@@ -9,7 +9,7 @@ export const LOCALE = 'en-US';
 
 /**
  * Race Data Configurations
- * 
+ *
  * Starting values for each race
  */
 export const RACES = [
@@ -103,5 +103,5 @@ export const BATTLE_CONFIG = {
 export const TICK_CONFIG = {
     intervalMs: 5_000,
     combatZones: ['/battle', '/suicide', '/death'],
-    restingZones: ['/', '/shop/weapons', '/shop/armors', '/inn', '/character'],
+    restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],
 } as const;
