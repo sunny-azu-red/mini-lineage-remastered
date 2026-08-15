@@ -1,7 +1,7 @@
 /*
  * ========================================================================
  * Mini-Lineage — Tables
- * .data-table, utility span/td classes, .xp-table-grid
+ * .data-table, utility span/td classes
  * ========================================================================
  */
 
@@ -50,28 +50,7 @@
     background: rgba(22, 33, 62, 0.5);
 }
 
-.row-current {
-    background: rgba(255, 188, 0, 0.1) !important;
-}
-
-.row-current td {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
 td.center,
 th.center {
     text-align: center;
-}
-
-/* ===== XP Table Grid ===== */
-.xp-table-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-}
-
-@media (max-width: 600px) {
-    .xp-table-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }

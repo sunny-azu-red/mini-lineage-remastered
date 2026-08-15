@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { calculateLevel } from '@/service/math.service';
-import { renderSuicideView, renderDeathView, renderXpTableView } from '@/view/player.view';
+import { renderSuicideView, renderDeathView, renderCharacterView } from '@/view/player.view';
 import { commitSuicide } from '@/service/player.service';
 import { SuicideSchema } from '@/schema/player.schema';
 import { statisticsRepository } from '@/repository/statistics.repository';
@@ -35,10 +34,7 @@ export const getRestart = (req: Request, res: Response) => {
     });
 };
 
-export const getXpTable = (req: Request, res: Response) => {
+export const getCharacter = (req: Request, res: Response) => {
     const player = res.locals.player;
-    const currentXp = player.experience;
-    const currentLevel = calculateLevel(currentXp);
-
-    res.send(renderXpTableView(currentXp, currentLevel, res.locals.flash));
+    res.send(renderCharacterView(player, res.locals.flash));
 };

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { postSuicide, getSuicide, getDeath, getRestart, getXpTable } from './player.controller';
+import { postSuicide, getSuicide, getDeath, getRestart, getCharacter } from './player.controller';
 import { commitSuicide } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import * as playerView from '@/view/player.view';
@@ -16,7 +16,7 @@ vi.mock('@/service/math.service', () => ({
 vi.mock('@/view/player.view', () => ({
     renderSuicideView: vi.fn().mockReturnValue('suicide-view'),
     renderDeathView: vi.fn().mockReturnValue('death-view'),
-    renderXpTableView: vi.fn().mockReturnValue('xp-table-view'),
+    renderCharacterView: vi.fn().mockReturnValue('character-view'),
 }));
 
 vi.mock('@/repository/statistics.repository', () => ({
@@ -99,11 +99,11 @@ describe('playerController', () => {
         });
     });
 
-    describe('getXpTable', () => {
-        it('should send XP table view', () => {
-            getXpTable(req, res);
-            expect(playerView.renderXpTableView).toHaveBeenCalled();
-            expect(res.send).toHaveBeenCalledWith('xp-table-view');
+    describe('getCharacter', () => {
+        it('should send character view', () => {
+            getCharacter(req, res);
+            expect(playerView.renderCharacterView).toHaveBeenCalled();
+            expect(res.send).toHaveBeenCalledWith('character-view');
         });
     });
 });

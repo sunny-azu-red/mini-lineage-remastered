@@ -47,7 +47,7 @@ export function renderStatus(player: PlayerState): string {
     const statusEmoji = player.dead ? '☠️' : race.emoji;
     const levelDisplay = (player.ambushed || player.dead)
         ? `${statusEmoji} <span class="gold">${race.label} level ${formatNumber(level)}</span>`
-        : `${statusEmoji} <a href='/xp-table'>${race.label} level ${formatNumber(level)}</a>`;
+        : `${statusEmoji} <a href='/character'>${race.label} level ${formatNumber(level)}</a>`;
 
     return render(statusTpl, {
         hp,
