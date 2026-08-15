@@ -197,7 +197,7 @@ export function getPlayerAuras(player: PlayerState) {
 /**
  * processTick — entry point for all time-based passive effects (regen, future buffs/debuffs).
  * Called by SocketService on every TICK_CONFIG.intervalMs tick.
- * 
+ *
  * Returns true if the player state was modified (so the socket knows to emit).
  */
 export function processTick(player: PlayerState): boolean {
