@@ -1,7 +1,6 @@
 services:
   mini-lineage-remastered:
     build: .
-    image: mini-lineage-remastered:latest
     container_name: mini-lineage-remastered
     restart: always
     ports:
