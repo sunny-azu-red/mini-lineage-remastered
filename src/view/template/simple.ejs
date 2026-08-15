@@ -36,8 +36,9 @@
 
                 <div id="main-simple">
                     <div class="panel">
-                        <div class="panel-header">
-                            <%= title %>
+                        <div class="panel-header flex">
+                            <span class="header-name"><%= title %></span>
+                            <div class="header-stats" id="auras"></div>
                         </div>
 
                         <div class="panel-body">
@@ -55,7 +56,9 @@
         <% if (isRelease) { %>
             <script src="/script.js"></script>
         <% } else { %>
+            <script src="/socket.io/socket.io.js"></script>
             <script src="/js/common.js"></script>
+            <script src="/js/socket.js"></script>
         <% } %>
     </body>
 

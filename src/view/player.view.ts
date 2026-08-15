@@ -79,6 +79,7 @@ export function renderCharacterView(player: PlayerState, flash: FlashMessage | n
         battlesGroup,
         opponentRaceGroup,
         ambushesGroup,
+        hp: player.health,
         hpFormatted: formatNumber(player.health),
         maxHpFormatted: formatNumber(race.startHealth),
         adenaFormatted: formatAdena(player.adena),

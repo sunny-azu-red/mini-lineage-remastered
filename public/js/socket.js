@@ -54,19 +54,30 @@
      * Updates the health bar, value counter, and related UI states (low health warnings).
      */
     function updateHealth(newHp, maxHp) {
-        // read the currently displayed HP from the DOM
+        // read the currently displayed HP from the DOM (sidebar or character sheet)
         const hpEl = document.querySelector('#hp-bar ~ .bar-text .animate-val');
-        const prevHp = hpEl ? (parseInt(hpEl.innerText.replace(/,/g, '')) || newHp) : newHp;
+        const charHpEl = document.getElementById('char-hp');
+
+        const prevHp = hpEl
+            ? (parseInt(hpEl.innerText.replace(/,/g, '')) || newHp)
+            : (charHpEl ? (parseInt(charHpEl.innerText.replace(/,/g, '')) || newHp) : newHp);
 
         // skip if the HP hasn't actually changed (e.g. initial sync matches server-rendered HTML)
         if (newHp === prevHp)
             return;
 
-        // animate the HP value counter
+        // animate the sidebar HP value counter
         if (hpEl) {
             animateValue(hpEl, prevHp, newHp, 600);
             hpEl.dataset.val = newHp;
             hpEl.dataset.prev = prevHp;
+        }
+
+        // animate the character page HP counter
+        if (charHpEl) {
+            animateValue(charHpEl, prevHp, newHp, 600);
+            charHpEl.dataset.val = newHp;
+            charHpEl.dataset.prev = prevHp;
         }
 
         // animate the HP bar width
