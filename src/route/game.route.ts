@@ -45,4 +45,9 @@ router.get('/highscores/:raceLabel', getHighscores);
 router.get('/statistics', getStatistics);
 router.get('/races', getRaces);
 
+// test error simulation
+router.get('/simulate-error', (req, res, next) => {
+    next(new Error('💥 This is a simulated system error to test error.ejs!'));
+});
+
 export default router;
