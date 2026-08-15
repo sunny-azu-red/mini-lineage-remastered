@@ -157,6 +157,15 @@ describe('cheatMiddleware', () => {
             expect(next).toHaveBeenCalled();
         });
 
+        it('should allow non-initialized players on /races', () => {
+            vi.mocked(playerService.isGameStarted).mockReturnValue(false);
+            req.path = '/races';
+
+            cheatMiddleware(req, res, next);
+
+            expect(next).toHaveBeenCalled();
+        });
+
         it('should allow non-initialized players on filtered highscore paths', () => {
             vi.mocked(playerService.isGameStarted).mockReturnValue(false);
             req.path = '/highscores/dark-elf';
@@ -189,6 +198,15 @@ describe('cheatMiddleware', () => {
         it('should redirect initialized players away from /statistics', () => {
             vi.mocked(playerService.isGameStarted).mockReturnValue(true);
             req.path = '/statistics';
+
+            cheatMiddleware(req, res, next);
+
+            expect(res.redirect).toHaveBeenCalledWith('/');
+        });
+
+        it('should redirect initialized players away from /races', () => {
+            vi.mocked(playerService.isGameStarted).mockReturnValue(true);
+            req.path = '/races';
 
             cheatMiddleware(req, res, next);
 
