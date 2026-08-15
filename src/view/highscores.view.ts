@@ -2,11 +2,12 @@ import { readTemplate, render } from './base.view';
 import { renderSimplePage } from './layout.view';
 import { formatAdena, formatNumber, slugify, truncate } from '@/util/format.util';
 import { RACES } from '@/constant/game.constant';
-import { HighscoreEntry } from '@/interface';
+import { HighscoreEntry, PlayerState } from '@/interface';
+import { isGameStarted } from '@/service/player.service';
 
 const highscoresTpl = readTemplate('highscores.ejs');
 
-export function renderHighscoresView(highscores: HighscoreEntry[] = [], activeRaceId?: number): string {
+export function renderHighscoresView(highscores: HighscoreEntry[] = [], activeRaceId?: number, player: PlayerState | null = null): string {
     const rows = highscores.map((score) => {
         const d = new Date(score.created);
         const pad = (n: number) => n.toString().padStart(2, '0');
@@ -21,7 +22,8 @@ export function renderHighscoresView(highscores: HighscoreEntry[] = [], activeRa
             date,
         };
     });
-    const content = render(highscoresTpl, { rows, activeRaceId, races: RACES, slugify });
+    const isStarted = player ? isGameStarted(player) : false;
+    const content = render(highscoresTpl, { rows, activeRaceId, races: RACES, slugify, isGameStarted: isStarted });
 
-    return renderSimplePage('Hall of Champions', content);
+    return renderSimplePage('Hall of Champions', content, null, player);
 }

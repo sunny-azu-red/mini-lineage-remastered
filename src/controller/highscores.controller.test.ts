@@ -59,6 +59,7 @@ describe('highscoresController', () => {
         it('should fetch all highscores if no race label provided', async () => {
             await getHighscores(req, res);
             expect(highscoreRepository.findAll).toHaveBeenCalledWith(undefined);
+            expect(highscoresView.renderHighscoresView).toHaveBeenCalledWith([], undefined, res.locals.player);
             expect(res.send).toHaveBeenCalledWith('highscores-view');
         });
 

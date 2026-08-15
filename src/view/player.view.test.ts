@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { renderDeathView, renderSuicideView, renderXpTableView } from './player.view';
+import { renderDeathView, renderSuicideView, renderCharacterView } from './player.view';
 import { renderPage, renderSimplePage } from './layout.view';
 import { PlayerState } from '@/interface';
 
@@ -91,10 +91,40 @@ describe('player.view', () => {
         });
     });
 
-    describe('renderXpTableView', () => {
-        it('returns rendered XP table page', () => {
-            const html = renderXpTableView(100, 2);
+    describe('renderCharacterView', () => {
+        it('returns rendered character page with correct attributes for leveling character', () => {
+            const p = makePlayer({
+                name: 'Seth',
+                raceId: 2, // Elf
+                experience: 100,
+                totalBattles: 1,
+                totalAmbushes: 1,
+                totalEnemiesKilled: 1,
+            });
+            const html = renderCharacterView(p);
             expect(html).toBeDefined();
+            expect(html).toContain('Seth');
+            expect(html).toContain('a battle');
+            expect(html).toContain('a cunning ambush');
+            expect(html).toContain('isMaxLevel');
+        });
+
+        it('handles plural battles and ambushes', () => {
+            const p = makePlayer({
+                totalBattles: 5,
+                totalAmbushes: 3,
+                totalEnemiesKilled: 10,
+            });
+            const html = renderCharacterView(p);
+            expect(html).toContain('5 battles');
+            expect(html).toContain('3 cunning ambushes');
+        });
+
+        it('handles max level character correctly', () => {
+            const p = makePlayer({ experience: 999_999_999 });
+            const html = renderCharacterView(p);
+            expect(html).toContain('isMaxLevel');
+            expect(html).toContain('999,999,999');
         });
     });
 });
