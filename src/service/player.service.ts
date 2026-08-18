@@ -245,17 +245,12 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
     if (!item)
         return null;
 
-    if (itemType === ItemType.Weapon && player.weaponId === itemId) {
+    if (itemType === ItemType.Weapon && player.weaponId === itemId)
         return { success: false, text: `You are already wielding the ${item.emoji} ${item.name}!`, item };
-    }
-
-    if (itemType === ItemType.Armor && player.armorId === itemId) {
+    if (itemType === ItemType.Armor && player.armorId === itemId)
         return { success: false, text: `You are already wearing the ${item.emoji} ${item.name}!`, item };
-    }
-
-    if (!deductCost(player, item.cost)) {
-        return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}! It costs 🪙 ${formatAdena(item.cost)} Adena.`, item };
-    }
+    if (!deductCost(player, item.cost))
+        return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}!`, item };
 
     if (itemType === ItemType.Weapon) {
         player.weaponId = itemId;
@@ -356,7 +351,7 @@ export function processEffectExpiry(player: PlayerState): boolean {
 
 /**
  * Applies natural HP regeneration for players outside combat.
- * Runs strictly on the periodic cadence (REGEN_CONFIG.intervalMs = 5000ms).
+ * Runs strictly on the periodic cadence (TICK_CONFIG.intervalMs = 5000ms).
  *
  * Returns true if health was restored.
  */

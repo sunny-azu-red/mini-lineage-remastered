@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatAdena, formatNumber, pluralize, fillTemplate, slugify, formatShopItems, truncate, formatEffectModifier, formatEffectTooltip } from './format.util';
+import { formatAdena, formatNumber, pluralize, fillTemplate, slugify, formatShopItems, truncate, formatEffectModifier, formatEffectTooltip, formatSessionId, capitalize } from './format.util';
 import { EFFECTS_CONFIG } from '@/constant/game.constant';
 
 describe('formatAdena', () => {
@@ -166,3 +166,37 @@ describe('formatEffectTooltip', () => {
         expect(formatEffectTooltip(EFFECTS_CONFIG.konamiCheat)).toBe("Cheater's Mark (6x XP, 6x Adena, +15% Crit, +150 Max HP)");
     });
 });
+
+describe('formatSessionId', () => {
+    it('slices session ID to 7 characters by default', () => {
+        expect(formatSessionId('knTrfcRHsoP5sxrEdzK-ublzEUb6Z7F4')).toBe('knTrfcR');
+    });
+
+    it('slices session ID to custom length', () => {
+        expect(formatSessionId('knTrfcRHsoP5sxrEdzK-ublzEUb6Z7F4', 10)).toBe('knTrfcRHso');
+    });
+
+    it('returns placeholder dashes if session ID is undefined or empty', () => {
+        expect(formatSessionId(undefined)).toBe('-------');
+        expect(formatSessionId('')).toBe('-------');
+    });
+
+    it('returns custom-length placeholder dashes if session ID is missing', () => {
+        expect(formatSessionId(undefined, 5)).toBe('-----');
+    });
+});
+
+describe('capitalize', () => {
+    it('capitalizes the first letter of a word', () => {
+        expect(capitalize('buff')).toBe('Buff');
+        expect(capitalize('debuff')).toBe('Debuff');
+        expect(capitalize('aura')).toBe('Aura');
+    });
+
+    it('handles empty or undefined string', () => {
+        expect(capitalize('')).toBe('');
+        expect(capitalize(undefined as any)).toBe('');
+    });
+});
+
+

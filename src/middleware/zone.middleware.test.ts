@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { zoneMiddleware, isPathInZones } from './zone.middleware';
-import { REGEN_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { TICK_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
 import * as playerService from '@/service/player.service';
 
 vi.mock('@/service/player.service', () => ({

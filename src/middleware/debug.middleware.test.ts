@@ -40,8 +40,31 @@ describe('debugMiddleware', () => {
 
         expect(logger.debug).toHaveBeenCalledOnce();
         expect(logger.debug).toHaveBeenCalledWith(
-            expect.objectContaining({ "name\u200B": 'Player' }),
-            expect.stringContaining('[GET] / = 200')
+            expect.stringMatching(/\[GET:xyz\] \x1b\[35m\/ = 200 \(\d+ms\)\x1b\[0m\n\x1b\[90m\{"name":"Player"\}\x1b\[0m/)
+        );
+    });
+
+    it('should log POST payload if present in request body', () => {
+        vi.spyOn(version, 'isRelease').mockReturnValue(false);
+        const req = {
+            method: 'POST',
+            url: '/inn',
+            sessionID: 'xyz',
+            body: { select_food: '3' },
+            session: { name: 'Player' }
+        };
+        let finishHandler: Function = () => { };
+        const res = {
+            on: vi.fn((event, handler) => { if (event === 'finish') finishHandler = handler; }),
+            statusCode: 302
+        };
+        const next = vi.fn();
+
+        debugMiddleware(req as any, res as any, next);
+        finishHandler();
+
+        expect(logger.debug).toHaveBeenCalledWith(
+            expect.stringMatching(/\[POST:xyz\] \x1b\[35m\/inn = 302 \(\d+ms\)\x1b\[0m \x1b\[33mPayload: \{"select_food":"3"\}\x1b\[0m\n\x1b\[90m\{"name":"Player"\}\x1b\[0m/)
         );
     });
 
@@ -63,7 +86,7 @@ describe('debugMiddleware', () => {
 
     it('should handle missing session during debug log', () => {
         vi.spyOn(version, 'isRelease').mockReturnValue(false);
-        const req = { method: 'GET', url: '/', sessionID: 'xyz' }; // No session
+        const req = { method: 'GET', url: '/' }; // No sessionID
         let finishHandler: Function = () => { };
         const res = {
             on: vi.fn((event, handler) => { if (event === 'finish') finishHandler = handler; }),
@@ -74,7 +97,9 @@ describe('debugMiddleware', () => {
         debugMiddleware(req as any, res as any, next);
         finishHandler();
 
-        expect(logger.debug).toHaveBeenCalledWith({}, expect.any(String));
+        expect(logger.debug).toHaveBeenCalledWith(
+            expect.stringMatching(/\[GET:-------\] \x1b\[35m\/ = 200 \(\d+ms\)\x1b\[0m$/)
+        );
     });
 
     it('should handle empty session during debug log', () => {
@@ -90,6 +115,8 @@ describe('debugMiddleware', () => {
         debugMiddleware(req as any, res as any, next);
         finishHandler();
 
-        expect(logger.debug).toHaveBeenCalledWith({}, expect.any(String));
+        expect(logger.debug).toHaveBeenCalledWith(
+            expect.stringMatching(/\[GET:xyz\] \x1b\[35m\/ = 200 \(\d+ms\)\x1b\[0m$/)
+        );
     });
 });

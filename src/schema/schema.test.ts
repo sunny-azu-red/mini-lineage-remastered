@@ -3,7 +3,7 @@ import { itemIdSchema } from './common.schema';
 import { ShopWeaponSchema, ShopArmorSchema, ShopFoodSchema } from './shop.schema';
 import { GameStartSchema } from './game.schema';
 import { SuicideSchema } from './player.schema';
-import { SocketPingEventSchema, SocketInputEventSchema } from './socket.schema';
+import { SocketInputEventSchema } from './socket.schema';
 
 // ---------------------------------------------------------------------------
 // Common schemas
@@ -118,22 +118,6 @@ describe('SuicideSchema', () => {
 // ---------------------------------------------------------------------------
 // Socket schemas
 // ---------------------------------------------------------------------------
-
-describe('SocketPingEventSchema', () => {
-    it('accepts a valid timestamp', () => {
-        const result = SocketPingEventSchema.safeParse({ timestamp: Date.now() });
-        expect(result.success).toBe(true);
-    });
-    it('rejects a non-numeric timestamp', () => {
-        expect(SocketPingEventSchema.safeParse({ timestamp: 'now' }).success).toBe(false);
-    });
-    it('rejects a negative timestamp', () => {
-        expect(SocketPingEventSchema.safeParse({ timestamp: -1 }).success).toBe(false);
-    });
-    it('rejects a non-integer timestamp', () => {
-        expect(SocketPingEventSchema.safeParse({ timestamp: 123.456 }).success).toBe(false);
-    });
-});
 
 describe('SocketInputEventSchema', () => {
     it('accepts a valid key string', () => {

@@ -190,13 +190,13 @@ export const BATTLE_CONFIG = {
 } as const;
 
 /**
- * Regeneration & Zone Configuration
+ * Tick & Zone Configuration
  *
- * Controls the server-side passive HP regeneration cadence sent via WebSocket.
- * combatZones are paths where regen does NOT occur.
- * restingZones are paths where peaceful HP regen IS applied.
+ * Controls the server-side tick cadence and zone classifications.
+ * combatZones are paths where passive ticks pause HP regeneration.
+ * restingZones are paths where peaceful HP regeneration is applied.
  */
-export const REGEN_CONFIG = {
+export const TICK_CONFIG = {
     intervalMs: 5_000,
     combatZones: ['/battle', '/suicide', '/death'],
     restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],

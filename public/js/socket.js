@@ -1,12 +1,6 @@
 (function () {
     const socket = io();
 
-    // development test: emit a secure ping event
-    socket.emit('ping', { timestamp: Date.now() });
-    socket.on('pong', (data) => {
-        console.log(`[SOCKET] Secure Pong received:`, data);
-    });
-
     // listen for server-pushed player updates (HP, maxHP, effects, stats)
     socket.on('player_update', (data) => {
         if (!data)

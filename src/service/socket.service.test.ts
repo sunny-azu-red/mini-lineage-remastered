@@ -68,7 +68,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 import { initSocketService } from './socket.service';
 import { sessionStore } from '@/config/database.config';
 import * as playerService from '@/service/player.service';
-import { REGEN_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { TICK_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
 
 describe('socketService', () => {
     const mockServer = {} as any;
@@ -107,7 +107,7 @@ describe('socketService', () => {
         vi.mocked(playerService.processTick).mockReturnValue(true); // health changed
 
         // Advance time to trigger interval
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
 
         // The sessionStore.get and set are callbacks, so we need to wait for them to resolve
         await vi.runAllTicks();
@@ -129,7 +129,7 @@ describe('socketService', () => {
         vi.mocked(playerService.processTick).mockReturnValue(false);
 
         mockSocket.emit.mockClear();
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         expect(playerService.processTick).toHaveBeenCalledWith(player, { applyRegen: true });
@@ -150,12 +150,12 @@ describe('socketService', () => {
         vi.advanceTimersByTime(11_000);
 
         // Trigger the tick check
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         // If it's cleaned up, it won't call sessionStore.get
         vi.clearAllMocks();
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         expect(sessionStore.get).not.toHaveBeenCalled();
     });
     it('should register secure events and validate payloads', () => {
@@ -164,16 +164,14 @@ describe('socketService', () => {
         const connectionHandler = (mockIo.on as any).mock.calls.find((c: any) => c[0] === 'connection')[1];
         connectionHandler(mockSocket);
 
-        const pingHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'ping')[1];
-        expect(pingHandler).toBeDefined();
+        const inputHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'input')[1];
+        expect(inputHandler).toBeDefined();
 
         // Test invalid payload
-        pingHandler({ timestamp: 'not-a-number' });
-        expect(mockSocket.emit).not.toHaveBeenCalledWith('pong', expect.any(Object));
+        expect(() => inputHandler({ key: '' })).not.toThrow();
 
         // Test valid payload
-        pingHandler({ timestamp: 12345 });
-        expect(mockSocket.emit).toHaveBeenCalledWith('pong', { timestamp: 12345 });
+        expect(() => inputHandler({ key: 'arrowup' })).not.toThrow();
     });
 
     it('should gracefully handle session reload errors', async () => {
@@ -183,7 +181,7 @@ describe('socketService', () => {
 
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(new Error('Reload fail')));
         
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         expect(playerService.processTick).not.toHaveBeenCalled();
@@ -196,7 +194,7 @@ describe('socketService', () => {
 
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, null));
         
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         expect(playerService.processTick).not.toHaveBeenCalled();
@@ -215,14 +213,13 @@ describe('socketService', () => {
         const connectionHandler = (mockIo.on as any).mock.calls.find((c: any) => c[0] === 'connection')[1];
         connectionHandler(mockSocket);
 
-        const pingHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'ping')[1];
+        const inputHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'input')[1];
         
         // Mock socket.request to have no session
         const originalRequest = mockSocket.request;
         (mockSocket as any).request = {};
         
-        pingHandler({ timestamp: 12345 });
-        expect(mockSocket.emit).not.toHaveBeenCalledWith('pong', expect.any(Object));
+        expect(() => inputHandler({ key: 'arrowup' })).not.toThrow();
         
         (mockSocket as any).request = originalRequest;
     });
@@ -235,7 +232,7 @@ describe('socketService', () => {
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, {}));
         vi.mocked(playerService.isGameStarted).mockReturnValue(false);
 
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         expect(playerService.processTick).not.toHaveBeenCalled();
@@ -253,7 +250,7 @@ describe('socketService', () => {
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
         vi.mocked(playerService.processTick).mockReturnValue(false);
 
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         expect(sessionStore.set).not.toHaveBeenCalled();
@@ -275,21 +272,20 @@ describe('socketService', () => {
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
         vi.mocked(playerService.processTick).mockReturnValue(true);
 
-        vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
         await vi.runAllTicks();
 
         expect(playerService.processTick).toHaveBeenCalled();
         expect(mockSocket.emit).not.toHaveBeenCalledWith('player_update', expect.anything());
     });
 
-    it('should handle ping with missing payload', () => {
+    it('should handle input with missing payload', () => {
         initSocketService(mockServer, mockMiddleware);
         const connectionHandler = (mockIo.on as any).mock.calls.find((c: any) => c[0] === 'connection')[1];
         connectionHandler(mockSocket);
 
-        const pingHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'ping')[1];
-        pingHandler(undefined);
-        expect(mockSocket.emit).not.toHaveBeenCalledWith('pong', expect.any(Object));
+        const inputHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'input')[1];
+        expect(() => inputHandler(undefined)).not.toThrow();
     });
 
     it('should execute socket middleware', () => {
