@@ -271,7 +271,6 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
                         }
 
                         player.cheated = true;
-                        player.coward = true;
                         applyEffect(player, EFFECTS_CONFIG.konamiCheat);
                         void statisticsRepository.increment('total_players_cheated');
 

@@ -340,7 +340,7 @@ describe('socketService', () => {
 
         expect(playerService.applyEffect).toHaveBeenCalled();
         expect(player.cheated).toBe(true);
-        expect(player.coward).toBe(true);
+        expect(player.coward).toBeUndefined();
         expect(sessionStore.set).toHaveBeenCalledWith('session-1', player, expect.any(Function));
     });
 
