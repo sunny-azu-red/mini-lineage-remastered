@@ -9,19 +9,19 @@ vi.mock('@/config/env.config', () => ({
     }
 }));
 
+vi.mock('fs', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('fs')>();
+    return {
+        ...actual,
+        existsSync: vi.fn(),
+        readFileSync: vi.fn(),
+    };
+});
+
 describe('version utility', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.mocked(env).NODE_ENV = 'development';
-    });
-
-    vi.mock('fs', async (importOriginal) => {
-        const actual = await importOriginal<typeof import('fs')>();
-        return {
-            ...actual,
-            existsSync: vi.fn(),
-            readFileSync: vi.fn(),
-        };
     });
 
     describe('isRelease', () => {
