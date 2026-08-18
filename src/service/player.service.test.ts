@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ItemType, PlayerState } from '@/interface';
-import { RACES } from '@/constant/game.constant';
+import { RACES, EFFECTS_CONFIG } from '@/constant/game.constant';
 import {
     isGameStarted,
     initializePlayer,
@@ -11,11 +11,16 @@ import {
     purchaseItem,
     resolveBattleOutcome,
     processTick,
+    processEffectExpiry,
+    processRegenTick,
     getTotalRegen,
     getTotalCrit,
     getTotalAttack,
     getTotalDefense,
-    getPlayerAuras,
+    getPlayerEffects,
+    getPlayerStats,
+    applyEffect,
+    getActiveEffects,
 } from './player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
 
@@ -94,11 +99,18 @@ describe('deductCost', () => {
 });
 
 describe('killPlayer', () => {
-    it('sets health to 0 and dead to true and increments total_deaths', () => {
-        const p = makePlayer({ health: 75 });
+    it('sets health to 0, dead to true, clears active effects, and increments total_deaths', () => {
+        const p = makePlayer({
+            health: 75,
+            effects: [
+                { ...EFFECTS_CONFIG.smokedSausage }
+            ]
+        });
         killPlayer(p);
         expect(p.health).toBe(0);
         expect(p.dead).toBe(true);
+        expect(p.effects).toEqual([]);
+        expect(getActiveEffects(p)).toEqual([]);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_deaths');
     });
 });
@@ -130,6 +142,32 @@ describe('restoreHealth', () => {
         const p = makePlayer({ raceId: 0, health: RACES[0].startHealth });
         const healed = restoreHealth(p, 20);
         expect(healed).toBe(0);
+    });
+});
+
+describe('applyEffect', () => {
+    it('applies a new effect and preserves distinct groups', () => {
+        const p = makePlayer({ raceId: 0, effects: [] });
+        applyEffect(p, { id: 'food_1', type: 'buff', group: 'food', emoji: '🥓', label: 'Food 1', modifiers: [] });
+        applyEffect(p, { id: 'potion_1', type: 'buff', group: 'potion', emoji: '🧪', label: 'Potion 1', modifiers: [] });
+        expect(p.effects?.length).toBe(2);
+        expect(p.effects?.map(e => e.id)).toEqual(['food_1', 'potion_1']);
+    });
+
+    it('replaces active effects with the same group', () => {
+        const p = makePlayer({ raceId: 0, effects: [] });
+        applyEffect(p, { id: 'food_1', type: 'buff', group: 'food', emoji: '🥓', label: 'Food 1', modifiers: [] });
+        applyEffect(p, { id: 'food_2', type: 'buff', group: 'food', emoji: '🍖', label: 'Food 2', modifiers: [] });
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('food_2');
+    });
+
+    it('replaces effect by id when group is not specified', () => {
+        const p = makePlayer({ raceId: 0, effects: [] });
+        applyEffect(p, { id: 'custom_buff', type: 'buff', emoji: '⚡', label: 'Speed', durationMs: 10000, modifiers: [] });
+        applyEffect(p, { id: 'custom_buff', type: 'buff', emoji: '⚡', label: 'Speed Refreshed', durationMs: 20000, modifiers: [] });
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].label).toBe('Speed Refreshed');
     });
 });
 
@@ -192,6 +230,68 @@ describe('purchaseItem — food', () => {
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_food_bought');
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_adena_spent', 7);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_healed', 4);
+    });
+
+    it('applies buff effect when purchasing high-tier food', () => {
+        const p = makePlayer({ adena: 100, health: 50, raceId: 0 });
+        const result = purchaseItem(p, ItemType.Food, 2); // Smoked Sausage: stat 15, cost 60, effect: Satisfied (+10 maxHp)
+        expect(result?.success).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('satisfied');
+        expect(result?.text).toBe(
+            `You have bought 🌭 Smoked Sausage.\nYou feel invigorated by the 🥓 Satisfied buff!\nYou feel your strength returning, bringing you to 65 HP.`
+        );
+    });
+
+    it('heals into newly expanded max HP when purchasing food at full base HP', () => {
+        const p = makePlayer({ adena: 100, health: 100, raceId: 0 }); // Human base max HP = 100
+        const result = purchaseItem(p, ItemType.Food, 2); // Smoked Sausage: stat 15, cost 60, effect: Satisfied (+10 maxHp)
+        expect(result?.success).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.health).toBe(110); // Healed from 100 into the new 110 ceiling
+        expect(result?.text).toBe(
+            `You have bought 🌭 Smoked Sausage.\nYou feel invigorated by the 🥓 Satisfied buff!\nYou feel your strength returning, bringing you to 110 HP.`
+        );
+    });
+
+    it('replaces previous food buff when purchasing another food buff without stacking', () => {
+        const p = makePlayer({
+            adena: 5000,
+            health: 50,
+            raceId: 0,
+            effects: [
+                { id: 'satisfied', type: 'buff', group: 'food', emoji: '🥓', label: 'Satisfied', modifiers: [{ type: 'maxHealth', value: 10 }] }
+            ]
+        });
+
+        // Buy Hearty Mash (Well Fed: +30 maxHp)
+        const result1 = purchaseItem(p, ItemType.Food, 3);
+        expect(result1?.success).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('well_fed');
+
+        // Buy Roasted Pheasant (Gourmet Feast: +60 maxHp)
+        const result2 = purchaseItem(p, ItemType.Food, 4);
+        expect(result2?.success).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('gourmet_feast');
+    });
+
+    it('preserves non-food effects when replacing food buff', () => {
+        const p = makePlayer({
+            adena: 1000,
+            health: 50,
+            raceId: 0,
+            effects: [
+                { ...EFFECTS_CONFIG.restingAura },
+                { ...EFFECTS_CONFIG.konamiCheat },
+                { ...EFFECTS_CONFIG.smokedSausage }
+            ]
+        });
+
+        purchaseItem(p, ItemType.Food, 3); // Hearty Mash
+        const effectIds = p.effects?.map(e => e.id);
+        expect(effectIds).toEqual(['resting', 'konami_cheat', 'well_fed']);
     });
 });
 
@@ -339,6 +439,103 @@ describe('processTick', () => {
         expect(p.health).toBe(55);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 5);
     });
+
+    it('cleans up expired effects during processTick', () => {
+        const p = makePlayer({
+            effects: [
+                { id: 'expired_buff', type: 'buff', emoji: '⚡', label: 'Expired', expiresAt: Date.now() - 1000, modifiers: [] },
+                { id: 'active_buff', type: 'buff', emoji: '🛡️', label: 'Active', expiresAt: Date.now() + 50000, modifiers: [] }
+            ]
+        });
+        const changed = processTick(p);
+        expect(changed).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('active_buff');
+    });
+
+    it('clamps current health when maxHealth buff expires and health exceeds base max', () => {
+        const p = makePlayer({
+            raceId: 0, // Human base max 100
+            health: 120, // had food buff previously
+            effects: [
+                { id: 'expired_food', type: 'buff', emoji: '🍖', label: 'Well Fed', expiresAt: Date.now() - 1000, modifiers: [{ type: 'maxHealth', value: 25 }] }
+            ]
+        });
+        const changed = processTick(p);
+        expect(changed).toBe(true);
+        expect(p.health).toBe(100);
+        expect(p.effects?.length).toBe(0);
+    });
+
+    it('cleans up expired buffs and clamps HP while in combat without applying HP regen', () => {
+        const p = makePlayer({
+            raceId: 2, // Elf base max 75, regen 3
+            health: 90, // was at 100 with food buff (75+25), took 10 damage in battle
+            effects: [
+                { id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] },
+                { id: 'well_fed', type: 'buff', emoji: '🍖', label: 'Well Fed', expiresAt: Date.now() - 500, modifiers: [{ type: 'maxHealth', value: 25 }] }
+            ]
+        });
+        const changed = processTick(p);
+        expect(changed).toBe(true);
+        // Food buff expired -> removed from effects
+        expect(p.effects?.some(e => e.id === 'well_fed')).toBe(false);
+        expect(p.effects?.some(e => e.id === 'combat')).toBe(true);
+        // Max HP dropped back to 75 -> health clamped to 75 (no regen applied)
+        expect(p.health).toBe(75);
+    });
+
+    it('does not apply HP regen during tick when in combat with low HP', () => {
+        const p = makePlayer({
+            raceId: 2, // Elf base max 75, regen 3
+            health: 50,
+            effects: [
+                { id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }
+            ]
+        });
+        const changed = processTick(p);
+        expect(changed).toBe(false);
+        expect(p.health).toBe(50); // No regen during combat
+    });
+
+    it('processEffectExpiry cleans expired buffs without applying regen even when wounded', () => {
+        const p = makePlayer({
+            raceId: 2, // Elf base max 75, regen 3
+            health: 50, // wounded
+            effects: [
+                { id: 'expired_buff', type: 'buff', emoji: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
+            ]
+        });
+        const changed = processEffectExpiry(p);
+        expect(changed).toBe(true);
+        expect(p.effects?.length).toBe(0);
+        expect(p.health).toBe(50); // Did NOT heal
+    });
+
+    it('processRegenTick heals wounded resting player and returns true', () => {
+        const p = makePlayer({
+            raceId: 0, // Human base max 100, regen 1
+            health: 80,
+            effects: [{ ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] }]
+        });
+        const changed = processRegenTick(p);
+        expect(changed).toBe(true);
+        expect(p.health).toBe(82); // 80 + 1 (base) + 1 (resting aura)
+    });
+
+    it('processTick with applyRegen false only expires effects and does not grant regen', () => {
+        const p = makePlayer({
+            raceId: 2, // Elf base max 75, regen 3
+            health: 50, // wounded
+            effects: [
+                { id: 'expired_buff', type: 'buff', emoji: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
+            ]
+        });
+        const changed = processTick(p, { applyRegen: false });
+        expect(changed).toBe(true);
+        expect(p.effects?.length).toBe(0);
+        expect(p.health).toBe(50); // Remains 50, no unearned regen
+    });
 });
 
 describe('getRace (internal branch coverage)', () => {
@@ -421,46 +618,187 @@ describe('getTotalCrit', () => {
     });
 });
 
-describe('getPlayerAuras', () => {
+describe('getPlayerEffects', () => {
     it('returns resting aura when resting at full HP', () => {
-        const p = makePlayer({ raceId: 0, health: 100, isResting: true });
-        const auras = getPlayerAuras(p);
-        expect(auras).toEqual([{ id: 'resting', icon: '⛺', label: 'Resting' }]);
+        const p = makePlayer({
+            raceId: 0,
+            health: 100,
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
+        });
+        const effects = getPlayerEffects(p);
+        expect(effects).toEqual([
+            { ...EFFECTS_CONFIG.restingAura }
+        ]);
     });
 
     it('returns resting + regenerating when resting with low HP and regen > 0', () => {
-        const p = makePlayer({ raceId: 2, health: 50, armorId: 0, isResting: true }); // Elf (regen 3)
-        const auras = getPlayerAuras(p);
-        expect(auras).toEqual([
-            { id: 'resting', icon: '⛺', label: 'Resting' },
-            { id: 'regenerating', icon: '🌿', label: 'Regenerating' },
+        const p = makePlayer({
+            raceId: 2,
+            health: 50,
+            armorId: 0,
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
+        }); // Elf (base regen 3)
+        const effects = getPlayerEffects(p);
+        expect(effects).toEqual([
+            { ...EFFECTS_CONFIG.restingAura },
+            { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 3 }] },
         ]);
     });
 
-    it('returns only resting for Orc resting with low HP and no regen', () => {
-        const p = makePlayer({ raceId: 1, health: 80, armorId: 0, isResting: true }); // Orc (regen 0)
-        const auras = getPlayerAuras(p);
-        expect(auras).toEqual([{ id: 'resting', icon: '⛺', label: 'Resting' }]);
+    it('returns only resting (no regenerating) for Orc resting with low HP and 0 total regen', () => {
+        const p = makePlayer({
+            raceId: 1,
+            health: 80,
+            armorId: 0,
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
+        }); // Orc (base 0 regen, Peasant Tunic 0 regen)
+        const effects = getPlayerEffects(p);
+        expect(effects).toEqual([
+            { ...EFFECTS_CONFIG.restingAura }
+        ]);
     });
 
-    it('returns resting + regenerating for Orc with regen armor', () => {
-        const p = makePlayer({ raceId: 1, health: 80, armorId: 3, isResting: true }); // Orc + Knight's Plate (regen 1)
-        const auras = getPlayerAuras(p);
-        expect(auras).toEqual([
-            { id: 'resting', icon: '⛺', label: 'Resting' },
-            { id: 'regenerating', icon: '🌿', label: 'Regenerating' },
+    it('returns resting + regenerating for Orc with Knight Plate (regen 1) when resting with low HP', () => {
+        const p = makePlayer({
+            raceId: 1,
+            health: 80,
+            armorId: 3, // Knight's Plate (regen 1)
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
+        }); // Orc (base 0 + armor 1 = 1)
+        const effects = getPlayerEffects(p);
+        expect(effects).toEqual([
+            { ...EFFECTS_CONFIG.restingAura },
+            { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 1 }] },
         ]);
+    });
+
+    it('combines aura modifiers into total regen and does not double-count in getPlayerStats', () => {
+        const p = makePlayer({
+            raceId: 0, // Human base regen 1
+            health: 50,
+            armorId: 3, // Knight Plate regen 1
+            effects: [
+                { ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] } // Resting bonus +1
+            ]
+        });
+        const effects = getPlayerEffects(p);
+        // Total regen = 1 (base) + 1 (armor) + 1 (resting aura) = 3
+        expect(effects).toEqual([
+            { ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] },
+            { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 3 }] },
+        ]);
+
+        const stats = getPlayerStats(p);
+        expect(stats.regen).toBe(3); // 1 base + 1 armor + 1 resting aura (regenAura not double-counted)
+    });
+
+    it('returns resting + regenerating when resting with buffed max health above base startHealth', () => {
+        const p = makePlayer({
+            raceId: 2, // Elf base maxHp 75, regen 3
+            health: 120, // Above base 75, but below buffed 225
+            armorId: 0,
+            effects: [
+                { ...EFFECTS_CONFIG.konamiCheat },
+                { ...EFFECTS_CONFIG.restingAura }
+            ]
+        });
+        const effects = getPlayerEffects(p);
+        expect(effects.some(a => a.id === 'regenerating')).toBe(true);
+
+        // At full 225 HP, regenerating should disappear
+        p.health = 225;
+        const fullEffects = getPlayerEffects(p);
+        expect(fullEffects.some(a => a.id === 'regenerating')).toBe(false);
     });
 
     it('returns combat aura when in combat', () => {
-        const p = makePlayer({ inCombat: true });
-        const auras = getPlayerAuras(p);
-        expect(auras).toEqual([{ id: 'combat', icon: '⚔️', label: 'In Combat' }]);
+        const p = makePlayer({
+            effects: [{ ...EFFECTS_CONFIG.combatAura }]
+        });
+        const effects = getPlayerEffects(p);
+        expect(effects).toEqual([{ ...EFFECTS_CONFIG.combatAura }]);
     });
 
     it('returns empty array when not resting and not in combat', () => {
         const p = makePlayer();
-        const auras = getPlayerAuras(p);
-        expect(auras).toEqual([]);
+        const effects = getPlayerEffects(p);
+        expect(effects).toEqual([]);
+    });
+
+    it('includes active buffs and debuffs', () => {
+        const p = makePlayer();
+        applyEffect(p, EFFECTS_CONFIG.smokedSausage);
+        const effects = getPlayerEffects(p);
+        expect(effects.length).toBe(1);
+        expect(effects[0].id).toBe('satisfied');
+        expect(effects[0].type).toBe('buff');
+    });
+});
+
+describe('getPlayerStats & applyEffect', () => {
+    it('calculates layered stats with base, gear, and active buffs', () => {
+        const p = makePlayer({ raceId: 0, weaponId: 1, armorId: 1 }); // Human (base maxHp 100, crit 4, regen 1, ambush 8) + Weapon(16 stat) + Armor(10 stat)
+        const statsBase = getPlayerStats(p);
+        expect(statsBase.attack).toBe(16);
+        expect(statsBase.defense).toBe(10);
+        expect(statsBase.crit).toBe(4);
+        expect(statsBase.maxHealth).toBe(100);
+        expect(statsBase.regen).toBe(1);
+        expect(statsBase.ambushRisk).toBe(8);
+
+        // Apply food buff (+30 Max HP)
+        applyEffect(p, EFFECTS_CONFIG.heartyMash);
+
+        const statsBuffed = getPlayerStats(p);
+        expect(statsBuffed.maxHealth).toBe(130);
+    });
+
+    it('applies multiplier modifiers correctly', () => {
+        const p = makePlayer();
+        applyEffect(p, EFFECTS_CONFIG.konamiCheat);
+
+        const stats = getPlayerStats(p);
+        expect(stats.xpMultiplier).toBe(6);
+        expect(stats.adenaMultiplier).toBe(6);
+        expect(stats.crit).toBe(19); // 4 (base) + 15
+    });
+
+    it('filters out expired effects', () => {
+        const p = makePlayer();
+        p.effects = [
+            {
+                id: 'expired_buff',
+                type: 'buff',
+                emoji: '⏳',
+                label: 'Expired',
+                expiresAt: Date.now() - 1000,
+                modifiers: [{ type: 'attack', value: 100 }],
+            }
+        ];
+
+        const stats = getPlayerStats(p);
+        expect(stats.attack).toBe(7); // starter weapon only
+    });
+
+    it('clamps stats within valid bounds', () => {
+        const p = makePlayer({ raceId: 1, weaponId: 0, armorId: 0 }); // Orc
+        applyEffect(p, {
+            id: 'curse',
+            type: 'debuff',
+            emoji: '💀',
+            label: 'Heavy Curse',
+            modifiers: [
+                { type: 'attack', value: -100 },
+                { type: 'defense', value: -100 },
+                { type: 'crit', value: -50 },
+                { type: 'ambushRisk', value: 200 },
+            ],
+        });
+
+        const stats = getPlayerStats(p);
+        expect(stats.attack).toBe(0);
+        expect(stats.defense).toBe(0);
+        expect(stats.crit).toBe(0);
+        expect(stats.ambushRisk).toBe(100);
     });
 });

@@ -32,3 +32,5 @@ function checkEfficiency() {
 }
 
 checkEfficiency();
+
+process.exit(0);

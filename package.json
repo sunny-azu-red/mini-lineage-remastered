@@ -6,6 +6,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon src/server.ts",
+    "prod": "npm run build && npm start",
     "prebuild": "npm run test",
     "build": "rm -rf dist && tsc && tsc-alias && tsc -p tsconfig.scripts.json && tsc-alias -p tsconfig.scripts.json && mkdir -p dist/view/template dist/public && cp -r src/view/template dist/view/ && cp -r database dist/ && cp public/favicon.ico dist/public/ && npm run min:css && npm run min:js && npm run min:html && (echo ${APP_VERSION:-$(git rev-parse --short HEAD || echo 'unknown')}) > dist/version.txt",
     "db:migrate": "node dist/scripts/db/migrate.js",

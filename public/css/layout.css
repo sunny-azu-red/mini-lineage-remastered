@@ -9,7 +9,7 @@
 #app {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100dvh;
     padding: 12px;
 }
@@ -127,6 +127,10 @@
     min-width: 0;
 }
 
+.inventory-panel {
+    margin-top: 12px;
+}
+
 #main {
     flex: 1;
     min-width: 0;
@@ -157,6 +161,10 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 520px) {
+    #app {
+        padding: 12px;
+    }
+
     #content {
         flex-direction: column;
         align-items: stretch;
@@ -164,7 +172,28 @@
 
     #sidebar,
     #main {
-        flex: none;
+        display: contents;
+    }
+
+    .status-panel {
+        order: 1;
         width: 100%;
+    }
+
+    #main>.panel {
+        order: 2;
+        width: 100%;
+    }
+
+    .inventory-panel {
+        order: 3;
+        width: 100%;
+        margin-top: 0;
+    }
+
+    #content #copyright {
+        order: 4;
+        width: 100%;
+        margin-top: 0;
     }
 }

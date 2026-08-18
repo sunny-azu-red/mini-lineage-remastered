@@ -22,7 +22,7 @@
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.05em;
-    padding: 9px 12px 7px 12px;
+    padding: 7px 12px;
     text-transform: uppercase;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
@@ -33,18 +33,14 @@
     align-items: center;
 }
 
-.header-stats {
-    display: flex;
+.header-effects {
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    text-transform: none;
-    letter-spacing: normal;
-    font-size: 11px;
-    font-family: var(--font-body);
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    gap: 7px;
+    font-size: 13px;
     flex-shrink: 0;
+    line-height: 1;
+    margin-top: 1px;
 }
 
 .header-name {
@@ -53,37 +49,85 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin-top: 2px;
 }
 
-.header-stats-value {
-    color: var(--gold);
+.effect-icon {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    cursor: default;
+    user-select: none;
+    line-height: 1;
+    height: 14px;
 }
 
-.header-stats-value:first-child {
-    margin-left: 8px;
+.effect-emoji {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
 }
 
-.aura-fade-in {
-    animation: aura-fade-in 0.4s ease-out forwards;
+.effect-timer {
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    font-family: var(--font-pixel);
+    font-weight: 400;
+    color: #fff;
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+    text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.85),
+        0 0 5px rgba(0, 0, 0, 0.85),
+        -1px -1px 0 rgba(0, 0, 0, 0.85),
+        1px -1px 0 rgba(0, 0, 0, 0.85),
+        -1px 1px 0 rgba(0, 0, 0, 0.85),
+        1px 1px 0 rgba(0, 0, 0, 0.85);
 }
 
-@keyframes aura-fade-in {
+.effect-buff .effect-timer {
+    color: #58d68d;
+    border-color: rgba(46, 204, 113, 0.45);
+}
+
+.effect-debuff .effect-timer {
+    color: #e8785e;
+    border-color: rgba(231, 76, 60, 0.45);
+}
+
+.effect-fade-in {
+    animation: effect-fade-in 0.4s ease-out forwards;
+}
+
+.effect-aura {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
+}
+
+.effect-buff {
+    filter: drop-shadow(0 0 4px rgba(46, 204, 113, 0.2));
+}
+
+.effect-debuff {
+    filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.3));
+}
+
+@keyframes effect-fade-in {
     from {
         opacity: 0;
         transform: translateY(-4px) scale(0.8);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
-}
-
-.header-stats-divider {
-    opacity: 0.4;
-    padding: 0 2px;
 }
 
 .panel-body {

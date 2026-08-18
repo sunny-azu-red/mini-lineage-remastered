@@ -65,4 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }, SAFETY_TIMEOUT_MS);
         });
     });
+
+    /**
+     * Input dispatcher for hotkeys and control interactions.
+     */
+    window.addEventListener('keydown', (e) => {
+        if (!e.key || e.repeat || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
+            return;
+
+        if (window.gameSocket) {
+            window.gameSocket.emit('input', { key: e.key.toLowerCase() });
+        }
+    });
 });

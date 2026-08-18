@@ -10,10 +10,10 @@ function checkRestVsFood() {
 
     RACES.forEach(race => {
         const baseRegen = race.regen;
-        
+
         FOODS.slice(0, 3).forEach(food => {
             const ticksToRegen = baseRegen === 0 ? '∞' : Math.ceil(targetHeal / baseRegen).toString();
-            
+
             console.log(
                 `${race.label.padEnd(10)} | ` +
                 `${food.name.padEnd(15)} | ` +
@@ -26,3 +26,5 @@ function checkRestVsFood() {
 }
 
 checkRestVsFood();
+
+process.exit(0);

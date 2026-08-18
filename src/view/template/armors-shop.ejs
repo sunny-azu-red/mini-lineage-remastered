@@ -15,9 +15,10 @@
         </thead>
         <tbody>
             <% items.forEach(function(armor) { %>
+                <% const regenMod = armor.modifiers ? armor.modifiers.find(function(m) { return m.type === 'regen'; }) : null; %>
                 <tr>
                     <td><%= armor.emoji %> <%= armor.name %></td>
-                    <td><% if (armor.regen > 0) { %><span class="heal">+<%= armor.regen %></span><% } else { %><span class="muted">-</span><% } %></td>
+                    <td><% if (regenMod && regenMod.value > 0) { %><span class="heal">+<%= regenMod.value %></span><% } else { %><span class="muted">-</span><% } %></td>
                     <td><%= armor.statFormatted %></td>
                     <td class="gold">🪙 <%= armor.costFormatted %></td>
                 </tr>

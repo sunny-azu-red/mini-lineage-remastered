@@ -2,11 +2,11 @@ import { readTemplate, render } from './base.view';
 import { renderPage, renderSimplePage } from './layout.view';
 import { PlayerState, FlashMessage } from '@/interface';
 import { calculateLevel, getXpNeededToLevelUp, isMaxLevel } from '@/service/math.service';
-import { getTotalAttack, getTotalDefense, getTotalCrit, getTotalRegen } from '@/service/player.service';
+import { getPlayerStats } from '@/service/player.service';
 import { RACES, WEAPONS, ARMORS } from '@/constant/game.constant';
 import { RACE_TRAITS_TEMPLATES, DEATH_MESSAGES } from '@/constant/narratives.constant';
 import { formatNumber, formatAdena, fillTemplate, pluralize } from '@/util/format.util';
-import { randomElement } from '@/util/game.util';
+import { randomElement, getItemModifier } from '@/util/game.util';
 
 const suicideTpl = readTemplate('suicide.ejs');
 const deathTpl = readTemplate('death.ejs');
@@ -19,8 +19,11 @@ export function renderSuicideView(player: PlayerState, flash: FlashMessage | nul
 }
 
 export function renderDeathView(player: PlayerState): string {
+    const isCowardOrCheated = player.coward || player.cheated;
     if (!player.deathReason) {
-        if (player.coward) {
+        if (player.cheated) {
+            player.deathReason = "👾 The gods saw your heresy and cast your memory into oblivion.";
+        } else if (player.coward) {
             player.deathReason = player.ambushed
                 ? "🪤 You were caught trying to flee an ambush!"
                 : "🤡 You took the cowardly way out.";
@@ -31,7 +34,7 @@ export function renderDeathView(player: PlayerState): string {
 
     const content = render(deathTpl, {
         reason: player.deathReason,
-        coward: player.coward
+        coward: isCowardOrCheated
     });
 
     return renderPage('Game Over', player, content);
@@ -42,6 +45,7 @@ export function renderCharacterView(player: PlayerState, flash: FlashMessage | n
     const opponentRace = RACES[race.enemyRaceId];
     const weapon = WEAPONS[player.weaponId];
     const armor = ARMORS[player.armorId];
+    const stats = getPlayerStats(player);
 
     const currentLevel = calculateLevel(player.experience);
     const xpNeeded = getXpNeededToLevelUp(player.experience);
@@ -67,21 +71,21 @@ export function renderCharacterView(player: PlayerState, flash: FlashMessage | n
         raceTraits,
         weaponName: weapon.name,
         weaponEmoji: weapon.emoji,
-        weaponCrit: weapon.crit ?? 0,
+        weaponCrit: getItemModifier(weapon, 'crit') ?? 0,
         armorName: armor.name,
         armorEmoji: armor.emoji,
-        armorRegen: armor.regen ?? 0,
-        attackPower: formatNumber(getTotalAttack(player)),
-        defensePower: formatNumber(getTotalDefense(player)),
-        totalCrit: formatNumber(getTotalCrit(player)),
-        totalRegen: formatNumber(getTotalRegen(player)),
-        ambushChance: formatNumber(race.ambushChance),
+        armorRegen: getItemModifier(armor, 'regen') ?? 0,
+        attackPower: formatNumber(stats.attack),
+        defensePower: formatNumber(stats.defense),
+        totalCrit: formatNumber(stats.crit),
+        totalRegen: formatNumber(stats.regen),
+        ambushChance: formatNumber(stats.ambushRisk),
         battlesGroup,
         opponentRaceGroup,
         ambushesGroup,
         hp: player.health,
         hpFormatted: formatNumber(player.health),
-        maxHpFormatted: formatNumber(race.startHealth),
+        maxHpFormatted: formatNumber(stats.maxHealth),
         adenaFormatted: formatAdena(player.adena),
         level: formatNumber(currentLevel),
         nextLevel: formatNumber(currentLevel + 1),

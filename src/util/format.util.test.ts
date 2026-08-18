@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatAdena, formatNumber, pluralize, fillTemplate, slugify, formatShopItems, truncate } from './format.util';
+import { formatAdena, formatNumber, pluralize, fillTemplate, slugify, formatShopItems, truncate, formatEffectModifier, formatEffectTooltip } from './format.util';
+import { EFFECTS_CONFIG } from '@/constant/game.constant';
 
 describe('formatAdena', () => {
     it('returns plain number below 1k', () => expect(formatAdena(999)).toBe('999'));
@@ -65,17 +66,48 @@ describe('slugify', () => {
 describe('formatShopItems', () => {
     it('formats a list of shop items correctly', () => {
         const items = [
-            { id: 0, emoji: '🗡️', name: 'Dagger', stat: 10, cost: 100, regen: 0, crit: 5 }
+            { id: 0, emoji: '🗡️', name: 'Dagger', stat: 10, cost: 100, modifiers: [{ type: 'crit', value: 5 }] },
+            {
+                id: 1,
+                emoji: '🌭',
+                name: 'Sausage',
+                stat: 15,
+                cost: 29,
+                effect: { id: 'satisfied', type: 'buff', emoji: '🥓', label: 'Satisfied', modifiers: [{ type: 'maxHealth', value: 10 }] }
+            },
+            { id: 2, emoji: '🍎', name: 'Apple', stat: 6, cost: 11 }
         ] as any;
         const formatted = formatShopItems(items);
         expect(formatted[0]).toEqual({
             id: 0,
             emoji: '🗡️',
             name: 'Dagger',
-            regen: 0,
-            crit: 5,
+            stat: 10,
+            cost: 100,
+            modifiers: [{ type: 'crit', value: 5 }],
             statFormatted: '10',
             costFormatted: '100'
+        });
+        expect(formatted[1]).toEqual({
+            id: 1,
+            emoji: '🌭',
+            name: 'Sausage',
+            stat: 15,
+            cost: 29,
+            effect: { id: 'satisfied', type: 'buff', emoji: '🥓', label: 'Satisfied', modifiers: [{ type: 'maxHealth', value: 10 }] },
+            modifiers: [{ type: 'maxHealth', value: 10 }],
+            statFormatted: '15',
+            costFormatted: '29'
+        });
+        expect(formatted[2]).toEqual({
+            id: 2,
+            emoji: '🍎',
+            name: 'Apple',
+            stat: 6,
+            cost: 11,
+            modifiers: [],
+            statFormatted: '6',
+            costFormatted: '11'
         });
     });
 });
@@ -99,5 +131,38 @@ describe('truncate', () => {
 
     it('handles limit of 0', () => {
         expect(truncate('Hello', 0)).toBe('...');
+    });
+});
+
+describe('formatEffectModifier', () => {
+    it('formats positive maxHealth', () => expect(formatEffectModifier({ type: 'maxHealth', value: 10 })).toBe('+10 Max HP'));
+    it('formats positive regen', () => expect(formatEffectModifier({ type: 'regen', value: 2 })).toBe('+2 HP Regen'));
+    it('formats positive crit', () => expect(formatEffectModifier({ type: 'crit', value: 15 })).toBe('+15% Crit'));
+    it('formats negative crit', () => expect(formatEffectModifier({ type: 'crit', value: -2 })).toBe('-2% Crit'));
+    it('formats positive ambushRisk', () => expect(formatEffectModifier({ type: 'ambushRisk', value: 4 })).toBe('+4% Ambush'));
+    it('formats positive attack', () => expect(formatEffectModifier({ type: 'attack', value: 5 })).toBe('+5 Attack'));
+    it('formats positive defense', () => expect(formatEffectModifier({ type: 'defense', value: 3 })).toBe('+3 Defense'));
+    it('formats multipliers', () => {
+        expect(formatEffectModifier({ type: 'xpMultiplier', value: 6 })).toBe('6x XP');
+        expect(formatEffectModifier({ type: 'adenaMultiplier', value: 6 })).toBe('6x Adena');
+    });
+    it('handles fallback unknown modifier types', () => {
+        expect(formatEffectModifier({ type: 'speed' as any, value: 5 })).toBe('+5 speed');
+    });
+});
+
+describe('formatEffectTooltip', () => {
+    it('returns bare label when no modifiers exist', () => {
+        expect(formatEffectTooltip(EFFECTS_CONFIG.restingAura)).toBe('Resting');
+        expect(formatEffectTooltip({ label: 'Resting' })).toBe('Resting');
+    });
+
+    it('formats single modifier tooltip', () => {
+        expect(formatEffectTooltip(EFFECTS_CONFIG.smokedSausage)).toBe('Satisfied (+10 Max HP)');
+    });
+
+    it('formats multiple modifier tooltip', () => {
+        expect(formatEffectTooltip(EFFECTS_CONFIG.ambushDebuff)).toBe('Hexed (+4% Ambush, -2% Crit)');
+        expect(formatEffectTooltip(EFFECTS_CONFIG.konamiCheat)).toBe("Cheater's Mark (6x XP, 6x Adena, +15% Crit, +150 Max HP)");
     });
 });

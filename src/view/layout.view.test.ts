@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderPage, renderSimplePage } from './layout.view';
 import { PlayerState } from '@/interface';
+import { EFFECTS_CONFIG } from '@/constant/game.constant';
 import * as versionUtil from '@/util/version.util';
 import * as baseView from './base.view';
 
@@ -143,6 +144,66 @@ describe('layout.view', () => {
             const renderMock = vi.mocked(baseView.render);
             const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
             expect(lastCallArgs.lowHealthAlert).toContain('dangerously low');
+        });
+    });
+
+    describe('dynamic maxHealth with active effects', () => {
+        it('uses getPlayerStats to calculate dynamic maxHp in status panel', () => {
+            const renderMock = vi.mocked(baseView.render);
+            renderMock.mockClear();
+
+            const p = makePlayer({
+                raceId: 2, // Elf base maxHp 75
+                health: 225,
+                effects: [
+                    { ...EFFECTS_CONFIG.konamiCheat }
+                ]
+            });
+            renderPage('Title', p, 'Content');
+            // Check status render call
+            const statusCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].maxHp !== undefined) as any;
+            expect(statusCall).toBeDefined();
+            expect(statusCall[1].maxHp).toBe(225);
+            expect(statusCall[1].maxHpFormatted).toBe('225');
+            expect(statusCall[1].hpPercent).toBe(100);
+        });
+    });
+
+    describe('renderEffects and effectsHtml in layout', () => {
+        it('renders effectsHtml with badge classes in renderPage and renderSimplePage', () => {
+            const renderMock = vi.mocked(baseView.render);
+            renderMock.mockClear();
+
+            const p = makePlayer({
+                raceId: 0,
+                effects: [
+                    { ...EFFECTS_CONFIG.restingAura },
+                    { ...EFFECTS_CONFIG.smokedSausage, expiresAt: Date.now() + 25_000 },
+                    { ...EFFECTS_CONFIG.konamiCheat },
+                ]
+            });
+            renderPage('Title', p, 'Content');
+            const layoutCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].effectsHtml !== undefined) as any;
+            expect(layoutCall).toBeDefined();
+            expect(layoutCall[1].effectsHtml).toContain('effect-icon');
+            expect(layoutCall[1].effectsHtml).toContain('effect-aura');
+            expect(layoutCall[1].effectsHtml).toContain('effect-buff');
+            expect(layoutCall[1].effectsHtml).toContain('effect-debuff');
+            expect(layoutCall[1].effectsHtml).toContain('data-expires-at');
+            expect(layoutCall[1].effectsHtml).toContain('effect-timer');
+            expect(layoutCall[1].effectsHtml).toContain('>25<');
+            expect(layoutCall[1].effectsHtml).toContain('title="Satisfied (+10 Max HP)"');
+            expect(layoutCall[1].effectsHtml).toContain('data-effect-id="resting"');
+            expect(layoutCall[1].effectsHtml).toContain(EFFECTS_CONFIG.restingAura.emoji);
+            expect(layoutCall[1].effectsHtml).toContain(EFFECTS_CONFIG.smokedSausage.emoji);
+            expect(layoutCall[1].effectsHtml).toContain(EFFECTS_CONFIG.konamiCheat.emoji);
+
+            // Also test renderSimplePage
+            renderMock.mockClear();
+            renderSimplePage('Simple Title', 'Content', null, p);
+            const simpleCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].effectsHtml !== undefined) as any;
+            expect(simpleCall).toBeDefined();
+            expect(simpleCall[1].effectsHtml).toContain('effect-aura');
         });
     });
 });
