@@ -26,6 +26,7 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     player.consecutiveAmbushes = 0;
     player.totalEnemiesKilled = 0;
     player.effects = [];
+    applyEffect(player, EFFECTS_CONFIG.newbieBuff);
 
     void statisticsRepository.increment('total_players');
     void statisticsRepository.increment('total_adena', player.adena);

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ItemType, PlayerState } from '@/interface';
-import { RACES, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, EFFECTS_CONFIG } from '@/constant/game.constant';
 import {
     isGameStarted,
     initializePlayer,
@@ -66,6 +66,12 @@ describe('initializePlayer', () => {
         expect(p.adena).toBe(race.startAdena);
         expect(p.experience).toBe(0);
         expect(p.totalAmbushes).toBe(0);
+        expect(p.effects).toHaveLength(1);
+        expect(p.effects[0].id).toBe('newbie_blessing');
+        const stats = getPlayerStats(p);
+        expect(stats.maxHealth).toBe(race.startHealth + 20);
+        expect(stats.defense).toBe(ARMORS[0].stat + 2);
+        expect(stats.ambushRisk).toBe(race.ambushChance - 4);
         expect(flash.type).toBe('info');
         expect(flash.text).toContain('Human');
         // Verify repository increment for new players

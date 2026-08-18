@@ -58,6 +58,7 @@ export const RACES = [
  * for easy balance tuning in one single place.
  */
 export const EFFECTS_CONFIG = {
+    // auras
     restingAura: {
         id: 'resting',
         type: 'aura' as const,
@@ -79,12 +80,26 @@ export const EFFECTS_CONFIG = {
         label: 'Regenerating',
         modifiers: [], // populated dynamically at runtime with total regen rate
     },
+
+    // buffs / debuffs
+    newbieBuff: {
+        id: 'newbie_blessing',
+        type: 'buff' as const,
+        emoji: '🐣',
+        label: 'Newbie Blessing',
+        durationMs: 300_000, // 5m
+        modifiers: [
+            { type: 'maxHealth' as const, value: 20 },
+            { type: 'defense' as const, value: 2 },
+            { type: 'ambushRisk' as const, value: -4 },
+        ],
+    },
     ambushDebuff: {
         id: 'hexed',
         type: 'debuff' as const,
         emoji: '👁️',
         label: 'Hexed',
-        durationMs: 60_000,
+        durationMs: 60_000, // 1m
         modifiers: [
             { type: 'ambushRisk' as const, value: 4 },
             { type: 'crit' as const, value: -2 },
@@ -102,13 +117,15 @@ export const EFFECTS_CONFIG = {
             { type: 'maxHealth' as const, value: 150 },
         ],
     },
+
+    // food buffs
     smokedSausage: {
         id: 'satisfied',
         type: 'buff' as const,
         group: 'food' as const,
         emoji: '🥓',
         label: 'Satisfied',
-        durationMs: 30_000,
+        durationMs: 90_000, // 1.5m
         modifiers: [{ type: 'maxHealth' as const, value: 10 }],
     },
     heartyMash: {
@@ -117,7 +134,7 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '🍖',
         label: 'Well Fed',
-        durationMs: 60_000,
+        durationMs: 150_000, // 2.5m
         modifiers: [{ type: 'maxHealth' as const, value: 30 }],
     },
     roastedPheasant: {
@@ -126,7 +143,7 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '👑',
         label: 'Gourmet Feast',
-        durationMs: 90_000,
+        durationMs: 300_000, // 5m
         modifiers: [{ type: 'maxHealth' as const, value: 60 }],
     },
 } as const satisfies Record<string, EffectConfig>;

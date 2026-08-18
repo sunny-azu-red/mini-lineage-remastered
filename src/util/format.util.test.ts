@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatAdena, formatNumber, pluralize, fillTemplate, slugify, formatShopItems, truncate, formatEffectModifier, formatEffectTooltip, formatSessionId, capitalize } from './format.util';
+import { formatAdena, formatNumber, pluralize, fillTemplate, slugify, formatShopItems, truncate, formatEffectModifier, formatEffectTooltip, formatSessionId, capitalize, formatEffectTimer } from './format.util';
 import { EFFECTS_CONFIG } from '@/constant/game.constant';
 
 describe('formatAdena', () => {
@@ -162,6 +162,7 @@ describe('formatEffectTooltip', () => {
     });
 
     it('formats multiple modifier tooltip', () => {
+        expect(formatEffectTooltip(EFFECTS_CONFIG.newbieBuff)).toBe('Newbie Blessing (+20 Max HP, +2 Defense, -4% Ambush)');
         expect(formatEffectTooltip(EFFECTS_CONFIG.ambushDebuff)).toBe('Hexed (+4% Ambush, -2% Crit)');
         expect(formatEffectTooltip(EFFECTS_CONFIG.konamiCheat)).toBe("Cheater's Mark (6x XP, 6x Adena, +15% Crit, +150 Max HP)");
     });
@@ -198,5 +199,26 @@ describe('capitalize', () => {
         expect(capitalize(undefined as any)).toBe('');
     });
 });
+
+describe('formatEffectTimer', () => {
+    it('formats durations in minutes when >= 60 seconds', () => {
+        expect(formatEffectTimer(180)).toBe('3m');
+        expect(formatEffectTimer(120)).toBe('2m');
+        expect(formatEffectTimer(90)).toBe('1m');
+        expect(formatEffectTimer(60)).toBe('1m');
+    });
+
+    it('formats durations in seconds when < 60 seconds', () => {
+        expect(formatEffectTimer(59)).toBe('59');
+        expect(formatEffectTimer(30)).toBe('30');
+        expect(formatEffectTimer(1)).toBe('1');
+        expect(formatEffectTimer(0)).toBe('0');
+    });
+
+    it('clamps negative values to 0', () => {
+        expect(formatEffectTimer(-5)).toBe('0');
+    });
+});
+
 
 

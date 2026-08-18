@@ -102,3 +102,10 @@ export function capitalize(text: string): string {
 
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+export function formatEffectTimer(remSec: number): string {
+    if (remSec >= 60) {
+        return `${Math.floor(remSec / 60)}m`;
+    }
+    return `${Math.max(0, remSec)}`;
+}

@@ -1,4 +1,5 @@
 const formatNumber = (num) => num.toLocaleString(window.CONFIG.locale);
+const formatEffectTimer = (remSec) => remSec >= 60 ? `${Math.floor(remSec / 60)}m` : `${Math.max(0, remSec)}`;
 const getLowHealthThreshold = (maxHp) => Math.floor(maxHp * window.CONFIG.lowHealthThreshold);
 const isLowHealth = (health, maxHp) => health > 0 && health <= getLowHealthThreshold(maxHp);
 
