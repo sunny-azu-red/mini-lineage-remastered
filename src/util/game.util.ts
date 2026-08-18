@@ -1,7 +1,7 @@
 import { FlashMessage, PurchaseResult, Item, StatModifierType } from '@/interface';
 import { randomInt } from '@/service/math.service';
 
-export function randomElement<T>(array: T[]): T {
+export function randomElement<T>(array: readonly T[] | T[]): T {
     return array[randomInt(0, array.length - 1)];
 }
 

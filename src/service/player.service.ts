@@ -1,5 +1,5 @@
 import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, TickOptions } from '@/interface';
-import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
 import { randomElement, getItemModifier } from '@/util/game.util';
@@ -26,14 +26,16 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     player.consecutiveAmbushes = 0;
     player.totalEnemiesKilled = 0;
     player.effects = [];
+    applyEffect(player, EFFECTS_CONFIG.newbieBuff);
 
     void statisticsRepository.increment('total_players');
     void statisticsRepository.increment('total_adena', player.adena);
 
-    const builds = ['a hardy', 'a wiry', 'a sturdy', 'a fit', 'a rugged', 'a robust', 'a solid'];
-    const build = randomElement(builds);
-    const age = randomInt(9, 69);
-    const definition = age <= 23 ? 'youth' : (age <= 54 ? 'adult' : 'elder');
+    const build = randomElement(CHARACTER_CONFIG.builds);
+    const age = randomInt(CHARACTER_CONFIG.minAge, CHARACTER_CONFIG.maxAge);
+    const definition = age <= CHARACTER_CONFIG.ageThresholds.youth
+        ? 'youth'
+        : (age <= CHARACTER_CONFIG.ageThresholds.adult ? 'adult' : 'elder');
     const welcome = fillTemplate(randomElement(WELCOME_MESSAGES), { raceLabel: race.label });
 
     const text = `You have chosen the ${race.emoji} ${race.label}, ${welcome}\n` +
@@ -245,17 +247,12 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
     if (!item)
         return null;
 
-    if (itemType === ItemType.Weapon && player.weaponId === itemId) {
+    if (itemType === ItemType.Weapon && player.weaponId === itemId)
         return { success: false, text: `You are already wielding the ${item.emoji} ${item.name}!`, item };
-    }
-
-    if (itemType === ItemType.Armor && player.armorId === itemId) {
+    if (itemType === ItemType.Armor && player.armorId === itemId)
         return { success: false, text: `You are already wearing the ${item.emoji} ${item.name}!`, item };
-    }
-
-    if (!deductCost(player, item.cost)) {
-        return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}! It costs 🪙 ${formatAdena(item.cost)} Adena.`, item };
-    }
+    if (!deductCost(player, item.cost))
+        return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}!`, item };
 
     if (itemType === ItemType.Weapon) {
         player.weaponId = itemId;
@@ -356,7 +353,7 @@ export function processEffectExpiry(player: PlayerState): boolean {
 
 /**
  * Applies natural HP regeneration for players outside combat.
- * Runs strictly on the periodic cadence (REGEN_CONFIG.intervalMs = 5000ms).
+ * Runs strictly on the periodic cadence (TICK_CONFIG.intervalMs = 5000ms).
  *
  * Returns true if health was restored.
  */

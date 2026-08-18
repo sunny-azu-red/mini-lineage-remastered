@@ -58,6 +58,7 @@ export const RACES = [
  * for easy balance tuning in one single place.
  */
 export const EFFECTS_CONFIG = {
+    // auras
     restingAura: {
         id: 'resting',
         type: 'aura' as const,
@@ -79,12 +80,26 @@ export const EFFECTS_CONFIG = {
         label: 'Regenerating',
         modifiers: [], // populated dynamically at runtime with total regen rate
     },
+
+    // buffs / debuffs
+    newbieBuff: {
+        id: 'newbie_blessing',
+        type: 'buff' as const,
+        emoji: '🐣',
+        label: 'Newbie Blessing',
+        durationMs: 300_000, // 5m
+        modifiers: [
+            { type: 'maxHealth' as const, value: 20 },
+            { type: 'defense' as const, value: 2 },
+            { type: 'ambushRisk' as const, value: -4 },
+        ],
+    },
     ambushDebuff: {
         id: 'hexed',
         type: 'debuff' as const,
         emoji: '👁️',
         label: 'Hexed',
-        durationMs: 60_000,
+        durationMs: 60_000, // 1m
         modifiers: [
             { type: 'ambushRisk' as const, value: 4 },
             { type: 'crit' as const, value: -2 },
@@ -102,13 +117,15 @@ export const EFFECTS_CONFIG = {
             { type: 'maxHealth' as const, value: 150 },
         ],
     },
+
+    // food buffs
     smokedSausage: {
         id: 'satisfied',
         type: 'buff' as const,
         group: 'food' as const,
         emoji: '🥓',
         label: 'Satisfied',
-        durationMs: 30_000,
+        durationMs: 90_000, // 1.5m
         modifiers: [{ type: 'maxHealth' as const, value: 10 }],
     },
     heartyMash: {
@@ -117,7 +134,7 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '🍖',
         label: 'Well Fed',
-        durationMs: 60_000,
+        durationMs: 150_000, // 2.5m
         modifiers: [{ type: 'maxHealth' as const, value: 30 }],
     },
     roastedPheasant: {
@@ -126,7 +143,7 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '👑',
         label: 'Gourmet Feast',
-        durationMs: 90_000,
+        durationMs: 300_000, // 5m
         modifiers: [{ type: 'maxHealth' as const, value: 60 }],
     },
 } as const satisfies Record<string, EffectConfig>;
@@ -190,14 +207,65 @@ export const BATTLE_CONFIG = {
 } as const;
 
 /**
- * Regeneration & Zone Configuration
+ * Tick & Zone Configuration
  *
- * Controls the server-side passive HP regeneration cadence sent via WebSocket.
- * combatZones are paths where regen does NOT occur.
- * restingZones are paths where peaceful HP regen IS applied.
+ * Controls the server-side tick cadence and zone classifications.
+ * combatZones are paths where passive ticks pause HP regeneration.
+ * restingZones are paths where peaceful HP regeneration is applied.
  */
-export const REGEN_CONFIG = {
+export const TICK_CONFIG = {
     intervalMs: 5_000,
     combatZones: ['/battle', '/suicide', '/death'],
     restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],
+} as const;
+
+/**
+ * Session Configuration
+ */
+export const SESSION_CONFIG = {
+    shortIdLength: 7,
+    gracePeriodMs: 10_000,
+} as const;
+
+/**
+ * Cheat / Secret Sequence Configuration
+ */
+export const CHEAT_CONFIG = {
+    konamiSequence: ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'],
+} as const;
+
+/**
+ * Character Generation & Validation Configuration
+ */
+export const CHARACTER_CONFIG = {
+    minAge: 9,
+    maxAge: 69,
+    ageThresholds: {
+        youth: 23,
+        adult: 54,
+    },
+    nameMinLength: 1,
+    nameMaxLength: 20,
+    builds: ['a hardy', 'a wiry', 'a sturdy', 'a fit', 'a rugged', 'a robust', 'a solid'],
+} as const;
+
+/**
+ * Highscores Configuration
+ */
+export const HIGHSCORES_CONFIG = {
+    limit: 25,
+} as const;
+
+/**
+ * Rate Limiting Configuration
+ */
+export const RATE_LIMIT_CONFIG = {
+    battle: {
+        windowMs: 60 * 1000, // 1 minute
+        limit: 60, // 60 battles per minute
+    },
+    shop: {
+        windowMs: 60 * 1000, // 1 minute
+        limit: 30, // 30 shop actions per minute
+    },
 } as const;

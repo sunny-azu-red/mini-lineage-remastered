@@ -1,12 +1,6 @@
 (function () {
     const socket = io();
 
-    // development test: emit a secure ping event
-    socket.emit('ping', { timestamp: Date.now() });
-    socket.on('pong', (data) => {
-        console.log(`[SOCKET] Secure Pong received:`, data);
-    });
-
     // listen for server-pushed player updates (HP, maxHP, effects, stats)
     socket.on('player_update', (data) => {
         if (!data)
@@ -51,8 +45,7 @@
     }
 
     /**
-     * Efficiently updates the active effects container by comparing incoming IDs
-     * with the current ones, ensuring animations only play for new entries.
+     * Updates the active effect icons / tooltips / countdown badges in the header container.
      */
     function updateEffects(newEffects) {
         const container = document.getElementById('effects');
@@ -88,7 +81,7 @@
                 const remSec = Math.max(0, Math.ceil((effect.expiresAt - now) / 1000));
                 const timerSpan = document.createElement('span');
                 timerSpan.className = 'effect-timer';
-                timerSpan.innerText = `${remSec}`;
+                timerSpan.innerText = formatEffectTimer(remSec);
                 span.appendChild(timerSpan);
             }
 
@@ -113,7 +106,7 @@
                     const remSec = Math.ceil(remMs / 1000);
                     const timerEl = el.querySelector('.effect-timer');
                     if (timerEl) {
-                        timerEl.innerText = `${remSec}`;
+                        timerEl.innerText = formatEffectTimer(remSec);
                     }
                 }
             }

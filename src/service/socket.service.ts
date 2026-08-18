@@ -3,17 +3,14 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { RequestHandler } from 'express';
 import { sessionStore } from '@/config/database.config';
 import { acquireSessionLock } from '@/util/lock.util';
-import { REGEN_CONFIG, RACES, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { TICK_CONFIG, RACES, EFFECTS_CONFIG, SESSION_CONFIG, CHEAT_CONFIG } from '@/constant/game.constant';
 import { processTick, isGameStarted, getPlayerEffects, getPlayerStats, applyEffect } from '@/service/player.service';
 import { PlayerState, TickOptions, SessionTrackerEntry } from '@/interface';
 import { logger } from '@/config/logger.config';
 import { z } from 'zod';
-import { SocketPingEventSchema, SocketInputEventSchema } from '@/schema/socket.schema';
+import { SocketInputEventSchema } from '@/schema/socket.schema';
 import { statisticsRepository } from '@/repository/statistics.repository';
-import { formatEffectTooltip } from '@/util/format.util';
-
-const GRACE_PERIOD_MS = 10_000;
-const SECRET_SEQUENCE = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
+import { formatEffectTooltip, formatSessionId, capitalize } from '@/util/format.util';
 
 const sessionTracker = new Map<string, SessionTrackerEntry>();
 
@@ -112,20 +109,51 @@ function processSessionTick(tracker: SessionTrackerEntry, sessionId: string, opt
                 return;
             }
 
-            logger.debug(`[TICK] ${player.name} "${sessionId}"`);
+            const sid = formatSessionId(sessionId);
 
             // process passive effects: buff/debuff expiry, health clamping, and optional natural regen
             const oldHp = player.health;
+            const now = Date.now();
+            const expiring = (player.effects || []).filter(e => e.expiresAt !== undefined && e.expiresAt <= now);
+            const expiredLabel = expiring.map(e => e.label).join(', ');
             const changed = processTick(player, options);
+            const stats = getPlayerStats(player);
+            const isDead = Boolean(player.dead || player.health <= 0);
+            const inCombat = !isDead && Boolean(player.effects?.some(e => e.id === 'combat'));
+            const zone = isDead ? 'Dead' : (inCombat ? 'In Combat' : 'Resting');
+            const hpDiff = player.health - oldHp;
+
+            const hpDisplay = hpDiff !== 0
+                ? `${oldHp} -> ${player.health}/${stats.maxHealth}`
+                : `${player.health}/${stats.maxHealth}`;
+
+            const typeStr = expiring.length > 0 ? capitalize(expiring[0].type) : 'Effect';
+
+            let status: string;
+            if (hpDiff > 0) {
+                status = `+${hpDiff} HPR`;
+            } else if (hpDiff < 0) {
+                const labelStr = expiredLabel ? `: ${expiredLabel}` : '';
+                status = `${hpDiff} HP | ${typeStr} Expired${labelStr}`;
+            } else if (changed && expiredLabel) {
+                status = `${typeStr} Expired: ${expiredLabel}`;
+            } else if (changed) {
+                status = 'Effect Expired';
+            } else if (player.health >= stats.maxHealth) {
+                status = 'Full';
+            } else if (inCombat || isDead) {
+                status = 'Paused';
+            } else if (stats.regen === 0) {
+                status = '0 HPR';
+            } else {
+                status = 'Idle';
+            }
+
+            logger.debug(`[TICK:${sid}] \x1b[34m${zone} | HP: ${hpDisplay} (${status})\x1b[0m`);
+
             if (!changed) {
                 release();
                 return;
-            }
-
-            const hpDiff = player.health - oldHp;
-            if (hpDiff !== 0) {
-                const diffStr = hpDiff >= 0 ? `+${hpDiff}` : `${hpDiff}`;
-                logger.debug(`[REGEN] ${player.name} | HPR: ${diffStr} | HP: ${oldHp} -> ${player.health}`);
             }
 
             // persist the updated session and notify all connected clients
@@ -214,12 +242,6 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
             }
         });
 
-        // example of a secure event listener
-        registerSecureEvent(socket, 'ping', SocketPingEventSchema, (data, sid) => {
-            logger.debug(`[SOCKET] Ping received from ${sid} with timestamp ${data.timestamp}`);
-            socket.emit('pong', { timestamp: data.timestamp });
-        });
-
         // control key / sequence listener
         registerSecureEvent(socket, 'input', SocketInputEventSchema, (data, sid) => {
             const tracker = sessionTracker.get(sid);
@@ -227,12 +249,12 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
             if (!tracker.inputBuffer) tracker.inputBuffer = [];
             tracker.inputBuffer.push(data.key.toLowerCase());
-            if (tracker.inputBuffer.length > SECRET_SEQUENCE.length) {
+            if (tracker.inputBuffer.length > CHEAT_CONFIG.konamiSequence.length) {
                 tracker.inputBuffer.shift();
             }
 
-            if (tracker.inputBuffer.length === SECRET_SEQUENCE.length &&
-                tracker.inputBuffer.every((k, idx) => k === SECRET_SEQUENCE[idx])) {
+            if (tracker.inputBuffer.length === CHEAT_CONFIG.konamiSequence.length &&
+                tracker.inputBuffer.every((k, idx) => k === CHEAT_CONFIG.konamiSequence[idx])) {
                 tracker.inputBuffer = [];
 
                 acquireSessionLock(sid).then((release) => {
@@ -249,7 +271,6 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
                         }
 
                         player.cheated = true;
-                        player.coward = true;
                         applyEffect(player, EFFECTS_CONFIG.konamiCheat);
                         void statisticsRepository.increment('total_players_cheated');
 
@@ -268,14 +289,15 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
         });
     });
 
-    // global tick — runs every REGEN_CONFIG.intervalMs on the server for passive HP regen
+    // global tick — runs every TICK_CONFIG.intervalMs on the server for passive HP regen
     setInterval(() => {
         const now = Date.now();
 
         sessionTracker.forEach((tracker, sessionId) => {
             // clean up stale sessions (no sockets and beyond grace period)
-            if (tracker.socketIds.size === 0 && now - tracker.lastSeen > GRACE_PERIOD_MS) {
-                logger.debug(`[SOCKET] Cleaning up stale "${sessionId}"`);
+            if (tracker.socketIds.size === 0 && now - tracker.lastSeen > SESSION_CONFIG.gracePeriodMs) {
+                const sid = formatSessionId(sessionId);
+                logger.debug(`[SOCKET:${sid}] \x1b[34mCleaning up stale session\x1b[0m`);
                 if (tracker.expiryTimers) {
                     for (const timer of tracker.expiryTimers.values()) {
                         clearTimeout(timer);
@@ -288,5 +310,5 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
             processSessionTick(tracker, sessionId, { applyRegen: true });
         });
-    }, REGEN_CONFIG.intervalMs);
+    }, TICK_CONFIG.intervalMs);
 }

@@ -1,4 +1,4 @@
-import { LOCALE, STAT_MODIFIER_CONFIG } from '@/constant/game.constant';
+import { LOCALE, STAT_MODIFIER_CONFIG, SESSION_CONFIG } from '@/constant/game.constant';
 import { Item, StatModifier, StatModifierConfig } from '@/interface';
 
 export function formatAdena(adena: number): string {
@@ -70,7 +70,7 @@ export function truncate(text: string, length: number): string {
     return text.substring(0, length) + '...';
 }
 
-export function formatEffectModifier(mod: StatModifier | { type: string; value: number }): string {
+export function formatEffectModifier(mod: StatModifier | { type: string; value: number; }): string {
     const config = (STAT_MODIFIER_CONFIG as Record<string, StatModifierConfig>)[mod.type];
     if (config?.isMultiplier) {
         return `${mod.value}x ${config.label}`;
@@ -81,10 +81,31 @@ export function formatEffectModifier(mod: StatModifier | { type: string; value: 
     return `${sign}${mod.value}${unit}${label}`;
 }
 
-export function formatEffectTooltip(effect: { label: string; modifiers?: readonly StatModifier[] | StatModifier[] | readonly { type: string; value: number }[] }): string {
+export function formatEffectTooltip(effect: { label: string; modifiers?: readonly StatModifier[] | StatModifier[] | readonly { type: string; value: number; }[]; }): string {
     if (!effect.modifiers || effect.modifiers.length === 0) {
         return effect.label;
     }
     const formattedMods = effect.modifiers.map(formatEffectModifier).join(', ');
     return `${effect.label} (${formattedMods})`;
+}
+
+export function formatSessionId(sessionId?: string, length: number = SESSION_CONFIG.shortIdLength): string {
+    if (!sessionId)
+        return '-'.repeat(length);
+
+    return sessionId.slice(0, length);
+}
+
+export function capitalize(text: string): string {
+    if (!text)
+        return '';
+
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function formatEffectTimer(remSec: number): string {
+    if (remSec >= 60) {
+        return `${Math.floor(remSec / 60)}m`;
+    }
+    return `${Math.max(0, remSec)}`;
 }

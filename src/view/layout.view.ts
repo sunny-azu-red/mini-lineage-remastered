@@ -2,7 +2,7 @@ import { readTemplate, render } from './base.view';
 import { WEAPONS, ARMORS, RACES, GAME_VERSION, REPO_COMMIT_URL } from '@/constant/game.constant';
 import { calculateLevel, isLowHealth, calculatePercentage, getXpProgress, isMaxLevel } from '@/service/math.service';
 import { isGameStarted, getPlayerStats, getActiveEffects } from '@/service/player.service';
-import { formatAdena, formatNumber, formatEffectTooltip } from '@/util/format.util';
+import { formatAdena, formatNumber, formatEffectTooltip, formatEffectTimer } from '@/util/format.util';
 import { randomElement, getItemModifier } from '@/util/game.util';
 import { isRelease } from '@/util/version.util';
 import { AMBUSH_LOW_HEALTH_MESSAGES } from '@/constant/narratives.constant';
@@ -104,7 +104,7 @@ export function renderEffects(player: PlayerState): string {
         if (effect.expiresAt) {
             const remSec = Math.max(0, Math.ceil((effect.expiresAt - now) / 1000));
             expiresAttr = ` data-expires-at="${effect.expiresAt}"`;
-            timerHtml = `<span class="effect-timer">${remSec}</span>`;
+            timerHtml = `<span class="effect-timer">${formatEffectTimer(remSec)}</span>`;
         }
         const tooltip = formatEffectTooltip(effect);
         return `<span class="effect-icon effect-fade-in${typeClass}" data-effect-id="${effect.id}" data-label="${effect.label}"${expiresAttr} title="${tooltip}"><span class="effect-emoji">${effect.emoji}</span>${timerHtml}</span>`;
