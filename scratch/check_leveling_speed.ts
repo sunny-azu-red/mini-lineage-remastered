@@ -23,7 +23,15 @@ function simulateLeveling(raceId: number) {
             const weaponId = Math.min(5, Math.floor(currentLevel / 15));
             const armorId = Math.min(5, Math.floor(currentLevel / 15));
 
-            const res = simulateBattle(raceId, weaponId, armorId);
+            const res = simulateBattle({
+                raceId,
+                weaponId,
+                armorId,
+                health: race.startHealth,
+                experience,
+                adena: 0,
+                name: 'Hero'
+            } as any);
             experience += res.xpGained;
             battlesAtLevel++;
             totalBattles++;

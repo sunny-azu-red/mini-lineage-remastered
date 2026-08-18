@@ -34,11 +34,8 @@ export function pluralize(singular: string, plural: string, count: number, emoji
 
 export function formatShopItems(items: Item[]) {
     return items.map(i => ({
-        id: i.id,
-        emoji: i.emoji,
-        name: i.name,
-        regen: i.regen,
-        crit: i.crit,
+        ...i,
+        modifiers: i.modifiers ?? i.effect?.modifiers ?? [],
         statFormatted: formatNumber(i.stat),
         costFormatted: formatAdena(i.cost),
     }));

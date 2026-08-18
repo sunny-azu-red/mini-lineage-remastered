@@ -65,17 +65,48 @@ describe('slugify', () => {
 describe('formatShopItems', () => {
     it('formats a list of shop items correctly', () => {
         const items = [
-            { id: 0, emoji: '🗡️', name: 'Dagger', stat: 10, cost: 100, regen: 0, crit: 5 }
+            { id: 0, emoji: '🗡️', name: 'Dagger', stat: 10, cost: 100, modifiers: [{ type: 'crit', value: 5 }] },
+            {
+                id: 1,
+                emoji: '🌭',
+                name: 'Sausage',
+                stat: 15,
+                cost: 29,
+                effect: { id: 'satisfied', type: 'buff', icon: '🥓', label: 'Satisfied', modifiers: [{ type: 'maxHealth', value: 10 }] }
+            },
+            { id: 2, emoji: '🍎', name: 'Apple', stat: 6, cost: 11 }
         ] as any;
         const formatted = formatShopItems(items);
         expect(formatted[0]).toEqual({
             id: 0,
             emoji: '🗡️',
             name: 'Dagger',
-            regen: 0,
-            crit: 5,
+            stat: 10,
+            cost: 100,
+            modifiers: [{ type: 'crit', value: 5 }],
             statFormatted: '10',
             costFormatted: '100'
+        });
+        expect(formatted[1]).toEqual({
+            id: 1,
+            emoji: '🌭',
+            name: 'Sausage',
+            stat: 15,
+            cost: 29,
+            effect: { id: 'satisfied', type: 'buff', icon: '🥓', label: 'Satisfied', modifiers: [{ type: 'maxHealth', value: 10 }] },
+            modifiers: [{ type: 'maxHealth', value: 10 }],
+            statFormatted: '15',
+            costFormatted: '29'
+        });
+        expect(formatted[2]).toEqual({
+            id: 2,
+            emoji: '🍎',
+            name: 'Apple',
+            stat: 6,
+            cost: 11,
+            modifiers: [],
+            statFormatted: '6',
+            costFormatted: '11'
         });
     });
 });

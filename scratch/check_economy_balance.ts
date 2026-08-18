@@ -21,7 +21,15 @@ function checkEconomy(raceId: number) {
         const weaponId = Math.min(5, Math.floor(currentLevel / 15));
         const armorId = Math.min(5, Math.floor(currentLevel / 15));
 
-        const res = simulateBattle(raceId, weaponId, armorId);
+        const res = simulateBattle({
+            raceId,
+            weaponId,
+            armorId,
+            experience,
+            health: race.startHealth,
+            adena: 0,
+            name: 'Hero'
+        } as any);
         experience += res.xpGained;
         totalAdenaGenerated += res.adenaGained;
     }

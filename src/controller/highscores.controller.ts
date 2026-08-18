@@ -7,7 +7,7 @@ import { slugify } from '@/util/format.util';
 
 export const postHighscores = async (req: Request, res: Response) => {
     const player = res.locals.player;
-    if (player.dead && !player.coward) {
+    if (player.dead && !player.coward && !player.cheated) {
         const race = RACES.find(r => r.id === player.raceId);
         const redirectUrl = race ? `/highscores/${slugify(race.label)}` : '/highscores';
 

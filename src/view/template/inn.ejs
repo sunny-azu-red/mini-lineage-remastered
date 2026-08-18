@@ -8,14 +8,17 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th title="Health Point Recovery">HP Recovery</th>
+                <th title="Maximum Health Point Increase">Max HP+</th>
+                <th title="Health Point Heal">HP Heal</th>
                 <th>Adena</th>
             </tr>
         </thead>
         <tbody>
             <% items.forEach(function(food) { %>
+                <% const hpMod = food.modifiers ? food.modifiers.find(function(m) { return m.type === 'maxHealth'; }) : null; %>
                 <tr>
                     <td><%= food.emoji %> <%= food.name %></td>
+                    <td><% if (hpMod && hpMod.value > 0) { %><span class="hp">+<%= hpMod.value %></span><% } else { %><span class="muted">-</span><% } %></td>
                     <td><%= food.statFormatted %></td>
                     <td class="gold">🪙 <%= food.costFormatted %></td>
                 </tr>

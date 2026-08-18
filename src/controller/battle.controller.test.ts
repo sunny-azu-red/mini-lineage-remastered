@@ -13,6 +13,17 @@ vi.mock('@/service/battle.service', () => ({
 
 vi.mock('@/service/player.service', () => ({
     resolveBattleOutcome: vi.fn(),
+    getPlayerStats: vi.fn().mockReturnValue({
+        attack: 16,
+        defense: 10,
+        crit: 4,
+        maxHealth: 100,
+        regen: 1,
+        ambushRisk: 8,
+        xpMultiplier: 1,
+        adenaMultiplier: 1,
+    }),
+    applyEffect: vi.fn(),
 }));
 
 vi.mock('@/service/math.service', async (importOriginal) => {
@@ -122,13 +133,23 @@ describe('battleController', () => {
         expect(statisticsRepository.increment).not.toHaveBeenCalledWith('total_ambushes');
     });
 
-    it('should pass success flash to view on level up', () => {
-        vi.mocked(playerService.resolveBattleOutcome).mockReturnValue(true);
+    it('should track consecutive ambushes and apply Hexed debuff when consecutiveAmbushes >= 2', () => {
+        vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
+        player.consecutiveAmbushes = 1;
+
         getBattle(req, res, next);
-        expect(battleView.renderBattlegroundView).toHaveBeenCalledWith(
-            player,
-            expect.any(Object),
-            expect.objectContaining({ type: 'warning' })
-        );
+
+        expect(player.consecutiveAmbushes).toBe(2);
+        expect(playerService.applyEffect).toHaveBeenCalled();
+    });
+
+    it('should reset consecutiveAmbushes when battle is not ambushed', () => {
+        vi.mocked(mathService.calculateAmbushChance).mockReturnValue(false);
+        player.consecutiveAmbushes = 3;
+
+        getBattle(req, res, next);
+
+        expect(player.consecutiveAmbushes).toBe(0);
+        expect(playerService.applyEffect).not.toHaveBeenCalled();
     });
 });

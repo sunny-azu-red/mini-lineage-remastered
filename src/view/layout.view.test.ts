@@ -145,4 +145,70 @@ describe('layout.view', () => {
             expect(lastCallArgs.lowHealthAlert).toContain('dangerously low');
         });
     });
+
+    describe('dynamic maxHealth with active effects', () => {
+        it('uses getPlayerStats to calculate dynamic maxHp in status panel', () => {
+            const renderMock = vi.mocked(baseView.render);
+            renderMock.mockClear();
+
+            const p = makePlayer({
+                raceId: 2, // Elf base maxHp 75
+                health: 175,
+                effects: [
+                    {
+                        id: 'konami_cheat',
+                        type: 'debuff',
+                        icon: '👾',
+                        label: "Cheater's Mark",
+                        modifiers: [{ type: 'maxHealth', value: 100 }]
+                    }
+                ]
+            });
+            renderPage('Title', p, 'Content');
+            // Check status render call
+            const statusCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].maxHp !== undefined) as any;
+            expect(statusCall).toBeDefined();
+            expect(statusCall[1].maxHp).toBe(175);
+            expect(statusCall[1].maxHpFormatted).toBe('175');
+            expect(statusCall[1].hpPercent).toBe(100);
+        });
+    });
+
+    describe('renderEffects and effectsHtml in layout', () => {
+        it('renders effectsHtml with badge classes in renderPage and renderSimplePage', () => {
+            const renderMock = vi.mocked(baseView.render);
+            renderMock.mockClear();
+
+            const p = makePlayer({
+                raceId: 0,
+                effects: [
+                    { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] },
+                    { id: 'buff_1', type: 'buff', icon: '🌭', label: 'Yummy', expiresAt: Date.now() + 25_000, modifiers: [] },
+                    { id: 'debuff_1', type: 'debuff', icon: '👾', label: "Cheater's Mark", modifiers: [] },
+                ]
+            });
+            renderPage('Title', p, 'Content');
+            const layoutCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].effectsHtml !== undefined) as any;
+            expect(layoutCall).toBeDefined();
+            expect(layoutCall[1].effectsHtml).toContain('effect-icon');
+            expect(layoutCall[1].effectsHtml).toContain('effect-aura');
+            expect(layoutCall[1].effectsHtml).toContain('effect-buff');
+            expect(layoutCall[1].effectsHtml).toContain('effect-debuff');
+            expect(layoutCall[1].effectsHtml).toContain('data-expires-at');
+            expect(layoutCall[1].effectsHtml).toContain('effect-timer');
+            expect(layoutCall[1].effectsHtml).toContain('>25<');
+            expect(layoutCall[1].effectsHtml).toContain('title="Yummy"');
+            expect(layoutCall[1].effectsHtml).toContain('data-effect-id="resting"');
+            expect(layoutCall[1].effectsHtml).toContain('⛺');
+            expect(layoutCall[1].effectsHtml).toContain('🌭');
+            expect(layoutCall[1].effectsHtml).toContain('👾');
+
+            // Also test renderSimplePage
+            renderMock.mockClear();
+            renderSimplePage('Simple Title', 'Content', null, p);
+            const simpleCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].effectsHtml !== undefined) as any;
+            expect(simpleCall).toBeDefined();
+            expect(simpleCall[1].effectsHtml).toContain('effect-aura');
+        });
+    });
 });

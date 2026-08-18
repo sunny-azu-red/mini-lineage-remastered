@@ -7,48 +7,118 @@
         console.log(`[SOCKET] Secure Pong received:`, data);
     });
 
-    // listen for server-pushed HP updates (regen ticks, future buff/debuff ticks)
+    // listen for server-pushed player updates (HP, maxHP, effects, stats)
     socket.on('player_update', (data) => {
         if (!data)
             return;
 
-        // update auras (buffs/debuffs) regardless of HP change
-        if (data.auras)
-            updateAuras(data.auras);
+        // update active effects (buffs/debuffs/auras) regardless of HP change
+        if (data.effects)
+            updateEffects(data.effects);
 
-        // update health bar, value counter, and related UI states (low health warnings)
+        // update health bar, value counter, and related UI states
         if (data.health != null)
             updateHealth(data.health, data.maxHealth);
+
+        // update dynamic stats on character page
+        if (data.stats)
+            updateStats(data.stats);
     });
 
     /**
-     * Efficiently updates the auras container by comparing incoming IDs
+     * Updates attack, defense, crit, regen, ambush dynamic stats on the character page.
+     */
+    function updateStats(stats) {
+        const attackEl = document.getElementById('char-stat-attack') || document.getElementById('char-attack');
+        if (attackEl)
+            attackEl.innerText = Number(stats.attack).toLocaleString();
+
+        const defenseEl = document.getElementById('char-stat-defense') || document.getElementById('char-defense');
+        if (defenseEl)
+            defenseEl.innerText = Number(stats.defense).toLocaleString();
+
+        const critEl = document.getElementById('char-stat-crit') || document.getElementById('char-crit');
+        if (critEl)
+            critEl.innerText = Number(stats.crit).toLocaleString();
+
+        const regenEl = document.getElementById('char-stat-regen') || document.getElementById('char-regen');
+        if (regenEl)
+            regenEl.innerText = Number(stats.regen).toLocaleString();
+
+        const ambushEl = document.getElementById('char-stat-ambush') || document.getElementById('char-ambush');
+        if (ambushEl)
+            ambushEl.innerText = Number(stats.ambush).toLocaleString();
+    }
+
+    /**
+     * Efficiently updates the active effects container by comparing incoming IDs
      * with the current ones, ensuring animations only play for new entries.
      */
-    function updateAuras(newAuras) {
-        const container = document.getElementById('auras');
+    function updateEffects(newEffects) {
+        const container = document.getElementById('effects');
         if (!container)
             return;
 
-        const currentAuraEls = Array.from(container.querySelectorAll('.header-stats-value'));
-        const currentKey = currentAuraEls.map(el => el.dataset.auraId + el.innerText).join(',');
-        const newKey = newAuras.map(a => a.id + a.icon).join(',');
+        const currentEffectEls = Array.from(container.querySelectorAll('.effect-icon'));
+        const currentKey = currentEffectEls.map(el => el.dataset.effectId + (el.dataset.expiresAt || '')).join(',');
+        const newKey = newEffects.map(e => e.id + (e.expiresAt || '')).join(',');
 
         // skip if nothing changed to avoid flickering or re-triggering animations
         if (currentKey === newKey)
             return;
 
+        const now = Date.now();
         // rebuild the container, but new elements get the fade-in class
         container.innerHTML = '';
-        newAuras.forEach(aura => {
+        newEffects.forEach(effect => {
             const span = document.createElement('span');
-            span.className = 'header-stats-value aura-fade-in';
-            span.dataset.auraId = aura.id;
-            span.title = aura.label;
-            span.innerText = aura.icon;
+            const typeClass = effect.type ? ` effect-${effect.type}` : '';
+            span.className = `effect-icon effect-fade-in${typeClass}`;
+            span.dataset.effectId = effect.id;
+            span.dataset.label = effect.label;
+            span.title = effect.label;
+
+            const emojiSpan = document.createElement('span');
+            emojiSpan.className = 'effect-emoji';
+            emojiSpan.innerText = effect.icon;
+            span.appendChild(emojiSpan);
+
+            if (effect.expiresAt) {
+                span.dataset.expiresAt = effect.expiresAt;
+                const remSec = Math.max(0, Math.ceil((effect.expiresAt - now) / 1000));
+                const timerSpan = document.createElement('span');
+                timerSpan.className = 'effect-timer';
+                timerSpan.innerText = `${remSec}`;
+                span.appendChild(timerSpan);
+            }
+
             container.appendChild(span);
         });
     }
+
+    // periodic 1-second interval to update corner timer badges live
+    setInterval(() => {
+        const timedEffects = document.querySelectorAll('#effects .effect-icon[data-expires-at]');
+        if (timedEffects.length === 0)
+            return;
+
+        const now = Date.now();
+        timedEffects.forEach(el => {
+            const expiresAt = Number(el.dataset.expiresAt);
+            if (expiresAt) {
+                const remMs = expiresAt - now;
+                if (remMs <= 0) {
+                    el.remove();
+                } else {
+                    const remSec = Math.ceil(remMs / 1000);
+                    const timerEl = el.querySelector('.effect-timer');
+                    if (timerEl) {
+                        timerEl.innerText = `${remSec}`;
+                    }
+                }
+            }
+        });
+    }, 1000);
 
     /**
      * Updates the health bar, value counter, and related UI states (low health warnings).
@@ -62,25 +132,21 @@
             ? (parseInt(hpEl.innerText.replace(/,/g, '')) || newHp)
             : (charHpEl ? (parseInt(charHpEl.innerText.replace(/,/g, '')) || newHp) : newHp);
 
-        // skip if the HP hasn't actually changed (e.g. initial sync matches server-rendered HTML)
-        if (newHp === prevHp)
-            return;
-
-        // animate the sidebar HP value counter
-        if (hpEl) {
+        // animate the sidebar HP value counter if changed
+        if (hpEl && newHp !== prevHp) {
             animateValue(hpEl, prevHp, newHp, 600);
             hpEl.dataset.val = newHp;
             hpEl.dataset.prev = prevHp;
         }
 
-        // animate the character page HP counter
-        if (charHpEl) {
+        // animate the character page HP counter if changed
+        if (charHpEl && newHp !== prevHp) {
             animateValue(charHpEl, prevHp, newHp, 600);
             charHpEl.dataset.val = newHp;
             charHpEl.dataset.prev = prevHp;
         }
 
-        // animate the HP bar width
+        // update max HP displays and HP bar width
         if (maxHp) {
             const hpBar = document.getElementById('hp-bar');
             if (hpBar) {
@@ -88,8 +154,16 @@
                 hpBar.style.width = pct + '%';
             }
 
+            const statusMaxHpEl = document.getElementById('status-max-hp');
+            if (statusMaxHpEl)
+                statusMaxHpEl.innerText = Number(maxHp).toLocaleString();
+
+            const charMaxHpEl = document.getElementById('char-max-hp');
+            if (charMaxHpEl)
+                charMaxHpEl.innerText = Number(maxHp).toLocaleString();
+
             // remove the danger class and low-HP warning if HP is no longer critically low
-            if (maxHp && !isLowHealth(newHp, maxHp)) {
+            if (!isLowHealth(newHp, maxHp)) {
                 const barRow = document.querySelector('.stat-row.bar.danger');
                 if (barRow)
                     barRow.classList.remove('danger');
@@ -111,4 +185,6 @@
             }
         }
     }
+
+    window.gameSocket = socket;
 })();

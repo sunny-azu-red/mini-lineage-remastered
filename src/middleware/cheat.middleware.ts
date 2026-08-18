@@ -6,10 +6,10 @@ export const cheatMiddleware = (req: Request, res: Response, next: NextFunction)
     const player = res.locals.player;
     const isHighscores = req.path.startsWith('/highscores');
 
-    // checking dead players — cowards cannot post to the highscores
+    // checking dead players — cowards and cheaters cannot post to the highscores
     if (player.dead) {
         const isSafePath = ['/death', '/restart'].includes(req.path);
-        const canSubmitLegacy = req.method === 'POST' && req.path === '/highscores' && !player.coward;
+        const canSubmitLegacy = req.method === 'POST' && req.path === '/highscores' && !player.coward && !player.cheated;
         if (!isSafePath && !canSubmitLegacy)
             return res.redirect('/death');
 

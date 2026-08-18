@@ -4,10 +4,10 @@
 
 <h2>Inventory & Stats</h2>
 <p>
-    You are wielding the <%= weaponEmoji %> <%= weaponName %> granting <span class="hp"><%= attackPower %> Physical Attack</span><% if (weaponCrit > 0) { %> and <span class="crit">+<%= weaponCrit %>% Critical Hit Chance</span><% } %>, and wearing the <%= armorEmoji %> <%= armorName %> providing <span class="muted"><%= defensePower %> Physical Defense</span><% if (armorRegen > 0) { %> and <span class="heal">+<%= armorRegen %> HP Regeneration</span><% } %>.
+    You are wielding the <%= weaponEmoji %> <%= weaponName %> granting <span class="hp"><span id="char-stat-attack"><%= attackPower %></span> Physical Attack</span><% if (weaponCrit > 0) { %> and <span class="crit">+<%= weaponCrit %>% Critical Hit Chance</span><% } %>, and wearing the <%= armorEmoji %> <%= armorName %> providing <span class="muted"><span id="char-stat-defense"><%= defensePower %></span> Physical Defense</span><% if (armorRegen > 0) { %> and <span class="heal">+<%= armorRegen %> HP Regeneration</span><% } %>.
 </p>
 <p>
-    Combined with your ancestry, you strike with a total of <span class="crit"><%= totalCrit %>% Critical Hit Chance</span> and mend wounds at <span class="heal">+<%= totalRegen %> HP Regeneration</span> per rest cycle, while navigating the roads with a <span class="muted"><%= ambushChance %>% Ambush Risk</span>.
+    Combined with your ancestry, you strike with a total of <span class="crit"><span id="char-stat-crit"><%= totalCrit %></span>% Critical Hit Chance</span> and mend wounds at <span class="heal">+<span id="char-stat-regen"><%= totalRegen %></span> HP Regeneration</span> per rest cycle, while navigating the roads with a <span class="muted"><span id="char-stat-ambush"><%= ambushChance %></span>% Ambush Risk</span>.
 </p>
 
 <h2>The Journey So Far</h2>
@@ -15,7 +15,7 @@
     Your journey across the realm has been defined by conflict and survival. You have fought through <span class="gold"><%= battlesGroup %></span>, slaying <span class="gold"><%= opponentRaceGroup %></span> and overcoming <span class="hp"><%= ambushesGroup %></span> along the road.
 </p>
 <p>
-    Experience wise, you are at <span class="gold">Level <%= level %></span> with a total of <span class="xp"><%= totalXpFormatted %> XP</span><% if (!isMaxLevel) { %>, requiring another <span class="xp"><%= xpNeededFormatted %> XP</span> to reach <span class="gold">Level <%= nextLevel %></span><% } else { %>, standing unchallenged at the zenith of martial prowess<% } %> and your vitality currently sustains you at <span class="hp"><span id="char-hp" class="animate-val" data-val="<%= hp %>" data-prev="<%= hp %>"><%= hpFormatted %></span> / <%= maxHpFormatted %> HP</span> while your purse holds <span class="gold">🪙 <%= adenaFormatted %> Adena</span> for the journey ahead.
+    Experience wise, you are at <span class="gold">Level <%= level %></span> with a total of <span class="xp"><%= totalXpFormatted %> XP</span><% if (!isMaxLevel) { %>, requiring another <span class="xp"><%= xpNeededFormatted %> XP</span> to reach <span class="gold">Level <%= nextLevel %></span><% } else { %>, standing unchallenged at the zenith of martial prowess<% } %> and your vitality currently sustains you at <span class="hp"><span id="char-hp" class="animate-val" data-val="<%= hp %>" data-prev="<%= hp %>"><%= hpFormatted %></span> / <span id="char-max-hp"><%= maxHpFormatted %></span> HP</span> while your purse holds <span class="gold">🪙 <%= adenaFormatted %> Adena</span> for the journey ahead.
 </p>
 
 <p class="last back">

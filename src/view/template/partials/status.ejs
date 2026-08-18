@@ -1,7 +1,6 @@
 <div class="panel status-panel">
     <div class="panel-header flex">
         <span class="header-name"><%= playerName %></span>
-        <div class="header-stats" id="auras"></div>
     </div>
     <div class="panel-body small">
         <div class="stat-row">
@@ -11,16 +10,16 @@
         <div class="stat-row bar <% if (isLowHealth) { %>danger<% } %>">
             <span class="stat-label">HP</span>
             <div class="bar-track" id="hp-track">
-                <div class="bar hp-bar" id="hp-bar" style="width: <%= prevHpPercent %>%" data-width="<%= hpPercent %>"></div>
+                <div class="bar hp-bar" id="hp-bar" <%- `style="width: ${prevHpPercent}%;"` %> data-width="<%= hpPercent %>"></div>
                 <span class="bar-text">
-                    <span class="animate-val" data-val="<%= hp %>" data-prev="<%= prevHp %>"><%= prevHpFormatted %></span>/<%= maxHpFormatted %>
+                    <span class="animate-val" data-val="<%= hp %>" data-prev="<%= prevHp %>"><%= prevHpFormatted %></span>/<span id="status-max-hp"><%= maxHpFormatted %></span>
                 </span>
             </div>
         </div>
         <div class="stat-row bar">
             <span class="stat-label">XP</span>
             <div class="bar-track">
-                <div class="bar xp-bar" id="xp-bar" style="width: <%= prevXpPercent %>%" data-width="<%= isMaxLevel ? 100 : xpPercent %>"></div>
+                <div class="bar xp-bar" id="xp-bar" <%- `style="width: ${prevXpPercent}%;"` %> data-width="<%= isMaxLevel ? 100 : xpPercent %>"></div>
                 <span class="bar-text">
                     <% if (isMaxLevel) { %>
                         <span class="animate-val" data-val="<%= totalXp %>" data-prev="<%= prevTotalXp %>"><%= prevTotalXpFormatted %></span>

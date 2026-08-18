@@ -36,6 +36,64 @@ export const RACES = [
 ] satisfies Race[];
 
 /**
+ * Effects Configuration
+ *
+ * All buffs, debuffs, town resting effects, and cheat parameters live here
+ * for easy balance tuning in one single place.
+ */
+export const EFFECTS_CONFIG = {
+    ambushDebuff: {
+        id: 'hexed',
+        type: 'debuff' as const,
+        icon: '👁️',
+        label: 'Hexed',
+        durationMs: 60_000,
+        modifiers: [
+            { type: 'ambushRisk' as const, value: 4 },
+            { type: 'crit' as const, value: -2 },
+        ],
+    },
+    konamiCheat: {
+        id: 'konami_cheat',
+        type: 'debuff' as const,
+        icon: '👾',
+        label: "Cheater's Mark",
+        modifiers: [
+            { type: 'xpMultiplier' as const, value: 6 },
+            { type: 'adenaMultiplier' as const, value: 6 },
+            { type: 'crit' as const, value: 15 },
+            { type: 'maxHealth' as const, value: 150 },
+        ],
+    },
+    foodBuffs: {
+        smokedSausage: {
+            id: 'satisfied',
+            type: 'buff' as const,
+            icon: '🥓',
+            label: 'Satisfied',
+            durationMs: 30_000,
+            modifiers: [{ type: 'maxHealth' as const, value: 10 }],
+        },
+        heartyMash: {
+            id: 'well_fed',
+            type: 'buff' as const,
+            icon: '🍖',
+            label: 'Well Fed',
+            durationMs: 60_000,
+            modifiers: [{ type: 'maxHealth' as const, value: 30 }],
+        },
+        roastedPheasant: {
+            id: 'gourmet_feast',
+            type: 'buff' as const,
+            icon: '👑',
+            label: 'Gourmet Feast',
+            durationMs: 90_000,
+            modifiers: [{ type: 'maxHealth' as const, value: 60 }],
+        },
+    },
+} as const;
+
+/**
  * Item Data Configurations
  *
  * Game combat math (HP lost, Enemies killed, XP and Adena gained) scales
@@ -48,26 +106,26 @@ export const ARMORS = [
     { id: 0, name: `Peasant's Tunic`, emoji: '🧥', stat: 2, cost: 0 }, // start item
     { id: 1, name: `Brigandine Leathers`, emoji: '🥋', stat: 10, cost: 500 },
     { id: 2, name: `Spirit of the Forest`, emoji: '🪵', stat: 22, cost: 8_000 },
-    { id: 3, name: `Knight's Plate`, emoji: '🛡️', stat: 41, cost: 30_000, regen: 1 },
-    { id: 4, name: `Royal Chainmail`, emoji: '⛓️', stat: 64, cost: 140_000, regen: 2 },
-    { id: 5, name: `Eternal Aegis`, emoji: '💎', stat: 88, cost: 400_000, regen: 3 },
+    { id: 3, name: `Knight's Plate`, emoji: '🛡️', stat: 41, cost: 30_000, modifiers: [{ type: 'regen', value: 1 }] },
+    { id: 4, name: `Royal Chainmail`, emoji: '⛓️', stat: 64, cost: 200_000, modifiers: [{ type: 'regen', value: 2 }] },
+    { id: 5, name: `Eternal Aegis`, emoji: '💎', stat: 88, cost: 650_000, modifiers: [{ type: 'regen', value: 3 }] },
 ] satisfies Item[];
 
 export const WEAPONS = [
     { id: 0, name: `Brawler's Fists`, emoji: '👊', stat: 7, cost: 0 }, // start item
     { id: 1, name: `Elven Needle`, emoji: '🗡️', stat: 16, cost: 300 },
     { id: 2, name: `Stormbringer`, emoji: '⚡', stat: 28, cost: 5_000 },
-    { id: 3, name: `Echos of Valhalla`, emoji: '⚔️', stat: 45, cost: 18_000, crit: 3 },
-    { id: 4, name: `Calamity Comet`, emoji: '☄️', stat: 62, cost: 160_000, crit: 7 },
-    { id: 5, name: `The Forgotten Blade`, emoji: '💀', stat: 90, cost: 600_000, crit: 15 },
+    { id: 3, name: `Echos of Valhalla`, emoji: '⚔️', stat: 45, cost: 18_000, modifiers: [{ type: 'crit', value: 3 }] },
+    { id: 4, name: `Calamity Comet`, emoji: '☄️', stat: 62, cost: 250_000, modifiers: [{ type: 'crit', value: 7 }] },
+    { id: 5, name: `The Forgotten Blade`, emoji: '💀', stat: 90, cost: 900_000, modifiers: [{ type: 'crit', value: 15 }] },
 ] satisfies Item[];
 
 export const FOODS = [
     { id: 0, name: 'Spiced Ale', emoji: '🍺', stat: 4, cost: 7 },
-    { id: 1, name: 'Forest Apple', emoji: '🍎', stat: 6, cost: 11 },
-    { id: 2, name: 'Smoked Sausage', emoji: '🌭', stat: 15, cost: 29 },
-    { id: 3, name: 'Hearty Mash', emoji: '🥔', stat: 25, cost: 57 },
-    { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 50, cost: 137 },
+    { id: 1, name: 'Forest Apple', emoji: '🍎', stat: 6, cost: 15 },
+    { id: 2, name: 'Smoked Sausage', emoji: '🌭', stat: 15, cost: 60, effect: EFFECTS_CONFIG.foodBuffs.smokedSausage as any },
+    { id: 3, name: 'Hearty Mash', emoji: '🥔', stat: 25, cost: 250, effect: EFFECTS_CONFIG.foodBuffs.heartyMash as any },
+    { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 50, cost: 1_200, effect: EFFECTS_CONFIG.foodBuffs.roastedPheasant as any },
 ] satisfies Item[];
 
 /**
@@ -94,13 +152,13 @@ export const BATTLE_CONFIG = {
 } as const;
 
 /**
- * Tick Configuration
+ * Regeneration & Zone Configuration
  *
- * Controls the server-side regen tick sent via WebSocket.
+ * Controls the server-side passive HP regeneration cadence sent via WebSocket.
  * combatZones are paths where regen does NOT occur.
- * restingZones are paths where regen IS applied.
+ * restingZones are paths where peaceful HP regen IS applied.
  */
-export const TICK_CONFIG = {
+export const REGEN_CONFIG = {
     intervalMs: 5_000,
     combatZones: ['/battle', '/suicide', '/death'],
     restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],

@@ -12,7 +12,15 @@ function runSimulation(raceId: number, weaponId: number, armorId: number, iterat
     // Let's just run it 2000 times and filter the results by results.isCritical
 
     for (let i = 0; i < iterations * 10; i++) {
-        const res = simulateBattle(raceId, weaponId, armorId);
+        const res = simulateBattle({
+            raceId,
+            weaponId,
+            armorId,
+            health: 100,
+            experience: 0,
+            adena: 0,
+            name: 'Hero'
+        } as any);
 
         if (res.isCritical) {
             critTotalAdena += res.adenaGained;

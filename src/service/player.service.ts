@@ -1,8 +1,8 @@
-import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult } from '@/interface';
-import { RACES, ARMORS, WEAPONS, FOODS } from '@/constant/game.constant';
+import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, Item, TickOptions } from '@/interface';
+import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
-import { randomElement } from '@/util/game.util';
+import { randomElement, getItemModifier } from '@/util/game.util';
 import { WELCOME_MESSAGES } from '@/constant/narratives.constant';
 import { statisticsRepository } from '@/repository/statistics.repository';
 
@@ -23,7 +23,9 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     player.armorId = 0;
     player.totalBattles = 0;
     player.totalAmbushes = 0;
+    player.consecutiveAmbushes = 0;
     player.totalEnemiesKilled = 0;
+    player.effects = [];
 
     void statisticsRepository.increment('total_players');
     void statisticsRepository.increment('total_adena', player.adena);
@@ -60,19 +62,140 @@ export function deductCost(player: PlayerState, cost: number): boolean {
     return true;
 }
 
+/**
+ * Gathers all active effects (state auras + active buffs/debuffs).
+ */
+export function getActiveEffects(player: PlayerState): ActiveEffect[] {
+    const now = Date.now();
+    const effects: ActiveEffect[] = [];
+
+    let hasResting = false;
+    let effectMaxHealthBonus = 0;
+    let effectRegenBonus = 0;
+
+    // Timed Buffs / Debuffs & Permanent Curses / State Auras
+    for (const effect of player.effects ?? []) {
+        if (effect.expiresAt === undefined || effect.expiresAt > now) {
+            effects.push(effect);
+            if (effect.id === 'resting') {
+                hasResting = true;
+            }
+            for (const mod of effect.modifiers) {
+                if (mod.type === 'maxHealth') {
+                    effectMaxHealthBonus += mod.value;
+                } else if (mod.type === 'regen') {
+                    effectRegenBonus += mod.value;
+                }
+            }
+        }
+    }
+
+    // Dynamic Regenerating aura when resting below effective max HP with > 0 total regen
+    if (hasResting) {
+        const race = RACES[player.raceId] ?? RACES[0];
+        const armor = ARMORS[player.armorId] ?? ARMORS[0];
+        const effectiveMaxHealth = Math.max(1, race.startHealth + effectMaxHealthBonus);
+        const totalRegen = Math.max(0, race.regen + (getItemModifier(armor, 'regen') ?? 0) + effectRegenBonus);
+
+        if (player.health < effectiveMaxHealth && totalRegen > 0) {
+            effects.push({
+                id: 'regenerating',
+                type: 'aura',
+                icon: '🌿',
+                label: 'Regenerating',
+                modifiers: [],
+            });
+        }
+    }
+
+    return effects;
+}
+
+/**
+ * Pure layered computation pipeline that calculates the player's effective stats.
+ */
+export function getPlayerStats(player: PlayerState): PlayerStats {
+    const race = RACES[player.raceId] ?? RACES[0];
+    const weapon = WEAPONS[player.weaponId] ?? WEAPONS[0];
+    const armor = ARMORS[player.armorId] ?? ARMORS[0];
+    const activeEffects = getActiveEffects(player);
+
+    // Tier 1: Base Ancestry
+    const stats: PlayerStats = {
+        attack: 0,
+        defense: 0,
+        crit: race.crit,
+        maxHealth: race.startHealth,
+        regen: race.regen,
+        ambushRisk: race.ambushChance,
+        xpMultiplier: 1.0,
+        adenaMultiplier: 1.0,
+    };
+
+    // Tier 2: Equipment Base Stats
+    stats.attack += weapon.stat;
+    stats.defense += armor.stat;
+
+    // Tier 3: Modifiers (Equipment & Active Effects combined)
+    const modifiers = [
+        ...(weapon.modifiers ?? []),
+        ...(armor.modifiers ?? []),
+        ...activeEffects.flatMap(e => e.modifiers),
+    ];
+
+    for (const mod of modifiers) {
+        if (mod.type === 'xpMultiplier' || mod.type === 'adenaMultiplier') {
+            stats[mod.type] *= mod.value;
+        } else {
+            stats[mod.type] += mod.value;
+        }
+    }
+
+    // Tier 4: Sanitization & Range Bounds
+    stats.attack = Math.max(0, stats.attack);
+    stats.defense = Math.max(0, stats.defense);
+    stats.crit = Math.max(0, Math.min(100, stats.crit));
+    stats.regen = Math.max(0, stats.regen);
+    stats.maxHealth = Math.max(1, stats.maxHealth);
+    stats.ambushRisk = Math.max(0, Math.min(100, stats.ambushRisk));
+    stats.xpMultiplier = Math.max(0, stats.xpMultiplier);
+    stats.adenaMultiplier = Math.max(0, stats.adenaMultiplier);
+
+    return stats;
+}
+
+/**
+ * Applies a buff, debuff, or permanent effect to the player.
+ */
+export function applyEffect(
+    player: PlayerState,
+    effect: Omit<ActiveEffect, 'expiresAt'> & { durationMs?: number }
+): void {
+    const now = Date.now();
+    const existing = (player.effects ?? []).filter(e => e.id !== effect.id && (e.expiresAt === undefined || e.expiresAt > now));
+    
+    const newEffect: ActiveEffect = {
+        id: effect.id,
+        type: effect.type,
+        icon: effect.icon,
+        label: effect.label,
+        modifiers: effect.modifiers,
+        expiresAt: effect.durationMs ? now + effect.durationMs : undefined,
+    };
+
+    existing.push(newEffect);
+    player.effects = existing;
+}
+
 export function restoreHealth(player: PlayerState, amount: number): number {
-    const maxHp = RACES[player.raceId].startHealth;
+    const stats = getPlayerStats(player);
     const oldHealth = player.health;
-    player.health = Math.min(maxHp, player.health + amount);
+    player.health = Math.min(stats.maxHealth, player.health + amount);
     return player.health - oldHealth;
 }
 
 export function resolveBattleOutcome(player: PlayerState, result: BattleResult): boolean {
     let { hpLost, xpGained, adenaGained, enemiesKilled, damageBlocked, isCritical } = result;
-
-    // hpLost = 0; // DEBUG: never die
-    // xpGained = xpGained * 250; // DEBUG: level up faster
-    // adenaGained = adenaGained * 500; // DEBUG: get adena faster
 
     player.health -= hpLost;
     if (player.health <= 0) {
@@ -98,7 +221,8 @@ export function resolveBattleOutcome(player: PlayerState, result: BattleResult):
     void statisticsRepository.increment('total_damage_blocked', damageBlocked);
 
     if (isLevelUp(oldXp, player.experience)) {
-        const hpHealed = restoreHealth(player, RACES[player.raceId].startHealth);
+        const stats = getPlayerStats(player);
+        const hpHealed = restoreHealth(player, stats.maxHealth);
         void statisticsRepository.increment('total_levels_gained');
         void statisticsRepository.increment('total_hp_healed', hpHealed);
         return true;
@@ -108,7 +232,7 @@ export function resolveBattleOutcome(player: PlayerState, result: BattleResult):
 }
 
 export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: number): PurchaseResult | null {
-    const item = itemType === ItemType.Weapon ? WEAPONS[itemId] : (itemType === ItemType.Armor ? ARMORS[itemId] : FOODS[itemId]);
+    const item: Item | undefined = itemType === ItemType.Weapon ? WEAPONS[itemId] : (itemType === ItemType.Armor ? ARMORS[itemId] : FOODS[itemId]);
     if (!item)
         return null;
 
@@ -131,89 +255,132 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
         void statisticsRepository.increment('total_adena_spent', item.cost);
         return { success: true, text: `You have bought an Armor.\nYou are now wearing the mighty ${item.emoji} ${item.name}!`, item };
     } else {
+        if (item.effect) {
+            applyEffect(player, item.effect);
+        }
         const hpHealed = restoreHealth(player, item.stat);
         void statisticsRepository.increment('total_food_bought');
         void statisticsRepository.increment('total_adena_spent', item.cost);
         void statisticsRepository.increment('total_hp_healed', hpHealed);
-        return { success: true, text: `You have bought ${item.emoji} ${item.name}.\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`, item };
+
+        const effectDesc = item.effect ? `\nYou feel invigorated by the ${item.effect.icon} ${item.effect.label} buff!` : '';
+        return {
+            success: true,
+            text: `You have bought ${item.emoji} ${item.name}.${effectDesc}\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`,
+            item
+        };
     }
 }
 
 /**
- * Returns the player's total attack power (currently just the weapon stat).
+ * Returns the player's total attack power.
  */
 export function getTotalAttack(player: PlayerState): number {
-    const weapon = WEAPONS[player.weaponId] || WEAPONS[0];
-    return weapon.stat;
+    return getPlayerStats(player).attack;
 }
 
 /**
- * Returns the player's total defense value (currently just the armor stat).
+ * Returns the player's total defense value.
  */
 export function getTotalDefense(player: PlayerState): number {
-    const armor = ARMORS[player.armorId] || ARMORS[0];
-    return armor.stat;
+    return getPlayerStats(player).defense;
 }
 
 /**
- * Returns the player's total HP regeneration per tick (race base + armor bonus).
+ * Returns the player's total HP regeneration per tick.
  */
 export function getTotalRegen(player: PlayerState): number {
-    const race = RACES[player.raceId];
-    const armor = ARMORS[player.armorId];
-    return (race?.regen ?? 0) + (armor?.regen ?? 0);
+    return getPlayerStats(player).regen;
 }
 
 /**
- * Returns the player's total critical hit chance (race base + weapon bonus).
+ * Returns the player's total critical hit chance.
  */
 export function getTotalCrit(player: PlayerState): number {
-    const race = RACES[player.raceId];
-    const weapon = WEAPONS[player.weaponId];
-    return (race?.crit ?? 0) + (weapon?.crit ?? 0);
+    return getPlayerStats(player).crit;
 }
 
 /**
- * Gathers active status effects (auras) for a player based on their current state.
- * This can be easily extended with more complex logic (e.g., duration-based buffs).
+ * Gathers active status effects for a player based on their current state.
  */
-export function getPlayerAuras(player: PlayerState) {
-    const auras = [];
-
-    if (player.isResting) {
-        auras.push({ id: 'resting', icon: '⛺', label: 'Resting' });
-
-        const maxHp = RACES[player.raceId]?.startHealth ?? 0;
-        if (player.health < maxHp && getTotalRegen(player) > 0)
-            auras.push({ id: 'regenerating', icon: '🌿', label: 'Regenerating' });
-    }
-
-    if (player.inCombat && !player.dead)
-        auras.push({ id: 'combat', icon: '⚔️', label: 'In Combat' });
-
-    return auras;
+export function getPlayerEffects(player: PlayerState): ActiveEffect[] {
+    return getActiveEffects(player);
 }
 
 /**
- * processTick — entry point for all time-based passive effects (regen, future buffs/debuffs).
- * Called by SocketService on every TICK_CONFIG.intervalMs tick.
+ * Processes effect expiration and clamps current health to max health if a maxHealth buff expired.
+ * Runs on exact expiration timeouts as well as routine periodic ticks.
+ * Does NOT perform HP regeneration.
  *
- * Returns true if the player state was modified (so the socket knows to emit).
+ * Returns true if effects expired or current health was clamped.
  */
-export function processTick(player: PlayerState): boolean {
+export function processEffectExpiry(player: PlayerState): boolean {
     if (player.dead)
         return false;
 
-    const totalRegen = getTotalRegen(player);
-    if (totalRegen <= 0)
+    let stateChanged = false;
+    const now = Date.now();
+
+    // 1. Clean up expired effects
+    if (player.effects && player.effects.length > 0) {
+        const remaining = player.effects.filter(e => e.expiresAt === undefined || e.expiresAt > now);
+        if (remaining.length !== player.effects.length) {
+            player.effects = remaining;
+            stateChanged = true;
+        }
+    }
+
+    const stats = getPlayerStats(player);
+
+    // 2. Clamp current health if a maxHealth buff expired
+    if (player.health > stats.maxHealth) {
+        player.health = stats.maxHealth;
+        stateChanged = true;
+    }
+
+    return stateChanged;
+}
+
+/**
+ * Applies natural HP regeneration for players outside combat.
+ * Runs strictly on the periodic cadence (REGEN_CONFIG.intervalMs = 5000ms).
+ *
+ * Returns true if health was restored.
+ */
+export function processRegenTick(player: PlayerState): boolean {
+    if (player.dead)
         return false;
 
-    const healed = restoreHealth(player, totalRegen);
-    if (healed <= 0)
+    const inCombat = player.effects?.some(e => e.id === 'combat');
+    if (inCombat)
         return false;
 
-    player.prevHealth = player.health;
+    const stats = getPlayerStats(player);
+    if (stats.regen > 0 && player.health < stats.maxHealth) {
+        const healed = restoreHealth(player, stats.regen);
+        if (healed > 0) {
+            player.prevHealth = player.health;
+            void statisticsRepository.increment('total_hp_regen', healed);
+            return true;
+        }
+    }
 
-    void statisticsRepository.increment('total_hp_regen', healed);
-    return true;
+    return false;
+}
+
+/**
+ * processTick — entry point for passive state processing.
+ *
+ * @param player The player state to process
+ * @param options.applyRegen Whether to apply natural HP regeneration (default: true for periodic ticks, false for discrete expiry events)
+ */
+export function processTick(player: PlayerState, options: TickOptions = {}): boolean {
+    if (player.dead)
+        return false;
+
+    const applyRegen = options.applyRegen ?? true;
+    const expiryChanged = processEffectExpiry(player);
+    const regenChanged = applyRegen ? processRegenTick(player) : false;
+
+    return expiryChanged || regenChanged;
 }

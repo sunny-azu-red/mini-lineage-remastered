@@ -15,9 +15,10 @@
         </thead>
         <tbody>
             <% items.forEach(function(weapon) { %>
+                <% const critMod = weapon.modifiers ? weapon.modifiers.find(function(m) { return m.type === 'crit'; }) : null; %>
                 <tr>
                     <td><%= weapon.emoji %> <%= weapon.name %></td>
-                    <td><% if (weapon.crit > 0) { %><span class="crit"><%= weapon.crit %>%</span><% } else { %><span class="muted">-</span><% } %></td>
+                    <td><% if (critMod && critMod.value > 0) { %><span class="crit"><%= critMod.value %>%</span><% } else { %><span class="muted">-</span><% } %></td>
                     <td><%= weapon.statFormatted %></td>
                     <td class="gold">🪙 <%= weapon.costFormatted %></td>
                 </tr>

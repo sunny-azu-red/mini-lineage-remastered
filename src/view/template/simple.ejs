@@ -9,7 +9,7 @@
         <link rel="icon" href="/favicon.ico" type="image/x-icon">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
         <% if (isRelease) { %>
             <link href="/style.css" rel="stylesheet" type="text/css">
         <% } else { %>
@@ -38,7 +38,9 @@
                     <div class="panel">
                         <div class="panel-header flex">
                             <span class="header-name"><%= title %></span>
-                            <div class="header-stats" id="auras"></div>
+                            <div class="header-effects" id="effects">
+                                <%- effectsHtml %>
+                            </div>
                         </div>
 
                         <div class="panel-body">
@@ -47,9 +49,9 @@
                             <%- mainContent %>
                         </div>
                     </div>
-                </div>
 
-                <div id="copyright"><%- version %> &copy; 2005 &ndash; <%= year %></div>
+                    <div id="copyright"><%- version %> &copy; 2005 &ndash; <%= year %></div>
+                </div>
             </div>
         </div>
         <script src="/js/config.js"></script>

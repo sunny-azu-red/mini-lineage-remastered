@@ -57,6 +57,12 @@ describe('layout.view', () => {
 
 describe('player.view', () => {
     describe('renderDeathView', () => {
+        it('assigns heresy message for cheated players', () => {
+            const p = makePlayer({ cheated: true });
+            renderDeathView(p);
+            expect(p.deathReason).toContain('heresy');
+        });
+
         it('assigns specific message for trapped ambushed players', () => {
             const p = makePlayer({ ambushed: true, coward: true });
             renderDeathView(p);

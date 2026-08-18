@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { zoneMiddleware, isPathInZones } from './zone.middleware';
-import { TICK_CONFIG } from '@/constant/game.constant';
+import { REGEN_CONFIG } from '@/constant/game.constant';
 import * as playerService from '@/service/player.service';
 
 vi.mock('@/service/player.service', () => ({
@@ -36,8 +36,8 @@ describe('isPathInZones', () => {
 });
 
 describe('zoneMiddleware', () => {
-    it('should set isResting to true if path is in restingZones', () => {
-        const player = { isResting: false, inCombat: false };
+    it('should add resting aura to effects if path is in restingZones', () => {
+        const player: any = { effects: [] };
         const req = { method: 'GET', path: '/', headers: { accept: 'text/html' } };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -46,13 +46,13 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        expect(player.isResting).toBe(true);
-        expect(player.inCombat).toBe(false);
+        expect(player.effects.some((e: any) => e.id === 'resting')).toBe(true);
+        expect(player.effects.some((e: any) => e.id === 'combat')).toBe(false);
         expect(next).toHaveBeenCalled();
     });
 
-    it('should set isResting to true for wildcard paths like /shop/weapons and /highscores/human', () => {
-        const player = { isResting: false, inCombat: false };
+    it('should add resting aura to effects for wildcard paths like /shop/weapons and /highscores/human', () => {
+        const player: any = { effects: [] };
         const req = { method: 'GET', path: '/shop/weapons', headers: { accept: 'text/html' } };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -61,16 +61,16 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        expect(player.isResting).toBe(true);
-        expect(player.inCombat).toBe(false);
+        expect(player.effects.some((e: any) => e.id === 'resting')).toBe(true);
+        expect(player.effects.some((e: any) => e.id === 'combat')).toBe(false);
 
         const req2 = { method: 'GET', path: '/highscores/human', headers: { accept: 'text/html' } };
         zoneMiddleware(req2 as any, res as any, next);
-        expect(player.isResting).toBe(true);
+        expect(player.effects.some((e: any) => e.id === 'resting')).toBe(true);
     });
 
-    it('should not set isResting to true for invalid subpaths of exact zones', () => {
-        const player = { isResting: false, inCombat: false };
+    it('should not add resting aura for invalid subpaths of exact zones', () => {
+        const player: any = { effects: [] };
         const req = { method: 'GET', path: '/inn/invalid-subpath', headers: { accept: 'text/html' } };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -79,13 +79,13 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        expect(player.isResting).toBe(false);
-        expect(player.inCombat).toBe(false);
+        expect(player.effects.some((e: any) => e.id === 'resting')).toBe(false);
+        expect(player.effects.some((e: any) => e.id === 'combat')).toBe(false);
         expect(next).toHaveBeenCalled();
     });
 
-    it('should set inCombat to true if path is in combatZones', () => {
-        const player = { isResting: false, inCombat: false };
+    it('should add combat aura to effects if path is in combatZones', () => {
+        const player: any = { effects: [] };
         const req = { method: 'GET', path: '/battle', headers: { accept: 'text/html' } };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -94,13 +94,13 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        expect(player.isResting).toBe(false);
-        expect(player.inCombat).toBe(true);
+        expect(player.effects.some((e: any) => e.id === 'resting')).toBe(false);
+        expect(player.effects.some((e: any) => e.id === 'combat')).toBe(true);
         expect(next).toHaveBeenCalled();
     });
 
     it('should do nothing if method is not GET', () => {
-        const player = { isResting: false, inCombat: false };
+        const player: any = { effects: [] };
         const req = { method: 'POST', path: '/' };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -109,13 +109,12 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        expect(player.isResting).toBe(false);
-        expect(player.inCombat).toBe(false);
+        expect(player.effects.length).toBe(0);
         expect(next).toHaveBeenCalled();
     });
 
     it('should do nothing if game is not started', () => {
-        const player = { isResting: false, inCombat: false };
+        const player: any = { effects: [] };
         const req = { method: 'GET', path: '/' };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -124,8 +123,7 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        expect(player.isResting).toBe(false);
-        expect(player.inCombat).toBe(false);
+        expect(player.effects.length).toBe(0);
         expect(next).toHaveBeenCalled();
     });
 
@@ -138,8 +136,11 @@ describe('zoneMiddleware', () => {
 
         expect(next).toHaveBeenCalled();
     });
+
     it('should do nothing if Accept header does not include text/html', () => {
-        const player = { isResting: true, inCombat: false };
+        const player: any = {
+            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+        };
         const req = { method: 'GET', path: '/battle', headers: { accept: 'application/json' } };
         const res = { locals: { player } };
         const next = vi.fn();
@@ -148,8 +149,8 @@ describe('zoneMiddleware', () => {
 
         zoneMiddleware(req as any, res as any, next);
 
-        // Should NOT change from true to false because it's not an HTML request
-        expect(player.isResting).toBe(true);
+        // Should NOT change because it's not an HTML request
+        expect(player.effects.some((e: any) => e.id === 'resting')).toBe(true);
         expect(next).toHaveBeenCalled();
     });
 });

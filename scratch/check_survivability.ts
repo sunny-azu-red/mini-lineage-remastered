@@ -8,7 +8,15 @@ function checkSurvivability(raceId: number, weaponId: number, armorId: number, i
     let totalHpLost = 0;
 
     for (let i = 0; i < iterations; i++) {
-        const res = simulateBattle(raceId, weaponId, armorId);
+        const res = simulateBattle({
+            raceId,
+            weaponId,
+            armorId,
+            health: race.startHealth,
+            experience: 0,
+            adena: 0,
+            name: 'Hero'
+        } as any);
         totalHpLost += res.hpLost;
         
         // If a single battle takes more HP than the race's starting HP, we count it as a "Lethal Risk"

@@ -1,3 +1,5 @@
+import { ActiveEffect, StatModifier } from './player.interface';
+
 export enum RaceType {
     Human = 0,
     Orc = 1,
@@ -31,8 +33,8 @@ export interface Item {
     emoji: string;
     stat: number;
     cost: number;
-    regen?: number;
-    crit?: number;
+    modifiers?: readonly StatModifier[] | StatModifier[];
+    effect?: ActiveEffect;
 }
 
 export interface PurchaseResult {
