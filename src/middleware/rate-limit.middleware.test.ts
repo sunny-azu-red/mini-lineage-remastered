@@ -4,9 +4,13 @@ import * as version from '@/util/version.util';
 import * as rateLimitView from '@/view/rate-limit.view';
 
 // mock the constant as it might be 'development' or a real SHA
-vi.mock('@/constant/game.constant', () => ({
-    GAME_VERSION: 'development'
-}));
+vi.mock('@/constant/game.constant', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/constant/game.constant')>();
+    return {
+        ...actual,
+        GAME_VERSION: 'development',
+    };
+});
 
 vi.mock('@/view/rate-limit.view', () => ({
     renderRateLimitView: vi.fn().mockReturnValue('<html>Rate Limit</html>')

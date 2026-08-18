@@ -68,7 +68,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 import { initSocketService } from './socket.service';
 import { sessionStore } from '@/config/database.config';
 import * as playerService from '@/service/player.service';
-import { TICK_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { TICK_CONFIG, EFFECTS_CONFIG, SESSION_CONFIG, CHEAT_CONFIG } from '@/constant/game.constant';
 
 describe('socketService', () => {
     const mockServer = {} as any;
@@ -146,8 +146,8 @@ describe('socketService', () => {
         const disconnectHandler = (mockSocket.on as any).mock.calls.find((c: any) => c[0] === 'disconnect')[1];
         disconnectHandler();
 
-        // Advance beyond grace period (10s)
-        vi.advanceTimersByTime(11_000);
+        // Advance beyond grace period
+        vi.advanceTimersByTime(SESSION_CONFIG.gracePeriodMs + 1_000);
 
         // Trigger the tick check
         vi.advanceTimersByTime(TICK_CONFIG.intervalMs);
@@ -333,8 +333,7 @@ describe('socketService', () => {
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, player));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
 
-        const sequence = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
-        for (const key of sequence) {
+        for (const key of CHEAT_CONFIG.konamiSequence) {
             inputHandler({ key });
         }
         await vi.runAllTicks();
@@ -374,8 +373,7 @@ describe('socketService', () => {
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, deadPlayer));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
 
-        const sequence = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
-        for (const key of sequence) {
+        for (const key of CHEAT_CONFIG.konamiSequence) {
             inputHandler({ key });
         }
         await vi.runAllTicks();

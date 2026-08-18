@@ -201,3 +201,54 @@ export const TICK_CONFIG = {
     combatZones: ['/battle', '/suicide', '/death'],
     restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],
 } as const;
+
+/**
+ * Session Configuration
+ */
+export const SESSION_CONFIG = {
+    shortIdLength: 7,
+    gracePeriodMs: 10_000,
+} as const;
+
+/**
+ * Cheat / Secret Sequence Configuration
+ */
+export const CHEAT_CONFIG = {
+    konamiSequence: ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'],
+} as const;
+
+/**
+ * Character Generation & Validation Configuration
+ */
+export const CHARACTER_CONFIG = {
+    minAge: 9,
+    maxAge: 69,
+    ageThresholds: {
+        youth: 23,
+        adult: 54,
+    },
+    nameMinLength: 1,
+    nameMaxLength: 20,
+    builds: ['a hardy', 'a wiry', 'a sturdy', 'a fit', 'a rugged', 'a robust', 'a solid'],
+} as const;
+
+/**
+ * Highscores Configuration
+ */
+export const HIGHSCORES_CONFIG = {
+    limit: 25,
+} as const;
+
+/**
+ * Rate Limiting Configuration
+ */
+export const RATE_LIMIT_CONFIG = {
+    battle: {
+        windowMs: 60 * 1000, // 1 minute
+        limit: 60, // 60 battles per minute
+    },
+    shop: {
+        windowMs: 60 * 1000, // 1 minute
+        limit: 30, // 30 shop actions per minute
+    },
+} as const;

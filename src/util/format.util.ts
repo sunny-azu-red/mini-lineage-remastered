@@ -1,4 +1,4 @@
-import { LOCALE, STAT_MODIFIER_CONFIG } from '@/constant/game.constant';
+import { LOCALE, STAT_MODIFIER_CONFIG, SESSION_CONFIG } from '@/constant/game.constant';
 import { Item, StatModifier, StatModifierConfig } from '@/interface';
 
 export function formatAdena(adena: number): string {
@@ -89,7 +89,7 @@ export function formatEffectTooltip(effect: { label: string; modifiers?: readonl
     return `${effect.label} (${formattedMods})`;
 }
 
-export function formatSessionId(sessionId?: string, length: number = 7): string {
+export function formatSessionId(sessionId?: string, length: number = SESSION_CONFIG.shortIdLength): string {
     if (!sessionId)
         return '-'.repeat(length);
 

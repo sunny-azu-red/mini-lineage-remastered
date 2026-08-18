@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import { renderRateLimitView } from '@/view/rate-limit.view';
 import { isRelease } from '@/util/version.util';
-import { GAME_VERSION } from '@/constant/game.constant';
+import { GAME_VERSION, RATE_LIMIT_CONFIG } from '@/constant/game.constant';
 
 export const skipIfDev = () => !isRelease(GAME_VERSION);
 
@@ -24,8 +24,8 @@ export const shopRateLimitHandler = (req: any, res: any) => {
 };
 
 export const battleRateLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    limit: 60, // 60 battles per minute
+    windowMs: RATE_LIMIT_CONFIG.battle.windowMs,
+    limit: RATE_LIMIT_CONFIG.battle.limit,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     skip: skipIfDev,
@@ -33,8 +33,8 @@ export const battleRateLimiter = rateLimit({
 });
 
 export const shopRateLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    limit: 30, // 30 shop actions per minute
+    windowMs: RATE_LIMIT_CONFIG.shop.windowMs,
+    limit: RATE_LIMIT_CONFIG.shop.limit,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     skip: skipIfDev,

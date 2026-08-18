@@ -3,7 +3,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { RequestHandler } from 'express';
 import { sessionStore } from '@/config/database.config';
 import { acquireSessionLock } from '@/util/lock.util';
-import { TICK_CONFIG, RACES, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { TICK_CONFIG, RACES, EFFECTS_CONFIG, SESSION_CONFIG, CHEAT_CONFIG } from '@/constant/game.constant';
 import { processTick, isGameStarted, getPlayerEffects, getPlayerStats, applyEffect } from '@/service/player.service';
 import { PlayerState, TickOptions, SessionTrackerEntry } from '@/interface';
 import { logger } from '@/config/logger.config';
@@ -11,9 +11,6 @@ import { z } from 'zod';
 import { SocketInputEventSchema } from '@/schema/socket.schema';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { formatEffectTooltip, formatSessionId, capitalize } from '@/util/format.util';
-
-const GRACE_PERIOD_MS = 10_000;
-const SECRET_SEQUENCE = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
 
 const sessionTracker = new Map<string, SessionTrackerEntry>();
 
@@ -252,12 +249,12 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
             if (!tracker.inputBuffer) tracker.inputBuffer = [];
             tracker.inputBuffer.push(data.key.toLowerCase());
-            if (tracker.inputBuffer.length > SECRET_SEQUENCE.length) {
+            if (tracker.inputBuffer.length > CHEAT_CONFIG.konamiSequence.length) {
                 tracker.inputBuffer.shift();
             }
 
-            if (tracker.inputBuffer.length === SECRET_SEQUENCE.length &&
-                tracker.inputBuffer.every((k, idx) => k === SECRET_SEQUENCE[idx])) {
+            if (tracker.inputBuffer.length === CHEAT_CONFIG.konamiSequence.length &&
+                tracker.inputBuffer.every((k, idx) => k === CHEAT_CONFIG.konamiSequence[idx])) {
                 tracker.inputBuffer = [];
 
                 acquireSessionLock(sid).then((release) => {
@@ -299,7 +296,7 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
         sessionTracker.forEach((tracker, sessionId) => {
             // clean up stale sessions (no sockets and beyond grace period)
-            if (tracker.socketIds.size === 0 && now - tracker.lastSeen > GRACE_PERIOD_MS) {
+            if (tracker.socketIds.size === 0 && now - tracker.lastSeen > SESSION_CONFIG.gracePeriodMs) {
                 const sid = formatSessionId(sessionId);
                 logger.debug(`[SOCKET:${sid}] \x1b[34mCleaning up stale session\x1b[0m`);
                 if (tracker.expiryTimers) {
