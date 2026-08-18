@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { REGEN_CONFIG } from '@/constant/game.constant';
+import { REGEN_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
 import { isGameStarted } from '@/service/player.service';
 import { ActiveEffect } from '@/interface';
 
@@ -30,21 +30,9 @@ export const zoneMiddleware = (req: Request, res: Response, next: NextFunction) 
         player.effects = (player.effects ?? []).filter((e: ActiveEffect) => e.id !== 'resting' && e.id !== 'combat');
 
         if (isResting) {
-            player.effects.push({
-                id: 'resting',
-                type: 'aura',
-                icon: '⛺',
-                label: 'Resting',
-                modifiers: [],
-            });
+            player.effects.push({ ...EFFECTS_CONFIG.restingAura });
         } else if (inCombat && !player.dead) {
-            player.effects.push({
-                id: 'combat',
-                type: 'aura',
-                icon: '⚔️',
-                label: 'In Combat',
-                modifiers: [],
-            });
+            player.effects.push({ ...EFFECTS_CONFIG.combatAura });
         }
     }
 

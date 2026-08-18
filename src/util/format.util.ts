@@ -1,5 +1,5 @@
-import { LOCALE } from '@/constant/game.constant';
-import { Item } from '@/interface';
+import { LOCALE, STAT_MODIFIER_CONFIG } from '@/constant/game.constant';
+import { Item, StatModifier, StatModifierConfig } from '@/interface';
 
 export function formatAdena(adena: number): string {
     const abs = Math.abs(adena);
@@ -68,4 +68,23 @@ export function slugify(text: string): string {
 export function truncate(text: string, length: number): string {
     if (text.length <= length) return text;
     return text.substring(0, length) + '...';
+}
+
+export function formatEffectModifier(mod: StatModifier | { type: string; value: number }): string {
+    const config = (STAT_MODIFIER_CONFIG as Record<string, StatModifierConfig>)[mod.type];
+    if (config?.isMultiplier) {
+        return `${mod.value}x ${config.label}`;
+    }
+    const sign = mod.value > 0 ? '+' : '';
+    const unit = config?.isPercentage ? '%' : '';
+    const label = config ? ` ${config.label}` : ` ${mod.type}`;
+    return `${sign}${mod.value}${unit}${label}`;
+}
+
+export function formatEffectTooltip(effect: { label: string; modifiers?: readonly StatModifier[] | StatModifier[] | readonly { type: string; value: number }[] }): string {
+    if (!effect.modifiers || effect.modifiers.length === 0) {
+        return effect.label;
+    }
+    const formattedMods = effect.modifiers.map(formatEffectModifier).join(', ');
+    return `${effect.label} (${formattedMods})`;
 }

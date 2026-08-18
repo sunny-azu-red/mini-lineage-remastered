@@ -51,12 +51,12 @@ describe('getItemModifier', () => {
             stat: 15,
             cost: 29,
             effect: {
-                id: 'satisfied',
+                id: 'custom_buff',
                 type: 'buff',
-                icon: '🥓',
-                label: 'Satisfied',
+                emoji: '🍖',
+                label: 'Tasty',
                 modifiers: [{ type: 'maxHealth', value: 10 }]
-            }
+            },
         };
         expect(getItemModifier(food, 'maxHealth')).toBe(10);
         expect(getItemModifier(food, 'regen')).toBeUndefined();

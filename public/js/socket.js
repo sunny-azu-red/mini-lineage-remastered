@@ -76,11 +76,11 @@
             span.className = `effect-icon effect-fade-in${typeClass}`;
             span.dataset.effectId = effect.id;
             span.dataset.label = effect.label;
-            span.title = effect.label;
+            span.title = effect.tooltip || effect.label;
 
             const emojiSpan = document.createElement('span');
             emojiSpan.className = 'effect-emoji';
-            emojiSpan.innerText = effect.icon;
+            emojiSpan.innerText = effect.emoji;
             span.appendChild(emojiSpan);
 
             if (effect.expiresAt) {

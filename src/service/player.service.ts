@@ -1,4 +1,4 @@
-import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, Item, TickOptions } from '@/interface';
+import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, TickOptions } from '@/interface';
 import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
@@ -45,6 +45,7 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
 export function killPlayer(player: PlayerState): void {
     player.health = 0;
     player.dead = true;
+    player.effects = [];
 
     void statisticsRepository.increment('total_deaths');
 }
@@ -66,6 +67,9 @@ export function deductCost(player: PlayerState, cost: number): boolean {
  * Gathers all active effects (state auras + active buffs/debuffs).
  */
 export function getActiveEffects(player: PlayerState): ActiveEffect[] {
+    if (player.dead)
+        return [];
+
     const now = Date.now();
     const effects: ActiveEffect[] = [];
 
@@ -99,11 +103,8 @@ export function getActiveEffects(player: PlayerState): ActiveEffect[] {
 
         if (player.health < effectiveMaxHealth && totalRegen > 0) {
             effects.push({
-                id: 'regenerating',
-                type: 'aura',
-                icon: '🌿',
-                label: 'Regenerating',
-                modifiers: [],
+                ...EFFECTS_CONFIG.regenAura,
+                modifiers: [{ type: 'regen', value: totalRegen }],
             });
         }
     }
@@ -140,7 +141,7 @@ export function getPlayerStats(player: PlayerState): PlayerStats {
     const modifiers = [
         ...(weapon.modifiers ?? []),
         ...(armor.modifiers ?? []),
-        ...activeEffects.flatMap(e => e.modifiers),
+        ...activeEffects.filter(e => e.id !== 'regenerating').flatMap(e => e.modifiers),
     ];
 
     for (const mod of modifiers) {
@@ -166,18 +167,26 @@ export function getPlayerStats(player: PlayerState): PlayerStats {
 
 /**
  * Applies a buff, debuff, or permanent effect to the player.
+ * If the effect belongs to a group (e.g. 'food'), any existing active effect in the same group is replaced.
  */
 export function applyEffect(
     player: PlayerState,
-    effect: Omit<ActiveEffect, 'expiresAt'> & { durationMs?: number }
+    effect: EffectConfig
 ): void {
     const now = Date.now();
-    const existing = (player.effects ?? []).filter(e => e.id !== effect.id && (e.expiresAt === undefined || e.expiresAt > now));
-    
+
+    const existing = (player.effects ?? []).filter(e => {
+        if (effect.group && e.group === effect.group) {
+            return false;
+        }
+        return e.id !== effect.id && (e.expiresAt === undefined || e.expiresAt > now);
+    });
+
     const newEffect: ActiveEffect = {
         id: effect.id,
         type: effect.type,
-        icon: effect.icon,
+        group: effect.group,
+        emoji: effect.emoji,
         label: effect.label,
         modifiers: effect.modifiers,
         expiresAt: effect.durationMs ? now + effect.durationMs : undefined,
@@ -236,13 +245,17 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
     if (!item)
         return null;
 
-    if (itemType === ItemType.Weapon && player.weaponId === itemId)
-        return { success: false, text: `Sorry, you already own the ${item.emoji} ${item.name}.`, item };
-    if (itemType === ItemType.Armor && player.armorId === itemId)
-        return { success: false, text: `Sorry, you already own the ${item.emoji} ${item.name}.`, item };
+    if (itemType === ItemType.Weapon && player.weaponId === itemId) {
+        return { success: false, text: `You are already wielding the ${item.emoji} ${item.name}!`, item };
+    }
 
-    if (!deductCost(player, item.cost))
-        return { success: false, text: 'Sorry, you need more 🪙 Adena.' };
+    if (itemType === ItemType.Armor && player.armorId === itemId) {
+        return { success: false, text: `You are already wearing the ${item.emoji} ${item.name}!`, item };
+    }
+
+    if (!deductCost(player, item.cost)) {
+        return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}! It costs 🪙 ${formatAdena(item.cost)} Adena.`, item };
+    }
 
     if (itemType === ItemType.Weapon) {
         player.weaponId = itemId;
@@ -263,7 +276,7 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
         void statisticsRepository.increment('total_adena_spent', item.cost);
         void statisticsRepository.increment('total_hp_healed', hpHealed);
 
-        const effectDesc = item.effect ? `\nYou feel invigorated by the ${item.effect.icon} ${item.effect.label} buff!` : '';
+        const effectDesc = item.effect ? `\nYou feel invigorated by the ${item.effect.emoji} ${item.effect.label} buff!` : '';
         return {
             success: true,
             text: `You have bought ${item.emoji} ${item.name}.${effectDesc}\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`,

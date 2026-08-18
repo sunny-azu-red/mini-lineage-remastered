@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { zoneMiddleware, isPathInZones } from './zone.middleware';
-import { REGEN_CONFIG } from '@/constant/game.constant';
+import { REGEN_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
 import * as playerService from '@/service/player.service';
 
 vi.mock('@/service/player.service', () => ({
@@ -139,7 +139,7 @@ describe('zoneMiddleware', () => {
 
     it('should do nothing if Accept header does not include text/html', () => {
         const player: any = {
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         };
         const req = { method: 'GET', path: '/battle', headers: { accept: 'application/json' } };
         const res = { locals: { player } };

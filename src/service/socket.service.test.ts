@@ -68,7 +68,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 import { initSocketService } from './socket.service';
 import { sessionStore } from '@/config/database.config';
 import * as playerService from '@/service/player.service';
-import { REGEN_CONFIG } from '@/constant/game.constant';
+import { REGEN_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
 
 describe('socketService', () => {
     const mockServer = {} as any;
@@ -100,7 +100,7 @@ describe('socketService', () => {
         const player = {
             health: 50,
             raceId: 0,
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         };
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, player));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
@@ -247,7 +247,7 @@ describe('socketService', () => {
         connectionHandler(mockSocket);
 
         const player = {
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         };
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, player));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
@@ -268,7 +268,7 @@ describe('socketService', () => {
         mockSocket.emit.mockClear();
 
         const player = {
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         };
         vi.mocked(sessionStore.get as any).mockImplementation((_id: string, cb: any) => cb(null, player));
         vi.mocked(sessionStore.set as any).mockImplementation((_id: string, _sess: any, cb: any) => cb(new Error('Save failed')));
@@ -278,7 +278,8 @@ describe('socketService', () => {
         vi.advanceTimersByTime(REGEN_CONFIG.intervalMs);
         await vi.runAllTicks();
 
-        expect(mockSocket.emit).not.toHaveBeenCalledWith('player_update', expect.any(Object));
+        expect(playerService.processTick).toHaveBeenCalled();
+        expect(mockSocket.emit).not.toHaveBeenCalledWith('player_update', expect.anything());
     });
 
     it('should handle ping with missing payload', () => {
@@ -396,7 +397,7 @@ describe('socketService', () => {
             health: 125,
             raceId: 0,
             effects: [
-                { id: 'well_fed', type: 'buff', icon: '🍖', label: 'Well Fed', expiresAt: expiryTime, modifiers: [{ type: 'maxHealth', value: 25 }] }
+                { ...EFFECTS_CONFIG.heartyMash, expiresAt: expiryTime }
             ]
         };
 

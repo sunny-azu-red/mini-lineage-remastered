@@ -14,18 +14,32 @@ export interface PlayerStats {
 
 export type StatModifierType = keyof PlayerStats;
 
+export interface StatModifierConfig {
+    label: string;
+    isMultiplier?: boolean;
+    isPercentage?: boolean;
+}
+
 export interface StatModifier {
     type: StatModifierType;
     value: number;
 }
 
-export interface ActiveEffect {
+export interface BaseEffect {
     id: string;
     type: 'buff' | 'debuff' | 'aura';
-    icon: string;
+    group?: string;
+    emoji: string;
     label: string;
-    expiresAt?: number;
     modifiers: readonly StatModifier[] | StatModifier[];
+}
+
+export interface EffectConfig extends BaseEffect {
+    durationMs?: number;
+}
+
+export interface ActiveEffect extends BaseEffect {
+    expiresAt?: number;
 }
 
 export interface PlayerState {

@@ -10,6 +10,7 @@ import { logger } from '@/config/logger.config';
 import { z } from 'zod';
 import { SocketPingEventSchema, SocketInputEventSchema } from '@/schema/socket.schema';
 import { statisticsRepository } from '@/repository/statistics.repository';
+import { formatEffectTooltip } from '@/util/format.util';
 
 const GRACE_PERIOD_MS = 10_000;
 const SECRET_SEQUENCE = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
@@ -57,7 +58,10 @@ function syncExpiryTimers(tracker: SessionTrackerEntry, sessionId: string, playe
  */
 function buildPlayerUpdate(player: PlayerState) {
     const stats = isGameStarted(player) ? getPlayerStats(player) : null;
-    const effects = getPlayerEffects(player);
+    const effects = getPlayerEffects(player).map(e => ({
+        ...e,
+        tooltip: formatEffectTooltip(e),
+    }));
     return {
         health: player.health,
         maxHealth: stats ? stats.maxHealth : (player.raceId !== undefined ? RACES[player.raceId].startHealth : null),

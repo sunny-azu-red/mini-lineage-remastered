@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderPage, renderSimplePage } from './layout.view';
 import { PlayerState } from '@/interface';
+import { EFFECTS_CONFIG } from '@/constant/game.constant';
 import * as versionUtil from '@/util/version.util';
 import * as baseView from './base.view';
 
@@ -153,23 +154,17 @@ describe('layout.view', () => {
 
             const p = makePlayer({
                 raceId: 2, // Elf base maxHp 75
-                health: 175,
+                health: 225,
                 effects: [
-                    {
-                        id: 'konami_cheat',
-                        type: 'debuff',
-                        icon: '👾',
-                        label: "Cheater's Mark",
-                        modifiers: [{ type: 'maxHealth', value: 100 }]
-                    }
+                    { ...EFFECTS_CONFIG.konamiCheat }
                 ]
             });
             renderPage('Title', p, 'Content');
             // Check status render call
             const statusCall = renderMock.mock.calls.find((c: any) => c[1] && c[1].maxHp !== undefined) as any;
             expect(statusCall).toBeDefined();
-            expect(statusCall[1].maxHp).toBe(175);
-            expect(statusCall[1].maxHpFormatted).toBe('175');
+            expect(statusCall[1].maxHp).toBe(225);
+            expect(statusCall[1].maxHpFormatted).toBe('225');
             expect(statusCall[1].hpPercent).toBe(100);
         });
     });
@@ -182,9 +177,9 @@ describe('layout.view', () => {
             const p = makePlayer({
                 raceId: 0,
                 effects: [
-                    { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] },
-                    { id: 'buff_1', type: 'buff', icon: '🌭', label: 'Yummy', expiresAt: Date.now() + 25_000, modifiers: [] },
-                    { id: 'debuff_1', type: 'debuff', icon: '👾', label: "Cheater's Mark", modifiers: [] },
+                    { ...EFFECTS_CONFIG.restingAura },
+                    { ...EFFECTS_CONFIG.smokedSausage, expiresAt: Date.now() + 25_000 },
+                    { ...EFFECTS_CONFIG.konamiCheat },
                 ]
             });
             renderPage('Title', p, 'Content');
@@ -197,11 +192,11 @@ describe('layout.view', () => {
             expect(layoutCall[1].effectsHtml).toContain('data-expires-at');
             expect(layoutCall[1].effectsHtml).toContain('effect-timer');
             expect(layoutCall[1].effectsHtml).toContain('>25<');
-            expect(layoutCall[1].effectsHtml).toContain('title="Yummy"');
+            expect(layoutCall[1].effectsHtml).toContain('title="Satisfied (+10 Max HP)"');
             expect(layoutCall[1].effectsHtml).toContain('data-effect-id="resting"');
-            expect(layoutCall[1].effectsHtml).toContain('⛺');
-            expect(layoutCall[1].effectsHtml).toContain('🌭');
-            expect(layoutCall[1].effectsHtml).toContain('👾');
+            expect(layoutCall[1].effectsHtml).toContain(EFFECTS_CONFIG.restingAura.emoji);
+            expect(layoutCall[1].effectsHtml).toContain(EFFECTS_CONFIG.smokedSausage.emoji);
+            expect(layoutCall[1].effectsHtml).toContain(EFFECTS_CONFIG.konamiCheat.emoji);
 
             // Also test renderSimplePage
             renderMock.mockClear();

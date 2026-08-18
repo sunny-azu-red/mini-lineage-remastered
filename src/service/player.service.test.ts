@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ItemType, PlayerState } from '@/interface';
-import { RACES } from '@/constant/game.constant';
+import { RACES, EFFECTS_CONFIG } from '@/constant/game.constant';
 import {
     isGameStarted,
     initializePlayer,
@@ -99,11 +99,18 @@ describe('deductCost', () => {
 });
 
 describe('killPlayer', () => {
-    it('sets health to 0 and dead to true and increments total_deaths', () => {
-        const p = makePlayer({ health: 75 });
+    it('sets health to 0, dead to true, clears active effects, and increments total_deaths', () => {
+        const p = makePlayer({
+            health: 75,
+            effects: [
+                { ...EFFECTS_CONFIG.smokedSausage }
+            ]
+        });
         killPlayer(p);
         expect(p.health).toBe(0);
         expect(p.dead).toBe(true);
+        expect(p.effects).toEqual([]);
+        expect(getActiveEffects(p)).toEqual([]);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_deaths');
     });
 });
@@ -135,6 +142,32 @@ describe('restoreHealth', () => {
         const p = makePlayer({ raceId: 0, health: RACES[0].startHealth });
         const healed = restoreHealth(p, 20);
         expect(healed).toBe(0);
+    });
+});
+
+describe('applyEffect', () => {
+    it('applies a new effect and preserves distinct groups', () => {
+        const p = makePlayer({ raceId: 0, effects: [] });
+        applyEffect(p, { id: 'food_1', type: 'buff', group: 'food', emoji: '🥓', label: 'Food 1', modifiers: [] });
+        applyEffect(p, { id: 'potion_1', type: 'buff', group: 'potion', emoji: '🧪', label: 'Potion 1', modifiers: [] });
+        expect(p.effects?.length).toBe(2);
+        expect(p.effects?.map(e => e.id)).toEqual(['food_1', 'potion_1']);
+    });
+
+    it('replaces active effects with the same group', () => {
+        const p = makePlayer({ raceId: 0, effects: [] });
+        applyEffect(p, { id: 'food_1', type: 'buff', group: 'food', emoji: '🥓', label: 'Food 1', modifiers: [] });
+        applyEffect(p, { id: 'food_2', type: 'buff', group: 'food', emoji: '🍖', label: 'Food 2', modifiers: [] });
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('food_2');
+    });
+
+    it('replaces effect by id when group is not specified', () => {
+        const p = makePlayer({ raceId: 0, effects: [] });
+        applyEffect(p, { id: 'custom_buff', type: 'buff', emoji: '⚡', label: 'Speed', durationMs: 10000, modifiers: [] });
+        applyEffect(p, { id: 'custom_buff', type: 'buff', emoji: '⚡', label: 'Speed Refreshed', durationMs: 20000, modifiers: [] });
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].label).toBe('Speed Refreshed');
     });
 });
 
@@ -219,6 +252,46 @@ describe('purchaseItem — food', () => {
         expect(result?.text).toBe(
             `You have bought 🌭 Smoked Sausage.\nYou feel invigorated by the 🥓 Satisfied buff!\nYou feel your strength returning, bringing you to 110 HP.`
         );
+    });
+
+    it('replaces previous food buff when purchasing another food buff without stacking', () => {
+        const p = makePlayer({
+            adena: 5000,
+            health: 50,
+            raceId: 0,
+            effects: [
+                { id: 'satisfied', type: 'buff', group: 'food', emoji: '🥓', label: 'Satisfied', modifiers: [{ type: 'maxHealth', value: 10 }] }
+            ]
+        });
+
+        // Buy Hearty Mash (Well Fed: +30 maxHp)
+        const result1 = purchaseItem(p, ItemType.Food, 3);
+        expect(result1?.success).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('well_fed');
+
+        // Buy Roasted Pheasant (Gourmet Feast: +60 maxHp)
+        const result2 = purchaseItem(p, ItemType.Food, 4);
+        expect(result2?.success).toBe(true);
+        expect(p.effects?.length).toBe(1);
+        expect(p.effects?.[0].id).toBe('gourmet_feast');
+    });
+
+    it('preserves non-food effects when replacing food buff', () => {
+        const p = makePlayer({
+            adena: 1000,
+            health: 50,
+            raceId: 0,
+            effects: [
+                { ...EFFECTS_CONFIG.restingAura },
+                { ...EFFECTS_CONFIG.konamiCheat },
+                { ...EFFECTS_CONFIG.smokedSausage }
+            ]
+        });
+
+        purchaseItem(p, ItemType.Food, 3); // Hearty Mash
+        const effectIds = p.effects?.map(e => e.id);
+        expect(effectIds).toEqual(['resting', 'konami_cheat', 'well_fed']);
     });
 });
 
@@ -370,8 +443,8 @@ describe('processTick', () => {
     it('cleans up expired effects during processTick', () => {
         const p = makePlayer({
             effects: [
-                { id: 'expired_buff', type: 'buff', icon: '⚡', label: 'Expired', expiresAt: Date.now() - 1000, modifiers: [] },
-                { id: 'active_buff', type: 'buff', icon: '🛡️', label: 'Active', expiresAt: Date.now() + 50000, modifiers: [] }
+                { id: 'expired_buff', type: 'buff', emoji: '⚡', label: 'Expired', expiresAt: Date.now() - 1000, modifiers: [] },
+                { id: 'active_buff', type: 'buff', emoji: '🛡️', label: 'Active', expiresAt: Date.now() + 50000, modifiers: [] }
             ]
         });
         const changed = processTick(p);
@@ -385,7 +458,7 @@ describe('processTick', () => {
             raceId: 0, // Human base max 100
             health: 120, // had food buff previously
             effects: [
-                { id: 'expired_food', type: 'buff', icon: '🍖', label: 'Well Fed', expiresAt: Date.now() - 1000, modifiers: [{ type: 'maxHealth', value: 25 }] }
+                { id: 'expired_food', type: 'buff', emoji: '🍖', label: 'Well Fed', expiresAt: Date.now() - 1000, modifiers: [{ type: 'maxHealth', value: 25 }] }
             ]
         });
         const changed = processTick(p);
@@ -399,8 +472,8 @@ describe('processTick', () => {
             raceId: 2, // Elf base max 75, regen 3
             health: 90, // was at 100 with food buff (75+25), took 10 damage in battle
             effects: [
-                { id: 'combat', type: 'aura', icon: '⚔️', label: 'In Combat', modifiers: [] },
-                { id: 'well_fed', type: 'buff', icon: '🍖', label: 'Well Fed', expiresAt: Date.now() - 500, modifiers: [{ type: 'maxHealth', value: 25 }] }
+                { id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] },
+                { id: 'well_fed', type: 'buff', emoji: '🍖', label: 'Well Fed', expiresAt: Date.now() - 500, modifiers: [{ type: 'maxHealth', value: 25 }] }
             ]
         });
         const changed = processTick(p);
@@ -417,7 +490,7 @@ describe('processTick', () => {
             raceId: 2, // Elf base max 75, regen 3
             health: 50,
             effects: [
-                { id: 'combat', type: 'aura', icon: '⚔️', label: 'In Combat', modifiers: [] }
+                { id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }
             ]
         });
         const changed = processTick(p);
@@ -430,7 +503,7 @@ describe('processTick', () => {
             raceId: 2, // Elf base max 75, regen 3
             health: 50, // wounded
             effects: [
-                { id: 'expired_buff', type: 'buff', icon: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
+                { id: 'expired_buff', type: 'buff', emoji: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
             ]
         });
         const changed = processEffectExpiry(p);
@@ -443,7 +516,7 @@ describe('processTick', () => {
         const p = makePlayer({
             raceId: 0, // Human base max 100, regen 1
             health: 80,
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [{ type: 'regen', value: 1 }] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] }]
         });
         const changed = processRegenTick(p);
         expect(changed).toBe(true);
@@ -455,7 +528,7 @@ describe('processTick', () => {
             raceId: 2, // Elf base max 75, regen 3
             health: 50, // wounded
             effects: [
-                { id: 'expired_buff', type: 'buff', icon: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
+                { id: 'expired_buff', type: 'buff', emoji: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
             ]
         });
         const changed = processTick(p, { applyRegen: false });
@@ -550,11 +623,11 @@ describe('getPlayerEffects', () => {
         const p = makePlayer({
             raceId: 0,
             health: 100,
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         });
         const effects = getPlayerEffects(p);
         expect(effects).toEqual([
-            { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }
+            { ...EFFECTS_CONFIG.restingAura }
         ]);
     });
 
@@ -563,12 +636,12 @@ describe('getPlayerEffects', () => {
             raceId: 2,
             health: 50,
             armorId: 0,
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         }); // Elf (base regen 3)
         const effects = getPlayerEffects(p);
         expect(effects).toEqual([
-            { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] },
-            { id: 'regenerating', type: 'aura', icon: '🌿', label: 'Regenerating', modifiers: [] },
+            { ...EFFECTS_CONFIG.restingAura },
+            { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 3 }] },
         ]);
     });
 
@@ -577,11 +650,11 @@ describe('getPlayerEffects', () => {
             raceId: 1,
             health: 80,
             armorId: 0,
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         }); // Orc (base 0 regen, Peasant Tunic 0 regen)
         const effects = getPlayerEffects(p);
         expect(effects).toEqual([
-            { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }
+            { ...EFFECTS_CONFIG.restingAura }
         ]);
     });
 
@@ -590,40 +663,60 @@ describe('getPlayerEffects', () => {
             raceId: 1,
             health: 80,
             armorId: 3, // Knight's Plate (regen 1)
-            effects: [{ id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
         }); // Orc (base 0 + armor 1 = 1)
         const effects = getPlayerEffects(p);
         expect(effects).toEqual([
-            { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] },
-            { id: 'regenerating', type: 'aura', icon: '🌿', label: 'Regenerating', modifiers: [] },
+            { ...EFFECTS_CONFIG.restingAura },
+            { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 1 }] },
         ]);
+    });
+
+    it('combines aura modifiers into total regen and does not double-count in getPlayerStats', () => {
+        const p = makePlayer({
+            raceId: 0, // Human base regen 1
+            health: 50,
+            armorId: 3, // Knight Plate regen 1
+            effects: [
+                { ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] } // Resting bonus +1
+            ]
+        });
+        const effects = getPlayerEffects(p);
+        // Total regen = 1 (base) + 1 (armor) + 1 (resting aura) = 3
+        expect(effects).toEqual([
+            { ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] },
+            { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 3 }] },
+        ]);
+
+        const stats = getPlayerStats(p);
+        expect(stats.regen).toBe(3); // 1 base + 1 armor + 1 resting aura (regenAura not double-counted)
     });
 
     it('returns resting + regenerating when resting with buffed max health above base startHealth', () => {
         const p = makePlayer({
             raceId: 2, // Elf base maxHp 75, regen 3
-            health: 120, // Above base 75, but below buffed 175
+            health: 120, // Above base 75, but below buffed 225
             armorId: 0,
             effects: [
-                { id: 'konami_cheat', type: 'debuff', icon: '👾', label: "Cheater's Mark", modifiers: [{ type: 'maxHealth', value: 100 }] },
-                { id: 'resting', type: 'aura', icon: '⛺', label: 'Resting', modifiers: [] }
+                { ...EFFECTS_CONFIG.konamiCheat },
+                { ...EFFECTS_CONFIG.restingAura }
             ]
         });
         const effects = getPlayerEffects(p);
         expect(effects.some(a => a.id === 'regenerating')).toBe(true);
 
-        // At full 175 HP, regenerating should disappear
-        p.health = 175;
+        // At full 225 HP, regenerating should disappear
+        p.health = 225;
         const fullEffects = getPlayerEffects(p);
         expect(fullEffects.some(a => a.id === 'regenerating')).toBe(false);
     });
 
     it('returns combat aura when in combat', () => {
         const p = makePlayer({
-            effects: [{ id: 'combat', type: 'aura', icon: '⚔️', label: 'In Combat', modifiers: [] }]
+            effects: [{ ...EFFECTS_CONFIG.combatAura }]
         });
         const effects = getPlayerEffects(p);
-        expect(effects).toEqual([{ id: 'combat', type: 'aura', icon: '⚔️', label: 'In Combat', modifiers: [] }]);
+        expect(effects).toEqual([{ ...EFFECTS_CONFIG.combatAura }]);
     });
 
     it('returns empty array when not resting and not in combat', () => {
@@ -634,14 +727,7 @@ describe('getPlayerEffects', () => {
 
     it('includes active buffs and debuffs', () => {
         const p = makePlayer();
-        applyEffect(p, {
-            id: 'satisfied',
-            type: 'buff',
-            icon: '🥓',
-            label: 'Satisfied',
-            durationMs: 30_000,
-            modifiers: [{ type: 'maxHealth', value: 10 }],
-        });
+        applyEffect(p, EFFECTS_CONFIG.smokedSausage);
         const effects = getPlayerEffects(p);
         expect(effects.length).toBe(1);
         expect(effects[0].id).toBe('satisfied');
@@ -660,37 +746,20 @@ describe('getPlayerStats & applyEffect', () => {
         expect(statsBase.regen).toBe(1);
         expect(statsBase.ambushRisk).toBe(8);
 
-        // Apply food buff (+25 Max HP)
-        applyEffect(p, {
-            id: 'well_fed',
-            type: 'buff',
-            icon: '🍖',
-            label: 'Well Fed',
-            durationMs: 60_000,
-            modifiers: [{ type: 'maxHealth', value: 25 }],
-        });
+        // Apply food buff (+30 Max HP)
+        applyEffect(p, EFFECTS_CONFIG.heartyMash);
 
         const statsBuffed = getPlayerStats(p);
-        expect(statsBuffed.maxHealth).toBe(125);
+        expect(statsBuffed.maxHealth).toBe(130);
     });
 
     it('applies multiplier modifiers correctly', () => {
         const p = makePlayer();
-        applyEffect(p, {
-            id: 'konami_cheat',
-            type: 'debuff',
-            icon: '👾',
-            label: "Cheater's Mark",
-            modifiers: [
-                { type: 'xpMultiplier', value: 4 },
-                { type: 'adenaMultiplier', value: 4 },
-                { type: 'crit', value: 15 },
-            ],
-        });
+        applyEffect(p, EFFECTS_CONFIG.konamiCheat);
 
         const stats = getPlayerStats(p);
-        expect(stats.xpMultiplier).toBe(4);
-        expect(stats.adenaMultiplier).toBe(4);
+        expect(stats.xpMultiplier).toBe(6);
+        expect(stats.adenaMultiplier).toBe(6);
         expect(stats.crit).toBe(19); // 4 (base) + 15
     });
 
@@ -700,7 +769,7 @@ describe('getPlayerStats & applyEffect', () => {
             {
                 id: 'expired_buff',
                 type: 'buff',
-                icon: '⏳',
+                emoji: '⏳',
                 label: 'Expired',
                 expiresAt: Date.now() - 1000,
                 modifiers: [{ type: 'attack', value: 100 }],
@@ -716,7 +785,7 @@ describe('getPlayerStats & applyEffect', () => {
         applyEffect(p, {
             id: 'curse',
             type: 'debuff',
-            icon: '💀',
+            emoji: '💀',
             label: 'Heavy Curse',
             modifiers: [
                 { type: 'attack', value: -100 },

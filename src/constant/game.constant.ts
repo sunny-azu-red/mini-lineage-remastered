@@ -1,4 +1,4 @@
-import { Item, Race, RaceType } from '@/interface';
+import { Item, Race, RaceType, StatModifierType, StatModifierConfig, EffectConfig } from '@/interface';
 import { getVersion } from '@/util/version.util';
 
 export const GAME_VERSION = getVersion();
@@ -6,6 +6,22 @@ export const REPO_COMMIT_URL = 'https://github.com/sunny-azu-red/mini-lineage-re
 
 export const MAX_LEVEL = 80;
 export const LOCALE = 'en-US';
+
+/**
+ * Stat Modifier Display Configurations
+ *
+ * Configures labels, units, and display rules for stat modifiers shown in buff/item tooltips.
+ */
+export const STAT_MODIFIER_CONFIG = {
+    maxHealth: { label: 'Max HP' },
+    regen: { label: 'HP Regen' },
+    crit: { label: 'Crit', isPercentage: true },
+    ambushRisk: { label: 'Ambush', isPercentage: true },
+    attack: { label: 'Attack' },
+    defense: { label: 'Defense' },
+    xpMultiplier: { label: 'XP', isMultiplier: true },
+    adenaMultiplier: { label: 'Adena', isMultiplier: true },
+} as const satisfies Record<StatModifierType, StatModifierConfig>;
 
 /**
  * Race Data Configurations
@@ -42,10 +58,31 @@ export const RACES = [
  * for easy balance tuning in one single place.
  */
 export const EFFECTS_CONFIG = {
+    restingAura: {
+        id: 'resting',
+        type: 'aura' as const,
+        emoji: '💤',
+        label: 'Resting',
+        modifiers: [],
+    },
+    combatAura: {
+        id: 'combat',
+        type: 'aura' as const,
+        emoji: '⚔️',
+        label: 'In Combat',
+        modifiers: [],
+    },
+    regenAura: {
+        id: 'regenerating',
+        type: 'aura' as const,
+        emoji: '🌿',
+        label: 'Regenerating',
+        modifiers: [], // populated dynamically at runtime with total regen rate
+    },
     ambushDebuff: {
         id: 'hexed',
         type: 'debuff' as const,
-        icon: '👁️',
+        emoji: '👁️',
         label: 'Hexed',
         durationMs: 60_000,
         modifiers: [
@@ -56,7 +93,7 @@ export const EFFECTS_CONFIG = {
     konamiCheat: {
         id: 'konami_cheat',
         type: 'debuff' as const,
-        icon: '👾',
+        emoji: '👾',
         label: "Cheater's Mark",
         modifiers: [
             { type: 'xpMultiplier' as const, value: 6 },
@@ -65,33 +102,34 @@ export const EFFECTS_CONFIG = {
             { type: 'maxHealth' as const, value: 150 },
         ],
     },
-    foodBuffs: {
-        smokedSausage: {
-            id: 'satisfied',
-            type: 'buff' as const,
-            icon: '🥓',
-            label: 'Satisfied',
-            durationMs: 30_000,
-            modifiers: [{ type: 'maxHealth' as const, value: 10 }],
-        },
-        heartyMash: {
-            id: 'well_fed',
-            type: 'buff' as const,
-            icon: '🍖',
-            label: 'Well Fed',
-            durationMs: 60_000,
-            modifiers: [{ type: 'maxHealth' as const, value: 30 }],
-        },
-        roastedPheasant: {
-            id: 'gourmet_feast',
-            type: 'buff' as const,
-            icon: '👑',
-            label: 'Gourmet Feast',
-            durationMs: 90_000,
-            modifiers: [{ type: 'maxHealth' as const, value: 60 }],
-        },
+    smokedSausage: {
+        id: 'satisfied',
+        type: 'buff' as const,
+        group: 'food' as const,
+        emoji: '🥓',
+        label: 'Satisfied',
+        durationMs: 30_000,
+        modifiers: [{ type: 'maxHealth' as const, value: 10 }],
     },
-} as const;
+    heartyMash: {
+        id: 'well_fed',
+        type: 'buff' as const,
+        group: 'food' as const,
+        emoji: '🍖',
+        label: 'Well Fed',
+        durationMs: 60_000,
+        modifiers: [{ type: 'maxHealth' as const, value: 30 }],
+    },
+    roastedPheasant: {
+        id: 'gourmet_feast',
+        type: 'buff' as const,
+        group: 'food' as const,
+        emoji: '👑',
+        label: 'Gourmet Feast',
+        durationMs: 90_000,
+        modifiers: [{ type: 'maxHealth' as const, value: 60 }],
+    },
+} as const satisfies Record<string, EffectConfig>;
 
 /**
  * Item Data Configurations
@@ -123,9 +161,9 @@ export const WEAPONS = [
 export const FOODS = [
     { id: 0, name: 'Spiced Ale', emoji: '🍺', stat: 4, cost: 7 },
     { id: 1, name: 'Forest Apple', emoji: '🍎', stat: 6, cost: 15 },
-    { id: 2, name: 'Smoked Sausage', emoji: '🌭', stat: 15, cost: 60, effect: EFFECTS_CONFIG.foodBuffs.smokedSausage as any },
-    { id: 3, name: 'Hearty Mash', emoji: '🥔', stat: 25, cost: 250, effect: EFFECTS_CONFIG.foodBuffs.heartyMash as any },
-    { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 50, cost: 1_200, effect: EFFECTS_CONFIG.foodBuffs.roastedPheasant as any },
+    { id: 2, name: 'Smoked Sausage', emoji: '🌭', stat: 15, cost: 60, effect: EFFECTS_CONFIG.smokedSausage },
+    { id: 3, name: 'Hearty Mash', emoji: '🥔', stat: 25, cost: 250, effect: EFFECTS_CONFIG.heartyMash },
+    { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 50, cost: 1_200, effect: EFFECTS_CONFIG.roastedPheasant },
 ] satisfies Item[];
 
 /**

@@ -1,4 +1,4 @@
-import { ActiveEffect, StatModifier } from './player.interface';
+import { ActiveEffect, EffectConfig, StatModifier } from './player.interface';
 
 export enum RaceType {
     Human = 0,
@@ -34,7 +34,7 @@ export interface Item {
     stat: number;
     cost: number;
     modifiers?: readonly StatModifier[] | StatModifier[];
-    effect?: ActiveEffect;
+    effect?: EffectConfig;
 }
 
 export interface PurchaseResult {
