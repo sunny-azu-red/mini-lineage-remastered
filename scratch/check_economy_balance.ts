@@ -50,3 +50,5 @@ checkEconomy(0); // Human
 checkEconomy(1); // Orc
 checkEconomy(2); // Elf
 checkEconomy(3); // Dark Elf
+
+process.exit(0);

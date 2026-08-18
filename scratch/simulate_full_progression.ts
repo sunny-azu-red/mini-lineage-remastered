@@ -13,7 +13,7 @@ interface SimulationReport {
     totalMealsEaten: number;
     finalAdena: number;
     deaths: number;
-    levelTimeline: Array<{ level: number; battles: number; adena: number; weaponId: number; armorId: number }>;
+    levelTimeline: Array<{ level: number; battles: number; adena: number; weaponId: number; armorId: number; }>;
 }
 
 function runFullLifecycleSimulation(raceId: number, strategy: 'cheap_food' | 'buff_food' = 'buff_food'): SimulationReport {
@@ -139,3 +139,5 @@ console.log(`======================================================`);
         console.log(`${t.level.toString().padEnd(5)} | ${t.battles.toString().padEnd(7)} | 🪙 ${t.adena.toLocaleString().padEnd(10)} | ${WEAPONS[t.weaponId].name.padEnd(16)} | ${ARMORS[t.armorId].name}`);
     });
 });
+
+process.exit(0);

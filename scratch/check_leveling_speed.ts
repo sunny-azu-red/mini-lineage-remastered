@@ -50,3 +50,5 @@ simulateLeveling(0); // Human
 simulateLeveling(1); // Orc
 simulateLeveling(2); // Elf
 simulateLeveling(3); // Dark Elf
+
+process.exit(0);

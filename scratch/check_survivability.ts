@@ -45,3 +45,5 @@ checkSurvivability(0, 0, 0); // Starting Human
 checkSurvivability(2, 0, 0); // Starting Elf (Fragile)
 checkSurvivability(1, 0, 0); // Starting Orc (Tanky)
 checkSurvivability(0, 3, 3); // Mid-game Human
+
+process.exit(0);

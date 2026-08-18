@@ -45,3 +45,5 @@ function runSimulation(raceId: number, weaponId: number, armorId: number, iterat
 console.log('SIMULATING BATTLES...');
 runSimulation(0, 1, 1); // Starting weapon
 runSimulation(0, 5, 5); // Late game weapon
+
+process.exit(0);
