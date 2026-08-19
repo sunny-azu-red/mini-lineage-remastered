@@ -38,5 +38,6 @@ export const getHighscores = async (req: Request, res: Response) => {
     }
 
     const highscores = await highscoreRepository.findAll(filteredRaceId);
+
     res.send(renderHighscoresView(highscores, filteredRaceId, res.locals.player));
 };

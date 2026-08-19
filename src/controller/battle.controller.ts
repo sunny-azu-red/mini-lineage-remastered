@@ -25,9 +25,9 @@ export const getBattle = (req: Request, res: Response, next: NextFunction) => {
         player.ambushed = true;
         player.totalAmbushes = (player.totalAmbushes ?? 0) + 1;
         player.consecutiveAmbushes = (player.consecutiveAmbushes ?? 0) + 1;
-        if (player.consecutiveAmbushes >= 2) {
+        if (player.consecutiveAmbushes >= 2)
             applyEffect(player, EFFECTS_CONFIG.ambushDebuff);
-        }
+
         void statisticsRepository.increment('total_ambushes');
     } else {
         player.consecutiveAmbushes = 0;

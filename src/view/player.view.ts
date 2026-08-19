@@ -21,15 +21,14 @@ export function renderSuicideView(player: PlayerState, flash: FlashMessage | nul
 export function renderDeathView(player: PlayerState): string {
     const isCowardOrCheated = player.coward || player.cheated;
     if (!player.deathReason) {
-        if (player.cheated) {
+        if (player.cheated)
             player.deathReason = "👾 The gods saw your heresy and cast your memory into oblivion.";
-        } else if (player.coward) {
+        else if (player.coward)
             player.deathReason = player.ambushed
                 ? "🪤 You were caught trying to flee an ambush!"
                 : "🤡 You took the cowardly way out.";
-        } else {
+        else
             player.deathReason = randomElement(DEATH_MESSAGES);
-        }
     }
 
     const content = render(deathTpl, {

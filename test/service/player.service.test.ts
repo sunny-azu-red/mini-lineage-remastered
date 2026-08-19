@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ItemType, PlayerState } from '@/interface';
-import { RACES, ARMORS, EFFECTS_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG } from '@/constant/game.constant';
 import {
     isGameStarted,
     initializePlayer,
@@ -62,14 +62,14 @@ describe('initializePlayer', () => {
         const flash = initializePlayer(p, race, 'Arthur');
 
         expect(p.name).toBe('Arthur');
-        expect(p.health).toBe(race.startHealth);
+        const stats = getPlayerStats(p);
+        expect(stats.maxHealth).toBe(race.startHealth + 20);
+        expect(p.health).toBe(stats.maxHealth);
         expect(p.adena).toBe(race.startAdena);
         expect(p.experience).toBe(0);
         expect(p.totalAmbushes).toBe(0);
         expect(p.effects).toHaveLength(1);
         expect(p.effects[0].id).toBe('newbie_blessing');
-        const stats = getPlayerStats(p);
-        expect(stats.maxHealth).toBe(race.startHealth + 20);
         expect(stats.defense).toBe(ARMORS[0].stat + 2);
         expect(stats.ambushRisk).toBe(race.ambushChance - 4);
         expect(flash.type).toBe('info');
@@ -372,25 +372,22 @@ describe('initializePlayer — age definitions', () => {
     it('marks as youth when age <= 23', () => {
         const p = {} as any;
         vi.spyOn(Math, 'random').mockReturnValue(0); // low age
-        initializePlayer(p, RACES[0], 'Hero');
-        // randomInt(9, 69) with random 0 is 9.
-        expect(p.health).toBeDefined();
+        const flash = initializePlayer(p, RACES[0], 'Hero');
+        expect(flash.text).toContain(CHARACTER_CONFIG.ageThresholds.labels.youth);
     });
 
     it('marks as adult when age is between 24 and 54', () => {
         const p = {} as any;
-        // Age calculation: 9 + Math.floor(random * (69 - 9 + 1))
-        // For age 30: 30 = 9 + floor(random * 61) => 21 = floor(random * 61) => random approx 0.35
         vi.spyOn(Math, 'random').mockReturnValue(0.35);
-        initializePlayer(p, RACES[0], 'Hero');
-        expect(p.health).toBeDefined();
+        const flash = initializePlayer(p, RACES[0], 'Hero');
+        expect(flash.text).toContain(CHARACTER_CONFIG.ageThresholds.labels.adult);
     });
 
     it('marks as elder when age > 54', () => {
         const p = {} as any;
         vi.spyOn(Math, 'random').mockReturnValue(0.99); // high age
-        initializePlayer(p, RACES[0], 'Hero');
-        expect(p.health).toBeDefined();
+        const flash = initializePlayer(p, RACES[0], 'Hero');
+        expect(flash.text).toContain(CHARACTER_CONFIG.ageThresholds.labels.elder);
     });
 });
 

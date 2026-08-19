@@ -7,8 +7,10 @@ export const isPathInZones = (zones: readonly string[], currentPath: string): bo
     return zones.some(pattern => {
         if (pattern.endsWith('/*')) {
             const prefix = pattern.slice(0, -1); // e.g. '/shop/*' -> '/shop/'
+
             return currentPath.startsWith(prefix) && currentPath.length > prefix.length;
         }
+
         return currentPath === pattern;
     });
 };
@@ -29,11 +31,10 @@ export const zoneMiddleware = (req: Request, res: Response, next: NextFunction) 
         // Filter out existing zone state auras ('resting' and 'combat')
         player.effects = (player.effects ?? []).filter((e: ActiveEffect) => e.id !== 'resting' && e.id !== 'combat');
 
-        if (isResting) {
+        if (isResting)
             player.effects.push({ ...EFFECTS_CONFIG.restingAura });
-        } else if (inCombat && !player.dead) {
+        else if (inCombat && !player.dead)
             player.effects.push({ ...EFFECTS_CONFIG.combatAura });
-        }
     }
 
     next();

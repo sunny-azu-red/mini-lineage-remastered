@@ -36,5 +36,6 @@ export const getRestart = (req: Request, res: Response) => {
 
 export const getCharacter = (req: Request, res: Response) => {
     const player = res.locals.player;
+
     res.send(renderCharacterView(player, res.locals.flash));
 };

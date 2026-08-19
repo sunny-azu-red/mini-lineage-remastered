@@ -5,9 +5,8 @@ export const flashMiddleware = (req: Request, res: Response, next: NextFunction)
     if (req.session && req.session.flash) {
         res.locals.flash = req.session.flash as FlashMessage;
         delete req.session.flash;
-    } else {
+    } else
         res.locals.flash = null;
-    }
 
     next();
 };

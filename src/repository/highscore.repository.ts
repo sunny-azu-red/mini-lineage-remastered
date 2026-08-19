@@ -16,9 +16,12 @@ export const highscoreRepository = {
                 `SELECT * FROM highscores WHERE race_id = ? ORDER BY total_xp DESC, adena DESC LIMIT ${HIGHSCORES_CONFIG.limit}`,
                 [raceId]
             );
+
             return rows as HighscoreEntry[];
         }
+
         const [rows] = await dbPool.execute(`SELECT * FROM highscores ORDER BY total_xp DESC, adena DESC LIMIT ${HIGHSCORES_CONFIG.limit}`);
+
         return rows as HighscoreEntry[];
     },
 };

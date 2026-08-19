@@ -1,51 +1,48 @@
+/**
+ * Real-Time Socket Connection & State Synchronization
+ * Listens for server-pushed player updates (HP, stats, active buffs/debuffs/auras)
+ * and animates UI components in real time without requiring page reloads.
+ */
 (function () {
     const socket = io();
 
-    // listen for server-pushed player updates (HP, maxHP, effects, stats)
+    /**
+     * Server Player State Dispatcher
+     */
     socket.on('player_update', (data) => {
         if (!data)
             return;
 
-        // update active effects (buffs/debuffs/auras) regardless of HP change
         if (data.effects)
             updateEffects(data.effects);
 
-        // update health bar, value counter, and related UI states
         if (data.health != null)
             updateHealth(data.health, data.maxHealth);
 
-        // update dynamic stats on character page
         if (data.stats)
             updateStats(data.stats);
     });
 
     /**
-     * Updates attack, defense, crit, regen, ambush dynamic stats on the character page.
+     * Updates dynamic combat and character statistics on the Character view.
      */
     function updateStats(stats) {
-        const attackEl = document.getElementById('char-stat-attack') || document.getElementById('char-attack');
-        if (attackEl)
-            attackEl.innerText = Number(stats.attack).toLocaleString();
+        const statMappings = [
+            { el: document.getElementById('char-stat-attack') || document.getElementById('char-attack'), val: stats.attack },
+            { el: document.getElementById('char-stat-defense') || document.getElementById('char-defense'), val: stats.defense },
+            { el: document.getElementById('char-stat-crit') || document.getElementById('char-crit'), val: stats.crit },
+            { el: document.getElementById('char-stat-regen') || document.getElementById('char-regen'), val: stats.regen },
+            { el: document.getElementById('char-stat-ambush') || document.getElementById('char-ambush'), val: stats.ambush },
+        ];
 
-        const defenseEl = document.getElementById('char-stat-defense') || document.getElementById('char-defense');
-        if (defenseEl)
-            defenseEl.innerText = Number(stats.defense).toLocaleString();
-
-        const critEl = document.getElementById('char-stat-crit') || document.getElementById('char-crit');
-        if (critEl)
-            critEl.innerText = Number(stats.crit).toLocaleString();
-
-        const regenEl = document.getElementById('char-stat-regen') || document.getElementById('char-regen');
-        if (regenEl)
-            regenEl.innerText = Number(stats.regen).toLocaleString();
-
-        const ambushEl = document.getElementById('char-stat-ambush') || document.getElementById('char-ambush');
-        if (ambushEl)
-            ambushEl.innerText = Number(stats.ambush).toLocaleString();
+        statMappings.forEach(({ el, val }) => {
+            if (el && val != null)
+                el.innerText = Number(val).toLocaleString();
+        });
     }
 
     /**
-     * Updates the active effect icons / tooltips / countdown badges in the header container.
+     * Updates header status effect badges, tooltips, and countdown timers.
      */
     function updateEffects(newEffects) {
         const container = document.getElementById('effects');
@@ -56,13 +53,13 @@
         const currentKey = currentEffectEls.map(el => el.dataset.effectId + (el.dataset.expiresAt || '')).join(',');
         const newKey = newEffects.map(e => e.id + (e.expiresAt || '')).join(',');
 
-        // skip if nothing changed to avoid flickering or re-triggering animations
+        // Skip DOM rebuild if active effects have not changed
         if (currentKey === newKey)
             return;
 
         const now = Date.now();
-        // rebuild the container, but new elements get the fade-in class
         container.innerHTML = '';
+
         newEffects.forEach(effect => {
             const span = document.createElement('span');
             const typeClass = effect.type ? ` effect-${effect.type}` : '';
@@ -89,7 +86,9 @@
         });
     }
 
-    // periodic 1-second interval to update corner timer badges live
+    /**
+     * Periodic live countdown for expiring status effect badges.
+     */
     setInterval(() => {
         const timedEffects = document.querySelectorAll('#effects .effect-icon[data-expires-at]');
         if (timedEffects.length === 0)
@@ -100,51 +99,52 @@
             const expiresAt = Number(el.dataset.expiresAt);
             if (expiresAt) {
                 const remMs = expiresAt - now;
-                if (remMs <= 0) {
+                if (remMs <= 0)
                     el.remove();
-                } else {
+                else {
                     const remSec = Math.ceil(remMs / 1000);
                     const timerEl = el.querySelector('.effect-timer');
-                    if (timerEl) {
+                    if (timerEl)
                         timerEl.innerText = formatEffectTimer(remSec);
-                    }
                 }
             }
         });
     }, 1000);
 
     /**
-     * Updates the health bar, value counter, and related UI states (low health warnings).
+     * Updates HP bars, numeric counters, and low-health UI warnings in real time.
      */
     function updateHealth(newHp, maxHp) {
-        // read the currently displayed HP from the DOM (sidebar or character sheet)
         const hpEl = document.querySelector('#hp-bar ~ .bar-text .animate-val');
         const charHpEl = document.getElementById('char-hp');
 
         const prevHp = hpEl
-            ? (parseInt(hpEl.innerText.replace(/,/g, '')) || newHp)
-            : (charHpEl ? (parseInt(charHpEl.innerText.replace(/,/g, '')) || newHp) : newHp);
+            ? (parseInt(hpEl.innerText.replace(/,/g, ''), 10) || newHp)
+            : (charHpEl ? (parseInt(charHpEl.innerText.replace(/,/g, ''), 10) || newHp) : newHp);
 
-        // animate the sidebar HP value counter if changed
+        // Animate HP numeric counters if value changed
         if (hpEl && newHp !== prevHp) {
-            animateValue(hpEl, prevHp, newHp, 600);
+            animateValue(hpEl, prevHp, newHp, ANIMATION_DURATION_MS);
             hpEl.dataset.val = newHp;
             hpEl.dataset.prev = prevHp;
         }
 
-        // animate the character page HP counter if changed
         if (charHpEl && newHp !== prevHp) {
-            animateValue(charHpEl, prevHp, newHp, 600);
+            animateValue(charHpEl, prevHp, newHp, ANIMATION_DURATION_MS);
             charHpEl.dataset.val = newHp;
             charHpEl.dataset.prev = prevHp;
         }
 
-        // update max HP displays and HP bar width
+        // Update HP progress bar width and max HP displays
         if (maxHp) {
+            const pct = Math.min(100, Math.round((newHp / maxHp) * 100));
+            sessionStorage.setItem('mini_last_hp', newHp);
+            sessionStorage.setItem('mini_last_hp_pct', pct);
+
             const hpBar = document.getElementById('hp-bar');
             if (hpBar) {
-                const pct = Math.min(100, Math.round((newHp / maxHp) * 100));
-                hpBar.style.width = pct + '%';
+                hpBar.style.transition = TRANSITION_STYLE;
+                hpBar.style.width = `${pct}%`;
             }
 
             const statusMaxHpEl = document.getElementById('status-max-hp');
@@ -155,7 +155,7 @@
             if (charMaxHpEl)
                 charMaxHpEl.innerText = Number(maxHp).toLocaleString();
 
-            // remove the danger class and low-HP warning if HP is no longer critically low
+            // Clear danger classes and alerts if HP recovered above threshold
             if (!isLowHealth(newHp, maxHp)) {
                 const barRow = document.querySelector('.stat-row.bar.danger');
                 if (barRow)
@@ -167,14 +167,14 @@
             }
         }
 
-        // trigger regen shine animation when HP increases
+        // Trigger HP regen shine animation when recovering health
         if (newHp > prevHp) {
             const hpBar = document.getElementById('hp-bar');
             if (hpBar) {
                 hpBar.classList.remove('regen-active');
-                void hpBar.offsetWidth; // force reflow to restart the animation
+                void hpBar.offsetWidth; // Force reflow to restart CSS animation
                 hpBar.classList.add('regen-active');
-                setTimeout(() => hpBar.classList.remove('regen-active'), 500);
+                setTimeout(() => hpBar.classList.remove('regen-active'), ANIMATION_DURATION_MS);
             }
         }
     }

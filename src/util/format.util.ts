@@ -8,15 +8,17 @@ export function formatAdena(adena: number): string {
     if (abs <= 999)
         return adena.toString();
 
-    const floorToOneDecimal = (value: number, divisor: number, unit: string) => {
+    const floorToOneDecimal = (divisor: number, unit: string) => {
         const calculated = Math.floor((abs / divisor) * 10) / 10;
         return sign + calculated.toFixed(1).replace('.0', '') + unit;
     };
 
-    if (abs < 1_000_000) return floorToOneDecimal(abs, 1_000, 'k');
-    if (abs < 1_000_000_000) return floorToOneDecimal(abs, 1_000_000, 'kk');
+    if (abs < 1_000_000)
+        return floorToOneDecimal(1_000, 'k');
+    if (abs < 1_000_000_000)
+        return floorToOneDecimal(1_000_000, 'kk');
 
-    return floorToOneDecimal(abs, 1_000_000_000, 'kkk');
+    return floorToOneDecimal(1_000_000_000, 'kkk');
 }
 
 export function formatNumber(num: number): string {
@@ -29,6 +31,7 @@ export function pluralize(singular: string, plural: string, count: number, emoji
         const article = ['a', 'e', 'i', 'o', 'u'].includes(singular.charAt(0).toLowerCase()) ? 'an' : 'a';
         return `${article} ${icon}${singular}`;
     }
+
     return `${formatNumber(count)} ${icon}${plural}`;
 }
 
@@ -66,26 +69,30 @@ export function slugify(text: string): string {
 }
 
 export function truncate(text: string, length: number): string {
-    if (text.length <= length) return text;
+    if (text.length <= length)
+        return text;
+
     return text.substring(0, length) + '...';
 }
 
 export function formatEffectModifier(mod: StatModifier | { type: string; value: number; }): string {
     const config = (STAT_MODIFIER_CONFIG as Record<string, StatModifierConfig>)[mod.type];
-    if (config?.isMultiplier) {
+    if (config?.isMultiplier)
         return `${mod.value}x ${config.label}`;
-    }
+
     const sign = mod.value > 0 ? '+' : '';
     const unit = config?.isPercentage ? '%' : '';
     const label = config ? ` ${config.label}` : ` ${mod.type}`;
+
     return `${sign}${mod.value}${unit}${label}`;
 }
 
 export function formatEffectTooltip(effect: { label: string; modifiers?: readonly StatModifier[] | StatModifier[] | readonly { type: string; value: number; }[]; }): string {
-    if (!effect.modifiers || effect.modifiers.length === 0) {
+    if (!effect.modifiers || effect.modifiers.length === 0)
         return effect.label;
-    }
+
     const formattedMods = effect.modifiers.map(formatEffectModifier).join(', ');
+
     return `${effect.label} (${formattedMods})`;
 }
 
@@ -104,8 +111,8 @@ export function capitalize(text: string): string {
 }
 
 export function formatEffectTimer(remSec: number): string {
-    if (remSec >= 60) {
+    if (remSec >= 60)
         return `${Math.floor(remSec / 60)}m`;
-    }
+
     return `${Math.max(0, remSec)}`;
 }

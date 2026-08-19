@@ -16,6 +16,7 @@ export const statisticsRepository = {
 
         const stats = ALL_STAT_FIELDS.reduce((acc, field) => { // initialize all stats with 0
             acc[field] = 0;
+
             return acc;
         }, {} as any) as Statistics;
 

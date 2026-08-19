@@ -17,7 +17,9 @@ export const lockMiddleware = (req: Request, res: Response, next: NextFunction) 
         // wrap release so it can only fire once per request
         let released = false;
         const safeRelease = () => {
-            if (released) return;
+            if (released)
+                return;
+
             released = true;
             release();
         };

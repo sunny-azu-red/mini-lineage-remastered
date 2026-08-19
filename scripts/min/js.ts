@@ -6,10 +6,11 @@ const SOCKET_IO_CLIENT = path.resolve(process.cwd(), 'node_modules/socket.io/cli
 const JS_ORDER = [
     'common.js',
     'socket.js',
+    'start.js',
     'sidebar.js',
     'home.js',
-    'suicide.js',
     'shop.js',
+    'suicide.js',
 ];
 
 const SRC_DIR = path.resolve(process.cwd(), 'public/js');
@@ -41,6 +42,9 @@ async function minJs() {
         const minified = await minify(bundle, {
             compress: true,
             mangle: true,
+            format: {
+                comments: false,
+            },
         });
 
         if (minified.code) {

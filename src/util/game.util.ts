@@ -22,5 +22,6 @@ export function makePurchaseFlash(result: PurchaseResult): FlashMessage {
  */
 export function getItemModifier(item: Item, stat: StatModifierType): number | undefined {
     const modifiers = item.modifiers ?? item.effect?.modifiers;
+
     return modifiers?.find(m => m.type === stat)?.value;
 }

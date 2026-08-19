@@ -37,8 +37,8 @@ describe('layout.view', () => {
         expect(html).toContain('Your HP is dangerously low!');
     });
 
-    it('renders XP bar with previous state for animation', () => {
-        const p = makePlayer({ experience: 1000, prevExperience: 500 });
+    it('renders XP bar with formatted state', () => {
+        const p = makePlayer({ experience: 1000 });
         const html = renderPage('Title', p, 'Content');
         expect(html).toBeDefined();
     });
