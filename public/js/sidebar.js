@@ -112,9 +112,8 @@
                     xpBar.style.width = `${targetXpPct}%`;
                     animateValue(xpValEl, startXp, targetXp, ANIMATION_DURATION_MS);
                 }
-                if (shouldAnimateAdena && adenaValEl) {
+                if (shouldAnimateAdena && adenaValEl)
                     animateValue(adenaValEl, startAdena, targetAdena, ANIMATION_DURATION_MS, typeof formatAdena === 'function' ? formatAdena : undefined);
-                }
             });
         });
     }

@@ -7,13 +7,12 @@
         const sel = document.getElementById(selectId);
         const btn = document.getElementById(buttonId);
 
-        if (sel && btn) {
+        if (sel && btn)
             sel.addEventListener('change', () => {
                 const isDefault = sel.value === '';
                 btn.textContent = isDefault ? 'Return' : activeText;
                 btn.className = isDefault ? 'btn btn-secondary' : 'btn';
             });
-        }
     }
 
     setupShop('weapon-select', 'weapon-btn', '🪙 Purchase');

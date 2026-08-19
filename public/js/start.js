@@ -14,9 +14,8 @@
     ];
 
     const startForm = document.querySelector('form[action="/start"]');
-    if (startForm) {
+    if (startForm)
         startForm.addEventListener('submit', () => {
             SIDEBAR_STORAGE_KEYS.forEach(key => sessionStorage.removeItem(key));
         });
-    }
 })();

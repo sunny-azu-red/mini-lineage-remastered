@@ -22,9 +22,9 @@ let io: SocketIOServer;
  * Dispatches expiry ticks with { applyRegen: false } so natural HP regen is never awarded off-cadence.
  */
 function syncExpiryTimers(tracker: SessionTrackerEntry, sessionId: string, player: PlayerState) {
-    if (!tracker.expiryTimers) {
+    if (!tracker.expiryTimers)
         tracker.expiryTimers = new Map();
-    }
+
     const now = Date.now();
     const activeTimedEffects = (player.effects ?? []).filter(e => e.expiresAt && e.expiresAt > now);
     const activeEffectIds = new Set(activeTimedEffects.map(e => e.id));
@@ -77,9 +77,9 @@ function buildPlayerUpdate(player: PlayerState) {
  * Emits a player_update event to all sockets tracked under a given session.
  */
 function emitToSession(tracker: SessionTrackerEntry, player: PlayerState, sessionId?: string) {
-    if (sessionId) {
+    if (sessionId)
         syncExpiryTimers(tracker, sessionId, player);
-    }
+
     const payload = buildPlayerUpdate(player);
 
     tracker.socketIds.forEach(socketId => {
@@ -223,11 +223,13 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
             // initial update to sync state after page load (prevents stale UI)
             sessionStore.get(sessionId, (err, session) => {
-                if (err || !session) return;
+                if (err || !session)
+                    return;
+
                 const player = session as PlayerState;
-                if (tracker) {
+                if (tracker)
                     syncExpiryTimers(tracker, sessionId, player);
-                }
+
                 socket.emit('player_update', buildPlayerUpdate(player));
             });
         }
@@ -245,13 +247,15 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
         // control key / sequence listener
         registerSecureEvent(socket, 'input', SocketInputEventSchema, (data, sid) => {
             const tracker = sessionTracker.get(sid);
-            if (!tracker) return;
+            if (!tracker)
+                return;
 
-            if (!tracker.inputBuffer) tracker.inputBuffer = [];
+            if (!tracker.inputBuffer)
+                tracker.inputBuffer = [];
+
             tracker.inputBuffer.push(data.key.toLowerCase());
-            if (tracker.inputBuffer.length > CHEAT_CONFIG.konamiSequence.length) {
+            if (tracker.inputBuffer.length > CHEAT_CONFIG.konamiSequence.length)
                 tracker.inputBuffer.shift();
-            }
 
             if (tracker.inputBuffer.length === CHEAT_CONFIG.konamiSequence.length &&
                 tracker.inputBuffer.every((k, idx) => k === CHEAT_CONFIG.konamiSequence[idx])) {
@@ -277,12 +281,12 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
                         sessionStore.set(sid, session, (saveErr) => {
                             release();
-                            if (saveErr) return;
+                            if (saveErr)
+                                return;
 
                             const activeTracker = sessionTracker.get(sid);
-                            if (activeTracker) {
+                            if (activeTracker)
                                 emitToSession(activeTracker, player, sid);
-                            }
                         });
                     });
                 });

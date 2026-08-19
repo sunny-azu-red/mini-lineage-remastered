@@ -71,11 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.js-back-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            if (window.history.length > 1) {
+            if (window.history.length > 1)
                 window.history.back();
-            } else {
+            else
                 window.location.href = '/';
-            }
         });
     });
 
@@ -111,14 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Input dispatcher for hotkeys and control interactions.
+     * Input dispatcher for hotkeys and control interactions ;)
      */
     window.addEventListener('keydown', (e) => {
         if (!e.key || e.repeat || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
             return;
 
-        if (window.gameSocket) {
+        if (window.gameSocket)
             window.gameSocket.emit('input', { key: e.key.toLowerCase() });
-        }
     });
 });

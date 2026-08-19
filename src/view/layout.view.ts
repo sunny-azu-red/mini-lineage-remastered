@@ -73,6 +73,7 @@ export function renderInventory(player: PlayerState): string {
 export function renderEffects(player: PlayerState): string {
     const effects = getActiveEffects(player);
     const now = Date.now();
+
     return effects.map(effect => {
         const typeClass = effect.type ? ` effect-${effect.type}` : '';
         let timerHtml = '';
@@ -96,11 +97,10 @@ export function renderPage(title: string, player: PlayerState, mainContent: stri
     const maxHp = stats.maxHealth;
 
     let lowHealthAlert = '';
-    if (!player.dead && isLowHealth(player.health, maxHp) && !options.hideLowHealthAlert) {
+    if (!player.dead && isLowHealth(player.health, maxHp) && !options.hideLowHealthAlert)
         lowHealthAlert = player.ambushed
             ? `Your HP is dangerously low!<br>${randomElement(AMBUSH_LOW_HEALTH_MESSAGES)}`
             : `Your HP is dangerously low!<br>You should buy some food from the 🍺 <a href='/inn'>Inn</a> to regain your strength.`;
-    }
 
     return render(layoutTpl, {
         title,
@@ -119,6 +119,7 @@ export function renderPage(title: string, player: PlayerState, mainContent: stri
 
 export function renderSimplePage(title: string, mainContent: string, flash: FlashMessage | null = null, player: PlayerState | null = null): string {
     const effectsHtml = (player && isGameStarted(player)) ? renderEffects(player) : '';
+
     return render(simpleTpl, {
         title,
         mainContent,

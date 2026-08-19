@@ -2,7 +2,9 @@ import { cleanEnv, makeValidator, port, str, bool } from 'envalid';
 
 const isTest = process.env.NODE_ENV === 'test';
 const nonEmptyStr = makeValidator<string>((val) => {
-    if (typeof val === 'string' && val.length > 0) return val;
+    if (typeof val === 'string' && val.length > 0)
+        return val;
+
     throw new Error('Cannot be empty');
 });
 

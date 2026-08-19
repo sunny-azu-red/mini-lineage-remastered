@@ -6,5 +6,6 @@ const rateLimitTpl = readTemplate('rate-limit.ejs');
 
 export function renderRateLimitView(player: PlayerState | null, message: string, retryUrl: string): string {
     const content = render(rateLimitTpl, { message, retryUrl });
+
     return renderSimplePage('Slow down adventurer', content, null, player);
 }

@@ -17,13 +17,12 @@ router.get('/js/init.js', (req, res) => {
     const initCode = fs.existsSync(initPath) ? fs.readFileSync(initPath, 'utf-8') : '';
     let js = `window.CONFIG = ${JSON.stringify(getSharedConfig())};\n${initCode}`;
 
-    if (isRelease(GAME_VERSION)) {
+    if (isRelease(GAME_VERSION))
         js = js
             .replace(/\/\/.*$/gm, '')
             .replace(/\/\*[\s\S]*?\*\//g, '')
             .replace(/\s+/g, ' ')
             .trim();
-    }
 
     res.type('application/javascript').send(js);
 });

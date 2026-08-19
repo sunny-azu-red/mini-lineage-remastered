@@ -12,11 +12,10 @@
             btn.textContent = sel.value === '/suicide' ? '⚰️ Perish' : 'Travel';
         });
 
-        if (form) {
+        if (form)
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 window.location.href = sel.value;
             });
-        }
     }
 })();

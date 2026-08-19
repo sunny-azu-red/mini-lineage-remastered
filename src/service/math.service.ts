@@ -67,6 +67,7 @@ export function calculatePercentage(value: number, total: number, precision: num
         return Math.round(p);
 
     const factor = Math.pow(10, precision);
+
     return Math.round(p * factor) / factor;
 }
 

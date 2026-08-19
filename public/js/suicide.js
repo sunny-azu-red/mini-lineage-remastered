@@ -6,7 +6,7 @@
     const sel = document.getElementById('suicide-select');
     const btn = document.getElementById('suicide-btn');
 
-    if (sel && btn) {
+    if (sel && btn)
         sel.addEventListener('change', () => {
             if (sel.value === 'yes') {
                 btn.textContent = 'Do it 🥀';
@@ -16,5 +16,4 @@
                 btn.className = 'btn btn-secondary';
             }
         });
-    }
 })();

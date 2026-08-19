@@ -63,6 +63,7 @@ export function deductCost(player: PlayerState, cost: number): boolean {
         return false;
 
     player.adena -= cost;
+
     return true;
 }
 
@@ -84,15 +85,13 @@ export function getActiveEffects(player: PlayerState): ActiveEffect[] {
     for (const effect of player.effects ?? []) {
         if (effect.expiresAt === undefined || effect.expiresAt > now) {
             effects.push(effect);
-            if (effect.id === 'resting') {
+            if (effect.id === 'resting')
                 hasResting = true;
-            }
             for (const mod of effect.modifiers) {
-                if (mod.type === 'maxHealth') {
+                if (mod.type === 'maxHealth')
                     effectMaxHealthBonus += mod.value;
-                } else if (mod.type === 'regen') {
+                else if (mod.type === 'regen')
                     effectRegenBonus += mod.value;
-                }
             }
         }
     }
@@ -148,11 +147,10 @@ export function getPlayerStats(player: PlayerState): PlayerStats {
     ];
 
     for (const mod of modifiers) {
-        if (mod.type === 'xpMultiplier' || mod.type === 'adenaMultiplier') {
+        if (mod.type === 'xpMultiplier' || mod.type === 'adenaMultiplier')
             stats[mod.type] *= mod.value;
-        } else {
+        else
             stats[mod.type] += mod.value;
-        }
     }
 
     // Tier 4: Sanitization & Range Bounds
@@ -179,9 +177,9 @@ export function applyEffect(
     const now = Date.now();
 
     const existing = (player.effects ?? []).filter(e => {
-        if (effect.group && e.group === effect.group) {
+        if (effect.group && e.group === effect.group)
             return false;
-        }
+
         return e.id !== effect.id && (e.expiresAt === undefined || e.expiresAt > now);
     });
 
@@ -203,6 +201,7 @@ export function restoreHealth(player: PlayerState, amount: number): number {
     const stats = getPlayerStats(player);
     const oldHealth = player.health;
     player.health = Math.min(stats.maxHealth, player.health + amount);
+
     return player.health - oldHealth;
 }
 
@@ -237,6 +236,7 @@ export function resolveBattleOutcome(player: PlayerState, result: BattleResult):
         const hpHealed = restoreHealth(player, stats.maxHealth);
         void statisticsRepository.increment('total_levels_gained');
         void statisticsRepository.increment('total_hp_healed', hpHealed);
+
         return true;
     }
 
@@ -259,27 +259,26 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
         player.weaponId = itemId;
         void statisticsRepository.increment('total_weapons_bought');
         void statisticsRepository.increment('total_adena_spent', item.cost);
+
         return { success: true, text: `You have bought a Weapon.\nYou are now wielding the swift ${item.emoji} ${item.name}!`, item };
     } else if (itemType === ItemType.Armor) {
         player.armorId = itemId;
         void statisticsRepository.increment('total_armors_bought');
         void statisticsRepository.increment('total_adena_spent', item.cost);
+
         return { success: true, text: `You have bought an Armor.\nYou are now wearing the mighty ${item.emoji} ${item.name}!`, item };
     } else {
-        if (item.effect) {
+        if (item.effect)
             applyEffect(player, item.effect);
-        }
+
         const hpHealed = restoreHealth(player, item.stat);
         void statisticsRepository.increment('total_food_bought');
         void statisticsRepository.increment('total_adena_spent', item.cost);
         void statisticsRepository.increment('total_hp_healed', hpHealed);
 
         const effectDesc = item.effect ? `\nYou feel invigorated by the ${item.effect.emoji} ${item.effect.label} buff!` : '';
-        return {
-            success: true,
-            text: `You have bought ${item.emoji} ${item.name}.${effectDesc}\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`,
-            item
-        };
+
+        return { success: true, text: `You have bought ${item.emoji} ${item.name}.${effectDesc}\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`, item };
     }
 }
 
@@ -371,6 +370,7 @@ export function processRegenTick(player: PlayerState): boolean {
         const healed = restoreHealth(player, stats.regen);
         if (healed > 0) {
             void statisticsRepository.increment('total_hp_regen', healed);
+
             return true;
         }
     }

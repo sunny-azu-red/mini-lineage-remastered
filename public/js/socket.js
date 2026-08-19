@@ -36,9 +36,8 @@
         ];
 
         statMappings.forEach(({ el, val }) => {
-            if (el && val != null) {
+            if (el && val != null)
                 el.innerText = Number(val).toLocaleString();
-            }
         });
     }
 
@@ -100,14 +99,13 @@
             const expiresAt = Number(el.dataset.expiresAt);
             if (expiresAt) {
                 const remMs = expiresAt - now;
-                if (remMs <= 0) {
+                if (remMs <= 0)
                     el.remove();
-                } else {
+                else {
                     const remSec = Math.ceil(remMs / 1000);
                     const timerEl = el.querySelector('.effect-timer');
-                    if (timerEl) {
+                    if (timerEl)
                         timerEl.innerText = formatEffectTimer(remSec);
-                    }
                 }
             }
         });

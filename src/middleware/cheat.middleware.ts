@@ -27,6 +27,7 @@ export const cheatMiddleware = (req: Request, res: Response, next: NextFunction)
     if (player.ambushed && isPageNavigation && req.path !== '/battle') {
         void statisticsRepository.increment('total_players_cheated');
         commitSuicide(player);
+
         return res.redirect('/death');
     }
 
