@@ -21,6 +21,7 @@
             <link href="/css/buttons.css" rel="stylesheet" type="text/css">
             <link href="/css/components.css" rel="stylesheet" type="text/css">
         <% } %>
+        <script src="/js/init.js"></script>
     </head>
 
     <body>
@@ -54,13 +55,13 @@
                 </div>
             </div>
         </div>
-        <script src="/js/config.js"></script>
         <% if (isRelease) { %>
             <script src="/script.js"></script>
         <% } else { %>
             <script src="/socket.io/socket.io.js"></script>
             <script src="/js/common.js"></script>
             <script src="/js/socket.js"></script>
+            <script src="/js/start.js"></script>
         <% } %>
     </body>
 

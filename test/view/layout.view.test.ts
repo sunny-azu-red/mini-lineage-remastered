@@ -124,8 +124,8 @@ describe('layout.view', () => {
     });
 
     describe('renderStatus level up branches', () => {
-        it('covers level up animation branches', () => {
-            const p = makePlayer({ experience: 1000, prevExperience: 0 });
+        it('covers status rendering on higher experience', () => {
+            const p = makePlayer({ experience: 1000 });
             renderPage('Title', p, 'Content');
             expect(baseView.render).toHaveBeenCalled();
         });

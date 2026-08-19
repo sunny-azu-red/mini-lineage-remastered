@@ -14,11 +14,8 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     player.raceId = race.id;
     player.name = name;
     player.health = race.startHealth;
-    player.prevHealth = 0;
     player.adena = race.startAdena;
-    player.prevAdena = 0;
     player.experience = 0;
-    player.prevExperience = 0;
     player.weaponId = 0;
     player.armorId = 0;
     player.totalBattles = 0;
@@ -373,7 +370,6 @@ export function processRegenTick(player: PlayerState): boolean {
     if (stats.regen > 0 && player.health < stats.maxHealth) {
         const healed = restoreHealth(player, stats.regen);
         if (healed > 0) {
-            player.prevHealth = player.health;
             void statisticsRepository.increment('total_hp_regen', healed);
             return true;
         }

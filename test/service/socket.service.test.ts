@@ -46,7 +46,7 @@ vi.mock('@/service/player.service', () => ({
         attack: 10,
         defense: 5,
         crit: 4,
-        maxHealth: 100,
+        maxHealth: 250,
         regen: 1,
         ambushRisk: 8,
         xpMultiplier: 1,
@@ -340,7 +340,7 @@ describe('socketService', () => {
 
         expect(playerService.applyEffect).toHaveBeenCalled();
         expect(player.cheated).toBe(true);
-        expect(player.health).toBe(100);
+        expect(player.health).toBe(250);
         expect(player.coward).toBeUndefined();
         expect(sessionStore.set).toHaveBeenCalledWith('session-1', player, expect.any(Function));
     });

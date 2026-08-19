@@ -1,9 +1,13 @@
+/**
+ * Suicide Confirmation Handler
+ * Dynamically updates the action button style and text based on user selection.
+ */
 (function () {
-    // suicide confirmation
-    var sel = document.getElementById('suicide-select');
-    var btn = document.getElementById('suicide-btn');
+    const sel = document.getElementById('suicide-select');
+    const btn = document.getElementById('suicide-btn');
+
     if (sel && btn) {
-        sel.addEventListener('change', function () {
+        sel.addEventListener('change', () => {
             if (sel.value === 'yes') {
                 btn.textContent = 'Do it 🥀';
                 btn.className = 'btn btn-danger';

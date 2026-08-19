@@ -29,22 +29,6 @@ export function renderStatus(player: PlayerState): string {
     const stats = getPlayerStats(player);
     const maxHp = stats.maxHealth;
 
-    const prevHp = player.prevHealth ?? hp;
-    const prevXp = player.prevExperience ?? player.experience;
-    const prevAdena = player.prevAdena ?? player.adena;
-    const prevLevel = calculateLevel(prevXp);
-
-    const prevHpPercent = calculatePercentage(prevHp, maxHp);
-    const { current: prevCurrentXp, percent: prevXpPercentRaw } = getXpProgress(prevXp);
-
-    // for xp, avoid the "shrinking" effect (start from 0 on level up, unless reaching max level)
-    const prevXpPercent = (level > prevLevel && !isMaxLevel(level)) ? 0 : prevXpPercentRaw;
-    const prevCurrentXpAnim = (level > prevLevel && !isMaxLevel(level)) ? 0 : prevCurrentXp;
-
-    player.prevHealth = hp;
-    player.prevExperience = player.experience;
-    player.prevAdena = player.adena;
-
     const statusEmoji = player.dead ? '☠️' : race.emoji;
     const levelDisplay = (player.ambushed || player.dead)
         ? `${statusEmoji} <span class="gold">${race.label} level ${formatNumber(level)}</span>`
@@ -52,29 +36,21 @@ export function renderStatus(player: PlayerState): string {
 
     return render(statusTpl, {
         hp,
-        prevHp,
         maxHp,
         hpFormatted: formatNumber(hp),
-        prevHpFormatted: formatNumber(prevHp),
         maxHpFormatted: formatNumber(maxHp),
         hpPercent: calculatePercentage(hp, maxHp),
-        prevHpPercent,
         xpPercent,
-        prevXpPercent,
         currentXpFormatted: formatNumber(currentXp),
-        prevCurrentXpFormatted: formatNumber(prevCurrentXpAnim),
         nextLevelXpFormatted: formatNumber(nextLevelXp),
         totalXpFormatted: formatNumber(player.experience),
-        prevTotalXpFormatted: formatNumber(prevXp),
         currentXp,
-        prevCurrentXp: prevCurrentXpAnim,
         totalXp: player.experience,
-        prevTotalXp: prevXp,
         isMaxLevel: isMaxLevel(level),
         isLowHealth: isLowHealth(hp, maxHp),
         adena: player.adena,
-        prevAdena: prevAdena,
         adenaFormatted: formatAdena(player.adena),
+        level,
         levelDisplay,
         playerName: player.name,
     });

@@ -46,11 +46,8 @@ export interface PlayerState {
     name: string;
     raceId: RaceType;
     health: number;
-    prevHealth?: number;
     adena: number;
-    prevAdena?: number;
     experience: number;
-    prevExperience?: number;
     weaponId: number;
     armorId: number;
     dead?: boolean;
