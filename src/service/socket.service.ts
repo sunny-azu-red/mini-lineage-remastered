@@ -272,6 +272,7 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
 
                         player.cheated = true;
                         applyEffect(player, EFFECTS_CONFIG.konamiCheat);
+                        player.health = getPlayerStats(player).maxHealth;
                         void statisticsRepository.increment('total_players_cheated');
 
                         sessionStore.set(sid, session, (saveErr) => {

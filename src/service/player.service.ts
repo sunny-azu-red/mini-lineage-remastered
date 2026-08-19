@@ -26,7 +26,9 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     player.consecutiveAmbushes = 0;
     player.totalEnemiesKilled = 0;
     player.effects = [];
+
     applyEffect(player, EFFECTS_CONFIG.newbieBuff);
+    player.health = getPlayerStats(player).maxHealth;
 
     void statisticsRepository.increment('total_players');
     void statisticsRepository.increment('total_adena', player.adena);
@@ -34,8 +36,10 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     const build = randomElement(CHARACTER_CONFIG.builds);
     const age = randomInt(CHARACTER_CONFIG.minAge, CHARACTER_CONFIG.maxAge);
     const definition = age <= CHARACTER_CONFIG.ageThresholds.youth
-        ? 'youth'
-        : (age <= CHARACTER_CONFIG.ageThresholds.adult ? 'adult' : 'elder');
+        ? CHARACTER_CONFIG.ageThresholds.labels.youth
+        : (age <= CHARACTER_CONFIG.ageThresholds.adult
+            ? CHARACTER_CONFIG.ageThresholds.labels.adult
+            : CHARACTER_CONFIG.ageThresholds.labels.elder);
     const welcome = fillTemplate(randomElement(WELCOME_MESSAGES), { raceLabel: race.label });
 
     const text = `You have chosen the ${race.emoji} ${race.label}, ${welcome}\n` +

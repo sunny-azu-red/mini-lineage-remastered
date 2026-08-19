@@ -179,8 +179,8 @@ export const FOODS = [
     { id: 0, name: 'Spiced Ale', emoji: '🍺', stat: 4, cost: 7 },
     { id: 1, name: 'Forest Apple', emoji: '🍎', stat: 6, cost: 15 },
     { id: 2, name: 'Smoked Sausage', emoji: '🌭', stat: 15, cost: 60, effect: EFFECTS_CONFIG.smokedSausage },
-    { id: 3, name: 'Hearty Mash', emoji: '🥔', stat: 25, cost: 250, effect: EFFECTS_CONFIG.heartyMash },
-    { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 50, cost: 1_200, effect: EFFECTS_CONFIG.roastedPheasant },
+    { id: 3, name: 'Hearty Mash', emoji: '🥔', stat: 35, cost: 250, effect: EFFECTS_CONFIG.heartyMash },
+    { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 65, cost: 1_200, effect: EFFECTS_CONFIG.roastedPheasant },
 ] satisfies Item[];
 
 /**
@@ -243,6 +243,11 @@ export const CHARACTER_CONFIG = {
     ageThresholds: {
         youth: 23,
         adult: 54,
+        labels: {
+            youth: 'youth',
+            adult: 'adult',
+            elder: 'elder',
+        },
     },
     nameMinLength: 1,
     nameMaxLength: 20,
