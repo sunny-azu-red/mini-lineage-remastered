@@ -21,8 +21,9 @@
             <link href="/css/buttons.css" rel="stylesheet" type="text/css">
             <link href="/css/components.css" rel="stylesheet" type="text/css">
         <% } %>
+        <template id="game-config"><%- JSON.stringify(config).replace(/</g, '\\u003c') %></template>
         <script nonce="<%= cspNonce %>">
-            window.CONFIG = JSON.parse('<%- JSON.stringify(config) %>');
+            window.CONFIG = JSON.parse(document.getElementById('game-config').innerHTML);
         </script>
     </head>
 
