@@ -5,6 +5,7 @@ import { isGameStarted, getPlayerStats, getActiveEffects } from '@/service/playe
 import { formatAdena, formatNumber, formatEffectTooltip, formatEffectTimer } from '@/util/format.util';
 import { randomElement, getItemModifier } from '@/util/game.util';
 import { isRelease } from '@/util/version.util';
+import { getSharedConfig } from '@/util/config.util';
 import { AMBUSH_LOW_HEALTH_MESSAGES } from '@/constant/narratives.constant';
 import { PlayerState, RenderOptions, FlashMessage } from '@/interface';
 
@@ -114,6 +115,7 @@ export function renderPage(title: string, player: PlayerState, mainContent: stri
         year: new Date().getFullYear(),
         version: getVersionHtml(),
         isRelease: isRelease(GAME_VERSION),
+        config: getSharedConfig(),
     });
 }
 
@@ -129,5 +131,6 @@ export function renderSimplePage(title: string, mainContent: string, flash: Flas
         year: new Date().getFullYear(),
         version: getVersionHtml(),
         isRelease: isRelease(GAME_VERSION),
+        config: getSharedConfig(),
     });
 }

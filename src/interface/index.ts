@@ -6,3 +6,4 @@ export * from './view.interface';
 export * from './database.interface';
 export * from './statistics.interface';
 export * from './socket.interface';
+export * from './context.interface';
