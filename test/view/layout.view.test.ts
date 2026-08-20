@@ -50,6 +50,15 @@ describe('layout.view', () => {
             expect(lastCallArgs.flash).toEqual(flash);
         });
 
+        it('passes shared game config to template locals', () => {
+            renderPage('Title', makePlayer(), 'Content');
+            const renderMock = vi.mocked(baseView.render);
+            const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
+            expect(lastCallArgs.config).toBeDefined();
+            expect(lastCallArgs.config.lowHealthThreshold).toBeDefined();
+            expect(lastCallArgs.config.locale).toBeDefined();
+        });
+
         it('hides low health alert when option is set', () => {
             const p = makePlayer({ health: 5 }); // Low health
             renderPage('Title', p, 'Content', null, { hideLowHealthAlert: true });

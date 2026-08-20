@@ -21,7 +21,9 @@
             <link href="/css/buttons.css" rel="stylesheet" type="text/css">
             <link href="/css/components.css" rel="stylesheet" type="text/css">
         <% } %>
-        <script src="/js/init.js"></script>
+        <script nonce="<%= cspNonce %>">
+            window.CONFIG = JSON.parse('<%- JSON.stringify(config) %>');
+        </script>
     </head>
 
     <body>

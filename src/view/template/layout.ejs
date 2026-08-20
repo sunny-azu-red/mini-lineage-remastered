@@ -21,7 +21,21 @@
             <link href="/css/buttons.css" rel="stylesheet" type="text/css">
             <link href="/css/components.css" rel="stylesheet" type="text/css">
         <% } %>
-        <script src="/js/init.js"></script>
+        <script nonce="<%= cspNonce %>">
+            window.CONFIG = JSON.parse('<%- JSON.stringify(config) %>');
+            try {
+                var h = sessionStorage.getItem('mini_last_hp_pct');
+                var x = sessionStorage.getItem('mini_last_xp_pct');
+                if (h !== null || x !== null) {
+                    var s = document.createElement('style');
+                    s.id = 'sidebar-init-style';
+                    s.textContent = (h !== null ? '#hp-bar { width: ' + h + '% !important; transition: none !important; } ' : '') +
+                                    (x !== null ? '#xp-bar { width: ' + x + '% !important; transition: none !important; } ' : '') +
+                                    '#sidebar .animate-val, #sidebar .animate-adena { visibility: hidden; }';
+                    document.head.appendChild(s);
+                }
+            } catch (e) {}
+        </script>
     </head>
 
     <body>
