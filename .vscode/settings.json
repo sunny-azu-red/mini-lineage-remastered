@@ -23,9 +23,9 @@
   "javascript.format.semicolons": "insert",
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {
-    "**/.git": true,
-    "dist": true,
-    "coverage": true
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true
   },
   "search.exclude": {
     "**/node_modules": true,
