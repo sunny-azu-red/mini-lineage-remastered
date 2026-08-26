@@ -2,8 +2,6 @@
 
 **Mini-Lineage Remastered** is a modern, high-performance, full-stack rewrite of the classic text-based RPG. Built with TypeScript, Node.js, Express, and WebSocket technology, it revitalizes the nostalgic gameplay loop with real-time state synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy user interface.
 
----
-
 ## 🌟 Key Features
 
 ### 🎮 Gameplay & Combat
@@ -37,8 +35,6 @@
 - **Concurrency Locks**: Session-scoped lock middleware preventing duplicate submission and race conditions.
 - **Security Hardening**: Hardened with Helmet headers, Gzip compression, sanitized sessions, and sliding-window rate limiting.
 
----
-
 ## 🛠️ Tech Stack
 
 - **Backend Runtime**: Node.js & Express.js 5
@@ -50,8 +46,6 @@
 - **Logging**: Pino & Pino-Pretty
 - **Testing**: Vitest with v8 Coverage (420+ automated unit & integration tests)
 - **Asset Pipeline**: Clean-CSS, Terser, HTML-Minifier-Terser
-
----
 
 ## 📦 Installation & Setup
 
@@ -68,14 +62,8 @@ Create a `.env` file in the root directory based on `.env.example`
 ### 3. Database Migration
 Run database migrations to initialize tables and seed baseline data:
 ```bash
-# Apply pending migrations
 npm run db:migrate
-
-# Or in development directly with ts-node:
-npm run db:migrate:dev
 ```
-
----
 
 ## 🚀 Running the Application
 
@@ -98,8 +86,6 @@ npm run build
 npm start
 ```
 
----
-
 ## 🧪 Testing & Verification
 
 Run the full test suite (35 test files covering all controllers, middlewares, services, and math algorithms):
@@ -118,21 +104,17 @@ npm run test:watch
 Interactive standalone simulation scripts are available under `scratch/`:
 ```bash
 # Analyze Critical Hit reward balance across 10,000 battles per tier:
-npx ts-node -r tsconfig-paths/register scratch/check_crit_balance.ts
+npm run ts -- scratch/check_crit_balance.ts
 
 # Analyze Leveling Speed & Game Economy:
-npx ts-node -r tsconfig-paths/register scratch/check_economy_balance.ts
-npx ts-node -r tsconfig-paths/register scratch/simulate_full_progression.ts
+npm run ts -- scratch/check_economy_balance.ts
+npm run ts -- scratch/simulate_full_progression.ts
 ```
-
----
 
 ## 🗄️ Database Commands
 
 - `npm run db:migrate`: Applies any pending migrations safely to your schema.
 - `npm run db:fresh`: Drops all tables and re-runs migrations from scratch (**Destructive: Use with caution!**).
-
----
 
 ## 📜 License
 
