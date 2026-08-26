@@ -111,8 +111,8 @@ export const EFFECTS_CONFIG = {
         emoji: '👾',
         label: "Cheater's Mark",
         modifiers: [
-            { type: 'xpMultiplier' as const, value: 6 },
-            { type: 'adenaMultiplier' as const, value: 6 },
+            { type: 'xpMultiplier' as const, value: 4 },
+            { type: 'adenaMultiplier' as const, value: 4 },
             { type: 'crit' as const, value: 15 },
             { type: 'maxHealth' as const, value: 150 },
         ],
@@ -199,7 +199,7 @@ export const HP_CONFIG = {
 export const BATTLE_CONFIG = {
     enemyCount: { minMult: 0.3, maxMult: 0.6 },
     dangerLevel: { scaling: 0.6 },
-    critChance: { multiplier: 1.5, floor: 1 },
+    critReward: { multiplier: 1.9, floor: 1 },
     damageBlocked: { exponent: 0.95, scaling: 0.8 },
     xpGained: { exponent: 1.5, scaling: 0.8, killMin: 10, killMax: 18 },
     adenaGained: { exponent: 2.65, scaling: 0.05, killMin: 2, killMax: 4 },

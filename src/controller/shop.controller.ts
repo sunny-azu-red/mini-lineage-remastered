@@ -21,7 +21,7 @@ export const postWeaponsShop = (req: Request, res: Response, next: NextFunction)
     const player = res.locals.player;
     const result = purchaseItem(player, ItemType.Weapon, parsed.data.select_weapon);
     if (result)
-        player.flash = makePurchaseFlash(result);
+        player.flash = makePurchaseFlash(result, 'buy');
 
     saveAndRedirect(req, res, next, '/shop/weapons');
 };
@@ -41,7 +41,7 @@ export const postArmorsShop = (req: Request, res: Response, next: NextFunction) 
     const player = res.locals.player;
     const result = purchaseItem(player, ItemType.Armor, parsed.data.select_armor);
     if (result)
-        player.flash = makePurchaseFlash(result);
+        player.flash = makePurchaseFlash(result, 'buy');
 
     saveAndRedirect(req, res, next, '/shop/armors');
 };
@@ -61,7 +61,7 @@ export const postInn = (req: Request, res: Response, next: NextFunction) => {
     const player = res.locals.player;
     const result = purchaseItem(player, ItemType.Food, parsed.data.select_food);
     if (result)
-        player.flash = makePurchaseFlash(result);
+        player.flash = makePurchaseFlash(result, 'eat');
 
     saveAndRedirect(req, res, next, '/inn');
 };

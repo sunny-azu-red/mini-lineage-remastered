@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Disables the element immediately and restores it after a safety timeout.
      */
     const SAFETY_TIMEOUT_MS = 3000;
-    const actionables = document.querySelectorAll('button, input[type="submit"], a.btn');
+    const actionables = document.querySelectorAll(':is(button, input[type="submit"], a.btn):not(.no-debounce)');
 
     actionables.forEach(el => {
         el.addEventListener('click', (e) => {

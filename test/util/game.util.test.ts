@@ -16,6 +16,10 @@ describe('makeFlash', () => {
     it('forwards the type', () => {
         expect(makeFlash('msg', 'danger').type).toBe('danger');
     });
+    it('attaches optional sound property', () => {
+        expect(makeFlash('msg', 'warning', 'level').sound).toBe('level');
+        expect(makeFlash('msg', 'info').sound).toBeUndefined();
+    });
 });
 
 describe('makePurchaseFlash', () => {
@@ -26,6 +30,13 @@ describe('makePurchaseFlash', () => {
     it('returns danger type on failure', () => {
         const flash = makePurchaseFlash({ success: false, text: 'not enough adena' });
         expect(flash.type).toBe('danger');
+    });
+    it('forwards sound only on success', () => {
+        const successFlash = makePurchaseFlash({ success: true, text: 'bought!' }, 'buy');
+        expect(successFlash.sound).toBe('buy');
+
+        const failFlash = makePurchaseFlash({ success: false, text: 'failed!' }, 'buy');
+        expect(failFlash.sound).toBeUndefined();
     });
 });
 

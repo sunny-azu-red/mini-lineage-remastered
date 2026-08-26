@@ -22,7 +22,7 @@ export const postGameStart = (req: Request, res: Response, next: NextFunction) =
     const race = RACES[parsed.data.select_race];
     const player = res.locals.player;
     const flash = initializePlayer(player, race, parsed.data.name);
-    player.flash = makeFlash(flash.text, flash.type);
+    player.flash = makeFlash(flash.text, flash.type, flash.sound);
 
     saveAndRedirect(req, res, next, '/');
 };

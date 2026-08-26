@@ -49,6 +49,7 @@
 
     // 2. Experience Bar Animation Setup (handles level-up resets)
     let shouldAnimateXp = false;
+    let isLevelUp = false;
     let startXp = targetXp;
     let startXpPct = targetXpPct;
 
@@ -56,7 +57,7 @@
         const lastXp = parseInt(lastXpStr, 10);
         const lastXpPct = parseFloat(lastXpPctStr);
         const lastLevel = parseInt(lastLevelStr, 10) || 0;
-        const isLevelUp = lastLevel > 0 && targetLevel > lastLevel;
+        isLevelUp = lastLevel > 0 && targetLevel > lastLevel;
 
         if (!isNaN(lastXp) && lastXp !== targetXp) {
             shouldAnimateXp = true;
@@ -98,6 +99,17 @@
     if (initStyle)
         initStyle.remove();
 
+    // Helper to trigger shine animation on a progress bar
+    function triggerBarShimmer(barEl) {
+        if (!barEl)
+            return;
+
+        barEl.classList.remove('shimmer-active');
+        void barEl.offsetWidth; // Force reflow to restart CSS animation
+        barEl.classList.add('shimmer-active');
+        setTimeout(() => barEl.classList.remove('shimmer-active'), ANIMATION_DURATION_MS);
+    }
+
     // Trigger animations in double rAF to ensure starting state renders before transition
     if (shouldAnimateHp || shouldAnimateXp || shouldAnimateAdena) {
         requestAnimationFrame(() => {
@@ -106,11 +118,15 @@
                     hpBar.style.transition = TRANSITION_STYLE;
                     hpBar.style.width = `${targetHpPct}%`;
                     animateValue(hpValEl, startHp, targetHp, ANIMATION_DURATION_MS);
+                    if (targetHp > startHp)
+                        triggerBarShimmer(hpBar);
                 }
                 if (shouldAnimateXp && xpBar) {
                     xpBar.style.transition = TRANSITION_STYLE;
                     xpBar.style.width = `${targetXpPct}%`;
                     animateValue(xpValEl, startXp, targetXp, ANIMATION_DURATION_MS);
+                    if (targetXp > startXp || isLevelUp)
+                        triggerBarShimmer(xpBar);
                 }
                 if (shouldAnimateAdena && adenaValEl)
                     animateValue(adenaValEl, startAdena, targetAdena, ANIMATION_DURATION_MS, typeof formatAdena === 'function' ? formatAdena : undefined);

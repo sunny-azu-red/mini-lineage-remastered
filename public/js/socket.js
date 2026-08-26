@@ -171,10 +171,10 @@
         if (newHp > prevHp) {
             const hpBar = document.getElementById('hp-bar');
             if (hpBar) {
-                hpBar.classList.remove('regen-active');
+                hpBar.classList.remove('shimmer-active');
                 void hpBar.offsetWidth; // Force reflow to restart CSS animation
-                hpBar.classList.add('regen-active');
-                setTimeout(() => hpBar.classList.remove('regen-active'), ANIMATION_DURATION_MS);
+                hpBar.classList.add('shimmer-active');
+                setTimeout(() => hpBar.classList.remove('shimmer-active'), ANIMATION_DURATION_MS);
             }
         }
     }

@@ -164,7 +164,7 @@ describe('formatEffectTooltip', () => {
     it('formats multiple modifier tooltip', () => {
         expect(formatEffectTooltip(EFFECTS_CONFIG.newbieBuff)).toBe('Newbie Blessing (+20 Max HP, +2 Defense, -4% Ambush)');
         expect(formatEffectTooltip(EFFECTS_CONFIG.ambushDebuff)).toBe('Hexed (+4% Ambush, -2% Crit)');
-        expect(formatEffectTooltip(EFFECTS_CONFIG.konamiCheat)).toBe("Cheater's Mark (6x XP, 6x Adena, +15% Crit, +150 Max HP)");
+        expect(formatEffectTooltip(EFFECTS_CONFIG.konamiCheat)).toBe("Cheater's Mark (4x XP, 4x Adena, +15% Crit, +150 Max HP)");
     });
 });
 

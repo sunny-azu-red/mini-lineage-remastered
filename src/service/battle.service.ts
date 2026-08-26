@@ -13,7 +13,7 @@ export function simulateBattle(player: PlayerState): BattleResult {
     const { min: minEnemies, max: maxEnemies } = getEnemyCountRange(attackPower, BATTLE_CONFIG.enemyCount.minMult, BATTLE_CONFIG.enemyCount.maxMult);
     let enemiesKilled = randomInt(minEnemies, maxEnemies);
     if (isCritical)
-        enemiesKilled = Math.max(BATTLE_CONFIG.critChance.floor, Math.ceil(enemiesKilled * BATTLE_CONFIG.critChance.multiplier));
+        enemiesKilled = Math.max(BATTLE_CONFIG.critReward.floor, Math.ceil(enemiesKilled * BATTLE_CONFIG.critReward.multiplier));
 
     // hp lost: danger scales linearly, armor scales sub-linearly to prevent invincibility
     const dangerLevel = calculateDangerLevel(attackPower, BATTLE_CONFIG.dangerLevel.scaling);
@@ -25,8 +25,8 @@ export function simulateBattle(player: PlayerState): BattleResult {
     let adenaGained = (enemiesKilled * randomInt(BATTLE_CONFIG.adenaGained.killMin, BATTLE_CONFIG.adenaGained.killMax)) + calculateBaseAdenaGained(attackPower, BATTLE_CONFIG.adenaGained.exponent, BATTLE_CONFIG.adenaGained.scaling);
     
     if (isCritical) { // critical hits multiply total rewards so they stay impactful at all attack power tiers
-        xpGained = Math.ceil(xpGained * BATTLE_CONFIG.critChance.multiplier);
-        adenaGained = Math.ceil(adenaGained * BATTLE_CONFIG.critChance.multiplier);
+        xpGained = Math.ceil(xpGained * BATTLE_CONFIG.critReward.multiplier);
+        adenaGained = Math.ceil(adenaGained * BATTLE_CONFIG.critReward.multiplier);
     }
 
     // Apply active XP / Adena multipliers (e.g. from buffs or Konami cheat)

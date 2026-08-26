@@ -226,7 +226,15 @@
     overflow: hidden;
 }
 
-.hp-bar.regen-active::after {
+.xp-bar {
+    background: linear-gradient(90deg, var(--xp-color) 0%, var(--xp-glow) 100%);
+    box-shadow: 0 0 8px rgba(155, 89, 182, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.hp-bar.shimmer-active::after,
+.xp-bar.shimmer-active::after {
     content: '';
     position: absolute;
     top: 0;
@@ -237,10 +245,10 @@
             transparent,
             rgba(255, 255, 255, 0.15) 50%,
             transparent);
-    animation: regen-sweep 0.5s ease-out;
+    animation: bar-shimmer-sweep 0.5s ease-out;
 }
 
-@keyframes regen-sweep {
+@keyframes bar-shimmer-sweep {
     from {
         left: -100px;
     }
@@ -248,11 +256,6 @@
     to {
         left: 100%;
     }
-}
-
-.xp-bar {
-    background: linear-gradient(90deg, var(--xp-color) 0%, var(--xp-glow) 100%);
-    box-shadow: 0 0 8px rgba(155, 89, 182, 0.4);
 }
 
 .bar-text {
