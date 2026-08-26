@@ -61,6 +61,7 @@ export function renderBattlegroundView(player: PlayerState, results: BattleResul
         ambushedLine: ambushText,
         fightText: ambushEnemies === 1 ? `Face your Foe!` : `Fight them!`,
         nextMove: randomElement(BATTLE_MOVES),
+        sound: flash?.sound ? undefined : (player.ambushed ? 'ambush' : (results.isCritical ? 'crit' : undefined)),
     });
 
     return renderPage('Battleground', player, content, flash);

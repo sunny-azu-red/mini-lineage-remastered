@@ -1,16 +1,18 @@
-<% if (coward) { %>
-    <div class="alert alert-danger">
-        <%- reason %>
-    </div>
-<% } else { %>
-    <p><%- reason %></p>
-<% } %>
-
-<div class="action-links">
-    <% if (!coward) { %>
-        <form action="/highscores" method="post">
-            <button type="submit" class="btn">📜 Write your Legacy!</button>
-        </form>
+<div id="death-view" data-sound="death">
+    <% if (coward) { %>
+        <div class="alert alert-danger">
+            <%- reason %>
+        </div>
+    <% } else { %>
+        <p><%- reason %></p>
     <% } %>
-    <a href="/restart" class="btn btn-secondary">Play Again?</a>
+
+    <div class="action-links">
+        <% if (!coward) { %>
+            <form action="/highscores" method="post">
+                <button type="submit" class="btn">📜 Write your Legacy!</button>
+            </form>
+        <% } %>
+        <a href="/restart" class="btn btn-secondary">Play Again?</a>
+    </div>
 </div>

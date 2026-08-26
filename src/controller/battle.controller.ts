@@ -34,7 +34,7 @@ export const getBattle = (req: Request, res: Response, next: NextFunction) => {
     }
 
     const flash = results.isLevelUp
-        ? makeFlash(`🎉 Congratulations! You have reached level ${formatNumber(calculateLevel(player.experience))}.`, 'warning')
+        ? makeFlash(`🎉 Congratulations! You have reached level ${formatNumber(calculateLevel(player.experience))}.`, 'warning', 'level')
         : res.locals.flash;
 
     res.send(renderBattlegroundView(player, results, flash));

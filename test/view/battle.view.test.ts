@@ -89,5 +89,37 @@ describe('battle.view', () => {
             const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
             expect(lastCallArgs?.fightText).toBe('Fight them!');
         });
+
+        it('assigns "crit" sound when critical hit lands without ambush or flash sound', () => {
+            const p = makePlayer();
+            renderBattlegroundView(p, makeResults({ isCritical: true }));
+            const renderMock = vi.mocked(baseView.render);
+            const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
+            expect(lastCallArgs?.sound).toBe('crit');
+        });
+
+        it('assigns "ambush" sound when player is ambushed without flash sound', () => {
+            const p = makePlayer({ ambushed: true });
+            renderBattlegroundView(p, makeResults());
+            const renderMock = vi.mocked(baseView.render);
+            const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
+            expect(lastCallArgs?.sound).toBe('ambush');
+        });
+
+        it('omits sound when flash already provides a sound', () => {
+            const p = makePlayer({ ambushed: true });
+            renderBattlegroundView(p, makeResults({ isCritical: true }), { text: 'Level Up', type: 'warning', sound: 'level' });
+            const renderMock = vi.mocked(baseView.render);
+            const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
+            expect(lastCallArgs?.sound).toBeUndefined();
+        });
+
+        it('omits sound during regular combat', () => {
+            const p = makePlayer();
+            renderBattlegroundView(p, makeResults());
+            const renderMock = vi.mocked(baseView.render);
+            const lastCallArgs = renderMock.mock.calls[renderMock.mock.calls.length - 1][1] as any;
+            expect(lastCallArgs?.sound).toBeUndefined();
+        });
     });
 });

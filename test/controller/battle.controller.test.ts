@@ -99,6 +99,16 @@ describe('battleController', () => {
         expect(res.send).toHaveBeenCalledWith('rendered-view');
     });
 
+    it('should attach sound "level" to flash message when level up occurs', () => {
+        vi.mocked(playerService.resolveBattleOutcome).mockReturnValue(true);
+        getBattle(req, res, next);
+        expect(battleView.renderBattlegroundView).toHaveBeenCalledWith(
+            player,
+            expect.any(Object),
+            expect.objectContaining({ sound: 'level', type: 'warning' })
+        );
+    });
+
     it('should redirect home if player is dead', () => {
         vi.mocked(playerService.resolveBattleOutcome).mockImplementation((p: any) => {
             p.dead = true;

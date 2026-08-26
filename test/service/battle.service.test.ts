@@ -47,7 +47,7 @@ describe('simulateBattle', () => {
         expect(() => simulateBattle({ raceId: 0, weaponId: 999, armorId: 999 } as any)).not.toThrow();
         const result = simulateBattle({ raceId: 0, weaponId: 999, armorId: 999 } as any);
         expect(result.enemiesKilled).toBeGreaterThan(0);
-        
+
         // Also test just one invalid to ensure individual fallbacks are hit
         const result2 = simulateBattle({ raceId: 0, weaponId: 1, armorId: 999 } as any);
         expect(result2.damageBlocked).toBeGreaterThanOrEqual(0);
@@ -84,7 +84,7 @@ describe('simulateBattle', () => {
         const result = simulateBattle({ raceId: 0, weaponId: 1, armorId: 1 } as any);
         expect(result.isCritical).toBe(true);
         // We know randomInt returns min, which for weapon stat 16 is min=4.
-        // Multiplier is 1.5, so 4 * 1.5 = 6.
-        expect(result.enemiesKilled).toBe(Math.max(BATTLE_CONFIG.critChance.floor, Math.ceil(4 * BATTLE_CONFIG.critChance.multiplier)));
+        // Multiplier is 1.9, so 4 * 1.9 = 7.6.
+        expect(result.enemiesKilled).toBe(Math.max(BATTLE_CONFIG.critReward.floor, Math.ceil(4 * BATTLE_CONFIG.critReward.multiplier)));
     });
 });

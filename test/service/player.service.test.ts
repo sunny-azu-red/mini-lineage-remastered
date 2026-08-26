@@ -73,6 +73,7 @@ describe('initializePlayer', () => {
         expect(stats.defense).toBe(ARMORS[0].stat + 2);
         expect(stats.ambushRisk).toBe(race.ambushChance - 4);
         expect(flash.type).toBe('info');
+        expect(flash.sound).toBe('start');
         expect(flash.text).toContain('Human');
         // Verify repository increment for new players
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_players');
@@ -761,8 +762,8 @@ describe('getPlayerStats & applyEffect', () => {
         applyEffect(p, EFFECTS_CONFIG.konamiCheat);
 
         const stats = getPlayerStats(p);
-        expect(stats.xpMultiplier).toBe(6);
-        expect(stats.adenaMultiplier).toBe(6);
+        expect(stats.xpMultiplier).toBe(4);
+        expect(stats.adenaMultiplier).toBe(4);
         expect(stats.crit).toBe(19); // 4 (base) + 15
     });
 

@@ -1,14 +1,16 @@
-<p><%- critLine %> <%- killLine %> <%- deflectionLine %></p>
-<p><%- outcomeLine %></p>
+<div id="battle-arena"<% if (sound) { %> data-sound="<%= sound %>"<% } %>>
+    <p><%- critLine %> <%- killLine %> <%- deflectionLine %></p>
+    <p><%- outcomeLine %></p>
 
-<% if (ambushed) { %>
-    <div class="alert alert-danger">💢 <%- ambushedLine %></div>
-    <div class="action-links">
-        <a href="/battle" class="btn btn-danger">⚔️ <%- fightText %></a>
-    </div>
-<% } else { %>
-    <div class="action-links">
-        <a href="/battle" class="btn">⚡ <%- nextMove %></a>
-        <a href="/" class="btn btn-secondary">Retreat</a>
-    </div>
-<% } %>
+    <% if (ambushed) { %>
+        <div class="alert alert-danger">💢 <%- ambushedLine %></div>
+        <div class="action-links">
+            <a href="/battle" class="btn btn-danger">⚔️ <%- fightText %></a>
+        </div>
+    <% } else { %>
+        <div class="action-links">
+            <a href="/battle" class="btn">⚡ <%- nextMove %></a>
+            <a href="/" class="btn btn-secondary">Retreat</a>
+        </div>
+    <% } %>
+</div>

@@ -5,6 +5,7 @@ import { minify } from 'terser';
 const SOCKET_IO_CLIENT = path.resolve(process.cwd(), 'node_modules/socket.io/client-dist/socket.io.min.js');
 const JS_ORDER = [
     'common.js',
+    'audio.js',
     'socket.js',
     'start.js',
     'sidebar.js',

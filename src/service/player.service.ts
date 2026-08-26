@@ -42,7 +42,7 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     const text = `You have chosen the ${race.emoji} ${race.label}, ${welcome}\n` +
         `You are ${build} ${definition} of ${age} seasons, bearing a 🪙 ${formatAdena(player.adena)} Adena tribute.`;
 
-    return { text, type: 'info' };
+    return { text, type: 'info', sound: 'start' };
 }
 
 export function killPlayer(player: PlayerState): void {

@@ -60,14 +60,7 @@ describe('shopController', () => {
             vi.mocked(playerService.purchaseItem).mockReturnValue({ success: true, text: 'Bought', item: {} as any });
             postWeaponsShop(req, res, next);
             expect(playerService.purchaseItem).toHaveBeenCalledWith(res.locals.player, ItemType.Weapon, 1);
-            expect(res.redirect).toHaveBeenCalledWith('/shop/weapons');
-        });
-
-        it('should handle weapon purchase', () => {
-            req.body = { select_weapon: '1' };
-            vi.mocked(playerService.purchaseItem).mockReturnValue({ success: true, text: 'Bought', item: {} as any });
-            postWeaponsShop(req, res, next);
-            expect(playerService.purchaseItem).toHaveBeenCalledWith(res.locals.player, ItemType.Weapon, 1);
+            expect(res.locals.player.flash.sound).toBe('buy');
             expect(res.redirect).toHaveBeenCalledWith('/shop/weapons');
         });
 
@@ -83,6 +76,7 @@ describe('shopController', () => {
             vi.mocked(playerService.purchaseItem).mockReturnValue({ success: true, text: 'Bought', item: {} as any });
             postArmorsShop(req, res, next);
             expect(playerService.purchaseItem).toHaveBeenCalledWith(res.locals.player, ItemType.Armor, 1);
+            expect(res.locals.player.flash.sound).toBe('buy');
             expect(res.redirect).toHaveBeenCalledWith('/shop/armors');
         });
 
@@ -98,6 +92,7 @@ describe('shopController', () => {
             vi.mocked(playerService.purchaseItem).mockReturnValue({ success: true, text: 'Bought', item: {} as any });
             postInn(req, res, next);
             expect(playerService.purchaseItem).toHaveBeenCalledWith(res.locals.player, ItemType.Food, 1);
+            expect(res.locals.player.flash.sound).toBe('eat');
             expect(res.redirect).toHaveBeenCalledWith('/inn');
         });
 

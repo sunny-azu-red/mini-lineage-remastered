@@ -66,6 +66,7 @@ export interface PlayerState {
 export interface FlashMessage {
     text: string;
     type: 'success' | 'danger' | 'info' | 'warning';
+    sound?: string;
 }
 
 export interface TickOptions {

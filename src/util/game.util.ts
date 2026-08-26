@@ -5,15 +5,16 @@ export function randomElement<T>(array: readonly T[] | T[]): T {
     return array[randomInt(0, array.length - 1)];
 }
 
-export function makeFlash(text: string, type: FlashMessage['type']): FlashMessage {
+export function makeFlash(text: string, type: FlashMessage['type'], sound?: string): FlashMessage {
     return {
         type,
-        text: text.replace(/\n/g, '<br>')
+        text: text.replace(/\n/g, '<br>'),
+        sound,
     };
 }
 
-export function makePurchaseFlash(result: PurchaseResult): FlashMessage {
-    return makeFlash(result.text, result.success ? 'success' : 'danger');
+export function makePurchaseFlash(result: PurchaseResult, sound?: string): FlashMessage {
+    return makeFlash(result.text, result.success ? 'success' : 'danger', result.success ? sound : undefined);
 }
 
 /**
