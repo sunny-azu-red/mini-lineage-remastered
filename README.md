@@ -83,7 +83,7 @@ npm run prod
 Or step-by-step:
 ```bash
 npm run build
-npm start
+npm run start
 ```
 
 ## 🧪 Testing & Verification
@@ -91,10 +91,10 @@ npm start
 Run the full test suite (35 test files covering all controllers, middlewares, services, and math algorithms):
 ```bash
 # Run all tests once
-npm test
+npm run test
 
 # Run tests with code coverage report
-npx vitest run --coverage
+npm run test:coverage
 
 # Watch mode for active development
 npm run test:watch
