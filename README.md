@@ -57,7 +57,10 @@ npm install
 ```
 
 ### 2. Environment Configuration
-Create a `.env` file in the root directory based on `.env.example`
+Copy the example environment file and update credentials as needed:
+```bash
+cp .env.example .env
+```
 
 ### 3. Database Migration
 Run database migrations to initialize tables and seed baseline data:
