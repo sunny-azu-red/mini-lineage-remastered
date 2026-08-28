@@ -1,3 +1,5 @@
+import { useGameStore } from '@/store/gameStore';
+
 interface ErrorScreenProps {
     detail?: string | null;
 }
@@ -10,14 +12,22 @@ interface ErrorScreenProps {
  * message for that case today, so `detail` is simply omitted there — a generic notice, exactly
  * like the old EJS page showed whenever `detail` was null, e.g. in a release build).
  *
- * `.js-back-link`'s old `history.back()` behavior is ported literally (not a fixed `navigate()`
- * destination) — `useHistorySync`'s `popstate` handler (see that hook) is what turns this browser
- * "back" into the correct store screen transition, so this component doesn't need to know or
- * guess where "back" leads.
+ * `.js-back-link`'s old behavior (common.js) is ported literally: `history.back()` when there's
+ * somewhere to go back to, else fall back to going home — the old app's fallback was a hard
+ * `location.href = '/'`, which would force a full reload; the SPA equivalent is just `navigate()`
+ * directly, no reload needed. `useHistorySync`'s `popstate` handler (see that hook) is what turns
+ * a real `history.back()` into the correct store screen transition, so this component doesn't
+ * need to know or guess where "back" leads in that case.
  */
 export default function ErrorScreen({ detail = null }: ErrorScreenProps) {
+    const player = useGameStore(state => state.player);
+    const navigate = useGameStore(state => state.navigate);
+
     function handleBack() {
-        window.history.back();
+        if (window.history.length > 1)
+            window.history.back();
+        else
+            navigate(player?.started ? 'home' : 'start');
     }
 
     return (

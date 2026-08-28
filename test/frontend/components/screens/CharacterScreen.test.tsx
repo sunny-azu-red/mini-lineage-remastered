@@ -1,8 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
 import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 import CharacterScreen from '@/components/screens/CharacterScreen';
+
+function stubMatchMedia(matches: boolean) {
+    Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        configurable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+            matches, media: query, onchange: null,
+            addListener: vi.fn(), removeListener: vi.fn(),
+            addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+        })),
+    });
+}
 
 // RaceType enum (backend/interface/game.interface.ts): Human = 0, Orc = 1, Elf = 2, DarkElf = 3.
 // Human's id 0 is the exact value that used to trip the `!player.raceId` falsy-zero bug — using
@@ -147,5 +159,38 @@ describe('CharacterScreen', () => {
         resetStore(makePlayer({ raceId: null }));
         const { container } = render(<CharacterScreen />);
         expect(container).toBeEmptyDOMElement();
+    });
+
+    describe('HP counter animation (regression — this used to snap instantly instead of animating, unlike the sidebar)', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            stubMatchMedia(false);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('animates #char-hp toward a new value over time, the same as the sidebar HP bar', () => {
+            const { rerender } = render(<CharacterScreen />);
+            expect(document.getElementById('char-hp')?.textContent).toBe('80');
+
+            act(() => {
+                resetStore(makePlayer({ health: 100 }));
+                rerender(<CharacterScreen />);
+            });
+            act(() => {
+                vi.advanceTimersByTime(300);
+            });
+
+            const midValue = Number(document.getElementById('char-hp')?.textContent);
+            expect(midValue).toBeGreaterThan(80);
+            expect(midValue).toBeLessThan(100);
+
+            act(() => {
+                vi.advanceTimersByTime(400);
+            });
+            expect(document.getElementById('char-hp')?.textContent).toBe('100');
+        });
     });
 });

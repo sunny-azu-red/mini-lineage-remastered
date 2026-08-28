@@ -1,6 +1,7 @@
 import type { MouseEvent } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { pluralize, formatNumber, formatAdena } from '@shared/format';
+import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
 import Narrative from '@/components/common/Narrative';
 
 /**
@@ -14,6 +15,10 @@ export default function CharacterScreen() {
     const player = useGameStore(state => state.player);
     const catalog = useGameStore(state => state.catalog);
     const navigate = useGameStore(state => state.navigate);
+    // Hooks can't be called after an early return, so this is seeded even before the guard below
+    // confirms `player` exists — harmless, since a 0 rendered for one impossible frame is never
+    // visible (the guard bails before this component ever paints without a real player).
+    const { display: hpDisplay } = useAnimatedNumber(player?.health ?? 0, { format: formatNumber });
 
     if (!player || !catalog || player.raceId === null || !player.weapon || !player.armor || !player.stats)
         return null;
@@ -115,7 +120,7 @@ export default function CharacterScreen() {
                 )}{' '}
                 and your vitality currently sustains you at{' '}
                 <span className="hp">
-                    <span id="char-hp">{formatNumber(player.health ?? 0)}</span> /{' '}
+                    <span id="char-hp" className="animate-val">{hpDisplay}</span> /{' '}
                     <span id="char-max-hp">{formatNumber(player.maxHealth ?? 0)}</span> HP
                 </span>{' '}
                 while your purse holds <span className="gold">🪙 {formatAdena(player.adena ?? 0)} Adena</span> for the

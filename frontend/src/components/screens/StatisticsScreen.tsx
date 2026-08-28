@@ -22,6 +22,8 @@ export default function StatisticsScreen() {
     const navigate = useGameStore(state => state.navigate);
     const [stats, setStats] = useState<Record<string, number> | null | undefined>(undefined);
 
+    const setNotice = useGameStore(state => state.setNotice);
+
     useEffect(() => {
         let cancelled = false;
 
@@ -29,13 +31,21 @@ export default function StatisticsScreen() {
             if (cancelled)
                 return;
 
-            setStats(res.ok ? res.data.stats : null);
+            if (res.ok) {
+                setStats(res.data.stats);
+            } else {
+                // A real fetch failure must NOT collapse into the same "no players yet" empty
+                // state below — that's a genuine, distinct condition (an empty database), not an
+                // error. Surface it the same way every other rejected socket action does.
+                setNotice(res.error);
+                setStats(null);
+            }
         });
 
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [setNotice]);
 
     function handleBack(e: MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
