@@ -72,6 +72,16 @@ function screenFromPath(pathname: string, started: boolean): ScreenId {
     return started ? 'home' : 'start';
 }
 
+// Old app's `cheatMiddleware` restricted an uninitialized (`!isGameStarted`) player to only
+// `/`, `/start`, `/statistics`, `/races`, `/highscores*` — clamp a resolved deep-link screen the
+// same way so landing directly on e.g. `/battle` before ever starting a character doesn't route
+// there.
+const UNSTARTED_ALLOWED_SCREENS: ReadonlySet<ScreenId> = new Set(['start', 'statistics', 'races', 'highscores']);
+
+function clampForUnstarted(screen: ScreenId, started: boolean): ScreenId {
+    return !started && !UNSTARTED_ALLOWED_SCREENS.has(screen) ? 'start' : screen;
+}
+
 function raceFilterFromPath(pathname: string, races: RaceView[]): number | null {
     const path = pathname;
     const prefix = '/highscores/';
@@ -132,7 +142,7 @@ export function useHistorySync(): void {
                 // hook ever ran) — fall back to parsing the current URL directly so a hard
                 // refresh/back-navigation to a deep link like `/highscores/elf` still lands
                 // correctly.
-                navigate(screenFromPath(location.pathname, started), {
+                navigate(clampForUnstarted(screenFromPath(location.pathname, started), started), {
                     raceFilter: raceFilterFromPath(location.pathname, races),
                 });
             }
@@ -158,7 +168,9 @@ export function useHistorySync(): void {
 
         const started = useGameStore.getState().player?.started ?? false;
         fromPopStateRef.current = true;
-        navigate(screenFromPath(path, started), { raceFilter: raceFilterFromPath(path, catalog.races) });
+        navigate(clampForUnstarted(screenFromPath(path, started), started), {
+            raceFilter: raceFilterFromPath(path, catalog.races),
+        });
     }, [catalog, navigate]);
 
     // screen/raceFilter change -> pushState, unless this change originated from popstate/the

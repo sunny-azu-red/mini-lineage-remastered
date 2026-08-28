@@ -1,4 +1,5 @@
 export * from './common';
+export * from './battle-narrative';
 export * from './player';
 export * from './catalog';
 export * from './battle';

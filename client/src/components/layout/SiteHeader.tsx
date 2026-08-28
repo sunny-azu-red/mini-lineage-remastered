@@ -1,12 +1,26 @@
+import type { MouseEvent, ReactNode } from 'react';
+import { useGameStore } from '@/store/gameStore';
 import SoundToggle from './SoundToggle';
 
-// Ported verbatim from src/view/template/partials/header.ejs. The old EJS conditionally wrapped
-// this markup in a clickable `<a href="/" id="header-link">` when the player was neither
-// ambushed nor dead — that click-to-home behavior is deferred to the task that adds
-// `useHistorySync`/routing.
+// Ported from src/view/template/partials/header.ejs + layout.ejs/simple.ejs's wrapping `<a
+// href="/" id="header-link">`. Old `renderPage`/`renderSimplePage` computed `headerClickable` as
+// `!player.ambushed && !player.dead` once a character exists, or `true` when it doesn't (see git
+// show 6256e28:src/view/layout.view.ts) — matched exactly by `clickable` below. `SoundToggle` is
+// deliberately kept OUTSIDE the clickable region (unlike the old markup's incidental nesting of
+// the mute button inside the same anchor) so clicking it never also navigates.
 export default function SiteHeader() {
-    return (
-        <div id="site-header">
+    const player = useGameStore(state => state.player);
+    const navigate = useGameStore(state => state.navigate);
+
+    const clickable = player?.started ? (!player.ambushed && !player.dead) : true;
+
+    function handleClick(e: MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        navigate(player?.started ? 'home' : 'start');
+    }
+
+    const emblem: ReactNode = (
+        <>
             <svg className="header-emblem" xmlns="http://www.w3.org/2000/svg" viewBox="58 0 50 157">
                 <g>
                     <path
@@ -17,6 +31,18 @@ export default function SiteHeader() {
             </svg>
             <span className="header-title">Mini Lineage</span>
             <span className="header-subtitle">Remastered</span>
+        </>
+    );
+
+    return (
+        <div id="site-header">
+            {clickable ? (
+                <a href="#home" id="header-link" onClick={handleClick}>
+                    {emblem}
+                </a>
+            ) : (
+                emblem
+            )}
             <SoundToggle />
         </div>
     );

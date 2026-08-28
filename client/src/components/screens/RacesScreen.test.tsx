@@ -6,7 +6,7 @@ import RacesScreen from './RacesScreen';
 
 function makeCatalog(): GameCatalog {
     return {
-        version: '1.5.0', isRelease: false, year: 2026, locale: 'en-US',
+        version: '1.5.0', isRelease: false, commitUrl: null, year: 2026, locale: 'en-US',
         lowHealthThreshold: 0.2, maxLevel: 50, nameMinLength: 2, nameMaxLength: 16,
         races: [
             {
@@ -32,6 +32,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         adena: null, weapon: null, armor: null, stats: null, effects: [],
         dead: false, ambushed: false, coward: false, cheated: false, deathReason: null, highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }

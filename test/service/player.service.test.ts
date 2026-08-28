@@ -908,6 +908,23 @@ describe('resetPlayer', () => {
         expect(p.lastFightAt).toBeUndefined();
     });
 
+    it('clears lastBattleNarrative so a restarted character does not show its predecessor\'s last fight', () => {
+        const p = makePlayer({
+            lastBattleNarrative: {
+                narrative: {
+                    critLine: null, killLine: 'k', deflectionLine: 'd', outcomeLine: 'o',
+                    ambushLine: null, fightPrompt: null, nextMove: 'Strike',
+                },
+                outcome: { enemiesKilled: 1, hpLost: 1, damageBlocked: 0, xpGained: 1, adenaGained: 1, isCritical: false, isLevelUp: false },
+                ambushed: false,
+                died: true,
+                sound: 'death',
+            },
+        });
+        resetPlayer(p);
+        expect(p.lastBattleNarrative).toBeUndefined();
+    });
+
     it('preserves session-store bookkeeping fields (cookie, bootstrappedAt)', () => {
         const p: any = makePlayer({});
         p.cookie = { maxAge: 86400 };

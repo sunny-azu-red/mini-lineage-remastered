@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import type { ItemView } from '@shared/contract';
 import { formatAdena, formatNumber } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
@@ -27,10 +28,16 @@ const COLUMNS: Column<ItemView>[] = [
 export default function InnScreen() {
     const catalog = useGameStore(state => state.catalog);
     const applyMutation = useGameStore(state => state.applyMutation);
+    const navigate = useGameStore(state => state.navigate);
     const { run, pending } = useAction('shop:purchase');
 
     if (!catalog)
         return null;
+
+    function handleBack(e: MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        navigate('home');
+    }
 
     function handlePurchase(value: string) {
         void run(
@@ -60,6 +67,10 @@ export default function InnScreen() {
                 pending={pending}
                 onSubmit={handlePurchase}
             />
+
+            <p className="last back">
+                <a href="#home" onClick={handleBack}>🚪 Return to Home</a>
+            </p>
         </>
     );
 }

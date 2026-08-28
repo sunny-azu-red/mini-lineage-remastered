@@ -6,7 +6,7 @@ import { useHistorySync } from './useHistorySync';
 
 function makeCatalog(): GameCatalog {
     return {
-        version: '1.5.0', isRelease: false, year: 2026, locale: 'en-US',
+        version: '1.5.0', isRelease: false, commitUrl: null, year: 2026, locale: 'en-US',
         lowHealthThreshold: 0.2, maxLevel: 50, nameMinLength: 2, nameMaxLength: 16,
         races: [
             {
@@ -27,6 +27,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         adena: 500, weapon: null, armor: null, stats: null, effects: [],
         dead: false, ambushed: false, coward: false, cheated: false, deathReason: null, highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }
@@ -172,5 +173,57 @@ describe('useHistorySync', () => {
 
         expect(useGameStore.getState().screen).toBe('highscores');
         expect(useGameStore.getState().highscoreRaceFilter).toBe(1);
+    });
+
+    it('clamps a deep link to a disallowed screen (e.g. /battle) to "start" for an unstarted player, via the initial-sync reconciliation', () => {
+        window.history.replaceState(null, '', '/battle');
+        resetStore({ catalog: null, screen: 'start', player: makePlayer({ started: false }) });
+
+        const { rerender } = renderHook(() => useHistorySync());
+        expect(useGameStore.getState().screen).toBe('start');
+
+        act(() => {
+            resetStore({ screen: 'start', player: makePlayer({ started: false }) });
+        });
+        rerender();
+
+        expect(useGameStore.getState().screen).toBe('start');
+    });
+
+    it('does NOT clamp an allowed screen (e.g. /highscores) for the same unstarted player', () => {
+        window.history.replaceState(null, '', '/highscores');
+        resetStore({ catalog: null, screen: 'start', player: makePlayer({ started: false }) });
+
+        const { rerender } = renderHook(() => useHistorySync());
+
+        act(() => {
+            resetStore({ screen: 'start', player: makePlayer({ started: false }) });
+        });
+        rerender();
+
+        expect(useGameStore.getState().screen).toBe('highscores');
+    });
+
+    it('clamps a popstate-resolved deep link to "start" for an unstarted player', () => {
+        resetStore({ player: makePlayer({ started: false }), screen: 'start' });
+        renderHook(() => useHistorySync());
+
+        act(() => {
+            window.history.pushState(null, '', '/battle');
+            window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+        });
+
+        expect(useGameStore.getState().screen).toBe('start');
+    });
+
+    it('does not clamp a screen carried in real history state (only screenFromPath results are clamped)', () => {
+        resetStore({ player: makePlayer({ started: false }), screen: 'start' });
+        renderHook(() => useHistorySync());
+
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: { screen: 'battle', raceFilter: null } }));
+        });
+
+        expect(useGameStore.getState().screen).toBe('battle');
     });
 });

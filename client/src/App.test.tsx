@@ -11,6 +11,7 @@ function makeCatalog(): GameCatalog {
     return {
         version: '1.5.0',
         isRelease: false,
+        commitUrl: null,
         year: 2026,
         locale: 'en-US',
         lowHealthThreshold: 0.2,
@@ -55,6 +56,7 @@ function makePlayer(): PlayerSnapshot {
         deathReason: null,
         highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
     };
 }
 

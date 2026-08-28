@@ -1,25 +1,11 @@
 import type { PlayerSnapshot } from './player';
 import type { FlashView, SoundName } from './common';
+import type { BattleNarrative, BattleOutcome } from './battle-narrative';
 
-export interface BattleNarrative {
-    critLine: string | null;
-    killLine: string;
-    deflectionLine: string;
-    outcomeLine: string;
-    ambushLine: string | null;   // set iff ambushed === true (after this fight)
-    fightPrompt: string | null;  // "Face your Foe!" / "Fight them!" — set iff ambushed
-    nextMove: string;            // random BATTLE_MOVES label for the "continue" button
-}
-
-export interface BattleOutcome {
-    enemiesKilled: number;
-    hpLost: number;
-    damageBlocked: number;
-    xpGained: number;
-    adenaGained: number;
-    isCritical: boolean;
-    isLevelUp: boolean;
-}
+// Re-exported so existing `import type { BattleNarrative } from '@shared/contract/battle'`-style
+// importers (and the `@shared/contract` barrel) keep working unchanged — see battle-narrative.ts
+// for why the definitions themselves live there instead of here.
+export type { BattleNarrative, BattleOutcome } from './battle-narrative';
 
 export interface BattleFightResult {
     player: PlayerSnapshot;

@@ -6,6 +6,7 @@ function makeCatalog(): GameCatalog {
     return {
         version: '1.5.0',
         isRelease: false,
+        commitUrl: null,
         year: 2026,
         locale: 'en-US',
         lowHealthThreshold: 0.2,
@@ -52,6 +53,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         deathReason: null,
         highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }
@@ -221,9 +223,70 @@ describe('gameStore', () => {
 
             const state = useGameStore.getState();
             expect(state.player).toBe(player);
-            expect(state.lastBattle).toBe(result);
+            // `lastBattle` is now the lighter, reconnect-safe shape (narrative/outcome/
+            // ambushed/died/sound) — NOT the full ack object (which also carries player/flash,
+            // never read off lastBattle by BattleScreen/AmbushBanner; they read store.player/
+            // store.flash directly instead).
+            expect(state.lastBattle).toEqual({
+                narrative: result.narrative,
+                outcome: result.outcome,
+                ambushed: result.ambushed,
+                died: result.died,
+                sound: result.sound,
+            });
             expect(state.flash).toBeNull();
             expect(state.notice).toBeNull();
+        });
+    });
+
+    describe('hydrate — lastBattle persistence (Fix 4)', () => {
+        it('populates lastBattle from PlayerSnapshot.lastBattle on a subsequent hydrate (reconnect after a real page reload)', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false }), catalog });
+            expect(useGameStore.getState().lastBattle).toBeNull();
+
+            const persistedNarrative = {
+                narrative: {
+                    critLine: null, killLine: 'You slay a Goblin.', deflectionLine: 'Your armor deflects the blow.',
+                    outcomeLine: 'You gain 10 XP.', ambushLine: 'Bandits leap from the treeline!',
+                    fightPrompt: 'Fight them!', nextMove: 'Strike',
+                },
+                outcome: { enemiesKilled: 1, hpLost: 5, damageBlocked: 2, xpGained: 10, adenaGained: 3, isCritical: false, isLevelUp: false },
+                ambushed: true,
+                died: false,
+                sound: 'ambush' as const,
+            };
+
+            // Simulates a real reconnect: no recordBattleResult ever ran in this "session" — the
+            // narrative arrives purely via hydrate's PlayerSnapshot.lastBattle, exactly like a
+            // fresh page load after having fought previously.
+            useGameStore.getState().hydrate({
+                player: makePlayer({ dead: false, ambushed: true, lastBattle: persistedNarrative }),
+                catalog,
+            });
+
+            expect(useGameStore.getState().lastBattle).toEqual(persistedNarrative);
+        });
+
+        it('clears a stale lastBattle back to null when a reset lands (server already cleared lastBattleNarrative)', () => {
+            const catalog = makeCatalog();
+            const persistedNarrative = {
+                narrative: {
+                    critLine: null, killLine: 'k', deflectionLine: 'd', outcomeLine: 'o',
+                    ambushLine: null, fightPrompt: null, nextMove: 'Strike',
+                },
+                outcome: { enemiesKilled: 1, hpLost: 1, damageBlocked: 0, xpGained: 1, adenaGained: 1, isCritical: false, isLevelUp: false },
+                ambushed: false,
+                died: true,
+                sound: 'death' as const,
+            };
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: true, lastBattle: persistedNarrative }), catalog });
+            expect(useGameStore.getState().lastBattle).toEqual(persistedNarrative);
+
+            const resetPlayer = makePlayer({ started: false, dead: false, name: null, raceId: null, lastBattle: null });
+            useGameStore.getState().hydrate({ player: resetPlayer, catalog });
+
+            expect(useGameStore.getState().lastBattle).toBeNull();
         });
     });
 

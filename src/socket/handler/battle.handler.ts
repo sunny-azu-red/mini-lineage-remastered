@@ -42,10 +42,23 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
 
             if (ctx.player.dead) {
                 // resolveBattleOutcome -> killPlayer already set deathReason exactly once.
+                const deathNarrative = buildBattleNarrative(ctx.player, results, false);
+
+                // Persist so a reconnect (or any later buildPlayerSnapshot()) shows this exact
+                // narrative instead of a generic placeholder — mirrors resolveDeathReason()'s
+                // "resolve once, persist on PlayerState" pattern.
+                ctx.player.lastBattleNarrative = {
+                    narrative: deathNarrative,
+                    outcome: results,
+                    ambushed: false,
+                    died: true,
+                    sound: 'death',
+                };
+
                 return {
                     player: buildPlayerSnapshot(ctx.player),
                     outcome: results,
-                    narrative: buildBattleNarrative(ctx.player, results, false),
+                    narrative: deathNarrative,
                     ambushed: false,
                     died: true,
                     flash: null,
@@ -88,10 +101,26 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
                 ? 'level'
                 : (ctx.player.ambushed ? 'ambush' : (results.isCritical ? 'crit' : null));
 
+            const narrative = buildBattleNarrative(ctx.player, results, ctx.player.ambushed);
+
+            // Persist so a reconnect (or any later buildPlayerSnapshot()) shows this exact
+            // narrative instead of a generic placeholder — mirrors resolveDeathReason()'s
+            // "resolve once, persist on PlayerState" pattern. `ambushed` here is the SAME
+            // post-roll value already returned below, purely for display text — the live
+            // `ctx.player.ambushed`/PlayerSnapshot.ambushed field stays the sole source of truth
+            // for whether an ambush is currently active.
+            ctx.player.lastBattleNarrative = {
+                narrative,
+                outcome: results,
+                ambushed: Boolean(ctx.player.ambushed),
+                died: false,
+                sound,
+            };
+
             return {
                 player: buildPlayerSnapshot(ctx.player),
                 outcome: results,
-                narrative: buildBattleNarrative(ctx.player, results, ctx.player.ambushed),
+                narrative,
                 ambushed: Boolean(ctx.player.ambushed),
                 died: false,
                 flash,

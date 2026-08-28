@@ -20,6 +20,9 @@ export interface RaceView {
 export interface GameCatalog {
     version: string;
     isRelease: boolean;
+    /** Link to the tagged commit on the repo, only when `version` is a release-shaped build (see
+     *  `isRelease`); `null` for a dev/debug build with nothing sensible to link to. */
+    commitUrl: string | null;
     year: number;
     locale: string;
     lowHealthThreshold: number;

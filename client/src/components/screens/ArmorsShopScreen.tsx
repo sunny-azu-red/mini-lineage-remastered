@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import type { ItemView } from '@shared/contract';
 import { formatAdena, formatNumber } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
@@ -28,12 +29,18 @@ export default function ArmorsShopScreen() {
     const catalog = useGameStore(state => state.catalog);
     const player = useGameStore(state => state.player);
     const applyMutation = useGameStore(state => state.applyMutation);
+    const navigate = useGameStore(state => state.navigate);
     const { run, pending } = useAction('shop:purchase');
 
     if (!catalog)
         return null;
 
     const purchasable = catalog.armors.slice(1);
+
+    function handleBack(e: MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        navigate('home');
+    }
 
     function handlePurchase(value: string) {
         void run(
@@ -70,6 +77,10 @@ export default function ArmorsShopScreen() {
                 pending={pending}
                 onSubmit={handlePurchase}
             />
+
+            <p className="last back">
+                <a href="#home" onClick={handleBack}>🚪 Return to Home</a>
+            </p>
         </>
     );
 }

@@ -1,4 +1,5 @@
 import 'express-session';
+import type { BattleNarrativeSnapshot } from '@shared/contract';
 import { RaceType } from './game.interface';
 
 export interface PlayerStats {
@@ -63,6 +64,13 @@ export interface PlayerState {
     revision?: number;
     lastFightAt?: number;
     bootstrappedAt?: number;
+    /**
+     * The narrative from the most recently resolved `battle:fight`, resolved once and persisted
+     * here — mirrors `resolveDeathReason()`'s pattern for `deathReason` — so it rides along in
+     * every `buildPlayerSnapshot()` call (as `PlayerSnapshot.lastBattle`) and survives any
+     * reconnect, instead of existing only in that one fight's ack.
+     */
+    lastBattleNarrative?: BattleNarrativeSnapshot;
 }
 
 export interface FlashMessage {

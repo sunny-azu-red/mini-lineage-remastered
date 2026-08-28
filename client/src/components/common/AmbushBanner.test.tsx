@@ -42,6 +42,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         deathReason: null,
         highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }
@@ -95,7 +96,6 @@ describe('AmbushBanner', () => {
         resetStore({
             player: makePlayer({ ambushed: true }),
             lastBattle: {
-                player: makePlayer({ ambushed: true }),
                 outcome: { enemiesKilled: 1, hpLost: 1, damageBlocked: 0, xpGained: 1, adenaGained: 1, isCritical: false, isLevelUp: false },
                 narrative: {
                     critLine: null, killLine: 'k', deflectionLine: 'd', outcomeLine: 'o',
@@ -103,7 +103,6 @@ describe('AmbushBanner', () => {
                 },
                 ambushed: true,
                 died: false,
-                flash: null,
                 sound: 'ambush',
             },
         });

@@ -94,7 +94,7 @@ export function resetPlayer(player: PlayerState): void {
         'name', 'raceId', 'health', 'adena', 'experience', 'weaponId', 'armorId',
         'dead', 'ambushed', 'coward', 'cheated', 'deathReason',
         'totalBattles', 'totalAmbushes', 'consecutiveAmbushes', 'totalEnemiesKilled',
-        'effects', 'revision', 'lastFightAt',
+        'effects', 'revision', 'lastFightAt', 'lastBattleNarrative',
     ];
 
     for (const key of gameFields)

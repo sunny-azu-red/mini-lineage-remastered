@@ -8,11 +8,15 @@ const FALLBACK_AMBUSH_LINE = 'You are being ambushed!';
 /**
  * Ported from battleground.ejs — see that template for the exact paragraph grouping/markup this
  * mirrors. The one behavior with NO precedent in the old template is the "no lastBattle yet"
- * state (a first-ever visit or a navigation here without having fought): the old server always
- * had *something* to render because loading `/battle` simulated a fight as a side effect. That
- * simulate-on-load behavior is exactly the bug this whole rewrite exists to delete (see the plan's
- * "Context" section) — so this screen shows a plain, un-narrated prompt instead until the player
- * actually clicks Fight.
+ * state (a genuinely never-fought character): the old server always had *something* to render
+ * because loading `/battle` simulated a fight as a side effect. That simulate-on-load behavior is
+ * exactly the bug this whole rewrite exists to delete (see the plan's "Context" section) — so
+ * this screen shows a plain, un-narrated prompt instead until the player actually clicks Fight.
+ *
+ * `lastBattle` (and the `FALLBACK_AMBUSH_LINE`/"road is quiet" placeholders below) is no longer
+ * wiped by a page reload — Fix 4: `hydrate()` repopulates it from the server-persisted
+ * `PlayerSnapshot.lastBattle` on every reconnect, not just the acting tab's live ack. The
+ * fallbacks now only trigger for a player who has truly never fought yet.
  */
 export default function BattleScreen() {
     const player = useGameStore(state => state.player);

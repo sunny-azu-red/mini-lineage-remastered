@@ -11,11 +11,13 @@ const FALLBACK_AMBUSH_LINE = 'You are being ambushed!';
  * from here or from the Battle screen itself — is this same explicit "Fight!" click. There is no
  * time limit, no penalty for leaving it up, and no auto-resolution on navigation/reload.
  *
- * Narrative text comes from the most recent `battle:fight` ack (`lastBattle.narrative.ambushLine`)
- * when available. Right after a fresh page load/reconnect, `hydrate` can report
- * `player.ambushed === true` with NO `lastBattle` yet at all (narrative only ever exists as an
- * ack response, never as part of `PlayerSnapshot`) — the fallback text below covers exactly that
- * case, and it is load-bearing, not decorative.
+ * Narrative text comes from `lastBattle.narrative.ambushLine`, populated either by the most
+ * recent `battle:fight` ack (`recordBattleResult`) OR — Fix 4 — by `hydrate()` from the
+ * server-persisted `PlayerSnapshot.lastBattle`, so it's reliably present even right after a
+ * fresh page load/reconnect for any player who has fought at least once. The `FALLBACK_AMBUSH_LINE`
+ * below is now a true last resort: it only renders for a character that has never fought at all
+ * (fresh from Game Start, immediately ambushed) — everything else gets the real, server-rolled
+ * ambush line.
  *
  * Suppressed on the Battle screen itself: BattleScreen renders this exact same
  * narrative+Fight-button treatment inline (see its own "ambushed" branch, matching

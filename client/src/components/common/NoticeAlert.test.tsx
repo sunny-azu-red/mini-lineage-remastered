@@ -12,6 +12,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         adena: 500, weapon: null, armor: null, stats: null, effects: [],
         dead: false, ambushed: false, coward: false, cheated: false, deathReason: null, highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }

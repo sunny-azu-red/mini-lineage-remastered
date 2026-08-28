@@ -52,6 +52,7 @@ const EMPTY_SNAPSHOT_DEFAULTS: Omit<PlayerSnapshot, 'revision'> = {
     deathReason: null,
     highscoreEligible: false,
     counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+    lastBattle: null,
 };
 
 /**
@@ -132,5 +133,7 @@ export function buildPlayerSnapshot(player: PlayerState): PlayerSnapshot {
             consecutiveAmbushes: player.consecutiveAmbushes ?? 0,
             totalEnemiesKilled: player.totalEnemiesKilled ?? 0,
         },
+
+        lastBattle: player.lastBattleNarrative ?? null,
     };
 }

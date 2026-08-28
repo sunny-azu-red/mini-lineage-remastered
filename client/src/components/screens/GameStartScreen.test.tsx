@@ -12,6 +12,7 @@ function makeCatalog(): GameCatalog {
     return {
         version: '1.5.0',
         isRelease: false,
+        commitUrl: null,
         year: 2026,
         locale: 'en-US',
         lowHealthThreshold: 0.2,

@@ -1,8 +1,8 @@
 import { useGameStore } from '@/store/gameStore';
 
-// Ported from partials/inventory.ejs. `weapon`/`armor` are `null` before a character exists
-// (Sidebar is currently shown whenever `player !== null`, ahead of the `player.started` gate a
-// later task adds) — each row simply doesn't render in that case.
+// Ported from partials/inventory.ejs. `weapon`/`armor` are `null` before a character exists, but
+// AppShell only mounts Sidebar (and therefore this panel) once `player.started` is true anyway
+// (see AppShell.tsx's `SIDEBAR_SCREENS` gate) — the null checks below are just defensive.
 export default function InventoryPanel() {
     const player = useGameStore(state => state.player);
     if (!player)

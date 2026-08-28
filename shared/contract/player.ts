@@ -1,3 +1,5 @@
+import type { BattleNarrativeSnapshot } from './battle-narrative';
+
 export interface EffectView {
     id: string;
     type: 'buff' | 'debuff' | 'aura';
@@ -76,4 +78,14 @@ export interface PlayerSnapshot {
     highscoreEligible: boolean;
 
     counters: PlayerCounters;
+
+    /**
+     * The most recently resolved `battle:fight` narrative, persisted on `PlayerState` (as
+     * `lastBattleNarrative`) so it survives any reconnect — never `null` for a player who has
+     * fought at least once (even across reconnects), `null` for a never-started or
+     * never-fought character. `ambushed`/`narrative.ambushLine` here are for DISPLAY TEXT only;
+     * `PlayerSnapshot.ambushed` (above) remains the live, authoritative source for whether an
+     * ambush is currently active.
+     */
+    lastBattle: BattleNarrativeSnapshot | null;
 }

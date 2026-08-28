@@ -1,15 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { PlayerSnapshot } from '@shared/contract';
+import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
 
-const { playSoundMock } = vi.hoisted(() => ({ playSoundMock: vi.fn() }));
-vi.mock('@/audio/soundfx', () => ({ playSound: playSoundMock }));
+const { default: ArmorsShopScreen } = await import('./ArmorsShopScreen');
 
-const { default: SuicideScreen } = await import('./SuicideScreen');
+function makeCatalog(): GameCatalog {
+    return {
+        version: '1.5.0',
+        isRelease: false,
+        commitUrl: null,
+        year: 2026,
+        locale: 'en-US',
+        lowHealthThreshold: 0.2,
+        maxLevel: 50,
+        nameMinLength: 1,
+        nameMaxLength: 20,
+        races: [],
+        weapons: [],
+        armors: [
+            { id: 0, name: `Peasant's Tunic`, emoji: '🥋', stat: 2, cost: 0 },
+            { id: 1, name: 'Chainmail', emoji: '🛡️', stat: 12, cost: 400 },
+        ],
+        foods: [],
+    };
+}
 
 function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
     return {
@@ -52,8 +70,8 @@ function resetStore() {
         {
             status: 'ready',
             player: makePlayer(),
-            catalog: null,
-            screen: 'suicide',
+            catalog: makeCatalog(),
+            screen: 'armors',
             highscoreRaceFilter: null,
             flash: null,
             lastBattle: null,
@@ -64,37 +82,18 @@ function resetStore() {
     );
 }
 
-describe('SuicideScreen', () => {
+describe('ArmorsShopScreen', () => {
     beforeEach(() => {
         requestMock.mockReset();
-        playSoundMock.mockReset();
         resetStore();
     });
 
-    it('confirming calls player:suicide, applies the mutation, navigates to death, and plays the death sound', async () => {
-        const deadPlayer = makePlayer({ dead: true, deathReason: 'You took the cowardly way out.', coward: true });
-        requestMock.mockResolvedValue({ ok: true, data: { player: deadPlayer, flash: null } });
+    it('has a Return to Home link that navigates home without requiring an armor selection', async () => {
+        render(<ArmorsShopScreen />);
 
-        render(<SuicideScreen />);
+        fireEvent.click(screen.getByRole('link', { name: /Return to Home/i }));
 
-        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'yes' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Do it 🥀' }));
-
-        await waitFor(() => expect(requestMock).toHaveBeenCalledWith('player:suicide', {}));
-        await waitFor(() => expect(useGameStore.getState().screen).toBe('death'));
-
-        expect(useGameStore.getState().player).toEqual(deadPlayer);
-        expect(playSoundMock).toHaveBeenCalledWith('death');
-    });
-
-    it('cancelling navigates home without calling the server', () => {
-        render(<SuicideScreen />);
-
-        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'no' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Phew 😅' }));
-
+        await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
         expect(requestMock).not.toHaveBeenCalled();
-        expect(playSoundMock).not.toHaveBeenCalled();
-        expect(useGameStore.getState().screen).toBe('home');
     });
 });

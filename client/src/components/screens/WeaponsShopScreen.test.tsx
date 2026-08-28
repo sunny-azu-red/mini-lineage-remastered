@@ -12,6 +12,7 @@ function makeCatalog(): GameCatalog {
     return {
         version: '1.5.0',
         isRelease: false,
+        commitUrl: null,
         year: 2026,
         locale: 'en-US',
         lowHealthThreshold: 0.2,
@@ -60,6 +61,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         deathReason: null,
         highscoreEligible: false,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }
@@ -114,5 +116,14 @@ describe('WeaponsShopScreen', () => {
 
         expect(useGameStore.getState().flash).toEqual({ text: 'Bought!', type: 'success' });
         expect(useGameStore.getState().screen).toBe('weapons');
+    });
+
+    it('has a Return to Home link that navigates home without requiring a weapon selection', async () => {
+        render(<WeaponsShopScreen />);
+
+        fireEvent.click(screen.getByRole('link', { name: /Return to Home/i }));
+
+        await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
+        expect(requestMock).not.toHaveBeenCalled();
     });
 });

@@ -1,5 +1,5 @@
 import type { GameCatalog, RaceView } from '@shared/contract';
-import { RACES, WEAPONS, ARMORS, FOODS, GAME_VERSION, LOCALE, HP_CONFIG, MAX_LEVEL, CHARACTER_CONFIG } from '@/constant/game.constant';
+import { RACES, WEAPONS, ARMORS, FOODS, GAME_VERSION, REPO_COMMIT_URL, LOCALE, HP_CONFIG, MAX_LEVEL, CHARACTER_CONFIG } from '@/constant/game.constant';
 import { isRelease } from '@/util/version.util';
 import { slugify } from '@/util/format.util';
 import { buildRaceTraits } from '@/service/narrative.service';
@@ -35,6 +35,9 @@ export function buildGameCatalog(): GameCatalog {
     cachedCatalog = {
         version: GAME_VERSION,
         isRelease: isRelease(GAME_VERSION),
+        // Matches old layout.view.ts's getVersionHtml() exactly: a straight concatenation, no
+        // separator inserted (REPO_COMMIT_URL already ends with a trailing slash).
+        commitUrl: isRelease(GAME_VERSION) ? `${REPO_COMMIT_URL}${GAME_VERSION}` : null,
         year: new Date().getFullYear(),
         locale: LOCALE,
         lowHealthThreshold: HP_CONFIG.lowHealthThreshold,

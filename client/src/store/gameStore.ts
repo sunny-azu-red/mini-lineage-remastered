@@ -5,6 +5,7 @@ import type {
     FlashView,
     SocketErrorPayload,
     BattleFightResult,
+    BattleNarrativeSnapshot,
     HydratePayload,
 } from '@shared/contract';
 
@@ -43,7 +44,15 @@ export interface GameStore {
     screen: ScreenId;
     highscoreRaceFilter: number | null;
     flash: FlashView | null;
-    lastBattle: BattleFightResult | null;
+    /**
+     * The lighter, reconnect-safe narrative shape (`{narrative, outcome, ambushed, died,
+     * sound}`) — NOT the full `BattleFightResult` ack, which also carries `player`/`flash`
+     * (those always come straight from `store.player`/`store.flash`, never read off this field
+     * by `BattleScreen`/`AmbushBanner`). Populated by the live `battle:fight` ack
+     * (`recordBattleResult`) AND by every `hydrate()` from `PlayerSnapshot.lastBattle` — so a
+     * real page reload/reconnect shows the true last-fight narrative instead of a placeholder.
+     */
+    lastBattle: BattleNarrativeSnapshot | null;
     notice: SocketErrorPayload | null;
     soundEnabled: boolean;
 
@@ -117,7 +126,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 screen = 'start';
             }
 
-            return { player: p.player, catalog: p.catalog, screen };
+            // Sync unconditionally (including to `null`) on EVERY hydrate, not just the first —
+            // `PlayerSnapshot.lastBattle` is now the server-persisted source of truth, so a
+            // reconnect must reflect it exactly: a genuine last-fight narrative on any reconnect
+            // after fighting, but also back to `null` after a reset (game:restart/highscore
+            // submit already clears `lastBattleNarrative` server-side) rather than leaving a
+            // stale narrative from the previous character on screen.
+            const lastBattle: BattleNarrativeSnapshot | null = p.player?.lastBattle ?? null;
+
+            return { player: p.player, catalog: p.catalog, screen, lastBattle };
         });
     },
 
@@ -130,7 +147,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     },
 
     recordBattleResult(result) {
-        set({ player: result.player, flash: result.flash, lastBattle: result, notice: null });
+        set({
+            player: result.player,
+            flash: result.flash,
+            lastBattle: {
+                narrative: result.narrative,
+                outcome: result.outcome,
+                ambushed: result.ambushed,
+                died: result.died,
+                sound: result.sound,
+            },
+            notice: null,
+        });
     },
 
     navigate(screen, opts) {

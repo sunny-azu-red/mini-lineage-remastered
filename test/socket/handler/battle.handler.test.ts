@@ -213,6 +213,54 @@ describe('battle.handler', () => {
         });
     });
 
+    describe('persisting lastBattleNarrative (Fix 4 — survives reconnect)', () => {
+        it('writes ctx.player.lastBattleNarrative matching the ack narrative/outcome/sound exactly, on a live (non-death) fight', () => {
+            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ isCritical: true }));
+            vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
+
+            const ctx = makeCtx(makePlayer());
+            const result = getDef().handler(ctx);
+
+            expect(ctx.player.lastBattleNarrative).toEqual({
+                narrative: result.narrative,
+                outcome: result.outcome,
+                ambushed: result.ambushed,
+                died: result.died,
+                sound: result.sound,
+            });
+            expect(ctx.player.lastBattleNarrative?.ambushed).toBe(true);
+            expect(ctx.player.lastBattleNarrative?.died).toBe(false);
+        });
+
+        it('writes ctx.player.lastBattleNarrative matching the ack on the death path too', () => {
+            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ hpLost: 1000 }));
+
+            const ctx = makeCtx(makePlayer({ health: 10 }));
+            const result = getDef().handler(ctx);
+
+            expect(result.died).toBe(true);
+            expect(ctx.player.lastBattleNarrative).toEqual({
+                narrative: result.narrative,
+                outcome: result.outcome,
+                ambushed: result.ambushed,
+                died: result.died,
+                sound: result.sound,
+            });
+            expect(ctx.player.lastBattleNarrative?.died).toBe(true);
+            expect(ctx.player.lastBattleNarrative?.sound).toBe('death');
+        });
+
+        it('the persisted narrative rides along in the ack\'s own player snapshot (buildPlayerSnapshot runs after the write)', () => {
+            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
+            vi.mocked(mathService.calculateAmbushChance).mockReturnValue(false);
+
+            const ctx = makeCtx(makePlayer());
+            const result = getDef().handler(ctx);
+
+            expect((result.player as any).lastBattle).toEqual(ctx.player.lastBattleNarrative);
+        });
+    });
+
     it('hydrate/connect wiring never references simulateBattle (structural regression guard)', () => {
         const indexSrc = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'src', 'socket', 'index.ts'), 'utf8');
         expect(indexSrc).not.toContain('simulateBattle');

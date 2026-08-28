@@ -51,6 +51,7 @@ describe('buildPlayerSnapshot', () => {
             expect(snapshot.counters).toEqual({
                 totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0,
             });
+            expect(snapshot.lastBattle).toBeNull();
         });
 
         it('reflects player.revision even when the game has not started', () => {
@@ -145,6 +146,27 @@ describe('buildPlayerSnapshot', () => {
             expect(snapshot.counters).toEqual({
                 totalBattles: 5, totalAmbushes: 3, consecutiveAmbushes: 1, totalEnemiesKilled: 10,
             });
+        });
+
+        it('is null when the player has never fought (no lastBattleNarrative persisted yet)', () => {
+            const snapshot = buildPlayerSnapshot(makePlayer());
+            expect(snapshot.lastBattle).toBeNull();
+        });
+
+        it('carries the persisted lastBattleNarrative through verbatim (Fix 4 — survives reconnect)', () => {
+            const lastBattleNarrative = {
+                narrative: {
+                    critLine: null, killLine: 'k', deflectionLine: 'd', outcomeLine: 'o',
+                    ambushLine: 'Bandits leap from the treeline!', fightPrompt: 'Fight them!', nextMove: 'Strike',
+                },
+                outcome: { enemiesKilled: 2, hpLost: 8, damageBlocked: 1, xpGained: 20, adenaGained: 6, isCritical: false, isLevelUp: false },
+                ambushed: true,
+                died: false,
+                sound: 'ambush' as const,
+            };
+            const p = makePlayer({ lastBattleNarrative });
+            const snapshot = buildPlayerSnapshot(p);
+            expect(snapshot.lastBattle).toEqual(lastBattleNarrative);
         });
     });
 

@@ -39,13 +39,14 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         deathReason: 'You fought bravely... but not bravely enough.',
         highscoreEligible: true,
         counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
+        lastBattle: null,
         ...overrides,
     };
 }
 
 function makeCatalog() {
     return {
-        version: '1.5.0', isRelease: false, year: 2026, locale: 'en-US',
+        version: '1.5.0', isRelease: false, commitUrl: null, year: 2026, locale: 'en-US',
         lowHealthThreshold: 0.2, maxLevel: 50, nameMinLength: 2, nameMaxLength: 16,
         races: [
             {
