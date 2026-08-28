@@ -52,7 +52,6 @@ export default function HighscoresScreen() {
     }
 
     const columns: Column<HighscoreRow>[] = [
-        { key: 'rank', header: 'Rank', render: row => formatNumber(row.rank) },
         {
             key: 'name',
             header: 'Name',
@@ -103,7 +102,7 @@ export default function HighscoresScreen() {
             </div>
 
             {rows.length > 0 ? (
-                <DataTable minWidth={COLUMNS_MIN_WIDTH} columns={columns} rows={rows} rowKey={row => row.rank} />
+                <DataTable minWidth={COLUMNS_MIN_WIDTH} columns={columns} rows={rows} rowKey={row => `${row.name}-${row.created}`} />
             ) : (
                 <p>
                     The halls are silent. No soul has yet earned a place among these hallowed pillars. The

@@ -1,7 +1,6 @@
 import type { HydratePayload } from './events';
 
 export interface HighscoreRow {
-    rank: number;
     name: string;
     raceId: number;
     level: number;

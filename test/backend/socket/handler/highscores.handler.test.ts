@@ -75,7 +75,7 @@ describe('highscores.handler', () => {
             expect(def.guards).toBeUndefined();
         });
 
-        it('maps repository rows to 1-based ranked HighscoreRow entries', async () => {
+        it('maps repository rows to HighscoreRow entries (no rank field — the original game never had one)', async () => {
             const rows: HighscoreEntry[] = [
                 { name: 'A', race_id: 0, total_xp: 500, adena: 100, level: 5, created: '2024-01-01T00:00:00.000Z' },
                 { name: 'B', race_id: 0, total_xp: 300, adena: 50, level: 3, created: '2024-01-02T00:00:00.000Z' },
@@ -87,8 +87,8 @@ describe('highscores.handler', () => {
             expect(highscoreRepository.findAll).toHaveBeenCalledWith(0);
             expect(result.raceId).toBe(0);
             expect(result.rows).toEqual([
-                { rank: 1, name: 'A', raceId: 0, level: 5, totalXp: 500, adena: 100, created: '2024-01-01T00:00:00.000Z' },
-                { rank: 2, name: 'B', raceId: 0, level: 3, totalXp: 300, adena: 50, created: '2024-01-02T00:00:00.000Z' },
+                { name: 'A', raceId: 0, level: 5, totalXp: 500, adena: 100, created: '2024-01-01T00:00:00.000Z' },
+                { name: 'B', raceId: 0, level: 3, totalXp: 300, adena: 50, created: '2024-01-02T00:00:00.000Z' },
             ]);
         });
 

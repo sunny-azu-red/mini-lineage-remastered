@@ -63,8 +63,8 @@ function makeList(overrides: Partial<HighscoreList> = {}): HighscoreList {
     return {
         raceId: null,
         rows: [
-            { rank: 1, name: 'Champion', raceId: 1, level: 10, totalXp: 5000, adena: 12000, created: '2026-01-15T10:30:00.000Z' },
-            { rank: 2, name: 'A Very Long Name That Should Get Truncated Here', raceId: 2, level: 8, totalXp: 3000, adena: 900, created: '2026-01-10T08:05:00.000Z' },
+            { name: 'Champion', raceId: 1, level: 10, totalXp: 5000, adena: 12000, created: '2026-01-15T10:30:00.000Z' },
+            { name: 'A Very Long Name That Should Get Truncated Here', raceId: 2, level: 8, totalXp: 3000, adena: 900, created: '2026-01-10T08:05:00.000Z' },
         ],
         ...overrides,
     };
@@ -86,6 +86,13 @@ describe('HighscoresScreen', () => {
         expect(screen.getByText(/🧑 Champion/)).toBeInTheDocument();
         // Truncated to 20 chars + '...' (matches highscores.view.ts's truncate(name, 20)).
         expect(screen.getByText(/A Very Long Name Tha\.\.\./)).toBeInTheDocument();
+    });
+
+    it('does not render a Rank column — the original game never had one', async () => {
+        render(<HighscoresScreen />);
+
+        await screen.findByText(/Champion/);
+        expect(screen.queryByRole('columnheader', { name: 'Rank' })).not.toBeInTheDocument();
     });
 
     it('re-fetches when the store filter changes and highlights the active tab', async () => {

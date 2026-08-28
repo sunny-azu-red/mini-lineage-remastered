@@ -54,8 +54,7 @@ export function registerHighscoresHandlers(io: SocketIOServer, socket: Socket): 
 
             return {
                 raceId: payload.raceId ?? null,
-                rows: rows.map((row, idx) => ({
-                    rank: idx + 1,
+                rows: rows.map(row => ({
                     name: row.name,
                     raceId: row.race_id,
                     level: row.level,
