@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
 
-vi.mock('@/socket/client', () => ({ request: vi.fn() }));
+const { socketEmitMock } = vi.hoisted(() => ({ socketEmitMock: vi.fn() }));
+vi.mock('@/socket/client', () => ({ request: vi.fn(), socket: { emit: socketEmitMock } }));
 
 const { default: App } = await import('./App');
 
@@ -72,6 +73,7 @@ describe('App', () => {
         // can't leak into the next test's initial-deep-link reconciliation via a stale
         // location.pathname.
         window.history.replaceState(null, '', '/');
+        socketEmitMock.mockReset();
         useGameStore.setState(
             {
                 status: 'ready',
@@ -128,5 +130,13 @@ describe('App', () => {
         rerender(<App />);
         expect(document.title).toBe('Mini Lineage - Weapons Shop');
         expect(screen.getByText('Weapons Shop')).toBeInTheDocument();
+    });
+
+    it('mounts the global Konami-code relay (useKonamiRelay): a keydown on window emits input to the server', () => {
+        render(<App />);
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+
+        expect(socketEmitMock).toHaveBeenCalledWith('input', { key: 'arrowup' });
     });
 });

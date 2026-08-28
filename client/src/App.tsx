@@ -3,6 +3,7 @@ import AppShell from './components/layout/AppShell';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useGameStore, type ScreenId } from './store/gameStore';
 import { useHistorySync } from './hooks/useHistorySync';
+import { useKonamiRelay } from './hooks/useKonamiRelay';
 import GameStartScreen from './components/screens/GameStartScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import InnScreen from './components/screens/InnScreen';
@@ -64,6 +65,7 @@ export default function App() {
     const title = SCREEN_TITLES[screen];
 
     useHistorySync();
+    useKonamiRelay();
 
     useEffect(() => {
         document.title = `Mini Lineage - ${title}`;

@@ -9,6 +9,7 @@ import { withSession, readSession } from './session';
 import { floodLimiter } from './rate-limit';
 import { SocketError, toAckError } from './error';
 import { emitStateUpdate } from './emitter';
+import { refreshExpiryTimers } from './tick';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
 import { logger } from '@/config/logger.config';
 import { formatSessionId } from '@/util/format.util';
@@ -107,8 +108,16 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
             // Sync OTHER tabs on the same session — the acting socket gets its own full
             // result via the ack; a little redundancy for the acting tab is harmless and
             // matches today's multi-tab behavior where every tab receives the same push.
-            if (def.mode === 'mutate' && mutatedPlayer)
+            if (def.mode === 'mutate' && mutatedPlayer) {
                 emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer));
+
+                // Reschedule exact expiry timers (buffs/debuffs and the linger-driven
+                // combat aura) right after this mutation persisted — without this, a
+                // freshly-set expiresAt (e.g. battle:fight bumping lastFightAt) would sit
+                // unscheduled until the next periodic tick or reconnect happened to catch
+                // up, instead of firing at the exact millisecond it should.
+                refreshExpiryTimers(io, sessionId, mutatedPlayer);
+            }
 
             ack?.({ ok: true, data });
             logResult(true);

@@ -8,6 +8,35 @@ import { emitStateUpdate, syncExpiryTimers, cleanupStaleSessions, sessionTracker
 import { logger } from '@/config/logger.config';
 
 /**
+ * Schedules exact expiry timers for a session's currently active timed effects (buffs,
+ * debuffs, and now the linger-driven combat aura — see player.service.ts's syncZoneAuras)
+ * and wires their eventual firing back into an expiry-only tick (`{ applyRegen: false }`).
+ *
+ * Single shared home for what used to be an inline closure duplicated in both the
+ * connection handler (src/socket/index.ts) and processSessionTick below — both already
+ * called `syncExpiryTimers` with the exact same `onExpiry` callback. Lives here (rather
+ * than emitter.ts) because it needs `processSessionTick` directly; emitter.ts must NOT
+ * import from tick.ts, since tick.ts already imports `syncExpiryTimers`/`sessionTracker`
+ * from emitter.ts — importing the other way would create a cycle. tick.ts importing
+ * FROM registry.ts (or index.ts) is never needed, so registry.ts and index.ts are free
+ * to import this function from tick.ts without introducing one either.
+ *
+ * A no-op when the session has no tracker (e.g. it was never connected via a socket, or
+ * was already cleaned up) — mirrors the pre-existing inline call sites' own tracker guard.
+ */
+export function refreshExpiryTimers(io: SocketIOServer, sessionId: string, player: PlayerState): void {
+    const tracker = sessionTracker.get(sessionId);
+    if (!tracker)
+        return;
+
+    syncExpiryTimers(io, tracker, sessionId, player, (expiredSessionId) => {
+        const activeTracker = sessionTracker.get(expiredSessionId);
+        if (activeTracker)
+            void processSessionTick(io, activeTracker, expiredSessionId, { applyRegen: false });
+    });
+}
+
+/**
  * Processes a single session's tick — rebuilt on withSession() (lock -> load -> mutate ->
  * persist -> release) in place of today's inline sessionStore.get/set + acquireSessionLock
  * duplication. `withSession` now runs `syncZoneAuras` automatically before this mutator
@@ -42,11 +71,7 @@ export async function processSessionTick(
         if (snapshot === undefined || !playerRef)
             return;
 
-        syncExpiryTimers(io, tracker, sessionId, playerRef, (expiredSessionId) => {
-            const activeTracker = sessionTracker.get(expiredSessionId);
-            if (activeTracker)
-                void processSessionTick(io, activeTracker, expiredSessionId, { applyRegen: false });
-        });
+        refreshExpiryTimers(io, sessionId, playerRef);
 
         emitStateUpdate(io, sessionId, snapshot);
     } catch (err) {

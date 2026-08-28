@@ -4,8 +4,8 @@ import type { RequestHandler } from 'express';
 import type { PlayerState } from '@/interface';
 import { getSessionData } from '@/util/session-store.util';
 import { logger } from '@/config/logger.config';
-import { trackSocket, untrackSocket, emitHydrate, syncExpiryTimers, sessionTracker } from './emitter';
-import { startTickLoop, processSessionTick } from './tick';
+import { trackSocket, untrackSocket, emitHydrate } from './emitter';
+import { startTickLoop, refreshExpiryTimers } from './tick';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
 import { buildGameCatalog } from './serializer/catalog.serializer';
 import { registerGameHandlers } from './handler/game.handler';
@@ -46,14 +46,7 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
                     const session = await getSessionData(sessionId);
                     const player = (session ?? {}) as PlayerState;
 
-                    const tracker = sessionTracker.get(sessionId);
-                    if (tracker) {
-                        syncExpiryTimers(io, tracker, sessionId, player, (expiredSessionId) => {
-                            const activeTracker = sessionTracker.get(expiredSessionId);
-                            if (activeTracker)
-                                void processSessionTick(io, activeTracker, expiredSessionId, { applyRegen: false });
-                        });
-                    }
+                    refreshExpiryTimers(io, sessionId, player);
 
                     emitHydrate(io, sessionId, { player: buildPlayerSnapshot(player), catalog: buildGameCatalog() });
                 } catch (err) {

@@ -870,6 +870,46 @@ describe('syncZoneAuras', () => {
         expect(ids).toContain('resting');
     });
 
+    describe('expiresAt on the combat aura (Fix — exact-timeout combat->resting transition)', () => {
+        it('sets expiresAt to lastFightAt + combatLingerMs for a linger-driven combat aura (not ambushed)', () => {
+            vi.useFakeTimers();
+            try {
+                const now = Date.now();
+                vi.setSystemTime(now);
+                const lastFightAt = now - 1000;
+                const p = makePlayer({ ambushed: false, lastFightAt, effects: [] });
+
+                syncZoneAuras(p);
+
+                const combat = p.effects?.find(e => e.id === 'combat');
+                expect(combat).toBeDefined();
+                expect(combat?.expiresAt).toBe(lastFightAt + TICK_CONFIG.combatLingerMs);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('leaves expiresAt unset for an ambush-driven combat aura, even with a stale lastFightAt', () => {
+            const p = makePlayer({ ambushed: true, lastFightAt: Date.now() - 999_999, effects: [] });
+
+            syncZoneAuras(p);
+
+            const combat = p.effects?.find(e => e.id === 'combat');
+            expect(combat).toBeDefined();
+            expect(combat?.expiresAt).toBeUndefined();
+        });
+
+        it('leaves expiresAt unset for the resting aura', () => {
+            const p = makePlayer({ effects: [] });
+
+            syncZoneAuras(p);
+
+            const resting = p.effects?.find(e => e.id === 'resting');
+            expect(resting).toBeDefined();
+            expect(resting?.expiresAt).toBeUndefined();
+        });
+    });
+
     describe('return value (Fix 8 — callers need to know whether the aura actually changed)', () => {
         it('returns true on a resting -> combat transition', () => {
             const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });

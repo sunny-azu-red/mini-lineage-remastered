@@ -116,12 +116,19 @@ describe('HomeScreen', () => {
         expect(requestMock).not.toHaveBeenCalled();
     });
 
-    it('submitting with nothing selected (the placeholder) is a no-op: no navigation, no fight', () => {
+    it('defaults the select to the first real destination (Inn), not an empty placeholder', () => {
+        render(<HomeScreen />);
+
+        expect(screen.getByRole('combobox')).toHaveValue('inn');
+        expect(screen.queryByText('Where to?')).not.toBeInTheDocument();
+    });
+
+    it('submitting without changing the selection navigates to Inn (the pre-selected default), not a no-op', () => {
         render(<HomeScreen />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Travel' }));
 
-        expect(useGameStore.getState().screen).toBe('home');
+        expect(useGameStore.getState().screen).toBe('inn');
         expect(requestMock).not.toHaveBeenCalled();
     });
 });

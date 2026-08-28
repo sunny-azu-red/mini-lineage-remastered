@@ -18,6 +18,10 @@ vi.mock('@/socket/emitter', () => ({
     emitStateUpdate: vi.fn(),
 }));
 
+vi.mock('@/socket/tick', () => ({
+    refreshExpiryTimers: vi.fn(),
+}));
+
 vi.mock('@/socket/serializer/player.serializer', () => ({
     buildPlayerSnapshot: vi.fn((player: any) => ({ snapshotOf: player })),
 }));
@@ -25,6 +29,7 @@ vi.mock('@/socket/serializer/player.serializer', () => ({
 import { registerEvent } from '@/socket/registry';
 import { withSession, readSession } from '@/socket/session';
 import { emitStateUpdate } from '@/socket/emitter';
+import { refreshExpiryTimers } from '@/socket/tick';
 import { SocketError } from '@/socket/error';
 import type { Guard } from '@/socket/guard';
 import type { RateLimiter } from '@/socket/rate-limit';
@@ -196,6 +201,65 @@ describe('registerEvent', () => {
         expect(emitStateUpdate).toHaveBeenCalledTimes(1);
         expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { snapshotOf: player });
         expect(ack).toHaveBeenCalledWith({ ok: true, data: { result: true } });
+    });
+
+    it('refreshes exact expiry timers for the acting session on a successful mutation (Fix 2)', async () => {
+        // Closes the wiring gap: a fresh expiresAt set during a mutation (e.g. battle:fight
+        // bumping lastFightAt -> a linger-driven combat aura, see player.service.ts) must be
+        // scheduled immediately, not sit unscheduled until the next periodic tick/reconnect.
+        const player = { health: 42 };
+        vi.mocked(withSession).mockImplementation(async (sid: string, run: any) =>
+            run({ sessionId: sid, session: {}, player }));
+
+        const { socket, handlers } = makeSocket();
+        registerEvent(io, socket, {
+            event: 'test:mutate-refresh',
+            schema: z.object({}).default({}),
+            mode: 'mutate',
+            handler: vi.fn().mockReturnValue({ result: true }),
+        });
+
+        const ack = vi.fn();
+        await handlers['test:mutate-refresh']({}, ack);
+
+        expect(refreshExpiryTimers).toHaveBeenCalledTimes(1);
+        expect(refreshExpiryTimers).toHaveBeenCalledWith(io, 'sid-1', player);
+    });
+
+    it('does not refresh expiry timers for a read-mode handler', async () => {
+        vi.mocked(readSession).mockImplementation(async (sid: string, run: any) =>
+            run({ sessionId: sid, session: {}, player: {} }));
+
+        const { socket, handlers } = makeSocket();
+        registerEvent(io, socket, {
+            event: 'test:read-ok-2',
+            schema: z.object({}).default({}),
+            mode: 'read',
+            handler: vi.fn().mockReturnValue({ result: true }),
+        });
+
+        const ack = vi.fn();
+        await handlers['test:read-ok-2']({}, ack);
+
+        expect(refreshExpiryTimers).not.toHaveBeenCalled();
+    });
+
+    it('does not refresh expiry timers when a mutation throws before persisting', async () => {
+        vi.mocked(withSession).mockImplementation(async (_sid: string, run: any) =>
+            run({ sessionId: 'sid-1', session: {}, player: {} }));
+
+        const { socket, handlers } = makeSocket();
+        registerEvent(io, socket, {
+            event: 'test:mutate-throw',
+            schema: z.object({}).default({}),
+            mode: 'mutate',
+            handler: () => { throw new SocketError('DEAD', 'you are dead'); },
+        });
+
+        const ack = vi.fn();
+        await handlers['test:mutate-throw']({}, ack);
+
+        expect(refreshExpiryTimers).not.toHaveBeenCalled();
     });
 
     it('does not emit state:update for a read-mode handler', async () => {

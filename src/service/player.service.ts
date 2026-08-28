@@ -84,10 +84,22 @@ export function syncZoneAuras(player: PlayerState): boolean {
 
     const inCombat = Boolean(player.ambushed) || (Date.now() - (player.lastFightAt ?? 0)) < TICK_CONFIG.combatLingerMs;
 
-    if (inCombat)
-        player.effects.push({ ...EFFECTS_CONFIG.combatAura });
-    else
+    if (inCombat) {
+        // An ambush has no fixed end time — it only ends via an explicit battle:fight,
+        // which already triggers an instant resync through withSession's pre/post sync
+        // (see syncZoneAuras callers). The linger-driven combat aura DOES have a fixed
+        // end time (lastFightAt + combatLingerMs), so give it a real `expiresAt` and let
+        // the existing exact-timeout mechanism (syncExpiryTimers, emitter.ts) fire the
+        // combat -> resting transition at the precise millisecond, instead of waiting on
+        // the next periodic tick.
+        const combatAura: ActiveEffect = { ...EFFECTS_CONFIG.combatAura };
+        if (!player.ambushed)
+            combatAura.expiresAt = (player.lastFightAt ?? Date.now()) + TICK_CONFIG.combatLingerMs;
+
+        player.effects.push(combatAura);
+    } else {
         player.effects.push({ ...EFFECTS_CONFIG.restingAura });
+    }
 
     return before !== (inCombat ? 'combat' : 'resting');
 }

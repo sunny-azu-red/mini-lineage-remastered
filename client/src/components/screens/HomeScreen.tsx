@@ -33,13 +33,11 @@ export default function HomeScreen() {
     // Firing `fight()` right after `navigate('battle')` (not awaited) is the same `battle:fight`
     // call BattleScreen/AmbushBanner already make via this same shared hook — not a new mechanism.
     //
-    // `SelectActionForm` no longer gates submission on a real selection being made (Fix 1/7), so
-    // submitting the placeholder here reaches this handler as `value === ''` — unlike Inn/Weapons
-    // /Armors, Home has no "go home" meaning for that (you're already home), so it's just a no-op.
+    // `noPlaceholder` (Fix A) means `SelectActionForm` always pre-selects the first real
+    // destination (🍺 Inn), matching home.ejs's native browser default — there is no reachable
+    // empty-string value here to guard against, unlike Inn/Weapons/Armors, which legitimately
+    // still use a placeholder meaning "go home".
     function goToDestination(value: string) {
-        if (!value)
-            return;
-
         navigate(value as ScreenId);
         if (value === 'battle')
             fight();
@@ -61,7 +59,7 @@ export default function HomeScreen() {
              */}
             <SelectActionForm
                 options={DESTINATIONS}
-                placeholderLabel="Where to?"
+                noPlaceholder
                 defaultButtonLabel="Travel"
                 activeButtonLabel={value => (value === 'suicide' ? '⚰️ Perish' : 'Travel')}
                 defaultVariant="btn"
