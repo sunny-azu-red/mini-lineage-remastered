@@ -95,21 +95,27 @@ describe('SiteHeader', () => {
         expect(useGameStore.getState().screen).toBe('battle');
     });
 
-    it('is NOT clickable while dead', () => {
+    it('is still clickable while dead — the store transparently redirects the resulting navigate() to death', () => {
         setPlayer(makePlayer({ started: true, dead: true }));
         render(<SiteHeader />);
 
-        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+        const link = screen.getByRole('link');
+        fireEvent.click(link);
+
+        // The header itself no longer knows or cares about dead state — it fires a normal
+        // `navigate('home')` and the store's pin-to-death invariant (tested in gameStore.test.ts)
+        // is what actually redirects this to 'death'.
+        expect(useGameStore.getState().screen).toBe('death');
     });
 
-    it('always renders the SoundToggle mute button regardless of clickability, and it is outside the clickable link', () => {
+    it('always renders the SoundToggle mute button outside the clickable link', () => {
         setPlayer(makePlayer({ started: true, dead: true }));
         render(<SiteHeader />);
 
         const soundButton = screen.getByRole('button', { name: /Sound FX/i });
         expect(soundButton).toBeInTheDocument();
-        // No enclosing <a> anywhere in the tree since the header isn't clickable here.
-        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+        const link = screen.getByRole('link');
+        expect(link).not.toContainElement(soundButton);
     });
 
     it('keeps the SoundToggle outside the clickable <a> when the header IS clickable', () => {

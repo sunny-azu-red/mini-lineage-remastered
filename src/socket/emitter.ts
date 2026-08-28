@@ -33,12 +33,15 @@ export function untrackSocket(sessionId: string, socketId: string): void {
     tracker.lastSeen = Date.now();
 }
 
-function emitToTracked(io: SocketIOServer, sessionId: string, event: string, payload: unknown): void {
+function emitToTracked(io: SocketIOServer, sessionId: string, event: string, payload: unknown, excludeSocketId?: string): void {
     const tracker = sessionTracker.get(sessionId);
     if (!tracker)
         return;
 
     tracker.socketIds.forEach(socketId => {
+        if (socketId === excludeSocketId)
+            return;
+
         const targetSocket = io.sockets.sockets.get(socketId);
         if (targetSocket)
             targetSocket.emit(event, payload);
@@ -49,8 +52,17 @@ export function emitHydrate(io: SocketIOServer, sessionId: string, payload: Hydr
     emitToTracked(io, sessionId, 'hydrate', payload);
 }
 
-export function emitStateUpdate(io: SocketIOServer, sessionId: string, payload: Partial<PlayerSnapshot>): void {
-    emitToTracked(io, sessionId, 'state:update', payload);
+/**
+ * `excludeSocketId`: the acting socket of a mutation already gets its own authoritative,
+ * complete result via the request's own ack — it must NEVER also receive this push for the
+ * same mutation. That "harmless redundancy" used to race the ack: the push has no
+ * transition-detection logic of its own (e.g. "a reset just landed"), so if it arrived and
+ * was applied first, it could silently clobber the baseline the ack's own handler needed,
+ * leaving the UI stuck (see git history — the game:restart screen-freeze bug). Only OTHER
+ * tabs on the same session should receive this.
+ */
+export function emitStateUpdate(io: SocketIOServer, sessionId: string, payload: Partial<PlayerSnapshot>, excludeSocketId?: string): void {
+    emitToTracked(io, sessionId, 'state:update', payload, excludeSocketId);
 }
 
 export function emitNotice(io: SocketIOServer, sessionId: string, notice: FlashView): void {

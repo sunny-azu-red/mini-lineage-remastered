@@ -37,6 +37,7 @@ import type { RateLimiter } from '@/socket/rate-limit';
 function makeSocket(sessionId: string | null = 'sid-1') {
     const handlers: Record<string, (...args: any[]) => any> = {};
     const socket = {
+        id: 'socket-1',
         on: vi.fn((event: string, cb: (...args: any[]) => any) => { handlers[event] = cb; }),
         request: sessionId !== null ? { session: { id: sessionId } } : {},
     } as any;
@@ -199,7 +200,10 @@ describe('registerEvent', () => {
         await handlers['test:mutate-ok']({}, ack);
 
         expect(emitStateUpdate).toHaveBeenCalledTimes(1);
-        expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { snapshotOf: player });
+        // The acting socket's own id is passed through as the exclusion — it already gets this
+        // exact result via its own ack (see emitStateUpdate's doc comment: this used to be a
+        // race, see git history).
+        expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { snapshotOf: player }, 'socket-1');
         expect(ack).toHaveBeenCalledWith({ ok: true, data: { result: true } });
     });
 

@@ -149,17 +149,23 @@ describe('gameStore', () => {
             expect(useGameStore.getState().screen).toBe('start');
         });
 
-        it('does not re-jump to death on every subsequent reconnect once already on the death screen', () => {
+        it('stays pinned to death on every subsequent navigate/reconnect while dead (same simplification as ambush)', () => {
             const catalog = makeCatalog();
             useGameStore.getState().hydrate({ player: makePlayer({ dead: true }), catalog });
             expect(useGameStore.getState().screen).toBe('death');
 
+            // Unlike ambush-era "browse freely" behavior, death is now an unconditional pin: any
+            // attempt to navigate elsewhere while dead is silently redirected back to 'death' —
+            // there's nowhere else a dead player is allowed to be, matching the plan's explicit
+            // "same simplification as /battle" request.
             useGameStore.getState().navigate('highscores');
-            // A further reconnect where dead was ALREADY true before this hydrate (not a fresh
-            // transition) must not force the screen back to death.
-            useGameStore.getState().hydrate({ player: makePlayer({ dead: true }), catalog });
+            expect(useGameStore.getState().screen).toBe('death');
 
-            expect(useGameStore.getState().screen).toBe('highscores');
+            // A further reconnect where dead was already true before this hydrate must also
+            // still land on 'death', not wherever the (irrelevant, since unreachable) screen
+            // field happened to be.
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: true }), catalog });
+            expect(useGameStore.getState().screen).toBe('death');
         });
     });
 

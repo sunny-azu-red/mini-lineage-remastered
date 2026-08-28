@@ -6,12 +6,10 @@ import AdenaRow from './AdenaRow';
 
 // Ported from partials/status.ejs. The old EJS baked a pre-rendered `levelDisplay` HTML string
 // server-side (emoji + race/level, as a link to /character unless ambushed/dead); reconstructed
-// here from plain PlayerSnapshot fields since the client owns rendering now. The ambush half of
-// that no longer applies: the store's `navigate()` unconditionally pins the screen to 'battle'
-// whenever `player.ambushed`, so this link can always attempt to navigate to Character while
-// ambushed and simply gets redirected. `dead` is unrelated and still gates clickability. The link
-// becomes a `navigate('character')` call once routing exists — for this task it's a plain button
-// when clickable, matching only visual/semantic intent, not full click-through behavior yet.
+// here from plain PlayerSnapshot fields since the client owns rendering now. That whole gate is
+// gone: the store's `navigate()` unconditionally pins the screen to 'battle' whenever ambushed,
+// or to 'death' whenever dead, so this link can always attempt to navigate to Character and
+// simply gets redirected either way — it no longer needs to know or care about either state.
 export default function StatusPanel() {
     const player = useGameStore(state => state.player);
     const navigate = useGameStore(state => state.navigate);
@@ -20,7 +18,6 @@ export default function StatusPanel() {
         return null;
 
     const statusEmoji = player.dead ? '☠️' : (player.raceEmoji ?? '');
-    const isClickable = !player.dead;
     const levelText = `${player.raceLabel ?? ''} level ${formatNumber(player.level ?? 0)}`;
 
     return (
@@ -33,19 +30,15 @@ export default function StatusPanel() {
                     <span className="stat-label">Race</span>
                     <span className="stat-value">
                         {statusEmoji}{' '}
-                        {isClickable ? (
-                            <a
-                                href="#character"
-                                onClick={e => {
-                                    e.preventDefault();
-                                    navigate('character');
-                                }}
-                            >
-                                {levelText}
-                            </a>
-                        ) : (
-                            <span className="gold">{levelText}</span>
-                        )}
+                        <a
+                            href="#character"
+                            onClick={e => {
+                                e.preventDefault();
+                                navigate('character');
+                            }}
+                        >
+                            {levelText}
+                        </a>
                     </span>
                 </div>
                 <HpBar player={player} />

@@ -105,11 +105,12 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
                 ? await withSession(sessionId, run)
                 : await readSession(sessionId, run);
 
-            // Sync OTHER tabs on the same session — the acting socket gets its own full
-            // result via the ack; a little redundancy for the acting tab is harmless and
-            // matches today's multi-tab behavior where every tab receives the same push.
+            // Sync OTHER tabs on the same session — the acting socket gets its own full,
+            // authoritative result via the ack below and must be excluded here (see
+            // emitStateUpdate's doc comment: this used to race the ack and could leave the
+            // UI stuck).
             if (def.mode === 'mutate' && mutatedPlayer) {
-                emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer));
+                emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer), socket.id);
 
                 // Reschedule exact expiry timers (buffs/debuffs and the linger-driven
                 // combat aura) right after this mutation persisted — without this, a

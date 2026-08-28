@@ -52,11 +52,14 @@ export default function DeathScreen() {
             {},
             {
                 onSuccess: data => {
-                    // `game:restart` resets the player in place (plan A9) and returns a fresh
-                    // hydrate; `hydrate()` picks the right screen itself (routes to 'start' for
-                    // the now-unstarted player — see gameStore.ts's `hydrate()`), no manual
-                    // navigate() call needed here.
                     hydrate(data.hydrate);
+                    // Explicit, like GameStartScreen's and this screen's own highscore-submit
+                    // handler above — don't rely solely on hydrate()'s implicit "a reset just
+                    // landed" transition-detection. That inference can be raced by the server's
+                    // own state:update push for this same mutation arriving through a different
+                    // path (applyUpdate) and clobbering the baseline it depends on; navigating
+                    // explicitly here can't be raced by anything.
+                    navigate('start');
                 },
             },
         );

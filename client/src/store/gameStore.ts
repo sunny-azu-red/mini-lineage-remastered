@@ -38,14 +38,44 @@ function writeStoredSoundEnabled(enabled: boolean): void {
 }
 
 /**
- * The screen is pinned to 'battle' whenever the player is currently ambushed — there is no other
- * screen to reach in the first place, so this is applied at the end of every action that sets
- * `screen` and/or `player`, using whatever the FINAL `player` value of that update is. This keeps
- * "screen is 'battle' whenever ambushed" true atomically after every single state transition
- * (navigation, hydrate/reconnect, a shop/battle mutation, a pushed update), not just some of them.
+ * The screen is pinned to 'battle' whenever the player is ambushed, or to 'death' whenever the
+ * player is dead — there is no other screen to reach in either case, so this is applied at the
+ * end of every action that sets `screen` and/or `player`, using whatever the FINAL `player` value
+ * of that update is. This keeps both invariants true atomically after every single state
+ * transition (navigation, hydrate/reconnect, a shop/battle mutation, a pushed update), not just
+ * some of them — and it's what lets the header/character-name link stay unconditionally
+ * clickable now: clicking them while ambushed or dead just harmlessly redirects right back.
  */
-function pinToBattleIfAmbushed(screen: ScreenId, player: PlayerSnapshot | null): ScreenId {
-    return player?.ambushed ? 'battle' : screen;
+function pinScreen(screen: ScreenId, player: PlayerSnapshot | null): ScreenId {
+    if (player?.ambushed)
+        return 'battle';
+    if (player?.dead)
+        return 'death';
+    return screen;
+}
+
+/**
+ * Shared by every action that receives a new `player` value (`hydrate`, `applyUpdate` — NOT
+ * `applyMutation`/`recordBattleResult`, whose actions never transition FROM started TO unstarted)
+ * so the "a reset just landed, route back to 'start'" transition is detected identically no
+ * matter which path the update arrives through. This matters because a mutating action's own
+ * ack (processed via `hydrate`/`applyMutation`) and the server's `state:update` push for that
+ * SAME mutation (processed via `applyUpdate`, still received by every OTHER tab on the session)
+ * can arrive in either order — if only one of the two paths knew how to detect the transition,
+ * whichever one lost the race would silently leave the screen stuck (see git history: the
+ * game:restart screen-freeze bug).
+ */
+function deriveScreenAfterPlayerChange(
+    prevPlayer: PlayerSnapshot | null,
+    nextPlayer: PlayerSnapshot | null,
+    currentScreen: ScreenId,
+): ScreenId {
+    const wasStarted = prevPlayer?.started ?? false;
+    const isStarted = nextPlayer?.started ?? false;
+
+    const screen = wasStarted && !isStarted ? 'start' : currentScreen;
+
+    return pinScreen(screen, nextPlayer);
 }
 
 export interface GameStore {
@@ -109,8 +139,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // (every HydratePayload carries a non-null GameCatalog) — so it doubles as the
             // "is this the first hydrate this session" flag without a separate tracked field.
             const isFirstHydrateEver = state.catalog === null;
-            const wasDead = state.player?.dead ?? false;
-            const isDead = p.player?.dead ?? false;
             // NOTE: the server (src/socket/index.ts's connection handler) always sends a
             // non-null PlayerSnapshot — even for a session with no character yet, it's
             // `buildPlayerSnapshot({})`, i.e. `{ started: false, ... }` — never a literal
@@ -118,24 +146,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // generality (and so `game:restart`'s reset-in-place result composes cleanly), but
             // `started` — not null-ness — is the real "has a character" signal on both the
             // very first hydrate and every subsequent one.
-            const wasStarted = state.player?.started ?? false;
-            const isStarted = p.player?.started ?? false;
-
-            let screen = state.screen;
-            if (isFirstHydrateEver) {
-                screen = !isStarted ? 'start' : isDead ? 'death' : 'home';
-            } else if (isDead && !wasDead) {
-                // The core "refresh mid-ambush is boring/harmless" invariant only cares about
-                // one transition: a reconnect that reveals the player just died. Every other
-                // reconnect must leave the current screen alone.
-                screen = 'death';
-            } else if (wasStarted && !isStarted) {
-                // A reset landed (game:restart or a highscore submit, both of which resolve
-                // `resetPlayer()` server-side and push a fresh hydrate) — route back to 'start'
-                // exactly like a brand-new, never-started visitor, rather than leaving the
-                // screen stuck on wherever the just-reset player used to be (e.g. 'death').
-                screen = 'start';
-            }
+            const screen = isFirstHydrateEver
+                ? pinScreen(p.player?.started ? 'home' : 'start', p.player)
+                : deriveScreenAfterPlayerChange(state.player, p.player, state.screen);
 
             // Sync unconditionally (including to `null`) on EVERY hydrate, not just the first —
             // `PlayerSnapshot.lastBattle` is now the server-persisted source of truth, so a
@@ -145,7 +158,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // stale narrative from the previous character on screen.
             const lastBattle: BattleNarrativeSnapshot | null = p.player?.lastBattle ?? null;
 
-            return { player: p.player, catalog: p.catalog, screen: pinToBattleIfAmbushed(screen, p.player), lastBattle };
+            return { player: p.player, catalog: p.catalog, screen, lastBattle };
         });
     },
 
@@ -154,12 +167,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             if (!state.player)
                 return {};
             const player = { ...state.player, ...p };
-            return { player, screen: pinToBattleIfAmbushed(state.screen, player) };
+            return { player, screen: deriveScreenAfterPlayerChange(state.player, player, state.screen) };
         });
     },
 
     applyMutation(player, flash = null) {
-        set(state => ({ player, flash, notice: null, screen: pinToBattleIfAmbushed(state.screen, player) }));
+        set(state => ({ player, flash, notice: null, screen: pinScreen(state.screen, player) }));
     },
 
     recordBattleResult(result) {
@@ -174,13 +187,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 sound: result.sound,
             },
             notice: null,
-            screen: pinToBattleIfAmbushed(state.screen, result.player),
+            screen: pinScreen(state.screen, result.player),
         }));
     },
 
     navigate(screen, opts) {
         set(state => ({
-            screen: pinToBattleIfAmbushed(screen, state.player),
+            screen: pinScreen(screen, state.player),
             highscoreRaceFilter: opts?.raceFilter !== undefined ? opts.raceFilter : state.highscoreRaceFilter,
         }));
     },

@@ -81,6 +81,23 @@ describe('emitter', () => {
             expect(sock1.emit).toHaveBeenCalledWith('state:update', { health: 50 });
         });
 
+        it('emitStateUpdate excludes the acting socket when told to, but still reaches every other tab', () => {
+            // Regression test for the game:restart screen-freeze bug: the acting socket must
+            // never receive this push for its own mutation (it already got the full result via
+            // its own ack) — receiving both could race, since the ack's handler and this push's
+            // handler don't necessarily apply their updates in the same order.
+            const acting = { emit: vi.fn() };
+            const otherTab = { emit: vi.fn() };
+            const io = makeIo({ 'sock-acting': acting, 'sock-other': otherTab });
+            trackSocket(io, 'sid-1', 'sock-acting');
+            trackSocket(io, 'sid-1', 'sock-other');
+
+            emitStateUpdate(io, 'sid-1', { health: 50 }, 'sock-acting');
+
+            expect(acting.emit).not.toHaveBeenCalled();
+            expect(otherTab.emit).toHaveBeenCalledWith('state:update', { health: 50 });
+        });
+
         it('emitNotice sends the "notice" event', () => {
             const sock1 = { emit: vi.fn() };
             const io = makeIo({ 'sock-1': sock1 });
