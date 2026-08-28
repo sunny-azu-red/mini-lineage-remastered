@@ -1,0 +1,56 @@
+/*
+ * ========================================================================
+ * Mini-Lineage — Tables
+ * .data-table, utility span/td classes
+ * ========================================================================
+ */
+
+/* ===== Data Table ===== */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0px 0px 12px 0px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-dark);
+}
+
+.data-table thead tr {
+    background: linear-gradient(180deg, #0d2a50 0%, #0a1e38 100%);
+}
+
+.data-table th {
+    color: var(--gold);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 8px 10px 7px 10px;
+    text-align: left;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-dark);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.data-table td {
+    padding: 7px 10px;
+    color: var(--text-primary);
+}
+
+.data-table tbody tr:nth-child(odd) {
+    background: rgba(26, 26, 46, 0.6);
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: rgba(22, 33, 62, 0.5);
+}
+
+td.center,
+th.center {
+    text-align: center;
+}

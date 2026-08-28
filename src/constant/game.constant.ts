@@ -217,6 +217,7 @@ export const TICK_CONFIG = {
     intervalMs: 5_000,
     combatZones: ['/battle', '/suicide', '/death'],
     restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],
+    combatLingerMs: 10_000,
 } as const;
 
 /**
@@ -272,5 +273,9 @@ export const RATE_LIMIT_CONFIG = {
     shop: {
         windowMs: 60 * 1000, // 1 minute
         limit: 30, // 30 shop actions per minute
+    },
+    flood: {
+        windowMs: 60 * 1000, // 1 minute
+        limit: 300, // 300 events per minute, applied to every socket event
     },
 } as const;

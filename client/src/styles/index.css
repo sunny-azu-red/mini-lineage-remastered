@@ -1,0 +1,11 @@
+/*
+ * Cascade order matches scripts/min/css.ts's CSS_ORDER constant exactly, so specificity/
+ * cascade behavior is identical to the production-minified bundle the legacy server ships.
+ */
+@import './tokens.css';
+@import './base.css';
+@import './layout.css';
+@import './forms.css';
+@import './tables.css';
+@import './buttons.css';
+@import './components.css';

@@ -1,9 +1,9 @@
 import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, TickOptions } from '@/interface';
-import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
 import { randomElement, getItemModifier } from '@/util/game.util';
-import { WELCOME_MESSAGES } from '@/constant/narratives.constant';
+import { WELCOME_MESSAGES, DEATH_MESSAGES } from '@/constant/narratives.constant';
 import { statisticsRepository } from '@/repository/statistics.repository';
 
 export function isGameStarted(player: PlayerState): boolean {
@@ -51,11 +51,72 @@ export function killPlayer(player: PlayerState): void {
     player.effects = [];
 
     void statisticsRepository.increment('total_deaths');
+    resolveDeathReason(player);
 }
 
 export function commitSuicide(player: PlayerState): void {
-    killPlayer(player);
+    // set `coward` before killPlayer() so its internal resolveDeathReason() call
+    // (idempotent — see below) already sees the correct branch.
     player.coward = true;
+    killPlayer(player);
+    resolveDeathReason(player);
+}
+
+/**
+ * Strips existing 'resting'/'combat' zone auras and re-adds the correct one based
+ * on current state — server-derived zone tracking (replaces the URL-path-based
+ * derivation in zone.middleware.ts). Not wired into any caller yet; this phase is
+ * purely additive. Dead players get neither aura.
+ */
+export function syncZoneAuras(player: PlayerState): void {
+    player.effects = (player.effects ?? []).filter(e => e.id !== 'resting' && e.id !== 'combat');
+
+    if (player.dead)
+        return;
+
+    const inCombat = Boolean(player.ambushed) || (Date.now() - (player.lastFightAt ?? 0)) < TICK_CONFIG.combatLingerMs;
+
+    if (inCombat)
+        player.effects.push({ ...EFFECTS_CONFIG.combatAura });
+    else
+        player.effects.push({ ...EFFECTS_CONFIG.restingAura });
+}
+
+/**
+ * Clears every PlayerState key back to its "no character" state, preserving
+ * session-store bookkeeping fields that aren't part of the game's own fields
+ * (`cookie`, `bootstrappedAt`). After this call, isGameStarted(player) is false.
+ * Not wired into any caller yet; this phase is purely additive.
+ */
+export function resetPlayer(player: PlayerState): void {
+    const gameFields: (keyof PlayerState)[] = [
+        'name', 'raceId', 'health', 'adena', 'experience', 'weaponId', 'armorId',
+        'dead', 'ambushed', 'coward', 'cheated', 'deathReason', 'flash',
+        'totalBattles', 'totalAmbushes', 'consecutiveAmbushes', 'totalEnemiesKilled',
+        'effects', 'revision', 'lastFightAt',
+    ];
+
+    for (const key of gameFields)
+        delete (player as any)[key];
+}
+
+/**
+ * Sets player.deathReason (only if not already set) using the same branching
+ * as the old renderDeathView — extracted here so the reason is fixed once, at
+ * time of death, rather than re-randomized on every render.
+ */
+export function resolveDeathReason(player: PlayerState): void {
+    if (player.deathReason)
+        return;
+
+    if (player.cheated)
+        player.deathReason = "👾 The gods saw your heresy and cast your memory into oblivion.";
+    else if (player.coward)
+        player.deathReason = player.ambushed
+            ? "🪤 You were caught trying to flee an ambush!"
+            : "🤡 You took the cowardly way out.";
+    else
+        player.deathReason = randomElement(DEATH_MESSAGES);
 }
 
 export function deductCost(player: PlayerState, cost: number): boolean {

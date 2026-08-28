@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ItemType, PlayerState } from '@/interface';
-import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
+import { DEATH_MESSAGES } from '@/constant/narratives.constant';
 import {
     isGameStarted,
     initializePlayer,
@@ -21,6 +22,9 @@ import {
     getPlayerStats,
     applyEffect,
     getActiveEffects,
+    syncZoneAuras,
+    resetPlayer,
+    resolveDeathReason,
 } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
 
@@ -804,5 +808,167 @@ describe('getPlayerStats & applyEffect', () => {
         expect(stats.defense).toBe(0);
         expect(stats.crit).toBe(0);
         expect(stats.ambushRisk).toBe(100);
+    });
+});
+
+describe('syncZoneAuras', () => {
+    it('adds no zone aura when the player is dead', () => {
+        const p = makePlayer({ dead: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        syncZoneAuras(p);
+        expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
+    });
+
+    it('adds a combat aura when ambushed', () => {
+        const p = makePlayer({ ambushed: true, effects: [] });
+        syncZoneAuras(p);
+        expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+    });
+
+    it('adds a combat aura when the player fought within the linger window', () => {
+        vi.useFakeTimers();
+        try {
+            const now = Date.now();
+            vi.setSystemTime(now);
+            const p = makePlayer({ lastFightAt: now - (TICK_CONFIG.combatLingerMs - 1), effects: [] });
+            syncZoneAuras(p);
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('adds a resting aura once the linger window has fully elapsed', () => {
+        vi.useFakeTimers();
+        try {
+            const now = Date.now();
+            vi.setSystemTime(now);
+            const p = makePlayer({ lastFightAt: now - TICK_CONFIG.combatLingerMs, effects: [] });
+            syncZoneAuras(p);
+            expect(p.effects?.map(e => e.id)).toEqual(['resting']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('adds a resting aura when idle and never having fought', () => {
+        const p = makePlayer({ effects: [] });
+        syncZoneAuras(p);
+        expect(p.effects?.map(e => e.id)).toEqual(['resting']);
+    });
+
+    it('replaces a stale zone aura rather than stacking', () => {
+        const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        syncZoneAuras(p);
+        expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+    });
+
+    it('preserves non-zone effects untouched', () => {
+        const p = makePlayer({ effects: [{ ...EFFECTS_CONFIG.konamiCheat }] });
+        syncZoneAuras(p);
+        const ids = p.effects?.map(e => e.id);
+        expect(ids).toContain('konami_cheat');
+        expect(ids).toContain('resting');
+    });
+});
+
+describe('resetPlayer', () => {
+    it('clears game fields so isGameStarted returns false', () => {
+        const p = makePlayer({ raceId: 0, health: 100, adena: 500 });
+        expect(isGameStarted(p)).toBe(true);
+        resetPlayer(p);
+        expect(isGameStarted(p)).toBe(false);
+    });
+
+    it('deletes name, dead/coward/cheated flags, deathReason, counters, and effects', () => {
+        const p = makePlayer({
+            dead: true, coward: true, cheated: true, ambushed: true,
+            deathReason: 'died', effects: [{ ...EFFECTS_CONFIG.restingAura }],
+            revision: 3, lastFightAt: 12345,
+        });
+        resetPlayer(p);
+
+        expect(p.name).toBeUndefined();
+        expect(p.raceId).toBeUndefined();
+        expect(p.health).toBeUndefined();
+        expect(p.adena).toBeUndefined();
+        expect(p.experience).toBeUndefined();
+        expect(p.weaponId).toBeUndefined();
+        expect(p.armorId).toBeUndefined();
+        expect(p.dead).toBeUndefined();
+        expect(p.ambushed).toBeUndefined();
+        expect(p.coward).toBeUndefined();
+        expect(p.cheated).toBeUndefined();
+        expect(p.deathReason).toBeUndefined();
+        expect(p.totalBattles).toBeUndefined();
+        expect(p.totalAmbushes).toBeUndefined();
+        expect(p.consecutiveAmbushes).toBeUndefined();
+        expect(p.totalEnemiesKilled).toBeUndefined();
+        expect(p.effects).toBeUndefined();
+        expect(p.revision).toBeUndefined();
+        expect(p.lastFightAt).toBeUndefined();
+    });
+
+    it('preserves session-store bookkeeping fields (cookie, bootstrappedAt)', () => {
+        const p: any = makePlayer({});
+        p.cookie = { maxAge: 86400 };
+        p.bootstrappedAt = 999;
+
+        resetPlayer(p);
+
+        expect(p.cookie).toEqual({ maxAge: 86400 });
+        expect(p.bootstrappedAt).toBe(999);
+    });
+});
+
+describe('resolveDeathReason', () => {
+    it('sets the cheated death reason when player.cheated is true, regardless of coward', () => {
+        const p = makePlayer({ cheated: true, coward: true });
+        resolveDeathReason(p);
+        expect(p.deathReason).toContain('heresy');
+    });
+
+    it('sets the ambush-flee death reason when coward and ambushed', () => {
+        const p = makePlayer({ coward: true, ambushed: true });
+        resolveDeathReason(p);
+        expect(p.deathReason).toContain('caught trying to flee an ambush');
+    });
+
+    it('sets the plain coward death reason when coward but not ambushed', () => {
+        const p = makePlayer({ coward: true, ambushed: false });
+        resolveDeathReason(p);
+        expect(p.deathReason).toContain('cowardly way out');
+    });
+
+    it('sets a random death message when neither cheated nor coward', () => {
+        const p = makePlayer({ cheated: false, coward: false });
+        resolveDeathReason(p);
+        expect(p.deathReason).toBeDefined();
+        expect(DEATH_MESSAGES).toContain(p.deathReason);
+    });
+
+    it('is idempotent — never overwrites an already-set deathReason', () => {
+        const p = makePlayer({ cheated: true, deathReason: 'Custom Death' });
+        resolveDeathReason(p);
+        expect(p.deathReason).toBe('Custom Death');
+    });
+});
+
+describe('killPlayer / commitSuicide — deathReason fixed at time of death', () => {
+    it('killPlayer sets a deathReason once, at time of death', () => {
+        const p = makePlayer({ health: 75 });
+        killPlayer(p);
+        expect(p.deathReason).toBeDefined();
+    });
+
+    it('commitSuicide sets the coward deathReason (not a random one)', () => {
+        const p = makePlayer({ health: 100, ambushed: false });
+        commitSuicide(p);
+        expect(p.deathReason).toContain('cowardly way out');
+    });
+
+    it('commitSuicide while ambushed sets the ambush-flee deathReason', () => {
+        const p = makePlayer({ health: 100, ambushed: true });
+        commitSuicide(p);
+        expect(p.deathReason).toContain('caught trying to flee an ambush');
     });
 });

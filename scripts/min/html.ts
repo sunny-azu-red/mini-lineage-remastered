@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { minify } from 'html-minifier-terser';
 
-const DIST_VIEW_DIR = path.resolve(process.cwd(), 'dist/view/template');
+const DIST_VIEW_DIR = path.resolve(process.cwd(), 'dist/src/view/template');
 
 async function minifyFile(filePath: string) {
     const content = fs.readFileSync(filePath, 'utf-8');

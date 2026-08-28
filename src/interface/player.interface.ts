@@ -61,6 +61,9 @@ export interface PlayerState {
     consecutiveAmbushes?: number;
     totalEnemiesKilled?: number;
     effects?: ActiveEffect[];
+    revision?: number;
+    lastFightAt?: number;
+    bootstrappedAt?: number;
 }
 
 export interface FlashMessage {

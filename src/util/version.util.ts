@@ -4,7 +4,7 @@ import { env } from '@/config/env.config';
 
 export function getVersion(): string {
     try {
-        const versionPath = path.join(__dirname, '../version.txt');
+        const versionPath = path.join(__dirname, '../../version.txt');
         if (fs.existsSync(versionPath))
             return fs.readFileSync(versionPath, 'utf8').trim();
     } catch (err) {

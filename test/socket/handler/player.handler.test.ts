@@ -1,0 +1,59 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Socket, Server as SocketIOServer } from 'socket.io';
+
+vi.mock('@/socket/registry', () => ({ registerEvent: vi.fn() }));
+vi.mock('@/repository/statistics.repository', () => ({
+    statisticsRepository: { increment: vi.fn().mockResolvedValue(undefined) },
+}));
+
+import { registerEvent } from '@/socket/registry';
+import { registerPlayerHandlers } from '@/socket/handler/player.handler';
+import { requireStarted, requireAlive, requireNotAmbushed } from '@/socket/guard';
+import { statisticsRepository } from '@/repository/statistics.repository';
+import type { SessionContext } from '@/socket/session';
+import type { PlayerState } from '@/interface';
+
+function getDef() {
+    const call = vi.mocked(registerEvent).mock.calls.find(c => (c[2] as any).event === 'player:suicide');
+    if (!call)
+        throw new Error('player:suicide not registered');
+
+    return call[2] as any;
+}
+
+function makeCtx(overrides: Partial<PlayerState> = {}): SessionContext {
+    const player = {
+        name: 'Hero', raceId: 0, health: 50, adena: 10, experience: 0,
+        weaponId: 0, armorId: 0, ...overrides,
+    } as PlayerState;
+
+    return { sessionId: 'sid-1', session: {}, player };
+}
+
+describe('player.handler', () => {
+    const io = {} as SocketIOServer;
+    const socket = {} as Socket;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        registerPlayerHandlers(io, socket);
+    });
+
+    it('guards requireStarted/requireAlive/requireNotAmbushed and has no dedicated rate limiter', () => {
+        const def = getDef();
+        expect(def.guards).toEqual([requireStarted, requireAlive, requireNotAmbushed]);
+        expect(def.rateLimit).toBeUndefined();
+    });
+
+    it('commits suicide, marks coward, increments the suicide stat, and returns a null-flash MutationResult', () => {
+        const ctx = makeCtx();
+        const result = getDef().handler(ctx);
+
+        expect(ctx.player.dead).toBe(true);
+        expect(ctx.player.coward).toBe(true);
+        expect(ctx.player.deathReason).toBeTruthy();
+        expect(statisticsRepository.increment).toHaveBeenCalledWith('total_players_suicided');
+        expect(result).toEqual({ player: result.player, flash: null });
+        expect(result.player.dead).toBe(true);
+    });
+});

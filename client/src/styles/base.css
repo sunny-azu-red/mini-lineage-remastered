@@ -1,0 +1,108 @@
+/*
+ * ========================================================================
+ * Mini-Lineage — Base
+ * Reset, body background, global typography, links.
+ * ========================================================================
+ */
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    background-color: var(--bg-deep);
+    background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(74, 85, 128, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(123, 45, 139, 0.06) 0%, transparent 50%);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100dvh;
+}
+
+/* ===== Links ===== */
+a:link,
+a:visited,
+a:active {
+    color: var(--gold);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    color: var(--gold-hover);
+    text-decoration: underline;
+}
+
+/* ===== Typography ===== */
+strong {
+    color: var(--text-secondary);
+}
+
+h2 {
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+h2:first-child {
+    margin-top: 0;
+}
+
+p {
+    margin-bottom: 12px;
+}
+
+p.last {
+    margin-bottom: 0;
+}
+
+.back {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+/* ===== Utility Classes ===== */
+.muted {
+    color: var(--text-muted) !important;
+}
+
+.gold {
+    color: var(--gold) !important;
+}
+
+.heal {
+    color: var(--success) !important;
+}
+
+.hp {
+    color: var(--hp-glow) !important;
+}
+
+.xp {
+    color: var(--xp-glow) !important;
+}
+
+.crit {
+    color: var(--critical) !important;
+}

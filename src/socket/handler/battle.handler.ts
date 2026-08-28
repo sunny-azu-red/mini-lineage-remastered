@@ -1,0 +1,102 @@
+import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { BattleFightResult, SoundName } from '@shared/contract';
+import { registerEvent } from '../registry';
+import { requireStarted, requireAlive } from '../guard';
+import { battleLimiter } from '../rate-limit';
+import { EmptyPayloadSchema } from '@/schema/socket.schema';
+import { simulateBattle } from '@/service/battle.service';
+import { getPlayerStats, applyEffect, resolveBattleOutcome, syncZoneAuras } from '@/service/player.service';
+import { calculateAmbushChance, calculateLevel } from '@/service/math.service';
+import { buildBattleNarrative } from '@/service/narrative.service';
+import { formatNumber } from '@/util/format.util';
+import { EFFECTS_CONFIG } from '@/constant/game.constant';
+import { statisticsRepository } from '@/repository/statistics.repository';
+import { buildPlayerSnapshot } from '../serializer/player.serializer';
+
+/**
+ * From battle.controller.ts's getBattle — the heart of the anti-cheat redesign (plan A6).
+ *
+ * INVARIANT: battle:fight must succeed IDENTICALLY whether or not ctx.player.ambushed was
+ * already true when this handler runs. There is no "you must resolve the ambush by leaving"
+ * punishment and no precondition on `ambushed` at all — an ambush is resolved by fighting
+ * again, full stop. This is what makes the old navigate-away-while-ambushed exploit (and the
+ * cheat.middleware.ts mechanism built to punish it) structurally impossible now: viewing or
+ * reconnecting is provably non-mutating (see hydrate), and simulateBattle only ever runs from
+ * this explicit emit.
+ */
+export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void {
+    registerEvent(io, socket, {
+        event: 'battle:fight',
+        schema: EmptyPayloadSchema,
+        mode: 'mutate',
+        guards: [requireStarted, requireAlive],
+        rateLimit: battleLimiter,
+        handler: (ctx): BattleFightResult => {
+            // Unconditionally resolve whatever ambush was pending, then simulate.
+            ctx.player.ambushed = false;
+            ctx.player.lastFightAt = Date.now();
+            syncZoneAuras(ctx.player);
+
+            const results = simulateBattle(ctx.player);
+            results.isLevelUp = resolveBattleOutcome(ctx.player, results);
+
+            if (ctx.player.dead) {
+                // resolveBattleOutcome -> killPlayer already set deathReason exactly once.
+                return {
+                    player: buildPlayerSnapshot(ctx.player),
+                    outcome: results,
+                    narrative: buildBattleNarrative(ctx.player, results, false),
+                    ambushed: false,
+                    died: true,
+                    flash: null,
+                    sound: 'death',
+                };
+            }
+
+            // Roll a fresh ambush chance exactly as battle.controller.ts does today,
+            // including the consecutiveAmbushes >= 2 -> ambushDebuff snowball.
+            const stats = getPlayerStats(ctx.player);
+            const isAmbushed = calculateAmbushChance(stats.ambushRisk);
+            if (isAmbushed) {
+                ctx.player.ambushed = true;
+                ctx.player.totalAmbushes = (ctx.player.totalAmbushes ?? 0) + 1;
+                ctx.player.consecutiveAmbushes = (ctx.player.consecutiveAmbushes ?? 0) + 1;
+                if (ctx.player.consecutiveAmbushes >= 2)
+                    applyEffect(ctx.player, EFFECTS_CONFIG.ambushDebuff);
+
+                void statisticsRepository.increment('total_ambushes');
+            } else {
+                ctx.player.consecutiveAmbushes = 0;
+            }
+
+            // Re-sync: zone (resting/combat) depends on `ambushed`, which may have just
+            // flipped true by the roll above — a second, idempotent call keeps the
+            // persisted zone state correct rather than one fight stale.
+            syncZoneAuras(ctx.player);
+
+            const flash = results.isLevelUp
+                ? { text: `🎉 Congratulations! You have reached level ${formatNumber(calculateLevel(ctx.player.experience))}.`, type: 'warning' as const }
+                : null;
+
+            // Precedence: level-up (if any) beats ambush beats crit beats none — mirrors
+            // battle.controller.ts, which resolves the level-up flash FIRST (and only falls
+            // back to res.locals.flash otherwise), and battle.view.ts's own ternary
+            // (`flash?.sound ? undefined : (ambushed ? 'ambush' : (isCritical ? 'crit' : undefined))`),
+            // which only ever computes an ambush/crit sound when no flash sound (i.e. no
+            // level-up) is already set — folded here into one resolved value.
+            const sound: SoundName | null = results.isLevelUp
+                ? 'level'
+                : (ctx.player.ambushed ? 'ambush' : (results.isCritical ? 'crit' : null));
+
+            return {
+                player: buildPlayerSnapshot(ctx.player),
+                outcome: results,
+                narrative: buildBattleNarrative(ctx.player, results, ctx.player.ambushed),
+                ambushed: Boolean(ctx.player.ambushed),
+                died: false,
+                flash,
+                sound,
+            };
+        },
+    });
+}

@@ -23,10 +23,16 @@ describe('static.middleware', () => {
     });
 
     it('resolves production static path when isRelease is true', async () => {
+        // Compiled output now lands at dist/src/middleware/static.middleware.js (one extra
+        // level of nesting than the old flat dist/middleware layout), so the release-mode
+        // path climbs an extra directory to still land on dist/public. Under this test's
+        // uncompiled execution (src/middleware directly), that resolves to the real repo-root
+        // public/ dir — NOT src/public, which was the old (now-incorrect) expectation.
         vi.mocked(versionUtil.isRelease).mockReturnValue(true);
         const { getStaticPath } = await import('@/middleware/static.middleware');
         const resolvedPath = getStaticPath();
-        expect(resolvedPath).toContain(path.join('src', 'public'));
+        expect(resolvedPath).toContain('public');
+        expect(resolvedPath).not.toContain(path.join('src', 'public'));
     });
 
     it('resolves development static path when isRelease is false', async () => {
