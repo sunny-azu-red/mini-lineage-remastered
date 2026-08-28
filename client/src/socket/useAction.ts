@@ -31,11 +31,6 @@ interface UseActionResult<K extends MutatingEvent> {
  * same synchronous tick (e.g. a fast double-click before React has re-rendered with the new
  * `pending` state) must still only fire one request — a plain `if (pending) return` closed over
  * stale state would not catch that.
- *
- * AMBUSHED is handled centrally here (not by each call site) per plan decision "Ambush UX": the
- * server is authoritative, so a client that thought it was safe to shop/suicide/etc. and gets
- * told otherwise self-heals by routing to the battle screen and surfacing why, instead of
- * silently failing.
  */
 export function useAction<K extends MutatingEvent>(event: K): UseActionResult<K> {
     const [pending, setPending] = useState(false);
@@ -58,9 +53,6 @@ export function useAction<K extends MutatingEvent>(event: K): UseActionResult<K>
             setPending(false);
 
             if (!res.ok) {
-                if (res.error.code === 'AMBUSHED')
-                    useGameStore.getState().navigate('battle');
-
                 useGameStore.getState().setNotice(res.error);
                 return;
             }

@@ -1,7 +1,7 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { MutationResult } from '@shared/contract';
 import { registerEvent } from '../registry';
-import { requireStarted, requireAlive, requireNotAmbushed } from '../guard';
+import { requireStarted, requireAlive } from '../guard';
 import { EmptyPayloadSchema } from '@/schema/socket.schema';
 import { commitSuicide } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
@@ -17,7 +17,7 @@ export function registerPlayerHandlers(io: SocketIOServer, socket: Socket): void
         event: 'player:suicide',
         schema: EmptyPayloadSchema,
         mode: 'mutate',
-        guards: [requireStarted, requireAlive, requireNotAmbushed],
+        guards: [requireStarted, requireAlive],
         handler: (ctx): MutationResult => {
             commitSuicide(ctx.player);
             void statisticsRepository.increment('total_players_suicided');

@@ -8,7 +8,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 
 import { registerEvent } from '@/socket/registry';
 import { registerShopHandlers } from '@/socket/handler/shop.handler';
-import { requireStarted, requireAlive, requireNotAmbushed } from '@/socket/guard';
+import { requireStarted, requireAlive } from '@/socket/guard';
 import { shopLimiter } from '@/socket/rate-limit';
 import { SocketError } from '@/socket/error';
 import { WEAPONS, ARMORS, FOODS } from '@/constant/game.constant';
@@ -43,9 +43,9 @@ describe('shop.handler', () => {
         registerShopHandlers(io, socket);
     });
 
-    it('guards requireStarted/requireAlive/requireNotAmbushed and rate-limits with shopLimiter', () => {
+    it('guards requireStarted/requireAlive and rate-limits with shopLimiter', () => {
         const def = getDef();
-        expect(def.guards).toEqual([requireStarted, requireAlive, requireNotAmbushed]);
+        expect(def.guards).toEqual([requireStarted, requireAlive]);
         expect(def.rateLimit).toBe(shopLimiter);
     });
 

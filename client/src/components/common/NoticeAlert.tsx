@@ -11,10 +11,10 @@ const AMBUSH_RATE_LIMIT_MESSAGE =
 const GENERIC_RATE_LIMIT_MESSAGE = 'You are moving too fast. Please take a breath and try again in a moment.';
 
 /**
- * The one, shared renderer for `store.notice` (socket error acks — rate limits, an AMBUSHED
- * self-heal redirect's explanation, INVALID_PAYLOAD, etc). Per the plan's "RateLimitNotice"
- * section: there's no full-screen 429 page anymore (no HTTP response to swap out), so a rejected
- * action always surfaces here as an inline alert on whatever screen the player is already on.
+ * The one, shared renderer for `store.notice` (socket error acks — rate limits, INVALID_PAYLOAD,
+ * etc). Per the plan's "RateLimitNotice" section: there's no full-screen 429 page anymore (no
+ * HTTP response to swap out), so a rejected action always surfaces here as an inline alert on
+ * whatever screen the player is already on.
  *
  * DECISION: no separate `RateLimitNotice` component. `code === 'RATE_LIMITED'` is special-cased
  * right here instead — both render from the exact same `store.notice` state, so a second

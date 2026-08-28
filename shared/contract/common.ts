@@ -11,7 +11,6 @@ export type SocketErrorCode =
     | 'ALREADY_STARTED'   // character already exists
     | 'DEAD'              // action requires a living character
     | 'NOT_DEAD'          // action requires a dead character
-    | 'AMBUSHED'          // action blocked while an ambush is unresolved
     | 'INELIGIBLE'        // e.g. coward/cheater trying to post a highscore
     | 'INTERNAL';
 

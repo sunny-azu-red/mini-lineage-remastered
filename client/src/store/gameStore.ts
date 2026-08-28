@@ -37,6 +37,17 @@ function writeStoredSoundEnabled(enabled: boolean): void {
     }
 }
 
+/**
+ * The screen is pinned to 'battle' whenever the player is currently ambushed — there is no other
+ * screen to reach in the first place, so this is applied at the end of every action that sets
+ * `screen` and/or `player`, using whatever the FINAL `player` value of that update is. This keeps
+ * "screen is 'battle' whenever ambushed" true atomically after every single state transition
+ * (navigation, hydrate/reconnect, a shop/battle mutation, a pushed update), not just some of them.
+ */
+function pinToBattleIfAmbushed(screen: ScreenId, player: PlayerSnapshot | null): ScreenId {
+    return player?.ambushed ? 'battle' : screen;
+}
+
 export interface GameStore {
     status: 'connecting' | 'ready' | 'disconnected';
     player: PlayerSnapshot | null;
@@ -48,7 +59,7 @@ export interface GameStore {
      * The lighter, reconnect-safe narrative shape (`{narrative, outcome, ambushed, died,
      * sound}`) — NOT the full `BattleFightResult` ack, which also carries `player`/`flash`
      * (those always come straight from `store.player`/`store.flash`, never read off this field
-     * by `BattleScreen`/`AmbushBanner`). Populated by the live `battle:fight` ack
+     * by `BattleScreen`). Populated by the live `battle:fight` ack
      * (`recordBattleResult`) AND by every `hydrate()` from `PlayerSnapshot.lastBattle` — so a
      * real page reload/reconnect shows the true last-fight narrative instead of a placeholder.
      */
@@ -63,8 +74,8 @@ export interface GameStore {
      * `battle:fight`'s ack carries strictly more than a `MutationResult` (outcome, narrative,
      * ambushed/died flags, a resolved sound) — this is the dedicated setter for it, alongside
      * `applyMutation`, rather than overloading that one's signature. Also stamps `lastBattle` so
-     * `BattleScreen`/`AmbushBanner` can render the fight's narrative, and clears `notice` exactly
-     * like `applyMutation` does.
+     * `BattleScreen` can render the fight's narrative, and clears `notice` exactly like
+     * `applyMutation` does.
      */
     recordBattleResult(result: BattleFightResult): void;
     /**
@@ -134,20 +145,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // stale narrative from the previous character on screen.
             const lastBattle: BattleNarrativeSnapshot | null = p.player?.lastBattle ?? null;
 
-            return { player: p.player, catalog: p.catalog, screen, lastBattle };
+            return { player: p.player, catalog: p.catalog, screen: pinToBattleIfAmbushed(screen, p.player), lastBattle };
         });
     },
 
     applyUpdate(p) {
-        set(state => (state.player ? { player: { ...state.player, ...p } } : {}));
+        set(state => {
+            if (!state.player)
+                return {};
+            const player = { ...state.player, ...p };
+            return { player, screen: pinToBattleIfAmbushed(state.screen, player) };
+        });
     },
 
     applyMutation(player, flash = null) {
-        set({ player, flash, notice: null });
+        set(state => ({ player, flash, notice: null, screen: pinToBattleIfAmbushed(state.screen, player) }));
     },
 
     recordBattleResult(result) {
-        set({
+        set(state => ({
             player: result.player,
             flash: result.flash,
             lastBattle: {
@@ -158,12 +174,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 sound: result.sound,
             },
             notice: null,
-        });
+            screen: pinToBattleIfAmbushed(state.screen, result.player),
+        }));
     },
 
     navigate(screen, opts) {
         set(state => ({
-            screen,
+            screen: pinToBattleIfAmbushed(screen, state.player),
             highscoreRaceFilter: opts?.raceFilter !== undefined ? opts.raceFilter : state.highscoreRaceFilter,
         }));
     },

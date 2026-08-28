@@ -6,7 +6,6 @@ import Sidebar from '../sidebar/Sidebar';
 import EffectsList from '../effects/EffectsList';
 import FlashAlert from '../common/FlashAlert';
 import NoticeAlert from '../common/NoticeAlert';
-import AmbushBanner from '../common/AmbushBanner';
 import LowHealthAlert from '../common/LowHealthAlert';
 
 interface AppShellProps {
@@ -53,17 +52,12 @@ export default function AppShell({ children, title }: AppShellProps) {
                                 <NoticeAlert />
                                 <FlashAlert />
                                 {/*
-                                 * Visible on EVERY screen (plan's "Ambush UX" section) — not
-                                 * just Battle — so an ambushed player is reminded and offered
-                                 * the one-and-only way to resolve it (an explicit Fight click)
-                                 * no matter where they've navigated to.
-                                 */}
-                                <AmbushBanner />
-                                {/*
-                                 * Same structural slot as AmbushBanner — both are global,
-                                 * self-suppressing alerts driven purely by player state. Placed
-                                 * after it: an active ambush is the more urgent/actionable
-                                 * warning, low health is secondary context.
+                                 * Global, self-suppressing alert driven purely by player state.
+                                 * An ambush no longer needs a global banner here — the store
+                                 * unconditionally pins `screen` to 'battle' whenever
+                                 * `player.ambushed`, so BattleScreen's own inline ambush
+                                 * treatment is always what's on screen when ambushed; there is
+                                 * no other screen this alert could ever be seen from.
                                  */}
                                 <LowHealthAlert />
                                 {children}

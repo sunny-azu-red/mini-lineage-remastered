@@ -31,11 +31,6 @@ export const requireDead: Guard = (player) => {
         throw new SocketError('NOT_DEAD', "You're still alive — this action is only for the fallen.");
 };
 
-export const requireNotAmbushed: Guard = (player) => {
-    if (player.ambushed)
-        throw new SocketError('AMBUSHED', "You're being ambushed — fight your way out first!");
-};
-
 export const requireHighscoreEligible: Guard = (player) => {
     if (player.coward || player.cheated)
         throw new SocketError('INELIGIBLE', 'Cowards and cheaters cannot be immortalized on the highscores.');

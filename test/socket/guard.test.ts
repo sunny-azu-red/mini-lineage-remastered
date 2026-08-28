@@ -4,7 +4,6 @@ import {
     requireNotStarted,
     requireAlive,
     requireDead,
-    requireNotAmbushed,
     requireHighscoreEligible,
 } from '@/socket/guard';
 import { SocketError } from '@/socket/error';
@@ -77,21 +76,6 @@ describe('requireDead', () => {
             expect.unreachable();
         } catch (err) {
             expect((err as SocketError).code).toBe('NOT_DEAD');
-        }
-    });
-});
-
-describe('requireNotAmbushed', () => {
-    it('passes when not ambushed', () => {
-        expect(() => requireNotAmbushed(startedPlayer({ ambushed: false }))).not.toThrow();
-    });
-
-    it('throws AMBUSHED when ambushed', () => {
-        try {
-            requireNotAmbushed(startedPlayer({ ambushed: true }));
-            expect.unreachable();
-        } catch (err) {
-            expect((err as SocketError).code).toBe('AMBUSHED');
         }
     });
 });

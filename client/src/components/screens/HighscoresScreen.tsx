@@ -5,10 +5,10 @@ import { useGameStore } from '@/store/gameStore';
 import { request } from '@/socket/client';
 import DataTable, { type Column } from '@/components/common/DataTable';
 
-// `highscores:list` is a read-only event — it never fails with a rejectable game-state error
-// (no AMBUSHED routing applies to it), so it's fetched directly via `request()` in an effect
-// rather than through `useAction` (which exists specifically to handle mutating actions' pending
-// state + AMBUSHED self-heal). StatisticsScreen follows the identical pattern for consistency.
+// `highscores:list` is a read-only event — it never fails with a rejectable game-state error,
+// so it's fetched directly via `request()` in an effect rather than through `useAction` (which
+// exists specifically to handle mutating actions' pending state). StatisticsScreen follows the
+// identical pattern for consistency.
 const COLUMNS_MIN_WIDTH = 545;
 
 // Matches today's highscores.view.ts's `truncate(score.name, 20)` call exactly.

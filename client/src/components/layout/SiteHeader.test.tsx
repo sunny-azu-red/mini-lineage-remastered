@@ -82,12 +82,16 @@ describe('SiteHeader', () => {
         expect(useGameStore.getState().screen).toBe('start');
     });
 
-    it('is NOT clickable while ambushed', () => {
+    it('is clickable while ambushed — the store transparently redirects the resulting navigate() to battle', () => {
         setPlayer(makePlayer({ started: true, ambushed: true }));
         render(<SiteHeader />);
 
-        expect(screen.queryByRole('link')).not.toBeInTheDocument();
-        useGameStore.getState().navigate('battle');
+        const link = screen.getByRole('link');
+        fireEvent.click(link);
+
+        // The header itself no longer knows or cares about ambush state — it fires a normal
+        // `navigate('home')` and the store's pin-to-battle invariant (tested in gameStore.test.ts)
+        // is what actually redirects this to 'battle'.
         expect(useGameStore.getState().screen).toBe('battle');
     });
 
@@ -99,7 +103,7 @@ describe('SiteHeader', () => {
     });
 
     it('always renders the SoundToggle mute button regardless of clickability, and it is outside the clickable link', () => {
-        setPlayer(makePlayer({ started: true, ambushed: true }));
+        setPlayer(makePlayer({ started: true, dead: true }));
         render(<SiteHeader />);
 
         const soundButton = screen.getByRole('button', { name: /Sound FX/i });

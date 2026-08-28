@@ -290,6 +290,87 @@ describe('gameStore', () => {
         });
     });
 
+    describe('pin-to-battle invariant (ambushed screen === battle)', () => {
+        it('navigate() while ambushed silently redirects to "battle" instead of the requested screen', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: true }), catalog });
+
+            useGameStore.getState().navigate('highscores');
+
+            expect(useGameStore.getState().screen).toBe('battle');
+        });
+
+        it('hydrate() that flips ambushed to true immediately pins the screen to "battle", from whatever screen was previously active', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: false }), catalog });
+            useGameStore.getState().navigate('highscores');
+            expect(useGameStore.getState().screen).toBe('highscores');
+
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: true }), catalog });
+
+            expect(useGameStore.getState().screen).toBe('battle');
+        });
+
+        it('applyUpdate() that flips ambushed to true immediately pins the screen to "battle"', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: false }), catalog });
+            useGameStore.getState().navigate('weapons');
+            expect(useGameStore.getState().screen).toBe('weapons');
+
+            useGameStore.getState().applyUpdate({ ambushed: true });
+
+            expect(useGameStore.getState().screen).toBe('battle');
+        });
+
+        it('applyMutation() that flips ambushed to true immediately pins the screen to "battle"', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: false }), catalog });
+            useGameStore.getState().navigate('inn');
+            expect(useGameStore.getState().screen).toBe('inn');
+
+            useGameStore.getState().applyMutation(makePlayer({ ambushed: true }));
+
+            expect(useGameStore.getState().screen).toBe('battle');
+        });
+
+        it('recordBattleResult() whose player is ambushed immediately pins the screen to "battle"', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: false }), catalog });
+            useGameStore.getState().navigate('armors');
+            expect(useGameStore.getState().screen).toBe('armors');
+
+            useGameStore.getState().recordBattleResult({
+                player: makePlayer({ ambushed: true }),
+                outcome: {
+                    enemiesKilled: 1, hpLost: 5, damageBlocked: 2, xpGained: 10, adenaGained: 3,
+                    isCritical: false, isLevelUp: false,
+                },
+                narrative: {
+                    critLine: null, killLine: 'kill', deflectionLine: 'deflect',
+                    outcomeLine: 'outcome', ambushLine: 'ambush!', fightPrompt: 'Fight!', nextMove: 'Strike',
+                },
+                ambushed: true,
+                died: false,
+                flash: null,
+                sound: 'ambush',
+            });
+
+            expect(useGameStore.getState().screen).toBe('battle');
+        });
+
+        it('once ambushed resolves back to false, navigation works normally again', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false, ambushed: true }), catalog });
+            useGameStore.getState().navigate('highscores');
+            expect(useGameStore.getState().screen).toBe('battle');
+
+            useGameStore.getState().applyUpdate({ ambushed: false });
+            useGameStore.getState().navigate('highscores');
+
+            expect(useGameStore.getState().screen).toBe('highscores');
+        });
+    });
+
     describe('toggleSound', () => {
         it('flips soundEnabled', () => {
             const before = useGameStore.getState().soundEnabled;

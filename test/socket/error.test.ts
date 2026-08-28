@@ -13,8 +13,8 @@ vi.mock('@/config/logger.config', () => ({
 
 describe('SocketError', () => {
     it('carries code, message, and optional retryAfterMs', () => {
-        const err = new SocketError('AMBUSHED', 'fight first', 1234);
-        expect(err.code).toBe('AMBUSHED');
+        const err = new SocketError('DEAD', 'fight first', 1234);
+        expect(err.code).toBe('DEAD');
         expect(err.message).toBe('fight first');
         expect(err.retryAfterMs).toBe(1234);
         expect(err.name).toBe('SocketError');

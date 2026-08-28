@@ -8,7 +8,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 
 import { registerEvent } from '@/socket/registry';
 import { registerPlayerHandlers } from '@/socket/handler/player.handler';
-import { requireStarted, requireAlive, requireNotAmbushed } from '@/socket/guard';
+import { requireStarted, requireAlive } from '@/socket/guard';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import type { SessionContext } from '@/socket/session';
 import type { PlayerState } from '@/interface';
@@ -39,9 +39,9 @@ describe('player.handler', () => {
         registerPlayerHandlers(io, socket);
     });
 
-    it('guards requireStarted/requireAlive/requireNotAmbushed and has no dedicated rate limiter', () => {
+    it('guards requireStarted/requireAlive and has no dedicated rate limiter', () => {
         const def = getDef();
-        expect(def.guards).toEqual([requireStarted, requireAlive, requireNotAmbushed]);
+        expect(def.guards).toEqual([requireStarted, requireAlive]);
         expect(def.rateLimit).toBeUndefined();
     });
 

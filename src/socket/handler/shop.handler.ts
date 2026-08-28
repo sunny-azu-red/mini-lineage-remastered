@@ -1,7 +1,7 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { MutationResult, SoundName } from '@shared/contract';
 import { registerEvent } from '../registry';
-import { requireStarted, requireAlive, requireNotAmbushed } from '../guard';
+import { requireStarted, requireAlive } from '../guard';
 import { shopLimiter } from '../rate-limit';
 import { SocketError } from '../error';
 import { ShopPurchasePayloadSchema } from '@/schema/socket.schema';
@@ -26,7 +26,7 @@ export function registerShopHandlers(io: SocketIOServer, socket: Socket): void {
         event: 'shop:purchase',
         schema: ShopPurchasePayloadSchema,
         mode: 'mutate',
-        guards: [requireStarted, requireAlive, requireNotAmbushed],
+        guards: [requireStarted, requireAlive],
         rateLimit: shopLimiter,
         handler: (ctx, payload): MutationResult => {
             const itemType = ITEM_TYPE_BY_PAYLOAD_TYPE[payload.type];

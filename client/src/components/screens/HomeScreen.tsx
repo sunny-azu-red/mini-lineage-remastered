@@ -31,7 +31,7 @@ export default function HomeScreen() {
     // effect there), but an explicit in-app click into Battle from here IS a real user action, so
     // it should still fight immediately, exactly like clicking BattleScreen's own Fight button.
     // Firing `fight()` right after `navigate('battle')` (not awaited) is the same `battle:fight`
-    // call BattleScreen/AmbushBanner already make via this same shared hook — not a new mechanism.
+    // call BattleScreen's own independent `useBattleFight()` already makes — not a new mechanism.
     //
     // `noPlaceholder` (Fix A) means `SelectActionForm` always pre-selects the first real
     // destination (🍺 Inn), matching home.ejs's native browser default — there is no reachable

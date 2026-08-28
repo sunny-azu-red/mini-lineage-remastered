@@ -160,6 +160,39 @@ describe('BattleScreen', () => {
         expect(screen.queryByRole('link', { name: 'Retreat' })).not.toBeInTheDocument();
     });
 
+    // Direct regression test for the bug shown in the screenshots: the ambushed branch used to be
+    // mutually exclusive with the narrative branch, so a real fight's crit/kill/deflection/outcome
+    // narrative silently vanished the instant the player got ambushed. battleground.ejs always
+    // rendered the narrative unconditionally whenever a result existed, with `ambushed` only ever
+    // branching what's rendered BELOW it — this proves BattleScreen now matches that exactly.
+    it('shows BOTH the full battle narrative AND the ambush alert/Fight-your-Foe button when ambushed with a real lastBattle result', () => {
+        const lastBattle = makeBattleResult({
+            ambushed: true,
+            narrative: {
+                critLine: 'A CRITICAL strike!',
+                killLine: 'You slay a Goblin.',
+                deflectionLine: 'Your armor deflects the blow.',
+                outcomeLine: 'You gain 10 XP and 3 Adena.',
+                ambushLine: 'Bandits leap from the treeline!',
+                fightPrompt: 'Face your Foe!',
+                nextMove: 'Strike',
+            },
+        });
+        resetStore({ player: makePlayer({ ambushed: true }), lastBattle });
+        render(<BattleScreen />);
+
+        // The narrative that used to disappear:
+        expect(screen.getByText(/A CRITICAL strike!/)).toBeInTheDocument();
+        expect(screen.getByText(/You slay a Goblin\./)).toBeInTheDocument();
+        expect(screen.getByText(/Your armor deflects the blow\./)).toBeInTheDocument();
+        expect(screen.getByText(/You gain 10 XP and 3 Adena\./)).toBeInTheDocument();
+
+        // AND the ambush alert + Face your Foe button, below it:
+        expect(screen.getByText(/Bandits leap from the treeline!/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Face your Foe!/ })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Retreat' })).not.toBeInTheDocument();
+    });
+
     it('falls back to a generic ambush message when ambushed with no narrative available yet', () => {
         resetStore({ player: makePlayer({ ambushed: true }), lastBattle: null });
         render(<BattleScreen />);

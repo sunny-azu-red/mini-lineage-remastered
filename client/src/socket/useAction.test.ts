@@ -87,22 +87,6 @@ describe('useAction', () => {
         expect(result.current.pending).toBe(false);
     });
 
-    it('routes to battle and sets notice on an AMBUSHED error, without calling onSuccess', async () => {
-        const error = { code: 'AMBUSHED' as const, message: 'You are being ambushed!' };
-        requestMock.mockResolvedValue({ ok: false, error });
-
-        const { result } = renderHook(() => useAction('shop:purchase'));
-        const onSuccess = vi.fn();
-
-        await act(async () => {
-            await result.current.run({ type: 'food', itemId: 0 }, { onSuccess });
-        });
-
-        expect(onSuccess).not.toHaveBeenCalled();
-        expect(useGameStore.getState().screen).toBe('battle');
-        expect(useGameStore.getState().notice).toEqual(error);
-    });
-
     it('sets notice (does not navigate) on other error codes', async () => {
         const error = { code: 'RATE_LIMITED' as const, message: 'Slow down.', retryAfterMs: 500 };
         requestMock.mockResolvedValue({ ok: false, error });

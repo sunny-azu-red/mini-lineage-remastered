@@ -79,8 +79,8 @@ describe('withSession', () => {
         vi.mocked(getSessionData).mockResolvedValue(session);
 
         await expect(withSession('sid-1', () => {
-            throw new SocketError('AMBUSHED', 'nope');
-        })).rejects.toMatchObject({ code: 'AMBUSHED' });
+            throw new SocketError('DEAD', 'nope');
+        })).rejects.toMatchObject({ code: 'DEAD' });
 
         expect(release).toHaveBeenCalledTimes(1);
         expect(setSessionData).not.toHaveBeenCalled();
