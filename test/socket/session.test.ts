@@ -196,6 +196,25 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
         expect(setSessionData).not.toHaveBeenCalled();
         expect((session as any).effects).toBeUndefined();
     });
+
+    it('syncs the zone aura instantly for a player the mutator itself just started (post-mutation sync)', async () => {
+        // Pre-mutation: isGameStarted() is false, so the upfront sync correctly skips. The
+        // mutator then starts the character during its own execution (mirrors game:start) —
+        // only a POST-mutation sync can see the resulting zone, which is exactly the bug fix
+        // this test protects: without it, a freshly-started character would show no aura at
+        // all until the next 5s tick happened to catch up, instead of instantly.
+        const session: Record<string, any> = { cookie: {} };
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        const result = await withSession('sid-1', (ctx) => {
+            Object.assign(ctx.player, { raceId: 0, health: 100, adena: 300, dead: false, ambushed: false });
+            return 'started';
+        });
+
+        expect(result).toBe('started');
+        expect(setSessionData).toHaveBeenCalledWith('sid-1', session);
+        expect(session.effects.map((e: any) => e.id)).toEqual(['resting']);
+    });
 });
 
 describe('readSession', () => {

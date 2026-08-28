@@ -30,14 +30,18 @@ export interface SessionContext {
  * duplicated inline pattern in today's socket.service.ts (processSessionTick
  * and the Konami handler).
  *
- * `syncZoneAuras` runs automatically here, immediately after the session loads and
- * BEFORE `mutate` runs, for every started player — this is the "wired into every
- * withSession mutation" behavior the original zone-system design called for but never
- * actually implemented (previously only `battle:fight` and the tick called it). Its
- * returned boolean is folded into the persistence decision below: a zone-only change
- * (nothing else in the handler changed) must still persist and be observable to the
- * caller, which today it did not — a `mutate` reporting `NO_CHANGE` while the zone
- * silently flipped used to discard that flip entirely.
+ * `syncZoneAuras` runs automatically here — once immediately after the session loads
+ * and BEFORE `mutate` runs (exposed to the mutator via `ctx.zoneChanged`, e.g. the tick
+ * uses this to know "did the linger window expire on its own"), and once again
+ * immediately AFTER `mutate` returns. The second call is what makes aura/buff/debuff
+ * state instant rather than tied to the 5s regen tick: a mutator like `game:start` or
+ * `battle:fight` changes `ambushed`/`lastFightAt`/`dead` *during* its own execution, so
+ * only a POST-mutation sync can see the resulting zone correctly — the pre-mutation
+ * call alone would miss it and leave the player auraless until the next periodic tick
+ * happened to catch up. Both booleans are folded into the persistence decision: a
+ * zone-only change (nothing else in the handler changed) must still persist and be
+ * observable to the caller — a `mutate` reporting `NO_CHANGE` while the zone flipped
+ * (before OR after it ran) must never silently discard that flip.
  */
 export async function withSession<T>(
     sessionId: string,
@@ -64,7 +68,10 @@ export async function withSession<T>(
 
         const result = await mutate(ctx);
 
-        if (result === NO_CHANGE && !ctx.zoneChanged)
+        const postZoneChanged = isGameStarted(ctx.player) ? syncZoneAuras(ctx.player) : false;
+        const zoneChanged = ctx.zoneChanged || postZoneChanged;
+
+        if (result === NO_CHANGE && !zoneChanged)
             return undefined as T;
 
         ctx.player.revision = (ctx.player.revision ?? 0) + 1;
