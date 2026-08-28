@@ -27,18 +27,3 @@ export const sessionMiddleware = (req: Request, res: Response, next: NextFunctio
         next();
     });
 };
-
-/**
- * Saves the session to the store before redirecting.
- * Always use this instead of res.redirect() in POST handlers that mutate session
- * state, to prevent a race condition where the browser follows the redirect before
- * the session store has finished persisting the updated data.
- */
-export const saveAndRedirect = (req: Request, res: Response, next: NextFunction, url: string) => {
-    req.session.save((err) => {
-        if (err)
-            return next(err);
-
-        res.redirect(url);
-    });
-};

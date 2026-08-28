@@ -2,50 +2,36 @@ import { useEffect, useRef } from 'react';
 import type { RaceView } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
 
-/**
- * DECISION — why every path here is prefixed `/app`, not bare `/` as plan decision A4 originally
- * sketched (`home -> '/'`, `battle -> '/battle'`, ...): `src/route/game.route.ts` (the still-live
- * legacy EJS app, untouched during this additive/parallel-run phase) already owns EVERY one of
- * those exact paths (`/`, `/battle`, `/shop/weapons`, `/highscores/:raceLabel`, ...), and
- * `src/route/error.route.ts` mounts a catch-all 404 `router.use()` right after it. There is no
- * "unclaimed" path left at the root for a new SPA-fallback route to own without shadowing the
- * legacy app. Per the plan's own fallback contingency, the new client instead lives under a
- * dedicated `/app` prefix for the duration of this transition (see `src/app.ts`'s matching
- * `/app`, `/app/*splat` route) — once the legacy router is demolished (a later task), both this
- * map and that route can drop the prefix and own `/` outright.
- */
-const APP_PREFIX = '/app';
-
 function pathFor(screen: ScreenId, raceFilter: number | null, races: RaceView[]): string | null {
     switch (screen) {
         case 'start':
         case 'home':
-            return `${APP_PREFIX}/`;
+            return '/';
         case 'battle':
-            return `${APP_PREFIX}/battle`;
+            return '/battle';
         case 'weapons':
-            return `${APP_PREFIX}/shop/weapons`;
+            return '/shop/weapons';
         case 'armors':
-            return `${APP_PREFIX}/shop/armors`;
+            return '/shop/armors';
         case 'inn':
-            return `${APP_PREFIX}/inn`;
+            return '/inn';
         case 'suicide':
-            return `${APP_PREFIX}/suicide`;
+            return '/suicide';
         case 'death':
-            return `${APP_PREFIX}/death`;
+            return '/death';
         case 'character':
-            return `${APP_PREFIX}/character`;
+            return '/character';
         case 'highscores': {
             if (raceFilter === null)
-                return `${APP_PREFIX}/highscores`;
+                return '/highscores';
 
             const race = races.find(r => r.id === raceFilter);
-            return race ? `${APP_PREFIX}/highscores/${race.slug}` : `${APP_PREFIX}/highscores`;
+            return race ? `/highscores/${race.slug}` : '/highscores';
         }
         case 'statistics':
-            return `${APP_PREFIX}/statistics`;
+            return '/statistics';
         case 'races':
-            return `${APP_PREFIX}/races`;
+            return '/races';
         case 'error':
             // No genuinely link-worthy URL for an error state, and nothing to deep-link back
             // into — leave the address bar exactly as it was (plan's "your call, minor").
@@ -58,7 +44,7 @@ function pathFor(screen: ScreenId, raceFilter: number | null, races: RaceView[])
 /** Reverse of `pathFor` — used both for `popstate` events with no `state` payload (Safari/older
  * browsers can fire one) and for reconciling a hard page-load landing directly on a deep link. */
 function screenFromPath(pathname: string, started: boolean): ScreenId {
-    const path = pathname.startsWith(APP_PREFIX) ? pathname.slice(APP_PREFIX.length) || '/' : pathname;
+    const path = pathname;
 
     if (path === '/' || path === '')
         return started ? 'home' : 'start';
@@ -87,7 +73,7 @@ function screenFromPath(pathname: string, started: boolean): ScreenId {
 }
 
 function raceFilterFromPath(pathname: string, races: RaceView[]): number | null {
-    const path = pathname.startsWith(APP_PREFIX) ? pathname.slice(APP_PREFIX.length) : pathname;
+    const path = pathname;
     const prefix = '/highscores/';
 
     if (!path.startsWith(prefix))
@@ -110,6 +96,9 @@ function isHistoryState(value: unknown): value is HistoryState {
  * Maps `store.screen`/`store.highscoreRaceFilter` <-> browser history (plan decision A4) for the
  * handful of genuinely link-worthy URLs, giving Back/Forward support with no router dependency.
  * Call once from App.tsx.
+ *
+ * The SPA now owns `/` outright (the legacy EJS app's routes and its own `/app`-prefix
+ * workaround are gone — see git history for the prior parallel-run phase).
  *
  * Loop safety: a `screen` change triggers a `pushState` (one effect below); a `popstate` event
  * triggers a `store.navigate()` call (the other effect) which itself changes `screen` — without a
@@ -141,7 +130,7 @@ export function useHistorySync(): void {
             } else {
                 // No state (e.g. the very first history entry, before any pushState from this
                 // hook ever ran) — fall back to parsing the current URL directly so a hard
-                // refresh/back-navigation to a deep link like `/app/highscores/elf` still lands
+                // refresh/back-navigation to a deep link like `/highscores/elf` still lands
                 // correctly.
                 navigate(screenFromPath(location.pathname, started), {
                     raceFilter: raceFilterFromPath(location.pathname, races),
@@ -164,7 +153,7 @@ export function useHistorySync(): void {
         didInitialSyncRef.current = true;
 
         const path = location.pathname;
-        if (path === APP_PREFIX || path === `${APP_PREFIX}/` || !path.startsWith(APP_PREFIX))
+        if (path === '/')
             return;
 
         const started = useGameStore.getState().player?.started ?? false;

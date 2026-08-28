@@ -14,9 +14,7 @@ export default defineConfig({
     },
     server: {
         proxy: {
-            // Distinct path from the legacy app's default `/socket.io` — see src/socket/index.ts
-            // for why the new socket server is mounted on `/socket.io/v2`.
-            '/socket.io/v2': {
+            '/socket.io': {
                 target: 'http://localhost:3000',
                 ws: true,
             },

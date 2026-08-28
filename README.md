@@ -14,15 +14,13 @@
 ### 🎧 Procedural 8-Bit Web Audio Engine
 - **Zero Audio Assets**: 100% synthesized in real time via the browser's native `AudioContext`, `OscillatorNode`, and `GainNode`.
 - **Event-Driven Soundscapes**: Custom waveforms and arpeggios for Game Start, Critical Hits, Ambush Alarms, Level Up Fanfares, Inn Dining, Shop Purchases, and Death.
-- **Universal Data Triggers**: Clean, declarative `data-sound` integration decoupled from DOM text or route changes.
+- **Gesture-Safe Unlock**: A single capture-phase pointer/keyboard listener resumes the `AudioContext` on the very first user interaction — sounds are triggered directly from socket-ack handlers, not DOM markers, so nothing ever races a reload.
 - **Client Mute Controls**: Persistent audio toggle stored in `localStorage` with non-blocking UI controls.
 
 ### ⚡ Real-Time Engine & Zones
 - **Server-Side Tick Cadence**: Periodic 5-second tick loop handling passive HP regeneration and buff/debuff expiration.
-- **Zone Classifications**:
-  - *Resting Zones* (`/`, `/inn`, `/shop/*`, `/character`, `/highscores`): Peaceful areas that restore health over time.
-  - *Combat Zones* (`/battle`, `/death`, `/suicide`): Hostile territory that pauses passive health recovery.
-- **WebSocket Streaming**: Live bi-directional HP and status synchronization via Socket.IO, complemented by smooth client-side visual progress ticks.
+- **State-Derived Zones**: Combat vs. resting is derived purely from player state (`ambushed`, or a fight within the last 10s) — not the URL being viewed — so simply looking at a screen can never mutate or exploit zone status.
+- **WebSocket Streaming**: The React SPA and the server communicate exclusively over one Socket.IO connection (`/socket.io`) — live bi-directional HP/status sync, push updates on tick/effect-expiry, and every player action, with no page reloads.
 
 ### 🍖 Inn & Consumables
 - **Tiered Food Buffs**: Satisfying meals ranging from *Smoked Sausage* to *Gourmet Feast* that heal current HP and temporarily expand maximum health pool.
@@ -32,20 +30,19 @@
 - **Global Game Statistics**: Aggregates community milestones (Total Battles, Adena Circulated, Enemies Slain, Critical Strikes, Deaths, and Ambushes) with atomic MySQL transactions.
 
 ### 🛡️ Security & Reliability
-- **Concurrency Locks**: Session-scoped lock middleware preventing duplicate submission and race conditions.
-- **Security Hardening**: Hardened with Helmet headers, Gzip compression, sanitized sessions, and sliding-window rate limiting.
+- **Concurrency Locks**: Per-session mutex around every socket mutation (`withSession`), preventing duplicate submissions and race conditions.
+- **Security Hardening**: Hardened with Helmet headers (CSP, no inline scripts), Gzip compression, sanitized sessions, and sliding-window rate limiting per socket event.
 
 ## 🛠️ Tech Stack
 
-- **Backend Runtime**: Node.js & Express.js 5
-- **Language**: TypeScript (Strict type safety across models, services, and views)
-- **Real-Time Communication**: Socket.IO
+- **Backend Runtime**: Node.js & Express.js 5 (serves the built SPA + one `/api/bootstrap` route; all game actions run over Socket.IO)
+- **Frontend**: React 19 + Vite, Zustand for state, no router dependency (`useHistorySync` handles Back/Forward for the handful of link-worthy URLs)
+- **Language**: TypeScript (Strict type safety end-to-end, including a shared `shared/` contract imported by both server and client)
+- **Real-Time Communication**: Socket.IO (sole transport for client↔server actions/queries and server→client push)
 - **Database & Storage**: MySQL 8+ with Connection Pooling & `express-mysql-session`
 - **Audio Engine**: Web Audio API (Procedural Synthesizer)
-- **Templating**: EJS (Embedded JavaScript)
 - **Logging**: Pino & Pino-Pretty
-- **Testing**: Vitest with v8 Coverage (420+ automated unit & integration tests)
-- **Asset Pipeline**: Clean-CSS, Terser, HTML-Minifier-Terser
+- **Testing**: Vitest with v8 Coverage, two projects (server + jsdom-based client component tests)
 
 ## 📦 Installation & Setup
 
@@ -71,14 +68,14 @@ npm run db:migrate
 ## 🚀 Running the Application
 
 ### Development Mode
-Runs with hot-reloading via `nodemon` and `ts-node`:
+Runs two processes side by side — the Express/Socket.IO API (via `nodemon`/`ts-node`) and the Vite dev server for the React client (which proxies `/socket.io` and `/api` to the API):
 ```bash
 npm run dev
 ```
-Visit `http://localhost:3000` in your browser.
+Visit `http://localhost:5173` in your browser (the API alone listens on `http://localhost:3000`, but has no client assets to serve in dev).
 
 ### Production Build & Run
-Executes unit tests, compiles TypeScript, aliases path imports, bundles and minifies CSS/JS/HTML assets, and starts the optimized production server:
+Runs the test suite, builds the client (Vite, into `dist/public`) then the server (`tsc`/`tsc-alias`, into `dist/src`), and starts the optimized production server — which now serves the built client directly:
 ```bash
 npm run prod
 ```
@@ -88,10 +85,11 @@ Or step-by-step:
 npm run build
 npm run start
 ```
+Visit `http://localhost:3000` in your browser.
 
 ## 🧪 Testing & Verification
 
-Run the full test suite (35 test files covering all controllers, middlewares, services, and math algorithms):
+Run the full test suite (server + React client component tests, as two Vitest projects):
 ```bash
 # Run all tests once
 npm run test

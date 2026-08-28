@@ -86,12 +86,13 @@ export function syncZoneAuras(player: PlayerState): void {
  * Clears every PlayerState key back to its "no character" state, preserving
  * session-store bookkeeping fields that aren't part of the game's own fields
  * (`cookie`, `bootstrappedAt`). After this call, isGameStarted(player) is false.
- * Not wired into any caller yet; this phase is purely additive.
+ * Wired into `game:restart` and `highscores:submit` (plan decision A9 — reset in
+ * place rather than `req.session.destroy()`).
  */
 export function resetPlayer(player: PlayerState): void {
     const gameFields: (keyof PlayerState)[] = [
         'name', 'raceId', 'health', 'adena', 'experience', 'weaponId', 'armorId',
-        'dead', 'ambushed', 'coward', 'cheated', 'deathReason', 'flash',
+        'dead', 'ambushed', 'coward', 'cheated', 'deathReason',
         'totalBattles', 'totalAmbushes', 'consecutiveAmbushes', 'totalEnemiesKilled',
         'effects', 'revision', 'lastFightAt',
     ];

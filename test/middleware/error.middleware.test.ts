@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { errorMiddleware } from '@/middleware/error.middleware';
-import * as layoutView from '@/view/layout.view';
 import * as version from '@/util/version.util';
 import { logger } from '@/config/logger.config';
 
@@ -10,94 +9,49 @@ vi.mock('@/config/logger.config', () => ({
     }
 }));
 
-vi.mock('@/view/base.view', () => ({
-    readTemplate: vi.fn().mockReturnValue({ content: '', filename: 'error.ejs' }),
-    render: vi.fn().mockReturnValue('<html>Error</html>')
-}));
-
-vi.mock('@/view/layout.view', () => ({
-    renderSimplePage: vi.fn().mockReturnValue('<html>Simple Error</html>')
-}));
+function makeRes() {
+    return {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn(),
+    };
+}
 
 describe('errorMiddleware', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.spyOn(version, 'isRelease').mockReturnValue(false);
     });
-    it('should log error and return 500 response', () => {
+
+    it('should log error and return a JSON 500 response with the error message in dev', () => {
         const err = new Error('Test error');
         const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
+        const res = makeRes();
         const next = vi.fn();
 
         errorMiddleware(err, req as any, res as any, next);
 
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith('<html>Simple Error</html>');
-        expect(layoutView.renderSimplePage).toHaveBeenCalledWith(
-            expect.any(String),
-            expect.any(String),
-            null,
-            res.locals.player
-        );
+        expect(res.json).toHaveBeenCalledWith({ error: 'Test error' });
+        expect(logger.error).toHaveBeenCalled();
     });
 
-    it('should use error status and correct title for 404', async () => {
+    it('should return a JSON 404 response and not log for a 404', () => {
         const err = { message: 'Custom error', status: 404 };
         const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
+        const res = makeRes();
         const next = vi.fn();
 
         errorMiddleware(err as any, req as any, res as any, next);
 
         expect(res.status).toHaveBeenCalledWith(404);
-        expect(layoutView.renderSimplePage).toHaveBeenCalledWith(
-            'Page not found',
-            expect.any(String),
-            null,
-            res.locals.player
-        );
-        
-        // Should NOT call logger.error for 404
+        expect(res.json).toHaveBeenCalledWith({ error: 'Custom error' });
         expect(logger.error).not.toHaveBeenCalled();
-    });
-
-    it('should use "Something went wrong" for non-404 errors and log 500s', () => {
-        const err = new Error('Test error');
-        const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
-        const next = vi.fn();
-
-        errorMiddleware(err, req as any, res as any, next);
-
-        expect(layoutView.renderSimplePage).toHaveBeenCalledWith(
-            'Something went wrong',
-            expect.any(String),
-            null,
-            res.locals.player
-        );
-        expect(logger.error).toHaveBeenCalled();
     });
 
     it('should log other 5xx errors like 503', () => {
         const err = { message: 'Service Unavailable', status: 503 };
         const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
+        const res = makeRes();
         const next = vi.fn();
 
         errorMiddleware(err as any, req as any, res as any, next);
@@ -109,11 +63,7 @@ describe('errorMiddleware', () => {
     it('should NOT log other 4xx errors like 403', () => {
         const err = { message: 'Forbidden', status: 403 };
         const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
+        const res = makeRes();
         const next = vi.fn();
 
         errorMiddleware(err as any, req as any, res as any, next);
@@ -122,34 +72,41 @@ describe('errorMiddleware', () => {
         expect(logger.error).not.toHaveBeenCalled();
     });
 
-    it('should hide error details in release mode', () => {
+    it('should hide error details behind a generic message in release mode', () => {
         vi.spyOn(version, 'isRelease').mockReturnValue(true);
         const err = new Error('Secret error');
         const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
+        const res = makeRes();
         const next = vi.fn();
 
         errorMiddleware(err, req as any, res as any, next);
 
         expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Something went wrong' });
     });
 
-    it('should handle non-Error objects correctly', () => {
-        vi.spyOn(version, 'isRelease').mockReturnValue(false);
-        const err = "String error";
+    it('should use a generic 404 message in release mode', () => {
+        vi.spyOn(version, 'isRelease').mockReturnValue(true);
+        const err = { message: 'Custom error', status: 404 };
         const req = {};
-        const res = {
-            status: vi.fn().mockReturnThis(),
-            send: vi.fn(),
-            locals: { player: { name: 'Player' } }
-        };
+        const res = makeRes();
         const next = vi.fn();
 
         errorMiddleware(err as any, req as any, res as any, next);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Page not found' });
+    });
+
+    it('should handle non-Error objects correctly', () => {
+        const err = 'String error';
+        const req = {};
+        const res = makeRes();
+        const next = vi.fn();
+
+        errorMiddleware(err as any, req as any, res as any, next);
+
         expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith({ error: 'String error' });
     });
 });

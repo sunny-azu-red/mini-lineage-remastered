@@ -1,10 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import type { Ack, ClientToServerEvents, ServerToClientEvents } from '@shared/contract';
 
-// Mounted on the NEW socket server's distinct Engine.IO path — see src/socket/index.ts for why
-// this can't just be the default `/socket.io` (the legacy app already owns that path).
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io({
-    path: '/socket.io/v2',
     autoConnect: false,
 });
 

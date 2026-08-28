@@ -17,23 +17,14 @@ import { registerStatisticsHandlers } from './handler/statistics.handler';
 import { registerCheatHandler } from './handler/cheat.handler';
 
 /**
- * Initializes the NEW socket-driven API this phase introduces. Runs entirely side-by-side
- * with today's legacy `src/service/socket.service.ts` server — neither is modified nor
- * shares any state with the other (separate sessionTracker Map instances, separate event
- * names/contract).
- *
- * Collision avoidance: this server is mounted on a DISTINCT Engine.IO path,
- * `/socket.io/v2`, rather than the default `/socket.io` the legacy server already owns.
- * A Socket.IO *namespace* (e.g. `io.of('/v2')`) would NOT have been sufficient here — a
- * namespace still shares the underlying Engine.IO handshake/path with whatever server first
- * attached to it, and the legacy server has already claimed the default path outright. Two
- * independent `new SocketIOServer(server, { path })` instances on distinct paths are the
- * simplest way to guarantee zero interference. A later "demolition" phase deletes the legacy
- * server and moves this one onto the default path.
+ * Initializes the socket-driven API — the sole transport for client->server actions/queries and
+ * server->client push (plan decision A1). Now that the legacy Express+EJS app and its
+ * `src/service/socket.service.ts` socket server have been demolished, this binds to the DEFAULT
+ * Engine.IO path (`/socket.io`) — the transitional `/socket.io/v2` override that once avoided
+ * colliding with that legacy server is gone (see git history for the prior parallel-run phase).
  */
-export function initNewSocketService(server: HttpServer, sessionMiddleware: RequestHandler): SocketIOServer {
+export function initSocketService(server: HttpServer, sessionMiddleware: RequestHandler): SocketIOServer {
     const io = new SocketIOServer(server, {
-        path: '/socket.io/v2',
         cors: { origin: false },
     });
 
@@ -66,7 +57,7 @@ export function initNewSocketService(server: HttpServer, sessionMiddleware: Requ
 
                     emitHydrate(io, sessionId, { player: buildPlayerSnapshot(player), catalog: buildGameCatalog() });
                 } catch (err) {
-                    logger.error({ err }, '[SOCKET:v2] failed to build hydrate payload on connect');
+                    logger.error({ err }, '[SOCKET] failed to build hydrate payload on connect');
                 }
             })();
         }

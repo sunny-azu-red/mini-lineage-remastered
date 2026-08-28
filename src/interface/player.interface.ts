@@ -55,7 +55,6 @@ export interface PlayerState {
     coward?: boolean;
     cheated?: boolean;
     deathReason?: string;
-    flash?: FlashMessage;
     totalBattles?: number;
     totalAmbushes?: number;
     consecutiveAmbushes?: number;

@@ -2,7 +2,7 @@
     "watch": [
         "src"
     ],
-    "ext": "ts,json,ejs",
+    "ext": "ts,json",
     "ignore": [
         "node_modules"
     ],

@@ -62,12 +62,12 @@ describe('useHistorySync', () => {
         pushSpy.mockRestore();
     });
 
-    it('pushes the /app-prefixed path matching the current screen on mount', () => {
+    it('pushes the path matching the current screen on mount', () => {
         renderHook(() => useHistorySync());
         expect(pushSpy).toHaveBeenCalledWith(
             expect.objectContaining({ screen: 'home', raceFilter: null }),
             '',
-            '/app/',
+            '/',
         );
     });
 
@@ -79,7 +79,7 @@ describe('useHistorySync', () => {
             useGameStore.getState().navigate('battle');
         });
 
-        expect(pushSpy).toHaveBeenCalledWith(expect.anything(), '', '/app/battle');
+        expect(pushSpy).toHaveBeenCalledWith(expect.anything(), '', '/battle');
     });
 
     it('resolves a highscores raceFilter to its slug-based path via catalog.races', () => {
@@ -90,7 +90,7 @@ describe('useHistorySync', () => {
             useGameStore.getState().navigate('highscores', { raceFilter: 1 });
         });
 
-        expect(pushSpy).toHaveBeenCalledWith(expect.anything(), '', '/app/highscores/human');
+        expect(pushSpy).toHaveBeenCalledWith(expect.anything(), '', '/highscores/human');
     });
 
     it('does not push a path for the "error" screen (no link-worthy URL)', () => {
@@ -121,7 +121,7 @@ describe('useHistorySync', () => {
             // Simulates landing on a history entry that predates this hook ever calling
             // pushState (e.g. the very first page load) — no `event.state`, so the handler must
             // recover the screen by parsing the URL instead.
-            window.history.pushState(null, '', '/app/statistics');
+            window.history.pushState(null, '', '/statistics');
             window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
         });
 
@@ -156,7 +156,7 @@ describe('useHistorySync', () => {
     });
 
     it('reconciles a hard page-load landing directly on a deep link once catalog is available', () => {
-        window.history.replaceState(null, '', '/app/highscores/human');
+        window.history.replaceState(null, '', '/highscores/human');
         // Simulate the pre-hydrate state: no catalog yet, default screen.
         resetStore({ catalog: null, screen: 'start' });
 

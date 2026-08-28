@@ -22,23 +22,22 @@ describe('static.middleware', () => {
         expect(typeof staticMiddleware).toBe('function');
     });
 
-    it('resolves production static path when isRelease is true', async () => {
-        // Compiled output now lands at dist/src/middleware/static.middleware.js (one extra
-        // level of nesting than the old flat dist/middleware layout), so the release-mode
-        // path climbs an extra directory to still land on dist/public. Under this test's
-        // uncompiled execution (src/middleware directly), that resolves to the real repo-root
-        // public/ dir — NOT src/public, which was the old (now-incorrect) expectation.
+    it('resolves production client dist path (dist/public, via ../../public from dist/src/middleware)', async () => {
+        // Compiled output lands at dist/src/middleware/static.middleware.js, so the release-mode
+        // path climbs two directories to land on dist/public — the same directory Vite's build
+        // (client/vite.config.ts, outDir '../dist/public') writes to.
         vi.mocked(versionUtil.isRelease).mockReturnValue(true);
-        const { getStaticPath } = await import('@/middleware/static.middleware');
-        const resolvedPath = getStaticPath();
+        const { getClientDistPath } = await import('@/middleware/static.middleware');
+        const resolvedPath = getClientDistPath();
         expect(resolvedPath).toContain('public');
         expect(resolvedPath).not.toContain(path.join('src', 'public'));
+        expect(resolvedPath).not.toContain('dist');
     });
 
-    it('resolves development static path when isRelease is false', async () => {
+    it('resolves development client dist path (dist/public, via ../../dist/public from src/middleware)', async () => {
         vi.mocked(versionUtil.isRelease).mockReturnValue(false);
-        const { getStaticPath } = await import('@/middleware/static.middleware');
-        const resolvedPath = getStaticPath();
-        expect(resolvedPath).toContain('public');
+        const { getClientDistPath } = await import('@/middleware/static.middleware');
+        const resolvedPath = getClientDistPath();
+        expect(resolvedPath).toContain(path.join('dist', 'public'));
     });
 });
