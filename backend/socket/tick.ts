@@ -1,11 +1,12 @@
 import type { Server as SocketIOServer } from 'socket.io';
-import type { SessionTrackerEntry, PlayerState, TickOptions } from '@/interface';
+import type { ActiveEffect, SessionTrackerEntry, PlayerState, TickOptions } from '@/interface';
 import { TICK_CONFIG } from '@/constant/game.constant';
-import { processTick, isGameStarted } from '@/service/player.service';
+import { processTick, isGameStarted, getPlayerStats } from '@/service/player.service';
 import { withSession, NO_CHANGE } from './session';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
 import { emitStateUpdate, syncExpiryTimers, cleanupStaleSessions, sessionTracker } from './emitter';
 import { logger } from '@/config/logger.config';
+import { capitalize, formatSessionId } from '@/util/format.util';
 
 /**
  * Schedules exact expiry timers for a session's currently active timed effects (buffs,
@@ -49,6 +50,47 @@ export function refreshExpiryTimers(io: SocketIOServer, sessionId: string, playe
  * no change, is a silent no-op (no persist, no emit). A vanished session (SESSION_EXPIRED)
  * or any other error is caught and logged — it must never crash the shared tick loop.
  */
+/**
+ * Ported directly from the old game's socket.service.ts tick logging — one line per firing
+ * (periodic OR exact-expiry), format: `[TICK:<sid>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
+ * `expiring` must be captured BEFORE `processTick` runs (it removes expired effects from the
+ * array), so its label is still available for the status line.
+ */
+function logTickResult(sessionId: string, player: PlayerState, oldHp: number, expiring: ActiveEffect[], changed: boolean): void {
+    const stats = getPlayerStats(player);
+    const isDead = Boolean(player.dead || player.health <= 0);
+    const inCombat = !isDead && Boolean(player.effects?.some(e => e.id === 'combat'));
+    const zone = isDead ? 'Dead' : (inCombat ? 'In Combat' : 'Resting');
+    const hpDiff = player.health - oldHp;
+    const expiredLabel = expiring.map(e => e.label).join(', ');
+    const typeStr = expiring.length > 0 ? capitalize(expiring[0].type) : 'Effect';
+
+    const hpDisplay = hpDiff !== 0
+        ? `${oldHp} -> ${player.health}/${stats.maxHealth}`
+        : `${player.health}/${stats.maxHealth}`;
+
+    let status: string;
+    if (hpDiff > 0) {
+        status = `+${hpDiff} HPR`;
+    } else if (hpDiff < 0) {
+        status = `${hpDiff} HP${expiredLabel ? ` | ${typeStr} Expired: ${expiredLabel}` : ''}`;
+    } else if (changed && expiredLabel) {
+        status = `${typeStr} Expired: ${expiredLabel}`;
+    } else if (changed) {
+        status = 'Effect Expired';
+    } else if (player.health >= stats.maxHealth) {
+        status = 'Full';
+    } else if (inCombat || isDead) {
+        status = 'Paused';
+    } else if (stats.regen === 0) {
+        status = '0 HPR';
+    } else {
+        status = 'Idle';
+    }
+
+    logger.debug(`[TICK:${formatSessionId(sessionId)}] \x1b[34m${zone} | HP: ${hpDisplay} (${status})\x1b[0m`);
+}
+
 export async function processSessionTick(
     io: SocketIOServer,
     tracker: SessionTrackerEntry,
@@ -62,8 +104,14 @@ export async function processSessionTick(
             if (!isGameStarted(ctx.player))
                 return NO_CHANGE;
 
+            const oldHp = ctx.player.health;
+            const now = Date.now();
+            const expiring = (ctx.player.effects ?? []).filter(e => e.expiresAt !== undefined && e.expiresAt <= now);
+
             const changed = processTick(ctx.player, options) || ctx.zoneChanged;
             playerRef = ctx.player;
+
+            logTickResult(sessionId, ctx.player, oldHp, expiring, changed);
 
             return changed ? buildPlayerSnapshot(ctx.player) : NO_CHANGE;
         });

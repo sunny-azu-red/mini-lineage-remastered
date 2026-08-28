@@ -198,6 +198,40 @@ describe('gameStore', () => {
             useGameStore.getState().applyUpdate({ health: 5 });
             expect(useGameStore.getState().player).toBeNull();
         });
+
+        // Regression: PlayerSnapshot.revision is documented as monotonic specifically so an
+        // out-of-order state:update push (increasingly possible with mutation broadcasts, the
+        // periodic tick, and exact expiry timers all independently able to push for the same
+        // session) can be detected and dropped — applyUpdate previously never checked this at
+        // all, letting a stale push silently clobber fresher state.
+        it('drops a push whose revision is older than the currently-held player\'s', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ revision: 5, health: 80 }), catalog });
+
+            useGameStore.getState().applyUpdate({ revision: 3, health: 999 });
+
+            expect(useGameStore.getState().player?.health).toBe(80);
+            expect(useGameStore.getState().player?.revision).toBe(5);
+        });
+
+        it('applies a push whose revision is the same as or newer than the currently-held player\'s', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ revision: 5, health: 80 }), catalog });
+
+            useGameStore.getState().applyUpdate({ revision: 6, health: 42 });
+
+            expect(useGameStore.getState().player?.health).toBe(42);
+            expect(useGameStore.getState().player?.revision).toBe(6);
+        });
+
+        it('applies a push with no revision field at all (never drops purely for its absence)', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ revision: 5, health: 80 }), catalog });
+
+            useGameStore.getState().applyUpdate({ health: 42 });
+
+            expect(useGameStore.getState().player?.health).toBe(42);
+        });
     });
 
     describe('applyMutation', () => {
@@ -399,19 +433,18 @@ describe('gameStore', () => {
         });
     });
 
-    describe('navigate() fires battle:leave when leaving the Battle screen', () => {
-        it('fires battle:leave when navigating away from "battle" to another screen', () => {
+    describe('navigate() reports the resolved screen via player:screen — the location-based signal syncZoneAuras uses (matching the old game\'s per-navigation zone.middleware.ts)', () => {
+        it('fires player:screen with the new screen on every navigation', () => {
             const catalog = makeCatalog();
             useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
-            useGameStore.getState().navigate('battle');
             requestMock.mockClear();
 
-            useGameStore.getState().navigate('home');
+            useGameStore.getState().navigate('weapons');
 
-            expect(requestMock).toHaveBeenCalledWith('battle:leave', {});
+            expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'weapons' });
         });
 
-        it('does not fire battle:leave when navigating between two non-battle screens', () => {
+        it('fires player:screen again for a second, different navigation', () => {
             const catalog = makeCatalog();
             useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
             useGameStore.getState().navigate('weapons');
@@ -419,21 +452,10 @@ describe('gameStore', () => {
 
             useGameStore.getState().navigate('home');
 
-            expect(requestMock).not.toHaveBeenCalled();
+            expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'home' });
         });
 
-        it('does not fire battle:leave while ambushed — pinScreen keeps the player on "battle" regardless of the requested screen', () => {
-            const catalog = makeCatalog();
-            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: true }), catalog });
-            requestMock.mockClear();
-
-            useGameStore.getState().navigate('home');
-            expect(useGameStore.getState().screen).toBe('battle');
-
-            expect(requestMock).not.toHaveBeenCalled();
-        });
-
-        it('does not fire battle:leave when re-navigating to "battle" itself (e.g. a repeat click)', () => {
+        it('does not fire player:screen when re-navigating to the screen it\'s already on (e.g. a repeat click)', () => {
             const catalog = makeCatalog();
             useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
             useGameStore.getState().navigate('battle');
@@ -442,6 +464,49 @@ describe('gameStore', () => {
             useGameStore.getState().navigate('battle');
 
             expect(requestMock).not.toHaveBeenCalled();
+        });
+
+        it('reports "battle" (not the requested screen) while ambushed, since pinScreen forces it there regardless', () => {
+            const catalog = makeCatalog();
+            // First hydrate ever with an ambushed player already resolves screen to 'battle'
+            // directly (not via navigate()), so requesting 'home' here is a genuine change from
+            // the caller's perspective even though pinScreen collapses it back to 'battle'.
+            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
+            requestMock.mockClear();
+            useGameStore.getState().applyUpdate({ ambushed: true });
+            requestMock.mockClear();
+
+            useGameStore.getState().navigate('home');
+
+            expect(useGameStore.getState().screen).toBe('battle');
+            expect(requestMock).not.toHaveBeenCalledWith('player:screen', { screen: 'home' });
+        });
+    });
+
+    describe('hydrate() reports the resolved screen via player:screen for a started player', () => {
+        it('fires player:screen on the very first hydrate for a started player', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ started: true, dead: false }), catalog });
+
+            expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'home' });
+        });
+
+        it('does not fire player:screen for a not-yet-started player', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ started: false, dead: false, name: null }), catalog });
+
+            expect(requestMock).not.toHaveBeenCalled();
+        });
+
+        it('fires player:screen again on a later reconnect, reflecting whatever screen it resolved to', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: false }), catalog });
+            useGameStore.getState().navigate('highscores');
+            requestMock.mockClear();
+
+            useGameStore.getState().hydrate({ player: makePlayer({ dead: true }), catalog });
+
+            expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'death' });
         });
     });
 

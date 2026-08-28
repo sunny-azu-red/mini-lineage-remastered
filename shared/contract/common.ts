@@ -2,6 +2,16 @@ import type { PlayerSnapshot } from './player';
 
 export type SoundName = 'crit' | 'eat' | 'level' | 'death' | 'buy' | 'start' | 'ambush';
 
+/**
+ * Every screen the client can be on. Shared between frontend (gameStore.ts's navigation state
+ * machine) and backend (PlayerState.currentScreen, used by syncZoneAuras to classify combat vs
+ * resting zones exactly like the old game's URL-path-based zone.middleware.ts did — see
+ * game.constant.ts's TICK_CONFIG.combatZones/restingZones).
+ */
+export type ScreenId =
+    | 'start' | 'home' | 'battle' | 'weapons' | 'armors' | 'inn' | 'suicide'
+    | 'death' | 'character' | 'highscores' | 'statistics' | 'races' | 'error';
+
 export type SocketErrorCode =
     | 'UNAUTHENTICATED'   // no session id on the handshake
     | 'SESSION_EXPIRED'   // session row vanished from the store

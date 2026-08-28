@@ -63,27 +63,31 @@ export function commitSuicide(player: PlayerState): void {
 }
 
 /**
- * Strips existing 'resting'/'combat' zone auras and re-adds the correct one based
- * on current state — server-derived zone tracking (replaces the URL-path-based
- * derivation in zone.middleware.ts). Wired into every `withSession` mutation (see
- * `backend/socket/session.ts`) as well as the periodic tick, per the original design.
- * Dead players get neither aura.
+ * Strips existing 'resting'/'combat' zone auras and re-adds the correct one based on the
+ * player's current screen (`currentScreen`, stamped by the `player:screen` socket event — see
+ * its handler) — a direct, instant port of the old game's URL-path-based zone.middleware.ts:
+ * that middleware recomputed the SAME classification synchronously on every page navigation,
+ * with no timer of any kind involved, and this does too (wired into every `withSession`
+ * mutation via `backend/socket/session.ts`, so a `player:screen` event's own handler run
+ * applies it immediately, same as `battle:fight`'s ambush roll does below). Dead players get
+ * neither aura; a screen in neither `TICK_CONFIG.combatZones` nor `restingZones` (Statistics,
+ * Races, Start, Error) also gets neither, matching the old middleware's exact behavior for
+ * paths outside both its lists.
  *
- * Regen-blocking rule: an ambush blocks regen with no fixed end time, full stop — it only
- * ends via an explicit battle:fight (see battle.handler.ts). A regular (non-ambush) fight
- * blocks regen the SAME way — indefinitely — until the client explicitly reports leaving the
- * Battle screen (`battle:leave`, stamping `battleLeftAt`), at which point a short grace period
- * (`combatLingerMs`) starts counting down from THAT moment before regen resumes. Before this
- * fix, the grace period counted down from `lastFightAt` itself, which let regen silently
- * resume just by pausing between clicks while still on the Battle screen — the same class of
- * exploit already closed for ambushes. `combatAbandonedMs` is a safety net for a tab
- * closed/abandoned mid-fight that never fires `battle:leave` at all — regen is not blocked
- * forever in that case, just for a generous ceiling.
+ * `ambushed` unconditionally forces combat regardless of the reported screen — the one
+ * deliberate addition beyond the old game's literal code. The old game trusted the request path
+ * outright and only caught an ambush-escape after the fact via `cheat.middleware.ts` (a
+ * detect-and-punish patch); this rewrite instead makes it structurally impossible up front (the
+ * client always pins its own screen to 'battle' while ambushed — see gameStore.ts's
+ * `pinScreen`), and this override is what keeps that true even against a raw socket client that
+ * lies about its screen.
+ *
+ * Zone auras never carry an `expiresAt` — like the old game, a zone is exactly what your current
+ * screen says it is, not a countdown.
  *
  * Returns whether the resting/combat aura actually changed (including a transition
- * to/from "neither", which only happens for dead players) — callers use this to
- * decide whether a zone-only flip needs to persist/broadcast on its own, even when
- * nothing else about the player changed.
+ * to/from "neither") — callers use this to decide whether a zone-only flip needs to
+ * persist/broadcast on its own, even when nothing else about the player changed.
  */
 export function syncZoneAuras(player: PlayerState): boolean {
     const before = (player.effects ?? []).find(e => e.id === 'resting' || e.id === 'combat')?.id ?? null;
@@ -93,37 +97,18 @@ export function syncZoneAuras(player: PlayerState): boolean {
     if (player.dead)
         return before !== null;
 
-    const hasFought = player.lastFightAt !== undefined;
-    // Only counts as "left" if it happened AFTER the most recent fight — fighting again while
-    // the grace period was already counting down (e.g. re-engaging from Home) must re-block
-    // regen from scratch, not keep counting down against a now-stale leave timestamp.
-    const leftAt =
-        hasFought && player.battleLeftAt !== undefined && player.battleLeftAt >= player.lastFightAt!
-            ? player.battleLeftAt
-            : undefined;
+    const screen = player.currentScreen;
+    const inCombat = Boolean(player.ambushed) || (screen !== undefined && TICK_CONFIG.combatZones.includes(screen));
+    const isResting = !inCombat && screen !== undefined && TICK_CONFIG.restingZones.includes(screen);
 
-    const inCombat = Boolean(player.ambushed) || (hasFought && (
-        leftAt !== undefined
-            ? Date.now() - leftAt < TICK_CONFIG.combatLingerMs
-            : Date.now() - player.lastFightAt! < TICK_CONFIG.combatAbandonedMs
-    ));
-
-    if (inCombat) {
-        // No fixed end time while ambushed OR while genuinely still on the Battle screen
-        // (`leftAt === undefined`) — give the exact-timeout mechanism (syncExpiryTimers,
-        // emitter.ts) a real `expiresAt` ONLY once the grace period has actually started
-        // (i.e. `leftAt` is known), so the combat -> resting transition still fires at the
-        // precise millisecond instead of waiting on the next periodic tick.
-        const combatAura: ActiveEffect = { ...EFFECTS_CONFIG.combatAura };
-        if (!player.ambushed && leftAt !== undefined)
-            combatAura.expiresAt = leftAt + TICK_CONFIG.combatLingerMs;
-
-        player.effects.push(combatAura);
-    } else {
+    if (inCombat)
+        player.effects.push({ ...EFFECTS_CONFIG.combatAura });
+    else if (isResting)
         player.effects.push({ ...EFFECTS_CONFIG.restingAura });
-    }
 
-    return before !== (inCombat ? 'combat' : 'resting');
+    const after = inCombat ? 'combat' : (isResting ? 'resting' : null);
+
+    return before !== after;
 }
 
 /**
@@ -138,7 +123,7 @@ export function resetPlayer(player: PlayerState): void {
         'name', 'raceId', 'health', 'adena', 'experience', 'weaponId', 'armorId',
         'dead', 'ambushed', 'coward', 'cheated', 'deathReason',
         'totalBattles', 'totalAmbushes', 'consecutiveAmbushes', 'totalEnemiesKilled',
-        'effects', 'revision', 'lastFightAt', 'battleLeftAt', 'lastBattleNarrative',
+        'effects', 'revision', 'currentScreen', 'lastBattleNarrative',
     ];
 
     for (const key of gameFields)

@@ -1,11 +1,13 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { PlayerState } from '@/interface';
 import { SocketInputEventSchema } from '@/schema/socket.schema';
 import { CHEAT_CONFIG, EFFECTS_CONFIG } from '@/constant/game.constant';
 import { isGameStarted, applyEffect, getPlayerStats } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { withSession, NO_CHANGE } from '../session';
 import { floodLimiter } from '../rate-limit';
-import { sessionTracker, emitNotice } from '../emitter';
+import { sessionTracker, emitStateUpdate } from '../emitter';
+import { buildPlayerSnapshot } from '../serializer/player.serializer';
 import { logger } from '@/config/logger.config';
 import { formatSessionId } from '@/util/format.util';
 
@@ -55,6 +57,7 @@ export function registerCheatHandler(io: SocketIOServer, socket: Socket): void {
         tracker.inputBuffer = [];
 
         try {
+            let mutatedPlayer: PlayerState | undefined;
             const cheated = await withSession(sessionId, (ctx) => {
                 if (!isGameStarted(ctx.player) || ctx.player.dead)
                     return NO_CHANGE;
@@ -63,12 +66,18 @@ export function registerCheatHandler(io: SocketIOServer, socket: Socket): void {
                 applyEffect(ctx.player, EFFECTS_CONFIG.konamiCheat);
                 ctx.player.health = getPlayerStats(ctx.player).maxHealth;
                 void statisticsRepository.increment('total_players_cheated');
+                mutatedPlayer = ctx.player;
 
                 return true;
             });
 
-            if (cheated)
-                emitNotice(io, sessionId, { text: "👾 Cheater's Mark applied!", type: 'info' });
+            // Silent by design, matching the old game exactly — no flash/notice, just the debuff
+            // icon appearing and HP snapping to full via a normal real-time state push (mirrors
+            // the old game's own separate emitToSession call here, broadcast to every tab on the
+            // session — this handler bypasses registry.ts entirely, so nothing else would ever
+            // push this mutation to the client otherwise).
+            if (cheated && mutatedPlayer)
+                emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer));
         } catch (err) {
             logger.debug({ err }, `[SOCKET:${formatSessionId(sessionId)}] input handler error`);
         }

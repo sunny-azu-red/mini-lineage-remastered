@@ -112,11 +112,11 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
             if (def.mode === 'mutate' && mutatedPlayer) {
                 emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer), socket.id);
 
-                // Reschedule exact expiry timers (buffs/debuffs and the linger-driven
-                // combat aura) right after this mutation persisted — without this, a
-                // freshly-set expiresAt (e.g. battle:fight bumping lastFightAt) would sit
-                // unscheduled until the next periodic tick or reconnect happened to catch
-                // up, instead of firing at the exact millisecond it should.
+                // Reschedule exact expiry timers (real timed buffs/debuffs — zone auras never
+                // carry an expiresAt) right after this mutation persisted — without this, a
+                // freshly-applied effect's expiresAt would sit unscheduled until the next
+                // periodic tick or reconnect happened to catch up, instead of firing at the
+                // exact millisecond it should.
                 refreshExpiryTimers(io, sessionId, mutatedPlayer);
             }
 

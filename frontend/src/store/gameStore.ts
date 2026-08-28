@@ -8,11 +8,10 @@ import type {
     BattleFightResult,
     BattleNarrativeSnapshot,
     HydratePayload,
+    ScreenId,
 } from '@shared/contract';
 
-export type ScreenId =
-    | 'start' | 'home' | 'battle' | 'weapons' | 'armors' | 'inn' | 'suicide'
-    | 'death' | 'character' | 'highscores' | 'statistics' | 'races' | 'error';
+export type { ScreenId };
 
 const SOUND_STORAGE_KEY = 'mini_sound_enabled';
 
@@ -151,6 +150,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 ? pinScreen(p.player?.started ? 'home' : 'start', p.player)
                 : deriveScreenAfterPlayerChange(state.player, p.player, state.screen);
 
+            // Reports the resolved screen so the server's zone-aura classification
+            // (syncZoneAuras, matching the old game's URL-path-based zone.middleware.ts) is
+            // correct immediately on connect/reconnect — hydrate() itself stays a pure read (this
+            // fires a SEPARATE, real, tracked action as a reaction to what it resolved, the same
+            // pattern navigate() below uses). Fire-and-forget; response ignored.
+            if (p.player?.started)
+                void request('player:screen', { screen });
+
             // Sync unconditionally (including to `null`) on EVERY hydrate, not just the first —
             // `PlayerSnapshot.lastBattle` is now the server-persisted source of truth, so a
             // reconnect must reflect it exactly: a genuine last-fight narrative on any reconnect
@@ -166,6 +173,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyUpdate(p) {
         set(state => {
             if (!state.player)
+                return {};
+            // Drop an out-of-order push: with mutation broadcasts, the periodic tick, and exact
+            // expiry timers all independently able to emit `state:update` for the same session,
+            // an older one can land after a newer one. `PlayerSnapshot.revision` is documented as
+            // monotonic specifically so this can be detected — without this guard a stale push
+            // would silently clobber fresher state (including `effects`), which is exactly the
+            // kind of "aura is strange" symptom a race like this produces.
+            if (p.revision !== undefined && state.player.revision !== undefined && p.revision < state.player.revision)
                 return {};
             const player = { ...state.player, ...p };
             return { player, screen: deriveScreenAfterPlayerChange(state.player, player, state.screen) };
@@ -196,17 +211,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const state = get();
         const nextScreen = pinScreen(screen, state.player);
 
-        // Fire-and-forget: tells the server the Battle screen was actually left, so
-        // syncZoneAuras (player.service.ts) can start the combat aura's regen-blocking grace
-        // period from THIS moment instead of the player's last fight — otherwise simply
-        // pausing between fights while still on the Battle screen would let regen silently
-        // resume mid-encounter. Naturally never fires while ambushed: pinScreen forces
-        // `nextScreen` back to 'battle' in that case, so it never differs from 'battle'. The
-        // response is intentionally ignored — the server's own broadcast/exact-expiry-timer
-        // mechanism (see registry.ts/tick.ts) keeps every tab's effects list correct within a
-        // few seconds regardless.
-        if (state.screen === 'battle' && nextScreen !== 'battle')
-            void request('battle:leave', {});
+        // Fire-and-forget: tells the server which screen this is, so syncZoneAuras
+        // (player.service.ts) can classify combat/resting purely from location — exactly like
+        // the old game's URL-path-based zone.middleware.ts — instead of it lagging behind by a
+        // tick. Only fires on an actual change, mirroring the old app's model where a zone flip
+        // only ever happened as a side effect of a real navigation. The response is intentionally
+        // ignored — the server's own broadcast mechanism (registry.ts) keeps every tab's effects
+        // list correct immediately regardless.
+        if (nextScreen !== state.screen)
+            void request('player:screen', { screen: nextScreen });
 
         set({
             screen: nextScreen,

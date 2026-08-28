@@ -3,7 +3,7 @@ import { withSession, readSession, NO_CHANGE, SessionContext } from '@/socket/se
 import { SocketError } from '@/socket/error';
 import { acquireSessionLock } from '@/util/lock.util';
 import { getSessionData, setSessionData } from '@/util/session-store.util';
-import { EFFECTS_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
+import { EFFECTS_CONFIG } from '@/constant/game.constant';
 
 // Note: `@/service/player.service` is deliberately NOT mocked in this file — withSession's
 // automatic zone-sync (Fix 8) is real production wiring, and these tests rely on the real
@@ -134,12 +134,12 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
     }
 
     it('persists a zone-only flip even when the handler itself reports NO_CHANGE (the silent-drop bug)', async () => {
-        // Combat aura is stale: battle:leave fired and its grace period is well past, so
-        // syncZoneAuras should flip it to resting — a change the mutate callback below
-        // has no idea happened, and reports NO_CHANGE regardless.
+        // Persisted aura is stale relative to currentScreen (e.g. a player:screen call updated
+        // the screen without also calling syncZoneAuras itself), so syncZoneAuras should flip it
+        // to resting — a change the mutate callback below has no idea happened, and reports
+        // NO_CHANGE regardless.
         const session = makeStartedSession({
-            lastFightAt: Date.now() - TICK_CONFIG.combatLingerMs - 2000,
-            battleLeftAt: Date.now() - TICK_CONFIG.combatLingerMs - 1000,
+            currentScreen: 'home',
             effects: [{ ...EFFECTS_CONFIG.combatAura }],
         });
         vi.mocked(getSessionData).mockResolvedValue(session);
@@ -171,7 +171,8 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
 
     it('does not force a persist when the zone aura was already correct and the mutator reports NO_CHANGE', async () => {
         const session = makeStartedSession({
-            effects: [{ ...EFFECTS_CONFIG.restingAura }], // already resting, idle, never fought
+            currentScreen: 'home',
+            effects: [{ ...EFFECTS_CONFIG.restingAura }], // already resting, matches currentScreen
         });
         vi.mocked(getSessionData).mockResolvedValue(session);
 
@@ -208,7 +209,7 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
         vi.mocked(getSessionData).mockResolvedValue(session);
 
         const result = await withSession('sid-1', (ctx) => {
-            Object.assign(ctx.player, { raceId: 0, health: 100, adena: 300, dead: false, ambushed: false });
+            Object.assign(ctx.player, { raceId: 0, health: 100, adena: 300, dead: false, ambushed: false, currentScreen: 'home' });
             return 'started';
         });
 

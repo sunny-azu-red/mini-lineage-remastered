@@ -16,7 +16,7 @@ vi.mock('@/socket/session', async (importOriginal) => {
 
 vi.mock('@/socket/emitter', () => ({
     sessionTracker: new Map(),
-    emitNotice: vi.fn(),
+    emitStateUpdate: vi.fn(),
 }));
 
 vi.mock('@/repository/statistics.repository', () => ({
@@ -25,7 +25,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 
 import { registerCheatHandler } from '@/socket/handler/cheat.handler';
 import { withSession, NO_CHANGE } from '@/socket/session';
-import { sessionTracker, emitNotice } from '@/socket/emitter';
+import { sessionTracker, emitStateUpdate } from '@/socket/emitter';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { CHEAT_CONFIG } from '@/constant/game.constant';
 import type { PlayerState, SessionTrackerEntry } from '@/interface';
@@ -71,7 +71,7 @@ describe('cheat.handler (input / Konami relay)', () => {
             await handlers['input']({ key });
     }
 
-    it('applies the cheat effect once the full Konami sequence is entered', async () => {
+    it('applies the cheat effect once the full Konami sequence is entered, silently — no flash/notice, matching the old game exactly', async () => {
         const { socket, handlers } = makeSocket();
         sessionTracker.set('sid-1', { socketIds: new Set(['sock-1']), lastSeen: Date.now() } as SessionTrackerEntry);
         const player = makePlayer();
@@ -83,8 +83,10 @@ describe('cheat.handler (input / Konami relay)', () => {
         expect(player.cheated).toBe(true);
         expect(player.health).toBeGreaterThan(100); // maxHealth after konamiCheat buff
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_players_cheated');
-        expect(emitNotice).toHaveBeenCalledTimes(1);
-        expect(emitNotice).toHaveBeenCalledWith(io, 'sid-1', expect.objectContaining({ text: expect.any(String) }));
+        // Still broadcasts the resulting state (so the debuff icon/HP change show up in real
+        // time, matching the old game's own emitToSession call here) — just with no message.
+        expect(emitStateUpdate).toHaveBeenCalledTimes(1);
+        expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', expect.objectContaining({ cheated: true }));
     });
 
     it('resets the buffer after a completed sequence (case-insensitive keys)', async () => {
@@ -120,7 +122,7 @@ describe('cheat.handler (input / Konami relay)', () => {
         await sendSequence(handlers, CHEAT_CONFIG.konamiSequence);
 
         expect(deadPlayer.cheated).toBeUndefined();
-        expect(emitNotice).not.toHaveBeenCalled();
+        expect(emitStateUpdate).not.toHaveBeenCalled();
     });
 
     it('does nothing when there is no session id on the handshake', async () => {

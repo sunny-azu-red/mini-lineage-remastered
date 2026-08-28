@@ -102,7 +102,7 @@ describe('HomeScreen', () => {
 
         expect(useGameStore.getState().screen).toBe('battle');
         await waitFor(() => expect(requestMock).toHaveBeenCalledWith('battle:fight', {}));
-        expect(requestMock).toHaveBeenCalledTimes(1);
+        expect(requestMock.mock.calls.filter(call => call[0] === 'battle:fight')).toHaveLength(1);
         await waitFor(() => expect(useGameStore.getState().lastBattle).not.toBeNull());
     });
 
@@ -113,7 +113,7 @@ describe('HomeScreen', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Travel' }));
 
         expect(useGameStore.getState().screen).toBe('inn');
-        expect(requestMock).not.toHaveBeenCalled();
+        expect(requestMock).not.toHaveBeenCalledWith('battle:fight', expect.anything());
     });
 
     it('defaults the select to the first real destination (Inn), not an empty placeholder', () => {
@@ -129,6 +129,6 @@ describe('HomeScreen', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Travel' }));
 
         expect(useGameStore.getState().screen).toBe('inn');
-        expect(requestMock).not.toHaveBeenCalled();
+        expect(requestMock).not.toHaveBeenCalledWith('battle:fight', expect.anything());
     });
 });

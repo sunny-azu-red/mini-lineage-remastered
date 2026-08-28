@@ -1,4 +1,4 @@
-import type { Ack, MutationResult, FlashView } from './common';
+import type { Ack, MutationResult, FlashView, ScreenId } from './common';
 import type { PlayerSnapshot } from './player';
 import type { GameCatalog } from './catalog';
 import type { BattleFightResult } from './battle';
@@ -35,18 +35,23 @@ export interface InputPayload {
     key: string;
 }
 
+export interface PlayerScreenPayload {
+    screen: ScreenId;
+}
+
 export interface ClientToServerEvents {
     'game:start': (p: GameStartPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'game:restart': (p: EmptyPayload, ack: (r: Ack<{ hydrate: HydratePayload }>) => void) => void;
     'battle:fight': (p: EmptyPayload, ack: (r: Ack<BattleFightResult>) => void) => void;
     /**
-     * Fired by the client whenever it navigates away from the Battle screen (see gameStore.ts's
-     * navigate()) — the signal player.service.ts's syncZoneAuras needs to start the combat aura's
-     * short regen-blocking grace period from the moment battle was actually left, instead of from
-     * the last fight itself (which would let regen resume just by pausing between clicks while
-     * still on the Battle screen).
+     * Fired by the client on every screen change (see gameStore.ts's navigate()/hydrate()) —
+     * reports the player's current location so player.service.ts's syncZoneAuras can classify
+     * combat/resting zones purely from it, exactly like the old game's URL-path-based
+     * zone.middleware.ts did. `ambushed` still unconditionally forces combat server-side
+     * regardless of what screen is reported here (see syncZoneAuras) — a raw socket client lying
+     * about its screen can never escape that.
      */
-    'battle:leave': (p: EmptyPayload, ack: (r: Ack<MutationResult>) => void) => void;
+    'player:screen': (p: PlayerScreenPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'shop:purchase': (p: ShopPurchasePayload, ack: (r: Ack<MutationResult>) => void) => void;
     'player:suicide': (p: EmptyPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'highscores:submit': (p: EmptyPayload, ack: (r: Ack<HighscoreSubmitResult>) => void) => void;

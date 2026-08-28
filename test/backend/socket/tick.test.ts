@@ -8,6 +8,10 @@ vi.mock('@/socket/session', async (importOriginal) => {
 vi.mock('@/service/player.service', () => ({
     processTick: vi.fn(),
     isGameStarted: vi.fn(),
+    // processSessionTick's tick-result logging (ported from the old game's [TICK:...] debug
+    // line) calls this unconditionally for any started session — stub a sensible default so
+    // every test in this file can complete without needing its own stats setup.
+    getPlayerStats: vi.fn(() => ({ maxHealth: 100, regen: 5 })),
 }));
 
 vi.mock('@/socket/emitter', () => ({
@@ -76,14 +80,14 @@ describe('processSessionTick', () => {
         expect(syncExpiryTimers).not.toHaveBeenCalled();
     });
 
-    it('regression (Fix 8): builds and emits a snapshot when the zone alone changed (e.g. the combat linger window just expired), even though processTick itself reports no change', async () => {
+    it('regression (Fix 8): builds and emits a snapshot when the zone alone changed (e.g. a reconnect resolved a different screen than what was persisted), even though processTick itself reports no change', async () => {
         // withSession's own automatic syncZoneAuras call (session.ts) is what would set
-        // ctx.zoneChanged to true here in real production use, once
-        // Date.now() - lastFightAt >= TICK_CONFIG.combatLingerMs flips combat -> resting.
-        // withSession is mocked in this file, so ctx.zoneChanged is supplied directly to
-        // isolate tick.ts's own responsibility: folding it into its "did anything change"
-        // decision instead of relying on processTick alone, which knows nothing about zones.
-        const player = { raceId: 0, lastFightAt: Date.now() - TICK_CONFIG.combatLingerMs - 1 };
+        // ctx.zoneChanged to true here in real production use, whenever currentScreen no
+        // longer matches the persisted aura. withSession is mocked in this file, so
+        // ctx.zoneChanged is supplied directly to isolate tick.ts's own responsibility: folding
+        // it into its "did anything change" decision instead of relying on processTick alone,
+        // which knows nothing about zones.
+        const player = { raceId: 0, currentScreen: 'home' };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
             const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: true });
             return result === NO_CHANGE ? undefined : result;

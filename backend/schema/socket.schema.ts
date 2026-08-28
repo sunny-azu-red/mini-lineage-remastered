@@ -37,6 +37,17 @@ export const HighscoreListPayloadSchema = z.object({
 
 export type HighscoreListPayloadParsed = z.infer<typeof HighscoreListPayloadSchema>;
 
+const SCREEN_IDS = [
+    'start', 'home', 'battle', 'weapons', 'armors', 'inn', 'suicide',
+    'death', 'character', 'highscores', 'statistics', 'races', 'error',
+] as const;
+
+export const PlayerScreenPayloadSchema = z.object({
+    screen: z.enum(SCREEN_IDS),
+});
+
+export type PlayerScreenPayloadParsed = z.infer<typeof PlayerScreenPayloadSchema>;
+
 /**
  * Accepts `{}` cleanly AND an omitted/undefined payload (Socket.IO delivers no payload
  * argument at all when the client calls `.emit(event, ack)` with no data — registerEvent's

@@ -1,4 +1,5 @@
 import { Item, Race, RaceType, StatModifierType, StatModifierConfig, EffectConfig } from '@/interface';
+import type { ScreenId } from '@shared/contract';
 import { getVersion } from '@/util/version.util';
 
 export const GAME_VERSION = getVersion();
@@ -209,21 +210,19 @@ export const BATTLE_CONFIG = {
 /**
  * Tick & Zone Configuration
  *
- * Controls the server-side tick cadence and zone classifications.
- * combatZones are paths where passive ticks pause HP regeneration.
- * restingZones are paths where peaceful HP regeneration is applied.
+ * Controls the server-side tick cadence (regen + timed-effect expiry sweep — see tick.ts) and
+ * zone classifications. combatZones/restingZones classify screens (not URL paths, though the
+ * grouping is identical to the old game's zone.middleware.ts) — combatZones are screens where
+ * passive ticks pause HP regeneration, restingZones are screens where peaceful HP regeneration is
+ * applied. A screen in neither list (Statistics/Races/Start/Error) gets no zone aura at all,
+ * matching the old game's behavior for paths outside both its lists exactly. Zone classification
+ * itself is NOT tick-driven — see player.service.ts's syncZoneAuras and the player:screen socket
+ * event, which update it instantly on navigation, same as the old app did on every page load.
  */
 export const TICK_CONFIG = {
     intervalMs: 5_000,
-    combatZones: ['/battle', '/suicide', '/death'],
-    restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],
-    combatLingerMs: 10_000,
-    // Safety net ONLY — see player.service.ts's syncZoneAuras. A player who fought and never
-    // explicitly left the Battle screen (battle:leave) stays fully combat-blocked indefinitely,
-    // same as an ambush; this caps that at a generous ceiling so a tab closed/abandoned mid-fight
-    // doesn't block regen forever. Deliberately much longer than combatLingerMs so it never
-    // interferes with the normal (explicit-leave) grace period.
-    combatAbandonedMs: 5 * 60_000,
+    combatZones: ['battle', 'suicide', 'death'] as ScreenId[],
+    restingZones: ['home', 'inn', 'weapons', 'armors', 'character', 'highscores'] as ScreenId[],
 } as const;
 
 /**

@@ -208,9 +208,9 @@ describe('registerEvent', () => {
     });
 
     it('refreshes exact expiry timers for the acting session on a successful mutation (Fix 2)', async () => {
-        // Closes the wiring gap: a fresh expiresAt set during a mutation (e.g. battle:fight
-        // bumping lastFightAt -> a linger-driven combat aura, see player.service.ts) must be
-        // scheduled immediately, not sit unscheduled until the next periodic tick/reconnect.
+        // Closes the wiring gap: a fresh expiresAt set during a mutation (e.g. a food buff
+        // applied via shop:purchase, see player.service.ts's applyEffect) must be scheduled
+        // immediately, not sit unscheduled until the next periodic tick/reconnect.
         const player = { health: 42 };
         vi.mocked(withSession).mockImplementation(async (sid: string, run: any) =>
             run({ sessionId: sid, session: {}, player }));

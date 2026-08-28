@@ -32,10 +32,10 @@ export interface SessionContext {
  *
  * `syncZoneAuras` runs automatically here — once immediately after the session loads
  * and BEFORE `mutate` runs (exposed to the mutator via `ctx.zoneChanged`, e.g. the tick
- * uses this to know "did the linger window expire on its own"), and once again
+ * uses this to know "did the zone change on its own since last time"), and once again
  * immediately AFTER `mutate` returns. The second call is what makes aura/buff/debuff
  * state instant rather than tied to the 5s regen tick: a mutator like `game:start` or
- * `battle:fight` changes `ambushed`/`lastFightAt`/`dead` *during* its own execution, so
+ * `battle:fight` changes `ambushed`/`currentScreen`/`dead` *during* its own execution, so
  * only a POST-mutation sync can see the resulting zone correctly — the pre-mutation
  * call alone would miss it and leave the player auraless until the next periodic tick
  * happened to catch up. Both booleans are folded into the persistence decision: a

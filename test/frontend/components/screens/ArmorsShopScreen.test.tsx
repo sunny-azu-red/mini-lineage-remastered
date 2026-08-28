@@ -101,7 +101,7 @@ describe('ArmorsShopScreen', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Return' }));
 
         await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
-        expect(requestMock).not.toHaveBeenCalled();
+        expect(requestMock).not.toHaveBeenCalledWith('shop:purchase', expect.anything());
     });
 
     it('a real selection still purchases', async () => {

@@ -21,6 +21,13 @@ export function registerGameHandlers(io: SocketIOServer, socket: Socket): void {
             const race = RACES[payload.raceId];
             const flash = initializePlayer(ctx.player, race, payload.name);
 
+            // A fresh character always lands on Home (GameStartScreen navigates there on
+            // success) — stamped directly here, same reasoning as battle:fight's currentScreen
+            // stamp: the client's own separate player:screen call for that navigation is a
+            // second, independent round trip that could land after this ack, otherwise briefly
+            // leaving a freshly-started character with no zone aura at all.
+            ctx.player.currentScreen = 'home';
+
             // withSession's automatic pre-mutation sync ran before this handler started,
             // while isGameStarted(ctx.player) was still false, so it skipped entirely — its
             // post-mutation sync (after this handler returns) WOULD catch it, but that's too

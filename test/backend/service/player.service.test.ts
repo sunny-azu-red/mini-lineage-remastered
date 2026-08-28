@@ -818,94 +818,40 @@ describe('syncZoneAuras', () => {
         expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
     });
 
-    it('adds a combat aura when ambushed', () => {
+    it('adds a combat aura when ambushed, with no currentScreen at all', () => {
         const p = makePlayer({ ambushed: true, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it('keeps the combat aura indefinitely after fighting, with no battle:leave yet — even long past the old linger window', () => {
-        // Regression guard: before the battle:leave fix, this alone (no explicit leave) used
-        // to flip to resting once `combatLingerMs` had elapsed, letting regen silently resume
-        // just by pausing between fights while still on the Battle screen.
-        vi.useFakeTimers();
-        try {
-            const now = Date.now();
-            vi.setSystemTime(now);
-            const p = makePlayer({ lastFightAt: now - (TICK_CONFIG.combatLingerMs * 10), effects: [] });
-            syncZoneAuras(p);
-            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
-        } finally {
-            vi.useRealTimers();
-        }
+    it.each(TICK_CONFIG.combatZones)('adds a combat aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts combatZones)', screen => {
+        const p = makePlayer({ currentScreen: screen, effects: [] });
+        syncZoneAuras(p);
+        expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it('adds a resting aura once the grace period has elapsed since an explicit battle:leave', () => {
-        vi.useFakeTimers();
-        try {
-            const now = Date.now();
-            vi.setSystemTime(now);
-            const lastFightAt = now - 60_000;
-            const p = makePlayer({ lastFightAt, battleLeftAt: now - TICK_CONFIG.combatLingerMs, effects: [] });
-            syncZoneAuras(p);
-            expect(p.effects?.map(e => e.id)).toEqual(['resting']);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it('adds a combat aura while still within the grace period since an explicit battle:leave', () => {
-        vi.useFakeTimers();
-        try {
-            const now = Date.now();
-            vi.setSystemTime(now);
-            const lastFightAt = now - 60_000;
-            const p = makePlayer({ lastFightAt, battleLeftAt: now - (TICK_CONFIG.combatLingerMs - 1), effects: [] });
-            syncZoneAuras(p);
-            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it('ignores a stale battle:leave from before the most recent fight — re-engaging re-blocks regen from scratch', () => {
-        vi.useFakeTimers();
-        try {
-            const now = Date.now();
-            vi.setSystemTime(now);
-            // Left battle, then fought again (e.g. re-engaged from Home) — the leave timestamp
-            // predates this fight, so it must not count toward the grace period anymore.
-            const p = makePlayer({
-                lastFightAt: now,
-                battleLeftAt: now - TICK_CONFIG.combatLingerMs - 1,
-                effects: [],
-            });
-            syncZoneAuras(p);
-            const combat = p.effects?.find(e => e.id === 'combat');
-            expect(combat).toBeDefined();
-            expect(combat?.expiresAt).toBeUndefined();
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it('falls back to resting after combatAbandonedMs when battle:leave never fires (abandoned-tab safety net)', () => {
-        vi.useFakeTimers();
-        try {
-            const now = Date.now();
-            vi.setSystemTime(now);
-            const p = makePlayer({ lastFightAt: now - TICK_CONFIG.combatAbandonedMs, effects: [] });
-            syncZoneAuras(p);
-            expect(p.effects?.map(e => e.id)).toEqual(['resting']);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it('adds a resting aura when idle and never having fought', () => {
-        const p = makePlayer({ effects: [] });
+    it.each(TICK_CONFIG.restingZones)('adds a resting aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts restingZones)', screen => {
+        const p = makePlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['resting']);
+    });
+
+    it.each(['start', 'statistics', 'races', 'error'] as const)('adds no zone aura when currentScreen is "%s" — outside both zone lists, matching the old game\'s behavior for those paths exactly', screen => {
+        const p = makePlayer({ currentScreen: screen, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        syncZoneAuras(p);
+        expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
+    });
+
+    it('adds no zone aura when currentScreen has never been reported at all', () => {
+        const p = makePlayer({ effects: [] });
+        syncZoneAuras(p);
+        expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
+    });
+
+    it('ambushed unconditionally forces combat regardless of the reported screen — the safety net a raw socket client can\'t escape by lying about its screen', () => {
+        const p = makePlayer({ ambushed: true, currentScreen: 'home', effects: [] });
+        syncZoneAuras(p);
+        expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
     it('replaces a stale zone aura rather than stacking', () => {
@@ -915,62 +861,21 @@ describe('syncZoneAuras', () => {
     });
 
     it('preserves non-zone effects untouched', () => {
-        const p = makePlayer({ effects: [{ ...EFFECTS_CONFIG.konamiCheat }] });
+        const p = makePlayer({ currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.konamiCheat }] });
         syncZoneAuras(p);
         const ids = p.effects?.map(e => e.id);
         expect(ids).toContain('konami_cheat');
         expect(ids).toContain('resting');
     });
 
-    describe('expiresAt on the combat aura (Fix — exact-timeout combat->resting transition)', () => {
-        it('sets expiresAt to battleLeftAt + combatLingerMs once battle:leave has fired (not ambushed)', () => {
-            vi.useFakeTimers();
-            try {
-                const now = Date.now();
-                vi.setSystemTime(now);
-                const lastFightAt = now - 60_000;
-                const battleLeftAt = now - 1000;
-                const p = makePlayer({ ambushed: false, lastFightAt, battleLeftAt, effects: [] });
+    it('never sets expiresAt on a zone aura — a zone is exactly what the current screen says, never a countdown, matching the old game exactly', () => {
+        const combatPlayer = makePlayer({ currentScreen: 'battle', effects: [] });
+        syncZoneAuras(combatPlayer);
+        expect(combatPlayer.effects?.find(e => e.id === 'combat')?.expiresAt).toBeUndefined();
 
-                syncZoneAuras(p);
-
-                const combat = p.effects?.find(e => e.id === 'combat');
-                expect(combat).toBeDefined();
-                expect(combat?.expiresAt).toBe(battleLeftAt + TICK_CONFIG.combatLingerMs);
-            } finally {
-                vi.useRealTimers();
-            }
-        });
-
-        it('leaves expiresAt unset for a combat aura still on the Battle screen (fought, no battle:leave yet)', () => {
-            const p = makePlayer({ ambushed: false, lastFightAt: Date.now() - 1000, effects: [] });
-
-            syncZoneAuras(p);
-
-            const combat = p.effects?.find(e => e.id === 'combat');
-            expect(combat).toBeDefined();
-            expect(combat?.expiresAt).toBeUndefined();
-        });
-
-        it('leaves expiresAt unset for an ambush-driven combat aura, even with a stale lastFightAt', () => {
-            const p = makePlayer({ ambushed: true, lastFightAt: Date.now() - 999_999, effects: [] });
-
-            syncZoneAuras(p);
-
-            const combat = p.effects?.find(e => e.id === 'combat');
-            expect(combat).toBeDefined();
-            expect(combat?.expiresAt).toBeUndefined();
-        });
-
-        it('leaves expiresAt unset for the resting aura', () => {
-            const p = makePlayer({ effects: [] });
-
-            syncZoneAuras(p);
-
-            const resting = p.effects?.find(e => e.id === 'resting');
-            expect(resting).toBeDefined();
-            expect(resting?.expiresAt).toBeUndefined();
-        });
+        const restingPlayer = makePlayer({ currentScreen: 'home', effects: [] });
+        syncZoneAuras(restingPlayer);
+        expect(restingPlayer.effects?.find(e => e.id === 'resting')?.expiresAt).toBeUndefined();
     });
 
     describe('return value (Fix 8 — callers need to know whether the aura actually changed)', () => {
@@ -980,7 +885,7 @@ describe('syncZoneAuras', () => {
         });
 
         it('returns true on a combat -> resting transition', () => {
-            const p = makePlayer({ ambushed: false, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            const p = makePlayer({ ambushed: false, currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.combatAura }] });
             expect(syncZoneAuras(p)).toBe(true);
         });
 
@@ -989,8 +894,8 @@ describe('syncZoneAuras', () => {
             expect(syncZoneAuras(p)).toBe(false);
         });
 
-        it('returns false when idle with no prior zone aura and resting is (re)computed', () => {
-            const p = makePlayer({ effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        it('returns false when resting is (re)computed and already present', () => {
+            const p = makePlayer({ currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.restingAura }] });
             expect(syncZoneAuras(p)).toBe(false);
         });
 
@@ -1018,7 +923,7 @@ describe('resetPlayer', () => {
         const p = makePlayer({
             dead: true, coward: true, cheated: true, ambushed: true,
             deathReason: 'died', effects: [{ ...EFFECTS_CONFIG.restingAura }],
-            revision: 3, lastFightAt: 12345,
+            revision: 3, currentScreen: 'death',
         });
         resetPlayer(p);
 
@@ -1040,7 +945,7 @@ describe('resetPlayer', () => {
         expect(p.totalEnemiesKilled).toBeUndefined();
         expect(p.effects).toBeUndefined();
         expect(p.revision).toBeUndefined();
-        expect(p.lastFightAt).toBeUndefined();
+        expect(p.currentScreen).toBeUndefined();
     });
 
     it('clears lastBattleNarrative so a restarted character does not show its predecessor\'s last fight', () => {

@@ -92,7 +92,7 @@ describe('SuicideScreen', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Return' }));
 
-        expect(requestMock).not.toHaveBeenCalled();
+        expect(requestMock).not.toHaveBeenCalledWith('player:suicide', expect.anything());
         expect(useGameStore.getState().screen).toBe('home');
     });
 
@@ -118,7 +118,7 @@ describe('SuicideScreen', () => {
         fireEvent.change(screen.getByRole('combobox'), { target: { value: 'no' } });
         fireEvent.click(screen.getByRole('button', { name: 'Phew 😅' }));
 
-        expect(requestMock).not.toHaveBeenCalled();
+        expect(requestMock).not.toHaveBeenCalledWith('player:suicide', expect.anything());
         expect(playSoundMock).not.toHaveBeenCalled();
         expect(useGameStore.getState().screen).toBe('home');
     });

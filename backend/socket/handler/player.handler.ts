@@ -2,8 +2,8 @@ import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { MutationResult } from '@shared/contract';
 import { registerEvent } from '../registry';
 import { requireStarted, requireAlive } from '../guard';
-import { EmptyPayloadSchema } from '@/schema/socket.schema';
-import { commitSuicide } from '@/service/player.service';
+import { EmptyPayloadSchema, PlayerScreenPayloadSchema } from '@/schema/socket.schema';
+import { commitSuicide, syncZoneAuras } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 
@@ -21,6 +21,26 @@ export function registerPlayerHandlers(io: SocketIOServer, socket: Socket): void
         handler: (ctx): MutationResult => {
             commitSuicide(ctx.player);
             void statisticsRepository.increment('total_players_suicided');
+
+            return { player: buildPlayerSnapshot(ctx.player), flash: null };
+        },
+    });
+
+    /**
+     * Fired by the client's navigate()/hydrate() (gameStore.ts) on every screen change — the
+     * direct replacement for the old game's URL-path-based zone.middleware.ts, which recomputed
+     * combat/resting zones synchronously on every page navigation. `requireAlive` is deliberately
+     * NOT a guard here: a dead player is always pinned to 'death' client-side anyway, so recording
+     * that is harmless, and syncZoneAuras already gives dead players neither aura regardless.
+     */
+    registerEvent(io, socket, {
+        event: 'player:screen',
+        schema: PlayerScreenPayloadSchema,
+        mode: 'mutate',
+        guards: [requireStarted],
+        handler: (ctx, payload): MutationResult => {
+            ctx.player.currentScreen = payload.screen;
+            syncZoneAuras(ctx.player);
 
             return { player: buildPlayerSnapshot(ctx.player), flash: null };
         },

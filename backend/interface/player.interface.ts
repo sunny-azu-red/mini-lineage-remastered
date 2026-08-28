@@ -1,5 +1,5 @@
 import 'express-session';
-import type { BattleNarrativeSnapshot } from '@shared/contract';
+import type { BattleNarrativeSnapshot, ScreenId } from '@shared/contract';
 import { RaceType } from './game.interface';
 
 export interface PlayerStats {
@@ -62,13 +62,12 @@ export interface PlayerState {
     totalEnemiesKilled?: number;
     effects?: ActiveEffect[];
     revision?: number;
-    lastFightAt?: number;
     /**
-     * Stamped by the `battle:leave` handler (fired by the client's navigate() when it transitions
-     * away from the Battle screen) — see syncZoneAuras for how this, together with `lastFightAt`,
-     * decides whether the combat aura's regen-blocking grace period has started yet.
+     * Stamped by the `player:screen` handler (fired by the client's navigate()/hydrate() on every
+     * screen change) — see syncZoneAuras, which classifies combat/resting zones purely from this,
+     * exactly like the old game's URL-path-based zone.middleware.ts did.
      */
-    battleLeftAt?: number;
+    currentScreen?: ScreenId;
     bootstrappedAt?: number;
     /**
      * The narrative from the most recently resolved `battle:fight`, resolved once and persisted
