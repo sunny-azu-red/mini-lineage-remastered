@@ -39,25 +39,32 @@ export default function XpBar({ player }: XpBarProps) {
     const isLevelUp = prevLevelRef.current !== null && player.level !== null && player.level > prevLevelRef.current;
 
     useEffect(() => {
-        let rafId: number | null = null;
-
         if (isLevelUp) {
             setLevelUpEpoch(e => e + 1);
             setSuppressBarTransition(true);
-            rafId = requestAnimationFrame(() => setSuppressBarTransition(false));
         }
         if (isLevelUp || xpValue > prevXpRef.current)
             setGainTick(t => t + 1);
 
         prevLevelRef.current = player.level;
         prevXpRef.current = xpValue;
-
-        return () => {
-            if (rafId !== null)
-                cancelAnimationFrame(rafId);
-        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [player.level, xpValue, isLevelUp]);
+
+    // Deliberately its OWN effect, keyed only on `suppressBarTransition` — NOT folded into the
+    // level-up-detection effect above. That effect's dependency array also includes `xpValue`,
+    // so if another xp-changing render landed before this rAF fired, its cleanup would cancel
+    // the reset with nothing left to ever set `suppressBarTransition` back to `false` — silently
+    // and permanently disabling the bar's width transition for the rest of the session. Keying
+    // this reset on `suppressBarTransition` itself means only a change to THIS flag can cancel
+    // a pending reset, never an unrelated xp update.
+    useEffect(() => {
+        if (!suppressBarTransition)
+            return;
+
+        const rafId = requestAnimationFrame(() => setSuppressBarTransition(false));
+        return () => cancelAnimationFrame(rafId);
+    }, [suppressBarTransition]);
 
     const shimmer = useShimmer(gainTick);
 
