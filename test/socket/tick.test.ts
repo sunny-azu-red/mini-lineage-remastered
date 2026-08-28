@@ -7,7 +7,6 @@ vi.mock('@/socket/session', async (importOriginal) => {
 
 vi.mock('@/service/player.service', () => ({
     processTick: vi.fn(),
-    syncZoneAuras: vi.fn(),
     isGameStarted: vi.fn(),
 }));
 
@@ -40,18 +39,14 @@ describe('processSessionTick', () => {
         tracker = { socketIds: new Set(['sock-1']), lastSeen: Date.now() };
     });
 
-    it('applies syncZoneAuras before processTick, and emits the built snapshot when changed', async () => {
+    it('emits the built snapshot when processTick reports a change', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) =>
-            mutate({ sessionId: sid, session: {}, player }));
+            mutate({ sessionId: sid, session: {}, player, zoneChanged: false }));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
         vi.mocked(playerService.processTick).mockReturnValue(true);
 
         await processSessionTick(io, tracker, 'sid-1', { applyRegen: true });
-
-        const zoneCallOrder = vi.mocked(playerService.syncZoneAuras).mock.invocationCallOrder[0];
-        const tickCallOrder = vi.mocked(playerService.processTick).mock.invocationCallOrder[0];
-        expect(zoneCallOrder).toBeLessThan(tickCallOrder);
 
         expect(playerService.processTick).toHaveBeenCalledWith(player, { applyRegen: true });
         expect(buildPlayerSnapshot).toHaveBeenCalledWith(player);
@@ -59,10 +54,10 @@ describe('processSessionTick', () => {
         expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
     });
 
-    it('does not persist or emit when processTick reports no change', async () => {
+    it('does not persist or emit when neither processTick nor the zone report a change', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
-            const result = mutate({ sessionId: sid, session: {}, player });
+            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false });
             return result === NO_CHANGE ? undefined : result;
         });
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
@@ -74,10 +69,32 @@ describe('processSessionTick', () => {
         expect(syncExpiryTimers).not.toHaveBeenCalled();
     });
 
+    it('regression (Fix 8): builds and emits a snapshot when the zone alone changed (e.g. the combat linger window just expired), even though processTick itself reports no change', async () => {
+        // withSession's own automatic syncZoneAuras call (session.ts) is what would set
+        // ctx.zoneChanged to true here in real production use, once
+        // Date.now() - lastFightAt >= TICK_CONFIG.combatLingerMs flips combat -> resting.
+        // withSession is mocked in this file, so ctx.zoneChanged is supplied directly to
+        // isolate tick.ts's own responsibility: folding it into its "did anything change"
+        // decision instead of relying on processTick alone, which knows nothing about zones.
+        const player = { raceId: 0, lastFightAt: Date.now() - TICK_CONFIG.combatLingerMs - 1 };
+        vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
+            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: true });
+            return result === NO_CHANGE ? undefined : result;
+        });
+        vi.mocked(playerService.isGameStarted).mockReturnValue(true);
+        vi.mocked(playerService.processTick).mockReturnValue(false);
+
+        await processSessionTick(io, tracker, 'sid-1');
+
+        expect(buildPlayerSnapshot).toHaveBeenCalledWith(player);
+        expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { revision: 1 });
+        expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
+    });
+
     it('skips processTick entirely for a not-yet-started session', async () => {
         const player = {};
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
-            const result = mutate({ sessionId: sid, session: {}, player });
+            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false });
             return result === NO_CHANGE ? undefined : result;
         });
         vi.mocked(playerService.isGameStarted).mockReturnValue(false);
@@ -103,7 +120,7 @@ describe('processSessionTick', () => {
     it('passes applyRegen:false through to processTick for expiry-only ticks', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) =>
-            mutate({ sessionId: sid, session: {}, player }));
+            mutate({ sessionId: sid, session: {}, player, zoneChanged: false }));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
         vi.mocked(playerService.processTick).mockReturnValue(true);
 

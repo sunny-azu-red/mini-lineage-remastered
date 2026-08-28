@@ -88,12 +88,28 @@ describe('ArmorsShopScreen', () => {
         resetStore();
     });
 
-    it('has a Return to Home link that navigates home without requiring an armor selection', async () => {
+    it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
         render(<ArmorsShopScreen />);
 
-        fireEvent.click(screen.getByRole('link', { name: /Return to Home/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
 
         await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
         expect(requestMock).not.toHaveBeenCalled();
+    });
+
+    it('a real selection still purchases', async () => {
+        const newPlayer = makePlayer({ armor: { id: 1, name: 'Chainmail', emoji: '🛡️', stat: 12, cost: 400 }, adena: 100 });
+        requestMock.mockResolvedValue({ ok: true, data: { player: newPlayer, flash: { text: 'Bought!', type: 'success' } } });
+
+        render(<ArmorsShopScreen />);
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: '🪙 Purchase' }));
+
+        await waitFor(() => expect(requestMock).toHaveBeenCalledWith('shop:purchase', { type: 'armor', itemId: 1 }));
+        await waitFor(() => expect(useGameStore.getState().player).toEqual(newPlayer));
+
+        expect(useGameStore.getState().flash).toEqual({ text: 'Bought!', type: 'success' });
+        expect(useGameStore.getState().screen).toBe('armors');
     });
 });

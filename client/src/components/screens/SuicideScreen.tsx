@@ -37,7 +37,7 @@ export default function SuicideScreen() {
                     { value: 'no', label: 'No, I changed my mind' },
                     { value: 'yes', label: 'Yes, stab yourself in the heart' },
                 ]}
-                placeholderLabel="What will you do?"
+                noPlaceholder
                 defaultButtonLabel="Return"
                 activeButtonLabel={value => (value === 'yes' ? 'Do it 🥀' : 'Phew 😅')}
                 defaultVariant="btn-secondary"

@@ -1,7 +1,7 @@
 import type { Server as SocketIOServer } from 'socket.io';
 import type { SessionTrackerEntry, PlayerState, TickOptions } from '@/interface';
 import { TICK_CONFIG } from '@/constant/game.constant';
-import { processTick, syncZoneAuras, isGameStarted } from '@/service/player.service';
+import { processTick, isGameStarted } from '@/service/player.service';
 import { withSession, NO_CHANGE } from './session';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
 import { emitStateUpdate, syncExpiryTimers, cleanupStaleSessions, sessionTracker } from './emitter';
@@ -10,8 +10,11 @@ import { logger } from '@/config/logger.config';
 /**
  * Processes a single session's tick — rebuilt on withSession() (lock -> load -> mutate ->
  * persist -> release) in place of today's inline sessionStore.get/set + acquireSessionLock
- * duplication. `syncZoneAuras` runs immediately before `processTick`, per the plan's
- * "called at the top of every withSession mutation and every tick" instruction.
+ * duplication. `withSession` now runs `syncZoneAuras` automatically before this mutator
+ * even starts (see session.ts), so this no longer calls it directly — but `ctx.zoneChanged`
+ * still needs folding into `changed` here: `processTick` alone knows nothing about zones,
+ * so a zone-only flip (e.g. the combat linger window expiring between ticks) must still
+ * count as "something changed" or the resulting snapshot would silently stay stale.
  *
  * Mirrors today's `processSessionTick`: an uninitialized session, or a tick that produces
  * no change, is a silent no-op (no persist, no emit). A vanished session (SESSION_EXPIRED)
@@ -30,8 +33,7 @@ export async function processSessionTick(
             if (!isGameStarted(ctx.player))
                 return NO_CHANGE;
 
-            syncZoneAuras(ctx.player);
-            const changed = processTick(ctx.player, options);
+            const changed = processTick(ctx.player, options) || ctx.zoneChanged;
             playerRef = ctx.player;
 
             return changed ? buildPlayerSnapshot(ctx.player) : NO_CHANGE;

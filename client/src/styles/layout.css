@@ -25,24 +25,30 @@
 }
 
 /*
- * `#header-link` now wraps only the emblem/title/subtitle inside `#site-header` (SoundToggle is
- * deliberately excluded from the clickable region, unlike the old markup where the anchor wrapped
- * the entire `#site-header` box) — `display: contents` keeps it transparent to `#site-header`'s
- * flex layout (gap/alignment among the emblem/title) and to the subtitle's `position: absolute`
- * (which still resolves against `#site-header`, the nearest positioned ancestor).
+ * `.header-clickable-area` carries the flex layout (gap/alignment between emblem/title/subtitle)
+ * shared by both branches SiteHeader can render: the clickable `<a id="header-link">` when
+ * navigation is allowed, and a plain, unwrapped `<div>` when it isn't (ambushed/dead) — so the
+ * spacing looks identical either way. Putting the layout ON the element itself (rather than
+ * `display: contents` on the anchor, which was the old approach) is the fix: `display: contents`
+ * makes an element's own box disappear entirely for hit-testing, so only its children (the
+ * emblem/title/subtitle) were ever clickable, not the gaps/padding around them. Now the anchor's
+ * own box genuinely spans the whole emblem+title+subtitle+gaps+padding region.
  */
+.header-clickable-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 24px 12px 24px;
+    width: 100%;
+}
+
 #header-link {
-    display: contents;
     text-decoration: none;
     color: inherit;
     cursor: pointer;
 }
 
 #site-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 24px 12px 24px;
     background: linear-gradient(135deg,
             #0a0f1e 0%,
             #111830 30%,

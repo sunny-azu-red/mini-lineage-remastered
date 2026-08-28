@@ -71,6 +71,17 @@ describe('SuicideScreen', () => {
         resetStore();
     });
 
+    it('loads with "No, I changed my mind" pre-selected and an immediately-clickable Return button, no placeholder option', () => {
+        render(<SuicideScreen />);
+
+        const select = screen.getByRole('combobox') as HTMLSelectElement;
+        expect(select.value).toBe('no');
+        expect(screen.queryByText('What will you do?')).not.toBeInTheDocument();
+
+        const button = screen.getByRole('button', { name: 'Phew 😅' });
+        expect(button).not.toBeDisabled();
+    });
+
     it('confirming calls player:suicide, applies the mutation, navigates to death, and plays the death sound', async () => {
         const deadPlayer = makePlayer({ dead: true, deathReason: 'You took the cowardly way out.', coward: true });
         requestMock.mockResolvedValue({ ok: true, data: { player: deadPlayer, flash: null } });

@@ -3,6 +3,11 @@ import { withSession, readSession, NO_CHANGE, SessionContext } from '@/socket/se
 import { SocketError } from '@/socket/error';
 import { acquireSessionLock } from '@/util/lock.util';
 import { getSessionData, setSessionData } from '@/util/session-store.util';
+import { EFFECTS_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
+
+// Note: `@/service/player.service` is deliberately NOT mocked in this file — withSession's
+// automatic zone-sync (Fix 8) is real production wiring, and these tests rely on the real
+// `isGameStarted`/`syncZoneAuras` to verify it end-to-end.
 
 vi.mock('@/util/lock.util', () => ({
     acquireSessionLock: vi.fn(),
@@ -102,6 +107,94 @@ describe('withSession', () => {
         await withSession('sid-1', () => 'ok');
         // release is only ever invoked by the finally block, exactly once
         expect(release).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('withSession — automatic zone-aura sync (Fix 8)', () => {
+    let release: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        release = vi.fn(() => {});
+        vi.mocked(acquireSessionLock).mockResolvedValue(release as unknown as () => void);
+        vi.mocked(setSessionData).mockResolvedValue(undefined);
+    });
+
+    function makeStartedSession(overrides: Record<string, any> = {}): Record<string, any> {
+        return {
+            cookie: {},
+            raceId: 0,
+            health: 100,
+            adena: 50,
+            dead: false,
+            ambushed: false,
+            revision: 1,
+            ...overrides,
+        };
+    }
+
+    it('persists a zone-only flip even when the handler itself reports NO_CHANGE (the silent-drop bug)', async () => {
+        // Combat aura is stale: lastFightAt is well past the linger window, so
+        // syncZoneAuras should flip it to resting — a change the mutate callback below
+        // has no idea happened, and reports NO_CHANGE regardless.
+        const session = makeStartedSession({
+            lastFightAt: Date.now() - TICK_CONFIG.combatLingerMs - 1000,
+            effects: [{ ...EFFECTS_CONFIG.combatAura }],
+        });
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        const result = await withSession('sid-1', () => NO_CHANGE);
+
+        expect(result).toBeUndefined();
+        expect(setSessionData).toHaveBeenCalledWith('sid-1', session);
+        expect(session.revision).toBe(2); // still bumped — this genuinely persisted
+        expect(session.effects.map((e: any) => e.id)).toEqual(['resting']);
+    });
+
+    it('exposes the zone-changed flag on ctx so a mutator can fold it into its own decision', async () => {
+        const session = makeStartedSession({
+            ambushed: true, // was resting, syncZoneAuras should flip to combat
+            effects: [{ ...EFFECTS_CONFIG.restingAura }],
+        });
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        let observedZoneChanged: boolean | undefined;
+        await withSession('sid-1', (ctx) => {
+            observedZoneChanged = ctx.zoneChanged;
+            return NO_CHANGE;
+        });
+
+        expect(observedZoneChanged).toBe(true);
+        expect(session.effects.map((e: any) => e.id)).toEqual(['combat']);
+    });
+
+    it('does not force a persist when the zone aura was already correct and the mutator reports NO_CHANGE', async () => {
+        const session = makeStartedSession({
+            effects: [{ ...EFFECTS_CONFIG.restingAura }], // already resting, idle, never fought
+        });
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        const result = await withSession('sid-1', () => NO_CHANGE);
+
+        expect(result).toBeUndefined();
+        expect(setSessionData).not.toHaveBeenCalled();
+        expect(session.revision).toBe(1); // untouched
+    });
+
+    it('does not sync zone auras (and does not force a persist) for a not-yet-started player', async () => {
+        const session = { cookie: {} }; // isGameStarted() is false: no raceId/health/adena
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        let observedZoneChanged: boolean | undefined;
+        const result = await withSession('sid-1', (ctx) => {
+            observedZoneChanged = ctx.zoneChanged;
+            return NO_CHANGE;
+        });
+
+        expect(observedZoneChanged).toBe(false);
+        expect(result).toBeUndefined();
+        expect(setSessionData).not.toHaveBeenCalled();
+        expect((session as any).effects).toBeUndefined();
     });
 });
 

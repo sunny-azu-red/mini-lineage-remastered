@@ -27,7 +27,7 @@ function makeCtx(overrides: Partial<PlayerState> = {}): SessionContext {
         weaponId: 0, armorId: 0, ...overrides,
     } as PlayerState;
 
-    return { sessionId: 'sid-1', session: {}, player };
+    return { sessionId: 'sid-1', session: {}, player, zoneChanged: false };
 }
 
 describe('player.handler', () => {

@@ -1,4 +1,3 @@
-import type { MouseEvent } from 'react';
 import type { ItemView } from '@shared/contract';
 import { formatAdena, formatNumber } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
@@ -37,12 +36,12 @@ export default function ArmorsShopScreen() {
 
     const purchasable = catalog.armors.slice(1);
 
-    function handleBack(e: MouseEvent<HTMLAnchorElement>) {
-        e.preventDefault();
-        navigate('home');
-    }
-
     function handlePurchase(value: string) {
+        if (!value) {
+            navigate('home');
+            return;
+        }
+
         void run(
             { type: 'armor', itemId: Number(value) },
             {
@@ -77,10 +76,6 @@ export default function ArmorsShopScreen() {
                 pending={pending}
                 onSubmit={handlePurchase}
             />
-
-            <p className="last back">
-                <a href="#home" onClick={handleBack}>🚪 Return to Home</a>
-            </p>
         </>
     );
 }

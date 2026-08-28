@@ -65,14 +65,22 @@ export function commitSuicide(player: PlayerState): void {
 /**
  * Strips existing 'resting'/'combat' zone auras and re-adds the correct one based
  * on current state — server-derived zone tracking (replaces the URL-path-based
- * derivation in zone.middleware.ts). Not wired into any caller yet; this phase is
- * purely additive. Dead players get neither aura.
+ * derivation in zone.middleware.ts). Wired into every `withSession` mutation (see
+ * `src/socket/session.ts`) as well as the periodic tick, per the original design.
+ * Dead players get neither aura.
+ *
+ * Returns whether the resting/combat aura actually changed (including a transition
+ * to/from "neither", which only happens for dead players) — callers use this to
+ * decide whether a zone-only flip needs to persist/broadcast on its own, even when
+ * nothing else about the player changed.
  */
-export function syncZoneAuras(player: PlayerState): void {
+export function syncZoneAuras(player: PlayerState): boolean {
+    const before = (player.effects ?? []).find(e => e.id === 'resting' || e.id === 'combat')?.id ?? null;
+
     player.effects = (player.effects ?? []).filter(e => e.id !== 'resting' && e.id !== 'combat');
 
     if (player.dead)
-        return;
+        return before !== null;
 
     const inCombat = Boolean(player.ambushed) || (Date.now() - (player.lastFightAt ?? 0)) < TICK_CONFIG.combatLingerMs;
 
@@ -80,6 +88,8 @@ export function syncZoneAuras(player: PlayerState): void {
         player.effects.push({ ...EFFECTS_CONFIG.combatAura });
     else
         player.effects.push({ ...EFFECTS_CONFIG.restingAura });
+
+    return before !== (inCombat ? 'combat' : 'resting');
 }
 
 /**

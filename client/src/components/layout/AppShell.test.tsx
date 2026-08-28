@@ -87,7 +87,7 @@ describe('AppShell', () => {
         'shows the sidebar on screen "%s" once the player has started',
         screenId => {
             setStore(screenId, makePlayer());
-            render(<AppShell><div /></AppShell>);
+            render(<AppShell title="Home Town"><div /></AppShell>);
             expect(document.getElementById('sidebar')).not.toBeNull();
         },
     );
@@ -96,32 +96,38 @@ describe('AppShell', () => {
         'hides the sidebar on screen "%s" even once the player has started',
         screenId => {
             setStore(screenId, makePlayer());
-            render(<AppShell><div /></AppShell>);
+            render(<AppShell title="Home Town"><div /></AppShell>);
             expect(document.getElementById('sidebar')).toBeNull();
         },
     );
 
     it('hides the sidebar on the pre-game Game Start screen (player exists but has not started)', () => {
         setStore('start', makePlayer({ started: false }));
-        render(<AppShell><div /></AppShell>);
+        render(<AppShell title="Home Town"><div /></AppShell>);
         expect(document.getElementById('sidebar')).toBeNull();
     });
 
     it('hides the sidebar on an allowlisted screen when the player has not started (e.g. right after Death -> Play Again resets in place)', () => {
         setStore('home', makePlayer({ started: false }));
-        render(<AppShell><div /></AppShell>);
+        render(<AppShell title="Home Town"><div /></AppShell>);
         expect(document.getElementById('sidebar')).toBeNull();
     });
 
     it('hides the sidebar when there is no player at all', () => {
         setStore('home', null);
-        render(<AppShell><div /></AppShell>);
+        render(<AppShell title="Home Town"><div /></AppShell>);
         expect(document.getElementById('sidebar')).toBeNull();
     });
 
     it('renders the children passed to it', () => {
         setStore('home', makePlayer());
-        render(<AppShell><div data-testid="child-content">hello</div></AppShell>);
+        render(<AppShell title="Home Town"><div data-testid="child-content">hello</div></AppShell>);
         expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    });
+
+    it('renders the title prop as the in-panel heading, replacing the old hardcoded "Mini Lineage" literal', () => {
+        setStore('battle', makePlayer());
+        render(<AppShell title="Battleground"><div /></AppShell>);
+        expect(screen.getByText('Battleground')).toBeInTheDocument();
     });
 });

@@ -118,10 +118,10 @@ describe('WeaponsShopScreen', () => {
         expect(useGameStore.getState().screen).toBe('weapons');
     });
 
-    it('has a Return to Home link that navigates home without requiring a weapon selection', async () => {
+    it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
         render(<WeaponsShopScreen />);
 
-        fireEvent.click(screen.getByRole('link', { name: /Return to Home/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
 
         await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
         expect(requestMock).not.toHaveBeenCalled();

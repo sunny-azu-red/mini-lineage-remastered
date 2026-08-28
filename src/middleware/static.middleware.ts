@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { isRelease } from '@/util/version.util';
 import { GAME_VERSION } from '@/constant/game.constant';
@@ -21,3 +21,24 @@ export const getClientDistPath = (): string =>
         : path.join(__dirname, '../../dist/public');
 
 export const staticMiddleware = express.static(getClientDistPath());
+
+/**
+ * Dev-mode stand-in for `staticMiddleware` + app.ts's SPA-fallback catch-all (Fix 3).
+ * Only ever wired in when `env.NODE_ENV !== 'production'` — see app.ts. In development,
+ * the React client is served by Vite's own dev server on :5173, which proxies `/api/*`
+ * and the Socket.IO transport back to this server untouched (see client/vite.config.ts's
+ * `server.proxy`, keyed on `/api` and `/socket.io`) — this middleware must let both of
+ * those fall through via `next()` rather than swallowing them.
+ *
+ * Anything else reaching port 3000 directly in dev means someone bypassed Vite (a raw
+ * `curl localhost:3000/`, an old bookmark, muscle memory from single-port days) — respond
+ * with a clear pointer instead of what production would do here, which is silently
+ * serving `dist/public` — a build directory with zero staleness guard that may not even
+ * reflect the code currently running.
+ */
+export const devFallbackMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io'))
+        return next();
+
+    res.status(200).send('This is the Mini-Lineage API/socket server. In development, open the app at http://localhost:5173.');
+};

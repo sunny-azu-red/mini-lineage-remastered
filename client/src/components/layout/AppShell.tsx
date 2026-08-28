@@ -11,6 +11,8 @@ import LowHealthAlert from '../common/LowHealthAlert';
 
 interface AppShellProps {
     children: ReactNode;
+    /** The current screen's title, rendered as the in-panel heading (see App.tsx's `SCREEN_TITLES`). */
+    title: string;
 }
 
 // Old app showed the sidebar (layout.ejs, via renderPage) only for these screens — Game Start,
@@ -24,7 +26,7 @@ const SIDEBAR_SCREENS: ReadonlySet<ScreenId> =
 // Ported from layout.ejs's DOM shape (#app > #wrapper > #header/#content, #content ->
 // #sidebar + #main, #main -> .panel + #copyright) so the byte-for-byte-ported CSS, which
 // targets these exact ids/classes, still applies unmodified.
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell({ children, title }: AppShellProps) {
     const player = useGameStore(state => state.player);
     const screen = useGameStore(state => state.screen);
 
@@ -41,7 +43,7 @@ export default function AppShell({ children }: AppShellProps) {
                     <div id="main">
                         <div className="panel">
                             <div className="panel-header flex">
-                                <span className="header-name">Mini Lineage</span>
+                                <span className="header-name">{title}</span>
                                 <div className="header-effects" id="effects">
                                     <EffectsList effects={player?.effects ?? []} />
                                 </div>

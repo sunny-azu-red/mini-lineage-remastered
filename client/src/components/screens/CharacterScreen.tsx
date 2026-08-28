@@ -15,7 +15,7 @@ export default function CharacterScreen() {
     const catalog = useGameStore(state => state.catalog);
     const navigate = useGameStore(state => state.navigate);
 
-    if (!player || !catalog || !player.raceId || !player.weapon || !player.armor || !player.stats)
+    if (!player || !catalog || player.raceId === null || !player.weapon || !player.armor || !player.stats)
         return null;
 
     const race = catalog.races.find(r => r.id === player.raceId);

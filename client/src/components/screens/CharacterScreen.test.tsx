@@ -4,19 +4,23 @@ import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 import CharacterScreen from './CharacterScreen';
 
+// RaceType enum (src/interface/game.interface.ts): Human = 0, Orc = 1, Elf = 2, DarkElf = 3.
+// Human's id 0 is the exact value that used to trip the `!player.raceId` falsy-zero bug — using
+// the real enum values here (rather than the old ad-hoc 1/2 scheme) is what lets the regression
+// test below actually exercise that bug.
 function makeCatalog(): GameCatalog {
     return {
         version: '1.5.0', isRelease: false, commitUrl: null, year: 2026, locale: 'en-US',
         lowHealthThreshold: 0.2, maxLevel: 50, nameMinLength: 2, nameMaxLength: 16,
         races: [
             {
-                id: 1, label: 'Human', plural: 'Humans', emoji: '🧑', slug: 'human',
-                enemyRaceId: 2, startHealth: 100, startAdena: 50, ambushChance: 5, regen: 2, crit: 5,
+                id: 0, label: 'Human', plural: 'Humans', emoji: '🧑', slug: 'human',
+                enemyRaceId: 1, startHealth: 100, startAdena: 50, ambushChance: 5, regen: 2, crit: 5,
                 backstory: 'Humans are <em>adaptable</em>.', traits: 'Balanced stats across the board.',
             },
             {
-                id: 2, label: 'Orc', plural: 'Orcs', emoji: '👹', slug: 'orc',
-                enemyRaceId: 1, startHealth: 120, startAdena: 30, ambushChance: 8, regen: 1, crit: 3,
+                id: 1, label: 'Orc', plural: 'Orcs', emoji: '👹', slug: 'orc',
+                enemyRaceId: 0, startHealth: 120, startAdena: 30, ambushChance: 8, regen: 1, crit: 3,
                 backstory: 'Orcs are brutal.', traits: 'Strong but reckless.',
             },
         ],
@@ -29,7 +33,7 @@ function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
         revision: 1,
         started: true,
         name: 'Hero',
-        raceId: 1,
+        raceId: 0,
         raceLabel: 'Human',
         raceEmoji: '🧑',
         health: 80,
@@ -122,8 +126,25 @@ describe('CharacterScreen', () => {
         expect(screen.queryByText(/requiring another/)).not.toBeInTheDocument();
     });
 
+    // Regression test for the falsy-zero bug: RaceType.Human = 0 is a legitimate raceId, but the
+    // old guard used `!player.raceId`, which is truthy for 0 and incorrectly bailed out with
+    // `return null` for every Human player. The guard must check `raceId === null` instead.
+    it('renders its content (not null) for a Human player, whose raceId is the falsy value 0', () => {
+        resetStore(makePlayer({ raceId: 0 }));
+        const { container } = render(<CharacterScreen />);
+
+        expect(container).not.toBeEmptyDOMElement();
+        expect(screen.getByText(/Hero of Human Ancestry/)).toBeInTheDocument();
+    });
+
     it('renders nothing if the player has not started / catalog is missing critical data', () => {
         resetStore(makePlayer({ weapon: null }));
+        const { container } = render(<CharacterScreen />);
+        expect(container).toBeEmptyDOMElement();
+    });
+
+    it('renders nothing if raceId is genuinely null (no race assigned)', () => {
+        resetStore(makePlayer({ raceId: null }));
         const { container } = render(<CharacterScreen />);
         expect(container).toBeEmptyDOMElement();
     });

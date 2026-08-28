@@ -87,12 +87,28 @@ describe('InnScreen', () => {
         resetStore();
     });
 
-    it('has a Return to Home link that navigates home without requiring a food selection', async () => {
+    it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
         render(<InnScreen />);
 
-        fireEvent.click(screen.getByRole('link', { name: /Return to Home/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
 
         await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
         expect(requestMock).not.toHaveBeenCalled();
+    });
+
+    it('a real selection still purchases', async () => {
+        const newPlayer = makePlayer({ adena: 450 });
+        requestMock.mockResolvedValue({ ok: true, data: { player: newPlayer, flash: { text: 'Ate!', type: 'success' } } });
+
+        render(<InnScreen />);
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: '🪙 Order' }));
+
+        await waitFor(() => expect(requestMock).toHaveBeenCalledWith('shop:purchase', { type: 'food', itemId: 1 }));
+        await waitFor(() => expect(useGameStore.getState().player).toEqual(newPlayer));
+
+        expect(useGameStore.getState().flash).toEqual({ text: 'Ate!', type: 'success' });
+        expect(useGameStore.getState().screen).toBe('inn');
     });
 });

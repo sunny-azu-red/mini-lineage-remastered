@@ -113,4 +113,20 @@ describe('App', () => {
         render(<App />);
         expect(screen.getByText(/Welcome to/)).toBeInTheDocument();
     });
+
+    it('sets the browser tab title and in-panel heading per screen, using the exact old title strings', () => {
+        const { rerender } = render(<App />);
+        expect(document.title).toBe('Mini Lineage - Home Town');
+        expect(screen.getByText('Home Town')).toBeInTheDocument();
+
+        useGameStore.getState().navigate('battle');
+        rerender(<App />);
+        expect(document.title).toBe('Mini Lineage - Battleground');
+        expect(screen.getByText('Battleground')).toBeInTheDocument();
+
+        useGameStore.getState().navigate('weapons');
+        rerender(<App />);
+        expect(document.title).toBe('Mini Lineage - Weapons Shop');
+        expect(screen.getByText('Weapons Shop')).toBeInTheDocument();
+    });
 });

@@ -35,6 +35,12 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
             // Unconditionally resolve whatever ambush was pending, then simulate.
             ctx.player.ambushed = false;
             ctx.player.lastFightAt = Date.now();
+
+            // NOT redundant with withSession's own automatic upfront syncZoneAuras call
+            // (session.ts): that call ran before this handler started, against the
+            // PRE-fight lastFightAt/ambushed — a harmless no-op resync of whatever zone
+            // was already true. This call runs AFTER lastFightAt was just bumped above,
+            // so it's the one that actually flips the zone into combat for THIS fight.
             syncZoneAuras(ctx.player);
 
             const results = simulateBattle(ctx.player);

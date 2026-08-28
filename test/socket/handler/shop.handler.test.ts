@@ -31,7 +31,7 @@ function makePlayer(overrides: Partial<PlayerState> = {}): PlayerState {
 }
 
 function makeCtx(player: PlayerState): SessionContext {
-    return { sessionId: 'sid-1', session: {}, player };
+    return { sessionId: 'sid-1', session: {}, player, zoneChanged: false };
 }
 
 describe('shop.handler', () => {

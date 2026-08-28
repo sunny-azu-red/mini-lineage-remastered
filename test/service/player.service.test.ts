@@ -869,6 +869,38 @@ describe('syncZoneAuras', () => {
         expect(ids).toContain('konami_cheat');
         expect(ids).toContain('resting');
     });
+
+    describe('return value (Fix 8 — callers need to know whether the aura actually changed)', () => {
+        it('returns true on a resting -> combat transition', () => {
+            const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+            expect(syncZoneAuras(p)).toBe(true);
+        });
+
+        it('returns true on a combat -> resting transition', () => {
+            const p = makePlayer({ ambushed: false, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            expect(syncZoneAuras(p)).toBe(true);
+        });
+
+        it('returns false when the same aura is recomputed (no actual change)', () => {
+            const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            expect(syncZoneAuras(p)).toBe(false);
+        });
+
+        it('returns false when idle with no prior zone aura and resting is (re)computed', () => {
+            const p = makePlayer({ effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+            expect(syncZoneAuras(p)).toBe(false);
+        });
+
+        it('returns true when a live player (with a zone aura present) dies (aura -> neither)', () => {
+            const p = makePlayer({ dead: true, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            expect(syncZoneAuras(p)).toBe(true);
+        });
+
+        it('returns false for an already-dead player with no zone aura to begin with', () => {
+            const p = makePlayer({ dead: true, effects: [] });
+            expect(syncZoneAuras(p)).toBe(false);
+        });
+    });
 });
 
 describe('resetPlayer', () => {

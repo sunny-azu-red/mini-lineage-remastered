@@ -1,4 +1,3 @@
-import type { MouseEvent } from 'react';
 import type { ItemView } from '@shared/contract';
 import { formatAdena, formatNumber } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
@@ -34,12 +33,12 @@ export default function InnScreen() {
     if (!catalog)
         return null;
 
-    function handleBack(e: MouseEvent<HTMLAnchorElement>) {
-        e.preventDefault();
-        navigate('home');
-    }
-
     function handlePurchase(value: string) {
+        if (!value) {
+            navigate('home');
+            return;
+        }
+
         void run(
             { type: 'food', itemId: Number(value) },
             {
@@ -67,10 +66,6 @@ export default function InnScreen() {
                 pending={pending}
                 onSubmit={handlePurchase}
             />
-
-            <p className="last back">
-                <a href="#home" onClick={handleBack}>🚪 Return to Home</a>
-            </p>
         </>
     );
 }

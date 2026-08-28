@@ -10,8 +10,17 @@ export interface SelectActionOption {
 
 interface SelectActionFormProps {
     options: SelectActionOption[];
-    /** The <select>'s initial/no-selection option text. */
-    placeholderLabel: string;
+    /**
+     * The <select>'s initial/no-selection option text. Ignored (and may be omitted) when
+     * `noPlaceholder` is set, since no such option is rendered in that mode.
+     */
+    placeholderLabel?: string;
+    /**
+     * When true, skips rendering the synthetic placeholder `<option>` entirely and pre-selects
+     * the first real option on mount — for screens (Suicide) whose old template never had a
+     * "nothing picked" state to begin with.
+     */
+    noPlaceholder?: boolean;
     defaultButtonLabel: string;
     activeButtonLabel: string | ((selectedValue: string) => string);
     defaultVariant?: ButtonVariant;
@@ -43,13 +52,17 @@ interface SelectActionFormProps {
  *
  * This component generalizes all three shapes: `activeButtonLabel`/`activeVariant` only apply
  * once something other than the placeholder option is selected, and until then the button shows
- * `defaultButtonLabel`/`defaultVariant` and is `disabled` (this is the one deliberate behavior
- * change from home.js, which never disabled its button — see HomeScreen's own doc comment for
- * why that's an intentional simplification worth taking here, not a regression).
+ * `defaultButtonLabel`/`defaultVariant`. The button is only ever `disabled` while `pending` —
+ * matching every old page's actual behavior, including shop.js/inn: submitting with the
+ * placeholder still selected is a legitimate "go home" signal (`onSubmit('')`), exactly like the
+ * old dual-purpose select-and-submit forms. `noPlaceholder` mode (Suicide) skips the synthetic
+ * placeholder option altogether and pre-selects the first real option on mount, matching
+ * suicide.ejs's natural default-selected-first-option behavior.
  */
 export default function SelectActionForm({
     options,
     placeholderLabel,
+    noPlaceholder = false,
     defaultButtonLabel,
     activeButtonLabel,
     defaultVariant = 'btn-secondary',
@@ -57,7 +70,7 @@ export default function SelectActionForm({
     pending,
     onSubmit,
 }: SelectActionFormProps) {
-    const [selected, setSelected] = useState('');
+    const [selected, setSelected] = useState(noPlaceholder ? options[0]?.value ?? '' : '');
     const hasSelection = selected !== '';
 
     const buttonLabel = hasSelection
@@ -73,7 +86,7 @@ export default function SelectActionForm({
 
     function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (!hasSelection || pending)
+        if (pending)
             return;
 
         onSubmit(selected);
@@ -87,14 +100,14 @@ export default function SelectActionForm({
                     value={selected}
                     onChange={e => setSelected(e.target.value)}
                 >
-                    <option value="">{placeholderLabel}</option>
+                    {!noPlaceholder && <option value="">{placeholderLabel}</option>}
                     {options.map(opt => (
                         <option key={opt.value} value={opt.value} disabled={opt.disabled}>
                             {opt.label}
                         </option>
                     ))}
                 </select>
-                <button type="submit" className={buttonVariant} disabled={!hasSelection || pending}>
+                <button type="submit" className={buttonVariant} disabled={pending}>
                     {buttonLabel}
                 </button>
             </div>

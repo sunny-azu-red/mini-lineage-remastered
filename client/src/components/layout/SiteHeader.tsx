@@ -7,7 +7,12 @@ import SoundToggle from './SoundToggle';
 // `!player.ambushed && !player.dead` once a character exists, or `true` when it doesn't (see git
 // show 6256e28:src/view/layout.view.ts) — matched exactly by `clickable` below. `SoundToggle` is
 // deliberately kept OUTSIDE the clickable region (unlike the old markup's incidental nesting of
-// the mute button inside the same anchor) so clicking it never also navigates.
+// the mute button inside the same anchor) so clicking it never also navigates — it stays a
+// sibling, absolutely positioned in its corner independent of either branch below.
+//
+// Both branches share the `.header-clickable-area` class (see layout.css) so the flex
+// layout/spacing around the emblem+title+subtitle is identical whether or not the content is
+// wrapped in an `<a>` — only the wrapping element and its `href`/`onClick` differ.
 export default function SiteHeader() {
     const player = useGameStore(state => state.player);
     const navigate = useGameStore(state => state.navigate);
@@ -37,11 +42,11 @@ export default function SiteHeader() {
     return (
         <div id="site-header">
             {clickable ? (
-                <a href="#home" id="header-link" onClick={handleClick}>
+                <a href="#home" id="header-link" className="header-clickable-area" onClick={handleClick}>
                     {emblem}
                 </a>
             ) : (
-                emblem
+                <div className="header-clickable-area">{emblem}</div>
             )}
             <SoundToggle />
         </div>

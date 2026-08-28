@@ -8,7 +8,7 @@ const OPTIONS = [
 ];
 
 describe('SelectActionForm', () => {
-    it('starts with the default label/variant and a disabled button until something is selected', () => {
+    it('starts with the default label/variant and an enabled button (not gated on a selection) until something is selected', () => {
         render(
             <SelectActionForm
                 options={OPTIONS}
@@ -23,7 +23,7 @@ describe('SelectActionForm', () => {
         );
 
         const button = screen.getByRole('button', { name: 'Phew 😅' });
-        expect(button).toBeDisabled();
+        expect(button).not.toBeDisabled();
         expect(button.className).toBe('btn-secondary');
     });
 
@@ -84,7 +84,7 @@ describe('SelectActionForm', () => {
         expect(screen.getByRole('button', { name: '🪙 Purchase' })).toBeInTheDocument();
 
         fireEvent.change(select, { target: { value: '' } });
-        expect(screen.getByRole('button', { name: 'Return' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Return' })).not.toBeDisabled();
     });
 
     it('calls onSubmit with the selected value on form submit', () => {
@@ -139,5 +139,63 @@ describe('SelectActionForm', () => {
 
         const owned = screen.getByRole('option', { name: 'Pick 🗡️ Elven Needle (Owned)' }) as HTMLOptionElement;
         expect(owned.disabled).toBe(true);
+    });
+
+    it('submitting with the placeholder still selected calls onSubmit with an empty string (old dual-purpose select-and-submit "go home" signal)', () => {
+        const onSubmit = vi.fn();
+        render(
+            <SelectActionForm
+                options={OPTIONS}
+                placeholderLabel="🚪 Home Town"
+                defaultButtonLabel="Return"
+                activeButtonLabel="🪙 Purchase"
+                pending={false}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
+
+        expect(onSubmit).toHaveBeenCalledWith('');
+    });
+
+    it('noPlaceholder mode omits the synthetic placeholder option and pre-selects the first real option on mount', () => {
+        render(
+            <SelectActionForm
+                noPlaceholder
+                options={OPTIONS}
+                placeholderLabel="unused"
+                defaultButtonLabel="Return"
+                activeButtonLabel={value => (value === 'yes' ? 'Do it 🥀' : 'Phew 😅')}
+                activeVariant={value => (value === 'yes' ? 'btn-danger' : 'btn-secondary')}
+                pending={false}
+                onSubmit={vi.fn()}
+            />,
+        );
+
+        expect(screen.queryByRole('option', { name: 'unused' })).not.toBeInTheDocument();
+
+        const select = screen.getByRole('combobox') as HTMLSelectElement;
+        expect(select.value).toBe(OPTIONS[0].value);
+        expect(screen.getByRole('button', { name: 'Do it 🥀' })).toBeInTheDocument();
+    });
+
+    it('noPlaceholder mode submits the pre-selected first option without requiring any change', () => {
+        const onSubmit = vi.fn();
+        render(
+            <SelectActionForm
+                noPlaceholder
+                options={OPTIONS}
+                placeholderLabel="unused"
+                defaultButtonLabel="Return"
+                activeButtonLabel="Do it 🥀"
+                pending={false}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Do it 🥀' }));
+
+        expect(onSubmit).toHaveBeenCalledWith(OPTIONS[0].value);
     });
 });
