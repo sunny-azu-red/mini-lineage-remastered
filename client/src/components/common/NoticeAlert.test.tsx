@@ -33,6 +33,26 @@ describe('NoticeAlert', () => {
         expect(screen.getByText(/That is not a valid choice\./)).toBeInTheDocument();
     });
 
+    it('styles a non-rate-limit notice (e.g. a dropped connection) as danger, not warning', () => {
+        useGameStore.setState(
+            { notice: { code: 'INTERNAL', message: 'The realm did not answer in time.' } },
+            false,
+        );
+        const { container } = render(<NoticeAlert />);
+        expect(container.querySelector('.alert-danger')).toBeInTheDocument();
+        expect(container.querySelector('.alert-warning')).not.toBeInTheDocument();
+    });
+
+    it('styles a rate-limit notice as warning, not danger', () => {
+        useGameStore.setState(
+            { notice: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.' } },
+            false,
+        );
+        const { container } = render(<NoticeAlert />);
+        expect(container.querySelector('.alert-warning')).toBeInTheDocument();
+        expect(container.querySelector('.alert-danger')).not.toBeInTheDocument();
+    });
+
     it('shows the generic rate-limit copy (not the raw server message) when not ambushed', () => {
         useGameStore.setState(
             { notice: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.', retryAfterMs: 4200 } },

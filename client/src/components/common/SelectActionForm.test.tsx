@@ -24,7 +24,10 @@ describe('SelectActionForm', () => {
 
         const button = screen.getByRole('button', { name: 'Phew 😅' });
         expect(button).not.toBeDisabled();
-        expect(button.className).toBe('btn-secondary');
+        // .btn-secondary/.btn-danger are pure CSS modifiers (background/border/color only) that
+        // rely on the base .btn class for layout/shape/typography — omitting "btn" renders an
+        // unstyled browser-default button. Regression test for that exact bug.
+        expect(button.className).toBe('btn btn-secondary');
     });
 
     it('swaps the label and variant once a non-placeholder value is selected (suicide.js behavior)', () => {
@@ -45,7 +48,7 @@ describe('SelectActionForm', () => {
 
         const button = screen.getByRole('button', { name: 'Do it 🥀' });
         expect(button).not.toBeDisabled();
-        expect(button.className).toBe('btn-danger');
+        expect(button.className).toBe('btn btn-danger');
     });
 
     it('supports a function form of activeButtonLabel keyed off the selected value (shop.js/inn behavior)', () => {

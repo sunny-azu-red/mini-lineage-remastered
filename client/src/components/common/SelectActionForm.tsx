@@ -107,7 +107,11 @@ export default function SelectActionForm({
                         </option>
                     ))}
                 </select>
-                <button type="submit" className={buttonVariant} disabled={pending}>
+                <button
+                    type="submit"
+                    className={buttonVariant === 'btn' ? 'btn' : `btn ${buttonVariant}`}
+                    disabled={pending}
+                >
                     {buttonLabel}
                 </button>
             </div>

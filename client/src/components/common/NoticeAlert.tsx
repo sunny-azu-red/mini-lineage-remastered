@@ -38,12 +38,23 @@ export default function NoticeAlert() {
         : notice.message;
     const retryAfterSeconds = notice.retryAfterMs ? Math.max(1, Math.ceil(notice.retryAfterMs / 1000)) : null;
 
+    // RATE_LIMITED is a soft "slow down" cue — warning (gold/orange) fits it, same tone as a
+    // level-up flash. Everything else (a dropped connection, an invalid payload, an internal
+    // error, ...) is something that actually failed and reads wrong in that same celebratory
+    // color — those get the danger (red) treatment instead.
+    const alertType = isRateLimited ? 'warning' : 'danger';
+
     return (
-        <div className="alert alert-warning">
+        <div className={`alert alert-${alertType} alert-dismissible`}>
             {message}
             {retryAfterSeconds !== null && <> Try again in {retryAfterSeconds}s.</>}
-            <button type="button" className="btn-sm" onClick={() => setNotice(null)} style={{ marginLeft: 8 }}>
-                Dismiss
+            <button
+                type="button"
+                className="alert-dismiss"
+                aria-label="Dismiss"
+                onClick={() => setNotice(null)}
+            >
+                ×
             </button>
         </div>
     );
