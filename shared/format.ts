@@ -1,9 +1,9 @@
 /**
- * Pure, framework-agnostic formatting helpers shared by the server (src/) and the
- * client (client/src/). Kept dependency-free (no `fs`, no game constants) so both
+ * Pure, framework-agnostic formatting helpers shared by the server (backend/) and the
+ * client (frontend/src/). Kept dependency-free (no `fs`, no game constants) so both
  * a Node process and a browser bundle can import this file unmodified.
  *
- * These mirror src/util/format.util.ts's formatAdena/formatNumber/pluralize/
+ * These mirror backend/util/format.util.ts's formatAdena/formatNumber/pluralize/
  * formatEffectTimer exactly (same output for the same input) — the server still
  * uses its own copy internally, but this is the one the client imports.
  */

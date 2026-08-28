@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { RACES } from '../src/constant/game.constant';
-import { simulateBattle } from '../src/service/battle.service';
+import { RACES } from '../backend/constant/game.constant';
+import { simulateBattle } from '../backend/service/battle.service';
 
 function checkSurvivability(raceId: number, weaponId: number, armorId: number, iterations: number = 1000) {
     const race = RACES[raceId];

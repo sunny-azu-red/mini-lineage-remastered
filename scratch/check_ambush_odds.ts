@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { RACES } from '../src/constant/game.constant';
-import { calculateAmbushChance } from '../src/service/math.service';
+import { RACES } from '../backend/constant/game.constant';
+import { calculateAmbushChance } from '../backend/service/math.service';
 
 function runAmbushSimulation(iterations: number = 1000000) {
     console.log(`\n--- Ambush Probability Simulation ---`);

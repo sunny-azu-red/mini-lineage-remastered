@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { WEAPONS, ARMORS } from '../src/constant/game.constant';
+import { WEAPONS, ARMORS } from '../backend/constant/game.constant';
 
 function checkEfficiency() {
     console.log(`\n--- Weapon Efficiency (Cost per Stat Point) ---`);

@@ -75,7 +75,7 @@ npm run dev
 Visit `http://localhost:5173` in your browser (the API alone listens on `http://localhost:3000`, but has no client assets to serve in dev).
 
 ### Production Build & Run
-Runs the test suite, builds the client (Vite, into `dist/public`) then the server (`tsc`/`tsc-alias`, into `dist/src`), and starts the optimized production server — which now serves the built client directly:
+Runs the test suite, builds the client (Vite, into `dist/public`) then the server (`tsc`/`tsc-alias`, into `dist/backend`), and starts the optimized production server — which now serves the built client directly:
 ```bash
 npm run prod
 ```

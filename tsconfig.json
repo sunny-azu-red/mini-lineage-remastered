@@ -6,7 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "backend/*"
       ],
       "@shared/*": [
         "shared/*"
@@ -18,8 +18,8 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "test/**/*"
+    "backend/**/*",
+    "test/backend/**/*"
   ],
   "ts-node": {
     "require": [

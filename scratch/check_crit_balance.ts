@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import { RACES, WEAPONS, ARMORS } from '../src/constant/game.constant';
-import { getEnemyCountRange, randomInt, calculateDangerLevel, calculateDamageBlocked, calculateBaseXpGained, calculateBaseAdenaGained } from '../src/service/math.service';
-import { getPlayerStats } from '../src/service/player.service';
-import { PlayerState } from '../src/interface';
+import { RACES, WEAPONS, ARMORS } from '../backend/constant/game.constant';
+import { getEnemyCountRange, randomInt, calculateDangerLevel, calculateDamageBlocked, calculateBaseXpGained, calculateBaseAdenaGained } from '../backend/service/math.service';
+import { getPlayerStats } from '../backend/service/player.service';
+import { PlayerState } from '../backend/interface';
 
 // Custom simulation runner that accepts an explicit critMultiplier
 function simCombat(player: PlayerState, critMultiplier: number, isCritical: boolean) {

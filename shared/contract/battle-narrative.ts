@@ -32,7 +32,7 @@ export interface BattleOutcome {
  * The persisted, reconnect-safe shape of a resolved fight's narrative — everything
  * `BattleFightResult` carries EXCEPT `player`/`flash`, which are always freshly derived from the
  * live `PlayerState`/mutation result, never stale. Mirrors the exact pattern already proven for
- * `deathReason` (see `src/service/player.service.ts`'s `resolveDeathReason`): resolve once,
+ * `deathReason` (see `backend/service/player.service.ts`'s `resolveDeathReason`): resolve once,
  * persist on `PlayerState` (as `lastBattleNarrative`), carry it in every `buildPlayerSnapshot()`
  * call (as `PlayerSnapshot.lastBattle`) so it survives any reconnect — a real page reload no
  * longer wipes it back to a generic placeholder.
