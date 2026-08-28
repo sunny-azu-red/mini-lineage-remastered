@@ -162,7 +162,7 @@ describe('SelectActionForm', () => {
         expect(onSubmit).toHaveBeenCalledWith('');
     });
 
-    it('noPlaceholder mode omits the synthetic placeholder option and pre-selects the first real option on mount', () => {
+    it('noPlaceholder mode omits the synthetic placeholder option and pre-selects the first real option on mount, but keeps the default button label/variant until an explicit change (suicide.js: the "change" event never fires just from the browser default-selecting the first option)', () => {
         render(
             <SelectActionForm
                 noPlaceholder
@@ -170,6 +170,7 @@ describe('SelectActionForm', () => {
                 placeholderLabel="unused"
                 defaultButtonLabel="Return"
                 activeButtonLabel={value => (value === 'yes' ? 'Do it 🥀' : 'Phew 😅')}
+                defaultVariant="btn-secondary"
                 activeVariant={value => (value === 'yes' ? 'btn-danger' : 'btn-secondary')}
                 pending={false}
                 onSubmit={vi.fn()}
@@ -180,10 +181,40 @@ describe('SelectActionForm', () => {
 
         const select = screen.getByRole('combobox') as HTMLSelectElement;
         expect(select.value).toBe(OPTIONS[0].value);
-        expect(screen.getByRole('button', { name: 'Do it 🥀' })).toBeInTheDocument();
+
+        const button = screen.getByRole('button', { name: 'Return' });
+        expect(button).not.toBeDisabled();
+        expect(button.className).toBe('btn btn-secondary');
     });
 
-    it('noPlaceholder mode submits the pre-selected first option without requiring any change', () => {
+    it('noPlaceholder mode applies the active label/variant once the user explicitly changes the selection', () => {
+        render(
+            <SelectActionForm
+                noPlaceholder
+                options={OPTIONS}
+                placeholderLabel="unused"
+                defaultButtonLabel="Return"
+                activeButtonLabel={value => (value === 'yes' ? 'Do it 🥀' : 'Phew 😅')}
+                defaultVariant="btn-secondary"
+                activeVariant={value => (value === 'yes' ? 'btn-danger' : 'btn-secondary')}
+                pending={false}
+                onSubmit={vi.fn()}
+            />,
+        );
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'yes' } });
+        const dangerButton = screen.getByRole('button', { name: 'Do it 🥀' });
+        expect(dangerButton.className).toBe('btn btn-danger');
+
+        // Explicitly re-selecting the already-pre-filled first option ('no') still counts as an
+        // interaction — this is a real, submittable choice in noPlaceholder mode, unlike the
+        // placeholder mode's empty-string "nothing chosen" sentinel.
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'no' } });
+        const secondaryButton = screen.getByRole('button', { name: 'Phew 😅' });
+        expect(secondaryButton.className).toBe('btn btn-secondary');
+    });
+
+    it('noPlaceholder mode submits the pre-selected first option without requiring any change (the button still reads its default label at that point)', () => {
         const onSubmit = vi.fn();
         render(
             <SelectActionForm
@@ -197,7 +228,7 @@ describe('SelectActionForm', () => {
             />,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Do it 🥀' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
 
         expect(onSubmit).toHaveBeenCalledWith(OPTIONS[0].value);
     });

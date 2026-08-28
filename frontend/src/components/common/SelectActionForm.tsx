@@ -57,7 +57,12 @@ interface SelectActionFormProps {
  * placeholder still selected is a legitimate "go home" signal (`onSubmit('')`), exactly like the
  * old dual-purpose select-and-submit forms. `noPlaceholder` mode (Suicide) skips the synthetic
  * placeholder option altogether and pre-selects the first real option on mount, matching
- * suicide.ejs's natural default-selected-first-option behavior.
+ * suicide.ejs's natural default-selected-first-option behavior — but suicide.js's button text
+ * only ever changed on an explicit `change` event, never merely because the browser happens to
+ * default-select the first option on page load, so "has the user actually touched the select
+ * yet" (`hasInteracted`) has to be tracked separately from "what's the select's current value"
+ * for this mode: on first mount the button must still read `defaultButtonLabel` ("Return") even
+ * though `selected` already holds the pre-filled first option's value.
  */
 export default function SelectActionForm({
     options,
@@ -71,7 +76,8 @@ export default function SelectActionForm({
     onSubmit,
 }: SelectActionFormProps) {
     const [selected, setSelected] = useState(noPlaceholder ? options[0]?.value ?? '' : '');
-    const hasSelection = selected !== '';
+    const [hasInteracted, setHasInteracted] = useState(false);
+    const hasSelection = noPlaceholder ? hasInteracted : selected !== '';
 
     const buttonLabel = hasSelection
         ? typeof activeButtonLabel === 'function'
@@ -98,7 +104,10 @@ export default function SelectActionForm({
                 <select
                     className="form-select"
                     value={selected}
-                    onChange={e => setSelected(e.target.value)}
+                    onChange={e => {
+                        setSelected(e.target.value);
+                        setHasInteracted(true);
+                    }}
                 >
                     {!noPlaceholder && <option value="">{placeholderLabel}</option>}
                     {options.map(opt => (

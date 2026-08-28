@@ -72,14 +72,28 @@ describe('SuicideScreen', () => {
     });
 
     it('loads with "No, I changed my mind" pre-selected and an immediately-clickable Return button, no placeholder option', () => {
+        // Mirrors suicide.js exactly: its `change` listener never fired just from the browser
+        // default-selecting the first `<option>` on page load, so the button stayed "Return"
+        // until the visitor actually touched the dropdown — even though its underlying value
+        // was already 'no'.
         render(<SuicideScreen />);
 
         const select = screen.getByRole('combobox') as HTMLSelectElement;
         expect(select.value).toBe('no');
         expect(screen.queryByText('What will you do?')).not.toBeInTheDocument();
 
-        const button = screen.getByRole('button', { name: 'Phew 😅' });
+        const button = screen.getByRole('button', { name: 'Return' });
         expect(button).not.toBeDisabled();
+        expect(button.className).toBe('btn btn-secondary');
+    });
+
+    it('submitting the default Return button (no interaction) still submits the pre-selected "no" and just navigates home', () => {
+        render(<SuicideScreen />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
+
+        expect(requestMock).not.toHaveBeenCalled();
+        expect(useGameStore.getState().screen).toBe('home');
     });
 
     it('confirming calls player:suicide, applies the mutation, navigates to death, and plays the death sound', async () => {
