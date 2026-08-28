@@ -311,14 +311,14 @@
 
 /* Extra right padding so the dismiss "x" never overlaps longer message text */
 .alert-dismissible {
-    padding-right: 28px;
+    padding-right: 30px;
 }
 
 /* ===== Dismiss ("x") button — a small corner glyph, not a full .btn ===== */
 .alert-dismiss {
     position: absolute;
-    top: 4px;
-    right: 6px;
+    top: 7px;
+    right: 7px;
     background: none;
     border: none;
     padding: 4px;
