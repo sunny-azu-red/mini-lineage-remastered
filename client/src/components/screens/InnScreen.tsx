@@ -26,6 +26,7 @@ const COLUMNS: Column<ItemView>[] = [
 // flash renders via the already-mounted FlashAlert reading store.flash.
 export default function InnScreen() {
     const catalog = useGameStore(state => state.catalog);
+    const player = useGameStore(state => state.player);
     const applyMutation = useGameStore(state => state.applyMutation);
     const navigate = useGameStore(state => state.navigate);
     const { run, pending } = useAction('shop:purchase');
@@ -59,6 +60,11 @@ export default function InnScreen() {
             </p>
             <DataTable minWidth={400} columns={COLUMNS} rows={catalog.foods} rowKey={food => food.id} />
             <SelectActionForm
+                // Remounts (resetting the internal `selected` state back to the placeholder)
+                // after every successful purchase — `revision` bumps on every mutation, so this
+                // is what stops someone from spamming the buy button on the same item, matching
+                // the old app's fresh-page-per-purchase behavior.
+                key={player?.revision}
                 options={catalog.foods.map(food => ({ value: String(food.id), label: `Pick ${food.emoji} ${food.name}` }))}
                 placeholderLabel="🚪 Home Town"
                 defaultButtonLabel="Return"

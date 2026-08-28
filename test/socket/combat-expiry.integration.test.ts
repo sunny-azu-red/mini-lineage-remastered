@@ -42,6 +42,7 @@ import { getSessionData, setSessionData } from '@/util/session-store.util';
 import { simulateBattle } from '@/service/battle.service';
 import { registerBattleHandlers } from '@/socket/handler/battle.handler';
 import { trackSocket, sessionTracker } from '@/socket/emitter';
+import { processSessionTick } from '@/socket/tick';
 
 function makeBattleResult(overrides: Partial<BattleResult> = {}): BattleResult {
     return {
@@ -62,6 +63,7 @@ describe('combat aura exact-expiry wiring (integration)', () => {
     let ack: ReturnType<typeof vi.fn>;
     let fightHandler: (...args: unknown[]) => Promise<void>;
     let sock1Emit: ReturnType<typeof vi.fn>;
+    let io: SocketIOServer;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -88,10 +90,10 @@ describe('combat aura exact-expiry wiring (integration)', () => {
         vi.mocked(setSessionData).mockImplementation(async () => undefined);
         vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
 
-        const io = {
+        sock1Emit = vi.fn();
+        io = {
             sockets: { sockets: { get: (id: string) => (id === 'sock-1' ? { emit: sock1Emit } : undefined) } },
         } as unknown as SocketIOServer;
-        sock1Emit = vi.fn();
 
         const handlers: Record<string, (...args: unknown[]) => Promise<void>> = {};
         const socket = {
@@ -166,5 +168,36 @@ describe('combat aura exact-expiry wiring (integration)', () => {
 
         const tracker = sessionTracker.get(SESSION_ID);
         expect(tracker?.expiryTimers?.has('combat')).toBe(false);
+    });
+
+    it('never allows regen while ambushed, no matter how much time passes — the exact scenario a regen-based ambush escape would need', async () => {
+        // Round 5 investigation: confirmed not exploitable, but explicitly locking in the
+        // invariant permanently given how safety-critical it is. An ambushed player must never
+        // regenerate HP back up before actually fighting — that would let them simply wait out
+        // danger instead of resolving the ambush.
+        session.health = 10; // well below max, so regen WOULD fire here if it were unblocked
+        const mathService = await import('@/service/math.service');
+        vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
+
+        await fightHandler(ack);
+        expect(session.ambushed).toBe(true);
+
+        const combatAfterFight = session.effects.find((e: any) => e.id === 'combat');
+        expect(combatAfterFight.expiresAt).toBeUndefined();
+        const healthAfterFight = session.health;
+
+        // Advance WAY past what would be the linger window if this aura had one — several
+        // periodic ticks' worth, run explicitly (not just time-advanced, since no expiry timer
+        // exists to fire on its own here) to prove the periodic-tick regen path is ALSO blocked,
+        // not just the exact-timer path.
+        for (let i = 0; i < 5; i++) {
+            await vi.advanceTimersByTimeAsync(TICK_CONFIG.intervalMs);
+            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        }
+
+        expect(session.health).toBe(healthAfterFight); // never regenerated
+        expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
+        expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
+        expect(session.ambushed).toBe(true); // still unresolved — only an explicit fight changes this
     });
 });

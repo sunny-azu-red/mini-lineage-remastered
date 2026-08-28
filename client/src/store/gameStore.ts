@@ -195,6 +195,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         set(state => ({
             screen: pinScreen(screen, state.player),
             highscoreRaceFilter: opts?.raceFilter !== undefined ? opts.raceFilter : state.highscoreRaceFilter,
+            // A flash is a one-shot message tied to the action that produced it (old app's
+            // session flash was deleted the instant it was read, so it could never survive a
+            // navigation by construction) — clear it here so it doesn't linger indefinitely
+            // across unrelated screen changes the way it did before this fix.
+            flash: null,
         }));
     },
 

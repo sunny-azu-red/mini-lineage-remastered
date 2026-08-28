@@ -62,6 +62,9 @@ export default function ArmorsShopScreen() {
             </p>
             <DataTable minWidth={400} columns={COLUMNS} rows={purchasable} rowKey={armor => armor.id} />
             <SelectActionForm
+                // Remounts (resetting the internal `selected` state back to the placeholder)
+                // after every successful purchase — see InnScreen.tsx for the full rationale.
+                key={player?.revision}
                 options={purchasable.map(armor => {
                     const owned = player?.armor?.id === armor.id;
                     return {

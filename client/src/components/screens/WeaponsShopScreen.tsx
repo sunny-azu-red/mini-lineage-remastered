@@ -62,6 +62,9 @@ export default function WeaponsShopScreen() {
             </p>
             <DataTable minWidth={400} columns={COLUMNS} rows={purchasable} rowKey={weapon => weapon.id} />
             <SelectActionForm
+                // Remounts (resetting the internal `selected` state back to the placeholder)
+                // after every successful purchase — see InnScreen.tsx for the full rationale.
+                key={player?.revision}
                 options={purchasable.map(weapon => {
                     const owned = player?.weapon?.id === weapon.id;
                     return {

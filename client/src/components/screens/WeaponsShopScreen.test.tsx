@@ -118,6 +118,32 @@ describe('WeaponsShopScreen', () => {
         expect(useGameStore.getState().screen).toBe('weapons');
     });
 
+    it('resets the select back to its default placeholder after a successful purchase, instead of leaving the just-bought item selected', async () => {
+        // Regression test: the old app reset this for free via a full page reload after every
+        // purchase; the SPA must reproduce it explicitly (key={player.revision}) so the button
+        // can't be spammed to buy the same item repeatedly.
+        const newPlayer = makePlayer({
+            revision: 2, // a real mutation always bumps this
+            weapon: { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 },
+            adena: 200,
+        });
+        requestMock.mockResolvedValue({ ok: true, data: { player: newPlayer, flash: { text: 'Bought!', type: 'success' } } });
+
+        render(<WeaponsShopScreen />);
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
+        expect(screen.getByRole('button', { name: '🪙 Purchase' })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: '🪙 Purchase' }));
+        await waitFor(() => expect(useGameStore.getState().player?.revision).toBe(2));
+
+        // The form remounted: back to the default "Return" button and an unselected combobox,
+        // not stuck showing "Purchase" with Stormbringer still picked.
+        expect(screen.getByRole('button', { name: 'Return' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: '🪙 Purchase' })).not.toBeInTheDocument();
+        expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('');
+    });
+
     it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
         render(<WeaponsShopScreen />);
 

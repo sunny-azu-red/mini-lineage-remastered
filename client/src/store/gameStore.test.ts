@@ -377,6 +377,19 @@ describe('gameStore', () => {
         });
     });
 
+    describe('navigate() clears flash', () => {
+        it('clears a lingering flash message when navigating to a different screen', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer(), catalog });
+            useGameStore.getState().applyMutation(makePlayer(), { text: 'You have bought a thing.', type: 'success' });
+            expect(useGameStore.getState().flash).not.toBeNull();
+
+            useGameStore.getState().navigate('home');
+
+            expect(useGameStore.getState().flash).toBeNull();
+        });
+    });
+
     describe('toggleSound', () => {
         it('flips soundEnabled', () => {
             const before = useGameStore.getState().soundEnabled;
