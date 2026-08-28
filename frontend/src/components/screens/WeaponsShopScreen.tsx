@@ -17,7 +17,7 @@ const COLUMNS: Column<ItemView>[] = [
                 ? <span className="crit">{weapon.crit}%</span>
                 : <span className="muted">-</span>,
     },
-    { key: 'stat', header: 'P. Attack', render: weapon => formatNumber(weapon.stat) },
+    { key: 'stat', header: 'P. Attack', headerTitle: 'Physical Attack', render: weapon => formatNumber(weapon.stat) },
     { key: 'cost', header: 'Adena', className: 'gold', render: weapon => <>🪙 {formatAdena(weapon.cost)}</> },
 ];
 

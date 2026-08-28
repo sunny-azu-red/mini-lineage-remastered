@@ -87,6 +87,13 @@ describe('InnScreen', () => {
         resetStore();
     });
 
+    it('carries the same column header tooltips as the original inn.ejs', () => {
+        render(<InnScreen />);
+
+        expect(screen.getByRole('columnheader', { name: 'Max HP+' })).toHaveAttribute('title', 'Maximum Health Point Increase');
+        expect(screen.getByRole('columnheader', { name: 'HP Heal' })).toHaveAttribute('title', 'Health Point Heal');
+    });
+
     it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
         render(<InnScreen />);
 

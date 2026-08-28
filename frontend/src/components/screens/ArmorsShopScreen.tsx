@@ -17,7 +17,7 @@ const COLUMNS: Column<ItemView>[] = [
                 ? <span className="heal">+{armor.regen}</span>
                 : <span className="muted">-</span>,
     },
-    { key: 'stat', header: 'P. Defense', render: armor => formatNumber(armor.stat) },
+    { key: 'stat', header: 'P. Defense', headerTitle: 'Physical Defense', render: armor => formatNumber(armor.stat) },
     { key: 'cost', header: 'Adena', className: 'gold', render: armor => <>🪙 {formatAdena(armor.cost)}</> },
 ];
 

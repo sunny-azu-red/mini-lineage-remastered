@@ -89,6 +89,13 @@ describe('WeaponsShopScreen', () => {
         resetStore(makePlayer());
     });
 
+    it('carries the same column header tooltips as the original weapons-shop.ejs', () => {
+        render(<WeaponsShopScreen />);
+
+        expect(screen.getByRole('columnheader', { name: 'C. Hit %' })).toHaveAttribute('title', 'Critical Hit Chance');
+        expect(screen.getByRole('columnheader', { name: 'P. Attack' })).toHaveAttribute('title', 'Physical Attack');
+    });
+
     it('excludes the starting weapon and disables/marks the currently-equipped item', () => {
         render(<WeaponsShopScreen />);
 

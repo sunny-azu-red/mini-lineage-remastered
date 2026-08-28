@@ -88,6 +88,13 @@ describe('ArmorsShopScreen', () => {
         resetStore();
     });
 
+    it('carries the same column header tooltips as the original armors-shop.ejs', () => {
+        render(<ArmorsShopScreen />);
+
+        expect(screen.getByRole('columnheader', { name: 'HP Regen' })).toHaveAttribute('title', 'Health Point Regeneration');
+        expect(screen.getByRole('columnheader', { name: 'P. Defense' })).toHaveAttribute('title', 'Physical Defense');
+    });
+
     it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
         render(<ArmorsShopScreen />);
 

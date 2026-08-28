@@ -17,7 +17,7 @@ const COLUMNS: Column<ItemView>[] = [
                 ? <span className="hp">+{food.maxHealth}</span>
                 : <span className="muted">-</span>,
     },
-    { key: 'stat', header: 'HP Heal', render: food => formatNumber(food.stat) },
+    { key: 'stat', header: 'HP Heal', headerTitle: 'Health Point Heal', render: food => formatNumber(food.stat) },
     { key: 'cost', header: 'Adena', className: 'gold', render: food => <>🪙 {formatAdena(food.cost)}</> },
 ];
 
