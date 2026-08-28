@@ -70,6 +70,15 @@ describe('RacesScreen', () => {
         expect(screen.getByText('Strong but reckless.')).toBeInTheDocument();
     });
 
+    it('does not wrap each race in a container element — the original races.ejs rendered flat h2/p siblings', () => {
+        const { container } = render(<RacesScreen />);
+
+        // Every direct child of the fragment's parent is an h2 or p — no div/section wrapper
+        // was ever inserted per race, matching the old template's flat structure exactly.
+        const tagNames = Array.from(container.children).map(el => el.tagName);
+        expect(tagNames.every(tag => tag === 'H2' || tag === 'P')).toBe(true);
+    });
+
     it('links back to "start" when no character has been started yet', () => {
         render(<RacesScreen />);
         expect(screen.getByRole('link', { name: /Go back to game start/ })).toBeInTheDocument();

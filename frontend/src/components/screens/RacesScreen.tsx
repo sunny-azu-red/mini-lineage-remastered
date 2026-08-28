@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import { Fragment, type MouseEvent } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import Narrative from '@/components/common/Narrative';
 
@@ -23,7 +23,7 @@ export default function RacesScreen() {
     return (
         <>
             {catalog.races.map(race => (
-                <div key={race.id}>
+                <Fragment key={race.id}>
                     <h2>
                         {race.emoji} {race.label}
                     </h2>
@@ -33,7 +33,7 @@ export default function RacesScreen() {
                     <p>
                         <Narrative html={race.traits} />
                     </p>
-                </div>
+                </Fragment>
             ))}
 
             <p className="last back">
