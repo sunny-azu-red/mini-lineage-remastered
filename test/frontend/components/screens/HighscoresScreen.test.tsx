@@ -95,6 +95,17 @@ describe('HighscoresScreen', () => {
         expect(screen.queryByRole('columnheader', { name: 'Rank' })).not.toBeInTheDocument();
     });
 
+    it('applies the same td/th classes the original highscores.ejs used, directly on the cell (not a nested span)', async () => {
+        const { container } = render(<HighscoresScreen />);
+        await screen.findByText(/Champion/);
+
+        expect(container.querySelector('th.center')?.textContent).toBe('Level');
+        expect(container.querySelector('td.center')?.textContent).toBe('10');
+        expect(container.querySelector('td.xp')?.textContent).toBe('5,000');
+        expect(container.querySelector('td.gold')?.textContent).toBe('🪙 12k');
+        expect(container.querySelector('td.muted')).not.toBeNull();
+    });
+
     it('re-fetches when the store filter changes and highlights the active tab', async () => {
         render(<HighscoresScreen />);
         await waitFor(() => expect(requestMock).toHaveBeenCalledWith('highscores:list', { raceId: null }));

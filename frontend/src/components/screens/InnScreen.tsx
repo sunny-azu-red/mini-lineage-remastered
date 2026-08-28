@@ -18,7 +18,7 @@ const COLUMNS: Column<ItemView>[] = [
                 : <span className="muted">-</span>,
     },
     { key: 'stat', header: 'HP Heal', render: food => formatNumber(food.stat) },
-    { key: 'cost', header: 'Adena', render: food => <span className="gold">🪙 {formatAdena(food.cost)}</span> },
+    { key: 'cost', header: 'Adena', className: 'gold', render: food => <>🪙 {formatAdena(food.cost)}</> },
 ];
 
 // Ported from inn.ejs + shop.js's `setupShop('inn-select', 'inn-btn', '🪙 Order')`. Purchase

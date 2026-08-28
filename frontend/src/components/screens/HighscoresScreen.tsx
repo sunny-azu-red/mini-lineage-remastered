@@ -61,21 +61,19 @@ export default function HighscoresScreen() {
                 </>
             ),
         },
-        { key: 'level', header: 'Level', render: row => formatNumber(row.level) },
-        { key: 'totalXp', header: 'Total XP', render: row => <span className="xp">{formatNumber(row.totalXp)}</span> },
+        { key: 'level', header: 'Level', headerClassName: 'center', className: 'center', render: row => formatNumber(row.level) },
+        { key: 'totalXp', header: 'Total XP', className: 'xp', render: row => formatNumber(row.totalXp) },
         {
             key: 'adena',
             header: 'Wealth',
-            render: row => (
-                <span className="gold">
-                    🪙 {formatAdena(row.adena)}
-                </span>
-            ),
+            className: 'gold',
+            render: row => <>🪙 {formatAdena(row.adena)}</>,
         },
         {
             key: 'created',
             header: 'Date',
-            render: row => <span className="muted">{formatShortDate(row.created)}</span>,
+            className: 'muted',
+            render: row => formatShortDate(row.created),
         },
     ];
 

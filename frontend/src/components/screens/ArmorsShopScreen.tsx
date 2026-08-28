@@ -18,7 +18,7 @@ const COLUMNS: Column<ItemView>[] = [
                 : <span className="muted">-</span>,
     },
     { key: 'stat', header: 'P. Defense', render: armor => formatNumber(armor.stat) },
-    { key: 'cost', header: 'Adena', render: armor => <span className="gold">🪙 {formatAdena(armor.cost)}</span> },
+    { key: 'cost', header: 'Adena', className: 'gold', render: armor => <>🪙 {formatAdena(armor.cost)}</> },
 ];
 
 // Ported from armors-shop.ejs + shop.js's `setupShop('armor-select', 'armor-btn', '🪙 Purchase')`.
