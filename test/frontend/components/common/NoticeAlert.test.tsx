@@ -43,26 +43,35 @@ describe('NoticeAlert', () => {
         expect(container.querySelector('.alert-warning')).not.toBeInTheDocument();
     });
 
-    it('styles a rate-limit notice as warning, not danger', () => {
+    it('styles a rate-limit notice as danger, same as any other rejected action', () => {
         useGameStore.setState(
             { notice: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.' } },
             false,
         );
         const { container } = render(<NoticeAlert />);
-        expect(container.querySelector('.alert-warning')).toBeInTheDocument();
-        expect(container.querySelector('.alert-danger')).not.toBeInTheDocument();
+        expect(container.querySelector('.alert-danger')).toBeInTheDocument();
+        expect(container.querySelector('.alert-warning')).not.toBeInTheDocument();
     });
 
-    it('shows the generic rate-limit copy (not the raw server message) when not ambushed', () => {
+    it('shows the generic rate-limit copy, with the retry time folded into the sentence (not the raw server message, and not a redundant second "try again")', () => {
         useGameStore.setState(
             { notice: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.', retryAfterMs: 4200 } },
             false,
         );
         render(<NoticeAlert />);
 
-        expect(screen.getByText(/You are moving too fast\. Please take a breath and try again in a moment\./)).toBeInTheDocument();
+        expect(screen.getByText('You are moving too fast. Please take a breath and try again in 5s.')).toBeInTheDocument(); // ceil(4200/1000)
         expect(screen.queryByText(/Too many requests\. Please slow down\./)).not.toBeInTheDocument();
-        expect(screen.getByText(/Try again in 5s\./)).toBeInTheDocument(); // ceil(4200/1000)
+    });
+
+    it('falls back to "in a moment" when a rate-limit notice carries no retryAfterMs', () => {
+        useGameStore.setState(
+            { notice: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.' } },
+            false,
+        );
+        render(<NoticeAlert />);
+
+        expect(screen.getByText('You are moving too fast. Please take a breath and try again in a moment.')).toBeInTheDocument();
     });
 
     it('shows the ambush-specific rate-limit copy when the player is currently ambushed', () => {
@@ -78,6 +87,19 @@ describe('NoticeAlert', () => {
         expect(
             screen.getByText(/You are in the middle of an ambush and moving too fast\. Please wait a moment before your next move\./),
         ).toBeInTheDocument();
+    });
+
+    it('still appends the "Try again in Ns." sentence to the ambush-specific copy', () => {
+        useGameStore.setState(
+            {
+                player: makePlayer({ ambushed: true, dead: false }),
+                notice: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.', retryAfterMs: 4200 },
+            },
+            false,
+        );
+        render(<NoticeAlert />);
+
+        expect(screen.getByText(/Try again in 5s\./)).toBeInTheDocument();
     });
 
     it('dismiss button clears the notice', () => {

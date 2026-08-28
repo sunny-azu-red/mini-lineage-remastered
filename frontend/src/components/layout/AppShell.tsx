@@ -19,7 +19,7 @@ interface AppShellProps {
 // git show 6256e28:src/view/layout.view.ts), even Character despite a character existing. Kept as
 // an explicit allowlist rather than derived from `player` state, since "does a character exist"
 // and "should this screen show a sidebar" are two different questions.
-const SIDEBAR_SCREENS: ReadonlySet<ScreenId> =
+export const SIDEBAR_SCREENS: ReadonlySet<ScreenId> =
     new Set(['home', 'battle', 'weapons', 'armors', 'inn', 'suicide', 'death']);
 
 // Ported from layout.ejs's DOM shape (#app > #wrapper > #header/#content, #content ->

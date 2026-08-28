@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { request } from '@/socket/client';
 import type {
     PlayerSnapshot,
     GameCatalog,
@@ -192,15 +193,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
     },
 
     navigate(screen, opts) {
-        set(state => ({
-            screen: pinScreen(screen, state.player),
+        const state = get();
+        const nextScreen = pinScreen(screen, state.player);
+
+        // Fire-and-forget: tells the server the Battle screen was actually left, so
+        // syncZoneAuras (player.service.ts) can start the combat aura's regen-blocking grace
+        // period from THIS moment instead of the player's last fight — otherwise simply
+        // pausing between fights while still on the Battle screen would let regen silently
+        // resume mid-encounter. Naturally never fires while ambushed: pinScreen forces
+        // `nextScreen` back to 'battle' in that case, so it never differs from 'battle'. The
+        // response is intentionally ignored — the server's own broadcast/exact-expiry-timer
+        // mechanism (see registry.ts/tick.ts) keeps every tab's effects list correct within a
+        // few seconds regardless.
+        if (state.screen === 'battle' && nextScreen !== 'battle')
+            void request('battle:leave', {});
+
+        set({
+            screen: nextScreen,
             highscoreRaceFilter: opts?.raceFilter !== undefined ? opts.raceFilter : state.highscoreRaceFilter,
             // A flash is a one-shot message tied to the action that produced it (old app's
             // session flash was deleted the instant it was read, so it could never survive a
             // navigation by construction) — clear it here so it doesn't linger indefinitely
             // across unrelated screen changes the way it did before this fix.
             flash: null,
-        }));
+        });
     },
 
     setFlash(flash) {

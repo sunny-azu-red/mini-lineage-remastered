@@ -134,11 +134,12 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
     }
 
     it('persists a zone-only flip even when the handler itself reports NO_CHANGE (the silent-drop bug)', async () => {
-        // Combat aura is stale: lastFightAt is well past the linger window, so
+        // Combat aura is stale: battle:leave fired and its grace period is well past, so
         // syncZoneAuras should flip it to resting — a change the mutate callback below
         // has no idea happened, and reports NO_CHANGE regardless.
         const session = makeStartedSession({
-            lastFightAt: Date.now() - TICK_CONFIG.combatLingerMs - 1000,
+            lastFightAt: Date.now() - TICK_CONFIG.combatLingerMs - 2000,
+            battleLeftAt: Date.now() - TICK_CONFIG.combatLingerMs - 1000,
             effects: [{ ...EFFECTS_CONFIG.combatAura }],
         });
         vi.mocked(getSessionData).mockResolvedValue(session);

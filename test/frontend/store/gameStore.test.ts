@@ -1,6 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { GameCatalog, PlayerSnapshot, HydratePayload } from '@shared/contract';
-import { useGameStore } from '@/store/gameStore';
+
+const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
+
+vi.mock('@/socket/client', () => ({
+    request: requestMock,
+}));
+
+const { useGameStore } = await import('@/store/gameStore');
 
 function makeCatalog(): GameCatalog {
     return {
@@ -77,6 +84,8 @@ function resetStore() {
 
 describe('gameStore', () => {
     beforeEach(() => {
+        requestMock.mockReset();
+        requestMock.mockResolvedValue({ ok: true, data: { player: makePlayer(), flash: null } });
         resetStore();
     });
 
@@ -387,6 +396,52 @@ describe('gameStore', () => {
             useGameStore.getState().navigate('home');
 
             expect(useGameStore.getState().flash).toBeNull();
+        });
+    });
+
+    describe('navigate() fires battle:leave when leaving the Battle screen', () => {
+        it('fires battle:leave when navigating away from "battle" to another screen', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
+            useGameStore.getState().navigate('battle');
+            requestMock.mockClear();
+
+            useGameStore.getState().navigate('home');
+
+            expect(requestMock).toHaveBeenCalledWith('battle:leave', {});
+        });
+
+        it('does not fire battle:leave when navigating between two non-battle screens', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
+            useGameStore.getState().navigate('weapons');
+            requestMock.mockClear();
+
+            useGameStore.getState().navigate('home');
+
+            expect(requestMock).not.toHaveBeenCalled();
+        });
+
+        it('does not fire battle:leave while ambushed — pinScreen keeps the player on "battle" regardless of the requested screen', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: true }), catalog });
+            requestMock.mockClear();
+
+            useGameStore.getState().navigate('home');
+            expect(useGameStore.getState().screen).toBe('battle');
+
+            expect(requestMock).not.toHaveBeenCalled();
+        });
+
+        it('does not fire battle:leave when re-navigating to "battle" itself (e.g. a repeat click)', () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false }), catalog });
+            useGameStore.getState().navigate('battle');
+            requestMock.mockClear();
+
+            useGameStore.getState().navigate('battle');
+
+            expect(requestMock).not.toHaveBeenCalled();
         });
     });
 

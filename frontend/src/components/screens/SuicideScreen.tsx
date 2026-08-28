@@ -21,9 +21,12 @@ export default function SuicideScreen() {
             {},
             {
                 onSuccess: data => {
+                    // navigate() FIRST — see GameStartScreen.tsx's identical fix: it clears
+                    // `flash`, so calling it after applyMutation() would wipe any flash in the
+                    // same tick before it ever renders.
+                    navigate('death');
                     applyMutation(data.player, data.flash);
                     playSound('death');
-                    navigate('death');
                 },
             },
         );

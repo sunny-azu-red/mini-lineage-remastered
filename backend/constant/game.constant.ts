@@ -218,6 +218,12 @@ export const TICK_CONFIG = {
     combatZones: ['/battle', '/suicide', '/death'],
     restingZones: ['/', '/inn', '/shop/*', '/character', '/highscores', '/highscores/*'],
     combatLingerMs: 10_000,
+    // Safety net ONLY — see player.service.ts's syncZoneAuras. A player who fought and never
+    // explicitly left the Battle screen (battle:leave) stays fully combat-blocked indefinitely,
+    // same as an ambush; this caps that at a generous ceiling so a tab closed/abandoned mid-fight
+    // doesn't block regen forever. Deliberately much longer than combatLingerMs so it never
+    // interferes with the normal (explicit-leave) grace period.
+    combatAbandonedMs: 5 * 60_000,
 } as const;
 
 /**

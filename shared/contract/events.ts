@@ -39,6 +39,14 @@ export interface ClientToServerEvents {
     'game:start': (p: GameStartPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'game:restart': (p: EmptyPayload, ack: (r: Ack<{ hydrate: HydratePayload }>) => void) => void;
     'battle:fight': (p: EmptyPayload, ack: (r: Ack<BattleFightResult>) => void) => void;
+    /**
+     * Fired by the client whenever it navigates away from the Battle screen (see gameStore.ts's
+     * navigate()) — the signal player.service.ts's syncZoneAuras needs to start the combat aura's
+     * short regen-blocking grace period from the moment battle was actually left, instead of from
+     * the last fight itself (which would let regen resume just by pausing between clicks while
+     * still on the Battle screen).
+     */
+    'battle:leave': (p: EmptyPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'shop:purchase': (p: ShopPurchasePayload, ack: (r: Ack<MutationResult>) => void) => void;
     'player:suicide': (p: EmptyPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'highscores:submit': (p: EmptyPayload, ack: (r: Ack<HighscoreSubmitResult>) => void) => void;

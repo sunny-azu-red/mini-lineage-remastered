@@ -54,9 +54,12 @@ export default function GameStartScreen() {
             { raceId: selectedRaceId, name: trimmed },
             {
                 onSuccess: data => {
+                    // navigate() FIRST: it clears `flash` (see gameStore.ts), so calling it after
+                    // applyMutation() would wipe the welcome flash in the same synchronous tick,
+                    // before it ever renders.
+                    navigate('home');
                     applyMutation(data.player, data.flash);
                     playSound(data.flash?.sound);
-                    navigate('home');
                 },
             },
         );

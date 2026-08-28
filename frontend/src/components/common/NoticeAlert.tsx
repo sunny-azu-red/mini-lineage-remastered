@@ -1,14 +1,22 @@
 import { useGameStore } from '@/store/gameStore';
 
 // Ported from rate-limit.ejs's two message variants (see the deleted battleRateLimitHandler /
-// shopRateLimitHandler in src/middleware/rate-limit.middleware.ts) for wording — but chosen
+// shopRateLimitHandler in the legacy rate-limit.middleware.ts) for wording — but chosen
 // client-side off the CURRENT `player.ambushed` state rather than trusted from the server's ack,
-// since the new socket-side rate limiter (src/socket/registry.ts) sends one generic
+// since the socket-side rate limiter (backend/socket/registry.ts) sends one generic
 // "Too many requests. Please slow down." message for every RATE_LIMITED rejection regardless of
 // cause. This is purely flavor text, not a security-relevant distinction.
 const AMBUSH_RATE_LIMIT_MESSAGE =
     'You are in the middle of an ambush and moving too fast. Please wait a moment before your next move.';
-const GENERIC_RATE_LIMIT_MESSAGE = 'You are moving too fast. Please take a breath and try again in a moment.';
+
+// Folds the retry time directly into the sentence (rather than appending a second "Try again in
+// Ns." after a message that already says "try again") so the retryAfterSeconds-known case reads
+// as one clean sentence instead of two overlapping ones.
+function genericRateLimitMessage(retryAfterSeconds: number | null): string {
+    return retryAfterSeconds !== null
+        ? `You are moving too fast. Please take a breath and try again in ${retryAfterSeconds}s.`
+        : 'You are moving too fast. Please take a breath and try again in a moment.';
+}
 
 /**
  * The one, shared renderer for `store.notice` (socket error acks — rate limits, INVALID_PAYLOAD,
@@ -31,23 +39,18 @@ export default function NoticeAlert() {
         return null;
 
     const isRateLimited = notice.code === 'RATE_LIMITED';
-    const message = isRateLimited
-        ? player?.ambushed && !player?.dead
-            ? AMBUSH_RATE_LIMIT_MESSAGE
-            : GENERIC_RATE_LIMIT_MESSAGE
-        : notice.message;
+    const isAmbushRateLimited = isRateLimited && player?.ambushed && !player?.dead;
     const retryAfterSeconds = notice.retryAfterMs ? Math.max(1, Math.ceil(notice.retryAfterMs / 1000)) : null;
-
-    // RATE_LIMITED is a soft "slow down" cue — warning (gold/orange) fits it, same tone as a
-    // level-up flash. Everything else (a dropped connection, an invalid payload, an internal
-    // error, ...) is something that actually failed and reads wrong in that same celebratory
-    // color — those get the danger (red) treatment instead.
-    const alertType = isRateLimited ? 'warning' : 'danger';
+    const message = isRateLimited
+        ? isAmbushRateLimited
+            ? AMBUSH_RATE_LIMIT_MESSAGE
+            : genericRateLimitMessage(retryAfterSeconds)
+        : notice.message;
 
     return (
-        <div className={`alert alert-${alertType} alert-dismissible`}>
+        <div className="alert alert-danger alert-dismissible">
             {message}
-            {retryAfterSeconds !== null && <> Try again in {retryAfterSeconds}s.</>}
+            {isAmbushRateLimited && retryAfterSeconds !== null && <> Try again in {retryAfterSeconds}s.</>}
             <button
                 type="button"
                 className="alert-dismiss"

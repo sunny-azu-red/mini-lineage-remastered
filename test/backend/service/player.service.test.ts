@@ -824,12 +824,15 @@ describe('syncZoneAuras', () => {
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it('adds a combat aura when the player fought within the linger window', () => {
+    it('keeps the combat aura indefinitely after fighting, with no battle:leave yet — even long past the old linger window', () => {
+        // Regression guard: before the battle:leave fix, this alone (no explicit leave) used
+        // to flip to resting once `combatLingerMs` had elapsed, letting regen silently resume
+        // just by pausing between fights while still on the Battle screen.
         vi.useFakeTimers();
         try {
             const now = Date.now();
             vi.setSystemTime(now);
-            const p = makePlayer({ lastFightAt: now - (TICK_CONFIG.combatLingerMs - 1), effects: [] });
+            const p = makePlayer({ lastFightAt: now - (TICK_CONFIG.combatLingerMs * 10), effects: [] });
             syncZoneAuras(p);
             expect(p.effects?.map(e => e.id)).toEqual(['combat']);
         } finally {
@@ -837,12 +840,61 @@ describe('syncZoneAuras', () => {
         }
     });
 
-    it('adds a resting aura once the linger window has fully elapsed', () => {
+    it('adds a resting aura once the grace period has elapsed since an explicit battle:leave', () => {
         vi.useFakeTimers();
         try {
             const now = Date.now();
             vi.setSystemTime(now);
-            const p = makePlayer({ lastFightAt: now - TICK_CONFIG.combatLingerMs, effects: [] });
+            const lastFightAt = now - 60_000;
+            const p = makePlayer({ lastFightAt, battleLeftAt: now - TICK_CONFIG.combatLingerMs, effects: [] });
+            syncZoneAuras(p);
+            expect(p.effects?.map(e => e.id)).toEqual(['resting']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('adds a combat aura while still within the grace period since an explicit battle:leave', () => {
+        vi.useFakeTimers();
+        try {
+            const now = Date.now();
+            vi.setSystemTime(now);
+            const lastFightAt = now - 60_000;
+            const p = makePlayer({ lastFightAt, battleLeftAt: now - (TICK_CONFIG.combatLingerMs - 1), effects: [] });
+            syncZoneAuras(p);
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('ignores a stale battle:leave from before the most recent fight — re-engaging re-blocks regen from scratch', () => {
+        vi.useFakeTimers();
+        try {
+            const now = Date.now();
+            vi.setSystemTime(now);
+            // Left battle, then fought again (e.g. re-engaged from Home) — the leave timestamp
+            // predates this fight, so it must not count toward the grace period anymore.
+            const p = makePlayer({
+                lastFightAt: now,
+                battleLeftAt: now - TICK_CONFIG.combatLingerMs - 1,
+                effects: [],
+            });
+            syncZoneAuras(p);
+            const combat = p.effects?.find(e => e.id === 'combat');
+            expect(combat).toBeDefined();
+            expect(combat?.expiresAt).toBeUndefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('falls back to resting after combatAbandonedMs when battle:leave never fires (abandoned-tab safety net)', () => {
+        vi.useFakeTimers();
+        try {
+            const now = Date.now();
+            vi.setSystemTime(now);
+            const p = makePlayer({ lastFightAt: now - TICK_CONFIG.combatAbandonedMs, effects: [] });
             syncZoneAuras(p);
             expect(p.effects?.map(e => e.id)).toEqual(['resting']);
         } finally {
@@ -871,22 +923,33 @@ describe('syncZoneAuras', () => {
     });
 
     describe('expiresAt on the combat aura (Fix — exact-timeout combat->resting transition)', () => {
-        it('sets expiresAt to lastFightAt + combatLingerMs for a linger-driven combat aura (not ambushed)', () => {
+        it('sets expiresAt to battleLeftAt + combatLingerMs once battle:leave has fired (not ambushed)', () => {
             vi.useFakeTimers();
             try {
                 const now = Date.now();
                 vi.setSystemTime(now);
-                const lastFightAt = now - 1000;
-                const p = makePlayer({ ambushed: false, lastFightAt, effects: [] });
+                const lastFightAt = now - 60_000;
+                const battleLeftAt = now - 1000;
+                const p = makePlayer({ ambushed: false, lastFightAt, battleLeftAt, effects: [] });
 
                 syncZoneAuras(p);
 
                 const combat = p.effects?.find(e => e.id === 'combat');
                 expect(combat).toBeDefined();
-                expect(combat?.expiresAt).toBe(lastFightAt + TICK_CONFIG.combatLingerMs);
+                expect(combat?.expiresAt).toBe(battleLeftAt + TICK_CONFIG.combatLingerMs);
             } finally {
                 vi.useRealTimers();
             }
+        });
+
+        it('leaves expiresAt unset for a combat aura still on the Battle screen (fought, no battle:leave yet)', () => {
+            const p = makePlayer({ ambushed: false, lastFightAt: Date.now() - 1000, effects: [] });
+
+            syncZoneAuras(p);
+
+            const combat = p.effects?.find(e => e.id === 'combat');
+            expect(combat).toBeDefined();
+            expect(combat?.expiresAt).toBeUndefined();
         });
 
         it('leaves expiresAt unset for an ambush-driven combat aura, even with a stale lastFightAt', () => {

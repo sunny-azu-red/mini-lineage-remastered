@@ -1,5 +1,5 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
-import type { BattleFightResult, SoundName } from '@shared/contract';
+import type { BattleFightResult, MutationResult, SoundName } from '@shared/contract';
 import { registerEvent } from '../registry';
 import { requireStarted, requireAlive } from '../guard';
 import { battleLimiter } from '../rate-limit';
@@ -14,7 +14,9 @@ import { statisticsRepository } from '@/repository/statistics.repository';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 
 /**
- * From battle.controller.ts's getBattle — the heart of the anti-cheat redesign (plan A6).
+ * Registers both Battle-screen events: `battle:fight` (from battle.controller.ts's getBattle —
+ * the heart of the anti-cheat redesign, plan A6) and `battle:leave` (see its own doc comment
+ * below, and syncZoneAuras in player.service.ts).
  *
  * INVARIANT: battle:fight must succeed IDENTICALLY whether or not ctx.player.ambushed was
  * already true when this handler runs. There is no "you must resolve the ambush by leaving"
@@ -132,6 +134,30 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
                 flash,
                 sound,
             };
+        },
+    });
+
+    registerEvent(io, socket, {
+        event: 'battle:leave',
+        schema: EmptyPayloadSchema,
+        mode: 'mutate',
+        guards: [requireStarted, requireAlive],
+        handler: (ctx): MutationResult => {
+            // Ignored while ambushed: syncZoneAuras already blocks regen unconditionally in
+            // that case (`Boolean(player.ambushed) ||` short-circuits before this timestamp is
+            // even consulted), and an ambushed player can never reach a screen to send this
+            // from anyway (the store pins screen to 'battle' whenever ambushed) — but a raw
+            // socket call could still send it, so stamping it here would just be a no-op with
+            // a misleading persisted value.
+            if (!ctx.player.ambushed)
+                ctx.player.battleLeftAt = Date.now();
+
+            // NOT redundant with withSession's own automatic upfront syncZoneAuras call — see
+            // battle:fight's identical comment above. This one runs AFTER battleLeftAt was
+            // just stamped, so it's the one that actually starts the grace-period countdown.
+            syncZoneAuras(ctx.player);
+
+            return { player: buildPlayerSnapshot(ctx.player), flash: null };
         },
     });
 }

@@ -5,8 +5,10 @@ import type { BattleResult } from '@/interface';
 
 /**
  * Genuinely end-to-end regression test for the fix described in player.service.ts's
- * syncZoneAuras (linger-driven combat aura gets a real `expiresAt`) combined with the
- * registry.ts wiring fix (a successful mutation reschedules exact expiry timers via
+ * syncZoneAuras (the combat aura gets a real `expiresAt` only once `battle:leave` reports the
+ * Battle screen was actually left — not from `lastFightAt` alone, which used to let regen
+ * silently resume just by pausing between fights while still on the Battle screen) combined
+ * with the registry.ts wiring fix (a successful mutation reschedules exact expiry timers via
  * backend/socket/tick.ts's refreshExpiryTimers, not just the periodic tick/reconnect).
  *
  * Deliberately does NOT mock @/socket/registry, @/socket/session, @/socket/emitter,
@@ -62,6 +64,7 @@ describe('combat aura exact-expiry wiring (integration)', () => {
     let session: Record<string, any>;
     let ack: ReturnType<typeof vi.fn>;
     let fightHandler: (...args: unknown[]) => Promise<void>;
+    let leaveHandler: (...args: unknown[]) => Promise<void>;
     let sock1Emit: ReturnType<typeof vi.fn>;
     let io: SocketIOServer;
 
@@ -105,6 +108,7 @@ describe('combat aura exact-expiry wiring (integration)', () => {
         trackSocket(io, SESSION_ID, 'sock-1');
         registerBattleHandlers(io, socket);
         fightHandler = handlers['battle:fight'];
+        leaveHandler = handlers['battle:leave'];
 
         ack = vi.fn();
     });
@@ -113,16 +117,26 @@ describe('combat aura exact-expiry wiring (integration)', () => {
         vi.useRealTimers();
     });
 
-    it('schedules an exact "combat" expiry timer on battle:fight and flips to resting at exactly combatLingerMs later, with no periodic tick involved', async () => {
-        const t0 = Date.now();
-
+    it('sets no expiry right after a fight (still on the Battle screen), then schedules an exact "combat" expiry timer on battle:leave and flips to resting exactly combatLingerMs later, with no periodic tick involved', async () => {
         await fightHandler(ack);
-
-        // The fight succeeded and set an exact expiresAt on the combat aura.
         expect(ack).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
+
+        // Right after the fight — no battle:leave yet — the aura has no fixed end time, same
+        // as an ambush. This is the core of the fix: the OLD behavior gave this a
+        // lastFightAt-derived expiresAt immediately, letting regen resume just by pausing
+        // between fights while still on the Battle screen.
         const combatAfterFight = session.effects.find((e: any) => e.id === 'combat');
         expect(combatAfterFight).toBeDefined();
-        expect(combatAfterFight.expiresAt).toBe(t0 + TICK_CONFIG.combatLingerMs);
+        expect(combatAfterFight.expiresAt).toBeUndefined();
+
+        const t0 = Date.now();
+        const leaveAck = vi.fn();
+        await leaveHandler(leaveAck);
+        expect(leaveAck).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
+
+        const combatAfterLeave = session.effects.find((e: any) => e.id === 'combat');
+        expect(combatAfterLeave).toBeDefined();
+        expect(combatAfterLeave.expiresAt).toBe(t0 + TICK_CONFIG.combatLingerMs);
 
         // registry.ts's post-mutation refreshExpiryTimers() call (Fix 2) must have scheduled
         // a real timer for it immediately — not left it to the next periodic tick.
@@ -153,6 +167,29 @@ describe('combat aura exact-expiry wiring (integration)', () => {
         // The now-inactive 'combat' timer entry was cleaned up (recomputed as part of the
         // expiry-triggered tick's own refreshExpiryTimers call).
         expect(tracker?.expiryTimers?.has('combat')).toBe(false);
+    });
+
+    it('never lets regen resume between fights while still on the Battle screen (no battle:leave) — the exact exploit this fix closes', async () => {
+        session.health = 10; // well below max, so regen WOULD fire here if it were unblocked
+
+        await fightHandler(ack);
+        expect(session.ambushed).toBe(false); // a regular (non-ambush) battle
+
+        const combatAfterFight = session.effects.find((e: any) => e.id === 'combat');
+        expect(combatAfterFight.expiresAt).toBeUndefined();
+        const healthAfterFight = session.health;
+
+        // Advance well past what used to be the linger window (10s from lastFightAt) via
+        // several REAL periodic ticks — proving regen stays blocked purely because
+        // battle:leave was never fired, regardless of how much idle time passes.
+        for (let i = 0; i < 5; i++) {
+            await vi.advanceTimersByTimeAsync(TICK_CONFIG.intervalMs);
+            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        }
+
+        expect(session.health).toBe(healthAfterFight); // never regenerated
+        expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
+        expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
     });
 
     it('does not schedule any expiry timer for an ambush-driven combat aura (no fixed end time)', async () => {

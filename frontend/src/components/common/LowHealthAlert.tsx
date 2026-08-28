@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react';
 import { useGameStore } from '@/store/gameStore';
+import { SIDEBAR_SCREENS } from '../layout/AppShell';
 
 // Old app's AMBUSH_LOW_HEALTH_MESSAGES (src/constant/narratives.constant.ts) was a nine-line
 // random pool. That randomness is flavor text, not game state, so — unlike the battle
@@ -17,13 +18,17 @@ const AMBUSH_LOW_HEALTH_LINE = 'Your warm blood stains the ancient, cold earth o
  * it on the Inn screen itself (`renderInnView`, same mechanism) — reproduced here too, since the
  * plain variant's own call-to-action is "go to the Inn", which is nonsensical to show while
  * already standing in it.
+ *
+ * Also gated on `SIDEBAR_SCREENS` (the same allowlist AppShell uses to decide whether the status
+ * panel/HP bar is even on screen) — there's no point telling the player their HP is low on a
+ * screen that doesn't show HP at all (Character, Highscores, Statistics, Races, Game Start).
  */
 export default function LowHealthAlert() {
     const player = useGameStore(state => state.player);
     const screen = useGameStore(state => state.screen);
     const navigate = useGameStore(state => state.navigate);
 
-    if (!player || !player.lowHealth || player.dead || screen === 'suicide' || screen === 'inn')
+    if (!player || !player.lowHealth || player.dead || !SIDEBAR_SCREENS.has(screen) || screen === 'suicide' || screen === 'inn')
         return null;
 
     function handleInnClick(e: MouseEvent<HTMLAnchorElement>) {
