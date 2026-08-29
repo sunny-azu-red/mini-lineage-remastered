@@ -121,9 +121,9 @@ describe('StatisticsScreen', () => {
     // flavor text. It must now surface via the same notice mechanism every other rejected socket
     // action uses.
     it('surfaces a failed statistics:get as a notice, distinct from the genuinely-empty state', async () => {
-        requestMock.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'The realm did not answer in time.' } });
+        requestMock.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: '⭕ You got disconnected from the realm, the backend is offline.' } });
         render(<StatisticsScreen />);
 
-        await waitFor(() => expect(useGameStore.getState().notice).toEqual({ code: 'INTERNAL', message: 'The realm did not answer in time.' }));
+        await waitFor(() => expect(useGameStore.getState().notice).toEqual({ code: 'INTERNAL', message: '⭕ You got disconnected from the realm, the backend is offline.' }));
     });
 });

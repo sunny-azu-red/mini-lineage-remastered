@@ -35,7 +35,7 @@ describe('NoticeAlert', () => {
 
     it('styles a non-rate-limit notice (e.g. a dropped connection) as danger, not warning', () => {
         useGameStore.setState(
-            { notice: { code: 'INTERNAL', message: 'The realm did not answer in time.' } },
+            { notice: { code: 'INTERNAL', message: '⭕ You got disconnected from the realm, the backend is offline.' } },
             false,
         );
         const { container } = render(<NoticeAlert />);

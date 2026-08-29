@@ -46,13 +46,13 @@ export async function request<K extends MutatingEvents>(
 ): Promise<Ack<AckDataOf<K>>> {
     try {
         const untypedSocket = socket as unknown as {
-            timeout(ms: number): { emitWithAck(event: string, payload: unknown): Promise<Ack<AckDataOf<K>>> };
+            timeout(ms: number): { emitWithAck(event: string, payload: unknown): Promise<Ack<AckDataOf<K>>>; };
         };
         return await untypedSocket.timeout(10_000).emitWithAck(event, payload);
     } catch {
         return {
             ok: false,
-            error: { code: 'INTERNAL', message: 'The realm did not answer in time.' },
+            error: { code: 'INTERNAL', message: '⭕ You got disconnected from the realm, the backend is offline.' },
         };
     }
 }
