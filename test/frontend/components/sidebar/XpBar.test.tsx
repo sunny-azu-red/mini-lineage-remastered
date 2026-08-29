@@ -38,7 +38,7 @@ describe('XpBar', () => {
         vi.useRealTimers();
     });
 
-    it('snaps the bar width transition off for the level-up render itself', () => {
+    it('snaps the bar to 0% width with its transition off for the level-up render itself', () => {
         const { rerender, container } = render(<XpBar player={makePlayer({ level: 2, xpCurrent: 90 })} />);
 
         act(() => {
@@ -47,9 +47,14 @@ describe('XpBar', () => {
 
         const bar = container.querySelector('.xp-bar') as HTMLElement;
         expect(bar.style.transition).toBe('none');
+        expect(bar.style.width).toBe('0%');
     });
 
-    it('restores the bar width transition on the very next frame after a level-up', () => {
+    // Regression: the bar used to snap straight from the pre-level-up width to the post-level-up
+    // width with no animation at all (skipping the 0% stage entirely), matching the reported
+    // "the xp bar fills from 0 to some value, that part is not animated" bug. It must now animate
+    // a genuine fill from 0% up to the real post-level-up percentage once the transition restores.
+    it('animates the bar filling from 0% up to the real percentage once the transition restores', () => {
         const { rerender, container } = render(<XpBar player={makePlayer({ level: 2, xpCurrent: 90 })} />);
 
         act(() => {
@@ -61,6 +66,10 @@ describe('XpBar', () => {
 
         const bar = container.querySelector('.xp-bar') as HTMLElement;
         expect(bar.style.transition).not.toBe('none');
+        // The transition is enabled and the target width is the real 6% — the browser's CSS
+        // engine (untestable here) is what actually animates the visible fill from the 0% that
+        // was painted on the previous frame up to this new target.
+        expect(bar.style.width).toBe('6%');
     });
 
     // Regression guard: the level-up-detection effect used to schedule the transition's reset
@@ -100,6 +109,14 @@ describe('XpBar', () => {
 
         act(() => {
             rerender(<XpBar player={makePlayer({ level: 3, xpCurrent: 10, xpRequired: 150, xpPercent: 6 })} />);
+        });
+        // Two hops of rAF now separate the level-up from the settled value: one frame resets the
+        // counter to 0 (AnimatedXpValue's own effect), then a second, freshly-scheduled rAF loop
+        // (useAnimatedNumber's) eases it up to 10 — advanced in two separate act()s so React gets
+        // a chance to flush the effect that schedules the second hop before more fake time passes
+        // (a single big advanceTimersByTime call never "discovers" it).
+        act(() => {
+            vi.advanceTimersByTime(20);
         });
         act(() => {
             vi.advanceTimersByTime(700);
