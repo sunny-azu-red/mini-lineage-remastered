@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ItemView } from '@shared/contract';
 import { formatAdena, formatNumber } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
@@ -26,10 +27,14 @@ const COLUMNS: Column<ItemView>[] = [
 // flash renders via the already-mounted FlashAlert reading store.flash.
 export default function InnScreen() {
     const catalog = useGameStore(state => state.catalog);
-    const player = useGameStore(state => state.player);
     const applyMutation = useGameStore(state => state.applyMutation);
     const navigate = useGameStore(state => state.navigate);
     const { run, pending } = useAction('shop:purchase');
+    // Deliberately a LOCAL counter, not player?.revision — revision bumps on every persisted
+    // mutation for the session (a regen tick, an aura sync, another tab's purchase), any of
+    // which would remount this form and silently discard whatever the player had open/selected
+    // if it were keyed on that instead. This only ever increments on THIS form's own purchase.
+    const [purchaseEpoch, setPurchaseEpoch] = useState(0);
 
     if (!catalog)
         return null;
@@ -46,6 +51,7 @@ export default function InnScreen() {
                 onSuccess: data => {
                     applyMutation(data.player, data.flash);
                     playSound(data.flash?.sound);
+                    setPurchaseEpoch(e => e + 1);
                 },
             },
         );
@@ -61,10 +67,9 @@ export default function InnScreen() {
             <DataTable minWidth={400} columns={COLUMNS} rows={catalog.foods} rowKey={food => food.id} />
             <SelectActionForm
                 // Remounts (resetting the internal `selected` state back to the placeholder)
-                // after every successful purchase — `revision` bumps on every mutation, so this
-                // is what stops someone from spamming the buy button on the same item, matching
-                // the old app's fresh-page-per-purchase behavior.
-                key={player?.revision}
+                // after every successful purchase — stops someone from spamming the buy button
+                // on the same item, matching the old app's fresh-page-per-purchase behavior.
+                key={purchaseEpoch}
                 options={catalog.foods.map(food => ({ value: String(food.id), label: `Pick ${food.emoji} ${food.name}` }))}
                 placeholderLabel="🚪 Home Town"
                 defaultButtonLabel="Return"

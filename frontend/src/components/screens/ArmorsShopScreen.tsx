@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ItemView } from '@shared/contract';
 import { formatAdena, formatNumber } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
@@ -30,6 +31,11 @@ export default function ArmorsShopScreen() {
     const applyMutation = useGameStore(state => state.applyMutation);
     const navigate = useGameStore(state => state.navigate);
     const { run, pending } = useAction('shop:purchase');
+    // Deliberately a LOCAL counter, not player?.revision — revision bumps on every persisted
+    // mutation for the session (a regen tick, an aura sync, another tab's purchase), any of
+    // which would remount this form and silently discard whatever the player had open/selected
+    // if it were keyed on that instead. This only ever increments on THIS form's own purchase.
+    const [purchaseEpoch, setPurchaseEpoch] = useState(0);
 
     if (!catalog)
         return null;
@@ -48,6 +54,7 @@ export default function ArmorsShopScreen() {
                 onSuccess: data => {
                     applyMutation(data.player, data.flash);
                     playSound(data.flash?.sound);
+                    setPurchaseEpoch(e => e + 1);
                 },
             },
         );
@@ -64,7 +71,7 @@ export default function ArmorsShopScreen() {
             <SelectActionForm
                 // Remounts (resetting the internal `selected` state back to the placeholder)
                 // after every successful purchase — see InnScreen.tsx for the full rationale.
-                key={player?.revision}
+                key={purchaseEpoch}
                 options={purchasable.map(armor => {
                     const owned = player?.armor?.id === armor.id;
                     return {

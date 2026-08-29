@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 
@@ -131,8 +131,9 @@ describe('WeaponsShopScreen', () => {
 
     it('resets the select back to its default placeholder after a successful purchase, instead of leaving the just-bought item selected', async () => {
         // Regression test: the old app reset this for free via a full page reload after every
-        // purchase; the SPA must reproduce it explicitly (key={player.revision}) so the button
-        // can't be spammed to buy the same item repeatedly.
+        // purchase; the SPA must reproduce it explicitly (a local purchase-epoch counter,
+        // remounting SelectActionForm) so the button can't be spammed to buy the same item
+        // repeatedly.
         const newPlayer = makePlayer({
             revision: 2, // a real mutation always bumps this
             weapon: { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 },
@@ -153,6 +154,29 @@ describe('WeaponsShopScreen', () => {
         expect(screen.getByRole('button', { name: 'Return' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: '🪙 Purchase' })).not.toBeInTheDocument();
         expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('');
+    });
+
+    // Regression: this form used to key off player?.revision directly, which bumps on ANY
+    // persisted mutation for the session — including a routine regen tick, an aura sync, or
+    // another tab's action — not just a purchase from THIS form. That meant an open selection
+    // (e.g. picking Stormbringer, not yet clicking Purchase) got silently discarded the moment a
+    // background tick happened to heal HP, closing the select and reverting the button back to
+    // "Return" out from under the player mid-decision.
+    it('does not reset the selection when an unrelated background update bumps revision (e.g. a regen tick)', () => {
+        render(<WeaponsShopScreen />);
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
+        expect(screen.getByRole('button', { name: '🪙 Purchase' })).toBeInTheDocument();
+
+        // Simulates a state:update push from an unrelated periodic regen tick — same shape
+        // applyUpdate() receives from the socket, bumping revision with nothing to do with this
+        // form's own purchase flow.
+        act(() => {
+            useGameStore.getState().applyUpdate({ revision: 2, health: 81 });
+        });
+
+        expect(screen.getByRole('button', { name: '🪙 Purchase' })).toBeInTheDocument();
+        expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('2');
     });
 
     it('submitting with nothing selected (the placeholder) navigates home without calling the server', async () => {
