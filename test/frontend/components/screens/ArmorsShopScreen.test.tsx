@@ -85,6 +85,10 @@ function resetStore() {
 describe('ArmorsShopScreen', () => {
     beforeEach(() => {
         requestMock.mockReset();
+        // navigate() always calls .then() on this now (to apply the player:screen ack to its
+        // own store) — a safe default so tests that don't care about the response don't crash;
+        // individual tests below still override it with their own mockResolvedValue.
+        requestMock.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'mock default' } });
         resetStore();
     });
 

@@ -3,8 +3,14 @@ import { render, screen } from '@testing-library/react';
 import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
 
-const { socketEmitMock } = vi.hoisted(() => ({ socketEmitMock: vi.fn() }));
-vi.mock('@/socket/client', () => ({ request: vi.fn(), socket: { emit: socketEmitMock } }));
+const { socketEmitMock, requestMock } = vi.hoisted(() => ({
+    socketEmitMock: vi.fn(),
+    // navigate()/hydrate() always call .then() on this now (to apply the player:screen ack to
+    // their own store) — needs a resolved default so tests that don't care about the response
+    // don't crash on `undefined.then`.
+    requestMock: vi.fn().mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'mock default' } }),
+}));
+vi.mock('@/socket/client', () => ({ request: requestMock, socket: { emit: socketEmitMock } }));
 
 const { default: App } = await import('@/App');
 

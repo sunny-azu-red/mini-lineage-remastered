@@ -154,9 +154,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // (syncZoneAuras, matching the old game's URL-path-based zone.middleware.ts) is
             // correct immediately on connect/reconnect — hydrate() itself stays a pure read (this
             // fires a SEPARATE, real, tracked action as a reaction to what it resolved, the same
-            // pattern navigate() below uses). Fire-and-forget; response ignored.
+            // pattern navigate() below uses). The ack's player snapshot IS applied (via
+            // applyUpdate, revision-guarded) — registry.ts's broadcast for this mutation
+            // deliberately excludes the acting socket, so the ack is the ONLY way this tab
+            // itself ever learns its own aura just changed; without applying it, this client
+            // would keep showing the aura from before this hydrate until some unrelated later
+            // push happened to refresh it (or a hard reload re-hydrated from scratch).
             if (p.player?.started)
-                void request('player:screen', { screen });
+                void request('player:screen', { screen }).then(res => {
+                    // `res.data.player` is defensively checked (not just `res.ok`): a malformed
+                    // or unexpected response must never be able to crash applyUpdate.
+                    if (res.ok && res.data.player)
+                        get().applyUpdate(res.data.player);
+                });
 
             // Sync unconditionally (including to `null`) on EVERY hydrate, not just the first —
             // `PlayerSnapshot.lastBattle` is now the server-persisted source of truth, so a
@@ -172,7 +182,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     applyUpdate(p) {
         set(state => {
-            if (!state.player)
+            if (!state.player || !p)
                 return {};
             // Drop an out-of-order push: with mutation broadcasts, the periodic tick, and exact
             // expiry timers all independently able to emit `state:update` for the same session,
@@ -211,15 +221,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const state = get();
         const nextScreen = pinScreen(screen, state.player);
 
-        // Fire-and-forget: tells the server which screen this is, so syncZoneAuras
-        // (player.service.ts) can classify combat/resting purely from location — exactly like
-        // the old game's URL-path-based zone.middleware.ts — instead of it lagging behind by a
-        // tick. Only fires on an actual change, mirroring the old app's model where a zone flip
-        // only ever happened as a side effect of a real navigation. The response is intentionally
-        // ignored — the server's own broadcast mechanism (registry.ts) keeps every tab's effects
-        // list correct immediately regardless.
+        // Tells the server which screen this is, so syncZoneAuras (player.service.ts) can
+        // classify combat/resting purely from location — exactly like the old game's
+        // URL-path-based zone.middleware.ts — instantly rather than lagging behind. Only fires
+        // on an actual change, mirroring the old app's model where a zone flip only ever
+        // happened as a side effect of a real navigation. The ack's player snapshot IS applied
+        // (via applyUpdate, revision-guarded against a later, faster action's response landing
+        // first): registry.ts's broadcast for this mutation excludes the acting socket, so this
+        // ack is the ONLY way THIS tab ever learns its own aura just changed — other tabs on
+        // the same session still get it via that broadcast.
         if (nextScreen !== state.screen)
-            void request('player:screen', { screen: nextScreen });
+            void request('player:screen', { screen: nextScreen }).then(res => {
+                // `res.data.player` is defensively checked (not just `res.ok`): a malformed or
+                // unexpected response must never be able to crash applyUpdate.
+                if (res.ok && res.data.player)
+                    get().applyUpdate(res.data.player);
+            });
 
         set({
             screen: nextScreen,

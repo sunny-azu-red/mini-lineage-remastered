@@ -481,6 +481,48 @@ describe('gameStore', () => {
             expect(useGameStore.getState().screen).toBe('battle');
             expect(requestMock).not.toHaveBeenCalledWith('player:screen', { screen: 'home' });
         });
+
+        // Regression: the acting tab's own navigate() call was firing player:screen and
+        // discarding the response entirely, reasoning that "the server's broadcast keeps every
+        // tab correct" — but registry.ts's broadcast for this mutation deliberately EXCLUDES the
+        // acting socket (every mutating action does this), so the ack is the ONLY way this tab
+        // itself ever learns its own aura just changed. Without applying it, the combat aura
+        // never appeared on screens like Suicide until an unrelated action or a hard reload
+        // happened to refresh it, even though the server-side state (and regen-blocking) was
+        // already correct all along.
+        it('applies the player:screen ack to its OWN store — the acting tab must see its own aura change, not just other tabs', async () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ ambushed: false, effects: [] }), catalog });
+            requestMock.mockClear();
+
+            const combatEffect = { id: 'combat', type: 'aura' as const, emoji: '⚔️', label: 'In Combat', tooltip: '' };
+            const updatedPlayer = makePlayer({ ambushed: false, effects: [combatEffect] });
+            requestMock.mockResolvedValueOnce({ ok: true, data: { player: updatedPlayer, flash: null } });
+
+            useGameStore.getState().navigate('suicide');
+            expect(useGameStore.getState().player?.effects).toEqual([]); // not yet — ack still in flight
+
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(useGameStore.getState().player?.effects).toEqual([combatEffect]);
+        });
+
+        it('drops a player:screen ack that arrives after a fresher (higher-revision) update already landed', async () => {
+            const catalog = makeCatalog();
+            useGameStore.getState().hydrate({ player: makePlayer({ revision: 1, health: 80 }), catalog });
+            requestMock.mockClear();
+
+            requestMock.mockResolvedValueOnce({ ok: true, data: { player: makePlayer({ revision: 1, health: 999 }), flash: null } });
+            useGameStore.getState().navigate('inn');
+
+            // A different, fresher mutation lands first (e.g. a purchase's own ack).
+            useGameStore.getState().applyMutation(makePlayer({ revision: 2, health: 42 }));
+
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(useGameStore.getState().player?.health).toBe(42); // stale ack ignored
+            expect(useGameStore.getState().player?.revision).toBe(2);
+        });
     });
 
     describe('hydrate() reports the resolved screen via player:screen for a started player', () => {
@@ -507,6 +549,23 @@ describe('gameStore', () => {
             useGameStore.getState().hydrate({ player: makePlayer({ dead: true }), catalog });
 
             expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'death' });
+        });
+
+        // Same regression as navigate()'s equivalent test above: hydrate's own player:screen ack
+        // must be applied, since a fresh page load's own aura (computed against whatever
+        // currentScreen was PERSISTED from before this connection) can be stale relative to the
+        // screen this hydrate just resolved to and reported.
+        it('applies the player:screen ack to its own store after hydrating', async () => {
+            const catalog = makeCatalog();
+            const combatEffect = { id: 'combat', type: 'aura' as const, emoji: '⚔️', label: 'In Combat', tooltip: '' };
+            requestMock.mockResolvedValueOnce({ ok: true, data: { player: makePlayer({ effects: [combatEffect] }), flash: null } });
+
+            useGameStore.getState().hydrate({ player: makePlayer({ started: true, dead: false, effects: [] }), catalog });
+            expect(useGameStore.getState().player?.effects).toEqual([]);
+
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(useGameStore.getState().player?.effects).toEqual([combatEffect]);
         });
     });
 

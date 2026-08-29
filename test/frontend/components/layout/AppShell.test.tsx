@@ -3,7 +3,11 @@ import { render, screen } from '@testing-library/react';
 import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
 
-vi.mock('@/socket/client', () => ({ request: vi.fn() }));
+// navigate() always calls .then() on this now (to apply the player:screen ack to its own
+// store) — needs a resolved default so tests that don't care about the response don't crash.
+vi.mock('@/socket/client', () => ({
+    request: vi.fn().mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'mock default' } }),
+}));
 
 const { default: AppShell } = await import('@/components/layout/AppShell');
 
