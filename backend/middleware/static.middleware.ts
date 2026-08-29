@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { isRelease } from '@/util/version.util';
 import { GAME_VERSION } from '@/constant/game.constant';
+import { env } from '@/config/env.config';
 
 /**
  * Resolves the built frontend's directory (frontend/'s Vite output — see
@@ -26,7 +27,8 @@ export const staticMiddleware = express.static(getClientDistPath());
 /**
  * Dev-mode stand-in for `staticMiddleware` + app.ts's SPA-fallback catch-all (Fix 3).
  * Only ever wired in when `env.NODE_ENV !== 'production'` — see app.ts. In development,
- * the React client is served by Vite's own dev server on :5173, which proxies `/api/*`
+ * the React client is served by Vite's own dev server (port configured via `DEV_FRONTEND_PORT`
+ * in `.env`), which proxies `/api/*`
  * and the Socket.IO transport back to this server untouched (see frontend/vite.config.ts's
  * `server.proxy`, keyed on `/api` and `/socket.io`) — this middleware must let both of
  * those fall through via `next()` rather than swallowing them.
@@ -41,5 +43,6 @@ export const devFallbackMiddleware = (req: Request, res: Response, next: NextFun
     if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io'))
         return next();
 
-    res.status(200).send('This is the Mini-Lineage API/socket server. In development, open the app at http://localhost:5173.');
+    const frontendUrl = `http://localhost:${env.DEV_FRONTEND_PORT}`;
+    res.status(200).send(`This is the Mini-Lineage API/socket server. In development, open the app at <a href="${frontendUrl}">${frontendUrl}</a>.`);
 };

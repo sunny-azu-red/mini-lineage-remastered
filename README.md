@@ -54,7 +54,8 @@ npm install
 ```
 
 ### 2. Environment Configuration
-Copy the example environment file and update credentials as needed:
+Copy the example environment file and update credentials as needed. The `DEV_`-prefixed vars
+(frontend dev server port, backend URL for the Vite proxy) are dev-only and ignored in production:
 ```bash
 cp .env.example .env
 ```
@@ -72,7 +73,7 @@ Runs two processes side by side — the Express/Socket.IO API (via `nodemon`/`ts
 ```bash
 npm run dev
 ```
-Visit `http://localhost:5173` in your browser (the API alone listens on `http://localhost:3000`, but has no client assets to serve in dev).
+Visit `http://localhost:5173` in your browser by default (configurable via `DEV_FRONTEND_PORT` in `.env`; the API alone listens on `http://localhost:3000`, but has no client assets to serve in dev).
 
 ### Production Build & Run
 Runs the test suite, builds the client (Vite, into `dist/public`) then the server (`tsc`/`tsc-alias`, into `dist/backend`), and starts the optimized production server — which now serves the built client directly:

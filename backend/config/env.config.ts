@@ -15,6 +15,7 @@ export const env = cleanEnv(process.env, {
         default: 'development'
     }),
     PORT: port({ default: 3000 }),
+    DEV_FRONTEND_PORT: port({ default: 5173 }),
     SESSION_SECRET: isTest ? str({ default: 'your-secret-here' }) : nonEmptyStr(),
     DB_HOST: str({ default: isTest ? '127.0.0.1' : undefined }),
     DB_PORT: port({ default: 3306 }),
