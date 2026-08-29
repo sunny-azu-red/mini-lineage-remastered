@@ -7,6 +7,7 @@ import EffectsList from '../effects/EffectsList';
 import FlashAlert from '../common/FlashAlert';
 import NoticeAlert from '../common/NoticeAlert';
 import LowHealthAlert from '../common/LowHealthAlert';
+import LoadingPanel from '../common/LoadingPanel';
 
 interface AppShellProps {
     children: ReactNode;
@@ -28,6 +29,10 @@ export const SIDEBAR_SCREENS: ReadonlySet<ScreenId> =
 export default function AppShell({ children, title }: AppShellProps) {
     const player = useGameStore(state => state.player);
     const screen = useGameStore(state => state.screen);
+    // Null until the server's initial `hydrate` push lands (bootstrap fetch + socket handshake
+    // both still in flight) — every screen component itself guards on this same condition, so
+    // gating here once covers all of them instead of each screen flashing empty individually.
+    const catalog = useGameStore(state => state.catalog);
 
     return (
         <div id="app">
@@ -42,7 +47,7 @@ export default function AppShell({ children, title }: AppShellProps) {
                     <div id="main">
                         <div className="panel">
                             <div className="panel-header flex">
-                                <span className="header-name">{title}</span>
+                                <span className="header-name">{catalog ? title : 'Loading'}</span>
                                 <div className="header-effects" id="effects">
                                     <EffectsList effects={player?.effects ?? []} />
                                 </div>
@@ -60,7 +65,7 @@ export default function AppShell({ children, title }: AppShellProps) {
                                  * no other screen this alert could ever be seen from.
                                  */}
                                 <LowHealthAlert />
-                                {children}
+                                {catalog ? children : <LoadingPanel />}
                             </div>
                         </div>
 
