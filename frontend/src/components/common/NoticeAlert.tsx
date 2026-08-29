@@ -7,15 +7,15 @@ import { useGameStore } from '@/store/gameStore';
 // "Too many requests. Please slow down." message for every RATE_LIMITED rejection regardless of
 // cause. This is purely flavor text, not a security-relevant distinction.
 const AMBUSH_RATE_LIMIT_MESSAGE =
-    'You are in the middle of an ambush and moving too fast. Please wait a moment before your next move.';
+    'You are in the middle of an ambush and moving too fast, please wait a moment.';
 
 // Folds the retry time directly into the sentence (rather than appending a second "Try again in
 // Ns." after a message that already says "try again") so the retryAfterSeconds-known case reads
 // as one clean sentence instead of two overlapping ones.
 function genericRateLimitMessage(retryAfterSeconds: number | null): string {
     return retryAfterSeconds !== null
-        ? `You are moving too fast. Please take a breath and try again in ${retryAfterSeconds}s.`
-        : 'You are moving too fast. Please take a breath and try again in a moment.';
+        ? `You are moving too fast, please take a breath and try again in ${retryAfterSeconds}s.`
+        : 'You are moving too fast, please take a breath and try again in a moment.';
 }
 
 /**

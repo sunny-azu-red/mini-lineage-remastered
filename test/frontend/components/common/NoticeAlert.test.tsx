@@ -60,7 +60,7 @@ describe('NoticeAlert', () => {
         );
         render(<NoticeAlert />);
 
-        expect(screen.getByText('You are moving too fast. Please take a breath and try again in 5s.')).toBeInTheDocument(); // ceil(4200/1000)
+        expect(screen.getByText('You are moving too fast, please take a breath and try again in 5s.')).toBeInTheDocument(); // ceil(4200/1000)
         expect(screen.queryByText(/Too many requests\. Please slow down\./)).not.toBeInTheDocument();
     });
 
@@ -71,7 +71,7 @@ describe('NoticeAlert', () => {
         );
         render(<NoticeAlert />);
 
-        expect(screen.getByText('You are moving too fast. Please take a breath and try again in a moment.')).toBeInTheDocument();
+        expect(screen.getByText('You are moving too fast, please take a breath and try again in a moment.')).toBeInTheDocument();
     });
 
     it('shows the ambush-specific rate-limit copy when the player is currently ambushed', () => {
@@ -85,7 +85,7 @@ describe('NoticeAlert', () => {
         render(<NoticeAlert />);
 
         expect(
-            screen.getByText(/You are in the middle of an ambush and moving too fast\. Please wait a moment before your next move\./),
+            screen.getByText(/You are in the middle of an ambush and moving too fast, please wait a moment\./),
         ).toBeInTheDocument();
     });
 
