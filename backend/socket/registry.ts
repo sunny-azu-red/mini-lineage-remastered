@@ -71,8 +71,17 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
         };
 
         try {
-            if (!sessionId)
+            if (!sessionId) {
+                // WARN, not the DEBUG-level logResult() below — matches the old game's
+                // socket.service.ts exactly, and matters beyond cosmetics: pino's level is
+                // raised to 'info' in a release build (logger.config.ts), which silently drops
+                // every .debug() call. A WARN survives that filter, so an unauthenticated/invalid
+                // event attempt (worth knowing about even in production) stays visible instead of
+                // vanishing entirely, the way it would if this only logged at the generic
+                // per-event DEBUG level like every routine success/failure does.
+                logger.warn(`[SOCKET] Unauthenticated event '${def.event}' from socket ${socket.id}`);
                 throw new SocketError('UNAUTHENTICATED', 'Not authenticated.');
+            }
 
             const flood = floodLimiter.consume(sessionId);
             if (!flood.allowed)
@@ -86,6 +95,7 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
 
             const parsed = def.schema.safeParse(payload);
             if (!parsed.success) {
+                logger.warn({ err: parsed.error }, `[SOCKET] Invalid payload for event '${def.event}' from socket ${socket.id}`);
                 const message = parsed.error.issues.map(i => i.message).join(', ') || 'Invalid payload.';
                 throw new SocketError('INVALID_PAYLOAD', `Invalid payload: ${message}`);
             }

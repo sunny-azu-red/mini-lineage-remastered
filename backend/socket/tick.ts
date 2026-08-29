@@ -55,6 +55,12 @@ export function refreshExpiryTimers(io: SocketIOServer, sessionId: string, playe
  * (periodic OR exact-expiry), format: `[TICK:<sid>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
  * `expiring` must be captured BEFORE `processTick` runs (it removes expired effects from the
  * array), so its label is still available for the status line.
+ *
+ * `changed` here is `processTick`'s OWN return value (regen/expiry) — deliberately NOT folded
+ * with `ctx.zoneChanged` the way `processSessionTick`'s persist decision is. The old game never
+ * had a zone-driven tick status at all (zone lived entirely outside the tick, in
+ * zone.middleware.ts), so a pure zone flip with nothing else to report should fall through to
+ * Full/Paused/0 HPR/Idle exactly like a no-op tick would, not misleadingly claim "Effect Expired".
  */
 function logTickResult(sessionId: string, player: PlayerState, oldHp: number, expiring: ActiveEffect[], changed: boolean): void {
     const stats = getPlayerStats(player);
@@ -73,7 +79,8 @@ function logTickResult(sessionId: string, player: PlayerState, oldHp: number, ex
     if (hpDiff > 0) {
         status = `+${hpDiff} HPR`;
     } else if (hpDiff < 0) {
-        status = `${hpDiff} HP${expiredLabel ? ` | ${typeStr} Expired: ${expiredLabel}` : ''}`;
+        const labelStr = expiredLabel ? `: ${expiredLabel}` : '';
+        status = `${hpDiff} HP | ${typeStr} Expired${labelStr}`;
     } else if (changed && expiredLabel) {
         status = `${typeStr} Expired: ${expiredLabel}`;
     } else if (changed) {
@@ -108,11 +115,12 @@ export async function processSessionTick(
             const now = Date.now();
             const expiring = (ctx.player.effects ?? []).filter(e => e.expiresAt !== undefined && e.expiresAt <= now);
 
-            const changed = processTick(ctx.player, options) || ctx.zoneChanged;
+            const tickChanged = processTick(ctx.player, options);
             playerRef = ctx.player;
 
-            logTickResult(sessionId, ctx.player, oldHp, expiring, changed);
+            logTickResult(sessionId, ctx.player, oldHp, expiring, tickChanged);
 
+            const changed = tickChanged || ctx.zoneChanged;
             return changed ? buildPlayerSnapshot(ctx.player) : NO_CHANGE;
         });
 

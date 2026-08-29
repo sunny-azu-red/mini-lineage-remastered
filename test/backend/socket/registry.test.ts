@@ -31,6 +31,7 @@ import { withSession, readSession } from '@/socket/session';
 import { emitStateUpdate } from '@/socket/emitter';
 import { refreshExpiryTimers } from '@/socket/tick';
 import { SocketError } from '@/socket/error';
+import { logger } from '@/config/logger.config';
 import type { Guard } from '@/socket/guard';
 import type { RateLimiter } from '@/socket/rate-limit';
 
@@ -99,12 +100,18 @@ describe('registerEvent', () => {
             handler: vi.fn(),
         });
 
+        const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined as any);
         const ack = vi.fn();
         await handlers['test:auth']({}, ack);
 
         expect(ack).toHaveBeenCalledWith({ ok: false, error: expect.objectContaining({ code: 'UNAUTHENTICATED' }) });
         expect(withSession).not.toHaveBeenCalled();
         expect(readSession).not.toHaveBeenCalled();
+        // WARN, not just the generic per-event DEBUG log — matches the old game exactly, and
+        // matters because pino's level rises to 'info' in a release build (silencing .debug()
+        // entirely), so this must survive that filter to stay visible in production.
+        expect(warnSpy).toHaveBeenCalledWith(`[SOCKET] Unauthenticated event 'test:auth' from socket socket-1`);
+        warnSpy.mockRestore();
     });
 
     it('acks INVALID_PAYLOAD when Zod rejects the payload, without touching the session', async () => {
@@ -116,11 +123,17 @@ describe('registerEvent', () => {
             handler: vi.fn(),
         });
 
+        const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined as any);
         const ack = vi.fn();
         await handlers['test:invalid']({ n: 'not a number' }, ack);
 
         expect(ack).toHaveBeenCalledWith({ ok: false, error: expect.objectContaining({ code: 'INVALID_PAYLOAD' }) });
         expect(withSession).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledWith(
+            { err: expect.anything() },
+            `[SOCKET] Invalid payload for event 'test:invalid' from socket socket-1`,
+        );
+        warnSpy.mockRestore();
     });
 
     it('maps a thrown guard SocketError to its code via the ack', async () => {
