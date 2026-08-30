@@ -47,6 +47,19 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
                 logger.debug(`[SOCKET:${formatSessionId(sessionId)}] \x1b[35m${def.event} = ${ok ? 'ok' : 'error'} (${Date.now() - start}ms)\x1b[0m`);
         };
 
+        /**
+         * OTHER tabs only — the acting socket gets the authoritative result via its own ack, and
+         * a racing push has no transition detection, so it could clobber the baseline that ack's
+         * handler needs. A read never broadcasts.
+         */
+        const syncOtherTabs = (sid: string, player: PlayerState | undefined) => {
+            if (def.mode !== 'mutate' || !player)
+                return;
+
+            emitStateUpdate(io, sid, buildPlayerSnapshot(player), socket.id);
+            refreshExpiryTimers(io, sid, player);
+        };
+
         try {
             if (!sessionId) {
                 // WARN, not the DEBUG logResult below: a release build raises pino to 'info',
@@ -82,13 +95,7 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
                 ? await withSession(sessionId, run)
                 : await readSession(sessionId, run);
 
-            if (def.mode === 'mutate' && mutatedPlayer) {
-                // OTHER tabs only — the acting socket gets the authoritative result via its own
-                // ack below, and a racing push has no transition detection so it could clobber
-                // the baseline that ack's handler needs.
-                emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer), socket.id);
-                refreshExpiryTimers(io, sessionId, mutatedPlayer);
-            }
+            syncOtherTabs(sessionId, mutatedPlayer);
 
             ack?.({ ok: true, data });
             logResult(true);
