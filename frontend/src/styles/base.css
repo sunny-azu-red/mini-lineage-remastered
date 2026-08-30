@@ -45,6 +45,21 @@ a:hover {
     text-decoration: underline;
 }
 
+/*
+ * ===== Keyboard Focus =====
+ * The default for everything focusable that is NOT a bordered control: links, the alert dismiss
+ * ×, the sound toggle. An offset outline rather than the flush box-shadow ring those controls
+ * use, because a zero-offset ring sits hard against the glyphs of an inline link and reads as
+ * cramped — and an outline follows a link that wraps across lines, where a box-shadow does not.
+ *
+ * .btn and the form controls override this with their own flush ring. Both are (0,2,0) against
+ * this rule's (0,1,0), so they win on specificity and cascade order is not load-bearing.
+ */
+:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+}
+
 /* ===== Typography ===== */
 strong {
     color: var(--text-secondary);

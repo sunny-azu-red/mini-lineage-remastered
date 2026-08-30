@@ -1,6 +1,8 @@
 /*
- * Cascade order matches scripts/min/css.ts's CSS_ORDER constant exactly, so specificity/
- * cascade behavior is identical to the production-minified bundle the legacy server ships.
+ * Import order is the cascade order, and it is deliberate: tokens first (everything reads them),
+ * then the reset, then progressively more specific layers, so a later file can override an
+ * earlier one without needing extra specificity to do it. Reordering these lines changes which
+ * rule wins. Inherited from the legacy server's hand-ordered bundle.
  */
 @import './tokens.css';
 @import './base.css';

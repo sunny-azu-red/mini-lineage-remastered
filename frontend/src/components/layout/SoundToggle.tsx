@@ -23,7 +23,7 @@ export default function SoundToggle() {
         <button
             id="sound-toggle"
             type="button"
-            className={`sound-toggle-btn no-debounce${soundEnabled ? '' : ' muted'}`}
+            className={`sound-toggle-btn${soundEnabled ? '' : ' muted'}`}
             title={title}
             aria-label={title}
             onClick={handleClick}
