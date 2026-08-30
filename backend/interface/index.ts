@@ -122,6 +122,13 @@ export interface PlayerState {
      * exactly like the old game's URL-path-based zone.middleware.ts did.
      */
     currentScreen?: ScreenId;
+    /**
+     * When the ⚔️ In Combat aura stops lingering after the player LEFT a combat zone. Absent
+     * while they are still standing in one (that combat is indefinite and carries no countdown),
+     * and absent again once it has elapsed. Server-side only — the countdown reaches the client
+     * as the zone aura's ordinary `expiresAt`. See syncZoneAuras.
+     */
+    combatUntil?: number;
     bootstrappedAt?: number;
     /**
      * The narrative from the most recently resolved `battle:fight`, resolved once and persisted

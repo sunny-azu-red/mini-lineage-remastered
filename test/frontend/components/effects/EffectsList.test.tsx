@@ -71,6 +71,23 @@ describe('EffectsList', () => {
         expect(icons.map(el => el.getAttribute('data-effect-id'))).toEqual(['live']);
     });
 
+    // A zone aura is REPLACED by the server, not removed — ⚔️ In Combat's disengage countdown
+    // becomes 💤 Resting. Hiding it the instant it hit zero would punch a hole in the row for the
+    // ~30ms until that push lands, showing a state the game never actually has.
+    it('keeps an aura past its expiresAt, since the server replaces rather than removes it', () => {
+        const { container } = render(
+            <EffectsList
+                effects={[
+                    makeEffect({ id: 'combat', type: 'aura', emoji: '⚔️', expiresAt: NOW - 1 }),
+                    makeEffect({ id: 'staleBuff', expiresAt: NOW - 1 }),
+                ]}
+            />,
+        );
+
+        const icons = Array.from(container.querySelectorAll('.effect-icon'));
+        expect(icons.map(el => el.getAttribute('data-effect-id'))).toEqual(['combat']);
+    });
+
     it('keeps a permanent effect (no expiresAt) forever', () => {
         const { container } = render(<EffectsList effects={[makeEffect({ id: 'aura', type: 'aura', expiresAt: undefined })]} />);
 

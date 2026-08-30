@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import { TICK_CONFIG } from '@/constant/game.constant';
+import { TICK_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
 import type { BattleResult } from '@/interface';
 
 /**
@@ -116,7 +116,7 @@ describe('location-based zone sync (integration)', () => {
         expect(combat.expiresAt).toBeUndefined();
     });
 
-    it('reporting a resting screen via player:screen flips the aura to resting instantly — no tick, no timer, no periodic loop involved', async () => {
+    it('reporting a resting screen via player:screen does NOT rest instantly — it starts a combatLingerMs disengage countdown', async () => {
         await fightHandler(ack);
         expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
 
@@ -125,12 +125,86 @@ describe('location-based zone sync (integration)', () => {
         expect(screenAck).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
 
         expect(session.currentScreen).toBe('home');
+        expect(session.effects.some((e: any) => e.id === 'resting')).toBe(false);
+
+        const combat = session.effects.find((e: any) => e.id === 'combat');
+        expect(combat).toBeDefined();
+        expect(combat.expiresAt).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
+
+        // The countdown starting is itself the change — persisted from THIS mutation's own ack
+        // processing, with no fake timers advanced to observe it.
+        expect(setSessionData).toHaveBeenCalledWith(SESSION_ID, session);
+    });
+
+    it('flips to resting once the countdown elapses, driven by the aura\'s own exact timer rather than the tick loop', async () => {
+        await fightHandler(ack);
+        await screenHandler({ screen: 'home' }, vi.fn());
+
+        // One millisecond short: still disengaging.
+        await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs - 1);
+        expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
+        expect(session.effects.some((e: any) => e.id === 'resting')).toBe(false);
+
+        // syncExpiryTimers scheduled the wake-up at expiry + 25ms. Nothing here advances by a
+        // whole TICK_CONFIG.intervalMs, so the periodic loop cannot be what resolved this.
+        await vi.advanceTimersByTimeAsync(30);
+
         expect(session.effects.some((e: any) => e.id === 'combat')).toBe(false);
         expect(session.effects.some((e: any) => e.id === 'resting')).toBe(true);
+        expect(session.combatUntil).toBeUndefined();
+    });
 
-        // Broadcast happened as part of THIS mutation's own ack processing — no advancing of
-        // fake timers was needed anywhere in this test to observe the flip.
-        expect(setSessionData).toHaveBeenCalledWith(SESSION_ID, session);
+    it('keeps regen paused for the whole countdown, and resumes it only afterwards — the reported scenario end to end', async () => {
+        session.health = 10; // well below max, so regen fires the moment it is allowed to
+
+        await fightHandler(ack);
+        await screenHandler({ screen: 'home' }, vi.fn());
+        const healthOnLeaving = session.health;
+
+        // A periodic tick lands mid-countdown: still in combat, so it must heal nothing. The
+        // offset is deliberately NOT TICK_CONFIG.intervalMs — that happens to equal
+        // combatLingerMs today, which would land exactly ON the deadline and prove nothing.
+        await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs - 2_000);
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
+        expect(session.health).toBe(healthOnLeaving);
+
+        // Let the countdown elapse, then tick again.
+        await vi.advanceTimersByTimeAsync(2_030);
+        expect(session.effects.some((e: any) => e.id === 'resting')).toBe(true);
+
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        expect(session.health).toBeGreaterThan(healthOnLeaving);
+    });
+
+    it('re-arms a fresh countdown on every exit, so bouncing Back and Forward never rests early', async () => {
+        await fightHandler(ack);
+        await screenHandler({ screen: 'home' }, vi.fn());
+        const firstDeadline = session.combatUntil;
+
+        // Browser Back onto /battle: standing in the zone again, so the countdown is cancelled.
+        await vi.advanceTimersByTimeAsync(3_000);
+        await screenHandler({ screen: 'battle' }, vi.fn());
+        expect(session.combatUntil).toBeUndefined();
+        expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimers?.has('combat')).toBe(false);
+
+        // Forward to /home again: a full countdown, not the remainder of the first one.
+        await screenHandler({ screen: 'home' }, vi.fn());
+        expect(session.combatUntil).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
+        expect(session.combatUntil).toBeGreaterThan(firstDeadline);
+    });
+
+    it('does not re-arm the countdown while already disengaging, so repeated syncs cannot extend it', async () => {
+        await fightHandler(ack);
+        await screenHandler({ screen: 'home' }, vi.fn());
+        const deadline = session.combatUntil;
+
+        await vi.advanceTimersByTimeAsync(2_000);
+        await screenHandler({ screen: 'inn' }, vi.fn());   // resting zone -> resting zone
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+
+        expect(session.combatUntil).toBe(deadline);
     });
 
     it('never lets regen resume while currentScreen stays "battle", no matter how much time passes — the exact exploit the old lastFightAt-based heuristic was vulnerable to', async () => {
@@ -152,12 +226,37 @@ describe('location-based zone sync (integration)', () => {
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
     });
 
-    it('never schedules any expiry timer for a zone aura — combat/resting never carry expiresAt, unlike a real timed buff', async () => {
+    it('schedules no expiry timer while HELD in a combat zone — that combat is indefinite, unlike a real timed buff', async () => {
         await fightHandler(ack);
 
         const tracker = sessionTracker.get(SESSION_ID);
         expect(tracker?.expiryTimers?.has('combat')).toBe(false);
         expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+    });
+
+    it('schedules one for the disengage countdown, and never for the resting aura', async () => {
+        await fightHandler(ack);
+        await screenHandler({ screen: 'home' }, vi.fn());
+
+        const tracker = sessionTracker.get(SESSION_ID);
+        expect(tracker?.expiryTimers?.has('combat')).toBe(true);
+        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs + 30);
+        expect(tracker?.expiryTimers?.has('combat')).toBe(false);
+        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+    });
+
+    it('gives a reconnecting player who left the tab on /battle an untimed aura, and the countdown only once they move', async () => {
+        // No fight this time: the session simply persisted mid-battleground.
+        session.currentScreen = 'battle';
+        session.effects = [{ id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }];
+
+        await screenHandler({ screen: 'battle' }, vi.fn());
+        expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
+
+        await screenHandler({ screen: 'home' }, vi.fn());
+        expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
     });
 
     it('ambushed unconditionally forces combat even if a raw client reports a resting screen — the safety net the old game\'s naive path-trust model lacked', async () => {

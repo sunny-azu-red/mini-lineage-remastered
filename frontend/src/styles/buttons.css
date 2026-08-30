@@ -2,7 +2,7 @@
  * ========================================================================
  * Mini-Lineage — Button Styles
  * Lineage 2-inspired fantasy button design
- * Uses design tokens defined in style.css (:root variables)
+ * Uses design tokens defined in tokens.css (:root variables)
  * ========================================================================
  */
 
@@ -110,13 +110,27 @@
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.35);
-    /* color: var(--gold-hover); */
     text-decoration: none;
 }
 
 /* Trigger shimmer animation on hover */
 .btn:hover::before {
     animation: btn-shimmer 0.55s ease forwards;
+}
+
+/*
+ * ===== Keyboard Focus =====
+ * usePanelFocus puts focus on the panel's first control so the game is playable without a mouse;
+ * this ring is the entire affordance telling you what Space will do. Deliberately stronger than
+ * :hover's, so the two read as different states. :focus-visible, not :focus, keeps mouse clicks
+ * ring-free.
+ */
+.btn:focus-visible {
+    border-color: var(--gold);
+    box-shadow:
+        var(--focus-ring),
+        0 1px 3px rgba(0, 0, 0, 0.35);
+    outline: none;
 }
 
 /* ===== Active / Press ===== */
@@ -162,8 +176,6 @@
     box-shadow:
         0 0 0 2px rgba(231, 76, 60, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.4);
-
-    /* color: #f4a89e; */
 }
 
 .btn-danger:active,
@@ -207,7 +219,6 @@
     box-shadow:
         0 0 0 2px rgba(74, 85, 128, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.3);
-    /* color: var(--text-primary); */
 }
 
 .btn-secondary:active,
@@ -241,16 +252,11 @@
     font-size: 11px;
 }
 
-/* ===== Disabled State (applied by JS debouncing) ===== */
-.btn-disabled {
-    opacity: 0.45;
-    pointer-events: none;
-    cursor: not-allowed;
-}
-
 /*
- * Native `disabled` state — used by SelectActionForm (no selection yet / a request in flight)
- * instead of the old `.btn-disabled` classList toggling + setTimeout debounce hack.
+ * ===== Disabled State =====
+ * The native `disabled` attribute — set by SelectActionForm and the action buttons while a
+ * request is in flight, replacing the old app's `.btn-disabled` classList toggling + setTimeout
+ * debounce hack.
  */
 .btn:disabled,
 .btn-secondary:disabled,

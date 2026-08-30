@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ItemType, PlayerState, RaceType } from '@/interface';
-import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
 import { DEATH_MESSAGES } from '@/constant/narratives.constant';
 import {
     isGameStarted,
@@ -619,13 +619,20 @@ describe('processTick', () => {
         vi.mocked(statisticsRepository.increment).mockClear();
         const realNow = Date.now();
         let call = 0;
-        // First read sees the buff alive (max 110); every later read sees it expired (max 100).
-        const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => (call++ === 0 ? realNow : realNow + 10_000));
+        // White-box by necessity: processRegenTick reads the clock once for its combat check and
+        // once for the ceiling, and restoreHealth reads it again. The first two must see the buff
+        // alive (max 110), the third expired (max 100). The p.health assertion below is what makes
+        // a future change to that call sequence fail loudly instead of silently skipping the
+        // branch under test.
+        const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => (call++ < 2 ? realNow : realNow + 10_000));
 
         try {
             // health 110 < maxHealth 110 is false, so nudge health down to enter the regen path.
             p.health = 109;
             expect(processRegenTick(p)).toBe(false);
+            // restoreHealth DID run and clamped down to the lowered ceiling — proving the guard
+            // that reported "no change" was the healed-nothing one, not the earlier wounded check.
+            expect(p.health).toBe(100);
             expect(statisticsRepository.increment).not.toHaveBeenCalledWith('total_hp_regen', expect.anything());
         } finally {
             nowSpy.mockRestore();
@@ -780,12 +787,14 @@ describe('getPlayerStats — crit', () => {
     });
 });
 
-describe('getActiveEffects — unknown race/armor ids', () => {
-    it('falls back to the default race and armor when computing the resting regen aura', () => {
+describe('getActiveEffects — unknown race/weapon/armor ids', () => {
+    it('falls back to the default race, weapon and armor when computing the resting regen aura', () => {
         // A corrupt or forward-incompatible session must still produce a sane aura rather than
-        // throwing on `race.startHealth` / `armor.modifiers` of an undefined catalog entry.
+        // throwing on `race.startHealth` / `weapon.modifiers` / `armor.modifiers` of an undefined
+        // catalog entry. All three are read here, since the modifier list mirrors getPlayerStats'.
         const p = localPlayer({
             raceId: 99 as unknown as RaceType,
+            weaponId: 99,
             armorId: 99,
             health: 10,
             effects: [{ ...EFFECTS_CONFIG.restingAura }],
@@ -796,6 +805,65 @@ describe('getActiveEffects — unknown race/armor ids', () => {
 
         expect(regenerating).toBeDefined(); // Human fallback: startHealth 100, regen 1
         expect(regenerating?.modifiers).toEqual([{ type: 'regen', value: 1 }]);
+    });
+});
+
+/**
+ * 🌿 Regenerating is derived at serialization time, never stored — so it appears and vanishes on
+ * its own as the conditions change, with no sweep needed. All three conditions must hold: resting,
+ * below full HP, and a positive total regen rate.
+ */
+describe('getActiveEffects — the regenerating aura appears only while resting and wounded', () => {
+    const humanResting = (o: Partial<PlayerState> = {}) =>
+        localPlayer({ raceId: 0, armorId: 0, weaponId: 0, effects: [{ ...EFFECTS_CONFIG.restingAura }], ...o });
+
+    const hasRegen = (p: PlayerState) => getActiveEffects(p).some(e => e.id === 'regenerating');
+
+    it('is present one HP below maximum', () => {
+        expect(hasRegen(humanResting({ health: 99 }))).toBe(true); // Human startHealth 100
+    });
+
+    it('disappears the moment HP reaches maximum', () => {
+        expect(hasRegen(humanResting({ health: 100 }))).toBe(false);
+    });
+
+    it('stays away above maximum, e.g. while a max-HP buff is still being unwound', () => {
+        expect(hasRegen(humanResting({ health: 120 }))).toBe(false);
+    });
+
+    it('is absent for a race with no innate regeneration, however wounded', () => {
+        // Orc: startHealth 150, regen 0.
+        expect(hasRegen(humanResting({ raceId: 1 as RaceType, health: 1 }))).toBe(false);
+    });
+
+    it('is absent while in combat, wounded or not — the resting aura is the gate', () => {
+        expect(hasRegen(localPlayer({ raceId: 0, health: 10, effects: [{ ...EFFECTS_CONFIG.combatAura }] }))).toBe(false);
+    });
+
+    it('is absent during the disengage countdown, so leaving the arena does not heal early', () => {
+        const p = localPlayer({
+            raceId: 0,
+            health: 10,
+            effects: [{ ...EFFECTS_CONFIG.combatAura, expiresAt: Date.now() + 5_000 }],
+        });
+
+        expect(hasRegen(p)).toBe(false);
+    });
+
+    it('counts a max-health buff toward "full", so a freshly buffed player regenerates into it', () => {
+        // Newbie Blessing grants +20 max HP: 100 -> 120, so 100/120 is wounded, not full.
+        const p = humanResting({ health: 100, effects: [{ ...EFFECTS_CONFIG.restingAura }, { ...EFFECTS_CONFIG.newbieBuff }] });
+
+        expect(hasRegen(p)).toBe(true);
+    });
+
+    it('sums equipment regen into the rate it reports, matching getPlayerStats exactly', () => {
+        // Knight's Plate carries +1 regen; Human's innate is 1.
+        const p = humanResting({ health: 10, armorId: 3 });
+        const regenerating = getActiveEffects(p).find(e => e.id === 'regenerating');
+
+        expect(regenerating?.modifiers).toEqual([{ type: 'regen', value: 2 }]);
+        expect(getPlayerStats(p).regen).toBe(2);
     });
 });
 
@@ -997,13 +1065,13 @@ describe('syncZoneAuras', () => {
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it.each(TICK_CONFIG.combatZones)('adds a combat aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts combatZones)', screen => {
+    it.each(ZONE_CONFIG.combatZones)('adds a combat aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts combatZones)', screen => {
         const p = localPlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it.each(TICK_CONFIG.restingZones)('adds a resting aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts restingZones)', screen => {
+    it.each(ZONE_CONFIG.restingZones)('adds a resting aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts restingZones)', screen => {
         const p = localPlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['resting']);
@@ -1041,7 +1109,7 @@ describe('syncZoneAuras', () => {
         expect(ids).toContain('resting');
     });
 
-    it('never sets expiresAt on a zone aura — a zone is exactly what the current screen says, never a countdown, matching the old game exactly', () => {
+    it('sets no expiresAt while HELD in a combat zone, nor ever on the resting aura', () => {
         const combatPlayer = localPlayer({ currentScreen: 'battle', effects: [] });
         syncZoneAuras(combatPlayer);
         expect(combatPlayer.effects?.find(e => e.id === 'combat')?.expiresAt).toBeUndefined();
@@ -1049,6 +1117,145 @@ describe('syncZoneAuras', () => {
         const restingPlayer = localPlayer({ currentScreen: 'home', effects: [] });
         syncZoneAuras(restingPlayer);
         expect(restingPlayer.effects?.find(e => e.id === 'resting')?.expiresAt).toBeUndefined();
+    });
+
+    /**
+     * Leaving a combat zone no longer rests you instantly: ⚔️ In Combat stays, gains a countdown,
+     * and only when that elapses does 💤 Resting (and with it regen) take over. The countdown is
+     * anchored to LEAVING the zone, not to the last fight, so it re-arms on every exit.
+     */
+    describe('disengage countdown', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(1_700_000_000_000);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        /** Puts the player in the arena the way a real sync would, so `before` is the held aura. */
+        function standInArena(overrides: Partial<PlayerState> = {}) {
+            const p = localPlayer({ currentScreen: 'battle', effects: [], ...overrides });
+            syncZoneAuras(p);
+
+            return p;
+        }
+
+        it('arms exactly combatLingerMs when the player leaves for a resting zone', () => {
+            const p = standInArena();
+            p.currentScreen = 'home';
+
+            expect(syncZoneAuras(p)).toBe(true);
+            expect(p.combatUntil).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+            expect(p.effects?.[0].expiresAt).toBe(p.combatUntil);
+        });
+
+        it('reports a change even though the aura id is identical — it is the countdown that is new', () => {
+            const p = standInArena();
+            p.currentScreen = 'home';
+
+            const changed = syncZoneAuras(p);
+
+            // The id does NOT move: combat -> combat. So a return value derived from the id alone
+            // would say "nothing changed", and the countdown would never reach the client, since
+            // nothing would tell withSession or the tick to persist and broadcast it.
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+            expect(changed).toBe(true);
+        });
+
+        it('leaves for a screen in NEITHER zone list still disengaging, then dropping to no aura', () => {
+            const p = standInArena();
+            p.currentScreen = 'statistics';
+            syncZoneAuras(p);
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+
+            vi.advanceTimersByTime(ZONE_CONFIG.combatLingerMs);
+            syncZoneAuras(p);
+            expect(p.effects).toEqual([]);
+            expect(p.combatUntil).toBeUndefined();
+        });
+
+        it('flips to resting once the countdown elapses, clearing combatUntil', () => {
+            const p = standInArena();
+            p.currentScreen = 'home';
+            syncZoneAuras(p);
+
+            vi.advanceTimersByTime(ZONE_CONFIG.combatLingerMs - 1);
+            syncZoneAuras(p);
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+
+            vi.advanceTimersByTime(1);
+            expect(syncZoneAuras(p)).toBe(true);
+            expect(p.effects?.map(e => e.id)).toEqual(['resting']);
+            expect(p.combatUntil).toBeUndefined();
+        });
+
+        it('does not re-arm on repeated syncs while already disengaging', () => {
+            const p = standInArena();
+            p.currentScreen = 'home';
+            syncZoneAuras(p);
+            const deadline = p.combatUntil;
+
+            expect(deadline).toBeGreaterThan(Date.now()); // a countdown really is running
+
+            vi.advanceTimersByTime(2_000);
+            expect(syncZoneAuras(p)).toBe(false); // idempotent: nothing to broadcast
+            p.currentScreen = 'inn';              // resting zone -> resting zone, still disengaging
+            syncZoneAuras(p);
+
+            expect(p.combatUntil).toBe(deadline);
+            expect(p.effects?.[0].expiresAt).toBe(deadline);
+        });
+
+        it('cancels the countdown on re-entering a combat zone, then arms a FRESH one on leaving again', () => {
+            const p = standInArena();
+            p.currentScreen = 'home';
+            syncZoneAuras(p);
+            const first = p.combatUntil!;
+
+            vi.advanceTimersByTime(3_000);
+            p.currentScreen = 'battle';
+            syncZoneAuras(p);
+            expect(p.combatUntil).toBeUndefined();
+            expect(p.effects?.[0].expiresAt).toBeUndefined();
+
+            p.currentScreen = 'home';
+            syncZoneAuras(p);
+            expect(p.combatUntil).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
+            expect(p.combatUntil).toBeGreaterThan(first);
+        });
+
+        it('never arms one for a player who was merely resting, so walking between towns stays instant', () => {
+            const p = localPlayer({ currentScreen: 'home', effects: [] });
+            syncZoneAuras(p);
+            p.currentScreen = 'inn';
+            syncZoneAuras(p);
+
+            expect(p.combatUntil).toBeUndefined();
+            expect(p.effects?.map(e => e.id)).toEqual(['resting']);
+        });
+
+        it('gives an ambushed player indefinite combat with no countdown, wherever they claim to be', () => {
+            const p = standInArena({ ambushed: true });
+            p.currentScreen = 'home';
+            syncZoneAuras(p);
+
+            expect(p.effects?.map(e => e.id)).toEqual(['combat']);
+            expect(p.effects?.[0].expiresAt).toBeUndefined();
+            expect(p.combatUntil).toBeUndefined();
+        });
+
+        it('never arms one for a corpse — death clears the aura outright', () => {
+            const p = standInArena();
+            p.dead = true;
+            p.currentScreen = 'home';
+            syncZoneAuras(p);
+
+            expect(p.effects).toEqual([]);
+            expect(p.combatUntil).toBeUndefined();
+        });
     });
 
     describe('return value (Fix 8 — callers need to know whether the aura actually changed)', () => {

@@ -37,6 +37,22 @@
     box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.15);
 }
 
+/*
+ * Keyboard focus, matching .btn:focus-visible — usePanelFocus auto-focuses these, so the ring has
+ * to read as focused rather than merely hovered. The rule above deliberately keeps plain :focus on
+ * the subtle hover-strength ring, which is what a mouse click should get.
+ *
+ * Must stay AFTER that rule: `:focus` and `:focus-visible` have identical specificity here, so
+ * being declared later is the only reason this wins. `outline: none` is restated rather than
+ * leaning on the base rule above, so the override is visible where it is read.
+ */
+.form-select:focus-visible,
+.form-input:focus-visible {
+    border-color: var(--gold);
+    box-shadow: var(--focus-ring);
+    outline: none;
+}
+
 .form-select {
     cursor: pointer;
     appearance: none;

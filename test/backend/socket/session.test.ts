@@ -134,10 +134,11 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
     }
 
     it('persists a zone-only flip even when the handler itself reports NO_CHANGE (the silent-drop bug)', async () => {
-        // Persisted aura is stale relative to currentScreen (e.g. a player:screen call updated
-        // the screen without also calling syncZoneAuras itself), so syncZoneAuras should flip it
-        // to resting — a change the mutate callback below has no idea happened, and reports
-        // NO_CHANGE regardless.
+        // Persisted aura is out of step with currentScreen (e.g. a player:screen call updated the
+        // screen without also calling syncZoneAuras itself). An INDEFINITE combat aura on a
+        // resting screen reads as "just left a combat zone", so syncZoneAuras starts the disengage
+        // countdown — a change the mutate callback below has no idea happened, and reports
+        // NO_CHANGE regardless. The flip must still persist.
         const session = makeStartedSession({
             currentScreen: 'home',
             effects: [{ ...EFFECTS_CONFIG.combatAura }],
@@ -149,7 +150,25 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
         expect(result).toBeUndefined();
         expect(setSessionData).toHaveBeenCalledWith('sid-1', session);
         expect(session.revision).toBe(2); // still bumped — this genuinely persisted
+        expect(session.effects.map((e: any) => e.id)).toEqual(['combat']);
+        // Gaining a countdown is the change; without comparing expiresAt it would look like none.
+        expect(session.effects[0].expiresAt).toBe(session.combatUntil);
+        expect(session.combatUntil).toBeGreaterThan(Date.now());
+    });
+
+    it('persists the countdown ELAPSING into a resting aura, likewise with the mutator reporting NO_CHANGE', async () => {
+        const session = makeStartedSession({
+            currentScreen: 'home',
+            combatUntil: Date.now() - 1, // disengage already over
+            effects: [{ ...EFFECTS_CONFIG.combatAura, expiresAt: Date.now() - 1 }],
+        });
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        await withSession('sid-1', () => NO_CHANGE);
+
         expect(session.effects.map((e: any) => e.id)).toEqual(['resting']);
+        expect(session.combatUntil).toBeUndefined();
+        expect(setSessionData).toHaveBeenCalledWith('sid-1', session);
     });
 
     it('exposes the zone-changed flag on ctx so a mutator can fold it into its own decision', async () => {

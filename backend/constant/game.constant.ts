@@ -181,15 +181,25 @@ export const BATTLE_CONFIG = {
     hpLost: { baseMin: 10, baseMax: 25, floor: 1 },
 } as const;
 
-/**
- * Tick cadence plus zone classification by SCREEN. Combat zones pause regen, resting zones apply
- * it; a screen in neither (Statistics/Races/Start/Error) gets no aura. Classification is not
- * tick-driven — syncZoneAuras updates it instantly on every player:screen event.
- */
+/** Cadence of the passive session loop: applies regen and sweeps expired effects as a backstop. */
 export const TICK_CONFIG = {
     intervalMs: 5_000,
+} as const;
+
+/**
+ * Zone classification by SCREEN, plus the rule for leaving one. Combat zones pause regen, resting
+ * zones apply it; a screen in neither (Statistics/Races/Start/Error) gets no aura.
+ *
+ * Nothing here is tick-driven: syncZoneAuras recomputes the aura synchronously on every
+ * player:screen event, and the disengage countdown expires on its own exact timer (emitter.ts).
+ * `combatLingerMs` being 5s is unrelated to TICK_CONFIG.intervalMs also being 5s — they are free
+ * to diverge.
+ */
+export const ZONE_CONFIG = {
     combatZones: ['battle', 'suicide', 'death'] as ScreenId[],
     restingZones: ['home', 'inn', 'weapons', 'armors', 'character', 'highscores'] as ScreenId[],
+    /** How long ⚔️ In Combat lingers after LEAVING a combat zone, before 💤 Resting takes over. */
+    combatLingerMs: 5_000,
 } as const;
 
 export const SESSION_CONFIG = {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { request } from '@/socket/client';
+import { screenFromPath } from '@/routes';
 import type {
     PlayerSnapshot, GameCatalog, FlashView, SocketErrorPayload,
     BattleFightResult, BattleNarrativeSnapshot, HydratePayload, ScreenId,
@@ -163,10 +164,14 @@ export const useGameStore = create<GameStore>((set, get) => {
                 // Every HydratePayload carries a catalog, so a null one doubles as "this is the
                 // first hydrate this session" without a separate tracked field.
                 const isFirstHydrate = state.catalog === null;
-                // The server always sends a non-null snapshot (`{ started: false, ... }` for a
-                // session with no character), so `started` — not null-ness — is the real signal.
+                // Boot straight into whatever screen the URL names, so a deep link reports itself
+                // ONCE. Guessing 'home' here and letting useHistorySync correct it afterwards cost
+                // a second `player:screen` a round trip later, which the server saw as a real
+                // navigation. `screenFromPath` returns 'home' for '/', and pinScreen demotes that
+                // to 'start' for a visitor with no character — so the old started-or-not special
+                // case is subsumed. Read at call time, so no effect ordering can beat it.
                 const screen = isFirstHydrate
-                    ? pinScreen(p.player?.started ? 'home' : 'start', p.player)
+                    ? pinScreen(screenFromPath(location.pathname), p.player)
                     : deriveScreenAfterPlayerChange(state.player, p.player, state.screen);
 
                 // hydrate() itself stays a pure read; this fires a separate, real action.

@@ -4,7 +4,7 @@ export type SoundName = 'crit' | 'eat' | 'level' | 'death' | 'buy' | 'start' | '
 
 /**
  * Every screen the client can be on. Shared with the server, whose `PlayerState.currentScreen`
- * drives zone classification (see TICK_CONFIG.combatZones/restingZones).
+ * drives zone classification (see ZONE_CONFIG.combatZones/restingZones).
  */
 export type ScreenId =
     | 'start' | 'home' | 'battle' | 'weapons' | 'armors' | 'inn' | 'suicide'

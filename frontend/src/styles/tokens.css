@@ -38,8 +38,11 @@
 
     --radius: 6px;
     --radius-lg: 10px;
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+    /* --gold at 45%, expanded by hand: a hex custom property cannot be alpha'd in plain CSS. */
+    --focus-ring-color: rgba(201, 168, 76, 0.45);
+    --focus-ring: 0 0 0 2px var(--focus-ring-color);
 
     --font-heading: 'Cinzel', Georgia, serif;
     --font-body: 'Inter', Verdana, Arial, sans-serif;

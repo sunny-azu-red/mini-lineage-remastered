@@ -192,8 +192,9 @@ describe('tick logging format (integration — real player.service/session wirin
     // `changed` flag used for both the persist decision AND the log status, which would have
     // wrongly printed "Effect Expired" here.
     it('persists/emits a pure zone-only change (persisted aura stale relative to currentScreen) without mislabeling it "Effect Expired" in the log', async () => {
-        // Persisted aura says combat, but currentScreen says home — withSession's automatic
-        // pre-mutation syncZoneAuras call will correct this to resting before the tick body runs.
+        // Persisted aura says combat with no countdown, but currentScreen says home — withSession's
+        // automatic pre-mutation syncZoneAuras call reads that as "just left a combat zone" and
+        // starts the disengage countdown before the tick body runs.
         session.currentScreen = 'home';
         session.effects = [{ id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }];
         session.health = 100; // Full — isolates the zone flip as the ONLY thing that changed
@@ -203,7 +204,26 @@ describe('tick logging format (integration — real player.service/session wirin
         const line = lastTickLine();
         expect(line).toContain('(Full)');
         expect(line).not.toContain('Effect Expired');
-        expect(session.effects.map((e: any) => e.id)).toEqual(['resting']);
+        expect(session.effects.map((e: any) => e.id)).toEqual(['combat']);
         expect(setSessionData).toHaveBeenCalled(); // the zone flip alone still persisted
+    });
+
+    // The same guarantee one step later: the countdown elapsing is also a pure zone change, and
+    // must not be logged as an expiring effect either — the pre-mutation sync has already swapped
+    // the aura by the time the tick body captures what is expiring.
+    it('persists/emits the disengage countdown elapsing into resting, still without saying "Effect Expired"', async () => {
+        session.currentScreen = 'home';
+        session.combatUntil = Date.now() - 1;
+        session.effects = [{ id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [], expiresAt: Date.now() - 1 }];
+        session.health = 100;
+
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+
+        const line = lastTickLine();
+        expect(line).toContain('(Full)');
+        expect(line).not.toContain('Effect Expired');
+        expect(line).not.toContain('In Combat');
+        expect(session.effects.map((e: any) => e.id)).toEqual(['resting']);
+        expect(setSessionData).toHaveBeenCalled();
     });
 });
