@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useGameStore } from '@/store/gameStore';
 import Footer from '@/components/layout/Footer';
@@ -49,7 +49,30 @@ describe('Footer', () => {
         const { container } = render(<Footer />);
 
         expect(container.textContent).toContain('⚡ development');
+        // A dev build genuinely IS a debug build, so the warning colour is correct here.
         expect(container.querySelector('.version-debug')).toBeInTheDocument();
+    });
+
+    // Regression: `.version-debug` is the red "this is a debug build" marker. It used to be
+    // applied whenever the catalog had not arrived, so a production bundle flagged ITSELF as a
+    // debug build for the whole loading window, then silently corrected once the server answered.
+    it('does not flag a release-shaped version as a debug build while loading', () => {
+        vi.stubGlobal('__APP_VERSION__', 'a1b2c3d');
+        useGameStore.setState({ catalog: null }, false);
+        const { container } = render(<Footer />);
+
+        expect(container.textContent).toContain('a1b2c3d');
+        expect(container.querySelector('.version-debug')).not.toBeInTheDocument();
+        vi.unstubAllGlobals();
+    });
+
+    it('still flags a non-release version as a debug build while loading', () => {
+        vi.stubGlobal('__APP_VERSION__', 'unknown');
+        useGameStore.setState({ catalog: null }, false);
+        const { container } = render(<Footer />);
+
+        expect(container.querySelector('.version-debug')).toBeInTheDocument();
+        vi.unstubAllGlobals();
     });
 
     it('prefers the server version once the catalog lands', () => {

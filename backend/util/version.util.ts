@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { env } from '@/config/env.config';
+import { isReleaseVersion } from '@shared/version';
 
 export function getVersion(): string {
     try {
@@ -16,5 +17,5 @@ export function getVersion(): string {
 
 /** True for a production process or a release-shaped (short git sha) version string. */
 export function isRelease(version: string): boolean {
-    return env.NODE_ENV === 'production' || (version.length === 7 && /^[0-9a-f]+$/i.test(version));
+    return env.NODE_ENV === 'production' || isReleaseVersion(version);
 }
