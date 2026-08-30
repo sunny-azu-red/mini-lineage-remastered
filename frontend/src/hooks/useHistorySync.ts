@@ -1,60 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RaceView } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
-
-/**
- * The single source of truth for the handful of link-worthy URLs, used in BOTH directions —
- * previously two hand-maintained inverse functions that could silently drift apart.
- * 'start'/'home' share '/' and are disambiguated by `started`; 'error' has no URL.
- */
-const ROUTES = [
-    ['battle', '/battle'],
-    ['weapons', '/shop/weapons'],
-    ['armors', '/shop/armors'],
-    ['inn', '/inn'],
-    ['suicide', '/suicide'],
-    ['death', '/death'],
-    ['character', '/character'],
-    ['highscores', '/highscores'],
-    ['statistics', '/statistics'],
-    ['races', '/races'],
-] as const satisfies readonly (readonly [ScreenId, string])[];
-
-const HIGHSCORES_PREFIX = '/highscores/';
-
-function pathFor(screen: ScreenId, raceFilter: number | null, races: RaceView[]): string | null {
-    if (screen === 'start' || screen === 'home')
-        return '/';
-    if (screen === 'highscores' && raceFilter !== null) {
-        const race = races.find(r => r.id === raceFilter);
-        return race ? `${HIGHSCORES_PREFIX}${race.slug}` : '/highscores';
-    }
-
-    // 'error' has no link-worthy URL and nothing to deep-link back into — leave the bar alone.
-    return ROUTES.find(([id]) => id === screen)?.[1] ?? null;
-}
-
-/**
- * Resolves a URL to the screen it names. Deliberately does NOT enforce who may go there —
- * `pinScreen` (gameStore.ts) owns every access rule, and every path here reaches it via
- * `navigate()`. Keeping the check in one place is what makes the Back button obey the same rules
- * as a deep link.
- */
-function screenFromPath(pathname: string): ScreenId {
-    if (pathname.startsWith(HIGHSCORES_PREFIX))
-        return 'highscores';
-
-    // Unknown paths resolve to Home; pinScreen demotes that to Game Start for a visitor with no
-    // character, so this needs no knowledge of player state.
-    return ROUTES.find(([, path]) => path === pathname)?.[0] ?? 'home';
-}
-
-function raceFilterFromPath(pathname: string, races: RaceView[]): number | null {
-    if (!pathname.startsWith(HIGHSCORES_PREFIX))
-        return null;
-
-    return races.find(r => r.slug === pathname.slice(HIGHSCORES_PREFIX.length))?.id ?? null;
-}
+import { pathFor, screenFromPath, raceFilterFromPath } from '@/routes';
 
 interface HistoryState {
     screen: ScreenId;
@@ -124,8 +71,11 @@ export function useHistorySync(): void {
     }, [navigate]);
 
     // One-shot reconciliation for a hard load landing on a deep link — no popstate fires for the
-    // initial document load. Waits for `catalog` (needed to resolve a race slug and the
-    // ambiguous "/" home-vs-start case).
+    // initial document load. `hydrate` already resolved the SCREEN from the URL, so for a socket
+    // boot this usually re-navigates to where we already are (a no-op that fires no
+    // `player:screen`). It still earns its keep: it resolves a `/highscores/<slug>` race filter,
+    // which needs `catalog.races`, and it rewrites the URL when pinScreen redirected away from
+    // what was typed. Waits for `catalog` for that race lookup.
     useEffect(() => {
         if (didInitialSyncRef.current || !catalog)
             return;

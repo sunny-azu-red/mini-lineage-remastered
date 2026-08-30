@@ -71,6 +71,68 @@ describe('gameStore', () => {
             useGameStore.getState().hydrate(payload);
             expect(useGameStore.getState().screen).toBe('death');
         });
+
+        /**
+         * A deep link must be reported to the server exactly ONCE. Booting to 'home' and letting
+         * useHistorySync correct it a round trip later made the server see two real navigations —
+         * so a hard reload on /battle briefly classified the player as resting, and (once the
+         * disengage countdown existed) armed and then cancelled one.
+         */
+        describe('resolves the boot screen from the URL', () => {
+            afterEach(() => {
+                window.history.replaceState(null, '', '/');
+            });
+
+            it('boots straight into a deep-linked screen, reporting it once and never "home" first', () => {
+                window.history.replaceState(null, '', '/battle');
+
+                useGameStore.getState().hydrate({ player: localPlayer({ dead: false }), catalog: localCatalog() });
+
+                expect(useGameStore.getState().screen).toBe('battle');
+                expect(requestMock).toHaveBeenCalledTimes(1);
+                expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'battle' });
+            });
+
+            it('still applies the access rules to what the URL asked for', () => {
+                // /death offers "Play Again?", which would wipe a living character.
+                window.history.replaceState(null, '', '/death');
+
+                useGameStore.getState().hydrate({ player: localPlayer({ dead: false }), catalog: localCatalog() });
+
+                expect(useGameStore.getState().screen).toBe('home');
+                expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'home' });
+            });
+
+            it('boots a visitor with no character into an allowlisted deep link', () => {
+                window.history.replaceState(null, '', '/statistics');
+
+                useGameStore.getState().hydrate({ player: localPlayer({ started: false, name: null }), catalog: localCatalog() });
+
+                expect(useGameStore.getState().screen).toBe('statistics');
+                // requireStarted would reject a report from a character-less visitor.
+                expect(requestMock).not.toHaveBeenCalled();
+            });
+
+            it('resolves a race-filtered highscores slug to the highscores screen', () => {
+                window.history.replaceState(null, '', '/highscores/human');
+
+                useGameStore.getState().hydrate({ player: localPlayer({ dead: false }), catalog: localCatalog() });
+
+                expect(useGameStore.getState().screen).toBe('highscores');
+            });
+
+            it('ignores the URL on a later hydrate, keeping the screen the player is actually on', () => {
+                useGameStore.getState().hydrate({ player: localPlayer({ dead: false }), catalog: localCatalog() });
+                useGameStore.getState().navigate('inn');
+                window.history.replaceState(null, '', '/battle');
+                requestMock.mockClear();
+
+                // A reconnect re-hydrates; it must not teleport the player to whatever the bar says.
+                useGameStore.getState().hydrate({ player: localPlayer({ dead: false }), catalog: localCatalog() });
+
+                expect(useGameStore.getState().screen).toBe('inn');
+            });
+        });
     });
 
     describe('hydrate — reconnect (subsequent hydrate)', () => {
