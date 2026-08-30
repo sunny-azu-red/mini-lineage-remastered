@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ItemType, PlayerState, RaceType } from '@/interface';
-import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
 import { DEATH_MESSAGES } from '@/constant/narratives.constant';
 import {
     isGameStarted,
@@ -997,13 +997,13 @@ describe('syncZoneAuras', () => {
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it.each(TICK_CONFIG.combatZones)('adds a combat aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts combatZones)', screen => {
+    it.each(ZONE_CONFIG.combatZones)('adds a combat aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts combatZones)', screen => {
         const p = localPlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
-    it.each(TICK_CONFIG.restingZones)('adds a resting aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts restingZones)', screen => {
+    it.each(ZONE_CONFIG.restingZones)('adds a resting aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts restingZones)', screen => {
         const p = localPlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['resting']);

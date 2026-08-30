@@ -1,5 +1,5 @@
 import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, StatField, TickOptions } from '@/interface';
-import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
+import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
 import { randomElement, getItemModifier } from '@/util/game.util';
@@ -79,8 +79,8 @@ export function syncZoneAuras(player: PlayerState): boolean {
         return before !== null;
 
     const screen = player.currentScreen;
-    const inCombat = Boolean(player.ambushed) || (screen !== undefined && TICK_CONFIG.combatZones.includes(screen));
-    const isResting = !inCombat && screen !== undefined && TICK_CONFIG.restingZones.includes(screen);
+    const inCombat = Boolean(player.ambushed) || (screen !== undefined && ZONE_CONFIG.combatZones.includes(screen));
+    const isResting = !inCombat && screen !== undefined && ZONE_CONFIG.restingZones.includes(screen);
     const after = inCombat ? 'combat' : isResting ? 'resting' : null;
 
     if (after)
