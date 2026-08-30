@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { dbPool } from '../../src/config/database.config';
+import { dbPool } from '../../backend/config/database.config';
 import { dbMigrate } from './migrate';
 
 async function dbReset() {

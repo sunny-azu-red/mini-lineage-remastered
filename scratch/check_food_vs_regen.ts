@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { RACES, FOODS, ARMORS } from '../src/constant/game.constant';
+import { RACES, FOODS, ARMORS } from '../backend/constant/game.constant';
 
 function checkRestVsFood() {
     console.log(`\n--- Healing ROI (Rest vs Food) ---`);

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
-import { dbPool } from '../../src/config/database.config';
+import { dbPool } from '../../backend/config/database.config';
 
 const MIGRATIONS_DIR = path.join(__dirname, '../../database/migrations');
 

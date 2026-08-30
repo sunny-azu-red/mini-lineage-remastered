@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { simulateBattle } from '../src/service/battle.service';
+import { simulateBattle } from '../backend/service/battle.service';
 
 function runSimulation(raceId: number, weaponId: number, armorId: number, iterations: number = 1000) {
     let normalTotalAdena = 0;

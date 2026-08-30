@@ -6,7 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "backend/*"
+      ],
+      "@shared/*": [
+        "shared/*"
       ]
     },
     "esModuleInterop": true,
@@ -15,8 +18,8 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "test/**/*"
+    "backend/**/*",
+    "test/backend/**/*"
   ],
   "ts-node": {
     "require": [

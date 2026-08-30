@@ -1,7 +1,7 @@
-import { RACES, WEAPONS, ARMORS, FOODS, EFFECTS_CONFIG } from '../src/constant/game.constant';
-import { simulateBattle } from '../src/service/battle.service';
-import { getPlayerStats } from '../src/service/player.service';
-import { PlayerState } from '../src/interface';
+import { RACES, WEAPONS, ARMORS, FOODS, EFFECTS_CONFIG } from '../backend/constant/game.constant';
+import { simulateBattle } from '../backend/service/battle.service';
+import { getPlayerStats } from '../backend/service/player.service';
+import { PlayerState } from '../backend/interface';
 
 interface SimulationScenario {
     raceId: number;

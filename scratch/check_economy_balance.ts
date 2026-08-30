@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { RACES, WEAPONS, ARMORS, MAX_LEVEL } from '../src/constant/game.constant';
-import { simulateBattle } from '../src/service/battle.service';
-import { calculateLevel } from '../src/service/math.service';
+import { RACES, WEAPONS, ARMORS, MAX_LEVEL } from '../backend/constant/game.constant';
+import { simulateBattle } from '../backend/service/battle.service';
+import { calculateLevel } from '../backend/service/math.service';
 
 function checkEconomy(raceId: number) {
     const race = RACES[raceId];

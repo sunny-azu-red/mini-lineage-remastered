@@ -1,10 +1,10 @@
 {
     "watch": [
-        "src"
+        "backend"
     ],
-    "ext": "ts,json,ejs",
+    "ext": "ts,json",
     "ignore": [
         "node_modules"
     ],
-    "exec": "ts-node -r tsconfig-paths/register src/server.ts"
+    "exec": "ts-node -r tsconfig-paths/register backend/server.ts"
 }
