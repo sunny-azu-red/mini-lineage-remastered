@@ -10,6 +10,7 @@
 - **Punchy Critical Strikes**: A `1.9×` critical multiplier applied to enemies slain, XP, and Adena alike, so a crit stays impactful at every attack tier.
 - **Chain Ambush Engine**: Every fight rolls a fresh ambush against your live ambush risk. Two consecutive ambushes inflict the `Hexed` debuff (`+4% Ambush Risk`, `-2% Crit`, 1 minute), snowballing the danger for reckless adventurers.
 - **Equipment & Progression**: 6 weapon tiers and 6 armor tiers, the top ones carrying innate modifiers (*Calamity Comet*'s crit, *Eternal Aegis*' regen), across a level curve that runs to **level 80**.
+- **Playable Without a Mouse**: The main panel's first control takes focus on arrival, so <kbd>Space</kbd> on the Battleground fights again and again, and <kbd>↑</kbd><kbd>↓</kbd> + <kbd>Enter</kbd> drives travel and the shops. Focus is reclaimed after each request re-enables its button, never stolen from a control you moved to yourself, and never placed on the death screen — where a stray keypress would submit your score or restart your character.
 
 ### 🎧 Procedural 8-Bit Web Audio Engine
 - **Zero Audio Assets**: 100% synthesized in real time via the browser's native `AudioContext`, `OscillatorNode`, and `GainNode`.

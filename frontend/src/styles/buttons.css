@@ -119,6 +119,21 @@
     animation: btn-shimmer 0.55s ease forwards;
 }
 
+/*
+ * ===== Keyboard Focus =====
+ * usePanelFocus puts focus on the panel's first control so the game is playable without a mouse;
+ * this ring is the entire affordance telling you what Space will do. Deliberately stronger than
+ * :hover's, so the two read as different states. :focus-visible, not :focus, keeps mouse clicks
+ * ring-free.
+ */
+.btn:focus-visible {
+    border-color: var(--gold);
+    box-shadow:
+        0 0 0 2px rgba(201, 168, 76, 0.45),
+        0 1px 3px rgba(0, 0, 0, 0.35);
+    outline: none;
+}
+
 /* ===== Active / Press ===== */
 .btn:active,
 .btn.active {

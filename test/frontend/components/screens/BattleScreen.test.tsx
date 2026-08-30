@@ -231,15 +231,21 @@ describe('BattleScreen', () => {
     });
 });
 
-describe('BattleScreen — keyboard focus across the very first fight', () => {
+describe('BattleScreen — the action button survives the very first fight as one DOM node', () => {
     /**
      * The pre-refactor screen branched on `!lastBattle` first, so a character's FIRST fight
-     * swapped in a structurally different tree and React destroyed the Fight button — dropping
-     * keyboard focus to <body>. Every LATER fight kept the same tree, so focus was retained.
-     * That inconsistency is gone: the action row now holds a stable position, so focus survives
-     * the first fight too. Pinned deliberately, because it is a real accessibility behaviour.
+     * swapped in a structurally different tree and React destroyed the Fight button. Every LATER
+     * fight kept the same tree. That inconsistency is gone: the action row now holds a stable
+     * position, so the same node is reused throughout.
+     *
+     * Node reuse is necessary for keyboard play but NOT sufficient, and this test cannot show the
+     * difference: `useAction` disables the button for the length of the request, and a real browser
+     * blurs a disabled element to <body> — jsdom does not, which is the only reason the focus
+     * assertion below holds here. What actually keeps focus on the button in a browser is
+     * `usePanelFocus`, which reclaims it when the button re-enables; see its own suite for the
+     * disable/enable cycle spelled out properly.
      */
-    it('keeps focus on the action button when the first-ever result arrives', async () => {
+    it('reuses the same button node when the first-ever result arrives', async () => {
         useGameStore.setState({ player: makePlayer({ ambushed: false }), lastBattle: null, screen: 'battle' }, false);
         requestMock.mockResolvedValue({ ok: true, data: makeBattleResult() });
 
@@ -252,8 +258,8 @@ describe('BattleScreen — keyboard focus across the very first fight', () => {
         fireEvent.click(before);
         await waitFor(() => expect(useGameStore.getState().lastBattle).not.toBeNull());
 
-        // The same DOM node is reused — only its label changes — so focus is never lost and a
-        // second Enter/Space keeps fighting.
+        // The same DOM node is reused — only its label changes — so React never destroys the
+        // focus target out from under the player.
         const after = container.querySelector('button');
         expect(after).toBe(before);
         expect(document.activeElement).toBe(after);
