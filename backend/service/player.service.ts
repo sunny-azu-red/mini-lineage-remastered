@@ -1,4 +1,4 @@
-import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, TickOptions } from '@/interface';
+import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, StatField, TickOptions } from '@/interface';
 import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
@@ -6,23 +6,27 @@ import { randomElement, getItemModifier } from '@/util/game.util';
 import { WELCOME_MESSAGES, DEATH_MESSAGES } from '@/constant/narratives.constant';
 import { statisticsRepository } from '@/repository/statistics.repository';
 
+const ZONE_AURA_IDS = ['resting', 'combat'];
+
+/** Every PlayerState key `resetPlayer` clears — i.e. everything except session-store bookkeeping. */
+const GAME_FIELDS: (keyof PlayerState)[] = [
+    'name', 'raceId', 'health', 'adena', 'experience', 'weaponId', 'armorId',
+    'dead', 'ambushed', 'coward', 'cheated', 'deathReason',
+    'totalBattles', 'totalAmbushes', 'consecutiveAmbushes', 'totalEnemiesKilled',
+    'effects', 'revision', 'currentScreen', 'lastBattleNarrative',
+];
+
 export function isGameStarted(player: PlayerState): boolean {
     return player.raceId !== undefined && player.health !== undefined && player.adena !== undefined;
 }
 
 export function initializePlayer(player: PlayerState, race: Race, name: string): FlashMessage {
-    player.raceId = race.id;
-    player.name = name;
-    player.health = race.startHealth;
-    player.adena = race.startAdena;
-    player.experience = 0;
-    player.weaponId = 0;
-    player.armorId = 0;
-    player.totalBattles = 0;
-    player.totalAmbushes = 0;
-    player.consecutiveAmbushes = 0;
-    player.totalEnemiesKilled = 0;
-    player.effects = [];
+    Object.assign(player, {
+        raceId: race.id, name, health: race.startHealth, adena: race.startAdena,
+        experience: 0, weaponId: 0, armorId: 0,
+        totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0,
+        effects: [],
+    });
 
     applyEffect(player, EFFECTS_CONFIG.newbieBuff);
     player.health = getPlayerStats(player).maxHealth;
@@ -30,19 +34,19 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     void statisticsRepository.increment('total_players');
     void statisticsRepository.increment('total_adena', player.adena);
 
-    const build = randomElement(CHARACTER_CONFIG.builds);
-    const age = randomInt(CHARACTER_CONFIG.minAge, CHARACTER_CONFIG.maxAge);
-    const definition = age <= CHARACTER_CONFIG.ageThresholds.youth
-        ? CHARACTER_CONFIG.ageThresholds.labels.youth
-        : (age <= CHARACTER_CONFIG.ageThresholds.adult
-            ? CHARACTER_CONFIG.ageThresholds.labels.adult
-            : CHARACTER_CONFIG.ageThresholds.labels.elder);
+    // Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
+    const { minAge, maxAge, ageThresholds: { youth, adult, labels }, builds } = CHARACTER_CONFIG;
+    const build = randomElement(builds);
+    const age = randomInt(minAge, maxAge);
+    const definition = age <= youth ? labels.youth : age <= adult ? labels.adult : labels.elder;
     const welcome = fillTemplate(randomElement(WELCOME_MESSAGES), { raceLabel: race.label });
 
-    const text = `You have chosen the ${race.emoji} ${race.label}, ${welcome}\n` +
-        `You are ${build} ${definition} of ${age} seasons, bearing a 🪙 ${formatAdena(player.adena)} Adena tribute.`;
-
-    return { text, type: 'info', sound: 'start' };
+    return {
+        text: `You have chosen the ${race.emoji} ${race.label}, ${welcome}\n` +
+            `You are ${build} ${definition} of ${age} seasons, bearing a 🪙 ${formatAdena(player.adena)} Adena tribute.`,
+        type: 'info',
+        sound: 'start',
+    };
 }
 
 export function killPlayer(player: PlayerState): void {
@@ -55,44 +59,21 @@ export function killPlayer(player: PlayerState): void {
 }
 
 export function commitSuicide(player: PlayerState): void {
-    // set `coward` before killPlayer() so its internal resolveDeathReason() call
-    // (idempotent — see below) already sees the correct branch.
+    // `coward` must be set BEFORE killPlayer, whose resolveDeathReason call picks the branch.
     player.coward = true;
     killPlayer(player);
-    resolveDeathReason(player);
 }
 
 /**
- * Strips existing 'resting'/'combat' zone auras and re-adds the correct one based on the
- * player's current screen (`currentScreen`, stamped by the `player:screen` socket event — see
- * its handler) — a direct, instant port of the old game's URL-path-based zone.middleware.ts:
- * that middleware recomputed the SAME classification synchronously on every page navigation,
- * with no timer of any kind involved, and this does too (wired into every `withSession`
- * mutation via `backend/socket/session.ts`, so a `player:screen` event's own handler run
- * applies it immediately, same as `battle:fight`'s ambush roll does below). Dead players get
- * neither aura; a screen in neither `TICK_CONFIG.combatZones` nor `restingZones` (Statistics,
- * Races, Start, Error) also gets neither, matching the old middleware's exact behavior for
- * paths outside both its lists.
- *
- * `ambushed` unconditionally forces combat regardless of the reported screen — the one
- * deliberate addition beyond the old game's literal code. The old game trusted the request path
- * outright and only caught an ambush-escape after the fact via `cheat.middleware.ts` (a
- * detect-and-punish patch); this rewrite instead makes it structurally impossible up front (the
- * client always pins its own screen to 'battle' while ambushed — see gameStore.ts's
- * `pinScreen`), and this override is what keeps that true even against a raw socket client that
- * lies about its screen.
- *
- * Zone auras never carry an `expiresAt` — like the old game, a zone is exactly what your current
- * screen says it is, not a countdown.
- *
- * Returns whether the resting/combat aura actually changed (including a transition
- * to/from "neither") — callers use this to decide whether a zone-only flip needs to
- * persist/broadcast on its own, even when nothing else about the player changed.
+ * Re-derives the resting/combat zone aura from `currentScreen` (stamped by `player:screen`),
+ * returning whether it changed. Dead players and screens in neither zone list get no aura.
+ * `ambushed` unconditionally forces combat, so a raw socket client lying about its screen
+ * can never escape an ambush. Zone auras never carry an `expiresAt`.
  */
 export function syncZoneAuras(player: PlayerState): boolean {
-    const before = (player.effects ?? []).find(e => e.id === 'resting' || e.id === 'combat')?.id ?? null;
-
-    player.effects = (player.effects ?? []).filter(e => e.id !== 'resting' && e.id !== 'combat');
+    const effects = player.effects ?? [];
+    const before = effects.find(e => ZONE_AURA_IDS.includes(e.id))?.id ?? null;
+    player.effects = effects.filter(e => !ZONE_AURA_IDS.includes(e.id));
 
     if (player.dead)
         return before !== null;
@@ -100,53 +81,33 @@ export function syncZoneAuras(player: PlayerState): boolean {
     const screen = player.currentScreen;
     const inCombat = Boolean(player.ambushed) || (screen !== undefined && TICK_CONFIG.combatZones.includes(screen));
     const isResting = !inCombat && screen !== undefined && TICK_CONFIG.restingZones.includes(screen);
+    const after = inCombat ? 'combat' : isResting ? 'resting' : null;
 
-    if (inCombat)
-        player.effects.push({ ...EFFECTS_CONFIG.combatAura });
-    else if (isResting)
-        player.effects.push({ ...EFFECTS_CONFIG.restingAura });
-
-    const after = inCombat ? 'combat' : (isResting ? 'resting' : null);
+    if (after)
+        player.effects.push({ ...(inCombat ? EFFECTS_CONFIG.combatAura : EFFECTS_CONFIG.restingAura) });
 
     return before !== after;
 }
 
-/**
- * Clears every PlayerState key back to its "no character" state, preserving
- * session-store bookkeeping fields that aren't part of the game's own fields
- * (`cookie`, `bootstrappedAt`). After this call, isGameStarted(player) is false.
- * Wired into `game:restart` and `highscores:submit` (plan decision A9 — reset in
- * place rather than `req.session.destroy()`).
- */
+/** Clears every game field, preserving session-store bookkeeping (`cookie`, `bootstrappedAt`). */
 export function resetPlayer(player: PlayerState): void {
-    const gameFields: (keyof PlayerState)[] = [
-        'name', 'raceId', 'health', 'adena', 'experience', 'weaponId', 'armorId',
-        'dead', 'ambushed', 'coward', 'cheated', 'deathReason',
-        'totalBattles', 'totalAmbushes', 'consecutiveAmbushes', 'totalEnemiesKilled',
-        'effects', 'revision', 'currentScreen', 'lastBattleNarrative',
-    ];
-
-    for (const key of gameFields)
-        delete (player as any)[key];
+    for (const key of GAME_FIELDS)
+        delete (player as Partial<PlayerState>)[key];
 }
 
-/**
- * Sets player.deathReason (only if not already set) using the same branching
- * as the old renderDeathView — extracted here so the reason is fixed once, at
- * time of death, rather than re-randomized on every render.
- */
+/** Fixes the death reason once, at time of death, so it is never re-randomized on re-render. */
 export function resolveDeathReason(player: PlayerState): void {
     if (player.deathReason)
         return;
 
-    if (player.cheated)
-        player.deathReason = "👾 The gods saw your heresy and cast your memory into oblivion.";
-    else if (player.coward)
-        player.deathReason = player.ambushed
-            ? "🪤 You were caught trying to flee an ambush!"
-            : "🤡 You took the cowardly way out.";
-    else
-        player.deathReason = randomElement(DEATH_MESSAGES);
+    // There is no "caught fleeing an ambush" reason any more: fleeing is prevented rather than
+    // punished, so the event that message described cannot occur. A player who quits while
+    // ambushed simply quit.
+    player.deathReason = player.cheated
+        ? '👾 The gods saw your heresy and cast your memory into oblivion.'
+        : player.coward
+            ? '🤡 You took the cowardly way out.'
+            : randomElement(DEATH_MESSAGES);
 }
 
 export function deductCost(player: PlayerState, cost: number): boolean {
@@ -158,66 +119,42 @@ export function deductCost(player: PlayerState, cost: number): boolean {
     return true;
 }
 
-/**
- * Gathers all active effects (state auras + active buffs/debuffs).
- */
+/** All currently active effects: unexpired buffs/debuffs/auras, plus the dynamic regen aura. */
 export function getActiveEffects(player: PlayerState): ActiveEffect[] {
     if (player.dead)
         return [];
 
     const now = Date.now();
-    const effects: ActiveEffect[] = [];
+    const effects = (player.effects ?? []).filter(e => e.expiresAt === undefined || e.expiresAt > now);
 
-    let hasResting = false;
-    let effectMaxHealthBonus = 0;
-    let effectRegenBonus = 0;
+    if (!effects.some(e => e.id === 'resting'))
+        return effects;
 
-    // Timed Buffs / Debuffs & Permanent Curses / State Auras
-    for (const effect of player.effects ?? []) {
-        if (effect.expiresAt === undefined || effect.expiresAt > now) {
-            effects.push(effect);
-            if (effect.id === 'resting')
-                hasResting = true;
-            for (const mod of effect.modifiers) {
-                if (mod.type === 'maxHealth')
-                    effectMaxHealthBonus += mod.value;
-                else if (mod.type === 'regen')
-                    effectRegenBonus += mod.value;
-            }
-        }
-    }
+    // Regenerating aura: only while resting, wounded, and with a positive total regen rate.
+    const allModifiers = effects.flatMap(e => [...e.modifiers]);
+    const sumMod = (type: 'maxHealth' | 'regen') =>
+        allModifiers.reduce((total, m) => total + (m.type === type ? m.value : 0), 0);
 
-    // Dynamic Regenerating aura when resting below effective max HP with > 0 total regen
-    if (hasResting) {
-        const race = RACES[player.raceId] ?? RACES[0];
-        const armor = ARMORS[player.armorId] ?? ARMORS[0];
-        const effectiveMaxHealth = Math.max(1, race.startHealth + effectMaxHealthBonus);
-        const totalRegen = Math.max(0, race.regen + (getItemModifier(armor, 'regen') ?? 0) + effectRegenBonus);
+    const race = RACES[player.raceId] ?? RACES[0];
+    const armor = ARMORS[player.armorId] ?? ARMORS[0];
+    const effectiveMaxHealth = Math.max(1, race.startHealth + sumMod('maxHealth'));
+    const totalRegen = Math.max(0, race.regen + (getItemModifier(armor, 'regen') ?? 0) + sumMod('regen'));
 
-        if (player.health < effectiveMaxHealth && totalRegen > 0) {
-            effects.push({
-                ...EFFECTS_CONFIG.regenAura,
-                modifiers: [{ type: 'regen', value: totalRegen }],
-            });
-        }
-    }
+    if (player.health < effectiveMaxHealth && totalRegen > 0)
+        effects.push({ ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: totalRegen }] });
 
     return effects;
 }
 
-/**
- * Pure layered computation pipeline that calculates the player's effective stats.
- */
+/** Layered pipeline: race base -> equipment stats -> equipment/effect modifiers -> clamps. */
 export function getPlayerStats(player: PlayerState): PlayerStats {
     const race = RACES[player.raceId] ?? RACES[0];
     const weapon = WEAPONS[player.weaponId] ?? WEAPONS[0];
     const armor = ARMORS[player.armorId] ?? ARMORS[0];
-    const activeEffects = getActiveEffects(player);
 
-    // Tier 1: Base Ancestry
     const stats: PlayerStats = {
-        attack: 0,
-        defense: 0,
+        attack: weapon.stat,
+        defense: armor.stat,
         crit: race.crit,
         maxHealth: race.startHealth,
         regen: race.regen,
@@ -226,15 +163,11 @@ export function getPlayerStats(player: PlayerState): PlayerStats {
         adenaMultiplier: 1.0,
     };
 
-    // Tier 2: Equipment Base Stats
-    stats.attack += weapon.stat;
-    stats.defense += armor.stat;
-
-    // Tier 3: Modifiers (Equipment & Active Effects combined)
     const modifiers = [
         ...(weapon.modifiers ?? []),
         ...(armor.modifiers ?? []),
-        ...activeEffects.filter(e => e.id !== 'regenerating').flatMap(e => e.modifiers),
+        // 'regenerating' is derived FROM regen, so folding it back in would double-count.
+        ...getActiveEffects(player).filter(e => e.id !== 'regenerating').flatMap(e => e.modifiers),
     ];
 
     for (const mod of modifiers) {
@@ -244,37 +177,28 @@ export function getPlayerStats(player: PlayerState): PlayerStats {
             stats[mod.type] += mod.value;
     }
 
-    // Tier 4: Sanitization & Range Bounds
-    stats.attack = Math.max(0, stats.attack);
-    stats.defense = Math.max(0, stats.defense);
-    stats.crit = Math.max(0, Math.min(100, stats.crit));
-    stats.regen = Math.max(0, stats.regen);
-    stats.maxHealth = Math.max(1, stats.maxHealth);
-    stats.ambushRisk = Math.max(0, Math.min(100, stats.ambushRisk));
-    stats.xpMultiplier = Math.max(0, stats.xpMultiplier);
-    stats.adenaMultiplier = Math.max(0, stats.adenaMultiplier);
+    const clamp = (v: number, min: number, max = Infinity) => Math.max(min, Math.min(max, v));
+    stats.attack = clamp(stats.attack, 0);
+    stats.defense = clamp(stats.defense, 0);
+    stats.crit = clamp(stats.crit, 0, 100);
+    stats.regen = clamp(stats.regen, 0);
+    stats.maxHealth = clamp(stats.maxHealth, 1);
+    stats.ambushRisk = clamp(stats.ambushRisk, 0, 100);
+    stats.xpMultiplier = clamp(stats.xpMultiplier, 0);
+    stats.adenaMultiplier = clamp(stats.adenaMultiplier, 0);
 
     return stats;
 }
 
-/**
- * Applies a buff, debuff, or permanent effect to the player.
- * If the effect belongs to a group (e.g. 'food'), any existing active effect in the same group is replaced.
- */
-export function applyEffect(
-    player: PlayerState,
-    effect: EffectConfig
-): void {
+/** Applies an effect, replacing any active effect sharing its id or its `group` (e.g. 'food'). */
+export function applyEffect(player: PlayerState, effect: EffectConfig): void {
     const now = Date.now();
+    const kept = (player.effects ?? []).filter(e =>
+        !(effect.group && e.group === effect.group) &&
+        e.id !== effect.id &&
+        (e.expiresAt === undefined || e.expiresAt > now));
 
-    const existing = (player.effects ?? []).filter(e => {
-        if (effect.group && e.group === effect.group)
-            return false;
-
-        return e.id !== effect.id && (e.expiresAt === undefined || e.expiresAt > now);
-    });
-
-    const newEffect: ActiveEffect = {
+    kept.push({
         id: effect.id,
         type: effect.type,
         group: effect.group,
@@ -282,22 +206,22 @@ export function applyEffect(
         label: effect.label,
         modifiers: effect.modifiers,
         expiresAt: effect.durationMs ? now + effect.durationMs : undefined,
-    };
+    });
 
-    existing.push(newEffect);
-    player.effects = existing;
+    player.effects = kept;
 }
 
+/** Heals up to max HP; returns how much was actually restored. */
 export function restoreHealth(player: PlayerState, amount: number): number {
-    const stats = getPlayerStats(player);
-    const oldHealth = player.health;
-    player.health = Math.min(stats.maxHealth, player.health + amount);
+    const before = player.health;
+    player.health = Math.min(getPlayerStats(player).maxHealth, player.health + amount);
 
-    return player.health - oldHealth;
+    return player.health - before;
 }
 
+/** Applies a resolved fight to the player. Returns whether it caused a level-up. */
 export function resolveBattleOutcome(player: PlayerState, result: BattleResult): boolean {
-    let { hpLost, xpGained, adenaGained, enemiesKilled, damageBlocked, isCritical } = result;
+    const { hpLost, xpGained, adenaGained, enemiesKilled, damageBlocked, isCritical } = result;
 
     player.health -= hpLost;
     if (player.health <= 0) {
@@ -322,166 +246,134 @@ export function resolveBattleOutcome(player: PlayerState, result: BattleResult):
     void statisticsRepository.increment('total_xp_gained', xpGained);
     void statisticsRepository.increment('total_damage_blocked', damageBlocked);
 
-    if (isLevelUp(oldXp, player.experience)) {
-        const stats = getPlayerStats(player);
-        const hpHealed = restoreHealth(player, stats.maxHealth);
-        void statisticsRepository.increment('total_levels_gained');
-        void statisticsRepository.increment('total_hp_healed', hpHealed);
+    if (!isLevelUp(oldXp, player.experience))
+        return false;
 
-        return true;
-    }
+    const hpHealed = restoreHealth(player, getPlayerStats(player).maxHealth);
+    void statisticsRepository.increment('total_levels_gained');
+    void statisticsRepository.increment('total_hp_healed', hpHealed);
 
-    return false;
+    return true;
 }
 
+interface EquipmentSlot {
+    items: readonly Item[];
+    slot: 'weaponId' | 'armorId';
+    stat: StatField;
+    owned: (item: Item) => string;
+    bought: (item: Item) => string;
+}
+
+/**
+ * Null-prototype so an unexpected `itemType` can never resolve to an inherited `Object.prototype`
+ * member (`constructor`, `toString`, …) and be treated as a real equipment slot.
+ */
+const EQUIPMENT: Record<string, EquipmentSlot | undefined> = Object.assign(Object.create(null), {
+    [ItemType.Weapon]: {
+        items: WEAPONS as readonly Item[],
+        slot: 'weaponId' as const,
+        stat: 'total_weapons_bought' as StatField,
+        owned: (i: Item) => `You are already wielding the ${i.emoji} ${i.name}!`,
+        bought: (i: Item) => `You have bought a Weapon.\nYou are now wielding the swift ${i.emoji} ${i.name}!`,
+    },
+    [ItemType.Armor]: {
+        items: ARMORS as readonly Item[],
+        slot: 'armorId' as const,
+        stat: 'total_armors_bought' as StatField,
+        owned: (i: Item) => `You are already wearing the ${i.emoji} ${i.name}!`,
+        bought: (i: Item) => `You have bought an Armor.\nYou are now wearing the mighty ${i.emoji} ${i.name}!`,
+    },
+});
+
+/** Returns null for an unknown item; a `success: false` result for a rejected-but-valid purchase. */
 export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: number): PurchaseResult | null {
-    const item: Item | undefined = itemType === ItemType.Weapon ? WEAPONS[itemId] : (itemType === ItemType.Armor ? ARMORS[itemId] : FOODS[itemId]);
+    const equipment = EQUIPMENT[itemType];
+    const item: Item | undefined = (equipment?.items ?? FOODS)[itemId];
     if (!item)
         return null;
 
-    if (itemType === ItemType.Weapon && player.weaponId === itemId)
-        return { success: false, text: `You are already wielding the ${item.emoji} ${item.name}!`, item };
-    if (itemType === ItemType.Armor && player.armorId === itemId)
-        return { success: false, text: `You are already wearing the ${item.emoji} ${item.name}!`, item };
+    if (equipment && player[equipment.slot] === itemId)
+        return { success: false, text: equipment.owned(item), item };
     if (!deductCost(player, item.cost))
         return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}!`, item };
 
-    if (itemType === ItemType.Weapon) {
-        player.weaponId = itemId;
-        void statisticsRepository.increment('total_weapons_bought');
-        void statisticsRepository.increment('total_adena_spent', item.cost);
+    void statisticsRepository.increment('total_adena_spent', item.cost);
 
-        return { success: true, text: `You have bought a Weapon.\nYou are now wielding the swift ${item.emoji} ${item.name}!`, item };
-    } else if (itemType === ItemType.Armor) {
-        player.armorId = itemId;
-        void statisticsRepository.increment('total_armors_bought');
-        void statisticsRepository.increment('total_adena_spent', item.cost);
+    if (equipment) {
+        player[equipment.slot] = itemId;
+        void statisticsRepository.increment(equipment.stat);
 
-        return { success: true, text: `You have bought an Armor.\nYou are now wearing the mighty ${item.emoji} ${item.name}!`, item };
-    } else {
-        if (item.effect)
-            applyEffect(player, item.effect);
-
-        const hpHealed = restoreHealth(player, item.stat);
-        void statisticsRepository.increment('total_food_bought');
-        void statisticsRepository.increment('total_adena_spent', item.cost);
-        void statisticsRepository.increment('total_hp_healed', hpHealed);
-
-        const effectDesc = item.effect ? `\nYou feel invigorated by the ${item.effect.emoji} ${item.effect.label} buff!` : '';
-
-        return { success: true, text: `You have bought ${item.emoji} ${item.name}.${effectDesc}\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`, item };
+        return { success: true, text: equipment.bought(item), item };
     }
+
+    if (item.effect)
+        applyEffect(player, item.effect);
+
+    const hpHealed = restoreHealth(player, item.stat);
+    void statisticsRepository.increment('total_food_bought');
+    void statisticsRepository.increment('total_hp_healed', hpHealed);
+
+    const buff = item.effect ? `\nYou feel invigorated by the ${item.effect.emoji} ${item.effect.label} buff!` : '';
+
+    return {
+        success: true,
+        text: `You have bought ${item.emoji} ${item.name}.${buff}\nYou feel your strength returning, bringing you to ${formatNumber(player.health)} HP.`,
+        item,
+    };
 }
 
 /**
- * Returns the player's total attack power.
- */
-export function getTotalAttack(player: PlayerState): number {
-    return getPlayerStats(player).attack;
-}
-
-/**
- * Returns the player's total defense value.
- */
-export function getTotalDefense(player: PlayerState): number {
-    return getPlayerStats(player).defense;
-}
-
-/**
- * Returns the player's total HP regeneration per tick.
- */
-export function getTotalRegen(player: PlayerState): number {
-    return getPlayerStats(player).regen;
-}
-
-/**
- * Returns the player's total critical hit chance.
- */
-export function getTotalCrit(player: PlayerState): number {
-    return getPlayerStats(player).crit;
-}
-
-/**
- * Gathers active status effects for a player based on their current state.
- */
-export function getPlayerEffects(player: PlayerState): ActiveEffect[] {
-    return getActiveEffects(player);
-}
-
-/**
- * Processes effect expiration and clamps current health to max health if a maxHealth buff expired.
- * Runs on exact expiration timeouts as well as routine periodic ticks.
- * Does NOT perform HP regeneration.
- *
- * Returns true if effects expired or current health was clamped.
+ * Drops expired effects and clamps health if a maxHealth buff went away. Returns whether
+ * anything changed. Runs on both periodic ticks and exact-expiry timeouts; never regenerates.
  */
 export function processEffectExpiry(player: PlayerState): boolean {
     if (player.dead)
         return false;
 
-    let stateChanged = false;
     const now = Date.now();
+    const remaining = (player.effects ?? []).filter(e => e.expiresAt === undefined || e.expiresAt > now);
+    let changed = remaining.length !== (player.effects?.length ?? 0);
+    if (changed)
+        player.effects = remaining;
 
-    // 1. Clean up expired effects
-    if (player.effects && player.effects.length > 0) {
-        const remaining = player.effects.filter(e => e.expiresAt === undefined || e.expiresAt > now);
-        if (remaining.length !== player.effects.length) {
-            player.effects = remaining;
-            stateChanged = true;
-        }
+    const { maxHealth } = getPlayerStats(player);
+    if (player.health > maxHealth) {
+        player.health = maxHealth;
+        changed = true;
     }
 
-    const stats = getPlayerStats(player);
-
-    // 2. Clamp current health if a maxHealth buff expired
-    if (player.health > stats.maxHealth) {
-        player.health = stats.maxHealth;
-        stateChanged = true;
-    }
-
-    return stateChanged;
+    return changed;
 }
 
-/**
- * Applies natural HP regeneration for players outside combat.
- * Runs strictly on the periodic cadence (TICK_CONFIG.intervalMs = 5000ms).
- *
- * Returns true if health was restored.
- */
+/** Natural HP regeneration for players out of combat. Periodic cadence only. Returns whether healed. */
 export function processRegenTick(player: PlayerState): boolean {
-    if (player.dead)
+    if (player.dead || player.effects?.some(e => e.id === 'combat'))
         return false;
 
-    const inCombat = player.effects?.some(e => e.id === 'combat');
-    if (inCombat)
-        return false;
-
+    // Deliberately the POSITIVE form: `regen > 0 && health < maxHealth` bails on a NaN, whereas
+    // the inverted `regen <= 0 || health >= maxHealth` would fall through and persist NaN health.
     const stats = getPlayerStats(player);
-    if (stats.regen > 0 && player.health < stats.maxHealth) {
-        const healed = restoreHealth(player, stats.regen);
-        if (healed > 0) {
-            void statisticsRepository.increment('total_hp_regen', healed);
+    if (!(stats.regen > 0 && player.health < stats.maxHealth))
+        return false;
 
-            return true;
-        }
-    }
+    // Record what was ACTUALLY restored, not the full rate — a player within `regen` of their
+    // maximum heals less than the rate, and the statistic must reflect that.
+    const healed = restoreHealth(player, stats.regen);
+    if (!(healed > 0))
+        return false;
 
-    return false;
+    void statisticsRepository.increment('total_hp_regen', healed);
+
+    return true;
 }
 
-/**
- * processTick — entry point for passive state processing.
- *
- * @param player The player state to process
- * @param options.applyRegen Whether to apply natural HP regeneration (default: true for periodic ticks, false for discrete expiry events)
- */
+/** Passive-state entry point. `applyRegen` is false for discrete expiry events. */
 export function processTick(player: PlayerState, options: TickOptions = {}): boolean {
     if (player.dead)
         return false;
 
-    const applyRegen = options.applyRegen ?? true;
     const expiryChanged = processEffectExpiry(player);
-    const regenChanged = applyRegen ? processRegenTick(player) : false;
+    const regenChanged = (options.applyRegen ?? true) ? processRegenTick(player) : false;
 
     return expiryChanged || regenChanged;
 }

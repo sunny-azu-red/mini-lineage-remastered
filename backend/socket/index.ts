@@ -16,57 +16,42 @@ import { registerHighscoresHandlers } from './handler/highscores.handler';
 import { registerStatisticsHandlers } from './handler/statistics.handler';
 import { registerCheatHandler } from './handler/cheat.handler';
 
-/**
- * Initializes the socket-driven API — the sole transport for client->server actions/queries and
- * server->client push (plan decision A1). Now that the legacy Express+EJS app and its
- * `socket.service.ts` socket server have been demolished, this binds to the DEFAULT
- * Engine.IO path (`/socket.io`) — the transitional `/socket.io/v2` override that once avoided
- * colliding with that legacy server is gone (see git history for the prior parallel-run phase).
- */
+const REGISTRARS = [
+    registerGameHandlers, registerBattleHandlers, registerShopHandlers, registerPlayerHandlers,
+    registerHighscoresHandlers, registerStatisticsHandlers, registerCheatHandler,
+];
+
+/** The sole transport for client->server actions and server->client push. */
 export function initSocketService(server: HttpServer, sessionMiddleware: RequestHandler): SocketIOServer {
-    const io = new SocketIOServer(server, {
-        cors: { origin: false },
-    });
+    const io = new SocketIOServer(server, { cors: { origin: false } });
 
     io.use((socket, next) => {
         (sessionMiddleware as any)(socket.request, {}, next);
     });
 
     io.on('connection', (socket: Socket) => {
-        const req = socket.request as any;
-        const sessionId: string | undefined = req.session?.id;
+        const sessionId: string | undefined = (socket.request as any).session?.id;
 
         if (sessionId) {
             trackSocket(io, sessionId, socket.id);
 
-            // Hydrate is provably non-mutating — read whatever's in the store (or nothing)
-            // and send it as-is. This is what makes even a mid-ambush hard refresh harmless.
+            // Hydrate is provably non-mutating — read whatever is in the store and send it
+            // as-is. That is what makes even a mid-ambush hard refresh harmless.
             void (async () => {
                 try {
-                    const session = await getSessionData(sessionId);
-                    const player = (session ?? {}) as PlayerState;
-
+                    const player = ((await getSessionData(sessionId)) ?? {}) as PlayerState;
                     refreshExpiryTimers(io, sessionId, player);
-
                     emitHydrate(io, sessionId, { player: buildPlayerSnapshot(player), catalog: buildGameCatalog() });
                 } catch (err) {
                     logger.error({ err }, '[SOCKET] failed to build hydrate payload on connect');
                 }
             })();
+
+            socket.on('disconnect', () => untrackSocket(sessionId, socket.id));
         }
 
-        socket.on('disconnect', () => {
-            if (sessionId)
-                untrackSocket(sessionId, socket.id);
-        });
-
-        registerGameHandlers(io, socket);
-        registerBattleHandlers(io, socket);
-        registerShopHandlers(io, socket);
-        registerPlayerHandlers(io, socket);
-        registerHighscoresHandlers(io, socket);
-        registerStatisticsHandlers(io, socket);
-        registerCheatHandler(io, socket);
+        for (const register of REGISTRARS)
+            register(io, socket);
     });
 
     startTickLoop(io);

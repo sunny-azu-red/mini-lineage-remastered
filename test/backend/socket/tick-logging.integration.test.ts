@@ -101,6 +101,45 @@ describe('tick logging format (integration — real player.service/session wirin
         expect(session.health).toBe(50); // never regenerated
     });
 
+    it('logs "0 HPR" for a wounded resting player whose total regen is zero (Orc, no regen armor)', async () => {
+        // Distinct from "Paused" (combat/death block an otherwise-working regen) and from "Idle"
+        // (regen works, there is simply nothing to heal): here the player is out of combat, alive,
+        // and below max HP, yet has literally no regeneration to apply.
+        session.raceId = 1; // Orc — startHealth 150, regen 0
+        session.health = 50; // wounded, and nothing can heal it
+
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+
+        const line = lastTickLine();
+        expect(line).toContain('Resting | HP: 50/150 (0 HPR)');
+        expect(session.health).toBe(50);
+        expect(setSessionData).not.toHaveBeenCalled(); // nothing changed, nothing to persist
+    });
+
+    it('logs the "Dead" zone for a dead player, with regen reported as paused', async () => {
+        session.dead = true;
+        session.health = 0;
+        session.currentScreen = 'death';
+
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+
+        const line = lastTickLine();
+        expect(line).toContain('Dead | HP: 0/100 (Paused)');
+    });
+
+    it('logs a bare "| <Type> Expired" clause on a negative HP diff with no expiring effect to name', async () => {
+        // Health sitting above the base max with no buff to blame for it (a stale value carried
+        // in the session): the expiry sweep's clamp drives hpDiff negative while `expiring` is
+        // empty, so the type falls back to the generic "Effect" and no ": <label>" suffix is added.
+        session.health = 130;
+
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+
+        const line = lastTickLine();
+        expect(line).toContain('HP: 130 -> 100/100 (-30 HP | Effect Expired)');
+        expect(session.health).toBe(100);
+    });
+
     it('logs "<Type> Expired: <label>" when a timed buff expires with no HP change', async () => {
         session.health = 100; // at max, so no maxHealth-clamp HP diff either
         session.effects.push({

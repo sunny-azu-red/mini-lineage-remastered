@@ -1,75 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
+import { makeCatalog, makePlayer } from '../../factories';
+
+// The defaults this file's assertions were written against.
+const localCatalog = (o: Partial<Parameters<typeof makeCatalog>[0]> = {}) =>
+    makeCatalog({ foods: [ { id: 1, name: 'Bread', emoji: '🍞', stat: 20, cost: 50 }, ], ...o });
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
 
 const { default: InnScreen } = await import('@/components/screens/InnScreen');
 
-function makeCatalog(): GameCatalog {
-    return {
-        version: '1.5.0',
-        isRelease: false,
-        commitUrl: null,
-        year: 2026,
-        locale: 'en-US',
-        lowHealthThreshold: 0.2,
-        maxLevel: 50,
-        nameMinLength: 1,
-        nameMaxLength: 20,
-        races: [],
-        weapons: [],
-        armors: [],
-        foods: [
-            { id: 1, name: 'Bread', emoji: '🍞', stat: 20, cost: 50 },
-        ],
-    };
-}
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: null,
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
-
 function resetStore() {
     useGameStore.setState(
         {
             status: 'ready',
             player: makePlayer(),
-            catalog: makeCatalog(),
+            catalog: localCatalog(),
             screen: 'inn',
             highscoreRaceFilter: null,
             flash: null,
@@ -91,7 +39,7 @@ describe('InnScreen', () => {
         resetStore();
     });
 
-    it('carries the same column header tooltips as the original inn.ejs', () => {
+    it('exposes a tooltip on every abbreviated stat column header', () => {
         render(<InnScreen />);
 
         expect(screen.getByRole('columnheader', { name: 'Max HP+' })).toHaveAttribute('title', 'Maximum Health Point Increase');
@@ -121,5 +69,32 @@ describe('InnScreen', () => {
 
         expect(useGameStore.getState().flash).toEqual({ text: 'Ate!', type: 'success' });
         expect(useGameStore.getState().screen).toBe('inn');
+    });
+
+    it('shows a food\'s Max HP+ bonus when it has one, and a muted dash when it does not', () => {
+        const catalog = localCatalog();
+        useGameStore.setState(
+            {
+                catalog: {
+                    ...catalog,
+                    foods: [
+                        { id: 1, name: 'Bread', emoji: '🍞', stat: 20, cost: 50 },
+                        { id: 2, name: 'Hearty Stew', emoji: '🍲', stat: 40, cost: 120, maxHealth: 5 },
+                    ],
+                },
+            },
+            false,
+        );
+        const { container } = render(<InnScreen />);
+
+        expect(container.querySelector('.hp')?.textContent).toBe('+5');
+        expect(container.querySelector('.muted')?.textContent).toBe('-');
+    });
+
+    it('renders nothing until the catalog arrives (the item list comes straight from it)', () => {
+        useGameStore.setState({ catalog: null }, false);
+        const { container } = render(<InnScreen />);
+
+        expect(container).toBeEmptyDOMElement();
     });
 });

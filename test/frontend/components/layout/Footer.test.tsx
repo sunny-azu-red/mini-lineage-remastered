@@ -1,27 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { GameCatalog } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 import Footer from '@/components/layout/Footer';
-
-function makeCatalog(overrides: Partial<GameCatalog> = {}): GameCatalog {
-    return {
-        version: '1.5.0',
-        isRelease: false,
-        commitUrl: null,
-        year: 2026,
-        locale: 'en-US',
-        lowHealthThreshold: 0.2,
-        maxLevel: 50,
-        nameMinLength: 1,
-        nameMaxLength: 20,
-        races: [],
-        weapons: [],
-        armors: [],
-        foods: [],
-        ...overrides,
-    };
-}
+import { makeCatalog } from '../../factories';
 
 describe('Footer', () => {
     it('renders a link to the tagged commit when commitUrl is set (release build)', () => {

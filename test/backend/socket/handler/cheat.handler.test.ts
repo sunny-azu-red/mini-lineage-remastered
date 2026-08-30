@@ -28,7 +28,9 @@ import { withSession, NO_CHANGE } from '@/socket/session';
 import { sessionTracker, emitStateUpdate } from '@/socket/emitter';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { CHEAT_CONFIG } from '@/constant/game.constant';
+import { logger } from '@/config/logger.config';
 import type { PlayerState, SessionTrackerEntry } from '@/interface';
+import { makePlayer } from '../../factories';
 
 function makeSocket() {
     const handlers: Record<string, (...args: any[]) => any> = {};
@@ -41,13 +43,8 @@ function makeSocket() {
     return { socket, handlers };
 }
 
-function makePlayer(overrides: Partial<PlayerState> = {}): PlayerState {
-    return {
-        name: 'Hero', raceId: 0, health: 100, adena: 0, experience: 0,
-        weaponId: 0, armorId: 0, dead: false, ...overrides,
-    } as PlayerState;
-}
-
+// The defaults this file's assertions were written against.
+const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) => makePlayer({ name: 'Hero', dead: false, ...o });
 describe('cheat.handler (input / Konami relay)', () => {
     const io = {} as SocketIOServer;
 
@@ -74,7 +71,7 @@ describe('cheat.handler (input / Konami relay)', () => {
     it('applies the cheat effect once the full Konami sequence is entered, silently — no flash/notice, matching the old game exactly', async () => {
         const { socket, handlers } = makeSocket();
         sessionTracker.set('sid-1', { socketIds: new Set(['sock-1']), lastSeen: Date.now() } as SessionTrackerEntry);
-        const player = makePlayer();
+        const player = localPlayer();
         withSessionAgainst(player);
 
         registerCheatHandler(io, socket);
@@ -92,7 +89,7 @@ describe('cheat.handler (input / Konami relay)', () => {
     it('resets the buffer after a completed sequence (case-insensitive keys)', async () => {
         const { socket, handlers } = makeSocket();
         sessionTracker.set('sid-1', { socketIds: new Set(['sock-1']), lastSeen: Date.now() } as SessionTrackerEntry);
-        const player = makePlayer();
+        const player = localPlayer();
         withSessionAgainst(player);
 
         registerCheatHandler(io, socket);
@@ -115,7 +112,7 @@ describe('cheat.handler (input / Konami relay)', () => {
     it('does not apply the cheat for a dead or not-yet-started player (silent no-op, no ack to report to)', async () => {
         const { socket, handlers } = makeSocket();
         sessionTracker.set('sid-1', { socketIds: new Set(['sock-1']), lastSeen: Date.now() } as SessionTrackerEntry);
-        const deadPlayer = makePlayer({ dead: true });
+        const deadPlayer = localPlayer({ dead: true });
         withSessionAgainst(deadPlayer);
 
         registerCheatHandler(io, socket);
@@ -160,5 +157,53 @@ describe('cheat.handler (input / Konami relay)', () => {
 
         await expect(handlers['input']({ key: '' })).resolves.not.toThrow();
         expect(withSession).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when the session has no tracker entry (never connected, or already cleaned up)', async () => {
+        // The input buffer lives on the tracker, not the session — with no tracker there is
+        // nowhere to record keystrokes, so the relay bails before touching the session store.
+        const { socket, handlers } = makeSocket();
+        // beforeEach already cleared sessionTracker; deliberately do NOT register one here.
+        registerCheatHandler(io, socket);
+
+        await expect(sendSequence(handlers, CHEAT_CONFIG.konamiSequence)).resolves.not.toThrow();
+
+        expect(sessionTracker.has('sid-1')).toBe(false);
+        expect(withSession).not.toHaveBeenCalled();
+    });
+
+    it('drops the oldest keystroke once the buffer overflows, so a stray key before the sequence still matches', async () => {
+        const { socket, handlers } = makeSocket();
+        sessionTracker.set('sid-1', { socketIds: new Set(['sock-1']), lastSeen: Date.now() } as SessionTrackerEntry);
+        const player = localPlayer();
+        withSessionAgainst(player);
+
+        registerCheatHandler(io, socket);
+        // One extra key first: the buffer grows past konamiSequence.length on the final push and
+        // has to shift the stray 'x' off the front for the match to still land.
+        await sendSequence(handlers, ['x', ...CHEAT_CONFIG.konamiSequence]);
+
+        expect(player.cheated).toBe(true);
+        expect(emitStateUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('swallows and debug-logs an error thrown by withSession (fire-and-forget, no ack to report it to)', async () => {
+        const { socket, handlers } = makeSocket();
+        sessionTracker.set('sid-1', { socketIds: new Set(['sock-1']), lastSeen: Date.now() } as SessionTrackerEntry);
+        vi.mocked(withSession).mockRejectedValue(new Error('session vanished mid-cheat'));
+
+        const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => undefined as any);
+        registerCheatHandler(io, socket);
+
+        await expect(sendSequence(handlers, CHEAT_CONFIG.konamiSequence)).resolves.not.toThrow();
+
+        expect(debugSpy).toHaveBeenCalledWith(
+            { err: expect.any(Error) },
+            expect.stringContaining('input handler error'),
+        );
+        expect(emitStateUpdate).not.toHaveBeenCalled();
+
+        debugSpy.mockRestore();
+        vi.mocked(withSession).mockReset();
     });
 });

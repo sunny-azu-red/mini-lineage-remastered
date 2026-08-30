@@ -6,10 +6,7 @@ import { formatEffectTooltip } from '@/util/format.util';
 import { getItemModifier } from '@/util/game.util';
 import { RACES, WEAPONS, ARMORS } from '@/constant/game.constant';
 
-/**
- * Flattens an Item's modifiers into a display-ready ItemView. Shared by
- * the player snapshot serializer and the (static) game catalog serializer.
- */
+/** Flattens an Item's modifiers into a display-ready view. */
 export function toItemView(item: Item): ItemView {
     return {
         id: item.id,
@@ -23,7 +20,7 @@ export function toItemView(item: Item): ItemView {
     };
 }
 
-const EMPTY_SNAPSHOT_DEFAULTS: Omit<PlayerSnapshot, 'revision'> = {
+const EMPTY_SNAPSHOT: Omit<PlayerSnapshot, 'revision'> = {
     started: false,
     name: null,
     raceId: null,
@@ -55,27 +52,17 @@ const EMPTY_SNAPSHOT_DEFAULTS: Omit<PlayerSnapshot, 'revision'> = {
     lastBattle: null,
 };
 
-/**
- * Replaces layout.view.ts's renderStatus/renderInventory/renderEffects and
- * player.view.ts's renderCharacterView data-assembly with a single pure
- * PlayerState -> PlayerSnapshot mapping. Reuses every existing math/player
- * service computation rather than re-deriving it.
- */
+/** The single pure PlayerState -> PlayerSnapshot mapping. Reuses the math/player services. */
 export function buildPlayerSnapshot(player: PlayerState): PlayerSnapshot {
     const revision = player.revision ?? 0;
 
     if (!isGameStarted(player))
-        return { revision, ...EMPTY_SNAPSHOT_DEFAULTS };
+        return { revision, ...EMPTY_SNAPSHOT };
 
     const race = RACES[player.raceId];
-    const weapon = WEAPONS[player.weaponId];
-    const armor = ARMORS[player.armorId];
     const stats = getPlayerStats(player);
-    const activeEffects = getActiveEffects(player);
-
     const level = calculateLevel(player.experience);
-    const xpProgress = getXpProgress(player.experience);
-    const xpNeeded = getXpNeededToLevelUp(player.experience);
+    const xp = getXpProgress(player.experience);
 
     return {
         revision,
@@ -94,15 +81,15 @@ export function buildPlayerSnapshot(player: PlayerState): PlayerSnapshot {
         experience: player.experience,
         level,
         isMaxLevel: isMaxLevel(level),
-        xpCurrent: xpProgress.current,
-        xpRequired: xpProgress.required,
-        xpPercent: xpProgress.percent,
-        xpNeeded,
+        xpCurrent: xp.current,
+        xpRequired: xp.required,
+        xpPercent: xp.percent,
+        xpNeeded: getXpNeededToLevelUp(player.experience),
 
         adena: player.adena,
 
-        weapon: toItemView(weapon),
-        armor: toItemView(armor),
+        weapon: toItemView(WEAPONS[player.weaponId]),
+        armor: toItemView(ARMORS[player.armorId]),
 
         stats: {
             attack: stats.attack,
@@ -111,7 +98,7 @@ export function buildPlayerSnapshot(player: PlayerState): PlayerSnapshot {
             regen: stats.regen,
             ambushRisk: stats.ambushRisk,
         },
-        effects: activeEffects.map(effect => ({
+        effects: getActiveEffects(player).map(effect => ({
             id: effect.id,
             type: effect.type,
             emoji: effect.emoji,

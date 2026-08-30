@@ -7,12 +7,9 @@ import { commitSuicide, syncZoneAuras } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 
-/**
- * From player.controller.ts's postSuicide. No dedicated rate limiter today (only the
- * flood limiter, applied to every event by registerEvent) — confirmed via game.route.ts,
- * where /suicide carries no rate-limit middleware, unlike /battle and the shop/inn routes.
- */
 export function registerPlayerHandlers(io: SocketIOServer, socket: Socket): void {
+    // Deliberately no dedicated rate limiter (only the global flood limiter), matching the
+    // original /suicide route.
     registerEvent(io, socket, {
         event: 'player:suicide',
         schema: EmptyPayloadSchema,
@@ -21,17 +18,19 @@ export function registerPlayerHandlers(io: SocketIOServer, socket: Socket): void
         handler: (ctx): MutationResult => {
             commitSuicide(ctx.player);
             void statisticsRepository.increment('total_players_suicided');
+            // Stamped here rather than left to a follow-up player:screen, same as game:start and
+            // battle:fight do — the client now moves to the death screen in the same atomic store
+            // update that applies this ack, so it never sends a separate navigation for it.
+            ctx.player.currentScreen = 'death';
 
             return { player: buildPlayerSnapshot(ctx.player), flash: null };
         },
     });
 
     /**
-     * Fired by the client's navigate()/hydrate() (gameStore.ts) on every screen change — the
-     * direct replacement for the old game's URL-path-based zone.middleware.ts, which recomputed
-     * combat/resting zones synchronously on every page navigation. `requireAlive` is deliberately
-     * NOT a guard here: a dead player is always pinned to 'death' client-side anyway, so recording
-     * that is harmless, and syncZoneAuras already gives dead players neither aura regardless.
+     * Reports the client's current screen so syncZoneAuras can classify combat/resting from it.
+     * `requireAlive` is intentionally absent: a dead player is pinned to 'death' client-side and
+     * syncZoneAuras gives dead players no aura anyway, so recording it is harmless.
      */
     registerEvent(io, socket, {
         event: 'player:screen',

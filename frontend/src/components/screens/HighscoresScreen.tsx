@@ -1,80 +1,44 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 import type { HighscoreRow } from '@shared/contract';
 import { formatAdena, formatNumber, formatShortDate, truncate } from '@shared/format';
 import { useGameStore } from '@/store/gameStore';
-import { request } from '@/socket/client';
+import { useRequest } from '@/socket/useRequest';
 import DataTable, { type Column } from '@/components/common/DataTable';
+import BackLink from '@/components/common/BackLink';
+import LoadingPanel from '@/components/common/LoadingPanel';
 
-// `highscores:list` is a read-only event — it never fails with a rejectable game-state error,
-// so it's fetched directly via `request()` in an effect rather than through `useAction` (which
-// exists specifically to handle mutating actions' pending state). StatisticsScreen follows the
-// identical pattern for consistency.
 const COLUMNS_MIN_WIDTH = 545;
-
-// Matches today's highscores.view.ts's `truncate(score.name, 20)` call exactly.
 const NAME_TRUNCATE_LENGTH = 20;
 
 export default function HighscoresScreen() {
     const catalog = useGameStore(state => state.catalog);
-    const player = useGameStore(state => state.player);
     const raceFilter = useGameStore(state => state.highscoreRaceFilter);
     const navigate = useGameStore(state => state.navigate);
-    const [rows, setRows] = useState<HighscoreRow[]>([]);
+    const { data, loading } = useRequest('highscores:list', { raceId: raceFilter });
 
-    useEffect(() => {
-        let cancelled = false;
-
-        void request('highscores:list', { raceId: raceFilter }).then(res => {
-            if (!cancelled && res.ok)
-                setRows(res.data.rows);
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [raceFilter]);
-
+    // Must stay the FIRST guard: the race-filter row below needs the catalog to render at all.
     if (!catalog)
         return null;
 
-    function raceEmoji(raceId: number): string {
-        return catalog!.races.find(r => r.id === raceId)?.emoji ?? '❓';
-    }
+    const rows: HighscoreRow[] = data?.rows ?? [];
+
+    const races = catalog.races;
 
     function handleFilter(e: MouseEvent<HTMLAnchorElement>, raceId: number | null) {
         e.preventDefault();
         navigate('highscores', { raceFilter: raceId });
     }
 
-    function handleBack(e: MouseEvent<HTMLAnchorElement>) {
-        e.preventDefault();
-        navigate(player?.started ? 'home' : 'start');
-    }
-
     const columns: Column<HighscoreRow>[] = [
         {
             key: 'name',
             header: 'Name',
-            render: row => (
-                <>
-                    {raceEmoji(row.raceId)} {truncate(row.name, NAME_TRUNCATE_LENGTH)}
-                </>
-            ),
+            render: row => <>{races.find(r => r.id === row.raceId)?.emoji ?? '❓'} {truncate(row.name, NAME_TRUNCATE_LENGTH)}</>,
         },
         { key: 'level', header: 'Level', headerClassName: 'center', className: 'center', render: row => formatNumber(row.level) },
         { key: 'totalXp', header: 'Total XP', className: 'xp', render: row => formatNumber(row.totalXp) },
-        {
-            key: 'adena',
-            header: 'Wealth',
-            className: 'gold',
-            render: row => <>🪙 {formatAdena(row.adena)}</>,
-        },
-        {
-            key: 'created',
-            header: 'Date',
-            className: 'muted',
-            render: row => formatShortDate(row.created),
-        },
+        { key: 'adena', header: 'Wealth', className: 'gold', render: row => <>🪙 {formatAdena(row.adena)}</> },
+        { key: 'created', header: 'Date', className: 'muted', render: row => formatShortDate(row.created) },
     ];
 
     return (
@@ -87,7 +51,7 @@ export default function HighscoresScreen() {
                 >
                     All
                 </a>
-                {catalog.races.map(race => (
+                {races.map(race => (
                     <a
                         key={race.id}
                         href={`#highscores/${race.slug}`}
@@ -99,7 +63,14 @@ export default function HighscoresScreen() {
                 ))}
             </div>
 
-            {rows.length > 0 ? (
+            {/*
+              * `!data` — not `loading` alone: a re-fetch after switching race tabs keeps the
+              * previous table on screen rather than flashing a spinner. An empty hall is only
+              * ever claimed once a request has actually come back.
+              */}
+            {loading && !data ? (
+                <LoadingPanel label="Consulting the chronicles…" />
+            ) : rows.length > 0 ? (
                 <DataTable minWidth={COLUMNS_MIN_WIDTH} columns={columns} rows={rows} rowKey={row => `${row.name}-${row.created}`} />
             ) : (
                 <p>
@@ -109,11 +80,7 @@ export default function HighscoresScreen() {
                 </p>
             )}
 
-            <p className="last">
-                <a href="#home" onClick={handleBack}>
-                    {player?.started ? 'Continue your journey' : 'Go back to game start'}
-                </a>
-            </p>
+            <BackLink className="last" />
         </>
     );
 }

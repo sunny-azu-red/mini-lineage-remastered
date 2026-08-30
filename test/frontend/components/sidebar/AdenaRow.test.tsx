@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
-import type { PlayerSnapshot } from '@shared/contract';
 import AdenaRow from '@/components/sidebar/AdenaRow';
+import { makePlayer } from '../../factories';
+
+// The defaults this file's assertions were written against.
+const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) =>
+    makePlayer({ xpCurrent: 90, xpPercent: 90, xpNeeded: 10, ...o });
 
 function stubMatchMedia(matches: boolean) {
     Object.defineProperty(window, 'matchMedia', {
@@ -15,19 +19,6 @@ function stubMatchMedia(matches: boolean) {
     });
 }
 
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1, started: true, name: 'Hero', raceId: 1, raceLabel: 'Human', raceEmoji: '🧑',
-        health: 80, maxHealth: 100, hpPercent: 80, lowHealth: false,
-        experience: 10, level: 2, isMaxLevel: false, xpCurrent: 90, xpRequired: 100, xpPercent: 90, xpNeeded: 10,
-        adena: 500, weapon: null, armor: null, stats: null, effects: [],
-        dead: false, ambushed: false, coward: false, cheated: false, deathReason: null, highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
-
 describe('AdenaRow', () => {
     beforeEach(() => {
         vi.useFakeTimers();
@@ -39,15 +30,15 @@ describe('AdenaRow', () => {
     });
 
     it('renders the true formatted value instantly on first mount (no 0→N sweep)', () => {
-        const { getByText } = render(<AdenaRow player={makePlayer({ adena: 500 })} />);
+        const { getByText } = render(<AdenaRow player={localPlayer({ adena: 500 })} />);
         expect(getByText('500')).toBeInTheDocument();
     });
 
     it('animates toward a higher value over time on a gain (e.g. a battle reward)', () => {
-        const { rerender, getByText } = render(<AdenaRow player={makePlayer({ adena: 500 })} />);
+        const { rerender, getByText } = render(<AdenaRow player={localPlayer({ adena: 500 })} />);
 
         act(() => {
-            rerender(<AdenaRow player={makePlayer({ adena: 800 })} />);
+            rerender(<AdenaRow player={localPlayer({ adena: 800 })} />);
         });
         act(() => {
             vi.advanceTimersByTime(300);
@@ -64,14 +55,22 @@ describe('AdenaRow', () => {
     });
 
     it('animates toward a lower value over time on a loss (e.g. a purchase)', () => {
-        const { rerender, getByText } = render(<AdenaRow player={makePlayer({ adena: 500 })} />);
+        const { rerender, getByText } = render(<AdenaRow player={localPlayer({ adena: 500 })} />);
 
         act(() => {
-            rerender(<AdenaRow player={makePlayer({ adena: 100 })} />);
+            rerender(<AdenaRow player={localPlayer({ adena: 100 })} />);
         });
         act(() => {
             vi.advanceTimersByTime(700);
         });
         expect(getByText('100')).toBeInTheDocument();
+    });
+
+    // `adena` is null on a snapshot for a character that has not been started yet — render a
+    // plain 0 rather than "NaN"/"null".
+    it('falls back to 0 when the snapshot carries a null adena', () => {
+        const { container } = render(<AdenaRow player={localPlayer({ adena: null })} />);
+
+        expect(container.querySelector('.animate-adena')?.textContent).toBe('0');
     });
 });

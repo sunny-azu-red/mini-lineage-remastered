@@ -42,4 +42,28 @@ describe('ErrorScreen', () => {
         expect(useGameStore.getState().screen).toBe('home');
         vi.restoreAllMocks();
     });
+
+    it('that same fallback routes an unstarted player to the Game Start screen, not home', () => {
+        vi.spyOn(window.history, 'length', 'get').mockReturnValue(1);
+        const backSpy = vi.spyOn(window.history, 'back').mockImplementation(() => {});
+        useGameStore.setState({ player: { started: false } as any, screen: 'error' }, false);
+
+        render(<ErrorScreen />);
+        fireEvent.click(screen.getByRole('link', { name: /Return to safer lands/ }));
+
+        expect(backSpy).not.toHaveBeenCalled();
+        expect(useGameStore.getState().screen).toBe('start');
+        vi.restoreAllMocks();
+    });
+
+    it('and routes to the Game Start screen when there is no player at all yet', () => {
+        vi.spyOn(window.history, 'length', 'get').mockReturnValue(1);
+        vi.spyOn(window.history, 'back').mockImplementation(() => {});
+
+        render(<ErrorScreen />);
+        fireEvent.click(screen.getByRole('link', { name: /Return to safer lands/ }));
+
+        expect(useGameStore.getState().screen).toBe('start');
+        vi.restoreAllMocks();
+    });
 });

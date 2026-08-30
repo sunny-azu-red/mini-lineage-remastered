@@ -8,7 +8,7 @@ vi.mock('@/repository/statistics.repository', () => ({
 
 import { registerEvent } from '@/socket/registry';
 import { registerGameHandlers } from '@/socket/handler/game.handler';
-import { requireNotStarted } from '@/socket/guard';
+import { requireNotStarted, requireDead } from '@/socket/guard';
 import type { SessionContext } from '@/socket/session';
 import type { PlayerState } from '@/interface';
 
@@ -53,8 +53,11 @@ describe('game.handler', () => {
     });
 
     describe('game:restart', () => {
-        it('has no guards — works whether started or not', () => {
-            expect(getDef('game:restart').guards).toBeUndefined();
+        // Restarting destroys a character, so only a dead one may be destroyed. The old app got
+        // this from cheatMiddleware gating /restart; here it is a guard on the event itself, the
+        // one place a raw socket client cannot route around.
+        it('is guarded by requireDead — a living character can never be wiped', () => {
+            expect(getDef('game:restart').guards).toEqual([requireDead]);
         });
 
         it('resets the player in place (not session.destroy) and returns a fresh hydrate payload', () => {

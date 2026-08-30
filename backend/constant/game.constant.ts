@@ -8,11 +8,7 @@ export const REPO_COMMIT_URL = 'https://github.com/sunny-azu-red/mini-lineage-re
 export const MAX_LEVEL = 80;
 export const LOCALE = 'en-US';
 
-/**
- * Stat Modifier Display Configurations
- *
- * Configures labels, units, and display rules for stat modifiers shown in buff/item tooltips.
- */
+/** Labels/units for stat modifiers shown in buff and item tooltips. */
 export const STAT_MODIFIER_CONFIG = {
     maxHealth: { label: 'Max HP' },
     regen: { label: 'HP Regen' },
@@ -24,11 +20,7 @@ export const STAT_MODIFIER_CONFIG = {
     adenaMultiplier: { label: 'Adena', isMultiplier: true },
 } as const satisfies Record<StatModifierType, StatModifierConfig>;
 
-/**
- * Race Data Configurations
- *
- * Starting values for each race
- */
+/** Starting values per race. */
 export const RACES = [
     {
         id: RaceType.Human, label: `Human`, plural: `Humans`, emoji: `🧙`, enemyRaceId: RaceType.Orc,
@@ -52,12 +44,7 @@ export const RACES = [
     },
 ] satisfies Race[];
 
-/**
- * Effects Configuration
- *
- * All buffs, debuffs, town resting effects, and cheat parameters live here
- * for easy balance tuning in one single place.
- */
+/** Every aura, buff, debuff and cheat effect — one place for balance tuning. */
 export const EFFECTS_CONFIG = {
     // auras
     restingAura: {
@@ -79,7 +66,7 @@ export const EFFECTS_CONFIG = {
         type: 'aura' as const,
         emoji: '🌿',
         label: 'Regenerating',
-        modifiers: [], // populated dynamically at runtime with total regen rate
+        modifiers: [], // filled in at runtime with the total regen rate
     },
 
     // buffs / debuffs
@@ -88,7 +75,7 @@ export const EFFECTS_CONFIG = {
         type: 'buff' as const,
         emoji: '🐣',
         label: 'Newbie Blessing',
-        durationMs: 300_000, // 5m
+        durationMs: 300_000,
         modifiers: [
             { type: 'maxHealth' as const, value: 20 },
             { type: 'defense' as const, value: 2 },
@@ -100,7 +87,7 @@ export const EFFECTS_CONFIG = {
         type: 'debuff' as const,
         emoji: '👁️',
         label: 'Hexed',
-        durationMs: 60_000, // 1m
+        durationMs: 60_000,
         modifiers: [
             { type: 'ambushRisk' as const, value: 4 },
             { type: 'crit' as const, value: -2 },
@@ -126,7 +113,7 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '🥓',
         label: 'Satisfied',
-        durationMs: 90_000, // 1.5m
+        durationMs: 90_000,
         modifiers: [{ type: 'maxHealth' as const, value: 10 }],
     },
     heartyMash: {
@@ -135,7 +122,7 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '🍖',
         label: 'Well Fed',
-        durationMs: 150_000, // 2.5m
+        durationMs: 150_000,
         modifiers: [{ type: 'maxHealth' as const, value: 30 }],
     },
     roastedPheasant: {
@@ -144,19 +131,14 @@ export const EFFECTS_CONFIG = {
         group: 'food' as const,
         emoji: '👑',
         label: 'Gourmet Feast',
-        durationMs: 300_000, // 5m
+        durationMs: 300_000,
         modifiers: [{ type: 'maxHealth' as const, value: 60 }],
     },
 } as const satisfies Record<string, EffectConfig>;
 
 /**
- * Item Data Configurations
- *
- * Game combat math (HP lost, Enemies killed, XP and Adena gained) scales
- * dynamically based solely on the `stat` property of the equipped Weapon and Armor.
- *
- * You can seamlessly add new Items to the end of these arrays without breaking
- * the game engine, provided the `stat` roughly follows the established scaling curve.
+ * Combat math scales purely off the equipped weapon's/armor's `stat`, so new items can be
+ * appended freely as long as `stat` roughly follows the established curve.
  */
 export const ARMORS = [
     { id: 0, name: `Peasant's Tunic`, emoji: '🧥', stat: 2, cost: 0 }, // start item
@@ -184,19 +166,11 @@ export const FOODS = [
     { id: 4, name: 'Roasted Pheasant', emoji: '🍗', stat: 65, cost: 1_200, effect: EFFECTS_CONFIG.roastedPheasant },
 ] satisfies Item[];
 
-/**
- * HP Configuration
- */
 export const HP_CONFIG = {
     lowHealthThreshold: 0.25,
 } as const;
 
-/**
- * Battle Scaling Configuration
- *
- * All tuning knobs for the combat simulation live here.
- * Adjust these values to rebalance the game without touching service logic.
- */
+/** Every tuning knob for the combat simulation — rebalance here, never in the services. */
 export const BATTLE_CONFIG = {
     enemyCount: { minMult: 0.3, maxMult: 0.6 },
     dangerLevel: { scaling: 0.6 },
@@ -208,16 +182,9 @@ export const BATTLE_CONFIG = {
 } as const;
 
 /**
- * Tick & Zone Configuration
- *
- * Controls the server-side tick cadence (regen + timed-effect expiry sweep — see tick.ts) and
- * zone classifications. combatZones/restingZones classify screens (not URL paths, though the
- * grouping is identical to the old game's zone.middleware.ts) — combatZones are screens where
- * passive ticks pause HP regeneration, restingZones are screens where peaceful HP regeneration is
- * applied. A screen in neither list (Statistics/Races/Start/Error) gets no zone aura at all,
- * matching the old game's behavior for paths outside both its lists exactly. Zone classification
- * itself is NOT tick-driven — see player.service.ts's syncZoneAuras and the player:screen socket
- * event, which update it instantly on navigation, same as the old app did on every page load.
+ * Tick cadence plus zone classification by SCREEN. Combat zones pause regen, resting zones apply
+ * it; a screen in neither (Statistics/Races/Start/Error) gets no aura. Classification is not
+ * tick-driven — syncZoneAuras updates it instantly on every player:screen event.
  */
 export const TICK_CONFIG = {
     intervalMs: 5_000,
@@ -225,24 +192,15 @@ export const TICK_CONFIG = {
     restingZones: ['home', 'inn', 'weapons', 'armors', 'character', 'highscores'] as ScreenId[],
 } as const;
 
-/**
- * Session Configuration
- */
 export const SESSION_CONFIG = {
     shortIdLength: 7,
     gracePeriodMs: 10_000,
 } as const;
 
-/**
- * Cheat / Secret Sequence Configuration
- */
 export const CHEAT_CONFIG = {
     konamiSequence: ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'],
 } as const;
 
-/**
- * Character Generation & Validation Configuration
- */
 export const CHARACTER_CONFIG = {
     minAge: 9,
     maxAge: 69,
@@ -260,27 +218,21 @@ export const CHARACTER_CONFIG = {
     builds: ['a hardy', 'a wiry', 'a sturdy', 'a fit', 'a rugged', 'a robust', 'a solid'],
 } as const;
 
-/**
- * Highscores Configuration
- */
 export const HIGHSCORES_CONFIG = {
     limit: 25,
 } as const;
 
-/**
- * Rate Limiting Configuration
- */
 export const RATE_LIMIT_CONFIG = {
     battle: {
-        windowMs: 60 * 1000, // 1 minute
-        limit: 60, // 60 battles per minute
+        windowMs: 60_000,
+        limit: 60,
     },
     shop: {
-        windowMs: 60 * 1000, // 1 minute
-        limit: 30, // 30 shop actions per minute
+        windowMs: 60_000,
+        limit: 30,
     },
     flood: {
-        windowMs: 60 * 1000, // 1 minute
-        limit: 300, // 300 events per minute, applied to every socket event
+        windowMs: 60_000,
+        limit: 300,
     },
 } as const;

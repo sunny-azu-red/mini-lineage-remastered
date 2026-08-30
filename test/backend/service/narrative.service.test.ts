@@ -4,6 +4,7 @@ import { PlayerState, BattleResult } from '@/interface';
 import { RACES } from '@/constant/game.constant';
 import { BATTLE_LEVEL_UP_TEMPLATES, BATTLE_OUTCOME_TEMPLATES, BATTLE_MOVES } from '@/constant/narratives.constant';
 import { fillTemplate, formatAdena, formatNumber } from '@/util/format.util';
+import { makePlayer } from '../factories';
 
 const makeResult = (overrides: Partial<BattleResult> = {}): BattleResult => ({
     enemiesKilled: 1,
@@ -16,15 +17,6 @@ const makeResult = (overrides: Partial<BattleResult> = {}): BattleResult => ({
     ...overrides,
 });
 
-const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
-    raceId: 0,
-    health: 100,
-    adena: 0,
-    experience: 0,
-    weaponId: 0,
-    armorId: 0,
-    ...overrides,
-} as PlayerState);
 
 describe('buildBattleNarrative', () => {
     describe('opponent-race selection per race', () => {

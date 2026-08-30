@@ -1,77 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
+import type { PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
+import { makeCatalog, makePlayer } from '../../factories';
+
+// The defaults this file's assertions were written against.
+const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) =>
+    makePlayer({ weapon: { id: 1, name: 'Elven Needle', emoji: '🗡️', stat: 16, cost: 300 }, ...o });
+
+// The defaults this file's assertions were written against.
+const localCatalog = (o: Partial<Parameters<typeof makeCatalog>[0]> = {}) =>
+    makeCatalog({ weapons: [ { id: 0, name: `Brawler's Fists`, emoji: '👊', stat: 7, cost: 0 }, { id: 1, name: 'Elven Needle', emoji: '🗡️', stat: 16, cost: 300 }, { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 }, ], ...o });
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
 
 const { default: WeaponsShopScreen } = await import('@/components/screens/WeaponsShopScreen');
 
-function makeCatalog(): GameCatalog {
-    return {
-        version: '1.5.0',
-        isRelease: false,
-        commitUrl: null,
-        year: 2026,
-        locale: 'en-US',
-        lowHealthThreshold: 0.2,
-        maxLevel: 50,
-        nameMinLength: 1,
-        nameMaxLength: 20,
-        races: [],
-        weapons: [
-            { id: 0, name: `Brawler's Fists`, emoji: '👊', stat: 7, cost: 0 },
-            { id: 1, name: 'Elven Needle', emoji: '🗡️', stat: 16, cost: 300 },
-            { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 },
-        ],
-        armors: [],
-        foods: [],
-    };
-}
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: { id: 1, name: 'Elven Needle', emoji: '🗡️', stat: 16, cost: 300 },
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
-
 function resetStore(player: PlayerSnapshot) {
     useGameStore.setState(
         {
             status: 'ready',
             player,
-            catalog: makeCatalog(),
+            catalog: localCatalog(),
             screen: 'weapons',
             highscoreRaceFilter: null,
             flash: null,
@@ -90,10 +41,10 @@ describe('WeaponsShopScreen', () => {
         // own store) — a safe default so tests that don't care about the response don't crash;
         // individual tests below still override it with their own mockResolvedValue.
         requestMock.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'mock default' } });
-        resetStore(makePlayer());
+        resetStore(localPlayer());
     });
 
-    it('carries the same column header tooltips as the original weapons-shop.ejs', () => {
+    it('exposes a tooltip on every abbreviated stat column header', () => {
         render(<WeaponsShopScreen />);
 
         expect(screen.getByRole('columnheader', { name: 'C. Hit %' })).toHaveAttribute('title', 'Critical Hit Chance');
@@ -114,7 +65,7 @@ describe('WeaponsShopScreen', () => {
     });
 
     it('purchasing successfully calls applyMutation and stays on the weapons screen', async () => {
-        const newPlayer = makePlayer({ weapon: { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 }, adena: 200 });
+        const newPlayer = localPlayer({ weapon: { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 }, adena: 200 });
         requestMock.mockResolvedValue({ ok: true, data: { player: newPlayer, flash: { text: 'Bought!', type: 'success' } } });
 
         render(<WeaponsShopScreen />);
@@ -134,7 +85,7 @@ describe('WeaponsShopScreen', () => {
         // purchase; the SPA must reproduce it explicitly (a local purchase-epoch counter,
         // remounting SelectActionForm) so the button can't be spammed to buy the same item
         // repeatedly.
-        const newPlayer = makePlayer({
+        const newPlayer = localPlayer({
             revision: 2, // a real mutation always bumps this
             weapon: { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000 },
             adena: 200,
@@ -186,5 +137,33 @@ describe('WeaponsShopScreen', () => {
 
         await waitFor(() => expect(useGameStore.getState().screen).toBe('home'));
         expect(requestMock).not.toHaveBeenCalledWith('shop:purchase', expect.anything());
+    });
+
+    it('shows a weapon\'s critical-hit chance when it has one, and a muted dash when it does not', () => {
+        const catalog = localCatalog();
+        useGameStore.setState(
+            {
+                catalog: {
+                    ...catalog,
+                    weapons: [
+                        { id: 0, name: `Brawler's Fists`, emoji: '👊', stat: 7, cost: 0 },
+                        { id: 1, name: 'Elven Needle', emoji: '🗡️', stat: 16, cost: 300 },
+                        { id: 2, name: 'Stormbringer', emoji: '⚡', stat: 28, cost: 5000, crit: 7 },
+                    ],
+                },
+            },
+            false,
+        );
+        const { container } = render(<WeaponsShopScreen />);
+
+        expect(container.querySelector('.crit')?.textContent).toBe('7%');
+        expect(container.querySelector('.muted')?.textContent).toBe('-');
+    });
+
+    it('renders nothing until the catalog arrives (the item list comes straight from it)', () => {
+        useGameStore.setState({ catalog: null }, false);
+        const { container } = render(<WeaponsShopScreen />);
+
+        expect(container).toBeEmptyDOMElement();
     });
 });

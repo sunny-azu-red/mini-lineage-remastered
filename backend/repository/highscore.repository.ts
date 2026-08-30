@@ -2,6 +2,8 @@ import { dbPool } from '@/config/database.config';
 import { HighscoreEntry } from '@/interface';
 import { HIGHSCORES_CONFIG } from '@/constant/game.constant';
 
+const ORDER = `ORDER BY total_xp DESC, adena DESC LIMIT ${HIGHSCORES_CONFIG.limit}`;
+
 export const highscoreRepository = {
     async insert(data: { name: string; experience: number; raceId: number; adena: number; level: number }): Promise<void> {
         await dbPool.execute(
@@ -11,16 +13,9 @@ export const highscoreRepository = {
     },
 
     async findAll(raceId?: number): Promise<HighscoreEntry[]> {
-        if (raceId !== undefined) {
-            const [rows] = await dbPool.execute(
-                `SELECT * FROM highscores WHERE race_id = ? ORDER BY total_xp DESC, adena DESC LIMIT ${HIGHSCORES_CONFIG.limit}`,
-                [raceId]
-            );
-
-            return rows as HighscoreEntry[];
-        }
-
-        const [rows] = await dbPool.execute(`SELECT * FROM highscores ORDER BY total_xp DESC, adena DESC LIMIT ${HIGHSCORES_CONFIG.limit}`);
+        const [rows] = raceId !== undefined
+            ? await dbPool.execute(`SELECT * FROM highscores WHERE race_id = ? ${ORDER}`, [raceId])
+            : await dbPool.execute(`SELECT * FROM highscores ${ORDER}`);
 
         return rows as HighscoreEntry[];
     },

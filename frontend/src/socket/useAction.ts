@@ -1,46 +1,30 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Ack, ClientToServerEvents } from '@shared/contract';
-import { request } from './client';
+import { request, type AckedEvent, type AckDataOf } from './client';
 import { useGameStore } from '@/store/gameStore';
 
-/** Every `ClientToServerEvents` key that acks — i.e. every one except the fire-and-forget `input` relay. */
-type MutatingEvent = Exclude<keyof ClientToServerEvents, 'input'>;
-
-type AckDataOf<K extends MutatingEvent> = ClientToServerEvents[K] extends (
-    payload: any,
-    ack: (r: Ack<infer TData>) => void,
-) => void
-    ? TData
-    : never;
-
-interface UseActionOptions<TData> {
-    onSuccess?: (data: TData) => void;
-}
-
-interface UseActionResult<K extends MutatingEvent> {
+interface UseActionResult<K extends AckedEvent> {
     pending: boolean;
-    run: (payload: Parameters<ClientToServerEvents[K]>[0], opts?: UseActionOptions<AckDataOf<K>>) => Promise<void>;
+    run: (
+        payload: Parameters<ClientToServerEvents[K]>[0],
+        opts?: { onSuccess?: (data: AckDataOf<K>) => void },
+    ) => Promise<void>;
 }
 
 /**
- * Replaces the old global 3s button-disable debounce hack (`.btn-disabled` toggled by hand,
- * plus a `setTimeout` to re-enable) entirely — no timers, no CSS classes, just a `pending` flag
- * that a caller wires straight to a button's `disabled` prop.
+ * Wraps one mutating socket action with a `pending` flag a caller wires straight to a button's
+ * `disabled` prop — replacing the old global 3s button-disable hack entirely.
  *
- * A `useRef` (not just the `pending` state) guards re-entrancy: two `run()` calls issued in the
- * same synchronous tick (e.g. a fast double-click before React has re-rendered with the new
- * `pending` state) must still only fire one request — a plain `if (pending) return` closed over
- * stale state would not catch that.
+ * The `useRef` (not just `pending`) is what guards re-entrancy: two `run()` calls in the same
+ * synchronous tick (a fast double-click before React re-renders) must still fire one request,
+ * which a plain `if (pending)` closed over stale state would not catch.
  */
-export function useAction<K extends MutatingEvent>(event: K): UseActionResult<K> {
+export function useAction<K extends AckedEvent>(event: K): UseActionResult<K> {
     const [pending, setPending] = useState(false);
     const pendingRef = useRef(false);
 
-    const run = useCallback(
-        async (
-            payload: Parameters<ClientToServerEvents[K]>[0],
-            opts?: UseActionOptions<AckDataOf<K>>,
-        ): Promise<void> => {
+    const run = useCallback<UseActionResult<K>['run']>(
+        async (payload, opts) => {
             if (pendingRef.current)
                 return;
 

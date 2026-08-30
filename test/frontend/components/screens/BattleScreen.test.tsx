@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { PlayerSnapshot, BattleFightResult } from '@shared/contract';
+import type { BattleFightResult } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
+import { makePlayer } from '../../factories';
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
@@ -10,42 +11,6 @@ const { playSoundMock } = vi.hoisted(() => ({ playSoundMock: vi.fn() }));
 vi.mock('@/audio/soundfx', () => ({ playSound: playSoundMock }));
 
 const { default: BattleScreen } = await import('@/components/screens/BattleScreen');
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: null,
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
 
 function makeBattleResult(overrides: Partial<BattleFightResult> = {}): BattleFightResult {
     return {
@@ -160,11 +125,10 @@ describe('BattleScreen', () => {
         expect(screen.queryByRole('link', { name: 'Retreat' })).not.toBeInTheDocument();
     });
 
-    // Direct regression test for the bug shown in the screenshots: the ambushed branch used to be
-    // mutually exclusive with the narrative branch, so a real fight's crit/kill/deflection/outcome
-    // narrative silently vanished the instant the player got ambushed. battleground.ejs always
-    // rendered the narrative unconditionally whenever a result existed, with `ambushed` only ever
-    // branching what's rendered BELOW it — this proves BattleScreen now matches that exactly.
+    // Regression test: the ambushed branch was once mutually exclusive with the narrative branch,
+    // so a real fight's crit/kill/deflection/outcome lines vanished the instant the player got
+    // ambushed. Whenever a result exists the narrative renders unconditionally; `ambushed` only
+    // ever branches what appears BELOW it.
     it('shows BOTH the full battle narrative AND the ambush alert/Fight-your-Foe button when ambushed with a real lastBattle result', () => {
         const lastBattle = makeBattleResult({
             ambushed: true,
@@ -236,10 +200,62 @@ describe('BattleScreen', () => {
         await waitFor(() => expect(playSoundMock).toHaveBeenCalledWith('crit'));
     });
 
+    it('clicking Retreat from the never-fought prompt returns home instead of following the anchor', () => {
+        resetStore({ player: makePlayer({ ambushed: false }), lastBattle: null });
+        requestMock.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'mock default' } });
+        render(<BattleScreen />);
+
+        const link = screen.getByRole('link', { name: 'Retreat' });
+        // fireEvent returns false once preventDefault() has been called on the dispatched event.
+        expect(fireEvent.click(link)).toBe(false);
+        expect(useGameStore.getState().screen).toBe('home');
+        expect(requestMock).not.toHaveBeenCalledWith('battle:fight', expect.anything());
+    });
+
+    it('clicking Retreat below a real battle narrative returns home too', () => {
+        resetStore({ player: makePlayer({ ambushed: false }), lastBattle: makeBattleResult() });
+        requestMock.mockResolvedValue({ ok: false, error: { code: 'INTERNAL', message: 'mock default' } });
+        render(<BattleScreen />);
+
+        fireEvent.click(screen.getByRole('link', { name: 'Retreat' }));
+
+        expect(useGameStore.getState().screen).toBe('home');
+        expect(requestMock).not.toHaveBeenCalledWith('battle:fight', expect.anything());
+    });
+
     it('renders nothing for an already-dead player (DeathScreen takes over instead)', () => {
         resetStore({ player: makePlayer({ dead: true }) });
         const { container } = render(<BattleScreen />);
         expect(container).toBeEmptyDOMElement();
         expect(requestMock).not.toHaveBeenCalled();
+    });
+});
+
+describe('BattleScreen — keyboard focus across the very first fight', () => {
+    /**
+     * The pre-refactor screen branched on `!lastBattle` first, so a character's FIRST fight
+     * swapped in a structurally different tree and React destroyed the Fight button — dropping
+     * keyboard focus to <body>. Every LATER fight kept the same tree, so focus was retained.
+     * That inconsistency is gone: the action row now holds a stable position, so focus survives
+     * the first fight too. Pinned deliberately, because it is a real accessibility behaviour.
+     */
+    it('keeps focus on the action button when the first-ever result arrives', async () => {
+        useGameStore.setState({ player: makePlayer({ ambushed: false }), lastBattle: null, screen: 'battle' }, false);
+        requestMock.mockResolvedValue({ ok: true, data: makeBattleResult() });
+
+        const { container } = render(<BattleScreen />);
+
+        const before = screen.getByRole('button');
+        before.focus();
+        expect(document.activeElement).toBe(before);
+
+        fireEvent.click(before);
+        await waitFor(() => expect(useGameStore.getState().lastBattle).not.toBeNull());
+
+        // The same DOM node is reused — only its label changes — so focus is never lost and a
+        // second Enter/Space keeps fighting.
+        const after = container.querySelector('button');
+        expect(after).toBe(before);
+        expect(document.activeElement).toBe(after);
     });
 });

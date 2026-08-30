@@ -1,12 +1,8 @@
 import type { SoundName } from './common';
 
 /**
- * `BattleNarrative`/`BattleOutcome` live here — not in `battle.ts` alongside `BattleFightResult`
- * — specifically so `player.ts` can import them (for `PlayerSnapshot.lastBattle`, see
- * `BattleNarrativeSnapshot` below) without creating a cycle: `battle.ts` itself imports
- * `PlayerSnapshot` from `./player`, so `player.ts` importing anything back out of `battle.ts`
- * would close a loop. `battle.ts` re-exports both for existing importers, so nothing outside
- * this file needs to know the split happened.
+ * Lives here rather than in `battle.ts` so `player.ts` can import it without a cycle
+ * (`battle.ts` imports `PlayerSnapshot` from `player.ts`). `battle.ts` re-exports both.
  */
 export interface BattleNarrative {
     critLine: string | null;
@@ -29,18 +25,15 @@ export interface BattleOutcome {
 }
 
 /**
- * The persisted, reconnect-safe shape of a resolved fight's narrative — everything
- * `BattleFightResult` carries EXCEPT `player`/`flash`, which are always freshly derived from the
- * live `PlayerState`/mutation result, never stale. Mirrors the exact pattern already proven for
- * `deathReason` (see `backend/service/player.service.ts`'s `resolveDeathReason`): resolve once,
- * persist on `PlayerState` (as `lastBattleNarrative`), carry it in every `buildPlayerSnapshot()`
- * call (as `PlayerSnapshot.lastBattle`) so it survives any reconnect — a real page reload no
- * longer wipes it back to a generic placeholder.
+ * The persisted, reconnect-safe half of a resolved fight — everything `BattleFightResult`
+ * carries EXCEPT `player`/`flash`, which are always derived fresh and never stale. Resolved
+ * once and stored on `PlayerState`, the same pattern as `deathReason`, so a page reload
+ * replays the real narrative instead of a placeholder.
  */
 export interface BattleNarrativeSnapshot {
     narrative: BattleNarrative;
     outcome: BattleOutcome;
-    ambushed: boolean;  // state AFTER the fight resolved — display-only, see PlayerSnapshot.ambushed for live truth
+    ambushed: boolean;  // state AFTER the fight — display only; PlayerSnapshot.ambushed is live truth
     died: boolean;
     sound: SoundName | null;
 }

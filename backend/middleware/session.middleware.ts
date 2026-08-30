@@ -9,11 +9,7 @@ const expressSession = session({
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
-    cookie: {
-        sameSite: 'lax',
-        httpOnly: true,
-        secure: env.IN_DOCKER,
-    },
+    cookie: { sameSite: 'lax', httpOnly: true, secure: env.IN_DOCKER },
 });
 
 export const sessionMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -21,7 +17,8 @@ export const sessionMiddleware = (req: Request, res: Response, next: NextFunctio
         if (err)
             return next(err);
 
-        if (res && res.locals) // safe check for res.locals (Socket.IO passes a mock response object {} which lacks locals)
+        // Socket.IO passes a mock response object `{}` with no `locals`.
+        if (res?.locals)
             res.locals.player = req.session as PlayerState;
 
         next();

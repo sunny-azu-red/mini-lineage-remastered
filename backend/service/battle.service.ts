@@ -4,42 +4,26 @@ import { randomInt, calculateCritChance, getEnemyCountRange, calculateDangerLeve
 import { getPlayerStats } from '@/service/player.service';
 
 export function simulateBattle(player: PlayerState): BattleResult {
+    const { enemyCount, dangerLevel, critReward, damageBlocked: blockCfg, xpGained: xpCfg, adenaGained: adenaCfg, hpLost: hpCfg } = BATTLE_CONFIG;
     const stats = getPlayerStats(player);
-    const attackPower = stats.attack;
-    const defensePower = stats.defense;
+    const attack = stats.attack;
     const isCritical = calculateCritChance(stats.crit);
 
-    // enemies killed: scales dynamically with attack power
-    const { min: minEnemies, max: maxEnemies } = getEnemyCountRange(attackPower, BATTLE_CONFIG.enemyCount.minMult, BATTLE_CONFIG.enemyCount.maxMult);
-    let enemiesKilled = randomInt(minEnemies, maxEnemies);
-    if (isCritical)
-        enemiesKilled = Math.max(BATTLE_CONFIG.critReward.floor, Math.ceil(enemiesKilled * BATTLE_CONFIG.critReward.multiplier));
+    // Enemies killed scales with attack power; a crit multiplies the whole group.
+    const { min, max } = getEnemyCountRange(attack, enemyCount.minMult, enemyCount.maxMult);
+    const rolled = randomInt(min, max);
+    const enemiesKilled = isCritical
+        ? Math.max(critReward.floor, Math.ceil(rolled * critReward.multiplier))
+        : rolled;
 
-    // hp lost: danger scales linearly, armor scales sub-linearly to prevent invincibility
-    const dangerLevel = calculateDangerLevel(attackPower, BATTLE_CONFIG.dangerLevel.scaling);
-    const damageBlocked = calculateDamageBlocked(defensePower, BATTLE_CONFIG.damageBlocked.exponent, BATTLE_CONFIG.damageBlocked.scaling);
-    const hpLost = Math.max(BATTLE_CONFIG.hpLost.floor, randomInt(BATTLE_CONFIG.hpLost.baseMin, BATTLE_CONFIG.hpLost.baseMax) + dangerLevel - damageBlocked);
+    // Danger scales linearly with attack, armor mitigates sub-linearly.
+    const blocked = calculateDamageBlocked(stats.defense, blockCfg.exponent, blockCfg.scaling);
+    const hpLost = Math.max(hpCfg.floor, randomInt(hpCfg.baseMin, hpCfg.baseMax) + calculateDangerLevel(attack, dangerLevel.scaling) - blocked);
 
-    // experience gained & adena gained (with multipliers)
-    let xpGained = (enemiesKilled * randomInt(BATTLE_CONFIG.xpGained.killMin, BATTLE_CONFIG.xpGained.killMax)) + calculateBaseXpGained(attackPower, BATTLE_CONFIG.xpGained.exponent, BATTLE_CONFIG.xpGained.scaling);
-    let adenaGained = (enemiesKilled * randomInt(BATTLE_CONFIG.adenaGained.killMin, BATTLE_CONFIG.adenaGained.killMax)) + calculateBaseAdenaGained(attackPower, BATTLE_CONFIG.adenaGained.exponent, BATTLE_CONFIG.adenaGained.scaling);
-    
-    if (isCritical) { // critical hits multiply total rewards so they stay impactful at all attack power tiers
-        xpGained = Math.ceil(xpGained * BATTLE_CONFIG.critReward.multiplier);
-        adenaGained = Math.ceil(adenaGained * BATTLE_CONFIG.critReward.multiplier);
-    }
+    // Crits multiply total rewards so they stay impactful at every attack tier.
+    const critScale = isCritical ? critReward.multiplier : 1;
+    const xpGained = Math.ceil(Math.ceil((enemiesKilled * randomInt(xpCfg.killMin, xpCfg.killMax) + calculateBaseXpGained(attack, xpCfg.exponent, xpCfg.scaling)) * critScale) * stats.xpMultiplier);
+    const adenaGained = Math.ceil(Math.ceil((enemiesKilled * randomInt(adenaCfg.killMin, adenaCfg.killMax) + calculateBaseAdenaGained(attack, adenaCfg.exponent, adenaCfg.scaling)) * critScale) * stats.adenaMultiplier);
 
-    // Apply active XP / Adena multipliers (e.g. from buffs or Konami cheat)
-    xpGained = Math.ceil(xpGained * stats.xpMultiplier);
-    adenaGained = Math.ceil(adenaGained * stats.adenaMultiplier);
-
-    return {
-        enemiesKilled,
-        hpLost,
-        damageBlocked,
-        xpGained,
-        adenaGained,
-        isCritical,
-        isLevelUp: false
-    };
+    return { enemiesKilled, hpLost, damageBlocked: blocked, xpGained, adenaGained, isCritical, isLevelUp: false };
 }

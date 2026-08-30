@@ -154,6 +154,33 @@ describe('emitter', () => {
             expect(tracker.expiryTimers?.size).toBe(0);
         });
 
+        it('schedules nothing for a player carrying no effects array at all (never-started session)', () => {
+            const io = {} as any;
+            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
+            const player = {} as PlayerState; // no `effects` key whatsoever
+
+            expect(() => syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn())).not.toThrow();
+            expect(tracker.expiryTimers?.size).toBe(0);
+        });
+
+        it('ignores effects with no expiry (permanent auras/curses) and a falsy expiresAt of 0', () => {
+            const io = {} as any;
+            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
+            const player: PlayerState = {
+                effects: [
+                    // Permanent — `expiresAt` omitted entirely, must never get a timeout.
+                    { id: 'resting', type: 'aura', emoji: '💤', label: 'Resting', modifiers: [] },
+                    // Falsy-but-present expiry, which must be treated as "no expiry" rather
+                    // than "expires at the epoch" (which would schedule a 0ms timer storm).
+                    { id: 'zero', type: 'buff', emoji: '⭐', label: 'Zero', modifiers: [], expiresAt: 0 },
+                ],
+            } as any;
+
+            syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
+
+            expect(tracker.expiryTimers?.size).toBe(0);
+        });
+
         it('does not double-schedule an already-scheduled effect', () => {
             const io = {} as any;
             const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };

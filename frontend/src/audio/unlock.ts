@@ -1,16 +1,13 @@
 import { getAudioContext } from './soundfx';
 
 /**
- * Installs one capture-phase, `{ once: true }` listener each for `pointerdown` and `keydown` on
- * `window`, resuming the shared `AudioContext` on the very first user gesture anywhere on the
- * page. Call this ONCE from main.tsx, before the React tree renders.
+ * Resumes the shared AudioContext on the very first user gesture anywhere on the page. Call ONCE
+ * from main.tsx, before the React tree renders.
  *
- * This is the fix for hack #1 (`public/js/audio.js` auto-playing a `data-sound` element on
- * `DOMContentLoaded`, before any gesture had occurred, so `resume()` silently no-op'd on every
- * reload): in the new architecture nothing ever plays a sound outside of a click handler's
- * response (see the plan's Audio table), and this unlock listener runs at the very start of the
- * dispatch of that same first click/keydown — so the context is guaranteed unlocked before any
- * sound is ever asked to play. There is no load-time autoplay racing a gesture anymore.
+ * This is what fixed audio breaking on refresh: the old script auto-played on DOMContentLoaded,
+ * before any gesture, so `resume()` silently no-op'd. Nothing plays outside a click handler's
+ * response now, and this listener runs at the very start of that same first click's dispatch — so
+ * the context is always unlocked before any sound is asked to play.
  */
 export function installAudioUnlock(): void {
     const unlock = () => {
@@ -23,6 +20,6 @@ export function installAudioUnlock(): void {
         }
     };
 
-    window.addEventListener('pointerdown', unlock, { capture: true, once: true });
-    window.addEventListener('keydown', unlock, { capture: true, once: true });
+    for (const event of ['pointerdown', 'keydown'] as const)
+        window.addEventListener(event, unlock, { capture: true, once: true });
 }

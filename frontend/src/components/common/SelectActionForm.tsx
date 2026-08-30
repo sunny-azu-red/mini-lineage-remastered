@@ -10,59 +10,34 @@ export interface SelectActionOption {
 
 interface SelectActionFormProps {
     options: SelectActionOption[];
-    /**
-     * The <select>'s initial/no-selection option text. Ignored (and may be omitted) when
-     * `noPlaceholder` is set, since no such option is rendered in that mode.
-     */
+    /** The no-selection option's text. Ignored (and omittable) when `noPlaceholder` is set. */
     placeholderLabel?: string;
-    /**
-     * When true, skips rendering the synthetic placeholder `<option>` entirely and pre-selects
-     * the first real option on mount — for screens (Suicide) whose old template never had a
-     * "nothing picked" state to begin with.
-     */
+    /** Skips the synthetic placeholder and pre-selects the first real option (Home, Suicide). */
     noPlaceholder?: boolean;
     defaultButtonLabel: string;
     activeButtonLabel: string | ((selectedValue: string) => string);
     defaultVariant?: ButtonVariant;
-    /**
-     * A single variant, OR a function of the selected value — needed to faithfully port
-     * suicide.js, whose two non-default choices ('yes'/'no') each carry their OWN variant
-     * (btn-danger / btn-secondary respectively), not just one "active" variant vs. one default.
-     */
+    /** A function form is needed for Suicide, whose two choices each carry their own variant. */
     activeVariant?: ButtonVariant | ((selectedValue: string) => ButtonVariant);
     pending: boolean;
     onSubmit: (value: string) => void;
 }
 
+const resolve = <T,>(value: T | ((selected: string) => T), selected: string): T =>
+    typeof value === 'function' ? (value as (s: string) => T)(selected) : value;
+
 /**
- * One reusable component replacing FIVE near-identical select+button-relabel templates/scripts
- * (home.ejs+home.js, inn.ejs+shop.js, weapons/armors-shop.ejs+shop.js, suicide.ejs+suicide.js).
- * All five shared the same mechanism — a `<select>` whose value drives a companion `<button>`'s
- * label and (for shop/inn/suicide, not home) CSS variant — even though the exact copy differed
- * between them:
+ * One component replacing five near-identical select+relabelling-button forms. All shared the
+ * same mechanism — a `<select>` driving a companion button's label and (everywhere but Home) its
+ * CSS variant — with different copy.
  *
- *   - home.js: label swaps ('Travel' -> '⚰️ Perish' when the suicide destination is picked),
- *     variant never changes (always plain `.btn`), and the button is never disabled — a
- *     destination is always pre-selected (there's no "nothing picked" state on that page).
- *   - shop.js: label swaps ('Return' -> e.g. '🪙 Purchase'/'🪙 Order') AND variant swaps
- *     (`.btn-secondary` -> `.btn`) together, gated on the placeholder ('') option.
- *   - suicide.js: label swaps ('Phew 😅' -> 'Do it 🥀') AND variant swaps (`.btn-secondary` ->
- *     `.btn-danger`) together — no placeholder option; the default choice ("no") IS a real,
- *     submittable value.
+ * Submitting with the placeholder still selected is a legitimate "go home" signal (`onSubmit('')`),
+ * so the button is only ever disabled while `pending`.
  *
- * This component generalizes all three shapes: `activeButtonLabel`/`activeVariant` only apply
- * once something other than the placeholder option is selected, and until then the button shows
- * `defaultButtonLabel`/`defaultVariant`. The button is only ever `disabled` while `pending` —
- * matching every old page's actual behavior, including shop.js/inn: submitting with the
- * placeholder still selected is a legitimate "go home" signal (`onSubmit('')`), exactly like the
- * old dual-purpose select-and-submit forms. `noPlaceholder` mode (Suicide) skips the synthetic
- * placeholder option altogether and pre-selects the first real option on mount, matching
- * suicide.ejs's natural default-selected-first-option behavior — but suicide.js's button text
- * only ever changed on an explicit `change` event, never merely because the browser happens to
- * default-select the first option on page load, so "has the user actually touched the select
- * yet" (`hasInteracted`) has to be tracked separately from "what's the select's current value"
- * for this mode: on first mount the button must still read `defaultButtonLabel` ("Return") even
- * though `selected` already holds the pre-filled first option's value.
+ * In `noPlaceholder` mode the button must still read `defaultButtonLabel` on first mount even
+ * though `selected` already holds the pre-filled first option — the old scripts only relabelled
+ * on an explicit `change` event, never on the browser's default selection. Hence `hasInteracted`
+ * is tracked separately from the select's value.
  */
 export default function SelectActionForm({
     options,
@@ -79,23 +54,13 @@ export default function SelectActionForm({
     const [hasInteracted, setHasInteracted] = useState(false);
     const hasSelection = noPlaceholder ? hasInteracted : selected !== '';
 
-    const buttonLabel = hasSelection
-        ? typeof activeButtonLabel === 'function'
-            ? activeButtonLabel(selected)
-            : activeButtonLabel
-        : defaultButtonLabel;
-    const buttonVariant = hasSelection
-        ? typeof activeVariant === 'function'
-            ? activeVariant(selected)
-            : activeVariant
-        : defaultVariant;
+    const label = hasSelection ? resolve(activeButtonLabel, selected) : defaultButtonLabel;
+    const variant = hasSelection ? resolve(activeVariant, selected) : defaultVariant;
 
     function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (pending)
-            return;
-
-        onSubmit(selected);
+        if (!pending)
+            onSubmit(selected);
     }
 
     return (
@@ -111,17 +76,11 @@ export default function SelectActionForm({
                 >
                     {!noPlaceholder && <option value="">{placeholderLabel}</option>}
                     {options.map(opt => (
-                        <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-                            {opt.label}
-                        </option>
+                        <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>
                     ))}
                 </select>
-                <button
-                    type="submit"
-                    className={buttonVariant === 'btn' ? 'btn' : `btn ${buttonVariant}`}
-                    disabled={pending}
-                >
-                    {buttonLabel}
+                <button type="submit" className={variant === 'btn' ? 'btn' : `btn ${variant}`} disabled={pending}>
+                    {label}
                 </button>
             </div>
         </form>

@@ -1,10 +1,7 @@
 import { isRelease } from '@/util/version.util';
 import { GAME_VERSION, RATE_LIMIT_CONFIG } from '@/constant/game.constant';
 
-/**
- * In-memory sliding-window rate limiter, no external dependency.
- * Mirrors the dev bypass today's rate-limit.middleware.ts applies via `skip: skipIfDev`.
- */
+/** Rate limiting is bypassed entirely outside a release build. */
 export const skipIfDev = (): boolean => !isRelease(GAME_VERSION);
 
 export interface RateLimiter {
@@ -12,17 +9,19 @@ export interface RateLimiter {
     consume(key: string): { allowed: true } | { allowed: false; retryAfterMs: number };
 }
 
+/** In-memory sliding window, no external dependency. */
 export function createSlidingWindow(name: string, cfg: { windowMs: number; limit: number }): RateLimiter {
     const hits = new Map<string, number[]>();
+    const fresh = (timestamps: number[], now: number) => timestamps.filter(t => now - t < cfg.windowMs);
 
     const gc = setInterval(() => {
         const now = Date.now();
         for (const [key, timestamps] of hits.entries()) {
-            const fresh = timestamps.filter(t => now - t < cfg.windowMs);
-            if (fresh.length === 0)
+            const kept = fresh(timestamps, now);
+            if (kept.length === 0)
                 hits.delete(key);
-            else if (fresh.length !== timestamps.length)
-                hits.set(key, fresh);
+            else if (kept.length !== timestamps.length)
+                hits.set(key, kept);
         }
     }, cfg.windowMs);
     gc.unref();
@@ -34,12 +33,10 @@ export function createSlidingWindow(name: string, cfg: { windowMs: number; limit
                 return { allowed: true };
 
             const now = Date.now();
-            const timestamps = (hits.get(key) ?? []).filter(t => now - t < cfg.windowMs);
+            const timestamps = fresh(hits.get(key) ?? [], now);
 
-            if (timestamps.length >= cfg.limit) {
-                const oldest = timestamps[0];
-                return { allowed: false, retryAfterMs: oldest + cfg.windowMs - now };
-            }
+            if (timestamps.length >= cfg.limit)
+                return { allowed: false, retryAfterMs: timestamps[0] + cfg.windowMs - now };
 
             timestamps.push(now);
             hits.set(key, timestamps);

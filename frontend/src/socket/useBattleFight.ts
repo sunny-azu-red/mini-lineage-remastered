@@ -1,38 +1,24 @@
-import type { BattleFightResult } from '@shared/contract';
 import { useAction } from './useAction';
 import { useGameStore } from '@/store/gameStore';
 import { playSound } from '@/audio/soundfx';
 
-interface UseBattleFightResult {
-    pending: boolean;
-    /** Fires the ONE shared `battle:fight` action, called independently by both BattleScreen and HomeScreen. */
-    fight: () => void;
-}
-
 /**
- * The single place `battle:fight` is ever fired from. BattleScreen's own "⚡"/"⚔️" button and
- * HomeScreen's "travel to Battlefield" destination both call this via their own independent
- * `useBattleFight()` — same event, same payload, same success handling.
+ * The single place `battle:fight` is ever fired from — BattleScreen's Fight button and
+ * HomeScreen's "travel to Battlefield" both call this.
  *
- * Deliberately does NOT navigate on `died: true` — BattleScreen reacts to that via its own
- * `useEffect` on `lastBattle`/`player.dead` (see BattleScreen.tsx), so this hook stays usable
- * from any screen without fighting over who's responsible for the death transition.
+ * Deliberately does NOT navigate on death: BattleScreen handles that transition via its own
+ * effect, so this hook stays usable from any screen.
  */
-export function useBattleFight(): UseBattleFightResult {
+export function useBattleFight(): { pending: boolean; fight: () => void } {
     const { run, pending } = useAction('battle:fight');
     const recordBattleResult = useGameStore(state => state.recordBattleResult);
 
-    function fight(): void {
-        void run(
-            {},
-            {
-                onSuccess: (data: BattleFightResult) => {
-                    recordBattleResult(data);
-                    playSound(data.sound);
-                },
-            },
-        );
-    }
+    const fight = () => void run({}, {
+        onSuccess: data => {
+            recordBattleResult(data);
+            playSound(data.sound);
+        },
+    });
 
     return { fight, pending };
 }

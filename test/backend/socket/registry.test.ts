@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { z } from 'zod';
 
 const { floodConsumeMock } = vi.hoisted(() => ({
@@ -26,12 +26,20 @@ vi.mock('@/socket/serializer/player.serializer', () => ({
     buildPlayerSnapshot: vi.fn((player: any) => ({ snapshotOf: player })),
 }));
 
+// Only registerEvent's own `logResult` consults this; defaults to a dev build so every
+// existing test keeps the exact behavior it had before (the debug line still being emitted).
+vi.mock('@/util/version.util', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/util/version.util')>();
+    return { ...actual, isRelease: vi.fn(() => false) };
+});
+
 import { registerEvent } from '@/socket/registry';
 import { withSession, readSession } from '@/socket/session';
 import { emitStateUpdate } from '@/socket/emitter';
 import { refreshExpiryTimers } from '@/socket/tick';
 import { SocketError } from '@/socket/error';
 import { logger } from '@/config/logger.config';
+import { isRelease } from '@/util/version.util';
 import type { Guard } from '@/socket/guard';
 import type { RateLimiter } from '@/socket/rate-limit';
 
@@ -134,6 +142,48 @@ describe('registerEvent', () => {
             `[SOCKET] Invalid payload for event 'test:invalid' from socket socket-1`,
         );
         warnSpy.mockRestore();
+    });
+
+    it('falls back to a generic message when Zod reports an issue carrying no message text', async () => {
+        const { socket, handlers } = makeSocket();
+        registerEvent(io, socket, {
+            event: 'test:blank-issue',
+            schema: z.unknown().refine(() => false, { message: '' }),
+            mode: 'read',
+            handler: vi.fn(),
+        });
+
+        const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => undefined as any);
+        const ack = vi.fn();
+        await handlers['test:blank-issue']({}, ack);
+
+        expect(ack).toHaveBeenCalledWith({
+            ok: false,
+            error: expect.objectContaining({ code: 'INVALID_PAYLOAD', message: 'Invalid payload: Invalid payload.' }),
+        });
+        warnSpy.mockRestore();
+    });
+
+    it('pushes nothing to other tabs when a mutation resolves without the handler ever running', async () => {
+        // withSession can resolve without invoking its callback at all (its NO_CHANGE path
+        // returns undefined), leaving `mutatedPlayer` unset — there is no player state to
+        // snapshot, broadcast, or reschedule timers for.
+        vi.mocked(withSession).mockResolvedValue(undefined);
+
+        const { socket, handlers } = makeSocket();
+        registerEvent(io, socket, {
+            event: 'test:mutate-noop',
+            schema: z.object({}).default({}),
+            mode: 'mutate',
+            handler: vi.fn(),
+        });
+
+        const ack = vi.fn();
+        await handlers['test:mutate-noop']({}, ack);
+
+        expect(emitStateUpdate).not.toHaveBeenCalled();
+        expect(refreshExpiryTimers).not.toHaveBeenCalled();
+        expect(ack).toHaveBeenCalledWith({ ok: true, data: undefined });
     });
 
     it('maps a thrown guard SocketError to its code via the ack', async () => {
@@ -318,5 +368,43 @@ describe('registerEvent', () => {
         expect(response.ok).toBe(false);
         expect(response.error.code).toBe('INTERNAL');
         expect(JSON.stringify(response)).not.toContain('leaked internal detail');
+    });
+});
+
+describe('registerEvent — release build', () => {
+    const io = {} as any;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        floodConsumeMock.mockReturnValue({ allowed: true });
+        vi.mocked(isRelease).mockReturnValue(true);
+    });
+
+    afterEach(() => {
+        vi.mocked(isRelease).mockReturnValue(false);
+    });
+
+    it('skips the per-event debug log entirely, without altering the ack', async () => {
+        // pino is raised to 'info' in a release build (logger.config.ts), so this routine
+        // per-event DEBUG line would be dropped anyway — logResult bails before even
+        // formatting it. The handler result itself must be completely unaffected.
+        vi.mocked(readSession).mockImplementation(async (sid: string, run: any) =>
+            run({ sessionId: sid, session: {}, player: {} }));
+
+        const { socket, handlers } = makeSocket();
+        registerEvent(io, socket, {
+            event: 'test:release-log',
+            schema: z.object({}).default({}),
+            mode: 'read',
+            handler: vi.fn().mockReturnValue('ok'),
+        });
+
+        const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => undefined as any);
+        const ack = vi.fn();
+        await handlers['test:release-log']({}, ack);
+
+        expect(ack).toHaveBeenCalledWith({ ok: true, data: 'ok' });
+        expect(debugSpy).not.toHaveBeenCalled();
+        debugSpy.mockRestore();
     });
 });

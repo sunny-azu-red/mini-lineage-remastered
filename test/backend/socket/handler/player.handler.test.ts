@@ -56,4 +56,16 @@ describe('player.handler', () => {
         expect(result).toEqual({ player: result.player, flash: null });
         expect(result.player.dead).toBe(true);
     });
+
+    // The client now moves to the death screen in the same atomic store update that applies this
+    // ack, so it never sends a follow-up player:screen. The handler stamps its own destination
+    // instead — the same pattern game:start and battle:fight already use.
+    it('stamps currentScreen as death so the session never keeps a stale location', () => {
+        const ctx = makeCtx({ currentScreen: 'suicide' });
+
+        getDef().handler(ctx);
+
+        expect(ctx.player.currentScreen).toBe('death');
+        expect(ctx.player.dead).toBe(true);
+    });
 });

@@ -10,17 +10,13 @@ import { makePurchaseFlash } from '@/util/game.util';
 import { ItemType } from '@/interface';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 
-const ITEM_TYPE_BY_PAYLOAD_TYPE: Record<'weapon' | 'armor' | 'food', ItemType> = {
+const ITEM_TYPES: Record<'weapon' | 'armor' | 'food', ItemType> = {
     weapon: ItemType.Weapon,
     armor: ItemType.Armor,
     food: ItemType.Food,
 };
 
-/**
- * From shop.controller.ts. Plan decision A8: one unified `shop:purchase` event instead of
- * three separate weapon/armor/food events — one guard set, one rate limiter, maps 1:1 onto
- * the existing purchaseItem(player, ItemType, itemId) signature.
- */
+/** One unified purchase event for all three shops — one guard set, one limiter. */
 export function registerShopHandlers(io: SocketIOServer, socket: Socket): void {
     registerEvent(io, socket, {
         event: 'shop:purchase',
@@ -29,20 +25,17 @@ export function registerShopHandlers(io: SocketIOServer, socket: Socket): void {
         guards: [requireStarted, requireAlive],
         rateLimit: shopLimiter,
         handler: (ctx, payload): MutationResult => {
-            const itemType = ITEM_TYPE_BY_PAYLOAD_TYPE[payload.type];
-            const sound: SoundName = payload.type === 'food' ? 'eat' : 'buy';
-
-            const result = purchaseItem(ctx.player, itemType, payload.itemId);
+            const result = purchaseItem(ctx.player, ITEM_TYPES[payload.type], payload.itemId);
             if (!result)
                 throw new SocketError('INVALID_PAYLOAD', 'Unknown item.');
 
-            // A11: "not enough Adena"/"already own this" are ok:true acks carrying a danger
-            // flash, exactly like today's PurchaseResult{success:false,...} — not an error code.
-            const flashMsg = makePurchaseFlash(result, sound);
+            // "Not enough Adena"/"already own this" are ok:true acks with a danger flash, not
+            // error codes.
+            const flash = makePurchaseFlash(result, payload.type === 'food' ? 'eat' : 'buy');
 
             return {
                 player: buildPlayerSnapshot(ctx.player),
-                flash: { text: flashMsg.text, type: flashMsg.type, sound: flashMsg.sound as SoundName | undefined },
+                flash: { text: flash.text, type: flash.type, sound: flash.sound as SoundName | undefined },
             };
         },
     });

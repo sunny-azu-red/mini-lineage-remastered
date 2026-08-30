@@ -11,27 +11,23 @@ import LoadingPanel from '../common/LoadingPanel';
 
 interface AppShellProps {
     children: ReactNode;
-    /** The current screen's title, rendered as the in-panel heading (see App.tsx's `SCREEN_TITLES`). */
+    /** The current screen's title, rendered as the in-panel heading. */
     title: string;
 }
 
-// Old app showed the sidebar (layout.ejs, via renderPage) only for these screens — Game Start,
-// Character, Highscores, Statistics, and Races all used simple.ejs/renderSimplePage instead (see
-// git show 6256e28:src/view/layout.view.ts), even Character despite a character existing. Kept as
-// an explicit allowlist rather than derived from `player` state, since "does a character exist"
-// and "should this screen show a sidebar" are two different questions.
+// An explicit allowlist, not derived from `player` — "does a character exist" and "should this
+// screen show a sidebar" are different questions. Game Start, Character, Highscores, Statistics
+// and Races all used the sidebar-less layout.
 export const SIDEBAR_SCREENS: ReadonlySet<ScreenId> =
     new Set(['home', 'battle', 'weapons', 'armors', 'inn', 'suicide', 'death']);
 
-// Ported from layout.ejs's DOM shape (#app > #wrapper > #header/#content, #content ->
-// #sidebar + #main, #main -> .panel + #copyright) so the byte-for-byte-ported CSS, which
-// targets these exact ids/classes, still applies unmodified.
+// The DOM shape is ported from the old layout so the byte-for-byte-ported CSS, which targets
+// these exact ids and classes, still applies unmodified.
 export default function AppShell({ children, title }: AppShellProps) {
     const player = useGameStore(state => state.player);
     const screen = useGameStore(state => state.screen);
-    // Null until the server's initial `hydrate` push lands (bootstrap fetch + socket handshake
-    // both still in flight) — every screen component itself guards on this same condition, so
-    // gating here once covers all of them instead of each screen flashing empty individually.
+    // Null until the first hydrate lands. Gating here once covers every screen, all of which
+    // would otherwise each flash empty.
     const catalog = useGameStore(state => state.catalog);
 
     return (
@@ -57,12 +53,9 @@ export default function AppShell({ children, title }: AppShellProps) {
                                 <NoticeAlert />
                                 <FlashAlert />
                                 {/*
-                                 * Global, self-suppressing alert driven purely by player state.
-                                 * An ambush no longer needs a global banner here — the store
-                                 * unconditionally pins `screen` to 'battle' whenever
-                                 * `player.ambushed`, so BattleScreen's own inline ambush
-                                 * treatment is always what's on screen when ambushed; there is
-                                 * no other screen this alert could ever be seen from.
+                                 * An ambush needs no global banner: the store pins `screen` to
+                                 * 'battle' whenever ambushed, so BattleScreen's own inline
+                                 * treatment is always what's on screen.
                                  */}
                                 <LowHealthAlert />
                                 {catalog ? children : <LoadingPanel />}

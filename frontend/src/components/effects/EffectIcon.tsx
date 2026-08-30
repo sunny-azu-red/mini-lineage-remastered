@@ -3,23 +3,17 @@ import { formatEffectTimer } from '@shared/format';
 
 interface EffectIconProps {
     effect: EffectView;
-    /** Shared tick from EffectsList's single useEffectCountdown() call — see that hook's doc. */
+    /** The shared tick from EffectsList's single useEffectCountdown() call. */
     now: number;
 }
 
-// Mirrors src/view/layout.view.ts's renderEffects() markup shape exactly, so the ported CSS
-// (.effect-icon / .effect-fade-in / .effect-{type} / .effect-emoji / .effect-timer) still
-// applies unmodified.
+// The markup shape is ported verbatim so the existing effect-icon CSS applies unmodified.
 export default function EffectIcon({ effect, now }: EffectIconProps) {
-    const typeClass = effect.type ? ` effect-${effect.type}` : '';
-
-    const remSec = effect.expiresAt !== undefined
-        ? Math.max(0, Math.ceil((effect.expiresAt - now) / 1000))
-        : null;
+    const remSec = effect.expiresAt !== undefined ? Math.max(0, Math.ceil((effect.expiresAt - now) / 1000)) : null;
 
     return (
         <span
-            className={`effect-icon effect-fade-in${typeClass}`}
+            className={`effect-icon effect-fade-in${effect.type ? ` effect-${effect.type}` : ''}`}
             data-effect-id={effect.id}
             data-label={effect.label}
             data-expires-at={effect.expiresAt}

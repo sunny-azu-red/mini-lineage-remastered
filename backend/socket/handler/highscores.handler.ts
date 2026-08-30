@@ -11,9 +11,6 @@ import { highscoreRepository } from '@/repository/highscore.repository';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 import { buildGameCatalog } from '../serializer/catalog.serializer';
 
-/**
- * From highscores.controller.ts's postHighscores/getHighscores.
- */
 export function registerHighscoresHandlers(io: SocketIOServer, socket: Socket): void {
     registerEvent(io, socket, {
         event: 'highscores:submit',
@@ -33,22 +30,19 @@ export function registerHighscoresHandlers(io: SocketIOServer, socket: Socket): 
 
             const raceSlug = race ? slugify(race.label) : null;
 
-            // Plan decision A9: reset in place instead of session.destroy() — destroying
-            // mid-socket would leave the socket authenticated against a dead row.
+            // Reset in place rather than destroying the session, which would leave this socket
+            // authenticated against a dead row.
             resetPlayer(ctx.player);
 
-            return {
-                raceSlug,
-                hydrate: { player: buildPlayerSnapshot(ctx.player), catalog: buildGameCatalog() },
-            };
+            return { raceSlug, hydrate: { player: buildPlayerSnapshot(ctx.player), catalog: buildGameCatalog() } };
         },
     });
 
+    // Public — works for anyone, started or not.
     registerEvent(io, socket, {
         event: 'highscores:list',
         schema: HighscoreListPayloadSchema,
         mode: 'read',
-        // Public — works for anyone, matching today's unauthenticated-safe getHighscores.
         handler: async (_ctx, payload): Promise<HighscoreList> => {
             const rows = await highscoreRepository.findAll(payload.raceId ?? undefined);
 

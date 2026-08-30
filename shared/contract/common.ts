@@ -3,10 +3,8 @@ import type { PlayerSnapshot } from './player';
 export type SoundName = 'crit' | 'eat' | 'level' | 'death' | 'buy' | 'start' | 'ambush';
 
 /**
- * Every screen the client can be on. Shared between frontend (gameStore.ts's navigation state
- * machine) and backend (PlayerState.currentScreen, used by syncZoneAuras to classify combat vs
- * resting zones exactly like the old game's URL-path-based zone.middleware.ts did — see
- * game.constant.ts's TICK_CONFIG.combatZones/restingZones).
+ * Every screen the client can be on. Shared with the server, whose `PlayerState.currentScreen`
+ * drives zone classification (see TICK_CONFIG.combatZones/restingZones).
  */
 export type ScreenId =
     | 'start' | 'home' | 'battle' | 'weapons' | 'armors' | 'inn' | 'suicide'
@@ -35,12 +33,13 @@ export type Ack<T> =
     | { ok: false; error: SocketErrorPayload };
 
 export interface FlashView {
-    text: string; // may contain server-composed HTML (<span class="xp">...), see narrative-safety invariant
+    /** May contain server-composed HTML — see the narrative-safety invariant on `Narrative`. */
+    text: string;
     type: 'success' | 'danger' | 'info' | 'warning';
     sound?: SoundName;
 }
 
-/** Standard shape for the simple mutating actions (shop purchase, suicide, game start). */
+/** The shape of every simple mutating action (shop purchase, suicide, game start). */
 export interface MutationResult {
     player: PlayerSnapshot;
     flash: FlashView | null;

@@ -7,12 +7,14 @@ export function getVersion(): string {
         const versionPath = path.join(__dirname, '../../version.txt');
         if (fs.existsSync(versionPath))
             return fs.readFileSync(versionPath, 'utf8').trim();
-    } catch (err) {
+    } catch {
+        // No version file (e.g. a source checkout) — fall through to the dev label.
     }
 
     return '⚡ development';
 }
 
+/** True for a production process or a release-shaped (short git sha) version string. */
 export function isRelease(version: string): boolean {
     return env.NODE_ENV === 'production' || (version.length === 7 && /^[0-9a-f]+$/i.test(version));
 }

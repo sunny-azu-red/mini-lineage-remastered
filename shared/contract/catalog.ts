@@ -13,15 +13,14 @@ export interface RaceView {
     regen: number;
     crit: number;
     backstory: string;
-    /** Pre-filled from RACE_TRAITS_TEMPLATES server-side; contains HTML spans (see narrative-safety invariant). */
+    /** Pre-filled server-side; contains HTML spans (see the narrative-safety invariant). */
     traits: string;
 }
 
 export interface GameCatalog {
     version: string;
     isRelease: boolean;
-    /** Link to the tagged commit on the repo, only when `version` is a release-shaped build (see
-     *  `isRelease`); `null` for a dev/debug build with nothing sensible to link to. */
+    /** The tagged commit, only for a release-shaped build; null for a dev build. */
     commitUrl: string | null;
     year: number;
     locale: string;

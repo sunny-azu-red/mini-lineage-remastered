@@ -29,6 +29,7 @@ import { resolveDeathReason } from '@/service/player.service';
 import { EFFECTS_CONFIG } from '@/constant/game.constant';
 import type { SessionContext } from '@/socket/session';
 import type { PlayerState, BattleResult } from '@/interface';
+import { makeBattleResult, makePlayer } from '../../factories';
 
 function getDef() {
     const call = vi.mocked(registerEvent).mock.calls.find(c => (c[2] as any).event === 'battle:fight');
@@ -38,38 +39,14 @@ function getDef() {
     return call[2] as any;
 }
 
-function makePlayer(overrides: Partial<PlayerState> = {}): PlayerState {
-    return {
-        name: 'Hero',
-        raceId: 0,
-        health: 100,
-        adena: 100,
-        experience: 0,
-        weaponId: 0,
-        armorId: 0,
-        dead: false,
-        ambushed: false,
-        ...overrides,
-    } as PlayerState;
-}
-
+// The defaults this file's assertions were written against.
+const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) => makePlayer({ name: 'Hero', adena: 100, dead: false, ambushed: false, ...o });
 function makeCtx(player: PlayerState): SessionContext {
     return { sessionId: 'sid-1', session: {}, player, zoneChanged: false };
 }
 
-function makeBattleResult(overrides: Partial<BattleResult> = {}): BattleResult {
-    return {
-        enemiesKilled: 3,
-        hpLost: 5,
-        damageBlocked: 2,
-        xpGained: 10,
-        adenaGained: 5,
-        isCritical: false,
-        isLevelUp: false,
-        ...overrides,
-    };
-}
-
+// The defaults this file's assertions were written against.
+const localBattleResult = (o: Partial<Parameters<typeof makeBattleResult>[0]> = {}) => makeBattleResult({ enemiesKilled: 3, damageBlocked: 2, xpGained: 10, adenaGained: 5, ...o });
 describe('battle.handler', () => {
     const io = {} as SocketIOServer;
     const socket = {} as Socket;
@@ -88,10 +65,10 @@ describe('battle.handler', () => {
 
     describe('the core anti-cheat invariant', () => {
         it('succeeds identically whether ambushed starts true or false', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult());
 
-            const ctxTrue = makeCtx(makePlayer({ ambushed: true }));
-            const ctxFalse = makeCtx(makePlayer({ ambushed: false }));
+            const ctxTrue = makeCtx(localPlayer({ ambushed: true }));
+            const ctxFalse = makeCtx(localPlayer({ ambushed: false }));
 
             expect(() => getDef().handler(ctxTrue)).not.toThrow();
             expect(() => getDef().handler(ctxFalse)).not.toThrow();
@@ -100,18 +77,18 @@ describe('battle.handler', () => {
         it('clears ambushed before simulating (simulateBattle never sees ambushed:true)', () => {
             vi.mocked(simulateBattle).mockImplementation((p: any) => {
                 expect(p.ambushed).toBe(false);
-                return makeBattleResult();
+                return localBattleResult();
             });
 
-            getDef().handler(makeCtx(makePlayer({ ambushed: true })));
+            getDef().handler(makeCtx(localPlayer({ ambushed: true })));
             expect(simulateBattle).toHaveBeenCalled();
         });
 
         it('may re-set ambushed after simulating, based on a fresh roll', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult());
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
 
-            const ctx = makeCtx(makePlayer({ ambushed: true }));
+            const ctx = makeCtx(localPlayer({ ambushed: true }));
             const result = getDef().handler(ctx);
 
             expect(ctx.player.ambushed).toBe(true);
@@ -122,9 +99,9 @@ describe('battle.handler', () => {
 
     describe('the death path', () => {
         it('sets deathReason exactly once and returns died:true with sound "death"', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ hpLost: 1000 }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ hpLost: 1000 }));
 
-            const ctx = makeCtx(makePlayer({ health: 10 }));
+            const ctx = makeCtx(localPlayer({ health: 10 }));
             const result = getDef().handler(ctx);
 
             expect(ctx.player.dead).toBe(true);
@@ -140,18 +117,18 @@ describe('battle.handler', () => {
         });
 
         it('does not roll a fresh ambush chance once dead', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ hpLost: 1000 }));
-            getDef().handler(makeCtx(makePlayer({ health: 1 })));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ hpLost: 1000 }));
+            getDef().handler(makeCtx(localPlayer({ health: 1 })));
             expect(mathService.calculateAmbushChance).not.toHaveBeenCalled();
         });
     });
 
     describe('consecutive ambush snowball', () => {
         it('applies the Hexed debuff once consecutiveAmbushes reaches 2', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult());
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
 
-            const ctx = makeCtx(makePlayer({ consecutiveAmbushes: 1 }));
+            const ctx = makeCtx(localPlayer({ consecutiveAmbushes: 1 }));
             getDef().handler(ctx);
 
             expect(ctx.player.consecutiveAmbushes).toBe(2);
@@ -159,10 +136,10 @@ describe('battle.handler', () => {
         });
 
         it('resets consecutiveAmbushes to 0 when not ambushed', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult());
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(false);
 
-            const ctx = makeCtx(makePlayer({ consecutiveAmbushes: 3 }));
+            const ctx = makeCtx(localPlayer({ consecutiveAmbushes: 3 }));
             getDef().handler(ctx);
 
             expect(ctx.player.consecutiveAmbushes).toBe(0);
@@ -171,10 +148,10 @@ describe('battle.handler', () => {
 
     describe('sound/flash precedence: level beats ambush beats crit beats none', () => {
         it('resolves "level" and a congratulatory flash on level-up, even while ambushed+critical', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ xpGained: 780, isCritical: true }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ xpGained: 780, isCritical: true }));
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
 
-            const ctx = makeCtx(makePlayer({ experience: 0 }));
+            const ctx = makeCtx(localPlayer({ experience: 0 }));
             const result = getDef().handler(ctx);
 
             expect(result.outcome.isLevelUp).toBe(true);
@@ -184,29 +161,29 @@ describe('battle.handler', () => {
         });
 
         it('resolves "ambush" over "crit" when both apply but no level-up', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ isCritical: true }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ isCritical: true }));
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
 
-            const result = getDef().handler(makeCtx(makePlayer()));
+            const result = getDef().handler(makeCtx(localPlayer()));
 
             expect(result.sound).toBe('ambush');
             expect(result.flash).toBeNull();
         });
 
         it('resolves "crit" when critical but not ambushed or leveled', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ isCritical: true }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ isCritical: true }));
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(false);
 
-            const result = getDef().handler(makeCtx(makePlayer()));
+            const result = getDef().handler(makeCtx(localPlayer()));
 
             expect(result.sound).toBe('crit');
         });
 
         it('resolves null when nothing special happened', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ isCritical: false }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ isCritical: false }));
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(false);
 
-            const result = getDef().handler(makeCtx(makePlayer()));
+            const result = getDef().handler(makeCtx(localPlayer()));
 
             expect(result.sound).toBeNull();
             expect(result.flash).toBeNull();
@@ -215,10 +192,10 @@ describe('battle.handler', () => {
 
     describe('persisting lastBattleNarrative (Fix 4 — survives reconnect)', () => {
         it('writes ctx.player.lastBattleNarrative matching the ack narrative/outcome/sound exactly, on a live (non-death) fight', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ isCritical: true }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ isCritical: true }));
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(true);
 
-            const ctx = makeCtx(makePlayer());
+            const ctx = makeCtx(localPlayer());
             const result = getDef().handler(ctx);
 
             expect(ctx.player.lastBattleNarrative).toEqual({
@@ -233,9 +210,9 @@ describe('battle.handler', () => {
         });
 
         it('writes ctx.player.lastBattleNarrative matching the ack on the death path too', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult({ hpLost: 1000 }));
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult({ hpLost: 1000 }));
 
-            const ctx = makeCtx(makePlayer({ health: 10 }));
+            const ctx = makeCtx(localPlayer({ health: 10 }));
             const result = getDef().handler(ctx);
 
             expect(result.died).toBe(true);
@@ -251,10 +228,10 @@ describe('battle.handler', () => {
         });
 
         it('the persisted narrative rides along in the ack\'s own player snapshot (buildPlayerSnapshot runs after the write)', () => {
-            vi.mocked(simulateBattle).mockReturnValue(makeBattleResult());
+            vi.mocked(simulateBattle).mockReturnValue(localBattleResult());
             vi.mocked(mathService.calculateAmbushChance).mockReturnValue(false);
 
-            const ctx = makeCtx(makePlayer());
+            const ctx = makeCtx(localPlayer());
             const result = getDef().handler(ctx);
 
             expect((result.player as any).lastBattle).toEqual(ctx.player.lastBattleNarrative);

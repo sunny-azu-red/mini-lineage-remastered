@@ -13,6 +13,7 @@ export function rollChance(chance: number): boolean {
     return Math.random() * 100 <= chance;
 }
 
+// Distinct names (not aliases) so each roll can be stubbed independently in tests.
 export function calculateCritChance(chance: number): boolean {
     return rollChance(chance);
 }
@@ -61,43 +62,27 @@ export function calculatePercentage(value: number, total: number, precision: num
     if (total <= 0)
         return 0;
 
-    let p = (value / total) * 100;
-    p = Math.max(0, Math.min(100, p));
-    if (precision === 0)
-        return Math.round(p);
-
+    const percent = Math.max(0, Math.min(100, (value / total) * 100));
     const factor = Math.pow(10, precision);
 
-    return Math.round(p * factor) / factor;
+    return Math.round(percent * factor) / factor;
 }
 
-export function getXpProgress(xp: number) {
+export function getXpProgress(xp: number): { current: number; required: number; percent: number } {
     const level = calculateLevel(xp);
     if (isMaxLevel(level))
-        return {
-            current: 0,
-            required: 0,
-            percent: 100
-        };
+        return { current: 0, required: 0, percent: 100 };
 
-    const prevLimit = calculateXpForLevel(level);
-    const nextLimit = calculateXpForLevel(level + 1);
-    const current = xp - prevLimit;
-    const required = nextLimit - prevLimit;
+    const current = xp - calculateXpForLevel(level);
+    const required = calculateXpForLevel(level + 1) - calculateXpForLevel(level);
 
-    return {
-        current,
-        required,
-        percent: calculatePercentage(current, required, 1)
-    };
+    return { current, required, percent: calculatePercentage(current, required, 1) };
 }
 
 export function getXpNeededToLevelUp(xp: number): number {
     const level = calculateLevel(xp);
-    if (isMaxLevel(level))
-        return 0;
 
-    return calculateXpForLevel(level + 1) - xp;
+    return isMaxLevel(level) ? 0 : calculateXpForLevel(level + 1) - xp;
 }
 
 export function isLevelUp(oldXp: number, newXp: number): boolean {
@@ -111,7 +96,7 @@ export function isLevelUp(oldXp: number, newXp: number): boolean {
 export function getEnemyCountRange(attackPower: number, minMult: number = 0.3, maxMult: number = 0.6): { min: number, max: number } {
     return {
         min: Math.max(1, Math.floor(attackPower * minMult)),
-        max: Math.max(2, Math.floor(attackPower * maxMult))
+        max: Math.max(2, Math.floor(attackPower * maxMult)),
     };
 }
 
@@ -119,6 +104,7 @@ export function calculateDangerLevel(attackPower: number, multiplier: number = 0
     return Math.floor(attackPower * multiplier);
 }
 
+/** Sub-linear so stacking armor never reaches invincibility. */
 export function calculateDamageBlocked(defensePower: number, exponent: number = 0.95, multiplier: number = 0.8): number {
     return Math.max(1, Math.floor(Math.pow(defensePower, exponent) * multiplier));
 }

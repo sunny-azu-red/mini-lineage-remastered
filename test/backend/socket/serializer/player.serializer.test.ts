@@ -3,17 +3,8 @@ import { buildPlayerSnapshot, toItemView } from '@/socket/serializer/player.seri
 import { PlayerState } from '@/interface';
 import { EFFECTS_CONFIG, WEAPONS, ARMORS } from '@/constant/game.constant';
 import { formatEffectTooltip } from '@/util/format.util';
+import { makePlayer } from '../../factories';
 
-const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
-    name: 'Test Hero',
-    raceId: 0,
-    health: 100,
-    adena: 0,
-    experience: 0,
-    weaponId: 0,
-    armorId: 0,
-    ...overrides,
-} as PlayerState);
 
 describe('buildPlayerSnapshot', () => {
     describe('unstarted player', () => {
@@ -73,6 +64,19 @@ describe('buildPlayerSnapshot', () => {
             expect(snapshot.experience).toBe(999_999_999);
             expect(typeof snapshot.level).toBe('number');
             expect(snapshot.isMaxLevel).toBe(true);
+        });
+
+        it('falls back to a null race label/emoji when raceId does not index a real race', () => {
+            // A corrupt or forward-incompatible session (a race removed from the catalog) must
+            // still serialize: getPlayerStats falls back to RACES[0] for the numbers, but the
+            // displayed identity is reported as unknown rather than silently mislabeled Human.
+            const p = makePlayer({ raceId: 99 as PlayerState['raceId'] });
+            const snapshot = buildPlayerSnapshot(p);
+
+            expect(snapshot.started).toBe(true);
+            expect(snapshot.raceId).toBe(99);
+            expect(snapshot.raceLabel).toBeNull();
+            expect(snapshot.raceEmoji).toBeNull();
         });
 
         it('computes hp percent and low-health flag from live stats, not raw race maxHealth', () => {

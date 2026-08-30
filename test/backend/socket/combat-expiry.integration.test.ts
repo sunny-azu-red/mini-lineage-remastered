@@ -44,19 +44,7 @@ import { registerBattleHandlers } from '@/socket/handler/battle.handler';
 import { registerPlayerHandlers } from '@/socket/handler/player.handler';
 import { trackSocket, sessionTracker } from '@/socket/emitter';
 import { processSessionTick } from '@/socket/tick';
-
-function makeBattleResult(overrides: Partial<BattleResult> = {}): BattleResult {
-    return {
-        enemiesKilled: 1,
-        hpLost: 5,
-        damageBlocked: 0,
-        xpGained: 1,
-        adenaGained: 1,
-        isCritical: false,
-        isLevelUp: false,
-        ...overrides,
-    };
-}
+import { makeBattleResult } from '../factories';
 
 describe('location-based zone sync (integration)', () => {
     const SESSION_ID = 'sid-integration-1';

@@ -1,15 +1,12 @@
+import type { MouseEvent } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { formatNumber } from '@shared/format';
 import HpBar from './HpBar';
 import XpBar from './XpBar';
 import AdenaRow from './AdenaRow';
 
-// Ported from partials/status.ejs. The old EJS baked a pre-rendered `levelDisplay` HTML string
-// server-side (emoji + race/level, as a link to /character unless ambushed/dead); reconstructed
-// here from plain PlayerSnapshot fields since the client owns rendering now. That whole gate is
-// gone: the store's `navigate()` unconditionally pins the screen to 'battle' whenever ambushed,
-// or to 'death' whenever dead, so this link can always attempt to navigate to Character and
-// simply gets redirected either way — it no longer needs to know or care about either state.
+// The old EJS baked a pre-rendered level line server-side, gated on ambushed/dead. That gate is
+// gone: navigate() pins the screen either way, so this link can always attempt Character.
 export default function StatusPanel() {
     const player = useGameStore(state => state.player);
     const navigate = useGameStore(state => state.navigate);
@@ -17,8 +14,10 @@ export default function StatusPanel() {
     if (!player)
         return null;
 
-    const statusEmoji = player.dead ? '☠️' : (player.raceEmoji ?? '');
-    const levelText = `${player.raceLabel ?? ''} level ${formatNumber(player.level ?? 0)}`;
+    function handleClick(e: MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        navigate('character');
+    }
 
     return (
         <div className="panel status-panel">
@@ -29,15 +28,9 @@ export default function StatusPanel() {
                 <div className="stat-row">
                     <span className="stat-label">Race</span>
                     <span className="stat-value">
-                        {statusEmoji}{' '}
-                        <a
-                            href="#character"
-                            onClick={e => {
-                                e.preventDefault();
-                                navigate('character');
-                            }}
-                        >
-                            {levelText}
+                        {player.dead ? '☠️' : (player.raceEmoji ?? '')}{' '}
+                        <a href="#character" onClick={handleClick}>
+                            {`${player.raceLabel ?? ''} level ${formatNumber(player.level ?? 0)}`}
                         </a>
                     </span>
                 </div>

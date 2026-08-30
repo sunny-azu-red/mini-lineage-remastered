@@ -1,96 +1,59 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RaceView } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
 
+/**
+ * The single source of truth for the handful of link-worthy URLs, used in BOTH directions —
+ * previously two hand-maintained inverse functions that could silently drift apart.
+ * 'start'/'home' share '/' and are disambiguated by `started`; 'error' has no URL.
+ */
+const ROUTES = [
+    ['battle', '/battle'],
+    ['weapons', '/shop/weapons'],
+    ['armors', '/shop/armors'],
+    ['inn', '/inn'],
+    ['suicide', '/suicide'],
+    ['death', '/death'],
+    ['character', '/character'],
+    ['highscores', '/highscores'],
+    ['statistics', '/statistics'],
+    ['races', '/races'],
+] as const satisfies readonly (readonly [ScreenId, string])[];
+
+const HIGHSCORES_PREFIX = '/highscores/';
+
 function pathFor(screen: ScreenId, raceFilter: number | null, races: RaceView[]): string | null {
-    switch (screen) {
-        case 'start':
-        case 'home':
-            return '/';
-        case 'battle':
-            return '/battle';
-        case 'weapons':
-            return '/shop/weapons';
-        case 'armors':
-            return '/shop/armors';
-        case 'inn':
-            return '/inn';
-        case 'suicide':
-            return '/suicide';
-        case 'death':
-            return '/death';
-        case 'character':
-            return '/character';
-        case 'highscores': {
-            if (raceFilter === null)
-                return '/highscores';
-
-            const race = races.find(r => r.id === raceFilter);
-            return race ? `/highscores/${race.slug}` : '/highscores';
-        }
-        case 'statistics':
-            return '/statistics';
-        case 'races':
-            return '/races';
-        case 'error':
-            // No genuinely link-worthy URL for an error state, and nothing to deep-link back
-            // into — leave the address bar exactly as it was (plan's "your call, minor").
-            return null;
-        default:
-            return null;
+    if (screen === 'start' || screen === 'home')
+        return '/';
+    if (screen === 'highscores' && raceFilter !== null) {
+        const race = races.find(r => r.id === raceFilter);
+        return race ? `${HIGHSCORES_PREFIX}${race.slug}` : '/highscores';
     }
+
+    // 'error' has no link-worthy URL and nothing to deep-link back into — leave the bar alone.
+    return ROUTES.find(([id]) => id === screen)?.[1] ?? null;
 }
 
-/** Reverse of `pathFor` — used both for `popstate` events with no `state` payload (Safari/older
- * browsers can fire one) and for reconciling a hard page-load landing directly on a deep link. */
-function screenFromPath(pathname: string, started: boolean): ScreenId {
-    const path = pathname;
-
-    if (path === '/' || path === '')
-        return started ? 'home' : 'start';
-    if (path === '/battle')
-        return 'battle';
-    if (path === '/shop/weapons')
-        return 'weapons';
-    if (path === '/shop/armors')
-        return 'armors';
-    if (path === '/inn')
-        return 'inn';
-    if (path === '/suicide')
-        return 'suicide';
-    if (path === '/death')
-        return 'death';
-    if (path === '/character')
-        return 'character';
-    if (path === '/highscores' || path.startsWith('/highscores/'))
+/**
+ * Resolves a URL to the screen it names. Deliberately does NOT enforce who may go there —
+ * `pinScreen` (gameStore.ts) owns every access rule, and every path here reaches it via
+ * `navigate()`. Keeping the check in one place is what makes the Back button obey the same rules
+ * as a deep link.
+ */
+function screenFromPath(pathname: string): ScreenId {
+    if (pathname.startsWith(HIGHSCORES_PREFIX))
         return 'highscores';
-    if (path === '/statistics')
-        return 'statistics';
-    if (path === '/races')
-        return 'races';
 
-    return started ? 'home' : 'start';
-}
-
-// Old app's `cheatMiddleware` restricted an uninitialized (`!isGameStarted`) player to only
-// `/`, `/start`, `/statistics`, `/races`, `/highscores*` — clamp a resolved deep-link screen the
-// same way so landing directly on e.g. `/battle` before ever starting a character doesn't route
-// there.
-const UNSTARTED_ALLOWED_SCREENS: ReadonlySet<ScreenId> = new Set(['start', 'statistics', 'races', 'highscores']);
-
-function clampForUnstarted(screen: ScreenId, started: boolean): ScreenId {
-    return !started && !UNSTARTED_ALLOWED_SCREENS.has(screen) ? 'start' : screen;
+    // Unknown paths resolve to Home; pinScreen demotes that to Game Start for a visitor with no
+    // character, so this needs no knowledge of player state.
+    return ROUTES.find(([, path]) => path === pathname)?.[0] ?? 'home';
 }
 
 function raceFilterFromPath(pathname: string, races: RaceView[]): number | null {
-    const path = pathname;
-    const prefix = '/highscores/';
-
-    if (!path.startsWith(prefix))
+    if (!pathname.startsWith(HIGHSCORES_PREFIX))
         return null;
 
-    const slug = path.slice(prefix.length);
-    return races.find(r => r.slug === slug)?.id ?? null;
+    return races.find(r => r.slug === pathname.slice(HIGHSCORES_PREFIX.length))?.id ?? null;
 }
 
 interface HistoryState {
@@ -103,20 +66,17 @@ function isHistoryState(value: unknown): value is HistoryState {
 }
 
 /**
- * Maps `store.screen`/`store.highscoreRaceFilter` <-> browser history (plan decision A4) for the
- * handful of genuinely link-worthy URLs, giving Back/Forward support with no router dependency.
- * Call once from App.tsx.
+ * Maps `store.screen`/`highscoreRaceFilter` <-> browser history, giving Back/Forward support
+ * with no router dependency. Call once, from App.tsx.
  *
- * The SPA now owns `/` outright (the legacy EJS app's routes and its own `/app`-prefix
- * workaround are gone — see git history for the prior parallel-run phase).
+ * Loop safety: a screen change pushes state, and a popstate navigates the store — which would
+ * re-trigger the push and clobber the entry just navigated to. `fromHistoryRef` marks
+ * history-originated (and initial-reconciliation) navigations so the sync effect corrects the
+ * current entry in place instead of pushing a new one.
  *
- * Loop safety: a `screen` change triggers a `pushState` (one effect below); a `popstate` event
- * triggers a `store.navigate()` call (the other effect) which itself changes `screen` — without a
- * guard that would immediately re-trigger the first effect and `pushState` AGAIN on top of the
- * entry `popstate` just navigated to. `fromPopStateRef` breaks this: whenever a navigation
- * originates from `popstate` (or the one-time initial-deep-link reconciliation below), it's set
- * to `true` immediately before calling `navigate()`, and the push-effect consumes-and-clears it
- * instead of pushing.
+ * Access rules are NOT enforced here — `pinScreen` owns all of them, and every path in this hook
+ * reaches it through `navigate()`. That is what makes Back/Forward obey exactly the same rules as
+ * a typed URL.
  */
 export function useHistorySync(): void {
     const screen = useGameStore(state => state.screen);
@@ -124,62 +84,64 @@ export function useHistorySync(): void {
     const catalog = useGameStore(state => state.catalog);
     const navigate = useGameStore(state => state.navigate);
 
-    const fromPopStateRef = useRef(false);
+    const fromHistoryRef = useRef(false);
     const didInitialSyncRef = useRef(false);
+    // Bumped by every history-originated navigation purely to guarantee the sync effect below
+    // re-runs. Without it, a navigation that resolves to the screen already showing (very common
+    // now that pinScreen redirects) changes none of that effect's other deps, so it never runs,
+    // never clears `fromHistoryRef`, and silently swallows the NEXT genuine navigation's push.
+    const [historySeq, setHistorySeq] = useState(0);
 
-    // popstate (Back/Forward button) handling — registered once.
+    /** Navigates from a history event — never pushes a new entry, only corrects the current one. */
+    function navigateFromHistory(screen: ScreenId, raceFilter: number | null): void {
+        fromHistoryRef.current = true;
+        setHistorySeq(seq => seq + 1);
+        navigate(screen, { raceFilter });
+    }
+
+    /** Resolves a URL to a screen + race filter and navigates there. */
+    function navigateToPath(pathname: string, races: RaceView[]): void {
+        navigateFromHistory(screenFromPath(pathname), raceFilterFromPath(pathname, races));
+    }
+
     useEffect(() => {
         function onPopState(event: PopStateEvent): void {
-            const races = useGameStore.getState().catalog?.races ?? [];
-            const started = useGameStore.getState().player?.started ?? false;
-
-            fromPopStateRef.current = true;
-
             if (isHistoryState(event.state)) {
-                navigate(event.state.screen, { raceFilter: event.state.raceFilter });
-            } else {
-                // No state (e.g. the very first history entry, before any pushState from this
-                // hook ever ran) — fall back to parsing the current URL directly so a hard
-                // refresh/back-navigation to a deep link like `/highscores/elf` still lands
-                // correctly.
-                navigate(clampForUnstarted(screenFromPath(location.pathname, started), started), {
-                    raceFilter: raceFilterFromPath(location.pathname, races),
-                });
+                // The encoded screen is NOT trusted — it goes through navigate() -> pinScreen
+                // like everything else, so Back obeys the same access rules as a deep link.
+                navigateFromHistory(event.state.screen, event.state.raceFilter);
+                return;
             }
+
+            // No state (the first history entry, before this hook ever pushed) — parse the URL
+            // so a hard refresh or back-navigation onto a deep link still lands correctly.
+            navigateToPath(location.pathname, useGameStore.getState().catalog?.races ?? []);
         }
 
         window.addEventListener('popstate', onPopState);
         return () => window.removeEventListener('popstate', onPopState);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
 
-    // One-time reconciliation for a hard page-load landing directly on a deep link (no
-    // `popstate` fires for this — it's the initial document load, not a history navigation).
-    // Runs once catalog is available (i.e. after the first `hydrate`), since resolving a
-    // highscores race-slug and the ambiguous "/" -> home-vs-start case both need it.
+    // One-shot reconciliation for a hard load landing on a deep link — no popstate fires for the
+    // initial document load. Waits for `catalog` (needed to resolve a race slug and the
+    // ambiguous "/" home-vs-start case).
     useEffect(() => {
         if (didInitialSyncRef.current || !catalog)
             return;
 
         didInitialSyncRef.current = true;
-
-        const path = location.pathname;
-        if (path === '/')
-            return;
-
-        const started = useGameStore.getState().player?.started ?? false;
-        fromPopStateRef.current = true;
-        navigate(clampForUnstarted(screenFromPath(path, started), started), {
-            raceFilter: raceFilterFromPath(path, catalog.races),
-        });
+        if (location.pathname !== '/')
+            navigateToPath(location.pathname, catalog.races);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [catalog, navigate]);
 
-    // screen/raceFilter change -> pushState, unless this change originated from popstate/the
-    // initial-sync reconciliation above (see the loop-safety note in this function's doc comment).
     useEffect(() => {
-        if (fromPopStateRef.current) {
-            fromPopStateRef.current = false;
-            return;
-        }
+        // Consume the flag unconditionally, BEFORE any early return — leaving it set would
+        // swallow the next genuine navigation's push. `historySeq` is in the deps precisely so
+        // this runs even when the navigation resolved to the screen already showing.
+        const fromHistory = fromHistoryRef.current;
+        fromHistoryRef.current = false;
 
         if (!catalog)
             return;
@@ -188,6 +150,18 @@ export function useHistorySync(): void {
         if (path === null)
             return;
 
-        window.history.pushState({ screen, raceFilter: highscoreRaceFilter } satisfies HistoryState, '', path);
-    }, [screen, highscoreRaceFilter, catalog]);
+        const entry = { screen, raceFilter: highscoreRaceFilter } satisfies HistoryState;
+
+        if (fromHistory) {
+            // We are already standing on this history entry. If pinScreen redirected away from
+            // what it encoded, rewrite it in place so the URL stops lying — pushing would
+            // duplicate the entry and break Back. replaceState fires no popstate, so no loop.
+            if (path !== location.pathname)
+                window.history.replaceState(entry, '', path);
+
+            return;
+        }
+
+        window.history.pushState(entry, '', path);
+    }, [screen, highscoreRaceFilter, catalog, historySeq]);
 }

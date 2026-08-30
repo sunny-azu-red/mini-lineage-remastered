@@ -3,9 +3,8 @@ import { useAction } from '@/socket/useAction';
 import { playSound } from '@/audio/soundfx';
 import SelectActionForm from '@/components/common/SelectActionForm';
 
-// Ported from suicide.ejs + suicide.js. suicide.js's two non-default choices each carry a
-// DIFFERENT variant ('yes' -> btn-danger, 'no' -> btn-secondary) — SelectActionForm's function
-// form of `activeVariant` (added specifically to support this screen faithfully) expresses that.
+// The two choices each carry their OWN button variant, which is why SelectActionForm accepts a
+// function form of `activeVariant`.
 export default function SuicideScreen() {
     const navigate = useGameStore(state => state.navigate);
     const applyMutation = useGameStore(state => state.applyMutation);
@@ -17,19 +16,14 @@ export default function SuicideScreen() {
             return;
         }
 
-        void run(
-            {},
-            {
-                onSuccess: data => {
-                    // navigate() FIRST — see GameStartScreen.tsx's identical fix: it clears
-                    // `flash`, so calling it after applyMutation() would wipe any flash in the
-                    // same tick before it ever renders.
-                    navigate('death');
-                    applyMutation(data.player, data.flash);
-                    playSound('death');
-                },
+        void run({}, {
+            onSuccess: data => {
+                // One atomic update, same reasoning as GameStartScreen: navigate() would pin
+                // against the store's still-ALIVE player and bounce to Home.
+                applyMutation(data.player, data.flash, 'death');
+                playSound('death');
             },
-        );
+        });
     }
 
     return (

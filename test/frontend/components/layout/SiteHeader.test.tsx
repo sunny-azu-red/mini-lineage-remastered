@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
+import { makePlayer } from '../../factories';
 
 // navigate() always calls .then() on this now (to apply the player:screen ack to its own
 // store) — needs a resolved default so tests that don't care about the response don't crash.
@@ -10,42 +11,7 @@ vi.mock('@/socket/client', () => ({
 }));
 
 const { default: SiteHeader } = await import('@/components/layout/SiteHeader');
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: null,
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
+const { request: requestMock } = vi.mocked(await import('@/socket/client'));
 
 function setPlayer(player: PlayerSnapshot | null) {
     useGameStore.setState({ player }, false);
@@ -129,5 +95,33 @@ describe('SiteHeader', () => {
         const link = screen.getByRole('link');
         const soundButton = screen.getByRole('button', { name: /Sound FX/i });
         expect(link.contains(soundButton)).toBe(false);
+    });
+
+    // Regression: clicking the header from a pre-character screen (The Tome of Lore, Chronicles
+    // of Ancestry, Hall of Champions) used to fire `player:screen`, which the server rejects with
+    // NOT_STARTED — surfacing as `player:screen = error` in the backend log on an action the
+    // player experienced as working fine.
+    it('navigates home without reporting a screen when no character exists yet', () => {
+        useGameStore.setState({ screen: 'statistics' }, false);
+        setPlayer(makePlayer({ started: false, name: null }));
+        render(<SiteHeader />);
+        requestMock.mockClear();
+
+        fireEvent.click(screen.getByRole('link'));
+
+        expect(useGameStore.getState().screen).toBe('start');
+        expect(requestMock).not.toHaveBeenCalled();
+    });
+
+    it('still reports the screen when a character does exist', () => {
+        useGameStore.setState({ screen: 'statistics' }, false);
+        setPlayer(makePlayer({ started: true, dead: false, ambushed: false }));
+        render(<SiteHeader />);
+        requestMock.mockClear();
+
+        fireEvent.click(screen.getByRole('link'));
+
+        expect(useGameStore.getState().screen).toBe('home');
+        expect(requestMock).toHaveBeenCalledWith('player:screen', { screen: 'home' });
     });
 });

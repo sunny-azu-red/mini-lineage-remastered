@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ItemType, PlayerState } from '@/interface';
+import { ItemType, PlayerState, RaceType } from '@/interface';
 import { RACES, ARMORS, EFFECTS_CONFIG, CHARACTER_CONFIG, TICK_CONFIG } from '@/constant/game.constant';
 import { DEATH_MESSAGES } from '@/constant/narratives.constant';
 import {
@@ -14,11 +14,6 @@ import {
     processTick,
     processEffectExpiry,
     processRegenTick,
-    getTotalRegen,
-    getTotalCrit,
-    getTotalAttack,
-    getTotalDefense,
-    getPlayerEffects,
     getPlayerStats,
     applyEffect,
     getActiveEffects,
@@ -27,6 +22,7 @@ import {
     resolveDeathReason,
 } from '@/service/player.service';
 import { statisticsRepository } from '@/repository/statistics.repository';
+import { makePlayer } from '../factories';
 
 vi.mock('@/repository/statistics.repository', () => ({
     statisticsRepository: {
@@ -35,25 +31,14 @@ vi.mock('@/repository/statistics.repository', () => ({
     },
 }));
 
-const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
-    name: 'Test Hero',
-    raceId: 0, // Human — startHealth: 100
-    health: 100,
-    adena: 500,
-    experience: 0,
-    weaponId: 0,
-    armorId: 0,
-    totalBattles: 0,
-    totalAmbushes: 0,
-    totalEnemiesKilled: 0,
-    ...overrides,
-} as PlayerState);
+// The defaults this file's assertions were written against.
+const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) => makePlayer({ adena: 500, totalBattles: 0, totalAmbushes: 0, totalEnemiesKilled: 0, ...o });
 
 describe('isGameStarted', () => {
-    it('returns true for a fully initialized player', () => expect(isGameStarted(makePlayer())).toBe(true));
+    it('returns true for a fully initialized player', () => expect(isGameStarted(localPlayer())).toBe(true));
     it('returns false when raceId is missing', () => expect(isGameStarted({} as PlayerState)).toBe(false));
     it('returns false when raceId is undefined explicitly', () => {
-        const p = makePlayer();
+        const p = localPlayer();
         delete (p as any).raceId;
         expect(isGameStarted(p)).toBe(false);
     });
@@ -93,17 +78,17 @@ describe('initializePlayer', () => {
 
 describe('deductCost', () => {
     it('deducts adena and returns true when affordable', () => {
-        const p = makePlayer({ adena: 100 });
+        const p = localPlayer({ adena: 100 });
         expect(deductCost(p, 50)).toBe(true);
         expect(p.adena).toBe(50);
     });
     it('deducts nothing and returns false when not affordable', () => {
-        const p = makePlayer({ adena: 10 });
+        const p = localPlayer({ adena: 10 });
         expect(deductCost(p, 50)).toBe(false);
         expect(p.adena).toBe(10);
     });
     it('succeeds when player has exact amount, leaving 0 adena', () => {
-        const p = makePlayer({ adena: 50 });
+        const p = localPlayer({ adena: 50 });
         expect(deductCost(p, 50)).toBe(true);
         expect(p.adena).toBe(0);
     });
@@ -111,7 +96,7 @@ describe('deductCost', () => {
 
 describe('killPlayer', () => {
     it('sets health to 0, dead to true, clears active effects, and increments total_deaths', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             health: 75,
             effects: [
                 { ...EFFECTS_CONFIG.smokedSausage }
@@ -128,7 +113,7 @@ describe('killPlayer', () => {
 
 describe('commitSuicide', () => {
     it('kills the player and marks them as a coward', () => {
-        const p = makePlayer({ health: 100 });
+        const p = localPlayer({ health: 100 });
         commitSuicide(p);
         expect(p.health).toBe(0);
         expect(p.dead).toBe(true);
@@ -138,19 +123,19 @@ describe('commitSuicide', () => {
 
 describe('restoreHealth', () => {
     it('restores partial HP and returns amount healed', () => {
-        const p = makePlayer({ raceId: 0, health: 50 });
+        const p = localPlayer({ raceId: 0, health: 50 });
         const healed = restoreHealth(p, 20);
         expect(p.health).toBe(70);
         expect(healed).toBe(20);
     });
     it('clamps to maxHp — no over-healing — and returns clamped amount', () => {
-        const p = makePlayer({ raceId: 0, health: 90 });
+        const p = localPlayer({ raceId: 0, health: 90 });
         const healed = restoreHealth(p, 999);
         expect(p.health).toBe(RACES[0].startHealth); // 100
         expect(healed).toBe(10);
     });
     it('returns 0 when already at full health', () => {
-        const p = makePlayer({ raceId: 0, health: RACES[0].startHealth });
+        const p = localPlayer({ raceId: 0, health: RACES[0].startHealth });
         const healed = restoreHealth(p, 20);
         expect(healed).toBe(0);
     });
@@ -158,7 +143,7 @@ describe('restoreHealth', () => {
 
 describe('applyEffect', () => {
     it('applies a new effect and preserves distinct groups', () => {
-        const p = makePlayer({ raceId: 0, effects: [] });
+        const p = localPlayer({ raceId: 0, effects: [] });
         applyEffect(p, { id: 'food_1', type: 'buff', group: 'food', emoji: '🥓', label: 'Food 1', modifiers: [] });
         applyEffect(p, { id: 'potion_1', type: 'buff', group: 'potion', emoji: '🧪', label: 'Potion 1', modifiers: [] });
         expect(p.effects?.length).toBe(2);
@@ -166,15 +151,27 @@ describe('applyEffect', () => {
     });
 
     it('replaces active effects with the same group', () => {
-        const p = makePlayer({ raceId: 0, effects: [] });
+        const p = localPlayer({ raceId: 0, effects: [] });
         applyEffect(p, { id: 'food_1', type: 'buff', group: 'food', emoji: '🥓', label: 'Food 1', modifiers: [] });
         applyEffect(p, { id: 'food_2', type: 'buff', group: 'food', emoji: '🍖', label: 'Food 2', modifiers: [] });
         expect(p.effects?.length).toBe(1);
         expect(p.effects?.[0].id).toBe('food_2');
     });
 
+    it('drops effects that already expired while applying a new one', () => {
+        const p = localPlayer({
+            raceId: 0,
+            effects: [
+                { id: 'stale', type: 'buff', emoji: '🍎', label: 'Stale', modifiers: [], expiresAt: Date.now() - 1000 },
+                { id: 'live', type: 'buff', emoji: '🛡️', label: 'Live', modifiers: [], expiresAt: Date.now() + 60_000 },
+            ],
+        });
+        applyEffect(p, { id: 'fresh', type: 'buff', emoji: '⚡', label: 'Fresh', modifiers: [] });
+        expect(p.effects?.map(e => e.id)).toEqual(['live', 'fresh']);
+    });
+
     it('replaces effect by id when group is not specified', () => {
-        const p = makePlayer({ raceId: 0, effects: [] });
+        const p = localPlayer({ raceId: 0, effects: [] });
         applyEffect(p, { id: 'custom_buff', type: 'buff', emoji: '⚡', label: 'Speed', durationMs: 10000, modifiers: [] });
         applyEffect(p, { id: 'custom_buff', type: 'buff', emoji: '⚡', label: 'Speed Refreshed', durationMs: 20000, modifiers: [] });
         expect(p.effects?.length).toBe(1);
@@ -184,7 +181,7 @@ describe('applyEffect', () => {
 
 describe('purchaseItem — weapon', () => {
     it('deducts cost and updates weaponId on success', () => {
-        const p = makePlayer({ adena: 1000, weaponId: 0 });
+        const p = localPlayer({ adena: 1000, weaponId: 0 });
         const result = purchaseItem(p, ItemType.Weapon, 1); // Elven Needle costs 300
         expect(result?.success).toBe(true);
         expect(p.weaponId).toBe(1);
@@ -193,14 +190,14 @@ describe('purchaseItem — weapon', () => {
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_adena_spent', 300);
     });
     it('fails when adena is insufficient', () => {
-        const p = makePlayer({ adena: 10, weaponId: 0 });
+        const p = localPlayer({ adena: 10, weaponId: 0 });
         const result = purchaseItem(p, ItemType.Weapon, 1);
         expect(result?.success).toBe(false);
         expect(p.adena).toBe(10);
         expect(p.weaponId).toBe(0);
     });
     it('fails when already owning the item', () => {
-        const p = makePlayer({ adena: 1000, weaponId: 1 });
+        const p = localPlayer({ adena: 1000, weaponId: 1 });
         const result = purchaseItem(p, ItemType.Weapon, 1);
         expect(result?.success).toBe(false);
         expect(p.adena).toBe(1000); // no deduction
@@ -209,7 +206,7 @@ describe('purchaseItem — weapon', () => {
 
 describe('purchaseItem — armor', () => {
     it('deducts cost and updates armorId and increments stats', () => {
-        const p = makePlayer({ adena: 1000, armorId: 0 });
+        const p = localPlayer({ adena: 1000, armorId: 0 });
         const result = purchaseItem(p, ItemType.Armor, 1); // Brigandine Leathers costs 500
         expect(result?.success).toBe(true);
         expect(p.armorId).toBe(1);
@@ -219,21 +216,21 @@ describe('purchaseItem — armor', () => {
     });
 
     it('fails when already owning the armor', () => {
-        const p = makePlayer({ adena: 1000, armorId: 1 });
+        const p = localPlayer({ adena: 1000, armorId: 1 });
         const result = purchaseItem(p, ItemType.Armor, 1);
         expect(result?.success).toBe(false);
         expect(p.adena).toBe(1000);
     });
 
     it('returns null when item ID is invalid', () => {
-        const p = makePlayer();
+        const p = localPlayer();
         const result = purchaseItem(p, ItemType.Weapon, 999);
         expect(result).toBeNull();
     });
 });
 describe('purchaseItem — food', () => {
     it('heals the player on purchase and increments stats', () => {
-        const p = makePlayer({ adena: 100, health: 50, raceId: 0 });
+        const p = localPlayer({ adena: 100, health: 50, raceId: 0 });
         const result = purchaseItem(p, ItemType.Food, 0); // Spiced Ale: stat 4, cost 7
         expect(result?.success).toBe(true);
         expect(p.health).toBe(54);
@@ -244,7 +241,7 @@ describe('purchaseItem — food', () => {
     });
 
     it('applies buff effect when purchasing high-tier food', () => {
-        const p = makePlayer({ adena: 100, health: 50, raceId: 0 });
+        const p = localPlayer({ adena: 100, health: 50, raceId: 0 });
         const result = purchaseItem(p, ItemType.Food, 2); // Smoked Sausage: stat 15, cost 60, effect: Satisfied (+10 maxHp)
         expect(result?.success).toBe(true);
         expect(p.effects?.length).toBe(1);
@@ -255,7 +252,7 @@ describe('purchaseItem — food', () => {
     });
 
     it('heals into newly expanded max HP when purchasing food at full base HP', () => {
-        const p = makePlayer({ adena: 100, health: 100, raceId: 0 }); // Human base max HP = 100
+        const p = localPlayer({ adena: 100, health: 100, raceId: 0 }); // Human base max HP = 100
         const result = purchaseItem(p, ItemType.Food, 2); // Smoked Sausage: stat 15, cost 60, effect: Satisfied (+10 maxHp)
         expect(result?.success).toBe(true);
         expect(p.effects?.length).toBe(1);
@@ -266,7 +263,7 @@ describe('purchaseItem — food', () => {
     });
 
     it('replaces previous food buff when purchasing another food buff without stacking', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             adena: 5000,
             health: 50,
             raceId: 0,
@@ -289,7 +286,7 @@ describe('purchaseItem — food', () => {
     });
 
     it('preserves non-food effects when replacing food buff', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             adena: 1000,
             health: 50,
             raceId: 0,
@@ -306,29 +303,118 @@ describe('purchaseItem — food', () => {
     });
 });
 
+describe('purchaseItem — hostile input', () => {
+    // EQUIPMENT is keyed by ItemType. If it were a plain object, `EQUIPMENT['constructor']` would
+    // resolve up the prototype chain to a truthy value and be treated as a real equipment slot —
+    // deducting adena and writing junk onto the session before throwing. A null-prototype map
+    // cannot. Unreachable through the Zod-validated handler, but the service must not rely on that.
+    it.each(['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__'])(
+        'treats the inherited key %s as an unknown item type, not an equipment slot',
+        (key) => {
+            const p = localPlayer({ adena: 1000, weaponId: 0, armorId: 0 });
+            vi.mocked(statisticsRepository.increment).mockClear();
+
+            expect(() => purchaseItem(p, key as unknown as ItemType, 0)).not.toThrow();
+
+            // Whatever it resolved to, it must not have written an equipment slot or junk key.
+            expect(p.weaponId).toBe(0);
+            expect(p.armorId).toBe(0);
+            expect(Object.keys(p)).not.toContain('undefined');
+            expect(statisticsRepository.increment).not.toHaveBeenCalledWith(undefined);
+        },
+    );
+});
+
+describe('processRegenTick — non-finite state', () => {
+    // The guard is written positively (`regen > 0 && health < maxHealth`) precisely because the
+    // inverted form falls through on NaN and would persist NaN health plus a NaN statistic,
+    // which the 5s tick would then broadcast forever.
+    it('bails out instead of persisting NaN health', () => {
+        const p = localPlayer({ raceId: 0, health: NaN });
+        p.effects = [{ ...EFFECTS_CONFIG.restingAura }];
+        vi.mocked(statisticsRepository.increment).mockClear();
+
+        expect(processRegenTick(p)).toBe(false);
+        expect(statisticsRepository.increment).not.toHaveBeenCalled();
+    });
+});
+
+describe('purchaseItem — statistics fired', () => {
+    // Pins the COMPLETE set of counters each purchase touches. A `toHaveBeenCalledWith` check
+    // alone cannot catch an increment that was dropped, duplicated, or given the wrong amount.
+    const incrementsFor = (run: () => void): Array<[string, number | undefined]> => {
+        vi.mocked(statisticsRepository.increment).mockClear();
+        run();
+        return vi.mocked(statisticsRepository.increment).mock.calls
+            .map(([field, amount]) => [field, amount] as [string, number | undefined])
+            .sort((a, b) => a[0].localeCompare(b[0]));
+    };
+
+    it('a weapon purchase spends adena and counts the weapon, nothing else', () => {
+        const p = localPlayer({ adena: 1000, weaponId: 0 });
+        expect(incrementsFor(() => purchaseItem(p, ItemType.Weapon, 1))).toEqual([
+            ['total_adena_spent', 300],
+            ['total_weapons_bought', undefined],
+        ]);
+    });
+
+    it('an armor purchase spends adena and counts the armor, nothing else', () => {
+        const p = localPlayer({ adena: 1000, armorId: 0 });
+        expect(incrementsFor(() => purchaseItem(p, ItemType.Armor, 1))).toEqual([
+            ['total_adena_spent', 500],
+            ['total_armors_bought', undefined],
+        ]);
+    });
+
+    it('a food purchase spends adena, counts the meal, and records the HP actually healed', () => {
+        const p = localPlayer({ adena: 1000, health: 50, raceId: 0 }); // Spiced Ale: 4 HP, 7 adena
+        expect(incrementsFor(() => purchaseItem(p, ItemType.Food, 0))).toEqual([
+            ['total_adena_spent', 7],
+            ['total_food_bought', undefined],
+            ['total_hp_healed', 4],
+        ]);
+    });
+
+    it('food records only the HP actually restored when it would overheal', () => {
+        const p = localPlayer({ adena: 1000, health: 98, raceId: 0 }); // 100 max, heals 4 -> only 2 land
+        expect(incrementsFor(() => purchaseItem(p, ItemType.Food, 0))).toContainEqual(['total_hp_healed', 2]);
+    });
+
+    it('a rejected purchase spends nothing and counts nothing', () => {
+        const broke = localPlayer({ adena: 1, weaponId: 0 });
+        expect(incrementsFor(() => purchaseItem(broke, ItemType.Weapon, 1))).toEqual([]);
+
+        const owned = localPlayer({ adena: 100_000, weaponId: 1 });
+        expect(incrementsFor(() => purchaseItem(owned, ItemType.Weapon, 1))).toEqual([]);
+
+        const unknown = localPlayer({ adena: 100_000 });
+        expect(incrementsFor(() => purchaseItem(unknown, ItemType.Weapon, 999))).toEqual([]);
+    });
+});
+
 describe('resolveBattleOutcome', () => {
     it('kills the player on lethal damage', () => {
-        const p = makePlayer({ health: 5 });
+        const p = localPlayer({ health: 5 });
         const flash = resolveBattleOutcome(p, { hpLost: 10, xpGained: 100, adenaGained: 50, enemiesKilled: 3, damageBlocked: 2, isCritical: false } as any);
         expect(p.dead).toBe(true);
         expect(p.health).toBe(0);
         expect(flash).toBe(false);
     });
     it('returns a level-up flash and restores hp on level-up', () => {
-        const p = makePlayer({ health: 90, experience: 0, raceId: 0 });
+        const p = localPlayer({ health: 90, experience: 0, raceId: 0 });
         // Level 2 threshold is calculateXpForLevel(2) = 780
         const flash = resolveBattleOutcome(p, { hpLost: 0, xpGained: 780, adenaGained: 0, enemiesKilled: 0, damageBlocked: 0, isCritical: false } as any);
         expect(flash).toBe(true);
         expect(p.health).toBe(RACES[0].startHealth); // full HP on level up
     });
     it('increments total_levels_gained and total_hp_healed on level-up', () => {
-        const p = makePlayer({ health: 60, experience: 0, raceId: 0 });
+        const p = localPlayer({ health: 60, experience: 0, raceId: 0 });
         resolveBattleOutcome(p, { hpLost: 0, xpGained: 780, adenaGained: 0, enemiesKilled: 0, damageBlocked: 0, isCritical: false } as any);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_levels_gained');
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_healed', 40); // 100 - 60
     });
     it('returns null flash and updates stats on normal battle', () => {
-        const p = makePlayer({ health: 80, adena: 100, experience: 0 });
+        const p = localPlayer({ health: 80, adena: 100, experience: 0 });
         const flash = resolveBattleOutcome(p, { hpLost: 10, xpGained: 50, adenaGained: 25, enemiesKilled: 5, damageBlocked: 3, isCritical: false } as any);
         expect(flash).toBe(false);
         expect(p.health).toBe(70);
@@ -339,7 +425,7 @@ describe('resolveBattleOutcome', () => {
     });
 
     it('increments global stats during battle', () => {
-        const p = makePlayer({ health: 100 });
+        const p = localPlayer({ health: 100 });
         resolveBattleOutcome(p, { hpLost: 10, xpGained: 50, adenaGained: 25, enemiesKilled: 5, damageBlocked: 7, isCritical: false } as any);
 
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_battles');
@@ -352,19 +438,19 @@ describe('resolveBattleOutcome', () => {
     });
 
     it('increments total_deaths when player dies', () => {
-        const p = makePlayer({ health: 5 });
+        const p = localPlayer({ health: 5 });
         resolveBattleOutcome(p, { hpLost: 10, xpGained: 0, adenaGained: 0, enemiesKilled: 0, damageBlocked: 0, isCritical: false } as any);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_deaths');
     });
 
     it('increments total_critical_hits when isCritical is true', () => {
-        const p = makePlayer({ health: 100 });
+        const p = localPlayer({ health: 100 });
         resolveBattleOutcome(p, { hpLost: 10, xpGained: 50, adenaGained: 25, enemiesKilled: 5, damageBlocked: 7, isCritical: true } as any);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_critical_hits');
     });
 
     it('handles missing totalBattles and totalEnemiesKilled during resolution', () => {
-        const p = makePlayer({ health: 100 });
+        const p = localPlayer({ health: 100 });
         delete (p as any).totalBattles;
         delete (p as any).totalEnemiesKilled;
         resolveBattleOutcome(p, { hpLost: 0, xpGained: 0, adenaGained: 0, enemiesKilled: 10, damageBlocked: 0, isCritical: false } as any);
@@ -398,7 +484,7 @@ describe('initializePlayer — age definitions', () => {
 
 describe('processTick', () => {
     it('heals an Elf (regen 3) with no regen armor by 3 and returns true', () => {
-        const p = makePlayer({ raceId: 2, health: 50, armorId: 0 }); // Elf, Peasant's Tunic
+        const p = localPlayer({ raceId: 2, health: 50, armorId: 0 }); // Elf, Peasant's Tunic
         const result = processTick(p);
         expect(result).toBe(true);
         expect(p.health).toBe(53);
@@ -406,7 +492,7 @@ describe('processTick', () => {
     });
 
     it('heals a Human (regen 1) with Knight\'s Plate (regen 1) by 2 total and returns true', () => {
-        const p = makePlayer({ raceId: 0, health: 70, armorId: 3 }); // Human, Knight's Plate
+        const p = localPlayer({ raceId: 0, health: 70, armorId: 3 }); // Human, Knight's Plate
         const result = processTick(p);
         expect(result).toBe(true);
         expect(p.health).toBe(72);
@@ -414,42 +500,42 @@ describe('processTick', () => {
     });
 
     it('returns false and does not heal an Orc (regen 0) with no regen armor', () => {
-        const p = makePlayer({ raceId: 1, health: 80, armorId: 0 }); // Orc, Peasant's Tunic
+        const p = localPlayer({ raceId: 1, health: 80, armorId: 0 }); // Orc, Peasant's Tunic
         const result = processTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(80);
     });
 
     it('returns false when player is already at full HP', () => {
-        const p = makePlayer({ raceId: 2, health: 75, armorId: 0 }); // Elf at max HP (75)
+        const p = localPlayer({ raceId: 2, health: 75, armorId: 0 }); // Elf at max HP (75)
         const result = processTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(75);
     });
 
     it('returns false when player is dead', () => {
-        const p = makePlayer({ raceId: 2, health: 0, dead: true, armorId: 0 });
+        const p = localPlayer({ raceId: 2, health: 0, dead: true, armorId: 0 });
         const result = processTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(0);
     });
 
     it('clamps HP to maxHp and heals only the remainder', () => {
-        const p = makePlayer({ raceId: 0, health: 99, armorId: 0 }); // Human max 100, regen 1
+        const p = localPlayer({ raceId: 0, health: 99, armorId: 0 }); // Human max 100, regen 1
         processTick(p);
         expect(p.health).toBe(100);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 1);
     });
 
     it('Dark Elf (regen 2) with Eternal Aegis (regen 3) heals for 5 total', () => {
-        const p = makePlayer({ raceId: 3, health: 50, armorId: 5 }); // Dark Elf, Eternal Aegis
+        const p = localPlayer({ raceId: 3, health: 50, armorId: 5 }); // Dark Elf, Eternal Aegis
         processTick(p);
         expect(p.health).toBe(55);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 5);
     });
 
     it('cleans up expired effects during processTick', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             effects: [
                 { id: 'expired_buff', type: 'buff', emoji: '⚡', label: 'Expired', expiresAt: Date.now() - 1000, modifiers: [] },
                 { id: 'active_buff', type: 'buff', emoji: '🛡️', label: 'Active', expiresAt: Date.now() + 50000, modifiers: [] }
@@ -462,7 +548,7 @@ describe('processTick', () => {
     });
 
     it('clamps current health when maxHealth buff expires and health exceeds base max', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 0, // Human base max 100
             health: 120, // had food buff previously
             effects: [
@@ -476,7 +562,7 @@ describe('processTick', () => {
     });
 
     it('cleans up expired buffs and clamps HP while in combat without applying HP regen', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 2, // Elf base max 75, regen 3
             health: 90, // was at 100 with food buff (75+25), took 10 damage in battle
             effects: [
@@ -494,7 +580,7 @@ describe('processTick', () => {
     });
 
     it('does not apply HP regen during tick when in combat with low HP', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 2, // Elf base max 75, regen 3
             health: 50,
             effects: [
@@ -507,7 +593,7 @@ describe('processTick', () => {
     });
 
     it('processEffectExpiry cleans expired buffs without applying regen even when wounded', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 2, // Elf base max 75, regen 3
             health: 50, // wounded
             effects: [
@@ -520,8 +606,49 @@ describe('processTick', () => {
         expect(p.health).toBe(50); // Did NOT heal
     });
 
+    it('processRegenTick reports no change if a maxHealth buff expires mid-call', () => {
+        // Defensive guard: getPlayerStats is evaluated once here and again inside restoreHealth.
+        // If a +maxHealth buff lapses between the two, the ceiling drops and nothing is actually
+        // restored — the tick must then report "no change" rather than a phantom heal.
+        const p = localPlayer({ raceId: 0, health: 110 }); // Human: 100 base max
+        p.effects = [
+            { ...EFFECTS_CONFIG.restingAura },
+            { ...EFFECTS_CONFIG.smokedSausage, expiresAt: Date.now() + 1_000 }, // +10 max HP
+        ];
+
+        vi.mocked(statisticsRepository.increment).mockClear();
+        const realNow = Date.now();
+        let call = 0;
+        // First read sees the buff alive (max 110); every later read sees it expired (max 100).
+        const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => (call++ === 0 ? realNow : realNow + 10_000));
+
+        try {
+            // health 110 < maxHealth 110 is false, so nudge health down to enter the regen path.
+            p.health = 109;
+            expect(processRegenTick(p)).toBe(false);
+            expect(statisticsRepository.increment).not.toHaveBeenCalledWith('total_hp_regen', expect.anything());
+        } finally {
+            nowSpy.mockRestore();
+        }
+    });
+
+    it('processRegenTick records only the HP actually restored when capped by max health', () => {
+        // Regressions here are invisible in-game but silently inflate the global HP-regen stat:
+        // a player one point below maximum heals 1, not their full regen rate.
+        const p = localPlayer({ raceId: 2, health: 74, armorId: 0 }); // Elf: 75 max HP, regen 3
+        p.effects = [{ ...EFFECTS_CONFIG.restingAura }];
+
+        // This file does not reset mocks between tests, so isolate this call's own increments.
+        vi.mocked(statisticsRepository.increment).mockClear();
+
+        expect(processRegenTick(p)).toBe(true);
+        expect(p.health).toBe(75);
+        expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 1);
+        expect(statisticsRepository.increment).not.toHaveBeenCalledWith('total_hp_regen', 3);
+    });
+
     it('processRegenTick heals wounded resting player and returns true', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 0, // Human base max 100, regen 1
             health: 80,
             effects: [{ ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] }]
@@ -531,8 +658,35 @@ describe('processTick', () => {
         expect(p.health).toBe(82); // 80 + 1 (base) + 1 (resting aura)
     });
 
+    it('processEffectExpiry returns false for a dead player, leaving their expired effects untouched', () => {
+        // The dead are frozen exactly as they died — no expiry sweep, no maxHealth clamp.
+        const p = localPlayer({
+            raceId: 2,
+            health: 0,
+            dead: true,
+            effects: [
+                { id: 'expired_buff', type: 'buff', emoji: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
+            ]
+        });
+        const changed = processEffectExpiry(p);
+        expect(changed).toBe(false);
+        expect(p.effects?.length).toBe(1); // never swept
+    });
+
+    it('processRegenTick returns false for a dead player and never heals them', () => {
+        const p = localPlayer({
+            raceId: 2, // Elf, regen 3 — would otherwise heal
+            health: 0,
+            dead: true,
+            effects: [{ ...EFFECTS_CONFIG.restingAura }]
+        });
+        const changed = processRegenTick(p);
+        expect(changed).toBe(false);
+        expect(p.health).toBe(0);
+    });
+
     it('processTick with applyRegen false only expires effects and does not grant regen', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 2, // Elf base max 75, regen 3
             health: 50, // wounded
             effects: [
@@ -552,101 +706,120 @@ describe('getRace (internal branch coverage)', () => {
     });
 
     it('resolveBattleOutcome returns true for level up', () => {
-        const p = makePlayer({ experience: 0, raceId: 0, health: 50 });
+        const p = localPlayer({ experience: 0, raceId: 0, health: 50 });
         // Level 2: 780 XP
         expect(resolveBattleOutcome(p, { hpLost: 0, xpGained: 780, adenaGained: 0, enemiesKilled: 0, damageBlocked: 0, isCritical: false } as any)).toBe(true);
     });
 });
 
-describe('getTotalRegen', () => {
+describe('getPlayerStats — regen', () => {
     it('returns race regen + armor regen for Human with Knight\'s Plate', () => {
-        const p = makePlayer({ raceId: 0, armorId: 3 }); // Human (regen 1) + Knight's Plate (regen 1)
-        expect(getTotalRegen(p)).toBe(2);
+        const p = localPlayer({ raceId: 0, armorId: 3 }); // Human (regen 1) + Knight's Plate (regen 1)
+        expect(getPlayerStats(p).regen).toBe(2);
     });
 
     it('returns 0 for Orc with no regen armor', () => {
-        const p = makePlayer({ raceId: 1, armorId: 0 }); // Orc (regen 0) + Peasant's Tunic (regen 0)
-        expect(getTotalRegen(p)).toBe(0);
+        const p = localPlayer({ raceId: 1, armorId: 0 }); // Orc (regen 0) + Peasant's Tunic (regen 0)
+        expect(getPlayerStats(p).regen).toBe(0);
     });
 
     it('returns armor regen alone when race has 0 regen', () => {
-        const p = makePlayer({ raceId: 1, armorId: 3 }); // Orc (regen 0) + Knight's Plate (regen 1)
-        expect(getTotalRegen(p)).toBe(1);
+        const p = localPlayer({ raceId: 1, armorId: 3 }); // Orc (regen 0) + Knight's Plate (regen 1)
+        expect(getPlayerStats(p).regen).toBe(1);
     });
 
     it('returns race regen alone when armor has 0 regen', () => {
-        const p = makePlayer({ raceId: 2, armorId: 0 }); // Elf (regen 3) + Peasant's Tunic (regen 0)
-        expect(getTotalRegen(p)).toBe(3);
+        const p = localPlayer({ raceId: 2, armorId: 0 }); // Elf (regen 3) + Peasant's Tunic (regen 0)
+        expect(getPlayerStats(p).regen).toBe(3);
     });
 });
 
-describe('getTotalCrit', () => {
+describe('getPlayerStats — crit', () => {
     it('returns race crit + weapon crit for Human with Echos of Valhalla', () => {
-        const p = makePlayer({ raceId: 0, weaponId: 3 }); // Human (crit 4) + Echos of Valhalla (crit 3)
-        expect(getTotalCrit(p)).toBe(7);
+        const p = localPlayer({ raceId: 0, weaponId: 3 }); // Human (crit 4) + Echos of Valhalla (crit 3)
+        expect(getPlayerStats(p).crit).toBe(7);
     });
 
     it('returns race crit alone with starter weapon', () => {
-        const p = makePlayer({ raceId: 0, weaponId: 0 }); // Human (crit 4) + Apprentice Blade (crit 0)
-        expect(getTotalCrit(p)).toBe(4);
+        const p = localPlayer({ raceId: 0, weaponId: 0 }); // Human (crit 4) + Apprentice Blade (crit 0)
+        expect(getPlayerStats(p).crit).toBe(4);
     });
 
     it('returns weapon crit alone when race has 0 crit', () => {
-        const p = makePlayer({ raceId: 1, weaponId: 3 }); // Orc (crit 0) + Echos of Valhalla (crit 3)
-        expect(getTotalCrit(p)).toBe(3);
+        const p = localPlayer({ raceId: 1, weaponId: 3 }); // Orc (crit 0) + Echos of Valhalla (crit 3)
+        expect(getPlayerStats(p).crit).toBe(3);
     });
 
     it('returns 0 when both race and weapon have 0 crit', () => {
-        const p = makePlayer({ raceId: 1, weaponId: 0 }); // Orc (crit 0) + Apprentice Blade (crit 0)
-        expect(getTotalCrit(p)).toBe(0);
+        const p = localPlayer({ raceId: 1, weaponId: 0 }); // Orc (crit 0) + Apprentice Blade (crit 0)
+        expect(getPlayerStats(p).crit).toBe(0);
     });
 
-    describe('getTotalAttack', () => {
+    describe('getPlayerStats — attack', () => {
         it('returns the weapon stat for Elven Needle', () => {
-            const p = makePlayer({ weaponId: 1 }); // Elven Needle: stat 16
-            expect(getTotalAttack(p)).toBe(16);
+            const p = localPlayer({ weaponId: 1 }); // Elven Needle: stat 16
+            expect(getPlayerStats(p).attack).toBe(16);
         });
 
         it('falls back to starter weapon for invalid ID', () => {
-            const p = makePlayer({ weaponId: 999 });
-            expect(getTotalAttack(p)).toBe(7); // Brawler's Fists: stat 7
+            const p = localPlayer({ weaponId: 999 });
+            expect(getPlayerStats(p).attack).toBe(7); // Brawler's Fists: stat 7
         });
     });
 
-    describe('getTotalDefense', () => {
+    describe('getPlayerStats — defense', () => {
         it('returns the armor stat for Brigandine Leathers', () => {
-            const p = makePlayer({ armorId: 1 }); // Brigandine Leathers: stat 10
-            expect(getTotalDefense(p)).toBe(10);
+            const p = localPlayer({ armorId: 1 }); // Brigandine Leathers: stat 10
+            expect(getPlayerStats(p).defense).toBe(10);
         });
 
         it('falls back to starter armor for invalid ID', () => {
-            const p = makePlayer({ armorId: 999 });
-            expect(getTotalDefense(p)).toBe(2); // Peasant's Tunic: stat 2
+            const p = localPlayer({ armorId: 999 });
+            expect(getPlayerStats(p).defense).toBe(2); // Peasant's Tunic: stat 2
         });
     });
 });
 
-describe('getPlayerEffects', () => {
+describe('getActiveEffects — unknown race/armor ids', () => {
+    it('falls back to the default race and armor when computing the resting regen aura', () => {
+        // A corrupt or forward-incompatible session must still produce a sane aura rather than
+        // throwing on `race.startHealth` / `armor.modifiers` of an undefined catalog entry.
+        const p = localPlayer({
+            raceId: 99 as unknown as RaceType,
+            armorId: 99,
+            health: 10,
+            effects: [{ ...EFFECTS_CONFIG.restingAura }],
+        });
+
+        const effects = getActiveEffects(p);
+        const regenerating = effects.find(e => e.id === 'regenerating');
+
+        expect(regenerating).toBeDefined(); // Human fallback: startHealth 100, regen 1
+        expect(regenerating?.modifiers).toEqual([{ type: 'regen', value: 1 }]);
+    });
+});
+
+describe('getActiveEffects — via snapshot', () => {
     it('returns resting aura when resting at full HP', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 0,
             health: 100,
             effects: [{ ...EFFECTS_CONFIG.restingAura }]
         });
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects).toEqual([
             { ...EFFECTS_CONFIG.restingAura }
         ]);
     });
 
     it('returns resting + regenerating when resting with low HP and regen > 0', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 2,
             health: 50,
             armorId: 0,
             effects: [{ ...EFFECTS_CONFIG.restingAura }]
         }); // Elf (base regen 3)
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects).toEqual([
             { ...EFFECTS_CONFIG.restingAura },
             { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 3 }] },
@@ -654,26 +827,26 @@ describe('getPlayerEffects', () => {
     });
 
     it('returns only resting (no regenerating) for Orc resting with low HP and 0 total regen', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 1,
             health: 80,
             armorId: 0,
             effects: [{ ...EFFECTS_CONFIG.restingAura }]
         }); // Orc (base 0 regen, Peasant Tunic 0 regen)
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects).toEqual([
             { ...EFFECTS_CONFIG.restingAura }
         ]);
     });
 
     it('returns resting + regenerating for Orc with Knight Plate (regen 1) when resting with low HP', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 1,
             health: 80,
             armorId: 3, // Knight's Plate (regen 1)
             effects: [{ ...EFFECTS_CONFIG.restingAura }]
         }); // Orc (base 0 + armor 1 = 1)
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects).toEqual([
             { ...EFFECTS_CONFIG.restingAura },
             { ...EFFECTS_CONFIG.regenAura, modifiers: [{ type: 'regen', value: 1 }] },
@@ -681,7 +854,7 @@ describe('getPlayerEffects', () => {
     });
 
     it('combines aura modifiers into total regen and does not double-count in getPlayerStats', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 0, // Human base regen 1
             health: 50,
             armorId: 3, // Knight Plate regen 1
@@ -689,7 +862,7 @@ describe('getPlayerEffects', () => {
                 { ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] } // Resting bonus +1
             ]
         });
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         // Total regen = 1 (base) + 1 (armor) + 1 (resting aura) = 3
         expect(effects).toEqual([
             { ...EFFECTS_CONFIG.restingAura, modifiers: [{ type: 'regen', value: 1 }] },
@@ -701,7 +874,7 @@ describe('getPlayerEffects', () => {
     });
 
     it('returns resting + regenerating when resting with buffed max health above base startHealth', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             raceId: 2, // Elf base maxHp 75, regen 3
             health: 120, // Above base 75, but below buffed 225
             armorId: 0,
@@ -710,33 +883,33 @@ describe('getPlayerEffects', () => {
                 { ...EFFECTS_CONFIG.restingAura }
             ]
         });
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects.some(a => a.id === 'regenerating')).toBe(true);
 
         // At full 225 HP, regenerating should disappear
         p.health = 225;
-        const fullEffects = getPlayerEffects(p);
+        const fullEffects = getActiveEffects(p);
         expect(fullEffects.some(a => a.id === 'regenerating')).toBe(false);
     });
 
     it('returns combat aura when in combat', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             effects: [{ ...EFFECTS_CONFIG.combatAura }]
         });
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects).toEqual([{ ...EFFECTS_CONFIG.combatAura }]);
     });
 
     it('returns empty array when not resting and not in combat', () => {
-        const p = makePlayer();
-        const effects = getPlayerEffects(p);
+        const p = localPlayer();
+        const effects = getActiveEffects(p);
         expect(effects).toEqual([]);
     });
 
     it('includes active buffs and debuffs', () => {
-        const p = makePlayer();
+        const p = localPlayer();
         applyEffect(p, EFFECTS_CONFIG.smokedSausage);
-        const effects = getPlayerEffects(p);
+        const effects = getActiveEffects(p);
         expect(effects.length).toBe(1);
         expect(effects[0].id).toBe('satisfied');
         expect(effects[0].type).toBe('buff');
@@ -745,7 +918,7 @@ describe('getPlayerEffects', () => {
 
 describe('getPlayerStats & applyEffect', () => {
     it('calculates layered stats with base, gear, and active buffs', () => {
-        const p = makePlayer({ raceId: 0, weaponId: 1, armorId: 1 }); // Human (base maxHp 100, crit 4, regen 1, ambush 8) + Weapon(16 stat) + Armor(10 stat)
+        const p = localPlayer({ raceId: 0, weaponId: 1, armorId: 1 }); // Human (base maxHp 100, crit 4, regen 1, ambush 8) + Weapon(16 stat) + Armor(10 stat)
         const statsBase = getPlayerStats(p);
         expect(statsBase.attack).toBe(16);
         expect(statsBase.defense).toBe(10);
@@ -762,7 +935,7 @@ describe('getPlayerStats & applyEffect', () => {
     });
 
     it('applies multiplier modifiers correctly', () => {
-        const p = makePlayer();
+        const p = localPlayer();
         applyEffect(p, EFFECTS_CONFIG.konamiCheat);
 
         const stats = getPlayerStats(p);
@@ -772,7 +945,7 @@ describe('getPlayerStats & applyEffect', () => {
     });
 
     it('filters out expired effects', () => {
-        const p = makePlayer();
+        const p = localPlayer();
         p.effects = [
             {
                 id: 'expired_buff',
@@ -789,7 +962,7 @@ describe('getPlayerStats & applyEffect', () => {
     });
 
     it('clamps stats within valid bounds', () => {
-        const p = makePlayer({ raceId: 1, weaponId: 0, armorId: 0 }); // Orc
+        const p = localPlayer({ raceId: 1, weaponId: 0, armorId: 0 }); // Orc
         applyEffect(p, {
             id: 'curse',
             type: 'debuff',
@@ -813,55 +986,55 @@ describe('getPlayerStats & applyEffect', () => {
 
 describe('syncZoneAuras', () => {
     it('adds no zone aura when the player is dead', () => {
-        const p = makePlayer({ dead: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        const p = localPlayer({ dead: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
         syncZoneAuras(p);
         expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
     });
 
     it('adds a combat aura when ambushed, with no currentScreen at all', () => {
-        const p = makePlayer({ ambushed: true, effects: [] });
+        const p = localPlayer({ ambushed: true, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
     it.each(TICK_CONFIG.combatZones)('adds a combat aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts combatZones)', screen => {
-        const p = makePlayer({ currentScreen: screen, effects: [] });
+        const p = localPlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
     it.each(TICK_CONFIG.restingZones)('adds a resting aura when currentScreen is "%s" (matches the old game\'s zone.middleware.ts restingZones)', screen => {
-        const p = makePlayer({ currentScreen: screen, effects: [] });
+        const p = localPlayer({ currentScreen: screen, effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['resting']);
     });
 
     it.each(['start', 'statistics', 'races', 'error'] as const)('adds no zone aura when currentScreen is "%s" — outside both zone lists, matching the old game\'s behavior for those paths exactly', screen => {
-        const p = makePlayer({ currentScreen: screen, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        const p = localPlayer({ currentScreen: screen, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
         syncZoneAuras(p);
         expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
     });
 
     it('adds no zone aura when currentScreen has never been reported at all', () => {
-        const p = makePlayer({ effects: [] });
+        const p = localPlayer({ effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.some(e => e.id === 'resting' || e.id === 'combat')).toBe(false);
     });
 
     it('ambushed unconditionally forces combat regardless of the reported screen — the safety net a raw socket client can\'t escape by lying about its screen', () => {
-        const p = makePlayer({ ambushed: true, currentScreen: 'home', effects: [] });
+        const p = localPlayer({ ambushed: true, currentScreen: 'home', effects: [] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
     it('replaces a stale zone aura rather than stacking', () => {
-        const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+        const p = localPlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
         syncZoneAuras(p);
         expect(p.effects?.map(e => e.id)).toEqual(['combat']);
     });
 
     it('preserves non-zone effects untouched', () => {
-        const p = makePlayer({ currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.konamiCheat }] });
+        const p = localPlayer({ currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.konamiCheat }] });
         syncZoneAuras(p);
         const ids = p.effects?.map(e => e.id);
         expect(ids).toContain('konami_cheat');
@@ -869,43 +1042,43 @@ describe('syncZoneAuras', () => {
     });
 
     it('never sets expiresAt on a zone aura — a zone is exactly what the current screen says, never a countdown, matching the old game exactly', () => {
-        const combatPlayer = makePlayer({ currentScreen: 'battle', effects: [] });
+        const combatPlayer = localPlayer({ currentScreen: 'battle', effects: [] });
         syncZoneAuras(combatPlayer);
         expect(combatPlayer.effects?.find(e => e.id === 'combat')?.expiresAt).toBeUndefined();
 
-        const restingPlayer = makePlayer({ currentScreen: 'home', effects: [] });
+        const restingPlayer = localPlayer({ currentScreen: 'home', effects: [] });
         syncZoneAuras(restingPlayer);
         expect(restingPlayer.effects?.find(e => e.id === 'resting')?.expiresAt).toBeUndefined();
     });
 
     describe('return value (Fix 8 — callers need to know whether the aura actually changed)', () => {
         it('returns true on a resting -> combat transition', () => {
-            const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+            const p = localPlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.restingAura }] });
             expect(syncZoneAuras(p)).toBe(true);
         });
 
         it('returns true on a combat -> resting transition', () => {
-            const p = makePlayer({ ambushed: false, currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            const p = localPlayer({ ambushed: false, currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.combatAura }] });
             expect(syncZoneAuras(p)).toBe(true);
         });
 
         it('returns false when the same aura is recomputed (no actual change)', () => {
-            const p = makePlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            const p = localPlayer({ ambushed: true, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
             expect(syncZoneAuras(p)).toBe(false);
         });
 
         it('returns false when resting is (re)computed and already present', () => {
-            const p = makePlayer({ currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.restingAura }] });
+            const p = localPlayer({ currentScreen: 'home', effects: [{ ...EFFECTS_CONFIG.restingAura }] });
             expect(syncZoneAuras(p)).toBe(false);
         });
 
         it('returns true when a live player (with a zone aura present) dies (aura -> neither)', () => {
-            const p = makePlayer({ dead: true, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
+            const p = localPlayer({ dead: true, effects: [{ ...EFFECTS_CONFIG.combatAura }] });
             expect(syncZoneAuras(p)).toBe(true);
         });
 
         it('returns false for an already-dead player with no zone aura to begin with', () => {
-            const p = makePlayer({ dead: true, effects: [] });
+            const p = localPlayer({ dead: true, effects: [] });
             expect(syncZoneAuras(p)).toBe(false);
         });
     });
@@ -913,14 +1086,14 @@ describe('syncZoneAuras', () => {
 
 describe('resetPlayer', () => {
     it('clears game fields so isGameStarted returns false', () => {
-        const p = makePlayer({ raceId: 0, health: 100, adena: 500 });
+        const p = localPlayer({ raceId: 0, health: 100, adena: 500 });
         expect(isGameStarted(p)).toBe(true);
         resetPlayer(p);
         expect(isGameStarted(p)).toBe(false);
     });
 
     it('deletes name, dead/coward/cheated flags, deathReason, counters, and effects', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             dead: true, coward: true, cheated: true, ambushed: true,
             deathReason: 'died', effects: [{ ...EFFECTS_CONFIG.restingAura }],
             revision: 3, currentScreen: 'death',
@@ -949,7 +1122,7 @@ describe('resetPlayer', () => {
     });
 
     it('clears lastBattleNarrative so a restarted character does not show its predecessor\'s last fight', () => {
-        const p = makePlayer({
+        const p = localPlayer({
             lastBattleNarrative: {
                 narrative: {
                     critLine: null, killLine: 'k', deflectionLine: 'd', outcomeLine: 'o',
@@ -966,7 +1139,7 @@ describe('resetPlayer', () => {
     });
 
     it('preserves session-store bookkeeping fields (cookie, bootstrappedAt)', () => {
-        const p: any = makePlayer({});
+        const p: any = localPlayer({});
         p.cookie = { maxAge: 86400 };
         p.bootstrappedAt = 999;
 
@@ -979,32 +1152,32 @@ describe('resetPlayer', () => {
 
 describe('resolveDeathReason', () => {
     it('sets the cheated death reason when player.cheated is true, regardless of coward', () => {
-        const p = makePlayer({ cheated: true, coward: true });
+        const p = localPlayer({ cheated: true, coward: true });
         resolveDeathReason(p);
         expect(p.deathReason).toContain('heresy');
     });
 
-    it('sets the ambush-flee death reason when coward and ambushed', () => {
-        const p = makePlayer({ coward: true, ambushed: true });
+    it('sets the same cowardly reason whether or not an ambush was active', () => {
+        const p = localPlayer({ coward: true, ambushed: true });
         resolveDeathReason(p);
-        expect(p.deathReason).toContain('caught trying to flee an ambush');
+        expect(p.deathReason).toContain('cowardly way out');
     });
 
     it('sets the plain coward death reason when coward but not ambushed', () => {
-        const p = makePlayer({ coward: true, ambushed: false });
+        const p = localPlayer({ coward: true, ambushed: false });
         resolveDeathReason(p);
         expect(p.deathReason).toContain('cowardly way out');
     });
 
     it('sets a random death message when neither cheated nor coward', () => {
-        const p = makePlayer({ cheated: false, coward: false });
+        const p = localPlayer({ cheated: false, coward: false });
         resolveDeathReason(p);
         expect(p.deathReason).toBeDefined();
         expect(DEATH_MESSAGES).toContain(p.deathReason);
     });
 
     it('is idempotent — never overwrites an already-set deathReason', () => {
-        const p = makePlayer({ cheated: true, deathReason: 'Custom Death' });
+        const p = localPlayer({ cheated: true, deathReason: 'Custom Death' });
         resolveDeathReason(p);
         expect(p.deathReason).toBe('Custom Death');
     });
@@ -1012,20 +1185,20 @@ describe('resolveDeathReason', () => {
 
 describe('killPlayer / commitSuicide — deathReason fixed at time of death', () => {
     it('killPlayer sets a deathReason once, at time of death', () => {
-        const p = makePlayer({ health: 75 });
+        const p = localPlayer({ health: 75 });
         killPlayer(p);
         expect(p.deathReason).toBeDefined();
     });
 
     it('commitSuicide sets the coward deathReason (not a random one)', () => {
-        const p = makePlayer({ health: 100, ambushed: false });
+        const p = localPlayer({ health: 100, ambushed: false });
         commitSuicide(p);
         expect(p.deathReason).toContain('cowardly way out');
     });
 
-    it('commitSuicide while ambushed sets the ambush-flee deathReason', () => {
-        const p = makePlayer({ health: 100, ambushed: true });
+    it('commitSuicide while ambushed still reads as an ordinary suicide', () => {
+        const p = localPlayer({ health: 100, ambushed: true });
         commitSuicide(p);
-        expect(p.deathReason).toContain('caught trying to flee an ambush');
+        expect(p.deathReason).toContain('cowardly way out');
     });
 });

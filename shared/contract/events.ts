@@ -6,9 +6,9 @@ import type { HighscoreList, HighscoreSubmitResult } from './highscores';
 import type { StatisticsResponse } from './statistics';
 
 /**
- * Sent to the client on every socket connect AND reconnect. Building/sending this payload
- * must NEVER mutate player state — that invariant is what makes a hard refresh (even
- * mid-ambush) completely harmless. `player` is null when no character has been started yet.
+ * Sent on every connect AND reconnect. Building this payload must NEVER mutate player state —
+ * that invariant is what makes a hard refresh, even mid-ambush, completely harmless.
+ * `player` is null when no character has been started.
  */
 export interface HydratePayload {
     player: PlayerSnapshot | null;
@@ -44,12 +44,9 @@ export interface ClientToServerEvents {
     'game:restart': (p: EmptyPayload, ack: (r: Ack<{ hydrate: HydratePayload }>) => void) => void;
     'battle:fight': (p: EmptyPayload, ack: (r: Ack<BattleFightResult>) => void) => void;
     /**
-     * Fired by the client on every screen change (see gameStore.ts's navigate()/hydrate()) —
-     * reports the player's current location so player.service.ts's syncZoneAuras can classify
-     * combat/resting zones purely from it, exactly like the old game's URL-path-based
-     * zone.middleware.ts did. `ambushed` still unconditionally forces combat server-side
-     * regardless of what screen is reported here (see syncZoneAuras) — a raw socket client lying
-     * about its screen can never escape that.
+     * Fired on every screen change so the server can classify combat/resting zones from
+     * location alone. `ambushed` still forces combat server-side regardless of what is
+     * reported here, so a raw client lying about its screen can never escape an ambush.
      */
     'player:screen': (p: PlayerScreenPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'shop:purchase': (p: ShopPurchasePayload, ack: (r: Ack<MutationResult>) => void) => void;
@@ -57,15 +54,15 @@ export interface ClientToServerEvents {
     'highscores:submit': (p: EmptyPayload, ack: (r: Ack<HighscoreSubmitResult>) => void) => void;
     'highscores:list': (p: HighscoreListPayload, ack: (r: Ack<HighscoreList>) => void) => void;
     'statistics:get': (p: EmptyPayload, ack: (r: Ack<StatisticsResponse>) => void) => void;
-    /** Fire-and-forget Konami-code relay — no ack, unchanged from today. */
+    /** Fire-and-forget Konami relay — no ack. */
     input: (p: InputPayload) => void;
 }
 
 export interface ServerToClientEvents {
-    /** On connect AND every reconnect. Never a side effect of any mutation. */
+    /** On connect AND every reconnect. Never a side effect of a mutation. */
     hydrate: (p: HydratePayload) => void;
-    /** Tick regen, effect expiry, other-tab sync. Partial — client shallow-merges. */
+    /** Tick regen, effect expiry, other-tab sync. Partial — the client shallow-merges. */
     'state:update': (p: Partial<PlayerSnapshot>) => void;
-    /** Server-initiated notice (e.g. Konami cheat activation). */
+    /** Server-initiated notice (e.g. Konami activation). */
     notice: (p: FlashView) => void;
 }

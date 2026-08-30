@@ -16,10 +16,7 @@ import { formatSessionId } from '@/util/format.util';
 import { isRelease } from '@/util/version.util';
 import { GAME_VERSION } from '@/constant/game.constant';
 
-/**
- * Declarative shape every socket event handler plugs into — Zod validation, guards,
- * rate limiting, locking, and acking are all handled once by registerEvent() below.
- */
+/** The shape every socket event plugs into; validation/guards/limits/locking/acking happen once below. */
 export interface EventDefinition<TIn, TOut> {
     event: string;
     schema: z.ZodType<TIn>;
@@ -31,73 +28,43 @@ export interface EventDefinition<TIn, TOut> {
 
 type AckFn = (response: Ack<unknown>) => void;
 
-/**
- * Socket.IO always passes the ack callback (if the caller provided one) as the LAST
- * argument. `input` never sends one; other events always do. Normalize both shapes here.
- */
+/** Socket.IO passes the ack (when the caller sent one) as the last argument; `input` sends none. */
 function extractArgs(args: unknown[]): { payload: unknown; ack: AckFn | undefined } {
-    if (args.length > 0 && typeof args[args.length - 1] === 'function') {
-        const ack = args[args.length - 1] as AckFn;
-        const payload = args.length > 1 ? args[0] : undefined;
-
-        return { payload, ack };
-    }
+    if (args.length > 0 && typeof args[args.length - 1] === 'function')
+        return { payload: args.length > 1 ? args[0] : undefined, ack: args[args.length - 1] as AckFn };
 
     return { payload: args[0], ack: undefined };
 }
 
-/**
- * Registers one client->server event on a socket: resolves the session id, applies the
- * flood limiter then (optionally) a per-event rate limiter, validates the payload with
- * Zod, runs guards against the current player inside withSession/readSession, calls the
- * handler, syncs other tabs on a mutation, and acks the result — or acks a mapped error
- * at any failure point. If the caller sent no ack (e.g. `input`), the result/error is
- * simply swallowed after being logged (toAckError already logs unexpected errors).
- */
 export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def: EventDefinition<TIn, TOut>): void {
     socket.on(def.event, async (...args: unknown[]) => {
         const start = Date.now();
         const { payload, ack } = extractArgs(args);
-        const req = socket.request as any;
-        const sessionId: string | undefined = req.session?.id;
-        const shortSid = formatSessionId(sessionId);
+        const sessionId: string | undefined = (socket.request as any).session?.id;
 
         const logResult = (ok: boolean) => {
-            if (isRelease(GAME_VERSION))
-                return;
-
-            const duration = Date.now() - start;
-            logger.debug(`[SOCKET:${shortSid}] \x1b[35m${def.event} = ${ok ? 'ok' : 'error'} (${duration}ms)\x1b[0m`);
+            if (!isRelease(GAME_VERSION))
+                logger.debug(`[SOCKET:${formatSessionId(sessionId)}] \x1b[35m${def.event} = ${ok ? 'ok' : 'error'} (${Date.now() - start}ms)\x1b[0m`);
         };
 
         try {
             if (!sessionId) {
-                // WARN, not the DEBUG-level logResult() below — matches the old game's
-                // socket.service.ts exactly, and matters beyond cosmetics: pino's level is
-                // raised to 'info' in a release build (logger.config.ts), which silently drops
-                // every .debug() call. A WARN survives that filter, so an unauthenticated/invalid
-                // event attempt (worth knowing about even in production) stays visible instead of
-                // vanishing entirely, the way it would if this only logged at the generic
-                // per-event DEBUG level like every routine success/failure does.
+                // WARN, not the DEBUG logResult below: a release build raises pino to 'info',
+                // which would silently drop an unauthenticated-event report entirely.
                 logger.warn(`[SOCKET] Unauthenticated event '${def.event}' from socket ${socket.id}`);
                 throw new SocketError('UNAUTHENTICATED', 'Not authenticated.');
             }
 
-            const flood = floodLimiter.consume(sessionId);
-            if (!flood.allowed)
-                throw new SocketError('RATE_LIMITED', 'Too many requests. Please slow down.', flood.retryAfterMs);
-
-            if (def.rateLimit) {
-                const limited = def.rateLimit.consume(sessionId);
-                if (!limited.allowed)
-                    throw new SocketError('RATE_LIMITED', 'Too many requests. Please slow down.', limited.retryAfterMs);
+            for (const limiter of [floodLimiter, def.rateLimit]) {
+                const check = limiter?.consume(sessionId);
+                if (check && !check.allowed)
+                    throw new SocketError('RATE_LIMITED', 'Too many requests. Please slow down.', check.retryAfterMs);
             }
 
             const parsed = def.schema.safeParse(payload);
             if (!parsed.success) {
                 logger.warn({ err: parsed.error }, `[SOCKET] Invalid payload for event '${def.event}' from socket ${socket.id}`);
-                const message = parsed.error.issues.map(i => i.message).join(', ') || 'Invalid payload.';
-                throw new SocketError('INVALID_PAYLOAD', `Invalid payload: ${message}`);
+                throw new SocketError('INVALID_PAYLOAD', `Invalid payload: ${parsed.error.issues.map(i => i.message).join(', ') || 'Invalid payload.'}`);
             }
 
             let mutatedPlayer: PlayerState | undefined;
@@ -115,18 +82,11 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
                 ? await withSession(sessionId, run)
                 : await readSession(sessionId, run);
 
-            // Sync OTHER tabs on the same session — the acting socket gets its own full,
-            // authoritative result via the ack below and must be excluded here (see
-            // emitStateUpdate's doc comment: this used to race the ack and could leave the
-            // UI stuck).
             if (def.mode === 'mutate' && mutatedPlayer) {
+                // OTHER tabs only — the acting socket gets the authoritative result via its own
+                // ack below, and a racing push has no transition detection so it could clobber
+                // the baseline that ack's handler needs.
                 emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer), socket.id);
-
-                // Reschedule exact expiry timers (real timed buffs/debuffs — zone auras never
-                // carry an expiresAt) right after this mutation persisted — without this, a
-                // freshly-applied effect's expiresAt would sit unscheduled until the next
-                // periodic tick or reconnect happened to catch up, instead of firing at the
-                // exact millisecond it should.
                 refreshExpiryTimers(io, sessionId, mutatedPlayer);
             }
 

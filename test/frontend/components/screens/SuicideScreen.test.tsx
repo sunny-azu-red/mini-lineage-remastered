@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
+import { makePlayer } from '../../factories';
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
@@ -10,42 +10,6 @@ const { playSoundMock } = vi.hoisted(() => ({ playSoundMock: vi.fn() }));
 vi.mock('@/audio/soundfx', () => ({ playSound: playSoundMock }));
 
 const { default: SuicideScreen } = await import('@/components/screens/SuicideScreen');
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: null,
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
 
 function resetStore() {
     useGameStore.setState(
@@ -125,5 +89,19 @@ describe('SuicideScreen', () => {
         expect(requestMock).not.toHaveBeenCalledWith('player:suicide', expect.anything());
         expect(playSoundMock).not.toHaveBeenCalled();
         expect(useGameStore.getState().screen).toBe('home');
+    });
+
+    // The transition happens in ONE store update against the freshly-dead player. Doing it as
+    // navigate()-then-applyMutation would pin 'death' against the still-ALIVE store player,
+    // bounce to Home, and report that bogus intermediate screen to the server.
+    it('moves to death without bouncing through home', async () => {
+        requestMock.mockResolvedValue({ ok: true, data: { player: makePlayer({ dead: true }), flash: null } });
+        render(<SuicideScreen />);
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'yes' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Do it 🥀' }));
+
+        await waitFor(() => expect(useGameStore.getState().screen).toBe('death'));
+        expect(requestMock).not.toHaveBeenCalledWith('player:screen', { screen: 'home' });
     });
 });

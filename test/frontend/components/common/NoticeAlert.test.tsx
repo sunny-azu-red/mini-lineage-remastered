@@ -1,21 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import type { PlayerSnapshot } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 import NoticeAlert from '@/components/common/NoticeAlert';
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1, started: true, name: 'Hero', raceId: 1, raceLabel: 'Human', raceEmoji: '🧑',
-        health: 80, maxHealth: 100, hpPercent: 80, lowHealth: false,
-        experience: 10, level: 2, isMaxLevel: false, xpCurrent: 10, xpRequired: 100, xpPercent: 10, xpNeeded: 90,
-        adena: 500, weapon: null, armor: null, stats: null, effects: [],
-        dead: false, ambushed: false, coward: false, cheated: false, deathReason: null, highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
+import { makePlayer } from '../../factories';
 
 describe('NoticeAlert', () => {
     beforeEach(() => {

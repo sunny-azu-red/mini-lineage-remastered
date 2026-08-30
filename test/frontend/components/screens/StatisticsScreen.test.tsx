@@ -1,40 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useGameStore } from '@/store/gameStore';
+import { makeCatalog, makePlayer } from '../../factories';
+
+// The defaults this file's assertions were written against.
+const localCatalog = (o: Partial<Parameters<typeof makeCatalog>[0]> = {}) =>
+    makeCatalog({ nameMinLength: 2, nameMaxLength: 16, ...o });
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
 
 const { default: StatisticsScreen } = await import('@/components/screens/StatisticsScreen');
 
-function makeCatalog(): GameCatalog {
-    return {
-        version: '1.5.0', isRelease: false, commitUrl: null, year: 2026, locale: 'en-US',
-        lowHealthThreshold: 0.2, maxLevel: 50, nameMinLength: 2, nameMaxLength: 16,
-        races: [], weapons: [], armors: [], foods: [],
-    };
-}
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1, started: true, name: 'Hero', raceId: 1, raceLabel: 'Human', raceEmoji: '🧑',
-        health: 80, maxHealth: 100, hpPercent: 80, lowHealth: false,
-        experience: 10, level: 2, isMaxLevel: false, xpCurrent: 10, xpRequired: 100, xpPercent: 10, xpNeeded: 90,
-        adena: 500, weapon: null, armor: null, stats: null, effects: [],
-        dead: false, ambushed: false, coward: false, cheated: false, deathReason: null, highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
-
 function resetStore(overrides: Partial<ReturnType<typeof useGameStore.getState>> = {}) {
     useGameStore.setState(
         {
             status: 'ready',
             player: makePlayer(),
-            catalog: makeCatalog(),
+            catalog: localCatalog(),
             screen: 'statistics',
             highscoreRaceFilter: null,
             flash: null,
@@ -116,6 +99,28 @@ describe('StatisticsScreen', () => {
         expect(requestMock).toHaveBeenCalledTimes(1);
     });
 
+    it('the back link routes a started player back to Home Town, suppressing the anchor default', async () => {
+        requestMock.mockResolvedValue({ ok: true, data: { stats: null } });
+        render(<StatisticsScreen />);
+        await screen.findByText(/The ancient archives are empty/);
+
+        const link = screen.getByRole('link', { name: /Go back to game start/ });
+        // fireEvent returns false once preventDefault() has been called on the dispatched event.
+        expect(fireEvent.click(link)).toBe(false);
+        expect(useGameStore.getState().screen).toBe('home');
+    });
+
+    it('the back link routes an unstarted visitor to the Game Start screen instead', async () => {
+        resetStore({ player: makePlayer({ started: false, name: null, raceId: null }), screen: 'statistics' });
+        requestMock.mockResolvedValue({ ok: true, data: { stats: null } });
+        render(<StatisticsScreen />);
+        await screen.findByText(/The ancient archives are empty/);
+
+        fireEvent.click(screen.getByRole('link', { name: /Go back to game start/ }));
+
+        expect(useGameStore.getState().screen).toBe('start');
+    });
+
     // Regression: a real fetch failure used to collapse into the exact same `stats: null` state
     // as "genuinely no players yet", silently hiding a backend error behind the empty-archives
     // flavor text. It must now surface via the same notice mechanism every other rejected socket
@@ -125,5 +130,22 @@ describe('StatisticsScreen', () => {
         render(<StatisticsScreen />);
 
         await waitFor(() => expect(useGameStore.getState().notice).toEqual({ code: 'INTERNAL', message: '⭕ You got disconnected from the realm, the backend is offline.' }));
+    });
+
+    // Previously this rendered literally nothing while fetching — no prose, no spinner, and no
+    // back link, so there was no way off the screen until the request came back.
+    it('shows the loader — not the empty-archives message — while the request is in flight', () => {
+        requestMock.mockReturnValue(new Promise(() => { /* never settles */ }));
+        const { container } = render(<StatisticsScreen />);
+
+        expect(container.querySelector('.loading-spinner')).toBeInTheDocument();
+        expect(screen.queryByText(/The ancient archives are empty/)).not.toBeInTheDocument();
+    });
+
+    it('keeps the back link reachable while loading', () => {
+        requestMock.mockReturnValue(new Promise(() => { /* never settles */ }));
+        render(<StatisticsScreen />);
+
+        expect(screen.getByRole('link', { name: /Go back to game start/ })).toBeInTheDocument();
     });
 });

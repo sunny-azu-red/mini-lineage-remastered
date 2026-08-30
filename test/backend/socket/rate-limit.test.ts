@@ -105,6 +105,33 @@ describe('rate-limit', () => {
             // after GC, the key should behave like brand new (still allowed, unaffected either way)
             expect(limiter.consume('stale-key').allowed).toBe(true);
         });
+
+        it('the periodic GC prunes only the stale timestamps of a partially-stale key, keeping the key itself', async () => {
+            vi.useFakeTimers();
+            vi.mocked(versionUtil.isRelease).mockReturnValue(true);
+            const { createSlidingWindow } = await import('@/socket/rate-limit');
+            const limiter = createSlidingWindow('test-gc-3', { windowMs: 1000, limit: 2 });
+
+            limiter.consume('mixed-key'); // t+0 — stale by the time the GC sweeps
+            vi.advanceTimersByTime(600);
+            limiter.consume('mixed-key'); // t+600 — still fresh when the GC sweeps
+            limiter.consume('fresh-key'); // t+600 — wholly fresh, the GC must leave it alone
+            vi.advanceTimersByTime(400);  // t+1000 — GC fires: drops t+0, keeps t+600
+
+            // The key survived the sweep with its single fresh hit, so only ONE further consume
+            // fits under the limit of 2 (a fully-deleted key would have allowed two), and the
+            // retry window is measured from the surviving t+600 hit.
+            expect(limiter.consume('mixed-key').allowed).toBe(true);
+            const denied = limiter.consume('mixed-key');
+            expect(denied.allowed).toBe(false);
+            if (!denied.allowed)
+                expect(denied.retryAfterMs).toBe(600);
+
+            // The untouched all-fresh key kept its one hit too (one more consume fits, a second
+            // does not) — the GC neither dropped it nor rewrote it.
+            expect(limiter.consume('fresh-key').allowed).toBe(true);
+            expect(limiter.consume('fresh-key').allowed).toBe(false);
+        });
     });
 
     describe('exported limiters', () => {

@@ -125,6 +125,47 @@ describe('SelectActionForm', () => {
         expect(screen.getByRole('button', { name: '🪙 Purchase' })).toBeDisabled();
     });
 
+    it('noPlaceholder mode degrades to an empty selection when there are no options to pre-select', () => {
+        const onSubmit = vi.fn();
+        render(
+            <SelectActionForm
+                noPlaceholder
+                options={[]}
+                defaultButtonLabel="Return"
+                activeButtonLabel="Do it 🥀"
+                pending={false}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Return' }));
+        expect(onSubmit).toHaveBeenCalledWith('');
+    });
+
+    // Belt-and-braces alongside the `disabled` attribute: a form can still be submitted while
+    // pending (Enter in the <select>, or a programmatic submit), and a second in-flight purchase
+    // must never reach the server.
+    it('ignores a submit that lands while pending, even if the disabled button is bypassed', () => {
+        const onSubmit = vi.fn();
+        const { container } = render(
+            <SelectActionForm
+                options={OPTIONS}
+                placeholderLabel="Choose..."
+                defaultButtonLabel="Return"
+                activeButtonLabel="🪙 Purchase"
+                pending={true}
+                onSubmit={onSubmit}
+            />,
+        );
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'yes' } });
+        fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+
+        expect(onSubmit).not.toHaveBeenCalled();
+    });
+
     it('marks individual options disabled (e.g. an already-owned item)', () => {
         render(
             <SelectActionForm

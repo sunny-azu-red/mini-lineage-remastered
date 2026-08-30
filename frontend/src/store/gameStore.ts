@@ -1,26 +1,15 @@
 import { create } from 'zustand';
 import { request } from '@/socket/client';
 import type {
-    PlayerSnapshot,
-    GameCatalog,
-    FlashView,
-    SocketErrorPayload,
-    BattleFightResult,
-    BattleNarrativeSnapshot,
-    HydratePayload,
-    ScreenId,
+    PlayerSnapshot, GameCatalog, FlashView, SocketErrorPayload,
+    BattleFightResult, BattleNarrativeSnapshot, HydratePayload, ScreenId,
 } from '@shared/contract';
 
 export type { ScreenId };
 
 const SOUND_STORAGE_KEY = 'mini_sound_enabled';
 
-/**
- * Matches public/js/audio.js line ~10 exactly: default to true unless the stored value is
- * literally the string 'false'. Wrapped in try/catch — localStorage can throw in private-mode
- * Safari, and simply doesn't exist in the plain Vitest 'node' test environment this store's
- * pure-logic tests run under.
- */
+// localStorage throws in private-mode Safari and is absent in a plain 'node' test environment.
 function readStoredSoundEnabled(): boolean {
     try {
         return localStorage.getItem(SOUND_STORAGE_KEY) !== 'false';
@@ -33,49 +22,66 @@ function writeStoredSoundEnabled(enabled: boolean): void {
     try {
         localStorage.setItem(SOUND_STORAGE_KEY, enabled ? 'true' : 'false');
     } catch {
-        // Preference just won't persist this session — non-fatal.
+        // The preference just won't persist — non-fatal.
     }
 }
 
 /**
- * The screen is pinned to 'battle' whenever the player is ambushed, or to 'death' whenever the
- * player is dead — there is no other screen to reach in either case, so this is applied at the
- * end of every action that sets `screen` and/or `player`, using whatever the FINAL `player` value
- * of that update is. This keeps both invariants true atomically after every single state
- * transition (navigation, hydrate/reconnect, a shop/battle mutation, a pushed update), not just
- * some of them — and it's what lets the header/character-name link stay unconditionally
- * clickable now: clicking them while ambushed or dead just harmlessly redirects right back.
+ * The only screens a visitor with no character may reach — the old cheatMiddleware's allowlist,
+ * plus `error`: it is an out-of-band state with no URL, and hiding a failure behind the character
+ * creation form would be worse than showing it.
+ */
+const UNSTARTED_ALLOWED: ReadonlySet<ScreenId> = new Set(['start', 'statistics', 'races', 'highscores', 'error']);
+
+/**
+ * Screens a player WITH a living character may never be on. `start` and the two pre-character
+ * lore screens belong to character creation; `death` would otherwise expose "Play Again?" and let
+ * a living character be wiped. The old app redirected all four to `/`.
+ */
+const STARTED_BLOCKED: ReadonlySet<ScreenId> = new Set(['start', 'statistics', 'races', 'death']);
+
+/**
+ * The single place every navigation rule is enforced — a direct port of the old app's global
+ * `cheatMiddleware`, which ran on every request. Applied at the end of EVERY action that sets
+ * `screen` and/or `player`, so the invariants hold after every transition no matter how it
+ * arrived: an in-app link, a deep link, or the Back button.
+ *
+ * Order matters. Death wins outright, then an active ambush; only after those can a screen be
+ * judged against a living or absent character. Death is checked FIRST because `killPlayer` does
+ * not clear `ambushed`, so a corpse can still carry the flag — pinning that to `battle` would
+ * strand it on a screen BattleScreen refuses to render for the dead, with every navigation
+ * bouncing straight back.
+ *
+ * Because this catches everything, the header and character links can stay unconditionally
+ * clickable — clicking them in a pinned state just harmlessly redirects back.
  */
 function pinScreen(screen: ScreenId, player: PlayerSnapshot | null): ScreenId {
-    if (player?.ambushed)
-        return 'battle';
     if (player?.dead)
         return 'death';
-    return screen;
+    if (player?.ambushed)
+        return 'battle';
+
+    // Reaching here means the character is alive, or does not exist yet.
+    if (player?.started)
+        return STARTED_BLOCKED.has(screen) ? 'home' : screen;
+
+    return UNSTARTED_ALLOWED.has(screen) ? screen : 'start';
 }
 
 /**
- * Shared by every action that receives a new `player` value (`hydrate`, `applyUpdate` — NOT
- * `applyMutation`/`recordBattleResult`, whose actions never transition FROM started TO unstarted)
- * so the "a reset just landed, route back to 'start'" transition is detected identically no
- * matter which path the update arrives through. This matters because a mutating action's own
- * ack (processed via `hydrate`/`applyMutation`) and the server's `state:update` push for that
- * SAME mutation (processed via `applyUpdate`, still received by every OTHER tab on the session)
- * can arrive in either order — if only one of the two paths knew how to detect the transition,
- * whichever one lost the race would silently leave the screen stuck (see git history: the
- * game:restart screen-freeze bug).
+ * Detects "a reset just landed" identically on every path that receives a new player. A
+ * mutation's own ack and the server's `state:update` push for that same mutation can arrive in
+ * either order, so if only one path knew the transition, whichever lost the race would leave the
+ * screen stuck.
  */
 function deriveScreenAfterPlayerChange(
-    prevPlayer: PlayerSnapshot | null,
-    nextPlayer: PlayerSnapshot | null,
+    prev: PlayerSnapshot | null,
+    next: PlayerSnapshot | null,
     currentScreen: ScreenId,
 ): ScreenId {
-    const wasStarted = prevPlayer?.started ?? false;
-    const isStarted = nextPlayer?.started ?? false;
+    const wasReset = (prev?.started ?? false) && !(next?.started ?? false);
 
-    const screen = wasStarted && !isStarted ? 'start' : currentScreen;
-
-    return pinScreen(screen, nextPlayer);
+    return pinScreen(wasReset ? 'start' : currentScreen, next);
 }
 
 export interface GameStore {
@@ -86,12 +92,9 @@ export interface GameStore {
     highscoreRaceFilter: number | null;
     flash: FlashView | null;
     /**
-     * The lighter, reconnect-safe narrative shape (`{narrative, outcome, ambushed, died,
-     * sound}`) — NOT the full `BattleFightResult` ack, which also carries `player`/`flash`
-     * (those always come straight from `store.player`/`store.flash`, never read off this field
-     * by `BattleScreen`). Populated by the live `battle:fight` ack
-     * (`recordBattleResult`) AND by every `hydrate()` from `PlayerSnapshot.lastBattle` — so a
-     * real page reload/reconnect shows the true last-fight narrative instead of a placeholder.
+     * The reconnect-safe narrative shape — NOT the full `BattleFightResult` ack, whose
+     * `player`/`flash` always come from `store.player`/`store.flash`. Populated by the live
+     * fight ack AND by every hydrate from `PlayerSnapshot.lastBattle`.
      */
     lastBattle: BattleNarrativeSnapshot | null;
     notice: SocketErrorPayload | null;
@@ -99,21 +102,18 @@ export interface GameStore {
 
     hydrate(p: HydratePayload): void;
     applyUpdate(p: Partial<PlayerSnapshot>): void;
-    applyMutation(player: PlayerSnapshot, flash?: FlashView | null): void;
     /**
-     * `battle:fight`'s ack carries strictly more than a `MutationResult` (outcome, narrative,
-     * ambushed/died flags, a resolved sound) — this is the dedicated setter for it, alongside
-     * `applyMutation`, rather than overloading that one's signature. Also stamps `lastBattle` so
-     * `BattleScreen` can render the fight's narrative, and clears `notice` exactly like
-     * `applyMutation` does.
+     * `screen` moves the player in the SAME atomic update that commits the new snapshot. Callers
+     * mid-transition (game start, suicide) must use it rather than calling `navigate()` first:
+     * `navigate` pins against whatever is in the store right now, which is still the OLD player
+     * until this runs.
      */
+    applyMutation(player: PlayerSnapshot, flash?: FlashView | null, screen?: ScreenId): void;
+    /** `battle:fight`'s ack carries more than a MutationResult, so it gets its own setter. */
     recordBattleResult(result: BattleFightResult): void;
     /**
-     * `raceFilter: undefined` (or omitting `opts` entirely) leaves the current filter alone;
-     * `raceFilter: null` explicitly clears it (HighscoresScreen's "All" tab); `raceFilter: <id>`
-     * sets it. This three-way distinction is why the field is `number | null | undefined` rather
-     * than just `number` — the store's own implementation already handled `null` correctly via
-     * its `!== undefined` check, this only widens the type to let callers pass it.
+     * `raceFilter: undefined` (or no opts) leaves the filter alone, `null` clears it, a number
+     * sets it — hence the three-way type.
      */
     navigate(screen: ScreenId, opts?: { raceFilter?: number | null }): void;
     setFlash(f: FlashView | null): void;
@@ -122,148 +122,127 @@ export interface GameStore {
     toggleSound(): void;
 }
 
-export const useGameStore = create<GameStore>((set, get) => ({
-    status: 'connecting',
-    player: null,
-    catalog: null,
-    screen: 'start',
-    highscoreRaceFilter: null,
-    flash: null,
-    lastBattle: null,
-    notice: null,
-    soundEnabled: readStoredSoundEnabled(),
+export const useGameStore = create<GameStore>((set, get) => {
+    /**
+     * Tells the server which screen we're on so it can classify the combat/resting zone. The
+     * ack's snapshot IS applied (revision-guarded): registry.ts excludes the acting socket from
+     * its broadcast, so this ack is the only way this tab learns its own aura changed.
+     *
+     * `started` is passed in rather than read off the store because `hydrate` calls this from
+     * inside its own `set` updater, before the new player has been committed.
+     *
+     * A player with no character has no zone to classify, and the server's handler is guarded by
+     * requireStarted — reporting anyway is guaranteed to be rejected as NOT_STARTED and logged as
+     * an error. Reachable from every pre-character screen (Game Start, Statistics, Races,
+     * Highscores), so the guard belongs here, covering both call sites at once.
+     */
+    const reportScreen = (screen: ScreenId, started: boolean) => {
+        if (!started)
+            return;
 
-    hydrate(p) {
-        set(state => {
-            // `catalog` is null ONLY before the very first hydrate this store has ever received
-            // (every HydratePayload carries a non-null GameCatalog) — so it doubles as the
-            // "is this the first hydrate this session" flag without a separate tracked field.
-            const isFirstHydrateEver = state.catalog === null;
-            // NOTE: the server (src/socket/index.ts's connection handler) always sends a
-            // non-null PlayerSnapshot — even for a session with no character yet, it's
-            // `buildPlayerSnapshot({})`, i.e. `{ started: false, ... }` — never a literal
-            // `null`. `HydratePayload.player` is typed `PlayerSnapshot | null` for API
-            // generality (and so `game:restart`'s reset-in-place result composes cleanly), but
-            // `started` — not null-ness — is the real "has a character" signal on both the
-            // very first hydrate and every subsequent one.
-            const screen = isFirstHydrateEver
-                ? pinScreen(p.player?.started ? 'home' : 'start', p.player)
-                : deriveScreenAfterPlayerChange(state.player, p.player, state.screen);
-
-            // Reports the resolved screen so the server's zone-aura classification
-            // (syncZoneAuras, matching the old game's URL-path-based zone.middleware.ts) is
-            // correct immediately on connect/reconnect — hydrate() itself stays a pure read (this
-            // fires a SEPARATE, real, tracked action as a reaction to what it resolved, the same
-            // pattern navigate() below uses). The ack's player snapshot IS applied (via
-            // applyUpdate, revision-guarded) — registry.ts's broadcast for this mutation
-            // deliberately excludes the acting socket, so the ack is the ONLY way this tab
-            // itself ever learns its own aura just changed; without applying it, this client
-            // would keep showing the aura from before this hydrate until some unrelated later
-            // push happened to refresh it (or a hard reload re-hydrated from scratch).
-            if (p.player?.started)
-                void request('player:screen', { screen }).then(res => {
-                    // `res.data.player` is defensively checked (not just `res.ok`): a malformed
-                    // or unexpected response must never be able to crash applyUpdate.
-                    if (res.ok && res.data.player)
-                        get().applyUpdate(res.data.player);
-                });
-
-            // Sync unconditionally (including to `null`) on EVERY hydrate, not just the first —
-            // `PlayerSnapshot.lastBattle` is now the server-persisted source of truth, so a
-            // reconnect must reflect it exactly: a genuine last-fight narrative on any reconnect
-            // after fighting, but also back to `null` after a reset (game:restart/highscore
-            // submit already clears `lastBattleNarrative` server-side) rather than leaving a
-            // stale narrative from the previous character on screen.
-            const lastBattle: BattleNarrativeSnapshot | null = p.player?.lastBattle ?? null;
-
-            return { player: p.player, catalog: p.catalog, screen, lastBattle };
+        void request('player:screen', { screen }).then(res => {
+            // Defensive on `res.data.player` too — a malformed response must never crash applyUpdate.
+            if (res.ok && res.data.player)
+                get().applyUpdate(res.data.player);
         });
-    },
+    };
 
-    applyUpdate(p) {
-        set(state => {
-            if (!state.player || !p)
-                return {};
-            // Drop an out-of-order push: with mutation broadcasts, the periodic tick, and exact
-            // expiry timers all independently able to emit `state:update` for the same session,
-            // an older one can land after a newer one. `PlayerSnapshot.revision` is documented as
-            // monotonic specifically so this can be detected — without this guard a stale push
-            // would silently clobber fresher state (including `effects`), which is exactly the
-            // kind of "aura is strange" symptom a race like this produces.
-            if (p.revision !== undefined && state.player.revision !== undefined && p.revision < state.player.revision)
-                return {};
-            const player = { ...state.player, ...p };
-            return { player, screen: deriveScreenAfterPlayerChange(state.player, player, state.screen) };
-        });
-    },
+    return {
+        status: 'connecting',
+        player: null,
+        catalog: null,
+        screen: 'start',
+        highscoreRaceFilter: null,
+        flash: null,
+        lastBattle: null,
+        notice: null,
+        soundEnabled: readStoredSoundEnabled(),
 
-    applyMutation(player, flash = null) {
-        set(state => ({ player, flash, notice: null, screen: pinScreen(state.screen, player) }));
-    },
+        hydrate(p) {
+            set(state => {
+                // Every HydratePayload carries a catalog, so a null one doubles as "this is the
+                // first hydrate this session" without a separate tracked field.
+                const isFirstHydrate = state.catalog === null;
+                // The server always sends a non-null snapshot (`{ started: false, ... }` for a
+                // session with no character), so `started` — not null-ness — is the real signal.
+                const screen = isFirstHydrate
+                    ? pinScreen(p.player?.started ? 'home' : 'start', p.player)
+                    : deriveScreenAfterPlayerChange(state.player, p.player, state.screen);
 
-    recordBattleResult(result) {
-        set(state => ({
-            player: result.player,
-            flash: result.flash,
-            lastBattle: {
-                narrative: result.narrative,
-                outcome: result.outcome,
-                ambushed: result.ambushed,
-                died: result.died,
-                sound: result.sound,
-            },
-            notice: null,
-            screen: pinScreen(state.screen, result.player),
-        }));
-    },
+                // hydrate() itself stays a pure read; this fires a separate, real action.
+                reportScreen(screen, Boolean(p.player?.started));
 
-    navigate(screen, opts) {
-        const state = get();
-        const nextScreen = pinScreen(screen, state.player);
-
-        // Tells the server which screen this is, so syncZoneAuras (player.service.ts) can
-        // classify combat/resting purely from location — exactly like the old game's
-        // URL-path-based zone.middleware.ts — instantly rather than lagging behind. Only fires
-        // on an actual change, mirroring the old app's model where a zone flip only ever
-        // happened as a side effect of a real navigation. The ack's player snapshot IS applied
-        // (via applyUpdate, revision-guarded against a later, faster action's response landing
-        // first): registry.ts's broadcast for this mutation excludes the acting socket, so this
-        // ack is the ONLY way THIS tab ever learns its own aura just changed — other tabs on
-        // the same session still get it via that broadcast.
-        if (nextScreen !== state.screen)
-            void request('player:screen', { screen: nextScreen }).then(res => {
-                // `res.data.player` is defensively checked (not just `res.ok`): a malformed or
-                // unexpected response must never be able to crash applyUpdate.
-                if (res.ok && res.data.player)
-                    get().applyUpdate(res.data.player);
+                // Synced unconditionally (including to null) on EVERY hydrate: lastBattle is
+                // server-persisted, so a reset must clear it rather than leave the previous
+                // character's narrative on screen.
+                return { player: p.player, catalog: p.catalog, screen, lastBattle: p.player?.lastBattle ?? null };
             });
+        },
 
-        set({
-            screen: nextScreen,
-            highscoreRaceFilter: opts?.raceFilter !== undefined ? opts.raceFilter : state.highscoreRaceFilter,
-            // A flash is a one-shot message tied to the action that produced it (old app's
-            // session flash was deleted the instant it was read, so it could never survive a
-            // navigation by construction) — clear it here so it doesn't linger indefinitely
-            // across unrelated screen changes the way it did before this fix.
-            flash: null,
-        });
-    },
+        applyUpdate(p) {
+            set(state => {
+                if (!state.player || !p)
+                    return {};
 
-    setFlash(flash) {
-        set({ flash });
-    },
+                // Mutation broadcasts, the periodic tick and exact expiry timers can all emit
+                // for the same session, so an older push can land after a newer one. `revision`
+                // is monotonic precisely so a stale one can be dropped instead of clobbering
+                // fresher state (including `effects`).
+                if (p.revision !== undefined && state.player.revision !== undefined && p.revision < state.player.revision)
+                    return {};
 
-    setNotice(notice) {
-        set({ notice });
-    },
+                const player = { ...state.player, ...p };
 
-    setStatus(status) {
-        set({ status });
-    },
+                return { player, screen: deriveScreenAfterPlayerChange(state.player, player, state.screen) };
+            });
+        },
 
-    toggleSound() {
-        const next = !get().soundEnabled;
-        writeStoredSoundEnabled(next);
-        set({ soundEnabled: next });
-    },
-}));
+        applyMutation(player, flash = null, screen) {
+            set(state => ({ player, flash, notice: null, screen: pinScreen(screen ?? state.screen, player) }));
+        },
+
+        recordBattleResult(result) {
+            set(state => ({
+                player: result.player,
+                flash: result.flash,
+                lastBattle: {
+                    narrative: result.narrative,
+                    outcome: result.outcome,
+                    ambushed: result.ambushed,
+                    died: result.died,
+                    sound: result.sound,
+                },
+                notice: null,
+                screen: pinScreen(state.screen, result.player),
+            }));
+        },
+
+        navigate(screen, opts) {
+            const state = get();
+            const nextScreen = pinScreen(screen, state.player);
+
+            // Only on an actual change, mirroring the old model where a zone flip only ever
+            // happened as a side effect of a real navigation.
+            if (nextScreen !== state.screen)
+                reportScreen(nextScreen, Boolean(state.player?.started));
+
+            set({
+                screen: nextScreen,
+                highscoreRaceFilter: opts?.raceFilter !== undefined ? opts.raceFilter : state.highscoreRaceFilter,
+                // A flash is one-shot and tied to the action that produced it, so it must never
+                // survive a navigation.
+                flash: null,
+            });
+        },
+
+        setFlash: (flash) => set({ flash }),
+        setNotice: (notice) => set({ notice }),
+        setStatus: (status) => set({ status }),
+
+        toggleSound() {
+            const next = !get().soundEnabled;
+            writeStoredSoundEnabled(next);
+            set({ soundEnabled: next });
+        },
+    };
+});

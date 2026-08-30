@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { GameCatalog, PlayerSnapshot } from '@shared/contract';
+import type { PlayerSnapshot } from '@shared/contract';
 import { useGameStore, type ScreenId } from '@/store/gameStore';
+import { makeCatalog, makePlayer } from '../../factories';
 
 // navigate() always calls .then() on this now (to apply the player:screen ack to its own
 // store) — needs a resolved default so tests that don't care about the response don't crash.
@@ -10,60 +11,6 @@ vi.mock('@/socket/client', () => ({
 }));
 
 const { default: AppShell } = await import('@/components/layout/AppShell');
-
-function makeCatalog(): GameCatalog {
-    return {
-        version: '1.5.0',
-        isRelease: false,
-        commitUrl: null,
-        year: 2026,
-        locale: 'en-US',
-        lowHealthThreshold: 0.2,
-        maxLevel: 50,
-        nameMinLength: 1,
-        nameMaxLength: 20,
-        races: [],
-        weapons: [],
-        armors: [],
-        foods: [],
-    };
-}
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: null,
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
 
 function setStore(screenId: ScreenId, player: PlayerSnapshot | null) {
     useGameStore.setState(
@@ -133,5 +80,42 @@ describe('AppShell', () => {
         setStore('battle', makePlayer());
         render(<AppShell title="Battleground"><div /></AppShell>);
         expect(screen.getByText('Battleground')).toBeInTheDocument();
+    });
+
+    // Pre-hydrate window (bootstrap fetch + socket handshake still in flight): every screen
+    // component guards on `!catalog` itself, so gating once here is what stops the panel from
+    // rendering as a blank, broken-looking page.
+    describe('before the first hydrate lands (catalog still null)', () => {
+        beforeEach(() => {
+            setStore('home', makePlayer());
+            useGameStore.setState({ catalog: null }, false);
+        });
+
+        it('shows a "Loading" heading instead of the real screen title', () => {
+            render(<AppShell title="Home Town"><div /></AppShell>);
+
+            expect(screen.getByText('Loading')).toBeInTheDocument();
+            expect(screen.queryByText('Home Town')).not.toBeInTheDocument();
+        });
+
+        it('shows the LoadingPanel instead of the screen children', () => {
+            const { container } = render(<AppShell title="Home Town"><div data-testid="child-content">hello</div></AppShell>);
+
+            expect(container.querySelector('.loading-panel')).not.toBeNull();
+            expect(screen.getByText('Entering the realm…')).toBeInTheDocument();
+            expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+        });
+
+        it('swaps straight back to the real title and children once catalog arrives', () => {
+            const { rerender, container } = render(<AppShell title="Home Town"><div data-testid="child-content">hello</div></AppShell>);
+            expect(container.querySelector('.loading-panel')).not.toBeNull();
+
+            setStore('home', makePlayer());
+            rerender(<AppShell title="Home Town"><div data-testid="child-content">hello</div></AppShell>);
+
+            expect(container.querySelector('.loading-panel')).toBeNull();
+            expect(screen.getByText('Home Town')).toBeInTheDocument();
+            expect(screen.getByTestId('child-content')).toBeInTheDocument();
+        });
     });
 });

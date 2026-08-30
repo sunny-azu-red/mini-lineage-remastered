@@ -1,11 +1,7 @@
 /**
- * Pure, framework-agnostic formatting helpers shared by the server (backend/) and the
- * client (frontend/src/). Kept dependency-free (no `fs`, no game constants) so both
- * a Node process and a browser bundle can import this file unmodified.
- *
- * These mirror backend/util/format.util.ts's formatAdena/formatNumber/pluralize/
- * formatEffectTimer exactly (same output for the same input) — the server still
- * uses its own copy internally, but this is the one the client imports.
+ * Pure, framework-agnostic formatting helpers imported unmodified by BOTH the Node server
+ * (via backend/util/format.util.ts, which re-exports them) and the browser bundle. Keep this
+ * file dependency-free — no `fs`, no game constants.
  */
 
 export function formatAdena(adena: number): string {
@@ -85,7 +81,7 @@ export function capitalize(text: string): string {
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Formats a highscore/db timestamp exactly as today's highscores.view.ts does: DD/MM/YY, HH:MM. */
+/** DD/MM/YY, HH:MM */
 export function formatShortDate(iso: string): string {
     const d = new Date(iso);
     const pad = (n: number) => n.toString().padStart(2, '0');

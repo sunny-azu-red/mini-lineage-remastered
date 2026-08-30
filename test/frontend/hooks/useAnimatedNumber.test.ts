@@ -116,6 +116,31 @@ describe('useAnimatedNumber', () => {
         expect(result.current.direction).toBe(1);
     });
 
+    // matchMedia is missing entirely in some environments (and can throw) — the reduced-motion
+    // probe swallows that and animates normally rather than taking the whole hook down.
+    it('animates normally when matchMedia itself throws', () => {
+        Object.defineProperty(window, 'matchMedia', {
+            writable: true,
+            configurable: true,
+            value: vi.fn(() => {
+                throw new Error('matchMedia unavailable');
+            }),
+        });
+
+        const { result, rerender } = renderHook(({ target }) => useAnimatedNumber(target), {
+            initialProps: { target: 0 },
+        });
+
+        rerender({ target: 600 });
+        act(() => {
+            vi.advanceTimersByTime(300);
+        });
+
+        const midValue = Number(result.current.display.replace(/,/g, ''));
+        expect(midValue).toBeGreaterThan(0);
+        expect(midValue).toBeLessThan(600);
+    });
+
     it('uses the provided format function', () => {
         const { result } = renderHook(() => useAnimatedNumber(1234, { format: n => `$${n}` }));
         expect(result.current.display).toBe('$1234');

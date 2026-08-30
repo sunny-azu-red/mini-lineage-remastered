@@ -4,19 +4,14 @@ import { formatNumber } from '@shared/format';
 import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
 import { useShimmer } from '@/hooks/useShimmer';
 
-interface XpBarProps {
-    player: PlayerSnapshot;
-}
-
-// A tiny child component so `key={levelUpEpoch}` (see below) can force a full remount on every
-// level-up, resetting useAnimatedNumber's internal "first value" ref. On a level-up remount,
-// this starts the freshly-mounted hook instance at 0 (its own "first value, show instantly, no
-// sweep" case) and then retargets it to the real `value` one frame later — which IS a normal
-// (non-first) retarget, so useAnimatedNumber eases upward from 0 to `value` exactly like the old
-// game's sidebar.js did (`startXp = isLevelUp ? 0 : lastXp`, then `animateValue(el, startXp,
-// targetXp, ...)`). `resetConsumedRef` limits that one-frame deferral to just this initial reset
-// — every LATER value change during this same mounted instance's lifetime (a normal xp gain
-// within the level) sets the target immediately, exactly like before a level-up ever happened.
+/**
+ * A separate component purely so `key={levelUpEpoch}` can force a remount on every level-up,
+ * resetting useAnimatedNumber's internal "first value" ref. On that remount it starts at 0 (the
+ * hook's show-instantly case) and is retargeted to the real value one frame later — a normal,
+ * non-first retarget, so the hook eases 0 -> value. `resetConsumedRef` limits that one-frame
+ * deferral to the initial reset; every later change within the same mounted instance retargets
+ * immediately, exactly as before any level-up.
+ */
 function AnimatedXpValue({ value, justLeveledUp }: { value: number; justLeveledUp: boolean }) {
     const [target, setTarget] = useState(justLeveledUp ? 0 : value);
     const resetConsumedRef = useRef(!justLeveledUp);
@@ -34,79 +29,63 @@ function AnimatedXpValue({ value, justLeveledUp }: { value: number; justLeveledU
     }, [value]);
 
     const { display } = useAnimatedNumber(target, { format: formatNumber });
+
     return <>{display}</>;
 }
 
-// Ported from partials/status.ejs's XP stat-row.
-export default function XpBar({ player }: XpBarProps) {
+export default function XpBar({ player }: { player: PlayerSnapshot }) {
     const pct = player.isMaxLevel ? 100 : player.xpPercent;
     const xpValue = player.isMaxLevel ? (player.experience ?? 0) : player.xpCurrent;
 
-    // Mirrors sidebar.js's level-up special case (`isLevelUp = lastLevel > 0 && targetLevel >
-    // lastLevel`, `startXp = isLevelUp ? 0 : lastXp`, `startXpPct = isLevelUp ? 0 : lastXpPct`).
-    // xpCurrent legitimately *decreases* across a level-up (it wraps to the remainder into the
-    // new level) — without this check that reads as a "loss" and would neither shimmer nor look
-    // right. A level-up always counts as a gain, and always plays the same two-phase animation
-    // sidebar.js used: (a) snap the bar to 0% with its CSS transition disabled for one frame (the
-    // in-memory equivalent of sidebar.js's `xpBar.style.transition = 'none'` + forced-reflow
-    // reset, with no sessionStorage involved), (b) one frame later, restore the transition and
-    // fall back to the real post-level-up percentage, so it animates a smooth fill from 0 —
-    // instead of jumping straight there with no animation, or animating backwards through the
-    // wrap-around gap (e.g. 95% -> 5%). The counter (`AnimatedXpValue`, remounted via `key`) gets
-    // the identical treatment for the same reason.
     const prevLevelRef = useRef(player.level);
     const prevXpRef = useRef(xpValue);
     const [levelUpEpoch, setLevelUpEpoch] = useState(0);
-    const [suppressBarTransition, setSuppressBarTransition] = useState(false);
-    // Non-null only during the one-frame level-up reset window (forces width to 0%); null the
-    // rest of the time, when the bar just tracks `pct` directly.
-    const [levelUpBarPct, setLevelUpBarPct] = useState<number | null>(null);
+    // One flag for the whole one-frame reset window: it both forces the bar to 0% and disables
+    // its CSS width transition. These always moved together, so they are a single state.
+    const [resettingBar, setResettingBar] = useState(false);
     const [gainTick, setGainTick] = useState(0);
-    // Persisted (not recomputed per-render like `isLevelUp` below) specifically so it's still
-    // true on the render where `levelUpEpoch` actually changes and `AnimatedXpValue` remounts —
-    // that happens one render AFTER `isLevelUp` was true, by which point `prevLevelRef.current`
-    // has already caught up to `player.level` and `isLevelUp` itself has gone back to false.
+    // Persisted rather than recomputed, so it is still true on the render where `levelUpEpoch`
+    // changes and AnimatedXpValue remounts — one render AFTER `isLevelUp` was true, by which
+    // point prevLevelRef has caught up and `isLevelUp` is false again.
     const [justLeveledUp, setJustLeveledUp] = useState(false);
 
     const isLevelUp = prevLevelRef.current !== null && player.level !== null && player.level > prevLevelRef.current;
 
+    /**
+     * xpCurrent legitimately DECREASES across a level-up (it wraps into the new level), which
+     * would otherwise read as a loss. A level-up always counts as a gain and always plays the
+     * two-phase animation: snap to 0% with the transition off for one frame, then restore both so
+     * the bar fills smoothly from 0 — instead of jumping with no animation, or animating
+     * backwards through the wrap-around gap (95% -> 5%). The counter gets the same treatment via
+     * the remount above.
+     */
     useEffect(() => {
         if (isLevelUp) {
-            setLevelUpEpoch(e => e + 1);
-            setSuppressBarTransition(true);
-            setLevelUpBarPct(0);
+            setLevelUpEpoch(epoch => epoch + 1);
+            setResettingBar(true);
             setJustLeveledUp(true);
         }
         if (isLevelUp || xpValue > prevXpRef.current)
-            setGainTick(t => t + 1);
+            setGainTick(tick => tick + 1);
 
         prevLevelRef.current = player.level;
         prevXpRef.current = xpValue;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [player.level, xpValue, isLevelUp]);
 
-    // Deliberately its OWN effect, keyed only on `suppressBarTransition` — NOT folded into the
-    // level-up-detection effect above. That effect's dependency array also includes `xpValue`,
-    // so if another xp-changing render landed before this rAF fired, its cleanup would cancel
-    // the reset with nothing left to ever set `suppressBarTransition` back to `false` — silently
-    // and permanently disabling the bar's width transition for the rest of the session. Keying
-    // this reset on `suppressBarTransition` itself means only a change to THIS flag can cancel
-    // a pending reset, never an unrelated xp update. Releasing `levelUpBarPct` back to `null` in
-    // the same batch lets the bar fall through to the real `pct` right as the transition
-    // re-enables, which is what animates the fill from 0 up to it.
+    // Deliberately its OWN effect, keyed only on `resettingBar` — NOT folded into the one above,
+    // whose deps include `xpValue`. If another xp-changing render landed before this rAF fired,
+    // that effect's cleanup would cancel the reset with nothing left to clear the flag, silently
+    // disabling the bar's transition for the rest of the session.
     useEffect(() => {
-        if (!suppressBarTransition)
+        if (!resettingBar)
             return;
 
-        const rafId = requestAnimationFrame(() => {
-            setSuppressBarTransition(false);
-            setLevelUpBarPct(null);
-        });
+        const rafId = requestAnimationFrame(() => setResettingBar(false));
         return () => cancelAnimationFrame(rafId);
-    }, [suppressBarTransition]);
+    }, [resettingBar]);
 
     const shimmer = useShimmer(gainTick);
-    const displayPct = levelUpBarPct ?? pct;
 
     return (
         <div className="stat-row bar">
@@ -115,7 +94,7 @@ export default function XpBar({ player }: XpBarProps) {
                 <div
                     className={`bar xp-bar${shimmer ? ' shimmer-active' : ''}`}
                     id="xp-bar"
-                    style={{ width: `${displayPct}%`, transition: suppressBarTransition ? 'none' : undefined }}
+                    style={{ width: `${resettingBar ? 0 : pct}%`, transition: resettingBar ? 'none' : undefined }}
                     data-level={player.level ?? undefined}
                 />
                 <span className="bar-text">

@@ -14,15 +14,11 @@ import { statisticsRepository } from '@/repository/statistics.repository';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 
 /**
- * From battle.controller.ts's getBattle — the heart of the anti-cheat redesign (plan A6).
- *
- * INVARIANT: battle:fight must succeed IDENTICALLY whether or not ctx.player.ambushed was
- * already true when this handler runs. There is no "you must resolve the ambush by leaving"
- * punishment and no precondition on `ambushed` at all — an ambush is resolved by fighting
- * again, full stop. This is what makes the old navigate-away-while-ambushed exploit (and the
- * cheat.middleware.ts mechanism built to punish it) structurally impossible now: viewing or
- * reconnecting is provably non-mutating (see hydrate), and simulateBattle only ever runs from
- * this explicit emit.
+ * INVARIANT: battle:fight succeeds IDENTICALLY whether or not `ambushed` was already true.
+ * An ambush is resolved by fighting again — there is no precondition on `ambushed` and no
+ * punishment for navigating away. Combined with hydrate being non-mutating, that makes the
+ * old navigate-away-while-ambushed exploit structurally impossible. Simulation runs ONLY
+ * from this explicit emit — never on mount, hydrate or reconnect.
  */
 export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void {
     registerEvent(io, socket, {
@@ -32,107 +28,59 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
         guards: [requireStarted, requireAlive],
         rateLimit: battleLimiter,
         handler: (ctx): BattleFightResult => {
-            // Unconditionally resolve whatever ambush was pending, then simulate. Also stamps
-            // currentScreen directly (not just relying on the separate player:screen event):
-            // HomeScreen fires battle:fight immediately after navigate('battle') — two
-            // independent socket round trips that could otherwise land out of order and briefly
-            // miscompute the zone as resting mid-fight.
+            // Stamped directly rather than relying on the separate player:screen event, which is
+            // an independent round trip that could land out of order and miscompute the zone.
             ctx.player.ambushed = false;
             ctx.player.currentScreen = 'battle';
 
-            // NOT redundant with withSession's own automatic post-mutation syncZoneAuras call
-            // (session.ts): that one only runs AFTER this handler returns, but the response
-            // below (built via buildPlayerSnapshot) is constructed BEFORE that — this call is
-            // what makes THIS ack's own embedded snapshot already correct.
+            // Not redundant with withSession's post-mutation sync: that runs after this handler
+            // returns, but the snapshot below is built now.
             syncZoneAuras(ctx.player);
 
-            const results = simulateBattle(ctx.player);
-            results.isLevelUp = resolveBattleOutcome(ctx.player, results);
+            const outcome = simulateBattle(ctx.player);
+            outcome.isLevelUp = resolveBattleOutcome(ctx.player, outcome);
 
-            if (ctx.player.dead) {
-                // resolveBattleOutcome -> killPlayer already set deathReason exactly once.
-                const deathNarrative = buildBattleNarrative(ctx.player, results, false);
+            const died = Boolean(ctx.player.dead);
 
-                // Persist so a reconnect (or any later buildPlayerSnapshot()) shows this exact
-                // narrative instead of a generic placeholder — mirrors resolveDeathReason()'s
-                // "resolve once, persist on PlayerState" pattern.
-                ctx.player.lastBattleNarrative = {
-                    narrative: deathNarrative,
-                    outcome: results,
-                    ambushed: false,
-                    died: true,
-                    sound: 'death',
-                };
+            if (!died) {
+                const stats = getPlayerStats(ctx.player);
+                if (calculateAmbushChance(stats.ambushRisk)) {
+                    ctx.player.ambushed = true;
+                    ctx.player.totalAmbushes = (ctx.player.totalAmbushes ?? 0) + 1;
+                    ctx.player.consecutiveAmbushes = (ctx.player.consecutiveAmbushes ?? 0) + 1;
+                    if (ctx.player.consecutiveAmbushes >= 2)
+                        applyEffect(ctx.player, EFFECTS_CONFIG.ambushDebuff);
 
-                return {
-                    player: buildPlayerSnapshot(ctx.player),
-                    outcome: results,
-                    narrative: deathNarrative,
-                    ambushed: false,
-                    died: true,
-                    flash: null,
-                    sound: 'death',
-                };
+                    void statisticsRepository.increment('total_ambushes');
+                } else {
+                    ctx.player.consecutiveAmbushes = 0;
+                }
+                // No re-sync needed: currentScreen === 'battle' already forces combat, so the
+                // ambush roll cannot change the zone outcome.
             }
 
-            // Roll a fresh ambush chance exactly as battle.controller.ts does today,
-            // including the consecutiveAmbushes >= 2 -> ambushDebuff snowball.
-            const stats = getPlayerStats(ctx.player);
-            const isAmbushed = calculateAmbushChance(stats.ambushRisk);
-            if (isAmbushed) {
-                ctx.player.ambushed = true;
-                ctx.player.totalAmbushes = (ctx.player.totalAmbushes ?? 0) + 1;
-                ctx.player.consecutiveAmbushes = (ctx.player.consecutiveAmbushes ?? 0) + 1;
-                if (ctx.player.consecutiveAmbushes >= 2)
-                    applyEffect(ctx.player, EFFECTS_CONFIG.ambushDebuff);
+            const ambushed = !died && Boolean(ctx.player.ambushed);
+            // Precedence: death > level-up > ambush > crit > silence.
+            const sound: SoundName | null = died
+                ? 'death'
+                : outcome.isLevelUp ? 'level' : ambushed ? 'ambush' : outcome.isCritical ? 'crit' : null;
 
-                void statisticsRepository.increment('total_ambushes');
-            } else {
-                ctx.player.consecutiveAmbushes = 0;
-            }
+            const narrative = buildBattleNarrative(ctx.player, outcome, ambushed);
 
-            // No re-sync needed here: `currentScreen === 'battle'` alone already puts the
-            // player in combat unconditionally (see syncZoneAuras), so the ambush roll above
-            // flipping `ambushed` doesn't change the zone outcome — unlike the old
-            // lastFightAt/battleLeftAt heuristic this replaced, which depended on `ambushed`
-            // directly.
-            const flash = results.isLevelUp
-                ? { text: `🎉 Congratulations! You have reached level ${formatNumber(calculateLevel(ctx.player.experience))}.`, type: 'warning' as const }
-                : null;
-
-            // Precedence: level-up (if any) beats ambush beats crit beats none — mirrors
-            // battle.controller.ts, which resolves the level-up flash FIRST (and only falls
-            // back to res.locals.flash otherwise), and battle.view.ts's own ternary
-            // (`flash?.sound ? undefined : (ambushed ? 'ambush' : (isCritical ? 'crit' : undefined))`),
-            // which only ever computes an ambush/crit sound when no flash sound (i.e. no
-            // level-up) is already set — folded here into one resolved value.
-            const sound: SoundName | null = results.isLevelUp
-                ? 'level'
-                : (ctx.player.ambushed ? 'ambush' : (results.isCritical ? 'crit' : null));
-
-            const narrative = buildBattleNarrative(ctx.player, results, ctx.player.ambushed);
-
-            // Persist so a reconnect (or any later buildPlayerSnapshot()) shows this exact
-            // narrative instead of a generic placeholder — mirrors resolveDeathReason()'s
-            // "resolve once, persist on PlayerState" pattern. `ambushed` here is the SAME
-            // post-roll value already returned below, purely for display text — the live
-            // `ctx.player.ambushed`/PlayerSnapshot.ambushed field stays the sole source of truth
-            // for whether an ambush is currently active.
-            ctx.player.lastBattleNarrative = {
-                narrative,
-                outcome: results,
-                ambushed: Boolean(ctx.player.ambushed),
-                died: false,
-                sound,
-            };
+            // Persisted so a reconnect replays this exact narrative instead of a placeholder —
+            // same "resolve once, store on PlayerState" pattern as deathReason. `ambushed` here
+            // is display text only; PlayerSnapshot.ambushed remains the live source of truth.
+            ctx.player.lastBattleNarrative = { narrative, outcome, ambushed, died, sound };
 
             return {
                 player: buildPlayerSnapshot(ctx.player),
-                outcome: results,
+                outcome,
                 narrative,
-                ambushed: Boolean(ctx.player.ambushed),
-                died: false,
-                flash,
+                ambushed,
+                died,
+                flash: !died && outcome.isLevelUp
+                    ? { text: `🎉 Congratulations! You have reached level ${formatNumber(calculateLevel(ctx.player.experience))}.`, type: 'warning' as const }
+                    : null,
                 sound,
             };
         },

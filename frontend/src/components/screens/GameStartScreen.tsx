@@ -1,18 +1,12 @@
 import { useState, type FormEvent, type MouseEvent } from 'react';
-import { useGameStore } from '@/store/gameStore';
+import { useGameStore, type ScreenId } from '@/store/gameStore';
 import { useAction } from '@/socket/useAction';
 import { playSound } from '@/audio/soundfx';
-import type { ScreenId } from '@/store/gameStore';
 
 /**
- * Ported from game-start.ejs. Races render as a plain `<select>` (not a richer emoji-card
- * picker — confirmed against the actual template, which just lists `<option>{emoji} {label}</option>`),
- * defaulting to the first race like the original `<select>` (no explicit `selected` attribute
- * means the browser picks the first option) — there is no "nothing chosen" state to guard here,
- * mirroring the original form.
- *
- * Name-length validation against `catalog.nameMinLength`/`nameMaxLength` is purely a responsive
- * UX nicety: the server (GameStartPayloadSchema) remains the authoritative validator.
+ * Races render as a plain `<select>` defaulting to the first option, mirroring the original form —
+ * there is no "nothing chosen" state to guard. The name-length check is a UX nicety only; the
+ * server's GameStartPayloadSchema remains the authoritative validator.
  */
 export default function GameStartScreen() {
     const catalog = useGameStore(state => state.catalog);
@@ -27,18 +21,15 @@ export default function GameStartScreen() {
     if (!catalog)
         return null;
 
-    // Destructured into locals (rather than referencing `catalog.foo` inside the nested
-    // `handleSubmit` function declaration below): TypeScript's null-narrowing of `catalog` from
-    // the guard above isn't preserved inside a hoisted `function` declaration's body.
+    // Destructured into locals because TypeScript's narrowing of `catalog` doesn't survive into
+    // the hoisted function declarations below.
     const { nameMinLength, nameMaxLength, races } = catalog;
     const selectedRaceId = raceId ?? races[0]?.id ?? 0;
 
-    function goTo(screen: ScreenId) {
-        return (e: MouseEvent<HTMLAnchorElement>) => {
-            e.preventDefault();
-            navigate(screen);
-        };
-    }
+    const goTo = (screen: ScreenId) => (e: MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        navigate(screen);
+    };
 
     function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -50,19 +41,15 @@ export default function GameStartScreen() {
         }
 
         setValidationError(null);
-        void run(
-            { raceId: selectedRaceId, name: trimmed },
-            {
-                onSuccess: data => {
-                    // navigate() FIRST: it clears `flash` (see gameStore.ts), so calling it after
-                    // applyMutation() would wipe the welcome flash in the same synchronous tick,
-                    // before it ever renders.
-                    navigate('home');
-                    applyMutation(data.player, data.flash);
-                    playSound(data.flash?.sound);
-                },
+        void run({ raceId: selectedRaceId, name: trimmed }, {
+            onSuccess: data => {
+                // One atomic update: commit the new character AND move to Home together. Calling
+                // navigate() first would pin against the still-unstarted store player and bounce
+                // to 'start'; calling it after would clear the welcome flash.
+                applyMutation(data.player, data.flash, 'home');
+                playSound(data.flash?.sound);
             },
-        );
+        });
     }
 
     return (
@@ -90,20 +77,12 @@ export default function GameStartScreen() {
                         value={name}
                         onChange={e => setName(e.target.value)}
                     />
-                    <select
-                        className="form-select"
-                        value={selectedRaceId}
-                        onChange={e => setRaceId(Number(e.target.value))}
-                    >
+                    <select className="form-select" value={selectedRaceId} onChange={e => setRaceId(Number(e.target.value))}>
                         {races.map(race => (
-                            <option key={race.id} value={race.id}>
-                                {race.emoji} {race.label}
-                            </option>
+                            <option key={race.id} value={race.id}>{race.emoji} {race.label}</option>
                         ))}
                     </select>
-                    <button type="submit" className="btn" disabled={pending}>
-                        🚩 Start
-                    </button>
+                    <button type="submit" className="btn" disabled={pending}>🚩 Start</button>
                 </div>
             </form>
             {validationError && <div className="alert alert-warning">{validationError}</div>}

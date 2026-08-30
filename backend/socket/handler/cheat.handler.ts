@@ -12,46 +12,29 @@ import { logger } from '@/config/logger.config';
 import { formatSessionId } from '@/util/format.util';
 
 /**
- * Konami-code relay — ported logic-for-logic from today's socket.service.ts, relocated
- * onto withSession(). `input` has no ack (fire-and-forget), so every failure path (bad
- * payload, no session, flood-limited, not-yet-started/dead player) is a silent no-op —
- * there is nobody to report an error to, exactly like today.
- *
- * The input buffer lives on the per-tracker SessionTrackerEntry (not the session/player
- * data), so this handler reaches into emitter.ts's sessionTracker directly rather than
- * going through the generic SessionContext alone. Buffer bookkeeping intentionally stays
- * OUTSIDE any session lock/store round-trip (matching today's behavior) — only a full
- * Konami match ever touches the session store.
+ * Konami-code relay. `input` has no ack, so every failure path is a silent no-op. The key
+ * buffer lives on the tracker (not session data) and is kept OUTSIDE any lock/store round trip —
+ * only a full match ever touches the session store. Activation is silent by design: no flash,
+ * just the debuff icon and HP snapping to full via a normal state push. This handler bypasses
+ * registry.ts entirely, so that push is the only thing that reaches the client.
  */
 export function registerCheatHandler(io: SocketIOServer, socket: Socket): void {
     socket.on('input', async (payload: unknown) => {
-        const req = socket.request as any;
-        const sessionId: string | undefined = req.session?.id;
-        if (!sessionId)
-            return;
-
-        if (!floodLimiter.consume(sessionId).allowed)
+        const sessionId: string | undefined = (socket.request as any).session?.id;
+        if (!sessionId || !floodLimiter.consume(sessionId).allowed)
             return;
 
         const parsed = SocketInputEventSchema.safeParse(payload);
-        if (!parsed.success)
-            return;
-
         const tracker = sessionTracker.get(sessionId);
-        if (!tracker)
+        if (!parsed.success || !tracker)
             return;
 
-        if (!tracker.inputBuffer)
-            tracker.inputBuffer = [];
+        const buffer = tracker.inputBuffer ??= [];
+        buffer.push(parsed.data.key.toLowerCase());
+        if (buffer.length > CHEAT_CONFIG.konamiSequence.length)
+            buffer.shift();
 
-        tracker.inputBuffer.push(parsed.data.key.toLowerCase());
-        if (tracker.inputBuffer.length > CHEAT_CONFIG.konamiSequence.length)
-            tracker.inputBuffer.shift();
-
-        const matched = tracker.inputBuffer.length === CHEAT_CONFIG.konamiSequence.length &&
-            tracker.inputBuffer.every((k, idx) => k === CHEAT_CONFIG.konamiSequence[idx]);
-
-        if (!matched)
+        if (buffer.length !== CHEAT_CONFIG.konamiSequence.length || !buffer.every((k, i) => k === CHEAT_CONFIG.konamiSequence[i]))
             return;
 
         tracker.inputBuffer = [];
@@ -71,11 +54,6 @@ export function registerCheatHandler(io: SocketIOServer, socket: Socket): void {
                 return true;
             });
 
-            // Silent by design, matching the old game exactly — no flash/notice, just the debuff
-            // icon appearing and HP snapping to full via a normal real-time state push (mirrors
-            // the old game's own separate emitToSession call here, broadcast to every tab on the
-            // session — this handler bypasses registry.ts entirely, so nothing else would ever
-            // push this mutation to the client otherwise).
             if (cheated && mutatedPlayer)
                 emitStateUpdate(io, sessionId, buildPlayerSnapshot(mutatedPlayer));
         } catch (err) {

@@ -11,14 +11,14 @@ export const dbPool = mysql.createPool({
     password: env.DB_PASSWORD,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
 });
 
 const Store = MySQLStore(session as any);
 
 export const sessionStore = new Store({
     clearExpired: true,
-    checkExpirationInterval: 900_000, // clean up every 15 minutes
-    expiration: 86_400_000,           // sessions expire after 24 hours
-    createDatabaseTable: true,        // auto-creates the sessions table
+    checkExpirationInterval: 900_000, // every 15 minutes
+    expiration: 86_400_000,           // sessions live 24 hours
+    createDatabaseTable: true,
 }, dbPool as any);

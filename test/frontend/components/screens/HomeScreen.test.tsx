@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { PlayerSnapshot, BattleFightResult } from '@shared/contract';
+import type { BattleFightResult } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
+import { makePlayer } from '../../factories';
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 vi.mock('@/socket/client', () => ({ request: requestMock }));
@@ -10,42 +11,6 @@ const { playSoundMock } = vi.hoisted(() => ({ playSoundMock: vi.fn() }));
 vi.mock('@/audio/soundfx', () => ({ playSound: playSoundMock }));
 
 const { default: HomeScreen } = await import('@/components/screens/HomeScreen');
-
-function makePlayer(overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
-    return {
-        revision: 1,
-        started: true,
-        name: 'Hero',
-        raceId: 1,
-        raceLabel: 'Human',
-        raceEmoji: '🧑',
-        health: 80,
-        maxHealth: 100,
-        hpPercent: 80,
-        lowHealth: false,
-        experience: 10,
-        level: 2,
-        isMaxLevel: false,
-        xpCurrent: 10,
-        xpRequired: 100,
-        xpPercent: 10,
-        xpNeeded: 90,
-        adena: 500,
-        weapon: null,
-        armor: null,
-        stats: null,
-        effects: [],
-        dead: false,
-        ambushed: false,
-        coward: false,
-        cheated: false,
-        deathReason: null,
-        highscoreEligible: false,
-        counters: { totalBattles: 0, totalAmbushes: 0, consecutiveAmbushes: 0, totalEnemiesKilled: 0 },
-        lastBattle: null,
-        ...overrides,
-    };
-}
 
 function makeBattleResult(overrides: Partial<BattleFightResult> = {}): BattleFightResult {
     return {
@@ -125,6 +90,29 @@ describe('HomeScreen', () => {
 
         expect(screen.getByRole('combobox')).toHaveValue('inn');
         expect(screen.queryByText('Where to?')).not.toBeInTheDocument();
+    });
+
+    // home.js's one label swap: only the suicide destination relabels the button, and the
+    // variant stays plain `.btn` throughout (unlike shop.js/suicide.js).
+    it('relabels the button to "⚰️ Perish" for the suicide destination only, keeping the plain btn variant', () => {
+        render(<HomeScreen />);
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'suicide' } });
+        const perishButton = screen.getByRole('button', { name: '⚰️ Perish' });
+        expect(perishButton.className).toBe('btn');
+
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'armors' } });
+        expect(screen.getByRole('button', { name: 'Travel' }).className).toBe('btn');
+    });
+
+    it('clicking the "City of Aden" link navigates to Highscores instead of following the anchor', () => {
+        render(<HomeScreen />);
+
+        const link = screen.getByRole('link', { name: 'City of Aden' });
+        // fireEvent returns false once preventDefault() has been called on the dispatched event.
+        expect(fireEvent.click(link)).toBe(false);
+        expect(useGameStore.getState().screen).toBe('highscores');
+        expect(requestMock).not.toHaveBeenCalledWith('battle:fight', expect.anything());
     });
 
     it('submitting without changing the selection navigates to Inn (the pre-selected default), not a no-op', () => {

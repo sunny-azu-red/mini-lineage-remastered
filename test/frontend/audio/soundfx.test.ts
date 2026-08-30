@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useGameStore } from '@/store/gameStore';
-import { playSound, type SoundName } from '@/audio/soundfx';
+import { getAudioContext, playSound, type SoundName } from '@/audio/soundfx';
 
 // jsdom has no Web Audio API at all, so we stub the couple of methods/properties actually
 // exercised by soundfx.ts's synth functions: createOscillator/createGain, .connect, .start,
@@ -81,5 +81,49 @@ describe('soundfx', () => {
         useGameStore.setState({ soundEnabled: true });
 
         expect(() => playSound(name)).not.toThrow();
+    });
+
+    // Browsers auto-suspend an AudioContext in a backgrounded tab, even after the initial
+    // gesture-based unlock — every play defensively resumes so the sound isn't silently dropped
+    // when the tab comes back to the foreground.
+    it('resumes the shared context when it has been suspended', () => {
+        useGameStore.setState({ soundEnabled: true });
+        const ctx = getAudioContext() as unknown as { state: 'running' | 'suspended'; resume: () => Promise<void> };
+        ctx.state = 'suspended';
+        const resumeSpy = vi.spyOn(ctx, 'resume');
+
+        playSound('buy');
+
+        expect(resumeSpy).toHaveBeenCalledTimes(1);
+        resumeSpy.mockRestore();
+    });
+
+    // Safari (and older iOS WebKit) only ever exposed the prefixed constructor.
+    it('falls back to webkitAudioContext when the unprefixed constructor is missing', async () => {
+        vi.resetModules();
+        vi.stubGlobal('AudioContext', undefined);
+        vi.stubGlobal('webkitAudioContext', FakeAudioContext);
+        audioContextCtor.mockClear();
+
+        const fresh = await import('@/audio/soundfx');
+        const ctx = fresh.getAudioContext();
+
+        expect(audioContextCtor).toHaveBeenCalledTimes(1);
+        expect(ctx).toBeInstanceOf(FakeAudioContext);
+
+        vi.unstubAllGlobals();
+        vi.resetModules();
+    });
+
+    it('does not touch resume() when the context is already running', () => {
+        useGameStore.setState({ soundEnabled: true });
+        const ctx = getAudioContext() as unknown as { state: 'running' | 'suspended'; resume: () => Promise<void> };
+        ctx.state = 'running';
+        const resumeSpy = vi.spyOn(ctx, 'resume');
+
+        playSound('buy');
+
+        expect(resumeSpy).not.toHaveBeenCalled();
+        resumeSpy.mockRestore();
     });
 });

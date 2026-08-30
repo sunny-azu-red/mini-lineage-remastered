@@ -5,9 +5,9 @@ export interface EffectView {
     type: 'buff' | 'debuff' | 'aura';
     emoji: string;
     label: string;
-    /** Pre-formatted server-side via formatEffectTooltip() — "Label (+N Stat, ...)" */
+    /** Pre-formatted server-side: "Label (+N Stat, ...)" */
     tooltip: string;
-    /** Epoch ms. Client counts down locally for display; server remains authoritative on expiry. */
+    /** Epoch ms. The client counts down for display; the server is authoritative on expiry. */
     expiresAt?: number;
 }
 
@@ -17,7 +17,7 @@ export interface ItemView {
     emoji: string;
     stat: number;
     cost: number;
-    // flattened, display-ready modifier values (today's Item.modifiers/effect.modifiers)
+    // flattened, display-ready modifier values
     crit?: number;
     regen?: number;
     maxHealth?: number;
@@ -39,7 +39,7 @@ export interface PlayerCounters {
 }
 
 export interface PlayerSnapshot {
-    /** Monotonic; bumped on every persisted mutation. Client drops stale out-of-order pushes. */
+    /** Monotonic; bumped on every persisted mutation. The client drops stale out-of-order pushes. */
     revision: number;
     started: boolean;
 
@@ -74,18 +74,15 @@ export interface PlayerSnapshot {
     coward: boolean;
     cheated: boolean;
     deathReason: string | null;
-    /** dead && !coward && !cheated — server-computed so the client never re-derives eligibility rules. */
+    /** dead && !coward && !cheated — computed here so the client never re-derives the rule. */
     highscoreEligible: boolean;
 
     counters: PlayerCounters;
 
     /**
-     * The most recently resolved `battle:fight` narrative, persisted on `PlayerState` (as
-     * `lastBattleNarrative`) so it survives any reconnect — never `null` for a player who has
-     * fought at least once (even across reconnects), `null` for a never-started or
-     * never-fought character. `ambushed`/`narrative.ambushLine` here are for DISPLAY TEXT only;
-     * `PlayerSnapshot.ambushed` (above) remains the live, authoritative source for whether an
-     * ambush is currently active.
+     * The last resolved fight, persisted server-side so it survives a reconnect. Null only for a
+     * character that has never fought. Its `ambushed`/`ambushLine` are DISPLAY TEXT only —
+     * `PlayerSnapshot.ambushed` above stays the live source of truth.
      */
     lastBattle: BattleNarrativeSnapshot | null;
 }

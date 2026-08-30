@@ -5,18 +5,14 @@ import { SESSION_CONFIG } from '@/constant/game.constant';
 import { logger } from '@/config/logger.config';
 import { formatSessionId } from '@/util/format.util';
 
-/** Multi-tab session tracking + push-emission (see backend/socket/index.ts). */
+/** Multi-tab session tracking + push emission. */
 export const sessionTracker = new Map<string, SessionTrackerEntry>();
 
 export function trackSocket(_io: SocketIOServer, sessionId: string, socketId: string): void {
-    let tracker = sessionTracker.get(sessionId);
-    if (!tracker) {
-        tracker = { socketIds: new Set(), lastSeen: Date.now() };
-        sessionTracker.set(sessionId, tracker);
-    }
-
+    const tracker = sessionTracker.get(sessionId) ?? { socketIds: new Set<string>(), lastSeen: 0 };
     tracker.socketIds.add(socketId);
     tracker.lastSeen = Date.now();
+    sessionTracker.set(sessionId, tracker);
 }
 
 export function untrackSocket(sessionId: string, socketId: string): void {
@@ -29,17 +25,9 @@ export function untrackSocket(sessionId: string, socketId: string): void {
 }
 
 function emitToTracked(io: SocketIOServer, sessionId: string, event: string, payload: unknown, excludeSocketId?: string): void {
-    const tracker = sessionTracker.get(sessionId);
-    if (!tracker)
-        return;
-
-    tracker.socketIds.forEach(socketId => {
-        if (socketId === excludeSocketId)
-            return;
-
-        const targetSocket = io.sockets.sockets.get(socketId);
-        if (targetSocket)
-            targetSocket.emit(event, payload);
+    sessionTracker.get(sessionId)?.socketIds.forEach(socketId => {
+        if (socketId !== excludeSocketId)
+            io.sockets.sockets.get(socketId)?.emit(event, payload);
     });
 }
 
@@ -48,13 +36,9 @@ export function emitHydrate(io: SocketIOServer, sessionId: string, payload: Hydr
 }
 
 /**
- * `excludeSocketId`: the acting socket of a mutation already gets its own authoritative,
- * complete result via the request's own ack — it must NEVER also receive this push for the
- * same mutation. That "harmless redundancy" used to race the ack: the push has no
- * transition-detection logic of its own (e.g. "a reset just landed"), so if it arrived and
- * was applied first, it could silently clobber the baseline the ack's own handler needed,
- * leaving the UI stuck (see git history — the game:restart screen-freeze bug). Only OTHER
- * tabs on the same session should receive this.
+ * `excludeSocketId` is REQUIRED for a mutation's own acting socket: it already gets the
+ * authoritative result via its ack, and this push carries no transition detection, so if it
+ * won the race it could clobber the baseline that ack's handler needs and freeze the UI.
  */
 export function emitStateUpdate(io: SocketIOServer, sessionId: string, payload: Partial<PlayerSnapshot>, excludeSocketId?: string): void {
     emitToTracked(io, sessionId, 'state:update', payload, excludeSocketId);
@@ -65,12 +49,9 @@ export function emitNotice(io: SocketIOServer, sessionId: string, notice: FlashV
 }
 
 /**
- * Synchronizes exact server-side timeouts for active timed effects on a session,
- * guaranteeing immediate tick execution and client sync at the exact millisecond of expiry.
- * `onExpiry` is invoked (with the sessionId) when a scheduled timer fires — the caller
- * (tick.ts's processSessionTick) is responsible for re-processing the session with
- * { applyRegen: false }. Taking the callback as a parameter (rather than importing
- * processSessionTick directly) avoids a circular import between emitter.ts and tick.ts.
+ * Schedules an exact timeout per active timed effect so expiry fires to the millisecond rather
+ * than waiting for the next 5s tick. `onExpiry` is a parameter (not a direct import of
+ * processSessionTick) purely to avoid an emitter <-> tick import cycle.
  */
 export function syncExpiryTimers(
     _io: SocketIOServer,
@@ -79,53 +60,38 @@ export function syncExpiryTimers(
     player: PlayerState,
     onExpiry: (sessionId: string) => void,
 ): void {
-    if (!tracker.expiryTimers)
-        tracker.expiryTimers = new Map();
-
+    const timers = tracker.expiryTimers ??= new Map();
     const now = Date.now();
-    const activeTimedEffects = (player.effects ?? []).filter(e => e.expiresAt && e.expiresAt > now);
-    const activeEffectIds = new Set(activeTimedEffects.map(e => e.id));
+    const active = (player.effects ?? []).filter(e => e.expiresAt && e.expiresAt > now);
+    const activeIds = new Set(active.map(e => e.id));
 
-    // Clear timers for effects that were removed or already expired
-    for (const [id, timer] of tracker.expiryTimers.entries()) {
-        if (!activeEffectIds.has(id)) {
+    for (const [id, timer] of timers.entries()) {
+        if (!activeIds.has(id)) {
             clearTimeout(timer);
-            tracker.expiryTimers.delete(id);
+            timers.delete(id);
         }
     }
 
-    // Schedule exact timers for newly active timed effects
-    for (const effect of activeTimedEffects) {
-        if (effect.expiresAt && !tracker.expiryTimers.has(effect.id)) {
-            const delayMs = Math.max(0, effect.expiresAt - now + 25);
-            const timer = setTimeout(() => {
-                tracker.expiryTimers?.delete(effect.id);
-                onExpiry(sessionId);
-            }, delayMs);
-            tracker.expiryTimers.set(effect.id, timer);
-        }
+    for (const effect of active) {
+        if (timers.has(effect.id))
+            continue;
+
+        timers.set(effect.id, setTimeout(() => {
+            timers.delete(effect.id);
+            onExpiry(sessionId);
+        }, Math.max(0, effect.expiresAt! - now + 25)));
     }
 }
 
-/**
- * Grace-period cleanup — ported from the tail of today's global tick setInterval.
- * Removes tracker entries with no connected sockets that have been idle beyond
- * SESSION_CONFIG.gracePeriodMs, clearing any pending expiry timers first.
- */
+/** Drops tracker entries with no sockets that have been idle past the grace period. */
 export function cleanupStaleSessions(now: number): void {
     sessionTracker.forEach((tracker, sessionId) => {
-        if (tracker.socketIds.size === 0 && now - tracker.lastSeen > SESSION_CONFIG.gracePeriodMs) {
-            const sid = formatSessionId(sessionId);
-            logger.debug(`[SOCKET:${sid}] \x1b[34mCleaning up stale session\x1b[0m`);
+        if (tracker.socketIds.size > 0 || now - tracker.lastSeen <= SESSION_CONFIG.gracePeriodMs)
+            return;
 
-            if (tracker.expiryTimers) {
-                for (const timer of tracker.expiryTimers.values())
-                    clearTimeout(timer);
-
-                tracker.expiryTimers.clear();
-            }
-
-            sessionTracker.delete(sessionId);
-        }
+        logger.debug(`[SOCKET:${formatSessionId(sessionId)}] \x1b[34mCleaning up stale session\x1b[0m`);
+        tracker.expiryTimers?.forEach(timer => clearTimeout(timer));
+        tracker.expiryTimers?.clear();
+        sessionTracker.delete(sessionId);
     });
 }

@@ -1,140 +1,95 @@
-import { useEffect, useState, type MouseEvent } from 'react';
 import { pluralize, fillTemplate, formatNumber, formatAdena } from '@shared/format';
-import { useGameStore } from '@/store/gameStore';
-import { request } from '@/socket/client';
+import { useRequest } from '@/socket/useRequest';
 import Narrative from '@/components/common/Narrative';
+import BackLink from '@/components/common/BackLink';
+import LoadingPanel from '@/components/common/LoadingPanel';
 
 /**
- * Ported from statistics.ejs + statistics.view.ts's renderStatisticsView — "The Tome of Lore".
- * The raw counters (`Record<string, number>`, see src/constant/statistics.constant.ts's
- * ALL_STAT_FIELDS) are fetched fresh here; all the narrative prose/formatting that used to happen
- * server-side (fillTemplate/pluralize + formatNumber/formatAdena) now happens client-side against
- * `@shared/format`'s ports of the exact same functions.
+ * "The Tome of Lore". The raw counters are fetched fresh; all the prose formatting that used to
+ * happen server-side now happens here against `@shared/format`'s identical helpers.
  *
- * `fillTemplate(...)` calls embed literal HTML (`<span class="...">`) in their template string —
- * those go through `Narrative` (plan decision A12). Plain `pluralize(...)` calls return plain
- * text with no markup, so they're rendered as ordinary JSX children wrapped in a literal
- * `<span>` here (mirroring the ejs template's own literal `<span class="gold"><%- pluralize(...) %></span>`
- * markup) — no `dangerouslySetInnerHTML` needed for those.
+ * Templates embedding literal HTML go through `Narrative`; plain `pluralize` output is ordinary
+ * text and is rendered as normal JSX children.
  */
+interface CountedProps {
+    /** Uses `{n}` for the pluralized count and `{isSingle}` for singular/plural verb agreement. */
+    template: string;
+    singular: string;
+    plural: string;
+    count: number;
+}
+
+function Counted({ template, singular, plural, count }: CountedProps) {
+    return <Narrative html={fillTemplate(template, { n: pluralize(singular, plural, count), isSingle: count === 1 })} />;
+}
+
+/** A plain (markup-free) pluralized count, wrapped in a colour utility span. */
+function Tally({ className, singular, plural, count }: { className: string; singular: string; plural: string; count: number }) {
+    return <span className={className}>{pluralize(singular, plural, count)}</span>;
+}
+
 export default function StatisticsScreen() {
-    const player = useGameStore(state => state.player);
-    const navigate = useGameStore(state => state.navigate);
-    const [stats, setStats] = useState<Record<string, number> | null | undefined>(undefined);
-
-    const setNotice = useGameStore(state => state.setNotice);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        void request('statistics:get', {}).then(res => {
-            if (cancelled)
-                return;
-
-            if (res.ok) {
-                setStats(res.data.stats);
-            } else {
-                // A real fetch failure must NOT collapse into the same "no players yet" empty
-                // state below — that's a genuine, distinct condition (an empty database), not an
-                // error. Surface it the same way every other rejected socket action does.
-                setNotice(res.error);
-                setStats(null);
-            }
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [setNotice]);
-
-    function handleBack(e: MouseEvent<HTMLAnchorElement>) {
-        e.preventDefault();
-        navigate(player?.started ? 'home' : 'start');
-    }
-
-    if (stats === undefined)
-        return null;
+    const { data, loading } = useRequest('statistics:get', {});
+    const stats = data?.stats;
 
     return (
         <>
-            {stats ? (
+            {/*
+              * A failure surfaces as a notice banner (useRequest) and falls through to the
+              * empty-archives copy — an empty database is a genuine, distinct condition from a
+              * fetch that never came back, and the banner is what tells them apart. The BackLink
+              * below sits OUTSIDE this branch so it stays reachable while loading.
+              */}
+            {loading && !data ? (
+                <LoadingPanel label="Unsealing the tome…" />
+            ) : stats ? (
                 <>
                     <h2>The Legacy of the Realm</h2>
                     <p>
                         In the age of steel and magic,{' '}
-                        <Narrative
-                            html={fillTemplate(
-                                '<span class="gold">{playerText}</span> {isSinglePlayer ? "has" : "have"} set foot upon these dangerous lands.',
-                                {
-                                    playerText: pluralize('Brave Soul', 'Brave Souls', stats.total_players),
-                                    isSinglePlayer: stats.total_players === 1,
-                                },
-                            )}
+                        <Counted
+                            template='<span class="gold">{n}</span> {isSingle ? "has" : "have"} set foot upon these dangerous lands.'
+                            singular="Brave Soul" plural="Brave Souls" count={stats.total_players}
                         />{' '}
                         Through hardship and triumph, they have collectively ascended{' '}
-                        <span className="gold">{pluralize('Level', 'Levels', stats.total_levels_gained)}</span> in
+                        <Tally className="gold" singular="Level" plural="Levels" count={stats.total_levels_gained} /> in
                         their pursuit of power. Yet, glory always exacts a price, because{' '}
-                        <Narrative
-                            html={fillTemplate(
-                                '<span class="hp">{deathText}</span> {isSingleDeath ? "has" : "have"} fallen in battle... lost, but not forgotten.',
-                                {
-                                    deathText: pluralize('Champion', 'Champions', stats.total_deaths),
-                                    isSingleDeath: stats.total_deaths === 1,
-                                },
-                            )}
+                        <Counted
+                            template='<span class="hp">{n}</span> {isSingle ? "has" : "have"} fallen in battle... lost, but not forgotten.'
+                            singular="Champion" plural="Champions" count={stats.total_deaths}
                         />
                     </p>
                     <p>
                         A few, overwhelmed by the weight of their journey, chose the coward&apos;s end, with{' '}
-                        <Narrative
-                            html={fillTemplate(
-                                '<span class="muted">{suicideText}</span> taking {isSingleSuicide ? "its own life" : "their own lives"},',
-                                {
-                                    suicideText: pluralize('Weak Soul', 'Weak Souls', stats.total_players_suicided),
-                                    isSingleSuicide: stats.total_players_suicided === 1,
-                                },
-                            )}
+                        <Counted
+                            template='<span class="muted">{n}</span> taking {isSingle ? "its own life" : "their own lives"},'
+                            singular="Weak Soul" plural="Weak Souls" count={stats.total_players_suicided}
                         />{' '}
-                        <Narrative
-                            html={fillTemplate(
-                                'while <span class="hp">{cheatText}</span> {isSingleCheat ? "was" : "were"} struck down by the gods for attempting to bypass the laws of the realm.',
-                                {
-                                    cheatText: pluralize('Heretic', 'Heretics', stats.total_players_cheated),
-                                    isSingleCheat: stats.total_players_cheated === 1,
-                                },
-                            )}
+                        <Counted
+                            template='while <span class="hp">{n}</span> {isSingle ? "was" : "were"} struck down by the gods for attempting to bypass the laws of the realm.'
+                            singular="Heretic" plural="Heretics" count={stats.total_players_cheated}
                         />
                     </p>
 
                     <h2>Echoes of the Battlefield</h2>
                     <p>
                         The drums of war never truly fall silent because{' '}
-                        <Narrative
-                            html={fillTemplate(
-                                '<span class="gold">{battleText}</span> {isSingleBattle ? "has" : "have"} been fought against the encroaching darkness,',
-                                {
-                                    battleText: pluralize('Battle', 'Battles', stats.total_battles),
-                                    isSingleBattle: stats.total_battles === 1,
-                                },
-                            )}
+                        <Counted
+                            template='<span class="gold">{n}</span> {isSingle ? "has" : "have"} been fought against the encroaching darkness,'
+                            singular="Battle" plural="Battles" count={stats.total_battles}
                         />{' '}
                         resulting in the defeat of{' '}
-                        <span className="gold">{pluralize('Formidable Foe', 'Formidable Foes', stats.total_enemies_killed)}</span>{' '}
+                        <Tally className="gold" singular="Formidable Foe" plural="Formidable Foes" count={stats.total_enemies_killed} />{' '}
                         through lethal precision and the{' '}
-                        <span className="crit">{pluralize('Critical Strike', 'Critical Strikes', stats.total_critical_hits)}</span>{' '}
+                        <Tally className="crit" singular="Critical Strike" plural="Critical Strikes" count={stats.total_critical_hits} />{' '}
                         that turned the tide of every skirmish.
                     </p>
                     <p>
                         From these conflicts, the survivors extracted vast wisdom, gaining a total of{' '}
                         <span className="xp">{formatNumber(stats.total_xp_gained)} XP</span>.{' '}
-                        <Narrative
-                            html={fillTemplate(
-                                'But the wild is treacherous, as the hunters became the hunted and <span class="hp">{ambushText}</span> {isSingleAmbush ? \'has\' : \'have\'} occurred, nearly claiming those who walked unprepared.',
-                                {
-                                    ambushText: pluralize('Ambush', 'Ambushes', stats.total_ambushes),
-                                    isSingleAmbush: stats.total_ambushes === 1,
-                                },
-                            )}
+                        <Counted
+                            template='But the wild is treacherous, as the hunters became the hunted and <span class="hp">{n}</span> {isSingle ? "has" : "have"} occurred, nearly claiming those who walked unprepared.'
+                            singular="Ambush" plural="Ambushes" count={stats.total_ambushes}
                         />
                     </p>
 
@@ -165,10 +120,10 @@ export default function StatisticsScreen() {
                     </p>
                     <p>
                         The shops have flourished, selling{' '}
-                        <span className="gold">{pluralize('Weapon', 'Weapons', stats.total_weapons_bought)}</span> and{' '}
-                        <span className="gold">{pluralize('Armor', 'Armors', stats.total_armors_bought)}</span> to
+                        <Tally className="gold" singular="Weapon" plural="Weapons" count={stats.total_weapons_bought} /> and{' '}
+                        <Tally className="gold" singular="Armor" plural="Armors" count={stats.total_armors_bought} /> to
                         those who would be king, while the local Inn has served{' '}
-                        <span className="gold">{pluralize('Meal', 'Meals', stats.total_food_bought)}</span> to keep
+                        <Tally className="gold" singular="Meal" plural="Meals" count={stats.total_food_bought} /> to keep
                         the fires of life burning.
                     </p>
                 </>
@@ -179,11 +134,7 @@ export default function StatisticsScreen() {
                 </p>
             )}
 
-            <p className="last back">
-                <a href="#home" onClick={handleBack}>
-                    Go back to game start
-                </a>
-            </p>
+            <BackLink label="Go back to game start" />
         </>
     );
 }

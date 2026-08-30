@@ -5,29 +5,21 @@ import { ALL_STAT_FIELDS } from '@/constant/statistics.constant';
 export const statisticsRepository = {
     async increment(field: StatField, amount: number = 1): Promise<void> {
         await dbPool.execute(
-            `INSERT INTO statistics (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = value + ?`,
+            'INSERT INTO statistics (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = value + ?',
             [field, amount, amount]
         );
     },
 
+    /** Null when nobody has ever played, so the client can show its empty state. */
     async getAll(): Promise<Statistics | null> {
         const [rows] = await dbPool.execute('SELECT name, value FROM statistics');
-        const dbRows = rows as StatRow[];
 
-        const stats = ALL_STAT_FIELDS.reduce((acc, field) => { // initialize all stats with 0
-            acc[field] = 0;
-
-            return acc;
-        }, {} as any) as Statistics;
-
-        dbRows.forEach(row => { // overwrite with actual values from the database
+        const stats = Object.fromEntries(ALL_STAT_FIELDS.map(field => [field, 0])) as Statistics;
+        for (const row of rows as StatRow[]) {
             if (row.name in stats)
                 stats[row.name] = Number(row.value);
-        });
+        }
 
-        if (stats.total_players === 0)
-            return null;
-
-        return stats;
+        return stats.total_players === 0 ? null : stats;
     },
 };
