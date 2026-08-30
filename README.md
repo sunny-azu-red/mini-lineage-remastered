@@ -22,6 +22,7 @@
 - **Location-Based Zones**: The client reports its current screen (`player:screen`); the server classifies that as a combat zone (Battleground, Suicide, Death — regeneration pauses) or a resting zone (Town, Inn, Shops, Character, Highscores — regeneration applies). Being *ambushed* forces combat regardless of what the client claims, so a raw socket client can never lie its way out of one.
 - **Non-Mutating Reads**: Connecting, reconnecting, or refreshing only ever *reads* state. A fight happens exclusively on an explicit `battle:fight` — never on page load — which makes the classic navigate-away-mid-ambush exploit structurally impossible instead of merely punished.
 - **WebSocket Streaming**: The React SPA and the server communicate exclusively over one Socket.IO connection (`/socket.io`) — bi-directional HP/status sync, push updates on tick and effect expiry, and every player action, with no page reloads. Multiple tabs on one session stay in sync.
+- **Honest Loading States**: Waiting for data, receiving nothing, and failing to reach the server are three distinct states, never collapsed into one. A screen still fetching shows a spinner rather than announcing an empty leaderboard; a failed request raises the shared notice banner instead of passing an outage off as "nothing here yet". The footer names the running build even before the server answers, so an unreachable backend still tells you which bundle is loaded.
 
 ### 🍖 Inn & Consumables
 - **Tiered Meals**: Five dishes from *Spiced Ale* to *Roasted Pheasant*. All restore HP; the top three also grant a timed buff (*Satisfied*, *Well Fed*, *Gourmet Feast*) that temporarily expands the maximum health pool. Only one food buff is active at a time — a new meal replaces the old one.
@@ -31,9 +32,11 @@
 - **Global Game Statistics**: 20 community counters (battles fought, Adena circulated and spent, enemies slain, critical strikes, damage blocked, HP lost/healed/regenerated, deaths, ambushes, and more), each maintained with an atomic MySQL upsert.
 
 ### 🛡️ Security & Reliability
+- **One Place For Every Access Rule**: `pinScreen` decides where a player is allowed to be, and every navigation funnels through it — an in-app link, a typed URL and the Back button all obey the same checks. The dead are confined to the death screen; the living are kept *off* it (it offers "Play Again?", which wipes the character); a player with a character cannot wander back into character creation, Statistics or Races; a visitor without one is confined to Game Start, Statistics, Races and Highscores; and an ambushed player is pinned to the battleground.
+- **Guarded Mutations**: Every socket event that changes state declares its own preconditions (`requireStarted`, `requireNotStarted`, `requireAlive`, `requireDead`, `requireHighscoreEligible`), enforced server-side inside the session lock. Client-side routing is convenience; these guards are the boundary. Notably `game:restart` requires a *dead* character, so a living one can never be wiped — not even by a hand-rolled socket client.
 - **Concurrency Locks**: A per-session promise mutex wraps every socket mutation (`withSession`), so concurrent actions on one session can never interleave into a lost update.
 - **Revision-Guarded State**: Every persisted mutation bumps a monotonic `revision`, letting the client drop out-of-order pushes instead of letting a stale one clobber fresher state.
-- **Security Hardening**: Helmet headers (CSP with no inline scripts), Gzip compression, `httpOnly`/`sameSite` session cookies, Zod validation on every socket payload, and sliding-window rate limiting (per-event plus a global flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
+- **Security Hardening**: Helmet headers (CSP with no inline scripts), Gzip compression, `httpOnly`/`sameSite` session cookies, Zod validation on every socket payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter on every event). Rate limits are bypassed outside a release build so local development isn't throttled.
 
 ## 🛠️ Tech Stack
 
@@ -113,12 +116,15 @@ npm run test:coverage
 npm run test:watch
 ```
 
-No database is required — the suite stubs the store and repository layers.
+No database is required — the suite stubs the store and repository layers. Coverage sits at
+**100% of statements, branches, functions and lines**, and is expected to stay there.
 
-Beyond the unit tests, three suites guard against silent regressions:
+Beyond the unit tests, five suites pin invariants that are easy to break silently:
 
 - **`test/backend/service/balance.golden.test.ts`** — a golden master that plays 400 fights per character across all four races and five fixed RNG seeds, then pins the exact resulting progression. Because every roll runs off one deterministic stream, this also pins the *order* in which `Math.random()` is consumed: adding, removing, or reordering a draw anywhere in the fight path fails here even when each individual function is still correct. **A diff in this file is a deliberate balance change — regenerate it in the same commit.**
 - **`test/backend/socket/playthrough.integration.test.ts`** — plays a whole game end-to-end through the real socket stack (start → shop → fight → level → death → highscore → restart) with only the session store and repositories stubbed.
+- **`test/frontend/screen-access.test.ts`** — states the access policy above once, end to end, checking every rule through an in-app link, a typed URL *and* the Back button. The three routes must agree; historically they did not.
+- **`test/frontend/no-dead-ends.test.tsx`** — liveness. For every player state, whatever screen they are pinned to must render and offer at least one enabled control. Guards against a redirect and a screen's own self-blanking conspiring to strand someone on a page with no way off.
 - **`test/frontend/audio/soundfx.trace.test.ts`** — records the exact sequence of Web Audio calls each sound effect emits, so the game provably keeps sounding the same. Retuning a voice means updating its trace.
 
 ### 🔬 Balance Simulation Tools
