@@ -191,11 +191,15 @@ export const TICK_CONFIG = {
  * zones apply it; a screen in neither (Statistics/Races/Start/Error) gets no aura.
  *
  * Nothing here is tick-driven: syncZoneAuras recomputes the aura synchronously on every
- * player:screen event.
+ * player:screen event, and the disengage countdown expires on its own exact timer (emitter.ts).
+ * `combatLingerMs` being 5s is unrelated to TICK_CONFIG.intervalMs also being 5s — they are free
+ * to diverge.
  */
 export const ZONE_CONFIG = {
     combatZones: ['battle', 'suicide', 'death'] as ScreenId[],
     restingZones: ['home', 'inn', 'weapons', 'armors', 'character', 'highscores'] as ScreenId[],
+    /** How long ⚔️ In Combat lingers after LEAVING a combat zone, before 💤 Resting takes over. */
+    combatLingerMs: 5_000,
 } as const;
 
 export const SESSION_CONFIG = {

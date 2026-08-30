@@ -330,12 +330,24 @@ describe('full playthrough over the real socket stack', () => {
 
         const battle = expectOk<MutationResult>(await emit('player:screen', { screen: 'battle' }));
         expect(battle.player.effects.map(e => e.id)).toContain('combat');
+        // Standing in the zone: indefinite combat, no countdown.
+        expect(battle.player.effects.find(e => e.id === 'combat')?.expiresAt).toBeUndefined();
 
-        // Statistics is in neither zone list, so it gets no aura at all.
+        // Leaving a combat zone keeps the player flagged for combatLingerMs, wherever they went —
+        // Statistics is in neither zone list, but the disengage countdown outranks that.
         const stats = expectOk<MutationResult>(await emit('player:screen', { screen: 'statistics' }));
         const statsIds = stats.player.effects.map(e => e.id);
         expect(statsIds).not.toContain('resting');
-        expect(statsIds).not.toContain('combat');
+        expect(statsIds).toContain('combat');
+        expect(stats.player.effects.find(e => e.id === 'combat')?.expiresAt).toBe(store.combatUntil);
+
+        // Once it elapses, a screen in neither zone list gets no aura at all.
+        store.combatUntil = Date.now() - 1;
+        store.effects = store.effects.map((e: any) => (e.id === 'combat' ? { ...e, expiresAt: Date.now() - 1 } : e));
+        const settled = expectOk<MutationResult>(await emit('player:screen', { screen: 'statistics' }));
+        const settledIds = settled.player.effects.map(e => e.id);
+        expect(settledIds).not.toContain('resting');
+        expect(settledIds).not.toContain('combat');
 
         // An ambushed player who claims to be resting in the Inn is still forced into combat.
         store.ambushed = true;
