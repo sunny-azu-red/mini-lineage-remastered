@@ -40,4 +40,23 @@ describe('Footer', () => {
         expect(screen.queryByRole('link')).not.toBeInTheDocument();
         expect(screen.queryByText('version-debug')).not.toBeInTheDocument();
     });
+
+    // The gap this closes: with no catalog — still connecting, or the backend is unreachable —
+    // the footer used to show only "© 2005 – 2026", so there was no way to tell which build was
+    // loaded at exactly the moment that matters most for diagnosing an outage.
+    it('names the build from its own compile-time constant when the catalog has not arrived', () => {
+        useGameStore.setState({ catalog: null }, false);
+        const { container } = render(<Footer />);
+
+        expect(container.textContent).toContain('⚡ development');
+        expect(container.querySelector('.version-debug')).toBeInTheDocument();
+    });
+
+    it('prefers the server version once the catalog lands', () => {
+        useGameStore.setState({ catalog: makeCatalog({ version: 'abc1234', commitUrl: null }) }, false);
+        const { container } = render(<Footer />);
+
+        expect(container.textContent).toContain('abc1234');
+        expect(container.textContent).not.toContain('⚡ development');
+    });
 });

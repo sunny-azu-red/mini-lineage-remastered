@@ -39,6 +39,9 @@ export default defineConfig({
             },
             {
                 plugins: [react(), tsconfigPaths({ projects: ['./tsconfig.frontend.json'] })],
+                // frontend/vite.config.ts is not used here, so its build-time constants must be
+                // declared again — tests run the equivalent of a dev build.
+                define: { __APP_VERSION__: JSON.stringify('⚡ development') },
                 test: {
                     name: 'frontend',
                     globals: true,
