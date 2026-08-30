@@ -25,6 +25,9 @@
   "author": "Sunny",
   "license": "MIT",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.12"
+  },
   "dependencies": {
     "compression": "^1.8.1",
     "cross-env": "^10.1.0",
