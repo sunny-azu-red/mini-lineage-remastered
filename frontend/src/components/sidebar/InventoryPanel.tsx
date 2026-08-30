@@ -12,7 +12,7 @@ export default function InventoryPanel() {
     // The null checks are defensive — AppShell only mounts the sidebar once `player.started`.
     const row = (item: typeof armor, title: string, badge: ReactNode) => item && (
         <div className="stat-row">
-            <span className="stat-value" title={title}>{item.emoji} {item.name}{badge}</span>
+            <span className="stat-value" title={title}>{item.emoji} {item.name} {badge}</span>
         </div>
     );
 
