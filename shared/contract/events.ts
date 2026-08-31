@@ -4,6 +4,7 @@ import type { GameCatalog } from './catalog';
 import type { BattleFightResult } from './battle';
 import type { HighscoreList, HighscoreSubmitResult } from './highscores';
 import type { StatisticsResponse } from './statistics';
+import type { TimeSyncResponse } from './time';
 
 /**
  * Sent on every connect AND reconnect. Building this payload must NEVER mutate player state —
@@ -54,6 +55,12 @@ export interface ClientToServerEvents {
     'highscores:submit': (p: EmptyPayload, ack: (r: Ack<HighscoreSubmitResult>) => void) => void;
     'highscores:list': (p: HighscoreListPayload, ack: (r: Ack<HighscoreList>) => void) => void;
     'statistics:get': (p: EmptyPayload, ack: (r: Ack<StatisticsResponse>) => void) => void;
+    /**
+     * SNTP-style clock exchange. `EffectView.expiresAt` is an absolute SERVER epoch, so the client
+     * measures the offset between the two clocks and counts down against server time — otherwise
+     * any skew between the machines shifts every effect timer.
+     */
+    'time:sync': (p: EmptyPayload, ack: (r: Ack<TimeSyncResponse>) => void) => void;
     /** Fire-and-forget Konami relay — no ack. */
     input: (p: InputPayload) => void;
 }

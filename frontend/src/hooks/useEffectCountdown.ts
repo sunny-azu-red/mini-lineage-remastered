@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useGameStore } from '@/store/gameStore';
 
 /**
  * One shared `now` tick. Call ONCE from `EffectsList` and pass the value down, so the effects row
@@ -13,8 +14,14 @@ import { useEffect, useState } from 'react';
  * Reading the clock here makes the hook impure, which is correct: a clock is not a function of
  * state. React's development double-render gets two timestamps a fraction of a millisecond apart,
  * which a whole-second countdown cannot show.
+ *
+ * The value returned is SERVER time, not local time: `expiresAt` is stamped by the server, so
+ * comparing it against this machine's clock would let any skew between the two shift every timer.
+ * Subscribing to the offset (rather than reading it once) means the row re-renders the moment a
+ * measurement lands, instead of showing an uncorrected countdown until the next interval tick.
  */
 export function useEffectCountdown(intervalMs: number = 1000): number {
+    const clockOffsetMs = useGameStore(state => state.clockOffsetMs);
     const [, tick] = useState(0);
 
     useEffect(() => {
@@ -22,5 +29,5 @@ export function useEffectCountdown(intervalMs: number = 1000): number {
         return () => clearInterval(id);
     }, [intervalMs]);
 
-    return Date.now();
+    return Date.now() + clockOffsetMs;
 }

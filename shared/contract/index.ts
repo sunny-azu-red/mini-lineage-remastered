@@ -5,4 +5,5 @@ export * from './catalog';
 export * from './battle';
 export * from './highscores';
 export * from './statistics';
+export * from './time';
 export * from './events';

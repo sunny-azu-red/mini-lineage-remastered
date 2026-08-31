@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
 import type { EffectView } from '@shared/contract';
 import EffectsList from '@/components/effects/EffectsList';
+import { useGameStore } from '@/store/gameStore';
 
 const NOW = 1_700_000_000_000;
 
@@ -24,6 +25,7 @@ describe('EffectsList', () => {
 
     afterEach(() => {
         vi.useRealTimers();
+        useGameStore.setState({ clockOffsetMs: 0 });
     });
 
     it('renders nothing at all for an empty effects array', () => {
@@ -86,6 +88,48 @@ describe('EffectsList', () => {
 
         const icons = Array.from(container.querySelectorAll('.effect-icon'));
         expect(icons.map(el => el.getAttribute('data-effect-id'))).toEqual(['combat']);
+    });
+
+    /**
+     * `expiresAt` is stamped by the SERVER, so counting it down against this machine's clock let
+     * any skew between the two shift every timer — a server 3s ahead made a 5-second effect read 8.
+     * syncClock() measures that offset and the countdown is read against server time instead.
+     */
+    describe('with the server clock ahead of the local one', () => {
+        const SKEW = 3_000;
+
+        beforeEach(() => {
+            useGameStore.setState({ clockOffsetMs: SKEW });
+        });
+
+        it('shows a server-stamped effect at its true remaining time, not the skew plus it', () => {
+            // What the server would stamp for a 5s effect: its own clock, which reads NOW + SKEW.
+            const { container } = render(
+                <EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', expiresAt: NOW + SKEW + 5_000 })]} />,
+            );
+
+            expect(container.querySelector('.effect-timer')?.textContent).toBe('5');
+        });
+
+        it('drops it after its true duration, not the duration plus the skew', () => {
+            // A 2-second effect, stamped by a server whose clock reads NOW + SKEW.
+            const { container } = render(
+                <EffectsList effects={[makeEffect({ id: 'food', expiresAt: NOW + SKEW + 2_000 })]} />,
+            );
+            expect(container.querySelector('.effect-timer')?.textContent).toBe('2');
+
+            act(() => {
+                vi.advanceTimersByTime(1_000);
+            });
+            expect(container.querySelector('.effect-timer')?.textContent).toBe('1');
+
+            // Two seconds have genuinely passed, so it is over. Compared against local time the
+            // deadline would still look SKEW away, leaving the icon up reading 3.
+            act(() => {
+                vi.advanceTimersByTime(1_000);
+            });
+            expect(container.querySelector('.effect-icon')).toBeNull();
+        });
     });
 
     it('keeps a permanent effect (no expiresAt) forever', () => {

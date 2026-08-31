@@ -100,6 +100,13 @@ export interface GameStore {
     lastBattle: BattleNarrativeSnapshot | null;
     notice: SocketErrorPayload | null;
     soundEnabled: boolean;
+    /**
+     * How far the server's clock is ahead of this machine's, in ms — measured by `syncClock()` on
+     * every connect. `EffectView.expiresAt` is an absolute SERVER epoch, so every countdown is
+     * read against `Date.now() + clockOffsetMs` rather than local time. 0 until the first
+     * exchange lands, which is also the correct answer when the two clocks agree.
+     */
+    clockOffsetMs: number;
 
     hydrate(p: HydratePayload): void;
     applyUpdate(p: Partial<PlayerSnapshot>): void;
@@ -120,6 +127,7 @@ export interface GameStore {
     setFlash(f: FlashView | null): void;
     setNotice(n: SocketErrorPayload | null): void;
     setStatus(s: GameStore['status']): void;
+    setClockOffset(ms: number): void;
     toggleSound(): void;
 }
 
@@ -158,6 +166,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         lastBattle: null,
         notice: null,
         soundEnabled: readStoredSoundEnabled(),
+        clockOffsetMs: 0,
 
         hydrate(p) {
             set(state => {
@@ -243,6 +252,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         setFlash: (flash) => set({ flash }),
         setNotice: (notice) => set({ notice }),
         setStatus: (status) => set({ status }),
+        setClockOffset: (clockOffsetMs) => set({ clockOffsetMs }),
 
         toggleSound() {
             const next = !get().soundEnabled;

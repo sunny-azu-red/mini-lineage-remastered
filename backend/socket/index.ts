@@ -14,11 +14,12 @@ import { registerShopHandlers } from './handler/shop.handler';
 import { registerPlayerHandlers } from './handler/player.handler';
 import { registerHighscoresHandlers } from './handler/highscores.handler';
 import { registerStatisticsHandlers } from './handler/statistics.handler';
+import { registerTimeHandlers } from './handler/time.handler';
 import { registerCheatHandler } from './handler/cheat.handler';
 
 const REGISTRARS = [
     registerGameHandlers, registerBattleHandlers, registerShopHandlers, registerPlayerHandlers,
-    registerHighscoresHandlers, registerStatisticsHandlers, registerCheatHandler,
+    registerHighscoresHandlers, registerStatisticsHandlers, registerTimeHandlers, registerCheatHandler,
 ];
 
 /** The sole transport for client->server actions and server->client push. */
