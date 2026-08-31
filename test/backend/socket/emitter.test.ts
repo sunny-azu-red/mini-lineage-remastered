@@ -189,9 +189,46 @@ describe('emitter', () => {
             } as any;
 
             syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-            const firstTimer = tracker.expiryTimers?.get('x');
+            const firstTimer = tracker.expiryTimers?.get('x')?.timer;
             syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-            expect(tracker.expiryTimers?.get('x')).toBe(firstTimer);
+            expect(tracker.expiryTimers?.get('x')?.timer).toBe(firstTimer);
+        });
+
+        /**
+         * `applyEffect` refreshes an effect in place under the SAME id — re-applied Hexed, or
+         * buying the same food twice — so the deadline moves while the id does not. Keying only
+         * on the id kept the timer for the OLD deadline: it fired early, found nothing expired,
+         * and left the new deadline with no timer at all, pushing expiry out to the next periodic
+         * tick. That is why the client dropped an icon seconds before the server logged it.
+         */
+        it('reschedules when an effect is refreshed to a later deadline under the same id', () => {
+            const io = {} as any;
+            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
+            const start = Date.now();
+            const player: PlayerState = {
+                effects: [{ id: 'hexed', type: 'debuff', emoji: '👁️', label: 'Hexed', modifiers: [], expiresAt: start + 60_000 }],
+            } as any;
+            const onExpiry = vi.fn();
+
+            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
+            const firstTimer = tracker.expiryTimers?.get('hexed')?.timer;
+
+            // Re-applied 30s in: same id, deadline pushed out to start + 90s.
+            vi.advanceTimersByTime(30_000);
+            player.effects = [{ id: 'hexed', type: 'debuff', emoji: '👁️', label: 'Hexed', modifiers: [], expiresAt: start + 90_000 }] as any;
+            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
+
+            expect(tracker.expiryTimers?.get('hexed')?.timer).not.toBe(firstTimer);
+            expect(tracker.expiryTimers?.get('hexed')?.expiresAt).toBe(start + 90_000);
+
+            // The original deadline must pass in silence — the old timer is gone.
+            vi.advanceTimersByTime(30_100);
+            expect(onExpiry).not.toHaveBeenCalled();
+
+            // The new one fires on time, once.
+            vi.advanceTimersByTime(30_000);
+            expect(onExpiry).toHaveBeenCalledTimes(1);
+            expect(onExpiry).toHaveBeenCalledWith('sid-1');
         });
     });
 
@@ -221,7 +258,7 @@ describe('emitter', () => {
             sessionTracker.set('sid-stale', {
                 socketIds: new Set(),
                 lastSeen: Date.now() - SESSION_CONFIG.gracePeriodMs - 1,
-                expiryTimers: new Map([['x', timer]]),
+                expiryTimers: new Map([['x', { expiresAt: Date.now() + 10_000, timer }]]),
             });
 
             cleanupStaleSessions(Date.now());

@@ -63,23 +63,31 @@ export function syncExpiryTimers(
     const timers = tracker.expiryTimers ??= new Map();
     const now = Date.now();
     const active = (player.effects ?? []).filter(e => e.expiresAt && e.expiresAt > now);
-    const activeIds = new Set(active.map(e => e.id));
 
-    for (const [id, timer] of timers.entries()) {
-        if (!activeIds.has(id)) {
-            clearTimeout(timer);
+    // Compares the DEADLINE, not just the id. `applyEffect` refreshes an effect in place under
+    // the same id (re-applied Hexed, buying the same food twice), so an id-only check kept the
+    // timer for the OLD deadline: it fired early, found nothing expired, and left the new
+    // deadline with no timer at all — pushing expiry out to the next 5s periodic tick.
+    for (const [id, entry] of timers.entries()) {
+        if (!active.some(e => e.id === id && e.expiresAt === entry.expiresAt)) {
+            clearTimeout(entry.timer);
             timers.delete(id);
         }
     }
 
     for (const effect of active) {
+        // Safe now that a moved deadline was cleared above: this only ever skips a timer that is
+        // already scheduled for exactly this effect's current deadline.
         if (timers.has(effect.id))
             continue;
 
-        timers.set(effect.id, setTimeout(() => {
-            timers.delete(effect.id);
-            onExpiry(sessionId);
-        }, Math.max(0, effect.expiresAt! - now + 25)));
+        timers.set(effect.id, {
+            expiresAt: effect.expiresAt!,
+            timer: setTimeout(() => {
+                timers.delete(effect.id);
+                onExpiry(sessionId);
+            }, Math.max(0, effect.expiresAt! - now + 25)),
+        });
     }
 }
 
@@ -90,7 +98,7 @@ export function cleanupStaleSessions(now: number): void {
             return;
 
         logger.debug(`[SOCKET:${formatSessionId(sessionId)}] \x1b[34mCleaning up stale session\x1b[0m`);
-        tracker.expiryTimers?.forEach(timer => clearTimeout(timer));
+        tracker.expiryTimers?.forEach(entry => clearTimeout(entry.timer));
         tracker.expiryTimers?.clear();
         sessionTracker.delete(sessionId);
     });

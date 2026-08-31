@@ -65,7 +65,13 @@ describe('processSessionTick', () => {
         expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
     });
 
-    it('does not persist or emit when neither processTick nor the zone report a change', async () => {
+    /**
+     * A no-op tick must not persist or broadcast — but it MUST still re-derive the session's expiry
+     * timers. That is exactly when a missing or stale timer needs replacing, and gating the
+     * rescheduling on "something changed" is what let one stale timer delay an effect's expiry by a
+     * whole tick interval, so the client dropped the icon seconds before the server logged it.
+     */
+    it('re-syncs expiry timers but does not persist or emit when neither processTick nor the zone report a change', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
             const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false });
@@ -77,7 +83,7 @@ describe('processSessionTick', () => {
         await processSessionTick(io, tracker, 'sid-1');
 
         expect(emitStateUpdate).not.toHaveBeenCalled();
-        expect(syncExpiryTimers).not.toHaveBeenCalled();
+        expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
     });
 
     it('regression (Fix 8): builds and emits a snapshot when the zone alone changed (e.g. a reconnect resolved a different screen than what was persisted), even though processTick itself reports no change', async () => {

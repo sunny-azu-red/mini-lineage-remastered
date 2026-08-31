@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { TICK_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
-import type { BattleResult } from '@/interface';
+import type { BattleResult, PlayerState } from '@/interface';
 
 /**
  * Genuinely end-to-end regression test for the location-based zone system (player.service.ts's
@@ -257,6 +257,39 @@ describe('location-based zone sync (integration)', () => {
 
         await screenHandler({ screen: 'home' }, vi.fn());
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
+    });
+
+    /**
+     * A refreshed effect must still expire on its own exact timer, not fall through to the next
+     * periodic tick. `applyEffect` re-applies under the SAME id with a later deadline, which the
+     * id-keyed scheduler could not see — so the stale timer fired early, found nothing expired,
+     * and left the new deadline unscheduled. The client dropped the icon roughly on time and the
+     * server noticed up to a whole tick interval later.
+     */
+    it('expires a refreshed debuff on its new deadline via its own timer, not the periodic tick', async () => {
+        const { EFFECTS_CONFIG } = await import('@/constant/game.constant');
+        const { applyEffect } = await import('@/service/player.service');
+        const start = Date.now();
+
+        // Applied, then re-applied 30s later — exactly what a third consecutive ambush does.
+        applyEffect(session as unknown as PlayerState, EFFECTS_CONFIG.ambushDebuff);
+        await screenHandler({ screen: 'home' }, vi.fn());
+
+        await vi.advanceTimersByTimeAsync(30_000);
+        applyEffect(session as unknown as PlayerState, EFFECTS_CONFIG.ambushDebuff);
+        await screenHandler({ screen: 'home' }, vi.fn());
+
+        const refreshed = session.effects.find((e: any) => e.id === 'hexed');
+        expect(refreshed.expiresAt).toBe(start + 30_000 + EFFECTS_CONFIG.ambushDebuff.durationMs);
+
+        // The ORIGINAL deadline passes: the debuff must survive it.
+        await vi.advanceTimersByTimeAsync(30_100);
+        expect(session.effects.some((e: any) => e.id === 'hexed')).toBe(true);
+
+        // Its own timer fires 25ms past the new deadline — well short of a periodic tick, and
+        // processSessionTick is never called by hand anywhere in this test.
+        await vi.advanceTimersByTimeAsync(30_000);
+        expect(session.effects.some((e: any) => e.id === 'hexed')).toBe(false);
     });
 
     it('ambushed unconditionally forces combat even if a raw client reports a resting screen — the safety net the old game\'s naive path-trust model lacked', async () => {

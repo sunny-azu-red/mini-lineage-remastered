@@ -176,7 +176,12 @@ export type Statistics = {
 export interface SessionTrackerEntry {
     socketIds: Set<string>;
     lastSeen: number;
-    expiryTimers?: Map<string, NodeJS.Timeout>;
+    /**
+     * Per-effect exact-expiry timers, keyed by effect id. The deadline is stored alongside the
+     * handle so `syncExpiryTimers` can tell a REFRESHED effect (same id, later `expiresAt` —
+     * what `applyEffect` produces every time a buff is re-applied) from an unchanged one.
+     */
+    expiryTimers?: Map<string, { expiresAt: number; timer: NodeJS.Timeout }>;
     inputBuffer?: string[];
 }
 

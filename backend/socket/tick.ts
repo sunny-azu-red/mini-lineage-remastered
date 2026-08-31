@@ -93,10 +93,18 @@ export async function processSessionTick(
             return tickChanged || ctx.zoneChanged ? buildPlayerSnapshot(ctx.player) : NO_CHANGE;
         });
 
-        if (snapshot === undefined || !playerRef)
+        if (!playerRef)
             return;
 
+        // Before the NO_CHANGE check on purpose, so every tick re-derives the timers this session
+        // should have. A tick that changes nothing is exactly when a missing timer needs
+        // replacing — gating this on `snapshot` is what let one stale timer delay an expiry by a
+        // full tick interval.
         refreshExpiryTimers(io, sessionId, playerRef);
+
+        if (snapshot === undefined)
+            return;
+
         emitStateUpdate(io, sessionId, snapshot);
     } catch (err) {
         logger.debug({ err }, `[TICK] session ${sessionId} tick skipped (session missing or errored)`);

@@ -99,6 +99,51 @@ describe('EffectsList', () => {
         expect(container.querySelector('.effect-timer')).toBeNull();
     });
 
+    /**
+     * The reported bug: a 5-second aura opened its countdown on 6, sometimes 7.
+     *
+     * Staleness only exists BETWEEN interval firings, which is why nothing above caught it — every
+     * other test advances by whole multiples of the 1000ms interval, so the sampled clock happens
+     * to be fresh. Here the clock moves 500ms without the interval firing, and then an effect
+     * arrives (as a server push would). Holding `now` in state measured against a timestamp 500ms
+     * old and `Math.ceil` rounded the remainder up to 6.
+     */
+    it('opens a freshly arrived effect on its true duration, not one second more', () => {
+        const { container, rerender } = render(<EffectsList effects={[]} />);
+
+        act(() => {
+            vi.advanceTimersByTime(500); // clock moves; the 1000ms interval has NOT fired
+        });
+
+        rerender(<EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', expiresAt: Date.now() + 5_000 })]} />);
+
+        expect(container.querySelector('.effect-timer')?.textContent).toBe('5');
+    });
+
+    /**
+     * The same staleness at the other end of the countdown. A render landing between interval
+     * firings — a background tick pushing new player state, say — must measure the real clock. A
+     * stale sample kept a already-expired buff on screen still reading "1", which is why an effect
+     * appeared to vanish "with a second left" the moment the server's own push finally arrived.
+     */
+    it('drops an effect whose deadline has passed, even on a render the interval did not cause', () => {
+        const effects = [makeEffect({ id: 'food', expiresAt: NOW + 2_500 })];
+        const { container, rerender } = render(<EffectsList effects={effects} />);
+
+        act(() => {
+            vi.advanceTimersByTime(2_000); // interval fires at 1000 and 2000
+        });
+        expect(container.querySelector('.effect-timer')?.textContent).toBe('1');
+
+        // Past the deadline, but short of the next interval firing at 3000.
+        act(() => {
+            vi.advanceTimersByTime(600);
+        });
+        rerender(<EffectsList effects={effects} />);
+
+        expect(container.querySelector('.effect-icon')).toBeNull();
+    });
+
     // Regression: without the shared countdown tick re-rendering this list, an expiring buff's
     // timer would freeze at "0" and the icon would linger until the next state:update push —
     // the "buffs don't disappear correctly" symptom.
