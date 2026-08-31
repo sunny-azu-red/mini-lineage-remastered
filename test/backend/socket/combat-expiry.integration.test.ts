@@ -165,7 +165,7 @@ describe('location-based zone sync (integration)', () => {
         // offset is deliberately NOT TICK_CONFIG.intervalMs — that happens to equal
         // combatLingerMs today, which would land exactly ON the deadline and prove nothing.
         await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs - 2_000);
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
         expect(session.health).toBe(healthOnLeaving);
 
@@ -173,7 +173,7 @@ describe('location-based zone sync (integration)', () => {
         await vi.advanceTimersByTimeAsync(2_030);
         expect(session.effects.some((e: any) => e.id === 'resting')).toBe(true);
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         expect(session.health).toBeGreaterThan(healthOnLeaving);
     });
 
@@ -202,7 +202,7 @@ describe('location-based zone sync (integration)', () => {
 
         await vi.advanceTimersByTimeAsync(2_000);
         await screenHandler({ screen: 'inn' }, vi.fn());   // resting zone -> resting zone
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         expect(session.combatUntil).toBe(deadline);
     });
@@ -218,7 +218,7 @@ describe('location-based zone sync (integration)', () => {
         // currentScreen is still 'battle', regardless of how much idle time passes.
         for (let i = 0; i < 5; i++) {
             await vi.advanceTimersByTimeAsync(TICK_CONFIG.intervalMs);
-            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         }
 
         expect(session.health).toBe(healthAfterFight); // never regenerated
@@ -310,7 +310,7 @@ describe('location-based zone sync (integration)', () => {
 
         for (let i = 0; i < 5; i++) {
             await vi.advanceTimersByTimeAsync(TICK_CONFIG.intervalMs);
-            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         }
 
         expect(session.health).toBe(healthAfterFight); // never regenerated

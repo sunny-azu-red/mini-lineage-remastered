@@ -195,6 +195,58 @@ describe('emitter', () => {
         });
 
         /**
+         * THE bug behind "the icon vanished a second before the backend noticed".
+         *
+         * A timer fires 25ms AFTER its deadline, so for those 25ms the effect is due while its
+         * timer is still pending. Cleanup used to run over effects narrowed to "still in the
+         * future", so a call landing in that window found the effect missing and deleted the
+         * pending timer — and nothing ever rescheduled it, because an expired effect could never
+         * re-enter that list. Expiry then fell through to the next 5s periodic tick.
+         */
+        it('keeps a pending timer for an effect that is due but not yet swept', () => {
+            const io = {} as any;
+            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
+            const start = Date.now();
+            const player: PlayerState = {
+                effects: [{ id: 'satisfied', type: 'buff', emoji: '🥓', label: 'Satisfied', modifiers: [], expiresAt: start + 1_000 }],
+            } as any;
+            const onExpiry = vi.fn();
+
+            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
+            const scheduled = tracker.expiryTimers?.get('satisfied')?.timer;
+
+            // Land inside the window: past the deadline, before the timer fires at +25ms. The
+            // effect is still in player.effects because nothing has swept it yet.
+            vi.advanceTimersByTime(1_010);
+            expect(onExpiry).not.toHaveBeenCalled();
+            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
+
+            expect(tracker.expiryTimers?.get('satisfied')?.timer).toBe(scheduled);
+
+            // And it still fires, rather than leaving expiry to the periodic tick.
+            vi.advanceTimersByTime(50);
+            expect(onExpiry).toHaveBeenCalledTimes(1);
+        });
+
+        // Timers live in memory, so a restart or a reconnect rebuilds them from a player who may
+        // already be overdue. Math.max(0, …) gives that a 0ms timer, so it is swept at once
+        // instead of waiting for anything periodic.
+        it('schedules an immediate timer for an effect that is already overdue', () => {
+            const io = {} as any;
+            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
+            const player: PlayerState = {
+                effects: [{ id: 'stale', type: 'buff', emoji: '⭐', label: 'Stale', modifiers: [], expiresAt: Date.now() - 30_000 }],
+            } as any;
+            const onExpiry = vi.fn();
+
+            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
+            expect(tracker.expiryTimers?.size).toBe(1);
+
+            vi.advanceTimersByTime(1);
+            expect(onExpiry).toHaveBeenCalledWith('sid-1');
+        });
+
+        /**
          * `applyEffect` refreshes an effect in place under the SAME id — re-applied Hexed, or
          * buying the same food twice — so the deadline moves while the id does not. Keying only
          * on the id kept the timer for the OLD deadline: it fired early, found nothing expired,

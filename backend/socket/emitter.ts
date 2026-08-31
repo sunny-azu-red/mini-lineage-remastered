@@ -62,27 +62,44 @@ export function syncExpiryTimers(
 ): void {
     const timers = tracker.expiryTimers ??= new Map();
     const now = Date.now();
-    const active = (player.effects ?? []).filter(e => e.expiresAt && e.expiresAt > now);
 
-    // Compares the DEADLINE, not just the id. `applyEffect` refreshes an effect in place under
-    // the same id (re-applied Hexed, buying the same food twice), so an id-only check kept the
-    // timer for the OLD deadline: it fired early, found nothing expired, and left the new
-    // deadline with no timer at all — pushing expiry out to the next 5s periodic tick.
+    /**
+     * Every effect carrying a real deadline — deliberately NOT narrowed to "still in the future".
+     * Cleanup and scheduling below read this same list, because they are answering the same
+     * question: does a timer for exactly this effect and deadline still belong?
+     *
+     * Narrowing it broke that. A timer fires 25ms AFTER its deadline, so for those 25ms an effect
+     * is due while its timer is still pending — and a call landing in that window found the effect
+     * missing from the list and deleted the pending timer. Nothing ever rescheduled it, since an
+     * expired effect could never re-enter the list, so expiry fell through to the next periodic
+     * tick, seconds late.
+     *
+     * Truthiness rather than `!== undefined` on purpose: a falsy-but-present `expiresAt: 0` means
+     * "no expiry", not "expired in 1970".
+     */
+    const timed = (player.effects ?? []).filter(e => e.expiresAt);
+
+    // Compares the DEADLINE, not just the id. `applyEffect` refreshes an effect in place under the
+    // same id (re-applied Hexed, buying the same food twice), so an id-only check kept the timer
+    // for the OLD deadline and never scheduled the new one.
     for (const [id, entry] of timers.entries()) {
-        if (!active.some(e => e.id === id && e.expiresAt === entry.expiresAt)) {
+        if (!timed.some(e => e.id === id && e.expiresAt === entry.expiresAt)) {
             clearTimeout(entry.timer);
             timers.delete(id);
         }
     }
 
-    for (const effect of active) {
-        // Safe now that a moved deadline was cleared above: this only ever skips a timer that is
-        // already scheduled for exactly this effect's current deadline.
+    for (const effect of timed) {
+        // Only ever skips a timer already scheduled for exactly this effect's current deadline —
+        // a moved deadline was cleared above.
         if (timers.has(effect.id))
             continue;
 
         timers.set(effect.id, {
             expiresAt: effect.expiresAt!,
+            // `Math.max(0, …)` earns a second job here: an effect that is ALREADY overdue when the
+            // timers are rebuilt — after a server restart, or on reconnect — gets a 0ms timer and
+            // is swept at once, rather than waiting for anything periodic.
             timer: setTimeout(() => {
                 timers.delete(effect.id);
                 onExpiry(sessionId);

@@ -145,10 +145,6 @@ export interface FlashMessage {
     sound?: string;
 }
 
-export interface TickOptions {
-    applyRegen?: boolean;
-}
-
 // -----------------------
 // persistence & transport
 // -----------------------

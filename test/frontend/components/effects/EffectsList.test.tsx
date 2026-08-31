@@ -56,38 +56,29 @@ describe('EffectsList', () => {
         expect(container.querySelector('.effect-timer')?.textContent).toBe('45');
     });
 
-    // Matches the old EJS rendering, which recomputed getActiveEffects() against Date.now() on
-    // every render — an expired buff simply was not in the markup, regardless of whether the
-    // server's background sweep had physically removed it yet.
-    it('filters out an effect already past its expiresAt, without waiting for a state:update push', () => {
+    /**
+     * The rule, for every effect type: the SERVER withdraws effects, the client never does.
+     *
+     * `buildPlayerSnapshot` derives both `effects[]` and `stats` from `getActiveEffects`, so a
+     * snapshot already excludes anything expired and is internally consistent. Hiding an effect
+     * here early only ever disagreed with it — and took the icon away while the max HP that same
+     * buff was granting stayed put until the next push.
+     */
+    it('keeps every effect the server sent, past its deadline or not, showing 0', () => {
         const { container } = render(
             <EffectsList
                 effects={[
-                    makeEffect({ id: 'stale', expiresAt: NOW - 1 }),
+                    makeEffect({ id: 'staleBuff', expiresAt: NOW - 1 }),
+                    makeEffect({ id: 'combat', type: 'aura', emoji: '⚔️', expiresAt: NOW - 1 }),
                     makeEffect({ id: 'live', expiresAt: NOW + 10_000 }),
                 ]}
             />,
         );
 
         const icons = Array.from(container.querySelectorAll('.effect-icon'));
-        expect(icons.map(el => el.getAttribute('data-effect-id'))).toEqual(['live']);
-    });
-
-    // A zone aura is REPLACED by the server, not removed — ⚔️ In Combat's disengage countdown
-    // becomes 💤 Resting. Hiding it the instant it hit zero would punch a hole in the row for the
-    // ~30ms until that push lands, showing a state the game never actually has.
-    it('keeps an aura past its expiresAt, since the server replaces rather than removes it', () => {
-        const { container } = render(
-            <EffectsList
-                effects={[
-                    makeEffect({ id: 'combat', type: 'aura', emoji: '⚔️', expiresAt: NOW - 1 }),
-                    makeEffect({ id: 'staleBuff', expiresAt: NOW - 1 }),
-                ]}
-            />,
-        );
-
-        const icons = Array.from(container.querySelectorAll('.effect-icon'));
-        expect(icons.map(el => el.getAttribute('data-effect-id'))).toEqual(['combat']);
+        expect(icons.map(el => el.getAttribute('data-effect-id'))).toEqual(['staleBuff', 'combat', 'live']);
+        expect(container.querySelector('[data-effect-id="staleBuff"] .effect-timer')?.textContent).toBe('0');
+        expect(container.querySelector('[data-effect-id="live"] .effect-timer')?.textContent).toBe('10');
     });
 
     /**
@@ -111,7 +102,7 @@ describe('EffectsList', () => {
             expect(container.querySelector('.effect-timer')?.textContent).toBe('5');
         });
 
-        it('drops it after its true duration, not the duration plus the skew', () => {
+        it('reaches 0 after its true duration, not the duration plus the skew', () => {
             // A 2-second effect, stamped by a server whose clock reads NOW + SKEW.
             const { container } = render(
                 <EffectsList effects={[makeEffect({ id: 'food', expiresAt: NOW + SKEW + 2_000 })]} />,
@@ -124,11 +115,11 @@ describe('EffectsList', () => {
             expect(container.querySelector('.effect-timer')?.textContent).toBe('1');
 
             // Two seconds have genuinely passed, so it is over. Compared against local time the
-            // deadline would still look SKEW away, leaving the icon up reading 3.
+            // deadline would still look SKEW away, leaving it reading 3.
             act(() => {
                 vi.advanceTimersByTime(1_000);
             });
-            expect(container.querySelector('.effect-icon')).toBeNull();
+            expect(container.querySelector('.effect-timer')?.textContent).toBe('0');
         });
     });
 
@@ -170,7 +161,7 @@ describe('EffectsList', () => {
      * stale sample kept a already-expired buff on screen still reading "1", which is why an effect
      * appeared to vanish "with a second left" the moment the server's own push finally arrived.
      */
-    it('drops an effect whose deadline has passed, even on a render the interval did not cause', () => {
+    it('reads 0 for a passed deadline, even on a render the interval did not cause', () => {
         const effects = [makeEffect({ id: 'food', expiresAt: NOW + 2_500 })];
         const { container, rerender } = render(<EffectsList effects={effects} />);
 
@@ -185,13 +176,13 @@ describe('EffectsList', () => {
         });
         rerender(<EffectsList effects={effects} />);
 
-        expect(container.querySelector('.effect-icon')).toBeNull();
+        expect(container.querySelector('.effect-timer')?.textContent).toBe('0');
     });
 
     // Regression: without the shared countdown tick re-rendering this list, an expiring buff's
     // timer would freeze at "0" and the icon would linger until the next state:update push —
     // the "buffs don't disappear correctly" symptom.
-    it('drops an effect the moment its countdown tick carries `now` past its expiresAt', () => {
+    it('runs each countdown down to 0 as the shared tick advances `now`', () => {
         const { container } = render(
             <EffectsList
                 effects={[
@@ -213,7 +204,8 @@ describe('EffectsList', () => {
             vi.advanceTimersByTime(2000);
         });
 
-        const remaining = Array.from(container.querySelectorAll('.effect-icon'));
-        expect(remaining.map(el => el.getAttribute('data-effect-id'))).toEqual(['long']);
+        // Both remain — withdrawing them is the server's call — but the lapsed one reads 0.
+        expect(container.querySelector('[data-effect-id="short"] .effect-timer')?.textContent).toBe('0');
+        expect(container.querySelector('[data-effect-id="long"] .effect-timer')?.textContent).toBe('1m'); // formatEffectTimer renders minutes above 60s
     });
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RACES, WEAPONS, ARMORS, FOODS } from '@/constant/game.constant';
 import { simulateBattle } from '@/service/battle.service';
-import { initializePlayer, resolveBattleOutcome, purchaseItem, getPlayerStats, processTick, syncZoneAuras } from '@/service/player.service';
+import { initializePlayer, resolveBattleOutcome, purchaseItem, getPlayerStats, processEffectExpiry, processRegenTick, syncZoneAuras } from '@/service/player.service';
 import { calculateLevel, calculateAmbushChance } from '@/service/math.service';
 import { buildBattleNarrative } from '@/service/narrative.service';
 import { ItemType, type PlayerState } from '@/interface';
@@ -72,7 +72,13 @@ function play(raceId: number, startSeed: number) {
             buildBattleNarrative(player, result, ambushed);
         }
 
-        processTick(player, { applyRegen: true });
+        // Spelled out in the order the old processTick() ran them, so the pinned numbers below
+        // cannot move: the food this loop buys really does expire, and processEffectExpiry's
+        // health clamp really does fire. Production splits these across two mechanisms now — the
+        // periodic loop regenerates, each effect's own timer expires — but a balance simulation
+        // wants both, back to back.
+        processEffectExpiry(player);
+        processRegenTick(player);
     }
 
     return {

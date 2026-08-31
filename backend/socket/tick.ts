@@ -1,7 +1,7 @@
 import type { Server as SocketIOServer } from 'socket.io';
-import type { ActiveEffect, SessionTrackerEntry, PlayerState, TickOptions } from '@/interface';
+import type { ActiveEffect, SessionTrackerEntry, PlayerState } from '@/interface';
 import { TICK_CONFIG } from '@/constant/game.constant';
-import { processTick, isGameStarted, getPlayerStats } from '@/service/player.service';
+import { processEffectExpiry, processRegenTick, isGameStarted, getPlayerStats } from '@/service/player.service';
 import { withSession, NO_CHANGE } from './session';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
 import { emitStateUpdate, syncExpiryTimers, cleanupStaleSessions, sessionTracker } from './emitter';
@@ -21,15 +21,21 @@ export function refreshExpiryTimers(io: SocketIOServer, sessionId: string, playe
     syncExpiryTimers(io, tracker, sessionId, player, (expiredSessionId) => {
         const activeTracker = sessionTracker.get(expiredSessionId);
         if (activeTracker)
-            void processSessionTick(io, activeTracker, expiredSessionId, { applyRegen: false });
+            void processSessionTick(io, activeTracker, expiredSessionId, 'expiry');
     });
 }
 
 /**
+ * Which single job a firing performs. The periodic loop only ever regenerates; expiry is driven
+ * exclusively by each effect's own exact timer.
+ */
+export type TickKind = 'regen' | 'expiry';
+
+/**
  * One line per firing: `[TICK:<sid>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
- * `expiring` must be captured BEFORE processTick removes those effects.
+ * `expiring` must be captured BEFORE the expiry sweep removes those effects.
  *
- * `changed` is processTick's own return value, deliberately NOT folded with `zoneChanged`: a
+ * `changed` is the tick's own return value, deliberately NOT folded with `zoneChanged`: a
  * pure zone flip should fall through to Full/Paused/0 HPR/Idle, not claim "Effect Expired".
  */
 function logTickResult(sessionId: string, player: PlayerState, oldHp: number, expiring: ActiveEffect[], changed: boolean): void {
@@ -64,7 +70,7 @@ function logTickResult(sessionId: string, player: PlayerState, oldHp: number, ex
 
 /**
  * Ticks one session. An uninitialized session, or a tick producing no change, is a silent
- * no-op. `ctx.zoneChanged` is folded into `changed` because processTick knows nothing about
+ * no-op. `ctx.zoneChanged` is folded into `changed` because neither job knows anything about
  * zones, so a zone-only flip must still persist and broadcast. Errors are logged, never thrown —
  * they must not crash the shared loop.
  */
@@ -72,7 +78,7 @@ export async function processSessionTick(
     io: SocketIOServer,
     tracker: SessionTrackerEntry,
     sessionId: string,
-    options: TickOptions = { applyRegen: true },
+    kind: TickKind,
 ): Promise<void> {
     let playerRef: PlayerState | undefined;
 
@@ -85,7 +91,10 @@ export async function processSessionTick(
             const now = Date.now();
             const expiring = (ctx.player.effects ?? []).filter(e => e.expiresAt !== undefined && e.expiresAt <= now);
 
-            const tickChanged = processTick(ctx.player, options);
+            // One job per firing. The periodic loop is the REGEN cadence and nothing else;
+            // buffs, debuffs and auras expire on their own exact timers. Letting the loop sweep
+            // effects too is what hid a lost timer as a mere 5-second delay instead of a fault.
+            const tickChanged = kind === 'regen' ? processRegenTick(ctx.player) : processEffectExpiry(ctx.player);
             playerRef = ctx.player;
 
             logTickResult(sessionId, ctx.player, oldHp, expiring, tickChanged);
@@ -116,7 +125,7 @@ export function startTickLoop(io: SocketIOServer): NodeJS.Timeout {
     return setInterval(() => {
         cleanupStaleSessions(Date.now());
         sessionTracker.forEach((tracker, sessionId) => {
-            void processSessionTick(io, tracker, sessionId, { applyRegen: true });
+            void processSessionTick(io, tracker, sessionId, 'regen');
         });
     }, TICK_CONFIG.intervalMs);
 }

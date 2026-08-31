@@ -76,7 +76,7 @@ describe('tick logging format (integration — real player.service/session wirin
     }
 
     it('logs "+N HPR" and the old -> new/max HP display on a regen tick', async () => {
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('Resting | HP: 50 -> 51/100 (+1 HPR)');
@@ -84,7 +84,7 @@ describe('tick logging format (integration — real player.service/session wirin
 
     it('logs "Full" once at max health with nothing else to report', async () => {
         session.health = 100;
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('Resting | HP: 100/100 (Full)');
@@ -94,7 +94,7 @@ describe('tick logging format (integration — real player.service/session wirin
         session.currentScreen = 'battle';
         session.effects = [{ id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }];
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('In Combat | HP: 50/100 (Paused)');
@@ -108,7 +108,7 @@ describe('tick logging format (integration — real player.service/session wirin
         session.raceId = 1; // Orc — startHealth 150, regen 0
         session.health = 50; // wounded, and nothing can heal it
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('Resting | HP: 50/150 (0 HPR)');
@@ -121,7 +121,7 @@ describe('tick logging format (integration — real player.service/session wirin
         session.health = 0;
         session.currentScreen = 'death';
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('Dead | HP: 0/100 (Paused)');
@@ -133,7 +133,7 @@ describe('tick logging format (integration — real player.service/session wirin
         // empty, so the type falls back to the generic "Effect" and no ": <label>" suffix is added.
         session.health = 130;
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'expiry');
 
         const line = lastTickLine();
         expect(line).toContain('HP: 130 -> 100/100 (-30 HP | Effect Expired)');
@@ -148,7 +148,7 @@ describe('tick logging format (integration — real player.service/session wirin
             expiresAt: Date.now() - 1000, // already expired
         });
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'expiry');
 
         const line = lastTickLine();
         expect(line).toContain('HP: 100/100 (Buff Expired: Test Buff)');
@@ -169,7 +169,7 @@ describe('tick logging format (integration — real player.service/session wirin
             expiresAt: Date.now() - 1000,
         });
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'expiry');
 
         const line = lastTickLine();
         expect(line).toContain('HP: 130 -> 100/100 (-30 HP | Buff Expired: Fading Vigor)');
@@ -179,7 +179,7 @@ describe('tick logging format (integration — real player.service/session wirin
     it('still logs (matching the old game: every tick firing logs, changed or not) but does not persist/emit for a truly idle tick', async () => {
         session.health = 100; // Full — a real no-op tick, nothing to regen or expire
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         expect(lastTickLine()).toContain('(Full)');
         expect(setSessionData).not.toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe('tick logging format (integration — real player.service/session wirin
         session.effects = [{ id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }];
         session.health = 100; // Full — isolates the zone flip as the ONLY thing that changed
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('(Full)');
@@ -217,7 +217,7 @@ describe('tick logging format (integration — real player.service/session wirin
         session.effects = [{ id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [], expiresAt: Date.now() - 1 }];
         session.health = 100;
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         const line = lastTickLine();
         expect(line).toContain('(Full)');
