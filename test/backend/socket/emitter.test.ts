@@ -6,7 +6,7 @@ import {
     emitHydrate,
     emitStateUpdate,
     emitNotice,
-    syncExpiryTimers,
+    scheduleNextExpiry,
     cleanupStaleSessions,
 } from '@/socket/emitter';
 import { SESSION_CONFIG } from '@/constant/game.constant';
@@ -120,167 +120,128 @@ describe('emitter', () => {
         });
     });
 
-    describe('syncExpiryTimers', () => {
-        beforeEach(() => vi.useFakeTimers());
-        afterEach(() => vi.useRealTimers());
+    /**
+     * ONE timer per session, at the earliest upcoming deadline. Replaces a timer-per-effect map
+     * whose scheduling and cleanup halves had to agree on which timers still applied — every bug
+     * in the old design came from them disagreeing. There is nothing here to disagree about.
+     */
+    describe('scheduleNextExpiry', () => {
+        const io = {} as any;
+        let tracker: SessionTrackerEntry;
 
-        it('schedules a timer that fires onExpiry once an effect expires', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const player: PlayerState = {
-                effects: [{ id: 'x', type: 'buff', emoji: '⭐', label: 'X', modifiers: [], expiresAt: Date.now() + 1000 }],
-            } as any;
+        beforeEach(() => {
+            vi.useFakeTimers();
+            tracker = { socketIds: new Set(), lastSeen: Date.now() };
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        const effect = (id: string, expiresAt?: number) =>
+            ({ id, type: 'buff', emoji: '⭐', label: id, modifiers: [], expiresAt }) as any;
+
+        const player = (...effects: any[]) => ({ effects } as PlayerState);
+
+        it('arms nothing for a player with no timed effects', () => {
             const onExpiry = vi.fn();
 
-            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
-            expect(tracker.expiryTimers?.size).toBe(1);
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('resting')), onExpiry);
 
-            vi.advanceTimersByTime(1100);
-            expect(onExpiry).toHaveBeenCalledWith('sid-1');
-        });
-
-        it('clears a timer for an effect that is no longer active', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const player: PlayerState = {
-                effects: [{ id: 'x', type: 'buff', emoji: '⭐', label: 'X', modifiers: [], expiresAt: Date.now() + 1000 }],
-            } as any;
-
-            syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-            expect(tracker.expiryTimers?.size).toBe(1);
-
-            player.effects = [];
-            syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-            expect(tracker.expiryTimers?.size).toBe(0);
-        });
-
-        it('schedules nothing for a player carrying no effects array at all (never-started session)', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const player = {} as PlayerState; // no `effects` key whatsoever
-
-            expect(() => syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn())).not.toThrow();
-            expect(tracker.expiryTimers?.size).toBe(0);
-        });
-
-        it('ignores effects with no expiry (permanent auras/curses) and a falsy expiresAt of 0', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const player: PlayerState = {
-                effects: [
-                    // Permanent — `expiresAt` omitted entirely, must never get a timeout.
-                    { id: 'resting', type: 'aura', emoji: '💤', label: 'Resting', modifiers: [] },
-                    // Falsy-but-present expiry, which must be treated as "no expiry" rather
-                    // than "expires at the epoch" (which would schedule a 0ms timer storm).
-                    { id: 'zero', type: 'buff', emoji: '⭐', label: 'Zero', modifiers: [], expiresAt: 0 },
-                ],
-            } as any;
-
-            syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-
-            expect(tracker.expiryTimers?.size).toBe(0);
-        });
-
-        it('does not double-schedule an already-scheduled effect', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const player: PlayerState = {
-                effects: [{ id: 'x', type: 'buff', emoji: '⭐', label: 'X', modifiers: [], expiresAt: Date.now() + 5000 }],
-            } as any;
-
-            syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-            const firstTimer = tracker.expiryTimers?.get('x')?.timer;
-            syncExpiryTimers(io, tracker, 'sid-1', player, vi.fn());
-            expect(tracker.expiryTimers?.get('x')?.timer).toBe(firstTimer);
-        });
-
-        /**
-         * THE bug behind "the icon vanished a second before the backend noticed".
-         *
-         * A timer fires 25ms AFTER its deadline, so for those 25ms the effect is due while its
-         * timer is still pending. Cleanup used to run over effects narrowed to "still in the
-         * future", so a call landing in that window found the effect missing and deleted the
-         * pending timer — and nothing ever rescheduled it, because an expired effect could never
-         * re-enter that list. Expiry then fell through to the next 5s periodic tick.
-         */
-        it('keeps a pending timer for an effect that is due but not yet swept', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const start = Date.now();
-            const player: PlayerState = {
-                effects: [{ id: 'satisfied', type: 'buff', emoji: '🥓', label: 'Satisfied', modifiers: [], expiresAt: start + 1_000 }],
-            } as any;
-            const onExpiry = vi.fn();
-
-            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
-            const scheduled = tracker.expiryTimers?.get('satisfied')?.timer;
-
-            // Land inside the window: past the deadline, before the timer fires at +25ms. The
-            // effect is still in player.effects because nothing has swept it yet.
-            vi.advanceTimersByTime(1_010);
+            expect(tracker.expiryTimer).toBeUndefined();
+            vi.advanceTimersByTime(600_000);
             expect(onExpiry).not.toHaveBeenCalled();
-            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
+        });
 
-            expect(tracker.expiryTimers?.get('satisfied')?.timer).toBe(scheduled);
+        it('arms nothing for a player carrying no effects array at all', () => {
+            expect(() => scheduleNextExpiry(tracker, 'sid-1', {} as PlayerState, vi.fn())).not.toThrow();
+            expect(tracker.expiryTimer).toBeUndefined();
+        });
 
-            // And it still fires, rather than leaving expiry to the periodic tick.
-            vi.advanceTimersByTime(50);
+        // A falsy-but-present 0 means "no expiry", not "expired in 1970" — which would arm a
+        // 0ms timer storm.
+        it('treats a falsy expiresAt of 0 as no expiry', () => {
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('zero', 0)), vi.fn());
+
+            expect(tracker.expiryTimer).toBeUndefined();
+        });
+
+        it('arms for the EARLIEST deadline when several are pending', () => {
+            const now = Date.now();
+            const onExpiry = vi.fn();
+
+            scheduleNextExpiry(tracker, 'sid-1', player(
+                effect('late', now + 90_000),
+                effect('soon', now + 5_000),
+                effect('middle', now + 30_000),
+            ), onExpiry);
+
+            vi.advanceTimersByTime(5_100);
+            expect(onExpiry).toHaveBeenCalledExactlyOnceWith('sid-1');
+        });
+
+        it('fires once for several effects due at the same moment', () => {
+            const at = Date.now() + 1_000;
+            const onExpiry = vi.fn();
+
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('a', at), effect('b', at)), onExpiry);
+
+            vi.advanceTimersByTime(1_100);
             expect(onExpiry).toHaveBeenCalledTimes(1);
         });
 
-        // Timers live in memory, so a restart or a reconnect rebuilds them from a player who may
-        // already be overdue. Math.max(0, …) gives that a 0ms timer, so it is swept at once
-        // instead of waiting for anything periodic.
-        it('schedules an immediate timer for an effect that is already overdue', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const player: PlayerState = {
-                effects: [{ id: 'stale', type: 'buff', emoji: '⭐', label: 'Stale', modifiers: [], expiresAt: Date.now() - 30_000 }],
-            } as any;
+        // Re-arming is unconditional, so a deadline that moved — a re-applied Hexed, the same food
+        // bought twice — needs no detection.
+        it('re-arms for a refreshed deadline, and the old one passes in silence', () => {
+            const now = Date.now();
             const onExpiry = vi.fn();
 
-            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
-            expect(tracker.expiryTimers?.size).toBe(1);
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('hexed', now + 10_000)), onExpiry);
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('hexed', now + 40_000)), onExpiry);
+
+            vi.advanceTimersByTime(10_100);
+            expect(onExpiry).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(30_000);
+            expect(onExpiry).toHaveBeenCalledTimes(1);
+        });
+
+        it('re-arms for the next deadline after one fires', () => {
+            const now = Date.now();
+            const onExpiry = vi.fn();
+            const remaining = player(effect('late', now + 20_000));
+
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('soon', now + 2_000), effect('late', now + 20_000)), onExpiry);
+            vi.advanceTimersByTime(2_100);
+            expect(onExpiry).toHaveBeenCalledTimes(1);
+            expect(tracker.expiryTimer).toBeUndefined();   // cleared itself on firing
+
+            // What the expiry-triggered session load does once the first effect is swept.
+            scheduleNextExpiry(tracker, 'sid-1', remaining, onExpiry);
+            vi.advanceTimersByTime(18_000);
+            expect(onExpiry).toHaveBeenCalledTimes(2);
+        });
+
+        // Timers live in memory, so a restart leaves the stored player already overdue. Firing
+        // immediately is what gets it swept, rather than waiting for anything periodic.
+        it('fires immediately for a deadline already in the past', () => {
+            const onExpiry = vi.fn();
+
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('stale', Date.now() - 30_000)), onExpiry);
 
             vi.advanceTimersByTime(1);
             expect(onExpiry).toHaveBeenCalledWith('sid-1');
         });
 
-        /**
-         * `applyEffect` refreshes an effect in place under the SAME id — re-applied Hexed, or
-         * buying the same food twice — so the deadline moves while the id does not. Keying only
-         * on the id kept the timer for the OLD deadline: it fired early, found nothing expired,
-         * and left the new deadline with no timer at all, pushing expiry out to the next periodic
-         * tick. That is why the client dropped an icon seconds before the server logged it.
-         */
-        it('reschedules when an effect is refreshed to a later deadline under the same id', () => {
-            const io = {} as any;
-            const tracker: SessionTrackerEntry = { socketIds: new Set(), lastSeen: Date.now() };
-            const start = Date.now();
-            const player: PlayerState = {
-                effects: [{ id: 'hexed', type: 'debuff', emoji: '👁️', label: 'Hexed', modifiers: [], expiresAt: start + 60_000 }],
-            } as any;
+        it('drops the pending timer when the effects are gone entirely', () => {
             const onExpiry = vi.fn();
 
-            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
-            const firstTimer = tracker.expiryTimers?.get('hexed')?.timer;
+            scheduleNextExpiry(tracker, 'sid-1', player(effect('a', Date.now() + 5_000)), onExpiry);
+            scheduleNextExpiry(tracker, 'sid-1', player(), onExpiry);
 
-            // Re-applied 30s in: same id, deadline pushed out to start + 90s.
-            vi.advanceTimersByTime(30_000);
-            player.effects = [{ id: 'hexed', type: 'debuff', emoji: '👁️', label: 'Hexed', modifiers: [], expiresAt: start + 90_000 }] as any;
-            syncExpiryTimers(io, tracker, 'sid-1', player, onExpiry);
-
-            expect(tracker.expiryTimers?.get('hexed')?.timer).not.toBe(firstTimer);
-            expect(tracker.expiryTimers?.get('hexed')?.expiresAt).toBe(start + 90_000);
-
-            // The original deadline must pass in silence — the old timer is gone.
-            vi.advanceTimersByTime(30_100);
+            expect(tracker.expiryTimer).toBeUndefined();
+            vi.advanceTimersByTime(10_000);
             expect(onExpiry).not.toHaveBeenCalled();
-
-            // The new one fires on time, once.
-            vi.advanceTimersByTime(30_000);
-            expect(onExpiry).toHaveBeenCalledTimes(1);
-            expect(onExpiry).toHaveBeenCalledWith('sid-1');
         });
     });
 
@@ -310,7 +271,7 @@ describe('emitter', () => {
             sessionTracker.set('sid-stale', {
                 socketIds: new Set(),
                 lastSeen: Date.now() - SESSION_CONFIG.gracePeriodMs - 1,
-                expiryTimers: new Map([['x', { expiresAt: Date.now() + 10_000, timer }]]),
+                expiryTimer: timer,
             });
 
             cleanupStaleSessions(Date.now());

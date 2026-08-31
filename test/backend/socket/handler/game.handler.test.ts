@@ -21,7 +21,7 @@ function getDef(event: string) {
 }
 
 function makeCtx(player: Partial<PlayerState> = {}): SessionContext {
-    return { sessionId: 'sid-1', session: {}, player: player as PlayerState, zoneChanged: false };
+    return { sessionId: 'sid-1', session: {}, player: player as PlayerState, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: false } };
 }
 
 describe('game.handler', () => {

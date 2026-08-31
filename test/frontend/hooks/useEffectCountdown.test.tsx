@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { useEffectCountdown } from '@/hooks/useEffectCountdown';
-import { useGameStore } from '@/store/gameStore';
 
 const NOW = 1_700_000_000_000;
 
@@ -21,7 +20,6 @@ describe('useEffectCountdown', () => {
 
     afterEach(() => {
         vi.useRealTimers();
-        useGameStore.setState({ clockOffsetMs: 0 });
     });
 
     it('reports the current time on first render', () => {
@@ -60,38 +58,6 @@ describe('useEffectCountdown', () => {
         rerender(<Probe renders={renders} />);
 
         expect(getByTestId('now').textContent).toBe(String(NOW + 500));
-    });
-
-    /**
-     * `expiresAt` is stamped by the server, so this must report SERVER time. Counting down against
-     * local time let any skew between the machines shift every effect timer.
-     */
-    it('reports server time by applying the measured clock offset', () => {
-        useGameStore.setState({ clockOffsetMs: 4_000 });
-
-        const { getByTestId } = render(<Probe renders={{ count: 0 }} />);
-
-        expect(getByTestId('now').textContent).toBe(String(NOW + 4_000));
-    });
-
-    it('applies a negative offset, for a server clock that is behind', () => {
-        useGameStore.setState({ clockOffsetMs: -1_500 });
-
-        const { getByTestId } = render(<Probe renders={{ count: 0 }} />);
-
-        expect(getByTestId('now').textContent).toBe(String(NOW - 1_500));
-    });
-
-    // Subscribed, not read once: a countdown must not stay uncorrected until the next interval tick.
-    it('re-renders as soon as a measurement lands, without waiting for the interval', () => {
-        const { getByTestId } = render(<Probe renders={{ count: 0 }} />);
-        expect(getByTestId('now').textContent).toBe(String(NOW));
-
-        act(() => {
-            useGameStore.setState({ clockOffsetMs: 2_000 });
-        });
-
-        expect(getByTestId('now').textContent).toBe(String(NOW + 2_000));
     });
 
     it('honours a custom interval', () => {

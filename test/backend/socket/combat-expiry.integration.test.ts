@@ -187,7 +187,7 @@ describe('location-based zone sync (integration)', () => {
         await screenHandler({ screen: 'battle' }, vi.fn());
         expect(session.combatUntil).toBeUndefined();
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
-        expect(sessionTracker.get(SESSION_ID)?.expiryTimers?.has('combat')).toBe(false);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeUndefined();
 
         // Forward to /home again: a full countdown, not the remainder of the first one.
         await screenHandler({ screen: 'home' }, vi.fn());
@@ -226,25 +226,23 @@ describe('location-based zone sync (integration)', () => {
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
     });
 
-    it('schedules no expiry timer while HELD in a combat zone — that combat is indefinite, unlike a real timed buff', async () => {
+    it('arms no timer while HELD in a combat zone — that combat is indefinite, unlike a real timed buff', async () => {
         await fightHandler(ack);
 
-        const tracker = sessionTracker.get(SESSION_ID);
-        expect(tracker?.expiryTimers?.has('combat')).toBe(false);
-        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeUndefined();
     });
 
-    it('schedules one for the disengage countdown, and never for the resting aura', async () => {
+    it('arms one for the disengage countdown, and none once it has run out', async () => {
         await fightHandler(ack);
         await screenHandler({ screen: 'home' }, vi.fn());
 
-        const tracker = sessionTracker.get(SESSION_ID);
-        expect(tracker?.expiryTimers?.has('combat')).toBe(true);
-        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeDefined();
 
         await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs + 30);
-        expect(tracker?.expiryTimers?.has('combat')).toBe(false);
-        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+
+        // Resting carries no deadline, so nothing is left to wait for.
+        expect(session.effects.some((e: any) => e.id === 'resting')).toBe(true);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeUndefined();
     });
 
     it('gives a reconnecting player who left the tab on /battle an untimed aura, and the countdown only once they move', async () => {

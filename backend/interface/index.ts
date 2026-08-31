@@ -173,11 +173,12 @@ export interface SessionTrackerEntry {
     socketIds: Set<string>;
     lastSeen: number;
     /**
-     * Per-effect exact-expiry timers, keyed by effect id. The deadline is stored alongside the
-     * handle so `syncExpiryTimers` can tell a REFRESHED effect (same id, later `expiresAt` —
-     * what `applyEffect` produces every time a buff is re-applied) from an unchanged one.
+     * ONE timer, armed at the earliest upcoming effect deadline for this session. Deliberately not
+     * a timer per effect: that needed an id to key on and a deadline to compare, and every bug in
+     * it came from the scheduling and cleanup halves disagreeing about which timers still applied.
+     * A single deadline is cleared and re-armed unconditionally, so there is nothing to disagree.
      */
-    expiryTimers?: Map<string, { expiresAt: number; timer: NodeJS.Timeout }>;
+    expiryTimer?: NodeJS.Timeout;
     inputBuffer?: string[];
 }
 

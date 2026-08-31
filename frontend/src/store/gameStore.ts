@@ -101,12 +101,11 @@ export interface GameStore {
     notice: SocketErrorPayload | null;
     soundEnabled: boolean;
     /**
-     * How far the server's clock is ahead of this machine's, in ms — measured by `syncClock()` on
-     * every connect. `EffectView.expiresAt` is an absolute SERVER epoch, so every countdown is
-     * read against `Date.now() + clockOffsetMs` rather than local time. 0 until the first
-     * exchange lands, which is also the correct answer when the two clocks agree.
+     * When the snapshot carrying the current `player.effects` landed, on THIS machine's clock.
+     * Effects arrive as durations (`EffectView.remainingMs`), so this is the zero point every
+     * countdown is measured from — no server timestamp is ever compared against a local one.
      */
-    clockOffsetMs: number;
+    effectsStampedAt: number;
 
     hydrate(p: HydratePayload): void;
     applyUpdate(p: Partial<PlayerSnapshot>): void;
@@ -127,7 +126,6 @@ export interface GameStore {
     setFlash(f: FlashView | null): void;
     setNotice(n: SocketErrorPayload | null): void;
     setStatus(s: GameStore['status']): void;
-    setClockOffset(ms: number): void;
     toggleSound(): void;
 }
 
@@ -166,7 +164,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         lastBattle: null,
         notice: null,
         soundEnabled: readStoredSoundEnabled(),
-        clockOffsetMs: 0,
+        effectsStampedAt: Date.now(),
 
         hydrate(p) {
             set(state => {
@@ -189,7 +187,11 @@ export const useGameStore = create<GameStore>((set, get) => {
                 // Synced unconditionally (including to null) on EVERY hydrate: lastBattle is
                 // server-persisted, so a reset must clear it rather than leave the previous
                 // character's narrative on screen.
-                return { player: p.player, catalog: p.catalog, screen, lastBattle: p.player?.lastBattle ?? null };
+                return {
+                    player: p.player, catalog: p.catalog, screen,
+                    lastBattle: p.player?.lastBattle ?? null,
+                    effectsStampedAt: Date.now(),
+                };
             });
         },
 
@@ -207,12 +209,23 @@ export const useGameStore = create<GameStore>((set, get) => {
 
                 const player = { ...state.player, ...p };
 
-                return { player, screen: deriveScreenAfterPlayerChange(state.player, player, state.screen) };
+                return {
+                    player,
+                    screen: deriveScreenAfterPlayerChange(state.player, player, state.screen),
+                    // Only when this push actually carried effects: `remainingMs` values are
+                    // relative to the snapshot that sent them, so restamping on an unrelated
+                    // partial would silently restart every countdown.
+                    effectsStampedAt: p.effects ? Date.now() : state.effectsStampedAt,
+                };
             });
         },
 
         applyMutation(player, flash = null, screen) {
-            set(state => ({ player, flash, notice: null, screen: pinScreen(screen ?? state.screen, player) }));
+            set(state => ({
+                player, flash, notice: null,
+                screen: pinScreen(screen ?? state.screen, player),
+                effectsStampedAt: Date.now(),
+            }));
         },
 
         recordBattleResult(result) {
@@ -228,6 +241,7 @@ export const useGameStore = create<GameStore>((set, get) => {
                 },
                 notice: null,
                 screen: pinScreen(state.screen, result.player),
+                effectsStampedAt: Date.now(),
             }));
         },
 
@@ -252,7 +266,6 @@ export const useGameStore = create<GameStore>((set, get) => {
         setFlash: (flash) => set({ flash }),
         setNotice: (notice) => set({ notice }),
         setStatus: (status) => set({ status }),
-        setClockOffset: (clockOffsetMs) => set({ clockOffsetMs }),
 
         toggleSound() {
             const next = !get().soundEnabled;

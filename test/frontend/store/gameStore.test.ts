@@ -30,7 +30,7 @@ function resetStore() {
             lastBattle: null,
             notice: null,
             soundEnabled: true,
-            clockOffsetMs: 0,
+            effectsStampedAt: Date.now(),
         },
         false,
     );
@@ -661,24 +661,6 @@ describe('gameStore', () => {
 
             useGameStore.getState().setNotice(null);
             expect(useGameStore.getState().notice).toBeNull();
-        });
-
-        /**
-         * How far the server's clock is from this machine's, measured by syncClock() on connect.
-         * Every effect countdown is read against `Date.now() + clockOffsetMs`, because `expiresAt`
-         * is an absolute SERVER epoch.
-         */
-        it('setClockOffset stores a measured offset in either direction, defaulting to none', () => {
-            expect(useGameStore.getState().clockOffsetMs).toBe(0);
-
-            useGameStore.getState().setClockOffset(4_000);
-            expect(useGameStore.getState().clockOffsetMs).toBe(4_000);
-
-            useGameStore.getState().setClockOffset(-250);
-            expect(useGameStore.getState().clockOffsetMs).toBe(-250);
-
-            useGameStore.getState().setClockOffset(0);
-            expect(useGameStore.getState().clockOffsetMs).toBe(0);
         });
 
         it('setStatus moves the connection status across all three values', () => {

@@ -25,7 +25,7 @@ describe('EffectsList', () => {
 
     afterEach(() => {
         vi.useRealTimers();
-        useGameStore.setState({ clockOffsetMs: 0 });
+        useGameStore.setState({ effectsStampedAt: NOW });
     });
 
     it('renders nothing at all for an empty effects array', () => {
@@ -38,8 +38,8 @@ describe('EffectsList', () => {
         const { container } = render(
             <EffectsList
                 effects={[
-                    makeEffect({ id: 'a', emoji: '💪', expiresAt: NOW + 60_000 }),
-                    makeEffect({ id: 'b', emoji: '🛡️', type: 'debuff', expiresAt: NOW + 30_000 }),
+                    makeEffect({ id: 'a', emoji: '💪', remainingMs: 60_000 }),
+                    makeEffect({ id: 'b', emoji: '🛡️', type: 'debuff', remainingMs: 30_000 }),
                     makeEffect({ id: 'c', emoji: '⚔️', type: 'aura' }),
                 ]}
             />,
@@ -51,7 +51,7 @@ describe('EffectsList', () => {
     });
 
     it('passes the shared `now` down, so each icon renders a timer relative to it', () => {
-        const { container } = render(<EffectsList effects={[makeEffect({ expiresAt: NOW + 45_000 })]} />);
+        const { container } = render(<EffectsList effects={[makeEffect({ remainingMs: 45_000 })]} />);
 
         expect(container.querySelector('.effect-timer')?.textContent).toBe('45');
     });
@@ -68,9 +68,9 @@ describe('EffectsList', () => {
         const { container } = render(
             <EffectsList
                 effects={[
-                    makeEffect({ id: 'staleBuff', expiresAt: NOW - 1 }),
-                    makeEffect({ id: 'combat', type: 'aura', emoji: '⚔️', expiresAt: NOW - 1 }),
-                    makeEffect({ id: 'live', expiresAt: NOW + 10_000 }),
+                    makeEffect({ id: 'staleBuff', remainingMs: -1 }),
+                    makeEffect({ id: 'combat', type: 'aura', emoji: '⚔️', remainingMs: -1 }),
+                    makeEffect({ id: 'live', remainingMs: 10_000 }),
                 ]}
             />,
         );
@@ -86,27 +86,39 @@ describe('EffectsList', () => {
      * any skew between the two shift every timer — a server 3s ahead made a 5-second effect read 8.
      * syncClock() measures that offset and the countdown is read against server time instead.
      */
-    describe('with the server clock ahead of the local one', () => {
-        const SKEW = 3_000;
-
-        beforeEach(() => {
-            useGameStore.setState({ clockOffsetMs: SKEW });
-        });
-
-        it('shows a server-stamped effect at its true remaining time, not the skew plus it', () => {
-            // What the server would stamp for a 5s effect: its own clock, which reads NOW + SKEW.
-            const { container } = render(
-                <EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', expiresAt: NOW + SKEW + 5_000 })]} />,
-            );
+    /**
+     * FLAW 3, pinned. `Math.ceil` on a server DEADLINE minus a local clock read showed 6 for a
+     * 5-second aura whenever the difference came out even a millisecond over 5000 — and a
+     * cross-machine difference can err either way, so no amount of clock-sync precision removed it.
+     *
+     * A duration counted against elapsed local time cannot do that: `remainingMs` is at most the
+     * effect's real length and `elapsed` is at least zero, so the displayed value is at most the
+     * effect's length in seconds. There is no arithmetic path to 6.
+     */
+    describe('a 5-second effect can never display 6', () => {
+        it('opens on 5 at the instant it arrives', () => {
+            const { container } = render(<EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', remainingMs: 5_000 })]} />);
 
             expect(container.querySelector('.effect-timer')?.textContent).toBe('5');
         });
 
-        it('reaches 0 after its true duration, not the duration plus the skew', () => {
-            // A 2-second effect, stamped by a server whose clock reads NOW + SKEW.
-            const { container } = render(
-                <EffectsList effects={[makeEffect({ id: 'food', expiresAt: NOW + SKEW + 2_000 })]} />,
-            );
+        it('stays at 5 or below however the stamp and the clock line up', () => {
+            // Every elapsed value the store can produce, plus a negative one — a stamp momentarily
+            // ahead of the clock, which a clock adjustment could produce. None may read 6.
+            for (const stampOffset of [-50, -1, 0, 1, 250, 999]) {
+                useGameStore.setState({ effectsStampedAt: NOW + stampOffset });
+                const { container, unmount } = render(
+                    <EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', remainingMs: 5_000 })]} />,
+                );
+
+                expect(Number(container.querySelector('.effect-timer')?.textContent)).toBeLessThanOrEqual(5);
+                unmount();
+            }
+        });
+
+        it('counts all the way down to 0 and no further', () => {
+            const { container } = render(<EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', remainingMs: 2_000 })]} />);
+
             expect(container.querySelector('.effect-timer')?.textContent).toBe('2');
 
             act(() => {
@@ -114,17 +126,15 @@ describe('EffectsList', () => {
             });
             expect(container.querySelector('.effect-timer')?.textContent).toBe('1');
 
-            // Two seconds have genuinely passed, so it is over. Compared against local time the
-            // deadline would still look SKEW away, leaving it reading 3.
             act(() => {
-                vi.advanceTimersByTime(1_000);
+                vi.advanceTimersByTime(5_000); // well past it
             });
             expect(container.querySelector('.effect-timer')?.textContent).toBe('0');
         });
     });
 
-    it('keeps a permanent effect (no expiresAt) forever', () => {
-        const { container } = render(<EffectsList effects={[makeEffect({ id: 'aura', type: 'aura', expiresAt: undefined })]} />);
+    it('keeps a permanent effect (no remainingMs) forever', () => {
+        const { container } = render(<EffectsList effects={[makeEffect({ id: 'aura', type: 'aura', remainingMs: undefined })]} />);
 
         act(() => {
             vi.advanceTimersByTime(60_000);
@@ -150,7 +160,7 @@ describe('EffectsList', () => {
             vi.advanceTimersByTime(500); // clock moves; the 1000ms interval has NOT fired
         });
 
-        rerender(<EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', expiresAt: Date.now() + 5_000 })]} />);
+        rerender(<EffectsList effects={[makeEffect({ id: 'combat', type: 'aura', remainingMs: 5_000 })]} />);
 
         expect(container.querySelector('.effect-timer')?.textContent).toBe('5');
     });
@@ -162,7 +172,7 @@ describe('EffectsList', () => {
      * appeared to vanish "with a second left" the moment the server's own push finally arrived.
      */
     it('reads 0 for a passed deadline, even on a render the interval did not cause', () => {
-        const effects = [makeEffect({ id: 'food', expiresAt: NOW + 2_500 })];
+        const effects = [makeEffect({ id: 'food', remainingMs: 2_500 })];
         const { container, rerender } = render(<EffectsList effects={effects} />);
 
         act(() => {
@@ -186,8 +196,8 @@ describe('EffectsList', () => {
         const { container } = render(
             <EffectsList
                 effects={[
-                    makeEffect({ id: 'short', expiresAt: NOW + 2_000 }),
-                    makeEffect({ id: 'long', expiresAt: NOW + 120_000 }),
+                    makeEffect({ id: 'short', remainingMs: 2_000 }),
+                    makeEffect({ id: 'long', remainingMs: 120_000 }),
                 ]}
             />,
         );

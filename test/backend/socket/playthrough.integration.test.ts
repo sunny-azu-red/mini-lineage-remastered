@@ -31,7 +31,7 @@ import { registerPlayerHandlers } from '@/socket/handler/player.handler';
 import { registerHighscoresHandlers } from '@/socket/handler/highscores.handler';
 import { registerCheatHandler } from '@/socket/handler/cheat.handler';
 import { trackSocket, sessionTracker } from '@/socket/emitter';
-import { CHEAT_CONFIG, RACES, WEAPONS, ARMORS, FOODS } from '@/constant/game.constant';
+import { CHEAT_CONFIG, RACES, WEAPONS, ARMORS, FOODS, ZONE_CONFIG } from '@/constant/game.constant';
 
 const SESSION_ID = 'playthrough-session';
 
@@ -331,7 +331,7 @@ describe('full playthrough over the real socket stack', () => {
         const battle = expectOk<MutationResult>(await emit('player:screen', { screen: 'battle' }));
         expect(battle.player.effects.map(e => e.id)).toContain('combat');
         // Standing in the zone: indefinite combat, no countdown.
-        expect(battle.player.effects.find(e => e.id === 'combat')?.expiresAt).toBeUndefined();
+        expect(battle.player.effects.find(e => e.id === 'combat')?.remainingMs).toBeUndefined();
 
         // Leaving a combat zone keeps the player flagged for combatLingerMs, wherever they went —
         // Statistics is in neither zone list, but the disengage countdown outranks that.
@@ -339,7 +339,9 @@ describe('full playthrough over the real socket stack', () => {
         const statsIds = stats.player.effects.map(e => e.id);
         expect(statsIds).not.toContain('resting');
         expect(statsIds).toContain('combat');
-        expect(stats.player.effects.find(e => e.id === 'combat')?.expiresAt).toBe(store.combatUntil);
+        // A duration, not the deadline: the wire never sends a server timestamp for the client to
+        // compare against its own clock.
+        expect(stats.player.effects.find(e => e.id === 'combat')?.remainingMs).toBeLessThanOrEqual(ZONE_CONFIG.combatLingerMs);
 
         // Once it elapses, a screen in neither zone list gets no aura at all.
         store.combatUntil = Date.now() - 1;

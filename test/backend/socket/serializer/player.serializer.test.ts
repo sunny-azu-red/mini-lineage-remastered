@@ -99,10 +99,14 @@ describe('buildPlayerSnapshot', () => {
             expect(snapshot.lowHealth).toBe(true);
         });
 
-        it('maps active effects to EffectView with tooltip, emoji, and expiresAt', () => {
-            const expiresAt = Date.now() + 25_000;
+        /**
+         * The wire carries a DURATION, converted here — the one place state crosses to the client.
+         * Stored state stays an absolute epoch; sending it raw made the client compare two
+         * machines' clocks, and `Math.ceil` turned any error into a whole extra second.
+         */
+        it('maps active effects to EffectView with tooltip, emoji, and a remaining duration', () => {
             const p = makePlayer({
-                effects: [{ ...EFFECTS_CONFIG.smokedSausage, expiresAt }],
+                effects: [{ ...EFFECTS_CONFIG.smokedSausage, expiresAt: Date.now() + 25_000 }],
             });
             const snapshot = buildPlayerSnapshot(p);
 
@@ -112,7 +116,15 @@ describe('buildPlayerSnapshot', () => {
             expect(effect?.label).toBe('Satisfied');
             expect(effect?.tooltip).toBe(formatEffectTooltip(EFFECTS_CONFIG.smokedSausage));
             expect(effect?.tooltip).toContain('+10 Max HP');
-            expect(effect?.expiresAt).toBe(expiresAt);
+            // Never above the real remaining time, which is what makes ceil safe on the client.
+            expect(effect?.remainingMs).toBeGreaterThan(24_000);
+            expect(effect?.remainingMs).toBeLessThanOrEqual(25_000);
+        });
+
+        it('sends no duration at all for a permanent effect', () => {
+            const p = makePlayer({ effects: [{ ...EFFECTS_CONFIG.konamiCheat }] });
+
+            expect(buildPlayerSnapshot(p).effects.find(e => e.id === 'konami_cheat')?.remainingMs).toBeUndefined();
         });
 
         it('builds weapon/armor ItemView with flattened modifiers, undefined when absent', () => {
