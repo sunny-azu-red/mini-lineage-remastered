@@ -133,6 +133,52 @@ describe('withSession — automatic zone-aura sync (Fix 8)', () => {
         };
     }
 
+    /**
+     * FLAW 1, stated directly. An effect stops counting the instant its deadline passes, because
+     * getActiveEffects filters by it — so a sweep on any OTHER schedule split expiry into two
+     * moments: the stats changed silently at the deadline, and the removal was announced whenever
+     * the sweep next ran. A mutator must never be able to observe the gap between them.
+     */
+    it('sweeps an expired effect before the mutator can observe it', async () => {
+        const session = makeStartedSession({
+            currentScreen: 'home',
+            health: 120,
+            effects: [
+                { ...EFFECTS_CONFIG.smokedSausage, expiresAt: Date.now() - 1 },
+                { ...EFFECTS_CONFIG.newbieBuff, expiresAt: Date.now() + 60_000 },
+            ],
+        });
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        let seenByMutator: string[] | undefined;
+        let reportedRemoved: string[] | undefined;
+        await withSession('sid-1', (ctx) => {
+            seenByMutator = (ctx.player.effects ?? []).map(e => e.id);
+            reportedRemoved = ctx.expiry.removed.map(e => e.id);
+
+            return NO_CHANGE;
+        });
+
+        expect(seenByMutator).not.toContain('satisfied');
+        expect(seenByMutator).toContain('newbie_blessing');
+        // And the load says what it took, so a caller can still name it in a log.
+        expect(reportedRemoved).toEqual(['satisfied']);
+        expect(session.health).toBe(120); // Human 100 + newbie 20: still within the new ceiling
+    });
+
+    it('persists a load whose only change was the sweep, even on NO_CHANGE', async () => {
+        const session = makeStartedSession({
+            currentScreen: 'home',
+            effects: [{ ...EFFECTS_CONFIG.smokedSausage, expiresAt: Date.now() - 1 }],
+        });
+        vi.mocked(getSessionData).mockResolvedValue(session);
+
+        await withSession('sid-1', () => NO_CHANGE);
+
+        expect(setSessionData).toHaveBeenCalledWith('sid-1', session);
+        expect(session.effects.map((e: any) => e.id)).toEqual(['resting']);
+    });
+
     it('persists a zone-only flip even when the handler itself reports NO_CHANGE (the silent-drop bug)', async () => {
         // Persisted aura is out of step with currentScreen (e.g. a player:screen call updated the
         // screen without also calling syncZoneAuras itself). An INDEFINITE combat aura on a

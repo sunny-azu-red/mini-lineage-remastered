@@ -11,7 +11,6 @@ import {
     restoreHealth,
     purchaseItem,
     resolveBattleOutcome,
-    processTick,
     processEffectExpiry,
     processRegenTick,
     getPlayerStats,
@@ -482,10 +481,10 @@ describe('initializePlayer — age definitions', () => {
     });
 });
 
-describe('processTick', () => {
+describe('the two tick jobs — regen and expiry, each driven on its own', () => {
     it('heals an Elf (regen 3) with no regen armor by 3 and returns true', () => {
         const p = localPlayer({ raceId: 2, health: 50, armorId: 0 }); // Elf, Peasant's Tunic
-        const result = processTick(p);
+        const result = processRegenTick(p);
         expect(result).toBe(true);
         expect(p.health).toBe(53);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 3);
@@ -493,7 +492,7 @@ describe('processTick', () => {
 
     it('heals a Human (regen 1) with Knight\'s Plate (regen 1) by 2 total and returns true', () => {
         const p = localPlayer({ raceId: 0, health: 70, armorId: 3 }); // Human, Knight's Plate
-        const result = processTick(p);
+        const result = processRegenTick(p);
         expect(result).toBe(true);
         expect(p.health).toBe(72);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 2);
@@ -501,47 +500,47 @@ describe('processTick', () => {
 
     it('returns false and does not heal an Orc (regen 0) with no regen armor', () => {
         const p = localPlayer({ raceId: 1, health: 80, armorId: 0 }); // Orc, Peasant's Tunic
-        const result = processTick(p);
+        const result = processRegenTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(80);
     });
 
     it('returns false when player is already at full HP', () => {
         const p = localPlayer({ raceId: 2, health: 75, armorId: 0 }); // Elf at max HP (75)
-        const result = processTick(p);
+        const result = processRegenTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(75);
     });
 
     it('returns false when player is dead', () => {
         const p = localPlayer({ raceId: 2, health: 0, dead: true, armorId: 0 });
-        const result = processTick(p);
+        const result = processRegenTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(0);
     });
 
     it('clamps HP to maxHp and heals only the remainder', () => {
         const p = localPlayer({ raceId: 0, health: 99, armorId: 0 }); // Human max 100, regen 1
-        processTick(p);
+        processRegenTick(p);
         expect(p.health).toBe(100);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 1);
     });
 
     it('Dark Elf (regen 2) with Eternal Aegis (regen 3) heals for 5 total', () => {
         const p = localPlayer({ raceId: 3, health: 50, armorId: 5 }); // Dark Elf, Eternal Aegis
-        processTick(p);
+        processRegenTick(p);
         expect(p.health).toBe(55);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 5);
     });
 
-    it('cleans up expired effects during processTick', () => {
+    it('cleans up expired effects, leaving the live ones', () => {
         const p = localPlayer({
             effects: [
                 { id: 'expired_buff', type: 'buff', emoji: '⚡', label: 'Expired', expiresAt: Date.now() - 1000, modifiers: [] },
                 { id: 'active_buff', type: 'buff', emoji: '🛡️', label: 'Active', expiresAt: Date.now() + 50000, modifiers: [] }
             ]
         });
-        const changed = processTick(p);
+        const changed = processEffectExpiry(p);
         expect(changed).toBe(true);
         expect(p.effects?.length).toBe(1);
         expect(p.effects?.[0].id).toBe('active_buff');
@@ -555,7 +554,7 @@ describe('processTick', () => {
                 { id: 'expired_food', type: 'buff', emoji: '🍖', label: 'Well Fed', expiresAt: Date.now() - 1000, modifiers: [{ type: 'maxHealth', value: 25 }] }
             ]
         });
-        const changed = processTick(p);
+        const changed = processEffectExpiry(p);
         expect(changed).toBe(true);
         expect(p.health).toBe(100);
         expect(p.effects?.length).toBe(0);
@@ -570,7 +569,10 @@ describe('processTick', () => {
                 { id: 'well_fed', type: 'buff', emoji: '🍖', label: 'Well Fed', expiresAt: Date.now() - 500, modifiers: [{ type: 'maxHealth', value: 25 }] }
             ]
         });
-        const changed = processTick(p);
+        // Two mechanisms in production — the effect's own timer expires, the periodic loop
+        // regenerates — so both are driven here to pin the combination.
+        const changed = processEffectExpiry(p);
+        expect(processRegenTick(p)).toBe(false);
         expect(changed).toBe(true);
         // Food buff expired -> removed from effects
         expect(p.effects?.some(e => e.id === 'well_fed')).toBe(false);
@@ -587,7 +589,7 @@ describe('processTick', () => {
                 { id: 'combat', type: 'aura', emoji: '⚔️', label: 'In Combat', modifiers: [] }
             ]
         });
-        const changed = processTick(p);
+        const changed = processRegenTick(p);
         expect(changed).toBe(false);
         expect(p.health).toBe(50); // No regen during combat
     });
@@ -692,7 +694,17 @@ describe('processTick', () => {
         expect(p.health).toBe(0);
     });
 
-    it('processTick with applyRegen false only expires effects and does not grant regen', () => {
+    // A session that has never carried an effects array at all — corrupt, or forward-incompatible.
+    // Must report "nothing changed" rather than throwing on a missing array.
+    it('the expiry sweep tolerates a player with no effects array', () => {
+        const p = localPlayer({ raceId: 0, health: 50 });
+        delete (p as Partial<PlayerState>).effects;
+
+        expect(processEffectExpiry(p)).toBe(false);
+        expect(p.health).toBe(50);
+    });
+
+    it('the expiry sweep only expires effects and never grants regen', () => {
         const p = localPlayer({
             raceId: 2, // Elf base max 75, regen 3
             health: 50, // wounded
@@ -700,7 +712,7 @@ describe('processTick', () => {
                 { id: 'expired_buff', type: 'buff', emoji: '🍎', label: 'Snack', expiresAt: Date.now() - 500, modifiers: [] }
             ]
         });
-        const changed = processTick(p, { applyRegen: false });
+        const changed = processEffectExpiry(p);
         expect(changed).toBe(true);
         expect(p.effects?.length).toBe(0);
         expect(p.health).toBe(50); // Remains 50, no unearned regen

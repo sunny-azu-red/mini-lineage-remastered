@@ -145,10 +145,6 @@ export interface FlashMessage {
     sound?: string;
 }
 
-export interface TickOptions {
-    applyRegen?: boolean;
-}
-
 // -----------------------
 // persistence & transport
 // -----------------------
@@ -176,7 +172,13 @@ export type Statistics = {
 export interface SessionTrackerEntry {
     socketIds: Set<string>;
     lastSeen: number;
-    expiryTimers?: Map<string, NodeJS.Timeout>;
+    /**
+     * ONE timer, armed at the earliest upcoming effect deadline for this session. Deliberately not
+     * a timer per effect: that needed an id to key on and a deadline to compare, and every bug in
+     * it came from the scheduling and cleanup halves disagreeing about which timers still applied.
+     * A single deadline is cleared and re-armed unconditionally, so there is nothing to disagree.
+     */
+    expiryTimer?: NodeJS.Timeout;
     inputBuffer?: string[];
 }
 

@@ -1,4 +1,4 @@
-import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, StatField, TickOptions } from '@/interface';
+import { PlayerState, Race, FlashMessage, PurchaseResult, ItemType, BattleResult, PlayerStats, ActiveEffect, EffectConfig, Item, StatField } from '@/interface';
 import { RACES, ARMORS, WEAPONS, FOODS, EFFECTS_CONFIG, CHARACTER_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
 import { isLevelUp, randomInt } from '@/service/math.service';
 import { formatAdena, formatNumber, fillTemplate } from '@/util/format.util';
@@ -375,8 +375,9 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
 }
 
 /**
- * Drops expired effects and clamps health if a maxHealth buff went away. Returns whether
- * anything changed. Runs on both periodic ticks and exact-expiry timeouts; never regenerates.
+ * Drops expired effects and clamps health if a maxHealth buff went away. Returns whether anything
+ * changed. Driven ONLY by each effect's own exact-expiry timer (see emitter.ts::syncExpiryTimers) —
+ * the periodic loop is the regen cadence and no longer sweeps effects. Never regenerates.
  */
 export function processEffectExpiry(player: PlayerState): boolean {
     if (player.dead)
@@ -421,15 +422,4 @@ export function processRegenTick(player: PlayerState): boolean {
     void statisticsRepository.increment('total_hp_regen', healed);
 
     return true;
-}
-
-/** Passive-state entry point. `applyRegen` is false for discrete expiry events. */
-export function processTick(player: PlayerState, options: TickOptions = {}): boolean {
-    if (player.dead)
-        return false;
-
-    const expiryChanged = processEffectExpiry(player);
-    const regenChanged = (options.applyRegen ?? true) ? processRegenTick(player) : false;
-
-    return expiryChanged || regenChanged;
 }

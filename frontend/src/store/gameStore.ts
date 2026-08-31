@@ -100,6 +100,12 @@ export interface GameStore {
     lastBattle: BattleNarrativeSnapshot | null;
     notice: SocketErrorPayload | null;
     soundEnabled: boolean;
+    /**
+     * When the snapshot carrying the current `player.effects` landed, on THIS machine's clock.
+     * Effects arrive as durations (`EffectView.remainingMs`), so this is the zero point every
+     * countdown is measured from — no server timestamp is ever compared against a local one.
+     */
+    effectsStampedAt: number;
 
     hydrate(p: HydratePayload): void;
     applyUpdate(p: Partial<PlayerSnapshot>): void;
@@ -158,6 +164,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         lastBattle: null,
         notice: null,
         soundEnabled: readStoredSoundEnabled(),
+        effectsStampedAt: Date.now(),
 
         hydrate(p) {
             set(state => {
@@ -180,7 +187,11 @@ export const useGameStore = create<GameStore>((set, get) => {
                 // Synced unconditionally (including to null) on EVERY hydrate: lastBattle is
                 // server-persisted, so a reset must clear it rather than leave the previous
                 // character's narrative on screen.
-                return { player: p.player, catalog: p.catalog, screen, lastBattle: p.player?.lastBattle ?? null };
+                return {
+                    player: p.player, catalog: p.catalog, screen,
+                    lastBattle: p.player?.lastBattle ?? null,
+                    effectsStampedAt: Date.now(),
+                };
             });
         },
 
@@ -198,12 +209,23 @@ export const useGameStore = create<GameStore>((set, get) => {
 
                 const player = { ...state.player, ...p };
 
-                return { player, screen: deriveScreenAfterPlayerChange(state.player, player, state.screen) };
+                return {
+                    player,
+                    screen: deriveScreenAfterPlayerChange(state.player, player, state.screen),
+                    // Only when this push actually carried effects: `remainingMs` values are
+                    // relative to the snapshot that sent them, so restamping on an unrelated
+                    // partial would silently restart every countdown.
+                    effectsStampedAt: p.effects ? Date.now() : state.effectsStampedAt,
+                };
             });
         },
 
         applyMutation(player, flash = null, screen) {
-            set(state => ({ player, flash, notice: null, screen: pinScreen(screen ?? state.screen, player) }));
+            set(state => ({
+                player, flash, notice: null,
+                screen: pinScreen(screen ?? state.screen, player),
+                effectsStampedAt: Date.now(),
+            }));
         },
 
         recordBattleResult(result) {
@@ -219,6 +241,7 @@ export const useGameStore = create<GameStore>((set, get) => {
                 },
                 notice: null,
                 screen: pinScreen(state.screen, result.player),
+                effectsStampedAt: Date.now(),
             }));
         },
 

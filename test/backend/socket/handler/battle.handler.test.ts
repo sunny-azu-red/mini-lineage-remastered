@@ -42,7 +42,7 @@ function getDef() {
 // The defaults this file's assertions were written against.
 const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) => makePlayer({ name: 'Hero', adena: 100, dead: false, ambushed: false, ...o });
 function makeCtx(player: PlayerState): SessionContext {
-    return { sessionId: 'sid-1', session: {}, player, zoneChanged: false };
+    return { sessionId: 'sid-1', session: {}, player, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: false } };
 }
 
 // The defaults this file's assertions were written against.

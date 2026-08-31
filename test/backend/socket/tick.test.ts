@@ -6,7 +6,8 @@ vi.mock('@/socket/session', async (importOriginal) => {
 });
 
 vi.mock('@/service/player.service', () => ({
-    processTick: vi.fn(),
+    processRegenTick: vi.fn(),
+    processEffectExpiry: vi.fn(),
     isGameStarted: vi.fn(),
     // processSessionTick's tick-result logging (ported from the old game's [TICK:...] debug
     // line) calls this unconditionally for any started session — stub a sensible default so
@@ -16,7 +17,7 @@ vi.mock('@/service/player.service', () => ({
 
 vi.mock('@/socket/emitter', () => ({
     emitStateUpdate: vi.fn(),
-    syncExpiryTimers: vi.fn(),
+    scheduleNextExpiry: vi.fn(),
     cleanupStaleSessions: vi.fn(),
     sessionTracker: new Map(),
 }));
@@ -28,7 +29,7 @@ vi.mock('@/socket/serializer/player.serializer', () => ({
 import { processSessionTick, startTickLoop, refreshExpiryTimers } from '@/socket/tick';
 import { withSession, NO_CHANGE } from '@/socket/session';
 import * as playerService from '@/service/player.service';
-import { emitStateUpdate, syncExpiryTimers, cleanupStaleSessions, sessionTracker } from '@/socket/emitter';
+import { emitStateUpdate, scheduleNextExpiry, cleanupStaleSessions, sessionTracker } from '@/socket/emitter';
 import { buildPlayerSnapshot } from '@/socket/serializer/player.serializer';
 import { SocketError } from '@/socket/error';
 import { TICK_CONFIG } from '@/constant/game.constant';
@@ -50,94 +51,105 @@ describe('processSessionTick', () => {
         sessionTracker.set('sid-1', tracker);
     });
 
-    it('emits the built snapshot when processTick reports a change', async () => {
+    it('emits the built snapshot when processRegenTick reports a change', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) =>
-            mutate({ sessionId: sid, session: {}, player, zoneChanged: false }));
+            mutate({ sessionId: sid, session: {}, player, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: false } }));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
-        vi.mocked(playerService.processTick).mockReturnValue(true);
+        vi.mocked(playerService.processRegenTick).mockReturnValue(true);
 
-        await processSessionTick(io, tracker, 'sid-1', { applyRegen: true });
+        await processSessionTick(io, tracker, 'sid-1', 'regen');
 
-        expect(playerService.processTick).toHaveBeenCalledWith(player, { applyRegen: true });
+        expect(playerService.processRegenTick).toHaveBeenCalledWith(player);
         expect(buildPlayerSnapshot).toHaveBeenCalledWith(player);
         expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { revision: 1 });
-        expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
+        expect(scheduleNextExpiry).toHaveBeenCalledWith(tracker, 'sid-1', player, expect.any(Function));
     });
 
-    it('does not persist or emit when neither processTick nor the zone report a change', async () => {
+    /**
+     * A no-op tick must not persist or broadcast — but it MUST still re-derive the session's expiry
+     * timers. That is exactly when a missing or stale timer needs replacing, and gating the
+     * rescheduling on "something changed" is what let one stale timer delay an effect's expiry by a
+     * whole tick interval, so the client dropped the icon seconds before the server logged it.
+     */
+    it('re-syncs expiry timers but does not persist or emit when neither processRegenTick nor the zone report a change', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
-            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false });
+            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: false } });
             return result === NO_CHANGE ? undefined : result;
         });
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
-        vi.mocked(playerService.processTick).mockReturnValue(false);
+        vi.mocked(playerService.processRegenTick).mockReturnValue(false);
 
-        await processSessionTick(io, tracker, 'sid-1');
+        await processSessionTick(io, tracker, 'sid-1', 'regen');
 
         expect(emitStateUpdate).not.toHaveBeenCalled();
-        expect(syncExpiryTimers).not.toHaveBeenCalled();
+        expect(scheduleNextExpiry).toHaveBeenCalledWith(tracker, 'sid-1', player, expect.any(Function));
     });
 
-    it('regression (Fix 8): builds and emits a snapshot when the zone alone changed (e.g. a reconnect resolved a different screen than what was persisted), even though processTick itself reports no change', async () => {
+    it('regression (Fix 8): builds and emits a snapshot when the zone alone changed (e.g. a reconnect resolved a different screen than what was persisted), even though processRegenTick itself reports no change', async () => {
         // withSession's own automatic syncZoneAuras call (session.ts) is what would set
         // ctx.zoneChanged to true here in real production use, whenever currentScreen no
         // longer matches the persisted aura. withSession is mocked in this file, so
         // ctx.zoneChanged is supplied directly to isolate tick.ts's own responsibility: folding
-        // it into its "did anything change" decision instead of relying on processTick alone,
+        // it into its "did anything change" decision instead of relying on processRegenTick alone,
         // which knows nothing about zones.
         const player = { raceId: 0, currentScreen: 'home' };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
-            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: true });
+            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: true, expiry: { removed: [], healthBefore: undefined, changed: false } });
             return result === NO_CHANGE ? undefined : result;
         });
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
-        vi.mocked(playerService.processTick).mockReturnValue(false);
+        vi.mocked(playerService.processRegenTick).mockReturnValue(false);
 
-        await processSessionTick(io, tracker, 'sid-1');
+        await processSessionTick(io, tracker, 'sid-1', 'regen');
 
         expect(buildPlayerSnapshot).toHaveBeenCalledWith(player);
         expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { revision: 1 });
-        expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
+        expect(scheduleNextExpiry).toHaveBeenCalledWith(tracker, 'sid-1', player, expect.any(Function));
     });
 
-    it('skips processTick entirely for a not-yet-started session', async () => {
+    it('skips processRegenTick entirely for a not-yet-started session', async () => {
         const player = {};
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) => {
-            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false });
+            const result = mutate({ sessionId: sid, session: {}, player, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: false } });
             return result === NO_CHANGE ? undefined : result;
         });
         vi.mocked(playerService.isGameStarted).mockReturnValue(false);
 
-        await processSessionTick(io, tracker, 'sid-1');
+        await processSessionTick(io, tracker, 'sid-1', 'regen');
 
-        expect(playerService.processTick).not.toHaveBeenCalled();
+        expect(playerService.processRegenTick).not.toHaveBeenCalled();
         expect(emitStateUpdate).not.toHaveBeenCalled();
     });
 
     it('swallows SESSION_EXPIRED (vanished session) without crashing the loop', async () => {
         vi.mocked(withSession).mockRejectedValue(new SocketError('SESSION_EXPIRED', 'gone'));
 
-        await expect(processSessionTick(io, tracker, 'sid-1')).resolves.toBeUndefined();
+        await expect(processSessionTick(io, tracker, 'sid-1', 'regen')).resolves.toBeUndefined();
         expect(emitStateUpdate).not.toHaveBeenCalled();
     });
 
     it('swallows any other unexpected error without crashing the loop', async () => {
         vi.mocked(withSession).mockRejectedValue(new Error('boom'));
-        await expect(processSessionTick(io, tracker, 'sid-1')).resolves.toBeUndefined();
+        await expect(processSessionTick(io, tracker, 'sid-1', 'regen')).resolves.toBeUndefined();
     });
 
-    it('passes applyRegen:false through to processTick for expiry-only ticks', async () => {
+    /**
+     * An 'expiry' firing runs NEITHER job. Expiry happens in the session load (session.ts), so all
+     * this firing does is make a load happen at the right moment — and the load's own report is
+     * what drives the persist and the broadcast.
+     */
+    it('regenerates nothing on an expiry-triggered firing, and emits on the load\'s own report', async () => {
         const player = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) =>
-            mutate({ sessionId: sid, session: {}, player, zoneChanged: false }));
+            mutate({ sessionId: sid, session: {}, player, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: true } }));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
-        vi.mocked(playerService.processTick).mockReturnValue(true);
 
-        await processSessionTick(io, tracker, 'sid-1', { applyRegen: false });
+        await processSessionTick(io, tracker, 'sid-1', 'expiry');
 
-        expect(playerService.processTick).toHaveBeenCalledWith(player, { applyRegen: false });
+        expect(playerService.processRegenTick).not.toHaveBeenCalled();
+        expect(scheduleNextExpiry).toHaveBeenCalled();
     });
 });
 
@@ -151,39 +163,39 @@ describe('refreshExpiryTimers (Fix 2 — shared home for the duplicated onExpiry
         tracker = { socketIds: new Set(['sock-1']), lastSeen: Date.now() };
     });
 
-    it('looks the tracker up from sessionTracker by sessionId and delegates to syncExpiryTimers', () => {
+    it('looks the tracker up from sessionTracker by sessionId and delegates to scheduleNextExpiry', () => {
         const player = { raceId: 0 } as any;
         sessionTracker.set('sid-1', tracker);
 
         refreshExpiryTimers(io, 'sid-1', player);
 
-        expect(syncExpiryTimers).toHaveBeenCalledWith(io, tracker, 'sid-1', player, expect.any(Function));
+        expect(scheduleNextExpiry).toHaveBeenCalledWith(tracker, 'sid-1', player, expect.any(Function));
     });
 
     it('is a no-op when the session has no tracker (never connected, or already cleaned up)', () => {
         refreshExpiryTimers(io, 'sid-unknown', {} as any);
-        expect(syncExpiryTimers).not.toHaveBeenCalled();
+        expect(scheduleNextExpiry).not.toHaveBeenCalled();
     });
 
-    it('the onExpiry callback re-processes the session with applyRegen:false when the timer fires', async () => {
+    it('the onExpiry callback re-processes the session as an expiry-only firing', async () => {
         // This is the exact behavior that used to live as an inline closure duplicated in
         // both backend/socket/index.ts's connection handler and processSessionTick above —
         // confirming it still works identically now that both call through this one function.
         sessionTracker.set('sid-1', tracker);
         refreshExpiryTimers(io, 'sid-1', { raceId: 0 } as any);
 
-        const onExpiry = vi.mocked(syncExpiryTimers).mock.calls[0][4];
+        const onExpiry = vi.mocked(scheduleNextExpiry).mock.calls[0][3];
 
         const expiredPlayer = { raceId: 0 };
         vi.mocked(withSession).mockImplementation(async (sid: string, mutate: any) =>
-            mutate({ sessionId: sid, session: {}, player: expiredPlayer, zoneChanged: false }));
+            mutate({ sessionId: sid, session: {}, player: expiredPlayer, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: true } }));
         vi.mocked(playerService.isGameStarted).mockReturnValue(true);
-        vi.mocked(playerService.processTick).mockReturnValue(true);
 
         onExpiry('sid-1');
         await new Promise(resolve => setImmediate(resolve));
 
-        expect(playerService.processTick).toHaveBeenCalledWith(expiredPlayer, { applyRegen: false });
+        // Neither job runs — the load expired it. The firing's purpose is to cause that load.
+        expect(playerService.processRegenTick).not.toHaveBeenCalled();
         expect(emitStateUpdate).toHaveBeenCalledWith(io, 'sid-1', { revision: 1 });
     });
 
@@ -191,7 +203,7 @@ describe('refreshExpiryTimers (Fix 2 — shared home for the duplicated onExpiry
         sessionTracker.set('sid-1', tracker);
         refreshExpiryTimers(io, 'sid-1', { raceId: 0 } as any);
 
-        const onExpiry = vi.mocked(syncExpiryTimers).mock.calls[0][4];
+        const onExpiry = vi.mocked(scheduleNextExpiry).mock.calls[0][3];
         sessionTracker.delete('sid-1');
 
         onExpiry('sid-1');

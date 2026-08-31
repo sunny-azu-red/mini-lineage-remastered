@@ -1,35 +1,42 @@
 import type { Server as SocketIOServer } from 'socket.io';
-import type { ActiveEffect, SessionTrackerEntry, PlayerState, TickOptions } from '@/interface';
+import type { ActiveEffect, SessionTrackerEntry, PlayerState } from '@/interface';
 import { TICK_CONFIG } from '@/constant/game.constant';
-import { processTick, isGameStarted, getPlayerStats } from '@/service/player.service';
+import { processRegenTick, isGameStarted, getPlayerStats } from '@/service/player.service';
 import { withSession, NO_CHANGE } from './session';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
-import { emitStateUpdate, syncExpiryTimers, cleanupStaleSessions, sessionTracker } from './emitter';
+import { emitStateUpdate, scheduleNextExpiry, cleanupStaleSessions, sessionTracker } from './emitter';
 import { logger } from '@/config/logger.config';
 import { capitalize, formatSessionId } from '@/util/format.util';
 
 /**
- * Reschedules exact expiry timers for a session, wiring each firing back into an expiry-only
- * tick. Lives here rather than emitter.ts because it needs `processSessionTick`, and emitter.ts
- * must not import from tick.ts (tick.ts already imports from it). No-op without a tracker.
+ * Re-arms the session's single expiry timer, wiring its firing back into an expiry-only tick.
+ * Lives here rather than emitter.ts because it needs `processSessionTick`, and emitter.ts must not
+ * import from tick.ts (tick.ts already imports from it). No-op without a tracker.
  */
 export function refreshExpiryTimers(io: SocketIOServer, sessionId: string, player: PlayerState): void {
     const tracker = sessionTracker.get(sessionId);
     if (!tracker)
         return;
 
-    syncExpiryTimers(io, tracker, sessionId, player, (expiredSessionId) => {
+    scheduleNextExpiry(tracker, sessionId, player, (expiredSessionId) => {
         const activeTracker = sessionTracker.get(expiredSessionId);
         if (activeTracker)
-            void processSessionTick(io, activeTracker, expiredSessionId, { applyRegen: false });
+            void processSessionTick(io, activeTracker, expiredSessionId, 'expiry');
     });
 }
 
 /**
+ * Which single job a firing performs. The periodic loop only ever regenerates; expiry is done by
+ * the session load itself (session.ts), and an 'expiry' firing exists purely to MAKE a load happen
+ * at the right moment.
+ */
+export type TickKind = 'regen' | 'expiry';
+
+/**
  * One line per firing: `[TICK:<sid>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
- * `expiring` must be captured BEFORE processTick removes those effects.
+ * `expiring` must be captured BEFORE the expiry sweep removes those effects.
  *
- * `changed` is processTick's own return value, deliberately NOT folded with `zoneChanged`: a
+ * `changed` is the tick's own return value, deliberately NOT folded with `zoneChanged`: a
  * pure zone flip should fall through to Full/Paused/0 HPR/Idle, not claim "Effect Expired".
  */
 function logTickResult(sessionId: string, player: PlayerState, oldHp: number, expiring: ActiveEffect[], changed: boolean): void {
@@ -64,7 +71,7 @@ function logTickResult(sessionId: string, player: PlayerState, oldHp: number, ex
 
 /**
  * Ticks one session. An uninitialized session, or a tick producing no change, is a silent
- * no-op. `ctx.zoneChanged` is folded into `changed` because processTick knows nothing about
+ * no-op. `ctx.zoneChanged` is folded into `changed` because neither job knows anything about
  * zones, so a zone-only flip must still persist and broadcast. Errors are logged, never thrown —
  * they must not crash the shared loop.
  */
@@ -72,7 +79,7 @@ export async function processSessionTick(
     io: SocketIOServer,
     tracker: SessionTrackerEntry,
     sessionId: string,
-    options: TickOptions = { applyRegen: true },
+    kind: TickKind,
 ): Promise<void> {
     let playerRef: PlayerState | undefined;
 
@@ -81,22 +88,39 @@ export async function processSessionTick(
             if (!isGameStarted(ctx.player))
                 return NO_CHANGE;
 
-            const oldHp = ctx.player.health;
-            const now = Date.now();
-            const expiring = (ctx.player.effects ?? []).filter(e => e.expiresAt !== undefined && e.expiresAt <= now);
+            // Expiry already happened, in the session load — that is what stops "the stats
+            // changed" and "the effect expired" being two separate moments. The load reports what
+            // it swept so this line can still name it, and `healthBefore` is taken before its
+            // clamp so a lapsed maxHealth buff still shows the HP drop.
+            const oldHp = ctx.expiry.healthBefore ?? ctx.player.health;
 
-            const tickChanged = processTick(ctx.player, options);
+            // One job per firing. The periodic loop is the REGEN cadence and nothing else.
+            const tickChanged = kind === 'regen' ? processRegenTick(ctx.player) : false;
             playerRef = ctx.player;
 
-            logTickResult(sessionId, ctx.player, oldHp, expiring, tickChanged);
+            logTickResult(sessionId, ctx.player, oldHp, ctx.expiry.removed, tickChanged || ctx.expiry.changed);
 
-            return tickChanged || ctx.zoneChanged ? buildPlayerSnapshot(ctx.player) : NO_CHANGE;
+            // `ctx.expiry.changed` belongs here as much as the zone flip: when the load's sweep is
+            // the ONLY change, this is the push that tells the client the effect went away and its
+            // stats moved. Omitting it left the client waiting for an unrelated push — the very
+            // desync this redesign exists to remove.
+            return tickChanged || ctx.zoneChanged || ctx.expiry.changed
+                ? buildPlayerSnapshot(ctx.player)
+                : NO_CHANGE;
         });
 
-        if (snapshot === undefined || !playerRef)
+        if (!playerRef)
             return;
 
+        // Before the NO_CHANGE check on purpose, so every tick re-derives the timers this session
+        // should have. A tick that changes nothing is exactly when a missing timer needs
+        // replacing — gating this on `snapshot` is what let one stale timer delay an expiry by a
+        // full tick interval.
         refreshExpiryTimers(io, sessionId, playerRef);
+
+        if (snapshot === undefined)
+            return;
+
         emitStateUpdate(io, sessionId, snapshot);
     } catch (err) {
         logger.debug({ err }, `[TICK] session ${sessionId} tick skipped (session missing or errored)`);
@@ -108,7 +132,7 @@ export function startTickLoop(io: SocketIOServer): NodeJS.Timeout {
     return setInterval(() => {
         cleanupStaleSessions(Date.now());
         sessionTracker.forEach((tracker, sessionId) => {
-            void processSessionTick(io, tracker, sessionId, { applyRegen: true });
+            void processSessionTick(io, tracker, sessionId, 'regen');
         });
     }, TICK_CONFIG.intervalMs);
 }

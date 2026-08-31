@@ -30,6 +30,7 @@ function resetStore() {
             lastBattle: null,
             notice: null,
             soundEnabled: true,
+            effectsStampedAt: Date.now(),
         },
         false,
     );

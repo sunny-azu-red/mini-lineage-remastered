@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { TICK_CONFIG, ZONE_CONFIG } from '@/constant/game.constant';
-import type { BattleResult } from '@/interface';
+import type { BattleResult, PlayerState } from '@/interface';
 
 /**
  * Genuinely end-to-end regression test for the location-based zone system (player.service.ts's
@@ -165,7 +165,7 @@ describe('location-based zone sync (integration)', () => {
         // offset is deliberately NOT TICK_CONFIG.intervalMs — that happens to equal
         // combatLingerMs today, which would land exactly ON the deadline and prove nothing.
         await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs - 2_000);
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         expect(session.effects.some((e: any) => e.id === 'combat')).toBe(true);
         expect(session.health).toBe(healthOnLeaving);
 
@@ -173,7 +173,7 @@ describe('location-based zone sync (integration)', () => {
         await vi.advanceTimersByTimeAsync(2_030);
         expect(session.effects.some((e: any) => e.id === 'resting')).toBe(true);
 
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         expect(session.health).toBeGreaterThan(healthOnLeaving);
     });
 
@@ -187,7 +187,7 @@ describe('location-based zone sync (integration)', () => {
         await screenHandler({ screen: 'battle' }, vi.fn());
         expect(session.combatUntil).toBeUndefined();
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
-        expect(sessionTracker.get(SESSION_ID)?.expiryTimers?.has('combat')).toBe(false);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeUndefined();
 
         // Forward to /home again: a full countdown, not the remainder of the first one.
         await screenHandler({ screen: 'home' }, vi.fn());
@@ -202,7 +202,7 @@ describe('location-based zone sync (integration)', () => {
 
         await vi.advanceTimersByTimeAsync(2_000);
         await screenHandler({ screen: 'inn' }, vi.fn());   // resting zone -> resting zone
-        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
 
         expect(session.combatUntil).toBe(deadline);
     });
@@ -218,7 +218,7 @@ describe('location-based zone sync (integration)', () => {
         // currentScreen is still 'battle', regardless of how much idle time passes.
         for (let i = 0; i < 5; i++) {
             await vi.advanceTimersByTimeAsync(TICK_CONFIG.intervalMs);
-            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         }
 
         expect(session.health).toBe(healthAfterFight); // never regenerated
@@ -226,25 +226,23 @@ describe('location-based zone sync (integration)', () => {
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBeUndefined();
     });
 
-    it('schedules no expiry timer while HELD in a combat zone — that combat is indefinite, unlike a real timed buff', async () => {
+    it('arms no timer while HELD in a combat zone — that combat is indefinite, unlike a real timed buff', async () => {
         await fightHandler(ack);
 
-        const tracker = sessionTracker.get(SESSION_ID);
-        expect(tracker?.expiryTimers?.has('combat')).toBe(false);
-        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeUndefined();
     });
 
-    it('schedules one for the disengage countdown, and never for the resting aura', async () => {
+    it('arms one for the disengage countdown, and none once it has run out', async () => {
         await fightHandler(ack);
         await screenHandler({ screen: 'home' }, vi.fn());
 
-        const tracker = sessionTracker.get(SESSION_ID);
-        expect(tracker?.expiryTimers?.has('combat')).toBe(true);
-        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeDefined();
 
         await vi.advanceTimersByTimeAsync(ZONE_CONFIG.combatLingerMs + 30);
-        expect(tracker?.expiryTimers?.has('combat')).toBe(false);
-        expect(tracker?.expiryTimers?.has('resting')).toBe(false);
+
+        // Resting carries no deadline, so nothing is left to wait for.
+        expect(session.effects.some((e: any) => e.id === 'resting')).toBe(true);
+        expect(sessionTracker.get(SESSION_ID)?.expiryTimer).toBeUndefined();
     });
 
     it('gives a reconnecting player who left the tab on /battle an untimed aura, and the countdown only once they move', async () => {
@@ -257,6 +255,39 @@ describe('location-based zone sync (integration)', () => {
 
         await screenHandler({ screen: 'home' }, vi.fn());
         expect(session.effects.find((e: any) => e.id === 'combat').expiresAt).toBe(Date.now() + ZONE_CONFIG.combatLingerMs);
+    });
+
+    /**
+     * A refreshed effect must still expire on its own exact timer, not fall through to the next
+     * periodic tick. `applyEffect` re-applies under the SAME id with a later deadline, which the
+     * id-keyed scheduler could not see — so the stale timer fired early, found nothing expired,
+     * and left the new deadline unscheduled. The client dropped the icon roughly on time and the
+     * server noticed up to a whole tick interval later.
+     */
+    it('expires a refreshed debuff on its new deadline via its own timer, not the periodic tick', async () => {
+        const { EFFECTS_CONFIG } = await import('@/constant/game.constant');
+        const { applyEffect } = await import('@/service/player.service');
+        const start = Date.now();
+
+        // Applied, then re-applied 30s later — exactly what a third consecutive ambush does.
+        applyEffect(session as unknown as PlayerState, EFFECTS_CONFIG.ambushDebuff);
+        await screenHandler({ screen: 'home' }, vi.fn());
+
+        await vi.advanceTimersByTimeAsync(30_000);
+        applyEffect(session as unknown as PlayerState, EFFECTS_CONFIG.ambushDebuff);
+        await screenHandler({ screen: 'home' }, vi.fn());
+
+        const refreshed = session.effects.find((e: any) => e.id === 'hexed');
+        expect(refreshed.expiresAt).toBe(start + 30_000 + EFFECTS_CONFIG.ambushDebuff.durationMs);
+
+        // The ORIGINAL deadline passes: the debuff must survive it.
+        await vi.advanceTimersByTimeAsync(30_100);
+        expect(session.effects.some((e: any) => e.id === 'hexed')).toBe(true);
+
+        // Its own timer fires 25ms past the new deadline — well short of a periodic tick, and
+        // processSessionTick is never called by hand anywhere in this test.
+        await vi.advanceTimersByTimeAsync(30_000);
+        expect(session.effects.some((e: any) => e.id === 'hexed')).toBe(false);
     });
 
     it('ambushed unconditionally forces combat even if a raw client reports a resting screen — the safety net the old game\'s naive path-trust model lacked', async () => {
@@ -277,7 +308,7 @@ describe('location-based zone sync (integration)', () => {
 
         for (let i = 0; i < 5; i++) {
             await vi.advanceTimersByTimeAsync(TICK_CONFIG.intervalMs);
-            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, { applyRegen: true });
+            await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
         }
 
         expect(session.health).toBe(healthAfterFight); // never regenerated

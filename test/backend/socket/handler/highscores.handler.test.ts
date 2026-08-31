@@ -30,7 +30,7 @@ function makeCtx(overrides: Partial<PlayerState> = {}): SessionContext {
         weaponId: 0, armorId: 0, dead: true, ...overrides,
     } as PlayerState;
 
-    return { sessionId: 'sid-1', session: {}, player, zoneChanged: false };
+    return { sessionId: 'sid-1', session: {}, player, zoneChanged: false, expiry: { removed: [], healthBefore: undefined, changed: false } };
 }
 
 describe('highscores.handler', () => {

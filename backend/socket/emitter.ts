@@ -2,6 +2,9 @@ import type { Server as SocketIOServer } from 'socket.io';
 import type { HydratePayload, PlayerSnapshot, FlashView } from '@shared/contract';
 import type { SessionTrackerEntry, PlayerState } from '@/interface';
 import { SESSION_CONFIG } from '@/constant/game.constant';
+
+/** Fires just after the deadline, so the load-time sweep reliably sees the effect as due. */
+const EXPIRY_GRACE_MS = 25;
 import { logger } from '@/config/logger.config';
 import { formatSessionId } from '@/util/format.util';
 
@@ -49,38 +52,39 @@ export function emitNotice(io: SocketIOServer, sessionId: string, notice: FlashV
 }
 
 /**
- * Schedules an exact timeout per active timed effect so expiry fires to the millisecond rather
- * than waiting for the next 5s tick. `onExpiry` is a parameter (not a direct import of
- * processSessionTick) purely to avoid an emitter <-> tick import cycle.
+ * Arms ONE timer for the session, at the earliest upcoming effect deadline, so a session load
+ * happens the moment something is due — the load is what actually expires it (see
+ * session.ts::loadContext). `onExpiry` is a parameter rather than a direct import purely to avoid
+ * an emitter <-> tick cycle.
+ *
+ * Always cleared and re-armed from scratch. That is the whole point: the previous design kept a
+ * timer per effect id and had to decide which existing timers still applied, which is where every
+ * bug lived — an id-keyed check that missed a moved deadline, then a narrowed list that deleted
+ * still-pending timers. A single earliest-deadline timer has no such decision to get wrong, and a
+ * clearTimeout/setTimeout pair per call costs nothing.
  */
-export function syncExpiryTimers(
-    _io: SocketIOServer,
+export function scheduleNextExpiry(
     tracker: SessionTrackerEntry,
     sessionId: string,
     player: PlayerState,
     onExpiry: (sessionId: string) => void,
 ): void {
-    const timers = tracker.expiryTimers ??= new Map();
-    const now = Date.now();
-    const active = (player.effects ?? []).filter(e => e.expiresAt && e.expiresAt > now);
-    const activeIds = new Set(active.map(e => e.id));
+    clearTimeout(tracker.expiryTimer);
+    tracker.expiryTimer = undefined;
 
-    for (const [id, timer] of timers.entries()) {
-        if (!activeIds.has(id)) {
-            clearTimeout(timer);
-            timers.delete(id);
-        }
-    }
+    // Truthiness, not `!== undefined`: a falsy-but-present `expiresAt: 0` means "no expiry", not
+    // "expired in 1970".
+    const deadlines = (player.effects ?? []).map(e => e.expiresAt).filter((at): at is number => Boolean(at));
+    if (deadlines.length === 0)
+        return;
 
-    for (const effect of active) {
-        if (timers.has(effect.id))
-            continue;
-
-        timers.set(effect.id, setTimeout(() => {
-            timers.delete(effect.id);
-            onExpiry(sessionId);
-        }, Math.max(0, effect.expiresAt! - now + 25)));
-    }
+    tracker.expiryTimer = setTimeout(() => {
+        tracker.expiryTimer = undefined;
+        onExpiry(sessionId);
+    // The grace puts the firing just past the deadline, so the load-time sweep definitely sees it
+    // as due. `Math.max(0, …)` covers a deadline already in the past — after a restart, say — by
+    // firing immediately rather than not at all.
+    }, Math.max(0, Math.min(...deadlines) - Date.now() + EXPIRY_GRACE_MS));
 }
 
 /** Drops tracker entries with no sockets that have been idle past the grace period. */
@@ -90,8 +94,7 @@ export function cleanupStaleSessions(now: number): void {
             return;
 
         logger.debug(`[SOCKET:${formatSessionId(sessionId)}] \x1b[34mCleaning up stale session\x1b[0m`);
-        tracker.expiryTimers?.forEach(timer => clearTimeout(timer));
-        tracker.expiryTimers?.clear();
+        clearTimeout(tracker.expiryTimer);
         sessionTracker.delete(sessionId);
     });
 }
