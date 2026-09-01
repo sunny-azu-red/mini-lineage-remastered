@@ -2,10 +2,7 @@ import type { PlayerSnapshot } from './player';
 
 export type SoundName = 'crit' | 'eat' | 'level' | 'death' | 'buy' | 'start' | 'ambush';
 
-/**
- * Every screen the client can be on. Shared with the server, whose `PlayerState.currentScreen`
- * drives zone classification (see ZONE_CONFIG.combatZones/restingZones).
- */
+// Shared with the server: PlayerState.currentScreen drives zone classification off this.
 export type ScreenId =
     | 'start' | 'home' | 'battle' | 'weapons' | 'armors' | 'inn' | 'suicide'
     | 'death' | 'character' | 'highscores' | 'statistics' | 'races' | 'error';

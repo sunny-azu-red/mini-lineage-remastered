@@ -9,12 +9,8 @@ const genericRateLimitMessage = (retryAfterSeconds: number | null): string =>
         ? `You are moving too fast, please take a breath and try again in ${retryAfterSeconds}s.`
         : 'You are moving too fast, please take a breath and try again in a moment.';
 
-/**
- * The one shared renderer for `store.notice` (rate limits, INVALID_PAYLOAD, …). There is no
- * full-screen 429 page anymore, so a rejected action surfaces inline on the current screen.
- * RATE_LIMITED is special-cased here rather than in a second component — both render from the
- * same state, so a sibling would only duplicate this one's chrome or fight it over which renders.
- */
+// The one shared renderer for `store.notice` (rate limits, INVALID_PAYLOAD, …) — a rejected
+// action surfaces inline on the current screen rather than a full-screen error page.
 export default function NoticeAlert() {
     const notice = useGameStore(state => state.notice);
     const setNotice = useGameStore(state => state.setNotice);

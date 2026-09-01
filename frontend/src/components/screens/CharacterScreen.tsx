@@ -4,15 +4,11 @@ import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
 import Narrative from '@/components/common/Narrative';
 import BackLink from '@/components/common/BackLink';
 
-/**
- * Everything comes from `player: PlayerSnapshot` plus `catalog.races` — used for the player's own
- * race (backstory/traits, pre-filled HTML) and, via `enemyRaceId`, the opponent's plural forms.
- */
 export default function CharacterScreen() {
     const player = useGameStore(state => state.player);
     const catalog = useGameStore(state => state.catalog);
-    // Seeded before the guard below because hooks can't follow an early return. Harmless — the
-    // guard bails before this component ever paints without a real player.
+    // Seeded before the guard below since hooks can't follow an early return; harmless, since the
+    // guard bails before this ever paints without a real player.
     const { display: hpDisplay } = useAnimatedNumber(player?.health ?? 0, { format: formatNumber });
 
     if (!player || !catalog || player.raceId === null || !player.weapon || !player.armor || !player.stats)

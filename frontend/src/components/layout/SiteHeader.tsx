@@ -2,11 +2,8 @@ import type { MouseEvent } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import SoundToggle from './SoundToggle';
 
-/**
- * The old app gated header clickability on `!ambushed && !dead`. That gate is gone: navigate()
- * pins the screen to 'battle'/'death' anyway, so the header can always try to go home and simply
- * gets redirected. SoundToggle sits OUTSIDE the anchor so clicking it never also navigates.
- */
+// Always clickable: navigate() pins to 'battle'/'death' anyway, so it just redirects when blocked.
+// SoundToggle sits OUTSIDE the anchor so clicking it never also navigates.
 export default function SiteHeader() {
     const player = useGameStore(state => state.player);
     const navigate = useGameStore(state => state.navigate);

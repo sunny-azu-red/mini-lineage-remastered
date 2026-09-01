@@ -11,18 +11,14 @@ function prefersReducedMotion(): boolean {
     try {
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     } catch {
-        // matchMedia unavailable (e.g. an unstubbed test environment) — animate normally.
         return false;
     }
 }
 
 /**
- * Eases a displayed number toward `target` on the same cubic curve the old vanilla script used.
- *
- * The "from" value is seeded with the FIRST target this instance ever sees, so the initial render
- * (including right after a reconnect) shows the true value instantly with no 0→N sweep. That is
- * what replaces the old sessionStorage cache + pre-paint style-injection hack: there is no reload
- * here, so the previous value simply lives in memory across renders.
+ * Eases a displayed number toward `target` on a cubic curve. The "from" value is seeded with the
+ * FIRST target this instance ever sees, so the initial render (including right after a reconnect)
+ * shows the true value instantly with no 0→N sweep.
  */
 export function useAnimatedNumber(
     target: number,
@@ -69,8 +65,7 @@ export function useAnimatedNumber(
         };
         rafRef.current = requestAnimationFrame(step);
 
-        // Cancelling here is what stops two animations overlapping when retargeted mid-flight:
-        // React always runs this cleanup before re-running the effect.
+        // Runs before every re-run, so two animations retargeted mid-flight never overlap.
         return () => {
             if (rafRef.current !== null) {
                 cancelAnimationFrame(rafRef.current);

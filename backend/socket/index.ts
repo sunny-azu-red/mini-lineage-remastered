@@ -35,8 +35,8 @@ export function initSocketService(server: HttpServer, sessionMiddleware: Request
         if (sessionId) {
             trackSocket(io, sessionId, socket.id);
 
-            // Hydrate is provably non-mutating — read whatever is in the store and send it
-            // as-is. That is what makes even a mid-ambush hard refresh harmless.
+            // Hydrate is provably non-mutating — read the store as-is, so even a mid-ambush
+            // hard refresh is harmless.
             void (async () => {
                 try {
                     const player = ((await getSessionData(sessionId)) ?? {}) as PlayerState;

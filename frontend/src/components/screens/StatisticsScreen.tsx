@@ -4,13 +4,8 @@ import Narrative from '@/components/common/Narrative';
 import BackLink from '@/components/common/BackLink';
 import LoadingPanel from '@/components/common/LoadingPanel';
 
-/**
- * "The Tome of Lore". The raw counters are fetched fresh; all the prose formatting that used to
- * happen server-side now happens here against `@shared/format`'s identical helpers.
- *
- * Templates embedding literal HTML go through `Narrative`; plain `pluralize` output is ordinary
- * text and is rendered as normal JSX children.
- */
+// "The Tome of Lore": raw counters fetched fresh, formatted here via @shared/format. Templates
+// embedding literal HTML go through `Narrative`; plain `pluralize` output renders as JSX children.
 interface CountedProps {
     /** Uses `{n}` for the pluralized count and `{isSingle}` for singular/plural verb agreement. */
     template: string;
@@ -34,12 +29,7 @@ export default function StatisticsScreen() {
 
     return (
         <>
-            {/*
-              * A failure surfaces as a notice banner (useRequest) and falls through to the
-              * empty-archives copy — an empty database is a genuine, distinct condition from a
-              * fetch that never came back, and the banner is what tells them apart. The BackLink
-              * below sits OUTSIDE this branch so it stays reachable while loading.
-              */}
+            {/* A failure surfaces via the notice banner (useRequest) and falls through to the empty copy. */}
             {loading && !data ? (
                 <LoadingPanel label="Unsealing the tome…" />
             ) : stats ? (

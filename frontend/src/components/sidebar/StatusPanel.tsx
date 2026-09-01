@@ -5,8 +5,7 @@ import HpBar from './HpBar';
 import XpBar from './XpBar';
 import AdenaRow from './AdenaRow';
 
-// The old EJS baked a pre-rendered level line server-side, gated on ambushed/dead. That gate is
-// gone: navigate() pins the screen either way, so this link can always attempt Character.
+// Always clickable: navigate() pins the screen either way, so this link can always attempt Character.
 export default function StatusPanel() {
     const player = useGameStore(state => state.player);
     const navigate = useGameStore(state => state.navigate);

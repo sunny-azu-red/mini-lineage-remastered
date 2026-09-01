@@ -49,7 +49,7 @@ export interface PurchaseResult {
     item?: Item;
 }
 
-/** Structurally identical to the wire-level `BattleOutcome` — aliased so the two can never drift. */
+// Aliased to the wire-level type so the two can never drift.
 export type BattleResult = BattleOutcome;
 
 // ----------------
@@ -116,26 +116,12 @@ export interface PlayerState {
     totalEnemiesKilled?: number;
     effects?: ActiveEffect[];
     revision?: number;
-    /**
-     * Stamped by the `player:screen` handler (fired by the client's navigate()/hydrate() on every
-     * screen change) — see syncZoneAuras, which classifies combat/resting zones purely from this,
-     * exactly like the old game's URL-path-based zone.middleware.ts did.
-     */
+    /** Stamped by `player:screen`; syncZoneAuras classifies combat/resting zones purely from this. */
     currentScreen?: ScreenId;
-    /**
-     * When the ⚔️ In Combat aura stops lingering after the player LEFT a combat zone. Absent
-     * while they are still standing in one (that combat is indefinite and carries no countdown),
-     * and absent again once it has elapsed. Server-side only — the countdown reaches the client
-     * as the zone aura's ordinary `expiresAt`. See syncZoneAuras.
-     */
+    /** When the ⚔️ In Combat aura stops lingering after leaving a combat zone. See syncZoneAuras. */
     combatUntil?: number;
     bootstrappedAt?: number;
-    /**
-     * The narrative from the most recently resolved `battle:fight`, resolved once and persisted
-     * here — mirrors `resolveDeathReason()`'s pattern for `deathReason` — so it rides along in
-     * every `buildPlayerSnapshot()` call (as `PlayerSnapshot.lastBattle`) and survives any
-     * reconnect, instead of existing only in that one fight's ack.
-     */
+    /** The most recently resolved fight, persisted so it survives a reconnect. */
     lastBattleNarrative?: BattleNarrativeSnapshot;
 }
 
@@ -172,12 +158,7 @@ export type Statistics = {
 export interface SessionTrackerEntry {
     socketIds: Set<string>;
     lastSeen: number;
-    /**
-     * ONE timer, armed at the earliest upcoming effect deadline for this session. Deliberately not
-     * a timer per effect: that needed an id to key on and a deadline to compare, and every bug in
-     * it came from the scheduling and cleanup halves disagreeing about which timers still applied.
-     * A single deadline is cleared and re-armed unconditionally, so there is nothing to disagree.
-     */
+    /** ONE timer, armed at the earliest upcoming effect deadline — always cleared and re-armed whole. */
     expiryTimer?: NodeJS.Timeout;
     inputBuffer?: string[];
 }

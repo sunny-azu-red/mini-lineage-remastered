@@ -104,8 +104,8 @@ export function buildPlayerSnapshot(player: PlayerState): PlayerSnapshot {
             emoji: effect.emoji,
             label: effect.label,
             tooltip: formatEffectTooltip(effect),
-            // Converted to a duration here, at the one place state crosses to the client, so the
-            // two machines' clocks never need reconciling. Stored state stays absolute.
+            // Converted to a duration here, where state crosses to the client, so the two
+            // machines' clocks never need reconciling. Stored state stays absolute.
             remainingMs: effect.expiresAt === undefined ? undefined : Math.max(0, effect.expiresAt - Date.now()),
         })),
 

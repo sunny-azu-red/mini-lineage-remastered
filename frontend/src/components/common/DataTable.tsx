@@ -6,10 +6,7 @@ export interface Column<R> {
     headerTitle?: string;
     /** Applied to the `<th>` — alignment only; headers are never colour-tinted. */
     headerClassName?: string;
-    /**
-     * Applied to the `<td>`, for styling constant across every row (e.g. 'gold', 'center').
-     * A column whose styling VARIES per row should wrap its value in a span from `render`.
-     */
+    /** Applied to the `<td>` for styling constant across every row; per-row styling belongs in `render`. */
     className?: string;
     render: (row: R) => ReactNode;
 }

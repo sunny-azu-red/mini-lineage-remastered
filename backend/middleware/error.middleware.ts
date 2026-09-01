@@ -3,10 +3,7 @@ import { isRelease } from '@/util/version.util';
 import { GAME_VERSION } from '@/constant/game.constant';
 import { logger } from '@/config/logger.config';
 
-/**
- * The SPA owns its own error UI, so this only catches errors thrown by Express itself
- * (session-store failures, a failed sendFile) and answers with plain JSON.
- */
+// The SPA owns its own error UI; this only catches errors Express itself throws, as plain JSON.
 export const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err?.status || 500;
 

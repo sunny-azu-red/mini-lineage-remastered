@@ -1,9 +1,6 @@
 import type { SoundName } from './common';
 
-/**
- * Lives here rather than in `battle.ts` so `player.ts` can import it without a cycle
- * (`battle.ts` imports `PlayerSnapshot` from `player.ts`). `battle.ts` re-exports both.
- */
+// Split out from battle.ts (which re-exports both) to avoid an import cycle with player.ts.
 export interface BattleNarrative {
     critLine: string | null;
     killLine: string;
@@ -24,12 +21,7 @@ export interface BattleOutcome {
     isLevelUp: boolean;
 }
 
-/**
- * The persisted, reconnect-safe half of a resolved fight — everything `BattleFightResult`
- * carries EXCEPT `player`/`flash`, which are always derived fresh and never stale. Resolved
- * once and stored on `PlayerState`, the same pattern as `deathReason`, so a page reload
- * replays the real narrative instead of a placeholder.
- */
+/** Reconnect-safe half of BattleFightResult — everything but `player`/`flash`, always fresh. */
 export interface BattleNarrativeSnapshot {
     narrative: BattleNarrative;
     outcome: BattleOutcome;

@@ -5,13 +5,10 @@ interface ErrorScreenProps {
 }
 
 /**
- * Covers two failure modes with one visual: an unexpected render crash caught by ErrorBoundary
- * (`detail` = the thrown message, dev builds only), and the store's explicit `screen: 'error'`
- * navigation, which carries no message and so renders without `detail`.
- *
- * "Back" is `history.back()` when there is somewhere to go, else a plain navigate — the SPA
- * equivalent of the old hard `location.href = '/'`, with no reload. useHistorySync's popstate
- * handler turns a real back() into the right store transition, so this need not guess where it leads.
+ * Covers two failure modes: an unexpected render crash caught by ErrorBoundary (`detail` = the
+ * thrown message, dev builds only), and the store's explicit `screen: 'error'` navigation, which
+ * carries no message. "Back" is `history.back()` when possible — useHistorySync's popstate
+ * handler turns that into the right store transition, so this need not guess where it leads.
  */
 export default function ErrorScreen({ detail = null }: ErrorScreenProps) {
     const player = useGameStore(state => state.player);

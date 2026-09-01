@@ -30,8 +30,7 @@ export function registerHighscoresHandlers(io: SocketIOServer, socket: Socket): 
 
             const raceSlug = race ? slugify(race.label) : null;
 
-            // Reset in place rather than destroying the session, which would leave this socket
-            // authenticated against a dead row.
+            // Reset in place rather than destroying the session, which would desync this socket.
             resetPlayer(ctx.player);
 
             return { raceSlug, hydrate: { player: buildPlayerSnapshot(ctx.player), catalog: buildGameCatalog() } };

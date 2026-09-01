@@ -12,12 +12,10 @@ interface UseActionResult<K extends AckedEvent> {
 }
 
 /**
- * Wraps one mutating socket action with a `pending` flag a caller wires straight to a button's
- * `disabled` prop — replacing the old global 3s button-disable hack entirely.
- *
- * The `useRef` (not just `pending`) is what guards re-entrancy: two `run()` calls in the same
- * synchronous tick (a fast double-click before React re-renders) must still fire one request,
- * which a plain `if (pending)` closed over stale state would not catch.
+ * Wraps one mutating socket action with a `pending` flag wired straight to a button's `disabled`.
+ * The `useRef` (not just `pending` state) guards re-entrancy: two `run()` calls in the same
+ * synchronous tick (a fast double-click) must still fire one request, which a plain `if (pending)`
+ * closed over stale state would not catch.
  */
 export function useAction<K extends AckedEvent>(event: K): UseActionResult<K> {
     const [pending, setPending] = useState(false);

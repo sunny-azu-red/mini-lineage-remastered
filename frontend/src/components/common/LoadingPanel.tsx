@@ -3,9 +3,8 @@ interface LoadingPanelProps {
     label?: string;
 }
 
-// Shown while waiting on data: the server's initial `hydrate` push (AppShell), or a screen's own
-// fetch. Without it the panel body is simply empty, which reads as a broken page — or worse, as a
-// confident "there is nothing here" when the request is merely still in flight.
+// Shown while waiting on data (the initial hydrate, or a screen's own fetch) so an in-flight
+// request never reads as a confident "there is nothing here".
 export default function LoadingPanel({ label = 'Entering the realm…' }: LoadingPanelProps) {
     return (
         <div className="loading-panel">

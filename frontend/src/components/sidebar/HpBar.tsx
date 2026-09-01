@@ -4,11 +4,8 @@ import { formatNumber } from '@shared/format';
 import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
 import { useShimmer } from '@/hooks/useShimmer';
 
-/**
- * The bar FILL animates purely via the `.bar` CSS width transition — the compositor does that
- * more cheaply than a per-frame React re-render would. `useAnimatedNumber` drives only the
- * numeric text, which is the part users actually read digit by digit.
- */
+// The bar FILL animates via the CSS width transition (cheaper than a per-frame re-render);
+// useAnimatedNumber drives only the numeric text.
 export default function HpBar({ player }: { player: PlayerSnapshot }) {
     const health = player.health ?? 0;
     const { display } = useAnimatedNumber(health, { format: formatNumber });

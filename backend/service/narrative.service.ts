@@ -11,10 +11,7 @@ import { getAmbushEnemyCount } from '@/service/math.service';
 
 const pick = (templates: string[], data: Record<string, unknown>) => fillTemplate(randomElement(templates), data);
 
-/**
- * Builds the narrative for a resolved fight. `ambushedAfter` is the NEW ambush state, passed in
- * by the caller rather than rolled here, keeping this function side-effect-free.
- */
+/** Builds the narrative for a resolved fight. `ambushedAfter` is the NEW state, rolled by the caller. */
 export function buildBattleNarrative(player: PlayerState, result: BattleResult, ambushedAfter: boolean): BattleNarrative {
     const weapon = WEAPONS[player.weaponId];
     const armor = ARMORS[player.armorId];
@@ -42,9 +39,7 @@ export function buildBattleNarrative(player: PlayerState, result: BattleResult, 
         isSingleAmbush: ambushEnemies === 1,
     };
 
-    // Drawn as statements, in this exact order, because each one consumes a Math.random() —
-    // reordering them (or making the ambush draw conditional) would shift every later roll in
-    // the request. The ambush template is always SELECTED; only its fill is skipped when unused.
+    // Order is load-bearing: each draws a Math.random(), so reordering shifts every later roll.
     const critLine = result.isCritical ? pick(BATTLE_CRITICAL_TEMPLATES, data) : null;
     const killLine = pick(BATTLE_KILL_TEMPLATES, data);
     const deflectionLine = pick(BATTLE_DEFLECTION_TEMPLATES, data);

@@ -16,6 +16,12 @@ const GAME_FIELDS: (keyof PlayerState)[] = [
     'effects', 'revision', 'currentScreen', 'combatUntil', 'lastBattleNarrative',
 ];
 
+const getEquipment = (player: PlayerState): { race: Race; weapon: Item; armor: Item } => ({
+    race: RACES[player.raceId] ?? RACES[0],
+    weapon: WEAPONS[player.weaponId] ?? WEAPONS[0],
+    armor: ARMORS[player.armorId] ?? ARMORS[0],
+});
+
 export function isGameStarted(player: PlayerState): boolean {
     return player.raceId !== undefined && player.health !== undefined && player.adena !== undefined;
 }
@@ -59,15 +65,12 @@ export function killPlayer(player: PlayerState): void {
 }
 
 export function commitSuicide(player: PlayerState): void {
-    // `coward` must be set BEFORE killPlayer, whose resolveDeathReason call picks the branch.
+    // Must be set BEFORE killPlayer, whose resolveDeathReason call picks the branch on it.
     player.coward = true;
     killPlayer(player);
 }
 
-/**
- * Actively held in combat: standing in a combat zone, or ambushed anywhere. `ambushed` counts
- * unconditionally, so a raw socket client lying about its screen can never escape an ambush.
- */
+/** Actively held in combat: standing in a combat zone, or ambushed anywhere (unconditionally). */
 function isHeldInCombat(player: PlayerState): boolean {
     const screen = player.currentScreen;
 
@@ -75,30 +78,23 @@ function isHeldInCombat(player: PlayerState): boolean {
 }
 
 /**
- * The zone aura the player should have right now, or null for a screen in neither zone list.
- *
- * `before` is the aura being replaced, and is what makes the disengage transition detectable
- * without a second bookkeeping field: an indefinite combat aura (no `expiresAt`) means the player
- * was standing in a combat zone on the previous sync, so if they no longer are, they just stepped
- * out and the countdown starts now.
+ * The zone aura the player should have right now, or null. `before` is the aura being replaced:
+ * an indefinite combat aura (no `expiresAt`) means they were standing in a combat zone last sync,
+ * so leaving it now starts the disengage countdown.
  */
 function resolveZoneAura(player: PlayerState, before: ActiveEffect | undefined): ActiveEffect | null {
     const now = Date.now();
 
     if (isHeldInCombat(player)) {
-        // Standing in it: combat is indefinite, and any pending disengage is void. This is what
-        // keeps regen paused forever on the battleground no matter how much time passes.
         delete player.combatUntil;
-
         return { ...EFFECTS_CONFIG.combatAura };
     }
 
     if (before?.id === 'combat' && before.expiresAt === undefined)
         player.combatUntil = now + ZONE_CONFIG.combatLingerMs;
 
-    // Disengaging: still in combat, but now counting down. Re-entering a combat zone cancels it
-    // (above), and leaving again arms a fresh one — deliberate, since the countdown is anchored
-    // to leaving the zone rather than to the last fight.
+    // Disengaging: still in combat but counting down. Re-entering cancels it (above); leaving
+    // again arms a fresh one, anchored to leaving the zone rather than to the last fight.
     if (player.combatUntil !== undefined && player.combatUntil > now)
         return { ...EFFECTS_CONFIG.combatAura, expiresAt: player.combatUntil };
 
@@ -112,15 +108,10 @@ function resolveZoneAura(player: PlayerState, before: ActiveEffect | undefined):
 }
 
 /**
- * Re-derives the resting/combat zone aura from `currentScreen` (stamped by `player:screen`),
- * returning whether it changed. Dead players and screens in neither zone list get no aura.
- *
- * The resting aura never carries an `expiresAt`; the combat aura carries one only while
- * disengaging, which is how the countdown reaches the client — as an ordinary effect expiry, so
- * `syncExpiryTimers` schedules its exact wake-up and `EffectIcon` renders its timer for free.
- *
- * The returned "changed" flag compares `expiresAt` as well as the id, because combat gaining a
- * countdown is a real change that callers must persist and broadcast.
+ * Re-derives the resting/combat zone aura from `currentScreen`, returning whether it changed
+ * (id or expiry) so a caller knows to persist and broadcast. Dead players get no aura. The combat
+ * aura carries an `expiresAt` only while disengaging, which is how the countdown reaches the
+ * client — as an ordinary effect expiry.
  */
 export function syncZoneAuras(player: PlayerState): boolean {
     const effects = player.effects ?? [];
@@ -145,9 +136,6 @@ export function resolveDeathReason(player: PlayerState): void {
     if (player.deathReason)
         return;
 
-    // There is no "caught fleeing an ambush" reason any more: fleeing is prevented rather than
-    // punished, so the event that message described cannot occur. A player who quits while
-    // ambushed simply quit.
     player.deathReason = player.cheated
         ? '👾 The gods saw your heresy and cast your memory into oblivion.'
         : player.coward
@@ -175,16 +163,9 @@ export function getActiveEffects(player: PlayerState): ActiveEffect[] {
     if (!effects.some(e => e.id === 'resting'))
         return effects;
 
-    // Regenerating aura: only while resting, wounded, and with a positive total regen rate.
-    // The modifier list mirrors getPlayerStats' exactly — it cannot just call that, which would
-    // recurse back into here, so equipment is folded in rather than partially special-cased.
-    // Summing max health from effects alone agreed with getPlayerStats only by luck: no weapon
-    // or armor carries a maxHealth modifier today, but ItemView exposes one and the shop renders
-    // it, so the first item that did would hide this aura from a genuinely wounded player.
-    const race = RACES[player.raceId] ?? RACES[0];
-    const weapon = WEAPONS[player.weaponId] ?? WEAPONS[0];
-    const armor = ARMORS[player.armorId] ?? ARMORS[0];
-
+    // Regenerating aura: only while resting, wounded, and with a positive total regen rate. This
+    // modifier list mirrors getPlayerStats' by hand (rather than calling it) to avoid recursion.
+    const { race, weapon, armor } = getEquipment(player);
     const allModifiers = [...(weapon.modifiers ?? []), ...(armor.modifiers ?? []), ...effects.flatMap(e => e.modifiers)];
     const sumMod = (type: 'maxHealth' | 'regen') =>
         allModifiers.reduce((total, m) => total + (m.type === type ? m.value : 0), 0);
@@ -200,9 +181,7 @@ export function getActiveEffects(player: PlayerState): ActiveEffect[] {
 
 /** Layered pipeline: race base -> equipment stats -> equipment/effect modifiers -> clamps. */
 export function getPlayerStats(player: PlayerState): PlayerStats {
-    const race = RACES[player.raceId] ?? RACES[0];
-    const weapon = WEAPONS[player.weaponId] ?? WEAPONS[0];
-    const armor = ARMORS[player.armorId] ?? ARMORS[0];
+    const { race, weapon, armor } = getEquipment(player);
 
     const stats: PlayerStats = {
         attack: weapon.stat,
@@ -316,10 +295,8 @@ interface EquipmentSlot {
     bought: (item: Item) => string;
 }
 
-/**
- * Null-prototype so an unexpected `itemType` can never resolve to an inherited `Object.prototype`
- * member (`constructor`, `toString`, …) and be treated as a real equipment slot.
- */
+// Null-prototype so an unexpected `itemType` can never resolve to an inherited Object.prototype
+// member and be treated as a real equipment slot.
 const EQUIPMENT: Record<string, EquipmentSlot | undefined> = Object.assign(Object.create(null), {
     [ItemType.Weapon]: {
         items: WEAPONS as readonly Item[],
@@ -375,9 +352,8 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
 }
 
 /**
- * Drops expired effects and clamps health if a maxHealth buff went away. Returns whether anything
- * changed. Driven ONLY by each effect's own exact-expiry timer (see emitter.ts::syncExpiryTimers) —
- * the periodic loop is the regen cadence and no longer sweeps effects. Never regenerates.
+ * Drops expired effects and clamps health if a maxHealth buff went away. Driven ONLY by each
+ * effect's own exact-expiry timer (see emitter.ts::scheduleNextExpiry) — never regenerates.
  */
 export function processEffectExpiry(player: PlayerState): boolean {
     if (player.dead)
@@ -400,21 +376,16 @@ export function processEffectExpiry(player: PlayerState): boolean {
 
 /** Natural HP regeneration for players out of combat. Periodic cadence only. Returns whether healed. */
 export function processRegenTick(player: PlayerState): boolean {
-    // Via getActiveEffects (not raw `player.effects`) so an already-elapsed disengage countdown
-    // cannot wedge regen off. Held combat carries no `expiresAt` and so still pauses regen
-    // indefinitely — the battleground exploit stays closed. `player.dead` must be tested first:
-    // getActiveEffects returns [] for a corpse, which would otherwise invert this branch.
+    // getActiveEffects (not raw player.effects), so an already-elapsed disengage countdown can't
+    // wedge regen off; held combat carries no expiresAt so it still pauses regen indefinitely.
     if (player.dead || getActiveEffects(player).some(e => e.id === 'combat'))
         return false;
 
-    // Deliberately the POSITIVE form: `regen > 0 && health < maxHealth` bails on a NaN, whereas
-    // the inverted `regen <= 0 || health >= maxHealth` would fall through and persist NaN health.
+    // Positive form deliberately: bails cleanly on a NaN rather than persisting it.
     const stats = getPlayerStats(player);
     if (!(stats.regen > 0 && player.health < stats.maxHealth))
         return false;
 
-    // Record what was ACTUALLY restored, not the full rate — a player within `regen` of their
-    // maximum heals less than the rate, and the statistic must reflect that.
     const healed = restoreHealth(player, stats.regen);
     if (!(healed > 0))
         return false;

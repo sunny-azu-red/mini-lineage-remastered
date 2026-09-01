@@ -7,11 +7,9 @@ interface EffectIconProps {
     elapsed: number;
 }
 
-// The markup shape is ported verbatim so the existing effect-icon CSS applies unmodified.
 export default function EffectIcon({ effect, elapsed }: EffectIconProps) {
-    // `remainingMs` is a duration measured by the server, counted down against time elapsed on THIS
-    // machine since it arrived. Nothing compares the two clocks, so `remaining` can never exceed the
-    // effect's real length and `Math.ceil` can never report a second that does not exist.
+    // remainingMs is a duration measured by the server, counted down against elapsed local time —
+    // nothing compares two clocks, so this can never report a second that doesn't exist.
     const remSec = effect.remainingMs === undefined
         ? null
         : Math.max(0, Math.ceil((effect.remainingMs - elapsed) / 1000));

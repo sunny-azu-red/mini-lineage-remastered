@@ -3,11 +3,8 @@ import { useGameStore, type ScreenId } from '@/store/gameStore';
 import { useAction } from '@/socket/useAction';
 import { playSound } from '@/audio/soundfx';
 
-/**
- * Races render as a plain `<select>` defaulting to the first option, mirroring the original form —
- * there is no "nothing chosen" state to guard. The name-length check is a UX nicety only; the
- * server's GameStartPayloadSchema remains the authoritative validator.
- */
+// Races render as a plain <select> defaulting to the first option — there is no "nothing chosen"
+// state to guard. The name-length check is a UX nicety only; the server schema is authoritative.
 export default function GameStartScreen() {
     const catalog = useGameStore(state => state.catalog);
     const navigate = useGameStore(state => state.navigate);
@@ -21,8 +18,8 @@ export default function GameStartScreen() {
     if (!catalog)
         return null;
 
-    // Destructured into locals because TypeScript's narrowing of `catalog` doesn't survive into
-    // the hoisted function declarations below.
+    // Destructured into locals: TypeScript's narrowing of `catalog` doesn't survive into the
+    // hoisted function declarations below.
     const { nameMinLength, nameMaxLength, races } = catalog;
     const selectedRaceId = raceId ?? races[0]?.id ?? 0;
 
@@ -43,9 +40,8 @@ export default function GameStartScreen() {
         setValidationError(null);
         void run({ raceId: selectedRaceId, name: trimmed }, {
             onSuccess: data => {
-                // One atomic update: commit the new character AND move to Home together. Calling
-                // navigate() first would pin against the still-unstarted store player and bounce
-                // to 'start'; calling it after would clear the welcome flash.
+                // One atomic update: navigate() first would pin against the still-unstarted store
+                // player and bounce to 'start'; after would clear the welcome flash.
                 applyMutation(data.player, data.flash, 'home');
                 playSound(data.flash?.sound);
             },

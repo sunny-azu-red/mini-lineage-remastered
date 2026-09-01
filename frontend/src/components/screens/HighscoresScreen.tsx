@@ -63,11 +63,7 @@ export default function HighscoresScreen() {
                 ))}
             </div>
 
-            {/*
-              * `!data` — not `loading` alone: a re-fetch after switching race tabs keeps the
-              * previous table on screen rather than flashing a spinner. An empty hall is only
-              * ever claimed once a request has actually come back.
-              */}
+            {/* `!data`, not `loading` alone: a race-tab re-fetch keeps the previous table on screen. */}
             {loading && !data ? (
                 <LoadingPanel label="Consulting the chronicles…" />
             ) : rows.length > 0 ? (

@@ -14,11 +14,9 @@ import { statisticsRepository } from '@/repository/statistics.repository';
 import { buildPlayerSnapshot } from '../serializer/player.serializer';
 
 /**
- * INVARIANT: battle:fight succeeds IDENTICALLY whether or not `ambushed` was already true.
- * An ambush is resolved by fighting again — there is no precondition on `ambushed` and no
- * punishment for navigating away. Combined with hydrate being non-mutating, that makes the
- * old navigate-away-while-ambushed exploit structurally impossible. Simulation runs ONLY
- * from this explicit emit — never on mount, hydrate or reconnect.
+ * INVARIANT: succeeds IDENTICALLY whether or not `ambushed` was already true — an ambush is
+ * resolved by fighting again, with no precondition and no punishment for navigating away.
+ * Simulation runs ONLY from this explicit emit — never on mount, hydrate or reconnect.
  */
 export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void {
     registerEvent(io, socket, {
@@ -28,13 +26,10 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
         guards: [requireStarted, requireAlive],
         rateLimit: battleLimiter,
         handler: (ctx): BattleFightResult => {
-            // Stamped directly rather than relying on the separate player:screen event, which is
-            // an independent round trip that could land out of order and miscompute the zone.
+            // Stamped directly rather than relying on the separate player:screen event, which
+            // could land out of order and miscompute the zone.
             ctx.player.ambushed = false;
             ctx.player.currentScreen = 'battle';
-
-            // Not redundant with withSession's post-mutation sync: that runs after this handler
-            // returns, but the snapshot below is built now.
             syncZoneAuras(ctx.player);
 
             const outcome = simulateBattle(ctx.player);
@@ -55,8 +50,6 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
                 } else {
                     ctx.player.consecutiveAmbushes = 0;
                 }
-                // No re-sync needed: currentScreen === 'battle' already forces combat, so the
-                // ambush roll cannot change the zone outcome.
             }
 
             const ambushed = !died && Boolean(ctx.player.ambushed);
@@ -67,9 +60,7 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
 
             const narrative = buildBattleNarrative(ctx.player, outcome, ambushed);
 
-            // Persisted so a reconnect replays this exact narrative instead of a placeholder —
-            // same "resolve once, store on PlayerState" pattern as deathReason. `ambushed` here
-            // is display text only; PlayerSnapshot.ambushed remains the live source of truth.
+            // Persisted so a reconnect replays this exact narrative, same pattern as deathReason.
             ctx.player.lastBattleNarrative = { narrative, outcome, ambushed, died, sound };
 
             return {

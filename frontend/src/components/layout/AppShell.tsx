@@ -15,20 +15,15 @@ interface AppShellProps {
     title: string;
 }
 
-// An explicit allowlist, not derived from `player` — "does a character exist" and "should this
-// screen show a sidebar" are different questions. Game Start, Character, Highscores, Statistics
-// and Races all used the sidebar-less layout.
+// An explicit allowlist, not derived from `player` — "has a character" and "shows a sidebar" are
+// different questions (Character, Highscores, Statistics, Races and Game Start never show one).
 export const SIDEBAR_SCREENS: ReadonlySet<ScreenId> =
     new Set(['home', 'battle', 'weapons', 'armors', 'inn', 'suicide', 'death']);
 
-// The DOM shape is ported from the old layout so the byte-for-byte-ported CSS, which targets
-// these exact ids and classes, still applies unmodified.
 export default function AppShell({ children, title }: AppShellProps) {
     const player = useGameStore(state => state.player);
     const screen = useGameStore(state => state.screen);
-    // Null until the first hydrate lands. Gating here once covers every screen, all of which
-    // would otherwise each flash empty.
-    const catalog = useGameStore(state => state.catalog);
+    const catalog = useGameStore(state => state.catalog); // null until the first hydrate lands
 
     return (
         <div id="app">
@@ -52,11 +47,7 @@ export default function AppShell({ children, title }: AppShellProps) {
                             <div className="panel-body">
                                 <NoticeAlert />
                                 <FlashAlert />
-                                {/*
-                                 * An ambush needs no global banner: the store pins `screen` to
-                                 * 'battle' whenever ambushed, so BattleScreen's own inline
-                                 * treatment is always what's on screen.
-                                 */}
+                                {/* An ambush needs no global banner: the store pins `screen` to 'battle'. */}
                                 <LowHealthAlert />
                                 {catalog ? children : <LoadingPanel />}
                             </div>

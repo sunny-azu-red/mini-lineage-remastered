@@ -1,8 +1,4 @@
-/**
- * Pure, framework-agnostic formatting helpers imported unmodified by BOTH the Node server
- * (via backend/util/format.util.ts, which re-exports them) and the browser bundle. Keep this
- * file dependency-free — no `fs`, no game constants.
- */
+// Dependency-free: imported unmodified by both the Node server and the browser bundle.
 
 export function formatAdena(adena: number): string {
     const abs = Math.abs(adena);
