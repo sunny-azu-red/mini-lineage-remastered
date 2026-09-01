@@ -1,11 +1,8 @@
 import { useGameStore } from '@/store/gameStore';
 import { playSound } from '@/audio/soundfx';
 
-/**
- * A chime plays as audible confirmation only when the click is ENABLING sound — never on mute,
- * where there would be nothing to hear. Read at component level rather than inside the store's
- * `toggleSound()` to avoid a circular import between the store and the audio module.
- */
+// A chime confirms only when the click is ENABLING sound. Played here, not in toggleSound() itself,
+// to avoid a circular import between the store and the audio module.
 export default function SoundToggle() {
     const soundEnabled = useGameStore(state => state.soundEnabled);
     const toggleSound = useGameStore(state => state.toggleSound);

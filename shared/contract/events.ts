@@ -5,11 +5,7 @@ import type { BattleFightResult } from './battle';
 import type { HighscoreList, HighscoreSubmitResult } from './highscores';
 import type { StatisticsResponse } from './statistics';
 
-/**
- * Sent on every connect AND reconnect. Building this payload must NEVER mutate player state —
- * that invariant is what makes a hard refresh, even mid-ambush, completely harmless.
- * `player` is null when no character has been started.
- */
+/** Sent on every connect/reconnect. Must NEVER mutate player state (makes hard-refresh harmless). */
 export interface HydratePayload {
     player: PlayerSnapshot | null;
     catalog: GameCatalog;
@@ -43,11 +39,7 @@ export interface ClientToServerEvents {
     'game:start': (p: GameStartPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'game:restart': (p: EmptyPayload, ack: (r: Ack<{ hydrate: HydratePayload }>) => void) => void;
     'battle:fight': (p: EmptyPayload, ack: (r: Ack<BattleFightResult>) => void) => void;
-    /**
-     * Fired on every screen change so the server can classify combat/resting zones from
-     * location alone. `ambushed` still forces combat server-side regardless of what is
-     * reported here, so a raw client lying about its screen can never escape an ambush.
-     */
+    // Fired on every screen change so the server can classify combat/resting zones from location.
     'player:screen': (p: PlayerScreenPayload, ack: (r: Ack<MutationResult>) => void) => void;
     'shop:purchase': (p: ShopPurchasePayload, ack: (r: Ack<MutationResult>) => void) => void;
     'player:suicide': (p: EmptyPayload, ack: (r: Ack<MutationResult>) => void) => void;

@@ -2,13 +2,9 @@ import { useGameStore } from '@/store/gameStore';
 import { isReleaseVersion } from '@shared/version';
 
 /**
- * A release build links the version to its tagged commit; a debug build renders it in the warning
- * colour. Both the version and that release/debug judgement fall back to the client's OWN build
- * when the catalog has not arrived — while connecting, or when the backend is unreachable.
- *
- * The `.version-debug` class is a claim about the BUILD, not about whether the catalog has loaded
- * yet: keying it on the latter made a production bundle flag itself red for the whole loading
- * window, then quietly correct itself once the server answered.
+ * A release build links the version to its tagged commit; a debug build renders it flagged.
+ * Both fall back to the client's OWN build when the catalog hasn't arrived yet — `.version-debug`
+ * is a claim about the BUILD, not about loading state, so it must never key on the latter.
  */
 export default function Footer() {
     const catalog = useGameStore(state => state.catalog);

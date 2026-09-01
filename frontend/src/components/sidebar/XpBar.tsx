@@ -6,11 +6,8 @@ import { useShimmer } from '@/hooks/useShimmer';
 
 /**
  * A separate component purely so `key={levelUpEpoch}` can force a remount on every level-up,
- * resetting useAnimatedNumber's internal "first value" ref. On that remount it starts at 0 (the
- * hook's show-instantly case) and is retargeted to the real value one frame later — a normal,
- * non-first retarget, so the hook eases 0 -> value. `resetConsumedRef` limits that one-frame
- * deferral to the initial reset; every later change within the same mounted instance retargets
- * immediately, exactly as before any level-up.
+ * resetting useAnimatedNumber's "first value" ref: it starts at 0, then retargets to the real
+ * value one frame later so the hook eases 0 -> value instead of showing it instantly.
  */
 function AnimatedXpValue({ value, justLeveledUp }: { value: number; justLeveledUp: boolean }) {
     const [target, setTarget] = useState(justLeveledUp ? 0 : value);
@@ -40,25 +37,19 @@ export default function XpBar({ player }: { player: PlayerSnapshot }) {
     const prevLevelRef = useRef(player.level);
     const prevXpRef = useRef(xpValue);
     const [levelUpEpoch, setLevelUpEpoch] = useState(0);
-    // One flag for the whole one-frame reset window: it both forces the bar to 0% and disables
-    // its CSS width transition. These always moved together, so they are a single state.
+    // Forces the bar to 0% AND disables its CSS transition for one frame — always moved together.
     const [resettingBar, setResettingBar] = useState(false);
     const [gainTick, setGainTick] = useState(0);
-    // Persisted rather than recomputed, so it is still true on the render where `levelUpEpoch`
-    // changes and AnimatedXpValue remounts — one render AFTER `isLevelUp` was true, by which
-    // point prevLevelRef has caught up and `isLevelUp` is false again.
+    // Persisted (not recomputed) so it is still true on the render where AnimatedXpValue remounts,
+    // one render after `isLevelUp` itself went back to false.
     const [justLeveledUp, setJustLeveledUp] = useState(false);
 
     const isLevelUp = prevLevelRef.current !== null && player.level !== null && player.level > prevLevelRef.current;
 
-    /**
-     * xpCurrent legitimately DECREASES across a level-up (it wraps into the new level), which
-     * would otherwise read as a loss. A level-up always counts as a gain and always plays the
-     * two-phase animation: snap to 0% with the transition off for one frame, then restore both so
-     * the bar fills smoothly from 0 — instead of jumping with no animation, or animating
-     * backwards through the wrap-around gap (95% -> 5%). The counter gets the same treatment via
-     * the remount above.
-     */
+    // xpCurrent legitimately DECREASES across a level-up (it wraps into the new level), so a
+    // level-up always counts as a gain and plays a two-phase animation: snap to 0% with the
+    // transition off for one frame, then restore both so the bar fills smoothly from 0 instead of
+    // animating backwards through the wrap-around gap.
     useEffect(() => {
         if (isLevelUp) {
             setLevelUpEpoch(epoch => epoch + 1);
@@ -73,10 +64,9 @@ export default function XpBar({ player }: { player: PlayerSnapshot }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [player.level, xpValue, isLevelUp]);
 
-    // Deliberately its OWN effect, keyed only on `resettingBar` — NOT folded into the one above,
-    // whose deps include `xpValue`. If another xp-changing render landed before this rAF fired,
-    // that effect's cleanup would cancel the reset with nothing left to clear the flag, silently
-    // disabling the bar's transition for the rest of the session.
+    // Its OWN effect, not folded into the one above: if another xp-changing render landed before
+    // this rAF fired, that effect's cleanup would cancel the reset with nothing left to clear the
+    // flag, silently disabling the bar's transition for the rest of the session.
     useEffect(() => {
         if (!resettingBar)
             return;

@@ -6,11 +6,8 @@ import { slugify } from '@/util/format.util';
 import { buildRaceTraits } from '@/service/narrative.service';
 import { toItemView } from './player.serializer';
 
-/**
- * `races` below spreads the whole `Race` record into the client payload, so every Race field is
- * public by construction. This makes that a COMPILE error rather than a silent leak: adding a
- * field to `Race` that isn't on `RaceView` flips this type to `false` and fails the build.
- */
+// `races` below spreads the whole Race record into the payload, so every field is public by
+// construction — this makes an unmapped new Race field a COMPILE error rather than a silent leak.
 const _everyRaceFieldIsPublic: Exclude<keyof Race, keyof RaceView> extends never ? true : false = true;
 void _everyRaceFieldIsPublic;
 
@@ -26,8 +23,7 @@ export function buildGameCatalog(): GameCatalog {
     return cachedCatalog = {
         version: GAME_VERSION,
         isRelease: release,
-        // Straight concatenation — REPO_COMMIT_URL already ends with a slash.
-        commitUrl: release ? `${REPO_COMMIT_URL}${GAME_VERSION}` : null,
+        commitUrl: release ? `${REPO_COMMIT_URL}${GAME_VERSION}` : null, // already ends with a slash
         year: new Date().getFullYear(),
         locale: LOCALE,
         lowHealthThreshold: HP_CONFIG.lowHealthThreshold,

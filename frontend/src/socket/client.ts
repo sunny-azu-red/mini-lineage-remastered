@@ -15,11 +15,7 @@ export type AckDataOf<K extends AckedEvent> = ClientToServerEvents[K] extends (
     ? TData
     : never;
 
-/**
- * Forces a session cookie to exist before the first connect: express-session's
- * `saveUninitialized:false` plus Socket.IO's mock `res` means a socket-only session can never
- * receive a Set-Cookie. Must be awaited once before `connectSocket()`.
- */
+/** Forces a session cookie to exist before the first connect. Must be awaited before connectSocket(). */
 export async function bootstrapSession(): Promise<void> {
     await fetch('/api/bootstrap', { credentials: 'same-origin' });
 }
@@ -30,10 +26,8 @@ export function connectSocket(): void {
 
 /**
  * Typed wrapper around `emitWithAck`. Callers never need a try/catch — a transport failure
- * (including a server that never acks in time) resolves to a normal `Ack` failure.
- *
- * The call is internally loosened to `any` only because socket.io-client's inference for
- * `emitWithAck` doesn't collapse on a generic event name; the public signature stays exact.
+ * resolves to a normal `Ack` failure. Loosened to `any` internally only because socket.io-client's
+ * `emitWithAck` inference doesn't collapse on a generic event name.
  */
 export async function request<K extends AckedEvent>(
     event: K,

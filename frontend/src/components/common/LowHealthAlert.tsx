@@ -6,11 +6,8 @@ import { SIDEBAR_SCREENS } from '../layout/AppShell';
 // text, not game state, so unlike the battle narrative it needn't go through the contract.
 const AMBUSH_LOW_HEALTH_LINE = 'Your warm blood stains the ancient, cold earth of Aden...';
 
-/**
- * Shown whenever `lowHealth && !dead`, with an ambush-flavored line while ambushed. Suppressed on
- * Suicide and on the Inn itself (the plain variant's call to action is "go to the Inn"), and
- * gated on SIDEBAR_SCREENS — there is no point reporting low HP on a screen that doesn't show HP.
- */
+// Shown whenever lowHealth && !dead, on any screen that shows HP. Suppressed on Suicide and the
+// Inn itself, whose own call to action already is "go to the Inn".
 export default function LowHealthAlert() {
     const player = useGameStore(state => state.player);
     const screen = useGameStore(state => state.screen);

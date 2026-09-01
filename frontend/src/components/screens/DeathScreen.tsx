@@ -1,11 +1,8 @@
 import { useGameStore } from '@/store/gameStore';
 import { useAction } from '@/socket/useAction';
 
-/**
- * `player.deathReason` is fixed server-side at time of death, so this screen never re-randomizes
- * it. `coward || cheated` drives styling only; the highscore button uses the server-computed
- * `highscoreEligible` rather than re-deriving the rule.
- */
+// `deathReason` is fixed server-side at time of death, so this never re-randomizes it. The
+// highscore button uses the server-computed `highscoreEligible` rather than re-deriving the rule.
 export default function DeathScreen() {
     const player = useGameStore(state => state.player);
     const catalog = useGameStore(state => state.catalog);
@@ -14,8 +11,7 @@ export default function DeathScreen() {
     const submitAction = useAction('highscores:submit');
     const restartAction = useAction('game:restart');
 
-    // `!player.dead` is defence in depth behind pinScreen, which already keeps the living off this
-    // screen: it must be impossible to render "Play Again?" for a character that is still alive.
+    // Defence in depth behind pinScreen: must be impossible to render "Play Again?" for the living.
     if (!player || !player.dead)
         return null;
 
@@ -23,8 +19,7 @@ export default function DeathScreen() {
         void submitAction.run({}, {
             onSuccess: data => {
                 hydrate(data.hydrate);
-                // Explicitly clears the filter when the slug can't be resolved, so a stale filter
-                // from an earlier visit can never leak into this navigation.
+                // Explicit null when the slug can't be resolved, so a stale filter never leaks in.
                 navigate('highscores', { raceFilter: catalog?.races.find(r => r.slug === data.raceSlug)?.id ?? null });
             },
         });
@@ -34,8 +29,8 @@ export default function DeathScreen() {
         void restartAction.run({}, {
             onSuccess: data => {
                 hydrate(data.hydrate);
-                // Navigate explicitly rather than relying on hydrate()'s implicit reset
-                // detection, which the server's own push for this mutation can race.
+                // Explicit, rather than relying on hydrate()'s reset detection, which this mutation's
+                // own server push can race.
                 navigate('start');
             },
         });

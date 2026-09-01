@@ -2,13 +2,9 @@ import type { RaceView } from '@shared/contract';
 import type { ScreenId } from '@shared/contract';
 
 /**
- * The single source of truth for the handful of link-worthy URLs, used in BOTH directions —
- * previously two hand-maintained inverse functions that could silently drift apart.
- * 'start'/'home' share '/' and are disambiguated by `started`; 'error' has no URL.
- *
- * Lives outside `useHistorySync` so the store can resolve the boot screen from the URL on the
- * first hydrate, without either side owning a second copy of the table. Access rules are NOT
- * enforced here — `pinScreen` (gameStore.ts) owns every one of them, and both callers reach it.
+ * The single source of truth for the handful of link-worthy URLs, used in BOTH directions.
+ * 'start'/'home' share '/', disambiguated by `started`; 'error' has no URL. Access rules are NOT
+ * enforced here — `pinScreen` (gameStore.ts) owns every one of them.
  */
 const ROUTES = [
     ['battle', '/battle'],
@@ -37,13 +33,11 @@ export function pathFor(screen: ScreenId, raceFilter: number | null, races: Race
     return ROUTES.find(([id]) => id === screen)?.[1] ?? null;
 }
 
-/** Resolves a URL to the screen it names. */
+/** Resolves a URL to the screen it names. Unknown paths resolve to Home (pinScreen demotes as needed). */
 export function screenFromPath(pathname: string): ScreenId {
     if (pathname.startsWith(HIGHSCORES_PREFIX))
         return 'highscores';
 
-    // Unknown paths resolve to Home; pinScreen demotes that to Game Start for a visitor with no
-    // character, so this needs no knowledge of player state.
     return ROUTES.find(([, path]) => path === pathname)?.[0] ?? 'home';
 }
 

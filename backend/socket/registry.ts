@@ -28,7 +28,7 @@ export interface EventDefinition<TIn, TOut> {
 
 type AckFn = (response: Ack<unknown>) => void;
 
-/** Socket.IO passes the ack (when the caller sent one) as the last argument; `input` sends none. */
+// Socket.IO passes the ack (when the caller sent one) as the last argument; `input` sends none.
 function extractArgs(args: unknown[]): { payload: unknown; ack: AckFn | undefined } {
     if (args.length > 0 && typeof args[args.length - 1] === 'function')
         return { payload: args.length > 1 ? args[0] : undefined, ack: args[args.length - 1] as AckFn };
@@ -47,11 +47,8 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
                 logger.debug(`[SOCKET:${formatSessionId(sessionId)}] \x1b[35m${def.event} = ${ok ? 'ok' : 'error'} (${Date.now() - start}ms)\x1b[0m`);
         };
 
-        /**
-         * OTHER tabs only — the acting socket gets the authoritative result via its own ack, and
-         * a racing push has no transition detection, so it could clobber the baseline that ack's
-         * handler needs. A read never broadcasts.
-         */
+        // OTHER tabs only — the acting socket already has the result via its own ack, and a
+        // racing push (no transition detection) could clobber the baseline that ack needs.
         const syncOtherTabs = (sid: string, player: PlayerState | undefined) => {
             if (def.mode !== 'mutate' || !player)
                 return;
@@ -62,8 +59,7 @@ export function registerEvent<TIn, TOut>(io: SocketIOServer, socket: Socket, def
 
         try {
             if (!sessionId) {
-                // WARN, not the DEBUG logResult below: a release build raises pino to 'info',
-                // which would silently drop an unauthenticated-event report entirely.
+                // WARN, not the DEBUG logResult below: a release build raises pino past debug.
                 logger.warn(`[SOCKET] Unauthenticated event '${def.event}' from socket ${socket.id}`);
                 throw new SocketError('UNAUTHENTICATED', 'Not authenticated.');
             }

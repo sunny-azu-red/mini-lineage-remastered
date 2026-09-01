@@ -136,10 +136,7 @@ export const EFFECTS_CONFIG = {
     },
 } as const satisfies Record<string, EffectConfig>;
 
-/**
- * Combat math scales purely off the equipped weapon's/armor's `stat`, so new items can be
- * appended freely as long as `stat` roughly follows the established curve.
- */
+// Combat math scales purely off the equipped item's `stat`, so items can be appended freely.
 export const ARMORS = [
     { id: 0, name: `Peasant's Tunic`, emoji: '🧥', stat: 2, cost: 0 }, // start item
     { id: 1, name: `Brigandine Leathers`, emoji: '🥋', stat: 10, cost: 500 },
@@ -181,20 +178,12 @@ export const BATTLE_CONFIG = {
     hpLost: { baseMin: 10, baseMax: 25, floor: 1 },
 } as const;
 
-/** Cadence of the passive session loop: applies regen and sweeps expired effects as a backstop. */
+/** Cadence of the periodic regen loop (expiry is handled by exact timers, not this). */
 export const TICK_CONFIG = {
     intervalMs: 5_000,
 } as const;
 
-/**
- * Zone classification by SCREEN, plus the rule for leaving one. Combat zones pause regen, resting
- * zones apply it; a screen in neither (Statistics/Races/Start/Error) gets no aura.
- *
- * Nothing here is tick-driven: syncZoneAuras recomputes the aura synchronously on every
- * player:screen event, and the disengage countdown expires on its own exact timer (emitter.ts).
- * `combatLingerMs` being 5s is unrelated to TICK_CONFIG.intervalMs also being 5s — they are free
- * to diverge.
- */
+// Zone classification by SCREEN: combat zones pause regen, resting zones apply it, neither = no aura.
 export const ZONE_CONFIG = {
     combatZones: ['battle', 'suicide', 'death'] as ScreenId[],
     restingZones: ['home', 'inn', 'weapons', 'armors', 'character', 'highscores'] as ScreenId[],

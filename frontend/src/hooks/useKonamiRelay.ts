@@ -3,8 +3,7 @@ import { socket } from '@/socket/client';
 
 /**
  * Relays every non-repeated keydown outside a text input to the server as the fire-and-forget
- * `input` event, which drives the Konami cheat. Mount ONCE for the app's lifetime — like the old
- * global listener, it must stay active regardless of the current screen.
+ * `input` event, which drives the Konami cheat. Mount ONCE — it must stay active on every screen.
  */
 export function useKonamiRelay(): void {
     useEffect(() => {

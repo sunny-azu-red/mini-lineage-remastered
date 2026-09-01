@@ -1,10 +1,7 @@
-/**
- * A per-session promise-chain mutex. Each session id maps to a chain; new requests queue behind
- * the previous one so only one handler at a time can read/write a given player's session data.
- * The returned release function MUST be called when the work is done.
- */
+// Per-session promise-chain mutex: requests queue behind the previous one for the same session.
 const locks = new Map<string, Promise<void>>();
 
+/** Resolves once the previous holder (if any) releases; the returned fn MUST be called when done. */
 export function acquireSessionLock(sessionId: string): Promise<() => void> {
     let release: () => void;
     const newLock = new Promise<void>((resolve) => { release = resolve; });

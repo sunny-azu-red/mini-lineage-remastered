@@ -17,11 +17,10 @@ export function registerGameHandlers(io: SocketIOServer, socket: Socket): void {
         handler: (ctx, payload): MutationResult => {
             const flash = initializePlayer(ctx.player, RACES[payload.raceId], payload.name);
 
-            // Stamped here (not left to the client's separate player:screen round trip, which
-            // could land after this ack) so a fresh character never renders auraless.
+            // Stamped + synced here so a fresh character never renders auraless: withSession's
+            // pre-mutation sync skipped this player (not started yet), and its post-mutation sync
+            // runs too late for the snapshot returned below.
             ctx.player.currentScreen = 'home';
-            // withSession's pre-mutation sync skipped this player (not started yet) and its
-            // post-mutation sync runs too late for the snapshot below.
             syncZoneAuras(ctx.player);
 
             return {
@@ -35,13 +34,8 @@ export function registerGameHandlers(io: SocketIOServer, socket: Socket): void {
         event: 'game:restart',
         schema: EmptyPayloadSchema,
         mode: 'mutate',
-        // Only the fallen may start over. The old app's `/restart` destroyed the session
-        // unconditionally, but its cheat middleware gated *reaching* that route, so a living
-        // character could never be wiped — `requireDead` restores that effective rule at the one
-        // place a raw socket client cannot route around.
-        guards: [requireDead],
-        // Resets in place rather than destroying the session, which would desync this socket
-        // from a dead store row.
+        guards: [requireDead], // Only the fallen may start over.
+        // Resets in place rather than destroying the session, which would desync this socket.
         handler: (ctx): { hydrate: HydratePayload } => {
             resetPlayer(ctx.player);
 

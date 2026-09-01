@@ -6,24 +6,17 @@ import Narrative from '@/components/common/Narrative';
 
 const FALLBACK_AMBUSH_LINE = 'You are being ambushed!';
 
-/**
- * Whenever a battle result exists the narrative paragraphs ALWAYS render first; `ambushed` only
- * branches what appears below them, never whether they appear.
- *
- * The "never fought yet" state has no old-app equivalent — loading /battle used to simulate a
- * fight as a side effect, which is exactly the bug this rewrite exists to delete. So a
- * genuinely-never-fought character gets an un-narrated prompt instead. A reload no longer hits
- * that path: hydrate repopulates `lastBattle` from the server-persisted snapshot.
- */
+// Whenever a battle result exists the narrative paragraphs ALWAYS render first; `ambushed` only
+// branches what appears below them. A genuinely never-fought character gets an un-narrated prompt
+// instead — simulating a fight as a side effect of loading this screen is the bug this rewrite deletes.
 export default function BattleScreen() {
     const player = useGameStore(state => state.player);
     const lastBattle = useGameStore(state => state.lastBattle);
     const navigate = useGameStore(state => state.navigate);
     const { fight, pending } = useBattleFight();
 
-    // Reacts to an ack that already happened; it never triggers one. `lastBattle.died` alone is
-    // not enough — it can be stale from a previous life — so it must agree with `player.dead`,
-    // which the same ack set.
+    // Reacts to an ack that already happened; never triggers one. `lastBattle.died` alone could be
+    // stale from a previous life, so it must agree with `player.dead`, set by the same ack.
     useEffect(() => {
         if (lastBattle?.died && player?.dead)
             navigate('death');
@@ -37,8 +30,8 @@ export default function BattleScreen() {
         navigate('home');
     }
 
-    // Battle simulation happens ONLY on this explicit click — never on mount, hydrate or
-    // reconnect. That is the entire anti-cheat redesign; never add an effect that calls fight().
+    // Battle simulation happens ONLY on this explicit click — never on mount, hydrate, or
+    // reconnect. Never add an effect that calls fight().
     const fightButton = (label: string, danger: boolean) => (
         <button type="button" className={danger ? 'btn btn-danger' : 'btn'} disabled={pending} onClick={fight}>
             {label}

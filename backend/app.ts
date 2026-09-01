@@ -10,9 +10,7 @@ import { env } from '@/config/env.config';
 
 const app = express();
 
-// NODE_ENV (not isRelease, which describes the version string rather than the run mode) decides
-// whether this process serves the built SPA. In dev, Vite serves it — gating this off stops
-// :3000 from silently serving a stale dist/public.
+// In dev, Vite serves the SPA — gating this off stops :3000 serving a stale dist/public.
 const isProduction = env.NODE_ENV === 'production';
 
 app.set('trust proxy', 1);
@@ -23,16 +21,13 @@ if (isProduction)
 app.use(sessionMiddleware);
 app.use(debugMiddleware);
 
-// saveUninitialized:false plus Socket.IO's mock `res` means a socket-only session can never
-// receive a Set-Cookie. This forces a real HTTP response to save the session so the browser
-// learns its sid before the first io() connect.
+// Forces a real HTTP response to save the session, so the browser has its sid before io() connects.
 app.get('/api/bootstrap', (req, res) => {
     req.session.bootstrappedAt = Date.now();
     req.session.save(() => res.json({ ok: true }));
 });
 
-// SPA fallback: the client owns every non-API GET. Unmatched /api/* falls through to the JSON
-// 404 below rather than silently getting an HTML document back.
+// SPA fallback: the client owns every non-API GET; unmatched /api/* falls through to the 404 below.
 app.get('*splat', isProduction
     ? (req, res, next) => {
         if (req.path.startsWith('/api/'))

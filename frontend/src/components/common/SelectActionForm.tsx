@@ -27,17 +27,11 @@ const resolve = <T,>(value: T | ((selected: string) => T), selected: string): T 
     typeof value === 'function' ? (value as (s: string) => T)(selected) : value;
 
 /**
- * One component replacing five near-identical select+relabelling-button forms. All shared the
- * same mechanism — a `<select>` driving a companion button's label and (everywhere but Home) its
- * CSS variant — with different copy.
- *
- * Submitting with the placeholder still selected is a legitimate "go home" signal (`onSubmit('')`),
- * so the button is only ever disabled while `pending`.
- *
- * In `noPlaceholder` mode the button must still read `defaultButtonLabel` on first mount even
- * though `selected` already holds the pre-filled first option — the old scripts only relabelled
- * on an explicit `change` event, never on the browser's default selection. Hence `hasInteracted`
- * is tracked separately from the select's value.
+ * One shared form for a `<select>` driving a companion button's label (and usually its CSS
+ * variant). Submitting with the placeholder still selected is a legitimate "go home" signal
+ * (`onSubmit('')`), so the button is only ever disabled while `pending`. In `noPlaceholder` mode,
+ * `hasInteracted` is tracked separately from the select's value so the button still reads
+ * `defaultButtonLabel` on first mount, before any explicit `change`.
  */
 export default function SelectActionForm({
     options,

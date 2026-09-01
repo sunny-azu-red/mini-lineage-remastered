@@ -13,17 +13,9 @@ function isHistoryState(value: unknown): value is HistoryState {
 }
 
 /**
- * Maps `store.screen`/`highscoreRaceFilter` <-> browser history, giving Back/Forward support
- * with no router dependency. Call once, from App.tsx.
- *
- * Loop safety: a screen change pushes state, and a popstate navigates the store — which would
- * re-trigger the push and clobber the entry just navigated to. `fromHistoryRef` marks
- * history-originated (and initial-reconciliation) navigations so the sync effect corrects the
- * current entry in place instead of pushing a new one.
- *
- * Access rules are NOT enforced here — `pinScreen` owns all of them, and every path in this hook
- * reaches it through `navigate()`. That is what makes Back/Forward obey exactly the same rules as
- * a typed URL.
+ * Maps `store.screen`/`highscoreRaceFilter` <-> browser history, giving Back/Forward support with
+ * no router dependency. Call once, from App.tsx. Access rules are NOT enforced here — `pinScreen`
+ * (gameStore.ts) owns all of them, and every path here reaches it through `navigate()`.
  */
 export function useHistorySync(): void {
     const screen = useGameStore(state => state.screen);
@@ -31,22 +23,22 @@ export function useHistorySync(): void {
     const catalog = useGameStore(state => state.catalog);
     const navigate = useGameStore(state => state.navigate);
 
+    // Marks a history-originated (or initial-reconciliation) navigation so the sync effect below
+    // corrects the current entry in place instead of pushing a new one — otherwise a popstate's
+    // own navigate() call would re-trigger a push and clobber the entry just navigated to.
     const fromHistoryRef = useRef(false);
     const didInitialSyncRef = useRef(false);
-    // Bumped by every history-originated navigation purely to guarantee the sync effect below
-    // re-runs. Without it, a navigation that resolves to the screen already showing (very common
-    // now that pinScreen redirects) changes none of that effect's other deps, so it never runs,
-    // never clears `fromHistoryRef`, and silently swallows the NEXT genuine navigation's push.
+    // Bumped on every history-originated navigation to guarantee the sync effect re-runs even when
+    // it resolves to the screen already showing (common now that pinScreen redirects) — otherwise
+    // that effect never clears `fromHistoryRef` and silently swallows the NEXT real navigation.
     const [historySeq, setHistorySeq] = useState(0);
 
-    /** Navigates from a history event — never pushes a new entry, only corrects the current one. */
     function navigateFromHistory(screen: ScreenId, raceFilter: number | null): void {
         fromHistoryRef.current = true;
         setHistorySeq(seq => seq + 1);
         navigate(screen, { raceFilter });
     }
 
-    /** Resolves a URL to a screen + race filter and navigates there. */
     function navigateToPath(pathname: string, races: RaceView[]): void {
         navigateFromHistory(screenFromPath(pathname), raceFilterFromPath(pathname, races));
     }
@@ -54,14 +46,12 @@ export function useHistorySync(): void {
     useEffect(() => {
         function onPopState(event: PopStateEvent): void {
             if (isHistoryState(event.state)) {
-                // The encoded screen is NOT trusted — it goes through navigate() -> pinScreen
-                // like everything else, so Back obeys the same access rules as a deep link.
                 navigateFromHistory(event.state.screen, event.state.raceFilter);
                 return;
             }
 
-            // No state (the first history entry, before this hook ever pushed) — parse the URL
-            // so a hard refresh or back-navigation onto a deep link still lands correctly.
+            // No state (the first history entry, before this hook ever pushed) — parse the URL so
+            // a hard refresh or back-navigation onto a deep link still lands correctly.
             navigateToPath(location.pathname, useGameStore.getState().catalog?.races ?? []);
         }
 
@@ -70,12 +60,10 @@ export function useHistorySync(): void {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
 
-    // One-shot reconciliation for a hard load landing on a deep link — no popstate fires for the
-    // initial document load. `hydrate` already resolved the SCREEN from the URL, so for a socket
-    // boot this usually re-navigates to where we already are (a no-op that fires no
-    // `player:screen`). It still earns its keep: it resolves a `/highscores/<slug>` race filter,
-    // which needs `catalog.races`, and it rewrites the URL when pinScreen redirected away from
-    // what was typed. Waits for `catalog` for that race lookup.
+    // One-shot reconciliation for a hard load landing on a deep link (no popstate fires for the
+    // initial document load). `hydrate` already resolved the screen from the URL, so this usually
+    // re-navigates to where we already are; it still resolves a highscores race-filter slug and
+    // rewrites the URL if pinScreen redirected away from what was typed.
     useEffect(() => {
         if (didInitialSyncRef.current || !catalog)
             return;
@@ -87,9 +75,8 @@ export function useHistorySync(): void {
     }, [catalog, navigate]);
 
     useEffect(() => {
-        // Consume the flag unconditionally, BEFORE any early return — leaving it set would
-        // swallow the next genuine navigation's push. `historySeq` is in the deps precisely so
-        // this runs even when the navigation resolved to the screen already showing.
+        // Consumed unconditionally, before any early return, or it would swallow the next
+        // genuine navigation's push.
         const fromHistory = fromHistoryRef.current;
         fromHistoryRef.current = false;
 
@@ -103,9 +90,8 @@ export function useHistorySync(): void {
         const entry = { screen, raceFilter: highscoreRaceFilter } satisfies HistoryState;
 
         if (fromHistory) {
-            // We are already standing on this history entry. If pinScreen redirected away from
-            // what it encoded, rewrite it in place so the URL stops lying — pushing would
-            // duplicate the entry and break Back. replaceState fires no popstate, so no loop.
+            // Already standing on this entry; rewrite in place only if pinScreen redirected away
+            // from what it encoded. replaceState fires no popstate, so this can't loop.
             if (path !== location.pathname)
                 window.history.replaceState(entry, '', path);
 

@@ -4,10 +4,7 @@ export type SoundName = 'crit' | 'eat' | 'level' | 'death' | 'buy' | 'start' | '
 
 let audioCtx: AudioContext | null = null;
 
-/**
- * The lazily-created singleton AudioContext, exported so unlock.ts can resume the same instance
- * from a gesture listener. This module never auto-resumes on its own.
- */
+/** Lazily-created singleton, exported so unlock.ts can resume it. Never auto-resumes on its own. */
 export function getAudioContext(): AudioContext {
     if (!audioCtx) {
         const Ctor = window.AudioContext
@@ -46,10 +43,7 @@ function arpeggio(freqs: number[], every: number, voice: Voice): Note[] {
     return freqs.map((freq, idx) => ({ ...voice, freq, offset: idx * every } as Note));
 }
 
-/**
- * Every sound effect, declared rather than hand-wired. Each is a list of notes; `playNote` below
- * turns one into the oscillator/gain graph. Tuning lives here and nowhere else.
- */
+// Every sound effect, declared as a list of notes; `playNote` below turns one into the oscillator/gain graph.
 const SOUNDS: Record<SoundName, Note[]> = {
     // ⚔️ Punchy 8-bit impact crunch with a rapid pitch slide.
     crit: [{
@@ -115,10 +109,8 @@ function playNote(ctx: AudioContext, start: number, note: Note): void {
 }
 
 /**
- * Plays a sound effect. No-ops when `name` is nullish or sound is muted. Reads the store via
- * `getState()` rather than a hook, since this is called from non-component code (socket acks).
- * Defensively resumes a suspended context each time — cheap, and covers a backgrounded tab that
- * was auto-suspended again after the initial gesture unlock.
+ * Plays a sound effect. No-ops when `name` is nullish or sound is muted. Defensively resumes a
+ * suspended context each time — cheap, and covers a backgrounded tab re-suspended after unlock.
  */
 export function playSound(name: SoundName | null | undefined): void {
     if (!name || !useGameStore.getState().soundEnabled)

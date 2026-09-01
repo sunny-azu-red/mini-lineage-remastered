@@ -3,7 +3,7 @@ import { useGameStore, type ScreenId } from '@/store/gameStore';
 import { useBattleFight } from '@/socket/useBattleFight';
 import SelectActionForm from '@/components/common/SelectActionForm';
 
-// Travelling around town never touched server state, so these are pure client-side navigations.
+// Travelling around town is a pure client-side navigation, no server round trip.
 const DESTINATIONS: { value: ScreenId; label: string }[] = [
     { value: 'inn', label: '🍺 Inn' },
     { value: 'armors', label: '🛡️ Armor Shop' },
@@ -21,9 +21,8 @@ export default function HomeScreen() {
         navigate('highscores');
     }
 
-    // An explicit in-app click into Battle IS a real user action, so it fights immediately —
-    // exactly like BattleScreen's own Fight button, and via the same shared hook. This is NOT the
-    // old fight-on-page-load behaviour, which the anti-cheat redesign deliberately removed.
+    // An explicit click into Battle IS a real user action, so it fights immediately via the same
+    // shared hook BattleScreen's own Fight button uses — never on page load.
     function goToDestination(value: string) {
         navigate(value as ScreenId);
         if (value === 'battle')
@@ -38,11 +37,7 @@ export default function HomeScreen() {
                 Where do you want to go next, or what do you want to do?
             </p>
 
-            {/*
-             * `noPlaceholder` pre-selects the first destination, matching the old page's native
-             * browser default — there is no reachable "nothing picked" value here. The button
-             * label swaps for Suicide but its variant never does, unlike the shop/suicide forms.
-             */}
+            {/* noPlaceholder pre-selects the first destination — there's no "nothing picked" state. */}
             <SelectActionForm
                 options={DESTINATIONS}
                 noPlaceholder

@@ -3,11 +3,10 @@ import { useGameStore } from '@/store/gameStore';
 import ErrorScreen from './screens/ErrorScreen';
 
 /**
- * Catches a genuinely unexpected render-time throw anywhere in the tree — a bug, as opposed to
- * the store's modeled `screen: 'error'` state — and swaps in ErrorScreen rather than unmounting
- * to a blank page. The message is passed through only in a non-release build, mirroring
- * error.middleware.ts. `catalog.isRelease` is read off the vanilla store because a class
- * component can't call hooks; a one-shot read is fine since it never changes for a loaded page.
+ * Catches a genuinely unexpected render-time throw — a bug, as opposed to the store's modeled
+ * `screen: 'error'` state — and swaps in ErrorScreen. The message is passed through only in a
+ * non-release build; `catalog.isRelease` is read off the vanilla store since a class component
+ * can't call hooks.
  */
 export default class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
     state: { error: Error | null } = { error: null };

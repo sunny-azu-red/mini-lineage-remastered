@@ -2,12 +2,7 @@ import { LOCALE, STAT_MODIFIER_CONFIG, SESSION_CONFIG } from '@/constant/game.co
 import { formatAdena, formatNumber as formatNumberShared } from '@shared/format';
 import { Item, StatModifier, StatModifierConfig } from '@/interface';
 
-/**
- * Server-side formatting. The pure, framework-agnostic helpers live in `@shared/format`
- * (imported unmodified by both this process and the browser bundle) and are re-exported
- * here so backend callers keep a single import site; only `formatNumber` (locale-bound to
- * the server's LOCALE) and the three effect/session helpers below are backend-specific.
- */
+// Re-exported so backend callers have one import site; only what follows is backend-specific.
 export { formatAdena, pluralize, fillTemplate, slugify, truncate, capitalize, formatEffectTimer } from '@shared/format';
 
 export function formatNumber(num: number): string {

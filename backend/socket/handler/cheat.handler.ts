@@ -12,11 +12,9 @@ import { logger } from '@/config/logger.config';
 import { formatSessionId } from '@/util/format.util';
 
 /**
- * Konami-code relay. `input` has no ack, so every failure path is a silent no-op. The key
- * buffer lives on the tracker (not session data) and is kept OUTSIDE any lock/store round trip —
- * only a full match ever touches the session store. Activation is silent by design: no flash,
- * just the debuff icon and HP snapping to full via a normal state push. This handler bypasses
- * registry.ts entirely, so that push is the only thing that reaches the client.
+ * Konami-code relay. `input` has no ack, so every failure path is a silent no-op. The key buffer
+ * lives on the tracker, outside any lock/store round trip — only a full match touches the store.
+ * Activation is silent by design: no flash, just the debuff icon and HP snapping to full.
  */
 export function registerCheatHandler(io: SocketIOServer, socket: Socket): void {
     socket.on('input', async (payload: unknown) => {

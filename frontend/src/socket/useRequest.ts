@@ -9,21 +9,9 @@ interface UseRequestResult<K extends AckedEvent> {
     loading: boolean;
 }
 
-/**
- * The read-side sibling to `useAction`: fetches on mount and whenever the payload changes.
- *
- * `loading` starts TRUE, unlike `useAction`'s `pending` — that one is driven by a click, this one
- * by a mount, so its very first render is already in flight. Keeping the two distinct is the whole
- * point: a screen that cannot tell "still loading" from "came back empty" ends up confidently
- * telling the player there is nothing there while the request is still on the wire.
- *
- * `data` is deliberately RETAINED across a re-fetch, so a screen that re-queries with new
- * arguments (the highscores race filter) keeps showing the previous results instead of blanking.
- *
- * A failure surfaces through the shared notice banner and leaves `data` untouched. Read via
- * `getState()` rather than a subscription, matching `useAction`, so `setNotice` stays out of the
- * effect's dependencies.
- */
+// The read-side sibling to `useAction`: fetches on mount and whenever the payload changes.
+// `loading` starts TRUE, unlike `useAction`'s `pending`, since a mount is already in flight.
+// `data` is RETAINED across a re-fetch, so re-querying with new args doesn't blank old results.
 export function useRequest<K extends AckedEvent>(
     event: K,
     payload: Parameters<ClientToServerEvents[K]>[0],

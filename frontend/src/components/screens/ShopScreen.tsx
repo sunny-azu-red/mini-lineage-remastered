@@ -30,19 +30,15 @@ export interface ShopScreenProps {
     ownedItemId?: number | null;
 }
 
-/**
- * The shared Weapons Shop / Armor Shop / Inn screen. All three were the same table + select +
- * relabelling button over a different item list; only the columns and copy differ.
- */
+// The shared Weapons Shop / Armor Shop / Inn screen — same table + select + button, different columns/copy.
 export default function ShopScreen({
     type, intro, items, modifier, statHeader, statHeaderTitle, actionLabel, ownedItemId,
 }: ShopScreenProps) {
     const applyMutation = useGameStore(state => state.applyMutation);
     const navigate = useGameStore(state => state.navigate);
     const { run, pending } = useAction('shop:purchase');
-    // A LOCAL counter, deliberately not player.revision — that bumps on every persisted mutation
-    // for the session (a regen tick, another tab's purchase), any of which would remount the form
-    // and silently discard whatever the player had selected.
+    // A LOCAL counter, deliberately not player.revision — that bumps on every session mutation
+    // (a regen tick, another tab's purchase), which would remount the form and discard the selection.
     const [purchaseEpoch, setPurchaseEpoch] = useState(0);
 
     const columns: Column<ItemView>[] = [
@@ -79,9 +75,7 @@ export default function ShopScreen({
             <p>{intro}</p>
             <DataTable minWidth={400} columns={columns} rows={items} rowKey={item => item.id} />
             <SelectActionForm
-                // Remounting resets the select back to the placeholder after every successful
-                // purchase, matching the old app's fresh-page-per-purchase behaviour.
-                key={purchaseEpoch}
+                key={purchaseEpoch} // remounting resets the select back to the placeholder after a purchase
                 options={items.map(item => {
                     const owned = ownedItemId === item.id;
                     return {

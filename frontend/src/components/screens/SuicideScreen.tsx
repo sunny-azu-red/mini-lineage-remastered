@@ -18,7 +18,7 @@ export default function SuicideScreen() {
 
         void run({}, {
             onSuccess: data => {
-                // One atomic update, same reasoning as GameStartScreen: navigate() would pin
+                // One atomic update, same reasoning as GameStartScreen: navigate() alone would pin
                 // against the store's still-ALIVE player and bounce to Home.
                 applyMutation(data.player, data.flash, 'death');
                 playSound('death');

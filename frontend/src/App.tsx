@@ -19,11 +19,8 @@ import StatisticsScreen from './components/screens/StatisticsScreen';
 import RacesScreen from './components/screens/RacesScreen';
 import ErrorScreen from './components/screens/ErrorScreen';
 
-/**
- * Every screen, with the panel heading + `<title>` the old app used for that route.
- * `error` is the store's explicit error state — distinct from ErrorBoundary, which catches an
- * unexpected render throw. Nothing carries a message for that path, so it renders with no detail.
- */
+// Every screen, with the panel heading + <title> for that route. 'error' is the store's explicit
+// error state — distinct from ErrorBoundary, which catches an unexpected render throw.
 const SCREENS: Record<ScreenId, { component: ComponentType; title: string }> = {
     start: { component: GameStartScreen, title: 'Game Start' },
     home: { component: HomeScreen, title: 'Home Town' },
