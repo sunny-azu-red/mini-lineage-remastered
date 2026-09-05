@@ -374,11 +374,11 @@ export function processEffectExpiry(player: PlayerState): boolean {
     return changed;
 }
 
-/** Natural HP regeneration for players out of combat. Periodic cadence only. Returns whether healed. */
+/** Natural HP regeneration, earned by resting. Periodic cadence only. Returns whether healed. */
 export function processRegenTick(player: PlayerState): boolean {
-    // getActiveEffects (not raw player.effects), so an already-elapsed disengage countdown can't
-    // wedge regen off; held combat carries no expiresAt so it still pauses regen indefinitely.
-    if (player.dead || getActiveEffects(player).some(e => e.id === 'combat'))
+    // Requires the resting aura outright, rather than merely the absence of combat: a screen in
+    // neither zone list regenerated silently, with no 🌿 aura to show for it.
+    if (player.dead || !getActiveEffects(player).some(e => e.id === 'resting'))
         return false;
 
     // Positive form deliberately: bails cleanly on a NaN rather than persisting it.

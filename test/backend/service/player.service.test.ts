@@ -32,6 +32,9 @@ vi.mock('@/repository/statistics.repository', () => ({
 
 // The defaults this file's assertions were written against.
 const localPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) => makePlayer({ adena: 500, totalBattles: 0, totalAmbushes: 0, totalEnemiesKilled: 0, ...o });
+/** Regeneration is earned by resting, so every regen test starts with the resting aura. */
+const restingPlayer = (o: Partial<Parameters<typeof makePlayer>[0]> = {}) =>
+    localPlayer({ effects: [{ ...EFFECTS_CONFIG.restingAura }], ...o });
 
 describe('isGameStarted', () => {
     it('returns true for a fully initialized player', () => expect(isGameStarted(localPlayer())).toBe(true));
@@ -483,7 +486,7 @@ describe('initializePlayer — age definitions', () => {
 
 describe('the two tick jobs — regen and expiry, each driven on its own', () => {
     it('heals an Elf (regen 3) with no regen armor by 3 and returns true', () => {
-        const p = localPlayer({ raceId: 2, health: 50, armorId: 0 }); // Elf, Peasant's Tunic
+        const p = restingPlayer({ raceId: 2, health: 50, armorId: 0 }); // Elf, Peasant's Tunic
         const result = processRegenTick(p);
         expect(result).toBe(true);
         expect(p.health).toBe(53);
@@ -491,7 +494,7 @@ describe('the two tick jobs — regen and expiry, each driven on its own', () =>
     });
 
     it('heals a Human (regen 1) with Knight\'s Plate (regen 1) by 2 total and returns true', () => {
-        const p = localPlayer({ raceId: 0, health: 70, armorId: 3 }); // Human, Knight's Plate
+        const p = restingPlayer({ raceId: 0, health: 70, armorId: 3 }); // Human, Knight's Plate
         const result = processRegenTick(p);
         expect(result).toBe(true);
         expect(p.health).toBe(72);
@@ -499,38 +502,46 @@ describe('the two tick jobs — regen and expiry, each driven on its own', () =>
     });
 
     it('returns false and does not heal an Orc (regen 0) with no regen armor', () => {
-        const p = localPlayer({ raceId: 1, health: 80, armorId: 0 }); // Orc, Peasant's Tunic
+        const p = restingPlayer({ raceId: 1, health: 80, armorId: 0 }); // Orc, Peasant's Tunic
         const result = processRegenTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(80);
     });
 
     it('returns false when player is already at full HP', () => {
-        const p = localPlayer({ raceId: 2, health: 75, armorId: 0 }); // Elf at max HP (75)
+        const p = restingPlayer({ raceId: 2, health: 75, armorId: 0 }); // Elf at max HP (75)
         const result = processRegenTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(75);
     });
 
     it('returns false when player is dead', () => {
-        const p = localPlayer({ raceId: 2, health: 0, dead: true, armorId: 0 });
+        const p = restingPlayer({ raceId: 2, health: 0, dead: true, armorId: 0 });
         const result = processRegenTick(p);
         expect(result).toBe(false);
         expect(p.health).toBe(0);
     });
 
     it('clamps HP to maxHp and heals only the remainder', () => {
-        const p = localPlayer({ raceId: 0, health: 99, armorId: 0 }); // Human max 100, regen 1
+        const p = restingPlayer({ raceId: 0, health: 99, armorId: 0 }); // Human max 100, regen 1
         processRegenTick(p);
         expect(p.health).toBe(100);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 1);
     });
 
     it('Dark Elf (regen 2) with Eternal Aegis (regen 3) heals for 5 total', () => {
-        const p = localPlayer({ raceId: 3, health: 50, armorId: 5 }); // Dark Elf, Eternal Aegis
+        const p = restingPlayer({ raceId: 3, health: 50, armorId: 5 }); // Dark Elf, Eternal Aegis
         processRegenTick(p);
         expect(p.health).toBe(55);
         expect(statisticsRepository.increment).toHaveBeenCalledWith('total_hp_regen', 5);
+    });
+
+    it('does not regenerate without the resting aura, even out of combat', () => {
+        // A screen in neither zone list (no aura at all) used to regenerate silently.
+        const p = localPlayer({ raceId: 2, health: 50, armorId: 0, effects: [] });
+
+        expect(processRegenTick(p)).toBe(false);
+        expect(p.health).toBe(50);
     });
 
     it('cleans up expired effects, leaving the live ones', () => {
