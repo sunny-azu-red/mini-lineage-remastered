@@ -38,7 +38,9 @@ defmodule MiniLineage.Game.Format do
   defp short(sign, abs, divisor, unit) do
     calculated = Kernel.floor(abs / divisor * 10) / 10
 
-    sign <> String.replace(:erlang.float_to_binary(calculated, decimals: 1), ".0", "", global: false) <> unit
+    sign <>
+      String.replace(:erlang.float_to_binary(calculated, decimals: 1), ".0", "", global: false) <>
+      unit
   end
 
   def pluralize(singular, plural, count, emoji \\ nil) do

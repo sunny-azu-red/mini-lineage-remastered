@@ -35,10 +35,14 @@ defmodule MiniLineage.Game.Battle do
 
     xp_roll = Math.random_int(cfg.xp_gained.kill_min, cfg.xp_gained.kill_max)
     xp_base = Math.base_xp_gained(attack, cfg.xp_gained.exponent, cfg.xp_gained.scaling)
-    xp_gained = ceil(ceil((enemies_killed * xp_roll + xp_base) * crit_scale) * stats.xp_multiplier)
+
+    xp_gained =
+      ceil(ceil((enemies_killed * xp_roll + xp_base) * crit_scale) * stats.xp_multiplier)
 
     adena_roll = Math.random_int(cfg.adena_gained.kill_min, cfg.adena_gained.kill_max)
-    adena_base = Math.base_adena_gained(attack, cfg.adena_gained.exponent, cfg.adena_gained.scaling)
+
+    adena_base =
+      Math.base_adena_gained(attack, cfg.adena_gained.exponent, cfg.adena_gained.scaling)
 
     adena_gained =
       ceil(ceil((enemies_killed * adena_roll + adena_base) * crit_scale) * stats.adena_multiplier)

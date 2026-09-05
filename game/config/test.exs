@@ -35,3 +35,8 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# The idle grace only needs to be observably non-zero here.
+config :mini_lineage, character_idle_grace_ms: 150
+
+config :mini_lineage, start_statistics_collector: false

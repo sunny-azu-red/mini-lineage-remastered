@@ -2,10 +2,14 @@ defmodule MiniLineage.Game.Narratives do
   @moduledoc "Narrative templates. Each list is drawn from by index, so ORDER is load-bearing."
 
   @race_traits %{
-    0 => ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="gold">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="heal">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="muted">{ambush}% Ambush Risk</span>.),
-    1 => ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="gold">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="muted">{ambush}% Ambush Risk</span>.),
-    2 => ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="gold">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="heal">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="muted">{ambush}% Ambush Risk</span>.),
-    3 => ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="gold">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="heal">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="muted">{ambush}% Ambush Risk</span>.)
+    0 =>
+      ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="gold">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="heal">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="muted">{ambush}% Ambush Risk</span>.),
+    1 =>
+      ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="gold">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="muted">{ambush}% Ambush Risk</span>.),
+    2 =>
+      ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="gold">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="heal">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="muted">{ambush}% Ambush Risk</span>.),
+    3 =>
+      ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="gold">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="heal">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="muted">{ambush}% Ambush Risk</span>.)
   }
 
   @welcome [
@@ -93,13 +97,26 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @moves [
-    "Investigate the shimmering lake", "Search the hollow log", "Follow the muddy tracks",
-    "Scale the castle walls", "Descend into the dungeon", "Cross the rickety bridge",
-    "Examine the mossy statue", "Explore the foggy marsh", "Consult the ancient map",
-    "Drink from the stone fountain", "Sharpen your blade", "Prepare for an ambush",
-    "Challenge the wandering guard", "Scout the enemy encampment", "Rally your strength",
-    "Set a trap in the brush", "Whisper a prayer to the Gods", "Search the fallen soldier",
-    "Rest by the dying embers", "Scribe a note for those to follow"
+    "Investigate the shimmering lake",
+    "Search the hollow log",
+    "Follow the muddy tracks",
+    "Scale the castle walls",
+    "Descend into the dungeon",
+    "Cross the rickety bridge",
+    "Examine the mossy statue",
+    "Explore the foggy marsh",
+    "Consult the ancient map",
+    "Drink from the stone fountain",
+    "Sharpen your blade",
+    "Prepare for an ambush",
+    "Challenge the wandering guard",
+    "Scout the enemy encampment",
+    "Rally your strength",
+    "Set a trap in the brush",
+    "Whisper a prayer to the Gods",
+    "Search the fallen soldier",
+    "Rest by the dying embers",
+    "Scribe a note for those to follow"
   ]
 
   def race_traits(race_id), do: Map.fetch!(@race_traits, race_id)

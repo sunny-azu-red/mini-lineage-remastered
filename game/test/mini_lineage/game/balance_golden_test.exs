@@ -117,33 +117,254 @@ defmodule MiniLineage.Game.BalanceGoldenTest do
   end
 
   @golden [
-    {"race0-seed1", %{level: 21, experience: 60638, adena: 650, dead: false, battles: 400, kills: 2664, ambushes: 13, weapon_id: 1, armor_id: 1}},
-    {"race0-seed7", %{level: 21, experience: 63968, adena: 199, dead: false, battles: 400, kills: 2744, ambushes: 16, weapon_id: 1, armor_id: 1}},
-    {"race0-seed42", %{level: 21, experience: 61893, adena: 380, dead: false, battles: 400, kills: 2689, ambushes: 9, weapon_id: 1, armor_id: 1}},
-    {"race0-seed1234", %{level: 21, experience: 60575, adena: 398, dead: false, battles: 400, kills: 2700, ambushes: 19, weapon_id: 1, armor_id: 1}},
-    {"race0-seed99999", %{level: 21, experience: 62433, adena: 160, dead: false, battles: 400, kills: 2751, ambushes: 20, weapon_id: 1, armor_id: 1}},
-    {"race1-seed1", %{level: 20, experience: 57062, adena: 300, dead: false, battles: 400, kills: 2601, ambushes: 56, weapon_id: 1, armor_id: 1}},
-    {"race1-seed7", %{level: 20, experience: 55972, adena: 157, dead: false, battles: 400, kills: 2564, ambushes: 42, weapon_id: 1, armor_id: 1}},
-    {"race1-seed42", %{level: 20, experience: 55627, adena: 560, dead: false, battles: 400, kills: 2567, ambushes: 57, weapon_id: 1, armor_id: 1}},
-    {"race1-seed1234", %{level: 20, experience: 57063, adena: 400, dead: false, battles: 400, kills: 2602, ambushes: 54, weapon_id: 1, armor_id: 1}},
-    {"race1-seed99999", %{level: 20, experience: 56957, adena: 178, dead: false, battles: 400, kills: 2577, ambushes: 49, weapon_id: 1, armor_id: 1}},
-    {"race2-seed1", %{level: 22, experience: 67789, adena: 162, dead: false, battles: 400, kills: 2842, ambushes: 0, weapon_id: 1, armor_id: 1}},
-    {"race2-seed7", %{level: 22, experience: 69763, adena: 481, dead: false, battles: 400, kills: 2924, ambushes: 0, weapon_id: 1, armor_id: 1}},
-    {"race2-seed42", %{level: 22, experience: 66908, adena: 461, dead: false, battles: 400, kills: 2843, ambushes: 0, weapon_id: 1, armor_id: 1}},
-    {"race2-seed1234", %{level: 22, experience: 69161, adena: 314, dead: false, battles: 400, kills: 2831, ambushes: 0, weapon_id: 1, armor_id: 1}},
-    {"race2-seed99999", %{level: 22, experience: 66293, adena: 529, dead: false, battles: 400, kills: 2829, ambushes: 0, weapon_id: 1, armor_id: 1}},
-    {"race3-seed1", %{level: 23, experience: 71882, adena: 200, dead: false, battles: 400, kills: 2944, ambushes: 1, weapon_id: 1, armor_id: 1}},
-    {"race3-seed7", %{level: 23, experience: 72810, adena: 565, dead: false, battles: 400, kills: 2984, ambushes: 2, weapon_id: 1, armor_id: 1}},
-    {"race3-seed42", %{level: 22, experience: 66765, adena: 788, dead: false, battles: 400, kills: 2809, ambushes: 4, weapon_id: 1, armor_id: 1}},
-    {"race3-seed1234", %{level: 23, experience: 72971, adena: 871, dead: false, battles: 400, kills: 2954, ambushes: 3, weapon_id: 1, armor_id: 1}},
-    {"race3-seed99999", %{level: 22, experience: 69425, adena: 272, dead: false, battles: 400, kills: 2857, ambushes: 3, weapon_id: 1, armor_id: 1}}
+    {"race0-seed1",
+     %{
+       level: 21,
+       experience: 60638,
+       adena: 650,
+       dead: false,
+       battles: 400,
+       kills: 2664,
+       ambushes: 13,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race0-seed7",
+     %{
+       level: 21,
+       experience: 63968,
+       adena: 199,
+       dead: false,
+       battles: 400,
+       kills: 2744,
+       ambushes: 16,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race0-seed42",
+     %{
+       level: 21,
+       experience: 61893,
+       adena: 380,
+       dead: false,
+       battles: 400,
+       kills: 2689,
+       ambushes: 9,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race0-seed1234",
+     %{
+       level: 21,
+       experience: 60575,
+       adena: 398,
+       dead: false,
+       battles: 400,
+       kills: 2700,
+       ambushes: 19,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race0-seed99999",
+     %{
+       level: 21,
+       experience: 62433,
+       adena: 160,
+       dead: false,
+       battles: 400,
+       kills: 2751,
+       ambushes: 20,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race1-seed1",
+     %{
+       level: 20,
+       experience: 57062,
+       adena: 300,
+       dead: false,
+       battles: 400,
+       kills: 2601,
+       ambushes: 56,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race1-seed7",
+     %{
+       level: 20,
+       experience: 55972,
+       adena: 157,
+       dead: false,
+       battles: 400,
+       kills: 2564,
+       ambushes: 42,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race1-seed42",
+     %{
+       level: 20,
+       experience: 55627,
+       adena: 560,
+       dead: false,
+       battles: 400,
+       kills: 2567,
+       ambushes: 57,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race1-seed1234",
+     %{
+       level: 20,
+       experience: 57063,
+       adena: 400,
+       dead: false,
+       battles: 400,
+       kills: 2602,
+       ambushes: 54,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race1-seed99999",
+     %{
+       level: 20,
+       experience: 56957,
+       adena: 178,
+       dead: false,
+       battles: 400,
+       kills: 2577,
+       ambushes: 49,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race2-seed1",
+     %{
+       level: 22,
+       experience: 67789,
+       adena: 162,
+       dead: false,
+       battles: 400,
+       kills: 2842,
+       ambushes: 0,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race2-seed7",
+     %{
+       level: 22,
+       experience: 69763,
+       adena: 481,
+       dead: false,
+       battles: 400,
+       kills: 2924,
+       ambushes: 0,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race2-seed42",
+     %{
+       level: 22,
+       experience: 66908,
+       adena: 461,
+       dead: false,
+       battles: 400,
+       kills: 2843,
+       ambushes: 0,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race2-seed1234",
+     %{
+       level: 22,
+       experience: 69161,
+       adena: 314,
+       dead: false,
+       battles: 400,
+       kills: 2831,
+       ambushes: 0,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race2-seed99999",
+     %{
+       level: 22,
+       experience: 66293,
+       adena: 529,
+       dead: false,
+       battles: 400,
+       kills: 2829,
+       ambushes: 0,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race3-seed1",
+     %{
+       level: 23,
+       experience: 71882,
+       adena: 200,
+       dead: false,
+       battles: 400,
+       kills: 2944,
+       ambushes: 1,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race3-seed7",
+     %{
+       level: 23,
+       experience: 72810,
+       adena: 565,
+       dead: false,
+       battles: 400,
+       kills: 2984,
+       ambushes: 2,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race3-seed42",
+     %{
+       level: 22,
+       experience: 66765,
+       adena: 788,
+       dead: false,
+       battles: 400,
+       kills: 2809,
+       ambushes: 4,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race3-seed1234",
+     %{
+       level: 23,
+       experience: 72971,
+       adena: 871,
+       dead: false,
+       battles: 400,
+       kills: 2954,
+       ambushes: 3,
+       weapon_id: 1,
+       armor_id: 1
+     }},
+    {"race3-seed99999",
+     %{
+       level: 22,
+       experience: 69425,
+       adena: 272,
+       dead: false,
+       battles: 400,
+       kills: 2857,
+       ambushes: 3,
+       weapon_id: 1,
+       armor_id: 1
+     }}
   ]
 
   for {key, expected} <- @golden do
     test "#{key} plays out exactly as before" do
       [_, race_id, seed] = Regex.run(~r/^race(\d+)-seed(\d+)$/, unquote(key))
 
-      assert play(String.to_integer(race_id), String.to_integer(seed)) == unquote(Macro.escape(expected))
+      assert play(String.to_integer(race_id), String.to_integer(seed)) ==
+               unquote(Macro.escape(expected))
     end
   end
 end

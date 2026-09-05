@@ -32,7 +32,9 @@ defmodule MiniLineage.Game.Math do
   def level_for_xp(xp), do: climb(1, xp)
 
   defp climb(level, xp) do
-    if not max_level?(level) and xp_for_level(level + 1) <= xp, do: climb(level + 1, xp), else: level
+    if not max_level?(level) and xp_for_level(level + 1) <= xp,
+      do: climb(level + 1, xp),
+      else: level
   end
 
   def max_level?(level), do: level >= Constants.max_level()
@@ -70,7 +72,10 @@ defmodule MiniLineage.Game.Math do
 
   # battle scaling
   def enemy_count_range(attack, min_mult \\ 0.3, max_mult \\ 0.6),
-    do: %{min: max(1, Kernel.floor(attack * min_mult)), max: max(2, Kernel.floor(attack * max_mult))}
+    do: %{
+      min: max(1, Kernel.floor(attack * min_mult)),
+      max: max(2, Kernel.floor(attack * max_mult))
+    }
 
   def danger_level(attack, multiplier \\ 0.6), do: Kernel.floor(attack * multiplier)
 

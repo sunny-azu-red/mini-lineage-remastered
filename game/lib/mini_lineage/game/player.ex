@@ -50,9 +50,18 @@ defmodule MiniLineage.Game.Player do
   def initialize(player, race, name) do
     player = %{
       player
-      | race_id: race.id, name: name, health: race.start_health, adena: race.start_adena,
-        experience: 0, weapon_id: 0, armor_id: 0, total_battles: 0, total_ambushes: 0,
-        consecutive_ambushes: 0, total_enemies_killed: 0, effects: []
+      | race_id: race.id,
+        name: name,
+        health: race.start_health,
+        adena: race.start_adena,
+        experience: 0,
+        weapon_id: 0,
+        armor_id: 0,
+        total_battles: 0,
+        total_ambushes: 0,
+        consecutive_ambushes: 0,
+        total_enemies_killed: 0,
+        effects: []
     }
 
     player = apply_effect(player, Constants.effect(:newbie_buff))
@@ -197,7 +206,10 @@ defmodule MiniLineage.Game.Player do
     modifiers =
       modifiers_of(weapon) ++
         modifiers_of(armor) ++
-        (player |> active_effects() |> Enum.reject(&(&1.id == "regenerating")) |> Enum.flat_map(& &1.modifiers))
+        (player
+         |> active_effects()
+         |> Enum.reject(&(&1.id == "regenerating"))
+         |> Enum.flat_map(& &1.modifiers))
 
     stats =
       Enum.reduce(modifiers, base, fn mod, acc ->
@@ -298,6 +310,12 @@ defmodule MiniLineage.Game.Player do
   """
   def process_effect_expiry(%{dead: true} = player), do: {player, false}
 
+  # An unstarted character has no health to clamp, and Elixir orders nil ABOVE every number — so
+  # `health > max_health` is true for nil and would invent a health value. JS compares undefined
+  # the other way, which is why the reference needs no such guard.
+  def process_effect_expiry(%{health: health} = player) when not is_integer(health),
+    do: {player, false}
+
   def process_effect_expiry(player) do
     now = Clock.now_ms()
     remaining = Enum.filter(player.effects, &(&1.expires_at == nil or &1.expires_at > now))
@@ -382,7 +400,9 @@ defmodule MiniLineage.Game.Player do
     end
   end
 
-  defp owned_text(item, :weapon_id), do: "You are already wielding the #{item.emoji} #{item.name}!"
+  defp owned_text(item, :weapon_id),
+    do: "You are already wielding the #{item.emoji} #{item.name}!"
+
   defp owned_text(item, :armor_id), do: "You are already wearing the #{item.emoji} #{item.name}!"
 
   defp complete_purchase(player, item, _item_id, nil) do
