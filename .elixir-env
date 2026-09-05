@@ -1,0 +1,3 @@
+# Toolchain lives outside the repo (no root needed), same pattern as ~/.local/lib/playwright-deps.
+export PATH="$HOME/.local/lib/otp/bin:$HOME/.local/lib/elixir/bin:$HOME/.local/usr/bin:$HOME/.mix/escripts:$PATH"
+export LD_LIBRARY_PATH="$HOME/.local/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
