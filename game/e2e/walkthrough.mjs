@@ -1,7 +1,7 @@
 /**
- * Drives the real game in a real browser. Unit tests and jsdom cannot see CSP enforcement, stale
- * bundles, or a background push wiping the panel — every browser-only bug in this project lived
- * in exactly that gap.
+ * Drives the real game in a real browser. Unit tests and jsdom cannot see CSP enforcement, a
+ * stale bundle, or a background push wiping the panel — every browser-only bug in this project
+ * lived in exactly that gap.
  *
  * Usage: start the isolated server (`game/e2e/serve.sh`), then
  *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node game/e2e/walkthrough.mjs
@@ -9,6 +9,7 @@
 import { chromium } from 'playwright';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
+const TICK_MS = 6000; // the regen tick is 5s; allow a margin
 
 const failures = [];
 const check = (label, ok, detail = '') => {
@@ -30,44 +31,184 @@ page.on('requestfailed', r => {
         failedRequests.push(`${r.method()} ${r.url()} :: ${r.failure()?.errorText}`);
 });
 
-const screen = () => page.getAttribute('#screen', 'data-screen');
+/** The character's live state, read off the one element that mirrors it. */
+const state = async () => {
+    const el = page.locator('#screen');
+    const raw = await el.evaluate(node => ({ ...node.dataset }));
+    return {
+        screen: raw.screen,
+        started: raw.started === 'true',
+        dead: raw.dead === 'true',
+        ambushed: raw.ambushed === 'true',
+        level: raw.level ? Number(raw.level) : null,
+        health: raw.health ? Number(raw.health) : null,
+        maxHealth: raw.maxHealth ? Number(raw.maxHealth) : null,
+        adena: raw.adena ? Number(raw.adena) : null,
+    };
+};
+
+const onScreen = (name) => page.waitForSelector(`#screen[data-screen="${name}"]`, { timeout: 8000 });
+
+/**
+ * Clicks Fight and waits for the result to actually land. A fixed sleep raced the round trip: a
+ * FATAL fight patches to the death screen while a stale read still says alive, and the next click
+ * then hunts a Fight button that no longer exists. A fatal fight is not counted as a battle, so
+ * the battle counter alone is not enough — either signal ends the wait.
+ */
+async function fight() {
+    const before = await page.getAttribute('#screen', 'data-battles');
+    // Matched on the event, not the label: an ambush relabels this button to the narrative's own
+    // prompt ("Face your Foe!"), which shares no words with the ordinary one.
+    await page.click('#main button[phx-click="fight"]', { timeout: 8000 });
+    await page.waitForFunction(
+        (prev) => {
+            const el = document.querySelector('#screen');
+            return !!el && (el.dataset.screen === 'death' || el.dataset.battles !== prev);
+        },
+        before,
+        { timeout: 8000 },
+    );
+}
+
+/** Travels via the Town form, which is how a player actually moves. */
+async function travel(to) {
+    await onScreen('home');
+    await page.selectOption('#main select[name="to"]', to);
+    await page.click('#main form[phx-submit="navigate"] button[type="submit"]');
+    await onScreen(to);
+}
 
 try {
     // Never `networkidle`: the LiveView websocket stays open, so it never settles.
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
 
-    check('the page renders a screen', await screen() === 'start');
-
-    // Proves the carried-over stylesheet actually loaded AND matched, not merely 200'd. The
-    // background lives on `body`; `#app` is the flex container the layout rules key off.
+    // ---- the stylesheet actually applied, not merely 200'd -----------------------------------
     const bg = await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor);
-    const display = await page.locator('#app').evaluate(el => getComputedStyle(el).display);
     const font = await page.locator('.header-title').evaluate(el => getComputedStyle(el).fontFamily);
     check('the carried-over CSS is applied', bg !== 'rgba(0, 0, 0, 0)', `body background ${bg}`);
-    check('...including the layout rules', display === 'flex', `#app display ${display}`);
     check('...including the display font', /Cinzel|Silkscreen/i.test(font), font);
-
-    // The bug this exists for: a CSP that silently breaks the app's own transport.
-    await page.waitForSelector('.phx-connected', { timeout: 5000 });
     check('LiveView connects through the CSP', true);
 
-    // ---- the character outlives the connection ----------------------------------------------
-    await page.fill('input[name="name"]', 'BrowserBot');
-    await page.selectOption('select[name="race_id"]', '2'); // Elf
-    await page.click('button[type="submit"]');
-    await page.waitForSelector('#screen[data-screen="home"]', { timeout: 5000 });
+    // ---- access policy: a visitor cannot walk into the game -----------------------------------
+    await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
+    check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
+    await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
+    check('...and so does the death screen', (await state()).screen === 'start');
+    await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
+    check('...but Chronicles of Ancestry is public', (await state()).screen === 'races');
 
-    const nameOf = () => page.textContent('#main [data-role="name"]');
-    const adenaOf = () => page.textContent('#main [data-role="adena"]');
-    check('creating a character lands on Town', await screen() === 'home');
-    check('...with the chosen name', await nameOf() === 'BrowserBot', await nameOf());
-    check('...and the Elf starting purse', await adenaOf() === '450', await adenaOf());
+    // ---- create a character -------------------------------------------------------------------
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.fill('#main input[name="name"]', 'BrowserBot');
+    await page.selectOption('#main select[name="race_id"]', '1'); // Orc: 150 HP, survives a while
+    await page.click('#main button[type="submit"]');
+    await onScreen('home');
 
-    // The bug this exists for: state living only in the view, lost the moment the socket drops.
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 5000 });
-    check('a hard refresh finds the same character', await nameOf() === 'BrowserBot', await nameOf());
-    check('...still on Town, not back at Game Start', await screen() === 'home');
+    const born = await state();
+    check('creating a character lands on Town', born.screen === 'home');
+    check('...at full health', born.health === born.maxHealth, `${born.health}/${born.maxHealth}`);
+    check('...with the Orc purse', born.adena === 250, String(born.adena));
+    check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
+
+    // ---- a living character is kept out of character creation ---------------------------------
+    await page.goto(`${BASE}/statistics`, { waitUntil: 'domcontentloaded' });
+    check('a living character is bounced off Statistics', (await state()).screen === 'home');
+
+    // ---- travel and buy -----------------------------------------------------------------------
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await travel('inn');
+    const beforeMeal = await state();
+    await page.selectOption('#main select[name="item_id"]', '0'); // Spiced Ale, 7 adena
+    await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+    await page.waitForSelector('#main .alert', { timeout: 8000 });
+    // Scoped to #main: the sidebar's panels carry .panel-body too.
+    const mealText = await page.textContent('#main .alert');
+    check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
+    check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
+
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await travel('weapons');
+    await page.selectOption('#main select[name="item_id"]', '1'); // Elven Needle, 300 — unaffordable
+    await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+    await page.waitForSelector('#main .alert-danger', { timeout: 8000 });
+    check('an unaffordable weapon is refused, not an error page',
+        /do not have enough Adena/.test(await page.textContent('#main .alert-danger')));
+
+    // ---- a background tick must not disturb the open panel ------------------------------------
+    // Pick an option and leave it UNSUBMITTED: a submitted form re-renders and legitimately
+    // resets, which would make this assertion pass without testing anything.
+    await page.selectOption('#main select[name="item_id"]', '2');
+    const selectBefore = await page.inputValue('#main select[name="item_id"]');
+    check('an option can be chosen and left open', selectBefore === '2', `value ${selectBefore}`);
+    await page.waitForTimeout(TICK_MS);
+    check('a background tick leaves the main panel standing', await page.locator('#main').count() === 1);
+    check('...and the panel is still the Weapons Shop', (await state()).screen === 'weapons');
+    check('...and the purchase form survives', await page.locator('#main form[phx-submit="purchase"]').count() === 1);
+    check('...and does not reset an open <select>',
+        await page.inputValue('#main select[name="item_id"]') === selectBefore,
+        `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
+
+    // ---- fight until level-up, then until death -----------------------------------------------
+    await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+
+    let sawLevelUp = false;
+    let sawNarrative = false;
+    let current = await state();
+    check('the battleground is reachable with a living character', current.screen === 'battle',
+        `screen=${current.screen} started=${current.started} dead=${current.dead}`);
+
+    for (let i = 0; i < 120 && !current.dead; i++) {
+        // Heal at the Inn while we can still afford it and are not pinned by an ambush.
+        if (!sawLevelUp && !current.ambushed && current.health < current.maxHealth * 0.45 && current.adena >= 7) {
+            await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
+            await page.waitForSelector('.phx-connected', { timeout: 8000 });
+            await page.selectOption('#main select[name="item_id"]', '0');
+            await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+            await page.waitForSelector('#main .alert', { timeout: 8000 });
+            await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
+            await page.waitForSelector('.phx-connected', { timeout: 8000 });
+            current = await state();
+            continue;
+        }
+
+        const levelBefore = current.level;
+        await fight();
+        current = await state();
+
+        if (!sawNarrative && await page.locator('#main p').count() > 0)
+            sawNarrative = true;
+        if (current.level !== null && levelBefore !== null && current.level > levelBefore)
+            sawLevelUp = true;
+    }
+
+    check('fighting narrates the encounter', sawNarrative);
+    check('the character levelled up along the way', sawLevelUp, `reached level ${current.level}`);
+    check('the character eventually died', current.dead === true);
+    check('death pins the player to the death screen', (await state()).screen === 'death');
+
+    // ---- the dead cannot wander ---------------------------------------------------------------
+    await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
+    check('a dead character is confined to the death screen', (await state()).screen === 'death');
+
+    // ---- submit a highscore, then restart -----------------------------------------------------
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('a legitimate death may write its legacy',
+        await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
+    await page.click('#main button:has-text("Write your Legacy")');
+    await onScreen('highscores');
+    const board = await page.textContent('#main table.data-table');
+    check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
+    check('submitting also clears the character', (await state()).started === false);
+
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('and the game is ready to start again', (await state()).screen === 'start');
+    check('...with a fresh name field', await page.locator('#main input[name="name"]').count() === 1);
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

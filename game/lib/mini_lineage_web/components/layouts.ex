@@ -1,14 +1,19 @@
 defmodule MiniLineageWeb.Layouts do
   @moduledoc """
   The page shell. Element ids and class names are load-bearing: the carried-over stylesheet keys
-  off `#app`/`#wrapper`/`#header`/`#content`/`#main`/`.panel`.
+  off `#app`/`#wrapper`/`#header`/`#content`/`#sidebar`/`#main`/`.panel`.
   """
   use MiniLineageWeb, :html
+
+  alias MiniLineage.Game.Format
+  alias MiniLineageWeb.{Paths, Screens}
 
   embed_templates "layouts/*"
 
   attr :flash, :map, required: true
   attr :title, :string, default: "Loading"
+  attr :view, :map, required: true
+  attr :screen, :string, required: true
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -20,11 +25,15 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div id="content">
+          <.sidebar :if={@view.started && Screens.sidebar?(@screen)} view={@view} />
+
           <div id="main">
             <div class="panel">
               <div class="panel-header flex">
                 <span class="header-name">{@title}</span>
-                <div class="header-effects" id="effects"></div>
+                <div class="header-effects" id="effects">
+                  <.effect_icon :for={effect <- effects_of(@view)} effect={effect} />
+                </div>
               </div>
 
               <div class="panel-body">
@@ -33,6 +42,111 @@ defmodule MiniLineageWeb.Layouts do
             </div>
 
             <.footer />
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp effects_of(%{started: true, effects: effects}), do: effects
+  defp effects_of(_view), do: []
+
+  attr :effect, :map, required: true
+
+  defp effect_icon(assigns) do
+    ~H"""
+    <span
+      class={"effect-icon effect-fade-in effect-#{@effect.type}"}
+      data-effect-id={@effect.id}
+      data-label={@effect.label}
+      data-remaining-ms={@effect.remaining_ms}
+      title={@effect.tooltip}
+    >
+      <span class="effect-emoji">{@effect.emoji}</span>
+      <span :if={@effect.remaining_ms} class="effect-timer">{effect_timer(@effect.remaining_ms)}</span>
+    </span>
+    """
+  end
+
+  defp effect_timer(remaining_ms) do
+    seconds = max(0, ceil(remaining_ms / 1000))
+
+    if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
+  end
+
+  attr :view, :map, required: true
+
+  defp sidebar(assigns) do
+    ~H"""
+    <div id="sidebar">
+      <div class="panel status-panel">
+        <div class="panel-header flex">
+          <span class="header-name">{@view.name}</span>
+        </div>
+        <div class="panel-body small">
+          <div class="stat-row">
+            <span class="stat-label">Race</span>
+            <span class="stat-value">
+              {if @view.dead, do: "☠️", else: @view.race_emoji}
+              <.link patch={Paths.for_screen("character")}>
+                {@view.race_label} level {Format.number(@view.level)}
+              </.link>
+            </span>
+          </div>
+
+          <div class={"stat-row bar#{if @view.low_health, do: " danger"}"}>
+            <span class="stat-label">HP</span>
+            <div class="bar-track" id="hp-track">
+              <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
+              <span class="bar-text">
+                <span class="animate-val">{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
+                  @view.max_health
+                )}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="stat-row bar">
+            <span class="stat-label">XP</span>
+            <div class="bar-track">
+              <div
+                class="bar xp-bar"
+                id="xp-bar"
+                style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
+                data-level={@view.level}
+              >
+              </div>
+              <span class="bar-text">
+                <span class="animate-val">
+                  {Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}
+                </span><span :if={!@view.is_max_level}>/{Format.number(@view.xp_required)}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <span class="stat-label">Adena</span>
+            <span class="stat-value gold">🪙
+            <span class="animate-adena">{Format.adena(@view.adena)}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel inventory-panel">
+        <div class="panel-header">Inventory</div>
+        <div class="panel-body small">
+          <div class="stat-row">
+            <span class="stat-value" title="Equipped Armor">
+              {@view.armor.emoji} {@view.armor.name}
+              <span :if={(@view.armor.regen || 0) > 0} class="heal">+{@view.armor.regen}</span>
+            </span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-value" title="Equipped Weapon">
+              {@view.weapon.emoji} {@view.weapon.name}
+              <span :if={(@view.weapon.crit || 0) > 0} class="crit">{@view.weapon.crit}%</span>
+            </span>
           </div>
         </div>
       </div>
