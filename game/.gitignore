@@ -38,3 +38,4 @@ npm-debug.log
 
 # The browser walkthrough builds into its own tree, so it cannot disturb a running dev server.
 /_build_e2e/
+/_build_check/

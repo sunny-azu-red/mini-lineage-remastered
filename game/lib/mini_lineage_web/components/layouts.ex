@@ -10,6 +10,32 @@ defmodule MiniLineageWeb.Layouts do
 
   embed_templates "layouts/*"
 
+  @doc """
+  The document head. Shared with the error page, which is rendered without a LiveView — so the
+  two cannot drift apart on fonts or stylesheets the way they already did once.
+  """
+  attr :scripts, :boolean, default: true
+
+  def head(assigns) do
+    ~H"""
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <link rel="icon" href={~p"/favicon.ico"} type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&family=Silkscreen:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script :if={@scripts} defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
+    """
+  end
+
   attr :flash, :map, required: true
   attr :title, :string, default: "Loading"
   attr :view, :map, required: true
@@ -21,7 +47,7 @@ defmodule MiniLineageWeb.Layouts do
     <div id="app" phx-hook="KonamiRelay">
       <div id="wrapper">
         <div id="header">
-          <.site_header />
+          <Layouts.site_header />
         </div>
 
         <div id="content">
@@ -41,7 +67,7 @@ defmodule MiniLineageWeb.Layouts do
               </div>
             </div>
 
-            <.footer />
+            <Layouts.footer />
           </div>
         </div>
       </div>
@@ -160,7 +186,10 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  defp site_header(assigns) do
+  @doc "The banner. `interactive?` is false on the error page, which loads no JS to drive the toggle."
+  attr :interactive?, :boolean, default: true
+
+  def site_header(assigns) do
     ~H"""
     <div id="site-header">
       <a href={~p"/"} id="header-link" class="header-clickable-area">
@@ -176,12 +205,20 @@ defmodule MiniLineageWeb.Layouts do
         <span class="header-subtitle">Remastered</span>
       </a>
       <%!-- Outside the anchor, so clicking it never also navigates. --%>
-      <button id="sound-toggle" type="button" phx-hook="SoundToggle" class="sound-toggle-btn">🔊</button>
+      <button
+        :if={@interactive?}
+        id="sound-toggle"
+        type="button"
+        phx-hook="SoundToggle"
+        class="sound-toggle-btn"
+      >
+        🔊
+      </button>
     </div>
     """
   end
 
-  defp footer(assigns) do
+  def footer(assigns) do
     version = Version.current()
 
     assigns =

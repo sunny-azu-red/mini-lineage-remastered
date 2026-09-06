@@ -143,8 +143,13 @@ try {
     const before404 = consoleErrors.length;
     const notFound = await page.goto(`${BASE}/no-such-road`, { waitUntil: 'domcontentloaded' });
     check('an unknown URL returns 404, not a crash', notFound?.status() === 404, String(notFound?.status()));
-    check('...wearing the game shell rather than bare text',
-        await page.locator('#main .panel-body').count() === 1);
+    check('...wearing the real game shell, not an approximation of it',
+        await page.locator('#site-header .header-title').count() === 1
+        && await page.locator('#copyright').count() === 1
+        && await page.locator('#main .panel-body').count() === 1);
+    check('...with the same fonts as every other screen',
+        /Cinzel|Silkscreen/i.test(
+            await page.locator('.header-title').evaluate(el => getComputedStyle(el).fontFamily)));
     check('...and in a dev build it says what happened',
         await page.locator('#main .code-block').count() === 1);
     // Asking for a 404 legitimately logs one console error. Drop exactly those, nothing else.
