@@ -13,6 +13,7 @@ defmodule MiniLineage.Application do
       {DNSCluster, query: Application.get_env(:mini_lineage, :dns_cluster_query) || :ignore},
       {Registry, keys: :unique, name: MiniLineage.Characters.Registry},
       {DynamicSupervisor, strategy: :one_for_one, name: MiniLineage.Characters.Supervisor},
+      MiniLineage.Game.RateLimit,
       {Phoenix.PubSub, name: MiniLineage.PubSub},
       # Start a worker by calling: MiniLineage.Worker.start_link(arg)
       # {MiniLineage.Worker, arg},

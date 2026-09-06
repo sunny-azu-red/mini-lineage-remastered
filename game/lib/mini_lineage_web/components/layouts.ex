@@ -18,7 +18,7 @@ defmodule MiniLineageWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <div id="app">
+    <div id="app" phx-hook="KonamiRelay">
       <div id="wrapper">
         <div id="header">
           <.site_header />
@@ -31,7 +31,7 @@ defmodule MiniLineageWeb.Layouts do
             <div class="panel">
               <div class="panel-header flex">
                 <span class="header-name">{@title}</span>
-                <div class="header-effects" id="effects">
+                <div class="header-effects" id="effects" phx-hook="EffectTimers">
                   <.effect_icon :for={effect <- effects_of(@view)} effect={effect} />
                 </div>
               </div>
@@ -169,6 +169,8 @@ defmodule MiniLineageWeb.Layouts do
         <span class="header-title">Mini Lineage</span>
         <span class="header-subtitle">Remastered</span>
       </a>
+      <%!-- Outside the anchor, so clicking it never also navigates. --%>
+      <button id="sound-toggle" type="button" phx-hook="SoundToggle" class="sound-toggle-btn">🔊</button>
     </div>
     """
   end

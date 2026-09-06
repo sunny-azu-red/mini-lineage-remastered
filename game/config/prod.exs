@@ -25,3 +25,6 @@ config :logger, level: :info
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
+
+# Throttling is on only for a real deployment; local development is never throttled.
+config :mini_lineage, rate_limit: true

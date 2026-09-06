@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.GameLive do
   use MiniLineageWeb, :live_view
 
   alias MiniLineage.Characters
-  alias MiniLineage.Game.{Access, Actions, Snapshot}
+  alias MiniLineage.Game.{Access, Actions, RateLimit, Snapshot}
   alias MiniLineage.Game.Statistics.Collector
   alias MiniLineage.Highscores
   alias MiniLineageWeb.{Paths, Screens}
@@ -37,7 +37,8 @@ defmodule MiniLineageWeb.GameLive do
        notice: nil,
        game_flash: nil,
        highscores: [],
-       statistics: nil
+       statistics: nil,
+       key_buffer: []
      )}
   end
 
@@ -108,17 +109,29 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   def handle_event("fight", _params, socket) do
-    socket = apply_action(socket, &Actions.fight/1)
+    case throttle(socket, :battle) do
+      {:ok, socket} ->
+        socket = apply_action(socket, &Actions.fight/1)
 
-    {:noreply, if(socket.assigns.player.dead, do: go(socket, "death"), else: socket)}
+        {:noreply, if(socket.assigns.player.dead, do: go(socket, "death"), else: socket)}
+
+      {:limited, socket} ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("purchase", %{"item_id" => ""}, socket), do: {:noreply, go(socket, "home")}
 
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
-    item_id = String.to_integer(item_id)
+    case throttle(socket, :shop) do
+      {:ok, socket} ->
+        item_id = String.to_integer(item_id)
 
-    {:noreply, apply_action(socket, &Actions.purchase(&1, type, item_id))}
+        {:noreply, apply_action(socket, &Actions.purchase(&1, type, item_id))}
+
+      {:limited, socket} ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("suicide", %{"confirm" => "yes"}, socket),
@@ -138,6 +151,17 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("dismiss_flash", _params, socket),
     do: {:noreply, assign(socket, game_flash: nil, notice: nil)}
+
+  # The Konami buffer lives here rather than in the character, so nothing about the sequence is
+  # persisted and a second tab cannot half-complete it.
+  def handle_event("key", %{"key" => key}, socket) do
+    sequence = MiniLineage.Game.Constants.konami_sequence()
+    buffer = Enum.take(socket.assigns.key_buffer ++ [key], -length(sequence))
+
+    if buffer == sequence,
+      do: {:noreply, socket |> assign(key_buffer: []) |> apply_action(&Actions.cheat/1)},
+      else: {:noreply, assign(socket, key_buffer: buffer)}
+  end
 
   # ----------------------------------------------------------------- pushes
 
@@ -177,6 +201,27 @@ defmodule MiniLineageWeb.GameLive do
 
   defp go(socket, screen), do: push_patch(socket, to: Paths.for_screen(screen))
 
+  # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries
+  # only one generic message. Flavour, not security.
+  defp throttle(socket, limiter) do
+    case RateLimit.check(socket.assigns.character_id, limiter) do
+      :ok ->
+        {:ok, socket}
+
+      {:error, retry_after_ms} ->
+        seconds = max(1, ceil(retry_after_ms / 1000))
+
+        message =
+          if socket.assigns.view[:ambushed] && !socket.assigns.view[:dead] do
+            "You are in the middle of an ambush and moving too fast, please wait a moment."
+          else
+            "You are moving too fast, please take a breath and try again in #{seconds}s."
+          end
+
+        {:limited, assign(socket, notice: message)}
+    end
+  end
+
   # ------------------------------------------------------------------ render
 
   @impl true
@@ -197,6 +242,7 @@ defmodule MiniLineageWeb.GameLive do
             game state rather than scraping prose. --%>
       <div
         id="screen"
+        phx-hook="PanelFocus"
         data-screen={@screen}
         data-started={to_string(@view.started)}
         data-dead={to_string(@view[:dead] || false)}

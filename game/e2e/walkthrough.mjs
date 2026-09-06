@@ -19,7 +19,25 @@ const check = (label, ok, detail = '') => {
 };
 
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const context = await browser.newContext();
+
+// Records every note the page actually plays. Web Audio produces no output to assert on, so the
+// synth is verified by the graph it builds — the same idea as the reference's sound trace test.
+await context.addInitScript(() => {
+    window.__notes = [];
+    const create = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function () {
+        const osc = create.call(this);
+        const start = osc.start.bind(osc);
+        osc.start = (when) => {
+            window.__notes.push(osc.type);
+            return start(when);
+        };
+        return osc;
+    };
+});
+
+const page = await context.newPage();
 
 const consoleErrors = [];
 const failedRequests = [];
@@ -107,10 +125,39 @@ try {
     await onScreen('home');
 
     const born = await state();
+    const startNotes = await page.evaluate(() => window.__notes.slice());
+    check('creating a character plays the start fanfare', startNotes.length === 4,
+        `notes: ${JSON.stringify(startNotes)}`);
+    check('...as three triangles and a square', startNotes.join(',') === 'triangle,triangle,triangle,square',
+        startNotes.join(','));
+
     check('creating a character lands on Town', born.screen === 'home');
     check('...at full health', born.health === born.maxHealth, `${born.health}/${born.maxHealth}`);
     check('...with the Orc purse', born.adena === 250, String(born.adena));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
+
+    // ---- the effect timer counts down locally --------------------------------------------------
+    const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
+    check('the Newbie Blessing shows a timer', /^\d+m?$/.test((await timerText()) ?? ''), await timerText());
+    const remainingBefore = await page.getAttribute('#effects [data-effect-id="newbie_blessing"]', 'data-remaining-ms');
+    check('...counted from a duration, never a server timestamp', Number(remainingBefore) <= 300000,
+        `${remainingBefore}ms`);
+
+    // ---- muting is a per-browser preference ----------------------------------------------------
+    await page.click('#sound-toggle');
+    check('muting flips the toggle', await page.textContent('#sound-toggle') === '🔇');
+    const beforeMuted = (await page.evaluate(() => window.__notes.length));
+    await page.click('#sound-toggle');
+    check('unmuting flips it back', await page.textContent('#sound-toggle') === '🔊');
+    check('...and the unmute chime is itself audible',
+        (await page.evaluate(() => window.__notes.length)) > beforeMuted);
+
+    // ---- a second tab follows along -------------------------------------------------------------
+    const tab = await context.newPage();
+    await tab.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await tab.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('a second tab sees the same character',
+        await tab.getAttribute('#screen', 'data-health') === String(born.health));
 
     // ---- a living character is kept out of character creation ---------------------------------
     await page.goto(`${BASE}/statistics`, { waitUntil: 'domcontentloaded' });
@@ -128,6 +175,15 @@ try {
     const mealText = await page.textContent('#main .alert');
     check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
+
+    await tab.waitForFunction(
+        (expected) => document.querySelector('#screen')?.dataset.adena === expected,
+        String(beforeMeal.adena - 7),
+        { timeout: 8000 },
+    ).then(() => check('the other tab sees the spend without acting', true))
+     .catch(async () => check('the other tab sees the spend without acting', false,
+        `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
+    await tab.close();
 
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
@@ -209,6 +265,39 @@ try {
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('and the game is ready to start again', (await state()).screen === 'start');
     check('...with a fresh name field', await page.locator('#main input[name="name"]').count() === 1);
+
+    // ---- the Konami cheat, last: it bars the highscores ---------------------------------------
+    await page.fill('#main input[name="name"]', 'Cheater');
+    await page.selectOption('#main select[name="race_id"]', '0');
+    await page.click('#main button[type="submit"]');
+    await onScreen('home');
+
+    // Done from the Battleground, whose first control is a button — on Town the arrow keys would
+    // also be walking the travel <select>.
+    await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'])
+        await page.keyboard.press(key);
+
+    await page.waitForSelector('#effects [data-effect-id="konami_cheat"]', { timeout: 8000 })
+        .then(() => check('the Konami sequence marks the cheater', true))
+        .catch(() => check('the Konami sequence marks the cheater', false));
+
+    // ---- keyboard play -------------------------------------------------------------------------
+    const focused = await page.evaluate(() => document.activeElement?.tagName);
+    check('the panel takes focus so the game plays from the keyboard',
+        ['BUTTON', 'INPUT', 'SELECT', 'A'].includes(focused), `focus on ${focused}`);
+
+    await page.goto(`${BASE}/suicide`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.selectOption('#main select[name="confirm"]', 'yes');
+    await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
+    await onScreen('death');
+    check('a cheater who quits is dead', (await state()).dead === true);
+    check('...and may NOT write a legacy',
+        await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
+    check('...but the death screen never takes focus',
+        await page.evaluate(() => document.activeElement === document.body || document.activeElement?.tagName === 'HTML'));
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

@@ -220,6 +220,23 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
+  @doc """
+  Konami cheat. Activation is silent by design: no flash, just the debuff icon and HP snapping to
+  full. Every failure path is a no-op — the relay has no ack to report one to.
+  """
+  def cheat(player) do
+    if not Player.started?(player) or player.dead do
+      {player, {:ok, nil}}
+    else
+      player = %{player | cheated: true}
+      player = Player.apply_effect(player, Constants.effect(:konami_cheat))
+      player = %{player | health: Player.stats(player).max_health}
+      Statistics.increment(:total_players_cheated)
+
+      {player, {:ok, nil}}
+    end
+  end
+
   @doc "Only the fallen may start over — a living character can never be wiped."
   def restart(player) do
     case guard(player, [{:not_dead, &(not &1.dead)}]) do
