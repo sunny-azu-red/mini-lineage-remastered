@@ -186,13 +186,21 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  @doc "The banner. `interactive?` is false on the error page, which loads no JS to drive the toggle."
+  @doc """
+  The banner. `interactive?` is false on the error page, which has no LiveView — so there the
+  banner is an ordinary link and the sound toggle, which nothing would drive, is left out.
+  """
   attr :interactive?, :boolean, default: true
 
   def site_header(assigns) do
     ~H"""
     <div id="site-header">
-      <a href={~p"/"} id="header-link" class="header-clickable-area">
+      <.link
+        patch={if @interactive?, do: ~p"/"}
+        href={unless @interactive?, do: ~p"/"}
+        id="header-link"
+        class="header-clickable-area"
+      >
         <svg class="header-emblem" xmlns="http://www.w3.org/2000/svg" viewBox="58 0 50 157">
           <g>
             <path
@@ -203,7 +211,7 @@ defmodule MiniLineageWeb.Layouts do
         </svg>
         <span class="header-title">Mini Lineage</span>
         <span class="header-subtitle">Remastered</span>
-      </a>
+      </.link>
       <%!-- Outside the anchor, so clicking it never also navigates. --%>
       <button
         :if={@interactive?}

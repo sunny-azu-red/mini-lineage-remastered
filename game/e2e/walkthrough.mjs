@@ -96,10 +96,53 @@ async function fight() {
  * navigation that follows is then aborted the moment the socket comes up. That produced a
  * `net::ERR_ABORTED` against the failed-request assertion perhaps one run in five.
  */
+/** Returns to Town by clicking the banner, the way the header link works in the game. */
+async function goHome() {
+    await page.click('#header-link');
+    await onScreen('home');
+}
+
+/**
+ * Buys one item and waits for the purse to actually move.
+ *
+ * Waiting for `#main .alert` instead returns immediately — the previous purchase's alert is still
+ * on screen — so the next iteration reads stale adena and tries to buy what it can no longer
+ * afford. Returns false when the purchase was refused.
+ */
+async function buy(itemId) {
+    const before = await page.getAttribute('#screen', 'data-adena');
+    await page.selectOption('#main select[name="item_id"]', String(itemId), { timeout: 5000 });
+    await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+
+    return page
+        .waitForFunction(
+            (prev) => document.querySelector('#screen')?.dataset.adena !== prev,
+            before,
+            { timeout: 5000 },
+        )
+        .then(() => true)
+        .catch(() => false);
+}
+
+/** Leaves a shop through its own "🚪 Home Town" option rather than by navigating away. */
+async function leaveShop() {
+    await page.selectOption('#main select[name="item_id"]', '', { timeout: 5000 });
+    await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+    await onScreen('home');
+}
+
 async function travel(to) {
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await onScreen('home');
-    await page.selectOption('#main select[name="to"]', to);
+
+    try {
+        await page.selectOption('#main select[name="to"]', to, { timeout: 5000 });
+    } catch {
+        const ds = await page.locator('#screen').evaluate(n => JSON.stringify({ ...n.dataset }));
+        const controls = await page.locator('#main select, #main button').allTextContents();
+        throw new Error(`no travel form on the way to "${to}". screen=${ds} controls=${JSON.stringify(controls)}`);
+    }
+
     await page.click('#main form[phx-submit="navigate"] button[type="submit"]');
     // Travelling to the Battleground fights on arrival, which can kill outright.
     try {
@@ -140,6 +183,10 @@ try {
     check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));
 
     // ---- access policy: a visitor cannot walk into the game -----------------------------------
+    // The `page.goto` calls from here on are deliberate: a TYPED URL is the thing under test, and
+    // there is no in-app link to these screens for a visitor to click. Everywhere else the
+    // walkthrough clicks, because a route reached only by URL is a route that never gets tested —
+    // travelling to the Battleground crashed the LiveView while its URL worked perfectly.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
     await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
@@ -188,6 +235,9 @@ try {
     check('...at full health', born.health === born.maxHealth, `${born.health}/${born.maxHealth}`);
     check('...with the Orc purse', born.adena === 250, String(born.adena));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
+    check('the panel takes focus so the game plays from the keyboard',
+        await page.evaluate(() => document.activeElement?.tagName) === 'SELECT',
+        await page.evaluate(() => document.activeElement?.tagName));
 
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
@@ -217,9 +267,19 @@ try {
     check('a living character is bounced off Statistics', (await state()).screen === 'home');
 
     // ---- travel and buy -----------------------------------------------------------------------
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await goHome();
+
+    // ---- the board is reachable from Town's own prose link -------------------------------------
+    await page.click('#main a[href="/highscores"]');
+    await onScreen('highscores');
+    check('Town links through to the Hall of Champions', (await state()).screen === 'highscores');
+    await page.click('#main .last a');
+    await onScreen('home');
+
     await travel('inn');
+    check('the Inn hands focus to its own picker, not a hidden field',
+        await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
+        await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
     const beforeMeal = await state();
     await page.selectOption('#main select[name="item_id"]', '0'); // Spiced Ale, 7 adena
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
@@ -238,9 +298,10 @@ try {
         `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
     await tab.close();
 
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await goHome();
     await travel('weapons');
+    check('...and so does the Weapons Shop',
+        await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id');
     await page.selectOption('#main select[name="item_id"]', '1'); // Elven Needle, 300 — unaffordable
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
     await page.waitForSelector('#main .alert-danger', { timeout: 8000 });
@@ -265,8 +326,7 @@ try {
     // Entered from the Town form, the way a player does — NOT by typing the URL. Travelling to
     // the Battleground is its own code path, and it crashed the LiveView while a typed URL
     // worked perfectly, so the shortcut this test used to take proved nothing.
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await goHome();
     const battlesBeforeTravel = Number(await page.getAttribute('#screen', 'data-battles'));
     await travel('battle');
     check('travelling to the Battleground from Town fights on arrival',
@@ -274,46 +334,75 @@ try {
         || (await state()).dead,
         `battles ${battlesBeforeTravel} -> ${await page.getAttribute('#screen', 'data-battles')}`);
 
-    let sawLevelUp = false;
+    // The highest level actually observed, rather than a comparison around one call site:
+    // travelling to the Battleground fights on arrival, so a level-up can land inside the heal
+    // detour where a narrower check never looks.
+    let maxLevel = 1;
     let sawNarrative = false;
     let sawShimmer = false;
+    let boughtWeapon = false;
     let current = await state();
     check('the battleground is reachable with a living character', current.screen === 'battle',
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
     for (let i = 0; i < 120 && !current.dead; i++) {
         // Heal at the Inn while we can still afford it and are not pinned by an ambush.
-        if (!sawLevelUp && !current.ambushed && current.health < current.maxHealth * 0.45 && current.adena >= 7) {
-            await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
-            await page.waitForSelector('.phx-connected', { timeout: 8000 });
-            await page.selectOption('#main select[name="item_id"]', '0');
-            // Eaten while genuinely wounded, so HP really rises — a gain shimmers, damage never does.
-            const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 3000 })
-                .then(() => true).catch(() => false);
-            await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
-            await page.waitForSelector('#main .alert', { timeout: 8000 });
-            sawShimmer = sawShimmer || await shimmer;
-            await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
-            await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        if (maxLevel === 1 && !current.ambushed && current.health < current.maxHealth * 0.45 && current.adena >= 7) {
+            await goHome();
+            await travel('inn');
+            // Eats until healthy or broke. One meal is a losing trade: getting back to the
+            // Battleground fights on arrival, which costs more than a cheap dish restores.
+            const MEAL_COSTS = [7, 15, 60, 250, 1200];
+            for (let meal = 0; meal < 12; meal++) {
+                current = await state();
+                if (current.health >= current.maxHealth * 0.8)
+                    break;
+
+                const best = [...MEAL_COSTS.keys()].reverse().find(i => current.adena >= MEAL_COSTS[i]);
+                if (best === undefined)
+                    break;
+
+                // Eaten while genuinely wounded, so HP really rises — a gain shimmers, damage never does.
+                const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 2000 })
+                    .then(() => true).catch(() => false);
+
+                if (!(await buy(best)))
+                    break;
+
+                sawShimmer = sawShimmer || await shimmer;
+            }
+            await leaveShop();
+
+            // A player upgrades as soon as the purse allows, and the XP that buys is what makes
+            // level 2 reachable before an Orc runs out of health.
             current = await state();
+            maxLevel = Math.max(maxLevel, current.level ?? 1);
+
+            if (!boughtWeapon && current.adena >= 300) {
+                await travel('weapons');
+                boughtWeapon = await buy(1);
+                await leaveShop();
+            }
+
+            await travel('battle');
+            current = await state();
+            maxLevel = Math.max(maxLevel, current.level ?? 1);
             continue;
         }
 
-        const levelBefore = current.level;
         await fight();
         current = await state();
+        maxLevel = Math.max(maxLevel, current.level ?? 1);
 
         if (!sawNarrative && await page.locator('#main p').count() > 0)
             sawNarrative = true;
-        if (current.level !== null && levelBefore !== null && current.level > levelBefore)
-            sawLevelUp = true;
     }
 
     check('fighting narrates the encounter', sawNarrative);
     check('healing while wounded sweeps a shimmer across the HP bar', sawShimmer);
     check('the counters carry their live values for the animation',
         await page.locator('#sidebar [data-value]').count() === 3);
-    check('the character levelled up along the way', sawLevelUp, `reached level ${current.level}`);
+    check('the character levelled up along the way', maxLevel > 1, `reached level ${maxLevel}`);
     check('the character eventually died', current.dead === true);
     check('death pins the player to the death screen', (await state()).screen === 'death');
 
@@ -331,9 +420,9 @@ try {
     check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
     check('submitting also clears the character', (await state()).started === false);
 
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('and the game is ready to start again', (await state()).screen === 'start');
+    await page.click('#main .last a');
+    await onScreen('start');
+    check('and the board\'s own back link leads to a fresh start', (await state()).screen === 'start');
     check('...with a fresh name field', await page.locator('#main input[name="name"]').count() === 1);
 
     // ---- the Konami cheat, last: it bars the highscores ---------------------------------------
@@ -342,10 +431,15 @@ try {
     await page.click('#main button[type="submit"]');
     await onScreen('home');
 
-    // Done from the Battleground, whose first control is a button — on Town the arrow keys would
-    // also be walking the travel <select>.
-    await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    // ---- the sidebar reaches the Character screen ---------------------------------------------
+    await page.click('#sidebar .stat-row a');
+    await onScreen('character');
+    check('the sidebar link opens the Character screen', (await state()).screen === 'character');
+    check('...which names the character and its ancestry',
+        /Cheater/.test(await page.textContent('#main h2') ?? ''));
+
+    // The cheat is entered here: the screen has no <select> for the arrow keys to walk, and
+    // nothing on arrival that could kill the cheater before the sequence lands.
     for (const key of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'])
         await page.keyboard.press(key);
 
@@ -354,12 +448,17 @@ try {
         .catch(() => check('the Konami sequence marks the cheater', false));
 
     // ---- keyboard play -------------------------------------------------------------------------
-    const focused = await page.evaluate(() => document.activeElement?.tagName);
-    check('the panel takes focus so the game plays from the keyboard',
-        ['BUTTON', 'INPUT', 'SELECT', 'A'].includes(focused), `focus on ${focused}`);
+    // Links are deliberately not focused — Space scrolls a link instead of activating it — so a
+    // screen whose only controls are links correctly takes no focus at all.
+    check('a screen with no controls does not steal focus',
+        await page.evaluate(() => document.activeElement === document.body), 
+        await page.evaluate(() => document.activeElement?.tagName));
 
-    await page.goto(`${BASE}/suicide`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.click('#main .back a');
+    await onScreen('home');
+    check('the Character screen\'s back link continues the journey', (await state()).screen === 'home');
+
+    await travel('suicide');
     await page.selectOption('#main select[name="confirm"]', 'yes');
     await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
     await onScreen('death');

@@ -89,21 +89,36 @@ export const KonamiRelay = {
  */
 export const PanelFocus = {
     mounted() {
-        this.focusFirst();
+        this.screen = this.el.dataset.screen;
+        requestAnimationFrame(() => this.focusFirst(true));
     },
     updated() {
-        this.focusFirst();
+        const arrived = this.el.dataset.screen !== this.screen;
+        this.screen = this.el.dataset.screen;
+        // Deferred a frame: LiveView restores the previously-focused element after patching, so
+        // claiming focus inline would be undone — and because it morphs one screen's control into
+        // the next screen's, what it restores is the wrong control entirely.
+        requestAnimationFrame(() => this.focusFirst(arrived));
     },
-    focusFirst() {
+    focusFirst(arrived) {
+        // You reach the death screen by dying, plausibly with a Space already travelling —
+        // focusing "Write your Legacy!" could submit a score before it has been read.
         if (this.el.dataset.screen === 'death')
             return;
 
-        const active = document.activeElement;
-        if (active && active !== document.body && this.el.contains(active))
+        // Arriving on a screen should pull focus in; an in-screen update must stay gentle, so it
+        // never yanks focus off a select mid-tab or a name field mid-word. Without the
+        // distinction, LiveView morphing one screen's button into the next screen's left focus
+        // sitting on the wrong control.
+        if (!arrived && document.activeElement !== document.body)
             return;
 
-        const control = this.el.querySelector('input, select, button, a.btn');
-        if (control)
+        // Links are excluded deliberately, matching the reference: Space scrolls a link rather
+        // than activating it, so focusing one would break the keyboard loop it exists to serve.
+        // A hidden input is not focusable but still matches `input` — the shops carry one, so
+        // without this exclusion three screens claimed focus onto nothing at all.
+        const control = this.el.querySelector('input:not([type="hidden"]), select, button');
+        if (control && !control.matches(':disabled'))
             control.focus({ preventScroll: true });
     },
 };
