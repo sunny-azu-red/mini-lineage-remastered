@@ -35,3 +35,6 @@ mini_lineage-*.tar
 npm-debug.log
 /assets/node_modules/
 
+
+# The browser walkthrough builds into its own tree, so it cannot disturb a running dev server.
+/_build_e2e/

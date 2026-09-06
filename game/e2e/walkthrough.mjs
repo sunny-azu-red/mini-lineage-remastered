@@ -74,6 +74,7 @@ const onScreen = (name) => page.waitForSelector(`#screen[data-screen="${name}"]`
  * the battle counter alone is not enough — either signal ends the wait.
  */
 async function fight() {
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     const before = await page.getAttribute('#screen', 'data-battles');
     // Matched on the event, not the label: an ambush relabels this button to the narrative's own
     // prompt ("Face your Foe!"), which shares no words with the ordinary one.
@@ -88,8 +89,15 @@ async function fight() {
     );
 }
 
-/** Travels via the Town form, which is how a player actually moves. */
+/**
+ * Travels via the Town form, which is how a player actually moves.
+ *
+ * Waits for the socket first: an unconnected LiveView submits the form natively, and the real
+ * navigation that follows is then aborted the moment the socket comes up. That produced a
+ * `net::ERR_ABORTED` against the failed-request assertion perhaps one run in five.
+ */
 async function travel(to) {
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await onScreen('home');
     await page.selectOption('#main select[name="to"]', to);
     await page.click('#main form[phx-submit="navigate"] button[type="submit"]');
