@@ -4,11 +4,17 @@ defmodule MiniLineageWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
+  # The cookie carries an opaque character id and nothing else. `max_age` matches the 24h the
+  # character row itself lives, so closing the browser no longer loses a character the database
+  # is still holding. `secure` is set for a deployment behind TLS.
   @session_options [
     store: :cookie,
     key: "_mini_lineage_key",
     signing_salt: "boRfKEv2",
-    same_site: "Lax"
+    same_site: "Lax",
+    http_only: true,
+    secure: System.get_env("IN_DOCKER") == "true",
+    max_age: 24 * 60 * 60
   ]
 
   socket "/live", Phoenix.LiveView.Socket,

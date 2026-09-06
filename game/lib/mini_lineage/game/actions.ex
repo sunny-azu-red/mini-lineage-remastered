@@ -148,21 +148,45 @@ defmodule MiniLineage.Game.Actions do
   def purchase(player, type, item_id) do
     case guard(player, alive()) do
       nil ->
-        case Player.purchase(player, type, item_id) do
-          nil ->
-            {player, {:error, :invalid, "Unknown item."}}
-
-          {player, result} ->
-            # "Not enough Adena" and "already own this" are successful actions with a danger
-            # flash, not errors.
-            sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
-            type_atom = if result.success, do: :success, else: :danger
-
-            {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
+        case validate_item(type, item_id) do
+          :invalid -> {player, {:error, :invalid, "Unknown item."}}
+          {:ok, item_id} -> do_purchase(player, type, item_id)
         end
 
       refusal ->
         refusal
+    end
+  end
+
+  # The boundary, not a convenience: it rejects anything that is not a number, and the starting
+  # weapon and armor, which cost nothing and are never for sale — buying one would be a free
+  # downgrade.
+  defp validate_item(type, item_id) do
+    with {id, ""} <- Integer.parse(to_string(item_id)),
+         true <- id in purchasable_ids(type) do
+      {:ok, id}
+    else
+      _ -> :invalid
+    end
+  end
+
+  defp purchasable_ids("weapon"), do: Enum.map(tl(Constants.weapons()), & &1.id)
+  defp purchasable_ids("armor"), do: Enum.map(tl(Constants.armors()), & &1.id)
+  defp purchasable_ids("food"), do: Enum.map(Constants.foods(), & &1.id)
+  defp purchasable_ids(_type), do: []
+
+  defp do_purchase(player, type, item_id) do
+    case Player.purchase(player, type, item_id) do
+      nil ->
+        {player, {:error, :invalid, "Unknown item."}}
+
+      {player, result} ->
+        # "Not enough Adena" and "already own this" are successful actions with a danger
+        # flash, not errors.
+        sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
+        type_atom = if result.success, do: :success, else: :danger
+
+        {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
     end
   end
 

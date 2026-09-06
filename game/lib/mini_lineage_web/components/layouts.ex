@@ -5,7 +5,7 @@ defmodule MiniLineageWeb.Layouts do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.Format
+  alias MiniLineage.Game.{Format, Version}
   alias MiniLineageWeb.{Paths, Screens}
 
   embed_templates "layouts/*"
@@ -176,11 +176,28 @@ defmodule MiniLineageWeb.Layouts do
   end
 
   defp footer(assigns) do
-    assigns = assign(assigns, year: Date.utc_today().year)
+    version = Version.current()
+
+    assigns =
+      assign(assigns,
+        year: Date.utc_today().year,
+        version: version,
+        commit_url: Version.commit_url(version)
+      )
 
     ~H"""
     <div id="copyright">
-      <span class="version-debug">⚡ development</span> &copy; 2005 &ndash; {@year}
+      <a
+        :if={@commit_url}
+        href={@commit_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="version-link"
+      >
+        {@version}
+      </a>
+      <span :if={!@commit_url} class="version-debug">{@version}</span>
+      &copy; 2005 &ndash; {@year}
     </div>
     """
   end

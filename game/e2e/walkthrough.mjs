@@ -108,6 +108,15 @@ try {
     check('...including the display font', /Cinzel|Silkscreen/i.test(font), font);
     check('LiveView connects through the CSP', true);
 
+    // The footer names the running build, flagged when it is not a release.
+    const footer = await page.textContent('#copyright');
+    check('the footer names the running build', /development/.test(footer ?? ''), footer?.trim());
+    check('...and flags it as a debug build', await page.locator('#copyright .version-debug').count() === 1);
+
+    const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
+    check('the session cookie is httpOnly', cookie?.httpOnly === true);
+    check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));
+
     // ---- access policy: a visitor cannot walk into the game -----------------------------------
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');

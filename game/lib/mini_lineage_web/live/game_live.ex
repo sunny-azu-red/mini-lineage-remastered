@@ -125,8 +125,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
     case throttle(socket, :shop) do
       {:ok, socket} ->
-        item_id = String.to_integer(item_id)
-
+        # Passed through as-is: Actions.purchase/3 is the boundary and validates it.
         {:noreply, apply_action(socket, &Actions.purchase(&1, type, item_id))}
 
       {:limited, socket} ->
