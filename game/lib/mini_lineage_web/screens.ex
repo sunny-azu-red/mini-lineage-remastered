@@ -80,18 +80,32 @@ defmodule MiniLineageWeb.Screens do
 
   # ------------------------------------------------------------------ alerts
 
+  @doc """
+  A rejected action, surfaced inline on the current screen rather than as a full-screen error.
+  Dismissed by its own corner glyph — never by clicking the banner, which would make it far too
+  easy to lose the message by accident.
+  """
   attr :message, :string, required: true
 
   def notice(assigns) do
-    ~H|<div class="alert alert-warning" phx-click="dismiss_flash">{@message}</div>|
+    ~H"""
+    <div class="alert alert-danger alert-dismissible">
+      {@message}
+      <button type="button" class="alert-dismiss" aria-label="Dismiss" phx-click="dismiss_notice">
+        ×
+      </button>
+    </div>
+    """
   end
 
+  @doc """
+  The result of an action. One-shot and NOT dismissible: it belongs to the action that produced it
+  and disappears the moment you leave the screen, so there is nothing to dismiss.
+  """
   attr :flash, :map, required: true
 
   def flash_alert(assigns) do
-    ~H|<div class={"alert alert-#{@flash.type}"} phx-click="dismiss_flash">
-  {raw(nl2br(@flash.text))}
-</div>|
+    ~H|<div class={"alert alert-#{@flash.type}"}>{raw(nl2br(@flash.text))}</div>|
   end
 
   attr :ambushed, :boolean, default: false

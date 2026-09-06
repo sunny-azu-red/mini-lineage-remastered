@@ -42,7 +42,8 @@ defmodule MiniLineageWeb.GameLive do
        statistics: nil,
        key_buffer: [],
        error_detail: nil,
-       picked: nil
+       picked: nil,
+       flash_fresh: false
      )}
   end
 
@@ -78,6 +79,17 @@ defmodule MiniLineageWeb.GameLive do
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
+    # `game_flash` is one-shot, tied to the action that produced it — leaving the screen drops it.
+    # A notice is not: it reports a refusal, and survives until dismissed or superseded.
+    #
+    # An action that both flashes AND moves you (creating a character, dying) would otherwise
+    # clear its own message on the way, so a flash set by this navigation survives exactly one
+    # arrival. The reference achieves the same by setting flash and screen in one update.
+    socket =
+      if socket.assigns[:flash_fresh],
+        do: assign(socket, flash_fresh: false),
+        else: assign(socket, game_flash: nil)
+
     socket = assign(socket, screen: screen, picked: nil, page_title: Screens.page_title(screen))
 
     if connected?(socket) and MiniLineage.Game.Player.started?(socket.assigns.player) do
@@ -103,11 +115,11 @@ defmodule MiniLineageWeb.GameLive do
   # Its own clause: written as one `if`, the `{:noreply, _}` wrapper ended up inside the else
   # branch, so travelling to Battle returned a bare socket and took the LiveView down.
   def handle_event("navigate", %{"to" => "battle"}, socket) do
-    handle_event("fight", %{}, push_patch(socket, to: Paths.for_screen("battle")))
+    handle_event("fight", %{}, leave(socket, "battle"))
   end
 
   def handle_event("navigate", %{"to" => screen}, socket) do
-    {:noreply, push_patch(socket, to: Paths.for_screen(screen))}
+    {:noreply, leave(socket, screen)}
   end
 
   def handle_event("start", %{"name" => name, "race_id" => race_id}, socket) do
@@ -126,7 +138,7 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  def handle_event("purchase", %{"item_id" => ""}, socket), do: {:noreply, go(socket, "home")}
+  def handle_event("purchase", %{"item_id" => ""}, socket), do: {:noreply, leave(socket, "home")}
 
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
     case throttle(socket, :shop) do
@@ -142,13 +154,13 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("suicide", %{"confirm" => "yes"}, socket),
     do: {:noreply, socket |> apply_action(&Actions.suicide/1) |> go("death")}
 
-  def handle_event("suicide", _params, socket), do: {:noreply, go(socket, "home")}
+  def handle_event("suicide", _params, socket), do: {:noreply, leave(socket, "home")}
 
   def handle_event("submit_highscore", _params, socket) do
     socket = apply_action(socket, &Actions.submit_highscore/1)
     slug = get_in(socket.assigns, [:last_result, :race_slug])
 
-    {:noreply, push_patch(socket, to: Paths.for_screen("highscores", slug))}
+    {:noreply, go(socket, "highscores", slug)}
   end
 
   def handle_event("restart", _params, socket),
@@ -158,8 +170,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("pick", %{"_target" => [field]} = params, socket),
     do: {:noreply, assign(socket, picked: params[field])}
 
-  def handle_event("dismiss_flash", _params, socket),
-    do: {:noreply, assign(socket, game_flash: nil, notice: nil)}
+  def handle_event("dismiss_notice", _params, socket), do: {:noreply, assign(socket, notice: nil)}
 
   # The Konami buffer lives here rather than in the character, so nothing about the sequence is
   # persisted and a second tab cannot half-complete it.
@@ -216,18 +227,34 @@ defmodule MiniLineageWeb.GameLive do
   defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil, last_result: nil)
 
   defp absorb(socket, {:ok, %{text: _} = flash}),
-    do: socket |> assign(notice: nil, game_flash: flash, last_result: nil) |> play(flash[:sound])
+    do:
+      socket
+      |> assign(notice: nil, game_flash: flash, last_result: nil)
+      |> play(flash[:sound])
 
   defp absorb(socket, {:ok, result}) do
+    flash = Map.get(result, :flash)
+
     socket
-    |> assign(notice: nil, game_flash: Map.get(result, :flash), last_result: result)
+    |> assign(notice: nil, game_flash: flash, last_result: result)
     |> play(Map.get(result, :sound))
   end
 
   defp play(socket, nil), do: socket
   defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})
 
-  defp go(socket, screen), do: push_patch(socket, to: Paths.for_screen(screen))
+  # An action moved you, so its flash comes along — creating a character lands on Town with its
+  # welcome, dying lands on the death screen with its reason.
+  defp go(socket, screen, race_slug \\ nil) do
+    socket
+    |> assign(flash_fresh: true)
+    |> push_patch(to: Paths.for_screen(screen, race_slug))
+  end
+
+  # The PLAYER moved themselves, so nothing comes along. A link or the banner reaches
+  # handle_params with no flag at all and is dropped there; these events need saying so, because
+  # a flash from an earlier action is still sitting in the assigns.
+  defp leave(socket, screen), do: socket |> assign(game_flash: nil) |> go(screen)
 
   # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries
   # only one generic message. Flavour, not security.

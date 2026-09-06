@@ -117,7 +117,11 @@ export const PanelFocus = {
         // than activating it, so focusing one would break the keyboard loop it exists to serve.
         // A hidden input is not focusable but still matches `input` — the shops carry one, so
         // without this exclusion three screens claimed focus onto nothing at all.
-        const control = this.el.querySelector('input:not([type="hidden"]), select, button');
+        // `.alert-dismiss` is excluded for the same reason: it sits before the screen's own
+        // content, so the first Space after a refusal would dismiss the banner instead of playing.
+        const control = this.el.querySelector(
+            'input:not([type="hidden"]), select, button:not(.alert-dismiss)',
+        );
         if (control && !control.matches(':disabled'))
             control.focus({ preventScroll: true });
     },

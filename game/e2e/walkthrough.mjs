@@ -236,6 +236,10 @@ try {
     check('...with the Orc purse', born.adena === 250, String(born.adena));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
 
+    // ---- a flash belongs to its action, and to nothing after it -------------------------------
+    check('creating a character flashes its welcome',
+        /You have chosen the/.test(await page.textContent('#main .alert') ?? ''));
+
     // Panel heading and document title, both carried over from the reference verbatim.
     check('Town is headed "Home Town"',
         (await page.textContent('#main .header-name'))?.trim() === 'Home Town',
@@ -262,6 +266,11 @@ try {
 
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
+    // Clicked last of the checks here: clicking it moves focus off the panel's own control.
+    await page.click('#main .alert');
+    await page.waitForTimeout(300);
+    check('...which clicking does not dismiss', await page.locator('#main .alert').count() === 1);
+
     check('the Newbie Blessing shows a timer', /^\d+m?$/.test((await timerText()) ?? ''), await timerText());
     const remainingBefore = await page.getAttribute('#effects [data-effect-id="newbie_blessing"]', 'data-remaining-ms');
     check('...counted from a duration, never a server timestamp', Number(remainingBefore) <= 300000,
@@ -342,6 +351,13 @@ try {
     const mealText = await page.textContent('#main .alert');
     check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
+
+    // One-shot: it belongs to the purchase, not to wherever you wander next.
+    await leaveShop();
+    check('a flash does not survive leaving the screen',
+        await page.locator('#main .alert').count() === 0,
+        await page.textContent('#main .alert').catch(() => '(none)'));
+    await travel('inn');
 
     await tab.waitForFunction(
         (expected) => document.querySelector('#screen')?.dataset.adena === expected,
