@@ -39,6 +39,7 @@ defmodule MiniLineageWeb.Screens do
   attr :statistics, :map, default: nil
   attr :race_filter, :integer, default: nil
   attr :detail, :string, default: nil
+  attr :picked, :string, default: nil
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "home"} = assigns), do: home(assigns)
@@ -122,6 +123,72 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  @doc """
+  One `<select>` driving a companion button's label and CSS variant — the shared form behind Town,
+  the three shops and Suicide.
+
+  Submitting with the placeholder still selected is a legitimate "go home" signal, so the button is
+  never disabled for want of a choice. Until something is picked the button reads `default_label`:
+  with no placeholder the first option is pre-selected, but that is the browser choosing, not the
+  player, so the button must not yet offer to act on it.
+  """
+  attr :event, :string, required: true
+  attr :name, :string, required: true
+  attr :options, :list, required: true
+  attr :placeholder, :string, default: nil
+  attr :picked, :string, default: nil
+  attr :default_label, :string, required: true
+  attr :active_label, :any, required: true
+  attr :default_variant, :string, default: "btn-secondary"
+  attr :active_variant, :any, default: "btn"
+  slot :hidden
+
+  def select_action_form(assigns) do
+    picked = assigns.picked
+    chosen? = picked not in [nil, ""]
+
+    assigns =
+      assign(assigns,
+        label:
+          if(chosen?, do: resolve(assigns.active_label, picked), else: assigns.default_label),
+        variant:
+          button_class(
+            if(chosen?,
+              do: resolve(assigns.active_variant, picked),
+              else: assigns.default_variant
+            )
+          )
+      )
+
+    ~H"""
+    <form phx-submit={@event} phx-change="pick">
+      {render_slot(@hidden)}
+      <div class="form-row">
+        <%!-- `selected` is rendered explicitly: re-rendering the option list to relabel the button
+              would otherwise drop the player's choice on the floor. --%>
+        <select name={@name} class="form-select">
+          <option :if={@placeholder} value="" selected={@picked in [nil, ""]}>{@placeholder}</option>
+          <option
+            :for={option <- @options}
+            value={option.value}
+            disabled={option[:disabled?]}
+            selected={@picked == option.value}
+          >
+            {option.label}
+          </option>
+        </select>
+        <button type="submit" class={@variant}>{@label}</button>
+      </div>
+    </form>
+    """
+  end
+
+  defp resolve(fun, value) when is_function(fun, 1), do: fun.(value)
+  defp resolve(value, _picked), do: value
+
+  defp button_class("btn"), do: "btn"
+  defp button_class(variant), do: "btn #{variant}"
+
   # ------------------------------------------------------------------ screens
 
   defp start_screen(assigns) do
@@ -168,18 +235,23 @@ defmodule MiniLineageWeb.Screens do
       Where do you want to go next, or what do you want to do?
     </p>
 
-    <form phx-submit="navigate">
-      <div class="form-row">
-        <select name="to" class="form-select">
-          <option value="inn">🍺 Inn</option>
-          <option value="armors">🛡️ Armor Shop</option>
-          <option value="weapons">🗡️ Weapon Shop</option>
-          <option value="battle">💀 Battlefield</option>
-          <option value="suicide">🥀 Commit Suicide</option>
-        </select>
-        <button type="submit" class="btn">Travel</button>
-      </div>
-    </form>
+    <%!-- No placeholder: there is no "nowhere" to travel to, so the first destination is preselected. --%>
+    <.select_action_form
+      event="navigate"
+      name="to"
+      picked={@picked}
+      options={[
+        %{value: "inn", label: "🍺 Inn"},
+        %{value: "armors", label: "🛡️ Armor Shop"},
+        %{value: "weapons", label: "🗡️ Weapon Shop"},
+        %{value: "battle", label: "💀 Battlefield"},
+        %{value: "suicide", label: "🥀 Commit Suicide"}
+      ]}
+      default_label="Travel"
+      active_label={fn value -> if value == "suicide", do: "⚰️ Perish", else: "Travel" end}
+      default_variant="btn"
+      active_variant="btn"
+    />
     """
   end
 
@@ -239,15 +311,20 @@ defmodule MiniLineageWeb.Screens do
   defp suicide(assigns) do
     ~H"""
     <p>Do you wish to depart this world?</p>
-    <form phx-submit="suicide">
-      <div class="form-row">
-        <select name="confirm" class="form-select">
-          <option value="no">No, I changed my mind</option>
-          <option value="yes">Yes, stab yourself in the heart</option>
-        </select>
-        <button type="submit" class="btn btn-danger">Do it 🥀</button>
-      </div>
-    </form>
+    <%!-- The two choices carry their own variants, which is why the variant may be a function. --%>
+    <.select_action_form
+      event="suicide"
+      name="confirm"
+      picked={@picked}
+      options={[
+        %{value: "no", label: "No, I changed my mind"},
+        %{value: "yes", label: "Yes, stab yourself in the heart"}
+      ]}
+      default_label="Return"
+      active_label={fn value -> if value == "yes", do: "Do it 🥀", else: "Phew 😅" end}
+      default_variant="btn-secondary"
+      active_variant={fn value -> if value == "yes", do: "btn-danger", else: "btn-secondary" end}
+    />
     """
   end
 
@@ -363,18 +440,25 @@ defmodule MiniLineageWeb.Screens do
       </table>
     </div>
 
-    <form phx-submit="purchase">
-      <input type="hidden" name="type" value={@type} />
-      <div class="form-row">
-        <select name="item_id" class="form-select">
-          <option value="">🚪 Home Town</option>
-          <option :for={item <- @items} value={item.id} disabled={@owned_id == item.id}>
-            Pick {item.emoji} {item.name}{if @owned_id == item.id, do: " (Owned)"}
-          </option>
-        </select>
-        <button type="submit" class="btn">{@action_label}</button>
-      </div>
-    </form>
+    <.select_action_form
+      event="purchase"
+      name="item_id"
+      picked={@picked}
+      placeholder="🚪 Home Town"
+      options={
+        Enum.map(@items, fn item ->
+          %{
+            value: to_string(item.id),
+            label: "Pick #{item.emoji} #{item.name}#{if @owned_id == item.id, do: " (Owned)"}",
+            disabled?: @owned_id == item.id
+          }
+        end)
+      }
+      default_label="Return"
+      active_label={@action_label}
+    >
+      <:hidden><input type="hidden" name="type" value={@type} /></:hidden>
+    </.select_action_form>
     """
   end
 

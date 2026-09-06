@@ -41,7 +41,8 @@ defmodule MiniLineageWeb.GameLive do
        highscores: [],
        statistics: nil,
        key_buffer: [],
-       error_detail: nil
+       error_detail: nil,
+       picked: nil
      )}
   end
 
@@ -75,7 +76,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
-    socket = assign(socket, screen: screen)
+    socket = assign(socket, screen: screen, picked: nil)
 
     if connected?(socket) and MiniLineage.Game.Player.started?(socket.assigns.player) do
       apply_action(socket, &Actions.set_screen(&1, screen))
@@ -150,6 +151,10 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("restart", _params, socket),
     do: {:noreply, socket |> apply_action(&Actions.restart/1) |> go("start")}
+
+  # `_target` names the field that changed, so one handler serves every action form.
+  def handle_event("pick", %{"_target" => [field]} = params, socket),
+    do: {:noreply, assign(socket, picked: params[field])}
 
   def handle_event("dismiss_flash", _params, socket),
     do: {:noreply, assign(socket, game_flash: nil, notice: nil)}
@@ -282,6 +287,7 @@ defmodule MiniLineageWeb.GameLive do
           statistics={@statistics}
           race_filter={@race_filter}
           detail={@error_detail}
+          picked={@picked}
         />
       </div>
     </Layouts.app>

@@ -239,6 +239,20 @@ try {
         await page.evaluate(() => document.activeElement?.tagName) === 'SELECT',
         await page.evaluate(() => document.activeElement?.tagName));
 
+    // ---- the action button answers to the selection ---------------------------------------------
+    const actionButton = async () => ({
+        label: (await page.textContent('#main form button'))?.trim(),
+        cls: await page.getAttribute('#main form button', 'class'),
+    });
+    check('Town offers to Travel before anything is picked',
+        (await actionButton()).label === 'Travel', JSON.stringify(await actionButton()));
+    await page.selectOption('#main select[name="to"]', 'suicide');
+    check('...and turns into Perish when Suicide is chosen',
+        (await actionButton()).label === '⚰️ Perish', JSON.stringify(await actionButton()));
+    await page.selectOption('#main select[name="to"]', 'inn');
+    check('...and back to Travel for anywhere else',
+        (await actionButton()).label === 'Travel', JSON.stringify(await actionButton()));
+
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
     check('the Newbie Blessing shows a timer', /^\d+m?$/.test((await timerText()) ?? ''), await timerText());
@@ -277,11 +291,17 @@ try {
     await onScreen('home');
 
     await travel('inn');
+    check('a shop offers to Return until something is picked',
+        (await actionButton()).label === 'Return'
+        && (await actionButton()).cls === 'btn btn-secondary', JSON.stringify(await actionButton()));
     check('the Inn hands focus to its own picker, not a hidden field',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
         await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
     const beforeMeal = await state();
     await page.selectOption('#main select[name="item_id"]', '0'); // Spiced Ale, 7 adena
+    check('...and to Order once a dish is chosen',
+        (await actionButton()).label === '🪙 Order' && (await actionButton()).cls === 'btn',
+        JSON.stringify(await actionButton()));
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
     await page.waitForSelector('#main .alert', { timeout: 8000 });
     // Scoped to #main: the sidebar's panels carry .panel-body too.
@@ -341,46 +361,66 @@ try {
     let sawNarrative = false;
     let sawShimmer = false;
     let boughtWeapon = false;
+    let boughtArmor = false;
     let current = await state();
     check('the battleground is reachable with a living character', current.screen === 'battle',
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
     for (let i = 0; i < 120 && !current.dead; i++) {
-        // Heal at the Inn while we can still afford it and are not pinned by an ambush.
-        if (maxLevel === 1 && !current.ambushed && current.health < current.maxHealth * 0.45 && current.adena >= 7) {
+        // A trip to town: eat, and upgrade whatever the purse now covers. Fighting on with the
+        // starting fists never earns enough XP to reach level 2 before an Orc runs out of health,
+        // so a player who never shops is not a realistic one. An ambush pins you here regardless.
+        // Food comes second until the weapon is bought: an Orc starts 50 adena short of one, and
+        // a purse spent on meals never closes that gap — so it fights on with fists, earns too
+        // little XP to level, and dies anyway.
+        const hungerThreshold = boughtWeapon ? 0.5 : 0.25;
+        const wantsFood = current.health < current.maxHealth * hungerThreshold && current.adena >= 7;
+        const wantsWeapon = !boughtWeapon && current.adena >= 300;
+        const wantsArmor = !boughtArmor && current.adena >= 500;
+
+        if (maxLevel === 1 && !current.ambushed && (wantsFood || wantsWeapon || wantsArmor)) {
             await goHome();
-            await travel('inn');
-            // Eats until healthy or broke. One meal is a losing trade: getting back to the
-            // Battleground fights on arrival, which costs more than a cheap dish restores.
-            const MEAL_COSTS = [7, 15, 60, 250, 1200];
-            for (let meal = 0; meal < 12; meal++) {
-                current = await state();
-                if (current.health >= current.maxHealth * 0.8)
-                    break;
 
-                const best = [...MEAL_COSTS.keys()].reverse().find(i => current.adena >= MEAL_COSTS[i]);
-                if (best === undefined)
-                    break;
+            if (wantsFood) {
+                await travel('inn');
+                // Eats until healthy or broke. One meal is a losing trade: getting back to the
+                // Battleground fights on arrival, which costs more than a cheap dish restores.
+                const MEAL_COSTS = [7, 15, 60, 250, 1200];
+                for (let meal = 0; meal < 12; meal++) {
+                    current = await state();
+                    if (current.health >= current.maxHealth * 0.9)
+                        break;
 
-                // Eaten while genuinely wounded, so HP really rises — a gain shimmers, damage never does.
-                const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 2000 })
-                    .then(() => true).catch(() => false);
+                    const best = [...MEAL_COSTS.keys()].reverse().find(i => current.adena >= MEAL_COSTS[i]);
+                    if (best === undefined)
+                        break;
 
-                if (!(await buy(best)))
-                    break;
+                    // Eaten while genuinely wounded, so HP really rises — a gain shimmers, damage never does.
+                    const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 2000 })
+                        .then(() => true).catch(() => false);
 
-                sawShimmer = sawShimmer || await shimmer;
+                    if (!(await buy(best)))
+                        break;
+
+                    sawShimmer = sawShimmer || await shimmer;
+                }
+
+                await leaveShop();
             }
-            await leaveShop();
 
-            // A player upgrades as soon as the purse allows, and the XP that buys is what makes
-            // level 2 reachable before an Orc runs out of health.
             current = await state();
             maxLevel = Math.max(maxLevel, current.level ?? 1);
 
             if (!boughtWeapon && current.adena >= 300) {
                 await travel('weapons');
                 boughtWeapon = await buy(1);
+                await leaveShop();
+                current = await state();
+            }
+
+            if (!boughtArmor && current.adena >= 500) {
+                await travel('armors');
+                boughtArmor = await buy(1);
                 await leaveShop();
             }
 
@@ -459,7 +499,16 @@ try {
     check('the Character screen\'s back link continues the journey', (await state()).screen === 'home');
 
     await travel('suicide');
+    check('Suicide offers to Return before a choice is made',
+        (await actionButton()).label === 'Return', JSON.stringify(await actionButton()));
+    await page.selectOption('#main select[name="confirm"]', 'no');
+    check('...a change of heart is not styled as danger',
+        (await actionButton()).label === 'Phew 😅'
+        && (await actionButton()).cls === 'btn btn-secondary', JSON.stringify(await actionButton()));
     await page.selectOption('#main select[name="confirm"]', 'yes');
+    check('...but going through with it is',
+        (await actionButton()).label === 'Do it 🥀'
+        && (await actionButton()).cls === 'btn btn-danger', JSON.stringify(await actionButton()));
     await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
     await onScreen('death');
     check('a cheater who quits is dead', (await state()).dead === true);
