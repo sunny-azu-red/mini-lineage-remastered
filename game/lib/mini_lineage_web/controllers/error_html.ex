@@ -45,7 +45,7 @@ defmodule MiniLineageWeb.ErrorHTML do
               <div id="main">
                 <div class="panel">
                   <div class="panel-header flex">
-                    <span class="header-name">Something Went Wrong</span>
+                    <span class="header-name">Error</span>
                     <div class="header-effects" id="effects"></div>
                   </div>
 

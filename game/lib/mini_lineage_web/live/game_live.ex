@@ -76,7 +76,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
-    socket = assign(socket, screen: screen, picked: nil)
+    socket = assign(socket, screen: screen, picked: nil, page_title: Screens.page_title(screen))
 
     if connected?(socket) and MiniLineage.Game.Player.started?(socket.assigns.player) do
       apply_action(socket, &Actions.set_screen(&1, screen))

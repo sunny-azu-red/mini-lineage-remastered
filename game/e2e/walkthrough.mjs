@@ -235,6 +235,13 @@ try {
     check('...at full health', born.health === born.maxHealth, `${born.health}/${born.maxHealth}`);
     check('...with the Orc purse', born.adena === 250, String(born.adena));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
+
+    // Panel heading and document title, both carried over from the reference verbatim.
+    check('Town is headed "Home Town"',
+        (await page.textContent('#main .header-name'))?.trim() === 'Home Town',
+        await page.textContent('#main .header-name'));
+    check('...and the document title names the screen',
+        await page.title() === 'Mini Lineage - Home Town', await page.title());
     check('the panel takes focus so the game plays from the keyboard',
         await page.evaluate(() => document.activeElement?.tagName) === 'SELECT',
         await page.evaluate(() => document.activeElement?.tagName));
@@ -291,6 +298,9 @@ try {
     await onScreen('home');
 
     await travel('inn');
+    check('the Inn is headed "Inn"',
+        (await page.textContent('#main .header-name'))?.trim() === 'Inn',
+        await page.textContent('#main .header-name'));
     check('a shop offers to Return until something is picked',
         (await actionButton()).label === 'Return'
         && (await actionButton()).cls === 'btn btn-secondary', JSON.stringify(await actionButton()));
@@ -475,6 +485,9 @@ try {
     await page.click('#sidebar .stat-row a');
     await onScreen('character');
     check('the sidebar link opens the Character screen', (await state()).screen === 'character');
+    check('...headed "Character"',
+        (await page.textContent('#main .header-name'))?.trim() === 'Character',
+        await page.textContent('#main .header-name'));
     check('...which names the character and its ancestry',
         /Cheater/.test(await page.textContent('#main h2') ?? ''));
 
@@ -512,6 +525,9 @@ try {
     await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
     await onScreen('death');
     check('a cheater who quits is dead', (await state()).dead === true);
+    check('...and the death screen is headed "Game Over"',
+        (await page.textContent('#main .header-name'))?.trim() === 'Game Over',
+        await page.textContent('#main .header-name'));
     check('...and may NOT write a legacy',
         await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
     check('...but the death screen never takes focus',

@@ -11,23 +11,26 @@ defmodule MiniLineageWeb.Screens do
   alias MiniLineage.Game.{Access, Format, Narratives}
   alias MiniLineageWeb.Paths
 
+  # The panel heading and the document title for each screen, carried over verbatim.
   @titles %{
     "start" => "Game Start",
-    "home" => "Town of Aden",
-    "battle" => "Battleground",
+    "home" => "Home Town",
+    "inn" => "Inn",
     "weapons" => "Weapons Shop",
     "armors" => "Armor Shop",
-    "inn" => "The Inn",
-    "suicide" => "Farewell",
-    "death" => "You Died",
-    "character" => "Your Character",
+    "suicide" => "Commit Suicide",
+    "battle" => "Battleground",
+    "death" => "Game Over",
+    "character" => "Character",
     "highscores" => "Hall of Champions",
     "statistics" => "The Tome of Lore",
     "races" => "Chronicles of Ancestry",
-    "error" => "Something Went Wrong"
+    "error" => "Error"
   }
 
   def title(screen), do: Map.get(@titles, screen, "Mini Lineage")
+
+  def page_title(screen), do: "Mini Lineage - #{title(screen)}"
 
   # One representative line from the old nine-line pool. Flavour text, not game state.
   @ambush_low_health_line hd(Narratives.ambush_low_health())
@@ -257,11 +260,13 @@ defmodule MiniLineageWeb.Screens do
 
   defp races(assigns) do
     ~H"""
-    <div :for={race <- @catalog.races}>
+    <%!-- No wrapper element: the stylesheet spaces these by sibling order, and a <div> per race
+          would break the run. --%>
+    <%= for race <- @catalog.races do %>
       <h2>{race.emoji} {race.label}</h2>
       <p>{raw(race.backstory)}</p>
       <p>{raw(race.traits)}</p>
-    </div>
+    <% end %>
 
     <.back_link started={@view.started} label="Go back to game start" />
     """
