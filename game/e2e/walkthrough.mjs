@@ -101,7 +101,21 @@ async function travel(to) {
     await onScreen('home');
     await page.selectOption('#main select[name="to"]', to);
     await page.click('#main form[phx-submit="navigate"] button[type="submit"]');
-    await onScreen(to);
+    // Travelling to the Battleground fights on arrival, which can kill outright.
+    try {
+        await page.waitForFunction(
+            (dest) => {
+                const screen = document.querySelector('#screen')?.dataset.screen;
+                return screen === dest || screen === 'death';
+            },
+            to,
+            { timeout: 8000 },
+        );
+    } catch {
+        // A LiveView that crashed remounts on the screen it started from, so say which trip
+        // failed rather than reporting a bare timeout.
+        throw new Error(`travel to "${to}" never arrived — still on "${(await state()).screen}"`);
+    }
 }
 
 try {
@@ -248,8 +262,17 @@ try {
         `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
 
     // ---- fight until level-up, then until death -----------------------------------------------
-    await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
+    // Entered from the Town form, the way a player does — NOT by typing the URL. Travelling to
+    // the Battleground is its own code path, and it crashed the LiveView while a typed URL
+    // worked perfectly, so the shortcut this test used to take proved nothing.
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    const battlesBeforeTravel = Number(await page.getAttribute('#screen', 'data-battles'));
+    await travel('battle');
+    check('travelling to the Battleground from Town fights on arrival',
+        Number(await page.getAttribute('#screen', 'data-battles')) > battlesBeforeTravel
+        || (await state()).dead,
+        `battles ${battlesBeforeTravel} -> ${await page.getAttribute('#screen', 'data-battles')}`);
 
     let sawLevelUp = false;
     let sawNarrative = false;

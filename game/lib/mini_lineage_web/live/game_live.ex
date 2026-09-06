@@ -96,15 +96,15 @@ defmodule MiniLineageWeb.GameLive do
   # ----------------------------------------------------------------- events
 
   @impl true
-  def handle_event("navigate", %{"to" => screen}, socket) do
-    # An explicit click into Battle IS a user action, so it fights immediately — never on load.
-    socket = push_patch(socket, to: Paths.for_screen(screen))
+  # An explicit click into Battle IS a user action, so it fights immediately — never on load.
+  # Its own clause: written as one `if`, the `{:noreply, _}` wrapper ended up inside the else
+  # branch, so travelling to Battle returned a bare socket and took the LiveView down.
+  def handle_event("navigate", %{"to" => "battle"}, socket) do
+    handle_event("fight", %{}, push_patch(socket, to: Paths.for_screen("battle")))
+  end
 
-    if screen == "battle",
-      do: handle_event("fight", %{}, socket) |> elem(1),
-      else:
-        socket
-        |> then(&{:noreply, &1})
+  def handle_event("navigate", %{"to" => screen}, socket) do
+    {:noreply, push_patch(socket, to: Paths.for_screen(screen))}
   end
 
   def handle_event("start", %{"name" => name, "race_id" => race_id}, socket) do
