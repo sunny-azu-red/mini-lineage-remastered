@@ -11,7 +11,8 @@ defmodule MiniLineageWeb.Paths do
     {"character", "/character"},
     {"highscores", "/highscores"},
     {"statistics", "/statistics"},
-    {"races", "/races"}
+    {"races", "/races"},
+    {"error", "/error"}
   ]
 
   @highscores_prefix "/highscores/"

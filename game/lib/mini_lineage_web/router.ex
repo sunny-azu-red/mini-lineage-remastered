@@ -33,6 +33,7 @@ defmodule MiniLineageWeb.Router do
     live "/highscores/:race", GameLive, :highscores
     live "/statistics", GameLive, :statistics
     live "/races", GameLive, :races
+    live "/error", GameLive, :error
   end
 
   # Other scopes may use custom stacks.

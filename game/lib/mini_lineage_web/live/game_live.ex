@@ -9,7 +9,9 @@ defmodule MiniLineageWeb.GameLive do
   use MiniLineageWeb, :live_view
 
   alias MiniLineage.Characters
-  alias MiniLineage.Game.{Access, Actions, RateLimit, Snapshot}
+  require Logger
+
+  alias MiniLineage.Game.{Access, Actions, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
   alias MiniLineage.Highscores
   alias MiniLineageWeb.{Paths, Screens}
@@ -38,7 +40,8 @@ defmodule MiniLineageWeb.GameLive do
        game_flash: nil,
        highscores: [],
        statistics: nil,
-       key_buffer: []
+       key_buffer: [],
+       error_detail: nil
      )}
   end
 
@@ -171,6 +174,10 @@ defmodule MiniLineageWeb.GameLive do
   # ------------------------------------------------------------------ plumbing
 
   # Runs an action in the character's process, then folds its result into the view.
+  #
+  # A genuinely unexpected failure lands on the error screen rather than taking the LiveView down
+  # and silently remounting. `catch` covers the character process exiting, which reaches the
+  # caller as an exit rather than a raise.
   defp apply_action(socket, fun) do
     id = socket.assigns.character_id
     result = Characters.mutate(id, fun)
@@ -179,6 +186,21 @@ defmodule MiniLineageWeb.GameLive do
     socket
     |> assign(player: player, view: Snapshot.build(player))
     |> absorb(result)
+  rescue
+    error ->
+      Logger.error(Exception.format(:error, error, __STACKTRACE__))
+      fail(socket, Exception.message(error))
+  catch
+    :exit, reason ->
+      Logger.error("character process exited: #{inspect(reason)}")
+      fail(socket, "the character process exited: #{inspect(reason)}")
+  end
+
+  # The detail is withheld from a release build: a deployed game must never hand a player a stack.
+  defp fail(socket, detail) do
+    detail = unless Version.release?(Version.current()), do: detail
+
+    socket |> assign(error_detail: detail) |> go("error")
   end
 
   defp absorb(socket, {:error, _code, message}),
@@ -259,6 +281,7 @@ defmodule MiniLineageWeb.GameLive do
           highscores={@highscores}
           statistics={@statistics}
           race_filter={@race_filter}
+          detail={@error_detail}
         />
       </div>
     </Layouts.app>

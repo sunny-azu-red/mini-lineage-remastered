@@ -38,6 +38,7 @@ defmodule MiniLineageWeb.Screens do
   attr :highscores, :list, default: []
   attr :statistics, :map, default: nil
   attr :race_filter, :integer, default: nil
+  attr :detail, :string, default: nil
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "home"} = assigns), do: home(assigns)
@@ -51,7 +52,27 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "highscores"} = assigns), do: highscores(assigns)
   def screen(%{screen: "statistics"} = assigns), do: statistics(assigns)
-  def screen(assigns), do: ~H|<p>Something went wrong. <.link patch="/">Start again</.link>.</p>|
+  def screen(%{screen: "error"} = assigns), do: error(assigns)
+  def screen(assigns), do: error(assigns)
+
+  @doc """
+  Covers both failure modes the reference did: an action that threw, and the modelled `error`
+  screen. The detail is the thrown message, and it is shown only in a non-release build — a
+  deployed game must never hand a stack trace to a player.
+  """
+  attr :view, :map, required: true
+  attr :detail, :string, default: nil
+
+  def error(assigns) do
+    assigns = assign_new(assigns, :detail, fn -> nil end)
+
+    ~H"""
+    <p>An unexpected error occurred on the server, please try again in a moment.</p>
+    <pre :if={@detail} class="code-block">{@detail}</pre>
+
+    <.back_link started={@view.started} label="Return to safer lands" class="last" />
+    """
+  end
 
   # ------------------------------------------------------------------ alerts
 

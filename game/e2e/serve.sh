@@ -8,6 +8,8 @@ source ../.elixir-env
 export DB_DATABASE="${TEST_DATABASE:-lineage_remastered_test}"
 # Its own port, so it can never silently answer for a dev server already on 4000.
 export PORT="${E2E_PORT:-4002}"
+# Renders the styled error page rather than Phoenix's developer debug page.
+export E2E=true
 
 mix ecto.migrate >/dev/null
 exec mix phx.server

@@ -125,6 +125,23 @@ try {
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
     check('...but Chronicles of Ancestry is public', (await state()).screen === 'races');
 
+    // ---- the error screen is a real, styled screen ---------------------------------------------
+    await page.goto(`${BASE}/error`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('the error screen is routable and styled', (await state()).screen === 'error');
+    check('...and offers a way out',
+        await page.locator('#main a:has-text("Return to safer lands")').count() === 1);
+
+    const before404 = consoleErrors.length;
+    const notFound = await page.goto(`${BASE}/no-such-road`, { waitUntil: 'domcontentloaded' });
+    check('an unknown URL returns 404, not a crash', notFound?.status() === 404, String(notFound?.status()));
+    check('...wearing the game shell rather than bare text',
+        await page.locator('#main .panel-body').count() === 1);
+    check('...and in a dev build it says what happened',
+        await page.locator('#main .code-block').count() === 1);
+    // Asking for a 404 legitimately logs one console error. Drop exactly those, nothing else.
+    consoleErrors.push(...consoleErrors.splice(before404).filter(e => !/404/.test(e)));
+
     // ---- create a character -------------------------------------------------------------------
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });

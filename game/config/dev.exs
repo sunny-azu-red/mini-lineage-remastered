@@ -23,7 +23,9 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}],
   check_origin: false,
   code_reloader: true,
-  debug_errors: true,
+  # Phoenix's debug page is the better tool while developing, but it hides the styled error page
+  # players actually get — so the browser walkthrough turns it off and tests the real thing.
+  debug_errors: System.get_env("E2E") != "true",
   secret_key_base: "lz2cr4M4G8Ux3ZZ8pdfpwEBX9Z+GHSgoycunMbd0+w7uMhPhYi5td3RPxnCss2Zp",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:mini_lineage, ~w(--sourcemap=inline --watch)]}
