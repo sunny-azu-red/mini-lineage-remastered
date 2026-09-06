@@ -72,7 +72,9 @@ defmodule MiniLineageWeb.GameLive do
     assign(socket, race_filter: race && race.id)
   end
 
-  defp assign_race_filter(socket, _params), do: socket
+  # Cleared, not left alone: "All" is simply /highscores with no race in the path, so a filter that
+  # survives the trip means the button appears to do nothing.
+  defp assign_race_filter(socket, _params), do: assign(socket, race_filter: nil)
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
@@ -264,32 +266,16 @@ defmodule MiniLineageWeb.GameLive do
         ambushed={@view.ambushed}
       />
 
-      <%!-- The character's live state, mirrored onto one element so a browser test can assert on
-            game state rather than scraping prose. --%>
-      <div
-        id="screen"
-        phx-hook="PanelFocus"
-        data-screen={@screen}
-        data-started={to_string(@view.started)}
-        data-dead={to_string(@view[:dead] || false)}
-        data-ambushed={to_string(@view[:ambushed] || false)}
-        data-level={@view[:level]}
-        data-health={@view[:health]}
-        data-max-health={@view[:max_health]}
-        data-adena={@view[:adena]}
-        data-battles={@view[:counters] && @view.counters.total_battles}
-      >
-        <Screens.screen
-          screen={@screen}
-          view={@view}
-          catalog={@catalog}
-          highscores={@highscores}
-          statistics={@statistics}
-          race_filter={@race_filter}
-          detail={@error_detail}
-          picked={@picked}
-        />
-      </div>
+      <Screens.screen
+        screen={@screen}
+        view={@view}
+        catalog={@catalog}
+        highscores={@highscores}
+        statistics={@statistics}
+        race_filter={@race_filter}
+        detail={@error_detail}
+        picked={@picked}
+      />
     </Layouts.app>
     """
   end

@@ -62,7 +62,26 @@ defmodule MiniLineageWeb.Layouts do
                 </div>
               </div>
 
-              <div class="panel-body">
+              <%!-- The screen renders straight into the panel body, with no wrapper of its own:
+                    `h2:first-child` drops its top margin, and an extra element would make every
+                    screen's first heading qualify even when an alert sits above it.
+
+                    The character's live state is mirrored here so a browser test can assert on
+                    game state rather than scraping prose. --%>
+              <div
+                class="panel-body"
+                id="screen"
+                phx-hook="PanelFocus"
+                data-screen={@screen}
+                data-started={to_string(@view.started)}
+                data-dead={to_string(@view[:dead] || false)}
+                data-ambushed={to_string(@view[:ambushed] || false)}
+                data-level={@view[:level]}
+                data-health={@view[:health]}
+                data-max-health={@view[:max_health]}
+                data-adena={@view[:adena]}
+                data-battles={@view[:counters] && @view.counters.total_battles}
+              >
                 {render_slot(@inner_block)}
               </div>
             </div>

@@ -537,12 +537,14 @@ defmodule MiniLineageWeb.Screens do
 
   defp highscores(assigns) do
     ~H"""
-    <div class="action-links filters">
+    <%!-- `top` is load-bearing: it pulls the row up to the panel edge and puts the 12px gap
+          below it instead, where the table needs it. --%>
+    <div class="action-links top">
       <.link
         patch={Paths.for_screen("highscores")}
         class={"btn btn-secondary btn-sm#{if is_nil(@race_filter), do: " active"}"}
       >
-        🌍 All
+        All
       </.link>
       <.link
         :for={race <- @catalog.races}

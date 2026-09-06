@@ -294,6 +294,30 @@ try {
     await page.click('#main a[href="/highscores"]');
     await onScreen('highscores');
     check('Town links through to the Hall of Champions', (await state()).screen === 'highscores');
+
+    // The race filters, clicked as a player would — including back to All, which is simply
+    // /highscores with no race in the path and so is the one that can silently do nothing.
+    const boardRows = () => page.locator('#main table.data-table tbody tr').count();
+    const activeFilter = async () =>
+        (await page.textContent('#main .action-links a.active'))?.replace(/\s+/g, ' ').trim();
+    const allRows = await boardRows();
+    check('the board opens on All', (await activeFilter())?.trim() === 'All', await activeFilter());
+
+    await page.click('#main .action-links a:has-text("Elf") >> nth=0');
+    await page.waitForFunction(() => location.pathname !== '/highscores', null, { timeout: 5000 });
+    const elfRows = await boardRows();
+    check('filtering to a race narrows the board',
+        elfRows < allRows && (await activeFilter())?.includes('Elf'),
+        `${allRows} rows -> ${elfRows}, active "${await activeFilter()}"`);
+    check('...and a filter matching nobody says so rather than showing an empty table',
+        elfRows > 0 || /The halls are silent/.test(await page.textContent('#main') ?? ''));
+
+    await page.click('#main .action-links a:has-text("All")');
+    await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
+    check('...and All puts every race back',
+        await boardRows() === allRows && (await activeFilter())?.trim() === 'All',
+        `${await boardRows()} rows, active ${await activeFilter()}`);
+
     await page.click('#main .last a');
     await onScreen('home');
 
