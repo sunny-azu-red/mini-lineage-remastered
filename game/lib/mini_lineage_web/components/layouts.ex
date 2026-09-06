@@ -79,7 +79,7 @@ defmodule MiniLineageWeb.Layouts do
 
   defp sidebar(assigns) do
     ~H"""
-    <div id="sidebar">
+    <div id="sidebar" phx-hook="AnimatedValues">
       <div class="panel status-panel">
         <div class="panel-header flex">
           <span class="header-name">{@view.name}</span>
@@ -100,7 +100,7 @@ defmodule MiniLineageWeb.Layouts do
             <div class="bar-track" id="hp-track">
               <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
               <span class="bar-text">
-                <span class="animate-val">{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
+                <span class="animate-val" data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
                   @view.max_health
                 )}</span>
               </span>
@@ -118,9 +118,13 @@ defmodule MiniLineageWeb.Layouts do
               >
               </div>
               <span class="bar-text">
-                <span class="animate-val">
-                  {Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}
-                </span><span :if={!@view.is_max_level}>/{Format.number(@view.xp_required)}</span>
+                <span
+                  class="animate-val"
+                  data-key="xp"
+                  data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
+                >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
+                  !@view.is_max_level
+                }>/{Format.number(@view.xp_required)}</span>
               </span>
             </div>
           </div>
@@ -128,7 +132,9 @@ defmodule MiniLineageWeb.Layouts do
           <div class="stat-row">
             <span class="stat-label">Adena</span>
             <span class="stat-value gold">🪙
-            <span class="animate-adena">{Format.adena(@view.adena)}</span></span>
+            <span class="animate-adena" data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
+              @view.adena
+            )}</span></span>
           </div>
         </div>
       </div>

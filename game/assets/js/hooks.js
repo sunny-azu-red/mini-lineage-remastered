@@ -108,4 +108,105 @@ export const PanelFocus = {
     },
 };
 
-export const hooks = { SoundToggle, EffectTimers, KonamiRelay, PanelFocus };
+/**
+ * Eases the HP/XP/Adena counters toward their new value and sweeps a shimmer across a bar that
+ * GAINED — damage never shimmers.
+ *
+ * Only the intermediate frames are formatted here. The final value is always the server-rendered
+ * text this hook was handed, so a difference between the two formatters can never be read.
+ */
+const EASE_MS = 600;
+
+const groupDigits = (n) => Math.round(n).toLocaleString('en-US');
+
+function shortAdena(value) {
+    const abs = Math.abs(value);
+    const sign = value < 0 ? '-' : '';
+    if (abs <= 999)
+        return String(Math.round(value));
+
+    const short = (divisor, unit) =>
+        sign + (Math.floor((abs / divisor) * 10) / 10).toFixed(1).replace('.0', '') + unit;
+
+    if (abs < 1e6) return short(1e3, 'k');
+    if (abs < 1e9) return short(1e6, 'kk');
+    return short(1e9, 'kkk');
+}
+
+export const AnimatedValues = {
+    mounted() {
+        this.previous = new Map();
+        this.sync(false);
+    },
+    updated() {
+        this.sync(true);
+    },
+    destroyed() {
+        cancelAnimationFrame(this.frame);
+    },
+    sync(animate) {
+        // A level-up wraps xpCurrent DOWNWARD into the new level, so the bar would slide
+        // backwards through the gap. Snap it to zero with the transition off for one frame, then
+        // let it fill from there.
+        const bar = this.el.querySelector('#xp-bar');
+        const level = bar?.dataset.level;
+        if (animate && bar && this.level !== undefined && level !== this.level) {
+            const width = bar.style.width;
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            requestAnimationFrame(() => {
+                bar.style.transition = '';
+                bar.style.width = width;
+            });
+        }
+        this.level = level;
+
+        for (const el of this.el.querySelectorAll('[data-value]')) {
+            const key = el.dataset.key;
+            const target = Number(el.dataset.value);
+            const from = this.previous.get(key);
+            this.previous.set(key, target);
+
+            if (!animate || from === undefined || from === target || !Number.isFinite(target))
+                continue;
+
+            if (target > from)
+                this.shimmer(el);
+
+            this.count(el, from, target);
+        }
+    },
+    shimmer(el) {
+        const bar = el.closest('.bar-track')?.querySelector('.bar');
+        if (!bar)
+            return;
+
+        bar.classList.remove('shimmer-active');
+        // Force a reflow so a repeated gain restarts the sweep instead of being ignored.
+        void bar.offsetWidth;
+        bar.classList.add('shimmer-active');
+        setTimeout(() => bar.classList.remove('shimmer-active'), 600);
+    },
+    count(el, from, to) {
+        const format = el.dataset.format === 'adena' ? shortAdena : groupDigits;
+        const settled = el.textContent;
+        const started = performance.now();
+
+        const step = (now) => {
+            const t = Math.min(1, (now - started) / EASE_MS);
+            const eased = 1 - Math.pow(1 - t, 3);
+
+            if (t < 1) {
+                el.textContent = format(from + (to - from) * eased);
+                this.frame = requestAnimationFrame(step);
+            } else {
+                // Always ends on the server's own rendering, never this module's.
+                el.textContent = settled;
+            }
+        };
+
+        this.frame = requestAnimationFrame(step);
+    },
+};
+
+export const hooks = { SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues };

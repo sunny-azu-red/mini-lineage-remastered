@@ -223,6 +223,7 @@ try {
 
     let sawLevelUp = false;
     let sawNarrative = false;
+    let sawShimmer = false;
     let current = await state();
     check('the battleground is reachable with a living character', current.screen === 'battle',
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
@@ -233,8 +234,12 @@ try {
             await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
             await page.waitForSelector('.phx-connected', { timeout: 8000 });
             await page.selectOption('#main select[name="item_id"]', '0');
+            // Eaten while genuinely wounded, so HP really rises — a gain shimmers, damage never does.
+            const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 3000 })
+                .then(() => true).catch(() => false);
             await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
             await page.waitForSelector('#main .alert', { timeout: 8000 });
+            sawShimmer = sawShimmer || await shimmer;
             await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
             await page.waitForSelector('.phx-connected', { timeout: 8000 });
             current = await state();
@@ -252,6 +257,9 @@ try {
     }
 
     check('fighting narrates the encounter', sawNarrative);
+    check('healing while wounded sweeps a shimmer across the HP bar', sawShimmer);
+    check('the counters carry their live values for the animation',
+        await page.locator('#sidebar [data-value]').count() === 3);
     check('the character levelled up along the way', sawLevelUp, `reached level ${current.level}`);
     check('the character eventually died', current.dead === true);
     check('death pins the player to the death screen', (await state()).screen === 'death');
