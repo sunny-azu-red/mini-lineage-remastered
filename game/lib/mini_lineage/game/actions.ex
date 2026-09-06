@@ -186,7 +186,12 @@ defmodule MiniLineage.Game.Actions do
         sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
         type_atom = if result.success, do: :success, else: :danger
 
-        {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
+        # Only a shop flash breaks its lines. The reference converts newlines here and nowhere
+        # else, so the welcome message stays one flowing paragraph — copied rather than tidied,
+        # because tidying it would be a visible change.
+        text = String.replace(result.text, "\n", "<br>")
+
+        {player, {:ok, %{text: text, type: type_atom, sound: sound}}}
     end
   end
 

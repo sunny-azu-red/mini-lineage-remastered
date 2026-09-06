@@ -28,10 +28,53 @@ defmodule MiniLineage.Game.Snapshot do
     Enum.find_value(modifiers, fn m -> if m.type == type, do: m.value end)
   end
 
+  @doc """
+  Always the SAME shape, whether or not a character exists. A view missing keys means any screen
+  still rendering when a character is reset — in this tab or another — raises instead of drawing,
+  and the LiveView silently remounts, swallowing whatever it was about to say.
+  """
+  @empty %{
+    started: false,
+    revision: 0,
+    name: nil,
+    race_id: nil,
+    race_label: nil,
+    race_emoji: nil,
+    health: nil,
+    max_health: nil,
+    hp_percent: 0,
+    low_health: false,
+    experience: nil,
+    level: nil,
+    is_max_level: false,
+    xp_current: 0,
+    xp_required: 0,
+    xp_percent: 0,
+    xp_needed: 0,
+    adena: nil,
+    weapon: nil,
+    armor: nil,
+    stats: nil,
+    effects: [],
+    dead: false,
+    ambushed: false,
+    coward: false,
+    cheated: false,
+    death_reason: nil,
+    highscore_eligible: false,
+    counters: %{
+      total_battles: 0,
+      total_ambushes: 0,
+      consecutive_ambushes: 0,
+      total_enemies_killed: 0
+    },
+    last_battle: nil
+  }
+
   def build(player) do
     if Player.started?(player),
       do: started(player),
-      else: %{started: false, dead: false, ambushed: false}
+      else: %{@empty | revision: player.revision}
   end
 
   defp started(player) do

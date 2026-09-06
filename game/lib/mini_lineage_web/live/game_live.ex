@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.Characters
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, RateLimit, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
   alias MiniLineage.Highscores
   alias MiniLineageWeb.{Paths, Screens}
@@ -92,7 +92,7 @@ defmodule MiniLineageWeb.GameLive do
 
     socket = assign(socket, screen: screen, picked: nil, page_title: Screens.page_title(screen))
 
-    if connected?(socket) and MiniLineage.Game.Player.started?(socket.assigns.player) do
+    if connected?(socket) and Player.started?(socket.assigns.player) do
       apply_action(socket, &Actions.set_screen(&1, screen))
     else
       socket
@@ -143,8 +143,12 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
     case throttle(socket, :shop) do
       {:ok, socket} ->
-        # Passed through as-is: Actions.purchase/3 is the boundary and validates it.
-        {:noreply, apply_action(socket, &Actions.purchase(&1, type, item_id))}
+        # `picked: nil` puts the select back on "🚪 Home Town" once the shop has answered —
+        # after a refusal too, matching the reference, which remounts the form on any completed
+        # attempt rather than only a successful one.
+        socket = apply_action(socket, &Actions.purchase(&1, type, item_id))
+
+        {:noreply, assign(socket, picked: nil)}
 
       {:limited, socket} ->
         {:noreply, socket}
@@ -186,8 +190,16 @@ defmodule MiniLineageWeb.GameLive do
   # ----------------------------------------------------------------- pushes
 
   @impl true
-  def handle_info({:character_updated, player}, socket),
-    do: {:noreply, assign(socket, player: player, view: Snapshot.build(player))}
+  def handle_info({:character_updated, player}, socket) do
+    # A push can invalidate where this tab is standing: another tab restarts the character, or the
+    # server kills it. Re-pin against the new player, and treat a reset as a trip back to Game
+    # Start rather than leaving this tab on a screen its character no longer qualifies for.
+    reset? = Player.started?(socket.assigns.player) and not Player.started?(player)
+    socket = assign(socket, player: player, view: Snapshot.build(player))
+    target = Access.pin_screen(if(reset?, do: "start", else: socket.assigns.screen), player)
+
+    {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}
+  end
 
   # ------------------------------------------------------------------ plumbing
 

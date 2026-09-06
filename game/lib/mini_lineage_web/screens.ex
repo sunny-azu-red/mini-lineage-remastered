@@ -44,6 +44,15 @@ defmodule MiniLineageWeb.Screens do
   attr :detail, :string, default: nil
   attr :picked, :string, default: nil
 
+  # A character can be reset from another tab while this one is still showing a screen that needs
+  # one. `pin_screen/2` will move us on the next params pass; until then, draw nothing rather than
+  # reach into a view that has no character in it.
+  @requires_character ~w(home battle weapons armors inn suicide death character)
+
+  def screen(%{view: %{started: false}, screen: screen} = assigns)
+      when screen in @requires_character,
+      do: ~H||
+
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "home"} = assigns), do: home(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
@@ -105,7 +114,7 @@ defmodule MiniLineageWeb.Screens do
   attr :flash, :map, required: true
 
   def flash_alert(assigns) do
-    ~H|<div class={"alert alert-#{@flash.type}"}>{raw(nl2br(@flash.text))}</div>|
+    ~H|<div class={"alert alert-#{@flash.type}"}>{raw(@flash.text)}</div>|
   end
 
   attr :ambushed, :boolean, default: false
@@ -716,8 +725,6 @@ defmodule MiniLineageWeb.Screens do
     "#{pad.(at.day)}/#{pad.(at.month)}/#{String.slice(Integer.to_string(at.year), -2..-1)}, " <>
       "#{pad.(at.hour)}:#{pad.(at.minute)}"
   end
-
-  defp nl2br(text), do: String.replace(text, "\n", "<br>")
 
   def sidebar?(screen), do: Access.sidebar?(screen)
 end
