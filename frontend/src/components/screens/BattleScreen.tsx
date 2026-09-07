@@ -2,7 +2,7 @@ import { useEffect, type MouseEvent } from 'react';
 import type { BattleNarrative } from '@shared/contract';
 import { useGameStore } from '@/store/gameStore';
 import { useBattleFight } from '@/socket/useBattleFight';
-import Narrative from '@/components/common/Narrative';
+import { narrativeHtml } from '@/components/common/narrative';
 
 const FALLBACK_AMBUSH_LINE = 'You are being ambushed!';
 
@@ -45,9 +45,10 @@ export default function BattleScreen() {
         return (
             <>
                 {narrative && <BattleNarrativeBlock narrative={narrative} />}
-                <div className="alert alert-danger">
-                    💢 <Narrative html={narrative?.ambushLine ?? FALLBACK_AMBUSH_LINE} />
-                </div>
+                <div
+                    className="alert alert-danger"
+                    {...narrativeHtml(`💢 ${narrative?.ambushLine ?? FALLBACK_AMBUSH_LINE}`)}
+                />
                 <div className="action-links">{fightButton(`⚔️ ${narrative?.fightPrompt ?? 'Fight!'}`, true)}</div>
             </>
         );
@@ -69,11 +70,10 @@ export default function BattleScreen() {
 function BattleNarrativeBlock({ narrative }: { narrative: BattleNarrative }) {
     return (
         <>
-            <p>
-                {narrative.critLine && <><Narrative html={narrative.critLine} /> </>}
-                <Narrative html={narrative.killLine} /> <Narrative html={narrative.deflectionLine} />
-            </p>
-            <p><Narrative html={narrative.outcomeLine} /></p>
+            {/* Joined into one string: each line is its own sentence, separated by a space, and
+                giving them an element apiece would add wrappers that carry nothing. */}
+            <p {...narrativeHtml([narrative.critLine, narrative.killLine, narrative.deflectionLine].filter(Boolean).join(' '))} />
+            <p {...narrativeHtml(narrative.outcomeLine)} />
         </>
     );
 }

@@ -19,7 +19,7 @@ vi.mock('@/util/session-store.util', () => ({
 }));
 
 vi.mock('@/repository/statistics.repository', () => ({
-    statisticsRepository: { increment: vi.fn().mockResolvedValue(undefined) },
+    statisticsRepository: { increment: vi.fn(), flush: vi.fn().mockResolvedValue(undefined) },
 }));
 
 import { acquireSessionLock } from '@/util/lock.util';
@@ -114,6 +114,20 @@ describe('tick logging format (integration — real player.service/session wirin
         expect(line).toContain('Resting | HP: 50/150 (0 HPR)');
         expect(session.health).toBe(50);
         expect(setSessionData).not.toHaveBeenCalled(); // nothing changed, nothing to persist
+    });
+
+    // Regression: the zone label used to be derived from the ABSENCE of combat, so a screen in
+    // neither zone list logged "Resting ... (Idle)" while regen was in fact off — the same drift
+    // processRegenTick was fixed for.
+    it('logs "No Zone | ... (Paused)" on a screen in neither zone list, where regen cannot happen', async () => {
+        session.currentScreen = 'statistics'; // neither a combat nor a resting zone
+        session.effects = [];
+
+        await processSessionTick(io, sessionTracker.get(SESSION_ID)!, SESSION_ID, 'regen');
+
+        const line = lastTickLine();
+        expect(line).toContain('No Zone | HP: 50/100 (Paused)');
+        expect(session.health).toBe(50); // never regenerated
     });
 
     it('logs the "Dead" zone for a dead player, with regen reported as paused', async () => {
