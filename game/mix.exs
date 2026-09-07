@@ -33,6 +33,9 @@ defmodule MiniLineage.MixProject do
 
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
+
+  # The balance simulations and their `mix balance` task are a dev tool; a release must not carry them.
+  defp elixirc_paths(:dev), do: ["lib", "scratch"]
   defp elixirc_paths(_), do: ["lib"]
 
   # Specifies your project dependencies.
