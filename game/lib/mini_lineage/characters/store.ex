@@ -6,7 +6,7 @@ defmodule MiniLineage.Characters.Store do
   alias MiniLineage.Game.Player
   alias MiniLineage.Repo
 
-  @ttl_hours 24
+  @ttl_hours Application.compile_env(:mini_lineage, :character_ttl_hours, 24)
 
   @doc "A fresh, unstarted character id. Opaque — it is what the session cookie carries."
   def new_id, do: Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
@@ -33,11 +33,16 @@ defmodule MiniLineage.Characters.Store do
 
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
-  @doc "Drops characters untouched for #{@ttl_hours}h, matching the reference's session lifetime."
+  @doc """
+  Drops characters untouched for #{@ttl_hours}h. Sliding, because `updated_at` moves every time the
+  character is saved — so the window is "since you last played", not "since you started".
+  """
   def sweep_expired do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)
     {count, _} = Repo.delete_all(from r in Record, where: r.updated_at < ^cutoff)
 
     count
   end
+
+  def ttl_hours, do: @ttl_hours
 end

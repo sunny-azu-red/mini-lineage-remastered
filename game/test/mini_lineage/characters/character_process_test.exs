@@ -6,6 +6,7 @@ defmodule MiniLineage.CharactersTest do
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.Characters
+  alias MiniLineage.Characters.{Record, Store}
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
@@ -134,9 +135,40 @@ defmodule MiniLineage.CharactersTest do
     assert MiniLineage.Characters.Store.load(id) == nil
   end
 
-  test "the 24h sweep drops only characters nobody has touched", %{id: id} do
-    start_character(id)
-    assert MiniLineage.Characters.Store.sweep_expired() == 0
-    assert Characters.snapshot(id).name == "Hero"
+  describe "the idle sweep" do
+    test "leaves a character somebody is still playing", %{id: id} do
+      start_character(id)
+      # Counting rows rather than the sweep's return value: this database is shared with the
+      # browser walkthrough, so a global count of zero is never a safe thing to assert.
+      MiniLineage.Characters.Store.sweep_expired()
+
+      assert Characters.snapshot(id).name == "Hero"
+    end
+
+    test "drops one nobody has touched for longer than the window", %{id: id} do
+      start_character(id)
+      Characters.forget_process(id)
+
+      # Backdated past the window, as if the browser had been closed that long ago.
+      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
+      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+
+      assert MiniLineage.Characters.Store.sweep_expired() >= 1
+      assert Store.load(id) == nil
+    end
+
+    test "the window slides: playing again resets the clock", %{id: id} do
+      start_character(id)
+      Characters.forget_process(id)
+
+      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
+      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+
+      # Touching the character writes it again, which moves updated_at to now.
+      Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok})
+
+      MiniLineage.Characters.Store.sweep_expired()
+      assert Characters.snapshot(id).name == "Hero"
+    end
   end
 end

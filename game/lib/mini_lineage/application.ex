@@ -14,6 +14,7 @@ defmodule MiniLineage.Application do
       {Registry, keys: :unique, name: MiniLineage.Characters.Registry},
       {DynamicSupervisor, strategy: :one_for_one, name: MiniLineage.Characters.Supervisor},
       MiniLineage.Game.RateLimit,
+      MiniLineage.Characters.Sweeper,
       {Phoenix.PubSub, name: MiniLineage.PubSub},
       # Start a worker by calling: MiniLineage.Worker.start_link(arg)
       # {MiniLineage.Worker, arg},

@@ -17,6 +17,14 @@ defmodule MiniLineage.Characters do
 
   def subscribe(id), do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, "character:#{id}")
 
+  @doc "Stops a character's process without touching its stored row."
+  def forget_process(id) do
+    case Registry.lookup(MiniLineage.Characters.Registry, id) do
+      [{pid, _}] -> GenServer.stop(pid, :normal)
+      [] -> :ok
+    end
+  end
+
   @doc "Forgets a character entirely — used by tests and the expiry sweep."
   def forget(id) do
     case Registry.lookup(MiniLineage.Characters.Registry, id) do

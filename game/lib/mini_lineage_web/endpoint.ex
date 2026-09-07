@@ -14,7 +14,7 @@ defmodule MiniLineageWeb.Endpoint do
     same_site: "Lax",
     http_only: true,
     secure: System.get_env("IN_DOCKER") == "true",
-    max_age: 24 * 60 * 60
+    max_age: Application.compile_env(:mini_lineage, :character_ttl_hours, 24) * 60 * 60
   ]
 
   socket "/live", Phoenix.LiveView.Socket,

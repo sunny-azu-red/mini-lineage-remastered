@@ -727,4 +727,14 @@ defmodule MiniLineageWeb.Screens do
   end
 
   def sidebar?(screen), do: Access.sidebar?(screen)
+
+  @doc """
+  Whether to warn about low health. Shown wherever HP is on screen, but suppressed on Suicide and
+  in the Inn — the Inn's whole call to action already IS "buy food", and the warning would be
+  telling you to go where you are standing.
+  """
+  def low_health_alert?(view, screen) do
+    view.started and not view.dead and view.low_health and sidebar?(screen) and
+      screen not in ~w(suicide inn)
+  end
 end

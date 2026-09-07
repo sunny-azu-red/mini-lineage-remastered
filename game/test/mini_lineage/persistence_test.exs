@@ -32,6 +32,28 @@ defmodule MiniLineage.PersistenceTest do
     end
   end
 
+  test "a legitimate death writes its legacy to the board and clears the character" do
+    {player, _} =
+      MiniLineage.Game.Player.initialize(
+        %MiniLineage.Game.Player{},
+        MiniLineage.Game.Constants.race(0),
+        "Legend"
+      )
+
+    dead = MiniLineage.Game.Player.kill(%{player | experience: 4321, adena: 99})
+
+    assert {fresh, {:ok, %{race_slug: "human"}}} = MiniLineage.Game.Actions.submit_highscore(dead)
+
+    assert fresh == %MiniLineage.Game.Player{},
+           "submitting resets in place, ready for a new character"
+
+    assert [entry] = Highscores.list()
+    assert entry.name == "Legend"
+    assert entry.total_xp == 4321
+    assert entry.adena == 99
+    assert entry.level == MiniLineage.Game.Math.level_for_xp(4321)
+  end
+
   describe "statistics" do
     setup do
       pid = start_supervised!(Collector)

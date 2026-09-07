@@ -21,6 +21,11 @@ if File.exists?(env_file) do
   end
 end
 
+# How long a character survives without being played. It is a SLIDING window — the clock restarts
+# every time you touch the character — and the session cookie is issued for exactly the same span,
+# so the two can never disagree about whether your character is still there.
+config :mini_lineage, character_ttl_hours: 24 * 30
+
 config :mini_lineage,
   ecto_repos: [MiniLineage.Repo],
   generators: [timestamp_type: :utc_datetime]
