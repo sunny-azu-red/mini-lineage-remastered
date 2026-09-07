@@ -37,8 +37,8 @@ export function initializePlayer(player: PlayerState, race: Race, name: string):
     applyEffect(player, EFFECTS_CONFIG.newbieBuff);
     player.health = getPlayerStats(player).maxHealth;
 
-    void statisticsRepository.increment('total_players');
-    void statisticsRepository.increment('total_adena', player.adena);
+    statisticsRepository.increment('total_players');
+    statisticsRepository.increment('total_adena', player.adena);
 
     // Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
     const { minAge, maxAge, ageThresholds: { youth, adult, labels }, builds } = CHARACTER_CONFIG;
@@ -60,7 +60,7 @@ export function killPlayer(player: PlayerState): void {
     player.dead = true;
     player.effects = [];
 
-    void statisticsRepository.increment('total_deaths');
+    statisticsRepository.increment('total_deaths');
     resolveDeathReason(player);
 }
 
@@ -267,22 +267,22 @@ export function resolveBattleOutcome(player: PlayerState, result: BattleResult):
     player.totalEnemiesKilled = (player.totalEnemiesKilled ?? 0) + enemiesKilled;
 
     if (isCritical)
-        void statisticsRepository.increment('total_critical_hits');
+        statisticsRepository.increment('total_critical_hits');
 
-    void statisticsRepository.increment('total_battles');
-    void statisticsRepository.increment('total_enemies_killed', enemiesKilled);
-    void statisticsRepository.increment('total_adena_generated', adenaGained);
-    void statisticsRepository.increment('total_adena', adenaGained);
-    void statisticsRepository.increment('total_hp_lost', hpLost);
-    void statisticsRepository.increment('total_xp_gained', xpGained);
-    void statisticsRepository.increment('total_damage_blocked', damageBlocked);
+    statisticsRepository.increment('total_battles');
+    statisticsRepository.increment('total_enemies_killed', enemiesKilled);
+    statisticsRepository.increment('total_adena_generated', adenaGained);
+    statisticsRepository.increment('total_adena', adenaGained);
+    statisticsRepository.increment('total_hp_lost', hpLost);
+    statisticsRepository.increment('total_xp_gained', xpGained);
+    statisticsRepository.increment('total_damage_blocked', damageBlocked);
 
     if (!isLevelUp(oldXp, player.experience))
         return false;
 
     const hpHealed = restoreHealth(player, getPlayerStats(player).maxHealth);
-    void statisticsRepository.increment('total_levels_gained');
-    void statisticsRepository.increment('total_hp_healed', hpHealed);
+    statisticsRepository.increment('total_levels_gained');
+    statisticsRepository.increment('total_hp_healed', hpHealed);
 
     return true;
 }
@@ -326,11 +326,11 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
     if (!deductCost(player, item.cost))
         return { success: false, text: `You do not have enough Adena to buy ${item.emoji} ${item.name}!`, item };
 
-    void statisticsRepository.increment('total_adena_spent', item.cost);
+    statisticsRepository.increment('total_adena_spent', item.cost);
 
     if (equipment) {
         player[equipment.slot] = itemId;
-        void statisticsRepository.increment(equipment.stat);
+        statisticsRepository.increment(equipment.stat);
 
         return { success: true, text: equipment.bought(item), item };
     }
@@ -339,8 +339,8 @@ export function purchaseItem(player: PlayerState, itemType: ItemType, itemId: nu
         applyEffect(player, item.effect);
 
     const hpHealed = restoreHealth(player, item.stat);
-    void statisticsRepository.increment('total_food_bought');
-    void statisticsRepository.increment('total_hp_healed', hpHealed);
+    statisticsRepository.increment('total_food_bought');
+    statisticsRepository.increment('total_hp_healed', hpHealed);
 
     const buff = item.effect ? `\nYou feel invigorated by the ${item.effect.emoji} ${item.effect.label} buff!` : '';
 
@@ -374,11 +374,11 @@ export function processEffectExpiry(player: PlayerState): boolean {
     return changed;
 }
 
-/** Natural HP regeneration for players out of combat. Periodic cadence only. Returns whether healed. */
+/** Natural HP regeneration, earned by resting. Periodic cadence only. Returns whether healed. */
 export function processRegenTick(player: PlayerState): boolean {
-    // getActiveEffects (not raw player.effects), so an already-elapsed disengage countdown can't
-    // wedge regen off; held combat carries no expiresAt so it still pauses regen indefinitely.
-    if (player.dead || getActiveEffects(player).some(e => e.id === 'combat'))
+    // Requires the resting aura outright, rather than merely the absence of combat: a screen in
+    // neither zone list regenerated silently, with no 🌿 aura to show for it.
+    if (player.dead || !getActiveEffects(player).some(e => e.id === 'resting'))
         return false;
 
     // Positive form deliberately: bails cleanly on a NaN rather than persisting it.
@@ -390,7 +390,7 @@ export function processRegenTick(player: PlayerState): boolean {
     if (!(healed > 0))
         return false;
 
-    void statisticsRepository.increment('total_hp_regen', healed);
+    statisticsRepository.increment('total_hp_regen', healed);
 
     return true;
 }
