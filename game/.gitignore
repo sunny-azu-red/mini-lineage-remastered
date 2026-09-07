@@ -35,4 +35,8 @@ mini_lineage-*.tar
 npm-debug.log
 /assets/node_modules/
 
-
+# Digested copies of every static file, produced by `mix assets.deploy`.
+/priv/static/*-*.*
+/priv/static/*.gz
+/priv/static/images/*-*.*
+/priv/static/images/*.gz

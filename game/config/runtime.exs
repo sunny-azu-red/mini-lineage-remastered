@@ -39,22 +39,40 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
+  # Every other environment — and the reference's own .env — names the database in discrete parts.
+  # DATABASE_URL still works for hosts that only offer one, but it cannot carry a password with
+  # URL-unsafe characters unless they are percent-encoded, so the parts win when both are set.
+  database_config =
+    cond do
+      System.get_env("DB_DATABASE") ->
+        [
+          username: System.fetch_env!("DB_USERNAME"),
+          password: System.fetch_env!("DB_PASSWORD"),
+          hostname: System.get_env("DB_HOST", "127.0.0.1"),
+          port: String.to_integer(System.get_env("DB_PORT", "3306")),
+          database: System.fetch_env!("DB_DATABASE")
+        ]
+
+      url = System.get_env("DATABASE_URL") ->
+        [url: url]
+
+      true ->
+        raise """
+        no database configured.
+        Set DB_DATABASE (with DB_USERNAME, DB_PASSWORD and optionally DB_HOST, DB_PORT),
+        or a single DATABASE_URL such as ecto://USER:PASS@HOST/DATABASE.
+        """
+    end
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  config :mini_lineage, MiniLineage.Repo,
-    # ssl: true,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    # For machines with several cores, consider starting multiple pools of `pool_size`
-    # pool_count: 4,
-    socket_options: maybe_ipv6
+  config :mini_lineage,
+         MiniLineage.Repo,
+         database_config ++
+           [
+             pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+             socket_options: maybe_ipv6
+           ]
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
