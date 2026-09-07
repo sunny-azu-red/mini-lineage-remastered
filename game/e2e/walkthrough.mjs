@@ -201,20 +201,13 @@ try {
     check('...and offers a way out',
         await page.locator('#main a:has-text("Return to safer lands")').count() === 1);
 
-    const before404 = consoleErrors.length;
-    const notFound = await page.goto(`${BASE}/no-such-road`, { waitUntil: 'domcontentloaded' });
-    check('an unknown URL returns 404, not a crash', notFound?.status() === 404, String(notFound?.status()));
-    check('...wearing the real game shell, not an approximation of it',
-        await page.locator('#site-header .header-title').count() === 1
-        && await page.locator('#copyright').count() === 1
-        && await page.locator('#main .panel-body').count() === 1);
-    check('...with the same fonts as every other screen',
-        /Cinzel|Silkscreen/i.test(
-            await page.locator('.header-title').evaluate(el => getComputedStyle(el).fontFamily)));
-    check('...and in a dev build it says what happened',
-        await page.locator('#main .code-block').count() === 1);
-    // Asking for a 404 legitimately logs one console error. Drop exactly those, nothing else.
-    consoleErrors.push(...consoleErrors.splice(before404).filter(e => !/404/.test(e)));
+    // The reference served index.html for every non-API GET and its router resolved an unknown path
+    // to Home, rewriting the address bar. The game owns every URL; there is no 404 page to reach.
+    const unknown = await page.goto(`${BASE}/no-such-road`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('an unknown URL serves the game, not an error', unknown?.status() === 200, String(unknown?.status()));
+    check('...resolving to the screen a visitor belongs on', (await state()).screen === 'start');
+    check('...and correcting the address bar', new URL(page.url()).pathname === '/', page.url());
 
     // ---- create a character -------------------------------------------------------------------
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });

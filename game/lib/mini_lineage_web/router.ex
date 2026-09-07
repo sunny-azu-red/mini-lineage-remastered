@@ -34,6 +34,11 @@ defmodule MiniLineageWeb.Router do
     live "/statistics", GameLive, :statistics
     live "/races", GameLive, :races
     live "/error", GameLive, :error
+
+    # The game owns every URL. An unrecognised path is not an error — it resolves to Town (or Game
+    # Start, once pinned) and the address bar is corrected, exactly as the reference's SPA fallback
+    # did. Must stay last: a glob would otherwise shadow every route above it.
+    live "/*unknown", GameLive, :unknown
   end
 
   # Other scopes may use custom stacks.

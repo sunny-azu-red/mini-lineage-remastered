@@ -54,15 +54,18 @@ defmodule MiniLineageWeb.GameLive do
     requested = requested_screen(socket.assigns.live_action, socket.assigns.player)
     pinned = Access.pin_screen(requested, socket.assigns.player)
 
-    if pinned != requested do
+    # An unrecognised path patches even when it resolved to where we already are, so the address bar
+    # never keeps a URL the game does not own.
+    if pinned != requested or socket.assigns.live_action == :unknown do
       {:noreply, push_patch(socket, to: Paths.for_screen(pinned), replace: true)}
     else
       {:noreply, socket |> assign_race_filter(params) |> enter(pinned)}
     end
   end
 
-  # '/' means Game Start for a visitor and Town for a character; every other route names itself.
-  defp requested_screen(:root, player),
+  # '/' and any unrecognised path both mean Game Start for a visitor and Town for a character;
+  # every other route names itself.
+  defp requested_screen(action, player) when action in [:root, :unknown],
     do: if(MiniLineage.Game.Player.started?(player), do: "home", else: "start")
 
   defp requested_screen(action, _player), do: Atom.to_string(action)
