@@ -505,19 +505,32 @@ defmodule MiniLineageWeb.Screens do
     <h2>Inventory &amp; Stats</h2>
     <p>
       You are wielding the {@view.weapon.emoji} {@view.weapon.name} granting
-      <span class="hp">{Format.number(@view.stats.attack)} Physical Attack</span><span :if={
-        (@view.weapon.crit || 0) > 0
-      }> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span></span>, and wearing
+      <span class="hp">
+        <span id="char-stat-attack">{Format.number(@view.stats.attack)}</span> Physical Attack
+      </span>
+      <%= if (@view.weapon.crit || 0) > 0 do %>
+        and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span>
+      <% end %>, and wearing
       the {@view.armor.emoji} {@view.armor.name} providing
-      <span class="muted">{Format.number(@view.stats.defense)} Physical Defense</span><span :if={
-        (@view.armor.regen || 0) > 0
-      }> and <span class="heal">+{@view.armor.regen} HP Regeneration</span></span>.
+      <span class="muted">
+        <span id="char-stat-defense">{Format.number(@view.stats.defense)}</span> Physical Defense
+      </span>
+      <%= if (@view.armor.regen || 0) > 0 do %>
+        and <span class="heal">+{@view.armor.regen} HP Regeneration</span>
+      <% end %>.
     </p>
     <p>
       Combined with your ancestry, you strike with a total of
-      <span class="crit">{Format.number(@view.stats.crit)}% Critical Hit Chance</span>
-      and mend wounds at <span class="heal">+{Format.number(@view.stats.regen)} HP Regeneration</span>
-      per rest cycle, while navigating the roads with a <span class="muted">{Format.number(@view.stats.ambush_risk)}% Ambush Risk</span>.
+      <span class="crit">
+        <span id="char-stat-crit">{Format.number(@view.stats.crit)}</span>% Critical Hit Chance
+      </span>
+      and mend wounds at
+      <span class="heal">
+        +<span id="char-stat-regen">{Format.number(@view.stats.regen)}</span> HP Regeneration
+      </span>
+      per rest cycle, while navigating the roads with a <span class="muted">
+        <span id="char-stat-ambush">{Format.number(@view.stats.ambush_risk)}</span>% Ambush Risk
+      </span>.
     </p>
 
     <h2>The Journey So Far</h2>
@@ -537,16 +550,25 @@ defmodule MiniLineageWeb.Screens do
       </span>
       along the road.
     </p>
-    <p>
+    <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
+    <p id="char-vitality" phx-hook="AnimatedValues">
       Experience wise, you are at <span class="gold">Level {Format.number(@view.level)}</span>
       with a
-      total of
-      <span class="xp">{Format.number(@view.experience)} XP</span><span :if={@view.is_max_level}>, standing unchallenged at the zenith of martial prowess</span><span :if={
-        !@view.is_max_level
-      }>, requiring another <span class="xp">{Format.number(@view.xp_needed)} XP</span>
-      to reach <span class="gold">Level {Format.number(@view.level + 1)}</span></span>
+      total of <span class="xp">{Format.number(@view.experience)} XP</span>
+      <%= if @view.is_max_level do %>
+        , standing unchallenged at the zenith of martial prowess
+      <% else %>
+        , requiring another <span class="xp">{Format.number(@view.xp_needed)} XP</span>
+        to reach <span class="gold">Level {Format.number(@view.level + 1)}</span>
+      <% end %>
       and your vitality currently sustains you at
-      <span class="hp">{Format.number(@view.health)} / {Format.number(@view.max_health)} HP</span>
+      <span class="hp">
+        <span id="char-hp" class="animate-val" data-key="char-hp" data-value={@view.health}>{Format.number(
+          @view.health
+        )}</span>
+        / <span id="char-max-hp">{Format.number(@view.max_health)}</span>
+        HP
+      </span>
       while your purse holds <span class="gold">🪙 {Format.adena(@view.adena)} Adena</span>
       for the
       journey ahead.
