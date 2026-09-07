@@ -6,6 +6,7 @@ import { withSession, NO_CHANGE } from './session';
 import { buildPlayerSnapshot } from './serializer/player.serializer';
 import { emitStateUpdate, scheduleNextExpiry, cleanupStaleSessions, sessionTracker } from './emitter';
 import { logger } from '@/config/logger.config';
+import { statisticsRepository } from '@/repository/statistics.repository';
 import { capitalize, formatSessionId } from '@/util/format.util';
 
 /**
@@ -33,7 +34,10 @@ function logTickResult(sessionId: string, player: PlayerState, oldHp: number, ex
     const stats = getPlayerStats(player);
     const isDead = Boolean(player.dead || player.health <= 0);
     const inCombat = !isDead && Boolean(player.effects?.some(e => e.id === 'combat'));
-    const zone = isDead ? 'Dead' : inCombat ? 'In Combat' : 'Resting';
+    // Read from the resting aura, not from the absence of combat: regen is granted by that aura,
+    // so a screen in neither zone list is its own case rather than a quietly mislabelled 'Resting'.
+    const isResting = !isDead && Boolean(player.effects?.some(e => e.id === 'resting'));
+    const zone = isDead ? 'Dead' : inCombat ? 'In Combat' : isResting ? 'Resting' : 'No Zone';
 
     const hpDiff = player.health - oldHp;
     const hpDisplay = `${hpDiff !== 0 ? `${oldHp} -> ` : ''}${player.health}/${stats.maxHealth}`;
@@ -51,7 +55,7 @@ function logTickResult(sessionId: string, player: PlayerState, oldHp: number, ex
         status = expiredLabel ? `${expiredType} Expired${expiredSuffix}` : 'Effect Expired';
     else if (player.health >= stats.maxHealth)
         status = 'Full';
-    else if (inCombat || isDead)
+    else if (inCombat || isDead || !isResting)
         status = 'Paused';
     else
         status = stats.regen === 0 ? '0 HPR' : 'Idle';
@@ -113,6 +117,8 @@ export async function processSessionTick(
 export function startTickLoop(io: SocketIOServer): NodeJS.Timeout {
     return setInterval(() => {
         cleanupStaleSessions(Date.now());
+        // The buffered counters ride the same cadence; flush() never rejects, so nothing to catch.
+        void statisticsRepository.flush();
         sessionTracker.forEach((tracker, sessionId) => {
             void processSessionTick(io, tracker, sessionId, 'regen');
         });

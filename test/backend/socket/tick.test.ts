@@ -26,11 +26,16 @@ vi.mock('@/socket/serializer/player.serializer', () => ({
     buildPlayerSnapshot: vi.fn(() => ({ revision: 1 })),
 }));
 
+vi.mock('@/repository/statistics.repository', () => ({
+    statisticsRepository: { increment: vi.fn(), flush: vi.fn().mockResolvedValue(undefined) },
+}));
+
 import { processSessionTick, startTickLoop, refreshExpiryTimers } from '@/socket/tick';
 import { withSession, NO_CHANGE } from '@/socket/session';
 import * as playerService from '@/service/player.service';
 import { emitStateUpdate, scheduleNextExpiry, cleanupStaleSessions, sessionTracker } from '@/socket/emitter';
 import { buildPlayerSnapshot } from '@/socket/serializer/player.serializer';
+import { statisticsRepository } from '@/repository/statistics.repository';
 import { SocketError } from '@/socket/error';
 import { TICK_CONFIG } from '@/constant/game.constant';
 import type { SessionTrackerEntry } from '@/interface';
@@ -236,6 +241,18 @@ describe('startTickLoop', () => {
 
         expect(cleanupStaleSessions).toHaveBeenCalled();
         expect(withSession).toHaveBeenCalledWith('sid-1', expect.any(Function));
+
+        clearInterval(handle);
+    });
+
+    // The counters are buffered in the repository, so the loop is what gets them to the database.
+    it('drains the buffered statistics counters on every firing, sessions or not', async () => {
+        const handle = startTickLoop({} as any);
+
+        vi.advanceTimersByTime(TICK_CONFIG.intervalMs * 2);
+        await vi.runAllTicks();
+
+        expect(statisticsRepository.flush).toHaveBeenCalledTimes(2);
 
         clearInterval(handle);
     });

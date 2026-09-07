@@ -46,7 +46,7 @@ export function registerBattleHandlers(io: SocketIOServer, socket: Socket): void
                     if (ctx.player.consecutiveAmbushes >= 2)
                         applyEffect(ctx.player, EFFECTS_CONFIG.ambushDebuff);
 
-                    void statisticsRepository.increment('total_ambushes');
+                    statisticsRepository.increment('total_ambushes');
                 } else {
                     ctx.player.consecutiveAmbushes = 0;
                 }

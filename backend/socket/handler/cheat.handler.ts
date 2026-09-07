@@ -46,7 +46,7 @@ export function registerCheatHandler(io: SocketIOServer, socket: Socket): void {
                 ctx.player.cheated = true;
                 applyEffect(ctx.player, EFFECTS_CONFIG.konamiCheat);
                 ctx.player.health = getPlayerStats(ctx.player).maxHealth;
-                void statisticsRepository.increment('total_players_cheated');
+                statisticsRepository.increment('total_players_cheated');
                 mutatedPlayer = ctx.player;
 
                 return true;

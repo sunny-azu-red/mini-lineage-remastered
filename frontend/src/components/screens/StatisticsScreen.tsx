@@ -54,7 +54,7 @@ export default function StatisticsScreen() {
                         {verb(stats.total_battles, 'has', 'have')} been fought against the encroaching darkness,{' '}
                         resulting in the defeat of{' '}
                         <Tally className="gold" singular="Formidable Foe" plural="Formidable Foes" count={stats.total_enemies_killed} />{' '}
-                        through lethal precision and the{' '}
+                        through lethal precision and{' '}
                         <Tally className="crit" singular="Critical Strike" plural="Critical Strikes" count={stats.total_critical_hits} />{' '}
                         that turned the tide of every skirmish.
                     </p>

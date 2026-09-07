@@ -16,7 +16,7 @@ export function registerPlayerHandlers(io: SocketIOServer, socket: Socket): void
         guards: [requireStarted, requireAlive],
         handler: (ctx): MutationResult => {
             commitSuicide(ctx.player);
-            void statisticsRepository.increment('total_players_suicided');
+            statisticsRepository.increment('total_players_suicided');
             // Stamped here, like game:start and battle:fight, so the client moves to the death
             // screen in the same atomic update that applies this ack.
             ctx.player.currentScreen = 'death';
