@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { statisticsRepository } from '@/repository/statistics.repository';
 import { dbPool } from '@/config/database.config';
+import { logger } from '@/config/logger.config';
 
 vi.mock('@/config/database.config', () => ({
     dbPool: {
         execute: vi.fn(),
     },
+}));
+
+vi.mock('@/config/logger.config', () => ({
+    logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 
 describe('statisticsRepository', () => {
@@ -20,6 +25,25 @@ describe('statisticsRepository', () => {
                 expect.stringContaining('INSERT INTO statistics'),
                 ['total_players', 1, 1]
             );
+        });
+
+        // Every caller is `void`-ed fire-and-forget, so a rejection here would be an UNHANDLED
+        // rejection — which terminates the process. A dropped connection mid-fight used to take
+        // the whole server down over a counter.
+        it('swallows and logs a database failure rather than rejecting', async () => {
+            const err = Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' });
+            vi.mocked(dbPool.execute).mockRejectedValueOnce(err);
+
+            await expect(statisticsRepository.increment('total_battles', 3)).resolves.toBeUndefined();
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.objectContaining({ err, field: 'total_battles', amount: 3 }),
+                expect.stringContaining('Statistics increment failed')
+            );
+        });
+
+        it('stays silent about a failure that never happened', async () => {
+            await statisticsRepository.increment('total_deaths');
+            expect(logger.error).not.toHaveBeenCalled();
         });
     });
 

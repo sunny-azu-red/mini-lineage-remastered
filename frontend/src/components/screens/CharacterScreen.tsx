@@ -1,7 +1,7 @@
 import { useGameStore } from '@/store/gameStore';
 import { pluralize, formatNumber, formatAdena } from '@shared/format';
 import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
-import Narrative from '@/components/common/Narrative';
+import { narrativeHtml } from '@/components/common/narrative';
 import BackLink from '@/components/common/BackLink';
 
 export default function CharacterScreen() {
@@ -28,8 +28,8 @@ export default function CharacterScreen() {
     return (
         <>
             <h2>{race.emoji} {player.name} of {race.label} Ancestry</h2>
-            <p><Narrative html={race.backstory} /></p>
-            <p><Narrative html={race.traits} /></p>
+            <p {...narrativeHtml(race.backstory)} />
+            <p {...narrativeHtml(race.traits)} />
 
             <h2>Inventory &amp; Stats</h2>
             <p>

@@ -1,27 +1,19 @@
-import { pluralize, fillTemplate, formatNumber, formatAdena } from '@shared/format';
+import { pluralize, formatNumber, formatAdena } from '@shared/format';
 import { useRequest } from '@/socket/useRequest';
-import Narrative from '@/components/common/Narrative';
 import BackLink from '@/components/common/BackLink';
 import LoadingPanel from '@/components/common/LoadingPanel';
 
-// "The Tome of Lore": raw counters fetched fresh, formatted here via @shared/format. Templates
-// embedding literal HTML go through `Narrative`; plain `pluralize` output renders as JSX children.
-interface CountedProps {
-    /** Uses `{n}` for the pluralized count and `{isSingle}` for singular/plural verb agreement. */
-    template: string;
-    singular: string;
-    plural: string;
-    count: number;
-}
+// "The Tome of Lore": raw counters fetched fresh, formatted here via @shared/format. Every count is
+// a `Tally` and every sentence is plain JSX — the prose used to be HTML templates rendered through
+// `Narrative`, which wrapped each one in a <span> that existed for no reason but to hold it.
 
-function Counted({ template, singular, plural, count }: CountedProps) {
-    return <Narrative html={fillTemplate(template, { n: pluralize(singular, plural, count), isSingle: count === 1 })} />;
-}
-
-/** A plain (markup-free) pluralized count, wrapped in a colour utility span. */
+/** A pluralized count in a colour utility span. */
 function Tally({ className, singular, plural, count }: { className: string; singular: string; plural: string; count: number }) {
     return <span className={className}>{pluralize(singular, plural, count)}</span>;
 }
+
+/** Singular/plural verb agreement for the tally it follows. */
+const verb = (count: number, one: string, many: string) => (count === 1 ? one : many);
 
 export default function StatisticsScreen() {
     const { data, loading } = useRequest('statistics:get', {});
@@ -37,37 +29,29 @@ export default function StatisticsScreen() {
                     <h2>The Legacy of the Realm</h2>
                     <p>
                         In the age of steel and magic,{' '}
-                        <Counted
-                            template='<span class="gold">{n}</span> {isSingle ? "has" : "have"} set foot upon these dangerous lands.'
-                            singular="Brave Soul" plural="Brave Souls" count={stats.total_players}
-                        />{' '}
+                        <Tally className="gold" singular="Brave Soul" plural="Brave Souls" count={stats.total_players} />{' '}
+                        {verb(stats.total_players, 'has', 'have')} set foot upon these dangerous lands.{' '}
                         Through hardship and triumph, they have collectively ascended{' '}
                         <Tally className="gold" singular="Level" plural="Levels" count={stats.total_levels_gained} /> in
                         their pursuit of power. Yet, glory always exacts a price, because{' '}
-                        <Counted
-                            template='<span class="hp">{n}</span> {isSingle ? "has" : "have"} fallen in battle... lost, but not forgotten.'
-                            singular="Champion" plural="Champions" count={stats.total_deaths}
-                        />
+                        <Tally className="hp" singular="Champion" plural="Champions" count={stats.total_deaths} />{' '}
+                        {verb(stats.total_deaths, 'has', 'have')} fallen in battle... lost, but not forgotten.
                     </p>
                     <p>
                         A few, overwhelmed by the weight of their journey, chose the coward&apos;s end, with{' '}
-                        <Counted
-                            template='<span class="muted">{n}</span> taking {isSingle ? "its own life" : "their own lives"},'
-                            singular="Weak Soul" plural="Weak Souls" count={stats.total_players_suicided}
-                        />{' '}
-                        <Counted
-                            template='while <span class="hp">{n}</span> {isSingle ? "was" : "were"} struck down by the gods for attempting to bypass the laws of the realm.'
-                            singular="Heretic" plural="Heretics" count={stats.total_players_cheated}
-                        />
+                        <Tally className="muted" singular="Weak Soul" plural="Weak Souls" count={stats.total_players_suicided} />{' '}
+                        taking {verb(stats.total_players_suicided, 'its own life', 'their own lives')},{' '}
+                        while{' '}
+                        <Tally className="hp" singular="Heretic" plural="Heretics" count={stats.total_players_cheated} />{' '}
+                        {verb(stats.total_players_cheated, 'was', 'were')} struck down by the gods for attempting to
+                        bypass the laws of the realm.
                     </p>
 
                     <h2>Echoes of the Battlefield</h2>
                     <p>
                         The drums of war never truly fall silent because{' '}
-                        <Counted
-                            template='<span class="gold">{n}</span> {isSingle ? "has" : "have"} been fought against the encroaching darkness,'
-                            singular="Battle" plural="Battles" count={stats.total_battles}
-                        />{' '}
+                        <Tally className="gold" singular="Battle" plural="Battles" count={stats.total_battles} />{' '}
+                        {verb(stats.total_battles, 'has', 'have')} been fought against the encroaching darkness,{' '}
                         resulting in the defeat of{' '}
                         <Tally className="gold" singular="Formidable Foe" plural="Formidable Foes" count={stats.total_enemies_killed} />{' '}
                         through lethal precision and the{' '}
@@ -77,10 +61,10 @@ export default function StatisticsScreen() {
                     <p>
                         From these conflicts, the survivors extracted vast wisdom, gaining a total of{' '}
                         <span className="xp">{formatNumber(stats.total_xp_gained)} XP</span>.{' '}
-                        <Counted
-                            template='But the wild is treacherous, as the hunters became the hunted and <span class="hp">{n}</span> {isSingle ? "has" : "have"} occurred, nearly claiming those who walked unprepared.'
-                            singular="Ambush" plural="Ambushes" count={stats.total_ambushes}
-                        />
+                        But the wild is treacherous, as the hunters became the hunted and{' '}
+                        <Tally className="hp" singular="Ambush" plural="Ambushes" count={stats.total_ambushes} />{' '}
+                        {verb(stats.total_ambushes, 'has', 'have')} occurred, nearly claiming those who walked
+                        unprepared.
                     </p>
 
                     <h2>The Toll of Survival</h2>
