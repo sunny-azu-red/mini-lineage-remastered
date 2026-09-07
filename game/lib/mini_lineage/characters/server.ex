@@ -10,7 +10,9 @@ defmodule MiniLineage.Characters.Server do
   use GenServer, restart: :transient
 
   alias MiniLineage.Characters.Store
-  alias MiniLineage.Game.{Clock, Constants, Player}
+  require Logger
+
+  alias MiniLineage.Game.{Clock, Constants, Format, Player}
 
   # Fires just past the deadline so the sweep reliably sees the effect as due.
   @expiry_grace_ms 25
@@ -57,14 +59,14 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_info(:tick, state) do
     schedule_tick()
-    {_result, state} = run(state, &Player.process_regen_tick/1)
+    {_result, state} = run(state, &Player.process_regen_tick/1, log: true)
 
     {:noreply, state}
   end
 
   def handle_info(:expiry, state) do
     # The sweep itself lives in run/2; this firing exists purely to make it happen on time.
-    {_result, state} = run(%{state | expiry_timer: nil}, &{&1, :ok})
+    {_result, state} = run(%{state | expiry_timer: nil}, &{&1, :ok}, log: true)
 
     {:noreply, state}
   end
@@ -87,13 +89,20 @@ defmodule MiniLineage.Characters.Server do
   # process itself. Whether anything changed is decided by comparing the struct, so a handler
   # never has to remember to report it. `fun` returns `{player, result}`, the same shape every
   # game function already returns, so they compose here without a wrapper.
-  defp run(state, fun) do
+  defp run(state, fun, opts \\ []) do
     before = state.player
 
-    player = before |> sync() |> sweep()
+    player = sync(before)
+    # Captured before the sweep's clamp, so a lapsed max-health buff still shows its HP drop.
+    health_before = player.health
+    expired = expiring(player)
+    player = sweep(player)
 
     {player, result} = fun.(player)
     player = sync(player)
+
+    changed? = not same?(before, player)
+    if opts[:log], do: log_tick(state.id, player, health_before, expired, changed?)
 
     if same?(before, player) do
       {result, state}
@@ -109,6 +118,60 @@ defmodule MiniLineage.Characters.Server do
   defp sweep(player) do
     {player, _changed} = Player.process_effect_expiry(player)
     player
+  end
+
+  defp expiring(player) do
+    now = Clock.now_ms()
+
+    Enum.filter(player.effects, &(&1.expires_at != nil and &1.expires_at <= now))
+  end
+
+  # One line per firing: `[TICK:<id>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
+  #
+  # The zone reads the RESTING aura rather than the absence of combat: regeneration is granted by
+  # that aura, so a screen in neither zone list is its own case rather than a mislabelled "Resting"
+  # logged beside a tick that did nothing.
+  defp log_tick(id, player, health_before, expired, changed?) do
+    stats = Player.stats(player)
+    dead? = player.dead or player.health <= 0
+    combat? = not dead? and Enum.any?(player.effects, &(&1.id == "combat"))
+    resting? = not dead? and Enum.any?(player.effects, &(&1.id == "resting"))
+
+    zone =
+      cond do
+        dead? -> "Dead"
+        combat? -> "In Combat"
+        resting? -> "Resting"
+        true -> "No Zone"
+      end
+
+    difference = player.health - health_before
+    moved = if difference != 0, do: "#{health_before} -> ", else: ""
+
+    labels = Enum.map_join(expired, ", ", & &1.label)
+
+    kind =
+      if expired == [],
+        do: "Effect",
+        else: expired |> hd() |> Map.fetch!(:type) |> to_string() |> Format.capitalize()
+
+    suffix = if labels == "", do: "", else: ": #{labels}"
+
+    status =
+      cond do
+        difference > 0 -> "+#{difference} HPR"
+        difference < 0 -> "#{difference} HP | #{kind} Expired#{suffix}"
+        changed? and labels != "" -> "#{kind} Expired#{suffix}"
+        changed? -> "Effect Expired"
+        player.health >= stats.max_health -> "Full"
+        combat? or dead? or not resting? -> "Paused"
+        stats.regen == 0 -> "0 HPR"
+        true -> "Idle"
+      end
+
+    Logger.debug(
+      "[TICK:#{String.slice(id, 0, 7)}] #{zone} | HP: #{moved}#{player.health}/#{stats.max_health} (#{status})"
+    )
   end
 
   defp sync(player) do

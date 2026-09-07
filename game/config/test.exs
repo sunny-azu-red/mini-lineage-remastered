@@ -26,6 +26,9 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warning
 
+# Ecto's own query logging drowns any test that raises the level to inspect a debug line of ours.
+config :mini_lineage, MiniLineage.Repo, log: false
+
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 

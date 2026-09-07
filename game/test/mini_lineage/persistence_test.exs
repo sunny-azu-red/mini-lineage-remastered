@@ -94,6 +94,41 @@ defmodule MiniLineage.PersistenceTest do
       assert Collector.read_all().total_players == 1
     end
 
+    test "drains as ONE statement, not one per counter" do
+      Statistics.increment(:total_players)
+      Statistics.increment(:total_battles, 5)
+      Statistics.increment(:total_deaths, 2)
+      Collector.flush()
+
+      stats = Collector.read_all()
+      assert {stats.total_battles, stats.total_deaths} == {5, 2}
+    end
+
+    test "reading flushes first, so a new player never sees empty archives" do
+      # No explicit flush: read_all/0 must drain the buffer itself, or the very player who just
+      # filled the archives reads them back as though nobody had ever played.
+      Statistics.increment(:total_players)
+      Statistics.increment(:total_battles, 3)
+
+      assert %{total_players: 1, total_battles: 3} = Collector.read_all()
+    end
+
+    test "a failed flush re-queues its counters rather than dropping them" do
+      Statistics.increment(:total_players)
+      Statistics.increment(:total_battles, 4)
+      # Too large for a BIGINT column, so the whole batch is rejected. Chosen over breaking the
+      # table with DDL, which commits implicitly and would escape the test's transaction.
+      Statistics.increment(:total_deaths, 99_999_999_999_999_999_999)
+
+      Collector.flush()
+
+      # Nothing reached the database — the archives still read as never-played...
+      assert Collector.read_all() == nil
+      # ...and nothing was lost on the way either.
+      assert Collector.pending()[:total_battles] == 4
+      assert Collector.pending()[:total_players] == 1
+    end
+
     test "every declared field is present, defaulted to zero" do
       Statistics.increment(:total_players)
       Collector.flush()

@@ -649,7 +649,7 @@ defmodule MiniLineageWeb.Screens do
         <span class="gold">
           {Format.pluralize("Formidable Foe", "Formidable Foes", @statistics.total_enemies_killed)}
         </span>
-        through lethal precision and the
+        through lethal precision and
         <span class="crit">
           {Format.pluralize("Critical Strike", "Critical Strikes", @statistics.total_critical_hits)}
         </span>
