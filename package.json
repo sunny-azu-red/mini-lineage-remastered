@@ -19,7 +19,8 @@
     "db:fresh": "npm run ts -- scripts/db/reset.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e:game": "node game/e2e/walkthrough.mjs"
   },
   "keywords": [],
   "author": "Sunny",
@@ -64,6 +65,7 @@
     "concurrently": "^9.1.2",
     "jsdom": "^29.1.1",
     "nodemon": "^3.1.14",
+    "playwright": "1.63.0",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",

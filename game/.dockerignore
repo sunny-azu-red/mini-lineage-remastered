@@ -1,0 +1,9 @@
+_build/
+deps/
+priv/static/assets/
+priv/static/cache_manifest.json
+e2e/
+scratch/
+test/
+erl_crash.dump
+.elixir_ls/

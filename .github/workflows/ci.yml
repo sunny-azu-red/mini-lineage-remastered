@@ -5,6 +5,7 @@ on:
   pull_request:
 
 jobs:
+  # The TypeScript reference. Removed at cutover, once `game` has replaced it.
   ci:
     runs-on: ubuntu-latest
 
@@ -44,3 +45,144 @@ jobs:
 
       - name: Test & Build
         run: npm run build
+
+  game:
+    name: game (Phoenix)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: game
+
+    services:
+      # MariaDB, not MySQL — it is what the game is deployed against.
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: pass
+          MARIADB_DATABASE: lineage_remastered_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3307
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_DATABASE: lineage_remastered_test
+      TEST_DATABASE: lineage_remastered_test
+      MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Pinned to the versions the game is developed against, and to the ones the Dockerfile builds.
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28.5.0.6"
+          elixir-version: "1.19.6"
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            game/deps
+            game/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('game/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Fetch dependencies
+        run: mix deps.get
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Compile without warnings
+        run: mix compile --warnings-as-errors
+
+      # Includes the golden master, which pins this rewrite to the reference's exact arithmetic.
+      - name: Test
+        run: mix test
+
+      # The balance simulations compile only in :dev, so :test alone would let them rot.
+      - name: Compile the dev-only balance simulations
+        env:
+          MIX_ENV: dev
+        run: mix compile --warnings-as-errors
+
+      - name: Build a production release
+        env:
+          MIX_ENV: prod
+        run: mix do deps.get --only prod + assets.deploy + release
+
+  walkthrough:
+    name: walkthrough (browser)
+    needs: game
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: pass
+          MARIADB_DATABASE: lineage_remastered_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3307
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      TEST_DATABASE: lineage_remastered_test
+      E2E_PORT: 4002
+      E2E_BASE_URL: http://localhost:4002
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28.5.0.6"
+          elixir-version: "1.19.6"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            game/deps
+            game/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('game/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Install Playwright and its browser
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Create the walkthrough's database
+        working-directory: game
+        env:
+          MIX_ENV: e2e
+          DB_DATABASE: lineage_remastered_test
+        run: mix do deps.get + ecto.create
+
+      # serve.sh migrates, then serves on E2E_PORT against TEST_DATABASE.
+      - name: Serve the game
+        run: |
+          game/e2e/serve.sh &
+          npx wait-on --timeout 120000 "$E2E_BASE_URL"
+
+      - name: Drive it in a real browser
+        run: npm run test:e2e:game

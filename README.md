@@ -101,9 +101,11 @@ Visit `http://localhost:3000` in your browser.
 ### 🐳 Docker
 The included multi-stage `Dockerfile` builds the client and server, then ships only production dependencies. `docker-compose.yml` reads the same `.env` and expects an **external** MySQL instance (it provisions no database of its own), so point `DB_HOST` at one that the container can reach:
 ```bash
-docker compose up --build
+docker compose up --build mini-lineage-remastered
 ```
 The container runs pending migrations before starting the server, and sets `IN_DOCKER=true` so session cookies are issued with the `secure` flag.
+
+The compose file carries a second service, `mini-lineage-elixir`, built from `game/` — see below.
 
 ## 🧪 Testing & Verification
 
@@ -140,6 +142,25 @@ npm run ts -- scratch/check_crit_balance.ts
 npm run ts -- scratch/check_economy_balance.ts
 npm run ts -- scratch/simulate_full_progression.ts
 ```
+
+## 🔮 The Phoenix Rewrite (`game/`)
+
+The same game, rewritten in Elixir and Phoenix LiveView against the same MySQL tables. It lives in
+[`game/`](game/) and runs alongside this one on its own port — **[game/README.md](game/README.md)**
+is its full documentation.
+
+```bash
+source .elixir-env          # once per terminal; the toolchain lives outside the repo
+cd game
+mix phx.server              # http://localhost:4000
+mix test                    # the Elixir suite, golden master included
+mix balance                 # the scratch/ studies, ported
+```
+
+Parity with this implementation is held by a golden master pinning 400 fights across 4 races and 5
+seeds to the reference's exact numbers — including the *order* randomness is consumed in — plus 730
+frames captured from this server itself, and a browser walkthrough that drives a real Chromium
+through a whole playthrough. CI runs all three on every push.
 
 ## 🗄️ Database Commands
 

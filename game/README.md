@@ -47,7 +47,64 @@ mix ecto.migrate      # apply pending migrations
 mix ecto.migrations   # what is applied
 mix format            # format
 mix compile --warnings-as-errors
+mix balance           # the balance simulations — see below
 ```
+
+## Balance simulations
+
+The ten studies that tuned this game, ported from the reference's `scratch/*.ts`. They read the
+shipped constants, so a rebalance is re-measured by rerunning them rather than by editing them.
+
+```bash
+mix balance                 # list them
+mix balance crit_balance    # run one
+mix balance all             # run every one
+```
+
+They compile only in `:dev`, so no release carries them.
+
+## Building a release
+
+`config/runtime.exs` is read at boot, not at build, so nothing here needs a database or a secret
+until the release actually starts.
+
+```bash
+export MIX_ENV=prod
+mix deps.get --only prod
+mix assets.deploy           # esbuild --minify, then phx.digest
+mix release
+```
+
+Then, with the `DB_*` keys from the repo-root `.env` plus a `SECRET_KEY_BASE` on the environment:
+
+```bash
+_build/prod/rel/mini_lineage/bin/mini_lineage eval 'MiniLineage.Release.migrate()'
+PHX_SERVER=true PORT=4000 PHX_HOST=localhost \
+  _build/prod/rel/mini_lineage/bin/mini_lineage start
+```
+
+A release carries no Mix, which is why migrations go through `MiniLineage.Release`. Generate a
+secret with `mix phx.gen.secret`. The database may be named either by the discrete `DB_*` keys or
+by a single `DATABASE_URL`; the parts win when both are set, because a URL cannot carry a password
+containing URL-unsafe characters unless they are percent-encoded.
+
+Production differs from development in ways worth knowing when something behaves oddly there:
+rate limiting is **on** (60 battles and 30 shop actions per minute, 300 events/min overall),
+`force_ssl` redirects to `https://$PHX_HOST` for every host except `localhost` and `127.0.0.1`,
+the logger sits at `:info`, and there is no code reloader.
+
+## Docker
+
+`Dockerfile` builds the release on the same Elixir and OTP this is developed against, then ships
+it on bare Alpine with no Elixir or Mix — the release brings its own ERTS. It provisions no
+database of its own, so point `DB_HOST` at one the container can reach.
+
+```bash
+cd ..
+docker compose up --build mini-lineage-elixir
+```
+
+The container migrates before it serves, so a fresh database is never served against.
 
 ## The browser walkthrough
 
