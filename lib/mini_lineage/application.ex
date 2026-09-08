@@ -8,7 +8,6 @@ defmodule MiniLineage.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      MiniLineageWeb.Telemetry,
       MiniLineage.Repo,
       {DNSCluster, query: Application.get_env(:mini_lineage, :dns_cluster_query) || :ignore},
       {Registry, keys: :unique, name: MiniLineage.Characters.Registry},
@@ -16,9 +15,7 @@ defmodule MiniLineage.Application do
       MiniLineage.Game.RateLimit,
       MiniLineage.Characters.Sweeper,
       {Phoenix.PubSub, name: MiniLineage.PubSub},
-      # Start a worker by calling: MiniLineage.Worker.start_link(arg)
-      # {MiniLineage.Worker, arg},
-      # Start to serve requests, typically the last entry
+      # Last, so nothing serves a request before the pieces behind it are up.
       MiniLineageWeb.Endpoint
     ]
 
