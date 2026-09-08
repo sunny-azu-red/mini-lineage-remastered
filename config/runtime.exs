@@ -32,7 +32,7 @@ if config_env() == :test do
          credentials ++
            [
              database:
-               "#{System.get_env("TEST_DATABASE", "lineage_remastered_test")}#{System.get_env("MIX_TEST_PARTITION")}",
+               "#{System.get_env("DB_DATABASE_TEST", "lineage_remastered_test")}#{System.get_env("MIX_TEST_PARTITION")}",
              pool: Ecto.Adapters.SQL.Sandbox,
              pool_size: System.schedulers_online() * 2
            ]

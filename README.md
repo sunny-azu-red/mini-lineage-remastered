@@ -79,15 +79,20 @@ source ~/mini-lineage-remastered/.elixir-env
 
 ## Which database
 
-| what | database | port |
-|---|---|---|
-| `mix phx.server` | `lineage_remastered_dev` — your real highscores and statistics | 4000 |
-| `mix test` | `lineage_remastered_test` | — |
-| `e2e/serve.sh` | `lineage_remastered_test` | 4002 |
+| what | database | from | port |
+|---|---|---|---|
+| `mix phx.server` | your real characters, highscores and statistics | `DB_DATABASE` | `PORT` (4000) |
+| `mix test` | a throwaway one | `DB_DATABASE_TEST` | — |
+| `e2e/serve.sh` | the same throwaway one | `DB_DATABASE_TEST` | `E2E_PORT` (4002) |
 
-Credentials come from the repo-root `.env`; only the `DB_*` keys are read. Both servers can run at
-once — the browser walkthrough is on its own port and its own database precisely so it can create
-characters, spend adena and submit highscores without touching real data.
+Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
+A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.
+`config/runtime.exs` reads it at BOOT, so a release started with `bin/mini_lineage start` picks up
+the same file rather than needing every variable on the command line; it looks in the working
+directory, and `ENV_FILE` names it elsewhere.
+
+Both servers can run at once — the walkthrough has its own port and its own database precisely so
+it can create characters, spend adena and submit highscores without touching real data.
 
 ## Commands
 

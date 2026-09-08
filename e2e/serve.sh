@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
 source ./.elixir-env
-export DB_DATABASE="${TEST_DATABASE:-lineage_remastered_test}"
+export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 # Its own MIX_ENV, so the build lands in the already-ignored _build/e2e rather than under the dev
 # server someone may be playing on. config/e2e.exs is just the dev configuration.
 export MIX_ENV=e2e
