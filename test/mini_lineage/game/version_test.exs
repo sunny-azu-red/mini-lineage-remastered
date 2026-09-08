@@ -91,13 +91,27 @@ defmodule MiniLineage.Game.VersionTest do
   end
 
   describe "the stamp itself" do
-    test "a build that stamps a sha is a release, and shows no error detail" do
+    test "a build that stamps a sha links its commit" do
       Application.put_env(:mini_lineage, :app_version, "7095a47")
 
-      assert Version.release?(Version.current()),
-             "a stamped build must count as a release, or it keeps leaking internals"
-
+      assert Version.release?(Version.current())
       assert Version.commit_url(Version.current())
+    end
+  end
+
+  describe "showing internals" do
+    test "is a property of the build, not of whether it knows its version" do
+      Application.put_env(:mini_lineage, :debug_build, false)
+      on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, true) end)
+
+      # No APP_VERSION, no stamp: this build cannot name its commit, and must still say nothing.
+      assert Version.current() == "⚡ development"
+      refute Version.release?(Version.current())
+      refute Version.debug_build?()
+    end
+
+    test "is on by default, so a build that says nothing about itself is treated as local" do
+      assert Version.debug_build?()
     end
   end
 end

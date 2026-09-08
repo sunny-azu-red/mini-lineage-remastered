@@ -16,7 +16,7 @@ defmodule MiniLineageWeb.ErrorHTML do
     reason = Phoenix.Controller.status_message_from_template(template)
 
     assigns
-    |> Map.put(:detail, unless(Version.release?(Version.current()), do: "#{status} #{reason}"))
+    |> Map.put(:detail, if(Version.debug_build?(), do: "#{status} #{reason}"))
     |> Map.put(:message, message_for(status))
     |> page()
   end

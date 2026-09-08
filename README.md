@@ -211,9 +211,9 @@ The container migrates before it serves, so a fresh database is never served aga
 `.env` itself and passes the values in as environment variables, so the image needs no copy of the
 file — and those variables beat any file anyway.
 
-`APP_VERSION` is not optional in a deployment. The build context carries no `.git`, so without it
-the image cannot tell it is a release: the footer says "development" and, more to the point, the
-error screens keep naming failures to players.
+Set `APP_VERSION` if you want the footer to link the commit it was built from — the build context
+carries no `.git`, so the image cannot work it out. Forgetting it costs you that link and nothing
+else: a production build never shows a player its internals, whether or not it knows its version.
 
 **Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
 with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets

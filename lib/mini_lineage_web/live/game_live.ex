@@ -231,7 +231,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # The detail is withheld from a release build: a deployed game must never hand a player a stack.
   defp fail(socket, detail) do
-    detail = unless Version.release?(Version.current()), do: detail
+    detail = if Version.debug_build?(), do: detail
 
     socket |> assign(error_detail: detail) |> go("error")
   end

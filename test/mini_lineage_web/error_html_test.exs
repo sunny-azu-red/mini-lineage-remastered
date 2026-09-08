@@ -26,14 +26,33 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
     assert html =~ "Internal Server Error"
   end
 
-  test "and withheld from a release build, which must never hand out internals" do
-    System.put_env("APP_VERSION", "a1b2c3d")
-    on_exit(fn -> System.delete_env("APP_VERSION") end)
+  describe "a production build" do
+    setup do
+      Application.put_env(:mini_lineage, :debug_build, false)
+      on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, true) end)
+    end
 
-    html = render_to_string(MiniLineageWeb.ErrorHTML, "500", "html", [])
+    test "hands out no internals" do
+      html = render_to_string(MiniLineageWeb.ErrorHTML, "500", "html", [])
 
-    refute html =~ "code-block"
-    refute html =~ "Internal Server Error"
-    assert html =~ "An unexpected error occurred on the server"
+      refute html =~ "code-block"
+      refute html =~ "Internal Server Error"
+      assert html =~ "An unexpected error occurred on the server"
+    end
+
+    test "and still none when nobody stamped a version" do
+      # The image built without APP_VERSION cannot name its commit. That must cost it the footer
+      # link and nothing else — tying the two is how a deployed release came to serve stack traces.
+      System.delete_env("APP_VERSION")
+      stamped = Application.get_env(:mini_lineage, :app_version)
+      Application.delete_env(:mini_lineage, :app_version)
+      on_exit(fn -> stamped && Application.put_env(:mini_lineage, :app_version, stamped) end)
+
+      html = render_to_string(MiniLineageWeb.ErrorHTML, "500", "html", [])
+
+      assert MiniLineage.Game.Version.current() == "⚡ development"
+      refute html =~ "code-block"
+      refute html =~ "Internal Server Error"
+    end
   end
 end

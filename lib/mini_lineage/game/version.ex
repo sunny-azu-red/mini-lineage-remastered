@@ -21,7 +21,15 @@ defmodule MiniLineage.Game.Version do
   defp present(value) when is_binary(value) and value != "", do: value
   defp present(_), do: nil
 
-  @doc "A short git sha and nothing else. Gates the footer link AND whether errors show detail."
+  @doc """
+  Whether this build may show its internals — false in a production one, whatever its version.
+
+  Kept apart from `release?/1` on purpose. Tying the two meant an image built without APP_VERSION
+  could not tell it was a release, and went on serving exception messages to players.
+  """
+  def debug_build?, do: Application.get_env(:mini_lineage, :debug_build, true)
+
+  @doc "A short git sha and nothing else. Gates the footer's commit link."
   def release?(version), do: String.match?(version, ~r/^[0-9a-f]{7}$/i)
 
   def commit_url(version), do: if(release?(version), do: @commit_url <> version)

@@ -12,6 +12,11 @@ import Config
 # so the two can never disagree about whether your character is still there.
 config :mini_lineage, character_ttl_hours: 24 * 30
 
+# May this build show its internals? Overridden in prod.exs. Deliberately NOT derived from the
+# version: a deployment that forgets to stamp a sha should lose the commit link in the footer, never
+# gain a stack trace on the error screen.
+config :mini_lineage, debug_build: true
+
 config :mini_lineage,
   ecto_repos: [MiniLineage.Repo],
   generators: [timestamp_type: :utc_datetime]
