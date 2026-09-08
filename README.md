@@ -97,18 +97,32 @@ it can create characters, spend adena and submit highscores without touching rea
 ## Commands
 
 ```bash
-mix dev               # run the game            (:4000, real dev data)
-mix prod              # test, build, migrate, serve — see below
+mix                   # run the game            (:4000, real dev data)
+mix dev               # ...the same thing, said out loud
+mix prod              # test, build, migrate, serve — `mix build` then `mix start`
+mix build             # test and build a release, without serving it
+mix start             # migrate and serve a release already built
+
 mix test              # the Elixir suite
+mix test.coverage     # ...with a coverage report
+npm run test:e2e      # the browser walkthrough — see below
+
 mix ecto.migrate      # apply pending migrations
 mix ecto.migrations   # what is applied
-mix format            # format
+mix ecto.reset        # drop everything and rebuild it (destructive)
+
+mix format
 mix compile --warnings-as-errors
+mix precommit         # all four of the above, in order
 mix balance           # the balance simulations — see below
 ```
 
-`mix dev` does not migrate: that is a deployment step, and `mix prod` does it. Run
+`mix dev` does not migrate: that is a deployment step, and `mix start` does it. Run
 `mix ecto.migrate` yourself after pulling a schema change.
+
+`mix test.coverage` reports, it does not gate. The browser walkthrough is where the web layer is
+actually exercised and it is not instrumented, so the number understates what is covered — a
+threshold here would fail honestly-tested code and teach everyone to ignore it.
 
 ## Balance simulations
 
@@ -130,7 +144,7 @@ One command does the whole thing — tests, dependencies, assets, the release, p
 then the server in the foreground:
 
 ```bash
-mix prod
+mix prod          # = mix build && mix start
 ```
 
 **It stops at the first failing test and deploys nothing**, so a build that does not pass never

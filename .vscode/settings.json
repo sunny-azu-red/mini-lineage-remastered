@@ -16,11 +16,13 @@
   "files.exclude": {
     "**/node_modules": true,
     "**/_build": true,
+    "**/cover": true,
     "**/deps": true
   },
   "search.exclude": {
     "**/node_modules": true,
     "**/_build": true,
+    "**/cover": true,
     "**/deps": true
   }
 }

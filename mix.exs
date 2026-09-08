@@ -11,6 +11,10 @@ defmodule MiniLineage.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
+      # Reports rather than gates. The browser walkthrough is where the web layer is exercised and
+      # it is not instrumented, so this number understates what is actually covered — a threshold
+      # here would fail honestly-tested code and teach everyone to ignore it.
+      test_coverage: [summary: [threshold: 0]],
       listeners: [Phoenix.CodeReloader]
     ]
   end
@@ -27,6 +31,10 @@ defmodule MiniLineage.MixProject do
 
   def cli do
     [
+      # Bare `mix` otherwise runs Mix's own default, `run`, which boots the app, finds the endpoint
+      # configured not to serve, and exits having printed nothing. It belongs here rather than in
+      # `project/0`: once cli/0 exists, Mix reads the setting from it alone.
+      default_task: "dev",
       preferred_envs: [precommit: :test]
     ]
   end
@@ -73,6 +81,8 @@ defmodule MiniLineage.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      # `npm run test:coverage` had no counterpart; --cover is built in, this just names it.
+      "test.coverage": ["test --cover"],
       "assets.setup": ["esbuild.install --if-missing"],
       "assets.build": ["compile", "esbuild mini_lineage"],
       "assets.deploy": [
