@@ -1,5 +1,11 @@
-dist/
-coverage/
+_build/
+deps/
+priv/static/assets/
+priv/static/cache_manifest.json
+e2e/
+scratch/
+test/
+erl_crash.dump
+.elixir_ls/
 node_modules/
-.DS_Store
 .env
