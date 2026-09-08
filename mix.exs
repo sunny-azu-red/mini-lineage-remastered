@@ -67,6 +67,9 @@ defmodule MiniLineage.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
+      # Migrating is a deployment step, not a dev-server one — `mix prod` does it, this does not.
+      # `mix prod` is a task rather than an alias: it spans three MIX_ENVs, and an alias has one.
+      dev: ["phx.server"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],

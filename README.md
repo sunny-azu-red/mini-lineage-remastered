@@ -60,7 +60,7 @@ was installed from precompiled builds into `~/.local/lib`). One line puts it on 
 cd ~/mini-lineage-remastered
 source .elixir-env          # needed once per terminal
 mix setup                   # first time only: deps, database, assets
-mix phx.server
+mix dev
 ```
 
 Then open **http://localhost:4000**.
@@ -97,7 +97,8 @@ it can create characters, spend adena and submit highscores without touching rea
 ## Commands
 
 ```bash
-mix phx.server        # run the game            (:4000, real dev data)
+mix dev               # run the game            (:4000, real dev data)
+mix prod              # test, build, migrate, serve — see below
 mix test              # the Elixir suite
 mix ecto.migrate      # apply pending migrations
 mix ecto.migrations   # what is applied
@@ -105,6 +106,9 @@ mix format            # format
 mix compile --warnings-as-errors
 mix balance           # the balance simulations — see below
 ```
+
+`mix dev` does not migrate: that is a deployment step, and `mix prod` does it. Run
+`mix ecto.migrate` yourself after pulling a schema change.
 
 ## Balance simulations
 
@@ -122,8 +126,19 @@ They compile only in `:dev`, so no release carries them.
 
 ## Building a release
 
-`config/runtime.exs` is read at boot, not at build, so nothing here needs a database or a secret
-until the release actually starts.
+One command does the whole thing — tests, dependencies, assets, the release, pending migrations,
+then the server in the foreground:
+
+```bash
+mix prod
+```
+
+**It stops at the first failing test and deploys nothing**, so a build that does not pass never
+reaches the server. Each step is its own `mix` process, because MIX_ENV is fixed for the life of
+one and the tests need `:test` while everything after them needs `:prod`.
+
+To do it by hand instead — `config/runtime.exs` is read at boot, not at build, so nothing here
+needs a database or a secret until the release actually starts:
 
 ```bash
 MIX_ENV=prod mix deps.get --only prod
