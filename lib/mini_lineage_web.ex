@@ -79,8 +79,6 @@ defmodule MiniLineageWeb do
     quote do
       # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components
-      import MiniLineageWeb.CoreComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

@@ -10,7 +10,6 @@
     "test:e2e": "node e2e/walkthrough.mjs"
   },
   "devDependencies": {
-    "playwright": "1.63.0",
-    "wait-on": "^9.1.0"
+    "playwright": "1.63.0"
   }
 }

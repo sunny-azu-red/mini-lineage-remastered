@@ -34,7 +34,7 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [html: MiniLineageWeb.ErrorHTML, json: MiniLineageWeb.ErrorJSON],
+    formats: [html: MiniLineageWeb.ErrorHTML],
     layout: false
   ],
   pubsub_server: MiniLineage.PubSub,

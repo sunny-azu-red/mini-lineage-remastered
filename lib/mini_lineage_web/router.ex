@@ -12,10 +12,6 @@ defmodule MiniLineageWeb.Router do
     plug MiniLineageWeb.Plugs.ContentSecurityPolicy
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
   scope "/", MiniLineageWeb do
     pipe_through :browser
 
@@ -40,9 +36,4 @@ defmodule MiniLineageWeb.Router do
     # did. Must stay last: a glob would otherwise shadow every route above it.
     live "/*unknown", GameLive, :unknown
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", MiniLineageWeb do
-  #   pipe_through :api
-  # end
 end
