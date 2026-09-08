@@ -248,14 +248,26 @@ try {
         label: (await page.textContent('#main form button'))?.trim(),
         cls: await page.getAttribute('#main form button', 'class'),
     });
-    check('Town offers to Travel before anything is picked',
-        (await actionButton()).label === 'Travel', JSON.stringify(await actionButton()));
+    // The label and the variant are both server-rendered, so choosing an option is a round trip and
+    // reading the button straight afterwards races the patch. Waits for the label, then reads ONCE:
+    // the same snapshot decides the check and explains it. Reading twice let an assertion fail on a
+    // stale button while its message quoted the settled one, which reads as nonsense in a log.
+    const buttonSettles = async expected => {
+        await page.waitForFunction(
+            label => document.querySelector('#main form button')?.textContent.trim() === label,
+            expected, { timeout: 5000 }).catch(() => {});
+
+        return actionButton();
+    };
+
+    let btn = await buttonSettles('Travel');
+    check('Town offers to Travel before anything is picked', btn.label === 'Travel', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'suicide');
-    check('...and turns into Perish when Suicide is chosen',
-        (await actionButton()).label === '⚰️ Perish', JSON.stringify(await actionButton()));
+    btn = await buttonSettles('⚰️ Perish');
+    check('...and turns into Perish when Suicide is chosen', btn.label === '⚰️ Perish', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'inn');
-    check('...and back to Travel for anywhere else',
-        (await actionButton()).label === 'Travel', JSON.stringify(await actionButton()));
+    btn = await buttonSettles('Travel');
+    check('...and back to Travel for anywhere else', btn.label === 'Travel', JSON.stringify(btn));
 
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
@@ -312,17 +324,17 @@ try {
     check('the Inn is headed "Inn"',
         (await page.textContent('#main .header-name'))?.trim() === 'Inn',
         await page.textContent('#main .header-name'));
+    let shopBtn = await buttonSettles('Return');
     check('a shop offers to Return until something is picked',
-        (await actionButton()).label === 'Return'
-        && (await actionButton()).cls === 'btn btn-secondary', JSON.stringify(await actionButton()));
+        shopBtn.label === 'Return' && shopBtn.cls === 'btn btn-secondary', JSON.stringify(shopBtn));
     check('the Inn hands focus to its own picker, not a hidden field',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
         await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
     const beforeMeal = await state();
     await page.selectOption('#main select[name="item_id"]', '0'); // Spiced Ale, 7 adena
+    shopBtn = await buttonSettles('🪙 Order');
     check('...and to Order once a dish is chosen',
-        (await actionButton()).label === '🪙 Order' && (await actionButton()).cls === 'btn',
-        JSON.stringify(await actionButton()));
+        shopBtn.label === '🪙 Order' && shopBtn.cls === 'btn', JSON.stringify(shopBtn));
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
     await page.waitForSelector('#main .alert', { timeout: 8000 });
     // Scoped to #main: the sidebar's panels carry .panel-body too.
@@ -572,16 +584,16 @@ try {
     check('the Character screen\'s back link continues the journey', (await state()).screen === 'home');
 
     await travel('suicide');
-    check('Suicide offers to Return before a choice is made',
-        (await actionButton()).label === 'Return', JSON.stringify(await actionButton()));
+    let endBtn = await buttonSettles('Return');
+    check('Suicide offers to Return before a choice is made', endBtn.label === 'Return', JSON.stringify(endBtn));
     await page.selectOption('#main select[name="confirm"]', 'no');
+    endBtn = await buttonSettles('Phew 😅');
     check('...a change of heart is not styled as danger',
-        (await actionButton()).label === 'Phew 😅'
-        && (await actionButton()).cls === 'btn btn-secondary', JSON.stringify(await actionButton()));
+        endBtn.label === 'Phew 😅' && endBtn.cls === 'btn btn-secondary', JSON.stringify(endBtn));
     await page.selectOption('#main select[name="confirm"]', 'yes');
+    endBtn = await buttonSettles('Do it 🥀');
     check('...but going through with it is',
-        (await actionButton()).label === 'Do it 🥀'
-        && (await actionButton()).cls === 'btn btn-danger', JSON.stringify(await actionButton()));
+        endBtn.label === 'Do it 🥀' && endBtn.cls === 'btn btn-danger', JSON.stringify(endBtn));
     await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
     await onScreen('death');
     check('a cheater who quits is dead', (await state()).dead === true);
