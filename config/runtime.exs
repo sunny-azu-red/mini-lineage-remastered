@@ -8,6 +8,15 @@ import Config
 # working directory; ENV_FILE names it anywhere else. A real environment variable beats the file.
 env_file = System.get_env("ENV_FILE") || Path.expand(".env", File.cwd!())
 
+# A quoted value is taken verbatim, so it may contain anything. An unquoted one ends at the first
+# " #", which is how a trailing comment is written — a bare # with no space before it is part of
+# the value, so a password containing one survives.
+read_value = fn
+  "\"" <> rest -> rest |> String.split("\"") |> hd()
+  "'" <> rest -> rest |> String.split("'") |> hd()
+  plain -> plain |> String.split(~r/\s+#/, parts: 2) |> hd() |> String.trim()
+end
+
 if File.exists?(env_file) do
   for line <- File.stream!(env_file),
       line = String.trim(line),
@@ -15,7 +24,7 @@ if File.exists?(env_file) do
       not String.starts_with?(line, "#"),
       [key, value] <- [String.split(line, "=", parts: 2)],
       System.get_env(key) == nil do
-    System.put_env(key, value |> String.trim() |> String.trim(~s(")) |> String.trim("'"))
+    System.put_env(key, read_value.(String.trim(value)))
   end
 end
 

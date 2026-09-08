@@ -108,8 +108,9 @@ mix balance           # the balance simulations — see below
 
 ## Balance simulations
 
-The ten studies that tuned this game, ported from the reference's `scratch/*.ts`. They read the
-shipped constants, so a rebalance is re-measured by rerunning them rather than by editing them.
+The ten studies that tuned this game, carried over from the TypeScript implementation this
+replaced. They read the shipped constants, so a rebalance is re-measured by rerunning them rather
+than by editing them.
 
 ```bash
 mix balance                 # list them
@@ -131,18 +132,22 @@ mix assets.deploy           # esbuild --minify, then phx.digest
 mix release
 ```
 
-Then, with the `DB_*` keys from the repo-root `.env` plus a `SECRET_KEY_BASE` on the environment:
+Then run it. `config/runtime.exs` reads `.env` at boot, so the release needs nothing on the command
+line that the file already answers — from the repo root, this is the whole of it:
 
 ```bash
 _build/prod/rel/mini_lineage/bin/mini_lineage eval 'MiniLineage.Release.migrate()'
-PHX_SERVER=true PORT=4000 PHX_HOST=localhost \
-  _build/prod/rel/mini_lineage/bin/mini_lineage start
+PHX_SERVER=true _build/prod/rel/mini_lineage/bin/mini_lineage start
 ```
 
-A release carries no Mix, which is why migrations go through `MiniLineage.Release`. Generate a
-secret with `mix phx.gen.secret`. The database may be named either by the discrete `DB_*` keys or
-by a single `DATABASE_URL`; the parts win when both are set, because a URL cannot carry a password
-containing URL-unsafe characters unless they are percent-encoded.
+The file is looked for in the **working directory**, since a release has no repo checkout; `ENV_FILE`
+names it anywhere else. A real environment variable always beats the file, so a platform that
+injects its own `PORT` still wins.
+
+A release carries no Mix, which is why migrations go through `MiniLineage.Release`. The database
+may be named either by the discrete `DB_*` keys or by a single `DATABASE_URL`; the parts win when
+both are set, because a URL cannot carry a password containing URL-unsafe characters unless they
+are percent-encoded.
 
 Production differs from development in ways worth knowing when something behaves oddly there:
 rate limiting is **on** (60 battles and 30 shop actions per minute, 300 events/min overall),
@@ -159,7 +164,9 @@ database of its own, so point `DB_HOST` at one the container can reach.
 docker compose up --build
 ```
 
-The container migrates before it serves, so a fresh database is never served against.
+The container migrates before it serves, so a fresh database is never served against. Compose reads
+`.env` itself and passes the values in as environment variables, so the image needs no copy of the
+file — and those variables beat any file anyway.
 
 ## The browser walkthrough
 
@@ -168,18 +175,29 @@ travel, buy, fight, level up, die, submit a highscore, restart — and asserts t
 failed, no console error was logged, a background tick disturbs neither the main panel nor an open
 `<select>`, and the audio synth builds the graph it should.
 
-Two terminals:
+Playwright is the only thing Node is still here for — two packages, and no build step:
 
 ```bash
-# terminal 1 — the isolated server
+npm ci
+npx playwright install chromium
+```
+
+Then two terminals:
+
+```bash
+# terminal 1 — its own port and its own database, so it can play destructively
 ./e2e/serve.sh
 
 # terminal 2 — the walkthrough
 LD_LIBRARY_PATH=~/.local/lib/playwright-deps npm run test:e2e
 ```
 
-`LD_LIBRARY_PATH` is required: Chromium's `libnss3`/`libnspr4` were extracted to
-`~/.local/lib/playwright-deps` rather than installed system-wide.
+`LD_LIBRARY_PATH` is required on this machine only: Chromium's `libnss3`/`libnspr4` were extracted
+to `~/.local/lib/playwright-deps` rather than installed system-wide. With
+`npx playwright install --with-deps chromium`, as CI does, it is not needed.
+
+Each luck-dependent check reports the run that produced it — fights fought, meals eaten, level
+reached — so a failure that only shows up once in a dozen runs still says what happened.
 
 ## What pins the balance
 
