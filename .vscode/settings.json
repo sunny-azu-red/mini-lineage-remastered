@@ -1,27 +1,18 @@
 {
-  "files.associations": {
-    "*.ejs": "html"
-  },
-  "[ejs]": {
-    "editor.formatOnSave": false,
-    "editor.defaultFormatter": null
-  },
-  "[html]": {
-    "editor.formatOnSave": false
-  },
-  "html.format.enable": false,
-  "editor.tabSize": 4,
+  "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "typescript.preferences.importModuleSpecifier": "non-relative",
-  "javascript.preferences.importModuleSpecifier": "non-relative",
-  "typescript.preferences.quoteStyle": "single",
-  "javascript.preferences.quoteStyle": "single",
-  "typescript.format.semicolons": "insert",
-  "javascript.format.semicolons": "insert",
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "[elixir]": {
+    "editor.formatOnSave": true
+  },
+  "[html-eex]": {
+    "editor.formatOnSave": true
+  },
+  "files.associations": {
+    "*.heex": "phoenix-heex"
+  },
   "files.exclude": {
     "**/node_modules": true,
     "**/_build": true,
