@@ -18,6 +18,11 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
+# The build context carries no .git, so the sha cannot be discovered here — pass it in, or the
+# image reports itself as a debug build and keeps showing error detail to players.
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
+
 # `mix assets.deploy` minifies and digests; config/runtime.exs is read at boot, not here, so the
 # build needs no database and no secret.
 RUN mix assets.deploy && mix compile && mix release

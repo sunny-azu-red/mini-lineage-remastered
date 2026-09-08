@@ -1,6 +1,10 @@
 services:
   mini-lineage:
-    build: .
+    build:
+      context: .
+      args:
+        # `APP_VERSION=$(git rev-parse --short=7 HEAD) docker compose up --build` stamps the build.
+        APP_VERSION: ${APP_VERSION:-}
     container_name: mini-lineage
     restart: always
     ports:

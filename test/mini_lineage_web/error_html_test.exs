@@ -1,6 +1,6 @@
 defmodule MiniLineageWeb.ErrorHTMLTest do
   @moduledoc "Errors Phoenix raises before a LiveView mounts, in the game's own shell."
-  use MiniLineageWeb.ConnCase, async: true
+  use MiniLineageWeb.ConnCase, async: false
 
   import Phoenix.Template, only: [render_to_string: 4]
 

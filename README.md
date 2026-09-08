@@ -144,6 +144,12 @@ The file is looked for in the **working directory**, since a release has no repo
 names it anywhere else. A real environment variable always beats the file, so a platform that
 injects its own `PORT` still wins.
 
+The build stamps itself with `git rev-parse --short=7 HEAD`, which is what makes it a *release*
+rather than a debug build: the footer links the commit, and — the part that matters — the error
+screens stop naming the failure. Pass `APP_VERSION` to override it, and pass it explicitly wherever
+the build has no git checkout to ask, which is every Docker build and every CI job. It must be the
+short, seven-character form; a full sha does not count as a release.
+
 A release carries no Mix, which is why migrations go through `MiniLineage.Release`. The database
 may be named either by the discrete `DB_*` keys or by a single `DATABASE_URL`; the parts win when
 both are set, because a URL cannot carry a password containing URL-unsafe characters unless they
@@ -161,7 +167,7 @@ it on bare Alpine with no Elixir or Mix — the release brings its own ERTS. It 
 database of its own, so point `DB_HOST` at one the container can reach.
 
 ```bash
-docker compose up --build
+APP_VERSION=$(git rev-parse --short=7 HEAD) docker compose up --build
 ```
 
 The container migrates before it serves, so a fresh database is never served against. Compose reads

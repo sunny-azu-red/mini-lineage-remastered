@@ -71,7 +71,11 @@ jobs:
       - name: Build a production release
         env:
           MIX_ENV: prod
-        run: mix do deps.get --only prod + assets.deploy + release
+        # The sha is truncated to seven characters because that is what Version.release?/1 accepts,
+        # and being a release is what stops the app showing error detail to players.
+        run: |
+          export APP_VERSION="${GITHUB_SHA::7}"
+          mix do deps.get --only prod + assets.deploy + release
 
   walkthrough:
     name: walkthrough (browser)
