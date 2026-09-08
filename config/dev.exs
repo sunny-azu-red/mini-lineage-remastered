@@ -1,16 +1,5 @@
 import Config
 
-# Configure your database
-config :mini_lineage, MiniLineage.Repo,
-  username: System.get_env("DB_USERNAME", "root"),
-  password: System.get_env("DB_PASSWORD", ""),
-  hostname: System.get_env("DB_HOST", "127.0.0.1"),
-  port: String.to_integer(System.get_env("DB_PORT", "3306")),
-  database: System.get_env("DB_DATABASE", "lineage_remastered_dev"),
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
-
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

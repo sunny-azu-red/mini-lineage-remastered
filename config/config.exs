@@ -7,19 +7,6 @@
 # General application configuration
 import Config
 
-# Database credentials come from the repo-root .env. Only DB_ keys are imported, so an unrelated
-# variable in that file can never reconfigure the endpoint.
-env_file = Path.expand("../.env", __DIR__)
-
-if File.exists?(env_file) do
-  for line <- File.stream!(env_file),
-      [key, value] <- [String.split(String.trim(line), "=", parts: 2)],
-      String.starts_with?(key, "DB_"),
-      System.get_env(key) == nil do
-    System.put_env(key, value)
-  end
-end
-
 # How long a character survives without being played. It is a SLIDING window — the clock restarts
 # every time you touch the character — and the session cookie is issued for exactly the same span,
 # so the two can never disagree about whether your character is still there.

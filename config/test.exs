@@ -1,21 +1,5 @@
 import Config
 
-# Configure your database
-#
-# The MIX_TEST_PARTITION environment variable can be used
-# to provide built-in test partitioning in CI environment.
-# Run `mix help test` for more information.
-# A separate database from dev, so a test run can never touch real highscores or statistics.
-config :mini_lineage, MiniLineage.Repo,
-  username: System.get_env("DB_USERNAME", "root"),
-  password: System.get_env("DB_PASSWORD", ""),
-  hostname: System.get_env("DB_HOST", "127.0.0.1"),
-  port: String.to_integer(System.get_env("DB_PORT", "3306")),
-  database:
-    "#{System.get_env("TEST_DATABASE", "lineage_remastered_test")}#{System.get_env("MIX_TEST_PARTITION")}",
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
-
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :mini_lineage, MiniLineageWeb.Endpoint,

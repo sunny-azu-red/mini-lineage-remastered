@@ -1,10 +1,55 @@
 import Config
 
-# config/runtime.exs is executed for all environments, including
-# during releases. It is executed after compilation and before the
-# system starts, so it is typically used to load production configuration
-# and secrets from environment variables or elsewhere. Do not define
-# any compile-time configuration in here, as it won't be applied.
+# runtime.exs is the ONLY configuration a release evaluates — config.exs and friends are baked in
+# at build time — so everything that reads the environment belongs here, and `mix phx.server` and
+# `bin/mini_lineage start` behave the same way.
+
+# Credentials live in .env. A release has no repo checkout, so the file is looked for in the
+# working directory; ENV_FILE names it anywhere else. A real environment variable beats the file.
+env_file = System.get_env("ENV_FILE") || Path.expand(".env", File.cwd!())
+
+if File.exists?(env_file) do
+  for line <- File.stream!(env_file),
+      line = String.trim(line),
+      line != "",
+      not String.starts_with?(line, "#"),
+      [key, value] <- [String.split(line, "=", parts: 2)],
+      System.get_env(key) == nil do
+    System.put_env(key, value |> String.trim() |> String.trim(~s(")) |> String.trim("'"))
+  end
+end
+
+credentials = [
+  username: System.get_env("DB_USERNAME", "root"),
+  password: System.get_env("DB_PASSWORD", ""),
+  hostname: System.get_env("DB_HOST", "127.0.0.1"),
+  port: String.to_integer(System.get_env("DB_PORT", "3306"))
+]
+
+if config_env() == :test do
+  config :mini_lineage,
+         MiniLineage.Repo,
+         credentials ++
+           [
+             database:
+               "#{System.get_env("TEST_DATABASE", "lineage_remastered_test")}#{System.get_env("MIX_TEST_PARTITION")}",
+             pool: Ecto.Adapters.SQL.Sandbox,
+             pool_size: System.schedulers_online() * 2
+           ]
+end
+
+if config_env() in [:dev, :e2e] do
+  config :mini_lineage,
+         MiniLineage.Repo,
+         credentials ++
+           [
+             database: System.get_env("DB_DATABASE", "lineage_remastered_dev"),
+             stacktrace: true,
+             show_sensitive_data_on_connection_error: true,
+             pool_size: 10
+           ]
+end
+
 # The block below contains prod specific runtime configuration.
 
 # ## Using releases
@@ -20,8 +65,11 @@ if System.get_env("PHX_SERVER") do
   config :mini_lineage, MiniLineageWeb.Endpoint, server: true
 end
 
-config :mini_lineage, MiniLineageWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+# Not in :test, which pins its own port and never serves.
+if config_env() != :test do
+  config :mini_lineage, MiniLineageWeb.Endpoint,
+    http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+end
 
 if config_env() == :dev do
   # Reload browser tabs when matching files change.
@@ -39,19 +87,12 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
-  # Every other environment — and the reference's own .env — names the database in discrete parts.
-  # DATABASE_URL still works for hosts that only offer one, but it cannot carry a password with
-  # URL-unsafe characters unless they are percent-encoded, so the parts win when both are set.
+  # DATABASE_URL still works for a host that offers only one, but it cannot carry a password with
+  # URL-unsafe characters unless they are percent-encoded, so the discrete keys win when both are set.
   database_config =
     cond do
-      System.get_env("DB_DATABASE") ->
-        [
-          username: System.fetch_env!("DB_USERNAME"),
-          password: System.fetch_env!("DB_PASSWORD"),
-          hostname: System.get_env("DB_HOST", "127.0.0.1"),
-          port: String.to_integer(System.get_env("DB_PORT", "3306")),
-          database: System.fetch_env!("DB_DATABASE")
-        ]
+      database = System.get_env("DB_DATABASE") ->
+        credentials ++ [database: database]
 
       url = System.get_env("DATABASE_URL") ->
         [url: url]
@@ -59,8 +100,8 @@ if config_env() == :prod do
       true ->
         raise """
         no database configured.
-        Set DB_DATABASE (with DB_USERNAME, DB_PASSWORD and optionally DB_HOST, DB_PORT),
-        or a single DATABASE_URL such as ecto://USER:PASS@HOST/DATABASE.
+        Set DB_DATABASE (with DB_USERNAME, DB_PASSWORD and optionally DB_HOST, DB_PORT) in the
+        environment or in a .env beside the release, or a single DATABASE_URL.
         """
     end
 
