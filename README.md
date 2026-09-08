@@ -211,12 +211,13 @@ The container migrates before it serves, so a fresh database is never served aga
 `.env` itself and passes the values in as environment variables, so the image needs no copy of the
 file — and those variables beat any file anyway.
 
-The build reads the commit from the `.git` in its own context, so a deploy from a git checkout —
-Portainer, a CI runner, `docker compose up --build` here — stamps itself with no help. The
-`APP_VERSION` build arg is only for building from a source copy with no repository in it; a build
-that ends up with neither says `production` in the footer rather than pretending to be a
-development one. Either way it shows a player no internals: that is a property of the build, not of
-whether it knows its own name.
+`APP_VERSION` is optional and puts a commit link in the footer. Nothing else depends on it: a build
+without one reports itself as `production`, and shows a player no internals either way — that is a
+property of the build, not of whether it knows its own name.
+
+Do not try to read it from a `.git` in the image. A Portainer stack sends the working tree without
+one, and the build fails on the missing path rather than falling back. Pass it as a stack variable
+there if you want the link.
 
 **Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
 with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets

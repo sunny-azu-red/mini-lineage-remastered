@@ -3,8 +3,9 @@ services:
     build:
       context: .
       args:
-        # Normally empty: the build reads the commit from the .git in its context. Set this only
-        # when building from a source copy that has no repository in it.
+        # Optional: puts a commit link in the footer. Portainer builds from a tree with no .git in
+        # it, so set it as a stack variable there if you want the link; without it the footer
+        # simply reads `production`.
         APP_VERSION: ${APP_VERSION:-}
     container_name: mini-lineage
     restart: always
