@@ -108,25 +108,27 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "a hostile document" do
     test "cannot mint an atom through an effect's type" do
-      before = :erlang.system_info(:atom_count)
+      hostile = "definitely_not_an_effect_type_#{System.unique_integer([:positive])}"
 
       loaded =
         Serde.from_map(%{
           "effects" => [
             %{
               "id" => "x",
-              "type" => "definitely_not_an_effect_type_#{System.unique_integer([:positive])}",
+              "type" => hostile,
               "modifiers" => []
             }
           ]
         })
 
       assert [%{type: :buff}] = loaded.effects
-      assert :erlang.system_info(:atom_count) == before
+      # Names the exact string rather than watching a global counter, which any concurrent atom
+      # creation would move.
+      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
     end
 
     test "cannot mint an atom through a modifier's type, and the modifier is dropped" do
-      before = :erlang.system_info(:atom_count)
+      hostile = "not_a_stat_#{System.unique_integer([:positive])}"
 
       loaded =
         Serde.from_map(%{
@@ -135,7 +137,7 @@ defmodule MiniLineage.Characters.SerdeTest do
               "id" => "x",
               "type" => "buff",
               "modifiers" => [
-                %{"type" => "not_a_stat_#{System.unique_integer([:positive])}", "value" => 999},
+                %{"type" => hostile, "value" => 999},
                 %{"type" => "attack", "value" => 3}
               ]
             }
@@ -143,7 +145,7 @@ defmodule MiniLineage.Characters.SerdeTest do
         })
 
       assert [%{modifiers: [%{type: :attack, value: 3}]}] = loaded.effects
-      assert :erlang.system_info(:atom_count) == before
+      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
     end
 
     test "a malformed modifier is dropped rather than crashing the load" do

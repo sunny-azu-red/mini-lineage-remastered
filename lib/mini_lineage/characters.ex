@@ -18,23 +18,26 @@ defmodule MiniLineage.Characters do
   def subscribe(id), do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, "character:#{id}")
 
   @doc "Stops a character's process without touching its stored row."
-  def forget_process(id) do
-    case Registry.lookup(MiniLineage.Characters.Registry, id) do
-      [{pid, _}] -> GenServer.stop(pid, :normal)
-      [] -> :ok
-    end
-  end
+  def forget_process(id), do: stop_process(id)
 
   @doc "Forgets a character entirely — used by tests and the expiry sweep."
   def forget(id) do
+    stop_process(id)
+    Store.delete(id)
+
+    :ok
+  end
+
+  # The same race `call/3` guards: an idle character stops itself, so a pid this lookup returns may
+  # already be gone by the time the stop reaches it. Asking a dead process to stop is success.
+  defp stop_process(id) do
     case Registry.lookup(MiniLineage.Characters.Registry, id) do
       [{pid, _}] -> GenServer.stop(pid, :normal)
       [] -> :ok
     end
-
-    Store.delete(id)
-
-    :ok
+  catch
+    :exit, {reason, _} when reason in [:noproc, :normal, :shutdown] -> :ok
+    :exit, reason when reason in [:noproc, :normal, :shutdown] -> :ok
   end
 
   # An idle character stops itself, and its registry entry clears asynchronously — so a pid found
