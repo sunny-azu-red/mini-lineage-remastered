@@ -403,6 +403,10 @@ try {
     let maxLevel = 1;
     let sawNarrative = false;
     let sawShimmer = false;
+    // Counted so a failure below can say WHICH thing went wrong: a shimmer that never fired, or a
+    // run whose rolls never left the character both wounded and solvent enough to eat.
+    let mealsEaten = 0;
+    let fightsFought = 0;
     let boughtWeapon = false;
     let boughtArmor = false;
     let current = await state();
@@ -445,6 +449,7 @@ try {
                     if (!(await buy(best)))
                         break;
 
+                    mealsEaten++;
                     sawShimmer = sawShimmer || await shimmer;
                 }
 
@@ -474,6 +479,7 @@ try {
         }
 
         await fight();
+        fightsFought++;
         current = await state();
         maxLevel = Math.max(maxLevel, current.level ?? 1);
 
@@ -481,12 +487,19 @@ try {
             sawNarrative = true;
     }
 
-    check('fighting narrates the encounter', sawNarrative);
-    check('healing while wounded sweeps a shimmer across the HP bar', sawShimmer);
+    // These four ride on the rolls, so each reports the run that produced it: a bare pass/fail here
+    // is unactionable when it only happens once in a dozen runs.
+    check('fighting narrates the encounter', sawNarrative, `${fightsFought} fights`);
+    check('healing while wounded sweeps a shimmer across the HP bar', sawShimmer,
+        mealsEaten === 0
+            ? 'NO MEAL WAS EVER EATEN — the run never left the character both wounded and solvent'
+            : `${mealsEaten} meal(s) eaten`);
     check('the counters carry their live values for the animation',
         await page.locator('#sidebar [data-value]').count() === 3);
-    check('the character levelled up along the way', maxLevel > 1, `reached level ${maxLevel}`);
-    check('the character eventually died', current.dead === true);
+    check('the character levelled up along the way', maxLevel > 1,
+        `reached level ${maxLevel} over ${fightsFought} fights, ${mealsEaten} meal(s)`);
+    check('the character eventually died', current.dead === true,
+        `dead=${current.dead} after ${fightsFought} fights (cap 120)`);
     check('death pins the player to the death screen', (await state()).screen === 'death');
 
     // ---- the dead cannot wander ---------------------------------------------------------------
