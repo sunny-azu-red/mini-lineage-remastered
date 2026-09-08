@@ -10,7 +10,7 @@ export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 # server someone may be playing on. config/e2e.exs is just the dev configuration.
 export MIX_ENV=e2e
 # Its own port, so it can never silently answer for a dev server already on 4000.
-export PORT="${E2E_PORT:-4002}"
+export PORT="${PORT_E2E:-4002}"
 
 mix ecto.migrate >/dev/null
 exec mix phx.server

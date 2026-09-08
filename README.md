@@ -83,7 +83,7 @@ source ~/mini-lineage-remastered/.elixir-env
 |---|---|---|---|
 | `mix phx.server` | your real characters, highscores and statistics | `DB_DATABASE` | `PORT` (4000) |
 | `mix test` | a throwaway one | `DB_DATABASE_TEST` | — |
-| `e2e/serve.sh` | the same throwaway one | `DB_DATABASE_TEST` | `E2E_PORT` (4002) |
+| `e2e/serve.sh` | the same throwaway one | `DB_DATABASE_TEST` | `PORT_E2E` (4002) |
 
 Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
 A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.

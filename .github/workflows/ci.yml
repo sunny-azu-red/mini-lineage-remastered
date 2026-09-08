@@ -96,7 +96,7 @@ jobs:
       DB_USERNAME: root
       DB_PASSWORD: pass
       DB_DATABASE_TEST: lineage_remastered_test
-      E2E_PORT: 4002
+      PORT_E2E: 4002
       E2E_BASE_URL: http://localhost:4002
 
     steps:
@@ -132,7 +132,7 @@ jobs:
           DB_DATABASE: lineage_remastered_test
         run: mix do deps.get + ecto.create
 
-      # serve.sh migrates, then serves on E2E_PORT against DB_DATABASE_TEST.
+      # serve.sh migrates, then serves on PORT_E2E against DB_DATABASE_TEST.
       - name: Serve the game
         run: |
           e2e/serve.sh &
