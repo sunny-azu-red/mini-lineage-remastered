@@ -102,6 +102,7 @@ mix dev               # ...the same thing, said out loud
 mix prod              # test, build, migrate, serve — `mix build` then `mix start`
 mix build             # test and build a release, without serving it
 mix start             # migrate and serve a release already built
+mix stop              # stop a release that is still running
 
 mix test              # the Elixir suite
 mix test.coverage     # ...with a coverage report
@@ -119,6 +120,11 @@ mix balance           # the balance simulations — see below
 
 `mix dev` does not migrate: that is a deployment step, and `mix start` does it. Run
 `mix ecto.migrate` yourself after pulling a schema change.
+
+**Ctrl-C does not stop the server `mix start` and `mix prod` launch.** Erlang spawns it into its own
+process group, where this terminal's interrupt never reaches it, so it keeps running — holding the
+port and the node name. Use `mix stop`. If you forget, `mix dev` and `mix start` both notice and
+say so by name rather than failing on `:eaddrinuse`.
 
 `mix test.coverage` reports, it does not gate. The browser walkthrough is where the web layer is
 actually exercised and it is not instrumented, so the number understates what is covered — a

@@ -16,6 +16,19 @@ defmodule Mix.Tasks.Start do
   def run(_args) do
     release = Shell.release!()
 
+    # Erlang spawns port children in their own process group, so Ctrl-C here never reaches the
+    # server — it outlives the task that started it, holding the port and the node name. Better to
+    # say so than to let the next run fail on :eaddrinuse and a node-name clash.
+    if pid = Shell.running_pid(release) do
+      Mix.raise("""
+      a release is already running as OS pid #{pid}, holding the port and the node name.
+
+      That is why `mix dev` reports :eaddrinuse and `mix prod` reports the node name in use.
+      Stop it with `mix stop` — Ctrl-C does not, because the server is not in this terminal's
+      process group.
+      """)
+    end
+
     Shell.step("Migrations", release, ["eval", "MiniLineage.Release.migrate()"])
 
     Mix.shell().info([:green, "\n▶ Serving. Ctrl-C twice to stop.\n", :reset])

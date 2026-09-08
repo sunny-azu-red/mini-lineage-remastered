@@ -17,6 +17,23 @@ defmodule MiniLineage.Scratch.Shell do
     Path.expand(@release)
   end
 
+  @doc """
+  The OS pid of a release already running, or nil.
+
+  `bin/... pid` exits 0 either way — it prints an RPC failure when nothing is there — so the output
+  is what decides.
+  """
+  def running_pid(release) do
+    case System.cmd(release, ["pid"], stderr_to_stdout: true) do
+      {output, 0} ->
+        pid = String.trim(output)
+        if pid =~ ~r/^\d+$/, do: pid
+
+      _ ->
+        nil
+    end
+  end
+
   def step(label, command, args, mix_env \\ nil, extra_env \\ []) do
     Mix.shell().info([:cyan, "\n▶ #{label}", :reset])
 
