@@ -22,8 +22,17 @@ defmodule Mix.Tasks.Stop do
         Mix.shell().info("Nothing running.")
 
       pid ->
-        Shell.step("Stopping OS pid #{pid}", release, ["stop"])
-        Mix.shell().info([:green, "\nStopped.", :reset])
+        Mix.shell().info([:cyan, "\n▶ Stopping OS pid #{pid}", :reset])
+        System.cmd(release, ["stop"], stderr_to_stdout: true)
+
+        if Shell.await_exit(pid) do
+          Mix.shell().info([:green, "Stopped.", :reset])
+        else
+          Mix.raise("""
+          pid #{pid} is still running well after being asked to stop — something is holding
+          shutdown open. `kill #{pid}` if you need the port back now.
+          """)
+        end
     end
   end
 end

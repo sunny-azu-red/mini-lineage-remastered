@@ -34,6 +34,30 @@ defmodule MiniLineage.Scratch.Shell do
     end
   end
 
+  @doc """
+  Blocks until an OS process is gone, or the timeout elapses. True if it went.
+
+  `bin/... stop` returns as soon as its RPC is sent, and the VM takes another moment to actually
+  go — longer with a browser still attached. Until it does, the port and the node name are still
+  taken, so anything that reports success on the strength of that command alone is guessing.
+  """
+  def await_exit(pid, timeout_ms \\ 20_000) do
+    deadline = System.monotonic_time(:millisecond) + timeout_ms
+
+    Stream.repeatedly(fn ->
+      if alive?(pid) and System.monotonic_time(:millisecond) < deadline do
+        Process.sleep(100)
+        :waiting
+      else
+        if alive?(pid), do: :timeout, else: :gone
+      end
+    end)
+    |> Enum.find(&(&1 != :waiting))
+    |> Kernel.==(:gone)
+  end
+
+  defp alive?(pid), do: match?({_, 0}, System.cmd("kill", ["-0", pid], stderr_to_stdout: true))
+
   def step(label, command, args, mix_env \\ nil, extra_env \\ []) do
     Mix.shell().info([:cyan, "\n▶ #{label}", :reset])
 
