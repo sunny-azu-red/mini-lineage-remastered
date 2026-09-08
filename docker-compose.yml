@@ -7,6 +7,8 @@ services:
         APP_VERSION: ${APP_VERSION:-}
     container_name: mini-lineage
     restart: always
+    # The release runs as PID 1 and does not reap the children the ERTS spawns.
+    init: true
     ports:
       - "${PORT:-4000}:${PORT:-4000}"
     environment:
@@ -18,3 +20,11 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+    # restart: always covers a crash; this covers a process that is up but no longer answering.
+    # localhost is excluded from force_ssl, so this reaches the game rather than a redirect.
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-4000}/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

@@ -4,6 +4,9 @@ FROM hexpm/elixir:1.19.6-erlang-28.5.0.6-alpine-3.22.5 AS builder
 RUN apk add --no-cache build-base git
 WORKDIR /app
 
+# Without a UTF-8 locale the VM runs with latin1 name encoding and warns that Elixir "may
+# malfunction". This game is made of emoji; it needs the real thing.
+ENV LANG=C.UTF-8
 ENV MIX_ENV=prod
 
 RUN mix local.hex --force && mix local.rebar --force
@@ -30,8 +33,11 @@ RUN mix assets.deploy && mix compile && mix release
 # --- runtime ---
 FROM alpine:3.22.5 AS runner
 
-RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc
+# ca-certificates so the database can be reached over TLS; the rest is what the ERTS links against.
+RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
 WORKDIR /app
+
+ENV LANG=C.UTF-8
 
 # The release brings its own ERTS; nothing here needs Elixir or Mix.
 COPY --from=builder /app/_build/prod/rel/mini_lineage ./

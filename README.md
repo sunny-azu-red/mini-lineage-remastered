@@ -211,6 +211,21 @@ The container migrates before it serves, so a fresh database is never served aga
 `.env` itself and passes the values in as environment variables, so the image needs no copy of the
 file — and those variables beat any file anyway.
 
+`APP_VERSION` is not optional in a deployment. The build context carries no `.git`, so without it
+the image cannot tell it is a release: the footer says "development" and, more to the point, the
+error screens keep naming failures to players.
+
+**Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
+with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets
+`X-Forwarded-Proto` this is right, and exposed directly on port 80 the site is a redirect loop.
+`localhost` and `127.0.0.1` are excluded, which is what lets the compose healthcheck reach the game
+rather than the redirect.
+
+Also set: `LANG=C.UTF-8`, without which the VM runs latin1 name encoding and warns that Elixir may
+malfunction — this game is made of emoji; `ca-certificates`, for a database reached over TLS; and
+`init: true`, because the release runs as PID 1 and does not reap the children the ERTS spawns.
+`docker stop` is clean — SIGTERM brings the release down in about a second.
+
 ## The browser walkthrough
 
 Playwright drives a real headless Chromium through a whole playthrough — create a character,
