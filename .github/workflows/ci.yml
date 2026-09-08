@@ -5,42 +5,142 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  test:
+    name: suite
     runs-on: ubuntu-latest
 
     services:
-      mysql:
-        image: mysql:8
+      # MariaDB, not MySQL — it is what the game is deployed against.
+      mariadb:
+        image: mariadb:10.11
         env:
-          MYSQL_ROOT_PASSWORD: pass
-          MYSQL_DATABASE: lineage_remastered
+          MARIADB_ROOT_PASSWORD: pass
+          MARIADB_DATABASE: lineage_remastered_test
         ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
 
     env:
-      NODE_ENV: test
-      PORT: 3000
-      SESSION_SECRET: your-secret-here
       DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_DATABASE: lineage_remastered
+      DB_PORT: 3307
       DB_USERNAME: root
       DB_PASSWORD: pass
+      DB_DATABASE: lineage_remastered_test
+      DB_DATABASE_TEST: lineage_remastered_test
+      MIX_ENV: test
 
     steps:
       - uses: actions/checkout@v6
+
+      # Pinned to the versions the game is developed against, and to the ones the Dockerfile builds.
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28.5.0.6"
+          elixir-version: "1.19.6"
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Fetch dependencies
+        run: mix deps.get
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Compile without warnings
+        run: mix compile --warnings-as-errors
+
+      # Includes the golden master, which pins this rewrite to the reference's exact arithmetic.
+      - name: Test
+        run: mix test
+
+      # The balance simulations compile only in :dev, so :test alone would let them rot.
+      - name: Compile the dev-only balance simulations
+        env:
+          MIX_ENV: dev
+        run: mix compile --warnings-as-errors
+
+      - name: Build a production release
+        env:
+          MIX_ENV: prod
+        # The sha is truncated to seven characters because that is what Version.release?/1 accepts,
+        # and being a release is what stops the app showing error detail to players.
+        run: |
+          export APP_VERSION="${GITHUB_SHA::7}"
+          mix do deps.get --only prod + assets.deploy + release
+
+  walkthrough:
+    name: walkthrough (browser)
+    needs: test
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: pass
+          MARIADB_DATABASE: lineage_remastered_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3307
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_DATABASE_TEST: lineage_remastered_test
+      PORT_E2E: 4002
+      E2E_BASE_URL: http://localhost:4002
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "28.5.0.6"
+          elixir-version: "1.19.6"
 
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
 
-      - name: Run migrations
-        run: npm run db:migrate
+      - name: Install Playwright and its browser
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
 
-      - name: Test & Build
-        run: npm run build
+      - name: Create the walkthrough's database
+        env:
+          MIX_ENV: e2e
+          DB_DATABASE: lineage_remastered_test
+        run: mix do deps.get + ecto.create
+
+      # serve.sh migrates, then serves on PORT_E2E against DB_DATABASE_TEST.
+      - name: Serve the game
+        run: |
+          e2e/serve.sh &
+          timeout 120 bash -c 'until curl -sf "$E2E_BASE_URL" >/dev/null; do sleep 1; done'
+
+      - name: Drive it in a real browser
+        run: npm run test:e2e

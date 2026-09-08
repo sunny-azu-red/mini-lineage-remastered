@@ -1,9 +1,10 @@
 # ⚔️ Mini-Lineage Remastered
 
-**Mini-Lineage Remastered** is a modern, full-stack rewrite of the classic text-based RPG. Built with TypeScript, Node.js, Express, and Socket.IO, it revitalizes the nostalgic gameplay loop with real-time state synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy user interface.
+**Mini-Lineage Remastered** is a modern rewrite of the classic text-based RPG. Built with Elixir,
+Phoenix LiveView and OTP, it revitalizes the nostalgic gameplay loop with real-time state
+synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy user interface.
 
 ## 🌟 Key Features
-
 ### 🎮 Gameplay & Combat
 - **Distinct Racial Profiles**: Choose between **Humans**, **Orcs**, **Elves**, and **Dark Elves**, each with its own starting health, inheritance, innate critical chance, ambush risk, and passive HP regeneration — plus a fixed rival race you fight for the whole run.
 - **Tactical Combat Simulation**: Dynamically scaled encounters where Weapon Attack drives enemy party size, XP and Adena payouts, while Armor Defense mitigates incoming damage *sub-linearly* so stacking armor never reaches invincibility.
@@ -24,127 +25,255 @@
 - **Disengaging Takes Five Seconds**: Leaving a combat zone does not rest you instantly — ⚔️ *In Combat* stays, gains a 5-second countdown, and only when that elapses does 💤 *Resting* take over and regeneration resume. Standing in a combat zone keeps you flagged *indefinitely* with no countdown at all, so waiting on the Battleground never restores a single point of health. The countdown is anchored to leaving the zone, so stepping back in cancels it and stepping out again starts a fresh one.
 - **Regeneration Is Earned, Not Assumed**: 🌿 *Regenerating* is derived per snapshot rather than stored, so it appears and vanishes on its own: it needs the resting aura, a wound, and a positive HP-regen rate at once. An Orc (no innate regen) never sees it; a player at full health loses it the instant they top up.
 - **Non-Mutating Reads**: Connecting, reconnecting, or refreshing only ever *reads* state. A fight happens exclusively on an explicit `battle:fight` — never on page load — which makes the classic navigate-away-mid-ambush exploit structurally impossible instead of merely punished.
-- **WebSocket Streaming**: The React SPA and the server communicate exclusively over one Socket.IO connection (`/socket.io`) — bi-directional HP/status sync, push updates on tick and effect expiry, and every player action, with no page reloads. Multiple tabs on one session stay in sync.
-- **Honest Loading States**: Waiting for data, receiving nothing, and failing to reach the server are three distinct states, never collapsed into one. A screen still fetching shows a spinner rather than announcing an empty leaderboard; a failed request raises the shared notice banner instead of passing an outage off as "nothing here yet". The footer names the running build even before the server answers, so an unreachable backend still tells you which bundle is loaded.
+- **LiveView Streaming**: One WebSocket carries the whole game. Every action is a `phx-click` or `phx-submit`; the server diffs the rendered HTML and pushes only what changed — HP and status on tick, effect expiry to the millisecond, and every player action, with no page reloads. Multiple tabs on one session stay in sync over `Phoenix.PubSub`.
 
 ### 🍖 Inn & Consumables
 - **Tiered Meals**: Five dishes from *Spiced Ale* to *Roasted Pheasant*. All restore HP; the top three also grant a timed buff (*Satisfied*, *Well Fed*, *Gourmet Feast*) that temporarily expands the maximum health pool. Only one food buff is active at a time — a new meal replaces the old one.
 
 ### 🏆 Leaderboards & Statistics
 - **Live Leaderboards**: The top 25 adventurers ordered by total Experience, then Adena — filterable per race. Cowards and cheaters are barred from posting.
-- **Global Game Statistics**: 20 community counters (battles fought, Adena circulated and spent, enemies slain, critical strikes, damage blocked, HP lost/healed/regenerated, deaths, ambushes, and more), each maintained with an atomic MySQL upsert.
-
 ### 🛡️ Security & Reliability
-- **One Place For Every Access Rule**: `pinScreen` decides where a player is allowed to be, and every navigation funnels through it — an in-app link, a typed URL and the Back button all obey the same checks. The dead are confined to the death screen; the living are kept *off* it (it offers "Play Again?", which wipes the character); a player with a character cannot wander back into character creation, Statistics or Races; a visitor without one is confined to Game Start, Statistics, Races and Highscores; and an ambushed player is pinned to the battleground.
-- **Guarded Mutations**: Every socket event that changes state declares its own preconditions (`requireStarted`, `requireNotStarted`, `requireAlive`, `requireDead`, `requireHighscoreEligible`), enforced server-side inside the session lock. Client-side routing is convenience; these guards are the boundary. Notably `game:restart` requires a *dead* character, so a living one can never be wiped — not even by a hand-rolled socket client.
-- **Concurrency Locks**: A per-session promise mutex wraps every socket mutation (`withSession`), so concurrent actions on one session can never interleave into a lost update.
-- **Revision-Guarded State**: Every persisted mutation bumps a monotonic `revision`, letting the client drop out-of-order pushes instead of letting a stale one clobber fresher state.
-- **Security Hardening**: Helmet headers (CSP with no inline scripts), Gzip compression, `httpOnly`/`sameSite` session cookies, Zod validation on every socket payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter on every event). Rate limits are bypassed outside a release build so local development isn't throttled.
+- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player is allowed to be, and every navigation funnels through `handle_params/3` — an in-app link, a typed URL and the Back button all obey the same checks. The dead are confined to the death screen; the living are kept *off* it (it offers "Play Again?", which wipes the character); a player with a character cannot wander back into character creation, Statistics or Races; a visitor without one is confined to Game Start, Statistics, Races and Highscores; and an ambushed player is pinned to the battleground. The game owns every URL — an unrecognised path resolves to Town rather than erroring.
+- **Guarded Mutations**: Every event that changes state declares its own preconditions, enforced server-side. Client-side routing is convenience; these guards are the boundary. Notably restarting requires a *dead* character, so a living one can never be wiped.
+- **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. Serialisation is a property of the mailbox rather than a mutex a caller must remember to take, so concurrent actions on one session cannot interleave into a lost update.
+- **Revision-Guarded State**: Every persisted mutation bumps a monotonic `revision`, so a stale push can never clobber fresher state.
+- **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies, validation on every payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
+- **Idle Characters Are Reaped**: A character process arms a stop timer the moment it starts and cancels it when a viewer attaches, so a crawler or health check leaves nothing running. Rows outlive the process and are swept after 30 days — the same window the session cookie uses.
 
 ## 🛠️ Tech Stack
 
-- **Backend Runtime**: Node.js & Express.js 5 (serves the built SPA + one `/api/bootstrap` route; all game actions run over Socket.IO)
-- **Frontend**: React 19 + Vite, Zustand for state, no router dependency (`useHistorySync` maps the handful of link-worthy URLs to Back/Forward)
-- **Language**: TypeScript (strict end-to-end, including a shared `shared/` contract imported by both server and client)
-- **Real-Time Communication**: Socket.IO (sole transport for client↔server actions/queries and server→client push)
-- **Database & Storage**: MySQL 8+ with connection pooling & `express-mysql-session`
-- **Audio Engine**: Web Audio API (procedural synthesizer)
-- **Logging**: Pino & Pino-Pretty
-- **Testing**: Vitest with v8 coverage, split into two projects (Node-based server tests + jsdom-based client component tests)
+- **Runtime**: Elixir 1.19 on OTP 28, served by Bandit
+- **Web**: Phoenix 1.8 with LiveView 1.1 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
+- **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for exact per-effect expiry
+- **Database**: Ecto + MyXQL against MariaDB, with each character persisted as a single JSON document
+- **Audio Engine**: Web Audio API (procedural synthesizer), driven from a LiveView JS hook
+- **Testing**: ExUnit, plus a Playwright walkthrough that drives a real headless Chromium
 
-Requires **Node.js 22.12+**.
+Requires **Elixir 1.19+ on OTP 28+**, and a reachable MariaDB or MySQL.
 
-## 📦 Installation & Setup
+## Running it
 
-### 1. Clone & Install Dependencies
+The Erlang and Elixir toolchain lives outside this repo (there is no root on this machine, so it
+was installed from precompiled builds into `~/.local/lib`). One line puts it on your `PATH`:
+
 ```bash
-git clone https://github.com/sunny-azu-red/mini-lineage-remastered.git
-cd mini-lineage-remastered
-npm install
+cd ~/mini-lineage-remastered
+source .elixir-env          # needed once per terminal
+mix setup                   # first time only: deps, database, assets
+mix dev
 ```
 
-### 2. Environment Configuration
-Copy the example environment file and update credentials as needed. The `DEV_`-prefixed vars
-(frontend dev server port, backend host for the Vite proxy) are dev-only and ignored in production:
+Then open **http://localhost:4000**.
+
+To keep an IEx shell attached while it runs — handy for poking at a live character:
+
 ```bash
-cp .env.example .env
+iex -S mix phx.server
 ```
 
-### 3. Database Migration
-Run database migrations to initialize tables and seed baseline data:
+If you would rather not source anything, add this line to `~/.bashrc`:
+
 ```bash
-npm run db:migrate
+source ~/mini-lineage-remastered/.elixir-env
 ```
 
-## 🚀 Running the Application
+## Which database
 
-### Development Mode
-Runs two processes side by side — the Express/Socket.IO API (via `nodemon`/`ts-node`) and the Vite dev server for the React client (which proxies `/socket.io` and `/api` to the API):
+| what | database | from | port |
+|---|---|---|---|
+| `mix phx.server` | your real characters, highscores and statistics | `DB_DATABASE` | `PORT` (4000) |
+| `mix test` | a throwaway one | `DB_DATABASE_TEST` | — |
+| `e2e/serve.sh` | the same throwaway one | `DB_DATABASE_TEST` | `PORT_E2E` (4002) |
+
+Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
+A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.
+`config/runtime.exs` reads it at BOOT, so a release started with `bin/mini_lineage start` picks up
+the same file rather than needing every variable on the command line; it looks in the working
+directory, and `ENV_FILE` names it elsewhere.
+
+Both servers can run at once — the walkthrough has its own port and its own database precisely so
+it can create characters, spend adena and submit highscores without touching real data.
+
+## Commands
+
 ```bash
-npm run dev
-```
-Visit `http://localhost:5173` in your browser by default (configurable via `DEV_FRONTEND_PORT` in `.env`). The API alone listens on `http://localhost:3000`, but serves no client assets in dev — hitting it directly just points you back at Vite.
+mix                   # run the game            (:4000, real dev data)
+mix dev               # ...the same thing, said out loud
+mix prod              # test, build, migrate, serve — `mix build` then `mix start`
+mix build             # test and build a release, without serving it
+mix start             # migrate and serve a release already built
+mix stop              # stop a release that is still running
 
-### Production Build & Run
-Runs the test suite, builds the client (Vite, into `dist/public`) then the server (`tsc`/`tsc-alias`, into `dist/backend`), and starts the optimized production server — which serves the built client directly:
-```bash
-npm run prod
-```
+mix test              # the Elixir suite
+mix test.coverage     # ...with a coverage report
+npm run test:e2e      # the browser walkthrough — see below
 
-Or step-by-step:
-```bash
-npm run build
-npm run start
-```
-Visit `http://localhost:3000` in your browser.
+mix ecto.migrate      # apply pending migrations
+mix ecto.migrations   # what is applied
+mix ecto.reset        # drop everything and rebuild it (destructive)
 
-### 🐳 Docker
-The included multi-stage `Dockerfile` builds the client and server, then ships only production dependencies. `docker-compose.yml` reads the same `.env` and expects an **external** MySQL instance (it provisions no database of its own), so point `DB_HOST` at one that the container can reach:
-```bash
-docker compose up --build
-```
-The container runs pending migrations before starting the server, and sets `IN_DOCKER=true` so session cookies are issued with the `secure` flag.
-
-## 🧪 Testing & Verification
-
-Run the full test suite (server + React client component tests, as two Vitest projects):
-```bash
-# Run all tests once
-npm run test
-
-# Run tests with code coverage report
-npm run test:coverage
-
-# Watch mode for active development
-npm run test:watch
+mix format
+mix compile --warnings-as-errors
+mix precommit         # all four of the above, in order
+mix balance           # the balance simulations — see below
 ```
 
-No database is required — the suite stubs the store and repository layers. Coverage sits at
-**100% of statements, branches, functions and lines**, and is expected to stay there.
+`mix dev` does not migrate: that is a deployment step, and `mix start` does it. Run
+`mix ecto.migrate` yourself after pulling a schema change.
 
-Beyond the unit tests, five suites pin invariants that are easy to break silently:
+**Ctrl-C does not stop the server `mix start` and `mix prod` launch.** Erlang spawns it into its own
+process group, where this terminal's interrupt never reaches it, so it keeps running — holding the
+port and the node name. Use `mix stop`. If you forget, `mix dev` and `mix start` both notice and
+say so by name rather than failing on `:eaddrinuse`.
 
-- **`test/backend/service/balance.golden.test.ts`** — a golden master that plays 400 fights per character across all four races and five fixed RNG seeds, then pins the exact resulting progression. Because every roll runs off one deterministic stream, this also pins the *order* in which `Math.random()` is consumed: adding, removing, or reordering a draw anywhere in the fight path fails here even when each individual function is still correct. **A diff in this file is a deliberate balance change — regenerate it in the same commit.**
-- **`test/backend/socket/playthrough.integration.test.ts`** — plays a whole game end-to-end through the real socket stack (start → shop → fight → level → death → highscore → restart) with only the session store and repositories stubbed.
-- **`test/frontend/screen-access.test.ts`** — states the access policy above once, end to end, checking every rule through an in-app link, a typed URL *and* the Back button. The three routes must agree; historically they did not.
-- **`test/frontend/no-dead-ends.test.tsx`** — liveness. For every player state, whatever screen they are pinned to must render and offer at least one enabled control. Guards against a redirect and a screen's own self-blanking conspiring to strand someone on a page with no way off.
-- **`test/frontend/audio/soundfx.trace.test.ts`** — records the exact sequence of Web Audio calls each sound effect emits, so the game provably keeps sounding the same. Retuning a voice means updating its trace.
+`mix test.coverage` reports, it does not gate. The browser walkthrough is where the web layer is
+actually exercised and it is not instrumented, so the number understates what is covered — a
+threshold here would fail honestly-tested code and teach everyone to ignore it.
 
-### 🔬 Balance Simulation Tools
-Interactive standalone simulation scripts live under `scratch/`:
+## Balance simulations
+
+The ten studies that tuned this game, carried over from the TypeScript implementation this
+replaced. They read the shipped constants, so a rebalance is re-measured by rerunning them rather
+than by editing them.
+
 ```bash
-# Compare Critical Hit reward multipliers across 10,000 simulated battles:
-npm run ts -- scratch/check_crit_balance.ts
-
-# Analyze leveling speed and the game economy:
-npm run ts -- scratch/check_economy_balance.ts
-npm run ts -- scratch/simulate_full_progression.ts
+mix balance                 # list them
+mix balance crit_balance    # run one
+mix balance all             # run every one
 ```
 
-## 🗄️ Database Commands
+They compile only in `:dev`, so no release carries them.
 
-- `npm run db:migrate`: Applies any pending migrations safely to your schema.
-- `npm run db:fresh`: Drops all tables and re-runs migrations from scratch (**Destructive: use with caution!**).
+## Building a release
+
+One command does the whole thing — tests, dependencies, assets, the release, pending migrations,
+then the server in the foreground:
+
+```bash
+mix prod          # = mix build && mix start
+```
+
+**It stops at the first failing test and deploys nothing**, so a build that does not pass never
+reaches the server. Each step is its own `mix` process, because MIX_ENV is fixed for the life of
+one and the tests need `:test` while everything after them needs `:prod`.
+
+To do it by hand instead — `config/runtime.exs` is read at boot, not at build, so nothing here
+needs a database or a secret until the release actually starts:
+
+```bash
+MIX_ENV=prod mix deps.get --only prod
+MIX_ENV=prod mix assets.deploy      # compile, esbuild --minify, then phx.digest
+MIX_ENV=prod mix release
+```
+
+Per command rather than `export MIX_ENV=prod`: an exported one outlives the build and follows you
+into `mix test`, which then runs without the sandbox and fails complaining about the pool.
+
+Then run it. `config/runtime.exs` reads `.env` at boot, so the release needs nothing on the command
+line that the file already answers — from the repo root, this is the whole of it:
+
+```bash
+_build/prod/rel/mini_lineage/bin/mini_lineage eval 'MiniLineage.Release.migrate()'
+PHX_SERVER=true _build/prod/rel/mini_lineage/bin/mini_lineage start
+```
+
+The file is looked for in the **working directory**, since a release has no repo checkout; `ENV_FILE`
+names it anywhere else. A real environment variable always beats the file, so a platform that
+injects its own `PORT` still wins.
+
+The build stamps itself with `git rev-parse --short=7 HEAD`, which is what makes it a *release*
+rather than a debug build: the footer links the commit, and — the part that matters — the error
+screens stop naming the failure. Pass `APP_VERSION` to override it, and pass it explicitly wherever
+the build has no git checkout to ask, which is every Docker build and every CI job. It must be the
+short, seven-character form; a full sha does not count as a release.
+
+A release carries no Mix, which is why migrations go through `MiniLineage.Release`. The database
+may be named either by the discrete `DB_*` keys or by a single `DATABASE_URL`; the parts win when
+both are set, because a URL cannot carry a password containing URL-unsafe characters unless they
+are percent-encoded.
+
+Production differs from development in ways worth knowing when something behaves oddly there:
+rate limiting is **on** (60 battles and 30 shop actions per minute, 300 events/min overall),
+`force_ssl` redirects to `https://$PHX_HOST` for every host except `localhost` and `127.0.0.1`,
+the logger sits at `:info`, and there is no code reloader.
+
+## Docker
+
+`Dockerfile` builds the release on the same Elixir and OTP this is developed against, then ships
+it on bare Alpine with no Elixir or Mix — the release brings its own ERTS. It provisions no
+database of its own, so point `DB_HOST` at one the container can reach.
+
+```bash
+APP_VERSION=$(git rev-parse --short=7 HEAD) docker compose up --build
+```
+
+The container migrates before it serves, so a fresh database is never served against. Compose reads
+`.env` itself and passes the values in as environment variables, so the image needs no copy of the
+file — and those variables beat any file anyway.
+
+The build reads the commit from the `.git` in its own context, so a deploy from a git checkout —
+Portainer, a CI runner, `docker compose up --build` here — stamps itself with no help. The
+`APP_VERSION` build arg is only for building from a source copy with no repository in it; a build
+that ends up with neither says `production` in the footer rather than pretending to be a
+development one. Either way it shows a player no internals: that is a property of the build, not of
+whether it knows its own name.
+
+**Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
+with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets
+`X-Forwarded-Proto` this is right, and exposed directly on port 80 the site is a redirect loop.
+`localhost` and `127.0.0.1` are excluded, which is what lets the compose healthcheck reach the game
+rather than the redirect.
+
+Also set: `LANG=C.UTF-8`, without which the VM runs latin1 name encoding and warns that Elixir may
+malfunction — this game is made of emoji; `ca-certificates`, for a database reached over TLS; and
+`init: true`, because the release runs as PID 1 and does not reap the children the ERTS spawns.
+`docker stop` is clean — SIGTERM brings the release down in about a second.
+
+## The browser walkthrough
+
+Playwright drives a real headless Chromium through a whole playthrough — create a character,
+travel, buy, fight, level up, die, submit a highscore, restart — and asserts that no request
+failed, no console error was logged, a background tick disturbs neither the main panel nor an open
+`<select>`, and the audio synth builds the graph it should.
+
+Playwright is the only thing Node is still here for — two packages, and no build step:
+
+```bash
+npm ci
+npx playwright install chromium
+```
+
+Then two terminals:
+
+```bash
+# terminal 1 — its own port and its own database, so it can play destructively
+./e2e/serve.sh
+
+# terminal 2 — the walkthrough
+LD_LIBRARY_PATH=~/.local/lib/playwright-deps npm run test:e2e
+```
+
+`LD_LIBRARY_PATH` is required on this machine only: Chromium's `libnss3`/`libnspr4` were extracted
+to `~/.local/lib/playwright-deps` rather than installed system-wide. With
+`npx playwright install --with-deps chromium`, as CI does, it is not needed.
+
+Each luck-dependent check reports the run that produced it — fights fought, meals eaten, level
+reached — so a failure that only shows up once in a dozen runs still says what happened.
+
+## What pins the balance
+
+This game began as a TypeScript implementation, and the rewrite was held to it exactly. Two of
+those instruments are permanent, and outlive the implementation they were built against:
+
+- **`test/mini_lineage/game/balance_golden_test.exs`** — 400 fights across 4 races and 5 fixed
+  seeds, pinned to exact numbers. Because every roll runs off one deterministic stream, it also
+  pins the ORDER randomness is consumed in: adding, removing or reordering a draw anywhere in the
+  fight path fails here even when each individual function is still correct.
+- **`test/mini_lineage/game/js_parity_test.exs`** — `:math.pow`, the rounding of halves, and
+  `toLocaleString('en-US')` number grouping, each pinned against values the original produced.
+
+A deliberate balance or wording change means regenerating the affected expectations in the same
+commit. **A diff in either file is exactly the change under review.**
 
 ## 📜 License
 

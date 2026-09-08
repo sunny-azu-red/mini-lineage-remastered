@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <MiniLineageWeb.Layouts.head />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title default="Mini Lineage - Remastered">{assigns[:page_title]}</.live_title>
+  </head>
+  <body>
+    {@inner_content}
+  </body>
+</html>

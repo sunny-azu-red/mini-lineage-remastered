@@ -1,16 +1,31 @@
 services:
-  mini-lineage-remastered:
-    build: .
-    container_name: mini-lineage-remastered
+  mini-lineage:
+    build:
+      context: .
+      args:
+        # Normally empty: the build reads the commit from the .git in its context. Set this only
+        # when building from a source copy that has no repository in it.
+        APP_VERSION: ${APP_VERSION:-}
+    container_name: mini-lineage
     restart: always
+    # The release runs as PID 1 and does not reap the children the ERTS spawns.
+    init: true
     ports:
-      - "${PORT}:${PORT}" 
+      - "${PORT:-4000}:${PORT:-4000}"
     environment:
-      - NODE_ENV=production
-      - PORT=${PORT}
-      - SESSION_SECRET=${SESSION_SECRET}
+      - PORT=${PORT:-4000}
+      - PHX_HOST=${PHX_HOST:-localhost}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+    # restart: always covers a crash; this covers a process that is up but no longer answering.
+    # localhost is excluded from force_ssl, so this reaches the game rather than a redirect.
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-4000}/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

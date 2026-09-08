@@ -1,24 +1,54 @@
-# --- STAGE 1: The Kitchen (Builder) ---
-FROM node:22-alpine AS builder
-RUN apk add --no-cache git curl
+# The builder's Elixir and OTP are pinned to the versions the game is developed and tested against.
+FROM hexpm/elixir:1.19.6-erlang-28.5.0.6-alpine-3.22.5 AS builder
+
+RUN apk add --no-cache build-base git
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+# Without a UTF-8 locale the VM runs with latin1 name encoding and warns that Elixir "may
+# malfunction". This game is made of emoji; it needs the real thing.
+ENV LANG=C.UTF-8
+ENV MIX_ENV=prod
 
-COPY . .
-RUN export APP_VERSION=$(curl -s https://api.github.com/repos/sunny-azu-red/mini-lineage-remastered/commits/main | grep -m 1 '"sha":' | cut -d '"' -f 4 | cut -c1-7) && \
-    npm run build
+RUN mix local.hex --force && mix local.rebar --force
 
-# --- STAGE 2: The App (Production) ---
-FROM node:22-alpine AS runner
+# Dependencies first, so editing game code does not re-fetch or recompile them.
+COPY mix.exs mix.lock ./
+RUN mix deps.get --only prod
+COPY config config
+RUN mix deps.compile
+
+COPY assets assets
+COPY priv priv
+COPY lib lib
+
+# Last, so a commit only invalidates the layers that were going to rebuild anyway. config/prod.exs
+# reads the sha from here at build time, which is what puts a commit link in the footer — a deploy
+# from a git checkout needs no APP_VERSION at all. The ARG is for builds without a repository.
+COPY .git .git
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
+
+# `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
+# here, so the build needs no database and no secret.
+RUN mix assets.deploy && mix release
+
+# --- runtime ---
+FROM alpine:3.22.5 AS runner
+
+# ca-certificates so the database can be reached over TLS; the rest is what the ERTS links against.
+RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
 WORKDIR /app
-ENV NODE_ENV=production
-ENV IN_DOCKER=true
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+ENV LANG=C.UTF-8
 
-RUN npm ci --omit=dev
+# The release brings its own ERTS; nothing here needs Elixir or Mix.
+COPY --from=builder /app/_build/prod/rel/mini_lineage ./
 
-CMD ["sh", "-c", "node dist/scripts/db/migrate.js && npm run start"]
+ENV PHX_SERVER=true
+EXPOSE 4000
+
+RUN addgroup -S app && adduser -S -G app app && chown -R app:app /app
+USER app
+
+# Migrations run in the same container that serves, so a fresh database is never served against.
+CMD ["sh", "-c", "bin/mini_lineage eval 'MiniLineage.Release.migrate()' && exec bin/mini_lineage start"]
