@@ -297,28 +297,13 @@ try {
     await onScreen('highscores');
     check('Town links through to the Hall of Champions', (await state()).screen === 'highscores');
 
-    // The race filters, clicked as a player would — including back to All, which is simply
-    // /highscores with no race in the path and so is the one that can silently do nothing.
     const boardRows = () => page.locator('#main table.data-table tbody tr').count();
     const activeFilter = async () =>
         (await page.textContent('#main .action-links a.active'))?.replace(/\s+/g, ' ').trim();
-    const allRows = await boardRows();
+
+    // The filters themselves are checked after a legacy is written, further down: on a fresh
+    // database this board is empty, and "narrows" cannot mean anything about no rows at all.
     check('the board opens on All', (await activeFilter())?.trim() === 'All', await activeFilter());
-
-    await page.click('#main .action-links a:has-text("Elf") >> nth=0');
-    await page.waitForFunction(() => location.pathname !== '/highscores', null, { timeout: 5000 });
-    const elfRows = await boardRows();
-    check('filtering to a race narrows the board',
-        elfRows < allRows && (await activeFilter())?.includes('Elf'),
-        `${allRows} rows -> ${elfRows}, active "${await activeFilter()}"`);
-    check('...and a filter matching nobody says so rather than showing an empty table',
-        elfRows > 0 || /The halls are silent/.test(await page.textContent('#main') ?? ''));
-
-    await page.click('#main .action-links a:has-text("All")');
-    await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
-    check('...and All puts every race back',
-        await boardRows() === allRows && (await activeFilter())?.trim() === 'All',
-        `${await boardRows()} rows, active ${await activeFilter()}`);
 
     await page.click('#main .last a');
     await onScreen('home');
@@ -515,6 +500,35 @@ try {
     const board = await page.textContent('#main table.data-table');
     check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
     check('submitting also clears the character', (await state()).started === false);
+
+    // The race filters, clicked as a player would — including back to All, which is simply
+    // /highscores with no race in the path and so is the one that can silently do nothing. Here
+    // rather than on arrival, because BrowserBot has just guaranteed the board is not empty:
+    // narrowing an empty board proves nothing, and putting an empty board back proves less. That
+    // Orc entry is also what makes "narrows" sound — the Elf board cannot be the whole board.
+    //
+    // Submitting lands on /highscores/<your own race>, so widen to All before measuring. Each wait
+    // names the path it expects: `!== '/highscores'` was already true here and passed instantly,
+    // and every assertion after it then read the page from before the click.
+    await page.click('#main .action-links a:has-text("All")');
+    await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
+    const allRows = await boardRows();
+    check('the board has the entry just written', allRows > 0, `${allRows} rows`);
+
+    await page.click('#main .action-links a:has-text("Elf") >> nth=0');
+    await page.waitForFunction(() => location.pathname === '/highscores/elf', null, { timeout: 5000 });
+    const elfRows = await boardRows();
+    check('filtering to a race narrows the board',
+        elfRows < allRows && (await activeFilter())?.includes('Elf'),
+        `${allRows} rows -> ${elfRows}, active "${await activeFilter()}"`);
+    check('...and a filter matching nobody says so rather than showing an empty table',
+        elfRows > 0 || /The halls are silent/.test(await page.textContent('#main') ?? ''));
+
+    await page.click('#main .action-links a:has-text("All")');
+    await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
+    check('...and All puts every race back',
+        await boardRows() === allRows && (await activeFilter())?.trim() === 'All',
+        `${await boardRows()} rows, active ${await activeFilter()}`);
 
     await page.click('#main .last a');
     await onScreen('start');
