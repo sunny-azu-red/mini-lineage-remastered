@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.AmbushChainTest do
   @moduledoc """
-  The chain ambush engine. Neither the golden master nor the parity fixture reaches this: both
+  The chain ambush engine. Neither the golden master nor the balance simulations reach this: both
   drive a simulation harness that rolls its own ambush and never tracks a streak, so the Hexed
   debuff is applied only by the shipped fight path.
   """

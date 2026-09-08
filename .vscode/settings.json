@@ -24,12 +24,12 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.exclude": {
     "**/node_modules": true,
-    "**/dist": true,
-    "**/coverage": true
+    "**/_build": true,
+    "**/deps": true
   },
   "search.exclude": {
     "**/node_modules": true,
-    "**/dist": true,
-    "**/coverage": true
+    "**/_build": true,
+    "**/deps": true
   }
 }
