@@ -383,20 +383,27 @@ defmodule MiniLineage.Game.Player do
   def purchase(_player, _type, _item_id), do: nil
 
   defp do_purchase(player, item, item_id, equipment) do
-    cond do
-      equipment != nil and Map.get(player, equipment.slot) == item_id ->
-        {player, %{success: false, text: owned_text(item, equipment.slot), item: item}}
+    if equipment != nil and Map.get(player, equipment.slot) == item_id do
+      {player, refusal(item, owned_text(item, equipment.slot))}
+    else
+      case deduct_cost(player, item.cost) do
+        {player, false} ->
+          {player,
+           refusal(item, "You do not have enough Adena to buy #{item.emoji} #{item.name}!")}
 
-      true ->
-        case deduct_cost(player, item.cost) do
-          {player, false} ->
-            text = "You do not have enough Adena to buy #{item.emoji} #{item.name}!"
-            {player, %{success: false, text: text, item: item}}
+        {player, true} ->
+          Statistics.increment(:total_adena_spent, item.cost)
+          complete_purchase(player, item, item_id, equipment)
+      end
+    end
+  end
 
-          {player, true} ->
-            Statistics.increment(:total_adena_spent, item.cost)
-            complete_purchase(player, item, item_id, equipment)
-        end
+  defp refusal(item, text), do: %{success: false, text: text, item: item}
+
+  defp effect_of(item) do
+    case Map.get(item, :effect) do
+      nil -> nil
+      key -> Constants.effect(key)
     end
   end
 
@@ -406,25 +413,17 @@ defmodule MiniLineage.Game.Player do
   defp owned_text(item, :armor_id), do: "You are already wearing the #{item.emoji} #{item.name}!"
 
   defp complete_purchase(player, item, _item_id, nil) do
-    player =
-      case Map.get(item, :effect) do
-        nil -> player
-        key -> apply_effect(player, Constants.effect(key))
-      end
+    effect = effect_of(item)
+    player = if effect, do: apply_effect(player, effect), else: player
 
     {player, healed} = restore_health(player, item.stat)
     Statistics.increment(:total_food_bought)
     Statistics.increment(:total_hp_healed, healed)
 
     buff =
-      case Map.get(item, :effect) do
-        nil ->
-          ""
-
-        key ->
-          effect = Constants.effect(key)
-          "\nYou feel invigorated by the #{effect.emoji} #{effect.label} buff!"
-      end
+      if effect,
+        do: "\nYou feel invigorated by the #{effect.emoji} #{effect.label} buff!",
+        else: ""
 
     text =
       "You have bought #{item.emoji} #{item.name}.#{buff}\n" <>

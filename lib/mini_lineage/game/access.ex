@@ -5,17 +5,11 @@ defmodule MiniLineage.Game.Access do
   """
   alias MiniLineage.Game.Player
 
-  @screens ~w(start home battle weapons armors inn suicide death character highscores statistics races error)
-
   # The only screens a visitor with no character may reach.
   @unstarted_allowed ~w(start statistics races highscores error)
 
   # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them.
   @started_blocked ~w(start statistics races death)
-
-  def screens, do: @screens
-
-  def known?(screen), do: screen in @screens
 
   @doc """
   Where the player is actually allowed to be. Death wins outright — checked first because killing

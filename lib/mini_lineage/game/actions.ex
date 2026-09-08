@@ -112,16 +112,7 @@ defmodule MiniLineage.Game.Actions do
         }
       end
 
-    {player,
-     {:ok,
-      %{
-        outcome: outcome,
-        narrative: narrative,
-        ambushed: ambushed,
-        died: died,
-        sound: sound,
-        flash: flash
-      }}}
+    {player, {:ok, Map.put(last, :flash, flash)}}
   end
 
   defp roll_ambush(player) do

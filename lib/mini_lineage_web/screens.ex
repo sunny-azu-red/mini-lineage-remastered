@@ -729,8 +729,6 @@ defmodule MiniLineageWeb.Screens do
 
   # ---------------------------------------------------------------- helpers
 
-  def ambush_low_health_line, do: @ambush_low_health_line
-
   defp verb(1, singular, _plural), do: singular
   defp verb(_count, _singular, plural), do: plural
 

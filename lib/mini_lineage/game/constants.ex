@@ -2,7 +2,6 @@ defmodule MiniLineage.Game.Constants do
   @moduledoc "Every tuning knob. Rebalance here, never in the game modules."
 
   @max_level 80
-  @locale "en-US"
 
   @races [
     %{
@@ -252,7 +251,6 @@ defmodule MiniLineage.Game.Constants do
   }
 
   def max_level, do: @max_level
-  def locale, do: @locale
   def races, do: @races
   def race(id), do: Enum.at(@races, id) || hd(@races)
   def effects, do: @effects

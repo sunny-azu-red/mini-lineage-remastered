@@ -6,7 +6,7 @@ defmodule MiniLineage.CharactersTest do
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.Characters
-  alias MiniLineage.Characters.{Record, Store}
+  alias MiniLineage.Characters.{Record, Store, Sweeper}
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
@@ -183,6 +183,19 @@ defmodule MiniLineage.CharactersTest do
       Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
 
       assert MiniLineage.Characters.Store.sweep_expired() >= 1
+      assert Store.load(id) == nil
+    end
+
+    test "the scheduled sweeper does the same work, through its own process", %{id: id} do
+      start_character(id)
+      Characters.forget_process(id)
+
+      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
+      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+
+      # Through the GenServer rather than Store directly: the hourly path has its own handler, and
+      # nothing else exercises it.
+      assert Sweeper.sweep_now() >= 1
       assert Store.load(id) == nil
     end
 
