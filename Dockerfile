@@ -21,8 +21,10 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# The build context carries no .git, so the sha cannot be discovered here — pass it in, or the
-# image reports itself as a debug build and keeps showing error detail to players.
+# Last, so a commit only invalidates the layers that were going to rebuild anyway. config/prod.exs
+# reads the sha from here at build time, which is what puts a commit link in the footer — a deploy
+# from a git checkout needs no APP_VERSION at all. The ARG is for builds without a repository.
+COPY .git .git
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 

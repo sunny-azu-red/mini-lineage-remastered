@@ -6,6 +6,9 @@ defmodule MiniLineage.Game.Version do
   """
   @commit_url "https://github.com/sunny-azu-red/mini-lineage-remastered/commit/"
   @development "⚡ development"
+  # A production build that cannot name its commit: built without a repository and without
+  # APP_VERSION. Saying "development" there would be a plain lie in a deployed footer.
+  @unnamed "production"
 
   @doc """
   APP_VERSION at runtime, else the sha stamped into the build by config/prod.exs, else a debug
@@ -14,7 +17,7 @@ defmodule MiniLineage.Game.Version do
   def current do
     with nil <- present(System.get_env("APP_VERSION")),
          nil <- present(Application.get_env(:mini_lineage, :app_version)) do
-      @development
+      if debug_build?(), do: @development, else: @unnamed
     end
   end
 

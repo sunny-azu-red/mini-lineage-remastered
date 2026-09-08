@@ -3,7 +3,8 @@ services:
     build:
       context: .
       args:
-        # `APP_VERSION=$(git rev-parse --short=7 HEAD) docker compose up --build` stamps the build.
+        # Normally empty: the build reads the commit from the .git in its context. Set this only
+        # when building from a source copy that has no repository in it.
         APP_VERSION: ${APP_VERSION:-}
     container_name: mini-lineage
     restart: always

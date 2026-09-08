@@ -50,7 +50,7 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
 
       html = render_to_string(MiniLineageWeb.ErrorHTML, "500", "html", [])
 
-      assert MiniLineage.Game.Version.current() == "⚡ development"
+      assert MiniLineage.Game.Version.current() == "production"
       refute html =~ "code-block"
       refute html =~ "Internal Server Error"
     end

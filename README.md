@@ -211,9 +211,12 @@ The container migrates before it serves, so a fresh database is never served aga
 `.env` itself and passes the values in as environment variables, so the image needs no copy of the
 file — and those variables beat any file anyway.
 
-Set `APP_VERSION` if you want the footer to link the commit it was built from — the build context
-carries no `.git`, so the image cannot work it out. Forgetting it costs you that link and nothing
-else: a production build never shows a player its internals, whether or not it knows its version.
+The build reads the commit from the `.git` in its own context, so a deploy from a git checkout —
+Portainer, a CI runner, `docker compose up --build` here — stamps itself with no help. The
+`APP_VERSION` build arg is only for building from a source copy with no repository in it; a build
+that ends up with neither says `production` in the footer rather than pretending to be a
+development one. Either way it shows a player no internals: that is a property of the build, not of
+whether it knows its own name.
 
 **Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
 with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets

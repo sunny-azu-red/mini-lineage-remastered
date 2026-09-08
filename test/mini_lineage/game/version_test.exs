@@ -57,6 +57,17 @@ defmodule MiniLineage.Game.VersionTest do
       assert Version.current() == "⚡ development"
       refute Version.release?(Version.current())
     end
+
+    test "but a PRODUCTION build with neither does not claim to be development" do
+      Application.put_env(:mini_lineage, :debug_build, false)
+      on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, true) end)
+
+      # Built from a source copy with no repository and no APP_VERSION. It cannot name its commit,
+      # which is a reason to say so — not to describe a deployed server as a development one.
+      assert Version.current() == "production"
+      refute Version.release?(Version.current())
+      refute Version.commit_url(Version.current())
+    end
   end
 
   describe "what counts as a release" do
@@ -105,7 +116,7 @@ defmodule MiniLineage.Game.VersionTest do
       on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, true) end)
 
       # No APP_VERSION, no stamp: this build cannot name its commit, and must still say nothing.
-      assert Version.current() == "⚡ development"
+      assert Version.current() == "production"
       refute Version.release?(Version.current())
       refute Version.debug_build?()
     end
