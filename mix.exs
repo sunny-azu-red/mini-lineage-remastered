@@ -82,10 +82,10 @@ defmodule MiniLineage.MixProject do
       "test.coverage": ["test --cover"],
       "assets.setup": ["esbuild.install --if-missing"],
       "assets.build": ["compile", "esbuild mini_lineage"],
-      "assets.deploy": [
-        "esbuild mini_lineage --minify",
-        "phx.digest"
-      ],
+      # `compile` first, as assets.build does: the LiveView compiler generates the colocated hooks
+      # app.js imports, into _build, and esbuild cannot resolve them before they exist. A warm
+      # _build hides this; a clean one — CI, Docker, a fresh clone — does not.
+      "assets.deploy": ["compile", "esbuild mini_lineage --minify", "phx.digest"],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
   end

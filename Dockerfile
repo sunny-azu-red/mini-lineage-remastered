@@ -28,9 +28,9 @@ COPY .git .git
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-# `mix assets.deploy` minifies and digests; config/runtime.exs is read at boot, not here, so the
-# build needs no database and no secret.
-RUN mix assets.deploy && mix compile && mix release
+# `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
+# here, so the build needs no database and no secret.
+RUN mix assets.deploy && mix release
 
 # --- runtime ---
 FROM alpine:3.22.5 AS runner

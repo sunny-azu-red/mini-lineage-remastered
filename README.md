@@ -162,7 +162,7 @@ needs a database or a secret until the release actually starts:
 
 ```bash
 MIX_ENV=prod mix deps.get --only prod
-MIX_ENV=prod mix assets.deploy      # esbuild --minify, then phx.digest
+MIX_ENV=prod mix assets.deploy      # compile, esbuild --minify, then phx.digest
 MIX_ENV=prod mix release
 ```
 
