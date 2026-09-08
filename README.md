@@ -126,11 +126,13 @@ They compile only in `:dev`, so no release carries them.
 until the release actually starts.
 
 ```bash
-export MIX_ENV=prod
-mix deps.get --only prod
-mix assets.deploy           # esbuild --minify, then phx.digest
-mix release
+MIX_ENV=prod mix deps.get --only prod
+MIX_ENV=prod mix assets.deploy      # esbuild --minify, then phx.digest
+MIX_ENV=prod mix release
 ```
+
+Per command rather than `export MIX_ENV=prod`: an exported one outlives the build and follows you
+into `mix test`, which then runs without the sandbox and fails complaining about the pool.
 
 Then run it. `config/runtime.exs` reads `.env` at boot, so the release needs nothing on the command
 line that the file already answers — from the repo root, this is the whole of it:
