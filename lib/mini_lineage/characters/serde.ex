@@ -10,6 +10,11 @@ defmodule MiniLineage.Characters.Serde do
   @effect_types %{"buff" => :buff, "debuff" => :debuff, "aura" => :aura}
   @modifier_types ~w(attack defense crit max_health regen ambush_risk xp_multiplier adena_multiplier)a
 
+  # Named once: these lists are both the shape written and the shape read back, and a key added to
+  # one side alone would silently stop persisting.
+  @narrative_keys ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
+  @outcome_keys ~w(enemies_killed hp_lost damage_blocked xp_gained adena_gained is_critical is_level_up)a
+
   def to_map(%Player{} = p) do
     %{
       "name" => p.name,
@@ -100,16 +105,8 @@ defmodule MiniLineage.Characters.Serde do
 
   defp battle_to_map(b) do
     %{
-      "narrative" =>
-        stringify(
-          b.narrative,
-          ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
-        ),
-      "outcome" =>
-        stringify(
-          b.outcome,
-          ~w(enemies_killed hp_lost damage_blocked xp_gained adena_gained is_critical is_level_up)a
-        ),
+      "narrative" => stringify(b.narrative, @narrative_keys),
+      "outcome" => stringify(b.outcome, @outcome_keys),
       "ambushed" => b.ambushed,
       "died" => b.died,
       "sound" => b.sound
@@ -120,16 +117,8 @@ defmodule MiniLineage.Characters.Serde do
 
   defp battle_from_map(b) do
     %{
-      narrative:
-        atomize(
-          b["narrative"],
-          ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
-        ),
-      outcome:
-        atomize(
-          b["outcome"],
-          ~w(enemies_killed hp_lost damage_blocked xp_gained adena_gained is_critical is_level_up)a
-        ),
+      narrative: atomize(b["narrative"], @narrative_keys),
+      outcome: atomize(b["outcome"], @outcome_keys),
       ambushed: b["ambushed"] == true,
       died: b["died"] == true,
       sound: b["sound"]

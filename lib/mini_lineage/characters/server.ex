@@ -115,14 +115,14 @@ defmodule MiniLineage.Characters.Server do
     changed? = not same?(before, player)
     if opts[:log], do: log_tick(state.id, player, health_before, expired, changed?)
 
-    if same?(before, player) do
-      {result, state}
-    else
+    if changed? do
       player = %{player | revision: player.revision + 1}
       Store.save(state.id, player)
       broadcast(state.id, player)
 
       {result, arm_expiry(%{state | player: player})}
+    else
+      {result, state}
     end
   end
 
