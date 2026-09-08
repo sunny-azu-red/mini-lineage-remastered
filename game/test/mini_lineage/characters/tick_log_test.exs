@@ -21,6 +21,7 @@ defmodule MiniLineage.Characters.TickLogTest do
 
     id = Characters.new_id()
     on_exit(fn -> Characters.forget(id) end)
+    hold(id)
 
     Characters.mutate(id, fn player ->
       {player, _} = Player.initialize(player, Constants.race(2), "Logged")
@@ -98,9 +99,10 @@ defmodule MiniLineage.Characters.TickLogTest do
     assert log =~ "(Paused)"
   end
 
-  test "a race with no regeneration is idle rather than mid-heal", %{id: id} do
+  test "a race with no regeneration is idle rather than mid-heal", %{id: _id} do
     orc = Characters.new_id()
     on_exit(fn -> Characters.forget(orc) end)
+    hold(orc)
 
     Characters.mutate(orc, fn player ->
       {player, _} = Player.initialize(player, Constants.race(1), "Grok")
@@ -111,5 +113,15 @@ defmodule MiniLineage.Characters.TickLogTest do
     log = tick(orc)
     assert log =~ "Resting"
     assert log =~ "(0 HPR)"
+  end
+
+  test "a visitor who has not created a character is not described at all" do
+    visitor = Characters.new_id()
+    on_exit(fn -> Characters.forget(visitor) end)
+    hold(visitor)
+
+    # No health, no zone, nothing expiring: the tick has nothing true to say about a visitor, and
+    # every field the line reads is still nil.
+    refute tick(visitor) =~ "[TICK:"
   end
 end

@@ -28,7 +28,11 @@ defmodule MiniLineage.Characters.Server do
     player = Store.load(id) || %Player{}
     schedule_tick()
 
-    {:ok, arm_expiry(%{id: id, player: player, expiry_timer: nil, viewers: %{}, stop_timer: nil})}
+    state = %{id: id, player: player, expiry_timer: nil, viewers: %{}, stop_timer: nil}
+
+    # Armed from the start rather than only when a viewer leaves: a process opened by a plain read
+    # — a dead render, a crawler — never attaches one, and would otherwise never stop.
+    {:ok, state |> arm_expiry() |> schedule_stop()}
   end
 
   # -------------------------------------------------------------------- calls
@@ -59,9 +63,16 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_info(:tick, state) do
     schedule_tick()
-    {_result, state} = run(state, &Player.process_regen_tick/1, log: true)
 
-    {:noreply, state}
+    # A visitor who has not created a character has nothing to regenerate, and no health for the
+    # tick log to describe. The timer keeps running: the character may yet be created in here.
+    if Player.started?(state.player) do
+      {_result, state} = run(state, &Player.process_regen_tick/1, log: true)
+
+      {:noreply, state}
+    else
+      {:noreply, state}
+    end
   end
 
   def handle_info(:expiry, state) do

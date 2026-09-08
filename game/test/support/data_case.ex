@@ -41,6 +41,18 @@ defmodule MiniLineage.DataCase do
   end
 
   @doc """
+  Holds a character's process open for the rest of the test. With no viewer attached it stops
+  itself once the idle grace elapses, which is deliberately short in this environment.
+  """
+  def hold(id) do
+    viewer = spawn(fn -> receive do: (:stop -> :ok) end)
+    MiniLineage.Characters.attach(id, viewer)
+    on_exit(fn -> send(viewer, :stop) end)
+
+    :ok
+  end
+
+  @doc """
   A helper that transforms changeset errors into a map of messages.
 
       assert {:error, changeset} = Accounts.create_user(%{password: "short"})
