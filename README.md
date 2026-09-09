@@ -203,8 +203,11 @@ the logger sits at `:info`, and there is no code reloader.
 it on bare Alpine with no Elixir or Mix — the release brings its own ERTS. It provisions no
 database of its own, so point `DB_HOST` at one the container can reach.
 
+`docker-compose.yml` pulls the published image and has no `build:` section, so a deployment can
+only ever run what CI built. To build here instead, add the override:
+
 ```bash
-APP_VERSION=$(git rev-parse --short=7 HEAD) docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
 ```
 
 The container migrates before it serves, so a fresh database is never served against. Compose reads
@@ -224,7 +227,10 @@ commit to hold or roll back; leave it unset to follow `main`.
 
 Two things to do once, on the package's page in GitHub: make it **public**, or Portainer will need a
 registry credential to pull it; and, if you want, link it to the repository. Then point the stack at
-this compose file and redeploy — pulling the image, not building it.
+this compose file and redeploy with **Re-pull image** on.
+
+The footer is how you tell which you got. A pulled image links its commit; anything built on the box
+has no commit to name and reads `production` instead.
 
 `APP_VERSION` is only ever cosmetic. A build without one reports itself as `production`, and shows a
 player no internals either way — that is a property of the build, not of whether it knows its own

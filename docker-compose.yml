@@ -1,15 +1,12 @@
 services:
   mini-lineage:
-    # Deploying pulls this — the image CI built from the commit that passed, already named after it.
-    # IMAGE_TAG pins an older one; the default follows main.
+    # The image CI built from the commit that passed, already named after it. IMAGE_TAG pins an
+    # older one; the default follows main.
+    #
+    # No `build:` here on purpose. With one, Portainer builds from the working tree instead of
+    # pulling — which deploys something no test ran against, and which cannot name its own commit,
+    # so the footer reads `production`. Building locally is docker-compose.build.yml.
     image: ghcr.io/sunny-azu-red/mini-lineage-remastered:${IMAGE_TAG:-latest}
-    # Only for building locally, with `docker compose build`. A deployment never reaches it.
-    # APP_VERSION is what puts a commit link in the footer; a local build usually has none, and the
-    # footer then reads `production`.
-    build:
-      context: .
-      args:
-        APP_VERSION: ${APP_VERSION:-}
     container_name: mini-lineage
     restart: always
     # The release runs as PID 1 and does not reap the children the ERTS spawns.
