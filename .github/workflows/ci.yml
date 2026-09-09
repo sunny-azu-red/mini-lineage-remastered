@@ -204,7 +204,8 @@ jobs:
         run: |
           docker run --rm --entrypoint sh \
             ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }} \
-            -c 'cat releases/*/sys.config' | grep -q '${{ steps.version.outputs.sha }}' \
+            -c 'grep -q "$1" "releases/$(cut -d" " -f2 releases/start_erl.data)/sys.config"' \
+            sh '${{ steps.version.outputs.sha }}' \
             || { echo "::error::image does not report ${{ steps.version.outputs.sha }}"; exit 1; }
 
       - name: Push
