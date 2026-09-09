@@ -1,7 +1,7 @@
 services:
   mini-lineage:
     # What CI built and tested. No `build:` on purpose — given one, Portainer builds the working
-    # tree instead of pulling. Building locally is docker-compose.build.yml.
+    # tree instead of pulling, and deploys something nothing ran against.
     image: ghcr.io/sunny-azu-red/mini-lineage-remastered:${IMAGE_TAG:-latest}
     container_name: mini-lineage
     restart: always

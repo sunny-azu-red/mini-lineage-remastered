@@ -204,10 +204,10 @@ it on bare Alpine with no Elixir or Mix — the release brings its own ERTS. It 
 database of its own, so point `DB_HOST` at one the container can reach.
 
 `docker-compose.yml` pulls the published image and has no `build:` section, so a deployment can
-only ever run what CI built. To build here instead, add the override:
+only ever run what CI built. To build one by hand:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) -t mini-lineage .
 ```
 
 The container migrates before it serves, so a fresh database is never served against. Compose reads

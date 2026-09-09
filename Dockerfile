@@ -21,10 +21,9 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer. Not read from a .git: a Portainer stack sends the working tree
-# without one, and COPYing a missing path fails the build.
+# Names the commit in the footer. CI passes it; config/prod.exs reads it during `mix release`, for
+# which an ARG is already an environment variable. Not read from a .git — a deploy has none.
 ARG APP_VERSION
-ENV APP_VERSION=$APP_VERSION
 
 # `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
 # here, so the build needs no database and no secret.

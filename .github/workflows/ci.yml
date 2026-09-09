@@ -188,3 +188,14 @@ jobs:
           # Layers survive between runs, so only what actually changed is rebuilt.
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # The stamp reaching `mix release` is a chain of small assumptions, and every way it can break
+      # is silent — a footer quietly reading `production` instead of naming its commit. Read it back
+      # out of the image that was just pushed, and fail here rather than in production.
+      - name: Check the image is stamped with its commit
+        run: |
+          image="ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}"
+          docker pull -q "$image"
+          docker run --rm --entrypoint sh "$image" -c 'cat releases/*/sys.config' \
+            | grep -q '${{ steps.version.outputs.sha }}' \
+            || { echo "::error::image does not report ${{ steps.version.outputs.sha }}"; exit 1; }
