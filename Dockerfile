@@ -41,6 +41,12 @@ WORKDIR /app
 
 ENV LANG=C.UTF-8
 
+# Links the package to this repository on GitHub, which gives it the README and makes where an
+# image came from answerable from the image itself.
+LABEL org.opencontainers.image.source="https://github.com/sunny-azu-red/mini-lineage-remastered"
+LABEL org.opencontainers.image.description="Mini-Lineage Remastered — a text-based RPG in Elixir and Phoenix LiveView"
+LABEL org.opencontainers.image.licenses="MIT"
+
 # The release brings its own ERTS; nothing here needs Elixir or Mix.
 COPY --from=builder /app/_build/prod/rel/mini_lineage ./
 
