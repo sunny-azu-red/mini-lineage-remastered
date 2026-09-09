@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Endpoint do
     signing_salt: "boRfKEv2",
     same_site: "Lax",
     http_only: true,
-    secure: System.get_env("IN_DOCKER") == "true",
+    secure: Application.compile_env(:mini_lineage, :secure_cookie, false),
     max_age: Application.compile_env(:mini_lineage, :character_ttl_hours, 24) * 60 * 60
   ]
 

@@ -48,7 +48,6 @@ LABEL org.opencontainers.image.licenses="MIT"
 COPY --from=builder /app/_build/prod/rel/mini_lineage ./
 
 ENV PHX_SERVER=true
-EXPOSE 4000
 
 RUN addgroup -S app && adduser -S -G app app && chown -R app:app /app
 USER app

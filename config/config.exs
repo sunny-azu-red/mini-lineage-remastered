@@ -8,6 +8,9 @@ config :mini_lineage, character_ttl_hours: 24 * 30
 # deployment that stamps no sha should lose the footer's commit link, never gain a stack trace.
 config :mini_lineage, debug_build: true
 
+# A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.
+config :mini_lineage, secure_cookie: false
+
 config :mini_lineage,
   ecto_repos: [MiniLineage.Repo],
   generators: [timestamp_type: :utc_datetime]

@@ -13,9 +13,6 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:mini_lineage, ~w(--sourcemap=inline --watch)]}
   ]
 
-# Enable dev routes for dashboard and mailbox
-config :mini_lineage, dev_routes: true
-
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 

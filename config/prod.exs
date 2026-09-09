@@ -33,6 +33,9 @@ config :mini_lineage, :app_version, app_version
 # Whatever the version turned out to be, a production build tells a player nothing.
 config :mini_lineage, debug_build: false
 
+# force_ssl means every request arrives over https, so the session may insist on it.
+config :mini_lineage, secure_cookie: true
+
 # The digested filenames, written by `mix assets.deploy`.
 config :mini_lineage, MiniLineageWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json"

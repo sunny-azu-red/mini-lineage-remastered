@@ -183,10 +183,8 @@ try {
     check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));
 
     // ---- access policy: a visitor cannot walk into the game -----------------------------------
-    // The `page.goto` calls from here on are deliberate: a TYPED URL is the thing under test, and
-    // there is no in-app link to these screens for a visitor to click. Everywhere else the
-    // walkthrough clicks, because a route reached only by URL is a route that never gets tested —
-    // travelling to the Battleground crashed the LiveView while its URL worked perfectly.
+    // `page.goto` on purpose: a TYPED URL is what is under test here, and a visitor has no link to
+    // click. Everywhere else this clicks, because a route only ever reached by URL is untested.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
     await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
@@ -248,10 +246,9 @@ try {
         label: (await page.textContent('#main form button'))?.trim(),
         cls: await page.getAttribute('#main form button', 'class'),
     });
-    // The label and the variant are both server-rendered, so choosing an option is a round trip and
-    // reading the button straight afterwards races the patch. Waits for the label, then reads ONCE:
-    // the same snapshot decides the check and explains it. Reading twice let an assertion fail on a
-    // stale button while its message quoted the settled one, which reads as nonsense in a log.
+    // Label and variant are server-rendered, so selecting is a round trip and reading straight
+    // after races the patch. Waits, then reads ONCE — two reads let a check fail on a stale button
+    // while its message quoted the settled one.
     const buttonSettles = async expected => {
         await page.waitForFunction(
             label => document.querySelector('#main form button')?.textContent.trim() === label,
@@ -383,9 +380,8 @@ try {
         `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
 
     // ---- fight until level-up, then until death -----------------------------------------------
-    // Entered from the Town form, the way a player does — NOT by typing the URL. Travelling to
-    // the Battleground is its own code path, and it crashed the LiveView while a typed URL
-    // worked perfectly, so the shortcut this test used to take proved nothing.
+    // From the Town form, not a typed URL: travelling is its own path, and it once crashed the
+    // LiveView while the URL worked perfectly.
     await goHome();
     const battlesBeforeTravel = Number(await page.getAttribute('#screen', 'data-battles'));
     await travel('battle');
@@ -411,12 +407,8 @@ try {
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
     for (let i = 0; i < 120 && !current.dead; i++) {
-        // A trip to town: eat, and upgrade whatever the purse now covers. Fighting on with the
-        // starting fists never earns enough XP to reach level 2 before an Orc runs out of health,
-        // so a player who never shops is not a realistic one. An ambush pins you here regardless.
-        // Food comes second until the weapon is bought: an Orc starts 50 adena short of one, and
-        // a purse spent on meals never closes that gap — so it fights on with fists, earns too
-        // little XP to level, and dies anyway.
+        // Shop, because fists never earn level 2 before an Orc runs out of health. Weapon before
+        // food: an Orc starts 50 adena short of one, and meals never close that gap.
         const hungerThreshold = boughtWeapon ? 0.5 : 0.25;
         const wantsFood = current.health < current.maxHealth * hungerThreshold && current.adena >= 7;
         const wantsWeapon = !boughtWeapon && current.adena >= 300;
@@ -513,15 +505,9 @@ try {
     check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
     check('submitting also clears the character', (await state()).started === false);
 
-    // The race filters, clicked as a player would — including back to All, which is simply
-    // /highscores with no race in the path and so is the one that can silently do nothing. Here
-    // rather than on arrival, because BrowserBot has just guaranteed the board is not empty:
-    // narrowing an empty board proves nothing, and putting an empty board back proves less. That
-    // Orc entry is also what makes "narrows" sound — the Elf board cannot be the whole board.
-    //
-    // Submitting lands on /highscores/<your own race>, so widen to All before measuring. Each wait
-    // names the path it expects: `!== '/highscores'` was already true here and passed instantly,
-    // and every assertion after it then read the page from before the click.
+    // Here, not on arrival: BrowserBot's Orc entry is what makes the board non-empty and the Elf
+    // filter narrower than All. Submitting lands on /highscores/<own race>, so widen first — and
+    // each wait names the path it expects, since "not /highscores" was already true.
     await page.click('#main .action-links a:has-text("All")');
     await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
     const allRows = await boardRows();
