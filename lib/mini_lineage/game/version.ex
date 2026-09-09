@@ -1,23 +1,21 @@
 defmodule MiniLineage.Game.Version do
   @moduledoc """
-  A release stamps a short git sha and links to its commit; anything else is flagged as a debug
-  build. The footer names the running build either way, so an unreachable backend still tells you
-  which bundle is loaded.
+  A release names the commit it was built from and links to it; anything else is a debug build. The
+  footer says which, so an unreachable backend still tells you what is loaded.
   """
   @commit_url "https://github.com/sunny-azu-red/mini-lineage-remastered/commit/"
   @development "⚡ development"
-  # A production build that cannot name its commit: built without a repository and without
-  # APP_VERSION. Saying "development" there would be a plain lie in a deployed footer.
-  @unnamed "production"
 
   @doc """
-  APP_VERSION at runtime, else the sha stamped into the build by config/prod.exs, else a debug
-  build. An empty APP_VERSION is treated as absent — a Docker build arg left unset arrives as "".
+  APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build. Only two
+  answers: a production build that could name no commit fails to build at all.
+
+  An empty APP_VERSION counts as absent — a Docker build arg left unset arrives as "".
   """
   def current do
     with nil <- present(System.get_env("APP_VERSION")),
          nil <- present(Application.get_env(:mini_lineage, :app_version)) do
-      if debug_build?(), do: @development, else: @unnamed
+      @development
     end
   end
 

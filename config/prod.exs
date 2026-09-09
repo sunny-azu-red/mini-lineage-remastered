@@ -18,6 +18,16 @@ app_version =
       end
   end
 
+app_version ||
+  raise """
+  no APP_VERSION, and no git checkout to take one from.
+
+  A production build names the commit it came from — there is no such thing as a release that
+  cannot say which one it is. Pass it:
+
+      docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) .
+  """
+
 config :mini_lineage, :app_version, app_version
 
 # Whatever the version turned out to be, a production build tells a player nothing.

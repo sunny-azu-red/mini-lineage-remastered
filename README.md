@@ -229,13 +229,14 @@ Two things to do once, on the package's page in GitHub: make it **public**, or P
 registry credential to pull it; and, if you want, link it to the repository. Then point the stack at
 this compose file and redeploy with **Re-pull image** on.
 
-The footer is how you tell which you got. A pulled image links its commit; anything built on the box
-has no commit to name and reads `production` instead.
+The footer names the commit the running build came from, so it is also how you tell that a deploy
+took: it links the commit, or it says `⚡ development` and you are looking at a development server.
+There is no third answer — a production build that could name no commit refuses to build, so a
+release can always say which one it is.
 
-`APP_VERSION` is only ever cosmetic. A build without one reports itself as `production`, and shows a
-player no internals either way — that is a property of the build, not of whether it knows its own
-name. Do not try to read it from a `.git` inside the image: a Portainer stack sends the working tree
-without one, and the build fails on the missing path rather than falling back.
+`APP_VERSION` is how CI supplies it. A build from a git checkout finds its own; only a source copy
+with no repository in it needs to be told, which is why the Dockerfile takes a build arg rather than
+reading a `.git` that a Portainer stack does not send.
 
 **Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
 with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets
