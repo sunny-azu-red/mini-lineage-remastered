@@ -1,10 +1,14 @@
 services:
   mini-lineage:
+    # Deploying pulls this — the image CI built from the commit that passed, already named after it.
+    # IMAGE_TAG pins an older one; the default follows main.
+    image: ghcr.io/sunny-azu-red/mini-lineage-remastered:${IMAGE_TAG:-latest}
+    # Only for building locally, with `docker compose build`. A deployment never reaches it.
+    # APP_VERSION is what puts a commit link in the footer; a local build usually has none, and the
+    # footer then reads `production`.
     build:
       context: .
       args:
-        # Normally empty: the build reads the commit from the .git in its context. Set this only
-        # when building from a source copy that has no repository in it.
         APP_VERSION: ${APP_VERSION:-}
     container_name: mini-lineage
     restart: always

@@ -21,10 +21,10 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Last, so a commit only invalidates the layers that were going to rebuild anyway. config/prod.exs
-# reads the sha from here at build time, which is what puts a commit link in the footer — a deploy
-# from a git checkout needs no APP_VERSION at all. The ARG is for builds without a repository.
-COPY .git .git
+# Names the commit in the footer, when whoever builds knows it. Not read from a .git here: a
+# Portainer stack sends the working tree WITHOUT one, and a COPY of it fails the build outright.
+# Nothing but the footer link depends on this — a build with no version reports itself as
+# `production`, and shows a player no internals either way.
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
@@ -40,6 +40,12 @@ RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
 WORKDIR /app
 
 ENV LANG=C.UTF-8
+
+# Links the package to this repository on GitHub, which gives it the README and makes where an
+# image came from answerable from the image itself.
+LABEL org.opencontainers.image.source="https://github.com/sunny-azu-red/mini-lineage-remastered"
+LABEL org.opencontainers.image.description="Mini-Lineage Remastered — a text-based RPG in Elixir and Phoenix LiveView"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # The release brings its own ERTS; nothing here needs Elixir or Mix.
 COPY --from=builder /app/_build/prod/rel/mini_lineage ./
