@@ -211,13 +211,25 @@ The container migrates before it serves, so a fresh database is never served aga
 `.env` itself and passes the values in as environment variables, so the image needs no copy of the
 file — and those variables beat any file anyway.
 
-`APP_VERSION` is optional and puts a commit link in the footer. Nothing else depends on it: a build
-without one reports itself as `production`, and shows a player no internals either way — that is a
-property of the build, not of whether it knows its own name.
+### Deploying
 
-Do not try to read it from a `.git` in the image. A Portainer stack sends the working tree without
-one, and the build fails on the missing path rather than falling back. Pass it as a stack variable
-there if you want the link.
+CI publishes the image, so a server pulls rather than builds:
+
+    ghcr.io/sunny-azu-red/mini-lineage-remastered:latest
+
+The `publish` job runs only from `main`, and only behind both green jobs, so what is deployed is the
+artifact that passed. Every build is tagged twice — `latest` and its seven-character commit — and
+built with `APP_VERSION` set, which is what puts the commit link in the footer. Pin `IMAGE_TAG` to a
+commit to hold or roll back; leave it unset to follow `main`.
+
+Two things to do once, on the package's page in GitHub: make it **public**, or Portainer will need a
+registry credential to pull it; and, if you want, link it to the repository. Then point the stack at
+this compose file and redeploy — pulling the image, not building it.
+
+`APP_VERSION` is only ever cosmetic. A build without one reports itself as `production`, and shows a
+player no internals either way — that is a property of the build, not of whether it knows its own
+name. Do not try to read it from a `.git` inside the image: a Portainer stack sends the working tree
+without one, and the build fails on the missing path rather than falling back.
 
 **Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
 with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets
