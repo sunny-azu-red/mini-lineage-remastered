@@ -427,7 +427,13 @@ try {
                     if (current.health >= current.maxHealth * 0.9)
                         break;
 
-                    const best = [...MEAL_COSTS.keys()].reverse().find(i => current.adena >= MEAL_COSTS[i]);
+                    // Cheapest dish until the weapon is paid for: the best affordable one is a 250
+                    // adena Hearty Mash, which is the whole opening purse and leaves an Orc short
+                    // of the 300 it needs — fighting on with fists, and dying at level 1.
+                    const best = boughtWeapon
+                        ? [...MEAL_COSTS.keys()].reverse().find(i => current.adena >= MEAL_COSTS[i])
+                        : (current.adena >= MEAL_COSTS[0] ? 0 : undefined);
+
                     if (best === undefined)
                         break;
 
