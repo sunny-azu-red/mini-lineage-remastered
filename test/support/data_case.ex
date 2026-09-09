@@ -1,17 +1,7 @@
 defmodule MiniLineage.DataCase do
   @moduledoc """
-  This module defines the setup for tests requiring
-  access to the application's data layer.
-
-  You may define functions here to be used as helpers in
-  your tests.
-
-  Finally, if the test case interacts with the database,
-  we enable the SQL sandbox, so changes done to the database
-  are reverted at the end of every test. If you are using
-  PostgreSQL, you can even run database tests asynchronously
-  by setting `use MiniLineage.DataCase, async: true`, although
-  this option is not recommended for other databases.
+  For tests that reach the database. Each runs inside the SQL sandbox, so whatever it writes is
+  rolled back after it — but not concurrently: MyXQL is not Postgres, and `async: true` is unsafe.
   """
 
   use ExUnit.CaseTemplate

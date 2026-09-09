@@ -1,20 +1,7 @@
 defmodule MiniLineageWeb do
   @moduledoc """
-  The entrypoint for defining your web interface, such
-  as controllers, components, channels, and so on.
-
-  This can be used in your application as:
-
-      use MiniLineageWeb, :controller
-      use MiniLineageWeb, :html
-
-  The definitions below will be executed for every controller,
-  component, etc, so keep them short and clean, focused
-  on imports, uses and aliases.
-
-  Do NOT define functions inside the quoted expressions
-  below. Instead, define additional modules and import
-  those modules here.
+  What `use MiniLineageWeb, :html` and friends expand to. Imports and aliases only — anything with a
+  body belongs in a module of its own, since every one of these runs in every user of it.
   """
 
   def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)

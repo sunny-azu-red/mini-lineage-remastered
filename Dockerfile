@@ -21,10 +21,8 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer, when whoever builds knows it. Not read from a .git here: a
-# Portainer stack sends the working tree WITHOUT one, and a COPY of it fails the build outright.
-# Nothing but the footer link depends on this — a build with no version reports itself as
-# `production`, and shows a player no internals either way.
+# Names the commit in the footer. Not read from a .git: a Portainer stack sends the working tree
+# without one, and COPYing a missing path fails the build.
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 

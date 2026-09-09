@@ -49,10 +49,9 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   defp schedule, do: Process.send_after(self(), :flush, @flush_ms)
 
-  # Drains the buffer into ONE statement and returns whatever is still owed. Never raises: a
-  # counter is not worth taking this process down, and a crash would drop the buffer with it. A
-  # failed batch is re-queued by field, so the buffer stays bounded however long an outage runs,
-  # and the log stays at one line per flush rather than one per counter.
+  # Drains the buffer into ONE statement and returns whatever is still owed. Never raises — a
+  # counter is not worth this process, and its death would take the buffer too. A failed batch is
+  # re-queued by field, so the buffer stays bounded however long an outage runs.
   defp write(pending) when map_size(pending) == 0, do: pending
 
   defp write(pending) do

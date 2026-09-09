@@ -3,8 +3,11 @@
 # characters, spends adena and submits highscores — never touches the real dev data.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-# shellcheck disable=SC1091
-source ./.elixir-env
+# Only where the toolchain is not already on PATH: this machine keeps it under ~/.local, CI does not.
+if [ -f ./.elixir-env ]; then
+  # shellcheck disable=SC1091
+  source ./.elixir-env
+fi
 export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 # Its own MIX_ENV, so the build lands in the already-ignored _build/e2e rather than under the dev
 # server someone may be playing on. config/e2e.exs is just the dev configuration.

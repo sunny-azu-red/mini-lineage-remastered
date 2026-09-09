@@ -1,14 +1,11 @@
-# Builds the image here instead of pulling the published one:
+# Builds here instead of pulling the published image, and lives apart from docker-compose.yml so
+# that a deployment cannot reach it:
 #
 #     docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
-#
-# Kept out of docker-compose.yml so a deployment cannot accidentally build: Portainer prefers a
-# build section when it finds one, and then serves a tree nothing tested.
 services:
   mini-lineage:
     build:
       context: .
       args:
-        # Optional, and only cosmetic — it puts a commit link in the footer:
-        #     APP_VERSION=$(git rev-parse --short=7 HEAD) docker compose ... up --build
+        # Only cosmetic: APP_VERSION=$(git rev-parse --short=7 HEAD) puts a commit in the footer.
         APP_VERSION: ${APP_VERSION:-}
