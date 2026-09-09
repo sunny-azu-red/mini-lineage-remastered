@@ -8,6 +8,12 @@ on:
     branches: [main]
   pull_request:
 
+# Supersede a pull request's older runs, but never interrupt main: cancelling mid-publish could
+# leave one tag pushed and the other not.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: suite
@@ -176,11 +182,14 @@ jobs:
         id: version
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push
+      # Loaded, not pushed. Publishing first would leave a broken image tagged `latest` whenever the
+      # check below failed, and `latest` is what a deployment pulls.
+      - name: Build
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
+          load: true
+          push: false
           build-args: APP_VERSION=${{ steps.version.outputs.sha }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
@@ -189,13 +198,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # The stamp reaching `mix release` is a chain of small assumptions, and every way it can break
-      # is silent — a footer quietly reading `production` instead of naming its commit. Read it back
-      # out of the image that was just pushed, and fail here rather than in production.
+      # Every way the stamp can fail to reach `mix release` is silent — a footer that names no
+      # commit. Read it back out of the release config before this image is allowed out.
       - name: Check the image is stamped with its commit
         run: |
-          image="ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}"
-          docker pull -q "$image"
-          docker run --rm --entrypoint sh "$image" -c 'cat releases/*/sys.config' \
-            | grep -q '${{ steps.version.outputs.sha }}' \
+          docker run --rm --entrypoint sh \
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }} \
+            -c 'cat releases/*/sys.config' | grep -q '${{ steps.version.outputs.sha }}' \
             || { echo "::error::image does not report ${{ steps.version.outputs.sha }}"; exit 1; }
+
+      - name: Push
+        run: |
+          docker push ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}
+          docker push ghcr.io/${{ github.repository }}:latest

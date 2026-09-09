@@ -181,11 +181,13 @@ The file is looked for in the **working directory**, since a release has no repo
 names it anywhere else. A real environment variable always beats the file, so a platform that
 injects its own `PORT` still wins.
 
-The build stamps itself with `git rev-parse --short=7 HEAD`, which is what makes it a *release*
-rather than a debug build: the footer links the commit, and — the part that matters — the error
-screens stop naming the failure. Pass `APP_VERSION` to override it, and pass it explicitly wherever
-the build has no git checkout to ask, which is every Docker build and every CI job. It must be the
-short, seven-character form; a full sha does not count as a release.
+The build stamps itself with `git rev-parse --short=7 HEAD`, and the footer links that commit.
+`APP_VERSION` overrides it, and has to be given wherever the build has no checkout to ask — a
+Docker build, or CI. It must be the short seven-character form, since that is what the footer link
+recognises, and a build that can supply neither refuses to build rather than go unnamed.
+
+Whether a player is shown internals is a separate question, deliberately: a production build
+withholds them because it was compiled as one, not because it managed to learn its own name.
 
 A release carries no Mix, which is why migrations go through `MiniLineage.Release`. The database
 may be named either by the discrete `DB_*` keys or by a single `DATABASE_URL`; the parts win when
@@ -221,9 +223,13 @@ CI publishes the image, so a server pulls rather than builds:
     ghcr.io/sunny-azu-red/mini-lineage-remastered:latest
 
 The `publish` job runs only from `main`, and only behind both green jobs, so what is deployed is the
-artifact that passed. Every build is tagged twice — `latest` and its seven-character commit — and
-built with `APP_VERSION` set, which is what puts the commit link in the footer. Pin `IMAGE_TAG` to a
-commit to hold or roll back; leave it unset to follow `main`.
+artifact that passed. It builds without publishing, reads the commit back out of the release config
+inside the image, and only then pushes — so a build that cannot name itself never becomes `latest`.
+Every image is tagged twice, `latest` and its seven-character commit, so pinning `IMAGE_TAG` holds
+or rolls back to any of them; unset, it follows `main`.
+
+The image is built for **amd64 only**. On an ARM host the pull fails, and `platforms:` in the
+publish job is where that changes.
 
 Two things to do once, on the package's page in GitHub: make it **public**, or Portainer will need a
 registry credential to pull it; and, if you want, link it to the repository. Then point the stack at
