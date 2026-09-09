@@ -44,23 +44,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Pinned to the versions the game is developed against, and to the ones the Dockerfile builds.
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: "28.5.0.6"
-          elixir-version: "1.19.6"
-
-      - name: Cache deps and build
-        uses: actions/cache@v6
-        with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-mix-
+      - uses: ./.github/actions/setup-elixir
 
       - name: Fetch dependencies
         run: mix deps.get
+
+      # The image is built on a pinned base rather than by this action, so nothing but a check keeps
+      # the two on the same Elixir and OTP.
+      - name: The Dockerfile builds on what this tested
+        run: |
+          otp=$(grep -oP 'otp-version: "\K[^"]+' .github/actions/setup-elixir/action.yml)
+          ex=$(grep -oP 'elixir-version: "\K[^"]+' .github/actions/setup-elixir/action.yml)
+          grep -q "hexpm/elixir:${ex}-erlang-${otp}-" Dockerfile \
+            || { echo "::error::Dockerfile pins a different Elixir/OTP than CI installs"; exit 1; }
 
       - name: Check formatting
         run: mix format --check-formatted
@@ -116,24 +112,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: "28.5.0.6"
-          elixir-version: "1.19.6"
+      - uses: ./.github/actions/setup-elixir
 
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-
-      - name: Cache deps and build
-        uses: actions/cache@v6
-        with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-mix-
 
       - name: Install Playwright and its browser
         run: |
