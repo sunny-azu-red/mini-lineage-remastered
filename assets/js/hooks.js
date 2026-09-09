@@ -90,6 +90,13 @@ export const KonamiRelay = {
 export const PanelFocus = {
     mounted() {
         this.screen = this.el.dataset.screen;
+        // A click on a button is the player acting, and only an update that follows their own
+        // action may take focus back. Cleared by the next focus pass, so it never outlives it.
+        this.acted = false;
+        this.el.addEventListener('click', (e) => {
+            if (e.target.closest('button'))
+                this.acted = true;
+        });
         requestAnimationFrame(() => this.focusFirst(true));
     },
     updated() {
@@ -102,15 +109,23 @@ export const PanelFocus = {
     },
     focusFirst(arrived) {
         // You reach the death screen by dying, plausibly with a Space already travelling —
-        // focusing "Write your Legacy!" could submit a score before it has been read.
-        if (this.el.dataset.screen === 'death')
-            return;
+        // "Write your Legacy!" would submit a score before it has been read. Declining to focus is
+        // not enough: LiveView morphs the Fight button you died on into it and keeps focus there,
+        // so the panel has to actively let go.
+        if (this.el.dataset.screen === 'death') {
+            if (this.el.contains(document.activeElement))
+                document.activeElement.blur();
 
-        // Arriving on a screen should pull focus in; an in-screen update must stay gentle, so it
-        // never yanks focus off a select mid-tab or a name field mid-word. Without the
-        // distinction, LiveView morphing one screen's button into the next screen's left focus
-        // sitting on the wrong control.
-        if (!arrived && document.activeElement !== document.body)
+            return;
+        }
+
+        // Arriving pulls focus in. An in-screen update reclaims it only from nothing, or right
+        // after the player pressed a button — LiveView restores focus to that button, which on a
+        // shop left it on Order rather than the picker you buy from next. Anything else you moved
+        // to yourself is left alone, so a tick never yanks focus off a half-tabbed select.
+        const acted = this.acted;
+        this.acted = false;
+        if (!arrived && document.activeElement !== document.body && !acted)
             return;
 
         // Links are excluded deliberately, matching the reference: Space scrolls a link rather

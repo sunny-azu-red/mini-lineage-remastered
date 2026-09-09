@@ -338,6 +338,11 @@ try {
     const mealText = await page.textContent('#main .alert');
     check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
+    // LiveView restores focus to the button that submitted, which left a keyboard player on Order
+    // with the picker they buy from next unreachable without reaching for the mouse.
+    check('...and buying hands focus back to the picker, not the button just pressed',
+        await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
+        await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
 
     // One-shot: it belongs to the purchase, not to wherever you wander next.
     await leaveShop();
@@ -390,6 +395,24 @@ try {
         || (await state()).dead,
         `battles ${battlesBeforeTravel} -> ${await page.getAttribute('#screen', 'data-battles')}`);
 
+    // Focus that cannot be seen is not an affordance. Arriving by mouse leaves the button focused
+    // but not :focus-visible, so the ring has to come from plain :focus — as it does on a select.
+    // Named by colour, not merely "differs from idle": the base drop shadow alone would pass that.
+    const RING = '201, 168, 76';
+    const armedRing = () => page.evaluate(() => {
+        const el = document.activeElement;
+        return el?.matches('#main .btn')
+            ? getComputedStyle(el).boxShadow
+            : `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
+    });
+    // Waits: the ring transitions in, so reading straight after arrival catches a mid-flight value.
+    await page.waitForFunction(
+        ring => document.activeElement?.matches('#main .btn')
+            && getComputedStyle(document.activeElement).boxShadow.includes(ring),
+        RING, { timeout: 3000 }).catch(() => {});
+    check('...and the button it arms is visibly focused, not merely focused',
+        (await armedRing()).includes(RING), await armedRing());
+
     // The highest level actually observed, rather than a comparison around one call site:
     // travelling to the Battleground fights on arrival, so a level-up can land inside the heal
     // detour where a narrower check never looks.
@@ -400,6 +423,7 @@ try {
     // run whose rolls never left the character both wounded and solvent enough to eat.
     let mealsEaten = 0;
     let fightsFought = 0;
+    let focusLeftTheFight = false;
     let boughtWeapon = false;
     let boughtArmor = false;
     let current = await state();
@@ -476,6 +500,12 @@ try {
         await fight();
         fightsFought++;
         current = await state();
+        // The battlefield is played by hammering one button, so it has to still be under the
+        // keyboard afterwards — including across an ambush, which swaps it for a different button.
+        if (!current.dead && !focusLeftTheFight)
+            focusLeftTheFight = await page.evaluate(
+                () => document.activeElement?.getAttribute('phx-click') !== 'fight');
+
         maxLevel = Math.max(maxLevel, current.level ?? 1);
 
         if (!sawNarrative && await page.locator('#main p').count() > 0)
@@ -496,6 +526,13 @@ try {
     check('the character eventually died', current.dead === true,
         `dead=${current.dead} after ${fightsFought} fights (cap 120)`);
     check('death pins the player to the death screen', (await state()).screen === 'death');
+    check('the Fight button stays under the keyboard between fights', !focusLeftTheFight,
+        `${fightsFought} fights`);
+    // Dying in battle morphs the Fight button into "Write your Legacy!" in place, so focus rides
+    // across with it — and the Space that fought submits a score nobody has read yet.
+    check('...but dying releases it, so no stray Space writes a legacy',
+        await page.evaluate(() => !document.querySelector('#screen')?.contains(document.activeElement)),
+        await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.textContent?.trim().slice(0, 20) ?? '')));
 
     // ---- the dead cannot wander ---------------------------------------------------------------
     await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });

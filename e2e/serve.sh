@@ -16,4 +16,12 @@ export MIX_ENV=e2e
 export PORT="${PORT_E2E:-4002}"
 
 mix ecto.migrate >/dev/null
+
+# The walkthrough is only worth running against the bundle in the working tree. Code reloading is
+# off here, which turns Plug.Static's gzip on, so a `.gz` left behind by an earlier
+# `mix assets.deploy` is served in preference to a freshly built app.js — the browser then runs
+# whatever JS was current when that release was cut. Clear the digests, then build.
+mix phx.digest.clean --all >/dev/null
+mix assets.build >/dev/null
+
 exec mix phx.server
