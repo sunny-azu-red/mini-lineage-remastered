@@ -58,6 +58,19 @@ defmodule MiniLineage.Game.VersionTest do
       refute Version.release?(Version.current())
     end
 
+    test "the label is the build's own, so two unreleased servers are told apart" do
+      # `Application.compile_env`, so :test reports the default while config/e2e.exs gives the
+      # browser suites' server "🔥 testing". Nothing at runtime can move it, which is the point.
+      assert Version.current() == "⚡ development"
+    end
+
+    test "and whatever a build calls itself, it is never taken for a commit" do
+      # A label that happened to look like a short sha would render a footer link to a commit that
+      # does not exist. Holds for every environment's label, not only this one's.
+      refute Version.release?(Version.current())
+      assert Version.commit_url(Version.current()) == nil
+    end
+
     test "and there is no third answer: a nameless production build never gets built" do
       # config/prod.exs raises rather than stamp nothing, so the only way to reach the fallback
       # above is to be a debug build. A deployed footer therefore always names a commit.

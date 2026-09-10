@@ -98,6 +98,9 @@ in, not two.
 | `mix test` | a throwaway one | `DB_DATABASE_TEST` | — |
 | `mix e2e` | the same throwaway one, board emptied first | `DB_DATABASE_TEST` | `PORT_E2E` (4002) |
 
+An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
+so the two are never confused. A release names its commit instead.
+
 Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
 A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.
 `config/runtime.exs` reads it at BOOT, so a release started with `bin/mini_lineage start` picks up

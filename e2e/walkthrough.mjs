@@ -49,9 +49,11 @@ try {
     check('...including the display font', /Cinzel|Silkscreen/i.test(font), font);
     check('LiveView connects through the CSP', true);
 
-    // The footer names the running build, flagged when it is not a release.
+    // The footer names the running build, flagged when it is not a release. This server is the e2e
+    // one, so it must say so — a run that reports "development" is driving the dev server on 4000,
+    // against real data, and every destructive check below it is pointed at the wrong game.
     const footer = await page.textContent('#copyright');
-    check('the footer names the running build', /development/.test(footer ?? ''), footer?.trim());
+    check('the footer names this as the testing build', /testing/.test(footer ?? ''), footer?.trim());
     check('...and flags it as a debug build', await page.locator('#copyright .version-debug').count() === 1);
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');

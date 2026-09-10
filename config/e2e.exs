@@ -10,3 +10,7 @@ import_config "dev.exs"
 config :mini_lineage, MiniLineageWeb.Endpoint,
   code_reloader: false,
   live_reload: [patterns: []]
+
+# Its own name in the footer: this server and the dev one are both unreleased builds, and telling
+# them apart at a glance is the whole point of the label.
+config :mini_lineage, build_label: "🔥 testing"

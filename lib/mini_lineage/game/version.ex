@@ -4,7 +4,10 @@ defmodule MiniLineage.Game.Version do
   footer says which, so an unreachable backend still tells you what is loaded.
   """
   @commit_url "https://github.com/sunny-azu-red/mini-lineage-remastered/commit/"
-  @development "⚡ development"
+
+  # What a build with no commit to name calls itself. Baked per environment, so the browser
+  # suites' server on 4002 is never mistaken for the dev server on 4000.
+  @label Application.compile_env(:mini_lineage, :build_label, "⚡ development")
 
   @doc """
   APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build. Only two
@@ -15,7 +18,7 @@ defmodule MiniLineage.Game.Version do
   def current do
     with nil <- present(System.get_env("APP_VERSION")),
          nil <- present(Application.get_env(:mini_lineage, :app_version)) do
-      @development
+      @label
     end
   end
 
