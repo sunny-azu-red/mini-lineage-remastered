@@ -5,6 +5,21 @@ defmodule MiniLineage.Game.Version do
   """
   @commit_url "https://github.com/sunny-azu-red/mini-lineage-remastered/commit/"
 
+  # There is no such thing as a release that cannot say which commit it is. Enforced as this
+  # module compiles, which is the moment a build of the app actually happens — config/prod.exs
+  # cannot enforce it, because it is read by every mix task including `mix deps.compile`, long
+  # before the build arg carrying the version is in scope.
+  if Application.compile_env(:mini_lineage, :require_stamp, false) and
+       Application.compile_env(:mini_lineage, :app_version) in [nil, ""] do
+    raise """
+    no APP_VERSION, and no git checkout to take one from.
+
+    A production build names the commit it came from. Pass it:
+
+        docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) .
+    """
+  end
+
   # What a build with no commit to name calls itself. Baked per environment, so the browser
   # suites' server on 4002 is never mistaken for the dev server on 4000.
   @label Application.compile_env(:mini_lineage, :build_label, "⚡ development")

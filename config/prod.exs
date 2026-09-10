@@ -18,17 +18,12 @@ app_version =
       end
   end
 
-app_version ||
-  raise """
-  no APP_VERSION, and no git checkout to take one from.
-
-  A production build names the commit it came from — there is no such thing as a release that
-  cannot say which one it is. Pass it:
-
-      docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) .
-  """
-
 config :mini_lineage, :app_version, app_version
+
+# A production build must name the commit it came from, but this file is not where to insist on
+# it: config is evaluated by every mix task, `mix deps.compile` among them, and a dependency has
+# no business needing the app's version. MiniLineage.Game.Version refuses to compile without one.
+config :mini_lineage, require_stamp: true
 
 # Whatever the version turned out to be, a production build tells a player nothing.
 config :mini_lineage, debug_build: false
