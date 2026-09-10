@@ -219,7 +219,7 @@ try {
 
     await goHome();
     await travel('weapons');
-    check('...and so does the Weapons Shop',
+    check('...and so does the Weapon Shop',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id');
     await page.selectOption('#main select[name="item_id"]', '1'); // Elven Needle, 300 — unaffordable
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
@@ -235,7 +235,7 @@ try {
     check('an option can be chosen and left open', selectBefore === '2', `value ${selectBefore}`);
     await page.waitForTimeout(TICK_MS);
     check('a background tick leaves the main panel standing', await page.locator('#main').count() === 1);
-    check('...and the panel is still the Weapons Shop', (await state()).screen === 'weapons');
+    check('...and the panel is still the Weapon Shop', (await state()).screen === 'weapons');
     check('...and the purchase form survives', await page.locator('#main form[phx-submit="purchase"]').count() === 1);
     check('...and does not reset an open <select>',
         await page.inputValue('#main select[name="item_id"]') === selectBefore,
@@ -255,7 +255,7 @@ try {
     // Focus that cannot be seen is not an affordance. Arriving by mouse leaves the button focused
     // but not :focus-visible, so the ring has to come from plain :focus — as it does on a select.
     // Named by colour, not merely "differs from idle": the base drop shadow alone would pass that.
-    const RING = '201, 168, 76';
+    const RING = 'rgba(201, 168, 76, 0.45)'; // --focus-ring-color, the full ring
     const armedRing = () => page.evaluate(() => {
         const el = document.activeElement;
         return el?.matches('#main .btn')
@@ -280,7 +280,10 @@ try {
     // Driven, not waited for. Arriving already fought once, and an Orc regenerates nothing, so it
     // stays hurt until it eats — which makes the heal, and the sweep it triggers, something this
     // run causes rather than something it hopes the dice allow.
-    while (fightsFought < 3 && !current.dead && current.health === current.maxHealth) {
+    // Also fights an ambush out: an ambushed player is pinned to the Battleground, so the Inn is
+    // unreachable until it is answered, and an ambush is answered only by fighting again.
+    while (fightsFought < 8 && !current.dead
+           && (current.health === current.maxHealth || current.ambushed)) {
         await fight();
         fightsFought++;
         current = await state();
@@ -289,11 +292,12 @@ try {
     check('fighting wounds the character', current.health < current.maxHealth,
         `${current.health}/${current.maxHealth} after arrival and ${fightsFought} further fight(s)`);
     check('...and narrates the encounter', await page.locator('#main p').count() > 0);
-    // Never fires in practice — three fights cannot spend an Orc's opening health — but it says so
-    // outright rather than skipping the shimmer in silence if it ever does.
-    check('...and leaves it alive to reach the Inn', !current.dead, `died after ${fightsFought}`);
+    // Never fires in practice — eight fights neither spend an Orc's opening health nor stay
+    // ambushed throughout — but it says so outright rather than skipping the shimmer in silence.
+    check('...and leaves it free to walk to the Inn', !current.dead && !current.ambushed,
+        `dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s)`);
 
-    if (!current.dead) {
+    if (!current.dead && !current.ambushed) {
         await goHome();
         await travel('inn');
         const wounded = await state();

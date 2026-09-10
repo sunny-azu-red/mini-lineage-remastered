@@ -88,7 +88,7 @@ try {
         await onScreen('home');
 
         // ---- normal play: shops open and price goods, the road runs out at the grave -----------
-        for (const [shop, heading] of [['inn', 'Inn'], ['weapons', 'Weapons Shop'], ['armors', 'Armor Shop']]) {
+        for (const [shop, heading] of [['inn', 'Inn'], ['weapons', 'Weapon Shop'], ['armors', 'Armor Shop']]) {
             await travel(shop);
             if ((await state()).screen !== shop)
                 break;

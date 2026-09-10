@@ -120,24 +120,15 @@
 
 /*
  * ===== Focus =====
- * A click focuses a button without making it :focus-visible, so on the battlefield the panel's
- * auto-focus left the button armed and unmarked — Space fought and nothing said it would. Mirrors
- * .form-select:focus: the hover-strength ring here, the stronger keyboard one below.
+ * One ring, whatever moved focus here. This is the entire affordance telling you what Space will
+ * do, so it is deliberately stronger than :hover's.
+ *
+ * :focus, not :focus-visible. Chrome grants :focus-visible to a <select> whether it was clicked or
+ * tabbed to, but withholds it from a button until a keypress — so the panel's own auto-focus lit
+ * the travel picker while leaving the Battleground's button looking untouched, and the ring turned
+ * up only once you pressed Tab. Keying on :focus is what makes the two agree.
  */
 .btn:focus {
-    border-color: var(--gold-dim);
-    box-shadow:
-        0 0 0 2px rgba(201, 168, 76, 0.15),
-        0 1px 3px rgba(0, 0, 0, 0.35);
-    outline: none;
-}
-
-/*
- * Keyboard focus. This ring is the entire affordance telling you what Space will do, so it is
- * deliberately stronger than :hover's. Must stay AFTER the rule above, which it ties on
- * specificity and beats only by being declared later.
- */
-.btn:focus-visible {
     border-color: var(--gold);
     box-shadow:
         var(--focus-ring),
