@@ -218,15 +218,38 @@ it on bare Alpine with no Elixir or Mix — the release brings its own ERTS. It 
 database of its own, so point `DB_HOST` at one the container can reach.
 
 `docker-compose.yml` pulls the published image and has no `build:` section, so a deployment can
-only ever run what CI built. To build one by hand:
+only ever run what CI built. The container migrates before it serves, so a fresh database is never
+served against.
+
+### Building and running it standalone
+
+The image needs nothing from compose or Portainer. Build it, then run it:
 
 ```bash
 docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) -t mini-lineage .
+
+docker run --rm -p 4000:4000 --env-file .env \
+  --add-host host.docker.internal:host-gateway \
+  -e DB_HOST=host.docker.internal \
+  mini-lineage
 ```
 
-The container migrates before it serves, so a fresh database is never served against. Compose reads
-`.env` itself and passes the values in as environment variables, so the image needs no copy of the
-file — and those variables beat any file anyway.
+Three things decide whether that works:
+
+- **`DB_HOST` must be reachable from inside the container.** `127.0.0.1` there is the container
+  itself, not your machine — hence the `--add-host`/`-e` pair above. A database on another host
+  needs neither.
+- **`--env-file` is Docker's own parser, not this app's.** It does not strip a comment written
+  after a value, so `PHX_HOST=localhost # the domain` would set the hostname to the whole line.
+  `.env.example` keeps every comment on its own line for exactly this reason. To use this app's
+  parser instead, mount the file at the working directory the release reads it from:
+  `-v "$PWD/.env:/app/.env:ro"`. The container runs as a non-root user, so that file has to be
+  readable by others — a `chmod 600 .env` makes the mount fail where `--env-file` would not.
+- **Keep `PHX_HOST=localhost` for a local run.** With a real domain, `force_ssl` answers every
+  plain-http request with a redirect to it; `localhost` and `127.0.0.1` are the excluded pair.
+
+The build **requires** `APP_VERSION` and refuses without one, so that no image can be running
+without being able to say which commit it is. For a throwaway image any seven characters will do.
 
 ### Deploying
 
