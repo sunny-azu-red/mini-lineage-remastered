@@ -56,7 +56,8 @@ Requires **Elixir 1.19+ on OTP 28+**, and a reachable MariaDB or MySQL.
 Once, ever:
 
 ```bash
-echo '[ -f ~/mini-lineage-remastered/env.sh ] && source ~/mini-lineage-remastered/env.sh' >> ~/.bashrc
+grep -q 'mini-lineage-remastered/env.sh' ~/.bashrc \
+  || echo '[ -f ~/mini-lineage-remastered/env.sh ] && source ~/mini-lineage-remastered/env.sh' >> ~/.bashrc
 exec bash                   # or just open a new terminal
 
 cd ~/mini-lineage-remastered
@@ -101,7 +102,7 @@ still works, but only because it forwards to `mix e2e` — there is one path, no
 |---|---|---|---|
 | `mix phx.server` | your real characters, highscores and statistics | `DB_DATABASE` | `PORT` (4000) |
 | `mix test` | a throwaway one | `DB_DATABASE_TEST` | — |
-| `e2e/serve.sh` | the same throwaway one | `DB_DATABASE_TEST` | `PORT_E2E` (4002) |
+| `mix e2e` | the same throwaway one, board emptied first | `DB_DATABASE_TEST` | `PORT_E2E` (4002) |
 
 Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
 A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.
@@ -298,7 +299,7 @@ behaves the same as CI's fresh one. That script refuses any database not named f
 One command, one terminal:
 
 ```bash
-mix e2e                 # both, about four minutes
+mix e2e                 # both, about a minute
 mix e2e walkthrough     # just the first
 ```
 
