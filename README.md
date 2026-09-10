@@ -194,6 +194,12 @@ PHX_SERVER=true _build/prod/rel/mini_lineage/bin/mini_lineage start
 `.env` is looked for in the **working directory**; `ENV_FILE` names it anywhere else. A real
 environment variable always beats the file.
 
+If a migration has to come back out, the same binary rolls it back:
+
+```bash
+bin/mini_lineage eval 'MiniLineage.Release.rollback(MiniLineage.Repo, 20260906000002)'
+```
+
 The build stamps itself with `git rev-parse --short=7 HEAD` and the footer links that commit.
 `APP_VERSION` overrides it, in the seven-character form, and is required wherever the build has no
 checkout to ask — a Docker build, or CI. A build that can supply neither refuses to build.

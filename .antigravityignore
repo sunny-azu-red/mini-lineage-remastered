@@ -1,7 +1,9 @@
 /.git/
-/dist/
-/coverage/
+/_build/
+/cover/
+/deps/
 /node_modules/
+/priv/static/assets/
 /.env
 /package-lock.json
 .DS_Store

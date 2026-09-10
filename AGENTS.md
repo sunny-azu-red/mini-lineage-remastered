@@ -1,23 +1,30 @@
-This is a web application written using the Phoenix web framework.
+This is Mini-Lineage Remastered: a text-based RPG in Elixir, Phoenix LiveView and OTP.
 
-## Project guidelines
+## This project, specifically
 
-- Use `mix precommit` alias when you are done with all changes and fix any pending issues
-- Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
+The generic Phoenix guidance below is worth reading, but where it disagrees with this list, this
+list wins — several generator defaults do not exist here.
 
-### Phoenix v1.8 guidelines
+- **There is no `core_components.ex`.** It was deleted as dead code, so there is no `<.icon>`, no
+  `<.input>`, and no `<.flash_group>`. Every control is hand-written HEEx in
+  `lib/mini_lineage_web/components/`. Ignore any advice below that reaches for those.
+- **There is no HTTP client** — no `Req`, no `:httpoison`. The game calls nothing outward.
+- **There is no authentication**, so no `current_scope`, no `live_session` scoping, no user table.
+  A browser is tied to a character by a signed session cookie and nothing else.
+- **There are no LiveView streams.** One character's state is one assign.
+- The database is **MariaDB via MyXQL**, not Postgres. Character state is a single JSON document.
+- One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
+  character goes through its process, never straight to the database.
+- `<Layouts.app>` does exist and every LiveView template starts with it.
 
-- **Always** begin your LiveView templates with `<Layouts.app flash={@flash} ...>` which wraps all inner content
-- The `MyAppWeb.Layouts` module is aliased in the `my_app_web.ex` file, so you can use it without needing to alias it again
-- Anytime you run into errors with no `current_scope` assign:
-  - You failed to follow the Authenticated Routes guidelines, or you failed to pass `current_scope` to `<Layouts.app>`
-  - **Always** fix the `current_scope` error by moving your routes to the proper `live_session` and ensure you pass `current_scope` as needed
-- Phoenix v1.8 moved the `<.flash_group>` component to the `Layouts` module. You are **forbidden** from calling `<.flash_group>` outside of the `layouts.ex` module
-- Out of the box, `core_components.ex` imports an `<.icon name="hero-x-mark" class="w-5 h-5"/>` component for hero icons. **Always** use the `<.icon>` component for icons, **never** use `Heroicons` modules or similar
-- **Always** use the imported `<.input>` component for form inputs from `core_components.ex` when available. `<.input>` is imported and using it will save steps and prevent errors
-- If you override the default input classes (`<.input class="myclass px-2 py-1 rounded-lg">)`) class with your own values, no default classes are inherited, so your
-custom classes must fully style the input
+### Working here
 
+- `mix precommit` before you call anything done.
+- `mix e2e` runs the browser suites — they are where the web layer is actually covered, so a
+  change to a screen, a hook or the CSS is not verified until they pass.
+- Keep comments to one to three lines. Say why, not what, and never write a paragraph.
+- Do not assert on a dice roll in the browser suites. What the RNG decides belongs in
+  `test/mini_lineage/game/balance_golden_test.exs`, which can seed it.
 
 <!-- usage-rules-start -->
 
@@ -403,7 +410,8 @@ Always give the form an explicit, unique DOM ID, like `id="todo-form"`.
 
 #### Avoiding form errors
 
-**Always** use a form assigned via `to_form/2` in the LiveView, and the `<.input>` component in the template. In the template **always access forms this**:
+**Always** use a form assigned via `to_form/2` in the LiveView. (This project has no `<.input>`
+component — write the input directly — but the `@form[:field]` access below still applies.)
 
     <%!-- ALWAYS do this (valid) --%>
     <.form for={@form} id="my-form">

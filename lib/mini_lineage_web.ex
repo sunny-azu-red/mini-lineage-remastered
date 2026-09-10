@@ -4,7 +4,7 @@ defmodule MiniLineageWeb do
   body belongs in a module of its own, since every one of these runs in every user of it.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths, do: ~w(assets favicon.ico robots.txt)
 
   def router do
     quote do
@@ -14,16 +14,6 @@ defmodule MiniLineageWeb do
       import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
-    end
-  end
-
-  def controller do
-    quote do
-      use Phoenix.Controller, formats: [:html, :json]
-
-      import Plug.Conn
-
-      unquote(verified_routes())
     end
   end
 
@@ -40,8 +30,7 @@ defmodule MiniLineageWeb do
       use Phoenix.Component
 
       # Import convenience functions from controllers
-      import Phoenix.Controller,
-        only: [get_csrf_token: 0, view_module: 1, view_template: 1]
+      import Phoenix.Controller, only: [get_csrf_token: 0]
 
       # Include general helpers for rendering HTML
       unquote(html_helpers())

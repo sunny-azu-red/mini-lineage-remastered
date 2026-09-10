@@ -289,7 +289,7 @@ defmodule MiniLineage.Game.Player do
 
   # ----------------------------------------------------------------- economy
 
-  def deduct_cost(player, cost) do
+  defp deduct_cost(player, cost) do
     if player.adena < cost,
       do: {player, false},
       else: {%{player | adena: player.adena - cost}, true}
