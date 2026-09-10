@@ -8,6 +8,12 @@ on:
     branches: [main]
   pull_request:
 
+# Supersede a pull request's older runs, but never interrupt main: cancelling mid-publish could
+# leave one tag pushed and the other not.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: suite
@@ -38,23 +44,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Pinned to the versions the game is developed against, and to the ones the Dockerfile builds.
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: "28.5.0.6"
-          elixir-version: "1.19.6"
-
-      - name: Cache deps and build
-        uses: actions/cache@v4
-        with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-mix-
+      - uses: ./.github/actions/setup-elixir
 
       - name: Fetch dependencies
         run: mix deps.get
+
+      # The image is built on a pinned base rather than by this action, so nothing but a check keeps
+      # the two on the same Elixir and OTP.
+      - name: The Dockerfile builds on what this tested
+        run: |
+          otp=$(grep -oP 'otp-version: "\K[^"]+' .github/actions/setup-elixir/action.yml)
+          ex=$(grep -oP 'elixir-version: "\K[^"]+' .github/actions/setup-elixir/action.yml)
+          grep -q "hexpm/elixir:${ex}-erlang-${otp}-" Dockerfile \
+            || { echo "::error::Dockerfile pins a different Elixir/OTP than CI installs"; exit 1; }
 
       - name: Check formatting
         run: mix format --check-formatted
@@ -110,44 +112,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: "28.5.0.6"
-          elixir-version: "1.19.6"
+      - uses: ./.github/actions/setup-elixir
 
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
 
-      - name: Cache deps and build
-        uses: actions/cache@v4
-        with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-mix-
-
       - name: Install Playwright and its browser
         run: |
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Create the walkthrough's database
+      - name: Create the browser suites' database
         env:
           MIX_ENV: e2e
           DB_DATABASE: lineage_remastered_test
         run: mix do deps.get + ecto.create
 
-      # serve.sh migrates, then serves on PORT_E2E against DB_DATABASE_TEST.
-      - name: Serve the game
-        run: |
-          e2e/serve.sh &
-          timeout 120 bash -c 'until curl -sf "$E2E_BASE_URL" >/dev/null; do sleep 1; done'
+      # `mix e2e` starts the server, empties the board and stops the server again, so there is
+      # nothing here to keep in step with how a developer runs it. One step per suite, so the log
+      # says which one failed without anyone opening it.
+      - name: Drive one character through a real browser
+        run: mix e2e walkthrough
 
-      - name: Drive it in a real browser
-        run: npm run test:e2e
+      - name: Play every lineage
+        run: mix e2e races
 
   # Only from main, and only behind both green jobs: what is published is what was tested. The
   # image carries the commit, so a deployment names itself without anyone remembering to say so.
@@ -176,11 +166,14 @@ jobs:
         id: version
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push
+      # Loaded, not pushed. Publishing first would leave a broken image tagged `latest` whenever the
+      # check below failed, and `latest` is what a deployment pulls.
+      - name: Build
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
+          load: true
+          push: false
           build-args: APP_VERSION=${{ steps.version.outputs.sha }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
@@ -188,3 +181,18 @@ jobs:
           # Layers survive between runs, so only what actually changed is rebuilt.
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Every way the stamp can fail to reach `mix release` is silent — a footer that names no
+      # commit. Read it back out of the release config before this image is allowed out.
+      - name: Check the image is stamped with its commit
+        run: |
+          docker run --rm --entrypoint sh \
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }} \
+            -c 'grep -q "$1" "releases/$(cut -d" " -f2 releases/start_erl.data)/sys.config"' \
+            sh '${{ steps.version.outputs.sha }}' \
+            || { echo "::error::image does not report ${{ steps.version.outputs.sha }}"; exit 1; }
+
+      - name: Push
+        run: |
+          docker push ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}
+          docker push ghcr.io/${{ github.repository }}:latest

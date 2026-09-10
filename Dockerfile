@@ -21,12 +21,9 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer, when whoever builds knows it. Not read from a .git here: a
-# Portainer stack sends the working tree WITHOUT one, and a COPY of it fails the build outright.
-# Nothing but the footer link depends on this — a build with no version reports itself as
-# `production`, and shows a player no internals either way.
+# Names the commit in the footer. CI passes it; config/prod.exs reads it during `mix release`, for
+# which an ARG is already an environment variable. Not read from a .git — a deploy has none.
 ARG APP_VERSION
-ENV APP_VERSION=$APP_VERSION
 
 # `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
 # here, so the build needs no database and no secret.
@@ -51,7 +48,6 @@ LABEL org.opencontainers.image.licenses="MIT"
 COPY --from=builder /app/_build/prod/rel/mini_lineage ./
 
 ENV PHX_SERVER=true
-EXPOSE 4000
 
 RUN addgroup -S app && adduser -S -G app app && chown -R app:app /app
 USER app

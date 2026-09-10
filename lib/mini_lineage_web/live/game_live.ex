@@ -82,12 +82,9 @@ defmodule MiniLineageWeb.GameLive do
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
-    # `game_flash` is one-shot, tied to the action that produced it — leaving the screen drops it.
-    # A notice is not: it reports a refusal, and survives until dismissed or superseded.
-    #
-    # An action that both flashes AND moves you (creating a character, dying) would otherwise
-    # clear its own message on the way, so a flash set by this navigation survives exactly one
-    # arrival. The reference achieves the same by setting flash and screen in one update.
+    # A flash belongs to the action that produced it and survives exactly one arrival, so an action
+    # that both flashes and moves you — creating a character, dying — does not clear its own
+    # message on the way. A notice is different: it reports a refusal and waits to be dismissed.
     socket =
       if socket.assigns[:flash_fresh],
         do: assign(socket, flash_fresh: false),
@@ -206,11 +203,8 @@ defmodule MiniLineageWeb.GameLive do
 
   # ------------------------------------------------------------------ plumbing
 
-  # Runs an action in the character's process, then folds its result into the view.
-  #
-  # A genuinely unexpected failure lands on the error screen rather than taking the LiveView down
-  # and silently remounting. `catch` covers the character process exiting, which reaches the
-  # caller as an exit rather than a raise.
+  # Runs an action in the character's process and folds the result into the view. A failure lands on
+  # the error screen rather than remounting; `catch` is for the process exiting, which is not a raise.
   defp apply_action(socket, fun) do
     id = socket.assigns.character_id
     result = Characters.mutate(id, fun)

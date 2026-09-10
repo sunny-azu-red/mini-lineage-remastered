@@ -3,39 +3,23 @@
  * stale bundle, or a background push wiping the panel — every browser-only bug in this project
  * lived in exactly that gap.
  *
+ * One character, played normally, end to end. What it asserts is what the browser alone can see:
+ * screens render, controls answer, focus lands where the keyboard needs it. How a fight rolls
+ * belongs to the unit suite, which can seed the dice; nothing here claims a level was reached.
+ * Every lineage is covered by races.mjs.
+ *
  * Usage: start the isolated server (`e2e/serve.sh`), then
  *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node e2e/walkthrough.mjs
  */
 import { chromium } from 'playwright';
+import { BASE, reporter, traceAudio, controls } from './helpers.mjs';
 
-const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 const TICK_MS = 6000; // the regen tick is 5s; allow a margin
 
-const failures = [];
-const check = (label, ok, detail = '') => {
-    console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`);
-    if (!ok)
-        failures.push(label);
-};
-
+const { check, failures } = reporter();
 const browser = await chromium.launch();
 const context = await browser.newContext();
-
-// Records every note the page actually plays. Web Audio produces no output to assert on, so the
-// synth is verified by the graph it builds — the same idea as the reference's sound trace test.
-await context.addInitScript(() => {
-    window.__notes = [];
-    const create = AudioContext.prototype.createOscillator;
-    AudioContext.prototype.createOscillator = function () {
-        const osc = create.call(this);
-        const start = osc.start.bind(osc);
-        osc.start = (when) => {
-            window.__notes.push(osc.type);
-            return start(when);
-        };
-        return osc;
-    };
-});
+await traceAudio(context);
 
 const page = await context.newPage();
 
@@ -49,117 +33,9 @@ page.on('requestfailed', r => {
         failedRequests.push(`${r.method()} ${r.url()} :: ${r.failure()?.errorText}`);
 });
 
-/** The character's live state, read off the one element that mirrors it. */
-const state = async () => {
-    const el = page.locator('#screen');
-    const raw = await el.evaluate(node => ({ ...node.dataset }));
-    return {
-        screen: raw.screen,
-        started: raw.started === 'true',
-        dead: raw.dead === 'true',
-        ambushed: raw.ambushed === 'true',
-        level: raw.level ? Number(raw.level) : null,
-        health: raw.health ? Number(raw.health) : null,
-        maxHealth: raw.maxHealth ? Number(raw.maxHealth) : null,
-        adena: raw.adena ? Number(raw.adena) : null,
-    };
-};
-
-const onScreen = (name) => page.waitForSelector(`#screen[data-screen="${name}"]`, { timeout: 8000 });
-
-/**
- * Clicks Fight and waits for the result to actually land. A fixed sleep raced the round trip: a
- * FATAL fight patches to the death screen while a stale read still says alive, and the next click
- * then hunts a Fight button that no longer exists. A fatal fight is not counted as a battle, so
- * the battle counter alone is not enough — either signal ends the wait.
- */
-async function fight() {
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    const before = await page.getAttribute('#screen', 'data-battles');
-    // Matched on the event, not the label: an ambush relabels this button to the narrative's own
-    // prompt ("Face your Foe!"), which shares no words with the ordinary one.
-    await page.click('#main button[phx-click="fight"]', { timeout: 8000 });
-    await page.waitForFunction(
-        (prev) => {
-            const el = document.querySelector('#screen');
-            return !!el && (el.dataset.screen === 'death' || el.dataset.battles !== prev);
-        },
-        before,
-        { timeout: 8000 },
-    );
-}
-
-/**
- * Travels via the Town form, which is how a player actually moves.
- *
- * Waits for the socket first: an unconnected LiveView submits the form natively, and the real
- * navigation that follows is then aborted the moment the socket comes up. That produced a
- * `net::ERR_ABORTED` against the failed-request assertion perhaps one run in five.
- */
-/** Returns to Town by clicking the banner, the way the header link works in the game. */
-async function goHome() {
-    await page.click('#header-link');
-    await onScreen('home');
-}
-
-/**
- * Buys one item and waits for the purse to actually move.
- *
- * Waiting for `#main .alert` instead returns immediately — the previous purchase's alert is still
- * on screen — so the next iteration reads stale adena and tries to buy what it can no longer
- * afford. Returns false when the purchase was refused.
- */
-async function buy(itemId) {
-    const before = await page.getAttribute('#screen', 'data-adena');
-    await page.selectOption('#main select[name="item_id"]', String(itemId), { timeout: 5000 });
-    await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
-
-    return page
-        .waitForFunction(
-            (prev) => document.querySelector('#screen')?.dataset.adena !== prev,
-            before,
-            { timeout: 5000 },
-        )
-        .then(() => true)
-        .catch(() => false);
-}
-
-/** Leaves a shop through its own "🚪 Home Town" option rather than by navigating away. */
-async function leaveShop() {
-    await page.selectOption('#main select[name="item_id"]', '', { timeout: 5000 });
-    await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
-    await onScreen('home');
-}
-
-async function travel(to) {
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    await onScreen('home');
-
-    try {
-        await page.selectOption('#main select[name="to"]', to, { timeout: 5000 });
-    } catch {
-        const ds = await page.locator('#screen').evaluate(n => JSON.stringify({ ...n.dataset }));
-        const controls = await page.locator('#main select, #main button').allTextContents();
-        throw new Error(`no travel form on the way to "${to}". screen=${ds} controls=${JSON.stringify(controls)}`);
-    }
-
-    await page.click('#main form[phx-submit="navigate"] button[type="submit"]');
-    // Travelling to the Battleground fights on arrival, which can kill outright.
-    try {
-        await page.waitForFunction(
-            (dest) => {
-                const screen = document.querySelector('#screen')?.dataset.screen;
-                return screen === dest || screen === 'death';
-            },
-            to,
-            { timeout: 8000 },
-        );
-    } catch {
-        // A LiveView that crashed remounts on the screen it started from, so say which trip
-        // failed rather than reporting a bare timeout.
-        throw new Error(`travel to "${to}" never arrived — still on "${(await state()).screen}"`);
-    }
-}
+const {
+    state, onScreen, goHome, buttonSettles, buy, leaveShop, travel, fight, boardRows, activeFilter,
+} = controls(page);
 
 try {
     // Never `networkidle`: the LiveView websocket stays open, so it never settles.
@@ -173,9 +49,11 @@ try {
     check('...including the display font', /Cinzel|Silkscreen/i.test(font), font);
     check('LiveView connects through the CSP', true);
 
-    // The footer names the running build, flagged when it is not a release.
+    // The footer names the running build, flagged when it is not a release. This server is the e2e
+    // one, so it must say so — a run that reports "development" is driving the dev server on 4000,
+    // against real data, and every destructive check below it is pointed at the wrong game.
     const footer = await page.textContent('#copyright');
-    check('the footer names the running build', /development/.test(footer ?? ''), footer?.trim());
+    check('the footer names this as the testing build', /testing/.test(footer ?? ''), footer?.trim());
     check('...and flags it as a debug build', await page.locator('#copyright .version-debug').count() === 1);
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
@@ -183,10 +61,8 @@ try {
     check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));
 
     // ---- access policy: a visitor cannot walk into the game -----------------------------------
-    // The `page.goto` calls from here on are deliberate: a TYPED URL is the thing under test, and
-    // there is no in-app link to these screens for a visitor to click. Everywhere else the
-    // walkthrough clicks, because a route reached only by URL is a route that never gets tested —
-    // travelling to the Battleground crashed the LiveView while its URL worked perfectly.
+    // `page.goto` on purpose: a TYPED URL is what is under test here, and a visitor has no link to
+    // click. Everywhere else this clicks, because a route only ever reached by URL is untested.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
     await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
@@ -244,22 +120,6 @@ try {
         await page.evaluate(() => document.activeElement?.tagName));
 
     // ---- the action button answers to the selection ---------------------------------------------
-    const actionButton = async () => ({
-        label: (await page.textContent('#main form button'))?.trim(),
-        cls: await page.getAttribute('#main form button', 'class'),
-    });
-    // The label and the variant are both server-rendered, so choosing an option is a round trip and
-    // reading the button straight afterwards races the patch. Waits for the label, then reads ONCE:
-    // the same snapshot decides the check and explains it. Reading twice let an assertion fail on a
-    // stale button while its message quoted the settled one, which reads as nonsense in a log.
-    const buttonSettles = async expected => {
-        await page.waitForFunction(
-            label => document.querySelector('#main form button')?.textContent.trim() === label,
-            expected, { timeout: 5000 }).catch(() => {});
-
-        return actionButton();
-    };
-
     let btn = await buttonSettles('Travel');
     check('Town offers to Travel before anything is picked', btn.label === 'Travel', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'suicide');
@@ -309,10 +169,6 @@ try {
     await onScreen('highscores');
     check('Town links through to the Hall of Champions', (await state()).screen === 'highscores');
 
-    const boardRows = () => page.locator('#main table.data-table tbody tr').count();
-    const activeFilter = async () =>
-        (await page.textContent('#main .action-links a.active'))?.replace(/\s+/g, ' ').trim();
-
     // The filters themselves are checked after a legacy is written, further down: on a fresh
     // database this board is empty, and "narrows" cannot mean anything about no rows at all.
     check('the board opens on All', (await activeFilter())?.trim() === 'All', await activeFilter());
@@ -341,6 +197,11 @@ try {
     const mealText = await page.textContent('#main .alert');
     check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
+    // LiveView restores focus to the button that submitted, which left a keyboard player on Order
+    // with the picker they buy from next unreachable without reaching for the mouse.
+    check('...and buying hands focus back to the picker, not the button just pressed',
+        await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
+        await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
 
     // One-shot: it belongs to the purchase, not to wherever you wander next.
     await leaveShop();
@@ -360,7 +221,7 @@ try {
 
     await goHome();
     await travel('weapons');
-    check('...and so does the Weapons Shop',
+    check('...and so does the Weapon Shop',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id');
     await page.selectOption('#main select[name="item_id"]', '1'); // Elven Needle, 300 — unaffordable
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
@@ -376,16 +237,15 @@ try {
     check('an option can be chosen and left open', selectBefore === '2', `value ${selectBefore}`);
     await page.waitForTimeout(TICK_MS);
     check('a background tick leaves the main panel standing', await page.locator('#main').count() === 1);
-    check('...and the panel is still the Weapons Shop', (await state()).screen === 'weapons');
+    check('...and the panel is still the Weapon Shop', (await state()).screen === 'weapons');
     check('...and the purchase form survives', await page.locator('#main form[phx-submit="purchase"]').count() === 1);
     check('...and does not reset an open <select>',
         await page.inputValue('#main select[name="item_id"]') === selectBefore,
         `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
 
-    // ---- fight until level-up, then until death -----------------------------------------------
-    // Entered from the Town form, the way a player does — NOT by typing the URL. Travelling to
-    // the Battleground is its own code path, and it crashed the LiveView while a typed URL
-    // worked perfectly, so the shortcut this test used to take proved nothing.
+    // ---- the battleground ---------------------------------------------------------------------
+    // From the Town form, not a typed URL: travelling is its own path, and it once crashed the
+    // LiveView while the URL worked perfectly.
     await goHome();
     const battlesBeforeTravel = Number(await page.getAttribute('#screen', 'data-battles'));
     await travel('battle');
@@ -394,110 +254,96 @@ try {
         || (await state()).dead,
         `battles ${battlesBeforeTravel} -> ${await page.getAttribute('#screen', 'data-battles')}`);
 
-    // The highest level actually observed, rather than a comparison around one call site:
-    // travelling to the Battleground fights on arrival, so a level-up can land inside the heal
-    // detour where a narrower check never looks.
-    let maxLevel = 1;
-    let sawNarrative = false;
-    let sawShimmer = false;
-    // Counted so a failure below can say WHICH thing went wrong: a shimmer that never fired, or a
-    // run whose rolls never left the character both wounded and solvent enough to eat.
-    let mealsEaten = 0;
+    // Focus that cannot be seen is not an affordance. Arriving by mouse leaves the button focused
+    // but not :focus-visible, so the ring has to come from plain :focus — as it does on a select.
+    // Named by colour, not merely "differs from idle": the base drop shadow alone would pass that.
+    const RING = 'rgba(201, 168, 76, 0.45)'; // --focus-ring-color, the full ring
+    const armedRing = () => page.evaluate(() => {
+        const el = document.activeElement;
+        return el?.matches('#main .btn')
+            ? getComputedStyle(el).boxShadow
+            : `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
+    });
+    // Waits: the ring transitions in, so reading straight after arrival catches a mid-flight value.
+    await page.waitForFunction(
+        ring => document.activeElement?.matches('#main .btn')
+            && getComputedStyle(document.activeElement).boxShadow.includes(ring),
+        RING, { timeout: 3000 }).catch(() => {});
+    check('...and the button it arms is visibly focused, not merely focused',
+        (await armedRing()).includes(RING), await armedRing());
+
     let fightsFought = 0;
-    let boughtWeapon = false;
-    let boughtArmor = false;
+    let focusLeftTheFight = false;
     let current = await state();
     check('the battleground is reachable with a living character', current.screen === 'battle',
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
-    for (let i = 0; i < 120 && !current.dead; i++) {
-        // A trip to town: eat, and upgrade whatever the purse now covers. Fighting on with the
-        // starting fists never earns enough XP to reach level 2 before an Orc runs out of health,
-        // so a player who never shops is not a realistic one. An ambush pins you here regardless.
-        // Food comes second until the weapon is bought: an Orc starts 50 adena short of one, and
-        // a purse spent on meals never closes that gap — so it fights on with fists, earns too
-        // little XP to level, and dies anyway.
-        const hungerThreshold = boughtWeapon ? 0.5 : 0.25;
-        const wantsFood = current.health < current.maxHealth * hungerThreshold && current.adena >= 7;
-        const wantsWeapon = !boughtWeapon && current.adena >= 300;
-        const wantsArmor = !boughtArmor && current.adena >= 500;
-
-        if (maxLevel === 1 && !current.ambushed && (wantsFood || wantsWeapon || wantsArmor)) {
-            await goHome();
-
-            if (wantsFood) {
-                await travel('inn');
-                // Eats until healthy or broke. One meal is a losing trade: getting back to the
-                // Battleground fights on arrival, which costs more than a cheap dish restores.
-                const MEAL_COSTS = [7, 15, 60, 250, 1200];
-                for (let meal = 0; meal < 12; meal++) {
-                    current = await state();
-                    if (current.health >= current.maxHealth * 0.9)
-                        break;
-
-                    const best = [...MEAL_COSTS.keys()].reverse().find(i => current.adena >= MEAL_COSTS[i]);
-                    if (best === undefined)
-                        break;
-
-                    // Eaten while genuinely wounded, so HP really rises — a gain shimmers, damage never does.
-                    const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 2000 })
-                        .then(() => true).catch(() => false);
-
-                    if (!(await buy(best)))
-                        break;
-
-                    mealsEaten++;
-                    sawShimmer = sawShimmer || await shimmer;
-                }
-
-                await leaveShop();
-            }
-
-            current = await state();
-            maxLevel = Math.max(maxLevel, current.level ?? 1);
-
-            if (!boughtWeapon && current.adena >= 300) {
-                await travel('weapons');
-                boughtWeapon = await buy(1);
-                await leaveShop();
-                current = await state();
-            }
-
-            if (!boughtArmor && current.adena >= 500) {
-                await travel('armors');
-                boughtArmor = await buy(1);
-                await leaveShop();
-            }
-
-            await travel('battle');
-            current = await state();
-            maxLevel = Math.max(maxLevel, current.level ?? 1);
-            continue;
-        }
-
+    // ---- a gain shimmers, and damage never does -------------------------------------------------
+    // Driven, not waited for. Arriving already fought once, and an Orc regenerates nothing, so it
+    // stays hurt until it eats — which makes the heal, and the sweep it triggers, something this
+    // run causes rather than something it hopes the dice allow.
+    // Also fights an ambush out: an ambushed player is pinned to the Battleground, so the Inn is
+    // unreachable until it is answered, and an ambush is answered only by fighting again.
+    while (fightsFought < 8 && !current.dead
+           && (current.health === current.maxHealth || current.ambushed)) {
         await fight();
         fightsFought++;
         current = await state();
-        maxLevel = Math.max(maxLevel, current.level ?? 1);
-
-        if (!sawNarrative && await page.locator('#main p').count() > 0)
-            sawNarrative = true;
     }
 
-    // These four ride on the rolls, so each reports the run that produced it: a bare pass/fail here
-    // is unactionable when it only happens once in a dozen runs.
-    check('fighting narrates the encounter', sawNarrative, `${fightsFought} fights`);
-    check('healing while wounded sweeps a shimmer across the HP bar', sawShimmer,
-        mealsEaten === 0
-            ? 'NO MEAL WAS EVER EATEN — the run never left the character both wounded and solvent'
-            : `${mealsEaten} meal(s) eaten`);
+    check('fighting wounds the character', current.health < current.maxHealth,
+        `${current.health}/${current.maxHealth} after arrival and ${fightsFought} further fight(s)`);
+    check('...and narrates the encounter', await page.locator('#main p').count() > 0);
+    // Never fires in practice — eight fights neither spend an Orc's opening health nor stay
+    // ambushed throughout — but it says so outright rather than skipping the shimmer in silence.
+    check('...and leaves it free to walk to the Inn', !current.dead && !current.ambushed,
+        `dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s)`);
+
+    if (!current.dead && !current.ambushed) {
+        await goHome();
+        await travel('inn');
+        const wounded = await state();
+        // Armed before the purchase: the sweep lasts 600ms and is gone by the time adena settles.
+        const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 3000 })
+            .then(() => true).catch(() => false);
+        const bought = await buy(0); // Spiced Ale, 7 adena — inside every lineage's opening purse
+        const healed = await state();
+
+        check('a meal heals the wounded', bought && healed.health > wounded.health,
+            `${wounded.health} -> ${healed.health}`);
+        check('...and the gain sweeps a shimmer across the HP bar', await shimmer);
+        await leaveShop();
+        await travel('battle');
+        current = await state();
+    }
+
+    // ---- the road ends at the grave -------------------------------------------------------------
+    // Fights on without shopping, so health only falls and this terminates. Nothing is claimed
+    // about the level reached or the damage taken: the dice own that, and balance_golden_test.exs
+    // is where they can be held still.
+    for (let i = 0; i < 200 && !current.dead && current.screen === 'battle'; i++) {
+        await fight();
+        fightsFought++;
+        current = await state();
+        // The battlefield is played by hammering one button, so it has to still be under the
+        // keyboard afterwards — including across an ambush, which swaps it for a different button.
+        if (!current.dead && !focusLeftTheFight)
+            focusLeftTheFight = await page.evaluate(
+                () => document.activeElement?.getAttribute('phx-click') !== 'fight');
+    }
+
     check('the counters carry their live values for the animation',
         await page.locator('#sidebar [data-value]').count() === 3);
-    check('the character levelled up along the way', maxLevel > 1,
-        `reached level ${maxLevel} over ${fightsFought} fights, ${mealsEaten} meal(s)`);
-    check('the character eventually died', current.dead === true,
-        `dead=${current.dead} after ${fightsFought} fights (cap 120)`);
+    check('the road ends at the grave', current.dead === true,
+        `dead=${current.dead} after ${fightsFought} fights (cap 200)`);
     check('death pins the player to the death screen', (await state()).screen === 'death');
+    check('the Fight button stays under the keyboard between fights', !focusLeftTheFight,
+        `${fightsFought} fights`);
+    // Dying in battle morphs the Fight button into "Write your Legacy!" in place, so focus rides
+    // across with it — and the Space that fought submits a score nobody has read yet.
+    check('...but dying releases it, so no stray Space writes a legacy',
+        await page.evaluate(() => !document.querySelector('#screen')?.contains(document.activeElement)),
+        await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.textContent?.trim().slice(0, 20) ?? '')));
 
     // ---- the dead cannot wander ---------------------------------------------------------------
     await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
@@ -513,15 +359,9 @@ try {
     check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
     check('submitting also clears the character', (await state()).started === false);
 
-    // The race filters, clicked as a player would — including back to All, which is simply
-    // /highscores with no race in the path and so is the one that can silently do nothing. Here
-    // rather than on arrival, because BrowserBot has just guaranteed the board is not empty:
-    // narrowing an empty board proves nothing, and putting an empty board back proves less. That
-    // Orc entry is also what makes "narrows" sound — the Elf board cannot be the whole board.
-    //
-    // Submitting lands on /highscores/<your own race>, so widen to All before measuring. Each wait
-    // names the path it expects: `!== '/highscores'` was already true here and passed instantly,
-    // and every assertion after it then read the page from before the click.
+    // Here, not on arrival: BrowserBot's Orc entry is what makes the board non-empty and the Elf
+    // filter narrower than All. Submitting lands on /highscores/<own race>, so widen first — and
+    // each wait names the path it expects, since "not /highscores" was already true.
     await page.click('#main .action-links a:has-text("All")');
     await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
     const allRows = await boardRows();

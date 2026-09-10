@@ -1,0 +1,19 @@
+name: Set up Elixir
+description: The toolchain the game is developed against, and the cache of what it builds.
+
+runs:
+  using: composite
+  steps:
+    # Pinned here alone, so the two jobs that need them cannot drift apart.
+    - uses: erlef/setup-beam@v1
+      with:
+        otp-version: "28.5.0.6"
+        elixir-version: "1.19.6"
+
+    - uses: actions/cache@v6
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-

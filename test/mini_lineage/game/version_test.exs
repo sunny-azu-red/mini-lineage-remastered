@@ -58,15 +58,23 @@ defmodule MiniLineage.Game.VersionTest do
       refute Version.release?(Version.current())
     end
 
-    test "but a PRODUCTION build with neither does not claim to be development" do
-      Application.put_env(:mini_lineage, :debug_build, false)
-      on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, true) end)
+    test "the label is the build's own, so two unreleased servers are told apart" do
+      # `Application.compile_env`, so :test reports the default while config/e2e.exs gives the
+      # browser suites' server "🔥 testing". Nothing at runtime can move it, which is the point.
+      assert Version.current() == "⚡ development"
+    end
 
-      # Built from a source copy with no repository and no APP_VERSION. It cannot name its commit,
-      # which is a reason to say so — not to describe a deployed server as a development one.
-      assert Version.current() == "production"
+    test "and whatever a build calls itself, it is never taken for a commit" do
+      # A label that happened to look like a short sha would render a footer link to a commit that
+      # does not exist. Holds for every environment's label, not only this one's.
       refute Version.release?(Version.current())
-      refute Version.commit_url(Version.current())
+      assert Version.commit_url(Version.current()) == nil
+    end
+
+    test "and there is no third answer: a nameless production build never gets built" do
+      # config/prod.exs raises rather than stamp nothing, so the only way to reach the fallback
+      # above is to be a debug build. A deployed footer therefore always names a commit.
+      assert Version.current() == "⚡ development"
     end
   end
 
@@ -115,8 +123,7 @@ defmodule MiniLineage.Game.VersionTest do
       Application.put_env(:mini_lineage, :debug_build, false)
       on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, true) end)
 
-      # No APP_VERSION, no stamp: this build cannot name its commit, and must still say nothing.
-      assert Version.current() == "production"
+      # Whatever it calls itself, a production build shows a player nothing.
       refute Version.release?(Version.current())
       refute Version.debug_build?()
     end

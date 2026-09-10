@@ -96,10 +96,8 @@ defmodule MiniLineage.Characters.Server do
 
   # ------------------------------------------------------------------- core
 
-  # lock -> load-time sync/sweep -> mutate -> post-sync -> persist -> broadcast. The lock is the
-  # process itself. Whether anything changed is decided by comparing the struct, so a handler
-  # never has to remember to report it. `fun` returns `{player, result}`, the same shape every
-  # game function already returns, so they compose here without a wrapper.
+  # sync/sweep -> mutate -> sync -> persist -> broadcast, serialised by the process itself. Whether
+  # anything changed is decided by comparing the struct, never by a handler remembering to say so.
   defp run(state, fun, opts \\ []) do
     before = state.player
 
@@ -137,11 +135,8 @@ defmodule MiniLineage.Characters.Server do
     Enum.filter(player.effects, &(&1.expires_at != nil and &1.expires_at <= now))
   end
 
-  # One line per firing: `[TICK:<id>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
-  #
-  # The zone reads the RESTING aura rather than the absence of combat: regeneration is granted by
-  # that aura, so a screen in neither zone list is its own case rather than a mislabelled "Resting"
-  # logged beside a tick that did nothing.
+  # `[TICK:<id>] <Zone> | HP: <old> -> <new>/<max> (<status>)`. The zone reads the RESTING aura, not
+  # the absence of combat: a screen in neither list is its own case, not a mislabelled "Resting".
   defp log_tick(id, player, health_before, expired, changed?) do
     stats = Player.stats(player)
     dead? = player.dead or player.health <= 0

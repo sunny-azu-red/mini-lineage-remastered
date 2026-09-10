@@ -1,11 +1,7 @@
 services:
   mini-lineage:
-    # The image CI built from the commit that passed, already named after it. IMAGE_TAG pins an
-    # older one; the default follows main.
-    #
-    # No `build:` here on purpose. With one, Portainer builds from the working tree instead of
-    # pulling — which deploys something no test ran against, and which cannot name its own commit,
-    # so the footer reads `production`. Building locally is docker-compose.build.yml.
+    # What CI built and tested. No `build:` on purpose — given one, Portainer builds the working
+    # tree instead of pulling, and deploys something nothing ran against.
     image: ghcr.io/sunny-azu-red/mini-lineage-remastered:${IMAGE_TAG:-latest}
     container_name: mini-lineage
     restart: always

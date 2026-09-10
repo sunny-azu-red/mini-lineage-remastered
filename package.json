@@ -1,5 +1,5 @@
 {
-  "name": "mini-lineage",
+  "name": "mini-lineage-remastered",
   "version": "1.5.0",
   "description": "Mini-Lineage Remastered is a modern rewrite of the original Mini-Lineage game.",
   "author": "Sunny",
@@ -7,7 +7,9 @@
   "keywords": [],
   "private": true,
   "scripts": {
-    "test:e2e": "node e2e/walkthrough.mjs"
+    "test:e2e": "mix e2e walkthrough",
+    "test:e2e:races": "mix e2e races",
+    "test:e2e:all": "mix e2e"
   },
   "devDependencies": {
     "playwright": "1.63.0"

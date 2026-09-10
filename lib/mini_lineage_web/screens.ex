@@ -16,7 +16,7 @@ defmodule MiniLineageWeb.Screens do
     "start" => "Game Start",
     "home" => "Home Town",
     "inn" => "Inn",
-    "weapons" => "Weapons Shop",
+    "weapons" => "Weapon Shop",
     "armors" => "Armor Shop",
     "suicide" => "Commit Suicide",
     "battle" => "Battleground",
@@ -270,7 +270,7 @@ defmodule MiniLineageWeb.Screens do
         %{value: "inn", label: "🍺 Inn"},
         %{value: "armors", label: "🛡️ Armor Shop"},
         %{value: "weapons", label: "🗡️ Weapon Shop"},
-        %{value: "battle", label: "💀 Battlefield"},
+        %{value: "battle", label: "💀 Battleground"},
         %{value: "suicide", label: "🥀 Commit Suicide"}
       ]}
       default_label="Travel"
@@ -412,7 +412,7 @@ defmodule MiniLineageWeb.Screens do
       stat_header: "P. Attack",
       stat_title: "Physical Attack",
       action_label: "🪙 Purchase",
-      intro_a: "You have arrived at the Weapons Shop.",
+      intro_a: "You have arrived at the Weapon Shop.",
       intro_b: "The nice man greets you and lets you look through his swords."
     )
   end

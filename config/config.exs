@@ -1,21 +1,15 @@
-# This file is responsible for configuring your application
-# and its dependencies with the aid of the Config module.
-#
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
-
-# General application configuration
 import Config
 
-# How long a character survives without being played. It is a SLIDING window — the clock restarts
-# every time you touch the character — and the session cookie is issued for exactly the same span,
-# so the two can never disagree about whether your character is still there.
+# How long a character survives unplayed — a SLIDING window, and the same span the session cookie
+# is issued for, so the two cannot disagree about whether a character is still there.
 config :mini_lineage, character_ttl_hours: 24 * 30
 
-# May this build show its internals? Overridden in prod.exs. Deliberately NOT derived from the
-# version: a deployment that forgets to stamp a sha should lose the commit link in the footer, never
-# gain a stack trace on the error screen.
+# May this build show its internals? Overridden in prod.exs. Not derived from the version: a
+# deployment that stamps no sha should lose the footer's commit link, never gain a stack trace.
 config :mini_lineage, debug_build: true
+
+# A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.
+config :mini_lineage, secure_cookie: false
 
 config :mini_lineage,
   ecto_repos: [MiniLineage.Repo],
