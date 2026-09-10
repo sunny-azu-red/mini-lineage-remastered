@@ -6,9 +6,9 @@
 # that is really about leftovers. CI gets this for free from a new database each run.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-if [ -f ./.elixir-env ]; then
+if [ -f ./env.sh ]; then
   # shellcheck disable=SC1091
-  source ./.elixir-env
+  source ./env.sh
 fi
 export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 export MIX_ENV=e2e

@@ -124,24 +124,20 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Create the walkthrough's database
+      - name: Create the browser suites' database
         env:
           MIX_ENV: e2e
           DB_DATABASE: lineage_remastered_test
         run: mix do deps.get + ecto.create
 
-      # serve.sh migrates, then serves on PORT_E2E against DB_DATABASE_TEST.
-      - name: Serve the game
-        run: |
-          e2e/serve.sh &
-          timeout 120 bash -c 'until curl -sf "$E2E_BASE_URL" >/dev/null; do sleep 1; done'
+      # `mix e2e` starts the server, empties the board and stops the server again, so there is
+      # nothing here to keep in step with how a developer runs it. One step per suite, so the log
+      # says which one failed without anyone opening it.
+      - name: Drive one character through a real browser
+        run: mix e2e walkthrough
 
-      - name: Drive it in a real browser
-        run: npm run test:e2e
-
-      # Separate step so the log says which suite failed without anyone opening it.
       - name: Play every lineage
-        run: npm run test:e2e:races
+        run: mix e2e races
 
   # Only from main, and only behind both green jobs: what is published is what was tested. The
   # image carries the commit, so a deployment names itself without anyone remembering to say so.

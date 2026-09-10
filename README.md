@@ -53,17 +53,31 @@ Requires **Elixir 1.19+ on OTP 28+**, and a reachable MariaDB or MySQL.
 
 ## Running it
 
-The Erlang and Elixir toolchain lives outside this repo (there is no root on this machine, so it
-was installed from precompiled builds into `~/.local/lib`). One line puts it on your `PATH`:
+Once, ever:
 
 ```bash
+echo '[ -f ~/mini-lineage-remastered/env.sh ] && source ~/mini-lineage-remastered/env.sh' >> ~/.bashrc
+exec bash                   # or just open a new terminal
+
 cd ~/mini-lineage-remastered
-source .elixir-env          # needed once per terminal
-mix setup                   # first time only: deps, database, assets
-mix dev
+mix setup                   # deps, database, assets, and the test browser
 ```
 
-Then open **http://localhost:4000**.
+After that, every terminal already has what it needs and there is nothing to source:
+
+```bash
+mix                         # the game, on http://localhost:4000
+mix e2e                     # the browser suites, server and all
+```
+
+`env.sh` is what that one line installs. This machine has no root, so the Erlang and Elixir
+builds, the libraries the ERTS links against, the ones Playwright's Chromium links against, and
+Node itself (nvm hides from non-interactive shells) all live under `~/.local` or `~/.nvm` instead
+of on the system path. `env.sh` puts every one of them where a shell will find it, skips whatever
+a given machine installed properly, and is safe to source twice.
+
+You can still `source env.sh` by hand in a terminal instead — and the repo's own scripts do
+exactly that, so they work whether or not you have.
 
 To keep an IEx shell attached while it runs — handy for poking at a live character:
 
@@ -71,11 +85,15 @@ To keep an IEx shell attached while it runs — handy for poking at a live chara
 iex -S mix phx.server
 ```
 
-If you would rather not source anything, add this line to `~/.bashrc`:
+### Why there is an npm as well as a mix
 
-```bash
-source ~/mini-lineage-remastered/.elixir-env
-```
+`mix` runs everything. npm is not a second way in: it exists only to download Playwright and the
+Chromium it drives, because there is no Elixir package that ships a browser. It builds nothing —
+the JavaScript and CSS are bundled by esbuild, which comes from the `esbuild` **Elixir** package,
+so `mix assets.build` needs no Node at all.
+
+`mix setup` runs `npm ci` for you, and `mix e2e` calls the suites directly. `npm run test:e2e`
+still works, but only because it forwards to `mix e2e` — there is one path, not two.
 
 ## Which database
 
@@ -108,9 +126,9 @@ mix stop                # stop a release that is still running
 
 mix test                # the Elixir suite
 mix test.coverage       # ...with a coverage report
-npm run test:e2e        # one character, played normally — see below
-npm run test:e2e:races  # every lineage
-npm run test:e2e:all    # both
+mix e2e                 # both browser suites — see below
+mix e2e walkthrough     # ...one character, played normally
+mix e2e races           # ...every lineage
 
 mix ecto.migrate        # apply pending migrations
 mix ecto.migrations     # what is applied
@@ -277,27 +295,21 @@ Both empty the board first, through `e2e/reset.sh`, so a local database that has
 behaves the same as CI's fresh one. That script refuses any database not named for a test, because
 `highscores` also exists in the one people play on.
 
-Playwright is the only thing Node is still here for — two packages, and no build step:
+One command, one terminal:
 
 ```bash
-npm ci
-npx playwright install chromium
+mix e2e                 # both, about four minutes
+mix e2e walkthrough     # just the first
 ```
 
-Then two terminals:
+It starts the isolated server, empties the board, drives Chromium, and stops the server it
+started. A server you already have running on that port is used as it is and left alone, so
+`e2e/serve.sh` in another terminal still works if you want one up while you poke at it.
 
-```bash
-# terminal 1 — its own port and its own database, so it can play destructively
-./e2e/serve.sh
-
-# terminal 2 — one of them, or `test:e2e:all` for both
-LD_LIBRARY_PATH=~/.local/lib/playwright-deps npm run test:e2e
-LD_LIBRARY_PATH=~/.local/lib/playwright-deps npm run test:e2e:races
-```
-
-`LD_LIBRARY_PATH` is required on this machine only: Chromium's `libnss3`/`libnspr4` were extracted
-to `~/.local/lib/playwright-deps` rather than installed system-wide. With
-`npx playwright install --with-deps chromium`, as CI does, it is not needed.
+Only one run at a time: they share a database and each empties the board before it starts, so a
+second `mix e2e` refuses and names the one already going rather than corrupting both. That is not
+hypothetical — a stray suite run alongside a soak is what emptied the board mid-check and produced
+three failures that had nothing to do with the game.
 
 Neither suite asserts on a roll of the dice. A browser run cannot seed the generator, so a check
 that needs the character to *reach* something — a level, a purse, a wound deep enough to be worth

@@ -4,9 +4,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # Only where the toolchain is not already on PATH: this machine keeps it under ~/.local, CI does not.
-if [ -f ./.elixir-env ]; then
+if [ -f ./env.sh ]; then
   # shellcheck disable=SC1091
-  source ./.elixir-env
+  source ./env.sh
 fi
 export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 # Its own MIX_ENV, so the build lands in the already-ignored _build/e2e rather than under the dev
