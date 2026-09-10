@@ -21,9 +21,15 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer. CI passes it; config/prod.exs reads it during `mix release`, for
-# which an ARG is already an environment variable. Not read from a .git — a deploy has none.
+# Names the commit in the footer. CI passes it; config/prod.exs reads it. Not read from a .git —
+# a deploy has none.
+#
+# Declared here, after the dependency layers, so a new commit does not rebuild them. The ENV is
+# not redundant: BuildKit keys a layer on an ARG only when the command mentions it, and mix reads
+# this from the environment instead — so without it the release below could be served from cache
+# and carry the previous build's commit.
 ARG APP_VERSION
+ENV APP_VERSION=${APP_VERSION}
 
 # `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
 # here, so the build needs no database and no secret.
