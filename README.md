@@ -6,12 +6,12 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 
 ## 🌟 Key Features
 ### 🎮 Gameplay & Combat
-- **Distinct Racial Profiles**: Choose between **Humans**, **Orcs**, **Elves**, and **Dark Elves**, each with its own starting health, inheritance, innate critical chance, ambush risk, and passive HP regeneration — plus a fixed rival race you fight for the whole run.
-- **Tactical Combat Simulation**: Dynamically scaled encounters where Weapon Attack drives enemy party size, XP and Adena payouts, while Armor Defense mitigates incoming damage *sub-linearly* so stacking armor never reaches invincibility.
+- **Four Lineages**: **Humans**, **Orcs**, **Elves** and **Dark Elves**, each with its own starting health, purse, critical chance, ambush risk and HP regeneration, and a fixed rival race it fights all run.
+- **Scaled Combat**: Weapon Attack drives enemy party size, XP and Adena; Armor Defense mitigates damage *sub-linearly*, so stacking armor never reaches invincibility.
 - **Punchy Critical Strikes**: A `1.9×` critical multiplier applied to enemies slain, XP, and Adena alike, so a crit stays impactful at every attack tier.
 - **Chain Ambush Engine**: Every fight rolls a fresh ambush against your live ambush risk. Two consecutive ambushes inflict the `Hexed` debuff (`+4% Ambush Risk`, `-2% Crit`, 1 minute), snowballing the danger for reckless adventurers.
 - **Equipment & Progression**: 6 weapon tiers and 6 armor tiers, the top ones carrying innate modifiers (*Calamity Comet*'s crit, *Eternal Aegis*' regen), across a level curve that runs to **level 80**.
-- **Playable Without a Mouse**: The main panel's first control takes focus on arrival, so <kbd>Space</kbd> on the Battleground fights again and again, and <kbd>↑</kbd><kbd>↓</kbd> + <kbd>Enter</kbd> drives travel and the shops. Pressing a button reclaims focus for the screen that answers — buying at a shop hands it back to the picker you buy from next, rather than leaving it on Order — while a control you moved to yourself is left alone, so a background tick never yanks focus off a half-tabbed select. The death screen is the exception in both directions: focus is not placed there, and is actively released if the button you died on morphs into "Write your Legacy!" beneath it, so the <kbd>Space</kbd> that fought cannot submit a score you have not read. Focus is drawn wherever it lands, including when it arrives by mouse.
+- **Playable Without a Mouse**: The panel's first control takes focus on arrival, so <kbd>Space</kbd> fights on the Battleground and <kbd>↑</kbd><kbd>↓</kbd> + <kbd>Enter</kbd> drives travel and the shops. Pressing a button hands focus to whatever answers — buying gives it back to the picker — while a control you moved to yourself is left alone. The death screen takes no focus and releases any it inherits, so the <kbd>Space</kbd> that fought cannot submit a score unread.
 
 ### 🎧 Procedural 8-Bit Web Audio Engine
 - **Zero Audio Assets**: 100% synthesized in real time via the browser's native `AudioContext`, `OscillatorNode`, and `GainNode`.
@@ -21,11 +21,11 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 
 ### ⚡ Real-Time Engine & Zones
 - **Server-Side Tick Cadence**: A 5-second tick loop applies passive HP regeneration and sweeps expired buffs/debuffs, alongside exact per-effect timers so an expiry fires to the millisecond rather than waiting for the next tick.
-- **Location-Based Zones**: The client reports its current screen (`player:screen`); the server classifies that as a combat zone (Battleground, Suicide, Death — regeneration pauses) or a resting zone (Town, Inn, Shops, Character, Highscores — regeneration applies). Being *ambushed* forces combat regardless of what the client claims, so a raw socket client can never lie its way out of one.
-- **Disengaging Takes Five Seconds**: Leaving a combat zone does not rest you instantly — ⚔️ *In Combat* stays, gains a 5-second countdown, and only when that elapses does 💤 *Resting* take over and regeneration resume. Standing in a combat zone keeps you flagged *indefinitely* with no countdown at all, so waiting on the Battleground never restores a single point of health. The countdown is anchored to leaving the zone, so stepping back in cancels it and stepping out again starts a fresh one.
+- **Location-Based Zones**: The server classifies the reported screen as combat (Battleground, Suicide, Death — regeneration pauses) or resting (everywhere else). Being *ambushed* forces combat whatever the client claims, so a raw socket client cannot lie its way out of one.
+- **Disengaging Takes Five Seconds**: Leaving combat keeps ⚔️ *In Combat* for a 5-second countdown before 💤 *Resting* resumes regeneration. Standing in a combat zone keeps the flag indefinitely, so waiting on the Battleground never heals; stepping back in cancels the countdown.
 - **Regeneration Is Earned, Not Assumed**: 🌿 *Regenerating* is derived per snapshot rather than stored, so it appears and vanishes on its own: it needs the resting aura, a wound, and a positive HP-regen rate at once. An Orc (no innate regen) never sees it; a player at full health loses it the instant they top up.
-- **Non-Mutating Reads**: Connecting, reconnecting, or refreshing only ever *reads* state. A fight happens exclusively on an explicit `battle:fight` — never on page load — which makes the classic navigate-away-mid-ambush exploit structurally impossible instead of merely punished.
-- **LiveView Streaming**: One WebSocket carries the whole game. Every action is a `phx-click` or `phx-submit`; the server diffs the rendered HTML and pushes only what changed — HP and status on tick, effect expiry to the millisecond, and every player action, with no page reloads. Multiple tabs on one session stay in sync over `Phoenix.PubSub`.
+- **Non-Mutating Reads**: Connecting, reconnecting and refreshing only *read* state. A fight happens only on an explicit `battle:fight`, never on page load, so navigating away mid-ambush escapes nothing.
+- **LiveView Streaming**: One WebSocket carries the whole game. The server diffs the rendered HTML and pushes only what changed, with no page reloads. Multiple tabs on one session stay in sync over `Phoenix.PubSub`.
 
 ### 🍖 Inn & Consumables
 - **Tiered Meals**: Five dishes from *Spiced Ale* to *Roasted Pheasant*. All restore HP; the top three also grant a timed buff (*Satisfied*, *Well Fed*, *Gourmet Feast*) that temporarily expands the maximum health pool. Only one food buff is active at a time — a new meal replaces the old one.
@@ -33,12 +33,12 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 ### 🏆 Leaderboards & Statistics
 - **Live Leaderboards**: The top 25 adventurers ordered by total Experience, then Adena — filterable per race. Cowards and cheaters are barred from posting.
 ### 🛡️ Security & Reliability
-- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player is allowed to be, and every navigation funnels through `handle_params/3` — an in-app link, a typed URL and the Back button all obey the same checks. The dead are confined to the death screen; the living are kept *off* it (it offers "Play Again?", which wipes the character); a player with a character cannot wander back into character creation, Statistics or Races; a visitor without one is confined to Game Start, Statistics, Races and Highscores; and an ambushed player is pinned to the battleground. The game owns every URL — an unrecognised path resolves to Town rather than erroring.
+- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player may be, and every navigation funnels through `handle_params/3`, so an in-app link, a typed URL and the Back button obey the same checks. The dead are confined to the death screen and the living kept off it; a player with a character cannot re-enter character creation; an ambushed one is pinned to the Battleground. The game owns every URL — an unrecognised path resolves to Town.
 - **Guarded Mutations**: Every event that changes state declares its own preconditions, enforced server-side. Client-side routing is convenience; these guards are the boundary. Notably restarting requires a *dead* character, so a living one can never be wiped.
-- **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. Serialisation is a property of the mailbox rather than a mutex a caller must remember to take, so concurrent actions on one session cannot interleave into a lost update.
+- **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Revision-Guarded State**: Every persisted mutation bumps a monotonic `revision`, so a stale push can never clobber fresher state.
 - **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies, validation on every payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
-- **Idle Characters Are Reaped**: A character process arms a stop timer the moment it starts and cancels it when a viewer attaches, so a crawler or health check leaves nothing running. Rows outlive the process and are swept after 30 days — the same window the session cookie uses.
+- **Idle Characters Are Reaped**: A character process arms a stop timer at start and cancels it when a viewer attaches, so a crawler leaves nothing running. Rows outlive the process and are swept after 30 days, the window the session cookie uses.
 
 ## 🛠️ Tech Stack
 
@@ -71,16 +71,11 @@ mix                         # the game, on http://localhost:4000
 mix e2e                     # the browser suites, server and all
 ```
 
-`env.sh` is what that one line installs. This machine has no root, so the Erlang and Elixir
-builds, the libraries the ERTS links against, the ones Playwright's Chromium links against, and
-Node itself (nvm hides from non-interactive shells) all live under `~/.local` or `~/.nvm` instead
-of on the system path. `env.sh` puts every one of them where a shell will find it, skips whatever
-a given machine installed properly, and is safe to source twice.
+There is no root on this machine, so Elixir, the ERTS libraries, Chromium's libraries and Node
+all live under `~/.local` and `~/.nvm`. `env.sh` puts them on the PATH. It is safe to source
+twice, and the repo's scripts source it themselves, so they work either way.
 
-You can still `source env.sh` by hand in a terminal instead — and the repo's own scripts do
-exactly that, so they work whether or not you have.
-
-To keep an IEx shell attached while it runs — handy for poking at a live character:
+To keep an IEx shell attached while it runs:
 
 ```bash
 iex -S mix phx.server
@@ -88,13 +83,12 @@ iex -S mix phx.server
 
 ### Why there is an npm as well as a mix
 
-`mix` runs everything. npm is not a second way in: it exists only to download Playwright and the
-Chromium it drives, because there is no Elixir package that ships a browser. It builds nothing —
-the JavaScript and CSS are bundled by esbuild, which comes from the `esbuild` **Elixir** package,
-so `mix assets.build` needs no Node at all.
+npm downloads Playwright and the Chromium it drives, and nothing else. It builds nothing: the
+JavaScript and CSS are bundled by esbuild, which is an **Elixir** package, so `mix assets.build`
+needs no Node.
 
-`mix setup` runs `npm ci` for you, and `mix e2e` calls the suites directly. `npm run test:e2e`
-still works, but only because it forwards to `mix e2e` — there is one path, not two.
+`mix setup` runs `npm ci` for you. `npm run test:e2e` forwards to `mix e2e`, so there is one way
+in, not two.
 
 ## Which database
 
@@ -144,20 +138,17 @@ mix balance             # the balance simulations — see below
 `mix dev` does not migrate: that is a deployment step, and `mix start` does it. Run
 `mix ecto.migrate` yourself after pulling a schema change.
 
-**Ctrl-C does not stop the server `mix start` and `mix prod` launch.** Erlang spawns it into its own
-process group, where this terminal's interrupt never reaches it, so it keeps running — holding the
-port and the node name. Use `mix stop`. If you forget, `mix dev` and `mix start` both notice and
-say so by name rather than failing on `:eaddrinuse`.
+**Ctrl-C does not stop the server `mix start` and `mix prod` launch** — Erlang puts it in its own
+process group, beyond this terminal's interrupt. Use `mix stop`. If you forget, `mix dev` and
+`mix start` say so by name rather than failing on `:eaddrinuse`.
 
-`mix test.coverage` reports, it does not gate. The browser suites are where the web layer is
-actually exercised and they are not instrumented, so the number understates what is covered — a
-threshold here would fail honestly-tested code and teach everyone to ignore it.
+`mix test.coverage` reports, it does not gate. The browser suites exercise the web layer and are
+not instrumented, so the number understates what is covered.
 
 ## Balance simulations
 
-The ten studies that tuned this game, carried over from the TypeScript implementation this
-replaced. They read the shipped constants, so a rebalance is re-measured by rerunning them rather
-than by editing them.
+Ten studies that measure the balance. They read the shipped constants, so a rebalance is
+re-measured by rerunning them rather than by editing them.
 
 ```bash
 mix balance                 # list them
@@ -176,12 +167,10 @@ then the server in the foreground:
 mix prod          # = mix build && mix start
 ```
 
-**It stops at the first failing test and deploys nothing**, so a build that does not pass never
-reaches the server. Each step is its own `mix` process, because MIX_ENV is fixed for the life of
-one and the tests need `:test` while everything after them needs `:prod`.
+**It stops at the first failing test and deploys nothing.**
 
-To do it by hand instead — `config/runtime.exs` is read at boot, not at build, so nothing here
-needs a database or a secret until the release actually starts:
+To do it by hand instead — nothing here needs a database or a secret, since `config/runtime.exs`
+is read at boot rather than at build:
 
 ```bash
 MIX_ENV=prod mix deps.get --only prod
@@ -189,38 +178,29 @@ MIX_ENV=prod mix assets.deploy      # compile, esbuild --minify, then phx.digest
 MIX_ENV=prod mix release
 ```
 
-Per command rather than `export MIX_ENV=prod`: an exported one outlives the build and follows you
-into `mix test`, which then runs without the sandbox and fails complaining about the pool.
+Set `MIX_ENV` per command, not with `export` — an exported one follows you into `mix test`, which
+then fails complaining about the pool.
 
-Then run it. `config/runtime.exs` reads `.env` at boot, so the release needs nothing on the command
-line that the file already answers — from the repo root, this is the whole of it:
+The release reads `.env` at boot, so from the repo root this is the whole of running it:
 
 ```bash
 _build/prod/rel/mini_lineage/bin/mini_lineage eval 'MiniLineage.Release.migrate()'
 PHX_SERVER=true _build/prod/rel/mini_lineage/bin/mini_lineage start
 ```
 
-The file is looked for in the **working directory**, since a release has no repo checkout; `ENV_FILE`
-names it anywhere else. A real environment variable always beats the file, so a platform that
-injects its own `PORT` still wins.
+`.env` is looked for in the **working directory**; `ENV_FILE` names it anywhere else. A real
+environment variable always beats the file.
 
-The build stamps itself with `git rev-parse --short=7 HEAD`, and the footer links that commit.
-`APP_VERSION` overrides it, and has to be given wherever the build has no checkout to ask — a
-Docker build, or CI. It must be the short seven-character form, since that is what the footer link
-recognises, and a build that can supply neither refuses to build rather than go unnamed.
+The build stamps itself with `git rev-parse --short=7 HEAD` and the footer links that commit.
+`APP_VERSION` overrides it, in the seven-character form, and is required wherever the build has no
+checkout to ask — a Docker build, or CI. A build that can supply neither refuses to build.
 
-Whether a player is shown internals is a separate question, deliberately: a production build
-withholds them because it was compiled as one, not because it managed to learn its own name.
+A release carries no Mix, so migrations go through `MiniLineage.Release`. Name the database with
+the `DB_*` keys or with a single `DATABASE_URL`; the parts win when both are set.
 
-A release carries no Mix, which is why migrations go through `MiniLineage.Release`. The database
-may be named either by the discrete `DB_*` keys or by a single `DATABASE_URL`; the parts win when
-both are set, because a URL cannot carry a password containing URL-unsafe characters unless they
-are percent-encoded.
-
-Production differs from development in ways worth knowing when something behaves oddly there:
-rate limiting is **on** (60 battles and 30 shop actions per minute, 300 events/min overall),
-`force_ssl` redirects to `https://$PHX_HOST` for every host except `localhost` and `127.0.0.1`,
-the logger sits at `:info`, and there is no code reloader.
+Production differs from development: rate limiting is **on** (60 battles and 30 shop actions per
+minute, 300 events/min overall), `force_ssl` redirects to `https://$PHX_HOST` for every host but
+`localhost` and `127.0.0.1`, the logger sits at `:info`, and there is no code reloader.
 
 ## Docker
 
@@ -245,11 +225,10 @@ CI publishes the image, so a server pulls rather than builds:
 
     ghcr.io/sunny-azu-red/mini-lineage-remastered:latest
 
-The `publish` job runs only from `main`, and only behind both green jobs, so what is deployed is the
-artifact that passed. It builds without publishing, reads the commit back out of the release config
-inside the image, and only then pushes — so a build that cannot name itself never becomes `latest`.
-Every image is tagged twice, `latest` and its seven-character commit, so pinning `IMAGE_TAG` holds
-or rolls back to any of them; unset, it follows `main`.
+The `publish` job runs only from `main` and only behind both green jobs, so what is deployed is
+the artifact that passed. It verifies the commit stamp inside the image before pushing. Every
+image is tagged twice, `latest` and its seven-character commit, so `IMAGE_TAG` pins or rolls back
+to any of them; unset, it follows `main`.
 
 The image is built for **amd64 only**. On an ARM host the pull fails, and `platforms:` in the
 publish job is where that changes.
@@ -258,30 +237,25 @@ Two things to do once, on the package's page in GitHub: make it **public**, or P
 registry credential to pull it; and, if you want, link it to the repository. Then point the stack at
 this compose file and redeploy with **Re-pull image** on.
 
-The footer names the commit the running build came from, so it is also how you tell that a deploy
-took: it links the commit, or it says `⚡ development` and you are looking at a development server.
-There is no third answer — a production build that could name no commit refuses to build, so a
-release can always say which one it is.
+The footer names the commit the running build came from, which is how you tell a deploy took: it
+links the commit, or says `⚡ development`. There is no third answer.
 
-`APP_VERSION` is how CI supplies it. A build from a git checkout finds its own; only a source copy
-with no repository in it needs to be told, which is why the Dockerfile takes a build arg rather than
-reading a `.git` that a Portainer stack does not send.
+CI supplies it as `APP_VERSION`. A build from a checkout finds its own, which is why the
+Dockerfile takes a build arg rather than reading a `.git` a Portainer stack does not send.
 
-**Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` answers every plain-http request
-with a 301 to `https://$PHX_HOST` — so behind a proxy that terminates TLS and sets
-`X-Forwarded-Proto` this is right, and exposed directly on port 80 the site is a redirect loop.
-`localhost` and `127.0.0.1` are excluded, which is what lets the compose healthcheck reach the game
-rather than the redirect.
+**Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` 301s every plain-http request to
+`https://$PHX_HOST`: right behind a proxy that terminates TLS and sets `X-Forwarded-Proto`, a
+redirect loop if exposed directly on port 80. `localhost` and `127.0.0.1` are excluded, which is
+how the compose healthcheck reaches the game.
 
-Also set: `LANG=C.UTF-8`, without which the VM runs latin1 name encoding and warns that Elixir may
-malfunction — this game is made of emoji; `ca-certificates`, for a database reached over TLS; and
-`init: true`, because the release runs as PID 1 and does not reap the children the ERTS spawns.
-`docker stop` is clean — SIGTERM brings the release down in about a second.
+The image also sets `LANG=C.UTF-8` (the VM otherwise runs latin1, and this game is made of
+emoji), `ca-certificates` for a database reached over TLS, and `init: true`, since the release
+runs as PID 1 and does not reap what the ERTS spawns.
 
 ## The browser suites
 
 Two Playwright runs drive a real headless Chromium, sharing their controls through
-`e2e/helpers.mjs` so a helper cannot drift between them:
+`e2e/helpers.mjs`:
 
 - **`e2e/walkthrough.mjs`** — one character played normally, end to end: create, travel, buy,
   fight, die, submit a highscore, restart. It asserts that no request failed, no console error was
@@ -292,9 +266,8 @@ Two Playwright runs drive a real headless Chromium, sharing their controls throu
   highscore board it can check something one race cannot — that every filter narrows to rows of
   that race alone.
 
-Both empty the board first, through `e2e/reset.sh`, so a local database that has accumulated runs
-behaves the same as CI's fresh one. That script refuses any database not named for a test, because
-`highscores` also exists in the one people play on.
+Both empty the board first, through `e2e/reset.sh`, which refuses any database not named for a
+test.
 
 One command, one terminal:
 
@@ -304,36 +277,15 @@ mix e2e walkthrough     # just the first
 ```
 
 It starts the isolated server, empties the board, drives Chromium, and stops the server it
-started. A server you already have running on that port is used as it is and left alone, so
-`e2e/serve.sh` in another terminal still works if you want one up while you poke at it.
+started. A server already running on that port is used as it is and left alone, so
+`e2e/serve.sh` in another terminal works too.
 
-Only one run at a time: they share a database and each empties the board before it starts, so a
-second `mix e2e` refuses and names the one already going rather than corrupting both. That is not
-hypothetical — a stray suite run alongside a soak is what emptied the board mid-check and produced
-three failures that had nothing to do with the game.
+One run at a time: they share a database and each empties the board first, so a second `mix e2e`
+refuses and names the one already going.
 
-Neither suite asserts on a roll of the dice. A browser run cannot seed the generator, so a check
-that needs the character to *reach* something — a level, a purse, a wound deep enough to be worth
-healing — fails on unlucky runs while the game is perfectly correct; a 977-run soak of the older
-walkthrough failed 7 times, every one of them that shape and none of them a bug. What the dice
-decide is pinned in `balance_golden_test.exs`, which can hold them still. So these suites drive
-the situations they need — fight until wounded, then eat, and watch the bar sweep — and assert
-only what the browser alone can see.
-
-## What pins the balance
-
-This game began as a TypeScript implementation, and the rewrite was held to it exactly. Two of
-those instruments are permanent, and outlive the implementation they were built against:
-
-- **`test/mini_lineage/game/balance_golden_test.exs`** — 400 fights across 4 races and 5 fixed
-  seeds, pinned to exact numbers. Because every roll runs off one deterministic stream, it also
-  pins the ORDER randomness is consumed in: adding, removing or reordering a draw anywhere in the
-  fight path fails here even when each individual function is still correct.
-- **`test/mini_lineage/game/js_parity_test.exs`** — `:math.pow`, the rounding of halves, and
-  `toLocaleString('en-US')` number grouping, each pinned against values the original produced.
-
-A deliberate balance or wording change means regenerating the affected expectations in the same
-commit. **A diff in either file is exactly the change under review.**
+Neither suite asserts on a roll of the dice — a browser cannot seed the generator. They drive the
+situations they need, then check what only a browser can see. What the dice decide is pinned in
+`test/mini_lineage/game/balance_golden_test.exs`.
 
 ## 📜 License
 
