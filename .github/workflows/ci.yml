@@ -139,6 +139,10 @@ jobs:
       - name: Drive it in a real browser
         run: npm run test:e2e
 
+      # Separate step so the log says which suite failed without anyone opening it.
+      - name: Play every lineage
+        run: npm run test:e2e:races
+
   # Only from main, and only behind both green jobs: what is published is what was tested. The
   # image carries the commit, so a deployment names itself without anyone remembering to say so.
   publish:

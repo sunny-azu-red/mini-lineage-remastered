@@ -255,12 +255,23 @@ malfunction — this game is made of emoji; `ca-certificates`, for a database re
 `init: true`, because the release runs as PID 1 and does not reap the children the ERTS spawns.
 `docker stop` is clean — SIGTERM brings the release down in about a second.
 
-## The browser walkthrough
+## The browser suites
 
-Playwright drives a real headless Chromium through a whole playthrough — create a character,
-travel, buy, fight, level up, die, submit a highscore, restart — and asserts that no request
-failed, no console error was logged, a background tick disturbs neither the main panel nor an open
-`<select>`, and the audio synth builds the graph it should.
+Two Playwright runs drive a real headless Chromium, sharing their controls through
+`e2e/helpers.mjs` so a helper cannot drift between them:
+
+- **`e2e/walkthrough.mjs`** — one character played normally, end to end: create, travel, buy,
+  fight, die, submit a highscore, restart. It asserts that no request failed, no console error was
+  logged, a background tick disturbs neither the main panel nor an open `<select>`, focus lands
+  where the keyboard needs it, and the audio synth builds the graph it should.
+- **`e2e/races.mjs`** — every lineage played through: each one's purse, health and stats as the
+  screens show them, what it can afford at birth, and its road to the board. With all four on the
+  highscore board it can check something one race cannot — that every filter narrows to rows of
+  that race alone.
+
+Both empty the board first, through `e2e/reset.sh`, so a local database that has accumulated runs
+behaves the same as CI's fresh one. That script refuses any database not named for a test, because
+`highscores` also exists in the one people play on.
 
 Playwright is the only thing Node is still here for — two packages, and no build step:
 
@@ -275,16 +286,22 @@ Then two terminals:
 # terminal 1 — its own port and its own database, so it can play destructively
 ./e2e/serve.sh
 
-# terminal 2 — the walkthrough
+# terminal 2 — one of them, or `test:e2e:all` for both
 LD_LIBRARY_PATH=~/.local/lib/playwright-deps npm run test:e2e
+LD_LIBRARY_PATH=~/.local/lib/playwright-deps npm run test:e2e:races
 ```
 
 `LD_LIBRARY_PATH` is required on this machine only: Chromium's `libnss3`/`libnspr4` were extracted
 to `~/.local/lib/playwright-deps` rather than installed system-wide. With
 `npx playwright install --with-deps chromium`, as CI does, it is not needed.
 
-Each luck-dependent check reports the run that produced it — fights fought, meals eaten, level
-reached — so a failure that only shows up once in a dozen runs still says what happened.
+Neither suite asserts on a roll of the dice. A browser run cannot seed the generator, so a check
+that needs the character to *reach* something — a level, a purse, a wound deep enough to be worth
+healing — fails on unlucky runs while the game is perfectly correct; a 977-run soak of the older
+walkthrough failed 7 times, every one of them that shape and none of them a bug. What the dice
+decide is pinned in `balance_golden_test.exs`, which can hold them still. So these suites drive
+the situations they need — fight until wounded, then eat, and watch the bar sweep — and assert
+only what the browser alone can see.
 
 ## What pins the balance
 
