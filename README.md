@@ -11,7 +11,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Punchy Critical Strikes**: A `1.9×` critical multiplier applied to enemies slain, XP, and Adena alike, so a crit stays impactful at every attack tier.
 - **Chain Ambush Engine**: Every fight rolls a fresh ambush against your live ambush risk. Two consecutive ambushes inflict the `Hexed` debuff (`+4% Ambush Risk`, `-2% Crit`, 1 minute), snowballing the danger for reckless adventurers.
 - **Equipment & Progression**: 6 weapon tiers and 6 armor tiers, the top ones carrying innate modifiers (*Calamity Comet*'s crit, *Eternal Aegis*' regen), across a level curve that runs to **level 80**.
-- **Playable Without a Mouse**: The main panel's first control takes focus on arrival, so <kbd>Space</kbd> on the Battleground fights again and again, and <kbd>↑</kbd><kbd>↓</kbd> + <kbd>Enter</kbd> drives travel and the shops. Focus is reclaimed after each request re-enables its button, never stolen from a control you moved to yourself, and never placed on the death screen — where a stray keypress would submit your score or restart your character.
+- **Playable Without a Mouse**: The main panel's first control takes focus on arrival, so <kbd>Space</kbd> on the Battleground fights again and again, and <kbd>↑</kbd><kbd>↓</kbd> + <kbd>Enter</kbd> drives travel and the shops. Pressing a button reclaims focus for the screen that answers — buying at a shop hands it back to the picker you buy from next, rather than leaving it on Order — while a control you moved to yourself is left alone, so a background tick never yanks focus off a half-tabbed select. The death screen is the exception in both directions: focus is not placed there, and is actively released if the button you died on morphs into "Write your Legacy!" beneath it, so the <kbd>Space</kbd> that fought cannot submit a score you have not read. Focus is drawn wherever it lands, including when it arrives by mouse.
 
 ### 🎧 Procedural 8-Bit Web Audio Engine
 - **Zero Audio Assets**: 100% synthesized in real time via the browser's native `AudioContext`, `OscillatorNode`, and `GainNode`.
@@ -47,7 +47,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for exact per-effect expiry
 - **Database**: Ecto + MyXQL against MariaDB, with each character persisted as a single JSON document
 - **Audio Engine**: Web Audio API (procedural synthesizer), driven from a LiveView JS hook
-- **Testing**: ExUnit, plus a Playwright walkthrough that drives a real headless Chromium
+- **Testing**: ExUnit, plus two Playwright suites that drive a real headless Chromium
 
 Requires **Elixir 1.19+ on OTP 28+**, and a reachable MariaDB or MySQL.
 
@@ -91,31 +91,35 @@ A real environment variable always beats the file, which is how `e2e/serve.sh` a
 the same file rather than needing every variable on the command line; it looks in the working
 directory, and `ENV_FILE` names it elsewhere.
 
-Both servers can run at once — the walkthrough has its own port and its own database precisely so
-it can create characters, spend adena and submit highscores without touching real data.
+Both servers can run at once — the browser suites have their own port and their own database
+precisely so they can create characters, spend adena and submit highscores without touching real
+data. They empty that database's board before each run, through `e2e/reset.sh`, which refuses any
+database not named for a test.
 
 ## Commands
 
 ```bash
-mix                   # run the game            (:4000, real dev data)
-mix dev               # ...the same thing, said out loud
-mix prod              # test, build, migrate, serve — `mix build` then `mix start`
-mix build             # test and build a release, without serving it
-mix start             # migrate and serve a release already built
-mix stop              # stop a release that is still running
+mix                     # run the game            (:4000, real dev data)
+mix dev                 # ...the same thing, said out loud
+mix prod                # test, build, migrate, serve — `mix build` then `mix start`
+mix build               # test and build a release, without serving it
+mix start               # migrate and serve a release already built
+mix stop                # stop a release that is still running
 
-mix test              # the Elixir suite
-mix test.coverage     # ...with a coverage report
-npm run test:e2e      # the browser walkthrough — see below
+mix test                # the Elixir suite
+mix test.coverage       # ...with a coverage report
+npm run test:e2e        # one character, played normally — see below
+npm run test:e2e:races  # every lineage
+npm run test:e2e:all    # both
 
-mix ecto.migrate      # apply pending migrations
-mix ecto.migrations   # what is applied
-mix ecto.reset        # drop everything and rebuild it (destructive)
+mix ecto.migrate        # apply pending migrations
+mix ecto.migrations     # what is applied
+mix ecto.reset          # drop everything and rebuild it (destructive)
 
 mix format
 mix compile --warnings-as-errors
-mix precommit         # all four of the above, in order
-mix balance           # the balance simulations — see below
+mix precommit           # compile --warnings-as-errors, deps.unlock, format, test
+mix balance             # the balance simulations — see below
 ```
 
 `mix dev` does not migrate: that is a deployment step, and `mix start` does it. Run
@@ -126,8 +130,8 @@ process group, where this terminal's interrupt never reaches it, so it keeps run
 port and the node name. Use `mix stop`. If you forget, `mix dev` and `mix start` both notice and
 say so by name rather than failing on `:eaddrinuse`.
 
-`mix test.coverage` reports, it does not gate. The browser walkthrough is where the web layer is
-actually exercised and it is not instrumented, so the number understates what is covered — a
+`mix test.coverage` reports, it does not gate. The browser suites are where the web layer is
+actually exercised and they are not instrumented, so the number understates what is covered — a
 threshold here would fail honestly-tested code and teach everyone to ignore it.
 
 ## Balance simulations
