@@ -63,6 +63,12 @@ what it still refuses. If a guard is in the way, the thing you are building is p
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
+**`compile_env` only for values that are constant per environment.** `:build_label` qualifies;
+`:app_version` does not — it is derived from `git rev-parse HEAD`, so marking it compile-time makes
+Mix compare the baked sha against the current one and refuse every task after the next commit.
+Read a value that moves with `Application.get_env/2` at runtime, and put a build-time requirement
+in a release step in `mix.exs`, which runs at the moment a thing becomes deployable.
+
 <!-- usage-rules-start -->
 
 <!-- phoenix:elixir-start -->

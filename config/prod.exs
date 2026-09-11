@@ -20,10 +20,8 @@ app_version =
 
 config :mini_lineage, :app_version, app_version
 
-# A production build must name the commit it came from, but this file is not where to insist on
-# it: config is evaluated by every mix task, `mix deps.compile` among them, and a dependency has
-# no business needing the app's version. MiniLineage.Game.Version refuses to compile without one.
-config :mini_lineage, require_stamp: true
+# The requirement that a release names its commit lives in mix.exs, as a release step: this file is
+# read by every mix task, and the sha changes with every commit, so neither is the place for it.
 
 # Whatever the version turned out to be, a production build tells a player nothing.
 config :mini_lineage, debug_build: false

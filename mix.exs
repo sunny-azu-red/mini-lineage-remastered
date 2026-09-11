@@ -15,8 +15,27 @@ defmodule MiniLineage.MixProject do
       # it is not instrumented, so this number understates what is actually covered — a threshold
       # here would fail honestly-tested code and teach everyone to ignore it.
       test_coverage: [summary: [threshold: 0]],
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      releases: [mini_lineage: [steps: [&require_stamp!/1, :assemble]]]
     ]
+  end
+
+  # A release names the commit it came from — there is no such thing as one that cannot say which
+  # it is. Checked as the release is assembled, which is the moment it becomes a thing that can be
+  # deployed. Not at compile time: the sha changes with every commit, so a compile-time check makes
+  # `mix prod` fail after each one until _build is thrown away.
+  defp require_stamp!(release) do
+    if Application.get_env(:mini_lineage, :app_version) in [nil, ""] do
+      Mix.raise("""
+      no APP_VERSION, and no git checkout to take one from.
+
+      A production build names the commit it came from. Pass it:
+
+          docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) .
+      """)
+    end
+
+    release
   end
 
   # Configuration for the OTP application.
