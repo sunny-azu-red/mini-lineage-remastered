@@ -3,6 +3,8 @@ defmodule MiniLineage.PersistenceTest do
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.Game.Statistics
+  import ExUnit.CaptureLog
+
   alias MiniLineage.Game.Statistics.Collector
   alias MiniLineage.Highscores
 
@@ -113,6 +115,9 @@ defmodule MiniLineage.PersistenceTest do
       assert %{total_players: 1, total_battles: 3} = Collector.read_all()
     end
 
+    # Reading drains the buffer too, and so does the collector stopping, so every one of them fails
+    # the same way. Tagged rather than wrapped one call at a time.
+    @tag :capture_log
     test "a failed flush re-queues its counters rather than dropping them" do
       Statistics.increment(:total_players)
       Statistics.increment(:total_battles, 4)
@@ -120,13 +125,18 @@ defmodule MiniLineage.PersistenceTest do
       # table with DDL, which commits implicitly and would escape the test's transaction.
       Statistics.increment(:total_deaths, 99_999_999_999_999_999_999)
 
-      Collector.flush()
+      log = capture_log(fn -> Collector.flush() end)
 
+      assert log =~ "counter(s) re-queued", "the failure went by unannounced"
       # Nothing reached the database — the archives still read as never-played...
       assert Collector.read_all() == nil
       # ...and nothing was lost on the way either.
       assert Collector.pending()[:total_battles] == 4
       assert Collector.pending()[:total_players] == 1
+
+      # Stopped here rather than left to teardown: the collector flushes on the way out, which
+      # fails once more, and by then the test's capture is no longer listening.
+      stop_supervised!(Collector)
     end
 
     test "every declared field is present, defaulted to zero" do

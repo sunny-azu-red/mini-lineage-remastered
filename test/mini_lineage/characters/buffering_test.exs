@@ -10,6 +10,8 @@ defmodule MiniLineage.Characters.BufferingTest do
   """
   use MiniLineage.DataCase, async: false
 
+  import ExUnit.CaptureLog
+
   alias MiniLineage.Characters
   alias MiniLineage.Characters.Store
   alias MiniLineage.Game.{Constants, Player}
@@ -140,12 +142,22 @@ defmodule MiniLineage.Characters.BufferingTest do
 
       # The character is one JSON document, so there is no column to overflow. A name that is not
       # valid UTF-8 cannot be encoded, and raises where any database error would.
-      Characters.mutate(id, &{%{&1 | name: <<0xFF, 0xFE>>}, :ok})
+      log =
+        capture_log(fn ->
+          Characters.mutate(id, &{%{&1 | name: <<0xFF, 0xFE>>}, :ok})
+        end)
 
+      assert log =~ "failed to persist, still buffered", "the failure went by unannounced"
       assert Process.alive?(pid), "a failed write killed the character and took its buffer"
       assert Characters.snapshot(id).name == <<0xFF, 0xFE>>
       assert Store.load(id).name == "Hero", "the failed write reached the database after all"
       assert :sys.get_state(pid).dirty_since != nil, "the state is not still owed"
+
+      # And what was owed is still owed: the next write the database will take settles it.
+      Characters.mutate(id, &{%{&1 | name: "Recovered"}, :ok})
+
+      assert Store.load(id).name == "Recovered"
+      assert :sys.get_state(pid).dirty_since == nil
     end
   end
 end

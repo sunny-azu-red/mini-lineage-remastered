@@ -80,7 +80,12 @@ defmodule MiniLineage.MixProject do
       # app.js imports, into _build, and esbuild cannot resolve them before they exist. A warm
       # _build hides this; a clean one — CI, Docker, a fresh clone — does not.
       "assets.deploy": ["compile", "esbuild mini_lineage --minify", "phx.digest"],
-      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
+      precommit: [
+        "compile --warnings-as-errors",
+        "deps.unlock --unused",
+        "format",
+        "test --warnings-as-errors"
+      ]
     ]
   end
 end

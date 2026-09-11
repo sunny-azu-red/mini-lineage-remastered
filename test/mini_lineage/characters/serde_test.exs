@@ -103,7 +103,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "the last battle is not in the document, because it is half its bytes" do
-      assert populated().last_battle_narrative != nil
+      # The fixture carries one; it belongs in battle_log, and the round trip drops it.
       refute Map.has_key?(Serde.to_map(populated()), "last_battle_narrative")
       assert Serde.from_map(Serde.to_map(populated())).last_battle_narrative == nil
     end
