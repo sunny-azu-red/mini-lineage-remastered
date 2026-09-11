@@ -37,8 +37,8 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Guarded Mutations**: Every event that changes state declares its own preconditions, enforced server-side. Client-side routing is convenience; these guards are the boundary. Notably restarting requires a *dead* character, so a living one can never be wiped.
 - **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Versioned Documents**: Each character's state records the shape it was written in, so a later reshape has something to branch on, and a document from a newer build is refused rather than read with every unrecognised field defaulted away.
-- **Writes Follow the Player, Not the Clock**: A character lives in its process, so the database is durability rather than storage. What the player *did* — a fight, a purchase, a death, a legacy — is written before they are told it worked. The passage of time — passive regeneration, which screen they wandered to — rides along with the next action, or with the process stopping. A hard kill costs a little healing and nothing else, and a session that used to take 41 writes takes 9.
-- **Every Fight Is Kept**: Each battle appends a row to `battle_log` — the numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before; the character's own document is rewritten whole on every save, which is why the last battle no longer lives in it. Writing a legacy claims that run's fights so they outlive the character; starting over without one discards them, so the next life never inherits them.
+- **Writes Follow the Player, Not the Clock**: A character lives in its process, so the database is durability rather than storage. What the player *did* — a fight, a purchase, a death, a legacy — is written before they are told it worked. The passage of time — passive regeneration, which screen they wandered to — rides along with the next action, or with the process stopping. A hard kill costs a little healing and nothing else.
+- **Every Fight Is Kept**: Each battle appends a row to `battle_log` — the numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before, where the character's own document is rewritten whole on every save. Writing a legacy claims that run's fights so they outlive the character; starting over without one discards them, so the next life never inherits them.
 - **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies, validation on every payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
 - **Idle Characters Are Reaped**: A character process arms a stop timer at start and cancels it when a viewer attaches, so a crawler leaves nothing running. Rows outlive the process and are swept after 30 days, the window the session cookie uses.
 
@@ -101,8 +101,8 @@ in, not two.
 | `mix e2e` | the same throwaway one, board emptied first | `.env.test` | `PORT` (4002) |
 
 Two files, the same key names in each: `config/runtime.exs` picks `.env.test` whenever `MIX_ENV`
-is `test` or `e2e`, so nothing has to remember a flag and no key needs a `_TEST` suffix. It also
-means the throwaway database can live on another host entirely, not merely under another name.
+is `test` or `e2e`, so nothing has to remember a flag, and the throwaway database can live on
+another host entirely rather than merely under another name.
 
 An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
 so the two are never confused. A release names its commit instead.
@@ -116,16 +116,15 @@ key, so taking a legacy off the board takes its fights with it.
 
 See [.env.example](.env.example) and [.env.test.example](.env.test.example) for what each setting
 does. A real environment variable always beats the file, which is how CI supplies them without
-either file.
-`config/runtime.exs` reads it at BOOT, so a release started with `bin/mini_lineage start` picks up
-the same file rather than needing every variable on the command line; it looks in the working
-directory, and `ENV_FILE` names it elsewhere.
+either file present.
 
-Both servers can run at once — the browser suites have their own port and their own database
-precisely so they can create characters, spend adena and submit highscores without touching real
-data. They empty that database's board before each run, through `e2e/reset.sh`, which refuses to
-touch whichever database `.env` names — so the throwaway one can be called anything, on any
-server.
+`config/runtime.exs` reads the file at BOOT, so a release started with `bin/mini_lineage start`
+picks it up from its working directory; `ENV_FILE` names it elsewhere.
+
+Both servers can run at once: the browser suites have their own port and their own database, so
+they can create characters, spend adena and submit highscores without touching real data. They
+empty that board before each run through `e2e/reset.sh`, which refuses to touch whichever database
+`.env` names — so the throwaway one can be called anything, on any server.
 
 ## Commands
 
@@ -254,17 +253,16 @@ Three things decide whether that works:
 - **`DB_HOST` must be reachable from inside the container.** `127.0.0.1` there is the container
   itself, not your machine — hence the `--add-host`/`-e` pair above. A database on another host
   needs neither.
-- **`--env-file` is Docker's own parser, not this app's.** It does not strip a comment written
-  after a value, so `PHX_HOST=localhost # the domain` would set the hostname to the whole line.
-  `.env.example` keeps every comment on its own line for exactly this reason. To use this app's
-  parser instead, mount the file at the working directory the release reads it from:
-  `-v "$PWD/.env:/app/.env:ro"`. The container runs as a non-root user, so that file has to be
-  readable by others — a `chmod 600 .env` makes the mount fail where `--env-file` would not.
+- **`--env-file` is Docker's own parser, not this app's.** It keeps a comment written after a
+  value, so `PHX_HOST=localhost # the domain` sets the hostname to the whole line — keep every
+  comment on its own line. To use this app's parser instead, mount the file where the release
+  reads it from: `-v "$PWD/.env:/app/.env:ro"`. The container runs as a non-root user, so that
+  file must be readable by others.
 - **Keep `PHX_HOST=localhost` for a local run.** With a real domain, `force_ssl` answers every
   plain-http request with a redirect to it; `localhost` and `127.0.0.1` are the excluded pair.
 
-The build **requires** `APP_VERSION` and refuses without one, so that no image can be running
-without being able to say which commit it is. For a throwaway image any seven characters will do.
+The build **requires** `APP_VERSION` — an image that cannot name its commit does not get built.
+For a throwaway one, any seven characters will do.
 
 ### Deploying
 
