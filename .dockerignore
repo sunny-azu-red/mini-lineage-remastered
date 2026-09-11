@@ -18,3 +18,4 @@ package-lock.json
 README.md
 Dockerfile
 docker-compose.yml
+.env.test

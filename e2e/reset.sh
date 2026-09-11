@@ -10,7 +10,6 @@ if [ -f ./env.sh ]; then
   # shellcheck disable=SC1091
   source ./env.sh
 fi
-export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 export MIX_ENV=e2e
 
 # The guard is the point: `highscores` also exists in the database people actually play on, and

@@ -94,11 +94,15 @@ in, not two.
 
 ## Which database
 
-| what | database | from | port |
+| what | database | reads | port |
 |---|---|---|---|
-| `mix phx.server` | your real characters, highscores and statistics | `DB_DATABASE` | `PORT` (4000) |
-| `mix test` | a throwaway one | `DB_DATABASE_TEST` | — |
-| `mix e2e` | the same throwaway one, board emptied first | `DB_DATABASE_TEST` | `PORT_E2E` (4002) |
+| `mix phx.server` | your real characters, highscores and statistics | `.env` | `PORT` (4000) |
+| `mix test` | a throwaway one | `.env.test` | — |
+| `mix e2e` | the same throwaway one, board emptied first | `.env.test` | `PORT` (4002) |
+
+Two files, the same key names in each: `config/runtime.exs` picks `.env.test` whenever `MIX_ENV`
+is `test` or `e2e`, so nothing has to remember a flag and no key needs a `_TEST` suffix. It also
+means the throwaway database can live on another host entirely, not merely under another name.
 
 An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
 so the two are never confused. A release names its commit instead.
@@ -110,8 +114,9 @@ them, because it is only ever rendered. All three stamp `inserted_at` as a timez
 microsecond timestamp, and a fight points at the board entry that claimed it with a real foreign
 key, so taking a legacy off the board takes its fights with it.
 
-Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
-A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.
+See [.env.example](.env.example) and [.env.test.example](.env.test.example) for what each setting
+does. A real environment variable always beats the file, which is how CI supplies them without
+either file.
 `config/runtime.exs` reads it at BOOT, so a release started with `bin/mini_lineage start` picks up
 the same file rather than needing every variable on the command line; it looks in the working
 directory, and `ENV_FILE` names it elsewhere.

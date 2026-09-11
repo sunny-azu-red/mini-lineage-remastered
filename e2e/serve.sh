@@ -8,12 +8,10 @@ if [ -f ./env.sh ]; then
   # shellcheck disable=SC1091
   source ./env.sh
 fi
-export DB_DATABASE="${DB_DATABASE_TEST:-lineage_remastered_test}"
 # Its own MIX_ENV, so the build lands in the already-ignored _build/e2e rather than under the dev
-# server someone may be playing on. config/e2e.exs is just the dev configuration.
+# server someone may be playing on, and so config/runtime.exs reads .env.test — which is where the
+# throwaway database and this server's own port come from.
 export MIX_ENV=e2e
-# Its own port, so it can never silently answer for a dev server already on 4000.
-export PORT="${PORT_E2E:-4002}"
 
 mix ecto.migrate >/dev/null
 

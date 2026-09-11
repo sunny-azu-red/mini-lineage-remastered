@@ -4,9 +4,12 @@ import Config
 # at build time — so everything that reads the environment belongs here, and `mix phx.server` and
 # `bin/mini_lineage start` behave the same way.
 
-# Credentials live in .env. A release has no repo checkout, so the file is looked for in the
-# working directory; ENV_FILE names it anywhere else. A real environment variable beats the file.
-env_file = System.get_env("ENV_FILE") || Path.expand(".env", File.cwd!())
+# Credentials live in .env, and the throwaway database's in .env.test — chosen here rather than by
+# each script, so `mix test`, `mix e2e` and e2e/serve.sh all agree without anyone passing a flag.
+# A release has no repo checkout, so the file is looked for in the working directory; ENV_FILE
+# names it anywhere else. A real environment variable beats the file.
+default_env_file = if config_env() in [:test, :e2e], do: ".env.test", else: ".env"
+env_file = System.get_env("ENV_FILE") || Path.expand(default_env_file, File.cwd!())
 
 # A quoted value is taken verbatim, so it may contain anything. An unquoted one ends at the first
 # " #", which is how a trailing comment is written — a bare # with no space before it is part of
@@ -41,7 +44,7 @@ if config_env() == :test do
          credentials ++
            [
              database:
-               "#{System.get_env("DB_DATABASE_TEST", "lineage_remastered_test")}#{System.get_env("MIX_TEST_PARTITION")}",
+               "#{System.get_env("DB_DATABASE", "lineage_remastered_test")}#{System.get_env("MIX_TEST_PARTITION")}",
              pool: Ecto.Adapters.SQL.Sandbox,
              pool_size: System.schedulers_online() * 2
            ]
