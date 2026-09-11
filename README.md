@@ -123,8 +123,9 @@ directory, and `ENV_FILE` names it elsewhere.
 
 Both servers can run at once — the browser suites have their own port and their own database
 precisely so they can create characters, spend adena and submit highscores without touching real
-data. They empty that database's board before each run, through `e2e/reset.sh`, which refuses any
-database not named for a test.
+data. They empty that database's board before each run, through `e2e/reset.sh`, which refuses to
+touch whichever database `.env` names — so the throwaway one can be called anything, on any
+server.
 
 ## Commands
 
@@ -312,8 +313,8 @@ Two Playwright runs drive a real headless Chromium, sharing their controls throu
   highscore board it can check something one race cannot — that every filter narrows to rows of
   that race alone.
 
-Both empty the board first, through `e2e/reset.sh`, which refuses any database not named for a
-test.
+Both empty the board first, through `e2e/reset.sh`, which refuses to touch whichever database
+`.env` names.
 
 One command, one terminal:
 
