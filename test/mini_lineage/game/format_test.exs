@@ -47,6 +47,20 @@ defmodule MiniLineage.Game.FormatTest do
     end
   end
 
+  describe "the values the JavaScript must agree on" do
+    test "are formatted the same way here" do
+      # The count-up animation formats its own intermediate frames, so hooks.js carries a second
+      # implementation of this — it cannot be removed without the number jumping format mid-count.
+      # Both sides read this file, so a divergence fails a test instead of wobbling on screen.
+      %{"cases" => cases} =
+        "test/fixtures/adena_format.json" |> File.read!() |> Jason.decode!()
+
+      for [value, expected] <- cases do
+        assert Format.adena(value) == expected, "#{value} formatted as #{Format.adena(value)}"
+      end
+    end
+  end
+
   describe "pluralize" do
     test "writes a single thing as prose rather than as a figure" do
       # "a battle" reads where "1 battle" counts, and these strings sit inside sentences.

@@ -19,7 +19,9 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
 
     Characters.mutate(id, fn player ->
       {player, _} = Player.initialize(player, Constants.race(1), "Hero")
-      {%{player | current_screen: "battle"}, :ok}
+      # Tanky enough that no roll below is fatal: a fatal fight counts no battle, and these
+      # compare counters across a read.
+      {%{player | current_screen: "battle", health: 5_000}, :ok}
     end)
 
     {:ok, id: id}
@@ -75,12 +77,13 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
 
     test "and is only ever answered by fighting", %{id: id} do
       Characters.mutate(id, &{%{&1 | ambushed: true}, :ok})
-      assert Characters.snapshot(id).ambushed
+      before = Characters.snapshot(id).total_battles
 
       Characters.mutate(id, &Actions.fight/1)
 
-      refute Characters.snapshot(id).ambushed and Characters.snapshot(id).dead == false and
-               Characters.snapshot(id).total_battles == 0
+      # Answering it costs a fight, which is the whole point — the roll may hand out another
+      # ambush, so what is asserted is that one was fought, not that none remains.
+      assert Characters.snapshot(id).total_battles == before + 1
     end
   end
 end

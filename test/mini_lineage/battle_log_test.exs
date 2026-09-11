@@ -24,7 +24,9 @@ defmodule MiniLineage.BattleLogTest do
   defp start_character(id, race_id \\ 1) do
     Characters.mutate(id, fn player ->
       {player, _flash} = Player.initialize(player, Constants.race(race_id), "Hero")
-      {%{player | current_screen: "battle"}, :ok}
+      # Tanky enough to survive every fight below. A fatal fight does not count a battle, so
+      # without this a lucky-unlucky roll would make these assertions come and go.
+      {%{player | current_screen: "battle", health: 5_000}, :ok}
     end)
   end
 
@@ -54,15 +56,15 @@ defmodule MiniLineage.BattleLogTest do
       fight(id)
 
       assert [row] = rows(id)
-      assert Store.load(id).total_battles >= 1, "a fight was logged that the character forgot"
+      assert Store.load(id).total_battles == 1, "a fight was logged that the character forgot"
       assert row.narrative["outcome_line"] != nil
     end
 
     test "appends rather than replacing, which is the whole point", %{id: id} do
       start_character(id)
-      for _ <- 1..3, do: if(Characters.snapshot(id).dead == false, do: fight(id))
+      for _ <- 1..3, do: fight(id)
 
-      assert length(rows(id)) >= 1
+      assert length(rows(id)) == 3
       assert rows(id) == Enum.sort_by(rows(id), & &1.id)
     end
   end

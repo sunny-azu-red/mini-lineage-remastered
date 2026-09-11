@@ -333,6 +333,11 @@ Neither suite asserts on a roll of the dice — a browser cannot seed the genera
 situations they need, then check what only a browser can see. What the dice decide is pinned in
 `test/mini_lineage/game/balance_golden_test.exs`.
 
+The Elixir suite holds the same rule. Where an outcome would otherwise turn on a roll, the dice are
+pinned — `Rng.put_source/1`, or `Test.Lcg` for the golden master's own stream — or the character is
+made tanky enough that no roll changes the answer. A fatal fight counts no battle, which is all it
+takes to make a counter assertion come and go.
+
 ## 📜 License
 
 MIT — see [LICENSE](LICENSE). © 2026 Sunny

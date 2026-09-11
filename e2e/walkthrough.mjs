@@ -11,6 +11,7 @@
  * Usage: start the isolated server (`e2e/serve.sh`), then
  *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node e2e/walkthrough.mjs
  */
+import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { BASE, reporter, traceAudio, controls } from './helpers.mjs';
 
@@ -55,6 +56,20 @@ try {
     const footer = await page.textContent('#copyright');
     check('the footer names this as the testing build', /testing/.test(footer ?? ''), footer?.trim());
     check('...and flags it as a debug build', await page.locator('#copyright .version-debug').count() === 1);
+
+    // ---- the two adena formatters agree -------------------------------------------------------
+    // The count-up animation formats its own frames, so hooks.js carries a second implementation
+    // of Format.adena. It cannot be removed — the number would jump format mid-count — so both
+    // sides are held to one table instead. Elixir reads it in format_test.exs.
+    const { cases } = JSON.parse(readFileSync('test/fixtures/adena_format.json', 'utf8'));
+    const mismatched = await page.evaluate(
+        (rows) => rows
+            .filter(([value, expected]) => window.__shortAdena(value) !== expected)
+            .map(([value, expected]) => `${value}: ${window.__shortAdena(value)} != ${expected}`),
+        cases,
+    );
+    check('the browser formats adena exactly as the server does', mismatched.length === 0,
+        mismatched.join(' | '));
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
