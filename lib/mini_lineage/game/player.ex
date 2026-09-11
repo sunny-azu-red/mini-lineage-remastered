@@ -24,7 +24,6 @@ defmodule MiniLineage.Game.Player do
             consecutive_ambushes: 0,
             total_enemies_killed: 0,
             effects: [],
-            revision: 0,
             current_screen: nil,
             combat_until: nil,
             last_battle_narrative: nil

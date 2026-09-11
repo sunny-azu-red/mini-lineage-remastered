@@ -7,6 +7,11 @@ defmodule MiniLineage.Characters.Serde do
   """
   alias MiniLineage.Game.Player
 
+  # The shape of the document, not of the character — which is why it is written here rather than
+  # carried on the struct. A reshape bumps this and `from_map/1` branches on it; today there is
+  # only one shape, and a row written before versioning has it.
+  @version 1
+
   @effect_types %{"buff" => :buff, "debuff" => :debuff, "aura" => :aura}
   @modifier_types ~w(attack defense crit max_health regen ambush_risk xp_multiplier adena_multiplier)a
 
@@ -17,6 +22,7 @@ defmodule MiniLineage.Characters.Serde do
 
   def to_map(%Player{} = p) do
     %{
+      "version" => @version,
       "name" => p.name,
       "race_id" => p.race_id,
       "health" => p.health,
@@ -34,7 +40,6 @@ defmodule MiniLineage.Characters.Serde do
       "consecutive_ambushes" => p.consecutive_ambushes,
       "total_enemies_killed" => p.total_enemies_killed,
       "effects" => Enum.map(p.effects, &effect_to_map/1),
-      "revision" => p.revision,
       "current_screen" => p.current_screen,
       "combat_until" => p.combat_until,
       "last_battle_narrative" => battle_to_map(p.last_battle_narrative)
@@ -42,6 +47,12 @@ defmodule MiniLineage.Characters.Serde do
   end
 
   def from_map(%{} = m) do
+    version = m["version"] || @version
+
+    if version > @version do
+      raise "character document is version #{version}; this build understands #{@version}"
+    end
+
     %Player{
       name: m["name"],
       race_id: m["race_id"],
@@ -60,7 +71,6 @@ defmodule MiniLineage.Characters.Serde do
       consecutive_ambushes: m["consecutive_ambushes"] || 0,
       total_enemies_killed: m["total_enemies_killed"] || 0,
       effects: Enum.map(m["effects"] || [], &effect_from_map/1),
-      revision: m["revision"] || 0,
       current_screen: m["current_screen"],
       combat_until: m["combat_until"],
       last_battle_narrative: battle_from_map(m["last_battle_narrative"])

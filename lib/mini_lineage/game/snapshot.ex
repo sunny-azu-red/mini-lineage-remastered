@@ -35,7 +35,6 @@ defmodule MiniLineage.Game.Snapshot do
   """
   @empty %{
     started: false,
-    revision: 0,
     name: nil,
     race_id: nil,
     race_label: nil,
@@ -74,7 +73,7 @@ defmodule MiniLineage.Game.Snapshot do
   def build(player) do
     if Player.started?(player),
       do: started(player),
-      else: %{@empty | revision: player.revision}
+      else: @empty
   end
 
   defp started(player) do
@@ -85,7 +84,6 @@ defmodule MiniLineage.Game.Snapshot do
 
     %{
       started: true,
-      revision: player.revision,
       name: player.name,
       race_id: player.race_id,
       race_label: race.label,

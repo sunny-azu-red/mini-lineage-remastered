@@ -149,15 +149,11 @@ defmodule MiniLineage.Characters.Server do
     if opts[:log], do: log_tick(state.id, player, health_before, expired, changed?)
 
     if changed? do
-      # Decided before the bump: `revision` is bookkeeping on every change, and comparing after it
-      # moves makes every tick look like something the player did.
-      flush? = flush?(before, player)
-      player = %{player | revision: player.revision + 1}
       # Always broadcast: a viewer must see the tick whether or not it was worth a write.
       broadcast(state.id, player)
       state = %{state | player: player}
 
-      {result, arm_expiry(if(flush?, do: persist(state), else: mark(state)))}
+      {result, arm_expiry(if(flush?(before, player), do: persist(state), else: mark(state)))}
     else
       {result, state}
     end
@@ -252,7 +248,7 @@ defmodule MiniLineage.Characters.Server do
   end
 
   # Revision is excluded: it is the record OF a change, never a reason to persist one.
-  defp same?(a, b), do: %{a | revision: 0} == %{b | revision: 0}
+  defp same?(a, b), do: a == b
 
   defp schedule_tick, do: Process.send_after(self(), :tick, Constants.tick_interval_ms())
 
