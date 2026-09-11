@@ -50,16 +50,19 @@ defmodule Mix.Tasks.E2e do
     Mix.shell().info([:green, "\n✔ #{Enum.join(suites, " and ")} passed", :reset])
   end
 
-  # This task runs in :dev, so it never reads .env.test itself — but the server it starts does.
-  # Asking the same file is what keeps the port it waits on and the port that opens in step.
+  # The server reads .env.test, so that file decides. The environment answers only when there is no
+  # file, which is how CI supplies it.
+  #
+  # Deliberately not the other way around: this task runs in :dev, where .env would otherwise hand
+  # it PORT=4000 and it would sit waiting on the development server's port. That it does not today
+  # is luck — a Mix task does not start the application, so runtime.exs never runs and never puts
+  # PORT into the environment. Adding `app.start` here would be enough to break it silently.
   defp e2e_port do
-    with nil <- System.get_env("PORT"),
-         {:ok, contents} <- File.read(".env.test"),
+    with {:ok, contents} <- File.read(".env.test"),
          [_, port] <- Regex.run(~r/^\s*PORT\s*=\s*(\d+)/m, contents) do
       port
     else
-      port when is_binary(port) -> port
-      _ -> "4002"
+      _ -> System.get_env("PORT", "4002")
     end
   end
 

@@ -170,8 +170,15 @@ defmodule MiniLineage.Scratch.Shell do
     else
       Mix.shell().info([:cyan, "\n▶ starting the e2e server on #{url}", :reset])
 
+      # PORT is handed down rather than left for the child to work out: an exported PORT in the
+      # caller's shell would otherwise bind the server somewhere this is not watching.
       port_ref =
-        Port.open({:spawn_executable, Path.expand("e2e/serve.sh")}, [:binary, :hide, args: []])
+        Port.open({:spawn_executable, Path.expand("e2e/serve.sh")}, [
+          :binary,
+          :hide,
+          args: [],
+          env: [{~c"PORT", String.to_charlist(port)}]
+        ])
 
       os_pid = Port.info(port_ref)[:os_pid]
 

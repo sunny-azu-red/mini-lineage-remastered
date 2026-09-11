@@ -123,10 +123,10 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      # CI has no .env.test — the variables above stand in for it, as they always have for .env.
       - name: Create the browser suites' database
         env:
           MIX_ENV: e2e
-          DB_DATABASE: lineage_remastered_test
         run: mix do deps.get + ecto.create
 
       # `mix e2e` starts the server, empties the board and stops the server again, so there is
