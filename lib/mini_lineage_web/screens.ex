@@ -356,12 +356,10 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp death(assigns) do
+    # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
+    # they are the last line of the run, and read as one.
     ~H"""
-    <%= if @view.coward || @view.cheated do %>
-      <div class="alert alert-danger">{@view.death_reason}</div>
-    <% else %>
-      <p>{@view.death_reason}</p>
-    <% end %>
+    <p>{@view.death_reason}</p>
 
     <div class="action-links">
       <button :if={@view.highscore_eligible} type="button" class="btn" phx-click="submit_highscore">

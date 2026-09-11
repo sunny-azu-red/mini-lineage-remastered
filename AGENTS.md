@@ -36,6 +36,12 @@ enough that no roll changes the answer — `health: 5_000` is the idiom. A fatal
 battle, which is all it takes to make a counter assertion pass for months and fail in CI once.
 What the dice decide belongs in `balance_golden_test.exs`, which seeds them.
 
+A randomly drawn *string* is the same trap wearing a disguise. Death reasons and narrative lines
+are drawn from pools, and some carry an apostrophe that HEEx escapes — so matching one against
+rendered HTML passes or fails on the roll. Where a test renders a drawn line, fix it first
+(`%{Player.kill(p) | death_reason: "..."}`); that it came from the pool at all is a separate test's
+job, against the struct rather than the page.
+
 **The two adena formatters stay in step.** `Format.adena` and `shortAdena` in `hooks.js` are
 duplicated on purpose — the count-up animation formats its own frames, and without a client-side
 copy the number would change format mid-count. Both read
