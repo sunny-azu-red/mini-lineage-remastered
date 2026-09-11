@@ -9,6 +9,7 @@ defmodule MiniLineage.Characters.Server do
   """
   use GenServer, restart: :transient
 
+  alias MiniLineage.BattleLog
   alias MiniLineage.Characters.Store
   require Logger
 
@@ -40,7 +41,10 @@ defmodule MiniLineage.Characters.Server do
     # ordinary shutdown would discard whatever is buffered.
     Process.flag(:trap_exit, true)
 
+    # The narrative is no longer in the document, so the screen is refilled from the log — one
+    # query, and only when the process starts.
     player = Store.load(id) || %Player{}
+    player = %{player | last_battle_narrative: BattleLog.last_for(id)}
     schedule_tick()
 
     state = %{
@@ -49,7 +53,8 @@ defmodule MiniLineage.Characters.Server do
       expiry_timer: nil,
       viewers: %{},
       stop_timer: nil,
-      dirty_since: nil
+      dirty_since: nil,
+      pending_battles: []
     }
 
     # Armed from the start rather than only when a viewer leaves: a process opened by a plain read
@@ -151,7 +156,11 @@ defmodule MiniLineage.Characters.Server do
     if changed? do
       # Always broadcast: a viewer must see the tick whether or not it was worth a write.
       broadcast(state.id, player)
-      state = %{state | player: player}
+
+      state =
+        %{state | player: player}
+        |> log_battle(before, player)
+        |> close_life(before, player, result)
 
       {result, arm_expiry(if(flush?(before, player), do: persist(state), else: mark(state)))}
     else
@@ -166,15 +175,42 @@ defmodule MiniLineage.Characters.Server do
     |> Enum.any?(fn {field, was} -> field not in @buffered and Map.get(now, field) != was end)
   end
 
+  # A fight is the only thing that sets a new narrative, so this is how the process notices one
+  # without Actions having to reach for the database itself.
+  defp log_battle(state, before, now) do
+    if now.last_battle_narrative && now.last_battle_narrative != before.last_battle_narrative do
+      %{
+        state
+        | pending_battles:
+            state.pending_battles ++ [BattleLog.row(state.id, now.last_battle_narrative)]
+      }
+    else
+      state
+    end
+  end
+
+  # A life ends when the character is reset — by writing a legacy, or by starting over without one.
+  # Claimed fights outlive the character; the rest go, so the next life does not inherit them.
+  defp close_life(state, before, now, result) do
+    if Player.started?(before) and not Player.started?(now) do
+      case result do
+        {:ok, %{highscore_id: id}} when is_integer(id) -> BattleLog.claim(state.id, id)
+        _ -> BattleLog.discard_unclaimed(state.id)
+      end
+    end
+
+    state
+  end
+
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state
 
   # Never raises. Once there is a buffer, letting a database error kill the process would take the
   # buffer with it — so a failure keeps the state dirty and the next flush carries it.
   defp persist(state) do
-    Store.save(state.id, state.player)
+    Store.save(state.id, state.player, state.pending_battles)
 
-    %{state | dirty_since: nil}
+    %{state | dirty_since: nil, pending_battles: []}
   rescue
     error ->
       Logger.error("💾 character #{state.id} failed to persist, still buffered: #{inspect(error)}")

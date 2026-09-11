@@ -26,6 +26,6 @@ mix run --no-start -e '
   end
 
   {:ok, conn} = MyXQL.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
-  for table <- ~w(highscores characters), do: MyXQL.query!(conn, "TRUNCATE TABLE #{table}")
-  IO.puts("reset #{database}: highscores, characters")
+  for table <- ~w(highscores characters battle_log), do: MyXQL.query!(conn, "TRUNCATE TABLE #{table}")
+  IO.puts("reset #{database}: highscores, characters, battle_log")
 ' >/dev/null

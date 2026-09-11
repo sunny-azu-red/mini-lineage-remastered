@@ -19,17 +19,19 @@ defmodule MiniLineage.Highscores do
     end
   end
 
+  @doc "Writes a legacy to the board and returns its id, which claims the run's battle log."
   def insert(%{name: name, experience: experience, race_id: race_id, adena: adena, level: level}) do
-    Repo.insert!(%Entry{
-      name: name,
-      total_xp: experience,
-      race_id: race_id,
-      adena: adena,
-      level: level,
-      created: NaiveDateTime.utc_now(:second)
-    })
+    %Entry{id: id} =
+      Repo.insert!(%Entry{
+        name: name,
+        total_xp: experience,
+        race_id: race_id,
+        adena: adena,
+        level: level,
+        created: NaiveDateTime.utc_now(:second)
+      })
 
-    :ok
+    id
   end
 
   @doc "Top entries by experience then adena, optionally filtered to one race."

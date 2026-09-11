@@ -38,6 +38,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Versioned Documents**: Each character's state records the shape it was written in, so a later reshape has something to branch on, and a document from a newer build is refused rather than read with every unrecognised field defaulted away.
 - **Writes Follow the Player, Not the Clock**: A character lives in its process, so the database is durability rather than storage. What the player *did* — a fight, a purchase, a death, a legacy — is written before they are told it worked. The passage of time — passive regeneration, which screen they wandered to — rides along with the next action, or with the process stopping. A hard kill costs a little healing and nothing else, and a session that used to take 41 writes takes 9.
+- **Every Fight Is Kept**: Each battle appends a row to `battle_log` — the numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before; the character's own document is rewritten whole on every save, which is why the last battle no longer lives in it. Writing a legacy claims that run's fights so they outlive the character; starting over without one discards them, so the next life never inherits them.
 - **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies, validation on every payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
 - **Idle Characters Are Reaped**: A character process arms a stop timer at start and cancels it when a viewer attaches, so a crawler leaves nothing running. Rows outlive the process and are swept after 30 days, the window the session cookie uses.
 
@@ -101,6 +102,11 @@ in, not two.
 
 An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
 so the two are never confused. A release names its commit instead.
+
+Three tables, two shapes, on purpose: `characters` is mutable working state owned by a process and
+only ever read whole, so it is one JSON document; `highscores` and `battle_log` are immutable facts
+that get sorted and aggregated, so they are columns — with the battle narrative kept as JSON beside
+them, because it is only ever rendered.
 
 Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
 A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.

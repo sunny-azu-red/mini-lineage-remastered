@@ -223,17 +223,18 @@ defmodule MiniLineage.Game.Actions do
 
     case guard(player, checks) do
       nil ->
-        Highscores.insert(%{
-          name: player.name,
-          experience: player.experience,
-          race_id: player.race_id,
-          adena: player.adena,
-          level: Math.level_for_xp(player.experience)
-        })
+        highscore_id =
+          Highscores.insert(%{
+            name: player.name,
+            experience: player.experience,
+            race_id: player.race_id,
+            adena: player.adena,
+            level: Math.level_for_xp(player.experience)
+          })
 
         slug = MiniLineage.Game.Format.slugify(Constants.race(player.race_id).label)
 
-        {Player.reset(player), {:ok, %{race_slug: slug}}}
+        {Player.reset(player), {:ok, %{race_slug: slug, highscore_id: highscore_id}}}
 
       refusal ->
         refusal
