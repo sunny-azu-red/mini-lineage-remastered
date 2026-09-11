@@ -11,7 +11,10 @@ defmodule MiniLineage.Game.Statistics.Collector do
   alias MiniLineage.Game.Statistics
   alias MiniLineage.Repo
 
-  @flush_ms 1_000
+  # Generous on purpose. `read_all/0` drains the buffer before it queries, so the archives are
+  # never stale however long this is; increments coalesce by field, so a batch is capped at the
+  # number of counters rather than by the wait; and a hard kill loses a minute of lifetime totals.
+  @flush_ms 60_000
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
