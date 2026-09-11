@@ -349,6 +349,26 @@ try {
     await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
     check('a dead character is confined to the death screen', (await state()).screen === 'death');
 
+    // ---- the fallen may look back --------------------------------------------------------------
+    // Through the sidebar's own link, which is the only route a player has to it.
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.click('#sidebar .stat-row a');
+    await onScreen('character');
+    const eulogy = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
+    check('the dead may look back at who they were', (await state()).screen === 'character');
+    check('...marked by the skull rather than their ancestry', eulogy.includes('☠️'));
+    check('...speaking of the run in the past', /Your Journey Has Ended/.test(eulogy) && /You fell at/.test(eulogy),
+        eulogy.slice(eulogy.indexOf('Your Journey'), eulogy.indexOf('Your Journey') + 60));
+    check('...and never as though it were still going',
+        !/are wielding|journey ahead|The Journey So Far/.test(eulogy));
+
+    await page.click('#main .back a');
+    await onScreen('death');
+    check('...and its way back is the death screen', (await state()).screen === 'death');
+    // The whole point of the detour: reviewing a character must not cost its legacy.
+    check('...with the legacy still there to write',
+        await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
+
     // ---- submit a highscore, then restart -----------------------------------------------------
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a legitimate death may write its legacy',
