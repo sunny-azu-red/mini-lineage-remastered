@@ -27,7 +27,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     %{player | experience: 4_200, adena: 900, total_battles: 12, total_enemies_killed: 30}
   end
 
-  defp fallen, do: living() |> Player.kill()
+  defp fallen, do: %{Player.kill(living()) | death_reason: "The road ran out beneath you."}
 
   describe "a fallen character" do
     test "is marked by the skull, not by its ancestry's emoji" do
@@ -57,9 +57,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     end
 
     test "closes on the reason it ended, the same line the death screen carries" do
-      player = fallen()
-
-      assert html_for(player) =~ player.death_reason
+      assert html_for(fallen()) =~ "The road ran out beneath you."
     end
 
     test "and its way back leads to the death screen, not to Town" do
@@ -78,6 +76,41 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
       assert html =~ "12 battles"
       assert html =~ "4,200 XP"
+    end
+  end
+
+  describe "the prose itself" do
+    # HEEx renders a line break as a space, so a span the formatter moved onto its own line puts
+    # one in front of whatever punctuation follows: "Physical Defense ." Invisible in the markup.
+    test "never leaves a space in front of its punctuation" do
+      for player <- [
+            living(),
+            fallen(),
+            %{living() | total_ambushes: 3},
+            %{fallen() | total_ambushes: 3}
+          ] do
+        text =
+          player |> html_for() |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
+
+        assert Regex.scan(~r/\S+ [,.]/, text) == [], text
+      end
+    end
+
+    test "counts ambushes only when there were any" do
+      refute html_for(fallen()) =~ "overcoming"
+      assert html_for(%{fallen() | total_ambushes: 3}) =~ "overcoming"
+      assert html_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
+    end
+
+    test "and gives the reason it ended the same weight as the death screen does" do
+      # Not muted: it is the last line of the eulogy, not a footnote to it. The reason is drawn at
+      # random on death, so it is read off the same character that was rendered.
+      player = fallen()
+      html = html_for(player)
+      reason = Regex.escape(player.death_reason)
+
+      assert html =~ ~r|<p[^>]*>#{reason}|, "the reason it ended is not on the page"
+      refute html =~ ~r|<p[^>]*class="[^"]*muted[^"]*"[^>]*>#{reason}|
     end
   end
 
