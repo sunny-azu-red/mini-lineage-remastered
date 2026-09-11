@@ -15,7 +15,10 @@ defmodule MiniLineage.Highscores do
       field :race_id, :integer
       field :adena, :integer
       field :level, :integer
-      field :created, :naive_datetime
+
+      # Timezone-aware and microsecond, matching characters and battle_log. The values were always
+      # UTC; they were simply not labelled as such.
+      timestamps(type: :utc_datetime_usec, updated_at: false)
     end
   end
 
@@ -27,8 +30,7 @@ defmodule MiniLineage.Highscores do
         total_xp: experience,
         race_id: race_id,
         adena: adena,
-        level: level,
-        created: NaiveDateTime.utc_now(:second)
+        level: level
       })
 
     id

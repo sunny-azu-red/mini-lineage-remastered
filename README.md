@@ -106,7 +106,9 @@ so the two are never confused. A release names its commit instead.
 Three tables, two shapes, on purpose: `characters` is mutable working state owned by a process and
 only ever read whole, so it is one JSON document; `highscores` and `battle_log` are immutable facts
 that get sorted and aggregated, so they are columns — with the battle narrative kept as JSON beside
-them, because it is only ever rendered.
+them, because it is only ever rendered. All three stamp `inserted_at` as a timezone-aware
+microsecond timestamp, and a fight points at the board entry that claimed it with a real foreign
+key, so taking a legacy off the board takes its fights with it.
 
 Settings come from the repo-root `.env` — see [.env.example](.env.example) for what each one does.
 A real environment variable always beats the file, which is how `e2e/serve.sh` and CI override it.

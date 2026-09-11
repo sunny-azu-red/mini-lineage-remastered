@@ -26,6 +26,9 @@ mix run --no-start -e '
   end
 
   {:ok, conn} = MyXQL.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
-  for table <- ~w(highscores characters battle_log), do: MyXQL.query!(conn, "TRUNCATE TABLE #{table}")
-  IO.puts("reset #{database}: highscores, characters, battle_log")
+  # DELETE, child first, rather than TRUNCATE: a table a foreign key points at cannot be
+  # truncated, and this order is the same one Postgres would need.
+  for table <- ~w(battle_log highscores characters),
+      do: MyXQL.query!(conn, "DELETE FROM #{table}")
+  IO.puts("reset #{database}: battle_log, highscores, characters")
 ' >/dev/null

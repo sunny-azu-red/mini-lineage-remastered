@@ -624,7 +624,7 @@ defmodule MiniLineageWeb.Screens do
               <td class="center">{Format.number(row.level)}</td>
               <td class="xp">{Format.number(row.total_xp)}</td>
               <td class="gold">🪙 {Format.adena(row.adena)}</td>
-              <td class="muted">{short_date(row.created)}</td>
+              <td class="muted">{short_date(row.inserted_at)}</td>
             </tr>
           </tbody>
         </table>
@@ -739,7 +739,7 @@ defmodule MiniLineageWeb.Screens do
     end
   end
 
-  defp short_date(%NaiveDateTime{} = at) do
+  defp short_date(at) do
     pad = &String.pad_leading(Integer.to_string(&1), 2, "0")
 
     "#{pad.(at.day)}/#{pad.(at.month)}/#{String.slice(Integer.to_string(at.year), -2..-1)}, " <>

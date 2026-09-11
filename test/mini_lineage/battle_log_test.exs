@@ -8,6 +8,8 @@ defmodule MiniLineage.BattleLogTest do
   """
   use MiniLineage.DataCase, async: false
 
+  import Ecto.Query
+
   alias MiniLineage.{BattleLog, Characters, Highscores}
   alias MiniLineage.Characters.Store
   alias MiniLineage.Game.{Actions, Constants, Player}
@@ -29,7 +31,6 @@ defmodule MiniLineage.BattleLogTest do
   defp fight(id), do: Characters.mutate(id, &Actions.fight/1)
 
   defp rows(id) do
-    import Ecto.Query
     Repo.all(from e in BattleLog.Entry, where: e.character_id == ^id, order_by: e.id)
   end
 
@@ -138,6 +139,29 @@ defmodule MiniLineage.BattleLogTest do
       id = Highscores.insert(%{name: "Hero", experience: 10, race_id: 1, adena: 2, level: 1})
 
       assert is_integer(id)
+    end
+
+    test "stamps itself with a timezone-aware time, like everything else here" do
+      Highscores.insert(%{name: "Hero", experience: 10, race_id: 1, adena: 2, level: 1})
+
+      assert %DateTime{} = List.first(Highscores.list()).inserted_at
+    end
+
+    test "and taking one off the board takes its fights with it", %{id: id} do
+      # The foreign key, not the application: a claimed fight whose entry is gone has no character
+      # either, so nothing would ever come back for it.
+      start_character(id)
+      fight(id)
+
+      highscore_id =
+        Highscores.insert(%{name: "Hero", experience: 10, race_id: 1, adena: 2, level: 1})
+
+      BattleLog.claim(id, highscore_id)
+      assert rows(id) != []
+
+      Repo.delete_all(from e in Highscores.Entry, where: e.id == ^highscore_id)
+
+      assert rows(id) == []
     end
   end
 end
