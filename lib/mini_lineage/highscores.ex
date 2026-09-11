@@ -15,21 +15,25 @@ defmodule MiniLineage.Highscores do
       field :race_id, :integer
       field :adena, :integer
       field :level, :integer
-      field :created, :naive_datetime
+
+      # Timezone-aware and microsecond, matching characters and battle_log. The values were always
+      # UTC; they were simply not labelled as such.
+      timestamps(type: :utc_datetime_usec, updated_at: false)
     end
   end
 
+  @doc "Writes a legacy to the board and returns its id, which claims the run's battle log."
   def insert(%{name: name, experience: experience, race_id: race_id, adena: adena, level: level}) do
-    Repo.insert!(%Entry{
-      name: name,
-      total_xp: experience,
-      race_id: race_id,
-      adena: adena,
-      level: level,
-      created: NaiveDateTime.utc_now(:second)
-    })
+    %Entry{id: id} =
+      Repo.insert!(%Entry{
+        name: name,
+        total_xp: experience,
+        race_id: race_id,
+        adena: adena,
+        level: level
+      })
 
-    :ok
+    id
   end
 
   @doc "Top entries by experience then adena, optionally filtered to one race."

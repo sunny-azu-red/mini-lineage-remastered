@@ -57,15 +57,16 @@ defmodule MiniLineage.CharactersTest do
     assert Characters.snapshot(id).adena == 50
   end
 
-  test "every persisted change bumps the revision, and a no-op change does not", %{id: id} do
+  test "a change that changes nothing is not a change", %{id: id} do
+    # Decided by comparing the struct rather than by the handler saying so, which is what makes a
+    # read — a snapshot runs through the same path — cost nothing.
     start_character(id)
-    before = Characters.snapshot(id).revision
+    Characters.mutate(id, &{%{&1 | adena: 4242}, :ok})
 
-    Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok})
-    assert Characters.snapshot(id).revision == before + 1
-
+    written = Store.load(id)
     Characters.mutate(id, &{&1, :ok})
-    assert Characters.snapshot(id).revision == before + 1
+
+    assert Store.load(id) == written
   end
 
   test "an effect expires on its own timer, pushing the change without anyone reading", %{id: id} do

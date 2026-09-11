@@ -55,6 +55,20 @@ defmodule MiniLineage.Game.Narrative do
     }
   end
 
+  @doc """
+  The warning shown while ambushed and near death.
+
+  Drawn from the pool by a hash of the run rather than at random, because the banner re-renders on
+  every tick: a fresh roll each time would have it flickering through nine lines while the player
+  reads it. The inputs only move when a fight does, which is also the only thing that ends an
+  ambush, so it holds still for exactly as long as the warning is on screen.
+  """
+  def ambush_low_health(player) do
+    pool = Narratives.ambush_low_health()
+
+    Enum.at(pool, rem(:erlang.phash2({player.experience, player.total_ambushes}), length(pool)))
+  end
+
   def build_race_traits(race) do
     Format.fill_template(Narratives.race_traits(race.id), %{
       "hp" => Format.number(race.start_health),

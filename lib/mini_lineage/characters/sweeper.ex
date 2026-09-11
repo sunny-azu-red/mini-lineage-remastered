@@ -37,9 +37,14 @@ defmodule MiniLineage.Characters.Sweeper do
 
   defp sweep do
     count = Store.sweep_expired()
+    # After the characters, not before: a row is orphaned by its character going away.
+    orphaned = MiniLineage.BattleLog.sweep_orphaned()
 
     if count > 0,
-      do: Logger.info("swept #{count} character(s) idle for over #{Store.ttl_hours()}h")
+      do:
+        Logger.info(
+          "swept #{count} character(s) idle for over #{Store.ttl_hours()}h, and #{orphaned} unclaimed fight(s)"
+        )
 
     count
   end

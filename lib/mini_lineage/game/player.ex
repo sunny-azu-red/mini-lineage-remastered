@@ -24,7 +24,6 @@ defmodule MiniLineage.Game.Player do
             consecutive_ambushes: 0,
             total_enemies_killed: 0,
             effects: [],
-            revision: 0,
             current_screen: nil,
             combat_until: nil,
             last_battle_narrative: nil
@@ -289,7 +288,7 @@ defmodule MiniLineage.Game.Player do
 
   # ----------------------------------------------------------------- economy
 
-  def deduct_cost(player, cost) do
+  defp deduct_cost(player, cost) do
     if player.adena < cost,
       do: {player, false},
       else: {%{player | adena: player.adena - cost}, true}

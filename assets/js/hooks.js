@@ -153,7 +153,7 @@ const EASE_MS = 600;
 
 const groupDigits = (n) => Math.round(n).toLocaleString('en-US');
 
-function shortAdena(value) {
+export function shortAdena(value) {
     const abs = Math.abs(value);
     const sign = value < 0 ? '-' : '';
     if (abs <= 999)

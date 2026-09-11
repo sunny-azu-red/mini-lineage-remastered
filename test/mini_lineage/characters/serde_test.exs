@@ -29,7 +29,6 @@ defmodule MiniLineage.Characters.SerdeTest do
       total_ambushes: 7,
       consecutive_ambushes: 2,
       total_enemies_killed: 118,
-      revision: 9,
       current_screen: "battle",
       combat_until: 1_700_000_005_000,
       effects: [
@@ -80,8 +79,22 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the document covers the struct" do
     test "every field is written, and nothing that is not a field" do
-      struct_keys = %Player{} |> Map.from_struct() |> Map.keys() |> MapSet.new()
-      written = %Player{} |> Serde.to_map() |> Map.keys() |> MapSet.new(&String.to_atom/1)
+      # Two deliberate exceptions, named so that a field forgotten by accident still fails here.
+      # `version` describes the document rather than the character; `last_battle_narrative` is
+      # transient, kept on the struct for the screen and stored in battle_log instead.
+      struct_keys =
+        %Player{}
+        |> Map.from_struct()
+        |> Map.keys()
+        |> MapSet.new()
+        |> MapSet.delete(:last_battle_narrative)
+
+      written =
+        %Player{}
+        |> Serde.to_map()
+        |> Map.keys()
+        |> MapSet.new(&String.to_atom/1)
+        |> MapSet.delete(:version)
 
       assert MapSet.difference(struct_keys, written) |> MapSet.to_list() == [],
              "a field is missing from Serde.to_map/1 and would stop persisting"
@@ -89,10 +102,17 @@ defmodule MiniLineage.Characters.SerdeTest do
       assert MapSet.difference(written, struct_keys) |> MapSet.to_list() == []
     end
 
+    test "the last battle is not in the document, because it is half its bytes" do
+      # The fixture carries one; it belongs in battle_log, and the round trip drops it.
+      refute Map.has_key?(Serde.to_map(populated()), "last_battle_narrative")
+      assert Serde.from_map(Serde.to_map(populated())).last_battle_narrative == nil
+    end
+
     test "a fully populated character survives the round trip unchanged" do
       player = populated()
 
-      assert player |> Serde.to_map() |> Serde.from_map() == player
+      assert player |> Serde.to_map() |> Serde.from_map() ==
+               %{player | last_battle_narrative: nil}
     end
 
     test "and so does one that has done nothing at all" do
@@ -102,7 +122,29 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "the document is plain JSON — no atoms, no structs" do
       encoded = populated() |> Serde.to_map() |> Jason.encode!()
 
-      assert encoded |> Jason.decode!() |> Serde.from_map() == populated()
+      assert encoded |> Jason.decode!() |> Serde.from_map() ==
+               %{populated() | last_battle_narrative: nil}
+    end
+  end
+
+  describe "the shape the document was written in" do
+    test "is recorded, so a later reshape has something to branch on" do
+      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 1
+    end
+
+    test "a document written before versioning is the shape we have now" do
+      # Every row already in the database predates this key, and none of them need converting.
+      before_versioning = %Player{} |> Serde.to_map() |> Map.delete("version")
+
+      assert Serde.from_map(before_versioning) == %Player{}
+    end
+
+    test "and one from a newer build is refused rather than quietly misread" do
+      # A rolling deploy runs two versions at once. Reading a shape this build does not know would
+      # otherwise default every unrecognised field and write the loss straight back.
+      newer = %Player{name: "Hero"} |> Serde.to_map() |> Map.put("version", 99)
+
+      assert_raise RuntimeError, ~r/version 99.*understands 1/, fn -> Serde.from_map(newer) end
     end
   end
 
@@ -164,7 +206,6 @@ defmodule MiniLineage.Characters.SerdeTest do
       assert loaded.total_ambushes == 0
       assert loaded.consecutive_ambushes == 0
       assert loaded.total_enemies_killed == 0
-      assert loaded.revision == 0
       assert loaded.effects == []
       assert loaded.dead == false
       assert loaded.last_battle_narrative == nil

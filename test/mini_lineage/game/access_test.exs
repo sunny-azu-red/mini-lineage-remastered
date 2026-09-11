@@ -60,6 +60,18 @@ defmodule MiniLineage.Game.AccessTest do
     test "may stay on the death screen" do
       assert Access.pin_screen("death", dead()) == "death"
     end
+
+    test "may look back at who they were, which is the one screen that is a retrospective" do
+      assert Access.pin_screen("character", dead()) == "character"
+    end
+
+    test "and that exception does not widen: everything else is still the death screen" do
+      # The list above covers the screens a player would try; this is the guard against a new one
+      # being added to @dead_allowed by accident.
+      for screen <- ~w(home inn weapons armors battle suicide highscores statistics races start) do
+        assert Access.pin_screen(screen, dead()) == "death", screen
+      end
+    end
   end
 
   describe "an ambushed character" do

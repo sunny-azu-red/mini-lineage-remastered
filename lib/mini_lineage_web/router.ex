@@ -23,7 +23,6 @@ defmodule MiniLineageWeb.Router do
     live "/shop/armors", GameLive, :armors
     live "/inn", GameLive, :inn
     live "/suicide", GameLive, :suicide
-    live "/death", GameLive, :death
     live "/character", GameLive, :character
     live "/highscores", GameLive, :highscores
     live "/highscores/:race", GameLive, :highscores

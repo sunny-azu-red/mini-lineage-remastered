@@ -1,7 +1,10 @@
 /.git/
-/dist/
-/coverage/
+/_build/
+/cover/
+/deps/
 /node_modules/
+/priv/static/assets/
 /.env
+/.env.test
 /package-lock.json
 .DS_Store

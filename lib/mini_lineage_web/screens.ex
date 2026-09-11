@@ -8,7 +8,7 @@ defmodule MiniLineageWeb.Screens do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Access, Format, Narratives}
+  alias MiniLineage.Game.{Access, Format}
   alias MiniLineageWeb.Paths
 
   # The panel heading and the document title for each screen, carried over verbatim.
@@ -31,9 +31,6 @@ defmodule MiniLineageWeb.Screens do
   def title(screen), do: Map.get(@titles, screen, "Mini Lineage")
 
   def page_title(screen), do: "Mini Lineage - #{title(screen)}"
-
-  # One representative line from the old nine-line pool. Flavour text, not game state.
-  @ambush_low_health_line hd(Narratives.ambush_low_health())
 
   attr :screen, :string, required: true
   attr :view, :map, required: true
@@ -118,10 +115,9 @@ defmodule MiniLineageWeb.Screens do
   end
 
   attr :ambushed, :boolean, default: false
+  attr :ambush_line, :string, default: nil
 
   def low_health(assigns) do
-    assigns = assign(assigns, ambush_line: @ambush_low_health_line)
-
     ~H"""
     <div id="low-health-alert" class="alert alert-danger">
       Your HP is dangerously low!<br />
@@ -138,11 +134,14 @@ defmodule MiniLineageWeb.Screens do
   attr :started, :boolean, required: true
   attr :label, :string, default: nil
   attr :class, :string, default: "last back"
+  # Named outright where "where you came from" is neither Town nor Game Start — the dead go back
+  # to their own ending, and patching to Town would only be bounced there anyway.
+  attr :to, :string, default: nil
 
   def back_link(assigns) do
     ~H"""
     <p class={@class}>
-      <.link patch={Paths.for_screen(if @started, do: "home", else: "start")}>
+      <.link patch={Paths.for_screen(@to || if(@started, do: "home", else: "start"))}>
         {@label || if @started, do: "Continue your journey", else: "Go back to game start"}
       </.link>
     </p>
@@ -357,12 +356,10 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp death(assigns) do
+    # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
+    # they are the last line of the run, and read as one.
     ~H"""
-    <%= if @view.coward || @view.cheated do %>
-      <div class="alert alert-danger">{@view.death_reason}</div>
-    <% else %>
-      <p>{@view.death_reason}</p>
-    <% end %>
+    <p>{@view.death_reason}</p>
 
     <div class="action-links">
       <button :if={@view.highscore_eligible} type="button" class="btn" phx-click="submit_highscore">
@@ -495,86 +492,116 @@ defmodule MiniLineageWeb.Screens do
   defp character(assigns) do
     race = Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id))
     opponent = Enum.find(assigns.catalog.races, &(&1.id == race.enemy_race_id))
-    assigns = assign(assigns, race: race, opponent: opponent)
 
+    # Numbers named up here so each stat and its punctuation fit on one line below. The HEEx
+    # formatter breaks a long line at a tag boundary, and a newline there renders as a space —
+    # which is how "Physical Defense ." happens.
+    assigns =
+      assign(assigns,
+        race: race,
+        opponent: opponent,
+        dead: assigns.view.dead,
+        attack: Format.number(assigns.view.stats.attack),
+        defense: Format.number(assigns.view.stats.defense),
+        crit: Format.number(assigns.view.stats.crit),
+        regen: Format.number(assigns.view.stats.regen),
+        ambush: Format.number(assigns.view.stats.ambush_risk),
+        level: Format.number(assigns.view.level),
+        next_level: Format.number(assigns.view.level + 1),
+        experience: Format.number(assigns.view.experience),
+        xp_needed: Format.number(assigns.view.xp_needed),
+        purse: Format.adena(assigns.view.adena)
+      )
+
+    # The numbers are shared, so a living and a fallen character can never drift apart; only the
+    # tense moves. The closing section forks outright — its sentences change shape, not just verbs,
+    # since there is no next level to reach and no journey ahead.
     ~H"""
-    <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
+    <h2>{if @dead, do: "☠️", else: @race.emoji} {@view.name} of {@race.label} Ancestry</h2>
     <p>{raw(@race.backstory)}</p>
     <p>{raw(@race.traits)}</p>
 
     <h2>Inventory &amp; Stats</h2>
-    <p>
-      You are wielding the {@view.weapon.emoji} {@view.weapon.name} granting
-      <span class="hp">
-        <span id="char-stat-attack">{Format.number(@view.stats.attack)}</span> Physical Attack
-      </span>
-      <%= if (@view.weapon.crit || 0) > 0 do %>
-        and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span>
-      <% end %>, and wearing
-      the {@view.armor.emoji} {@view.armor.name} providing
-      <span class="muted">
-        <span id="char-stat-defense">{Format.number(@view.stats.defense)}</span> Physical Defense
-      </span>
-      <%= if (@view.armor.regen || 0) > 0 do %>
-        and <span class="heal">+{@view.armor.regen} HP Regeneration</span>
-      <% end %>.
+    <p phx-no-format>
+      You {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} {@view.weapon.name} granting
+      <span class="hp"><span id="char-stat-attack">{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} {@view.armor.name} providing
+      <span class="muted"><span id="char-stat-defense">{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
     </p>
     <p>
-      Combined with your ancestry, you strike with a total of
-      <span class="crit">
-        <span id="char-stat-crit">{Format.number(@view.stats.crit)}</span>% Critical Hit Chance
-      </span>
-      and mend wounds at
-      <span class="heal">
-        +<span id="char-stat-regen">{Format.number(@view.stats.regen)}</span> HP Regeneration
-      </span>
-      per rest cycle, while navigating the roads with a <span class="muted">
-        <span id="char-stat-ambush">{Format.number(@view.stats.ambush_risk)}</span>% Ambush Risk
-      </span>.
+      Combined with your ancestry, you {if @dead, do: "struck", else: "strike"} with a total of
+      <span class="crit"><span id="char-stat-crit">{@crit}</span>% Critical Hit Chance</span>
+      and {if @dead, do: "mended", else: "mend"} wounds at
+      <span class="heal">+<span id="char-stat-regen">{@regen}</span> HP Regeneration</span>
+      per rest cycle, while navigating the roads with a <span class="muted"><span id="char-stat-ambush">{@ambush}</span>% Ambush Risk</span>.
     </p>
 
-    <h2>The Journey So Far</h2>
-    <p>
-      Your journey across the realm has been defined by conflict and survival. You have fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
-      <span class="gold">
-        {Format.pluralize(
+    <%= if @dead do %>
+      <h2>Your Journey Has Ended</h2>
+      <p>
+        Your journey across the realm was defined by conflict and survival. You fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
+        <span class="gold">{Format.pluralize(
           @opponent.label,
           @opponent.plural,
           @view.counters.total_enemies_killed,
           @opponent.emoji
-        )}
-      </span>
-      and overcoming
-      <span class="hp">
-        {Format.pluralize("cunning ambush", "cunning ambushes", @view.counters.total_ambushes)}
-      </span>
-      along the road.
-    </p>
-    <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
-    <p id="char-vitality" phx-hook="AnimatedValues">
-      Experience wise, you are at <span class="gold">Level {Format.number(@view.level)}</span>
-      with a
-      total of <span class="xp">{Format.number(@view.experience)} XP</span>
-      <%= if @view.is_max_level do %>
-        , standing unchallenged at the zenith of martial prowess
-      <% else %>
-        , requiring another <span class="xp">{Format.number(@view.xp_needed)} XP</span>
-        to reach <span class="gold">Level {Format.number(@view.level + 1)}</span>
-      <% end %>
-      and your vitality currently sustains you at
-      <span class="hp">
-        <span id="char-hp" class="animate-val" data-key="char-hp" data-value={@view.health}>{Format.number(
-          @view.health
         )}</span>
-        / <span id="char-max-hp">{Format.number(@view.max_health)}</span>
-        HP
-      </span>
-      while your purse holds <span class="gold">🪙 {Format.adena(@view.adena)} Adena</span>
-      for the
-      journey ahead.
-    </p>
+        <%= if @view.counters.total_ambushes > 0 do %>
+          and overcoming
+          <span class="hp">{Format.pluralize(
+            "cunning ambush",
+            "cunning ambushes",
+            @view.counters.total_ambushes
+          )}</span>
+        <% end %>
+        along the road.
+      </p>
+      <p phx-no-format>
+        You fell at <span class="gold">Level {@level}</span>
+        with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp">{@xp_needed} XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and your purse held <span class="gold">🪙 {@purse} Adena</span>
+        when the road ran out.
+      </p>
+      <p>{@view.death_reason}</p>
 
-    <.back_link started={@view.started} />
+      <.back_link started={@view.started} to="death" label="Return to your final rest" />
+    <% else %>
+      <h2>The Journey So Far</h2>
+      <p>
+        Your journey across the realm has been defined by conflict and survival. You have fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
+        <span class="gold">{Format.pluralize(
+          @opponent.label,
+          @opponent.plural,
+          @view.counters.total_enemies_killed,
+          @opponent.emoji
+        )}</span>
+        <%= if @view.counters.total_ambushes > 0 do %>
+          and overcoming
+          <span class="hp">{Format.pluralize(
+            "cunning ambush",
+            "cunning ambushes",
+            @view.counters.total_ambushes
+          )}</span>
+        <% end %>
+        along the road.
+      </p>
+      <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
+      <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
+        Experience wise, you are at <span class="gold">Level {@level}</span>
+        with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp">{@xp_needed} XP</span> to reach <span class="gold">Level {@next_level}</span><% end %>
+        and your vitality currently sustains you at
+        <span class="hp"><span
+          id="char-hp"
+          class="animate-val"
+          data-key="char-hp"
+          data-value={@view.health}
+        >{Format.number(@view.health)}</span>
+        / <span id="char-max-hp">{Format.number(@view.max_health)}</span>
+        HP</span>
+        while your purse holds <span class="gold">🪙 {@purse} Adena</span>
+        for the journey ahead.
+      </p>
+
+      <.back_link started={@view.started} />
+    <% end %>
     """
   end
 
@@ -624,7 +651,7 @@ defmodule MiniLineageWeb.Screens do
               <td class="center">{Format.number(row.level)}</td>
               <td class="xp">{Format.number(row.total_xp)}</td>
               <td class="gold">🪙 {Format.adena(row.adena)}</td>
-              <td class="muted">{short_date(row.created)}</td>
+              <td class="muted">{short_date(row.inserted_at)}</td>
             </tr>
           </tbody>
         </table>
@@ -739,7 +766,7 @@ defmodule MiniLineageWeb.Screens do
     end
   end
 
-  defp short_date(%NaiveDateTime{} = at) do
+  defp short_date(at) do
     pad = &String.pad_leading(Integer.to_string(&1), 2, "0")
 
     "#{pad.(at.day)}/#{pad.(at.month)}/#{String.slice(Integer.to_string(at.year), -2..-1)}, " <>

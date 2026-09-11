@@ -20,13 +20,19 @@ defmodule MiniLineage.Characters.Store do
 
   # MySQL has no conflict target — `on_conflict` compiles to ON DUPLICATE KEY UPDATE, which keys
   # off the primary key on its own.
-  def save(id, %Player{} = player) do
+  def save(id, %Player{} = player, battles \\ []) do
     now = DateTime.utc_now()
     state = Serde.to_map(player)
 
-    Repo.insert!(%Record{id: id, state: state, inserted_at: now, updated_at: now},
-      on_conflict: [set: [state: state, updated_at: now]]
-    )
+    # One transaction: a fight written without the character that fought it would show in the log
+    # as a battle its own totals do not include.
+    Repo.transaction(fn ->
+      Repo.insert!(%Record{id: id, state: state, inserted_at: now, updated_at: now},
+        on_conflict: [set: [state: state, updated_at: now]]
+      )
+
+      Enum.each(battles, &Repo.insert!/1)
+    end)
 
     :ok
   end

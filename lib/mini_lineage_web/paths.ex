@@ -7,7 +7,6 @@ defmodule MiniLineageWeb.Paths do
     {"armors", "/shop/armors"},
     {"inn", "/inn"},
     {"suicide", "/suicide"},
-    {"death", "/death"},
     {"character", "/character"},
     {"highscores", "/highscores"},
     {"statistics", "/statistics"},
@@ -17,9 +16,12 @@ defmodule MiniLineageWeb.Paths do
 
   @highscores_prefix "/highscores/"
 
-  @doc "'start' and 'home' share '/', disambiguated by whether a character exists."
+  @doc """
+  'start', 'home' and 'death' all live at '/': they are the three states of one run, told apart by
+  the character rather than by the address.
+  """
   def for_screen(screen, race_slug \\ nil)
-  def for_screen(screen, _slug) when screen in ["start", "home"], do: "/"
+  def for_screen(screen, _slug) when screen in ["start", "home", "death"], do: "/"
   def for_screen("highscores", slug) when is_binary(slug), do: @highscores_prefix <> slug
 
   def for_screen(screen, _slug) do

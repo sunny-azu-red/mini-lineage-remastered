@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping. Reuses the math and player modules."
-  alias MiniLineage.Game.{Constants, Format, Math, Player}
+  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player}
 
   def item_view(item) do
     modifiers = Map.get(item, :modifiers) || effect_modifiers(item)
@@ -35,7 +35,6 @@ defmodule MiniLineage.Game.Snapshot do
   """
   @empty %{
     started: false,
-    revision: 0,
     name: nil,
     race_id: nil,
     race_label: nil,
@@ -61,6 +60,7 @@ defmodule MiniLineage.Game.Snapshot do
     coward: false,
     cheated: false,
     death_reason: nil,
+    ambush_low_health: nil,
     highscore_eligible: false,
     counters: %{
       total_battles: 0,
@@ -74,7 +74,7 @@ defmodule MiniLineage.Game.Snapshot do
   def build(player) do
     if Player.started?(player),
       do: started(player),
-      else: %{@empty | revision: player.revision}
+      else: @empty
   end
 
   defp started(player) do
@@ -85,7 +85,6 @@ defmodule MiniLineage.Game.Snapshot do
 
     %{
       started: true,
-      revision: player.revision,
       name: player.name,
       race_id: player.race_id,
       race_label: race.label,
@@ -111,6 +110,7 @@ defmodule MiniLineage.Game.Snapshot do
       coward: player.coward,
       cheated: player.cheated,
       death_reason: player.death_reason,
+      ambush_low_health: Narrative.ambush_low_health(player),
       highscore_eligible: player.dead and not player.coward and not player.cheated,
       counters: %{
         total_battles: player.total_battles,
@@ -161,7 +161,7 @@ defmodule MiniLineage.Game.Snapshot do
         Enum.map(Constants.races(), fn race ->
           Map.merge(race, %{
             slug: Format.slugify(race.label),
-            traits: MiniLineage.Game.Narrative.build_race_traits(race)
+            traits: Narrative.build_race_traits(race)
           })
         end),
       weapons: Enum.map(Constants.weapons(), &item_view/1),
