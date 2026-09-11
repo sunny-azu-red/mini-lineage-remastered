@@ -294,7 +294,11 @@ defmodule MiniLineageWeb.GameLive do
     <Layouts.app flash={@flash} title={Screens.title(@screen)} view={@view} screen={@screen}>
       <Screens.notice :if={@notice} message={@notice} />
       <Screens.flash_alert :if={@game_flash} flash={@game_flash} />
-      <Screens.low_health :if={Screens.low_health_alert?(@view, @screen)} ambushed={@view.ambushed} />
+      <Screens.low_health
+        :if={Screens.low_health_alert?(@view, @screen)}
+        ambushed={@view.ambushed}
+        ambush_line={@view.ambush_low_health}
+      />
 
       <Screens.screen
         screen={@screen}

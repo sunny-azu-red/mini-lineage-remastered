@@ -29,7 +29,7 @@ defmodule MiniLineage.Game.Narratives do
     "👻 Your strength fails, and the world fades to black.",
     "💀 Fate has claimed your soul. Better luck in the next life.",
     "✨ Your life essence scatters into the aether.",
-    "🩸 Your story comes to a sudden, bloody conclusion.",
+    "🩸 Your story has come to a sudden, bloody conclusion.",
     "🥀 Your light flickers out in the cold silence of the dungeon.",
     "🪦 You fought bravely... but not bravely enough.",
     "🦴 Your bones will decorate this floor for the next adventurer.",

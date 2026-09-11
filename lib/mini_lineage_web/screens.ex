@@ -8,7 +8,7 @@ defmodule MiniLineageWeb.Screens do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Access, Format, Narratives}
+  alias MiniLineage.Game.{Access, Format}
   alias MiniLineageWeb.Paths
 
   # The panel heading and the document title for each screen, carried over verbatim.
@@ -31,9 +31,6 @@ defmodule MiniLineageWeb.Screens do
   def title(screen), do: Map.get(@titles, screen, "Mini Lineage")
 
   def page_title(screen), do: "Mini Lineage - #{title(screen)}"
-
-  # One representative line from the old nine-line pool. Flavour text, not game state.
-  @ambush_low_health_line hd(Narratives.ambush_low_health())
 
   attr :screen, :string, required: true
   attr :view, :map, required: true
@@ -118,10 +115,9 @@ defmodule MiniLineageWeb.Screens do
   end
 
   attr :ambushed, :boolean, default: false
+  attr :ambush_line, :string, default: nil
 
   def low_health(assigns) do
-    assigns = assign(assigns, ambush_line: @ambush_low_health_line)
-
     ~H"""
     <div id="low-health-alert" class="alert alert-danger">
       Your HP is dangerously low!<br />
