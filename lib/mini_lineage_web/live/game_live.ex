@@ -63,10 +63,19 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  # '/' and any unrecognised path both mean Game Start for a visitor and Town for a character;
-  # every other route names itself.
-  defp requested_screen(action, player) when action in [:root, :unknown],
-    do: if(MiniLineage.Game.Player.started?(player), do: "home", else: "start")
+  # '/' is wherever the player's own state puts them: Game Start for a visitor, Town for a
+  # character, Game Over for one who has died. Death is a state rather than a place — you never
+  # travel to it — so it has no URL of its own, and neither do the other two.
+  #
+  # An ambush is different: it pins you to the Battleground, which is somewhere you can stand, and
+  # keeps its own URL.
+  defp requested_screen(action, player) when action in [:root, :unknown] do
+    cond do
+      player.dead -> "death"
+      Player.started?(player) -> "home"
+      true -> "start"
+    end
+  end
 
   defp requested_screen(action, _player), do: Atom.to_string(action)
 

@@ -40,10 +40,16 @@ defmodule MiniLineageWeb.PathsTest do
     end
   end
 
-  describe "the two screens that share a URL" do
-    test "start and home are both the root, told apart by whether a character exists" do
-      assert Paths.for_screen("start") == "/"
-      assert Paths.for_screen("home") == "/"
+  describe "the three screens that share a URL" do
+    test "start, home and death are all the root — one run's three states" do
+      for screen <- ~w(start home death), do: assert(Paths.for_screen(screen) == "/", screen)
+    end
+
+    test "while a place you can stand in keeps its own" do
+      # An ambush pins you to the Battleground, which is somewhere you are rather than something
+      # that happened to you, so it keeps a URL.
+      assert Paths.for_screen("battle") == "/battle"
+      assert Paths.for_screen("character") == "/character"
     end
   end
 

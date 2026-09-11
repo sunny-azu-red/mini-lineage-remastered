@@ -80,8 +80,12 @@ try {
     // click. Everywhere else this clicks, because a route only ever reached by URL is untested.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
+    // /death is no longer a route — Game Over shares '/' with Start and Town — so this also proves
+    // an address the game once owned still lands somewhere sensible.
     await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
-    check('...and so does the death screen', (await state()).screen === 'start');
+    check('...and so does an address that used to be the death screen', (await state()).screen === 'start');
+    check('...which the game corrects rather than leaving in the bar',
+        new URL(page.url()).pathname === '/', page.url());
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
     check('...but Chronicles of Ancestry is public', (await state()).screen === 'races');
 
@@ -352,6 +356,8 @@ try {
     check('the road ends at the grave', current.dead === true,
         `dead=${current.dead} after ${fightsFought} fights (cap 200)`);
     check('death pins the player to the death screen', (await state()).screen === 'death');
+    check('...at the root, where Start and Town also live',
+        new URL(page.url()).pathname === '/', page.url());
     check('the Fight button stays under the keyboard between fights', !focusLeftTheFight,
         `${fightsFought} fights`);
     // Dying in battle morphs the Fight button into "Write your Legacy!" in place, so focus rides
@@ -363,6 +369,11 @@ try {
     // ---- the dead cannot wander ---------------------------------------------------------------
     await page.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
     check('a dead character is confined to the death screen', (await state()).screen === 'death');
+    check('...and the root shows them their ending, not Town',
+        await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' }).then(async () => {
+            await page.waitForSelector('.phx-connected', { timeout: 8000 });
+            return (await state()).screen === 'death';
+        }));
 
     // ---- the fallen may look back --------------------------------------------------------------
     // Through the sidebar's own link, which is the only route a player has to it.

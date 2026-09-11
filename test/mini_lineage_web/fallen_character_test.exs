@@ -60,11 +60,13 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       assert html_for(fallen()) =~ "The road ran out beneath you."
     end
 
-    test "and its way back leads to the death screen, not to Town" do
+    test "and its way back leads to the death screen, which is the root" do
+      # Start, Town and Game Over are one run's three states and share '/'. The Character screen is
+      # somewhere you navigated to, so it has a URL; the screen it returns you to does not.
       html = html_for(fallen())
 
       assert html =~ "Return to your final rest"
-      assert html =~ ~s|href="/death"|
+      assert html =~ ~s|href="/"|
     end
 
     test "still shows the numbers the living screen shows, from the same markup" do

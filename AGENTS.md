@@ -19,12 +19,49 @@ list wins — several generator defaults do not exist here.
 
 ### Working here
 
-- `mix precommit` before you call anything done.
-- `mix e2e` runs the browser suites — they are where the web layer is actually covered, so a
-  change to a screen, a hook or the CSS is not verified until they pass.
+- `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
+  a screen, a hook, the CSS. ExUnit reads 0% for the whole web layer because the browser suites
+  are not instrumented, not because it is untested.
 - Keep comments to one to three lines. Say why, not what, and never write a paragraph.
-- Do not assert on a dice roll in the browser suites. What the RNG decides belongs in
-  `test/mini_lineage/game/balance_golden_test.exs`, which can seed it.
+- Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
+  put it back. A test written after the fix and never seen to fail is decoration.
+
+### Rules that are not negotiable
+
+Each of these is here because it was got wrong once.
+
+**Never assert on a roll of the dice.** Not in the browser suites, not in ExUnit. Pin the source
+(`Rng.put_source/1`, or `Test.Lcg` for the golden master's stream), or make the character tanky
+enough that no roll changes the answer — `health: 5_000` is the idiom. A fatal fight counts no
+battle, which is all it takes to make a counter assertion pass for months and fail in CI once.
+What the dice decide belongs in `balance_golden_test.exs`, which seeds them.
+
+**The two adena formatters stay in step.** `Format.adena` and `shortAdena` in `hooks.js` are
+duplicated on purpose — the count-up animation formats its own frames, and without a client-side
+copy the number would change format mid-count. Both read
+`test/fixtures/adena_format.json`. Change one, change the table, and both tests will tell you.
+
+**Mutable working state is a document; immutable facts are columns.** `characters` is owned by a
+process and only ever read whole, so it is one JSON blob. `highscores` and `battle_log` are sorted
+and aggregated, so they are columns. Anything that grows with play — a battle history, an
+inventory, a mail box — gets its own table. Put it in the document and every save rewrites all of
+it, buffering or not.
+
+**Writes follow the player, not the clock.** What the player did is written before they are told it
+worked: creation, a fight, a purchase, death, a legacy, the cheat. The passage of time — passive
+regeneration, which screen they wandered to — is buffered and rides along with the next of those,
+or with `terminate/2`. The decision is derived from the struct in `Characters.Server`, never
+declared at a call site, because a call site can forget.
+
+**The URL is where you are.** Start, Town and Game Over are one run's three states and share `/`;
+`Access.pin_screen/2` decides which. Somewhere you can stand — the Battleground, a shop, the
+Character screen — gets a URL of its own. A state that happens to you does not.
+
+**Do not widen a guard to make something work.** `@dead_allowed` in `Access`, the `_test` check in
+`e2e/reset.sh`, the purchase preconditions: each one is the boundary, and there is a test asserting
+what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
+
+**Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
 <!-- usage-rules-start -->
 

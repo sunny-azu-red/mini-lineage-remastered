@@ -34,7 +34,8 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Live Leaderboards**: The top 25 adventurers ordered by total Experience, then Adena — filterable per race. Cowards and cheaters are barred from posting.
 ### 🛡️ Security & Reliability
 - **The Fallen May Look Back**: Death keeps everything but health and effects, so a dead character can still open its own Character screen — marked by ☠️ rather than its ancestry, written in the past, and closing on the reason the run ended. It is the only screen the dead may reach besides their own ending, and reaching it costs them nothing: the legacy is still there to write when they return.
-- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player may be, and every navigation funnels through `handle_params/3`, so an in-app link, a typed URL and the Back button obey the same checks. The dead are confined to the death screen and the living kept off it; a player with a character cannot re-enter character creation; an ambushed one is pinned to the Battleground. The game owns every URL — an unrecognised path resolves to Town.
+- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player may be, and every navigation funnels through `handle_params/3`, so an in-app link, a typed URL and the Back button obey the same checks. The dead are confined to their own ending and the living kept off it; a player with a character cannot re-enter character creation; an ambushed one is pinned to the Battleground. The game owns every URL — an unrecognised path resolves to wherever the player belongs.
+- **The URL Is Where You Are**: Game Start, Home Town and Game Over are one run's three states and all live at `/`, told apart by the character rather than by the address — you never travel to your own death. Somewhere you can stand keeps a URL of its own: the Battleground, the shops, the Character screen.
 - **Guarded Mutations**: Every event that changes state declares its own preconditions, enforced server-side. Client-side routing is convenience; these guards are the boundary. Notably restarting requires a *dead* character, so a living one can never be wiped.
 - **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Versioned Documents**: Each character's state records the shape it was written in, so a later reshape has something to branch on, and a document from a newer build is refused rather than read with every unrecognised field defaulted away.
@@ -108,12 +109,9 @@ another host entirely rather than merely under another name.
 An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
 so the two are never confused. A release names its commit instead.
 
-Three tables, two shapes, on purpose: `characters` is mutable working state owned by a process and
-only ever read whole, so it is one JSON document; `highscores` and `battle_log` are immutable facts
-that get sorted and aggregated, so they are columns — with the battle narrative kept as JSON beside
-them, because it is only ever rendered. All three stamp `inserted_at` as a timezone-aware
-microsecond timestamp, and a fight points at the board entry that claimed it with a real foreign
-key, so taking a legacy off the board takes its fights with it.
+Three tables: `characters` keeps each run's state as one JSON document, `highscores` the board,
+and `battle_log` a row per fight. A fight points at the board entry that claimed it, so taking a
+legacy off the board takes its fights with it.
 
 See [.env.example](.env.example) and [.env.test.example](.env.test.example) for what each setting
 does. A real environment variable always beats the file, which is how CI supplies them without
@@ -329,14 +327,14 @@ started. A server already running on that port is used as it is and left alone, 
 One run at a time: they share a database and each empties the board first, so a second `mix e2e`
 refuses and names the one already going.
 
-Neither suite asserts on a roll of the dice — a browser cannot seed the generator. They drive the
-situations they need, then check what only a browser can see. What the dice decide is pinned in
-`test/mini_lineage/game/balance_golden_test.exs`.
+No suite asserts on a roll of the dice. What the RNG decides is pinned in
+`test/mini_lineage/game/balance_golden_test.exs`, which can seed it.
 
-The Elixir suite holds the same rule. Where an outcome would otherwise turn on a roll, the dice are
-pinned — `Rng.put_source/1`, or `Test.Lcg` for the golden master's own stream — or the character is
-made tanky enough that no roll changes the answer. A fatal fight counts no battle, which is all it
-takes to make a counter assertion come and go.
+## Working on it
+
+[AGENTS.md](AGENTS.md) carries the conventions this codebase holds to — how the dice are kept out
+of tests, what belongs in a document and what belongs in columns, which writes are immediate, and
+what the URLs mean. It is written for whoever, or whatever, is editing the code.
 
 ## 📜 License
 
