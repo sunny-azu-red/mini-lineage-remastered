@@ -286,7 +286,7 @@ defmodule MiniLineageWeb.GameLive do
 
         message =
           if socket.assigns.view[:ambushed] && !socket.assigns.view[:dead] do
-            "You are in the middle of an ambush and moving too fast, please wait a moment."
+            "You are in the middle of an ambush and moving too fast, try again in #{seconds}s."
           else
             "You are moving too fast, please take a breath and try again in #{seconds}s."
           end
