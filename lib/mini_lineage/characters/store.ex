@@ -27,6 +27,8 @@ defmodule MiniLineage.Characters.Store do
   The character this browser is playing, as `{id, player}`, or nil before it has saved anything.
   Only ever finds a run still in progress — archiving clears the session it looks for.
   """
+  def load_by_session(nil), do: nil
+
   def load_by_session(session_id) do
     case Repo.one(from r in Record, where: r.session_id == ^session_id) do
       nil -> nil

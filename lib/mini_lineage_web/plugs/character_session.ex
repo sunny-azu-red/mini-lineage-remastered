@@ -16,8 +16,13 @@ defmodule MiniLineageWeb.Plugs.CharacterSession do
   @impl true
   def call(conn, _opts) do
     case get_session(conn, :session_id) do
-      nil -> put_session(conn, :session_id, Characters.new_session_id())
+      nil -> conn |> put_session(:session_id, Characters.new_session_id()) |> drop_stale()
       _id -> conn
     end
   end
+
+  # `character_id` was this key's name while the cookie also named the character. It is a session
+  # id's worth of dead weight in every returning player's cookie, and deleting it is how the last
+  # of them goes away.
+  defp drop_stale(conn), do: delete_session(conn, :character_id)
 end

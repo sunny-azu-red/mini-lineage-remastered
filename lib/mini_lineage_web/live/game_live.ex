@@ -16,9 +16,17 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineageWeb.{Paths, Screens}
 
   @impl true
-  def mount(_params, session, socket) do
-    id = session["session_id"]
+  def mount(_params, %{"session_id" => id}, socket) when is_binary(id) do
+    mount_character(id, socket)
+  end
 
+  # No session id: this socket carries a cookie the plug has never seen — a tab left open across a
+  # deploy, or a request that reached the socket without passing through the browser pipeline. A
+  # LiveView cannot issue a cookie, so bounce through a real request, which can. The plug sets one
+  # unconditionally, so this cannot come back round twice.
+  def mount(_params, _session, socket), do: {:ok, redirect(socket, to: ~p"/")}
+
+  defp mount_character(id, socket) do
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)

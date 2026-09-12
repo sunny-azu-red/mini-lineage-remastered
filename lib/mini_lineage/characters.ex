@@ -69,8 +69,19 @@ defmodule MiniLineage.Characters do
 
   defp server(id) do
     case DynamicSupervisor.start_child(MiniLineage.Characters.Supervisor, {Server, id}) do
-      {:ok, pid} -> pid
-      {:error, {:already_started, pid}} -> pid
+      {:ok, pid} ->
+        pid
+
+      {:error, {:already_started, pid}} ->
+        pid
+
+      # Anything else is the character's own `init/1` having raised. Without this the failure
+      # surfaced as a CaseClauseError here, naming this line instead of the one that broke.
+      {:error, {exception, stacktrace}} when is_exception(exception) ->
+        reraise(exception, stacktrace)
+
+      {:error, reason} ->
+        raise "character #{inspect(id)} could not be started: #{inspect(reason)}"
     end
   end
 end
