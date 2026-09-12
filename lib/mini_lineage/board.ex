@@ -54,18 +54,29 @@ defmodule MiniLineage.Board do
   def rank_of(%{disqualified: true}), do: nil
 
   def rank_of(entry) do
+    # Two counts rather than one OR-chain. The chain cannot use the board index and scans the whole
+    # table; a row comparison walks it, and the tie is an exact prefix match on the same index —
+    # both index-only, and both O(rank) rather than O(table).
     ahead =
       ranked()
       |> where(
         [r],
-        r.total_xp > ^entry.total_xp or
-          (r.total_xp == ^entry.total_xp and r.adena > ^entry.adena) or
-          (r.total_xp == ^entry.total_xp and r.adena == ^entry.adena and
-             r.inserted_at < ^entry.inserted_at)
+        fragment("(?, ?) > (?, ?)", r.total_xp, r.adena, ^entry.total_xp, ^entry.adena)
       )
       |> Repo.aggregate(:count)
 
-    ahead + 1
+    # Exactly level on both, and got there first. Rare, but this is what keeps the rank shown on a
+    # player's own row agreeing with where the list would have put them.
+    tied =
+      ranked()
+      |> where(
+        [r],
+        r.total_xp == ^entry.total_xp and r.adena == ^entry.adena and
+          r.inserted_at < ^entry.inserted_at
+      )
+      |> Repo.aggregate(:count)
+
+    ahead + tied + 1
   end
 
   @doc "One run by its public id, for its own page. Disqualified runs still render their own."
