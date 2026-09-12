@@ -360,9 +360,9 @@ try {
         new URL(page.url()).pathname === '/', page.url());
     check('the Fight button stays under the keyboard between fights', !focusLeftTheFight,
         `${fightsFought} fights`);
-    // Dying in battle morphs the Fight button into "Write your Legacy!" in place, so focus rides
-    // across with it — and the Space that fought submits a score nobody has read yet.
-    check('...but dying releases it, so no stray Space writes a legacy',
+    // Dying in battle replaces the Fight button in place, so focus would ride across with it — and
+    // the Space that fought would retire the run before the player has read a word of its ending.
+    check('...but dying releases it, so no stray Space starts the next run',
         await page.evaluate(() => !document.querySelector('#screen')?.contains(document.activeElement)),
         await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.textContent?.trim().slice(0, 20) ?? '')));
 
@@ -391,27 +391,37 @@ try {
     await page.click('#main .back a');
     await onScreen('death');
     check('...and its way back is the death screen', (await state()).screen === 'death');
-    // The whole point of the detour: reviewing a character must not cost its legacy.
-    check('...with the legacy still there to write',
-        await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
+    // The whole point of the detour: reviewing a run must not disturb it.
+    check('...and its own record is still one click away',
+        await page.locator('#main a:has-text("Your Record")').count() === 1);
 
-    // ---- submit a highscore, then restart -----------------------------------------------------
+    // ---- the run is already in the Halls, and has been since it started -----------------------
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('a legitimate death may write its legacy',
-        await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
-    await page.click('#main button:has-text("Write your Legacy")');
+    check('nothing asks the dead to write themselves in — they are already there',
+        await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
+
+    await page.click('#main a:has-text("Your Record")');
+    await onScreen('champion');
+    const record = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
+    check('a run has a page of its own', (await state()).screen === 'champion');
+    check('...which names it and says the road ended',
+        /BrowserBot/.test(record) && /road ended/.test(record), record.slice(0, 90));
+    check('...and tells the story fight by fight',
+        await page.locator('#main ol.chronicle li').count() > 0,
+        `${await page.locator('#main ol.chronicle li').count()} fights`);
+    // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
+    // the board never emits a session id is proved in board_test. What IS observable here is the
+    // property that matters: reading a champion's page does not make you that champion.
+    check('...without the reader becoming the character', (await state()).started === true);
+
+    await page.click('#main .action-links a:has-text("Back to the Halls")');
     await onScreen('highscores');
     const board = await page.textContent('#main table.data-table');
-    check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
-    check('submitting also clears the character', (await state()).started === false);
+    check('and the run stands on the board without ever being submitted',
+        /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
 
-    // Here, not on arrival: BrowserBot's Orc entry is what makes the board non-empty and the Elf
-    // filter narrower than All. Submitting lands on /highscores/<own race>, so widen first — and
-    // each wait names the path it expects, since "not /highscores" was already true.
-    await page.click('#main .action-links a:has-text("All")');
-    await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
     const allRows = await boardRows();
-    check('the board has the entry just written', allRows > 0, `${allRows} rows`);
+    check('the board has the run on it', allRows > 0, `${allRows} rows`);
 
     await page.click('#main .action-links a:has-text("Elf") >> nth=0');
     await page.waitForFunction(() => location.pathname === '/highscores/elf', null, { timeout: 5000 });
@@ -428,12 +438,29 @@ try {
         await boardRows() === allRows && (await activeFilter())?.trim() === 'All',
         `${await boardRows()} rows, active ${await activeFilter()}`);
 
-    await page.click('#main .last a');
+    // ---- starting over: a new identity, which takes a real request ---------------------------
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    const previousRecord = await page.getAttribute('#main a:has-text("Your Record")', 'href');
+
+    await page.click('#main form[action="/play-again"] button[type="submit"]');
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await onScreen('start');
-    check('and the board\'s own back link leads to a fresh start', (await state()).screen === 'start');
+    check('Play Again leads to a fresh start', (await state()).screen === 'start');
     check('...with a fresh name field', await page.locator('#main input[name="name"]').count() === 1);
 
-    // ---- the Konami cheat, last: it bars the highscores ---------------------------------------
+    // The retired run is still readable at the address it had — it kept its place, and only the
+    // session that was playing it was taken away.
+    await page.goto(`${BASE}${previousRecord}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and the run left behind still stands at its own address',
+        /BrowserBot/.test(await page.textContent('#main') ?? ''), previousRecord);
+    check('...without making the visitor that character',
+        (await state()).started === false);
+
+    // ---- the Konami cheat, last: it bars the Halls --------------------------------------------
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await page.fill('#main input[name="name"]', 'Cheater');
     await page.selectOption('#main select[name="race_id"]', '0');
     await page.click('#main button[type="submit"]');
@@ -486,8 +513,15 @@ try {
     check('...and the death screen is headed "Game Over"',
         (await page.textContent('#main .header-name'))?.trim() === 'Game Over',
         await page.textContent('#main .header-name'));
-    check('...and may NOT write a legacy',
-        await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
+    check('...and is told the Halls will not have them',
+        /will not have it/.test(await page.textContent('#main') ?? ''));
+
+    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and is nowhere on the board',
+        !/Cheater/.test(await page.textContent('#main') ?? ''));
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...but the death screen never takes focus',
         await page.evaluate(() => document.activeElement === document.body || document.activeElement?.tagName === 'HTML'));
 

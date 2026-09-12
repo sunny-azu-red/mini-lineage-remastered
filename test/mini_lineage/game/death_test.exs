@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.DeathTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Constants, Narratives, Player, Rng}
+  alias MiniLineage.Game.{Actions, Constants, Narratives, Player, Rng, Snapshot}
 
   defp living do
     {player, _} = Player.initialize(%Player{}, Constants.race(0), "Doomed")
@@ -64,18 +64,19 @@ defmodule MiniLineage.Game.DeathTest do
     assert dead.total_battles == 3, "and it does not count as a battle fought"
   end
 
-  # The successful submission writes a row, so it lives in the database suite; these refusals are
-  # refused by the guard before any write is attempted.
-  test "cowards and cheaters may not write a legacy" do
+  # Nobody writes a legacy any more: a run is in the Halls from the moment it picks a race. What is
+  # left to decide is who is barred, and that is now a property of the run rather than of an action.
+  test "cowards and cheaters are barred from the Halls, alive or dead" do
     dead = Player.kill(living())
 
     for barred <- [%{dead | coward: true}, %{dead | cheated: true}] do
-      assert {_p, {:error, :ineligible, _}} = Actions.submit_highscore(barred)
+      assert Snapshot.build(barred).disqualified
     end
   end
 
-  test "and neither may the living" do
-    assert {_p, {:error, :not_dead, _}} = Actions.submit_highscore(living())
+  test "and an ordinary run, living or finished, is not" do
+    refute Snapshot.build(living()).disqualified
+    refute Snapshot.build(Player.kill(living())).disqualified
   end
 
   test "a new character remembers no fight, whatever the struct it is built on" do

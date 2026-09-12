@@ -7,7 +7,6 @@ defmodule MiniLineage.Game.Actions do
   boundary. Notably `restart/1` requires a dead character, so a living one can never be wiped.
   """
   alias MiniLineage.Game.{Battle, Constants, Math, Narrative, Player, Statistics}
-  alias MiniLineage.Highscores
 
   @errors %{
     not_started: "You haven't started your journey yet — create a character first.",
@@ -215,31 +214,6 @@ defmodule MiniLineage.Game.Actions do
   end
 
   # -------------------------------------------------------------- end of run
-
-  def submit_highscore(player) do
-    checks =
-      started() ++
-        [{:not_dead, &(not &1.dead)}, {:ineligible, &(&1.coward or &1.cheated)}]
-
-    case guard(player, checks) do
-      nil ->
-        highscore_id =
-          Highscores.insert(%{
-            name: player.name,
-            experience: player.experience,
-            race_id: player.race_id,
-            adena: player.adena,
-            level: Math.level_for_xp(player.experience)
-          })
-
-        slug = MiniLineage.Game.Format.slugify(Constants.race(player.race_id).label)
-
-        {Player.reset(player), {:ok, %{race_slug: slug, highscore_id: highscore_id}}}
-
-      refusal ->
-        refusal
-    end
-  end
 
   @doc """
   Konami cheat. Activation is silent by design: no flash, just the debuff icon and HP snapping to

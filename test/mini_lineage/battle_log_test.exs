@@ -1,28 +1,29 @@
 defmodule MiniLineage.BattleLogTest do
   @moduledoc """
-  Every fight a character has had, and what becomes of them when the character does not.
+  Every fight a character has had, and what becomes of them when the run ends.
 
-  The log is the one thing here allowed to grow without limit, because it is append-only — so the
-  rules that matter are about what it keeps. A run written to the board outlives its character; a
-  run abandoned does not, and must not be inherited by whoever plays next on the same id.
+  The log is the one thing here allowed to grow without limit, because it is append-only. What
+  used to be delicate — claiming a run's fights for the board, discarding them when it was
+  abandoned — is gone: a run is never reset in place, so its fights have exactly one owner for as
+  long as they exist.
   """
   use MiniLineage.DataCase, async: false
 
   import Ecto.Query
 
-  alias MiniLineage.{BattleLog, Characters, Highscores}
-  alias MiniLineage.Characters.Store
+  alias MiniLineage.{BattleLog, Characters}
+  alias MiniLineage.Characters.{Record, Store}
   alias MiniLineage.Game.{Actions, Constants, Player}
 
   setup do
-    id = Characters.new_id()
-    on_exit(fn -> Characters.forget(id) end)
+    session = Characters.new_session_id()
+    on_exit(fn -> Characters.forget(session) end)
 
-    {:ok, id: id}
+    {:ok, session: session}
   end
 
-  defp start_character(id, race_id \\ 1) do
-    Characters.mutate(id, fn player ->
+  defp start_character(session, race_id \\ 1) do
+    Characters.mutate(session, fn player ->
       {player, _flash} = Player.initialize(player, Constants.race(race_id), "Hero")
       # Tanky enough to survive every fight below. A fatal fight does not count a battle, so
       # without this a lucky-unlucky roll would make these assertions come and go.
@@ -30,182 +31,170 @@ defmodule MiniLineage.BattleLogTest do
     end)
   end
 
-  defp fight(id), do: Characters.mutate(id, &Actions.fight/1)
+  defp fight(session), do: Characters.mutate(session, &Actions.fight/1)
 
-  defp rows(id) do
-    Repo.all(from e in BattleLog.Entry, where: e.character_id == ^id, order_by: e.id)
+  defp rows(session) do
+    case stored_id(session) do
+      nil -> []
+      id -> Repo.all(from e in BattleLog.Entry, where: e.character_id == ^id, order_by: e.id)
+    end
   end
 
   describe "a fight" do
-    test "is recorded with the numbers, not just the prose", %{id: id} do
-      start_character(id)
-      fight(id)
+    test "is recorded with the numbers, not just the prose", %{session: session} do
+      start_character(session)
+      fight(session)
 
-      [row] = rows(id)
+      [row] = rows(session)
 
-      assert row.character_id == id
-      assert row.highscore_id == nil
+      assert row.character_id == stored_id(session)
       assert is_integer(row.enemies_killed) and is_integer(row.xp_gained)
       assert is_boolean(row.is_critical) and is_boolean(row.ambushed)
       # The rendered lines ride alongside, so a log screen never has to re-roll the prose.
       assert is_binary(row.narrative["outcome_line"])
     end
 
-    test "and the character it belongs to is written in the same breath", %{id: id} do
-      start_character(id)
-      fight(id)
+    test "and the character it belongs to is written in the same breath", %{session: session} do
+      start_character(session)
+      fight(session)
 
-      assert [row] = rows(id)
-      assert Store.load(id).total_battles == 1, "a fight was logged that the character forgot"
+      assert [row] = rows(session)
+      assert stored(session).total_battles == 1, "a fight was logged that the character forgot"
       assert row.narrative["outcome_line"] != nil
     end
 
-    test "appends rather than replacing, which is the whole point", %{id: id} do
-      start_character(id)
-      for _ <- 1..3, do: fight(id)
+    test "appends rather than replacing, which is the whole point", %{session: session} do
+      start_character(session)
+      for _ <- 1..3, do: fight(session)
 
-      assert length(rows(id)) == 3
-      assert rows(id) == Enum.sort_by(rows(id), & &1.id)
+      assert length(rows(session)) == 3
+      assert rows(session) == Enum.sort_by(rows(session), & &1.id)
     end
   end
 
   describe "the screen still shows the last one" do
-    test "even though it is no longer in the character's document", %{id: id} do
-      start_character(id)
-      fight(id)
-      remembered = Characters.snapshot(id).last_battle_narrative
+    test "even though it is no longer in the character's document", %{session: session} do
+      start_character(session)
+      fight(session)
+      remembered = Characters.snapshot(session).last_battle_narrative
       assert remembered != nil
 
       # Restarting the process is what proves it: the document has no narrative to reload.
-      [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
-      ref = Process.monitor(pid)
-      GenServer.stop(pid, :normal)
-      assert_receive {:DOWN, ^ref, :process, ^pid, _}, 1_000
+      Characters.forget_process(session)
 
-      assert Characters.snapshot(id).last_battle_narrative == remembered
+      assert Characters.snapshot(session).last_battle_narrative == remembered
     end
   end
 
-  describe "when a life ends" do
-    test "a legacy claims its fights, so they outlive the character", %{id: id} do
-      start_character(id)
-      fight(id)
-      Characters.mutate(id, &{%{&1 | dead: true, experience: 500, adena: 10}, :ok})
-      Characters.mutate(id, &Actions.submit_highscore/1)
+  describe "the whole chronicle" do
+    test "is every fight of one run, oldest first", %{session: session} do
+      start_character(session)
+      for _ <- 1..3, do: fight(session)
 
-      claimed = rows(id)
-      assert claimed != []
-      assert Enum.all?(claimed, &is_integer(&1.highscore_id)), "a fight was left unclaimed"
+      history = BattleLog.history(stored_id(session))
 
-      # And the sweep leaves them, because they belong to the board now, not to the character.
-      Characters.forget(id)
-      assert BattleLog.sweep_orphaned() >= 0
-      assert rows(id) != [], "a claimed fight was swept with its character"
+      assert length(history) == 3
+      assert Enum.all?(history, &is_binary(&1.narrative.outcome_line))
+      # Oldest first: the page tells the run's story in the order it happened.
+      assert Enum.map(history, & &1.outcome) ==
+               Enum.map(
+                 rows(session),
+                 &%{
+                   enemies_killed: &1.enemies_killed,
+                   hp_lost: &1.hp_lost,
+                   damage_blocked: &1.damage_blocked,
+                   xp_gained: &1.xp_gained,
+                   adena_gained: &1.adena_gained,
+                   is_critical: &1.is_critical,
+                   is_level_up: &1.is_level_up
+                 }
+               )
     end
 
-    test "and `last_for/1` stops seeing them the moment they are claimed", %{id: id} do
-      # Tested directly rather than only through a restart: clearing the narrative in
-      # `Player.initialize/3` also hides this, so going through the process would let the query
-      # rot unnoticed behind the other fix.
-      start_character(id)
-      fight(id)
-      assert BattleLog.last_for(id) != nil
+    test "and nothing at all for a run that never drew a blade", %{session: session} do
+      start_character(session)
 
-      Characters.mutate(id, &{%{&1 | dead: true, experience: 500, adena: 10}, :ok})
-      Characters.mutate(id, &Actions.submit_highscore/1)
-
-      assert rows(id) != [], "the legacy lost its fights"
-      assert BattleLog.last_for(id) == nil, "a finished run is still the character's last fight"
-    end
-
-    test "but the next life does not inherit them, however the process is restarted", %{id: id} do
-      # The claimed rows stay in the table on purpose, which is exactly what made this reachable:
-      # the character keeps its id, so a query that does not ask whose life a fight belonged to
-      # hands the next player the previous champion's last stand.
-      start_character(id)
-      fight(id)
-      Characters.mutate(id, &{%{&1 | dead: true, experience: 500, adena: 10}, :ok})
-      Characters.mutate(id, &Actions.submit_highscore/1)
-
-      # Only after a restart: the reset clears the narrative in memory, and it is the rehydration
-      # on the way back up that used to bring it back.
-      Characters.forget_process(id)
-      assert rows(id) != [], "the legacy lost its fights"
-
-      Characters.mutate(id, fn player ->
-        {player, _flash} = Player.initialize(player, Constants.race(2), "Second")
-        {player, :ok}
-      end)
-
-      player = Characters.snapshot(id)
-
-      assert player.total_battles == 0
-
-      assert player.last_battle_narrative == nil,
-             "a new character arrived at the Battleground showing the last champion's fight"
-    end
-
-    test "starting over without one discards them, so the next life starts empty", %{id: id} do
-      start_character(id)
-      fight(id)
-      assert rows(id) != []
-
-      Characters.mutate(id, &{%{&1 | dead: true}, :ok})
-      Characters.mutate(id, &Actions.restart/1)
-
-      assert rows(id) == [], "the next life inherited the previous one's fights"
+      assert BattleLog.history(stored_id(session)) == []
     end
   end
 
-  describe "the sweep" do
-    test "takes unclaimed fights whose character is gone", %{id: id} do
-      start_character(id)
-      fight(id)
-      assert rows(id) != []
+  describe "when a run ends" do
+    test "its fights stay with it, because the row itself stays", %{session: session} do
+      start_character(session)
+      fight(session)
+      character_id = stored_id(session)
 
-      Characters.forget(id)
-      assert BattleLog.sweep_orphaned() >= 1
+      Characters.mutate(session, &{%{&1 | dead: true, experience: 500, adena: 10}, :ok})
+      Characters.archive(session)
 
-      assert rows(id) == []
+      # Archived, not deleted: the run keeps its id, its fights and its place in the Halls, and
+      # gives up only the session that tied it to a browser.
+      assert Repo.get(Record, character_id)
+      assert Repo.get(Record, character_id).session_id == nil
+
+      assert Repo.all(from e in BattleLog.Entry, where: e.character_id == ^character_id) != []
     end
 
-    test "and leaves a live character's alone", %{id: id} do
-      start_character(id)
-      fight(id)
+    test "and the next run cannot inherit them, because it is a different character", %{
+      session: session
+    } do
+      start_character(session)
+      fight(session)
+      first = stored_id(session)
 
-      assert BattleLog.sweep_orphaned() == 0
-      assert rows(id) != []
+      Characters.mutate(session, &{%{&1 | dead: true}, :ok})
+      Characters.archive(session)
+
+      # A new session is what the browser gets back from /play-again.
+      next = Characters.new_session_id()
+      on_exit(fn -> Characters.forget(next) end)
+      start_character(next)
+
+      assert stored_id(next) != first
+      assert rows(next) == [], "the next run inherited the previous one's fights"
+      assert BattleLog.last_for(stored_id(next)) == nil
     end
   end
 
-  describe "the board entry" do
-    test "hands back the id that claims a run", %{id: _id} do
-      id = Highscores.insert(%{name: "Hero", experience: 10, race_id: 1, adena: 2, level: 1})
+  describe "the foreign key" do
+    test "takes a character's fights with it when the character does go", %{session: session} do
+      # The only row still deleted is a visitor who never chose a race; this proves the cascade
+      # that carries their fights, without depending on the sweep to produce one.
+      start_character(session)
+      fight(session)
+      id = stored_id(session)
+      assert rows(session) != []
 
-      assert is_integer(id)
+      Store.delete(id)
+
+      assert Repo.all(from e in BattleLog.Entry, where: e.character_id == ^id) == []
     end
 
-    test "stamps itself with a timezone-aware time, like everything else here" do
-      Highscores.insert(%{name: "Hero", experience: 10, race_id: 1, adena: 2, level: 1})
+    test "and refuses a fight belonging to no character at all" do
+      orphan = BattleLog.row("no-such-character", sample_battle())
 
-      assert %DateTime{} = List.first(Highscores.list()).inserted_at
+      # Ecto wraps the driver's error, so the constraint surfaces as a ConstraintError.
+      assert_raise Ecto.ConstraintError, ~r/battle_log_character_id_fkey/, fn ->
+        Repo.insert!(orphan)
+      end
     end
+  end
 
-    test "and taking one off the board takes its fights with it", %{id: id} do
-      # The foreign key, not the application: a claimed fight whose entry is gone has no character
-      # either, so nothing would ever come back for it.
-      start_character(id)
-      fight(id)
-
-      highscore_id =
-        Highscores.insert(%{name: "Hero", experience: 10, race_id: 1, adena: 2, level: 1})
-
-      BattleLog.claim(id, highscore_id)
-      assert rows(id) != []
-
-      Repo.delete_all(from e in Highscores.Entry, where: e.id == ^highscore_id)
-
-      assert rows(id) == []
-    end
+  defp sample_battle do
+    %{
+      outcome: %{
+        enemies_killed: 1,
+        hp_lost: 0,
+        damage_blocked: 0,
+        xp_gained: 1,
+        adena_gained: 1,
+        is_critical: false,
+        is_level_up: false
+      },
+      narrative: %{outcome_line: "x"},
+      ambushed: false,
+      died: false,
+      sound: nil
+    }
   end
 end

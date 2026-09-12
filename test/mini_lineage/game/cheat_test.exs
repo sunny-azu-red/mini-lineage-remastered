@@ -1,8 +1,8 @@
 defmodule MiniLineage.Game.CheatTest do
-  @moduledoc "The Konami cheat: silent activation, and a permanent bar from the highscores."
+  @moduledoc "The Konami cheat: silent activation, and a permanent bar from the Halls of Champions."
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Constants, Player}
+  alias MiniLineage.Game.{Actions, Constants, Player, Snapshot}
 
   defp living do
     {player, _flash} = Player.initialize(%Player{}, Constants.race(0), "Cheater")
@@ -31,10 +31,12 @@ defmodule MiniLineage.Game.CheatTest do
     refute player.cheated
   end
 
-  test "bars the highscores for good" do
+  test "bars the Halls for good" do
+    # Nothing is refused any more — the run is simply not ranked, and it carries the mark that says
+    # so from the moment the sequence lands, alive or dead.
     {player, _} = Actions.cheat(living())
-    {_player, result} = Actions.submit_highscore(%{player | dead: true})
 
-    assert {:error, :ineligible, _message} = result
+    assert Snapshot.build(player).disqualified
+    assert Snapshot.build(%{player | dead: true}).disqualified
   end
 end

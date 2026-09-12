@@ -23,6 +23,7 @@ defmodule MiniLineageWeb.Screens do
     "death" => "Game Over",
     "character" => "Character",
     "highscores" => "Hall of Champions",
+    "champion" => "A Champion's Record",
     "statistics" => "The Tome of Lore",
     "races" => "Chronicles of Ancestry",
     "error" => "Error"
@@ -35,7 +36,11 @@ defmodule MiniLineageWeb.Screens do
   attr :screen, :string, required: true
   attr :view, :map, required: true
   attr :catalog, :map, required: true
-  attr :highscores, :list, default: []
+  attr :boards, :map, default: %{}
+  attr :character_id, :string, default: nil
+  attr :my_rank, :map, default: nil
+  attr :champion, :map, default: nil
+  attr :champion_log, :list, default: []
   attr :statistics, :map, default: nil
   attr :race_filter, :integer, default: nil
   attr :detail, :string, default: nil
@@ -61,6 +66,7 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "death"} = assigns), do: death(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "highscores"} = assigns), do: highscores(assigns)
+  def screen(%{screen: "champion"} = assigns), do: champion(assigns)
   def screen(%{screen: "statistics"} = assigns), do: statistics(assigns)
   def screen(%{screen: "error"} = assigns), do: error(assigns)
   def screen(assigns), do: error(assigns)
@@ -361,11 +367,20 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <p>{@view.death_reason}</p>
 
+    <p :if={@view.disqualified} class="muted">
+      This run keeps its record, but the Halls of Champions will not have it.
+    </p>
+
     <div class="action-links">
-      <button :if={@view.highscore_eligible} type="button" class="btn" phx-click="submit_highscore">
-        📜 Write your Legacy!
-      </button>
-      <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
+      <.link :if={@character_id} patch={Paths.for_champion(@character_id)} class="btn">
+        📜 Your Record
+      </.link>
+      <%!-- A form, not a button: it retires this run and mints a new identity, and only a real
+            request can set the cookie that carries one. --%>
+      <form method="post" action="/play-again" class="inline-form">
+        <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+        <button type="submit" class="btn btn-secondary">Play Again?</button>
+      </form>
     </div>
     """
   end
@@ -608,6 +623,8 @@ defmodule MiniLineageWeb.Screens do
   # --------------------------------------------------------------- highscores
 
   defp highscores(assigns) do
+    assigns = assign(assigns, rows: Map.get(assigns.boards, assigns.race_filter, []))
+
     ~H"""
     <%!-- `top` is load-bearing: it pulls the row up to the panel edge and puts the 12px gap
           below it instead, where the table needs it. --%>
@@ -627,7 +644,7 @@ defmodule MiniLineageWeb.Screens do
       </.link>
     </div>
 
-    <%= if @highscores == [] do %>
+    <%= if @rows == [] do %>
       <p>
         The halls are silent. No soul has yet earned a place among these hallowed pillars. The
         chronicle of champions awaits its first entry. Will your name be the first to echo through
@@ -638,6 +655,7 @@ defmodule MiniLineageWeb.Screens do
         <table class="data-table" style="min-width:545px">
           <thead>
             <tr>
+              <th class="center">#</th>
               <th>Name</th>
               <th class="center">Level</th>
               <th>Total XP</th>
@@ -646,19 +664,110 @@ defmodule MiniLineageWeb.Screens do
             </tr>
           </thead>
           <tbody>
-            <tr :for={row <- @highscores}>
-              <td>{race_emoji(@catalog, row.race_id)} {String.slice(row.name, 0, 20)}</td>
-              <td class="center">{Format.number(row.level)}</td>
-              <td class="xp">{Format.number(row.total_xp)}</td>
-              <td class="gold">🪙 {Format.adena(row.adena)}</td>
-              <td class="muted">{short_date(row.inserted_at)}</td>
-            </tr>
+            <.champion_row
+              :for={{row, index} <- Enum.with_index(@rows, 1)}
+              catalog={@catalog}
+              row={row}
+              rank={index}
+              mine={row.id == @character_id}
+            />
+            <%!-- Your own place, when you have not yet climbed into the list above it. The gap is
+                  marked rather than hidden, so the rank on your row is not read as the one after. --%>
+            <%= if @my_rank do %>
+              <tr class="rank-gap">
+                <td colspan="6" class="center muted">⋯</td>
+              </tr>
+              <.champion_row
+                catalog={@catalog}
+                row={@my_rank.entry}
+                rank={@my_rank.rank}
+                mine={true}
+              />
+            <% end %>
           </tbody>
         </table>
       </div>
     <% end %>
 
     <.back_link started={@view.started} class="last" />
+    """
+  end
+
+  attr :catalog, :map, required: true
+  attr :row, :map, required: true
+  attr :rank, :integer, required: true
+  attr :mine, :boolean, default: false
+
+  defp champion_row(assigns) do
+    ~H"""
+    <tr class={["champion-row", @mine && "mine"]}>
+      <td class="center muted">{@rank}</td>
+      <td>
+        <.link patch={Paths.for_champion(@row.id)}>
+          {race_emoji(@catalog, @row.race_id)} {String.slice(@row.name || "", 0, 20)}
+        </.link>
+        <%!-- Still going, as against a run that has ended. The board carries both. --%>
+        <span :if={not @row.dead} class="muted" title="Still fighting">⚔️</span>
+      </td>
+      <td class="center">{Format.number(@row.level)}</td>
+      <td class="xp">{Format.number(@row.total_xp)}</td>
+      <td class="gold">🪙 {Format.adena(@row.adena)}</td>
+      <td class="muted">{short_date(@row.inserted_at)}</td>
+    </tr>
+    """
+  end
+
+  # ----------------------------------------------------------------- champion
+
+  defp champion(%{champion: nil} = assigns) do
+    ~H"""
+    <p>
+      No such name is written here. The Halls keep only those who drew a blade, and this one either
+      never did or was never real.
+    </p>
+
+    <div class="action-links">
+      <.link patch={Paths.for_screen("highscores")} class="btn btn-secondary">
+        Back to the Halls
+      </.link>
+    </div>
+    """
+  end
+
+  defp champion(assigns) do
+    ~H"""
+    <h2>{race_emoji(@catalog, @champion.race_id)} {@champion.name}</h2>
+
+    <p :if={@champion.disqualified} class="muted">
+      Barred from the Halls of Champions — this run ended by its own hand or by heresy. Its record
+      stands regardless.
+    </p>
+
+    <p phx-no-format>
+      A <strong>level {Format.number(@champion.level)}</strong> soul with
+      <span class="xp">{Format.number(@champion.total_xp)} experience</span> and
+      <span class="gold">🪙 {Format.adena(@champion.adena)} Adena</span>,
+      {if @champion.dead, do: "whose road ended", else: "still walking the road"}
+      on {short_date(@champion.inserted_at)}.
+    </p>
+
+    <h3>The Chronicle</h3>
+
+    <%= if @champion_log == [] do %>
+      <p>Not one blow struck. This tale is over before it began.</p>
+    <% else %>
+      <ol class="chronicle">
+        <li :for={fight <- @champion_log}>
+          {raw(fight.narrative.outcome_line)}
+        </li>
+      </ol>
+    <% end %>
+
+    <div class="action-links last">
+      <.link patch={Paths.for_screen("highscores")} class="btn btn-secondary">
+        Back to the Halls
+      </.link>
+    </div>
     """
   end
 

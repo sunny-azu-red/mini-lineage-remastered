@@ -51,7 +51,7 @@ defmodule MiniLineage.Game.AccessTest do
   end
 
   describe "a dead character" do
-    for target <- ~w(home inn battle highscores statistics start) do
+    for target <- ~w(home inn battle statistics start) do
       test "is pinned to the death screen when trying to reach #{target}" do
         assert Access.pin_screen(unquote(target), dead()) == "death"
       end
@@ -61,14 +61,21 @@ defmodule MiniLineage.Game.AccessTest do
       assert Access.pin_screen("death", dead()) == "death"
     end
 
-    test "may look back at who they were, which is the one screen that is a retrospective" do
+    test "may look back at who they were, which is a retrospective rather than a status page" do
       assert Access.pin_screen("character", dead()) == "character"
     end
 
-    test "and that exception does not widen: everything else is still the death screen" do
+    test "and may see where the run they just finished now stands" do
+      # The Halls list them from the moment they chose a race, so shutting the dead out of the
+      # board would hide them from the one page their run exists on.
+      assert Access.pin_screen("highscores", dead()) == "highscores"
+      assert Access.pin_screen("champion", dead()) == "champion"
+    end
+
+    test "and those exceptions do not widen: everything else is still the death screen" do
       # The list above covers the screens a player would try; this is the guard against a new one
       # being added to @dead_allowed by accident.
-      for screen <- ~w(home inn weapons armors battle suicide highscores statistics races start) do
+      for screen <- ~w(home inn weapons armors battle suicide statistics races start) do
         assert Access.pin_screen(screen, dead()) == "death", screen
       end
     end

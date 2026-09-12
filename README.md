@@ -33,16 +33,18 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 ### 🏆 Leaderboards & Statistics
 - **Live Leaderboards**: The top 25 adventurers ordered by total Experience, then Adena — filterable per race. Cowards and cheaters are barred from posting.
 ### 🛡️ Security & Reliability
-- **The Fallen May Look Back**: Death keeps everything but health and effects, so a dead character can still open its own Character screen — marked by ☠️ rather than its ancestry, written in the past, and closing on the reason the run ended. It is the only screen the dead may reach besides their own ending, and reaching it costs them nothing: the legacy is still there to write when they return.
+- **The Fallen May Look Back**: Death keeps everything but health and effects, so a dead character can still open its own Character screen — marked by ☠️ rather than its ancestry, written in the past, and closing on the reason the run ended. The dead may also reach the Halls, where their run already stands.
 - **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player may be, and every navigation funnels through `handle_params/3`, so an in-app link, a typed URL and the Back button obey the same checks. The dead are confined to their own ending and the living kept off it; a player with a character cannot re-enter character creation; an ambushed one is pinned to the Battleground. The game owns every URL — an unrecognised path resolves to wherever the player belongs.
 - **The URL Is Where You Are**: Game Start, Home Town and Game Over are one run's three states and all live at `/`, told apart by the character rather than by the address — you never travel to your own death. Somewhere you can stand keeps a URL of its own: the Battleground, the shops, the Character screen.
 - **Guarded Mutations**: Every event that changes state declares its own preconditions, enforced server-side. Client-side routing is convenience; these guards are the boundary. Notably restarting requires a *dead* character, so a living one can never be wiped.
 - **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Versioned Documents**: Each character's state records the shape it was written in, so a later reshape has something to branch on, and a document from a newer build is refused rather than read with every unrecognised field defaulted away.
-- **Writes Follow the Player, Not the Clock**: A character lives in its process, so the database is durability rather than storage. What the player *did* — a fight, a purchase, a death, a legacy — is written before they are told it worked. The passage of time — passive regeneration, which screen they wandered to — rides along with the next action, or with the process stopping. A hard kill costs a little healing and nothing else.
-- **Every Fight Is Kept**: Each battle appends a row to `battle_log` — the numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before, where the character's own document is rewritten whole on every save. Writing a legacy claims that run's fights so they outlive the character; starting over without one discards them, so the next life never inherits them.
+- **Writes Follow the Player, Not the Clock**: A character lives in its process, so the database is durability rather than storage. What the player *did* — a fight, a purchase, a death — is written before they are told it worked. The passage of time — passive regeneration, which screen they wandered to — rides along with the next action, or with the process stopping. A hard kill costs a little healing and nothing else.
+- **Every Fight Is Kept**: Each battle appends a row to `battle_log` — the numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before, where the character's own document is rewritten whole on every save. A fight belongs to its run for good, and any run's chronicle can be read from its own page.
 - **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies, validation on every payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
-- **Idle Characters Are Reaped**: A character process arms a stop timer at start and cancels it when a viewer attaches, so a crawler leaves nothing running. Rows outlive the process and are swept after 30 days, the window the session cookie uses.
+- **A Live Hall of Champions**: The board is a view of the characters rather than a table of its own, so a run appears the moment it chooses a race and keeps its place when it ends — nobody is asked to write themselves in. It refreshes for every viewer as people play, coalesced into one recomputation per window rather than one query per viewer, and any row opens that run's stats and fight-by-fight chronicle. Suicide and the Konami cheat disqualify a run: it keeps its record and its own page, but the Halls will not list it.
+- **Two Identities Per Character**: A character's `id` is public and appears in every board link; the `session_id` in the cookie is secret and is what actually plays it. Keeping them apart is what stops a champion's URL being a working login for that character. Starting over retires the finished run and mints a new identity, which is why it goes through a real request rather than the WebSocket.
+- **Nothing Is Reaped, Only Retired**: A character process arms a stop timer at start and cancels it when a viewer attaches, so a crawler leaves nothing running. After 30 days — the window the session cookie uses — an untouched run gives up its session and stays in the Halls. The only row ever deleted is a visitor who never chose a race.
 
 ## 🛠️ Tech Stack
 
@@ -98,7 +100,7 @@ in, not two.
 
 | what | database | reads | port |
 |---|---|---|---|
-| `mix phx.server` | your real characters, highscores and statistics | `.env` | `PORT` (4000) |
+| `mix phx.server` | your real characters, board and statistics | `.env` | `PORT` (4000) |
 | `mix test` | a throwaway one | `.env.test` | — |
 | `mix e2e` | the same throwaway one, board emptied first | `.env.test` | `PORT` (4002) |
 
@@ -109,9 +111,12 @@ another host entirely rather than merely under another name.
 An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
 so the two are never confused. A release names its commit instead.
 
-Three tables: `characters` keeps each run's state as one JSON document, `highscores` the board,
-and `battle_log` a row per fight. A fight points at the board entry that claimed it, so taking a
-legacy off the board takes its fights with it.
+Three tables. `characters` keeps each run's state as one `jsonb` document, alongside generated
+columns Postgres derives from it — name, race, experience, wealth, dead, disqualified — so the
+board sorts relationally and cannot drift from the document. `battle_log` is a row per fight,
+pointing at the character that fought it. `statistics` is the lifetime counters.
+
+There is no highscores table: the Halls are a query over `characters`.
 
 See [.env.example](.env.example) and [.env.test.example](.env.test.example) for what each setting
 does. A real environment variable always beats the file, which is how CI supplies them without
@@ -121,8 +126,8 @@ either file present.
 picks it up from its working directory; `ENV_FILE` names it elsewhere.
 
 Both servers can run at once: the browser suites have their own port and their own database, so
-they can create characters, spend adena and submit highscores without touching real data. They
-empty that board before each run through `e2e/reset.sh`, which refuses to touch whichever database
+they can create characters, spend adena and fill the board without touching real data. They empty
+that board before each run through `e2e/reset.sh`, which refuses to touch whichever database
 `.env` names — so the throwaway one can be called anything, on any server.
 
 ## Commands
@@ -302,13 +307,13 @@ Two Playwright runs drive a real headless Chromium, sharing their controls throu
 `e2e/helpers.mjs`:
 
 - **`e2e/walkthrough.mjs`** — one character played normally, end to end: create, travel, buy,
-  fight, die, submit a highscore, restart. It asserts that no request failed, no console error was
+  fight, die, read its own record, start over. It asserts that no request failed, no console error was
   logged, a background tick disturbs neither the main panel nor an open `<select>`, focus lands
   where the keyboard needs it, and the audio synth builds the graph it should.
 - **`e2e/races.mjs`** — every lineage played through: each one's purse, health and stats as the
-  screens show them, what it can afford at birth, and its road to the board. With all four on the
-  highscore board it can check something one race cannot — that every filter narrows to rows of
-  that race alone.
+  screens show them, what it can afford at birth, and its road to the board. With all four in the
+  Halls it can check something one race cannot — that every filter narrows to rows of that race
+  alone.
 
 Both empty the board first, through `e2e/reset.sh`, which refuses to touch whichever database
 `.env` names.

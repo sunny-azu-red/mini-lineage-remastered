@@ -15,6 +15,10 @@ defmodule MiniLineageWeb.Paths do
   ]
 
   @highscores_prefix "/highscores/"
+  @champion_prefix "/champion/"
+
+  @doc "A run's own page, addressed by its PUBLIC id — never by the session that is playing it."
+  def for_champion(id), do: @champion_prefix <> id
 
   @doc """
   'start', 'home' and 'death' all live at '/': they are the three states of one run, told apart by

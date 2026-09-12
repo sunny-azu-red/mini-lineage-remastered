@@ -28,3 +28,4 @@ config :phoenix,
 config :mini_lineage, character_idle_grace_ms: 150
 
 config :mini_lineage, start_statistics_collector: false
+config :mini_lineage, start_board: false

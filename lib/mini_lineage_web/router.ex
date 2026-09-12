@@ -24,11 +24,15 @@ defmodule MiniLineageWeb.Router do
     live "/inn", GameLive, :inn
     live "/suicide", GameLive, :suicide
     live "/character", GameLive, :character
+    live "/champion/:id", GameLive, :champion
     live "/highscores", GameLive, :highscores
     live "/highscores/:race", GameLive, :highscores
     live "/statistics", GameLive, :statistics
     live "/races", GameLive, :races
     live "/error", GameLive, :error
+
+    # Not a LiveView: it rotates the session cookie, which needs a real response.
+    post "/play-again", PlayAgainController, :create
 
     # The game owns every URL. An unrecognised path is not an error — it resolves to Town (or Game
     # Start, once pinned) and the address bar is corrected, exactly as the reference's SPA fallback

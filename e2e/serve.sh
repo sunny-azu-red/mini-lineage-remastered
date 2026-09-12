@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Serves the app against an isolated database, so a browser walkthrough — which creates
-# characters, spends adena and submits highscores — never touches the real dev data.
+# characters, spends adena and fills the board — never touches the real dev data.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # Only where the toolchain is not already on PATH: this machine keeps it under ~/.local, CI does not.

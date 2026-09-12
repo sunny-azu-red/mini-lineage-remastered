@@ -5,12 +5,12 @@ defmodule MiniLineage.CharactersTest do
   """
   use MiniLineage.DataCase, async: false
 
-  alias MiniLineage.Characters
+  alias MiniLineage.{Board, Characters}
   alias MiniLineage.Characters.{Record, Store, Sweeper}
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
-    id = Characters.new_id()
+    id = Characters.new_session_id()
     on_exit(fn -> Characters.forget(id) end)
 
     {:ok, id: id}
@@ -63,10 +63,10 @@ defmodule MiniLineage.CharactersTest do
     start_character(id)
     Characters.mutate(id, &{%{&1 | adena: 4242}, :ok})
 
-    written = Store.load(id)
+    written = stored(id)
     Characters.mutate(id, &{&1, :ok})
 
-    assert Store.load(id) == written
+    assert stored(id) == written
   end
 
   test "an effect expires on its own timer, pushing the change without anyone reading", %{id: id} do
@@ -137,7 +137,7 @@ defmodule MiniLineage.CharactersTest do
     # and write a row for a visitor who had done nothing.
     assert Characters.snapshot(id) == %Player{}
     assert Characters.snapshot(id).health == nil
-    assert MiniLineage.Characters.Store.load(id) == nil
+    assert stored(id) == nil
   end
 
   test "the tick leaves a visitor who has no character alone", %{id: id} do
@@ -165,53 +165,77 @@ defmodule MiniLineage.CharactersTest do
     assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
   end
 
-  describe "the idle sweep" do
-    test "leaves a character somebody is still playing", %{id: id} do
-      start_character(id)
-      # Counting rows rather than the sweep's return value: this database is shared with the
-      # browser walkthrough, so a global count of zero is never a safe thing to assert.
-      MiniLineage.Characters.Store.sweep_expired()
+  describe "the idle retirement" do
+    # Nothing ages out of the table any more. A run nobody has come back to has still been played,
+    # so it keeps its place in the Halls and gives up only the session that tied it to a browser.
+    defp backdate(session) do
+      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
 
-      assert Characters.snapshot(id).name == "Hero"
+      Repo.update_all(from(r in Record, where: r.session_id == ^session),
+        set: [updated_at: stale]
+      )
     end
 
-    test "drops one nobody has touched for longer than the window", %{id: id} do
+    test "leaves a character somebody is still playing", %{id: id} do
       start_character(id)
+      Store.retire_idle()
+
+      assert Characters.snapshot(id).name == "Hero"
+      assert stored(id), "a character in play lost its session"
+    end
+
+    test "takes the session off one nobody has touched, and keeps the character", %{id: id} do
+      start_character(id)
+      character_id = stored_id(id)
       Characters.forget_process(id)
+      backdate(id)
 
-      # Backdated past the window, as if the browser had been closed that long ago.
-      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+      assert {retired, _discarded} = Store.retire_idle()
+      assert retired >= 1
 
-      assert MiniLineage.Characters.Store.sweep_expired() >= 1
-      assert Store.load(id) == nil
+      # The session is gone, so nothing can pick this run up again...
+      assert stored(id) == nil
+      # ...but the run itself is still here, and still in the Halls.
+      assert Repo.get(Record, character_id)
+      assert Board.entry(character_id).name == "Hero"
+    end
+
+    test "and discards a visitor who never chose a race, because that is a row about nobody" do
+      session = Characters.new_session_id()
+      on_exit(fn -> Characters.forget(session) end)
+      :ok = Store.save(Store.new_id(), session, %Player{})
+      backdate(session)
+
+      assert {_retired, discarded} = Store.retire_idle()
+      assert discarded >= 1
+      assert stored(session) == nil
     end
 
     test "the scheduled sweeper does the same work, through its own process", %{id: id} do
       start_character(id)
+      character_id = stored_id(id)
       Characters.forget_process(id)
-
-      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+      backdate(id)
 
       # Through the GenServer rather than Store directly: the hourly path has its own handler, and
       # nothing else exercises it.
       assert Sweeper.sweep_now() >= 1
-      assert Store.load(id) == nil
+      assert stored(id) == nil
+      assert Repo.get(Record, character_id)
     end
 
     test "the window slides: playing again resets the clock", %{id: id} do
       start_character(id)
       Characters.forget_process(id)
-
-      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+      backdate(id)
 
       # Touching the character writes it again, which moves updated_at to now.
       Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok})
 
-      MiniLineage.Characters.Store.sweep_expired()
+      Store.retire_idle()
+
       assert Characters.snapshot(id).name == "Hero"
+      assert stored(id), "a character played a moment ago was retired"
     end
   end
 end

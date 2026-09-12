@@ -8,21 +8,21 @@ defmodule MiniLineageWeb.GameLive do
   """
   use MiniLineageWeb, :live_view
 
-  alias MiniLineage.Characters
+  alias MiniLineage.{Board, Characters}
   require Logger
 
   alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
-  alias MiniLineage.Highscores
   alias MiniLineageWeb.{Paths, Screens}
 
   @impl true
   def mount(_params, session, socket) do
-    id = session["character_id"]
+    id = session["session_id"]
 
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)
+      Board.subscribe()
     end
 
     player = Characters.snapshot(id)
@@ -30,7 +30,9 @@ defmodule MiniLineageWeb.GameLive do
     {:ok,
      socket
      |> assign(
-       character_id: id,
+       session_id: id,
+       # Public, fixed for the life of this session, and the only id that may be rendered.
+       character_id: Characters.character_id(id),
        player: player,
        view: Snapshot.build(player),
        catalog: Snapshot.catalog(),
@@ -38,7 +40,10 @@ defmodule MiniLineageWeb.GameLive do
        race_filter: nil,
        notice: nil,
        game_flash: nil,
-       highscores: [],
+       boards: %{},
+       champion: nil,
+       champion_log: [],
+       my_rank: nil,
        statistics: nil,
        key_buffer: [],
        error_detail: nil,
@@ -59,7 +64,7 @@ defmodule MiniLineageWeb.GameLive do
     if pinned != requested or socket.assigns.live_action == :unknown do
       {:noreply, push_patch(socket, to: Paths.for_screen(pinned), replace: true)}
     else
-      {:noreply, socket |> assign_race_filter(params) |> enter(pinned)}
+      {:noreply, socket |> assign_race_filter(params) |> assign_champion(params) |> enter(pinned)}
     end
   end
 
@@ -89,6 +94,19 @@ defmodule MiniLineageWeb.GameLive do
   # survives the trip means the button appears to do nothing.
   defp assign_race_filter(socket, _params), do: assign(socket, race_filter: nil)
 
+  # A run nobody can find is not an error — `Screens` draws the empty state for a nil champion, the
+  # same way the Halls draw one when nobody has played.
+  defp assign_champion(socket, %{"id" => id}) do
+    entry = Board.entry(id)
+
+    assign(socket,
+      champion: entry,
+      champion_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
+    )
+  end
+
+  defp assign_champion(socket, _params), do: assign(socket, champion: nil, champion_log: [])
+
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
     # A flash belongs to the action that produced it and survives exactly one arrival, so an action
@@ -110,7 +128,9 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   defp load_screen_data(socket, "highscores"),
-    do: assign(socket, highscores: Highscores.list(socket.assigns.race_filter))
+    do: socket |> assign(boards: Board.current()) |> assign_my_rank()
+
+  defp load_screen_data(socket, "champion"), do: socket
 
   defp load_screen_data(socket, "statistics"),
     do: assign(socket, statistics: Collector.read_all())
@@ -169,16 +189,6 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("suicide", _params, socket), do: {:noreply, leave(socket, "home")}
 
-  def handle_event("submit_highscore", _params, socket) do
-    socket = apply_action(socket, &Actions.submit_highscore/1)
-    slug = get_in(socket.assigns, [:last_result, :race_slug])
-
-    {:noreply, go(socket, "highscores", slug)}
-  end
-
-  def handle_event("restart", _params, socket),
-    do: {:noreply, socket |> apply_action(&Actions.restart/1) |> go("start")}
-
   # `_target` names the field that changed, so one handler serves every action form.
   def handle_event("pick", %{"_target" => [field]} = params, socket),
     do: {:noreply, assign(socket, picked: params[field])}
@@ -210,12 +220,38 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}
   end
 
+  def handle_info({:board, boards}, socket) do
+    if socket.assigns.screen == "highscores",
+      do: {:noreply, socket |> assign(boards: boards) |> assign_my_rank()},
+      else: {:noreply, assign(socket, boards: boards)}
+  end
+
   # ------------------------------------------------------------------ plumbing
+
+  # Only when the player is not already in the list they are looking at: the pinned row exists to
+  # show someone their place when they have not yet earned one on screen.
+  defp assign_my_rank(socket) do
+    %{player: player, boards: boards, race_filter: filter} = socket.assigns
+    shown = Map.get(boards, filter, [])
+
+    rank =
+      with true <- Player.started?(player),
+           false <- player.coward or player.cheated,
+           id when is_binary(id) <- socket.assigns.character_id,
+           false <- Enum.any?(shown, &(&1.id == id)),
+           entry when not is_nil(entry) <- Board.entry(id) do
+        %{entry: entry, rank: Board.rank_of(entry)}
+      else
+        _ -> nil
+      end
+
+    assign(socket, my_rank: rank)
+  end
 
   # Runs an action in the character's process and folds the result into the view. A failure lands on
   # the error screen rather than remounting; `catch` is for the process exiting, which is not a raise.
   defp apply_action(socket, fun) do
-    id = socket.assigns.character_id
+    id = socket.assigns.session_id
     result = Characters.mutate(id, fun)
     player = Characters.snapshot(id)
 
@@ -277,7 +313,7 @@ defmodule MiniLineageWeb.GameLive do
   # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries
   # only one generic message. Flavour, not security.
   defp throttle(socket, limiter) do
-    case RateLimit.check(socket.assigns.character_id, limiter) do
+    case RateLimit.check(socket.assigns.session_id, limiter) do
       :ok ->
         {:ok, socket}
 
@@ -313,7 +349,11 @@ defmodule MiniLineageWeb.GameLive do
         screen={@screen}
         view={@view}
         catalog={@catalog}
-        highscores={@highscores}
+        boards={@boards}
+        character_id={@character_id}
+        my_rank={@my_rank}
+        champion={@champion}
+        champion_log={@champion_log}
         statistics={@statistics}
         race_filter={@race_filter}
         detail={@error_detail}

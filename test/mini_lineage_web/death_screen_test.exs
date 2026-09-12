@@ -69,15 +69,25 @@ defmodule MiniLineageWeb.DeathScreenTest do
   end
 
   describe "what a player may do from here" do
-    test "a legitimate death may write its legacy" do
-      assert html_for(Player.kill(hero())) =~ "Write your Legacy"
+    test "starting over is a form, because it takes a new identity" do
+      # A LiveView cannot set the session cookie, so this one control has to leave the socket. A
+      # GET would let a crawler retire somebody's run.
+      html = html_for(Player.kill(hero()))
+
+      assert html =~ ~s(action="/play-again")
+      assert html =~ ~s(method="post")
+      assert html =~ "_csrf_token"
+      refute html =~ "Write your Legacy", "the board no longer waits to be written to"
     end
 
-    test "and a coward or a cheater may not" do
+    test "a coward or a cheater is told the Halls will not have them" do
       {cheater, _} = Actions.cheat(hero())
 
-      refute html_for(Player.commit_suicide(hero())) =~ "Write your Legacy"
-      refute html_for(Player.kill(cheater)) =~ "Write your Legacy"
+      for barred <- [Player.commit_suicide(hero()), Player.kill(cheater)] do
+        assert html_for(barred) =~ "will not have it"
+      end
+
+      refute html_for(Player.kill(hero())) =~ "will not have it"
     end
 
     test "but anyone may start again" do

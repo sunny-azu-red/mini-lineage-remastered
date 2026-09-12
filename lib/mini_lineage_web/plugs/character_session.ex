@@ -1,7 +1,8 @@
 defmodule MiniLineageWeb.Plugs.CharacterSession do
   @moduledoc """
-  Puts an opaque character id in the signed session cookie. The cookie carries identity only —
-  the character itself lives in its own process, backed by the `characters` table.
+  Puts an opaque session id in the signed session cookie. It identifies the BROWSER, not the
+  character: the character's own id is public and appears in every board link, so the two are kept
+  apart — otherwise a champion's link would be a working cookie for playing as them.
   """
   import Plug.Conn
 
@@ -14,8 +15,8 @@ defmodule MiniLineageWeb.Plugs.CharacterSession do
 
   @impl true
   def call(conn, _opts) do
-    case get_session(conn, :character_id) do
-      nil -> put_session(conn, :character_id, Characters.new_id())
+    case get_session(conn, :session_id) do
+      nil -> put_session(conn, :session_id, Characters.new_session_id())
       _id -> conn
     end
   end

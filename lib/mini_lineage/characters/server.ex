@@ -31,24 +31,28 @@ defmodule MiniLineage.Characters.Server do
   # stop, so nothing would write. This bounds how long that buffer can sit unwritten.
   @backstop_ms 60_000
 
-  def start_link(id), do: GenServer.start_link(__MODULE__, id, name: via(id))
+  def start_link(session), do: GenServer.start_link(__MODULE__, session, name: via(session))
 
-  def via(id), do: {:via, Registry, {MiniLineage.Characters.Registry, id}}
+  def via(session), do: {:via, Registry, {MiniLineage.Characters.Registry, session}}
 
   @impl true
-  def init(id) do
+  def init(session) do
     # Without this the process dies on its parent's exit signal and `terminate/2` never runs, so an
     # ordinary shutdown would discard whatever is buffered.
     Process.flag(:trap_exit, true)
 
+    # The public id is discovered, or minted for a character that has never saved. Minting it here
+    # rather than at the first save is what lets two tabs on one session agree on it.
+    {id, player} = Store.load_by_session(session) || {Store.new_id(), %Player{}}
+
     # The narrative is no longer in the document, so the screen is refilled from the log — one
     # query, and only when the process starts.
-    player = Store.load(id) || %Player{}
     player = %{player | last_battle_narrative: BattleLog.last_for(id)}
     schedule_tick()
 
     state = %{
       id: id,
+      session: session,
       player: player,
       expiry_timer: nil,
       viewers: %{},
@@ -65,6 +69,8 @@ defmodule MiniLineage.Characters.Server do
   # -------------------------------------------------------------------- calls
 
   @impl true
+  def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
+
   def handle_call({:mutate, fun}, _from, state) do
     {result, state} = run(state, fun)
 
@@ -155,12 +161,9 @@ defmodule MiniLineage.Characters.Server do
 
     if changed? do
       # Always broadcast: a viewer must see the tick whether or not it was worth a write.
-      broadcast(state.id, player)
+      broadcast(state.session, player)
 
-      state =
-        %{state | player: player}
-        |> log_battle(before, player)
-        |> close_life(before, player, result)
+      state = log_battle(%{state | player: player}, before, player)
 
       {result, arm_expiry(if(flush?(before, player), do: persist(state), else: mark(state)))}
     else
@@ -189,26 +192,14 @@ defmodule MiniLineage.Characters.Server do
     end
   end
 
-  # A life ends when the character is reset — by writing a legacy, or by starting over without one.
-  # Claimed fights outlive the character; the rest go, so the next life does not inherit them.
-  defp close_life(state, before, now, result) do
-    if Player.started?(before) and not Player.started?(now) do
-      case result do
-        {:ok, %{highscore_id: id}} when is_integer(id) -> BattleLog.claim(state.id, id)
-        _ -> BattleLog.discard_unclaimed(state.id)
-      end
-    end
-
-    state
-  end
-
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state
 
   # Never raises. Once there is a buffer, letting a database error kill the process would take the
   # buffer with it — so a failure keeps the state dirty and the next flush carries it.
   defp persist(state) do
-    Store.save(state.id, state.player, state.pending_battles)
+    Store.save(state.id, state.session, state.player, state.pending_battles)
+    MiniLineage.Board.character_changed()
 
     %{state | dirty_since: nil, pending_battles: []}
   rescue

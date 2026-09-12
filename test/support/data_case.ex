@@ -36,6 +36,25 @@ defmodule MiniLineage.DataCase do
   end
 
   @doc """
+  The player as the database has it, found the way the game finds it — by the session, not by the
+  character's public id, which a test holding a cookie would not know.
+  """
+  def stored(session) do
+    case MiniLineage.Characters.Store.load_by_session(session) do
+      {_id, player} -> player
+      nil -> nil
+    end
+  end
+
+  @doc "The public id of the character this session is playing, or nil before it has saved."
+  def stored_id(session) do
+    case MiniLineage.Characters.Store.load_by_session(session) do
+      {id, _player} -> id
+      nil -> nil
+    end
+  end
+
+  @doc """
   Holds a character's process open for the rest of the test. With no viewer attached it stops
   itself once the idle grace elapses, which is deliberately short in this environment.
   """

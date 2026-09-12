@@ -19,7 +19,7 @@ defmodule MiniLineage.Characters.TickLogTest do
     Logger.configure(level: :debug)
     on_exit(fn -> Logger.configure(level: previous) end)
 
-    id = Characters.new_id()
+    id = Characters.new_session_id()
     on_exit(fn -> Characters.forget(id) end)
     hold(id)
 
@@ -100,7 +100,7 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "a race with no regeneration is idle rather than mid-heal", %{id: _id} do
-    orc = Characters.new_id()
+    orc = Characters.new_session_id()
     on_exit(fn -> Characters.forget(orc) end)
     hold(orc)
 
@@ -116,7 +116,7 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "a visitor who has not created a character is not described at all" do
-    visitor = Characters.new_id()
+    visitor = Characters.new_session_id()
     on_exit(fn -> Characters.forget(visitor) end)
     hold(visitor)
 

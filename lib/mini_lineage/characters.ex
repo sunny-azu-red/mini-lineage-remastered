@@ -2,15 +2,28 @@ defmodule MiniLineage.Characters do
   @moduledoc """
   The way in to a character. Every read and write goes through the character's own process, so
   state survives a disconnect and no two actions can interleave.
+
+  A process is addressed by the SESSION — the secret in the cookie — because that is what a
+  browser has. The character's public id lives inside the process and never comes back out here.
   """
   alias MiniLineage.Characters.{Server, Store}
 
-  defdelegate new_id(), to: Store
+  defdelegate new_session_id(), to: Store
+
+  @doc "Ends the run this browser was playing. The row stays on the board; the session lets go."
+  def archive(session) do
+    # Stopped first, so `terminate/2` writes the final state while the row is still its own.
+    stop_process(session)
+    Store.archive(session)
+  end
 
   @doc "Applies `fun` inside the character's process. `fun` takes a player and returns `{player, result}`."
   def mutate(id, fun), do: call(id, {:mutate, fun})
 
   def snapshot(id), do: call(id, :snapshot)
+
+  @doc "This session's character's PUBLIC id — what the board links to. Safe to render."
+  def character_id(session), do: call(session, :character_id)
 
   @doc "Registers a viewer. The process stops shortly after its last viewer goes away."
   def attach(id, pid \\ self()), do: call(id, {:attach, pid})
@@ -21,9 +34,13 @@ defmodule MiniLineage.Characters do
   def forget_process(id), do: stop_process(id)
 
   @doc "Forgets a character entirely — used by tests and the expiry sweep."
-  def forget(id) do
-    stop_process(id)
-    Store.delete(id)
+  def forget(session) do
+    stop_process(session)
+
+    case Store.load_by_session(session) do
+      {id, _player} -> Store.delete(id)
+      nil -> :ok
+    end
 
     :ok
   end

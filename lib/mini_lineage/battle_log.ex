@@ -6,9 +6,9 @@ defmodule MiniLineage.BattleLog do
   document is rewritten whole on every save — a history kept inside it would put the write cost
   back, and more of it with every fight.
 
-  A row is unclaimed until the run is written to the board, at which point it is stamped with that
-  entry and outlives the character. Unclaimed rows belong to the character's current life and go
-  when that life ends without a legacy, or when the character is swept.
+  A fight belongs to its character for good. Nothing claims or discards one any more: a character
+  is never reset in place — starting over makes a new row — so there is no second life that could
+  inherit the first one's fights, and no character that outlives them.
   """
   import Ecto.Query
 
@@ -26,7 +26,6 @@ defmodule MiniLineage.BattleLog do
     @timestamps_opts [type: :utc_datetime_usec, updated_at: false]
     schema "battle_log" do
       field :character_id, :string
-      field :highscore_id, :integer
 
       field :enemies_killed, :integer
       field :hp_lost, :integer
@@ -67,50 +66,23 @@ defmodule MiniLineage.BattleLog do
     }
   end
 
-  @doc """
-  The most recent fight of the character's CURRENT life, as the shape the battle screen renders.
-  Claimed rows are excluded: they belong to a run already on the board, and whoever plays next on
-  this id must not be shown the previous champion's last stand.
-  """
+  @doc "The most recent fight, as the shape the battle screen renders. Nil before the first one."
   def last_for(character_id) do
     Entry
-    |> where([e], e.character_id == ^character_id and is_nil(e.highscore_id))
+    |> where([e], e.character_id == ^character_id)
     |> order_by([e], desc: e.id)
     |> limit(1)
     |> Repo.one()
     |> to_battle()
   end
 
-  @doc "Claims this character's unclaimed fights for a board entry, so they outlive the character."
-  def claim(character_id, highscore_id) do
-    {count, _} =
-      Entry
-      |> where([e], e.character_id == ^character_id and is_nil(e.highscore_id))
-      |> Repo.update_all(set: [highscore_id: highscore_id])
-
-    count
-  end
-
-  @doc "Drops a life that ended without a legacy, so the next one does not inherit its fights."
-  def discard_unclaimed(character_id) do
-    {count, _} =
-      Entry
-      |> where([e], e.character_id == ^character_id and is_nil(e.highscore_id))
-      |> Repo.delete_all()
-
-    count
-  end
-
-  @doc "Unclaimed rows whose character no longer exists. Runs with the character sweep."
-  def sweep_orphaned do
-    characters = from(c in "characters", select: c.id)
-
-    {count, _} =
-      Entry
-      |> where([e], is_nil(e.highscore_id) and e.character_id not in subquery(characters))
-      |> Repo.delete_all()
-
-    count
+  @doc "Every fight of one run, oldest first, for the page that tells its story."
+  def history(character_id) do
+    Entry
+    |> where([e], e.character_id == ^character_id)
+    |> order_by([e], asc: e.id)
+    |> Repo.all()
+    |> Enum.map(&to_battle/1)
   end
 
   defp to_battle(nil), do: nil

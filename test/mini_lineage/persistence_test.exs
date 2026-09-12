@@ -1,59 +1,18 @@
 defmodule MiniLineage.PersistenceTest do
-  @moduledoc "Highscores and the global counters against the real database."
+  @moduledoc "The global counters against the real database. The board has its own suite."
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.Game.Statistics
   import ExUnit.CaptureLog
 
   alias MiniLineage.Game.Statistics.Collector
-  alias MiniLineage.Highscores
 
   # This database is shared with the browser walkthrough, so a test must assert against what it
   # put there, not what happened to be lying around. The sandbox rolls this back afterwards.
   setup do
-    Repo.delete_all(Highscores.Entry)
     Repo.query!("DELETE FROM statistics")
 
     :ok
-  end
-
-  describe "highscores" do
-    test "orders by experience, then adena, and caps at the configured limit" do
-      for {name, xp, adena} <- [{"Low", 10, 999}, {"High", 900, 1}, {"Tie", 900, 500}] do
-        Highscores.insert(%{name: name, experience: xp, race_id: 0, adena: adena, level: 1})
-      end
-
-      assert Enum.map(Highscores.list(), & &1.name) == ["Tie", "High", "Low"]
-    end
-
-    test "filters to one race" do
-      Highscores.insert(%{name: "Orc", experience: 5, race_id: 1, adena: 0, level: 1})
-      Highscores.insert(%{name: "Elf", experience: 5, race_id: 2, adena: 0, level: 1})
-
-      assert Enum.map(Highscores.list(1), & &1.name) == ["Orc"]
-    end
-  end
-
-  test "a legitimate death writes its legacy to the board and clears the character" do
-    {player, _} =
-      MiniLineage.Game.Player.initialize(
-        %MiniLineage.Game.Player{},
-        MiniLineage.Game.Constants.race(0),
-        "Legend"
-      )
-
-    dead = MiniLineage.Game.Player.kill(%{player | experience: 4321, adena: 99})
-
-    assert {fresh, {:ok, %{race_slug: "human"}}} = MiniLineage.Game.Actions.submit_highscore(dead)
-
-    assert fresh == %MiniLineage.Game.Player{},
-           "submitting resets in place, ready for a new character"
-
-    assert [entry] = Highscores.list()
-    assert entry.name == "Legend"
-    assert entry.total_xp == 4321
-    assert entry.adena == 99
-    assert entry.level == MiniLineage.Game.Math.level_for_xp(4321)
   end
 
   describe "statistics" do

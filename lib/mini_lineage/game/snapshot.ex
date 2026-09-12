@@ -61,7 +61,7 @@ defmodule MiniLineage.Game.Snapshot do
     cheated: false,
     death_reason: nil,
     ambush_low_health: nil,
-    highscore_eligible: false,
+    disqualified: false,
     counters: %{
       total_battles: 0,
       total_ambushes: 0,
@@ -111,7 +111,8 @@ defmodule MiniLineage.Game.Snapshot do
       cheated: player.cheated,
       death_reason: player.death_reason,
       ambush_low_health: Narrative.ambush_low_health(player),
-      highscore_eligible: player.dead and not player.coward and not player.cheated,
+      # Not "may they write a legacy" any more — they are already on the board, or barred from it.
+      disqualified: player.coward or player.cheated,
       counters: %{
         total_battles: player.total_battles,
         total_ambushes: player.total_ambushes,

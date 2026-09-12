@@ -10,11 +10,10 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.Characters
-  alias MiniLineage.Characters.Store
   alias MiniLineage.Game.{Actions, Constants, Player}
 
   setup do
-    id = Characters.new_id()
+    id = Characters.new_session_id()
     on_exit(fn -> Characters.forget(id) end)
 
     Characters.mutate(id, fn player ->
@@ -72,7 +71,7 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
       for _ <- 1..20, do: Characters.snapshot(id)
 
       assert Characters.snapshot(id).ambushed, "a read resolved the ambush"
-      assert Store.load(id).ambushed, "the ambush was not there on reload"
+      assert stored(id).ambushed, "the ambush was not there on reload"
     end
 
     test "and is only ever answered by fighting", %{id: id} do

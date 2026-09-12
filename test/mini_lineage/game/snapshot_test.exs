@@ -70,13 +70,13 @@ defmodule MiniLineage.Game.SnapshotTest do
     assert Snapshot.build(Player.kill(character())).effects == []
   end
 
-  test "eligibility for the board is derived, never assumed" do
+  test "disqualification is derived, never assumed" do
     dead = Player.kill(character())
 
-    assert Snapshot.build(dead).highscore_eligible
-    refute Snapshot.build(%{dead | coward: true}).highscore_eligible
-    refute Snapshot.build(%{dead | cheated: true}).highscore_eligible
-    refute Snapshot.build(character()).highscore_eligible, "the living are not eligible"
+    refute Snapshot.build(dead).disqualified
+    refute Snapshot.build(character()).disqualified, "the living are ranked like anyone else"
+    assert Snapshot.build(%{dead | coward: true}).disqualified
+    assert Snapshot.build(%{dead | cheated: true}).disqualified
   end
 
   test "effect tooltips name every modifier, with its unit" do

@@ -1,8 +1,10 @@
 defmodule MiniLineage.Characters.Sweeper do
   @moduledoc """
-  Drops characters nobody has played in a while. Without this the table only ever grows: a
-  character's process stops within seconds of its last viewer leaving, and the row it left behind
-  has nothing to remove it.
+  Takes the session off characters nobody has played in a while.
+
+  What it sweeps is the session, not the character: an abandoned run has still been played, so it
+  keeps its place in the Halls and gives up only the secret that ties it to a browser. The one
+  thing it does delete is a visitor who never chose a race, which is a row about nobody.
   """
   use GenServer
 
@@ -14,7 +16,7 @@ defmodule MiniLineage.Characters.Sweeper do
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
-  @doc "Sweeps now and reports how many went. For tests and for a hand at the console."
+  @doc "Sweeps now and reports how many were retired. For tests and for a hand at the console."
   def sweep_now, do: GenServer.call(__MODULE__, :sweep)
 
   @impl true
@@ -36,17 +38,16 @@ defmodule MiniLineage.Characters.Sweeper do
   def handle_call(:sweep, _from, state), do: {:reply, sweep(), state}
 
   defp sweep do
-    count = Store.sweep_expired()
-    # After the characters, not before: a row is orphaned by its character going away.
-    orphaned = MiniLineage.BattleLog.sweep_orphaned()
+    {retired, discarded} = Store.retire_idle()
 
-    if count > 0,
+    if retired > 0 or discarded > 0,
       do:
         Logger.info(
-          "swept #{count} character(s) idle for over #{Store.ttl_hours()}h, and #{orphaned} unclaimed fight(s)"
+          "retired #{retired} character(s) idle for over #{Store.ttl_hours()}h onto the board, " <>
+            "and discarded #{discarded} that never started"
         )
 
-    count
+    retired
   end
 
   defp schedule, do: Process.send_after(self(), :sweep, @every_ms)

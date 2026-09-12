@@ -47,14 +47,20 @@ duplicated on purpose — the count-up animation formats its own frames, and wit
 copy the number would change format mid-count. Both read
 `test/fixtures/adena_format.json`. Change one, change the table, and both tests will tell you.
 
-**Mutable working state is a document; immutable facts are columns.** `characters` is owned by a
-process and only ever read whole, so it is one JSON blob. `highscores` and `battle_log` are sorted
-and aggregated, so they are columns. Anything that grows with play — a battle history, an
-inventory, a mail box — gets its own table. Put it in the document and every save rewrites all of
-it, buffering or not.
+**Mutable working state is a document; anything sorted on is a column.** `characters` is owned by
+a process and only ever read whole, so it is one `jsonb` blob — but the fields the board ranks on
+are GENERATED columns over that document, never written by application code, so they cannot drift
+from it. Under PG18 write `STORED` explicitly or you get a VIRTUAL column that cannot be indexed.
+Anything that grows with play — a battle history, an inventory, a mail box — gets its own table.
+Put it in the document and every save rewrites all of it, buffering or not.
+
+**A character has two ids and they must never be confused.** `id` is public and goes in board
+links; `session_id` is the cookie and is a credential. A public id that is also a session lets
+anyone play as a champion by pasting their link into a cookie. The board selects into plain maps
+rather than `%Record{}` for exactly this reason — a struct carries a `session_id` key.
 
 **Writes follow the player, not the clock.** What the player did is written before they are told it
-worked: creation, a fight, a purchase, death, a legacy, the cheat. The passage of time — passive
+worked: creation, a fight, a purchase, death, the cheat. The passage of time — passive
 regeneration, which screen they wandered to — is buffered and rides along with the next of those,
 or with `terminate/2`. The decision is derived from the struct in `Characters.Server`, never
 declared at a call site, because a call site can forget.

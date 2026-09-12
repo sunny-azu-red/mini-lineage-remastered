@@ -2,9 +2,10 @@ defmodule Mix.Tasks.E2e do
   @shortdoc "Runs the browser suites, server and all"
 
   @moduledoc """
-      mix e2e                # both suites
+      mix e2e                # every suite
       mix e2e walkthrough    # one character, played normally
       mix e2e races          # every lineage
+      mix e2e live-board     # two players at once, watching the board move
 
   One command, one terminal. It starts the isolated server on the port `.env.test` names, empties
   that database's board, drives Chromium through the suites, and stops the server it started. A
@@ -16,14 +17,18 @@ defmodule Mix.Tasks.E2e do
 
   alias MiniLineage.Scratch.Shell
 
-  @suites %{"walkthrough" => "e2e/walkthrough.mjs", "races" => "e2e/races.mjs"}
+  @suites %{
+    "walkthrough" => "e2e/walkthrough.mjs",
+    "races" => "e2e/races.mjs",
+    "live-board" => "e2e/live-board.mjs"
+  }
   @boot_timeout_ms 90_000
 
   @impl Mix.Task
   def run(args) do
     suites =
       case args do
-        [] -> ["walkthrough", "races"]
+        [] -> ["walkthrough", "races", "live-board"]
         given -> Enum.map(given, &validate!/1)
       end
 

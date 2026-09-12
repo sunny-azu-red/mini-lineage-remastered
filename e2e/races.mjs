@@ -138,13 +138,21 @@ try {
         check('...and lands on the death screen', died.screen === 'death');
 
         await page.waitForSelector('.phx-connected', { timeout: 8000 });
-        check(`a fallen ${race.label} may write its legacy`,
-            await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
-        await page.click('#main button:has-text("Write your Legacy")');
-        await onScreen('highscores');
-        check(`...and the ${race.label} reaches the board`,
+
+        // Nothing is submitted: the run has been in the Halls since it chose a race, so this only
+        // confirms it is still there now that it has ended.
+        await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        check(`...and the ${race.label} stands on the board unbidden`,
             (await text('#main table.data-table')).includes(name));
-        check('submitting also clears the character', (await state()).started === false);
+
+        // A new run means a new identity, which only a real request can hand out.
+        await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        await page.click('#main form[action="/play-again"] button[type="submit"]');
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        check('playing again leaves the run behind and clears the character',
+            (await state()).started === false);
     }
 
     // ---- the board can be read one lineage at a time -------------------------------------------

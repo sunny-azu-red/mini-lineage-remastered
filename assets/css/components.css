@@ -404,3 +404,27 @@
 .version-debug {
     color: var(--hp-color);
 }
+
+/* Starting a new run takes a new identity, so its control is a form rather than a button. It must
+   still sit in a row of buttons as though it were one. */
+.action-links .inline-form {
+    display: inline;
+    margin: 0;
+}
+
+/* A run's own page: its fights, in the order they happened. */
+ol.chronicle {
+    margin: 0 0 18px 0;
+    padding-left: 22px;
+}
+
+ol.chronicle li {
+    margin-bottom: 8px;
+    line-height: 1.55;
+    color: var(--text-primary);
+}
+
+ol.chronicle li::marker {
+    color: var(--gold-dim);
+    font-size: 0.85em;
+}

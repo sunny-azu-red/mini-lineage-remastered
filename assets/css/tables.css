@@ -54,3 +54,32 @@ td.center,
 th.center {
     text-align: center;
 }
+
+/* --- the Halls of Champions ------------------------------------------------------------------ */
+
+/* Your own run, wherever it sits. The board lists everyone now, so the row a player came to find
+   has to be findable without counting. */
+.data-table tbody tr.champion-row.mine,
+.data-table tbody tr.champion-row.mine:nth-child(odd),
+.data-table tbody tr.champion-row.mine:nth-child(even) {
+    background: rgba(201, 168, 76, 0.14);
+    box-shadow: inset 2px 0 0 var(--gold);
+}
+
+.champion-row a {
+    color: var(--text-primary);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--gold-dim);
+}
+
+.champion-row a:hover {
+    color: var(--gold-hover);
+    border-bottom-color: var(--gold-hover);
+}
+
+/* The break between the top of the board and a player's own place further down it. Marked rather
+   than hidden, so the rank below is not misread as the one after. */
+.data-table tbody tr.rank-gap td {
+    padding: 2px 10px;
+    letter-spacing: 0.4em;
+}
