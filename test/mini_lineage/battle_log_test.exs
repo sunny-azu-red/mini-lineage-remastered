@@ -103,6 +103,48 @@ defmodule MiniLineage.BattleLogTest do
       assert rows(id) != [], "a claimed fight was swept with its character"
     end
 
+    test "and `last_for/1` stops seeing them the moment they are claimed", %{id: id} do
+      # Tested directly rather than only through a restart: clearing the narrative in
+      # `Player.initialize/3` also hides this, so going through the process would let the query
+      # rot unnoticed behind the other fix.
+      start_character(id)
+      fight(id)
+      assert BattleLog.last_for(id) != nil
+
+      Characters.mutate(id, &{%{&1 | dead: true, experience: 500, adena: 10}, :ok})
+      Characters.mutate(id, &Actions.submit_highscore/1)
+
+      assert rows(id) != [], "the legacy lost its fights"
+      assert BattleLog.last_for(id) == nil, "a finished run is still the character's last fight"
+    end
+
+    test "but the next life does not inherit them, however the process is restarted", %{id: id} do
+      # The claimed rows stay in the table on purpose, which is exactly what made this reachable:
+      # the character keeps its id, so a query that does not ask whose life a fight belonged to
+      # hands the next player the previous champion's last stand.
+      start_character(id)
+      fight(id)
+      Characters.mutate(id, &{%{&1 | dead: true, experience: 500, adena: 10}, :ok})
+      Characters.mutate(id, &Actions.submit_highscore/1)
+
+      # Only after a restart: the reset clears the narrative in memory, and it is the rehydration
+      # on the way back up that used to bring it back.
+      Characters.forget_process(id)
+      assert rows(id) != [], "the legacy lost its fights"
+
+      Characters.mutate(id, fn player ->
+        {player, _flash} = Player.initialize(player, Constants.race(2), "Second")
+        {player, :ok}
+      end)
+
+      player = Characters.snapshot(id)
+
+      assert player.total_battles == 0
+
+      assert player.last_battle_narrative == nil,
+             "a new character arrived at the Battleground showing the last champion's fight"
+    end
+
     test "starting over without one discards them, so the next life starts empty", %{id: id} do
       start_character(id)
       fight(id)

@@ -60,7 +60,10 @@ defmodule MiniLineage.Game.Player do
         total_ambushes: 0,
         consecutive_ambushes: 0,
         total_enemies_killed: 0,
-        effects: []
+        effects: [],
+        # A new character remembers no fight. Left alone it would keep whatever the process was
+        # rehydrated with, and the Battleground would open on someone else's last stand.
+        last_battle_narrative: nil
     }
 
     player = apply_effect(player, Constants.effect(:newbie_buff))

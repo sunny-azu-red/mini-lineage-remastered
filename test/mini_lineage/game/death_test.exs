@@ -78,6 +78,16 @@ defmodule MiniLineage.Game.DeathTest do
     assert {_p, {:error, :not_dead, _}} = Actions.submit_highscore(living())
   end
 
+  test "a new character remembers no fight, whatever the struct it is built on" do
+    # `initialize/3` overwrites a %Player{} that may have been rehydrated from storage, so every
+    # field carried over from the previous run has to be named here or it survives the reroll.
+    fought = %{living() | last_battle_narrative: %{narrative: %{}, outcome: %{}}}
+    {fresh, _} = Player.initialize(fought, Constants.race(1), "Second")
+
+    assert fresh.last_battle_narrative == nil
+    assert fresh.total_battles == 0
+  end
+
   test "only the fallen may start over — a living character can never be wiped" do
     assert {player, {:error, :not_dead, _}} = Actions.restart(living())
     assert player.name == "Doomed"

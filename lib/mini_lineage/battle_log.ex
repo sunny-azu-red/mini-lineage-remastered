@@ -67,10 +67,14 @@ defmodule MiniLineage.BattleLog do
     }
   end
 
-  @doc "The most recent fight, as the shape the battle screen renders. Nil before the first one."
+  @doc """
+  The most recent fight of the character's CURRENT life, as the shape the battle screen renders.
+  Claimed rows are excluded: they belong to a run already on the board, and whoever plays next on
+  this id must not be shown the previous champion's last stand.
+  """
   def last_for(character_id) do
     Entry
-    |> where([e], e.character_id == ^character_id)
+    |> where([e], e.character_id == ^character_id and is_nil(e.highscore_id))
     |> order_by([e], desc: e.id)
     |> limit(1)
     |> Repo.one()
