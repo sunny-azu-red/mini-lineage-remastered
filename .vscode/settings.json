@@ -7,19 +7,21 @@
   "[elixir]": {
     "editor.formatOnSave": true
   },
-  "[html-eex]": {
+  "[phoenix-heex]": {
     "editor.formatOnSave": true
   },
   "files.associations": {
     "*.heex": "phoenix-heex"
   },
   "files.exclude": {
+    "**/.elixir_ls": true,
     "**/node_modules": true,
     "**/_build": true,
     "**/cover": true,
     "**/deps": true
   },
   "search.exclude": {
+    "**/.elixir_ls": true,
     "**/node_modules": true,
     "**/_build": true,
     "**/cover": true,
