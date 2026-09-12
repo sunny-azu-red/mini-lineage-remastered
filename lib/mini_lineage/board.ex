@@ -54,19 +54,19 @@ defmodule MiniLineage.Board do
   def rank_of(%{disqualified: true}), do: nil
 
   def rank_of(entry) do
-    # Two counts rather than one OR-chain. The chain cannot use the board index and scans the whole
-    # table; a row comparison walks it, and the tie is an exact prefix match on the same index —
-    # both index-only, and both O(rank) rather than O(table).
+    # One statement, two index-only scans. The count has to be split — an OR-chain over the two
+    # cases cannot use the board index and scans the whole table — but it must not be split into
+    # two QUERIES: a round trip to the database costs ~0.8ms here, which is more than either scan.
     ahead =
       ranked()
       |> where(
         [r],
         fragment("(?, ?) > (?, ?)", r.total_xp, r.adena, ^entry.total_xp, ^entry.adena)
       )
-      |> Repo.aggregate(:count)
+      |> select([r], %{count: count()})
 
-    # Exactly level on both, and got there first. Rare, but this is what keeps the rank shown on a
-    # player's own row agreeing with where the list would have put them.
+    # Exactly level on both, and got there first. Rare, but it is what keeps the rank on a player's
+    # own row agreeing with where the list above it would have put them.
     tied =
       ranked()
       |> where(
@@ -74,9 +74,11 @@ defmodule MiniLineage.Board do
         r.total_xp == ^entry.total_xp and r.adena == ^entry.adena and
           r.inserted_at < ^entry.inserted_at
       )
-      |> Repo.aggregate(:count)
+      |> select([r], %{count: count()})
 
-    ahead + tied + 1
+    behind = Repo.one(from s in subquery(union_all(ahead, ^tied)), select: sum(s.count))
+
+    Decimal.to_integer(behind) + 1
   end
 
   @doc "One run by its public id, for its own page. Disqualified runs still render their own."

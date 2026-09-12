@@ -44,25 +44,38 @@ defmodule MiniLineage.Characters.Store do
     end
   end
 
-  # The conflict target is named, so a second unique index added later cannot quietly change which
-  # collision this updates on.
-  def save(id, session_id, %Player{} = player, battles \\ []) do
-    now = DateTime.utc_now()
-    state = Serde.to_map(player)
+  def save(id, session_id, player, battles \\ [])
 
-    # One transaction: a fight written without the character that fought it would show in the log
-    # as a battle its own totals do not include.
+  # No fight to stay consistent with, so no transaction. BEGIN and COMMIT are two more round trips,
+  # and at ~0.8ms each on this network they cost more than the write they were wrapping.
+  def save(id, session_id, %Player{} = player, []) do
+    upsert(id, session_id, player)
+
+    :ok
+  end
+
+  # One transaction: a fight written without the character that fought it would show in the log as
+  # a battle its own totals do not include.
+  def save(id, session_id, %Player{} = player, battles) do
     Repo.transaction(fn ->
-      Repo.insert!(
-        %Record{id: id, session_id: session_id, state: state, inserted_at: now, updated_at: now},
-        on_conflict: [set: [state: state, updated_at: now]],
-        conflict_target: :id
-      )
-
+      upsert(id, session_id, player)
       Enum.each(battles, &Repo.insert!/1)
     end)
 
     :ok
+  end
+
+  # The conflict target is named, so a second unique index added later cannot quietly change which
+  # collision this updates on.
+  defp upsert(id, session_id, player) do
+    now = DateTime.utc_now()
+    state = Serde.to_map(player)
+
+    Repo.insert!(
+      %Record{id: id, session_id: session_id, state: state, inserted_at: now, updated_at: now},
+      on_conflict: [set: [state: state, updated_at: now]],
+      conflict_target: :id
+    )
   end
 
   @doc """
