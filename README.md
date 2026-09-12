@@ -49,11 +49,11 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Runtime**: Elixir 1.19 on OTP 28, served by Bandit
 - **Web**: Phoenix 1.8 with LiveView 1.1 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for exact per-effect expiry
-- **Database**: Ecto + MyXQL against MariaDB, with each character persisted as a single JSON document
+- **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
 - **Audio Engine**: Web Audio API (procedural synthesizer), driven from a LiveView JS hook
 - **Testing**: ExUnit, plus two Playwright suites that drive a real headless Chromium
 
-Requires **Elixir 1.19+ on OTP 28+**, and a reachable MariaDB or MySQL.
+Requires **Elixir 1.19+ on OTP 28+**, and a reachable **PostgreSQL 14+** (18 in development and CI).
 
 ## Running it
 

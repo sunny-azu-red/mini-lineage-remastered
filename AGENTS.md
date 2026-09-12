@@ -12,7 +12,7 @@ list wins — several generator defaults do not exist here.
 - **There is no authentication**, so no `current_scope`, no `live_session` scoping, no user table.
   A browser is tied to a character by a signed session cookie and nothing else.
 - **There are no LiveView streams.** One character's state is one assign.
-- The database is **MariaDB via MyXQL**, not Postgres. Character state is a single JSON document.
+- The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
   character goes through its process, never straight to the database.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
@@ -63,8 +63,9 @@ declared at a call site, because a call site can forget.
 `Access.pin_screen/2` decides which. Somewhere you can stand — the Battleground, a shop, the
 Character screen — gets a URL of its own. A state that happens to you does not.
 
-**Do not widen a guard to make something work.** `@dead_allowed` in `Access`, the `_test` check in
-`e2e/reset.sh`, the purchase preconditions: each one is the boundary, and there is a test asserting
+**Do not widen a guard to make something work.** `@dead_allowed` in `Access`, the check in
+`e2e/reset.sh` that refuses the database `.env` names, the purchase preconditions: each one is the
+boundary, and there is a test asserting
 what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.

@@ -17,7 +17,7 @@ export MIX_ENV=e2e
 # looking for a "_test" in the name — with its own file the throwaway database can sit on another
 # server entirely, so the suffix had stopped meaning anything.
 mix run --no-start -e '
-  {:ok, _} = Application.ensure_all_started(:myxql)
+  {:ok, _} = Application.ensure_all_started(:postgrex)
   config = Application.get_env(:mini_lineage, MiniLineage.Repo)
   database = config[:database]
 
@@ -52,10 +52,10 @@ mix run --no-start -e '
     System.halt(1)
   end
 
-  {:ok, conn} = MyXQL.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
-  # DELETE, child first, rather than TRUNCATE: a table a foreign key points at cannot be
-  # truncated, and this order is the same one Postgres would need.
-  for table <- ~w(battle_log highscores characters),
-      do: MyXQL.query!(conn, "DELETE FROM #{table}")
+  {:ok, conn} = Postgrex.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
+  # One statement, child first. TRUNCATE takes a list, resets the sequences a fresh board wants,
+  # and CASCADE is deliberately NOT used — naming the tables keeps this incapable of reaching a
+  # table nobody listed.
+  Postgrex.query!(conn, "TRUNCATE battle_log, highscores, characters RESTART IDENTITY", [])
   IO.puts("reset #{database}: battle_log, highscores, characters")
 ' >/dev/null

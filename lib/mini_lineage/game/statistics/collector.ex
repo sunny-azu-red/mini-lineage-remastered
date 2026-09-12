@@ -6,6 +6,8 @@ defmodule MiniLineage.Game.Statistics.Collector do
   """
   use GenServer
 
+  import Ecto.Query
+
   require Logger
 
   alias MiniLineage.Game.Statistics
@@ -60,21 +62,19 @@ defmodule MiniLineage.Game.Statistics.Collector do
   defp write(pending) do
     batch = Enum.reject(pending, fn {_field, amount} -> amount == 0 end)
 
-    values = Enum.map_join(batch, ", ", fn _ -> "(?, ?)" end)
-    params = Enum.flat_map(batch, fn {field, amount} -> [Atom.to_string(field), amount] end)
+    entries =
+      Enum.map(batch, fn {field, amount} -> %{name: Atom.to_string(field), value: amount} end)
 
-    sql =
-      "INSERT INTO statistics (name, value) VALUES #{values} " <>
-        "ON DUPLICATE KEY UPDATE value = value + VALUES(value)"
-
-    # `rescue` as well as the error tuple: a value the driver cannot even encode RAISES rather
-    # than returning one, and a raise here would take the process down and the buffer with it —
-    # which is the very thing re-queueing exists to prevent.
+    # `rescue` rather than an error tuple: `insert_all` raises, and so does a value the driver
+    # cannot encode. A raise here would take the process down and the buffer with it — which is
+    # the very thing re-queueing exists to prevent.
     try do
-      case Repo.query(sql, params) do
-        {:ok, _result} -> %{}
-        {:error, error} -> requeue(batch, error)
-      end
+      Repo.insert_all("statistics", entries,
+        conflict_target: :name,
+        on_conflict: from(s in "statistics", update: [inc: [value: fragment("EXCLUDED.value")]])
+      )
+
+      %{}
     rescue
       error -> requeue(batch, error)
     end
@@ -94,8 +94,7 @@ defmodule MiniLineage.Game.Statistics.Collector do
     # buffer, or the archives read as empty to the very player who just filled them.
     if Process.whereis(__MODULE__), do: flush()
 
-    %{rows: rows} = Repo.query!("SELECT name, value FROM statistics")
-    stored = Map.new(rows, fn [name, value] -> {name, value} end)
+    stored = Map.new(Repo.all(from s in "statistics", select: {s.name, s.value}))
     stats = Map.new(Statistics.fields(), &{&1, Map.get(stored, Atom.to_string(&1), 0)})
 
     if stats.total_players == 0, do: nil, else: stats

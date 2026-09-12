@@ -20,22 +20,23 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # MariaDB, not MySQL — it is what the game is deployed against.
-      mariadb:
-        image: mariadb:10.11
+      # The major the game is deployed against. 5433 on the host so a developer running this
+      # locally cannot collide with their own Postgres on 5432.
+      postgres:
+        image: postgres:18
         env:
-          MARIADB_ROOT_PASSWORD: pass
-          MARIADB_DATABASE: lineage_remastered_test
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: lineage_remastered_test
         ports:
-          - 3307:3306
+          - 5433:5432
         options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s --health-timeout=5s --health-retries=10
 
     env:
       DB_HOST: 127.0.0.1
-      DB_PORT: 3307
-      DB_USERNAME: root
+      DB_PORT: 5433
+      DB_USERNAME: postgres
       DB_PASSWORD: pass
       DB_DATABASE: lineage_remastered_test
       MIX_ENV: test
@@ -90,21 +91,21 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mariadb:
-        image: mariadb:10.11
+      postgres:
+        image: postgres:18
         env:
-          MARIADB_ROOT_PASSWORD: pass
-          MARIADB_DATABASE: lineage_remastered_test
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: lineage_remastered_test
         ports:
-          - 3307:3306
+          - 5433:5432
         options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s --health-timeout=5s --health-retries=10
 
     env:
       DB_HOST: 127.0.0.1
-      DB_PORT: 3307
-      DB_USERNAME: root
+      DB_PORT: 5433
+      DB_USERNAME: postgres
       DB_PASSWORD: pass
       DB_DATABASE: lineage_remastered_test
       PORT: 4002

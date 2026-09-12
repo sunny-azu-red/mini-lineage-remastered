@@ -32,10 +32,10 @@ if File.exists?(env_file) do
 end
 
 credentials = [
-  username: System.get_env("DB_USERNAME", "root"),
+  username: System.get_env("DB_USERNAME", "postgres"),
   password: System.get_env("DB_PASSWORD", ""),
   hostname: System.get_env("DB_HOST", "127.0.0.1"),
-  port: String.to_integer(System.get_env("DB_PORT", "3306"))
+  port: String.to_integer(System.get_env("DB_PORT", "5432"))
 ]
 
 if config_env() == :test do
