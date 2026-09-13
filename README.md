@@ -53,7 +53,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for exact per-effect expiry
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
 - **Audio Engine**: Web Audio API (procedural synthesizer), driven from a LiveView JS hook
-- **Testing**: ExUnit, plus two Playwright suites that drive a real headless Chromium
+- **Testing**: ExUnit, plus three Playwright suites that drive a real headless Chromium
 
 Requires **Elixir 1.19+ on OTP 28+**, and a reachable **PostgreSQL 14+** (18 in development and CI).
 
@@ -142,9 +142,10 @@ mix stop                # stop a release that is still running
 
 mix test                # the Elixir suite
 mix test.coverage       # ...with a coverage report
-mix e2e                 # both browser suites — see below
+mix e2e                 # every browser suite — see below
 mix e2e walkthrough     # ...one character, played normally
 mix e2e races           # ...every lineage
+mix e2e live-board      # ...two players at once, watching the board move
 
 mix ecto.migrate        # apply pending migrations
 mix ecto.migrations     # what is applied
@@ -215,7 +216,7 @@ environment variable always beats the file.
 If a migration has to come back out, the same binary rolls it back:
 
 ```bash
-bin/mini_lineage eval 'MiniLineage.Release.rollback(MiniLineage.Repo, 20260906000002)'
+bin/mini_lineage eval 'MiniLineage.Release.rollback(MiniLineage.Repo, 0)'
 ```
 
 The build stamps itself with `git rev-parse --short=7 HEAD` and the footer links that commit.
@@ -223,7 +224,9 @@ The build stamps itself with `git rev-parse --short=7 HEAD` and the footer links
 checkout to ask — a Docker build, or CI. A release that can supply neither refuses to assemble.
 
 A release carries no Mix, so migrations go through `MiniLineage.Release`. Name the database with
-the `DB_*` keys or with a single `DATABASE_URL`; the parts win when both are set.
+the `DB_*` keys or with a single `DATABASE_URL`; the parts win when both are set. The image ships
+the migrations it was built with, so a stale one reports "Migrations already up" and means it —
+rebuild before believing that.
 
 Production differs from development: rate limiting is **on** (60 battles and 30 shop actions per
 minute, 300 events/min overall), `force_ssl` redirects to `https://$PHX_HOST` for every host but
@@ -303,7 +306,7 @@ runs as PID 1 and does not reap what the ERTS spawns.
 
 ## The browser suites
 
-Two Playwright runs drive a real headless Chromium, sharing their controls through
+Three Playwright runs drive a real headless Chromium, sharing their controls through
 `e2e/helpers.mjs`:
 
 - **`e2e/walkthrough.mjs`** — one character played normally, end to end: create, travel, buy,
@@ -314,6 +317,10 @@ Two Playwright runs drive a real headless Chromium, sharing their controls throu
   screens show them, what it can afford at birth, and its road to the board. With all four in the
   Halls it can check something one race cannot — that every filter narrows to rows of that race
   alone.
+- **`e2e/live-board.mjs`** — two browser contexts at once, so two session cookies and two players.
+  It watches one player's Halls change because of what the *other* one did, follows the link to a
+  stranger's record, and checks that reading it never adopts their character. The other two drive
+  a single browser, so a board that only refreshed for whoever caused the change would pass both.
 
 Both empty the board first, through `e2e/reset.sh`, which refuses to touch whichever database
 `.env` names.
@@ -321,7 +328,7 @@ Both empty the board first, through `e2e/reset.sh`, which refuses to touch which
 One command, one terminal:
 
 ```bash
-mix e2e                 # both, about a minute
+mix e2e                 # all three
 mix e2e walkthrough     # just the first
 ```
 

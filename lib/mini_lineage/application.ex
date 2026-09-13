@@ -18,10 +18,8 @@ defmodule MiniLineage.Application do
       MiniLineageWeb.Endpoint
     ]
 
-    # See https://elixir.hexdocs.pm/Supervisor.html
-    # for other strategies and supported options
-    # Both read or write on a timer, which would fight the SQL sandbox; their own tests start them,
-    # and `Board.current/0` computes in the caller when the process is absent.
+    # Both work on a timer, which would fight the SQL sandbox; their own tests start them, and
+    # `Board.current/0` computes in the caller when the process is absent.
     children =
       if Application.get_env(:mini_lineage, :start_statistics_collector, true),
         do: children ++ [MiniLineage.Game.Statistics.Collector],

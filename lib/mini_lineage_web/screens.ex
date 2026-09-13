@@ -155,13 +155,9 @@ defmodule MiniLineageWeb.Screens do
   end
 
   @doc """
-  One `<select>` driving a companion button's label and CSS variant — the shared form behind Town,
-  the three shops and Suicide.
-
-  Submitting with the placeholder still selected is a legitimate "go home" signal, so the button is
-  never disabled for want of a choice. Until something is picked the button reads `default_label`:
-  with no placeholder the first option is pre-selected, but that is the browser choosing, not the
-  player, so the button must not yet offer to act on it.
+  One `<select>` driving a companion button's label and variant — the shared form behind Town, the
+  shops and Suicide. Submitting with the placeholder selected is a legitimate "go home", so the
+  button is never disabled; until the PLAYER picks, it reads `default_label`.
   """
   attr :event, :string, required: true
   attr :name, :string, required: true

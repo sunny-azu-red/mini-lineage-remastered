@@ -6,12 +6,9 @@ defmodule MiniLineage.Game.BalanceGoldenTest do
   battle math, stat pipeline, shop logic, level curve, ambush rolls and narrative draws, then pins
   the resulting progression exactly. The expected values are the TypeScript reference's, unchanged.
 
-  Because every roll runs off one deterministic stream, this also pins the ORDER in which
-  randomness is consumed: adding, removing or reordering a draw anywhere in the fight path shifts
-  every later roll and fails here, even when each individual function is still correct.
-
-  The clock is frozen. The reference leaves it running and merely finishes fast enough that no buff
-  ever expires — these numbers silently assume that, so we make it structural instead of lucky.
+  One deterministic stream, so it also pins the ORDER randomness is consumed in: adding, removing
+  or reordering a draw anywhere in the fight path fails here even when every function is still
+  correct. The clock is frozen, because the reference's numbers assume no buff ever expires.
   """
   use ExUnit.Case, async: true
 

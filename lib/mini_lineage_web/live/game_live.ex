@@ -20,10 +20,8 @@ defmodule MiniLineageWeb.GameLive do
     mount_character(id, socket)
   end
 
-  # No session id: this socket carries a cookie the plug has never seen — a tab left open across a
-  # deploy, or a request that reached the socket without passing through the browser pipeline. A
-  # LiveView cannot issue a cookie, so bounce through a real request, which can. The plug sets one
-  # unconditionally, so this cannot come back round twice.
+  # A cookie the plug never saw — a tab left open across a deploy. A LiveView cannot issue one, so
+  # bounce through a real request. The plug always sets one, so this cannot come round twice.
   def mount(_params, _session, socket), do: {:ok, redirect(socket, to: ~p"/")}
 
   defp mount_character(id, socket) do
@@ -76,12 +74,8 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  # '/' is wherever the player's own state puts them: Game Start for a visitor, Town for a
-  # character, Game Over for one who has died. Death is a state rather than a place — you never
-  # travel to it — so it has no URL of its own, and neither do the other two.
-  #
-  # An ambush is different: it pins you to the Battleground, which is somewhere you can stand, and
-  # keeps its own URL.
+  # '/' is wherever the player's own state puts them. Death is a state, not a place, so it has no
+  # URL of its own — an ambush is different, being somewhere you can stand, and keeps one.
   defp requested_screen(action, player) when action in [:root, :unknown] do
     cond do
       player.dead -> "death"

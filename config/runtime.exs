@@ -4,10 +4,8 @@ import Config
 # at build time — so everything that reads the environment belongs here, and `mix phx.server` and
 # `bin/mini_lineage start` behave the same way.
 
-# Credentials live in .env, and the throwaway database's in .env.test — chosen here rather than by
-# each script, so `mix test`, `mix e2e` and e2e/serve.sh all agree without anyone passing a flag.
-# A release has no repo checkout, so the file is looked for in the working directory; ENV_FILE
-# names it anywhere else. A real environment variable beats the file.
+# Credentials live in .env, the throwaway database's in .env.test — chosen here so every entry
+# point agrees. ENV_FILE names the file elsewhere; a real environment variable beats it.
 default_env_file = if config_env() in [:test, :e2e], do: ".env.test", else: ".env"
 env_file = System.get_env("ENV_FILE") || Path.expand(default_env_file, File.cwd!())
 

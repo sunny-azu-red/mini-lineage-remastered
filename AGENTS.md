@@ -19,6 +19,16 @@ list wins — several generator defaults do not exist here.
 
 ### Working here
 
+- **`.env.test` decides the browser suites' port, never `.env`.** `mix e2e` runs in `:dev`, where
+  `.env` would hand it `PORT=4000` and it would sit waiting on the development server. It gets away
+  with this only because a Mix task does not start the application; adding `app.start` would break
+  it silently.
+- **Database tests cannot be `async: true`.** A character lives in a GenServer started by a
+  `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
+  mode bridges that, and shared mode means serial. This is our architecture, not the driver — it
+  was just as true on MySQL.
+- Migrations commit their DDL implicitly, which ends the sandbox transaction. That is why
+  `release_test` checks configuration rather than running one.
 - `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
   a screen, a hook, the CSS. ExUnit reads 0% for the whole web layer because the browser suites
   are not instrumented, not because it is untested.
@@ -75,6 +85,27 @@ boundary, and there is a test asserting
 what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
+
+**Dropping a column drops every index that mentions it — including in a WHERE.** `battle_log` lost
+its only useful index that way, silently, and went back to scanning the whole table for every new
+character. `schema_test.exs` names the indexes the game cannot go without; add to it when you add
+one. A query-plan assertion cannot do this job — Postgres rightly prefers a sequential scan over
+the few rows a test inserts.
+
+**A round trip costs ~0.8ms; the query usually costs less.** Measured against the real server, not
+guessed. So prefer one statement over a clever plan: splitting an OR-chain into two index-only
+COUNTs made `rank_of` *slower* until it was folded back into one `UNION ALL`. `EXPLAIN ANALYZE`
+reports server time and says nothing about the wire — time the wall clock before believing it.
+`Store.save` skips its transaction when there is no fight to be consistent with, for the same
+reason: `BEGIN` and `COMMIT` are two more trips.
+
+**An empty environment variable is not an absent one.** `System.get_env("DB_PORT", "5432")` returns
+`""`, not the default, and parsing it crashes at boot. Compose passes a missing key through as
+empty, so every `${VAR}` it forwards needs a `:-default`.
+
+**Migrations ship inside the release image.** `MiniLineage.Release.migrate()` run from a stale
+image reports "Migrations already up" and means it — about the migrations that image carries.
+Rebuild before you believe it.
 
 **`compile_env` only for values that are constant per environment.** `:build_label` qualifies;
 `:app_version` does not — it is derived from `git rev-parse HEAD`, so marking it compile-time makes

@@ -2,16 +2,12 @@ defmodule MiniLineage.ReleaseTest do
   @moduledoc """
   How a deployed release migrates, having no Mix to do it with.
 
-  Only the configuration is checked here, and deliberately so: `migrate/0` and `rollback/2` run
-  migrations, whose DDL commits implicitly. That ends the sandbox transaction the suite runs in,
-  and loading a migration file a second time warns about redefining its module — which the suite
-  now treats as an error. Both were tried. The migrations themselves are exercised every time the
-  browser suites start their server, and a rollback is rehearsed by hand against a scratch copy of
-  the schema before it is ever pointed at real data.
+  Configuration only: running a migration commits its DDL implicitly, which ends the sandbox
+  transaction, and reloading the file warns about redefining the module. The migrations themselves
+  are exercised every time the browser suites start their server.
 
-  What is worth pinning is the one way these can fail silently: with `:ecto_repos` unset,
-  `migrate/0` iterates an empty list, reports nothing wrong, and a deploy serves an unmigrated
-  database.
+  What is pinned here is the one silent failure: with `:ecto_repos` unset, `migrate/0` iterates an
+  empty list, reports nothing wrong, and a deploy serves an unmigrated database.
   """
   use ExUnit.Case, async: true
 

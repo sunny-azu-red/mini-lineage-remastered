@@ -1,11 +1,3 @@
-# Script for populating the database. You can run it as:
+# Seeds. Nothing to plant: a character is created by playing, and the board is a view of them.
 #
 #     mix run priv/repo/seeds.exs
-#
-# Inside the script, you can read and write to any of your
-# repositories directly:
-#
-#     MiniLineage.Repo.insert!(%MiniLineage.SomeSchema{})
-#
-# We recommend using the bang functions (`insert!`, `update!`
-# and so on) as they will fail if something goes wrong.

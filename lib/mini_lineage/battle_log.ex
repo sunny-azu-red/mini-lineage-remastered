@@ -1,14 +1,8 @@
 defmodule MiniLineage.BattleLog do
   @moduledoc """
-  Every fight a character has had, in order.
-
-  It lives here rather than in the character's document because it grows without limit, and the
-  document is rewritten whole on every save — a history kept inside it would put the write cost
-  back, and more of it with every fight.
-
-  A fight belongs to its character for good. Nothing claims or discards one any more: a character
-  is never reset in place — starting over makes a new row — so there is no second life that could
-  inherit the first one's fights, and no character that outlives them.
+  Every fight a character has had, in order. Its own table because it grows without limit and the
+  character's document is rewritten whole on every save. A fight belongs to its character for
+  good: starting over makes a new row, so no second life can inherit the first one's fights.
   """
   import Ecto.Query
 

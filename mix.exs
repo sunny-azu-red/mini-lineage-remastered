@@ -20,10 +20,8 @@ defmodule MiniLineage.MixProject do
     ]
   end
 
-  # A release names the commit it came from — there is no such thing as one that cannot say which
-  # it is. Checked as the release is assembled, which is the moment it becomes a thing that can be
-  # deployed. Not at compile time: the sha changes with every commit, so a compile-time check makes
-  # `mix prod` fail after each one until _build is thrown away.
+  # A release always names its commit. Checked at assembly, not compile time: the sha moves with
+  # every commit, and a compile-time check makes `mix prod` fail after each one.
   defp require_stamp!(release) do
     if Application.get_env(:mini_lineage, :app_version) in [nil, ""] do
       Mix.raise("""

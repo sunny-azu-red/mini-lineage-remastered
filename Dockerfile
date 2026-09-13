@@ -21,13 +21,9 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer. CI passes it; config/prod.exs reads it. Not read from a .git —
-# a deploy has none.
-#
-# Declared here, after the dependency layers, so a new commit does not rebuild them. The ENV is
-# not redundant: BuildKit keys a layer on an ARG only when the command mentions it, and mix reads
-# this from the environment instead — so without it the release below could be served from cache
-# and carry the previous build's commit.
+# Names the commit in the footer; a deploy has no .git to ask. Declared after the dependency
+# layers so a new commit does not rebuild them. The ENV is NOT redundant: BuildKit keys a layer on
+# an ARG only when the command mentions it, and mix reads this from the environment.
 ARG APP_VERSION
 ENV APP_VERSION=${APP_VERSION}
 

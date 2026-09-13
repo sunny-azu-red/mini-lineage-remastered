@@ -2,15 +2,12 @@ defmodule MiniLineage.SchemaTest do
   @moduledoc """
   The indexes the game cannot go without.
 
-  Named rather than inferred, because of how the last one went missing. `battle_log` had a partial
-  index on `character_id` whose predicate mentioned `highscore_id`; dropping that column dropped
-  the index with it, silently, and left the one table designed to grow without limit with nothing
-  but its primary key. Measured at 30,000 fights, the worst case was a character with NO fights —
-  every new one — scanning the whole table backwards for a match that was not there.
+  Named because one went missing silently: dropping a column drops any partial index whose
+  predicate mentions it, which is how `battle_log` lost its only useful index and started scanning
+  the whole table for every new character.
 
-  A query-plan assertion would be the truer test, but Postgres correctly prefers a sequential scan
-  over the handful of rows a test inserts, so it would pass either way. This asserts what can be
-  asserted: the index exists, and covers the columns the queries actually ask on.
+  A query-plan assertion would be truer, but Postgres rightly prefers a sequential scan over the
+  few rows a test inserts, so it would pass either way.
   """
   use MiniLineage.DataCase, async: false
 

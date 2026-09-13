@@ -1,7 +1,7 @@
 name: CI
 
 # A branch with a PR open would otherwise run everything twice — once for the push and once for the
-# pull request — and the walkthrough is two minutes each time. The PR is what gates a merge, and
+# pull request — and the browser suites are minutes each time. The PR is what gates a merge, and
 # main is what gets published, so those are the two that need to run.
 on:
   push:
@@ -85,8 +85,8 @@ jobs:
           export APP_VERSION="${GITHUB_SHA::7}"
           mix do deps.get --only prod + assets.deploy + release
 
-  walkthrough:
-    name: walkthrough (browser)
+  browser:
+    name: browser suites
     needs: test
     runs-on: ubuntu-latest
 
@@ -141,11 +141,14 @@ jobs:
       - name: Play every lineage
         run: mix e2e races
 
+      - name: Watch the board move for somebody else
+        run: mix e2e live-board
+
   # Only from main, and only behind both green jobs: what is published is what was tested. The
   # image carries the commit, so a deployment names itself without anyone remembering to say so.
   publish:
     name: publish (ghcr)
-    needs: [test, walkthrough]
+    needs: [test, browser]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 

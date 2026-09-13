@@ -13,8 +13,10 @@ services:
       - PORT=${PORT:-4000}
       - PHX_HOST=${PHX_HOST:-localhost}
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
+      # Defaulted, not bare: compose passes a missing key through as an EMPTY value, and an empty
+      # DB_PORT is not the same as an absent one — runtime.exs would try to parse "" and crash.
+      - DB_HOST=${DB_HOST:-127.0.0.1}
+      - DB_PORT=${DB_PORT:-5432}
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}

@@ -1,13 +1,8 @@
 defmodule MiniLineage.Game.VersionTest do
   @moduledoc """
-  What the running build calls itself.
-
-  This is not cosmetic. `release?/1` is what withholds error detail from players, so a build that
-  fails to identify itself as a release keeps handing out exception messages — which is exactly
-  what happened before config/prod.exs stamped the sha: a deployed release reported "development",
-  linked no commit, and showed the reason on its error pages.
-
-  Not async: these move APP_VERSION and the stamped application env, both global.
+  What the running build calls itself. Not cosmetic: `release?/1` withholds error detail, so a
+  build that fails to identify itself hands players exception messages — which is what a deployed
+  release did before prod.exs stamped the sha. Not async: these move global env.
   """
   use ExUnit.Case, async: false
 

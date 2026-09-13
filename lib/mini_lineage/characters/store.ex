@@ -2,10 +2,9 @@ defmodule MiniLineage.Characters.Store do
   @moduledoc """
   Persistence for characters. The only place that knows the state is stored as JSON.
 
-  A character has two identities. `id` is public and permanent — the board links to it and the
-  battle log points at it. `session_id` is the secret in the cookie, and a run that has been
-  played to its end gives it up: that is what both detaches it from the browser and marks it as
-  something the sweep must never take.
+  Two identities: `id` is public and permanent, `session_id` is the secret in the cookie. A run
+  that has ended gives up its session, which both takes it off the browser and puts it out of the
+  retirement's reach.
   """
   import Ecto.Query
 
@@ -95,14 +94,9 @@ defmodule MiniLineage.Characters.Store do
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
   @doc """
-  Retires runs nobody has touched for #{@ttl_hours}h — the same window the session cookie is issued
-  for, so a character is let go exactly when the browser holding it would have forgotten anyway.
-  Sliding, because `updated_at` moves on every save: "since you last played", not "since you
-  started".
-
-  Retiring is not deleting. An abandoned run has still been played, so it keeps its place on the
-  board and its fights, and gives up only its session — which is what stops anyone picking it up.
-  Returns `{retired, discarded}`.
+  Retires runs untouched for #{@ttl_hours}h — the window the session cookie is issued for. Sliding,
+  because `updated_at` moves on every save. Retiring is not deleting: the run keeps its place on
+  the board and its fights, and gives up only its session. Returns `{retired, discarded}`.
   """
   def retire_idle do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)

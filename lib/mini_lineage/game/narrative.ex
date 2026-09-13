@@ -56,12 +56,9 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   @doc """
-  The warning shown while ambushed and near death.
-
-  Drawn from the pool by a hash of the run rather than at random, because the banner re-renders on
-  every tick: a fresh roll each time would have it flickering through nine lines while the player
-  reads it. The inputs only move when a fight does, which is also the only thing that ends an
-  ambush, so it holds still for exactly as long as the warning is on screen.
+  The warning shown while ambushed and near death. Hashed from the run rather than rolled, because
+  the banner re-renders on every tick and a fresh roll would flicker through nine lines as the
+  player reads it. Its inputs only move when a fight does, which is what ends the ambush anyway.
   """
   def ambush_low_health(player) do
     pool = Narratives.ambush_low_health()

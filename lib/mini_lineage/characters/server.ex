@@ -1,11 +1,8 @@
 defmodule MiniLineage.Characters.Server do
   @moduledoc """
-  One process per character. A GenServer handles one message at a time, which is what replaces the
-  reference's hand-rolled per-session promise mutex — concurrent actions cannot interleave here by
-  construction.
-
-  It also owns the two timers the reference ran centrally: the 5s regeneration cadence, and a
-  single expiry timer re-armed at the earliest upcoming effect deadline.
+  One process per character. The mailbox serialises, so concurrent actions cannot interleave. It
+  owns both timers too: the 5s regeneration cadence, and one expiry timer re-armed at the earliest
+  upcoming effect deadline.
   """
   use GenServer, restart: :transient
 
@@ -20,15 +17,11 @@ defmodule MiniLineage.Characters.Server do
   # How long the process outlives its last viewer before stopping. Its buffer is flushed on the way.
   @idle_grace_ms Application.compile_env(:mini_lineage, :character_idle_grace_ms, 10_000)
 
-  # Changes confined to these are the passage of time and where the player is standing. Everything
-  # else is something they did, and is written before they are told it worked.
-  #
-  # Derived from the struct rather than declared per call site, for the same reason `changed?` is:
-  # a call site that forgets to ask for a flush loses data silently, and a diff cannot forget.
+  # The passage of time and where the player is standing; everything else is something they did.
+  # Derived from the struct, not declared per call site, because a call site can forget to flush.
   @buffered ~w(health current_screen effects combat_until)a
 
-  # A player who is connected but idle — watching health refill — triggers neither an action nor a
-  # stop, so nothing would write. This bounds how long that buffer can sit unwritten.
+  # A connected but idle player triggers neither an action nor a stop, so nothing would write.
   @backstop_ms 60_000
 
   def start_link(session), do: GenServer.start_link(__MODULE__, session, name: via(session))
