@@ -118,16 +118,10 @@
     animation: btn-shimmer 0.55s ease forwards;
 }
 
-/*
- * ===== Focus =====
- * One ring, whatever moved focus here. This is the entire affordance telling you what Space will
- * do, so it is deliberately stronger than :hover's.
- *
- * :focus, not :focus-visible. Chrome grants :focus-visible to a <select> whether it was clicked or
- * tabbed to, but withholds it from a button until a keypress — so the panel's own auto-focus lit
- * the travel picker while leaving the Battleground's button looking untouched, and the ring turned
- * up only once you pressed Tab. Keying on :focus is what makes the two agree.
- */
+/* ===== Focus =====
+ * One ring however focus arrived, and stronger than :hover — it is the whole affordance for Space.
+ * :focus, not :focus-visible: Chrome gives a <select> the latter on click but withholds it from a
+ * button until a keypress, so the two disagreed. */
 .btn:focus {
     border-color: var(--gold);
     box-shadow:
@@ -255,12 +249,8 @@
     font-size: 11px;
 }
 
-/*
- * ===== Disabled State =====
- * The native `disabled` attribute — set by SelectActionForm and the action buttons while a
- * request is in flight, replacing the old app's `.btn-disabled` classList toggling + setTimeout
- * debounce hack.
- */
+/* ===== Disabled State =====
+ * The native attribute, set while a request is in flight. */
 .btn:disabled,
 .btn-secondary:disabled,
 .btn-danger:disabled {

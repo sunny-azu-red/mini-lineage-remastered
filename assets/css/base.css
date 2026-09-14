@@ -24,8 +24,7 @@ body {
     background-image:
         radial-gradient(ellipse at 20% 50%, rgba(74, 85, 128, 0.08) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(123, 45, 139, 0.06) 0%, transparent 50%);
-    /* Painted once, at the top. `height: 100%` sizes the tile to the viewport, so on any page
-       taller than one screen the default `repeat` restarts both ellipses mid-scroll. */
+    /* The tile is one viewport tall, so `repeat` would restart it mid-scroll. */
     background-repeat: no-repeat;
     color: var(--text-primary);
     font-family: var(--font-body);
@@ -48,16 +47,9 @@ a:hover {
     text-decoration: underline;
 }
 
-/*
- * ===== Keyboard Focus =====
- * The default for everything focusable that is NOT a bordered control: links, the alert dismiss
- * ×, the sound toggle. An offset outline rather than the flush box-shadow ring those controls
- * use, because a zero-offset ring sits hard against the glyphs of an inline link and reads as
- * cramped — and an outline follows a link that wraps across lines, where a box-shadow does not.
- *
- * .btn and the form controls override this with their own flush ring. Both are (0,2,0) against
- * this rule's (0,1,0), so they win on specificity and cascade order is not load-bearing.
- */
+/* ===== Keyboard Focus =====
+ * For anything focusable that is not a bordered control. An outline, not a ring: it follows a
+ * link that wraps across lines. .btn and the form controls win on specificity, not order. */
 :focus-visible {
     outline: 2px solid var(--focus-ring-color);
     outline-offset: 2px;

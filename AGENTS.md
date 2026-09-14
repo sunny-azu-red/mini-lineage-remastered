@@ -32,7 +32,6 @@ list wins — several generator defaults do not exist here.
 - `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
   a screen, a hook, the CSS. ExUnit reads 0% for the whole web layer because the browser suites
   are not instrumented, not because it is untested.
-- Keep comments to one to three lines. Say why, not what, and never write a paragraph.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
   put it back. A test written after the fix and never seen to fail is decoration.
 
@@ -85,6 +84,15 @@ boundary, and there is a test asserting
 what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
+
+**Do not over-explain.** One to three lines, why not what, never a paragraph. A hard limit, not a
+preference — it is the rule broken most often.
+
+A comment earns its place by saying what the code cannot: a constraint, a trap, a decision that
+looks wrong until you know why. It never narrates the line, restates the identifier, or recounts
+how the bug was found. Needing more than three lines means the knowledge belongs in this file
+instead. CSS and HEEx need it least — a rule wanting a paragraph usually wants a better selector.
+Moduledocs may run to a short paragraph; nothing else may.
 
 **Dropping a column drops every index that mentions it — including in a WHERE.** `battle_log` lost
 its only useful index that way, silently, and went back to scanning the whole table for every new

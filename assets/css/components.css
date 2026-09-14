@@ -405,14 +405,13 @@
     color: var(--hp-color);
 }
 
-/* Starting a new run takes a new identity, so its control is a form rather than a button. It must
-   still sit in a row of buttons as though it were one. */
+/* A form, but it has to sit in a row of buttons as though it were one. */
 .action-links .inline-form {
     display: inline;
     margin: 0;
 }
 
-/* A run's own page: its fights, in the order they happened. */
+/* A run's fights, in order. */
 ol.chronicle {
     margin: 0 0 18px 0;
     padding-left: 22px;

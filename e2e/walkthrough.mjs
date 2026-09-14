@@ -298,11 +298,8 @@ try {
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
     // ---- a gain shimmers, and damage never does -------------------------------------------------
-    // Driven, not waited for. Arriving already fought once, and an Orc regenerates nothing, so it
-    // stays hurt until it eats — which makes the heal, and the sweep it triggers, something this
-    // run causes rather than something it hopes the dice allow.
-    // Also fights an ambush out: an ambushed player is pinned to the Battleground, so the Inn is
-    // unreachable until it is answered, and an ambush is answered only by fighting again.
+    // Driven, not waited for: an Orc regenerates nothing, so it stays hurt until it eats and the
+    // heal is caused rather than hoped for. Also fights out any ambush, which pins it here.
     while (fightsFought < 8 && !current.dead
            && (current.health === current.maxHealth || current.ambushed)) {
         await fight();

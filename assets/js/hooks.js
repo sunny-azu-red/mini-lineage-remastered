@@ -84,8 +84,8 @@ export const KonamiRelay = {
 
 /**
  * Focuses the main panel's first control on arrival, so the game plays from the keyboard. Never
- * steals focus from a control the player moved to themselves, and never focuses on the death
- * screen, where a stray keypress would submit a score or wipe the character.
+ * takes focus the player moved themselves, and never on the death screen, where a stray keypress
+ * would retire the run.
  */
 export const PanelFocus = {
     mounted() {
@@ -108,10 +108,9 @@ export const PanelFocus = {
         requestAnimationFrame(() => this.focusFirst(arrived));
     },
     focusFirst(arrived) {
-        // You reach the death screen by dying, plausibly with a Space already travelling —
-        // "Write your Legacy!" would submit a score before it has been read. Declining to focus is
-        // not enough: LiveView morphs the Fight button you died on into it and keeps focus there,
-        // so the panel has to actively let go.
+        // You arrive here by dying, plausibly with a Space already travelling, and Play Again
+        // would retire the run before it is read. Declining to focus is not enough: LiveView
+        // morphs the Fight button into it and keeps focus there, so the panel must let go.
         if (this.el.dataset.screen === 'death') {
             if (this.el.contains(document.activeElement))
                 document.activeElement.blur();
@@ -128,12 +127,9 @@ export const PanelFocus = {
         if (!arrived && document.activeElement !== document.body && !acted)
             return;
 
-        // Links are excluded deliberately, matching the reference: Space scrolls a link rather
-        // than activating it, so focusing one would break the keyboard loop it exists to serve.
-        // A hidden input is not focusable but still matches `input` — the shops carry one, so
-        // without this exclusion three screens claimed focus onto nothing at all.
-        // `.alert-dismiss` is excluded for the same reason: it sits before the screen's own
-        // content, so the first Space after a refusal would dismiss the banner instead of playing.
+        // Links are out because Space scrolls them rather than activating them; hidden inputs
+        // because they match `input` without being focusable; `.alert-dismiss` because it comes
+        // before the screen's own content and would eat the first Space.
         const control = this.el.querySelector(
             'input:not([type="hidden"]), select, button:not(.alert-dismiss)',
         );
@@ -143,11 +139,9 @@ export const PanelFocus = {
 };
 
 /**
- * Eases the HP/XP/Adena counters toward their new value and sweeps a shimmer across a bar that
- * GAINED — damage never shimmers.
- *
- * Only the intermediate frames are formatted here. The final value is always the server-rendered
- * text this hook was handed, so a difference between the two formatters can never be read.
+ * Eases the HP/XP/Adena counters toward their new value, shimmering a bar that GAINED — damage
+ * never shimmers. Only the intermediate frames are formatted here; the final value is always the
+ * server-rendered text, so the two formatters can never be seen to disagree.
  */
 const EASE_MS = 600;
 
