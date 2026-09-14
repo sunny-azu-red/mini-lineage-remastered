@@ -89,12 +89,9 @@ defmodule MiniLineage.Game.DeathTest do
     assert fresh.total_battles == 0
   end
 
-  test "only the fallen may start over — a living character can never be wiped" do
-    assert {player, {:error, :not_dead, _}} = Actions.restart(living())
-    assert player.name == "Doomed"
-
-    assert {fresh, {:ok, nil}} = Actions.restart(%{living() | dead: true})
-    assert fresh == %Player{}
+  test "only the fallen may start over — a living character can never be left behind" do
+    refute Actions.may_restart?(living())
+    assert Actions.may_restart?(%{living() | dead: true})
   end
 
   test "every death message is drawn from the table, never invented" do

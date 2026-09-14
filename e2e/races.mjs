@@ -146,11 +146,11 @@ try {
         check(`...and the ${race.label} stands on the board unbidden`,
             (await text('#main table.data-table')).includes(name));
 
-        // A new run means a new identity, which only a real request can hand out.
+        // Play Again is a patch, not a page load: the session outlives the run.
         await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
         await page.waitForSelector('.phx-connected', { timeout: 8000 });
-        await page.click('#main form[action="/play-again"] button[type="submit"]');
-        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        await page.click('#main button[phx-click="restart"]');
+        await onScreen('start');
         check('playing again leaves the run behind and clears the character',
             (await state()).started === false);
     }

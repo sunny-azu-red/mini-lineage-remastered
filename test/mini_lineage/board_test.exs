@@ -10,7 +10,7 @@ defmodule MiniLineage.BoardTest do
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.{Board, Characters}
-  alias MiniLineage.Characters.Store
+  alias MiniLineage.Characters.{Record, Store}
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
@@ -114,6 +114,43 @@ defmodule MiniLineage.BoardTest do
       assert entry.name == "Coward"
       assert entry.disqualified
       assert Board.rank_of(entry) == nil, "a barred run has no rank to show"
+    end
+  end
+
+  describe "starting over" do
+    test "keeps the browser's session and gives it a different character" do
+      %{id: first, session: session} = run("First", xp: 500, dead: true)
+
+      Characters.archive(session)
+      second = Characters.character_id(session)
+
+      # The session names the browser, not the run — which is why this needs no new cookie.
+      assert second != first
+      assert Repo.get(Record, first).session_id == nil
+      refute Player.started?(Characters.snapshot(session))
+      on_exit(fn -> Characters.forget(session) end)
+    end
+
+    test "leaves the finished run standing in the Halls" do
+      %{id: first, session: session} = run("Finished", xp: 500, dead: true)
+      Characters.archive(session)
+      on_exit(fn -> Characters.forget(session) end)
+
+      assert Board.entry(first).name == "Finished"
+      assert names() == ["Finished"]
+    end
+
+    test "and the next run joins it rather than replacing it" do
+      %{session: session} = run("First", xp: 500, dead: true)
+      Characters.archive(session)
+      on_exit(fn -> Characters.forget(session) end)
+
+      Characters.mutate(session, fn p ->
+        {p, _} = Player.initialize(p, Constants.race(2), "Second")
+        {%{p | experience: 100}, :ok}
+      end)
+
+      assert names() == ["First", "Second"]
     end
   end
 

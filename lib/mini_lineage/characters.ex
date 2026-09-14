@@ -10,11 +10,21 @@ defmodule MiniLineage.Characters do
 
   defdelegate new_session_id(), to: Store
 
-  @doc "Ends the run this browser was playing. The row stays on the board; the session lets go."
+  @doc """
+  Ends the run this browser was playing and hands it a fresh character. The old row keeps its id
+  and its place on the board, and gives up only its session — which the browser keeps, because it
+  names the browser rather than the run.
+  """
   def archive(session) do
     # Stopped first, so `terminate/2` writes the final state while the row is still its own.
     stop_process(session)
     Store.archive(session)
+
+    # Starts the next character, and tells any other tab that this one is no longer the old run.
+    player = snapshot(session)
+    Server.broadcast(session, player, character_id(session))
+
+    player
   end
 
   @doc "Applies `fun` inside the character's process. `fun` takes a player and returns `{player, result}`."

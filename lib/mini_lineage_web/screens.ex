@@ -371,12 +371,7 @@ defmodule MiniLineageWeb.Screens do
       <.link :if={@character_id} patch={Paths.for_champion(@character_id)} class="btn">
         📜 Your Record
       </.link>
-      <%!-- A form, not a button: it retires this run and mints a new identity, and only a real
-            request can set the cookie that carries one. --%>
-      <form method="post" action="/play-again" class="inline-form">
-        <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-        <button type="submit" class="btn btn-secondary">Play Again?</button>
-      </form>
+      <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
     </div>
     """
   end

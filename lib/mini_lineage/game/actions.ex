@@ -232,11 +232,6 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
-  @doc "Only the fallen may start over — a living character can never be wiped."
-  def restart(player) do
-    case guard(player, [{:not_dead, &(not &1.dead)}]) do
-      nil -> {Player.reset(player), {:ok, nil}}
-      refusal -> refusal
-    end
-  end
+  @doc "Only the fallen may start over. `Characters.archive/1` does the leaving behind."
+  def may_restart?(player), do: guard(player, [{:not_dead, &(not &1.dead)}]) == nil
 end

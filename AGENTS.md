@@ -68,6 +68,10 @@ links; `session_id` is the cookie and is a credential. A public id that is also 
 anyone play as a champion by pasting their link into a cookie. The board selects into plain maps
 rather than `%Record{}` for exactly this reason — a struct carries a `session_id` key.
 
+The session names the BROWSER, not the run, so it outlives both. Starting over archives the old
+row and gives the same session a new character; nothing needs a new cookie, and therefore nothing
+needs to leave the socket.
+
 **Writes follow the player, not the clock.** What the player did is written before they are told it
 worked: creation, a fight, a purchase, death, the cheat. The passage of time — passive
 regeneration, which screen they wandered to — is buffered and rides along with the next of those,

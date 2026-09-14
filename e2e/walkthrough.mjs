@@ -435,19 +435,21 @@ try {
         await boardRows() === allRows && (await activeFilter())?.trim() === 'All',
         `${await boardRows()} rows, active ${await activeFilter()}`);
 
-    // ---- starting over: a new identity, which takes a real request ---------------------------
+    // ---- starting over, without leaving the socket -------------------------------------------
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     const previousRecord = await page.getAttribute('#main a:has-text("Your Record")', 'href');
 
-    await page.click('#main form[action="/play-again"] button[type="submit"]');
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    // No navigation: if this ever became a page load again, the id would change across it.
+    const socketBefore = await page.evaluate(() => document.querySelector('[data-phx-main]')?.id);
+    await page.click('#main button[phx-click="restart"]');
     await onScreen('start');
     check('Play Again leads to a fresh start', (await state()).screen === 'start');
+    check('...without reloading the page', socketBefore ===
+        await page.evaluate(() => document.querySelector('[data-phx-main]')?.id), socketBefore);
     check('...with a fresh name field', await page.locator('#main input[name="name"]').count() === 1);
 
-    // The retired run is still readable at the address it had — it kept its place, and only the
-    // session that was playing it was taken away.
+    // The retired run is still readable at the address it had: it kept its id and its place.
     await page.goto(`${BASE}${previousRecord}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...and the run left behind still stands at its own address',

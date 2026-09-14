@@ -86,11 +86,11 @@ defmodule MiniLineage.CharactersTest do
     end)
 
     # The mutation's own broadcast still carries the blessing...
-    assert_receive {:character_updated, mutated}, 1_000
+    assert_receive {:character_updated, mutated, _id}, 1_000
     assert Enum.any?(mutated.effects, &(&1.id == "newbie_blessing"))
 
     # ...and the timer's does not. Nothing read the character in between.
-    assert_receive {:character_updated, expired}, 2_000
+    assert_receive {:character_updated, expired, _id}, 2_000
     refute Enum.any?(expired.effects, &(&1.id == "newbie_blessing"))
   end
 

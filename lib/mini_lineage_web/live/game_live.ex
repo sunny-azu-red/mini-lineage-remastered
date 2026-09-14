@@ -191,6 +191,25 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("suicide", _params, socket), do: {:noreply, leave(socket, "home")}
 
+  def handle_event("restart", _params, socket) do
+    session = socket.assigns.session_id
+
+    if Actions.may_restart?(socket.assigns.player) do
+      player = Characters.archive(session)
+
+      {:noreply,
+       socket
+       |> assign(
+         player: player,
+         view: Snapshot.build(player),
+         character_id: Characters.character_id(session)
+       )
+       |> go("start")}
+    else
+      {:noreply, socket}
+    end
+  end
+
   # `_target` names the field that changed, so one handler serves every action form.
   def handle_event("pick", %{"_target" => [field]} = params, socket),
     do: {:noreply, assign(socket, picked: params[field])}
@@ -211,12 +230,15 @@ defmodule MiniLineageWeb.GameLive do
   # ----------------------------------------------------------------- pushes
 
   @impl true
-  def handle_info({:character_updated, player}, socket) do
+  def handle_info({:character_updated, player, character_id}, socket) do
     # A push can invalidate where this tab is standing: another tab restarts the character, or the
     # server kills it. Re-pin against the new player, and treat a reset as a trip back to Game
     # Start rather than leaving this tab on a screen its character no longer qualifies for.
     reset? = Player.started?(socket.assigns.player) and not Player.started?(player)
-    socket = assign(socket, player: player, view: Snapshot.build(player))
+
+    socket =
+      assign(socket, player: player, view: Snapshot.build(player), character_id: character_id)
+
     target = Access.pin_screen(if(reset?, do: "start", else: socket.assigns.screen), player)
 
     {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}

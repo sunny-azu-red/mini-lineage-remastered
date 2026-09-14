@@ -405,12 +405,6 @@
     color: var(--hp-color);
 }
 
-/* A form, but it has to sit in a row of buttons as though it were one. */
-.action-links .inline-form {
-    display: inline;
-    margin: 0;
-}
-
 /* A run's fights, in order. */
 ol.chronicle {
     margin: 0 0 18px 0;

@@ -154,7 +154,7 @@ defmodule MiniLineage.Characters.Server do
 
     if changed? do
       # Always broadcast: a viewer must see the tick whether or not it was worth a write.
-      broadcast(state.session, player)
+      broadcast(state.session, player, state.id)
 
       state = log_battle(%{state | player: player}, before, player)
 
@@ -302,11 +302,12 @@ defmodule MiniLineage.Characters.Server do
     %{state | expiry_timer: timer}
   end
 
-  defp broadcast(id, player),
+  @doc false
+  def broadcast(session, player, character_id),
     do:
       Phoenix.PubSub.broadcast(
         MiniLineage.PubSub,
-        "character:#{id}",
-        {:character_updated, player}
+        "character:#{session}",
+        {:character_updated, player, character_id}
       )
 end

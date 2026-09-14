@@ -69,14 +69,11 @@ defmodule MiniLineageWeb.DeathScreenTest do
   end
 
   describe "what a player may do from here" do
-    test "starting over is a form, because it takes a new identity" do
-      # A LiveView cannot set the session cookie, so this one control has to leave the socket. A
-      # GET would let a crawler retire somebody's run.
+    test "starting over is an ordinary button — a new run needs no new cookie" do
       html = html_for(Player.kill(hero()))
 
-      assert html =~ ~s(action="/play-again")
-      assert html =~ ~s(method="post")
-      assert html =~ "_csrf_token"
+      assert html =~ ~s(phx-click="restart")
+      refute html =~ "/play-again", "the session survives the run; only the character changes"
       refute html =~ "Write your Legacy", "the board no longer waits to be written to"
     end
 
