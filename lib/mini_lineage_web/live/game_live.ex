@@ -49,7 +49,6 @@ defmodule MiniLineageWeb.GameLive do
        boards: %{},
        champion: nil,
        champion_log: [],
-       my_rank: nil,
        statistics: nil,
        key_buffer: [],
        error_detail: nil,
@@ -129,8 +128,7 @@ defmodule MiniLineageWeb.GameLive do
     |> load_screen_data(screen)
   end
 
-  defp load_screen_data(socket, "highscores"),
-    do: socket |> assign(boards: Board.current()) |> assign_my_rank()
+  defp load_screen_data(socket, "highscores"), do: assign(socket, boards: Board.current())
 
   defp load_screen_data(socket, "champion"), do: socket
 
@@ -244,33 +242,9 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}
   end
 
-  def handle_info({:board, boards}, socket) do
-    if socket.assigns.screen == "highscores",
-      do: {:noreply, socket |> assign(boards: boards) |> assign_my_rank()},
-      else: {:noreply, assign(socket, boards: boards)}
-  end
+  def handle_info({:board, boards}, socket), do: {:noreply, assign(socket, boards: boards)}
 
   # ------------------------------------------------------------------ plumbing
-
-  # Only when the player is not already in the list they are looking at: the pinned row exists to
-  # show someone their place when they have not yet earned one on screen.
-  defp assign_my_rank(socket) do
-    %{player: player, boards: boards, race_filter: filter} = socket.assigns
-    shown = Map.get(boards, filter, [])
-
-    rank =
-      with true <- Player.started?(player),
-           false <- player.coward or player.cheated,
-           id when is_binary(id) <- socket.assigns.character_id,
-           false <- Enum.any?(shown, &(&1.id == id)),
-           entry when not is_nil(entry) <- Board.entry(id) do
-        %{entry: entry, rank: Board.rank_of(entry)}
-      else
-        _ -> nil
-      end
-
-    assign(socket, my_rank: rank)
-  end
 
   # Runs an action in the character's process and folds the result into the view. A failure lands on
   # the error screen rather than remounting; `catch` is for the process exiting, which is not a raise.
@@ -375,7 +349,6 @@ defmodule MiniLineageWeb.GameLive do
         catalog={@catalog}
         boards={@boards}
         character_id={@character_id}
-        my_rank={@my_rank}
         champion={@champion}
         champion_log={@champion_log}
         statistics={@statistics}

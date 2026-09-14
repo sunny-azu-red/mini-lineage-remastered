@@ -65,6 +65,31 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute html =~ "Coward"
     end
 
+    test "hands the first three a medal, and nobody else", %{conn: conn} do
+      for {name, xp} <- [{"Gold", 900}, {"Silver", 800}, {"Bronze", 700}, {"Fourth", 600}] do
+        run(name, xp: xp)
+      end
+
+      {:ok, _live, html} = live(conn, ~p"/highscores")
+      row = fn name -> Enum.find(String.split(html, "<tr"), &String.contains?(&1, name)) end
+
+      assert row.("Gold") =~ "🥇"
+      assert row.("Silver") =~ "🥈"
+      assert row.("Bronze") =~ "🥉"
+      refute row.("Fourth") =~ "🥇"
+      refute row.("Fourth") =~ "🥈"
+      refute row.("Fourth") =~ "🥉"
+    end
+
+    test "and carries no rank column, as it never did", %{conn: conn} do
+      run("Alone", xp: 10)
+
+      {:ok, _live, html} = live(conn, ~p"/highscores")
+      headers = Regex.scan(~r/<th[^>]*>\s*([^<]*?)\s*<\/th>/, html) |> Enum.map(&List.last/1)
+
+      assert headers == ["Name", "Level", "Total XP", "Wealth", "Date"]
+    end
+
     test "and never renders a session id anywhere on the page", %{conn: conn} do
       %{session: session} = run("Named", xp: 10)
 

@@ -41,41 +41,6 @@ defmodule MiniLineage.Board do
     end
   end
 
-  @doc """
-  Where this run stands among all of them, counting from 1 — so a player outside the top can still
-  be shown their own place. Nil for a run that is not ranked at all.
-  """
-  def rank_of(%{race_id: nil}), do: nil
-  def rank_of(%{disqualified: true}), do: nil
-
-  def rank_of(entry) do
-    # One statement, two index-only scans. The count has to be split — an OR-chain over the two
-    # cases cannot use the board index and scans the whole table — but it must not be split into
-    # two QUERIES: a round trip to the database costs ~0.8ms here, which is more than either scan.
-    ahead =
-      ranked()
-      |> where(
-        [r],
-        fragment("(?, ?) > (?, ?)", r.total_xp, r.adena, ^entry.total_xp, ^entry.adena)
-      )
-      |> select([r], %{count: count()})
-
-    # Exactly level on both, and got there first. Rare, but it is what keeps the rank on a player's
-    # own row agreeing with where the list above it would have put them.
-    tied =
-      ranked()
-      |> where(
-        [r],
-        r.total_xp == ^entry.total_xp and r.adena == ^entry.adena and
-          r.inserted_at < ^entry.inserted_at
-      )
-      |> select([r], %{count: count()})
-
-    behind = Repo.one(from s in subquery(union_all(ahead, ^tied)), select: sum(s.count))
-
-    Decimal.to_integer(behind) + 1
-  end
-
   @doc "One run by its public id, for its own page. Disqualified runs still render their own."
   def entry(id) do
     Record
@@ -110,8 +75,19 @@ defmodule MiniLineage.Board do
   # One list per filter the screen offers, so a viewer on "Elves" is served by the same push as a
   # viewer on "All" rather than querying for themselves.
   defp compute do
-    Map.new([nil | Enum.map(Constants.races(), & &1.id)], &{&1, top(&1)})
+    overall = top(nil)
+
+    medals =
+      overall |> Enum.take(3) |> Enum.with_index(1) |> Map.new(&{elem(&1, 0).id, elem(&1, 1)})
+
+    Enum.map(Constants.races(), & &1.id)
+    |> Map.new(&{&1, award(top(&1), medals)})
+    |> Map.put(nil, award(overall, medals))
   end
+
+  # Three in the whole game wear one, so a lineage's own board shows a medal only where that
+  # character would have worn it on the full board too.
+  defp award(rows, medals), do: Enum.map(rows, &Map.put(&1, :medal, Map.get(medals, &1.id)))
 
   defp top(race_id) do
     ranked()

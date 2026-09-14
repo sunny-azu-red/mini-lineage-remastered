@@ -76,8 +76,6 @@ th.center {
     border-bottom-color: var(--gold-hover);
 }
 
-/* Marked, not hidden, so the rank below is not misread as the one after. */
-.data-table tbody tr.rank-gap td {
-    padding: 2px 10px;
-    letter-spacing: 0.4em;
+.champion-row .medal {
+    margin-left: 4px;
 }

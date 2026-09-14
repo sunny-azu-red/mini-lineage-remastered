@@ -54,13 +54,12 @@ defmodule MiniLineage.BoardTest do
     end
 
     test "breaks a dead heat in favour of whoever got there first" do
-      first = run("First", xp: 500, adena: 5)
+      run("First", xp: 500, adena: 5)
       # A later row with identical standing must rank below it, however the ids happen to sort.
       Process.sleep(5)
       run("Second", xp: 500, adena: 5)
 
       assert names() == ["First", "Second"]
-      assert Board.rank_of(Board.entry(first.id)) == 1
     end
 
     test "and caps at the configured limit" do
@@ -113,7 +112,7 @@ defmodule MiniLineage.BoardTest do
 
       assert entry.name == "Coward"
       assert entry.disqualified
-      assert Board.rank_of(entry) == nil, "a barred run has no rank to show"
+      assert names() == [], "a barred run is still absent from the board"
     end
   end
 
@@ -154,6 +153,33 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
+  describe "the medals" do
+    test "go to the first three, and no further" do
+      for {name, xp} <- [{"Gold", 900}, {"Silver", 800}, {"Bronze", 700}, {"Fourth", 600}] do
+        run(name, xp: xp)
+      end
+
+      assert Enum.map(Map.get(Board.current(), nil), &{&1.name, &1.medal}) ==
+               [{"Gold", 1}, {"Silver", 2}, {"Bronze", 3}, {"Fourth", nil}]
+    end
+
+    test "mean the same thing on a lineage's own board as on the full one" do
+      # Global, not per-list. Three Orcs hold every medal, so the best Elf tops the Elf board
+      # wearing nothing — which is the whole point of the choice.
+      for xp <- [900, 800, 700], do: run("Orc#{xp}", race_id: 1, xp: xp)
+      run("BestElf", race_id: 2, xp: 100)
+
+      assert Enum.map(Map.get(Board.current(), 2), &{&1.name, &1.medal}) == [{"BestElf", nil}]
+      assert Enum.map(Map.get(Board.current(), 1), & &1.medal) == [1, 2, 3]
+    end
+
+    test "and a board with fewer than three runs awards only what it has" do
+      run("Only", xp: 10)
+
+      assert Enum.map(Map.get(Board.current(), nil), & &1.medal) == [1]
+    end
+  end
+
   describe "the race filter" do
     test "shows only that race, and All shows everyone" do
       run("Orcish", race_id: 1, xp: 10)
@@ -162,22 +188,6 @@ defmodule MiniLineage.BoardTest do
       assert names(1) == ["Orcish"]
       assert names(2) == ["Elven"]
       assert names() == ["Elven", "Orcish"]
-    end
-  end
-
-  describe "a player's own place" do
-    test "counts everyone genuinely ahead of them" do
-      for n <- 1..5, do: run("Hero#{n}", xp: n * 100)
-      mine = run("Mine", xp: 250)
-
-      # 500 and 400 are ahead; 300 is not — 250 sits fourth.
-      assert Board.rank_of(Board.entry(mine.id)) == 4
-    end
-
-    test "and is first for the only run there is" do
-      %{id: id} = run("Alone", xp: 1)
-
-      assert Board.rank_of(Board.entry(id)) == 1
     end
   end
 

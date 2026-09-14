@@ -38,7 +38,6 @@ defmodule MiniLineageWeb.Screens do
   attr :catalog, :map, required: true
   attr :boards, :map, default: %{}
   attr :character_id, :string, default: nil
-  attr :my_rank, :map, default: nil
   attr :champion, :map, default: nil
   attr :champion_log, :list, default: []
   attr :statistics, :map, default: nil
@@ -646,7 +645,6 @@ defmodule MiniLineageWeb.Screens do
         <table class="data-table" style="min-width:545px">
           <thead>
             <tr>
-              <th class="center">#</th>
               <th>Name</th>
               <th class="center">Level</th>
               <th>Total XP</th>
@@ -656,25 +654,11 @@ defmodule MiniLineageWeb.Screens do
           </thead>
           <tbody>
             <.champion_row
-              :for={{row, index} <- Enum.with_index(@rows, 1)}
+              :for={row <- @rows}
               catalog={@catalog}
               row={row}
-              rank={index}
               mine={row.id == @character_id}
             />
-            <%!-- Your own place, when you have not yet climbed into the list above it. The gap is
-                  marked rather than hidden, so the rank on your row is not read as the one after. --%>
-            <%= if @my_rank do %>
-              <tr class="rank-gap">
-                <td colspan="6" class="center muted">⋯</td>
-              </tr>
-              <.champion_row
-                catalog={@catalog}
-                row={@my_rank.entry}
-                rank={@my_rank.rank}
-                mine={true}
-              />
-            <% end %>
           </tbody>
         </table>
       </div>
@@ -686,17 +670,18 @@ defmodule MiniLineageWeb.Screens do
 
   attr :catalog, :map, required: true
   attr :row, :map, required: true
-  attr :rank, :integer, required: true
   attr :mine, :boolean, default: false
 
   defp champion_row(assigns) do
     ~H"""
     <tr class={["champion-row", @mine && "mine"]}>
-      <td class="center muted">{@rank}</td>
       <td>
         <.link patch={Paths.for_champion(@row.id)}>
           {race_emoji(@catalog, @row.race_id)} {String.slice(@row.name || "", 0, 20)}
         </.link>
+        <span :if={@row[:medal]} class="medal" title={medal_title(@row.medal)}>
+          {medal(@row.medal)}
+        </span>
         <%!-- Still going, as against a run that has ended. The board carries both. --%>
         <span :if={not @row.dead} class="muted" title="Still fighting">⚔️</span>
       </td>
@@ -858,6 +843,14 @@ defmodule MiniLineageWeb.Screens do
 
   defp verb(1, singular, _plural), do: singular
   defp verb(_count, _singular, plural), do: plural
+
+  defp medal(1), do: "🥇"
+  defp medal(2), do: "🥈"
+  defp medal(3), do: "🥉"
+
+  defp medal_title(1), do: "First in the Halls"
+  defp medal_title(2), do: "Second in the Halls"
+  defp medal_title(3), do: "Third in the Halls"
 
   defp race_emoji(catalog, race_id) do
     case Enum.find(catalog.races, &(&1.id == race_id)) do
