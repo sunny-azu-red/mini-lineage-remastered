@@ -24,6 +24,9 @@ body {
     background-image:
         radial-gradient(ellipse at 20% 50%, rgba(74, 85, 128, 0.08) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(123, 45, 139, 0.06) 0%, transparent 50%);
+    /* Painted once, at the top. `height: 100%` sizes the tile to the viewport, so on any page
+       taller than one screen the default `repeat` restarts both ellipses mid-scroll. */
+    background-repeat: no-repeat;
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 13px;
