@@ -192,6 +192,53 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
+  describe "who is playing right now" do
+    test "is a run somebody has open, not merely one that is alive" do
+      # Written straight to the store, so no process is holding it.
+      %{id: idle} = run("Idle", xp: 10)
+
+      session = Characters.new_session_id()
+
+      Characters.mutate(session, fn p ->
+        {p, _} = Player.initialize(p, Constants.race(1), "Held")
+        {p, :ok}
+      end)
+
+      held = Characters.character_id(session)
+      Characters.attach(session, self())
+      on_exit(fn -> Characters.forget(session) end)
+
+      playing = Characters.playing()
+
+      assert MapSet.member?(playing, held)
+      refute MapSet.member?(playing, idle)
+    end
+
+    test "and the board carries it on the row" do
+      session = Characters.new_session_id()
+
+      Characters.mutate(session, fn p ->
+        {p, _} = Player.initialize(p, Constants.race(1), "Held")
+        {p, :ok}
+      end)
+
+      Characters.attach(session, self())
+      on_exit(fn -> Characters.forget(session) end)
+      run("Idle", xp: 10_000)
+
+      assert Map.new(Map.get(Board.current(), nil), &{&1.name, &1.playing}) ==
+               %{"Held" => true, "Idle" => false}
+    end
+
+    test "a single lookup has the same shape as a board row" do
+      # The shapes must not drift: the template reads one component for both.
+      %{id: id} = run("Solo", xp: 10)
+
+      assert Map.keys(Board.entry(id)) |> Enum.sort() ==
+               Map.keys(hd(Map.get(Board.current(), nil))) |> Enum.sort()
+    end
+  end
+
   describe "the medals" do
     test "go to the first three, and no further" do
       for {name, xp} <- [{"Gold", 900}, {"Silver", 800}, {"Bronze", 700}, {"Fourth", 600}] do

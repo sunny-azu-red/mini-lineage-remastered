@@ -56,7 +56,7 @@ defmodule MiniLineage.Characters.Server do
 
     # Armed from the start rather than only when a viewer leaves: a process opened by a plain read
     # — a dead render, a crawler — never attaches one, and would otherwise never stop.
-    {:ok, state |> arm_expiry() |> schedule_stop()}
+    {:ok, state |> publish() |> arm_expiry() |> schedule_stop()}
   end
 
   # -------------------------------------------------------------------- calls
@@ -81,7 +81,7 @@ defmodule MiniLineage.Characters.Server do
     ref = Process.monitor(pid)
     state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid)})
 
-    {:reply, :ok, state}
+    {:reply, :ok, publish(state)}
   end
 
   # ------------------------------------------------------------------- infos
@@ -111,7 +111,7 @@ defmodule MiniLineage.Characters.Server do
 
   def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
     viewers = Map.delete(state.viewers, ref)
-    state = %{state | viewers: viewers}
+    state = publish(%{state | viewers: viewers})
 
     {:noreply, if(map_size(viewers) == 0, do: schedule_stop(state), else: state)}
   end
@@ -300,6 +300,20 @@ defmodule MiniLineage.Characters.Server do
       end
 
     %{state | expiry_timer: timer}
+  end
+
+  # Which character this process is, and whether anyone is watching it. Kept in the registry entry
+  # so presence is one in-memory read rather than a message to every character.
+  defp publish(state) do
+    watched? = map_size(state.viewers) > 0
+
+    Registry.update_value(MiniLineage.Characters.Registry, state.session, fn _ ->
+      {state.id, watched?}
+    end)
+
+    MiniLineage.Board.character_changed()
+
+    state
   end
 
   @doc false

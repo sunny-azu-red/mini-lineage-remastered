@@ -9,6 +9,7 @@ defmodule MiniLineage.Board do
 
   import Ecto.Query
 
+  alias MiniLineage.Characters
   alias MiniLineage.Characters.Record
   alias MiniLineage.Game.{Constants, Math}
   alias MiniLineage.Repo
@@ -80,14 +81,21 @@ defmodule MiniLineage.Board do
     medals =
       overall |> Enum.take(3) |> Enum.with_index(1) |> Map.new(&{elem(&1, 0).id, elem(&1, 1)})
 
+    playing = Characters.playing()
+
     Enum.map(Constants.races(), & &1.id)
-    |> Map.new(&{&1, award(top(&1), medals)})
-    |> Map.put(nil, award(overall, medals))
+    |> Map.new(&{&1, mark(top(&1), medals, playing)})
+    |> Map.put(nil, mark(overall, medals, playing))
   end
 
-  # Three in the whole game wear one, so a lineage's own board shows a medal only where that
-  # character would have worn it on the full board too.
-  defp award(rows, medals), do: Enum.map(rows, &Map.put(&1, :medal, Map.get(medals, &1.id)))
+  # Three in the whole game wear a medal, so a lineage's own board shows one only where that
+  # character would have worn it on the full board too. Presence comes from the registry, so it
+  # costs no query and is as live as the push carrying it.
+  defp mark(rows, medals, playing) do
+    Enum.map(rows, fn row ->
+      %{row | medal: Map.get(medals, row.id), playing: MapSet.member?(playing, row.id)}
+    end)
+  end
 
   defp top(race_id) do
     ranked()
@@ -112,5 +120,8 @@ defmodule MiniLineage.Board do
 
   # Level is derived from experience by the same function the character screen uses, so the two can
   # never disagree — and it is why there is no generated column for it.
-  defp decorate(entry), do: Map.put(entry, :level, Math.level_for_xp(entry.total_xp))
+  # Every row has the same shape whether it came from a board or a single lookup. A missing key is
+  # a 500, and the board is served from a cache that can outlive a deploy of the template.
+  defp decorate(entry),
+    do: Map.merge(entry, %{level: Math.level_for_xp(entry.total_xp), medal: nil, playing: false})
 end

@@ -674,11 +674,12 @@ defmodule MiniLineageWeb.Screens do
 
   defp champion_row(assigns) do
     ~H"""
-    <tr class={["champion-row", not @row.dead && "online", @mine && "mine"]}>
+    <tr class={["champion-row", not @row.dead && "alive", @mine && "mine"]}>
       <td>
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_champion(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>
-        <span :if={@row[:medal]} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
+        <span :if={@row.playing} class="playing" title="Playing right now">·</span>
+        <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>
       <td class="center">{Format.number(@row.level)}</td>
       <td class="xp">{Format.number(@row.total_xp)}</td>

@@ -31,6 +31,9 @@
     --critical: #e67e22;
 
     --success: #27ae60;
+    /* Row washes. A hex custom property cannot be alpha'd in plain CSS, so they are spelled out. */
+    --success-wash: rgba(39, 174, 96, 0.13);
+    --gold-wash: rgba(201, 168, 76, 0.14);
     --danger: #922b21;
     --danger-border: #c0392b;
     --info: #1a4a6e;

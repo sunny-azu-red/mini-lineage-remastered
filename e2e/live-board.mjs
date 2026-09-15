@@ -44,6 +44,10 @@ try {
             () => document.querySelector('#main')?.textContent?.includes('LiveOne'),
             null, { timeout: 6000 }).then(() => true).catch(() => false));
 
+    check('...marked as somebody playing right now, not merely alive',
+        await watcher.locator('#main table.data-table tbody tr.alive .playing').count() === 1,
+        await watcher.locator('#main table.data-table tbody tr').first().textContent());
+
     const before = (await watcher.textContent('#main table.data-table .xp'))?.trim();
 
     await player.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });

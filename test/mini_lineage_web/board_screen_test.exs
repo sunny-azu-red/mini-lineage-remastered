@@ -98,8 +98,8 @@ defmodule MiniLineageWeb.BoardScreenTest do
       {:ok, _live, html} = live(conn, ~p"/highscores")
       row = fn name -> Enum.find(String.split(html, "<tr"), &String.contains?(&1, name)) end
 
-      assert row.("Alive") =~ "online"
-      refute row.("Fallen") =~ "online"
+      assert row.("Alive") =~ "alive"
+      refute row.("Fallen") =~ "alive"
       refute html =~ "⚔️", "the sword was replaced by the row itself"
     end
 
