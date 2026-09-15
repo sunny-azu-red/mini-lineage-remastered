@@ -688,7 +688,7 @@ defmodule MiniLineageWeb.Screens do
       <td class="center">{Format.number(@row.level)}</td>
       <td class="xp">{Format.number(@row.total_xp)}</td>
       <td class="gold">🪙 {Format.adena(@row.adena)}</td>
-      <td class="muted">{short_date(@row.inserted_at)}</td>
+      <td class="muted">{short_date(@row.updated_at)}</td>
     </tr>
     """
   end
@@ -723,8 +723,9 @@ defmodule MiniLineageWeb.Screens do
       A <strong>level {Format.number(@champion.level)}</strong> soul with
       <span class="xp">{Format.number(@champion.total_xp)} experience</span> and
       <span class="gold">🪙 {Format.adena(@champion.adena)} Adena</span>,
-      {if @champion.dead, do: "whose road ended", else: "still walking the road"}
-      on {short_date(@champion.inserted_at)}.
+      who set out on {short_date(@champion.inserted_at)}
+      {if @champion.dead, do: "and fell on", else: "and was last seen on"}
+      {short_date(@champion.updated_at)}.
     </p>
 
     <h3>The Chronicle</h3>

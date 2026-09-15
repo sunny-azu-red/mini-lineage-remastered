@@ -105,7 +105,8 @@ defmodule MiniLineage.Board do
 
   # Selected into a plain map, never a %Record{}: the schema struct carries `session_id`, and an
   # entry that has the key at all is one `Repo.all(Record)` away from carrying the secret with it.
-  defp fields, do: ~w(id name race_id total_xp adena dead disqualified inserted_at)a
+  defp fields,
+    do: ~w(id name race_id total_xp adena dead disqualified inserted_at updated_at)a
 
   defp decorate(nil), do: nil
 

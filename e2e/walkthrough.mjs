@@ -401,8 +401,9 @@ try {
     await onScreen('champion');
     const record = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('a run has a page of its own', (await state()).screen === 'champion');
-    check('...which names it and says the road ended',
-        /BrowserBot/.test(record) && /road ended/.test(record), record.slice(0, 90));
+    check('...which names it and says when it set out and when it fell',
+        /BrowserBot/.test(record) && /set out on/.test(record) && /and fell on/.test(record),
+        record.slice(0, 110));
     check('...and tells the story fight by fight',
         await page.locator('#main ol.chronicle li').count() > 0,
         `${await page.locator('#main ol.chronicle li').count()} fights`);

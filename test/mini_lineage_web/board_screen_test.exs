@@ -138,7 +138,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
 
       assert html =~ "Remembered"
-      assert html =~ "road ended"
+      assert html =~ "and fell on"
     end
 
     test "still renders a disqualified one, with the reason stated", %{conn: conn} do

@@ -153,6 +153,35 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
+  describe "the date a row shows" do
+    test "is when the run was last played, not when the character was born" do
+      %{id: id, session: session} = run("Aging", xp: 10)
+      born = Board.entry(id).inserted_at
+
+      # Time passes, then the run ends. The old board stamped its rows when a legacy was written;
+      # `inserted_at` on a character means something else entirely — the day it was rolled.
+      Process.sleep(1_100)
+      Characters.mutate(session, &{%{&1 | dead: true, experience: 900}, :ok})
+      on_exit(fn -> Characters.forget(session) end)
+
+      entry = Board.entry(id)
+
+      assert entry.inserted_at == born
+      assert DateTime.compare(entry.updated_at, born) == :gt
+    end
+
+    test "and archiving the run does not move it" do
+      %{id: id, session: session} = run("Done", xp: 10, dead: true)
+      ended = Board.entry(id).updated_at
+
+      Characters.archive(session)
+      on_exit(fn -> Characters.forget(session) end)
+
+      # Retiring is bookkeeping, not play — it must not restamp a finished run.
+      assert Board.entry(id).updated_at == ended
+    end
+  end
+
   describe "the medals" do
     test "go to the first three, and no further" do
       for {name, xp} <- [{"Gold", 900}, {"Silver", 800}, {"Bronze", 700}, {"Fourth", 600}] do
