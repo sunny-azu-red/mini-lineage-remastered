@@ -89,6 +89,12 @@ what it still refuses. If a guard is in the way, the thing you are building is p
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
+**Every absolute time a player sees goes through `<.stamp>`.** The database stores instants in
+`timestamptz` and the server runs in UTC, so only the browser knows what o'clock it is for the
+reader. The server-rendered text is the no-JS fallback; the `LocalTime` hook rewrites it. Durations
+(`data-remaining-ms`) are exempt — they are the same length everywhere.
+
+
 **Do not over-explain.** One to three lines, why not what, never a paragraph. A hard limit, not a
 preference — it is the rule broken most often.
 

@@ -237,4 +237,31 @@ export const AnimatedValues = {
     },
 };
 
-export const hooks = { SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues };
+/**
+ * Rewrites a server-rendered UTC stamp into the reader's own clock. The server stores an instant
+ * and has no idea where anyone is; the browser is the only thing that does.
+ *
+ * Same shape as `Screens.short_date/1`, which stays as the no-JS fallback.
+ */
+export const LocalTime = {
+    mounted() {
+        this.render();
+    },
+    updated() {
+        this.render();
+    },
+    render() {
+        const at = new Date(this.el.dateTime);
+
+        if (!isNaN(at)) this.el.textContent = localDate(at);
+    },
+};
+
+export function localDate(at) {
+    const pad = (n) => String(n).padStart(2, '0');
+
+    return `${pad(at.getDate())}/${pad(at.getMonth() + 1)}/${String(at.getFullYear()).slice(-2)}, `
+        + `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+}
+
+export const hooks = { SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, LocalTime };

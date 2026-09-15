@@ -76,6 +76,39 @@ try {
     check('...and going home offers them a character of their own',
         await watcher.locator('#main input[name="name"]').count() === 1);
 
+    // ---- the same instant, read from two different clocks ------------------------------------
+    // The server stores an instant and knows nothing about where anyone is, so the conversion has
+    // to happen in the browser. Two contexts, two timezones, one row.
+    const stampIn = async (timezoneId) => {
+        const page = await (await browser.newContext({ timezoneId })).newPage();
+        await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+        await connected(page);
+        const cell = page.locator('#main table.data-table tbody tr td').last();
+        await page.waitForFunction(
+            () => document.querySelector('#main table.data-table tbody tr td:last-child time'),
+            null, { timeout: 6000 });
+        return {
+            shown: (await cell.textContent()).trim(),
+            iso: await cell.locator('time').getAttribute('datetime'),
+            // What that instant IS in this timezone, computed by the browser itself.
+            expected: await page.evaluate((iso) => {
+                const d = new Date(iso), p = (n) => String(n).padStart(2, '0');
+                return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`
+                    + `, ${p(d.getHours())}:${p(d.getMinutes())}`;
+            }, await cell.locator('time').getAttribute('datetime')),
+        };
+    };
+
+    const tokyo = await stampIn('Asia/Tokyo');
+    const la = await stampIn('America/Los_Angeles');
+
+    check('a stamp is rendered in the reader\'s own timezone', tokyo.shown === tokyo.expected,
+        `${tokyo.shown} vs ${tokyo.expected}`);
+    check('...and in the other reader\'s, from the same instant',
+        la.shown === la.expected && tokyo.iso === la.iso, `${la.shown} vs ${la.expected}`);
+    check('...so two clocks disagree about one moment, as they should',
+        tokyo.shown !== la.shown, `Tokyo ${tokyo.shown} · LA ${la.shown}`);
+
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {
     check(`live board threw: ${err.message}`, false);

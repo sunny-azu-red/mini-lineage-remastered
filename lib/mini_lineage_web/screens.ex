@@ -688,7 +688,7 @@ defmodule MiniLineageWeb.Screens do
       <td class="center">{Format.number(@row.level)}</td>
       <td class="xp">{Format.number(@row.total_xp)}</td>
       <td class="gold">🪙 {Format.adena(@row.adena)}</td>
-      <td class="muted">{short_date(@row.updated_at)}</td>
+      <td class="muted"><.stamp id={"seen-#{@row.id}"} at={@row.updated_at} /></td>
     </tr>
     """
   end
@@ -723,9 +723,9 @@ defmodule MiniLineageWeb.Screens do
       A <strong>level {Format.number(@champion.level)}</strong> soul with
       <span class="xp">{Format.number(@champion.total_xp)} experience</span> and
       <span class="gold">🪙 {Format.adena(@champion.adena)} Adena</span>,
-      who set out on {short_date(@champion.inserted_at)}
+      who set out on <.stamp id="champion-set-out" at={@champion.inserted_at} />
       {if @champion.dead, do: "and fell on", else: "and was last seen on"}
-      {short_date(@champion.updated_at)}.
+      <.stamp id="champion-last" at={@champion.updated_at} />.
     </p>
 
     <h3>The Chronicle</h3>
@@ -858,6 +858,17 @@ defmodule MiniLineageWeb.Screens do
       nil -> "❓"
       race -> race.emoji
     end
+  end
+
+  attr :id, :string, required: true
+  attr :at, :any, required: true
+
+  @doc false
+  # The text is UTC and correct without JS; the hook rewrites it to wherever the reader is.
+  def stamp(assigns) do
+    ~H"""
+    <time id={@id} phx-hook="LocalTime" datetime={DateTime.to_iso8601(@at)}>{short_date(@at)}</time>
+    """
   end
 
   defp short_date(at) do
