@@ -65,7 +65,7 @@ try {
 
     // A stranger's row is a link, and following it must never adopt their character.
     const href = await watcher.getAttribute('#main table.data-table a', 'href');
-    check('...at a link to that run\'s own page', /^\/champion\/\S+$/.test(href ?? ''), href ?? '');
+    check('...at a link to that run\'s own record', /^\/character\/\S+$/.test(href ?? ''), href ?? '');
 
     await watcher.goto(`${BASE}${href}`, { waitUntil: 'domcontentloaded' });
     await connected(watcher);

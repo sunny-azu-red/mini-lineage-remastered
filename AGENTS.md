@@ -94,10 +94,14 @@ what it still refuses. If a guard is in the way, the thing you are building is p
 `Board` says `active` for "has a session", never the session itself, and the board treats a
 missing run as finished rather than as one still going.
 
-**One record, two voices.** `/champion` is your own and speaks to you; `/champion/:id` is anybody's
-and speaks about them. `Screens.record/1` renders both — pass `name` to switch. They/them is the
-third person because the game records no gender, and because it takes the same verb forms as
-"you", so nothing but the pronouns moves.
+**One record, one route, two voices.** `/character/:id` is every character's page, yours included —
+a record is public because it is on the board, so there is nothing to gate. `Screens.record/1`
+renders it; pass `name` to speak about somebody rather than to them. They/them is the third person
+because the game records no gender, and because it takes the same verb forms as "you", so nothing
+but the pronouns moves.
+
+Yours reads from your own process, not the stored document: `health` is buffered, so the row is
+behind by however long you have been resting.
 
 **Every absolute time a player sees goes through `<.stamp>`.** The database stores instants in
 `timestamptz` and the server runs in UTC, so only the browser knows what o'clock it is for the

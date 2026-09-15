@@ -47,9 +47,9 @@ defmodule MiniLineageWeb.GameLive do
        notice: nil,
        game_flash: nil,
        boards: %{},
-       champion: nil,
-       champion_view: nil,
-       champion_log: [],
+       record: nil,
+       record_view: nil,
+       record_log: [],
        statistics: nil,
        key_buffer: [],
        error_detail: nil,
@@ -70,7 +70,7 @@ defmodule MiniLineageWeb.GameLive do
     if pinned != requested or socket.assigns.live_action == :unknown do
       {:noreply, push_patch(socket, to: Paths.for_screen(pinned), replace: true)}
     else
-      {:noreply, socket |> assign_race_filter(params) |> assign_champion(params) |> enter(pinned)}
+      {:noreply, socket |> assign_race_filter(params) |> assign_record(params) |> enter(pinned)}
     end
   end
 
@@ -96,21 +96,30 @@ defmodule MiniLineageWeb.GameLive do
   # survives the trip means the button appears to do nothing.
   defp assign_race_filter(socket, _params), do: assign(socket, race_filter: nil)
 
-  # A run nobody can find is not an error — `Screens` draws the empty state for a nil champion, the
+  # A run nobody can find is not an error — `Screens` draws the empty state for a nil record, the
   # same way the Halls draw one when nobody has played.
-  defp assign_champion(socket, %{"id" => id}) do
+  #
+  # Yours reads from your own process, not from the document: `health` is buffered, so the stored
+  # row is behind by however long you have been resting, and the HP on this page counts up live.
+  defp assign_record(socket, %{"id" => id}) do
     entry = Board.entry(id)
-    player = entry && MiniLineage.Characters.Store.load(entry.id)
+
+    view =
+      cond do
+        is_nil(entry) -> nil
+        entry.id == socket.assigns.character_id -> socket.assigns.view
+        true -> entry.id |> MiniLineage.Characters.Store.load() |> Snapshot.build()
+      end
 
     assign(socket,
-      champion: entry,
-      champion_view: player && Snapshot.build(player),
-      champion_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
+      record: entry,
+      record_view: view,
+      record_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
     )
   end
 
-  defp assign_champion(socket, _params),
-    do: assign(socket, champion: nil, champion_view: nil, champion_log: [])
+  defp assign_record(socket, _params),
+    do: assign(socket, record: nil, record_view: nil, record_log: [])
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
@@ -133,18 +142,6 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   defp load_screen_data(socket, "highscores"), do: assign(socket, boards: Board.current())
-
-  # Your own record, from the board's point of view: when it set out, and its fights.
-  defp load_screen_data(socket, "character") do
-    entry = socket.assigns.character_id && Board.entry(socket.assigns.character_id)
-
-    assign(socket,
-      champion: entry,
-      champion_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
-    )
-  end
-
-  defp load_screen_data(socket, "champion"), do: socket
 
   defp load_screen_data(socket, "statistics"),
     do: assign(socket, statistics: Collector.read_all())
@@ -348,7 +345,13 @@ defmodule MiniLineageWeb.GameLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} title={Screens.title(@screen)} view={@view} screen={@screen}>
+    <Layouts.app
+      flash={@flash}
+      title={Screens.title(@screen)}
+      view={@view}
+      screen={@screen}
+      character_id={@character_id}
+    >
       <Screens.notice :if={@notice} message={@notice} />
       <Screens.flash_alert :if={@game_flash} flash={@game_flash} />
       <Screens.low_health
@@ -363,9 +366,9 @@ defmodule MiniLineageWeb.GameLive do
         catalog={@catalog}
         boards={@boards}
         character_id={@character_id}
-        champion={@champion}
-        champion_view={@champion_view}
-        champion_log={@champion_log}
+        record={@record}
+        record_view={@record_view}
+        record_log={@record_log}
         statistics={@statistics}
         race_filter={@race_filter}
         detail={@error_detail}

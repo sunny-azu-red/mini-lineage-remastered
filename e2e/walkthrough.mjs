@@ -385,10 +385,13 @@ try {
     check('...and never as though it were still going',
         !/are wielding|journey ahead|The Journey So Far/.test(eulogy));
 
-    await page.click('#main .back a');
-    await onScreen('death');
-    check('...and its way back is the death screen', (await state()).screen === 'death');
+    await page.click('#main .action-links a:has-text("Back to the Halls")');
+    await onScreen('highscores');
+    check('...and its way back is the Halls it stands in', (await state()).screen === 'highscores');
+
     // The whole point of the detour: reviewing a run must not disturb it.
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...and its own record is still one click away',
         await page.locator('#main a:has-text("Your Record")').count() === 1);
 
@@ -411,14 +414,11 @@ try {
         `${await page.locator('#main ol.chronicle li').count()} fights`);
     // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
     // the board never emits a session id is proved in board_test. What IS observable here is the
-    // property that matters: reading a champion's page does not make you that champion.
+    // property that matters: reading a record does not make you that character.
     check('...without the reader becoming the character', (await state()).started === true);
 
-    // Your own record goes back the way the Character screen always did — "Back to the Halls" is
-    // on somebody else's page, which this no longer is.
-    await page.click('#main .back a');
-    await onScreen('death');
-    check('...and its way back is still the death screen', (await state()).screen === 'death');
+    await page.click('#main .action-links a:has-text("Back to the Halls")');
+    await onScreen('highscores');
 
     await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
@@ -445,8 +445,8 @@ try {
         `${await boardRows()} rows, active ${await activeFilter()}`);
 
     // ---- starting over, without leaving the socket -------------------------------------------
-    // The PUBLIC link, taken from the board: "Your Record" points at /champion, which after this
-    // is a different character entirely.
+    // Taken from the board, because after Play Again this session is a different character and
+    // "Your Record" points at the new one.
     const previousRecord = await page.getAttribute('#main table.data-table a', 'href');
 
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
@@ -507,10 +507,11 @@ try {
         await page.evaluate(() => document.activeElement === document.body), 
         await page.evaluate(() => document.activeElement?.tagName));
 
-    await page.click('#main .back a');
-    await onScreen('home');
-    check('the Character screen\'s back link continues the journey', (await state()).screen === 'home');
+    await page.click('#main .action-links a:has-text("Back to the Halls")');
+    await onScreen('highscores');
+    check('a record\'s way out is the Halls it stands in', (await state()).screen === 'highscores');
 
+    await goHome();
     await travel('suicide');
     let endBtn = await buttonSettles('Return');
     check('Suicide offers to Return before a choice is made', endBtn.label === 'Return', JSON.stringify(endBtn));

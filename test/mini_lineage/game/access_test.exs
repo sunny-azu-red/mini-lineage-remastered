@@ -37,13 +37,13 @@ defmodule MiniLineage.Game.AccessTest do
   end
 
   describe "a visitor with no character" do
-    for blocked <- ~w(battle inn weapons armors suicide character death home) do
+    for blocked <- ~w(battle inn weapons armors suicide death home) do
       test "cannot reach #{blocked}" do
         assert Access.pin_screen(unquote(blocked), unstarted()) == "start"
       end
     end
 
-    for allowed <- ~w(start statistics races highscores) do
+    for allowed <- ~w(start statistics races highscores character) do
       test "can reach #{allowed}" do
         assert Access.pin_screen(unquote(allowed), unstarted()) == unquote(allowed)
       end
@@ -69,7 +69,7 @@ defmodule MiniLineage.Game.AccessTest do
       # The Halls list them from the moment they chose a race, so shutting the dead out of the
       # board would hide them from the one page their run exists on.
       assert Access.pin_screen("highscores", dead()) == "highscores"
-      assert Access.pin_screen("champion", dead()) == "champion"
+      assert Access.pin_screen("character", dead()) == "character"
     end
 
     test "and those exceptions do not widen: everything else is still the death screen" do

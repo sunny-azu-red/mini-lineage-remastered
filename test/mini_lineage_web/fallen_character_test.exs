@@ -13,12 +13,13 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   alias MiniLineage.Game.{Constants, Player, Snapshot}
   alias MiniLineageWeb.Screens
 
-  defp html_for(player) do
-    render_component(&Screens.screen/1,
+  # The component, not the screen: these are about the prose, and `record/1` is what carries it
+  # for a reader of any kind.
+  defp html_for(player, name \\ nil) do
+    render_component(&Screens.record/1,
       view: Snapshot.build(player),
-      screen: "character",
       catalog: Snapshot.catalog(),
-      flash: %{}
+      name: name
     )
   end
 
@@ -70,13 +71,12 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       assert html_for(fallen()) =~ "The road ran out beneath you."
     end
 
-    test "and its way back leads to the death screen, which is the root" do
-      # Start, Town and Game Over are one run's three states and share '/'. The Character screen is
-      # somewhere you navigated to, so it has a URL; the screen it returns you to does not.
-      html = html_for(fallen())
+    test "and reads as somebody else's when somebody else is reading it" do
+      html = html_for(fallen(), "Aurelia")
 
-      assert html =~ "Return to your final rest"
-      assert html =~ ~s|href="/"|
+      assert html =~ "Aurelia&#39;s Journey Has Ended"
+      assert html =~ "They fell at"
+      refute html =~ "You fell at"
     end
 
     test "still shows the numbers the living screen shows, from the same markup" do
@@ -132,7 +132,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
       assert html =~ "are wielding"
       assert html =~ "The Journey So Far"
-      assert html =~ "Continue your journey"
+      assert html =~ "The Journey So Far"
       refute html =~ "☠️"
       refute html =~ "You fell at"
     end

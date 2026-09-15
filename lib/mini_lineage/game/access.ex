@@ -5,9 +5,9 @@ defmodule MiniLineage.Game.Access do
   """
   alias MiniLineage.Game.Player
 
-  # The only screens a visitor with no character may reach. A champion's page is one of them:
-  # it is a public record, and linking to it from the Halls would be pointless otherwise.
-  @unstarted_allowed ~w(start statistics races highscores champion error)
+  # The only screens a visitor with no character may reach. A character's record is one of them:
+  # it is public, and linking to it from the Halls would be pointless otherwise.
+  @unstarted_allowed ~w(start statistics races highscores character error)
 
   # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them.
   @started_blocked ~w(start statistics races death)
@@ -15,7 +15,7 @@ defmodule MiniLineage.Game.Access do
   # What the dead may still reach. The Character screen becomes a retrospective rather than a status
   # page, and the Halls are where their run now stands — confining them to the death screen would
   # put the board they are on out of their reach. Nothing here can be acted on.
-  @dead_allowed ~w(death character champion highscores)
+  @dead_allowed ~w(death character highscores)
 
   @doc """
   Where the player is actually allowed to be. Death wins outright — checked first because killing

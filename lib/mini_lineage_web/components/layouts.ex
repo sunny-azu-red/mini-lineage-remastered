@@ -40,6 +40,7 @@ defmodule MiniLineageWeb.Layouts do
   attr :title, :string, default: "Loading"
   attr :view, :map, required: true
   attr :screen, :string, required: true
+  attr :character_id, :string, default: nil
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -51,7 +52,11 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div id="content">
-          <.sidebar :if={@view.started && Screens.sidebar?(@screen)} view={@view} />
+          <.sidebar
+            :if={@view.started && Screens.sidebar?(@screen)}
+            view={@view}
+            character_id={@character_id}
+          />
 
           <div id="main">
             <div class="panel">
@@ -121,6 +126,7 @@ defmodule MiniLineageWeb.Layouts do
   end
 
   attr :view, :map, required: true
+  attr :character_id, :string, default: nil
 
   defp sidebar(assigns) do
     ~H"""
@@ -134,7 +140,7 @@ defmodule MiniLineageWeb.Layouts do
             <span class="stat-label">Race</span>
             <span class="stat-value">
               {if @view.dead, do: "☠️", else: @view.race_emoji}
-              <.link patch={Paths.for_screen("character")}>
+              <.link patch={Paths.for_character(@character_id)}>
                 {@view.race_label} level {Format.number(@view.level)}
               </.link>
             </span>

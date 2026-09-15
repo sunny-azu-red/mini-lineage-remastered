@@ -23,9 +23,10 @@ defmodule MiniLineageWeb.Router do
     live "/shop/armors", GameLive, :armors
     live "/inn", GameLive, :inn
     live "/suicide", GameLive, :suicide
-    # One page, two doors: your own record is gated on having a character, anybody's is public.
-    live "/champion", GameLive, :character
-    live "/champion/:id", GameLive, :champion
+
+    # One record, one route. Every character's is public — it is on the board — so there is nothing
+    # here to gate, and yours is simply the one whose id matches your session's.
+    live "/character/:id", GameLive, :character
     live "/highscores", GameLive, :highscores
     live "/highscores/:race", GameLive, :highscores
     live "/statistics", GameLive, :statistics

@@ -43,7 +43,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       %{id: id} = run("Walker", xp: 500)
 
       {:ok, _live, html} = live(conn, ~p"/highscores")
-      [_, linked] = Regex.run(~r|<a[^>]*href="/champion/#{id}"[^>]*>(.*?)</a>|s, html)
+      [_, linked] = Regex.run(~r|<a[^>]*href="/character/#{id}"[^>]*>(.*?)</a>|s, html)
 
       # Only the name. The emoji around it are decoration, and a race badge is not navigation.
       assert String.trim(linked) == "Walker"
@@ -119,7 +119,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
     test "tells a stranger's story in the third person, not the reader's", %{conn: conn} do
       %{id: id} = run("Aurelia", xp: 500)
 
-      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+      {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       # They/them, because the game records no gender — and because it takes the same verb forms
       # as "you", so only the pronouns move between the two pages.
@@ -132,7 +132,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
     test "and carries the full record, not a summary", %{conn: conn} do
       %{id: id} = run("Aurelia", xp: 500)
 
-      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+      {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       # The same sections your own page has: ancestry, stats, the journey, then the chronicle.
       assert html =~ "Inventory &amp; Stats"
@@ -146,7 +146,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       MiniLineage.Characters.archive(session)
       on_exit(fn -> MiniLineage.Characters.forget(session) end)
 
-      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+      {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       assert html =~ "has not been seen since"
       refute html =~ "and fell on"
@@ -197,7 +197,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
     test "renders a run by its public id", %{conn: conn} do
       %{id: id} = run("Remembered", xp: 1_234, adena: 99, dead: true)
 
-      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+      {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       assert html =~ "Remembered"
       assert html =~ "and fell on"
@@ -206,14 +206,14 @@ defmodule MiniLineageWeb.BoardScreenTest do
     test "still renders a disqualified one, with the reason stated", %{conn: conn} do
       %{id: id} = run("Coward", xp: 50, dead: true, coward: true)
 
-      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+      {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       assert html =~ "Coward"
       assert html =~ "Barred from the Halls"
     end
 
     test "and says so plainly for an id that is nobody", %{conn: conn} do
-      {:ok, _live, html} = live(conn, ~p"/champion/not-a-real-id")
+      {:ok, _live, html} = live(conn, ~p"/character/not-a-real-id")
 
       assert html =~ "No such name is written here"
     end
@@ -221,7 +221,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
     test "viewing one does not make the viewer that character", %{conn: conn} do
       %{id: id} = run("Someone", xp: 500, dead: true)
 
-      {:ok, live, _html} = live(conn, ~p"/champion/#{id}")
+      {:ok, live, _html} = live(conn, ~p"/character/#{id}")
 
       # The strongest form: a visitor reading a champion's page is still a visitor, and going home
       # puts them at Game Start rather than into somebody else's run.
