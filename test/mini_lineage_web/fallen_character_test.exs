@@ -15,11 +15,11 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   # The component, not the screen: these are about the prose, and `record/1` is what carries it
   # for a reader of any kind.
-  defp html_for(player, name \\ nil) do
+  defp html_for(player, mine \\ true) do
     render_component(&Screens.record/1,
       view: Snapshot.build(player),
       catalog: Snapshot.catalog(),
-      name: name
+      mine: mine
     )
   end
 
@@ -41,9 +41,15 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   end
 
   describe "a fallen character" do
-    test "is marked by the skull, not by its ancestry's emoji" do
-      assert html_for(fallen()) =~ "☠️"
-      refute html_for(fallen()) =~ Constants.race(1).emoji
+    test "keeps its ancestry's emoji, and says it is over with a class instead" do
+      # A skull in place of the badge loses the one glyph that says which lineage this was.
+      html = html_for(fallen())
+
+      assert html =~ Constants.race(1).emoji
+      refute html =~ "☠️"
+      assert html =~ "record-name"
+      refute html =~ "record-name alive", "a run that ended is not still going"
+      assert html_for(living()) =~ "record-name alive"
     end
 
     test "speaks of the run in the past" do
@@ -72,9 +78,11 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     end
 
     test "and reads as somebody else's when somebody else is reading it" do
-      html = html_for(fallen(), "Aurelia")
+      # Never the name in the prose — the heading has already said whose record this is.
+      html = html_for(fallen(), false)
 
-      assert html =~ "Aurelia&#39;s Journey Has Ended"
+      assert html =~ "Their Journey Has Ended"
+      assert html =~ "Their journey across the realm was"
       assert html =~ "They fell at"
       refute html =~ "You fell at"
     end

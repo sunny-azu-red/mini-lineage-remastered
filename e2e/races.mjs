@@ -84,10 +84,8 @@ try {
         check('...and ambush risk', await stat('char-stat-ambush') === race.ambush,
             `${await stat('char-stat-ambush')}%, expected ${race.ambush}%`);
 
-        // A record exits to the Halls now; Town is the header's job.
-        await page.click('#main .action-links a:has-text("Back to the Halls")');
-        await onScreen('highscores');
-        await goHome();
+        await page.click('#main .back a');
+        await onScreen('home');
 
         // ---- normal play: shops open and price goods, the road runs out at the grave -----------
         for (const [shop, heading] of [['inn', 'Inn'], ['weapons', 'Weapon Shop'], ['armors', 'Armor Shop']]) {

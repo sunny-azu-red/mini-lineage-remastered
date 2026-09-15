@@ -16,8 +16,15 @@ defmodule MiniLineageWeb.Paths do
   @highscores_prefix "/highscores/"
   @character_prefix "/character/"
 
-  @doc "A run's own record, addressed by its PUBLIC id — never by the session that is playing it."
-  def for_character(id), do: @character_prefix <> id
+  @doc """
+  A run's own record, addressed by its PUBLIC id — never by the session that is playing it.
+
+  `from` is how the record knows where to send you back to: the Halls list every character, and
+  the sidebar only ever opens your own.
+  """
+  def for_character(id, from \\ nil)
+  def for_character(id, nil), do: @character_prefix <> id
+  def for_character(id, from), do: "#{@character_prefix}#{id}?from=#{from}"
 
   @doc """
   'start', 'home' and 'death' all live at '/': they are the three states of one run, told apart by

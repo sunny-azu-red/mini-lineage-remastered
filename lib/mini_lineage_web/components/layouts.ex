@@ -140,7 +140,7 @@ defmodule MiniLineageWeb.Layouts do
             <span class="stat-label">Race</span>
             <span class="stat-value">
               {if @view.dead, do: "☠️", else: @view.race_emoji}
-              <.link patch={Paths.for_character(@character_id)}>
+              <.link patch={Paths.for_character(@character_id, "game")}>
                 {@view.race_label} level {Format.number(@view.level)}
               </.link>
             </span>

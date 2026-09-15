@@ -50,6 +50,7 @@ defmodule MiniLineageWeb.GameLive do
        record: nil,
        record_view: nil,
        record_log: [],
+       from: nil,
        statistics: nil,
        key_buffer: [],
        error_detail: nil,
@@ -70,7 +71,12 @@ defmodule MiniLineageWeb.GameLive do
     if pinned != requested or socket.assigns.live_action == :unknown do
       {:noreply, push_patch(socket, to: Paths.for_screen(pinned), replace: true)}
     else
-      {:noreply, socket |> assign_race_filter(params) |> assign_record(params) |> enter(pinned)}
+      {:noreply,
+       socket
+       |> assign_race_filter(params)
+       |> assign_record(params)
+       |> assign_from(params)
+       |> enter(pinned)}
     end
   end
 
@@ -120,6 +126,10 @@ defmodule MiniLineageWeb.GameLive do
 
   defp assign_record(socket, _params),
     do: assign(socket, record: nil, record_view: nil, record_log: [])
+
+  # Where the reader came from, so the record can send them back there.
+  defp assign_from(socket, %{"from" => from}), do: assign(socket, from: from)
+  defp assign_from(socket, _params), do: assign(socket, from: nil)
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
@@ -369,6 +379,7 @@ defmodule MiniLineageWeb.GameLive do
         record={@record}
         record_view={@record_view}
         record_log={@record_log}
+        from={@from}
         statistics={@statistics}
         race_filter={@race_filter}
         detail={@error_detail}

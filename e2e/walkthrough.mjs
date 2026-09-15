@@ -379,19 +379,19 @@ try {
     await onScreen('character');
     const eulogy = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('the dead may look back at who they were', (await state()).screen === 'character');
-    check('...marked by the skull rather than their ancestry', eulogy.includes('☠️'));
+    check('...keeping its ancestry, and saying it is over in the class instead',
+        !eulogy.includes('☠️')
+        && !(await page.getAttribute('#main h2', 'class') ?? '').includes('alive'),
+        await page.getAttribute('#main h2', 'class'));
     check('...speaking of the run in the past', /Your Journey Has Ended/.test(eulogy) && /You fell at/.test(eulogy),
         eulogy.slice(eulogy.indexOf('Your Journey'), eulogy.indexOf('Your Journey') + 60));
     check('...and never as though it were still going',
         !/are wielding|journey ahead|The Journey So Far/.test(eulogy));
 
-    await page.click('#main .action-links a:has-text("Back to the Halls")');
-    await onScreen('highscores');
-    check('...and its way back is the Halls it stands in', (await state()).screen === 'highscores');
-
+    await page.click('#main .back a');
+    await onScreen('death');
+    check('...and its way back is where it was opened from', (await state()).screen === 'death');
     // The whole point of the detour: reviewing a run must not disturb it.
-    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...and its own record is still one click away',
         await page.locator('#main a:has-text("Your Record")').count() === 1);
 
@@ -417,8 +417,8 @@ try {
     // property that matters: reading a record does not make you that character.
     check('...without the reader becoming the character', (await state()).started === true);
 
-    await page.click('#main .action-links a:has-text("Back to the Halls")');
-    await onScreen('highscores');
+    await page.click('#main .back a');
+    await onScreen('death');
 
     await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
@@ -507,11 +507,10 @@ try {
         await page.evaluate(() => document.activeElement === document.body), 
         await page.evaluate(() => document.activeElement?.tagName));
 
-    await page.click('#main .action-links a:has-text("Back to the Halls")');
-    await onScreen('highscores');
-    check('a record\'s way out is the Halls it stands in', (await state()).screen === 'highscores');
+    await page.click('#main .back a');
+    await onScreen('home');
+    check('a record opened from the panel returns to the game', (await state()).screen === 'home');
 
-    await goHome();
     await travel('suicide');
     let endBtn = await buttonSettles('Return');
     check('Suicide offers to Return before a choice is made', endBtn.label === 'Return', JSON.stringify(endBtn));

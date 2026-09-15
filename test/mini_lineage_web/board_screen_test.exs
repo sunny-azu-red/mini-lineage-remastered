@@ -123,10 +123,23 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
       # They/them, because the game records no gender — and because it takes the same verb forms
       # as "you", so only the pronouns move between the two pages.
-      assert html =~ "Aurelia&#39;s journey across the realm"
+      assert html =~ "Their journey across the realm"
       assert html =~ "They are wielding"
       refute html =~ "You are wielding"
       refute html =~ "Your journey"
+      # The heading names them; the prose never does.
+      assert html =~ "Aurelia of"
+    end
+
+    test "sends you back where you came from, as a link and not a button", %{conn: conn} do
+      %{id: id} = run("Aurelia", xp: 500)
+
+      {:ok, _live, halls} = live(conn, ~p"/character/#{id}")
+      assert halls =~ "Go back to halls of champions"
+      refute halls =~ "btn btn-secondary", "the way out of a record has never been an action"
+
+      {:ok, _live, game} = live(conn, ~p"/character/#{id}?from=game")
+      refute game =~ "Go back to halls of champions"
     end
 
     test "and carries the full record, not a summary", %{conn: conn} do

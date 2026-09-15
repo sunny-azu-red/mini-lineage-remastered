@@ -40,6 +40,7 @@ defmodule MiniLineageWeb.Screens do
   attr :record, :map, default: nil
   attr :record_view, :map, default: nil
   attr :record_log, :list, default: []
+  attr :from, :string, default: nil
   attr :statistics, :map, default: nil
   attr :race_filter, :integer, default: nil
   attr :detail, :string, default: nil
@@ -366,7 +367,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
 
     <div class="action-links">
-      <.link :if={@character_id} patch={Paths.for_character(@character_id)} class="btn">
+      <.link :if={@character_id} patch={Paths.for_character(@character_id, "game")} class="btn">
         📜 Your Record
       </.link>
       <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
@@ -497,12 +498,11 @@ defmodule MiniLineageWeb.Screens do
   attr :catalog, :map, required: true
   attr :entry, :map, default: nil
   attr :chronicle, :list, default: []
-  attr :name, :string, default: nil
+  attr :mine, :boolean, default: true
 
   @doc false
-  # One record, whoever is reading it. `name` switches the voice: nil is your own page and speaks
-  # to you, a name is somebody else's and speaks about them. The verbs never move — they/them
-  # takes the same forms as you.
+  # One record, whoever is reading it. `mine` switches the voice: yours speaks to you, anybody
+  # else's speaks about them. The verbs never move — they/them takes the same forms as you.
   def record(assigns) do
     race = Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id))
     opponent = Enum.find(assigns.catalog.races, &(&1.id == race.enemy_race_id))
@@ -515,7 +515,7 @@ defmodule MiniLineageWeb.Screens do
         race: race,
         opponent: opponent,
         dead: assigns.view.dead,
-        voice: voice(assigns.name),
+        voice: voice(assigns.mine),
         attack: Format.number(assigns.view.stats.attack),
         defense: Format.number(assigns.view.stats.defense),
         crit: Format.number(assigns.view.stats.crit),
@@ -532,7 +532,9 @@ defmodule MiniLineageWeb.Screens do
     # tense moves. The closing section forks outright — its sentences change shape, not just verbs,
     # since there is no next level to reach and no journey ahead.
     ~H"""
-    <h2>{if @dead, do: "☠️", else: @race.emoji} {@view.name} of {@race.label} Ancestry</h2>
+    <h2 class={["record-name", not @dead && "alive"]}>
+      {@race.emoji} {@view.name} of {@race.label} Ancestry
+    </h2>
     <p>{raw(@race.backstory)}</p>
     <p>{raw(@race.traits)}</p>
 
@@ -639,11 +641,11 @@ defmodule MiniLineageWeb.Screens do
   # Your own page speaks to you; somebody else's speaks about them. They/them is not only the right
   # default for a character whose gender the game never records — it also takes the same verb forms
   # as "you", so nothing but the pronouns moves between the two.
-  defp voice(nil),
+  defp voice(true),
     do: %{they: "You", them: "you", object: "you", their: "your", whose: "Your"}
 
-  defp voice(name),
-    do: %{they: "They", them: "they", object: "them", their: "their", whose: "#{name}'s"}
+  defp voice(false),
+    do: %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
 
   defp character(%{record: nil} = assigns) do
     ~H"""
@@ -652,11 +654,7 @@ defmodule MiniLineageWeb.Screens do
       never did or was never real.
     </p>
 
-    <div class="action-links">
-      <.link patch={Paths.for_screen("highscores")} class="btn btn-secondary">
-        Back to the Halls
-      </.link>
-    </div>
+    <.halls_link />
     """
   end
 
@@ -667,14 +665,27 @@ defmodule MiniLineageWeb.Screens do
       catalog={@catalog}
       entry={@record}
       chronicle={@record_log}
-      name={if @record.id == @character_id, do: nil, else: @record.name}
+      mine={@record.id == @character_id}
     />
 
-    <div class="action-links last">
-      <.link patch={Paths.for_screen("highscores")} class="btn btn-secondary">
-        Back to the Halls
-      </.link>
-    </div>
+    <%!-- Back the way you came: the sidebar says so, the Halls say nothing and are the default. --%>
+    <%= if @from == "game" do %>
+      <.back_link
+        started={@view.started}
+        to={if @view.dead, do: "death"}
+        label={if @view.dead, do: "Return to your final rest"}
+      />
+    <% else %>
+      <.halls_link />
+    <% end %>
+    """
+  end
+
+  defp halls_link(assigns) do
+    ~H"""
+    <p class="last back">
+      <.link patch={Paths.for_screen("highscores")}>Go back to halls of champions</.link>
+    </p>
     """
   end
 
@@ -721,7 +732,7 @@ defmodule MiniLineageWeb.Screens do
             </tr>
           </thead>
           <tbody>
-            <.champion_row
+            <.character_row
               :for={row <- @rows}
               catalog={@catalog}
               row={row}
@@ -740,9 +751,9 @@ defmodule MiniLineageWeb.Screens do
   attr :row, :map, required: true
   attr :mine, :boolean, default: false
 
-  defp champion_row(assigns) do
+  defp character_row(assigns) do
     ~H"""
-    <tr class={["champion-row", still_going?(@row) && "alive", @mine && "mine"]}>
+    <tr class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}>
       <td>
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_character(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>

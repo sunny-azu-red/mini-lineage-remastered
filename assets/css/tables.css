@@ -59,18 +59,28 @@ th.center {
 
 /* A run that has not ended. `:not(.mine)` rather than declaration order, so yours stays gold
    however these rules get moved about. */
-.data-table tbody tr.champion-row.alive:not(.mine) {
+.data-table tbody tr.character-row.alive:not(.mine) {
     background: var(--success-wash);
     box-shadow: inset 2px 0 0 var(--success);
 }
 
 /* Your own run, findable without counting. */
-.data-table tbody tr.champion-row.mine {
+.data-table tbody tr.character-row.mine {
     background: var(--gold-wash);
     box-shadow: inset 2px 0 0 var(--gold);
 }
 
 /* Somebody has this character open right now, as against merely alive. */
-.champion-row .online {
+.character-row .online {
     color: var(--success);
+}
+
+/* A record's heading. The ancestry emoji is always the ancestry's; whether the run is still going
+   is said by the class, not by swapping the glyph for a skull. */
+.record-name {
+    color: var(--text-secondary);
+}
+
+.record-name.alive {
+    color: var(--gold);
 }
