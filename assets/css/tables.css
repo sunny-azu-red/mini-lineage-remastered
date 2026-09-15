@@ -57,10 +57,15 @@ th.center {
 
 /* --- the Halls of Champions ------------------------------------------------------------------ */
 
+/* A run still being played. `:not(.mine)` rather than declaration order, so yours stays gold
+   however these rules get moved about. */
+.data-table tbody tr.champion-row.online:not(.mine) {
+    background: rgba(39, 174, 96, 0.13);
+    box-shadow: inset 2px 0 0 var(--success);
+}
+
 /* Your own run, findable without counting. */
-.data-table tbody tr.champion-row.mine,
-.data-table tbody tr.champion-row.mine:nth-child(odd),
-.data-table tbody tr.champion-row.mine:nth-child(even) {
+.data-table tbody tr.champion-row.mine {
     background: rgba(201, 168, 76, 0.14);
     box-shadow: inset 2px 0 0 var(--gold);
 }

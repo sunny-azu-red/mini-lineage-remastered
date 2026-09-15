@@ -91,6 +91,18 @@ defmodule MiniLineageWeb.BoardScreenTest do
       assert headers == ["Name", "Level", "Total XP", "Wealth", "Date"]
     end
 
+    test "marks a run still being played, and leaves a finished one plain", %{conn: conn} do
+      run("Alive", xp: 500)
+      run("Fallen", xp: 400, dead: true)
+
+      {:ok, _live, html} = live(conn, ~p"/highscores")
+      row = fn name -> Enum.find(String.split(html, "<tr"), &String.contains?(&1, name)) end
+
+      assert row.("Alive") =~ "online"
+      refute row.("Fallen") =~ "online"
+      refute html =~ "⚔️", "the sword was replaced by the row itself"
+    end
+
     test "and never renders a session id anywhere on the page", %{conn: conn} do
       %{session: session} = run("Named", xp: 10)
 

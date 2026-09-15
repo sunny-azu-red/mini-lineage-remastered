@@ -182,6 +182,16 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
+  describe "whether a run is still being played" do
+    test "is on the row itself, so the board can style it", %{} do
+      run("Alive", xp: 10)
+      run("Fallen", xp: 5, dead: true)
+
+      assert Map.new(Map.get(Board.current(), nil), &{&1.name, &1.dead}) ==
+               %{"Alive" => false, "Fallen" => true}
+    end
+  end
+
   describe "the medals" do
     test "go to the first three, and no further" do
       for {name, xp} <- [{"Gold", 900}, {"Silver", 800}, {"Bronze", 700}, {"Fourth", 600}] do

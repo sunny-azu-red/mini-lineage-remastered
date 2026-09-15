@@ -674,13 +674,11 @@ defmodule MiniLineageWeb.Screens do
 
   defp champion_row(assigns) do
     ~H"""
-    <tr class={["champion-row", @mine && "mine"]}>
+    <tr class={["champion-row", not @row.dead && "online", @mine && "mine"]}>
       <td>
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_champion(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>
         <span :if={@row[:medal]} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
-        <%!-- Still going, as against a run that has ended. The board carries both. --%>
-        <span :if={not @row.dead} class="muted" title="Still fighting">⚔️</span>
       </td>
       <td class="center">{Format.number(@row.level)}</td>
       <td class="xp">{Format.number(@row.total_xp)}</td>
