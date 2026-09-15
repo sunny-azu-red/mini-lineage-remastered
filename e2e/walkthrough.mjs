@@ -379,10 +379,9 @@ try {
     await onScreen('character');
     const eulogy = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('the dead may look back at who they were', (await state()).screen === 'character');
-    check('...keeping its ancestry, and saying it is over in the class instead',
-        !eulogy.includes('☠️')
-        && !(await page.getAttribute('#main h2', 'class') ?? '').includes('alive'),
-        await page.getAttribute('#main h2', 'class'));
+    check('...keeping its ancestry rather than swapping in a skull',
+        !eulogy.includes('☠️') && eulogy.includes('of Orc Ancestry'),
+        await page.textContent('#main h2'));
     check('...speaking of the run in the past', /Your Journey Has Ended/.test(eulogy) && /You fell at/.test(eulogy),
         eulogy.slice(eulogy.indexOf('Your Journey'), eulogy.indexOf('Your Journey') + 60));
     check('...and never as though it were still going',

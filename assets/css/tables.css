@@ -74,13 +74,3 @@ th.center {
 .character-row .online {
     color: var(--success);
 }
-
-/* A record's heading. The ancestry emoji is always the ancestry's; whether the run is still going
-   is said by the class, not by swapping the glyph for a skull. */
-.record-name {
-    color: var(--text-secondary);
-}
-
-.record-name.alive {
-    color: var(--gold);
-}

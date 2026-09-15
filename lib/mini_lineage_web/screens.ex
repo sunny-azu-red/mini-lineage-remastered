@@ -532,9 +532,7 @@ defmodule MiniLineageWeb.Screens do
     # tense moves. The closing section forks outright — its sentences change shape, not just verbs,
     # since there is no next level to reach and no journey ahead.
     ~H"""
-    <h2 class={["record-name", not @dead && "alive"]}>
-      {@race.emoji} {@view.name} of {@race.label} Ancestry
-    </h2>
+    <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
     <p>{raw(@race.backstory)}</p>
     <p>{raw(@race.traits)}</p>
 

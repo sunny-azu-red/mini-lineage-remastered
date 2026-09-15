@@ -41,15 +41,13 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   end
 
   describe "a fallen character" do
-    test "keeps its ancestry's emoji, and says it is over with a class instead" do
-      # A skull in place of the badge loses the one glyph that says which lineage this was.
+    test "keeps its ancestry's emoji rather than swapping in a skull" do
+      # A skull in place of the badge loses the one glyph that says which lineage this was, to
+      # repeat something the prose below already says in words.
       html = html_for(fallen())
 
       assert html =~ Constants.race(1).emoji
       refute html =~ "☠️"
-      assert html =~ "record-name"
-      refute html =~ "record-name alive", "a run that ended is not still going"
-      assert html_for(living()) =~ "record-name alive"
     end
 
     test "speaks of the run in the past" do
