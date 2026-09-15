@@ -192,7 +192,7 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
-  describe "who is playing right now" do
+  describe "who is online right now" do
     test "is a run somebody has open, not merely one that is alive" do
       # Written straight to the store, so no process is holding it.
       %{id: idle} = run("Idle", xp: 10)
@@ -208,10 +208,10 @@ defmodule MiniLineage.BoardTest do
       Characters.attach(session, self())
       on_exit(fn -> Characters.forget(session) end)
 
-      playing = Characters.playing()
+      online = Characters.online()
 
-      assert MapSet.member?(playing, held)
-      refute MapSet.member?(playing, idle)
+      assert MapSet.member?(online, held)
+      refute MapSet.member?(online, idle)
     end
 
     test "and the board carries it on the row" do
@@ -226,7 +226,7 @@ defmodule MiniLineage.BoardTest do
       on_exit(fn -> Characters.forget(session) end)
       run("Idle", xp: 10_000)
 
-      assert Map.new(Map.get(Board.current(), nil), &{&1.name, &1.playing}) ==
+      assert Map.new(Map.get(Board.current(), nil), &{&1.name, &1.online}) ==
                %{"Held" => true, "Idle" => false}
     end
 

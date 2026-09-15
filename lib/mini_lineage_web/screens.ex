@@ -678,7 +678,7 @@ defmodule MiniLineageWeb.Screens do
       <td>
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_champion(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>
-        <span :if={@row.playing} class="playing" title="Playing right now">·</span>
+        <span :if={@row.online} class="online" title="Online right now">•</span>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>
       <td class="center">{Format.number(@row.level)}</td>

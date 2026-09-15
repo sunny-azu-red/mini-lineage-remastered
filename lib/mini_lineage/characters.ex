@@ -36,7 +36,7 @@ defmodule MiniLineage.Characters do
   def character_id(session), do: call(session, :character_id)
 
   @doc "The public ids of characters somebody has open right now. In memory; never touches the database."
-  def playing do
+  def online do
     MiniLineage.Characters.Registry
     |> Registry.select([{{:_, :_, {:"$1", true}}, [], [:"$1"]}])
     |> MapSet.new()

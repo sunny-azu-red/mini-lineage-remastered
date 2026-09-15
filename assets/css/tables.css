@@ -71,7 +71,6 @@ th.center {
 }
 
 /* Somebody has this character open right now, as against merely alive. */
-.champion-row .playing {
+.champion-row .online {
     color: var(--success);
-    font-weight: 700;
 }

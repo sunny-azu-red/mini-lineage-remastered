@@ -81,19 +81,19 @@ defmodule MiniLineage.Board do
     medals =
       overall |> Enum.take(3) |> Enum.with_index(1) |> Map.new(&{elem(&1, 0).id, elem(&1, 1)})
 
-    playing = Characters.playing()
+    online = Characters.online()
 
     Enum.map(Constants.races(), & &1.id)
-    |> Map.new(&{&1, mark(top(&1), medals, playing)})
-    |> Map.put(nil, mark(overall, medals, playing))
+    |> Map.new(&{&1, mark(top(&1), medals, online)})
+    |> Map.put(nil, mark(overall, medals, online))
   end
 
   # Three in the whole game wear a medal, so a lineage's own board shows one only where that
   # character would have worn it on the full board too. Presence comes from the registry, so it
   # costs no query and is as live as the push carrying it.
-  defp mark(rows, medals, playing) do
+  defp mark(rows, medals, online) do
     Enum.map(rows, fn row ->
-      %{row | medal: Map.get(medals, row.id), playing: MapSet.member?(playing, row.id)}
+      %{row | medal: Map.get(medals, row.id), online: MapSet.member?(online, row.id)}
     end)
   end
 
@@ -123,5 +123,5 @@ defmodule MiniLineage.Board do
   # Every row has the same shape whether it came from a board or a single lookup. A missing key is
   # a 500, and the board is served from a cache that can outlive a deploy of the template.
   defp decorate(entry),
-    do: Map.merge(entry, %{level: Math.level_for_xp(entry.total_xp), medal: nil, playing: false})
+    do: Map.merge(entry, %{level: Math.level_for_xp(entry.total_xp), medal: nil, online: false})
 end
