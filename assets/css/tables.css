@@ -64,18 +64,3 @@ th.center {
     background: rgba(201, 168, 76, 0.14);
     box-shadow: inset 2px 0 0 var(--gold);
 }
-
-.champion-row a {
-    color: var(--text-primary);
-    text-decoration: none;
-    border-bottom: 1px dotted var(--gold-dim);
-}
-
-.champion-row a:hover {
-    color: var(--gold-hover);
-    border-bottom-color: var(--gold-hover);
-}
-
-.champion-row .medal {
-    margin-left: 4px;
-}

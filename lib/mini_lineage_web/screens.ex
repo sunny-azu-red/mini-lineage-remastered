@@ -676,12 +676,9 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <tr class={["champion-row", @mine && "mine"]}>
       <td>
-        <.link patch={Paths.for_champion(@row.id)}>
-          {race_emoji(@catalog, @row.race_id)} {String.slice(@row.name || "", 0, 20)}
-        </.link>
-        <span :if={@row[:medal]} class="medal" title={medal_title(@row.medal)}>
-          {medal(@row.medal)}
-        </span>
+        {race_emoji(@catalog, @row.race_id)}
+        <.link patch={Paths.for_champion(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>
+        <span :if={@row[:medal]} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
         <%!-- Still going, as against a run that has ended. The board carries both. --%>
         <span :if={not @row.dead} class="muted" title="Still fighting">⚔️</span>
       </td>

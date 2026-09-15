@@ -39,13 +39,14 @@ defmodule MiniLineageWeb.BoardScreenTest do
   end
 
   describe "the board" do
-    test "lists a living run, and links it to its own page", %{conn: conn} do
+    test "lists a living run, and links its NAME to its own page", %{conn: conn} do
       %{id: id} = run("Walker", xp: 500)
 
       {:ok, _live, html} = live(conn, ~p"/highscores")
+      [_, linked] = Regex.run(~r|<a[^>]*href="/champion/#{id}"[^>]*>(.*?)</a>|s, html)
 
-      assert html =~ "Walker"
-      assert html =~ ~s(href="/champion/#{id}")
+      # Only the name. The emoji around it are decoration, and a race badge is not navigation.
+      assert String.trim(linked) == "Walker"
     end
 
     test "says the halls are silent rather than drawing an empty table", %{conn: conn} do
