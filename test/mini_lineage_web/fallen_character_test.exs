@@ -29,6 +29,16 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   defp fallen, do: %{Player.kill(living()) | death_reason: "The road ran out beneath you."}
 
+  describe "the voice" do
+    test "is second person on your own record" do
+      html = html_for(fallen())
+
+      assert html =~ "You were wielding"
+      assert html =~ "Your Journey Has Ended"
+      refute html =~ "They were wielding"
+    end
+  end
+
   describe "a fallen character" do
     test "is marked by the skull, not by its ancestry's emoji" do
       assert html_for(fallen()) =~ "☠️"

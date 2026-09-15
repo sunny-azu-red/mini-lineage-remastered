@@ -398,12 +398,14 @@ try {
         await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
 
     await page.click('#main a:has-text("Your Record")');
-    await onScreen('champion');
+    await onScreen('character');
     const record = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
-    check('a run has a page of its own', (await state()).screen === 'champion');
+    check('a run has a page of its own', (await state()).screen === 'character');
     check('...which names it and says when it set out and when it fell',
-        /BrowserBot/.test(record) && /set out on/.test(record) && /and fell on/.test(record),
+        /BrowserBot/.test(record) && /Set out on/.test(record) && /and fell on/.test(record),
         record.slice(0, 110));
+    check('...in the second person, because it is the reader\'s own',
+        /You were wielding/.test(record) && !/They were wielding/.test(record));
     check('...and tells the story fight by fight',
         await page.locator('#main ol.chronicle li').count() > 0,
         `${await page.locator('#main ol.chronicle li').count()} fights`);
@@ -412,8 +414,14 @@ try {
     // property that matters: reading a champion's page does not make you that champion.
     check('...without the reader becoming the character', (await state()).started === true);
 
-    await page.click('#main .action-links a:has-text("Back to the Halls")');
-    await onScreen('highscores');
+    // Your own record goes back the way the Character screen always did — "Back to the Halls" is
+    // on somebody else's page, which this no longer is.
+    await page.click('#main .back a');
+    await onScreen('death');
+    check('...and its way back is still the death screen', (await state()).screen === 'death');
+
+    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     const board = await page.textContent('#main table.data-table');
     check('and the run stands on the board without ever being submitted',
         /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
@@ -437,9 +445,12 @@ try {
         `${await boardRows()} rows, active ${await activeFilter()}`);
 
     // ---- starting over, without leaving the socket -------------------------------------------
+    // The PUBLIC link, taken from the board: "Your Record" points at /champion, which after this
+    // is a different character entirely.
+    const previousRecord = await page.getAttribute('#main table.data-table a', 'href');
+
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    const previousRecord = await page.getAttribute('#main a:has-text("Your Record")', 'href');
 
     // No navigation: if this ever became a page load again, the id would change across it.
     const socketBefore = await page.evaluate(() => document.querySelector('[data-phx-main]')?.id);
@@ -453,8 +464,12 @@ try {
     // The retired run is still readable at the address it had: it kept its id and its place.
     await page.goto(`${BASE}${previousRecord}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    const left = (await page.textContent('#main') ?? '').replace(/\s+/g, ' ');
     check('...and the run left behind still stands at its own address',
-        /BrowserBot/.test(await page.textContent('#main') ?? ''), previousRecord);
+        /BrowserBot/.test(left), previousRecord);
+    check('...told in the third person now that it is somebody else\'s',
+        /BrowserBot&#39;s|BrowserBot's/.test(left) || /They were wielding/.test(left),
+        left.slice(left.indexOf('Inventory'), left.indexOf('Inventory') + 60));
     check('...without making the visitor that character',
         (await state()).started === false);
 

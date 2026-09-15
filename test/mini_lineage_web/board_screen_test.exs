@@ -116,6 +116,31 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute row.("Missing") =~ "alive", "a run nobody can pick up again is not still going"
     end
 
+    test "tells a stranger's story in the third person, not the reader's", %{conn: conn} do
+      %{id: id} = run("Aurelia", xp: 500)
+
+      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+
+      # They/them, because the game records no gender — and because it takes the same verb forms
+      # as "you", so only the pronouns move between the two pages.
+      assert html =~ "Aurelia&#39;s journey across the realm"
+      assert html =~ "They are wielding"
+      refute html =~ "You are wielding"
+      refute html =~ "Your journey"
+    end
+
+    test "and carries the full record, not a summary", %{conn: conn} do
+      %{id: id} = run("Aurelia", xp: 500)
+
+      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+
+      # The same sections your own page has: ancestry, stats, the journey, then the chronicle.
+      assert html =~ "Inventory &amp; Stats"
+      assert html =~ "Physical Attack"
+      assert html =~ "Ambush Risk"
+      assert html =~ "The Chronicle"
+    end
+
     test "and a missing run's page says so rather than claiming it fell", %{conn: conn} do
       %{id: id, session: session} = run("Missing", xp: 500)
       MiniLineage.Characters.archive(session)

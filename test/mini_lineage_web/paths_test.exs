@@ -49,7 +49,7 @@ defmodule MiniLineageWeb.PathsTest do
       # An ambush pins you to the Battleground, which is somewhere you are rather than something
       # that happened to you, so it keeps a URL.
       assert Paths.for_screen("battle") == "/battle"
-      assert Paths.for_screen("character") == "/character"
+      assert Paths.for_screen("character") == "/champion"
     end
   end
 

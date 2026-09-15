@@ -39,6 +39,7 @@ defmodule MiniLineageWeb.Screens do
   attr :boards, :map, default: %{}
   attr :character_id, :string, default: nil
   attr :champion, :map, default: nil
+  attr :champion_view, :map, default: nil
   attr :champion_log, :list, default: []
   attr :statistics, :map, default: nil
   attr :race_filter, :integer, default: nil
@@ -367,7 +368,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
 
     <div class="action-links">
-      <.link :if={@character_id} patch={Paths.for_champion(@character_id)} class="btn">
+      <.link :if={@character_id} patch={Paths.for_screen("character")} class="btn">
         📜 Your Record
       </.link>
       <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
@@ -494,7 +495,17 @@ defmodule MiniLineageWeb.Screens do
 
   # ---------------------------------------------------------------- character
 
-  defp character(assigns) do
+  attr :view, :map, required: true
+  attr :catalog, :map, required: true
+  attr :entry, :map, default: nil
+  attr :chronicle, :list, default: []
+  attr :name, :string, default: nil
+
+  @doc false
+  # One record, whoever is reading it. `name` switches the voice: nil is your own page and speaks
+  # to you, a name is somebody else's and speaks about them. The verbs never move — they/them
+  # takes the same forms as you.
+  def record(assigns) do
     race = Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id))
     opponent = Enum.find(assigns.catalog.races, &(&1.id == race.enemy_race_id))
 
@@ -506,6 +517,7 @@ defmodule MiniLineageWeb.Screens do
         race: race,
         opponent: opponent,
         dead: assigns.view.dead,
+        v: voice(assigns.name),
         attack: Format.number(assigns.view.stats.attack),
         defense: Format.number(assigns.view.stats.defense),
         crit: Format.number(assigns.view.stats.crit),
@@ -528,12 +540,12 @@ defmodule MiniLineageWeb.Screens do
 
     <h2>Inventory &amp; Stats</h2>
     <p phx-no-format>
-      You {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} {@view.weapon.name} granting
+      {@v.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} {@view.weapon.name} granting
       <span class="hp"><span id="char-stat-attack">{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} {@view.armor.name} providing
       <span class="muted"><span id="char-stat-defense">{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
     </p>
     <p>
-      Combined with your ancestry, you {if @dead, do: "struck", else: "strike"} with a total of
+      Combined with {@v.their} ancestry, {@v.them} {if @dead, do: "struck", else: "strike"} with a total of
       <span class="crit"><span id="char-stat-crit">{@crit}</span>% Critical Hit Chance</span>
       and {if @dead, do: "mended", else: "mend"} wounds at
       <span class="heal">+<span id="char-stat-regen">{@regen}</span> HP Regeneration</span>
@@ -541,9 +553,9 @@ defmodule MiniLineageWeb.Screens do
     </p>
 
     <%= if @dead do %>
-      <h2>Your Journey Has Ended</h2>
+      <h2>{@v.whose} Journey Has Ended</h2>
       <p>
-        Your journey across the realm was defined by conflict and survival. You fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
+        {@v.whose} journey across the realm was defined by conflict and survival. {@v.they} fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
         <span class="gold">{Format.pluralize(
           @opponent.label,
           @opponent.plural,
@@ -561,17 +573,15 @@ defmodule MiniLineageWeb.Screens do
         along the road.
       </p>
       <p phx-no-format>
-        You fell at <span class="gold">Level {@level}</span>
-        with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp">{@xp_needed} XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and your purse held <span class="gold">🪙 {@purse} Adena</span>
+        {@v.they} fell at <span class="gold">Level {@level}</span>
+        with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp">{@xp_needed} XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and {@v.their} purse held <span class="gold">🪙 {@purse} Adena</span>
         when the road ran out.
       </p>
       <p>{@view.death_reason}</p>
-
-      <.back_link started={@view.started} to="death" label="Return to your final rest" />
     <% else %>
       <h2>The Journey So Far</h2>
       <p>
-        Your journey across the realm has been defined by conflict and survival. You have fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
+        {@v.whose} journey across the realm has been defined by conflict and survival. {@v.they} have fought through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
         <span class="gold">{Format.pluralize(
           @opponent.label,
           @opponent.plural,
@@ -590,9 +600,9 @@ defmodule MiniLineageWeb.Screens do
       </p>
       <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
       <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
-        Experience wise, you are at <span class="gold">Level {@level}</span>
+        Experience wise, {@v.them} are at <span class="gold">Level {@level}</span>
         with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp">{@xp_needed} XP</span> to reach <span class="gold">Level {@next_level}</span><% end %>
-        and your vitality currently sustains you at
+        and {@v.their} vitality currently sustains {@v.object} at
         <span class="hp"><span
           id="char-hp"
           class="animate-val"
@@ -601,10 +611,48 @@ defmodule MiniLineageWeb.Screens do
         >{Format.number(@view.health)}</span>
         / <span id="char-max-hp">{Format.number(@view.max_health)}</span>
         HP</span>
-        while your purse holds <span class="gold">🪙 {@purse} Adena</span>
+        while {@v.their} purse holds <span class="gold">🪙 {@purse} Adena</span>
         for the journey ahead.
       </p>
+    <% end %>
 
+    <p :if={@entry && @entry.disqualified} class="muted">
+      Barred from the Halls of Champions — this run ended by its own hand or by heresy. Its record
+      stands regardless.
+    </p>
+
+    <p :if={@entry} phx-no-format>
+      Set out on <.stamp id="record-set-out" at={@entry.inserted_at} />
+      {ending(@entry)} <.stamp id="record-last" at={@entry.updated_at} />.
+    </p>
+
+    <h3>The Chronicle</h3>
+
+    <%= if @chronicle == [] do %>
+      <p>Not one blow struck. This tale is over before it began.</p>
+    <% else %>
+      <ol class="chronicle">
+        <li :for={fight <- @chronicle}>{raw(fight.narrative.outcome_line)}</li>
+      </ol>
+    <% end %>
+    """
+  end
+
+  # Your own page speaks to you; somebody else's speaks about them. They/them is not only the right
+  # default for a character whose gender the game never records — it also takes the same verb forms
+  # as "you", so nothing but the pronouns moves between the two.
+  defp voice(nil),
+    do: %{they: "You", them: "you", object: "you", their: "your", whose: "Your"}
+
+  defp voice(name),
+    do: %{they: "They", them: "they", object: "them", their: "their", whose: "#{name}'s"}
+
+  defp character(assigns) do
+    ~H"""
+    <.record view={@view} catalog={@catalog} entry={@champion} chronicle={@champion_log} />
+    <%= if @view.dead do %>
+      <.back_link started={@view.started} to="death" label="Return to your final rest" />
+    <% else %>
       <.back_link started={@view.started} />
     <% end %>
     """
@@ -708,32 +756,13 @@ defmodule MiniLineageWeb.Screens do
 
   defp champion(assigns) do
     ~H"""
-    <h2>{race_emoji(@catalog, @champion.race_id)} {@champion.name}</h2>
-
-    <p :if={@champion.disqualified} class="muted">
-      Barred from the Halls of Champions — this run ended by its own hand or by heresy. Its record
-      stands regardless.
-    </p>
-
-    <p phx-no-format>
-      A <strong>level {Format.number(@champion.level)}</strong> soul with
-      <span class="xp">{Format.number(@champion.total_xp)} experience</span> and
-      <span class="gold">🪙 {Format.adena(@champion.adena)} Adena</span>,
-      who set out on <.stamp id="champion-set-out" at={@champion.inserted_at} />
-      {ending(@champion)} <.stamp id="champion-last" at={@champion.updated_at} />.
-    </p>
-
-    <h3>The Chronicle</h3>
-
-    <%= if @champion_log == [] do %>
-      <p>Not one blow struck. This tale is over before it began.</p>
-    <% else %>
-      <ol class="chronicle">
-        <li :for={fight <- @champion_log}>
-          {raw(fight.narrative.outcome_line)}
-        </li>
-      </ol>
-    <% end %>
+    <.record
+      view={@champion_view}
+      catalog={@catalog}
+      entry={@champion}
+      chronicle={@champion_log}
+      name={if @champion.id == @character_id, do: nil, else: @champion.name}
+    />
 
     <div class="action-links last">
       <.link patch={Paths.for_screen("highscores")} class="btn btn-secondary">

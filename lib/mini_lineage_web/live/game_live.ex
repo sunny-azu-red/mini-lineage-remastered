@@ -48,6 +48,7 @@ defmodule MiniLineageWeb.GameLive do
        game_flash: nil,
        boards: %{},
        champion: nil,
+       champion_view: nil,
        champion_log: [],
        statistics: nil,
        key_buffer: [],
@@ -99,14 +100,17 @@ defmodule MiniLineageWeb.GameLive do
   # same way the Halls draw one when nobody has played.
   defp assign_champion(socket, %{"id" => id}) do
     entry = Board.entry(id)
+    player = entry && MiniLineage.Characters.Store.load(entry.id)
 
     assign(socket,
       champion: entry,
+      champion_view: player && Snapshot.build(player),
       champion_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
     )
   end
 
-  defp assign_champion(socket, _params), do: assign(socket, champion: nil, champion_log: [])
+  defp assign_champion(socket, _params),
+    do: assign(socket, champion: nil, champion_view: nil, champion_log: [])
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
@@ -129,6 +133,16 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   defp load_screen_data(socket, "highscores"), do: assign(socket, boards: Board.current())
+
+  # Your own record, from the board's point of view: when it set out, and its fights.
+  defp load_screen_data(socket, "character") do
+    entry = socket.assigns.character_id && Board.entry(socket.assigns.character_id)
+
+    assign(socket,
+      champion: entry,
+      champion_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
+    )
+  end
 
   defp load_screen_data(socket, "champion"), do: socket
 
@@ -350,6 +364,7 @@ defmodule MiniLineageWeb.GameLive do
         boards={@boards}
         character_id={@character_id}
         champion={@champion}
+        champion_view={@champion_view}
         champion_log={@champion_log}
         statistics={@statistics}
         race_filter={@race_filter}

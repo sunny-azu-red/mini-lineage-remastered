@@ -7,7 +7,7 @@ defmodule MiniLineageWeb.Paths do
     {"armors", "/shop/armors"},
     {"inn", "/inn"},
     {"suicide", "/suicide"},
-    {"character", "/character"},
+    {"character", "/champion"},
     {"highscores", "/highscores"},
     {"statistics", "/statistics"},
     {"races", "/races"},
