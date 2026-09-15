@@ -46,7 +46,7 @@ defmodule MiniLineage.Board do
   def entry(id) do
     Record
     |> where([r], r.id == ^id and not is_nil(r.race_id))
-    |> select([r], map(r, ^fields()))
+    |> row()
     |> Repo.one()
     |> decorate()
   end
@@ -102,7 +102,7 @@ defmodule MiniLineage.Board do
     |> then(&if race_id, do: where(&1, [r], r.race_id == ^race_id), else: &1)
     |> order_by([r], desc: r.total_xp, desc: r.adena, asc: r.inserted_at, desc: r.id)
     |> limit(^Constants.highscores_limit())
-    |> select([r], map(r, ^fields()))
+    |> row()
     |> Repo.all()
     |> Enum.map(&decorate/1)
   end
@@ -113,8 +113,21 @@ defmodule MiniLineage.Board do
 
   # Selected into a plain map, never a %Record{}: the schema struct carries `session_id`, and an
   # entry that has the key at all is one `Repo.all(Record)` away from carrying the secret with it.
-  defp fields,
-    do: ~w(id name race_id total_xp adena dead disqualified inserted_at updated_at)a
+  # `active` is the one thing said about the session — whether there is one, never what it is.
+  defp row(query) do
+    select(query, [r], %{
+      id: r.id,
+      name: r.name,
+      race_id: r.race_id,
+      total_xp: r.total_xp,
+      adena: r.adena,
+      dead: r.dead,
+      disqualified: r.disqualified,
+      inserted_at: r.inserted_at,
+      updated_at: r.updated_at,
+      active: not is_nil(r.session_id)
+    })
+  end
 
   defp decorate(nil), do: nil
 

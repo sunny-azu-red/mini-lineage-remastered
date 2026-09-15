@@ -95,8 +95,9 @@ defmodule MiniLineage.Characters.Store do
 
   @doc """
   Retires runs untouched for #{@ttl_hours}h — the window the session cookie is issued for. Sliding,
-  because `updated_at` moves on every save. Retiring is not deleting: the run keeps its place on
-  the board and its fights, and gives up only its session. Returns `{retired, discarded}`.
+  because `updated_at` moves on every save. Retiring is neither deleting nor killing: the run keeps
+  its place on the board and its fights, and gives up only its session — which is what makes it
+  MISSING rather than dead. Returns `{retired, discarded}`.
   """
   def retire_idle do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)

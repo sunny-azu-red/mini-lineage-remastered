@@ -674,7 +674,7 @@ defmodule MiniLineageWeb.Screens do
 
   defp champion_row(assigns) do
     ~H"""
-    <tr class={["champion-row", not @row.dead && "alive", @mine && "mine"]}>
+    <tr class={["champion-row", still_going?(@row) && "alive", @mine && "mine"]}>
       <td>
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_champion(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>
@@ -720,8 +720,7 @@ defmodule MiniLineageWeb.Screens do
       <span class="xp">{Format.number(@champion.total_xp)} experience</span> and
       <span class="gold">🪙 {Format.adena(@champion.adena)} Adena</span>,
       who set out on <.stamp id="champion-set-out" at={@champion.inserted_at} />
-      {if @champion.dead, do: "and fell on", else: "and was last seen on"}
-      <.stamp id="champion-last" at={@champion.updated_at} />.
+      {ending(@champion)} <.stamp id="champion-last" at={@champion.updated_at} />.
     </p>
 
     <h3>The Chronicle</h3>
@@ -841,9 +840,19 @@ defmodule MiniLineageWeb.Screens do
   defp verb(1, singular, _plural), do: singular
   defp verb(_count, _singular, plural), do: plural
 
+  # A run is going while it has neither died nor lost its session. Without one it is missing: it
+  # can never be played again, so it is over even though it never died.
+  defp still_going?(row), do: not row.dead and row.active
+
   defp medal(1), do: "🥇"
   defp medal(2), do: "🥈"
   defp medal(3), do: "🥉"
+
+  # Three ways a record ends: fallen, still going, or missing — walked away from and past the day
+  # anyone could pick it up again.
+  defp ending(%{dead: true}), do: "and fell on"
+  defp ending(%{active: true}), do: "and was last seen on"
+  defp ending(_missing), do: "and has not been seen since"
 
   defp medal_title(1), do: "First in the Halls"
   defp medal_title(2), do: "Second in the Halls"

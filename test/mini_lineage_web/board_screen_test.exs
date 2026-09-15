@@ -103,6 +103,30 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute html =~ "⚔️", "the sword was replaced by the row itself"
     end
 
+    test "leaves a retired run plain, however it stopped", %{conn: conn} do
+      %{session: session} = run("Missing", xp: 500)
+      MiniLineage.Characters.archive(session)
+      on_exit(fn -> MiniLineage.Characters.forget(session) end)
+      run("Going", xp: 400)
+
+      {:ok, _live, html} = live(conn, ~p"/highscores")
+      row = fn name -> Enum.find(String.split(html, "<tr"), &String.contains?(&1, name)) end
+
+      assert row.("Going") =~ "alive"
+      refute row.("Missing") =~ "alive", "a run nobody can pick up again is not still going"
+    end
+
+    test "and a missing run's page says so rather than claiming it fell", %{conn: conn} do
+      %{id: id, session: session} = run("Missing", xp: 500)
+      MiniLineage.Characters.archive(session)
+      on_exit(fn -> MiniLineage.Characters.forget(session) end)
+
+      {:ok, _live, html} = live(conn, ~p"/champion/#{id}")
+
+      assert html =~ "has not been seen since"
+      refute html =~ "and fell on"
+    end
+
     test "and never renders a session id anywhere on the page", %{conn: conn} do
       %{session: session} = run("Named", xp: 10)
 

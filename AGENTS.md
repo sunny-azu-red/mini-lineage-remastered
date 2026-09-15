@@ -89,6 +89,11 @@ what it still refuses. If a guard is in the way, the thing you are building is p
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
+**A run ends three ways: fallen, going, or missing.** Dead is not the only way to be over — the
+30-day retirement takes a character's session without killing it, so it can never be played again.
+`Board` says `active` for "has a session", never the session itself, and the board treats a
+missing run as finished rather than as one still going.
+
 **Every absolute time a player sees goes through `<.stamp>`.** The database stores instants in
 `timestamptz` and the server runs in UTC, so only the browser knows what o'clock it is for the
 reader. The server-rendered text is the no-JS fallback; the `LocalTime` hook rewrites it. Durations

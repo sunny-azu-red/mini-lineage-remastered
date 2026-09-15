@@ -192,6 +192,34 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
+  describe "a run nobody can play again" do
+    test "is missing rather than going, once its session is gone" do
+      %{id: id, session: session} = run("Wanderer", xp: 500)
+      assert Board.entry(id).active, "a run with a session is still going"
+
+      # What the 30-day retirement does: it takes the session and kills nothing.
+      Characters.archive(session)
+      on_exit(fn -> Characters.forget(session) end)
+
+      entry = Board.entry(id)
+
+      refute entry.dead, "retirement must not pretend the character died"
+      refute entry.active, "but it can never be played again"
+    end
+
+    test "and the board never says how, only whether" do
+      %{id: id, session: session} = run("Wanderer", xp: 500)
+      Characters.archive(session)
+      on_exit(fn -> Characters.forget(session) end)
+
+      entry = Board.entry(id)
+
+      # `active` is the ONLY thing said about the session. The secret itself never leaves the row.
+      refute Map.has_key?(entry, :session_id)
+      refute session in Map.values(entry)
+    end
+  end
+
   describe "who is online right now" do
     test "is a run somebody has open, not merely one that is alive" do
       # Written straight to the store, so no process is holding it.
