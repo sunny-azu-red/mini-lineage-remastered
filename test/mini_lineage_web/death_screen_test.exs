@@ -69,6 +69,16 @@ defmodule MiniLineageWeb.DeathScreenTest do
   end
 
   describe "what a player may do from here" do
+    test "points at the Halls of its own lineage, not back at its own record" do
+      # The sidebar is on this screen and already links the record, so a second link to it was a
+      # second door into the same room. Where a run stands among its own is new.
+      html = html_for(Player.kill(hero()))
+
+      assert html =~ ~s(href="/highscores/orc")
+      assert html =~ "The Hall of Orcs"
+      refute html =~ "Your Record"
+    end
+
     test "starting over is an ordinary button — a new run needs no new cookie" do
       html = html_for(Player.kill(hero()))
 

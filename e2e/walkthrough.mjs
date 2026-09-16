@@ -391,15 +391,20 @@ try {
     await onScreen('death');
     check('...and its way back is where it was opened from', (await state()).screen === 'death');
     // The whole point of the detour: reviewing a run must not disturb it.
-    check('...and its own record is still one click away',
-        await page.locator('#main a:has-text("Your Record")').count() === 1);
+    check('...and the sidebar still reaches its record',
+        await page.locator('#sidebar .stat-row a').count() === 1);
 
     // ---- the run is already in the Halls, and has been since it started -----------------------
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('nothing asks the dead to write themselves in — they are already there',
         await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
 
-    await page.click('#main a:has-text("Your Record")');
+    // The ending offers the Halls of its own lineage — the sidebar is what reaches the record.
+    check('the ending points at the Halls of its own lineage',
+        (await page.getAttribute('#main .action-links a', 'href')) === '/highscores/orc',
+        await page.getAttribute('#main .action-links a', 'href'));
+
+    await page.click('#sidebar .stat-row a');
     await onScreen('character');
     const record = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('a run has a page of its own', (await state()).screen === 'character');
@@ -444,8 +449,7 @@ try {
         `${await boardRows()} rows, active ${await activeFilter()}`);
 
     // ---- starting over, without leaving the socket -------------------------------------------
-    // Taken from the board, because after Play Again this session is a different character and
-    // "Your Record" points at the new one.
+    // Taken from the board, because after Play Again this session is a different character.
     const previousRecord = await page.getAttribute('#main table.data-table a', 'href');
 
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });

@@ -85,7 +85,9 @@ defmodule MiniLineageWeb.Screens do
     <p>An unexpected error occurred on the server, please try again in a moment.</p>
     <pre :if={@detail} class="code-block">{@detail}</pre>
 
-    <.back_link started={@view.started} label="Return to safer lands" class="last" />
+    <%!-- Deliberately vague: this screen is reachable started or not, and "safer lands" is true
+          of Town and Game Start alike. --%>
+    <.back_link started={@view.started} dead={@view.dead} label="Return to safer lands" class="last" />
     """
   end
 
@@ -301,7 +303,7 @@ defmodule MiniLineageWeb.Screens do
       <p>{raw(race.traits)}</p>
     <% end %>
 
-    <.back_link started={@view.started} label="Go back to game start" />
+    <.back_link started={@view.started} dead={@view.dead} />
     """
   end
 
@@ -367,6 +369,9 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp death(assigns) do
+    assigns =
+      assign(assigns, race: Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id)))
+
     # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
     # they are the last line of the run, and read as one.
     ~H"""
@@ -377,8 +382,8 @@ defmodule MiniLineageWeb.Screens do
     </p>
 
     <div class="action-links">
-      <.link :if={@character_id} patch={Paths.for_character(@character_id, "game")} class="btn">
-        📜 Your Record
+      <.link :if={@race} patch={Paths.for_screen("highscores", @race.slug)} class="btn">
+        {@race.emoji} The Hall of {@race.plural}
       </.link>
       <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
     </div>
@@ -860,7 +865,7 @@ defmodule MiniLineageWeb.Screens do
       </p>
     <% end %>
 
-    <.back_link started={@view.started} label="Go back to game start" />
+    <.back_link started={@view.started} dead={@view.dead} />
     """
   end
 
