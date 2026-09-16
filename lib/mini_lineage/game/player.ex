@@ -31,9 +31,6 @@ defmodule MiniLineage.Game.Player do
   def started?(%__MODULE__{race_id: r, health: h, adena: a}),
     do: r != nil and h != nil and a != nil
 
-  @doc "Clears every game field. The reference preserves session bookkeeping; we hold none."
-  def reset(_player), do: %__MODULE__{}
-
   defp equipment(player) do
     %{
       race: Constants.race(player.race_id || 0),
@@ -171,19 +168,14 @@ defmodule MiniLineage.Game.Player do
       else: effects
   end
 
-  # Mirrors stats/1's modifier list by hand rather than calling it, to avoid recursion.
+  # Takes the effect list rather than reading it back off the player: `active_effects/1` is one of
+  # the callers, and asking it for the stats it is still deciding would not terminate.
   defp regen_aura(player, effects) do
-    %{race: race, weapon: weapon, armor: armor} = equipment(player)
+    stats = stats_from(player, effects)
 
-    all = modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
-    sum = fn type -> Enum.reduce(all, 0, &if(&1.type == type, do: &2 + &1.value, else: &2)) end
-
-    effective_max = max(1, race.start_health + sum.(:max_health))
-    total_regen = max(0, race.regen + sum.(:regen))
-
-    if player.health < effective_max and total_regen > 0 do
+    if player.health < stats.max_health and stats.regen > 0 do
       config = Constants.effect(:regen_aura)
-      [to_active(%{config | modifiers: [%{type: :regen, value: total_regen}]}, nil)]
+      [to_active(%{config | modifiers: [%{type: :regen, value: stats.regen}]}, nil)]
     else
       []
     end
@@ -191,6 +183,13 @@ defmodule MiniLineage.Game.Player do
 
   @doc "Layered pipeline: race base -> equipment stats -> equipment/effect modifiers -> clamps."
   def stats(player) do
+    # 'regenerating' is derived FROM regen, so folding it back in would double-count.
+    effects = Enum.reject(active_effects(player), &(&1.id == "regenerating"))
+
+    stats_from(player, effects)
+  end
+
+  defp stats_from(player, effects) do
     %{race: race, weapon: weapon, armor: armor} = equipment(player)
 
     base = %{
@@ -204,14 +203,8 @@ defmodule MiniLineage.Game.Player do
       adena_multiplier: 1.0
     }
 
-    # 'regenerating' is derived FROM regen, so folding it back in would double-count.
     modifiers =
-      modifiers_of(weapon) ++
-        modifiers_of(armor) ++
-        (player
-         |> active_effects()
-         |> Enum.reject(&(&1.id == "regenerating"))
-         |> Enum.flat_map(& &1.modifiers))
+      modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
 
     stats =
       Enum.reduce(modifiers, base, fn mod, acc ->
@@ -334,29 +327,21 @@ defmodule MiniLineage.Game.Player do
   @doc """
   Natural HP regeneration, earned by resting. Periodic cadence only. Returns `{player, healed?}`.
 
-  Requires the resting aura outright, rather than merely the absence of combat: a screen in
-  neither zone list used to regenerate silently, with no 🌿 aura to show for it.
+  Driven by the 🌿 aura rather than by a second copy of its conditions: what the player can see is
+  what heals them, so the icon and the healing cannot come apart.
   """
   def process_regen_tick(%{dead: true} = player), do: {player, false}
 
   def process_regen_tick(player) do
-    if Enum.any?(active_effects(player), &(&1.id == "resting")) do
-      stats = stats(player)
-
-      if stats.regen > 0 and player.health < stats.max_health do
-        {player, healed} = restore_health(player, stats.regen)
-
-        if healed > 0 do
-          Statistics.increment(:total_hp_regen, healed)
-          {player, true}
-        else
-          {player, false}
-        end
-      else
+    case Enum.find(active_effects(player), &(&1.id == "regenerating")) do
+      nil ->
         {player, false}
-      end
-    else
-      {player, false}
+
+      %{modifiers: [%{type: :regen, value: rate}]} ->
+        {player, healed} = restore_health(player, rate)
+        Statistics.increment(:total_hp_regen, healed)
+
+        {player, true}
     end
   end
 
