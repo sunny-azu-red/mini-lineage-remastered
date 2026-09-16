@@ -109,11 +109,8 @@ defmodule MiniLineageWeb.GameLive do
   defp filter_race(%{race_filter: id, catalog: catalog}),
     do: Enum.find(catalog.races, &(&1.id == id))
 
-  # A run nobody can find is not an error — `Screens` draws the empty state for a nil record, the
-  # same way the Halls draw one when nobody has played.
-  #
-  # Yours reads from your own process, not from the document: `health` is buffered, so the stored
-  # row is behind by however long you have been resting, and the HP on this page counts up live.
+  # A run nobody can find is not an error: `Screens` draws an empty state for a nil record. Yours
+  # is read from your own process rather than the document, because `health` is buffered.
   defp assign_record(socket, %{"id" => id}) do
     entry = Board.entry(id)
 

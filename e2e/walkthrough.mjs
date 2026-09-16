@@ -1,15 +1,7 @@
 /**
- * Drives the real game in a real browser. Unit tests and jsdom cannot see CSP enforcement, a
- * stale bundle, or a background push wiping the panel — every browser-only bug in this project
- * lived in exactly that gap.
- *
- * One character, played normally, end to end. What it asserts is what the browser alone can see:
- * screens render, controls answer, focus lands where the keyboard needs it. How a fight rolls
- * belongs to the unit suite, which can seed the dice; nothing here claims a level was reached.
- * Every lineage is covered by races.mjs.
- *
- * Usage: start the isolated server (`e2e/serve.sh`), then
- *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node e2e/walkthrough.mjs
+ * One character, played normally, end to end — `mix e2e walkthrough`. It asserts only what the
+ * browser alone can see: CSP enforcement, a stale bundle, focus, a push wiping the panel. How a
+ * fight rolls belongs to the unit suite, which can seed the dice; every lineage to races.mjs.
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';

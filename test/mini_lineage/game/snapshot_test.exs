@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.SnapshotTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Snapshot}
 
   defp character(race_id \\ 0, overrides \\ %{}) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), "Subject")
@@ -23,6 +23,29 @@ defmodule MiniLineage.Game.SnapshotTest do
     assert empty.effects == []
     assert empty.last_battle == nil
     assert empty.counters.total_battles == 0
+  end
+
+  describe "the catalog" do
+    # Built once per VM and kept in :persistent_term, so a field that is not in fact constant would
+    # be frozen at whatever it was on the first mount and never noticed again.
+    test "is what building it from the constants would give you" do
+      assert Snapshot.catalog() == %{
+               races:
+                 Enum.map(Constants.races(), fn race ->
+                   Map.merge(race, %{
+                     slug: Format.slugify(race.label),
+                     traits: Narrative.build_race_traits(race)
+                   })
+                 end),
+               weapons: Enum.map(Constants.weapons(), &Snapshot.item_view/1),
+               armors: Enum.map(Constants.armors(), &Snapshot.item_view/1),
+               foods: Enum.map(Constants.foods(), &Snapshot.item_view/1)
+             }
+    end
+
+    test "and the same map every time it is asked" do
+      assert Snapshot.catalog() == Snapshot.catalog()
+    end
   end
 
   describe "at the top of the curve" do

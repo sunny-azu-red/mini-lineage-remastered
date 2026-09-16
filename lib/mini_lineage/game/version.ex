@@ -11,10 +11,9 @@ defmodule MiniLineage.Game.Version do
   @label Application.compile_env(:mini_lineage, :build_label, "⚡ development")
 
   @doc """
-  APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build. Only two
-  answers: a production build that could name no commit fails to build at all.
-
-  An empty APP_VERSION counts as absent — a Docker build arg left unset arrives as "".
+  APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build — only two
+  answers, since a production build naming no commit fails to assemble. An empty APP_VERSION counts
+  as absent, because a Docker build arg left unset arrives as "".
   """
   def current do
     with nil <- present(System.get_env("APP_VERSION")),
@@ -27,10 +26,9 @@ defmodule MiniLineage.Game.Version do
   defp present(_), do: nil
 
   @doc """
-  Whether this build may show its internals — false in a production one, whatever its version.
-
-  Kept apart from `release?/1` on purpose. Tying the two meant an image built without APP_VERSION
-  could not tell it was a release, and went on serving exception messages to players.
+  Whether this build may show its internals — false in a production one, whatever its version. Kept
+  apart from `release?/1`: tying them meant an image built without APP_VERSION could not tell it was
+  a release, and served exception messages to players.
   """
   def debug_build?, do: Application.get_env(:mini_lineage, :debug_build, true)
 

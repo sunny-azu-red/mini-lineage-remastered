@@ -1,12 +1,11 @@
 defmodule MiniLineageWeb.Screens do
   @moduledoc """
-  Which screen is drawn, and the run's own four — Game Start, Town, the Battleground and the
-  ending. The pages that stand apart from a run have modules of their own: the shops, a character's
-  record, the Halls and the Tome.
+  Which screen is drawn, and the run's own four: Game Start, Town, the Battleground, the ending.
+  The pages that outlive a run have modules of their own.
 
-  Markup and class names are carried over from the reference so the stylesheet applies unchanged.
-  `raw/1` appears wherever a narrative is rendered; those strings are always composed by the server
-  from the template tables, never from anything a player typed.
+  Markup and class names are carried over from the reference, so the stylesheet applies unchanged.
+  `raw/1` renders narratives, which the server composes from the template tables and never from
+  anything a player typed.
   """
   use MiniLineageWeb, :html
 

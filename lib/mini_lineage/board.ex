@@ -131,10 +131,9 @@ defmodule MiniLineage.Board do
 
   defp decorate(nil), do: nil
 
-  # Level is derived from experience by the same function the character screen uses, so the two can
-  # never disagree — and it is why there is no generated column for it.
-  # Every row has the same shape whether it came from a board or a single lookup. A missing key is
-  # a 500, and the board is served from a cache that can outlive a deploy of the template.
+  # Level comes from the same function the character screen uses, which is why no column stores it.
+  # `medal` and `online` are defaulted rather than left out: a board and a single lookup must have
+  # the same shape, and the cache serving them can outlive a deploy of the template that reads it.
   defp decorate(entry),
     do: Map.merge(entry, %{level: Math.level_for_xp(entry.total_xp), medal: nil, online: false})
 end

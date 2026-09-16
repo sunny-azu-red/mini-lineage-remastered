@@ -24,9 +24,8 @@ export const SoundToggle = {
 };
 
 /**
- * An effect's remaining time, as the icon wears it. Twinned with `Format.countdown/1`, which
- * renders the first frame server-side — they are held to test/fixtures/effect_timer.json so the
- * number cannot change shape the moment this takes over.
+ * An effect's remaining time, as the icon wears it. Twinned with `Format.countdown/1`; both are
+ * held to test/fixtures/effect_timer.json so the label cannot change shape when this takes over.
  */
 export function timerLabel(remainingMs) {
     const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
@@ -34,10 +33,7 @@ export function timerLabel(remainingMs) {
     return seconds >= 60 ? `${Math.floor(seconds / 60)}m` : String(seconds);
 }
 
-/**
- * Counts each effect's timer down locally. The server sends a DURATION, not a deadline, so the
- * two clocks are never compared — this only subtracts elapsed local time from what it was told.
- */
+/** Counts each effect down locally. The server sends a DURATION, so no two clocks are compared. */
 export const EffectTimers = {
     mounted() {
         this.stamp();
@@ -70,9 +66,8 @@ export const EffectTimers = {
 };
 
 /**
- * Relays every non-repeated keydown outside a text field to the server, which drives the Konami
- * cheat. Deliberately fire-and-forget: the server keeps the buffer, so nothing here can be
- * inspected to discover the sequence.
+ * Relays every non-repeated keydown outside a text field, which drives the Konami cheat. The
+ * server keeps the buffer, so nothing here can be inspected to discover the sequence.
  */
 export const KonamiRelay = {
     mounted() {
@@ -93,9 +88,8 @@ export const KonamiRelay = {
 };
 
 /**
- * Focuses the main panel's first control on arrival, so the game plays from the keyboard. Never
- * takes focus the player moved themselves, and never on the death screen, where a stray keypress
- * would retire the run.
+ * Focuses the panel's first control on arrival, so the game plays from the keyboard. Never takes
+ * focus the player moved themselves, and never on the death screen, where Space would retire them.
  */
 export const PanelFocus = {
     mounted() {
@@ -150,8 +144,7 @@ export const PanelFocus = {
 
 /**
  * Eases the HP/XP/Adena counters toward their new value, shimmering a bar that GAINED — damage
- * never shimmers. Only the intermediate frames are formatted here; the final value is always the
- * server-rendered text, so the two formatters can never be seen to disagree.
+ * never does. Only intermediate frames are formatted here; the last one is the server's own text.
  */
 const EASE_MS = 600;
 
@@ -248,10 +241,8 @@ export const AnimatedValues = {
 };
 
 /**
- * Rewrites a server-rendered UTC stamp into the reader's own clock. The server stores an instant
- * and has no idea where anyone is; the browser is the only thing that does.
- *
- * Same shape as `Screens.short_date/1`, which stays as the no-JS fallback.
+ * Rewrites a server-rendered UTC stamp into the reader's own clock — the browser is the only thing
+ * that knows it. Same shape as `Controls.short_date/1`, which stays as the no-JS fallback.
  */
 export const LocalTime = {
     mounted() {

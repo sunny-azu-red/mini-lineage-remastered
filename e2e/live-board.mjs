@@ -1,9 +1,7 @@
 /**
- * The Halls of Champions, live — the one thing neither other suite can show.
- *
- * Both of those drive a single browser, so a board that only refreshed for the person who caused
- * the change would pass them both. This opens two contexts, which means two session cookies and
- * two separate players, and watches one player's page change because of what the OTHER one did.
+ * The Halls, live. The other two drive a single browser, so a board that refreshed only for
+ * whoever caused the change would pass them both. Two contexts here means two session cookies and
+ * two players, and it watches one player's page move because of what the OTHER one did.
  */
 import { chromium } from 'playwright';
 

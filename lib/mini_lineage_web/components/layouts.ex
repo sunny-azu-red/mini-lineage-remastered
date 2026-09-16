@@ -67,12 +67,9 @@ defmodule MiniLineageWeb.Layouts do
                 </div>
               </div>
 
-              <%!-- The screen renders straight into the panel body, with no wrapper of its own:
-                    `h2:first-child` drops its top margin, and an extra element would make every
-                    screen's first heading qualify even when an alert sits above it.
-
-                    The character's live state is mirrored here so a browser test can assert on
-                    game state rather than scraping prose. --%>
+              <%!-- No wrapper of its own: `h2:first-child` drops its top margin, and an extra
+                    element would qualify every screen's first heading even under an alert. The
+                    data attributes mirror live state, so a browser test need not scrape prose. --%>
               <div
                 class="panel-body"
                 id="screen"

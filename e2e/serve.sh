@@ -15,10 +15,9 @@ export MIX_ENV=e2e
 
 mix ecto.migrate >/dev/null
 
-# The walkthrough is only worth running against the bundle in the working tree. Code reloading is
-# off here, which turns Plug.Static's gzip on, so a `.gz` left behind by an earlier
-# `mix assets.deploy` is served in preference to a freshly built app.js — the browser then runs
-# whatever JS was current when that release was cut. Clear the digests, then build.
+# Code reloading is off here, which turns Plug.Static's gzip on — so a `.gz` left by an earlier
+# `mix assets.deploy` wins over a freshly built app.js, and the browser drives whatever JS was
+# current when that release was cut. Clear the digests, then build.
 mix phx.digest.clean --all >/dev/null
 mix assets.build >/dev/null
 

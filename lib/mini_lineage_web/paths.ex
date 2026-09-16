@@ -17,10 +17,8 @@ defmodule MiniLineageWeb.Paths do
   @character_prefix "/character/"
 
   @doc """
-  A run's own record, addressed by its PUBLIC id — never by the session that is playing it.
-
-  `from` is how the record knows where to send you back to: the Halls list every character, and
-  the sidebar only ever opens your own.
+  A run's own record, addressed by its PUBLIC id — never by the session playing it. `from` is how
+  the record knows where to send the reader back to.
   """
   def for_character(id, from \\ nil)
   def for_character(id, nil), do: @character_prefix <> id

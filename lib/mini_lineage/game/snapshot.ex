@@ -154,8 +154,26 @@ defmodule MiniLineage.Game.Snapshot do
     end
   end
 
-  @doc "The static catalog. Nothing in it changes at runtime."
+  @catalog_key {__MODULE__, :catalog}
+
+  @doc """
+  The static catalog. Nothing in it changes at runtime, so it is built once per VM rather than on
+  every mount — slugifying and filling the race templates cost more than building a whole view.
+  """
   def catalog do
+    case :persistent_term.get(@catalog_key, nil) do
+      nil ->
+        catalog = build_catalog()
+        :persistent_term.put(@catalog_key, catalog)
+
+        catalog
+
+      catalog ->
+        catalog
+    end
+  end
+
+  defp build_catalog do
     %{
       races:
         Enum.map(Constants.races(), fn race ->

@@ -326,9 +326,7 @@ defmodule MiniLineage.Game.Player do
 
   @doc """
   Natural HP regeneration, earned by resting. Periodic cadence only. Returns `{player, healed?}`.
-
-  Driven by the 🌿 aura rather than by a second copy of its conditions: what the player can see is
-  what heals them, so the icon and the healing cannot come apart.
+  Driven by the 🌿 aura rather than a second copy of its conditions, so the two cannot come apart.
   """
   def process_regen_tick(%{dead: true} = player), do: {player, false}
 

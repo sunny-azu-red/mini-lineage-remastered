@@ -1,15 +1,12 @@
 /**
- * Shared machinery for the browser suites. Both entry points drive the same game through the same
+ * Shared machinery for walkthrough.mjs and races.mjs. They drive the same game through the same
  * controls, and a helper that drifts between them is a bug neither run would report.
  */
 export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 
 /**
- * The four playable lineages, as the UI must present them.
- *
- * These numbers are the newbie blessing's +20 max health and -4 ambush risk already applied, which
- * is what a player actually sees on a fresh character. The balance behind them belongs to
- * balance_golden_test.exs; what is checked here is only that the screens show it.
+ * The four lineages as the UI must present them, with the newbie blessing already applied — what a
+ * player sees on a fresh character. The balance behind them is balance_golden_test.exs's job.
  */
 export const RACES = [
     { id: 0, label: 'Human',     emoji: '🧙', health: 120, adena: 300, crit: 4,  regen: 1, ambush: 4,  plural: 'Humans' },

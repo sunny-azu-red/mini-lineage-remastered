@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# Empties the walkthrough's board so a run starts from nothing.
-#
-# Without this a local database keeps every character an earlier run buried, the top of the board
-# fills with them, and a freshly created character can no longer rank — a failure about the game
-# that is really about leftovers. CI gets this for free from a new database each run.
+# Empties the browser suites' board so a run starts from nothing. Without it, characters an
+# earlier run buried fill the top and a fresh one can no longer rank — a failure about leftovers
+# wearing the costume of a failure about the game. CI gets this free from a new database each run.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 if [ -f ./env.sh ]; then
@@ -12,10 +10,9 @@ if [ -f ./env.sh ]; then
 fi
 export MIX_ENV=e2e
 
-# The guard is the point: `highscores` also exists in the database people actually play on, and
-# this script must be incapable of reaching it. It compares against what .env names rather than
-# looking for a "_test" in the name — with its own file the throwaway database can sit on another
-# server entirely, so the suffix had stopped meaning anything.
+# The guard is the point: these tables exist in the database people play on too, and this must be
+# incapable of reaching it. It compares against what .env names rather than hunting for a "_test"
+# suffix, which stopped meaning anything once the throwaway database got a file of its own.
 mix run --no-start -e '
   {:ok, _} = Application.ensure_all_started(:postgrex)
   config = Application.get_env(:mini_lineage, MiniLineage.Repo)

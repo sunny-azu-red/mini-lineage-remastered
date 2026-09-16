@@ -1,14 +1,7 @@
 /**
- * Plays every lineage through a normal game, which the main walkthrough cannot: it commits to one
- * race, so a fault in the other three — a wrong purse, a missing backstory, a race that cannot
- * reach the board — would ship unseen.
- *
- * Asserts identity and arithmetic the screens must show, never how a fight rolls. What each race
- * is worth in combat belongs to balance_golden_test.exs, which can seed the dice; here the dice
- * are real, so nothing is claimed about levels reached or damage dealt.
- *
- * Usage: start the isolated server (`e2e/serve.sh`), then
- *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node e2e/races.mjs
+ * Every lineage played through, which the walkthrough cannot: it commits to one race, so a wrong
+ * purse or an unreachable board in the other three would ship unseen. Asserts what the screens
+ * show, never how a fight rolls — the dice are real here, so nothing claims a level or a hit.
  */
 import { chromium } from 'playwright';
 import { BASE, RACES, reporter, controls } from './helpers.mjs';
