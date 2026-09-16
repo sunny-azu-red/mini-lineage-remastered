@@ -16,6 +16,7 @@ package.json
 package-lock.json
 .github/
 README.md
+AGENTS.md
 Dockerfile
 docker-compose.yml
 .env.test
