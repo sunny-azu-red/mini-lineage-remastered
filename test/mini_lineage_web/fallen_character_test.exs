@@ -11,12 +11,12 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   import Phoenix.LiveViewTest
 
   alias MiniLineage.Game.{Constants, Player, Snapshot}
-  alias MiniLineageWeb.Screens
+  alias MiniLineageWeb.{Screens, Screens.Record}
 
   # The component, not the screen: these are about the prose, and `record/1` is what carries it
   # for a reader of any kind.
   defp html_for(player, mine \\ true) do
-    render_component(&Screens.record/1,
+    render_component(&Record.record/1,
       view: Snapshot.build(player),
       catalog: Snapshot.catalog(),
       mine: mine

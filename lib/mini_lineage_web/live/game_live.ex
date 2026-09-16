@@ -8,7 +8,8 @@ defmodule MiniLineageWeb.GameLive do
   """
   use MiniLineageWeb, :live_view
 
-  alias MiniLineage.{Board, Characters}
+  alias MiniLineage.{BattleLog, Board, Characters}
+  alias MiniLineage.Characters.Store
   require Logger
 
   alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
@@ -120,13 +121,13 @@ defmodule MiniLineageWeb.GameLive do
       cond do
         is_nil(entry) -> nil
         entry.id == socket.assigns.character_id -> socket.assigns.view
-        true -> entry.id |> MiniLineage.Characters.Store.load() |> Snapshot.build()
+        true -> entry.id |> Store.load() |> Snapshot.build()
       end
 
     assign(socket,
       record: entry,
       record_view: view,
-      record_log: (entry && MiniLineage.BattleLog.history(entry.id)) || []
+      record_log: (entry && BattleLog.history(entry.id)) || []
     )
   end
 
@@ -308,19 +309,14 @@ defmodule MiniLineageWeb.GameLive do
   defp absorb(socket, {:error, _code, message}),
     do: assign(socket, notice: message, game_flash: nil)
 
-  defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil, last_result: nil)
+  defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil)
 
   defp absorb(socket, {:ok, %{text: _} = flash}),
-    do:
-      socket
-      |> assign(notice: nil, game_flash: flash, last_result: nil)
-      |> play(flash[:sound])
+    do: socket |> assign(notice: nil, game_flash: flash) |> play(flash[:sound])
 
   defp absorb(socket, {:ok, result}) do
-    flash = Map.get(result, :flash)
-
     socket
-    |> assign(notice: nil, game_flash: flash, last_result: result)
+    |> assign(notice: nil, game_flash: Map.get(result, :flash))
     |> play(Map.get(result, :sound))
   end
 
@@ -373,9 +369,9 @@ defmodule MiniLineageWeb.GameLive do
       screen={@screen}
       character_id={@character_id}
     >
-      <Screens.notice :if={@notice} message={@notice} />
-      <Screens.flash_alert :if={@game_flash} flash={@game_flash} />
-      <Screens.low_health
+      <Controls.notice :if={@notice} message={@notice} />
+      <Controls.flash_alert :if={@game_flash} flash={@game_flash} />
+      <Controls.low_health
         :if={Screens.low_health_alert?(@view, @screen)}
         ambushed={@view.ambushed}
         ambush_line={@view.ambush_low_health}

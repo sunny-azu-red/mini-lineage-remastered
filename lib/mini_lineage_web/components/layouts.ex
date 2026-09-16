@@ -5,8 +5,8 @@ defmodule MiniLineageWeb.Layouts do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Format, Version}
-  alias MiniLineageWeb.{Paths, Screens}
+  alias MiniLineage.Game.{Access, Format, Version}
+  alias MiniLineageWeb.Paths
 
   embed_templates "layouts/*"
 
@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.Layouts do
 
         <div id="content">
           <.sidebar
-            :if={@view.started && Screens.sidebar?(@screen)}
+            :if={@view.started && Access.sidebar?(@screen)}
             view={@view}
             character_id={@character_id}
           />
