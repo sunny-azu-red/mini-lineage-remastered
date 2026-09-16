@@ -22,15 +22,20 @@ defmodule MiniLineageWeb.Screens do
     "battle" => "Battleground",
     "death" => "Game Over",
     "character" => "Character",
-    "highscores" => "Hall of Champions",
     "statistics" => "The Tome of Lore",
     "races" => "Chronicles of Ancestry",
     "error" => "Error"
   }
 
-  def title(screen), do: Map.get(@titles, screen, "Mini Lineage")
+  def title(screen, race \\ nil)
+  def title("highscores", race), do: "Hall of #{hall_of(race)} Champions"
+  def title(screen, _race), do: Map.get(@titles, screen, "Mini Lineage")
 
-  def page_title(screen), do: "Mini Lineage - #{title(screen)}"
+  def page_title(screen, race \\ nil), do: "Mini Lineage - #{title(screen, race)}"
+
+  @doc "Whose hall this is. Every place that names one says it the same way."
+  def hall_of(nil), do: "All"
+  def hall_of(race), do: race.label
 
   attr :screen, :string, required: true
   attr :view, :map, required: true
@@ -381,7 +386,7 @@ defmodule MiniLineageWeb.Screens do
 
     <div class="action-links">
       <.link :if={@race} patch={Paths.for_screen("highscores", @race.slug)} class="btn">
-        {@race.emoji} The Hall of {@race.plural}
+        📜 The Hall of {hall_of(@race)} Champions
       </.link>
       <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
     </div>
@@ -628,7 +633,7 @@ defmodule MiniLineageWeb.Screens do
     <% end %>
 
     <p :if={@entry && @entry.disqualified} class="muted">
-      Barred from the Halls of Champions — this run ended by its own hand or by heresy. Its record
+      Barred from the Hall of Champions — this run ended by its own hand or by heresy. Its record
       stands regardless.
     </p>
 
@@ -661,7 +666,7 @@ defmodule MiniLineageWeb.Screens do
   defp character(%{record: nil} = assigns) do
     ~H"""
     <p>
-      No such name is written here. The Halls keep only those who drew a blade, and this one either
+      No such name is written here. The Hall keeps only those who drew a blade, and this one either
       never did or was never real.
     </p>
 
@@ -702,7 +707,7 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <p class="last back">
       <.link patch={Paths.for_screen("highscores", @race && @race.slug)}>
-        Go back to halls of champions
+        Go back to the Hall of {hall_of(@race)} Champions
       </.link>
     </p>
     """
@@ -740,7 +745,7 @@ defmodule MiniLineageWeb.Screens do
 
     <%= if @rows == [] do %>
       <p>
-        The halls are silent. No soul has yet earned a place among these hallowed pillars. The
+        The Hall is silent. No soul has yet earned a place among these hallowed pillars. The
         chronicle of champions awaits its first entry. Will your name be the first to echo through
         eternity?
       </p>
@@ -903,7 +908,7 @@ defmodule MiniLineageWeb.Screens do
   defp epitaph(%{cheated: true}),
     do:
       "The scribes have scraped your name from the stone before the ink was dry. Nothing of this " <>
-        "run will be kept, and the Halls will not remember you were ever here."
+        "run will be kept, and the Hall will not remember you were ever here."
 
   defp epitaph(%{coward: true}),
     do:
@@ -925,9 +930,9 @@ defmodule MiniLineageWeb.Screens do
   defp ending(%{active: true}), do: "and was last seen on"
   defp ending(_missing), do: "and has not been seen since"
 
-  defp medal_title(1), do: "First in the Halls"
-  defp medal_title(2), do: "Second in the Halls"
-  defp medal_title(3), do: "Third in the Halls"
+  defp medal_title(1), do: "First in the Hall"
+  defp medal_title(2), do: "Second in the Hall"
+  defp medal_title(3), do: "Third in the Hall"
 
   defp race_emoji(catalog, race_id) do
     case Enum.find(catalog.races, &(&1.id == race_id)) do

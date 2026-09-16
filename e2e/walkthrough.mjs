@@ -440,7 +440,7 @@ try {
         elfRows < allRows && (await activeFilter())?.includes('Elf'),
         `${allRows} rows -> ${elfRows}, active "${await activeFilter()}"`);
     check('...and a filter matching nobody says so rather than showing an empty table',
-        elfRows > 0 || /The halls are silent/.test(await page.textContent('#main') ?? ''));
+        elfRows > 0 || /The Hall is silent/.test(await page.textContent('#main') ?? ''));
 
     await page.click('#main .action-links a:has-text("All")');
     await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });

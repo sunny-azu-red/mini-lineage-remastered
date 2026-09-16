@@ -102,6 +102,12 @@ defmodule MiniLineageWeb.GameLive do
   # survives the trip means the button appears to do nothing.
   defp assign_race_filter(socket, _params), do: assign(socket, race_filter: nil)
 
+  # Which hall is being read, so every place that names one says the same thing.
+  defp filter_race(%{assigns: assigns}), do: filter_race(assigns)
+
+  defp filter_race(%{race_filter: id, catalog: catalog}),
+    do: Enum.find(catalog.races, &(&1.id == id))
+
   # A run nobody can find is not an error — `Screens` draws the empty state for a nil record, the
   # same way the Halls draw one when nobody has played.
   #
@@ -141,7 +147,12 @@ defmodule MiniLineageWeb.GameLive do
         do: assign(socket, flash_fresh: false),
         else: assign(socket, game_flash: nil)
 
-    socket = assign(socket, screen: screen, picked: nil, page_title: Screens.page_title(screen))
+    socket =
+      assign(socket,
+        screen: screen,
+        picked: nil,
+        page_title: Screens.page_title(screen, filter_race(socket))
+      )
 
     if connected?(socket) and Player.started?(socket.assigns.player) do
       apply_action(socket, &Actions.set_screen(&1, screen))
@@ -357,7 +368,7 @@ defmodule MiniLineageWeb.GameLive do
     ~H"""
     <Layouts.app
       flash={@flash}
-      title={Screens.title(@screen)}
+      title={Screens.title(@screen, filter_race(assigns))}
       view={@view}
       screen={@screen}
       character_id={@character_id}

@@ -52,7 +52,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
     test "says the halls are silent rather than drawing an empty table", %{conn: conn} do
       {:ok, _live, html} = live(conn, ~p"/highscores")
 
-      assert html =~ "The halls are silent"
+      assert html =~ "The Hall is silent"
       refute html =~ "data-table"
     end
 
@@ -135,11 +135,11 @@ defmodule MiniLineageWeb.BoardScreenTest do
       %{id: id} = run("Aurelia", xp: 500)
 
       {:ok, _live, halls} = live(conn, ~p"/character/#{id}")
-      assert halls =~ "Go back to halls of champions"
+      assert halls =~ "Go back to the Hall of All Champions"
       refute halls =~ "btn btn-secondary", "the way out of a record has never been an action"
 
       {:ok, _live, game} = live(conn, ~p"/character/#{id}?from=game")
-      refute game =~ "Go back to halls of champions"
+      refute game =~ "Go back to the Hall of"
     end
 
     test "keeps the lineage you were reading, all the way there and back", %{conn: conn} do
@@ -150,6 +150,16 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
       {:ok, _live, record} = live(conn, ~p"/character/#{id}?from=dark-elf")
       assert record =~ ~s(href="/highscores/dark-elf")
+    end
+
+    test "and the link says the hall it goes to", %{conn: conn} do
+      %{id: id} = run("Shadowy", race_id: 3, xp: 500)
+
+      {:ok, _live, filtered} = live(conn, ~p"/character/#{id}?from=dark-elf")
+      assert filtered =~ "Go back to the Hall of Dark Elf Champions"
+
+      {:ok, _live, all} = live(conn, ~p"/character/#{id}")
+      assert all =~ "Go back to the Hall of All Champions"
     end
 
     test "and the unfiltered Halls send you back unfiltered", %{conn: conn} do
@@ -253,7 +263,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       assert html =~ "Coward"
-      assert html =~ "Barred from the Halls"
+      assert html =~ "Barred from the Hall of Champions"
     end
 
     test "and says so plainly for an id that is nobody", %{conn: conn} do

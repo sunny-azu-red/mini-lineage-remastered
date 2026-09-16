@@ -83,7 +83,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
       html = html_for(Player.kill(hero()))
 
       assert html =~ ~s(href="/highscores/orc")
-      assert html =~ "The Hall of Orcs"
+      assert html =~ "The Hall of Orc Champions"
       refute html =~ "Your Record"
     end
 
