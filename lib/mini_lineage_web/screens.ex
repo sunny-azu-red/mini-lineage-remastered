@@ -251,8 +251,11 @@ defmodule MiniLineageWeb.Screens do
       you hail?
     </p>
 
+    <%!-- `phx-update="ignore"`: the dead render is interactive before the socket connects, and the
+          first live render was resetting a race picked in that window back to the first option.
+          Nothing here is server-driven — the lineages are static and the name is the player's. --%>
     <form phx-submit="start">
-      <div class="form-row">
+      <div class="form-row" id="start-fields" phx-update="ignore">
         <input
           type="text"
           name="name"

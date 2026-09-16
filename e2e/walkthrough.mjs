@@ -105,10 +105,20 @@ try {
     check('...and correcting the address bar', new URL(page.url()).pathname === '/', page.url());
 
     // ---- create a character -------------------------------------------------------------------
+    // Deliberately BEFORE the socket connects. The dead render is already interactive, and the
+    // first live render used to reset a race chosen in that window back to the first option — so a
+    // player on a slow connection picked an Orc and got a Human.
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.waitForSelector('#main select[name="race_id"]', { timeout: 8000 });
     await page.fill('#main input[name="name"]', 'BrowserBot');
     await page.selectOption('#main select[name="race_id"]', '1'); // Orc: 150 HP, survives a while
+
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('a choice made before the socket connects survives the first live render',
+        await page.inputValue('#main select[name="race_id"]') === '1'
+        && await page.inputValue('#main input[name="name"]') === 'BrowserBot',
+        `${await page.inputValue('#main select[name="race_id"]')} / ${await page.inputValue('#main input[name="name"]')}`);
+
     await page.click('#main button[type="submit"]');
     await onScreen('home');
 
