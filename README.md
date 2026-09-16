@@ -274,6 +274,13 @@ Three things decide whether that works:
 The build **requires** `APP_VERSION` — an image that cannot name its commit does not get built.
 For a throwaway one, any seven characters will do.
 
+`podman build` works as a drop-in, and rootless. It needs to be told where unqualified image names
+live, which Docker assumes:
+
+```bash
+printf 'unqualified-search-registries = ["docker.io"]\n' > ~/.config/containers/registries.conf
+```
+
 ### Deploying
 
 CI publishes the image, so a server pulls rather than builds:
