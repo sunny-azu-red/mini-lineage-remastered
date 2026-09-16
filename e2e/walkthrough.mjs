@@ -149,14 +149,14 @@ try {
         await page.evaluate(() => document.activeElement?.tagName));
 
     // ---- the action button answers to the selection ---------------------------------------------
-    let btn = await buttonSettles('Travel');
-    check('Town offers to Travel before anything is picked', btn.label === 'Travel', JSON.stringify(btn));
+    let btn = await buttonSettles('🧭 Travel');
+    check('Town offers to Travel before anything is picked', btn.label === '🧭 Travel', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'suicide');
     btn = await buttonSettles('⚰️ Perish');
     check('...and turns into Perish when Suicide is chosen', btn.label === '⚰️ Perish', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'inn');
-    btn = await buttonSettles('Travel');
-    check('...and back to Travel for anywhere else', btn.label === 'Travel', JSON.stringify(btn));
+    btn = await buttonSettles('🧭 Travel');
+    check('...and back to Travel for anywhere else', btn.label === '🧭 Travel', JSON.stringify(btn));
 
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');

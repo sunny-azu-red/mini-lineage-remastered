@@ -257,13 +257,15 @@ defmodule MiniLineageWeb.BoardScreenTest do
       assert html =~ "and fell on"
     end
 
-    test "still renders a disqualified one, with the reason stated", %{conn: conn} do
+    test "still renders a disqualified one — the record stands, unannotated", %{conn: conn} do
       %{id: id} = run("Coward", xp: 50, dead: true, coward: true)
 
       {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       assert html =~ "Coward"
-      assert html =~ "Barred from the Hall of Champions"
+      # The ending says what became of the run. A record is the run itself, and says neither.
+      refute html =~ "Barred from the Hall"
+      refute html =~ "hallowed pillars"
     end
 
     test "and says so plainly for an id that is nobody", %{conn: conn} do

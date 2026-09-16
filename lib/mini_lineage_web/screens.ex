@@ -293,8 +293,8 @@ defmodule MiniLineageWeb.Screens do
         %{value: "battle", label: "💀 Battleground"},
         %{value: "suicide", label: "🥀 Commit Suicide"}
       ]}
-      default_label="Travel"
-      active_label={fn value -> if value == "suicide", do: "⚰️ Perish", else: "Travel" end}
+      default_label="🧭 Travel"
+      active_label={fn value -> if value == "suicide", do: "⚰️ Perish", else: "🧭 Travel" end}
       default_variant="btn"
       active_variant="btn"
     />
@@ -601,7 +601,7 @@ defmodule MiniLineageWeb.Screens do
         with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp">{@xp_needed} XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and {@voice.their} purse held <span class="gold">🪙 {@purse} Adena</span>
         when the road ran out.
       </p>
-      <p>{@view.death_reason}</p>
+      <p class="hp">{@view.death_reason}</p>
     <% else %>
       <h2>The Journey So Far</h2>
       <p>
@@ -639,11 +639,6 @@ defmodule MiniLineageWeb.Screens do
         for the journey ahead.
       </p>
     <% end %>
-
-    <p :if={@entry && @entry.disqualified} class="muted">
-      Barred from the Hall of Champions — this run ended by its own hand or by heresy. Its record
-      stands regardless.
-    </p>
 
     <p :if={@entry} phx-no-format>
       Set out on <.stamp id="record-set-out" at={@entry.inserted_at} />
