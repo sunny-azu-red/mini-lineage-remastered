@@ -388,7 +388,12 @@ defmodule MiniLineageWeb.Screens do
     <p>{epitaph(@view)}</p>
 
     <div class="action-links">
-      <.link :if={@race} patch={Paths.for_screen("highscores", @race.slug)} class="btn">
+      <%!-- Not offered to a run the Hall will not list: the epitaph above has just said so. --%>
+      <.link
+        :if={@race && not @view.disqualified}
+        patch={Paths.for_screen("highscores", @race.slug)}
+        class="btn"
+      >
         📜 The Hall of {hall_of(@race)} Champions
       </.link>
       <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>

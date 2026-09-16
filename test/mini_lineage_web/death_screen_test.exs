@@ -77,6 +77,17 @@ defmodule MiniLineageWeb.DeathScreenTest do
       refute html =~ ~s(class="muted")
     end
 
+    test "is not offered to a run the Hall will not list" do
+      {cheater, _} = Actions.cheat(hero())
+
+      for barred <- [Player.commit_suicide(hero()), Player.kill(cheater)] do
+        html = html_for(barred)
+
+        refute html =~ "The Hall of", "a barred run is pointed at a board it is not on"
+        assert html =~ "Play Again?", "and is left with the one thing it can still do"
+      end
+    end
+
     test "points at the Halls of its own lineage, not back at its own record" do
       # The sidebar is on this screen and already links the record, so a second link to it was a
       # second door into the same room. Where a run stands among its own is new.
