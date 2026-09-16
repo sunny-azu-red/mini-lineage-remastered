@@ -531,8 +531,8 @@ try {
     check('...and the death screen is headed "Game Over"',
         (await page.textContent('#main .header-name'))?.trim() === 'Game Over',
         await page.textContent('#main .header-name'));
-    check('...and is told the Halls will not have them',
-        /will not have it/.test(await page.textContent('#main') ?? ''));
+    check('...and is told the scribes have unmade the run',
+        /scraped your name from the stone/.test(await page.textContent('#main') ?? ''));
 
     await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });

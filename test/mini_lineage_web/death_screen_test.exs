@@ -87,14 +87,16 @@ defmodule MiniLineageWeb.DeathScreenTest do
       refute html =~ "Write your Legacy", "the board no longer waits to be written to"
     end
 
-    test "a coward or a cheater is told the Halls will not have them" do
+    test "says what the chroniclers did with the run, and it is not the same for everyone" do
       {cheater, _} = Actions.cheat(hero())
 
-      for barred <- [Player.commit_suicide(hero()), Player.kill(cheater)] do
-        assert html_for(barred) =~ "will not have it"
-      end
+      # Heresy outranks cowardice, the order resolve_death_reason/1 uses.
+      assert html_for(Player.kill(cheater)) =~ "scraped your name from the stone"
+      assert html_for(Player.commit_suicide(hero())) =~ "No chronicler lifts a quill"
+      assert html_for(Player.kill(hero())) =~ "cut your deeds into the hallowed pillars"
 
-      refute html_for(Player.kill(hero())) =~ "will not have it"
+      # A cheat who also despairs is judged for the heresy.
+      assert html_for(Player.commit_suicide(cheater)) =~ "scraped your name from the stone"
     end
 
     test "but anyone may start again" do

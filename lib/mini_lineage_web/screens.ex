@@ -377,9 +377,7 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <p>{@view.death_reason}</p>
 
-    <p :if={@view.disqualified} class="muted">
-      This run keeps its record, but the Halls of Champions will not have it.
-    </p>
+    <p class="muted">{epitaph(@view)}</p>
 
     <div class="action-links">
       <.link :if={@race} patch={Paths.for_screen("highscores", @race.slug)} class="btn">
@@ -877,6 +875,23 @@ defmodule MiniLineageWeb.Screens do
   # A run is going while it has neither died nor lost its session. Without one it is missing: it
   # can never be played again, so it is over even though it never died.
   defp still_going?(row), do: not row.dead and row.active
+
+  # What the chroniclers did with the run, which is not the same as how it ended. Heresy outranks
+  # cowardice, the same order `resolve_death_reason/1` uses.
+  defp epitaph(%{cheated: true}),
+    do:
+      "The scribes have scraped your name from the stone before the ink was dry. Nothing of this " <>
+        "run will be kept, and the Halls will not remember you were ever here."
+
+  defp epitaph(%{coward: true}),
+    do:
+      "No chronicler lifts a quill for a life laid down by its own hand. The pillars stay bare " <>
+        "where your name should have stood."
+
+  defp epitaph(_recorded),
+    do:
+      "The chroniclers have already cut your deeds into the hallowed pillars of Aden, where they " <>
+        "keep what the living forget. Your name will echo there long after this road has closed."
 
   defp medal(1), do: "🥇"
   defp medal(2), do: "🥈"
