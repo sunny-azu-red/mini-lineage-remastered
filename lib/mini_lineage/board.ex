@@ -83,8 +83,8 @@ defmodule MiniLineage.Board do
 
     online = Characters.online()
 
-    Enum.map(Constants.races(), & &1.id)
-    |> Map.new(&{&1, mark(top(&1), medals, online)})
+    Constants.races()
+    |> Map.new(&{&1.id, mark(top(&1.id), medals, online)})
     |> Map.put(nil, mark(overall, medals, online))
   end
 

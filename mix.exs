@@ -36,9 +36,6 @@ defmodule MiniLineage.MixProject do
     release
   end
 
-  # Configuration for the OTP application.
-  #
-  # Type `mix help compile.app` for more information.
   def application do
     [
       mod: {MiniLineage.Application, []},
@@ -56,16 +53,12 @@ defmodule MiniLineage.MixProject do
     ]
   end
 
-  # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
 
   # The balance simulations and their `mix balance` task are a dev tool; a release must not carry them.
   defp elixirc_paths(:dev), do: ["lib", "scratch"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Specifies your project dependencies.
-  #
-  # Type `mix help deps` for examples and options.
   defp deps do
     [
       {:phoenix, "~> 1.8.13"},

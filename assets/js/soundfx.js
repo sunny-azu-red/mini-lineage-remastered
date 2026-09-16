@@ -8,7 +8,7 @@ let audioCtx = null;
 let enabled = true;
 
 /** Lazily-created singleton. Never auto-resumes on its own; `installUnlock` does that. */
-export function getAudioContext() {
+function getAudioContext() {
     if (!audioCtx) {
         const Ctor = window.AudioContext ?? window.webkitAudioContext;
         audioCtx = new Ctor();

@@ -1,4 +1,4 @@
-import { playSound, setSoundEnabled, soundEnabled, restoreSoundPreference } from './soundfx';
+import { playSound, setSoundEnabled, soundEnabled } from './soundfx';
 
 /** Mute toggle. The preference is per-browser and never reaches the server. */
 export const SoundToggle = {
@@ -257,7 +257,7 @@ export const LocalTime = {
     },
 };
 
-export function localDate(at) {
+function localDate(at) {
     const pad = (n) => String(n).padStart(2, '0');
 
     return `${pad(at.getDate())}/${pad(at.getMonth() + 1)}/${String(at.getFullYear()).slice(-2)}, `

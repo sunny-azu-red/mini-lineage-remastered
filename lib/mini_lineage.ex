@@ -1,9 +1,6 @@
 defmodule MiniLineage do
   @moduledoc """
-  MiniLineage keeps the contexts that define your domain
-  and business logic.
-
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
+  The game's namespace. `Characters` is the way in to a run; `Game` holds the rules it plays by,
+  and `Board`, `BattleLog` and `Statistics` are what outlives one.
   """
 end

@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping. Reuses the math and player modules."
-  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player}
+  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Player}
 
   def item_view(item) do
     modifiers = Map.get(item, :modifiers) || effect_modifiers(item)
@@ -131,8 +131,7 @@ defmodule MiniLineage.Game.Snapshot do
       label: effect.label,
       tooltip: tooltip(effect),
       # A duration, not a deadline: the two machines' clocks never need reconciling.
-      remaining_ms:
-        effect.expires_at && max(0, effect.expires_at - MiniLineage.Game.Clock.now_ms())
+      remaining_ms: effect.expires_at && max(0, effect.expires_at - Clock.now_ms())
     }
   end
 
