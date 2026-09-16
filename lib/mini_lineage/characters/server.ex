@@ -6,11 +6,11 @@ defmodule MiniLineage.Characters.Server do
   """
   use GenServer, restart: :transient
 
-  alias MiniLineage.BattleLog
-  alias MiniLineage.Characters.Store
+  alias MiniLineage.{BattleLog, Board}
+  alias MiniLineage.Characters.{Store, TickLog}
   require Logger
 
-  alias MiniLineage.Game.{Clock, Constants, Format, Player}
+  alias MiniLineage.Game.{Clock, Constants, Player}
 
   # Fires just past the deadline so the sweep reliably sees the effect as due.
   @expiry_grace_ms 25
@@ -149,8 +149,8 @@ defmodule MiniLineage.Characters.Server do
     {player, result} = fun.(player)
     player = sync(player)
 
-    changed? = not same?(before, player)
-    if opts[:log], do: log_tick(state.id, player, health_before, expired, changed?)
+    changed? = before != player
+    if opts[:log], do: TickLog.write(state.id, player, health_before, expired, changed?)
 
     if changed? do
       # Always broadcast: a viewer must see the tick whether or not it was worth a write.
@@ -192,7 +192,7 @@ defmodule MiniLineage.Characters.Server do
   # buffer with it — so a failure keeps the state dirty and the next flush carries it.
   defp persist(state) do
     Store.save(state.id, state.session, state.player, state.pending_battles)
-    MiniLineage.Board.character_changed()
+    Board.character_changed()
 
     %{state | dirty_since: nil, pending_battles: []}
   rescue
@@ -213,51 +213,6 @@ defmodule MiniLineage.Characters.Server do
     Enum.filter(player.effects, &(&1.expires_at != nil and &1.expires_at <= now))
   end
 
-  # `[TICK:<id>] <Zone> | HP: <old> -> <new>/<max> (<status>)`. The zone reads the RESTING aura, not
-  # the absence of combat: a screen in neither list is its own case, not a mislabelled "Resting".
-  defp log_tick(id, player, health_before, expired, changed?) do
-    stats = Player.stats(player)
-    dead? = player.dead or player.health <= 0
-    combat? = not dead? and Enum.any?(player.effects, &(&1.id == "combat"))
-    resting? = not dead? and Enum.any?(player.effects, &(&1.id == "resting"))
-
-    zone =
-      cond do
-        dead? -> "Dead"
-        combat? -> "In Combat"
-        resting? -> "Resting"
-        true -> "No Zone"
-      end
-
-    difference = player.health - health_before
-    moved = if difference != 0, do: "#{health_before} -> ", else: ""
-
-    labels = Enum.map_join(expired, ", ", & &1.label)
-
-    kind =
-      if expired == [],
-        do: "Effect",
-        else: expired |> hd() |> Map.fetch!(:type) |> to_string() |> Format.capitalize()
-
-    suffix = if labels == "", do: "", else: ": #{labels}"
-
-    status =
-      cond do
-        difference > 0 -> "+#{difference} HPR"
-        difference < 0 -> "#{difference} HP | #{kind} Expired#{suffix}"
-        changed? and labels != "" -> "#{kind} Expired#{suffix}"
-        changed? -> "Effect Expired"
-        player.health >= stats.max_health -> "Full"
-        combat? or dead? or not resting? -> "Paused"
-        stats.regen == 0 -> "0 HPR"
-        true -> "Idle"
-      end
-
-    Logger.debug(
-      "[TICK:#{String.slice(id, 0, 7)}] #{zone} | HP: #{moved}#{player.health}/#{stats.max_health} (#{status})"
-    )
-  end
-
   defp sync(player) do
     if Player.started?(player) do
       {player, _changed} = Player.sync_zone_auras(player)
@@ -266,9 +221,6 @@ defmodule MiniLineage.Characters.Server do
       player
     end
   end
-
-  # Revision is excluded: it is the record OF a change, never a reason to persist one.
-  defp same?(a, b), do: a == b
 
   defp schedule_tick, do: Process.send_after(self(), :tick, Constants.tick_interval_ms())
 
@@ -311,7 +263,7 @@ defmodule MiniLineage.Characters.Server do
       {state.id, watched?}
     end)
 
-    MiniLineage.Board.character_changed()
+    Board.character_changed()
 
     state
   end
