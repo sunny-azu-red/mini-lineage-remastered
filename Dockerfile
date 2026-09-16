@@ -1,7 +1,8 @@
 # The builder's Elixir and OTP are pinned to the versions the game is developed and tested against.
 FROM hexpm/elixir:1.20.4-erlang-28.5.0.6-alpine-3.22.5 AS builder
 
-RUN apk add --no-cache build-base git
+# Nothing to apk add: the base image carries Elixir and OTP, every production dependency is pure
+# Elixir or Erlang, and APP_VERSION arrives as a build arg because there is no .git in the context.
 WORKDIR /app
 
 # Without a UTF-8 locale the VM runs with latin1 name encoding and warns that Elixir "may
