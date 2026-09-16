@@ -533,7 +533,7 @@ try {
         endBtn.label === 'Phew 😅' && endBtn.cls === 'btn btn-secondary', JSON.stringify(endBtn));
     await page.selectOption('#main select[name="confirm"]', 'yes');
     endBtn = await buttonSettles('Do it 🥀');
-    check('...but going through with it is',
+    check('...but going through with it is the last warning, in the red death wears',
         endBtn.label === 'Do it 🥀' && endBtn.cls === 'btn btn-danger', JSON.stringify(endBtn));
     await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
     await onScreen('death');

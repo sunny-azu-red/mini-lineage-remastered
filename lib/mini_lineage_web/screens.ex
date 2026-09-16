@@ -356,6 +356,9 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  # Going through with it is danger, not primary: red is the last warning before the red death
+  # message it leads to. Its emoji trails the label rather than leading it, the one place the game
+  # does that.
   defp suicide(assigns) do
     ~H"""
     <p>Do you wish to depart this world?</p>
