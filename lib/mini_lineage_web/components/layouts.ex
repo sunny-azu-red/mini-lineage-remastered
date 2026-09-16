@@ -114,15 +114,9 @@ defmodule MiniLineageWeb.Layouts do
       title={@effect.tooltip}
     >
       <span class="effect-emoji">{@effect.emoji}</span>
-      <span :if={@effect.remaining_ms} class="effect-timer">{effect_timer(@effect.remaining_ms)}</span>
+      <span :if={@effect.remaining_ms} class="effect-timer">{Format.countdown(@effect.remaining_ms)}</span>
     </span>
     """
-  end
-
-  defp effect_timer(remaining_ms) do
-    seconds = max(0, ceil(remaining_ms / 1000))
-
-    if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
   end
 
   attr :view, :map, required: true

@@ -1,0 +1,24 @@
+{
+  "_comment": "Milliseconds remaining, and the label both countdown formatters must produce. Read by test/mini_lineage/game/format_test.exs for the Elixir side and by e2e/walkthrough.mjs for the JavaScript one, so a divergence fails a test rather than making the number jump the moment the hook takes over from the server.",
+  "cases": [
+    [0, "0"],
+    [1, "1"],
+    [999, "1"],
+    [1000, "1"],
+    [1001, "2"],
+    [5000, "5"],
+    [30000, "30"],
+    [59000, "59"],
+    [59001, "1m"],
+    [60000, "1m"],
+    [60001, "1m"],
+    [90000, "1m"],
+    [119999, "2m"],
+    [120000, "2m"],
+    [120001, "2m"],
+    [300000, "5m"],
+    [3600000, "60m"],
+    [-1, "0"],
+    [-5000, "0"]
+  ]
+}

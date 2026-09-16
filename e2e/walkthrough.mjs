@@ -71,6 +71,20 @@ try {
     check('the browser formats adena exactly as the server does', mismatched.length === 0,
         mismatched.join(' | '));
 
+    // ---- and so do the two countdown formatters ------------------------------------------------
+    // The server renders an effect's first frame and the hook repaints it every second, so these
+    // must agree or the label changes shape the moment the hook takes over. Elixir reads the same
+    // table in format_test.exs.
+    const timers = JSON.parse(readFileSync('test/fixtures/effect_timer.json', 'utf8')).cases;
+    const offBy = await page.evaluate(
+        (rows) => rows
+            .filter(([ms, expected]) => window.__timerLabel(ms) !== expected)
+            .map(([ms, expected]) => `${ms}: ${window.__timerLabel(ms)} != ${expected}`),
+        timers,
+    );
+    check('the browser labels a countdown exactly as the server does', offBy.length === 0,
+        offBy.join(' | '));
+
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
     check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));

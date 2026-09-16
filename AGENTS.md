@@ -56,10 +56,14 @@ rendered HTML passes or fails on the roll. Where a test renders a drawn line, fi
 (`%{Player.kill(p) | death_reason: "..."}`); that it came from the pool at all is a separate test's
 job, against the struct rather than the page.
 
-**The two adena formatters stay in step.** `Format.adena` and `shortAdena` in `hooks.js` are
-duplicated on purpose — the count-up animation formats its own frames, and without a client-side
-copy the number would change format mid-count. Both read
-`test/fixtures/adena_format.json`. Change one, change the table, and both tests will tell you.
+**A formatter with a client-side twin is held to a table.** Two are duplicated on purpose.
+`Format.adena` and `shortAdena` in `hooks.js`: the count-up animation formats its own frames, and
+without a client-side copy the number would change format mid-count. `Format.countdown` and
+`timerLabel`: the server renders an effect's first frame and the hook repaints it every second.
+Each pair reads one fixture — `test/fixtures/adena_format.json`, `test/fixtures/effect_timer.json`
+— from `format_test.exs` on the Elixir side and `walkthrough.mjs` on the JavaScript one. Change
+either implementation, change its table, and both tests will tell you. Anything else the two
+languages both format wants the same treatment before it gets a second copy.
 
 **Mutable working state is a document; anything sorted on is a column.** `characters` is owned by
 a process and only ever read whole, so it is one `jsonb` blob — but the fields the board ranks on

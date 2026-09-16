@@ -48,7 +48,7 @@ defmodule MiniLineage.Game.FormatTest do
   end
 
   describe "the values the JavaScript must agree on" do
-    test "are formatted the same way here" do
+    test "adena is formatted the same way here" do
       # The count-up animation formats its own intermediate frames, so hooks.js carries a second
       # implementation of this — it cannot be removed without the number jumping format mid-count.
       # Both sides read this file, so a divergence fails a test instead of wobbling on screen.
@@ -57,6 +57,17 @@ defmodule MiniLineage.Game.FormatTest do
 
       for [value, expected] <- cases do
         assert Format.adena(value) == expected, "#{value} formatted as #{Format.adena(value)}"
+      end
+    end
+
+    test "and so is a countdown" do
+      # The server renders the first frame and `timerLabel` in hooks.js repaints it every second,
+      # so a divergence shows as the number changing shape the instant the hook takes over.
+      %{"cases" => cases} =
+        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
+
+      for [ms, expected] <- cases do
+        assert Format.countdown(ms) == expected, "#{ms}ms labelled #{Format.countdown(ms)}"
       end
     end
   end

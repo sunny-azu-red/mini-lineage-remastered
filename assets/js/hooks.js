@@ -24,6 +24,17 @@ export const SoundToggle = {
 };
 
 /**
+ * An effect's remaining time, as the icon wears it. Twinned with `Format.countdown/1`, which
+ * renders the first frame server-side — they are held to test/fixtures/effect_timer.json so the
+ * number cannot change shape the moment this takes over.
+ */
+export function timerLabel(remainingMs) {
+    const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+
+    return seconds >= 60 ? `${Math.floor(seconds / 60)}m` : String(seconds);
+}
+
+/**
  * Counts each effect's timer down locally. The server sends a DURATION, not a deadline, so the
  * two clocks are never compared — this only subtracts elapsed local time from what it was told.
  */
@@ -53,8 +64,7 @@ export const EffectTimers = {
             if (!label)
                 continue;
 
-            const seconds = Math.max(0, Math.ceil((remaining - elapsed) / 1000));
-            label.textContent = seconds >= 60 ? `${Math.floor(seconds / 60)}m` : String(seconds);
+            label.textContent = timerLabel(remaining - elapsed);
         }
     },
 };

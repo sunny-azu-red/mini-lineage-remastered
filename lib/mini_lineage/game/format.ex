@@ -43,6 +43,16 @@ defmodule MiniLineage.Game.Format do
       unit
   end
 
+  @doc """
+  An effect's remaining time, as the icon wears it: seconds until a minute, whole minutes after.
+  Twinned with `timerLabel` in `hooks.js`, which repaints this every second.
+  """
+  def countdown(remaining_ms) do
+    seconds = max(0, ceil(remaining_ms / 1000))
+
+    if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
+  end
+
   def pluralize(singular, plural, count, emoji \\ nil) do
     icon = if emoji, do: "#{emoji} ", else: ""
 
