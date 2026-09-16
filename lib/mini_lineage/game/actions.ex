@@ -17,11 +17,14 @@ defmodule MiniLineage.Game.Actions do
     invalid: "That is not something you can do."
   }
 
-  defp guard(player, checks) do
+  defp refusal(player, checks) do
     Enum.find_value(checks, fn {code, failed?} ->
       if failed?.(player), do: {player, {:error, code, @errors[code]}}
     end)
   end
+
+  # The first failing precondition IS the result; `fun` runs only when every one of them holds.
+  defp guard(player, checks, fun), do: refusal(player, checks) || fun.(player)
 
   defp started, do: [{:not_started, &(not Player.started?(&1))}]
   defp alive, do: started() ++ [{:dead, & &1.dead}]
@@ -29,18 +32,21 @@ defmodule MiniLineage.Game.Actions do
   # ------------------------------------------------------------------- start
 
   def start(player, race_id, name) do
-    with nil <- guard(player, [{:already_started, &Player.started?/1}]),
-         {:ok, race_id, name} <- validate_start(race_id, name) do
-      {player, flash} = Player.initialize(player, Constants.race(race_id), name)
+    guard(player, [{:already_started, &Player.started?/1}], fn player ->
+      case validate_start(race_id, name) do
+        :invalid -> {player, {:error, :invalid, @errors.invalid}}
+        {:ok, race_id, name} -> begin(player, race_id, name)
+      end
+    end)
+  end
 
-      # Stamped here so a fresh character never renders auraless.
-      {player, _} = Player.sync_zone_auras(%{player | current_screen: "home"})
+  defp begin(player, race_id, name) do
+    {player, flash} = Player.initialize(player, Constants.race(race_id), name)
 
-      {player, {:ok, flash}}
-    else
-      {_player, _error} = refusal -> refusal
-      :invalid -> {player, {:error, :invalid, @errors.invalid}}
-    end
+    # Stamped here so a fresh character never renders auraless.
+    {player, _} = Player.sync_zone_auras(%{player | current_screen: "home"})
+
+    {player, {:ok, flash}}
   end
 
   defp validate_start(race_id, name) do
@@ -64,12 +70,7 @@ defmodule MiniLineage.Game.Actions do
   fighting again, with no penalty for having navigated away. Simulation runs ONLY from here,
   never on mount, reconnect or page load.
   """
-  def fight(player) do
-    case guard(player, alive()) do
-      nil -> do_fight(player)
-      refusal -> refusal
-    end
-  end
+  def fight(player), do: guard(player, alive(), &do_fight/1)
 
   defp do_fight(player) do
     # Stamped directly rather than relying on a separate screen report, which could land out of
@@ -136,16 +137,12 @@ defmodule MiniLineage.Game.Actions do
   # -------------------------------------------------------------------- shop
 
   def purchase(player, type, item_id) do
-    case guard(player, alive()) do
-      nil ->
-        case validate_item(type, item_id) do
-          :invalid -> {player, {:error, :invalid, "Unknown item."}}
-          {:ok, item_id} -> do_purchase(player, type, item_id)
-        end
-
-      refusal ->
-        refusal
-    end
+    guard(player, alive(), fn player ->
+      case validate_item(type, item_id) do
+        :invalid -> {player, {:error, :invalid, "Unknown item."}}
+        {:ok, item_id} -> do_purchase(player, type, item_id)
+      end
+    end)
   end
 
   # The boundary, not a convenience: it rejects anything that is not a number, and the starting
@@ -188,29 +185,21 @@ defmodule MiniLineage.Game.Actions do
   # ------------------------------------------------------------------ player
 
   def suicide(player) do
-    case guard(player, alive()) do
-      nil ->
-        player = Player.commit_suicide(player)
-        Statistics.increment(:total_players_suicided)
+    guard(player, alive(), fn player ->
+      player = Player.commit_suicide(player)
+      Statistics.increment(:total_players_suicided)
 
-        {%{player | current_screen: "death"}, {:ok, nil}}
-
-      refusal ->
-        refusal
-    end
+      {%{player | current_screen: "death"}, {:ok, nil}}
+    end)
   end
 
   # No `alive` guard: a dead player is pinned to 'death' anyway, and dead players get no aura, so
   # recording their screen is harmless.
   def set_screen(player, screen) do
-    case guard(player, started()) do
-      nil ->
-        {player, _} = Player.sync_zone_auras(%{player | current_screen: screen})
-        {player, {:ok, nil}}
-
-      refusal ->
-        refusal
-    end
+    guard(player, started(), fn player ->
+      {player, _} = Player.sync_zone_auras(%{player | current_screen: screen})
+      {player, {:ok, nil}}
+    end)
   end
 
   # -------------------------------------------------------------- end of run
@@ -233,5 +222,5 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Only the fallen may start over. `Characters.archive/1` does the leaving behind."
-  def may_restart?(player), do: guard(player, [{:not_dead, &(not &1.dead)}]) == nil
+  def may_restart?(player), do: refusal(player, [{:not_dead, &(not &1.dead)}]) == nil
 end
