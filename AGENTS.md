@@ -16,6 +16,11 @@ list wins — several generator defaults do not exist here.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
   character goes through its process, never straight to the database.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
+- **One LiveView, one dispatcher, a module per page.** `GameLive` holds no game state and routes
+  everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the run's own four
+  live in `Screens` itself, and the pages that outlive a run — `Screens.Shop`, `Screens.Record`,
+  `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
+  own (the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in `Controls`.
 
 ### Working here
 
@@ -87,6 +92,12 @@ Character screen — gets a URL of its own. A state that happens to you does not
 boundary, and there is a test asserting
 what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
 
+**What the player can see is what heals them.** The 🌿 aura and the regeneration tick are one
+condition, not two copies of it: `process_regen_tick/1` heals by whatever rate the aura carries, so
+an icon with no healing behind it — or healing with no icon — cannot happen. `regen_aura/2` takes
+its effect list as an argument rather than reading it back, because `active_effects/1` is what
+calls it.
+
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
 **A run ends three ways: fallen, going, or missing.** Dead is not the only way to be over — the
@@ -95,10 +106,11 @@ what it still refuses. If a guard is in the way, the thing you are building is p
 missing run as finished rather than as one still going.
 
 **One record, one route, two voices.** `/character/:id` is every character's page, yours included —
-a record is public because it is on the board, so there is nothing to gate. `Screens.record/1`
-renders it; pass `name` to speak about somebody rather than to them. They/them is the third person
+a record is public because it is on the board, so there is nothing to gate. `Screens.Record` draws
+it; pass `mine: false` to speak about somebody rather than to them. They/them is the third person
 because the game records no gender, and because it takes the same verb forms as "you", so nothing
-but the pronouns moves.
+but the pronouns moves — which is why the prose forks only where the sentences change shape, not
+wherever a verb does.
 
 Yours reads from your own process, not the stored document: `health` is buffered, so the row is
 behind by however long you have been resting.

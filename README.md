@@ -50,7 +50,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 ## 🛠️ Tech Stack
 
 - **Runtime**: Elixir 1.19 on OTP 28, served by Bandit
-- **Web**: Phoenix 1.8 with LiveView 1.1 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
+- **Web**: Phoenix 1.8 with LiveView 1.2 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for exact per-effect expiry
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
 - **Audio Engine**: Web Audio API (procedural synthesizer), driven from a LiveView JS hook
@@ -323,8 +323,8 @@ Three Playwright runs drive a real headless Chromium, sharing their controls thr
   stranger's record, and checks that reading it never adopts their character. The other two drive
   a single browser, so a board that only refreshed for whoever caused the change would pass both.
 
-Both empty the board first, through `e2e/reset.sh`, which refuses to touch whichever database
-`.env` names.
+All three empty the board first, through `e2e/reset.sh`, which refuses to touch whichever
+database `.env` names.
 
 One command, one terminal:
 
