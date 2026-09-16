@@ -375,9 +375,9 @@ defmodule MiniLineageWeb.Screens do
     # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
     # they are the last line of the run, and read as one.
     ~H"""
-    <p>{@view.death_reason}</p>
+    <p class="hp">{@view.death_reason}</p>
 
-    <p class="muted">{epitaph(@view)}</p>
+    <p>{epitaph(@view)}</p>
 
     <div class="action-links">
       <.link :if={@race} patch={Paths.for_screen("highscores", @race.slug)} class="btn">
@@ -665,7 +665,7 @@ defmodule MiniLineageWeb.Screens do
       never did or was never real.
     </p>
 
-    <.halls_link />
+    <.halls_link race={came_from(assigns)} />
     """
   end
 
@@ -679,19 +679,31 @@ defmodule MiniLineageWeb.Screens do
       mine={@record.id == @character_id}
     />
 
-    <%!-- Back the way you came: the sidebar says so, the Halls say nothing and are the default. --%>
+    <%!-- Back the way you came: the sidebar says "game", a board sends the lineage it was
+          filtered to, and the unfiltered Halls say nothing. --%>
     <%= if @from == "game" do %>
       <.back_link started={@view.started} dead={@view.dead} />
     <% else %>
-      <.halls_link />
+      <.halls_link race={came_from(assigns)} />
     <% end %>
     """
   end
 
+  # Looked up rather than trusted: `from` arrives in the URL, and only a lineage the game knows
+  # about may decide where a link points.
+  defp came_from(%{from: slug, catalog: catalog}) when is_binary(slug),
+    do: Enum.find(catalog.races, &(&1.slug == slug))
+
+  defp came_from(_assigns), do: nil
+
+  attr :race, :map, default: nil
+
   defp halls_link(assigns) do
     ~H"""
     <p class="last back">
-      <.link patch={Paths.for_screen("highscores")}>Go back to halls of champions</.link>
+      <.link patch={Paths.for_screen("highscores", @race && @race.slug)}>
+        Go back to halls of champions
+      </.link>
     </p>
     """
   end
@@ -699,7 +711,13 @@ defmodule MiniLineageWeb.Screens do
   # --------------------------------------------------------------- highscores
 
   defp highscores(assigns) do
-    assigns = assign(assigns, rows: Map.get(assigns.boards, assigns.race_filter, []))
+    filter = Enum.find(assigns.catalog.races, &(&1.id == assigns.race_filter))
+
+    assigns =
+      assign(assigns,
+        rows: Map.get(assigns.boards, assigns.race_filter, []),
+        filter_slug: filter && filter.slug
+      )
 
     ~H"""
     <%!-- `top` is load-bearing: it pulls the row up to the panel edge and puts the 12px gap
@@ -744,6 +762,7 @@ defmodule MiniLineageWeb.Screens do
               catalog={@catalog}
               row={row}
               mine={row.id == @character_id}
+              from={@filter_slug}
             />
           </tbody>
         </table>
@@ -757,13 +776,16 @@ defmodule MiniLineageWeb.Screens do
   attr :catalog, :map, required: true
   attr :row, :map, required: true
   attr :mine, :boolean, default: false
+  attr :from, :string, default: nil
 
   defp character_row(assigns) do
     ~H"""
     <tr class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}>
       <td>
         {race_emoji(@catalog, @row.race_id)}
-        <.link patch={Paths.for_character(@row.id)}>{String.slice(@row.name || "", 0, 20)}</.link>
+        <.link patch={Paths.for_character(@row.id, @from)}>
+          {String.slice(@row.name || "", 0, 20)}
+        </.link>
         <span :if={@row.online} class="online" title="Online right now">•</span>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>

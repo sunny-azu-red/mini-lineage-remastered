@@ -142,6 +142,37 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute game =~ "Go back to halls of champions"
     end
 
+    test "keeps the lineage you were reading, all the way there and back", %{conn: conn} do
+      %{id: id} = run("Shadowy", race_id: 3, xp: 500)
+
+      {:ok, _live, board} = live(conn, ~p"/highscores/dark-elf")
+      assert board =~ ~s(href="/character/#{id}?from=dark-elf")
+
+      {:ok, _live, record} = live(conn, ~p"/character/#{id}?from=dark-elf")
+      assert record =~ ~s(href="/highscores/dark-elf")
+    end
+
+    test "and the unfiltered Halls send you back unfiltered", %{conn: conn} do
+      %{id: id} = run("Shadowy", race_id: 3, xp: 500)
+
+      {:ok, _live, board} = live(conn, ~p"/highscores")
+      assert board =~ ~s(href="/character/#{id}")
+      refute board =~ "from="
+
+      {:ok, _live, record} = live(conn, ~p"/character/#{id}")
+      assert record =~ ~s(href="/highscores")
+    end
+
+    test "and a lineage the game has never heard of decides nothing", %{conn: conn} do
+      %{id: id} = run("Shadowy", race_id: 3, xp: 500)
+
+      # `from` arrives in the URL, so it is looked up rather than trusted.
+      {:ok, _live, html} = live(conn, ~p"/character/#{id}?from=../../etc")
+
+      assert html =~ ~s(href="/highscores")
+      refute html =~ "etc"
+    end
+
     test "and carries the full record, not a summary", %{conn: conn} do
       %{id: id} = run("Aurelia", xp: 500)
 
