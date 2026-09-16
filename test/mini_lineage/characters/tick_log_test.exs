@@ -8,8 +8,6 @@ defmodule MiniLineage.Characters.TickLogTest do
 
   import ExUnit.CaptureLog
 
-  require Logger
-
   alias MiniLineage.Characters
   alias MiniLineage.Game.{Constants, Player}
 

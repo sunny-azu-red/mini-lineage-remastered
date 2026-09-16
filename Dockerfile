@@ -1,5 +1,5 @@
 # The builder's Elixir and OTP are pinned to the versions the game is developed and tested against.
-FROM hexpm/elixir:1.19.6-erlang-28.5.0.6-alpine-3.22.5 AS builder
+FROM hexpm/elixir:1.20.4-erlang-28.5.0.6-alpine-3.22.5 AS builder
 
 RUN apk add --no-cache build-base git
 WORKDIR /app
