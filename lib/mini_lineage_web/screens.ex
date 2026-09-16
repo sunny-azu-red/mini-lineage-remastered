@@ -137,21 +137,31 @@ defmodule MiniLineageWeb.Screens do
   end
 
   attr :started, :boolean, required: true
+  attr :dead, :boolean, default: false
   attr :label, :string, default: nil
   attr :class, :string, default: "last back"
-  # Named outright where "where you came from" is neither Town nor Game Start — the dead go back
-  # to their own ending, and patching to Town would only be bounced there anyway.
+  # Named outright where "where you came from" is neither Town nor Game Start.
   attr :to, :string, default: nil
 
   def back_link(assigns) do
     ~H"""
     <p class={@class}>
-      <.link patch={Paths.for_screen(@to || if(@started, do: "home", else: "start"))}>
-        {@label || if @started, do: "Continue your journey", else: "Go back to game start"}
+      <.link patch={Paths.for_screen(@to || whence(@started, @dead))}>
+        {@label || whence_label(@started, @dead)}
       </.link>
     </p>
     """
   end
+
+  # The dead go back to their own ending. Patching to Town would be bounced there anyway, so this
+  # is about the promise the link makes, not where it lands.
+  defp whence(_started, true), do: "death"
+  defp whence(true, _dead), do: "home"
+  defp whence(false, _dead), do: "start"
+
+  defp whence_label(_started, true), do: "Return to your final rest"
+  defp whence_label(true, _dead), do: "Continue your journey"
+  defp whence_label(false, _dead), do: "Go back to game start"
 
   @doc """
   One `<select>` driving a companion button's label and variant — the shared form behind Town, the
@@ -668,11 +678,7 @@ defmodule MiniLineageWeb.Screens do
 
     <%!-- Back the way you came: the sidebar says so, the Halls say nothing and are the default. --%>
     <%= if @from == "game" do %>
-      <.back_link
-        started={@view.started}
-        to={if @view.dead, do: "death"}
-        label={if @view.dead, do: "Return to your final rest"}
-      />
+      <.back_link started={@view.started} dead={@view.dead} />
     <% else %>
       <.halls_link />
     <% end %>
@@ -741,7 +747,7 @@ defmodule MiniLineageWeb.Screens do
       </div>
     <% end %>
 
-    <.back_link started={@view.started} class="last" />
+    <.back_link started={@view.started} dead={@view.dead} class="last" />
     """
   end
 

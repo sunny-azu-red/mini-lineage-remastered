@@ -30,6 +30,34 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   defp fallen, do: %{Player.kill(living()) | death_reason: "The road ran out beneath you."}
 
+  describe "the way back, for someone who has died" do
+    defp halls_for(player) do
+      render_component(&Screens.screen/1,
+        view: Snapshot.build(player),
+        screen: "highscores",
+        catalog: Snapshot.catalog(),
+        boards: %{},
+        flash: %{}
+      )
+    end
+
+    test "leads to their ending, and says so" do
+      # The destination was already right — '/' renders the death screen for the dead — but the
+      # label promised a journey that is over.
+      html = halls_for(fallen())
+
+      assert html =~ "Return to your final rest"
+      refute html =~ "Continue your journey"
+    end
+
+    test "while the living are told to carry on" do
+      html = halls_for(living())
+
+      assert html =~ "Continue your journey"
+      refute html =~ "Return to your final rest"
+    end
+  end
+
   describe "the voice" do
     test "is second person on your own record" do
       html = html_for(fallen())
