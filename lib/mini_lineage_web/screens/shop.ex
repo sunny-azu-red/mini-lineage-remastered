@@ -95,7 +95,7 @@ defmodule MiniLineageWeb.Screens.Shop do
             <th class="name">Name</th>
             <th class="num" title={@modifier.title}>{@modifier.header}</th>
             <th class="num" title={@stat_title}>{@stat_header}</th>
-            <th class="num">🪙 Adena</th>
+            <th>Adena</th>
           </tr>
         </thead>
         <tbody>
@@ -108,7 +108,7 @@ defmodule MiniLineageWeb.Screens.Shop do
               <span :if={(Map.get(item, @modifier.key) || 0) <= 0} class="muted">-</span>
             </td>
             <td class={["num", @stat_class]}>{Format.number(item.stat)}</td>
-            <td class="num gold">{Format.adena(item.cost)}</td>
+            <td class="gold">🪙 {Format.adena(item.cost)}</td>
           </tr>
         </tbody>
       </table>

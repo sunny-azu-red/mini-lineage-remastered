@@ -88,7 +88,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       {:ok, _live, html} = live(conn, ~p"/highscores")
       headers = Regex.scan(~r/<th[^>]*>\s*([^<]*?)\s*<\/th>/, html) |> Enum.map(&List.last/1)
 
-      assert headers == ["Name", "Level", "Total XP", "🪙 Wealth", "Date"]
+      assert headers == ["Name", "Level", "Total XP", "Wealth", "Date"]
     end
 
     test "marks a run still being played, and leaves a finished one plain", %{conn: conn} do

@@ -24,11 +24,14 @@
    twice. This is the body face, quiet, and wide enough in the tracking to hold a line of small
    capitals. The data is what should be loud in a table. */
 .data-table th {
+    background: rgba(0, 0, 0, 0.28);
     color: var(--text-secondary);
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.1em;
-    padding: 6px 12px 7px;
+    /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
+       column's own padding is a label hanging over the wrong edge. */
+    padding: 6px 12px;
     text-align: left;
     text-transform: uppercase;
     border-bottom: 1px solid var(--border);
@@ -38,15 +41,8 @@
     padding: 8px 12px;
 }
 
-.data-table th {
-    padding-inline: 12px;
-}
-
-/* A hairline between rows rather than a stripe under every other one: the eye only needs the rows
-   separated, and a wash the Halls or a shop puts on one row then reads as its own rather than as a
-   stripe that happens to be darker. */
-.data-table tbody tr + tr td {
-    border-top: 1px solid var(--border-dark);
+.data-table tbody tr:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.022);
 }
 
 /* Figures are tabular, which only pays off against an edge to line up on: the magnitude of a
