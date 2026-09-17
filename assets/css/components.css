@@ -16,6 +16,7 @@
 
 .panel-header {
     background: linear-gradient(180deg, var(--bg-panel-alt) 0%, #0d2a50 100%);
+    line-height: 1.6;
     border-bottom: 1px solid var(--border);
     color: var(--gold);
     font-family: var(--font-heading);
@@ -260,6 +261,7 @@
 }
 
 .bar-text {
+    line-height: 1;
     position: absolute;
     left: 0;
     right: 0;

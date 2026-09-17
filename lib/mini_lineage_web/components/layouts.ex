@@ -185,7 +185,9 @@ defmodule MiniLineageWeb.Layouts do
       </div>
 
       <div class="panel inventory-panel">
-        <div class="panel-header">Inventory</div>
+        <div class="panel-header flex">
+          <span class="header-name">Inventory</span>
+        </div>
         <div class="panel-body small">
           <div class="stat-row">
             <span class="stat-value" title="Equipped Armor">

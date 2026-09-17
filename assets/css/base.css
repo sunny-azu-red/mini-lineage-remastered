@@ -29,7 +29,7 @@ body {
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.75;
     min-height: 100dvh;
 }
 
@@ -65,6 +65,7 @@ strong {
 h2 {
     color: var(--text-primary);
     font-family: var(--font-heading);
+    line-height: 1.3;
     font-size: 1.15rem;
     font-weight: 600;
     letter-spacing: 0.05em;
@@ -80,10 +81,7 @@ h2:first-child {
     margin-top: 0;
 }
 
-/* Prose only. The bars, the panel headers and the table rows are not paragraphs and do not want
- * it: `.bar-text` is centred inside an 18px track and would grow to 17.5 at this. */
 p {
-    line-height: 1.75;
     margin-bottom: 12px;
 }
 
@@ -138,7 +136,7 @@ p.last {
  * Everywhere else a value is set apart by its column or its bar. In a sentence it has only hue to
  * go on, which at 13px is not enough to pick a number out of a line of text — so it takes the
  * weight too. Tabular figures keep the sentence still while the HP counter animates through it.
- * The leading those paragraphs want is on `p` — every paragraph wants it, not only these. */
+ * The leading is on `body` — every line of prose wants it, not only these. */
 .value-prose .gold,
 .value-prose .hp,
 .value-prose .xp,
