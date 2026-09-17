@@ -107,6 +107,12 @@ so `config/runtime.exs` hands both the same `SECRET_KEY_BASE` — otherwise swit
 mints a new session and the character looks lost while sitting in the table untouched. Dev falls
 back to the secret committed in `config/dev.exs`, so a clone with no `.env` still boots.
 
+**An anchor wraps its text and nothing else.** A newline inside one renders as a space, and the
+underline covers it — which is how the Halls link came to underline the gap before the medal and
+the footer the gap after the sha. Where the attributes force the tag open across lines, keep the
+content flush against `>` and `</`; where the label is long, name it above the `~H` rather than
+letting the formatter break it inside the tag. Buttons are exempt, being padded boxes.
+
 **A value in prose takes the weight, not just the hue.** The colour utilities are enough in a
 table column or on a bar, and not enough at 13px in a sentence, so `.value-prose` adds
 `--weight-value` and tabular figures. The figures are load-bearing: the HP counter animates inside
