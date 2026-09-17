@@ -13,8 +13,20 @@ const liveSocket = new LiveSocket("/live", Socket, {
   hooks: {...colocatedHooks, ...gameHooks},
 })
 
-// Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+// Show progress bar on live navigation and form submits. The stops are the game's own value
+// colours in hue order — a rainbow the palette already had, rather than a borrowed one.
+topbar.config({
+  barColors: {
+    0: "#e95849",     // hp
+    0.17: "#e67e22",  // crit
+    0.33: "#c9a84c",  // gold
+    0.5: "#27ae60",   // heal
+    0.67: "#3fb0a0",  // tally
+    0.83: "#1c90e3",  // defense
+    1: "#ab74c2",     // xp
+  },
+  shadowColor: "rgba(0, 0, 0, .3)",
+})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
