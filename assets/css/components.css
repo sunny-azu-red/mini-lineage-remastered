@@ -177,7 +177,7 @@
 }
 
 .stat-row.danger {
-    background: rgba(146, 43, 33, 0.2);
+    background: var(--danger-wash);
     border-radius: 6px;
     padding: 10px 6px;
     margin: 0 -6px;
@@ -285,13 +285,13 @@
 }
 
 .alert-info {
-    background: rgba(26, 74, 110, 0.3);
+    background: var(--info-wash);
     border-color: var(--info-border);
     color: #85c1e9;
 }
 
 .alert-success {
-    background: rgba(39, 174, 96, 0.15);
+    background: var(--success-wash);
     border-color: var(--success);
     color: #58d68d;
 }
@@ -303,7 +303,7 @@
 }
 
 .alert-danger {
-    background: rgba(146, 43, 33, 0.2);
+    background: var(--danger-wash);
     border-color: var(--danger-border);
     color: #e8785e;
 }

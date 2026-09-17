@@ -66,11 +66,6 @@ th.name {
     white-space: nowrap;
 }
 
-td.center,
-th.center {
-    text-align: center;
-}
-
 /* --- the Halls of Champions ------------------------------------------------------------------ */
 
 /* A run that has not ended. `:not(.mine)` rather than declaration order, so yours stays gold
