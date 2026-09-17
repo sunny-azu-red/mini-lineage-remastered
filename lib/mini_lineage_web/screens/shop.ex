@@ -92,23 +92,23 @@ defmodule MiniLineageWeb.Screens.Shop do
       <table class="data-table" style="min-width:400px">
         <thead>
           <tr>
-            <th>Name</th>
-            <th title={@modifier.title}>{@modifier.header}</th>
-            <th title={@stat_title}>{@stat_header}</th>
-            <th>Adena</th>
+            <th class="name">Name</th>
+            <th class="num" title={@modifier.title}>{@modifier.header}</th>
+            <th class="num" title={@stat_title}>{@stat_header}</th>
+            <th class="num">Adena</th>
           </tr>
         </thead>
         <tbody>
-          <tr :for={item <- @items}>
-            <td>{item.emoji} {item.name}</td>
-            <td>
+          <tr :for={item <- @items} class={[@owned_id == item.id && "owned"]}>
+            <td class="name">{item.emoji} {item.name}</td>
+            <td class="num">
               <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>
                 {@modifier.prefix}{Map.get(item, @modifier.key)}{@modifier.suffix}
               </span>
               <span :if={(Map.get(item, @modifier.key) || 0) <= 0} class="muted">-</span>
             </td>
-            <td class={@stat_class}>{Format.number(item.stat)}</td>
-            <td class="gold">🪙 {Format.adena(item.cost)}</td>
+            <td class={["num", @stat_class]}>{Format.number(item.stat)}</td>
+            <td class="num gold">🪙 {Format.adena(item.cost)}</td>
           </tr>
         </tbody>
       </table>

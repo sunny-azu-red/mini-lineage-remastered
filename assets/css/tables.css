@@ -37,15 +37,38 @@
 }
 
 .data-table td {
-    padding: 7px 10px;
+    padding: 8px 12px;
 }
 
+.data-table th {
+    padding-inline: 12px;
+}
+
+/* One tint, not two nearly-identical ones. The stripe is a guide for the eye along a row, so it
+   only has to be visible, and the rows the Halls marks have to read over the top of it. */
 .data-table tbody tr:nth-child(odd) {
-    background: rgba(26, 26, 46, 0.6);
+    background: rgba(255, 255, 255, 0.022);
 }
 
-.data-table tbody tr:nth-child(even) {
-    background: rgba(22, 33, 62, 0.5);
+/* Figures are tabular, which only pays off against an edge to line up on: the magnitude of a
+   column becomes a shape you can read without reading any of the numbers. The header follows its
+   column, or the edge it labels is not the edge it sits over. */
+td.num,
+th.num {
+    text-align: right;
+}
+
+/* The name is what you are looking for, so it leads and it is the one column that may take the
+   width. `1%` on the rest makes them shrink to their content. */
+td.name,
+th.name {
+    width: 100%;
+}
+
+/* Everything but the name is a figure or a date, and neither reads wrapped. */
+.data-table th:not(.name),
+.data-table td:not(.name) {
+    white-space: nowrap;
 }
 
 td.center,
@@ -67,6 +90,18 @@ th.center {
     background: var(--gold-wash);
     box-shadow: inset 2px 0 0 var(--gold);
 }
+
+/* --- the shops ------------------------------------------------------------------------------- */
+
+/* What you are already wearing or wielding. The picker below says "(Owned)" and refuses it; the
+   table had been saying nothing, so the two disagreed about what you already have. Marked the way
+   the Halls marks your own run, since it is the same sentence: this row is you. */
+.data-table tbody tr.owned {
+    background: var(--gold-wash);
+    box-shadow: inset 2px 0 0 var(--gold);
+}
+
+/* --- the Halls of Champions ------------------------------------------------------------------ */
 
 /* Somebody has this character open right now, as against merely alive. */
 .character-row .online {

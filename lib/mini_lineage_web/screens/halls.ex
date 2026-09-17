@@ -56,10 +56,10 @@ defmodule MiniLineageWeb.Screens.Halls do
         <table class="data-table" style="min-width:545px">
           <thead>
             <tr>
-              <th>Name</th>
-              <th class="center">Level</th>
-              <th>Total XP</th>
-              <th>Wealth</th>
+              <th class="name">Name</th>
+              <th class="num">Level</th>
+              <th class="num">Total XP</th>
+              <th class="num">Wealth</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -90,15 +90,15 @@ defmodule MiniLineageWeb.Screens.Halls do
 
     ~H"""
     <tr class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}>
-      <td>
+      <td class="name">
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
         <span :if={@row.online} class="online" title="Online right now">•</span>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>
-      <td class="center gold">{Format.number(@row.level)}</td>
-      <td class="xp">{Format.number(@row.total_xp)}</td>
-      <td class="gold">🪙 {Format.adena(@row.adena)}</td>
+      <td class="num gold">{Format.number(@row.level)}</td>
+      <td class="num xp">{Format.number(@row.total_xp)}</td>
+      <td class="num gold">🪙 {Format.adena(@row.adena)}</td>
       <td><.stamp id={"seen-#{@row.id}"} at={@row.updated_at} /></td>
     </tr>
     """
