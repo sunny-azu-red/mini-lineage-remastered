@@ -15,7 +15,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       <h2>The Legacy of the Realm</h2>
       <p class="value-prose">
         In the age of steel and magic,
-        <span class="gold">{Format.pluralize("Brave Soul", "Brave Souls", @statistics.total_players)}</span>
+        <span class="tally">{Format.pluralize("Brave Soul", "Brave Souls", @statistics.total_players)}</span>
         {verb(@statistics.total_players, "has", "have")} set foot upon these dangerous lands. Through
         hardship and triumph, they have collectively ascended
         <span class="gold">{Format.pluralize("Level", "Levels", @statistics.total_levels_gained)}</span>
@@ -25,7 +25,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       </p>
       <p class="value-prose">
         A few, overwhelmed by the weight of their journey, chose the coward's end, with
-        <span class="muted">
+        <span class="tally">
           {Format.pluralize("Weak Soul", "Weak Souls", @statistics.total_players_suicided)}
         </span>
         taking {verb(@statistics.total_players_suicided, "its own life", "their own lives")}, while
@@ -37,10 +37,10 @@ defmodule MiniLineageWeb.Screens.Tome do
       <h2>Echoes of the Battlefield</h2>
       <p class="value-prose">
         The drums of war never truly fall silent because
-        <span class="gold">{Format.pluralize("Battle", "Battles", @statistics.total_battles)}</span>
+        <span class="tally">{Format.pluralize("Battle", "Battles", @statistics.total_battles)}</span>
         {verb(@statistics.total_battles, "has", "have")} been fought against the encroaching darkness,
         resulting in the defeat of
-        <span class="gold">
+        <span class="tally">
           {Format.pluralize("Formidable Foe", "Formidable Foes", @statistics.total_enemies_killed)}
         </span>
         through lethal precision and
@@ -52,7 +52,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       <p class="value-prose">
         From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp">{Format.number(@statistics.total_xp_gained)} XP</span>. But the wild is
         treacherous, as the hunters became the hunted and
-        <span class="hp">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
+        <span class="tally">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
         {verb(@statistics.total_ambushes, "has", "have")} occurred, nearly claiming those who walked
         unprepared.
       </p>
@@ -81,11 +81,11 @@ defmodule MiniLineageWeb.Screens.Tome do
       </p>
       <p class="value-prose">
         The shops have flourished, selling
-        <span class="gold">{Format.pluralize("Weapon", "Weapons", @statistics.total_weapons_bought)}</span>
+        <span class="tally">{Format.pluralize("Weapon", "Weapons", @statistics.total_weapons_bought)}</span>
         and
-        <span class="gold">{Format.pluralize("Armor", "Armors", @statistics.total_armors_bought)}</span>
+        <span class="tally">{Format.pluralize("Armor", "Armors", @statistics.total_armors_bought)}</span>
         to those who would be king, while the local Inn has served
-        <span class="gold">{Format.pluralize("Meal", "Meals", @statistics.total_food_bought)}</span>
+        <span class="tally">{Format.pluralize("Meal", "Meals", @statistics.total_food_bought)}</span>
         to keep the fires of life burning.
       </p>
     <% else %>

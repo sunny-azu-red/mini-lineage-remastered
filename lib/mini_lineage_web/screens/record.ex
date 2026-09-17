@@ -70,8 +70,8 @@ defmodule MiniLineageWeb.Screens.Record do
 
     <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
     <p class="value-prose">
-      {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
-      <span class="gold">{Format.pluralize(
+      {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through <span class="tally">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
+      <span class="tally">{Format.pluralize(
         @opponent.label,
         @opponent.plural,
         @view.counters.total_enemies_killed,
@@ -79,7 +79,7 @@ defmodule MiniLineageWeb.Screens.Record do
       )}</span>
       <%= if @view.counters.total_ambushes > 0 do %>
         and overcoming
-        <span class="ambush">{Format.pluralize(
+        <span class="tally">{Format.pluralize(
           "cunning ambush",
           "cunning ambushes",
           @view.counters.total_ambushes

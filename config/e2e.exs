@@ -11,6 +11,10 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   code_reloader: false,
   live_reload: [patterns: []]
 
+# The browser suites drive what ships, and what ships caches. A fresh server per run, so there is
+# nothing for a stale catalog to be stale against.
+config :mini_lineage, cache_catalog: true
+
 # Its own name in the footer: this server and the dev one are both unreleased builds, and telling
 # them apart at a glance is the whole point of the label.
 config :mini_lineage, build_label: "🔥 testing"

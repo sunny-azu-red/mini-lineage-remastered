@@ -49,20 +49,20 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @kill [
-    "Wielding your {weaponEmoji} {weaponName} with fury, you cut down {enemyGroup}.",
-    "Your {weaponEmoji} {weaponName} cleaves through the battlefield, slaying {enemyGroup}.",
-    "With a fierce war cry you lunge forward, striking down {enemyGroup} with your {weaponEmoji} {weaponName}.",
-    "The {enemyGroup} stood no chance, your {weaponEmoji} {weaponName} ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.",
-    "A lethal dance of your {weaponEmoji} {weaponName} leaves fallen {enemyGroup} in your wake.",
-    "Your strike is true. The {weaponEmoji} {weaponName} finds its mark against {enemyGroup}."
+    "Wielding your {weaponEmoji} <strong>{weaponName}</strong> with fury, you cut down {enemyGroup}.",
+    "Your {weaponEmoji} <strong>{weaponName}</strong> cleaves through the battlefield, slaying {enemyGroup}.",
+    "With a fierce war cry you lunge forward, striking down {enemyGroup} with your {weaponEmoji} <strong>{weaponName}</strong>.",
+    "The {enemyGroup} stood no chance, your {weaponEmoji} <strong>{weaponName}</strong> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.",
+    "A lethal dance of your {weaponEmoji} <strong>{weaponName}</strong> leaves fallen {enemyGroup} in your wake.",
+    "Your strike is true. The {weaponEmoji} <strong>{weaponName}</strong> finds its mark against {enemyGroup}."
   ]
 
   @deflection [
-    ~s(Your {armorEmoji} {armorName} absorbed a total of <span class="defense">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
-    ~s(The {armorEmoji} {armorName} held firm, deflecting <span class="defense">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
-    ~s(Blades glanced off your {armorEmoji} {armorName} for <span class="defense">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
-    ~s(Your {armorEmoji} {armorName} took the brunt of <span class="defense">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
-    ~s(Steel rings against your {armorEmoji} {armorName}, mitigating <span class="defense">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
+    ~s(Your {armorEmoji} <strong>{armorName}</strong> absorbed a total of <span class="defense">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
+    ~s(The {armorEmoji} <strong>{armorName}</strong> held firm, deflecting <span class="defense">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
+    ~s(Blades glanced off your {armorEmoji} <strong>{armorName}</strong> for <span class="defense">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
+    ~s(Your {armorEmoji} <strong>{armorName}</strong> took the brunt of <span class="defense">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
+    ~s(Steel rings against your {armorEmoji} <strong>{armorName}</strong>, mitigating <span class="defense">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
   ]
 
   @outcome [

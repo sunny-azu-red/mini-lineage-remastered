@@ -159,17 +159,24 @@ defmodule MiniLineage.Game.Snapshot do
   @doc """
   The static catalog. Nothing in it changes at runtime, so it is built once per VM rather than on
   every mount — slugifying and filling the race templates cost more than building a whole view.
+
+  Not cached in development: the race templates live in code, and a cache per VM means editing one
+  changes nothing until the server is restarted.
   """
   def catalog do
-    case :persistent_term.get(@catalog_key, nil) do
-      nil ->
-        catalog = build_catalog()
-        :persistent_term.put(@catalog_key, catalog)
+    if Application.get_env(:mini_lineage, :cache_catalog, true) do
+      case :persistent_term.get(@catalog_key, nil) do
+        nil ->
+          catalog = build_catalog()
+          :persistent_term.put(@catalog_key, catalog)
 
-        catalog
+          catalog
 
-      catalog ->
-        catalog
+        catalog ->
+          catalog
+      end
+    else
+      build_catalog()
     end
   end
 

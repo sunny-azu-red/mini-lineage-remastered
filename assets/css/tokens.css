@@ -61,9 +61,8 @@
     --text-hp: #e95849;
     --text-xp: #ab74c2;
 
-    /* A stat is not a de-emphasis. Defense and ambush risk had been wearing --text-muted, which
-     * says "ignore me" about the two numbers a player squints hardest at. Both sit inside the
-     * palette's own saturation and lightness, and ΔE 40 from every other value colour. */
+    /* Armour earns a colour of its own — it had been sharing the de-emphasis grey with ambush risk,
+     * and two different stats should not read alike. Inside the palette's own saturation and
+     * lightness, and ΔE 40 from every other value colour. */
     --text-defense: #1c90e3;
-    --text-ambush: #d26592;
 }

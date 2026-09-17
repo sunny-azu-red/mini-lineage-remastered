@@ -95,18 +95,25 @@ p.last {
 }
 
 /* ===== Utility Classes ===== */
-/* De-emphasis only — a timestamp, a "-" where an item has no modifier. A step down from the body,
- * not out of it: --text-muted is dimmer still and reserved for chrome like the footer. */
+/* Quiet on purpose: a timestamp, a "-" where an item has no modifier, a coward's tally. */
 .muted {
-    color: var(--text-secondary) !important;
+    color: var(--text-muted) !important;
 }
 
 .defense {
     color: var(--text-defense) !important;
 }
 
+/* A stat, so it keeps a name of its own — but a low ambush risk is good news, and reading it as
+ * quiet suits it. Separate from .muted so it can be given a colour without dragging dates with it. */
 .ambush {
-    color: var(--text-ambush) !important;
+    color: var(--text-muted) !important;
+}
+
+/* A count of things, where a hue would be noise: battles fought, foes slain, meals served. Gold is
+ * for what a run is worth — its purse and its level — and stops meaning that if everything wears it. */
+.tally {
+    color: var(--text-primary) !important;
 }
 
 .gold {
@@ -145,6 +152,7 @@ p.last {
 .value-prose .heal,
 .value-prose .defense,
 .value-prose .ambush,
+.value-prose .tally,
 .value-prose .muted {
     font-weight: var(--weight-value);
     font-variant-numeric: tabular-nums;

@@ -13,6 +13,10 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:mini_lineage, ~w(--sourcemap=inline --watch)]}
   ]
 
+# The catalog is built from code — race templates and slugs — so caching it per VM would mean a
+# code reload changed nothing until the server restarted.
+config :mini_lineage, cache_catalog: false
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 
