@@ -59,7 +59,7 @@ defmodule MiniLineageWeb.Screens.Halls do
               <th class="name">Name</th>
               <th class="num">Level</th>
               <th class="num">Total XP</th>
-              <th class="num">Wealth</th>
+              <th class="num">🪙 Wealth</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -98,7 +98,7 @@ defmodule MiniLineageWeb.Screens.Halls do
       </td>
       <td class="num gold">{Format.number(@row.level)}</td>
       <td class="num xp">{Format.number(@row.total_xp)}</td>
-      <td class="num gold">🪙 {Format.adena(@row.adena)}</td>
+      <td class="num gold">{Format.adena(@row.adena)}</td>
       <td><.stamp id={"seen-#{@row.id}"} at={@row.updated_at} /></td>
     </tr>
     """
