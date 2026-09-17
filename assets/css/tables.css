@@ -31,14 +31,14 @@
     letter-spacing: 0.1em;
     /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
        column's own padding is a label hanging over the wrong edge. */
-    padding: 6px 12px;
+    padding: 6px 10px;
     text-align: left;
     text-transform: uppercase;
     border-bottom: 1px solid var(--border);
 }
 
 .data-table td {
-    padding: 8px 12px;
+    padding: 8px 10px;
 }
 
 .data-table tbody tr:nth-child(odd) {
