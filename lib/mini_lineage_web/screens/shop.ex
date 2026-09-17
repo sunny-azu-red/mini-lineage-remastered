@@ -100,7 +100,7 @@ defmodule MiniLineageWeb.Screens.Shop do
         </thead>
         <tbody>
           <tr :for={item <- @items}>
-            <td>{item.emoji} <strong>{item.name}</strong></td>
+            <td>{item.emoji} {item.name}</td>
             <td>
               <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>
                 {@modifier.prefix}{Map.get(item, @modifier.key)}{@modifier.suffix}

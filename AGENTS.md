@@ -113,15 +113,18 @@ the footer the gap after the sha. Where the attributes force the tag open across
 content flush against `>` and `</`; where the label is long, name it above the `~H` rather than
 letting the formatter break it inside the tag. Buttons are exempt, being padded boxes.
 
-**A value takes the weight wherever it is.** `.gold`, `.hp`, `.xp`, `.crit`, `.heal`, `.defense`
-and `.tally` carry `--weight-value` and tabular figures themselves, so a number reads the same in a
-sentence, a shop column and the sidebar — the treatment follows the class, not the container. The
-figures are load-bearing: the HP counter animates inside one of those paragraphs, and proportional
-digits reflow the line on every frame. Only Inter 400, 500 and 600 are loaded; asking for 700 gets
-a fake.
+**Weight answers "which of these matters?", so a table never needs it.** Every value class carries
+tabular figures wherever it sits: a column of numbers wants to line up, and an animating one wants
+to stay still — the HP counter runs inside a paragraph, and proportional digits reflow the line on
+every frame. The weight is scoped to `p` and `li`, because inside a sentence a number has nothing
+but hue to set it apart, while a column has answered that question already and weighting every
+cell of one only makes the table heavier. Measured before it was put back: the weapon shop read 93%
+bold, the character page 24%. `<strong>` follows the same rule — a name in a sentence takes it, a
+Name column does not. Only Inter 400, 500 and 600 are loaded; asking for 700 gets a fake.
 
 `.minor` is the quiet value — an ambush risk you want low, the day a run was last seen, a coward's
-tally. It takes `--text-muted`'s colour and keeps the weight, which is the whole reason it cannot
+tally. It takes `--text-muted`'s colour and keeps the weight where weight applies, which is the
+whole reason it cannot
 just be `.muted`: that one is for what is not a value at all, and by now only the `-` where a shop
 item has no modifier qualifies.
 

@@ -141,10 +141,8 @@ p.last {
 }
 
 /* ===== Values =====
- * A value carries the weight wherever it is — a sentence, a shop column, the sidebar — so the
- * treatment follows the class and not the container it happens to sit in. Tabular figures keep a
- * sentence still while the HP counter animates through it, and keep a column of them aligned.
- * `.muted` is left out on purpose: it is the quiet one, and quiet means unweighted too. */
+ * Figures line up wherever they are: a column of them stays in its column, and a sentence stays
+ * still while the HP counter animates through it. */
 .gold,
 .hp,
 .xp,
@@ -152,7 +150,29 @@ p.last {
 .heal,
 .defense,
 .tally,
-.minor {
-    font-weight: var(--weight-value);
+.minor,
+.muted {
     font-variant-numeric: tabular-nums;
+}
+
+/* The weight answers "which of these matters?", so it belongs where something is competing — a
+ * number inside a sentence, with nothing but hue to set it apart. A column answers that question
+ * already, and weighting every cell in one only makes the table heavier. */
+p .gold,
+p .hp,
+p .xp,
+p .crit,
+p .heal,
+p .defense,
+p .tally,
+p .minor,
+li .gold,
+li .hp,
+li .xp,
+li .crit,
+li .heal,
+li .defense,
+li .tally,
+li .minor {
+    font-weight: var(--weight-value);
 }
