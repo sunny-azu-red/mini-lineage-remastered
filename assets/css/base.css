@@ -94,7 +94,7 @@ p.last {
 
 /* ===== Utility Classes ===== */
 .muted {
-    color: var(--text-muted) !important;
+    color: var(--muted-text) !important;
 }
 
 .gold {
@@ -106,13 +106,32 @@ p.last {
 }
 
 .hp {
-    color: var(--hp-glow) !important;
+    color: var(--hp-text) !important;
 }
 
 .xp {
-    color: var(--xp-glow) !important;
+    color: var(--xp-text) !important;
 }
 
 .crit {
     color: var(--critical) !important;
+}
+
+/* ===== Values in prose =====
+ * Everywhere else a value is set apart by its column or its bar. In a sentence it has only hue to
+ * go on, which at 13px is not enough to pick a number out of a line of text — so it takes the
+ * weight too. Tabular figures keep the sentence still while the HP counter animates through it.
+ * `!important` only because the colour utilities above already use it. */
+.record-prose {
+    line-height: 1.75;
+}
+
+.record-prose .gold,
+.record-prose .hp,
+.record-prose .xp,
+.record-prose .crit,
+.record-prose .heal,
+.record-prose .muted {
+    font-weight: var(--weight-value);
+    font-variant-numeric: tabular-nums;
 }

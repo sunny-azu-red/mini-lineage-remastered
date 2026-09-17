@@ -50,4 +50,14 @@
     --font-heading: 'Cinzel', Georgia, serif;
     --font-body: 'Inter', Verdana, Arial, sans-serif;
     --font-pixel: 'Silkscreen', monospace;
+
+    /* The heaviest Inter we load. Light text on a dark ground optically gains weight, so 600 reads
+     * as emphatic at 13px where 700 blooms and closes up its counters. */
+    --weight-value: 600;
+
+    /* Text variants of three palette colours that do not carry text legibly: on the panel they
+     * measure 4.16:1, 3.40:1 and 2.53:1, and AA wants 4.5. Same hue, lifted until they pass. */
+    --hp-text: #e95849;
+    --xp-text: #ab74c2;
+    --muted-text: #83899b;
 }
