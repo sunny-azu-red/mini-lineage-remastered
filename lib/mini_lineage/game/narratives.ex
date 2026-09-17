@@ -3,13 +3,13 @@ defmodule MiniLineage.Game.Narratives do
 
   @race_traits %{
     0 =>
-      ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="gold">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="heal">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="gold">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="heal">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="muted">{ambush}% Ambush Risk</span>.),
     1 =>
-      ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="gold">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="gold">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="muted">{ambush}% Ambush Risk</span>.),
     2 =>
-      ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="gold">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="heal">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="gold">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="heal">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="muted">{ambush}% Ambush Risk</span>.),
     3 =>
-      ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="gold">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="heal">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
+      ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="gold">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="heal">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="muted">{ambush}% Ambush Risk</span>.)
   }
 
   @welcome [
@@ -80,13 +80,13 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @ambush [
-    ~s(Out of the blue <span class="tally">{ambushEnemyGroup}</span> {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.),
-    ~s(You forgot to check your back and you get stormed by <span class="tally">{ambushEnemyGroup}</span>.),
+    "Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.",
+    "You forgot to check your back and you get stormed by {ambushEnemyGroup}.",
     "You find yourself in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
-    ~s(As you were walking along <span class="tally">{ambushEnemyGroup}</span> jumped out of the bushes.),
-    ~s(You reached a dead-end and while turning around, you find yourself cornered by <span class="tally">{ambushEnemyGroup}</span>.),
-    ~s(The ground trembles! Suddenly, <span class="tally">{ambushEnemyGroup}</span> {isSingleAmbush ? 'stands' : 'stand'} before you!),
-    ~s(An arrow whistles past your ear... ambush! <span class="tally">{ambushEnemyGroupCap}</span> {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!)
+    "As you were walking along {ambushEnemyGroup} jumped out of the bushes.",
+    "You reached a dead-end and while turning around, you find yourself cornered by {ambushEnemyGroup}.",
+    "The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before you!",
+    "An arrow whistles past your ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
   ]
 
   @critical [

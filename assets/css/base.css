@@ -95,19 +95,14 @@ p.last {
 }
 
 /* ===== Utility Classes ===== */
-/* Quiet on purpose: a timestamp, a "-" where an item has no modifier, a coward's tally. */
+/* Quiet on purpose, and the only thing that is: a timestamp, a "-" where an item has no modifier,
+ * a coward's tally, an ambush risk you want low. */
 .muted {
     color: var(--text-muted) !important;
 }
 
 .defense {
     color: var(--text-defense) !important;
-}
-
-/* A stat, so it keeps a name of its own — but a low ambush risk is good news, and reading it as
- * quiet suits it. Separate from .muted so it can be given a colour without dragging dates with it. */
-.ambush {
-    color: var(--text-muted) !important;
 }
 
 /* A count of things: battles fought, foes slain, meals served. Gold is for what a run is worth —
@@ -151,7 +146,6 @@ p.last {
 .value-prose .crit,
 .value-prose .heal,
 .value-prose .defense,
-.value-prose .ambush,
 .value-prose .tally,
 .value-prose .muted {
     font-weight: var(--weight-value);

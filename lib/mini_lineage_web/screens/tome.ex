@@ -25,7 +25,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       </p>
       <p class="value-prose">
         A few, overwhelmed by the weight of their journey, chose the coward's end, with
-        <span class="tally">
+        <span class="muted">
           {Format.pluralize("Weak Soul", "Weak Souls", @statistics.total_players_suicided)}
         </span>
         taking {verb(@statistics.total_players_suicided, "its own life", "their own lives")}, while
@@ -52,7 +52,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       <p class="value-prose">
         From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp">{Format.number(@statistics.total_xp_gained)} XP</span>. But the wild is
         treacherous, as the hunters became the hunted and
-        <span class="ambush">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
+        <span class="muted">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
         {verb(@statistics.total_ambushes, "has", "have")} occurred, nearly claiming those who walked
         unprepared.
       </p>

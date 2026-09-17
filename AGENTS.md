@@ -118,10 +118,10 @@ differ between them. Only Inter 400, 500 and 600 are loaded; asking for 700 gets
 its level — and stops meaning that if every number wears it, so counts of things take `.tally`:
 battles fought, foes slain, meals served, a group of enemies in a battle line. `.defense` exists
 because armour had been sharing the de-emphasis grey with ambush risk, and two stats should not
-read alike; `.ambush` stays quiet, which suits a number you want low, and takes the count of them
-survived as well as the risk of one. Names — a weapon, an armour — take `<strong>`, so weight marks
-a name and hue marks a value and a sentence carrying both still parses. Every text colour is a
-`--text-*` token, and `.muted` is de-emphasis only: a timestamp, an absent modifier.
+read alike. `.muted` is the quiet one and the only quiet one — a timestamp, an absent modifier, a
+coward's tally, an ambush risk you want low; there is no second class for the same colour. Names —
+a weapon, an armour — take `<strong>`, so weight marks a name and hue marks a value and a sentence
+carrying both still parses. Every text colour is a `--text-*` token.
 
 Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside the palette's own
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns
