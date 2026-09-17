@@ -89,7 +89,7 @@ defmodule MiniLineageWeb.Screens.Shop do
     <p>{@intro_a}<br />{@intro_b}</p>
 
     <div class="table-container">
-      <table class="data-table" style="min-width:400px">
+      <table class="data-table" style="min-width:430px">
         <thead>
           <tr>
             <th class="name">Name</th>
@@ -99,7 +99,13 @@ defmodule MiniLineageWeb.Screens.Shop do
           </tr>
         </thead>
         <tbody>
-          <tr :for={item <- @items} class={[@owned_id == item.id && "owned"]}>
+          <tr
+            :for={item <- @items}
+            class={[
+              @owned_id == item.id && "owned",
+              item.cost > @view.adena && "out-of-reach"
+            ]}
+          >
             <td class="name">{item.emoji} {item.name}</td>
             <td class="num">
               <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>

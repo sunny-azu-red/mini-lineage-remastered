@@ -120,6 +120,12 @@ changed and no second effect, so `.data-table td`, `h2`, `h3` and `.stat-value` 
 colour while `.stat-label` and `th` do. If a container is ever made secondary, the children that
 must stay primary will need to say so then; adding it in anticipation is how the two drift apart.
 
+**A signal must not spend the contrast of the thing it points at.** Dimming a shop row the player
+cannot afford took the gold price from 6.95:1 to 2.47:1 — hiding the number that made the row
+unaffordable. Opacity only reads as a signal below about 0.6, and everything is under 3:1 by then.
+A darker ground and an inset edge say the same thing and raise contrast rather than spending it,
+which is also how the Halls marks a run as yours or still going.
+
 **Size is hierarchy, never container.** 13px is anything you read — prose, an alert, a table cell —
 because an alert set a step under the paragraph above it reads as a different kind of thing when it
 is the same kind. 12px is a control or the compact sidebar, 11px a column label or the footer. The
