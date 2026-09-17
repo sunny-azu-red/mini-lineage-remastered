@@ -69,6 +69,22 @@ if config_env() in [:dev, :e2e] do
   end
 end
 
+# Both are read at runtime by the code that uses them, so they are settable per deployment without
+# a rebuild. Neither may be a compile_env, and neither has a compile-time default to disagree with.
+if level = System.get_env("LOG_LEVEL") do
+  levels = ~w(emergency alert critical error warning notice info debug)
+
+  unless level in levels do
+    raise "LOG_LEVEL is #{inspect(level)}; it must be one of #{Enum.join(levels, ", ")}"
+  end
+
+  config :logger, level: String.to_existing_atom(level)
+end
+
+if throttle = System.get_env("RATE_LIMIT") do
+  config :mini_lineage, rate_limit: throttle in ~w(true 1)
+end
+
 # A release does not serve unless told to: PHX_SERVER=true bin/mini_lineage start.
 if System.get_env("PHX_SERVER") do
   config :mini_lineage, MiniLineageWeb.Endpoint, server: true

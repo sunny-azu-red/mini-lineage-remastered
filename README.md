@@ -235,6 +235,11 @@ Production differs from development: rate limiting is **on** (60 battles and 30 
 minute, 300 events/min overall), `force_ssl` redirects to `https://$PHX_HOST` for every host but
 `localhost` and `127.0.0.1`, the logger sits at `:info`, and there is no code reloader.
 
+`LOG_LEVEL` and `RATE_LIMIT` override the last two per deployment, with no rebuild — both are read
+at boot rather than baked. Most other tuning is not: anything reached through `compile_env`, the
+character TTL among it, is fixed when the image is built and a release refuses to start if the
+environment disagrees with what it was built with.
+
 ## Docker
 
 `Dockerfile` builds the release on the same Elixir and OTP this is developed against, then ships

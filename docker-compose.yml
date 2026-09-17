@@ -20,6 +20,9 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      # Optional, and defaulted to what prod.exs already sets, so leaving them unset changes nothing.
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - RATE_LIMIT=${RATE_LIMIT:-true}
     # restart: always covers a crash; this covers a process that is up but no longer answering.
     # localhost is excluded from force_ssl, so this reaches the game rather than a redirect.
     healthcheck:
