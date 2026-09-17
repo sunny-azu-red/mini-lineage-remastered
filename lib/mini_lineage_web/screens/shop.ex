@@ -99,13 +99,7 @@ defmodule MiniLineageWeb.Screens.Shop do
           </tr>
         </thead>
         <tbody>
-          <tr
-            :for={item <- @items}
-            class={[
-              @owned_id == item.id && "owned",
-              item.cost > @view.adena && "out-of-reach"
-            ]}
-          >
+          <tr :for={item <- @items} class={[@owned_id == item.id && "owned"]}>
             <td class="name">{item.emoji} {item.name}</td>
             <td class="num">
               <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>

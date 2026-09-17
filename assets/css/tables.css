@@ -76,15 +76,6 @@ th.center {
     text-align: center;
 }
 
-/* What the purse will not stretch to yet. Set back rather than faded: opacity strong enough to read
-   as a signal takes the gold price from 6.95:1 to 2.47:1, which hides the number that makes the row
-   unaffordable in the first place. A darker ground and a grey edge say the same thing and raise the
-   contrast rather than spending it. Never the owned row — you are wearing that one. */
-.data-table tbody tr.out-of-reach:not(.owned) {
-    background: rgba(0, 0, 0, 0.25);
-    box-shadow: inset 2px 0 0 var(--border-bright);
-}
-
 /* --- the Halls of Champions ------------------------------------------------------------------ */
 
 /* A run that has not ended. `:not(.mine)` rather than declaration order, so yours stays gold
