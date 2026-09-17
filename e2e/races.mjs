@@ -108,7 +108,7 @@ try {
                 (await text('#sidebar')).includes('Elven Needle'), await text('#sidebar .panel-body'));
         else
             check('...and is told why, rather than shown an error page',
-                /do not have enough Adena/.test(await text('#main .alert-danger')),
+                /do not have enough 🪙 Adena/.test(await text('#main .alert-danger')),
                 await text('#main .alert-danger'));
 
         await leaveShop();
@@ -161,7 +161,7 @@ try {
         await page.click(`#main .action-links a:has-text("${race.label}") >> nth=0`);
         await page.waitForFunction(
             expected => document.querySelector('#main .action-links a.active')?.textContent.includes(expected),
-            race.label, { timeout: 5000 }).catch(() => {});
+            race.label, { timeout: 5000 }).catch(() => { });
 
         const rows = await boardRows();
         check(`filtering to ${race.plural} shows only ${race.plural}`,

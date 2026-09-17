@@ -60,6 +60,15 @@ if config_env() in [:dev, :e2e] do
            ]
 end
 
+# dev and prod read the same .env and so play the same characters, but a cookie is only readable
+# by the secret that signed it — so without this, switching between `mix dev` and `mix prod` looks
+# to the browser like a brand-new visitor while its character sits in the database untouched.
+if config_env() in [:dev, :e2e] do
+  if secret = System.get_env("SECRET_KEY_BASE") do
+    config :mini_lineage, MiniLineageWeb.Endpoint, secret_key_base: secret
+  end
+end
+
 # A release does not serve unless told to: PHX_SERVER=true bin/mini_lineage start.
 if System.get_env("PHX_SERVER") do
   config :mini_lineage, MiniLineageWeb.Endpoint, server: true

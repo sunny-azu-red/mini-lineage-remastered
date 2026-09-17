@@ -168,7 +168,7 @@ defmodule MiniLineage.Game.Actions do
         {player, {:error, :invalid, "Unknown item."}}
 
       {player, result} ->
-        # "Not enough Adena" and "already own this" are successful actions with a danger
+        # "Not enough 🪙 Adena" and "already own this" are successful actions with a danger
         # flash, not errors.
         sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
         type_atom = if result.success, do: :success, else: :danger

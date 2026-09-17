@@ -250,8 +250,8 @@ try {
         String(beforeMeal.adena - 7),
         { timeout: 8000 },
     ).then(() => check('the other tab sees the spend without acting', true))
-     .catch(async () => check('the other tab sees the spend without acting', false,
-        `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
+        .catch(async () => check('the other tab sees the spend without acting', false,
+            `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
     await tab.close();
 
     await goHome();
@@ -262,7 +262,7 @@ try {
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
     await page.waitForSelector('#main .alert-danger', { timeout: 8000 });
     check('an unaffordable weapon is refused, not an error page',
-        /do not have enough Adena/.test(await page.textContent('#main .alert-danger')));
+        /do not have enough 🪙 Adena/.test(await page.textContent('#main .alert-danger')));
 
     // ---- a background tick must not disturb the open panel ------------------------------------
     // Pick an option and leave it UNSUBMITTED: a submitted form re-renders and legitimately
@@ -303,7 +303,7 @@ try {
     await page.waitForFunction(
         ring => document.activeElement?.matches('#main .btn')
             && getComputedStyle(document.activeElement).boxShadow.includes(ring),
-        RING, { timeout: 3000 }).catch(() => {});
+        RING, { timeout: 3000 }).catch(() => { });
     check('...and the button it arms is visibly focused, not merely focused',
         (await armedRing()).includes(RING), await armedRing());
 
@@ -317,7 +317,7 @@ try {
     // Driven, not waited for: an Orc regenerates nothing, so it stays hurt until it eats and the
     // heal is caused rather than hoped for. Also fights out any ambush, which pins it here.
     while (fightsFought < 8 && !current.dead
-           && (current.health === current.maxHealth || current.ambushed)) {
+        && (current.health === current.maxHealth || current.ambushed)) {
         await fight();
         fightsFought++;
         current = await state();
@@ -523,7 +523,7 @@ try {
     // Links are deliberately not focused — Space scrolls a link instead of activating it — so a
     // screen whose only controls are links correctly takes no focus at all.
     check('a screen with no controls does not steal focus',
-        await page.evaluate(() => document.activeElement === document.body), 
+        await page.evaluate(() => document.activeElement === document.body),
         await page.evaluate(() => document.activeElement?.tagName));
 
     await page.click('#main .back a');

@@ -10,6 +10,10 @@ defmodule MiniLineage.Characters.TickLog do
   alias MiniLineage.Game.{Format, Player}
 
   @doc "Writes the line for one firing. `health_before` is captured ahead of the sweep's clamp."
+  # A visitor who has not created a character has no health to describe and nothing that could
+  # have happened to it. The tick guards this itself; an effect expiry fires without asking.
+  def write(_id, %{health: nil}, _health_before, _expired, _changed?), do: :ok
+
   def write(id, player, health_before, expired, changed?) do
     stats = Player.stats(player)
     difference = player.health - health_before

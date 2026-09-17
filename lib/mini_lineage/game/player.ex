@@ -374,7 +374,7 @@ defmodule MiniLineage.Game.Player do
       case deduct_cost(player, item.cost) do
         {player, false} ->
           {player,
-           refusal(item, "You do not have enough Adena to buy #{item.emoji} #{item.name}!")}
+           refusal(item, "You do not have enough 🪙 Adena to buy #{item.emoji} #{item.name}!")}
 
         {player, true} ->
           Statistics.increment(:total_adena_spent, item.cost)
