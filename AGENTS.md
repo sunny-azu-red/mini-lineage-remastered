@@ -107,12 +107,19 @@ so `config/runtime.exs` hands both the same `SECRET_KEY_BASE` — otherwise swit
 mints a new session and the character looks lost while sitting in the table untouched. Dev falls
 back to the secret committed in `config/dev.exs`, so a clone with no `.env` still boots.
 
-**A value in prose takes the weight, not just the hue.** `.gold`/`.hp`/`.xp`/`.crit`/`.heal`/
-`.muted` are colour-only utilities, which is enough in a table column or on a bar and not enough
-at 13px in a sentence. `.record-prose` adds `--weight-value` and tabular figures — the latter
-load-bearing, since the HP counter animates inside that paragraph and proportional digits reflow
-the line on every frame. Only Inter 400, 500 and 600 are loaded; asking for 700 gets a
-browser-synthesised fake.
+**A value in prose takes the weight, not just the hue.** The colour utilities are enough in a
+table column or on a bar, and not enough at 13px in a sentence, so `.value-prose` adds
+`--weight-value` and tabular figures. The figures are load-bearing: the HP counter animates inside
+one of those paragraphs, and proportional digits reflow the line on every frame. Put it on any
+paragraph carrying values — the same `race.traits` string renders on two screens and must not
+differ between them. Only Inter 400, 500 and 600 are loaded; asking for 700 gets a fake.
+
+**One colour per concept, and a stat is never `.muted`.** `.defense` and `.ambush` exist because
+both wore `.muted`, which says "look past me" about the two numbers a player squints hardest at —
+and because two different stats should not share a colour. An ambush survived takes `.ambush` too.
+Every text colour is a `--text-*` token; `.muted` is de-emphasis (a timestamp, an absent modifier)
+and resolves to `--text-secondary`, while `--text-muted` is dimmer still and reserved for chrome.
+All eight clear 4.5:1 on the panel.
 
 **A visitor is never written.** A browser that has not chosen a lineage lives in its process and
 nothing else: every action that could change it is guarded on `started?`, so nothing marks it dirty

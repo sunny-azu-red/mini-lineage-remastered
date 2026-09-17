@@ -55,9 +55,15 @@
      * as emphatic at 13px where 700 blooms and closes up its counters. */
     --weight-value: 600;
 
-    /* Text variants of three palette colours that do not carry text legibly: on the panel they
-     * measure 4.16:1, 3.40:1 and 2.53:1, and AA wants 4.5. Same hue, lifted until they pass. */
-    --hp-text: #e95849;
-    --xp-text: #ab74c2;
-    --muted-text: #83899b;
+    /* Text-only companions to the bar colours: --hp-glow and --xp-glow measure 4.16:1 and 3.40:1
+     * on the panel, and AA wants 4.5. Same hue, lifted until they pass. The bars keep the originals,
+     * where contrast against a filled track is a different question. */
+    --text-hp: #e95849;
+    --text-xp: #ab74c2;
+
+    /* A stat is not a de-emphasis. Defense and ambush risk had been wearing --text-muted, which
+     * says "ignore me" about the two numbers a player squints hardest at. Both sit inside the
+     * palette's own saturation and lightness, and ΔE 40 from every other value colour. */
+    --text-defense: #1c90e3;
+    --text-ambush: #d26592;
 }

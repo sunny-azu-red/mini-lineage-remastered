@@ -56,8 +56,10 @@ a:hover {
 }
 
 /* ===== Typography ===== */
+/* A name, not a value: the weight marks it out, the colour stays the body's. Was --text-secondary,
+ * which made the emphasised text dimmer than the text around it. */
 strong {
-    color: var(--text-secondary);
+    font-weight: var(--weight-value);
 }
 
 h2 {
@@ -93,8 +95,18 @@ p.last {
 }
 
 /* ===== Utility Classes ===== */
+/* De-emphasis only — a timestamp, a "-" where an item has no modifier. A step down from the body,
+ * not out of it: --text-muted is dimmer still and reserved for chrome like the footer. */
 .muted {
-    color: var(--muted-text) !important;
+    color: var(--text-secondary) !important;
+}
+
+.defense {
+    color: var(--text-defense) !important;
+}
+
+.ambush {
+    color: var(--text-ambush) !important;
 }
 
 .gold {
@@ -106,11 +118,11 @@ p.last {
 }
 
 .hp {
-    color: var(--hp-text) !important;
+    color: var(--text-hp) !important;
 }
 
 .xp {
-    color: var(--xp-text) !important;
+    color: var(--text-xp) !important;
 }
 
 .crit {
@@ -122,16 +134,18 @@ p.last {
  * go on, which at 13px is not enough to pick a number out of a line of text — so it takes the
  * weight too. Tabular figures keep the sentence still while the HP counter animates through it.
  * `!important` only because the colour utilities above already use it. */
-.record-prose {
+.value-prose {
     line-height: 1.75;
 }
 
-.record-prose .gold,
-.record-prose .hp,
-.record-prose .xp,
-.record-prose .crit,
-.record-prose .heal,
-.record-prose .muted {
+.value-prose .gold,
+.value-prose .hp,
+.value-prose .xp,
+.value-prose .crit,
+.value-prose .heal,
+.value-prose .defense,
+.value-prose .ambush,
+.value-prose .muted {
     font-weight: var(--weight-value);
     font-variant-numeric: tabular-nums;
 }

@@ -52,24 +52,24 @@ defmodule MiniLineageWeb.Screens.Record do
     ~H"""
     <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
     <p>{raw(@race.backstory)}</p>
-    <p class="record-prose">{raw(@race.traits)}</p>
+    <p class="value-prose">{raw(@race.traits)}</p>
 
     <h2>Inventory &amp; Stats</h2>
-    <p class="record-prose" phx-no-format>
-      {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} {@view.weapon.name} granting
-      <span class="hp"><span id="char-stat-attack">{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} {@view.armor.name} providing
-      <span class="muted"><span id="char-stat-defense">{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
+    <p class="value-prose" phx-no-format>
+      {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <strong>{@view.weapon.name}</strong> granting
+      <span class="hp"><span id="char-stat-attack">{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <strong>{@view.armor.name}</strong> providing
+      <span class="defense"><span id="char-stat-defense">{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
     </p>
-    <p class="record-prose">
+    <p class="value-prose">
       Combined with {@voice.their} ancestry, {@voice.them} {if @dead, do: "struck", else: "strike"} with a total of
       <span class="crit"><span id="char-stat-crit">{@crit}</span>% Critical Hit Chance</span>
       and {if @dead, do: "mended", else: "mend"} wounds at
       <span class="heal">+<span id="char-stat-regen">{@regen}</span> HP Regeneration</span>
-      per rest cycle, while navigating the roads with a <span class="muted"><span id="char-stat-ambush">{@ambush}</span>% Ambush Risk</span>.
+      per rest cycle, while navigating the roads with a <span class="ambush"><span id="char-stat-ambush">{@ambush}</span>% Ambush Risk</span>.
     </p>
 
     <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
-    <p class="record-prose">
+    <p class="value-prose">
       {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through <span class="gold">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
       <span class="gold">{Format.pluralize(
         @opponent.label,
@@ -79,7 +79,7 @@ defmodule MiniLineageWeb.Screens.Record do
       )}</span>
       <%= if @view.counters.total_ambushes > 0 do %>
         and overcoming
-        <span class="hp">{Format.pluralize(
+        <span class="ambush">{Format.pluralize(
           "cunning ambush",
           "cunning ambushes",
           @view.counters.total_ambushes
@@ -89,7 +89,7 @@ defmodule MiniLineageWeb.Screens.Record do
     </p>
 
     <%= if @dead do %>
-      <p class="record-prose" phx-no-format>
+      <p class="value-prose" phx-no-format>
         {@voice.they} fell at <span class="gold">Level {@level}</span>
         with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp">{@xp_needed} XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and {@voice.their} purse held <span class="gold">🪙 {@purse} Adena</span>
         when the road ran out.
@@ -97,7 +97,7 @@ defmodule MiniLineageWeb.Screens.Record do
       <p class="hp">{@view.death_reason}</p>
     <% else %>
       <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
-      <p id="char-vitality" class="record-prose" phx-hook="AnimatedValues" phx-no-format>
+      <p id="char-vitality" class="value-prose" phx-hook="AnimatedValues" phx-no-format>
         Experience wise, {@voice.them} are at <span class="gold">Level {@level}</span>
         with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp">{@xp_needed} XP</span> to reach <span class="gold">Level {@next_level}</span><% end %>
         and {@voice.their} vitality currently sustains {@voice.object} at
@@ -124,7 +124,7 @@ defmodule MiniLineageWeb.Screens.Record do
     <%= if @chronicle == [] do %>
       <p>Not one blow struck. This tale is over before it began.</p>
     <% else %>
-      <ol class="chronicle">
+      <ol class="chronicle value-prose">
         <li :for={fight <- @chronicle}>{raw(fight.narrative.outcome_line)}</li>
       </ol>
     <% end %>
