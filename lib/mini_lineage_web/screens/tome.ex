@@ -52,7 +52,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       <p class="value-prose">
         From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp">{Format.number(@statistics.total_xp_gained)} XP</span>. But the wild is
         treacherous, as the hunters became the hunted and
-        <span class="tally">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
+        <span class="ambush">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
         {verb(@statistics.total_ambushes, "has", "have")} occurred, nearly claiming those who walked
         unprepared.
       </p>

@@ -79,7 +79,7 @@ defmodule MiniLineageWeb.Screens.Record do
       )}</span>
       <%= if @view.counters.total_ambushes > 0 do %>
         and overcoming
-        <span class="tally">{Format.pluralize(
+        <span class="ambush">{Format.pluralize(
           "cunning ambush",
           "cunning ambushes",
           @view.counters.total_ambushes

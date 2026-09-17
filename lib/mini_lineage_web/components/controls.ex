@@ -71,11 +71,17 @@ defmodule MiniLineageWeb.Controls do
   attr :to, :string, default: nil
 
   def back_link(assigns) do
+    # Named up here so the anchor can sit flush against its text: a newline inside a link renders
+    # as a space, and the underline covers it.
+    assigns =
+      assign(assigns,
+        href: Paths.for_screen(assigns.to || whence(assigns.started, assigns.dead)),
+        text: assigns.label || whence_label(assigns.started, assigns.dead)
+      )
+
     ~H"""
     <p class={@class}>
-      <.link patch={Paths.for_screen(@to || whence(@started, @dead))}>
-        {@label || whence_label(@started, @dead)}
-      </.link>
+      <.link patch={@href}>{@text}</.link>
     </p>
     """
   end
@@ -93,11 +99,15 @@ defmodule MiniLineageWeb.Controls do
   attr :race, :map, default: nil
 
   def halls_link(assigns) do
+    assigns =
+      assign(assigns,
+        href: Paths.for_screen("highscores", assigns.race && assigns.race.slug),
+        text: "Go back to the Hall of #{hall_of(assigns.race)} Champions"
+      )
+
     ~H"""
     <p class="last back">
-      <.link patch={Paths.for_screen("highscores", @race && @race.slug)}>
-        Go back to the Hall of {hall_of(@race)} Champions
-      </.link>
+      <.link patch={@href}>{@text}</.link>
     </p>
     """
   end

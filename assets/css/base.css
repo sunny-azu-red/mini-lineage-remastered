@@ -110,10 +110,10 @@ p.last {
     color: var(--text-muted) !important;
 }
 
-/* A count of things, where a hue would be noise: battles fought, foes slain, meals served. Gold is
- * for what a run is worth — its purse and its level — and stops meaning that if everything wears it. */
+/* A count of things: battles fought, foes slain, meals served. Gold is for what a run is worth —
+ * its purse and its level — and stops meaning that if every number wears it. */
 .tally {
-    color: var(--text-primary) !important;
+    color: var(--text-tally) !important;
 }
 
 .gold {

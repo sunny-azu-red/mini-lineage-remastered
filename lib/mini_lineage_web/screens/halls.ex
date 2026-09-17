@@ -86,13 +86,13 @@ defmodule MiniLineageWeb.Screens.Halls do
   attr :from, :string, default: nil
 
   defp character_row(assigns) do
+    assigns = assign(assigns, name: String.slice(assigns.row.name || "", 0, 20))
+
     ~H"""
     <tr class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}>
       <td>
         {race_emoji(@catalog, @row.race_id)}
-        <.link patch={Paths.for_character(@row.id, @from)}>
-          {String.slice(@row.name || "", 0, 20)}
-        </.link>
+        <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
         <span :if={@row.online} class="online" title="Online right now">•</span>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>

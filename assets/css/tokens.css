@@ -65,4 +65,8 @@
      * and two different stats should not read alike. Inside the palette's own saturation and
      * lightness, and ΔE 40 from every other value colour. */
     --text-defense: #1c90e3;
+
+    /* Counts of things. Its own hue so a tally is not mistaken for a <strong>, and the one furthest
+     * from every colour already spoken for — nearest is .heal at ΔE 36. */
+    --text-tally: #3fb0a0;
 }

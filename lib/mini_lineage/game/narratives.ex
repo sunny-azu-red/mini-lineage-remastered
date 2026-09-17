@@ -49,12 +49,12 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @kill [
-    "Wielding your {weaponEmoji} <strong>{weaponName}</strong> with fury, you cut down {enemyGroup}.",
-    "Your {weaponEmoji} <strong>{weaponName}</strong> cleaves through the battlefield, slaying {enemyGroup}.",
-    "With a fierce war cry you lunge forward, striking down {enemyGroup} with your {weaponEmoji} <strong>{weaponName}</strong>.",
-    "The {enemyGroup} stood no chance, your {weaponEmoji} <strong>{weaponName}</strong> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.",
-    "A lethal dance of your {weaponEmoji} <strong>{weaponName}</strong> leaves fallen {enemyGroup} in your wake.",
-    "Your strike is true. The {weaponEmoji} <strong>{weaponName}</strong> finds its mark against {enemyGroup}."
+    ~s(Wielding your {weaponEmoji} <strong>{weaponName}</strong> with fury, you cut down <span class="tally">{enemyGroup}</span>.),
+    ~s(Your {weaponEmoji} <strong>{weaponName}</strong> cleaves through the battlefield, slaying <span class="tally">{enemyGroup}</span>.),
+    ~s(With a fierce war cry you lunge forward, striking down <span class="tally">{enemyGroup}</span> with your {weaponEmoji} <strong>{weaponName}</strong>.),
+    ~s(The <span class="tally">{enemyGroup}</span> stood no chance, your {weaponEmoji} <strong>{weaponName}</strong> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.),
+    ~s(A lethal dance of your {weaponEmoji} <strong>{weaponName}</strong> leaves fallen <span class="tally">{enemyGroup}</span> in your wake.),
+    ~s(Your strike is true. The {weaponEmoji} <strong>{weaponName}</strong> finds its mark against <span class="tally">{enemyGroup}</span>.)
   ]
 
   @deflection [
@@ -80,13 +80,13 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @ambush [
-    "Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.",
-    "You forgot to check your back and you get stormed by {ambushEnemyGroup}.",
+    ~s(Out of the blue <span class="tally">{ambushEnemyGroup}</span> {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.),
+    ~s(You forgot to check your back and you get stormed by <span class="tally">{ambushEnemyGroup}</span>.),
     "You find yourself in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
-    "As you were walking along {ambushEnemyGroup} jumped out of the bushes.",
-    "You reached a dead-end and while turning around, you find yourself cornered by {ambushEnemyGroup}.",
-    "The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before you!",
-    "An arrow whistles past your ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
+    ~s(As you were walking along <span class="tally">{ambushEnemyGroup}</span> jumped out of the bushes.),
+    ~s(You reached a dead-end and while turning around, you find yourself cornered by <span class="tally">{ambushEnemyGroup}</span>.),
+    ~s(The ground trembles! Suddenly, <span class="tally">{ambushEnemyGroup}</span> {isSingleAmbush ? 'stands' : 'stand'} before you!),
+    ~s(An arrow whistles past your ear... ambush! <span class="tally">{ambushEnemyGroupCap}</span> {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!)
   ]
 
   @critical [
