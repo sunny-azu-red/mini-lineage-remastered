@@ -102,6 +102,11 @@ an icon with no healing behind it — or healing with no icon — cannot happen.
 its effect list as an argument rather than reading it back, because `active_effects/1` is what
 calls it.
 
+**The cookie is only legible to the secret that signed it.** dev and prod read the same `.env`,
+so `config/runtime.exs` hands both the same `SECRET_KEY_BASE` — otherwise switching between them
+mints a new session and the character looks lost while sitting in the table untouched. Dev falls
+back to the secret committed in `config/dev.exs`, so a clone with no `.env` still boots.
+
 **A visitor is never written.** A browser that has not chosen a lineage lives in its process and
 nothing else: every action that could change it is guarded on `started?`, so nothing marks it dirty
 and nothing persists it. That is why the retirement only ever clears sessions and deletes nothing,

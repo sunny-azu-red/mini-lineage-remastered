@@ -114,6 +114,11 @@ another host entirely rather than merely under another name.
 An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
 so the two are never confused. A release names its commit instead.
 
+`mix dev` and `mix prod` read the same `.env`, so they play the same characters — and, because the
+cookie is only legible to the secret that signed it, the same `SECRET_KEY_BASE`. Switching between
+them keeps you signed in as whoever you were. Rotating that secret signs everyone out at once;
+their characters are untouched, but no browser can prove which one is its own.
+
 Three tables. `characters` keeps each run's state as one `jsonb` document, alongside generated
 columns Postgres derives from it — name, race, experience, wealth, dead, disqualified — so the
 board sorts relationally and cannot drift from the document. `battle_log` is a row per fight,
