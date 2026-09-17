@@ -31,6 +31,7 @@ defmodule MiniLineageWeb.Screens.Shop do
         prefix: "+",
         suffix: ""
       },
+      stat_class: "heal",
       stat_header: "HP Heal",
       stat_title: "Health Point Heal",
       action_label: "🪙 Order",
@@ -52,6 +53,7 @@ defmodule MiniLineageWeb.Screens.Shop do
         prefix: "",
         suffix: "%"
       },
+      stat_class: "hp",
       stat_header: "P. Attack",
       stat_title: "Physical Attack",
       action_label: "🪙 Purchase",
@@ -73,6 +75,7 @@ defmodule MiniLineageWeb.Screens.Shop do
         prefix: "+",
         suffix: ""
       },
+      stat_class: "defense",
       stat_header: "P. Defense",
       stat_title: "Physical Defense",
       action_label: "🪙 Purchase",
@@ -97,14 +100,14 @@ defmodule MiniLineageWeb.Screens.Shop do
         </thead>
         <tbody>
           <tr :for={item <- @items}>
-            <td>{item.emoji} {item.name}</td>
+            <td>{item.emoji} <strong>{item.name}</strong></td>
             <td>
               <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>
                 {@modifier.prefix}{Map.get(item, @modifier.key)}{@modifier.suffix}
               </span>
               <span :if={(Map.get(item, @modifier.key) || 0) <= 0} class="muted">-</span>
             </td>
-            <td>{Format.number(item.stat)}</td>
+            <td class={@stat_class}>{Format.number(item.stat)}</td>
             <td class="gold">🪙 {Format.adena(item.cost)}</td>
           </tr>
         </tbody>

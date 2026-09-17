@@ -134,19 +134,18 @@ p.last {
     color: var(--critical) !important;
 }
 
-/* ===== Values in prose =====
- * Everywhere else a value is set apart by its column or its bar. In a sentence it has only hue to
- * go on, which at 13px is not enough to pick a number out of a line of text — so it takes the
- * weight too. Tabular figures keep the sentence still while the HP counter animates through it.
- * The leading is on `body` — every line of prose wants it, not only these. */
-.value-prose .gold,
-.value-prose .hp,
-.value-prose .xp,
-.value-prose .crit,
-.value-prose .heal,
-.value-prose .defense,
-.value-prose .tally,
-.value-prose .muted {
+/* ===== Values =====
+ * A value carries the weight wherever it is — a sentence, a shop column, the sidebar — so the
+ * treatment follows the class and not the container it happens to sit in. Tabular figures keep a
+ * sentence still while the HP counter animates through it, and keep a column of them aligned.
+ * `.muted` is left out on purpose: it is the quiet one, and quiet means unweighted too. */
+.gold,
+.hp,
+.xp,
+.crit,
+.heal,
+.defense,
+.tally {
     font-weight: var(--weight-value);
     font-variant-numeric: tabular-nums;
 }

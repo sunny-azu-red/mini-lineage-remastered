@@ -13,7 +13,7 @@ defmodule MiniLineageWeb.Screens.Tome do
     ~H"""
     <%= if @statistics do %>
       <h2>The Legacy of the Realm</h2>
-      <p class="value-prose">
+      <p>
         In the age of steel and magic,
         <span class="tally">{Format.pluralize("Brave Soul", "Brave Souls", @statistics.total_players)}</span>
         {verb(@statistics.total_players, "has", "have")} set foot upon these dangerous lands. Through
@@ -23,7 +23,7 @@ defmodule MiniLineageWeb.Screens.Tome do
         <span class="hp">{Format.pluralize("Champion", "Champions", @statistics.total_deaths)}</span>
         {verb(@statistics.total_deaths, "has", "have")} fallen in battle... lost, but not forgotten.
       </p>
-      <p class="value-prose">
+      <p>
         A few, overwhelmed by the weight of their journey, chose the coward's end, with
         <span class="muted">
           {Format.pluralize("Weak Soul", "Weak Souls", @statistics.total_players_suicided)}
@@ -35,7 +35,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       </p>
 
       <h2>Echoes of the Battlefield</h2>
-      <p class="value-prose">
+      <p>
         The drums of war never truly fall silent because
         <span class="tally">{Format.pluralize("Battle", "Battles", @statistics.total_battles)}</span>
         {verb(@statistics.total_battles, "has", "have")} been fought against the encroaching darkness,
@@ -49,7 +49,7 @@ defmodule MiniLineageWeb.Screens.Tome do
         </span>
         that turned the tide of every skirmish.
       </p>
-      <p class="value-prose">
+      <p>
         From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp">{Format.number(@statistics.total_xp_gained)} XP</span>. But the wild is
         treacherous, as the hunters became the hunted and
         <span class="muted">{Format.pluralize("Ambush", "Ambushes", @statistics.total_ambushes)}</span>
@@ -58,11 +58,11 @@ defmodule MiniLineageWeb.Screens.Tome do
       </p>
 
       <h2>The Toll of Survival</h2>
-      <p class="value-prose">
+      <p>
         Hardship is measured in blood and resilience. Our champions have shed <span class="hp">{Format.number(@statistics.total_hp_lost)} HP</span>, flesh torn by tooth and
         claw. Yet, the craft of the blacksmith has proven its worth, as armor deflected <span class="defense">{Format.number(@statistics.total_damage_blocked)} Damage</span>.
       </p>
-      <p class="value-prose">
+      <p>
         To mend their broken bodies, they have sought the warmth of the Inn and the delicious food
         inside, healing for a combined total of <span class="heal">{Format.number(@statistics.total_hp_healed)} HP</span>. In the stillness of
         sanctuary, where fine armor protects the weary, another
@@ -71,7 +71,7 @@ defmodule MiniLineageWeb.Screens.Tome do
       </p>
 
       <h2>The Flow of Fortune</h2>
-      <p class="value-prose">
+      <p>
         Wealth flows like a river through the pockets of the daring. A massive sum of
         <span class="gold">🪙 {Format.adena(@statistics.total_adena_generated)} Adena</span>
         has been pulled from the corpses of monsters and the hidden corners of the world. Most of this
@@ -79,7 +79,7 @@ defmodule MiniLineageWeb.Screens.Tome do
         <span class="gold">🪙 {Format.adena(@statistics.total_adena_spent)} Adena</span>
         has been spent on provisions and equipment.
       </p>
-      <p class="value-prose">
+      <p>
         The shops have flourished, selling
         <span class="tally">{Format.pluralize("Weapon", "Weapons", @statistics.total_weapons_bought)}</span>
         and
@@ -89,7 +89,7 @@ defmodule MiniLineageWeb.Screens.Tome do
         to keep the fires of life burning.
       </p>
     <% else %>
-      <p class="value-prose">
+      <p>
         The ancient archives are empty and the lore of the realm has been lost to time. The chronicles
         of the realm await their first dynasty. Will you be the one to start a new bloodline?
       </p>

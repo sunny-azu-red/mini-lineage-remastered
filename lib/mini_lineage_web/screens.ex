@@ -170,7 +170,7 @@ defmodule MiniLineageWeb.Screens do
     <%= for race <- @catalog.races do %>
       <h2>{race.emoji} {race.label}</h2>
       <p>{raw(race.backstory)}</p>
-      <p class="value-prose">{raw(race.traits)}</p>
+      <p>{raw(race.traits)}</p>
     <% end %>
 
     <.back_link started={@view.started} dead={@view.dead} />
@@ -210,11 +210,11 @@ defmodule MiniLineageWeb.Screens do
 
   defp battle_narrative(assigns) do
     ~H"""
-    <p class="value-prose">
+    <p>
       <span :if={@narrative.crit_line}>{raw(@narrative.crit_line)} </span>{raw(@narrative.kill_line)}
       {raw(@narrative.deflection_line)}
     </p>
-    <p class="value-prose">{raw(@narrative.outcome_line)}</p>
+    <p>{raw(@narrative.outcome_line)}</p>
     """
   end
 

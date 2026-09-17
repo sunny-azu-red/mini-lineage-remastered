@@ -113,12 +113,12 @@ the footer the gap after the sha. Where the attributes force the tag open across
 content flush against `>` and `</`; where the label is long, name it above the `~H` rather than
 letting the formatter break it inside the tag. Buttons are exempt, being padded boxes.
 
-**A value in prose takes the weight, not just the hue.** The colour utilities are enough in a
-table column or on a bar, and not enough at 13px in a sentence, so `.value-prose` adds
-`--weight-value` and tabular figures. The figures are load-bearing: the HP counter animates inside
-one of those paragraphs, and proportional digits reflow the line on every frame. Put it on any
-paragraph carrying values — the same `race.traits` string renders on two screens and must not
-differ between them. Only Inter 400, 500 and 600 are loaded; asking for 700 gets a fake.
+**A value takes the weight wherever it is.** `.gold`, `.hp`, `.xp`, `.crit`, `.heal`, `.defense`
+and `.tally` carry `--weight-value` and tabular figures themselves, so a number reads the same in a
+sentence, a shop column and the sidebar — the treatment follows the class, not the container. The
+figures are load-bearing: the HP counter animates inside one of those paragraphs, and proportional
+digits reflow the line on every frame. `.muted` is left out: quiet means unweighted too. Only Inter
+400, 500 and 600 are loaded; asking for 700 gets a fake.
 
 **One colour per concept, and weight for a name.** `.gold` is what a run is worth — its purse and
 its level — and stops meaning that if every number wears it, so counts of things take `.tally`:
