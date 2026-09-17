@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.Screens.Halls do
       </p>
     <% else %>
       <div class="table-container">
-        <table class="data-table" style="min-width:540px">
+        <table class="data-table" style="min-width:520px">
           <thead>
             <tr>
               <th class="name">Name</th>

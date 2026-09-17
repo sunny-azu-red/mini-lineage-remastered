@@ -89,7 +89,7 @@ defmodule MiniLineageWeb.Screens.Shop do
     <p>{@intro_a}<br />{@intro_b}</p>
 
     <div class="table-container">
-      <table class="data-table" style="min-width:430px">
+      <table class="data-table" style="min-width:420px">
         <thead>
           <tr>
             <th class="name">Name</th>
