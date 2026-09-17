@@ -28,6 +28,9 @@ body {
     background-repeat: no-repeat;
     color: var(--text-primary);
     font-family: var(--font-body);
+    /* The game is arithmetic: a level, a purse, a countdown, an HP bar mid-animation. Figures line
+     * up everywhere rather than in a list of places somebody has to remember to extend. */
+    font-variant-numeric: tabular-nums;
     font-size: 13px;
     line-height: 1.75;
     min-height: 100dvh;
@@ -141,21 +144,7 @@ p.last {
 }
 
 /* ===== Values =====
- * Figures line up wherever they are: a column of them stays in its column, and a sentence stays
- * still while the HP counter animates through it. */
-.gold,
-.hp,
-.xp,
-.crit,
-.heal,
-.defense,
-.tally,
-.minor,
-.muted {
-    font-variant-numeric: tabular-nums;
-}
-
-/* The weight answers "which of these matters?", so it belongs where something is competing — a
+ * The weight answers "which of these matters?", so it belongs where something is competing — a
  * number inside a sentence, with nothing but hue to set it apart. A column answers that question
  * already, and weighting every cell in one only makes the table heavier. */
 p .gold,

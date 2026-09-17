@@ -113,10 +113,10 @@ the footer the gap after the sha. Where the attributes force the tag open across
 content flush against `>` and `</`; where the label is long, name it above the `~H` rather than
 letting the formatter break it inside the tag. Buttons are exempt, being padded boxes.
 
-**Weight answers "which of these matters?", so a table never needs it.** Every value class carries
-tabular figures wherever it sits: a column of numbers wants to line up, and an animating one wants
-to stay still — the HP counter runs inside a paragraph, and proportional digits reflow the line on
-every frame. The weight is scoped to `p` and `li`, because inside a sentence a number has nothing
+**Weight answers "which of these matters?", so a table never needs it.** Tabular figures are on
+`body`, not on a list of classes: the game is arithmetic, and a column of numbers wants to line up
+while an animating one wants to stay still — the HP counter runs inside a paragraph, and
+proportional digits reflow the line on every frame. The weight is scoped to `p` and `li`, because inside a sentence a number has nothing
 but hue to set it apart, while a column has answered that question already and weighting every
 cell of one only makes the table heavier. Measured before it was put back: the weapon shop read 93%
 bold, the character page 24%. `<strong>` follows the same rule — a name in a sentence takes it, a
