@@ -113,6 +113,13 @@ the footer the gap after the sha. Where the attributes force the tag open across
 content flush against `>` and `</`; where the label is long, name it above the `~H` rather than
 letting the formatter break it inside the tag. Buttons are exempt, being padded boxes.
 
+**Declare a property only where the element would not otherwise have it.** Either it does not
+inherit — form controls and buttons take no font or colour from `body`, which is measurable and was
+— or it differs from what it does. Restating the inherited value gives `body` a second place to be
+changed and no second effect, so `.data-table td`, `h2`, `h3` and `.stat-value` say nothing about
+colour while `.stat-label` and `th` do. If a container is ever made secondary, the children that
+must stay primary will need to say so then; adding it in anticipation is how the two drift apart.
+
 **Size is hierarchy, never container.** 13px is anything you read — prose, an alert, a table cell —
 because an alert set a step under the paragraph above it reads as a different kind of thing when it
 is the same kind. 12px is a control or the compact sidebar, 11px a column label or the footer. The

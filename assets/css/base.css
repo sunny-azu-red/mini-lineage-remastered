@@ -5,6 +5,10 @@
  * ========================================================================
  */
 
+/* A property is declared where the element would not otherwise have it: because it does not inherit
+ * (form controls and buttons inherit no font or colour), or because it differs from what it does.
+ * Restating the inherited value gives `body` a second place to be changed and no second effect. */
+
 /* ===== Reset ===== */
 *,
 *::before,
@@ -68,7 +72,6 @@ strong {
 /* A heading is not prose: 1.6 rather than the body's 1.75, and the same as `.panel-header`, so the
  * two kinds of heading on a screen sit alike. */
 h2 {
-    color: var(--text-primary);
     font-family: var(--font-heading);
     line-height: 1.6;
     font-size: 1.15rem;
@@ -86,11 +89,10 @@ h2:first-child {
     margin-top: 0;
 }
 
-/* A step below h2 and clearly one: same family and case, no rule beneath it, and the secondary
- * colour so the two never read as the same level. It had no rule at all before this — "The
- * Chronicle" was rendering at the browser's own 1.17em, which happened to land near h2. */
+/* A step below h2 and clearly one: same family, same case, same colour — the size and the missing
+ * rule beneath it carry the difference. It had no rule at all before this, so "The Chronicle" was
+ * rendering at the browser's own 1.17em, which happened to land near h2. */
 h3 {
-    color: var(--text-secondary);
     font-family: var(--font-heading);
     font-size: 15px;
     font-weight: 600;

@@ -9,7 +9,6 @@
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
 }
 
 .table-container {
@@ -39,7 +38,6 @@
 
 .data-table td {
     padding: 7px 10px;
-    color: var(--text-primary);
 }
 
 .data-table tbody tr:nth-child(odd) {

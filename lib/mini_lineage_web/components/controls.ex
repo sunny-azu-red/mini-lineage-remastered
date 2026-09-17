@@ -180,12 +180,15 @@ defmodule MiniLineageWeb.Controls do
 
   attr :id, :string, required: true
   attr :at, :any, required: true
+  attr :class, :string, default: "minor"
 
   @doc false
   # The text is UTC and correct without JS; the hook rewrites it to wherever the reader is.
   def stamp(assigns) do
     ~H"""
-    <time id={@id} phx-hook="LocalTime" datetime={DateTime.to_iso8601(@at)}>{short_date(@at)}</time>
+    <time id={@id} class={@class} phx-hook="LocalTime" datetime={DateTime.to_iso8601(@at)}>{short_date(
+      @at
+    )}</time>
     """
   end
 
