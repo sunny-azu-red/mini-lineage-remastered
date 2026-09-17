@@ -61,7 +61,7 @@ defmodule MiniLineageWeb.Layouts do
           <div id="main">
             <div class="panel">
               <div class="panel-header flex">
-                <span class="header-name">{@title}</span>
+                <h1 class="header-name">{@title}</h1>
                 <div class="header-effects" id="effects" phx-hook="EffectTimers">
                   <.effect_icon :for={effect <- effects_of(@view)} effect={effect} />
                 </div>
