@@ -24,7 +24,7 @@
    twice. This is the body face, quiet, and wide enough in the tracking to hold a line of small
    capitals. The data is what should be loud in a table. */
 .data-table th {
-    background: rgba(0, 0, 0, 0.28);
+    background: var(--border-dark);
     color: var(--text-secondary);
     font-weight: 600;
     font-size: 11px;
