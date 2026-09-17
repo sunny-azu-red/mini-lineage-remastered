@@ -120,7 +120,10 @@ defmodule MiniLineageWeb.Layouts do
   attr :character_id, :string, default: nil
 
   defp sidebar(assigns) do
-    assigns = assign(assigns, level: Format.number(assigns.view.level))
+    assigns =
+      assign(assigns,
+        race_line: "#{assigns.view.race_label} level #{Format.number(assigns.view.level)}"
+      )
 
     ~H"""
     <div id="sidebar" phx-hook="AnimatedValues">
@@ -133,7 +136,7 @@ defmodule MiniLineageWeb.Layouts do
             <span class="stat-label">Race</span>
             <span class="stat-value">
               {if @view.dead, do: "☠️", else: @view.race_emoji}
-              <.link patch={Paths.for_character(@character_id, "game")} phx-no-format>{@view.race_label} level <span class="gold">{@level}</span></.link>
+              <.link patch={Paths.for_character(@character_id, "game")}>{@race_line}</.link>
             </span>
           </div>
 
