@@ -96,18 +96,17 @@ defmodule MiniLineage.Characters.Store do
   @doc """
   Retires runs untouched for #{@ttl_hours}h — the window the cookie is issued for, sliding because
   `updated_at` moves on every save. A retired run keeps its place and its fights and gives up only
-  its session, which is what makes it MISSING rather than dead. Returns `{retired, discarded}`.
+  its session, which is what makes it MISSING rather than dead. Returns how many were retired.
+
+  Nothing is ever deleted: a visitor who chose no lineage is never written in the first place.
   """
   def retire_idle do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)
     idle = from r in Record, where: not is_nil(r.session_id) and r.updated_at < ^cutoff
 
-    # A visitor who never chose a race is nobody: no name, no fights, nothing to rank. That row is
-    # the one thing here still worth deleting, and its fights (there are none) cascade with it.
-    {discarded, _} = Repo.delete_all(from r in idle, where: is_nil(r.race_id))
     {retired, _} = Repo.update_all(idle, set: [session_id: nil])
 
-    {retired, discarded}
+    retired
   end
 
   def ttl_hours, do: @ttl_hours

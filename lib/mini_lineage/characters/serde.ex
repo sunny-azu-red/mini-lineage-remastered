@@ -8,8 +8,7 @@ defmodule MiniLineage.Characters.Serde do
   alias MiniLineage.Game.Player
 
   # The shape of the document, not of the character — which is why it is written here rather than
-  # carried on the struct. A reshape bumps this and `from_map/1` branches on it; today there is
-  # only one shape, and a row written before versioning has it.
+  # carried on the struct. A reshape bumps this and `from_map/1` branches on it.
   @version 1
 
   @effect_types %{"buff" => :buff, "debuff" => :debuff, "aura" => :aura}
@@ -42,9 +41,7 @@ defmodule MiniLineage.Characters.Serde do
     }
   end
 
-  def from_map(%{} = m) do
-    version = m["version"] || @version
-
+  def from_map(%{"version" => version} = m) do
     if version > @version do
       raise "character document is version #{version}; this build understands #{@version}"
     end
@@ -71,6 +68,9 @@ defmodule MiniLineage.Characters.Serde do
       combat_until: m["combat_until"]
     }
   end
+
+  def from_map(%{}),
+    do: raise("character document carries no version; every one this build writes does")
 
   defp effect_to_map(e) do
     %{

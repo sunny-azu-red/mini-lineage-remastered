@@ -132,11 +132,12 @@ defmodule MiniLineage.Characters.SerdeTest do
       assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 1
     end
 
-    test "a document written before versioning is the shape we have now" do
-      # Every row already in the database predates this key, and none of them need converting.
-      before_versioning = %Player{} |> Serde.to_map() |> Map.delete("version")
+    test "and a document without one is refused, not assumed to be this shape" do
+      # Nothing this build has ever written lacks the key, so a document that does is not a row
+      # from an older build — it is a document the game did not write.
+      unversioned = %Player{} |> Serde.to_map() |> Map.delete("version")
 
-      assert Serde.from_map(before_versioning) == %Player{}
+      assert_raise RuntimeError, ~r/carries no version/, fn -> Serde.from_map(unversioned) end
     end
 
     test "and one from a newer build is refused rather than quietly misread" do
@@ -154,6 +155,7 @@ defmodule MiniLineage.Characters.SerdeTest do
 
       loaded =
         Serde.from_map(%{
+          "version" => 1,
           "effects" => [
             %{
               "id" => "x",
@@ -174,6 +176,7 @@ defmodule MiniLineage.Characters.SerdeTest do
 
       loaded =
         Serde.from_map(%{
+          "version" => 1,
           "effects" => [
             %{
               "id" => "x",
@@ -193,6 +196,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "a malformed modifier is dropped rather than crashing the load" do
       loaded =
         Serde.from_map(%{
+          "version" => 1,
           "effects" => [%{"id" => "x", "type" => "buff", "modifiers" => ["nonsense", %{}, nil]}]
         })
 
@@ -200,7 +204,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "missing fields fall back to a playable character rather than nil arithmetic" do
-      loaded = Serde.from_map(%{})
+      loaded = Serde.from_map(%{"version" => 1})
 
       assert loaded.total_battles == 0
       assert loaded.total_ambushes == 0
@@ -212,7 +216,8 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "a truthy-looking string is not a truthy flag" do
-      loaded = Serde.from_map(%{"dead" => "yes", "cheated" => 1, "coward" => "true"})
+      loaded =
+        Serde.from_map(%{"version" => 1, "dead" => "yes", "cheated" => 1, "coward" => "true"})
 
       refute loaded.dead
       refute loaded.cheated

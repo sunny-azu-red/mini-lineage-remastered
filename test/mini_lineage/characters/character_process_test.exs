@@ -190,25 +190,13 @@ defmodule MiniLineage.CharactersTest do
       Characters.forget_process(id)
       backdate(id)
 
-      assert {retired, _discarded} = Store.retire_idle()
-      assert retired >= 1
+      assert Store.retire_idle() >= 1
 
       # The session is gone, so nothing can pick this run up again...
       assert stored(id) == nil
       # ...but the run itself is still here, and still in the Halls.
       assert Repo.get(Record, character_id)
       assert Board.entry(character_id).name == "Hero"
-    end
-
-    test "and discards a visitor who never chose a race, because that is a row about nobody" do
-      session = Characters.new_session_id()
-      on_exit(fn -> Characters.forget(session) end)
-      :ok = Store.save(Store.new_id(), session, %Player{})
-      backdate(session)
-
-      assert {_retired, discarded} = Store.retire_idle()
-      assert discarded >= 1
-      assert stored(session) == nil
     end
 
     test "the scheduled sweeper does the same work, through its own process", %{id: id} do

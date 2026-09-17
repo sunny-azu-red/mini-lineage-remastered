@@ -89,24 +89,13 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_info(:tick, state) do
     schedule_tick()
-    state = backstop(state)
 
-    # A visitor who has not created a character has nothing to regenerate, and no health for the
-    # tick log to describe. The timer keeps running: the character may yet be created in here.
-    if Player.started?(state.player) do
-      {_result, state} = run(state, &Player.process_regen_tick/1, log: true)
-
-      {:noreply, state}
-    else
-      {:noreply, state}
-    end
+    {:noreply, state |> backstop() |> on_timer(&Player.process_regen_tick/1)}
   end
 
   def handle_info(:expiry, state) do
     # The sweep itself lives in run/2; this firing exists purely to make it happen on time.
-    {_result, state} = run(%{state | expiry_timer: nil}, &{&1, :ok}, log: true)
-
-    {:noreply, state}
+    {:noreply, on_timer(%{state | expiry_timer: nil}, &{&1, :ok})}
   end
 
   def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
@@ -125,6 +114,18 @@ defmodule MiniLineage.Characters.Server do
   def terminate(_reason, state), do: flush_pending(state)
 
   # ------------------------------------------------------------------- core
+
+  # Neither timer has anything to do for a visitor who has not created a character: nothing to
+  # regenerate, no effects to expire, and no health for the tick log to describe. Both keep
+  # running, because the character may yet be created in here.
+  defp on_timer(state, fun) do
+    if Player.started?(state.player) do
+      {_result, state} = run(state, fun, log: true)
+      state
+    else
+      state
+    end
+  end
 
   defp backstop(%{dirty_since: nil} = state), do: state
 

@@ -38,13 +38,12 @@ defmodule MiniLineage.Characters.Sweeper do
   def handle_call(:sweep, _from, state), do: {:reply, sweep(), state}
 
   defp sweep do
-    {retired, discarded} = Store.retire_idle()
+    retired = Store.retire_idle()
 
-    if retired > 0 or discarded > 0,
+    if retired > 0,
       do:
         Logger.info(
-          "retired #{retired} character(s) idle for over #{Store.ttl_hours()}h onto the board, " <>
-            "and discarded #{discarded} that never started"
+          "retired #{retired} character(s) idle for over #{Store.ttl_hours()}h onto the board"
         )
 
     retired

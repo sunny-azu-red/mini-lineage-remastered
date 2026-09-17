@@ -102,6 +102,11 @@ an icon with no healing behind it — or healing with no icon — cannot happen.
 its effect list as an argument rather than reading it back, because `active_effects/1` is what
 calls it.
 
+**A visitor is never written.** A browser that has not chosen a lineage lives in its process and
+nothing else: every action that could change it is guarded on `started?`, so nothing marks it dirty
+and nothing persists it. That is why the retirement only ever clears sessions and deletes nothing,
+and why `characters` has no row without a race. `visitor_test.exs` holds it.
+
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
 **A run ends three ways: fallen, going, or missing.** Dead is not the only way to be over — the
