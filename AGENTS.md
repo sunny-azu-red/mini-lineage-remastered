@@ -117,8 +117,13 @@ letting the formatter break it inside the tag. Buttons are exempt, being padded 
 and `.tally` carry `--weight-value` and tabular figures themselves, so a number reads the same in a
 sentence, a shop column and the sidebar — the treatment follows the class, not the container. The
 figures are load-bearing: the HP counter animates inside one of those paragraphs, and proportional
-digits reflow the line on every frame. `.muted` is left out: quiet means unweighted too. Only Inter
-400, 500 and 600 are loaded; asking for 700 gets a fake.
+digits reflow the line on every frame. Only Inter 400, 500 and 600 are loaded; asking for 700 gets
+a fake.
+
+`.minor` is the quiet value — an ambush risk you want low, the day a run was last seen, a coward's
+tally. It takes `--text-muted`'s colour and keeps the weight, which is the whole reason it cannot
+just be `.muted`: that one is for what is not a value at all, and by now only the `-` where a shop
+item has no modifier qualifies.
 
 **One colour per concept, and weight for a name.** `.gold` is what a run is worth — its purse and
 its level — and stops meaning that if every number wears it, so counts of things take `.tally`:

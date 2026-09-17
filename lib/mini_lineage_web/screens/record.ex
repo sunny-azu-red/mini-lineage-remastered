@@ -65,7 +65,7 @@ defmodule MiniLineageWeb.Screens.Record do
       <span class="crit"><span id="char-stat-crit">{@crit}</span>% Critical Hit Chance</span>
       and {if @dead, do: "mended", else: "mend"} wounds at
       <span class="heal">+<span id="char-stat-regen">{@regen}</span> HP Regeneration</span>
-      per rest cycle, while navigating the roads with a <span class="muted"><span id="char-stat-ambush">{@ambush}</span>% Ambush Risk</span>.
+      per rest cycle, while navigating the roads with a <span class="minor"><span id="char-stat-ambush">{@ambush}</span>% Ambush Risk</span>.
     </p>
 
     <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
@@ -79,7 +79,7 @@ defmodule MiniLineageWeb.Screens.Record do
       )}</span>
       <%= if @view.counters.total_ambushes > 0 do %>
         and overcoming
-        <span class="muted">{Format.pluralize(
+        <span class="minor">{Format.pluralize(
           "cunning ambush",
           "cunning ambushes",
           @view.counters.total_ambushes

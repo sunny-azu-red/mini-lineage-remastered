@@ -98,9 +98,15 @@ p.last {
 }
 
 /* ===== Utility Classes ===== */
-/* Quiet on purpose, and the only thing that is: a timestamp, a "-" where an item has no modifier,
- * a coward's tally, an ambush risk you want low. */
+/* Not a value at all: a "-" where an item has no modifier, a coward's tally. No weight, no hue. */
 .muted {
+    color: var(--text-muted) !important;
+}
+
+/* A value you read but do not act on — an ambush risk you want low, the day a run was last seen.
+ * It takes --text-muted's quiet and keeps the weight every other value has, which is the whole
+ * reason it cannot just be `.muted`. */
+.minor {
     color: var(--text-muted) !important;
 }
 
@@ -145,7 +151,8 @@ p.last {
 .crit,
 .heal,
 .defense,
-.tally {
+.tally,
+.minor {
     font-weight: var(--weight-value);
     font-variant-numeric: tabular-nums;
 }

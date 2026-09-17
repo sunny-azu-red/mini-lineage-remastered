@@ -96,10 +96,10 @@ defmodule MiniLineageWeb.Screens.Halls do
         <span :if={@row.online} class="online" title="Online right now">•</span>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>
-      <td class="center">{Format.number(@row.level)}</td>
+      <td class="center gold">{Format.number(@row.level)}</td>
       <td class="xp">{Format.number(@row.total_xp)}</td>
       <td class="gold">🪙 {Format.adena(@row.adena)}</td>
-      <td class="muted"><.stamp id={"seen-#{@row.id}"} at={@row.updated_at} /></td>
+      <td class="minor"><.stamp id={"seen-#{@row.id}"} at={@row.updated_at} /></td>
     </tr>
     """
   end
