@@ -63,7 +63,9 @@ defmodule MiniLineageWeb.Screens.Halls do
               <th>Date</th>
             </tr>
           </thead>
-          <tbody>
+          <%!-- The hook animates every [data-value] beneath it and sweeps every [data-stamp] whose
+                stamp has moved, so one hook covers the whole board. --%>
+          <tbody id="halls-rows" phx-hook="AnimatedValues">
             <.character_row
               :for={row <- @rows}
               catalog={@catalog}
@@ -89,16 +91,40 @@ defmodule MiniLineageWeb.Screens.Halls do
     assigns = assign(assigns, name: String.slice(assigns.row.name || "", 0, 20))
 
     ~H"""
-    <tr class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}>
+    <%!-- Keyed by the character and never by the row: the board reorders under a climb, so a key
+          tied to a position would count a stranger's total into this one's.
+          The stamp is what the row SHOWS, not when it was written. On `updated_at` the sweep fired
+          for writes with nothing to see — starting over clears the old run's session, which moves
+          the date and drops the green, and swept a row whose figures had not changed. --%>
+    <tr
+      class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}
+      data-key={"row-#{@row.id}"}
+      data-stamp={"#{@row.level}/#{@row.total_xp}/#{@row.adena}/#{@row.dead}"}
+    >
       <td class="name">
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
-        <span :if={@row.online} class="online" title="Online right now">•</span>
+        <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and holding the
+              width means no name shifts sideways when somebody arrives. --%>
+        <span
+          class={["online", @row.online && "lit"]}
+          title={@row.online && "Online right now"}
+          aria-hidden={if @row.online, do: "false", else: "true"}
+        >•</span>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>
-      <td class="num gold">{Format.number(@row.level)}</td>
-      <td class="num xp">{Format.number(@row.total_xp)}</td>
-      <td class="gold">🪙 {Format.adena(@row.adena)}</td>
+      <td class="num gold">
+        <span data-key={"level-#{@row.id}"} data-value={@row.level}>{Format.number(@row.level)}</span>
+      </td>
+      <td class="num xp">
+        <span data-key={"xp-#{@row.id}"} data-value={@row.total_xp}>{Format.number(@row.total_xp)}</span>
+      </td>
+      <td class="gold">
+        🪙
+        <span data-key={"adena-#{@row.id}"} data-format="adena" data-value={@row.adena}>{Format.adena(
+          @row.adena
+        )}</span>
+      </td>
       <td><.stamp id={"seen-#{@row.id}"} at={@row.last_action_at} /></td>
     </tr>
     """

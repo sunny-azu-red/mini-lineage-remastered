@@ -224,6 +224,10 @@ defmodule MiniLineageWeb.GameLive do
 
     if Actions.may_restart?(socket.assigns.player) do
       player = Characters.archive(session)
+      # Archiving stops the process this tab attached to, so the run it starts has no viewers and
+      # reports itself unwatched. This tab attaches to the new one here rather than off its own
+      # broadcast, which it will not have handled before the assign below moves the id past it.
+      Characters.attach(session)
 
       {:noreply,
        socket
@@ -263,6 +267,13 @@ defmodule MiniLineageWeb.GameLive do
     # server kills it. Re-pin against the new player, and treat a reset as a trip back to Game
     # Start rather than leaving this tab on a screen its character no longer qualifies for.
     reset? = Player.started?(socket.assigns.player) and not Player.started?(player)
+
+    # Starting over stops the process this tab attached to and starts another, which begins with no
+    # viewers and so reports itself unwatched. Every tab must attach again or the new run shows as
+    # offline in the Halls until somebody reloads. The id changes only here, so this costs nothing
+    # on an ordinary tick.
+    if character_id != socket.assigns.character_id,
+      do: Characters.attach(socket.assigns.session_id)
 
     socket =
       assign(socket, player: player, view: Snapshot.build(player), character_id: character_id)

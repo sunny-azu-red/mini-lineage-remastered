@@ -42,7 +42,7 @@
 }
 
 .data-table tbody tr:nth-child(odd) {
-    background: var(--row-lift);
+    background-color: var(--row-lift);
 }
 
 /* Figures are tabular, which only pays off against an edge to line up on: the magnitude of a
@@ -71,13 +71,13 @@ th.name {
 /* A run that has not ended. `:not(.mine)` rather than declaration order, so yours stays gold
    however these rules get moved about. */
 .data-table tbody tr.character-row.alive:not(.mine) {
-    background: var(--success-wash);
+    background-color: var(--success-wash);
     box-shadow: inset 2px 0 0 var(--success);
 }
 
 /* Your own run, findable without counting. */
 .data-table tbody tr.character-row.mine {
-    background: var(--gold-wash);
+    background-color: var(--gold-wash);
     box-shadow: inset 2px 0 0 var(--gold);
 }
 
@@ -87,13 +87,53 @@ th.name {
    table had been saying nothing, so the two disagreed about what you already have. Marked the way
    the Halls marks your own run, since it is the same sentence: this row is you. */
 .data-table tbody tr.owned {
-    background: var(--gold-wash);
+    background-color: var(--gold-wash);
     box-shadow: inset 2px 0 0 var(--gold);
 }
 
 /* --- the Halls of Champions ------------------------------------------------------------------ */
 
 /* Somebody has this character open right now, as against merely alive. */
+/* Always in the DOM so it can fade; `.lit` is the only thing that changes when somebody arrives. */
 .character-row .online {
     color: var(--success);
+    opacity: 0;
+    transition: opacity 400ms ease;
+}
+
+.character-row .online.lit {
+    opacity: 1;
+}
+
+/* A write sweeps the row it touched, the same diagonal the level-up banner wears.
+   A background and not an overlay, which cost two attempts to learn: an absolutely positioned
+   ::after on a <tr> paints ON TOP of the cells, and `z-index: -1` does not move it — measured, the
+   washed cell was identical either way, because table painting does not honour it. A background is
+   painted beneath cell content by definition. It is why the row colours above set
+   `background-color` and not the `background` shorthand, which would blank this out.
+   Being beneath does not make it invisible through the glyphs: at 13px they are antialiased, so
+   every text pixel is part ground, and a band passing behind briefly lifts them. That is what a
+   shine is. It is held to 0.12 and 420ms so it passes any one figure in about a tenth of a
+   second, which reads as a sweep rather than as the value dimming. */
+.data-table tbody tr.character-row.stirred {
+    background-image: linear-gradient(105deg,
+            transparent 40%,
+            rgba(255, 255, 255, 0.12) 50%,
+            transparent 60%);
+    /* Not the default `repeat`: the image is two and a half rows wide, so a tiled one shows its
+       band twice over and reads as two sweeps. */
+    background-repeat: no-repeat;
+    background-size: 250% 100%;
+    background-position: -5% 0;
+    animation: row-sweep 420ms linear forwards;
+}
+
+/* A background-position percentage aligns that point of the image with that point of the box, and
+   the image is the larger, so the percentages run backwards: -5% puts the band just off the RIGHT
+   and 105% just off the left. The range is narrow on purpose — any wider and the band spends most
+   of the animation outside the row and reads as a flicker. Linear, so it crosses evenly. */
+@keyframes row-sweep {
+    to {
+        background-position: 105% 0;
+    }
 }

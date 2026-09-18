@@ -167,13 +167,21 @@ export function shortAdena(value) {
 export const AnimatedValues = {
     mounted() {
         this.previous = new Map();
+        this.stamps = new Map();
+        // One handle per value, not one for the hook: a board animates up to seventy-five at once,
+        // and a single handle would leave every chain but the last running into a detached node.
+        this.frames = new Map();
+        // Delegated, so a table of rows costs one listener rather than one per row.
+        this.el.addEventListener('animationend', (event) => {
+            if (event.animationName === 'row-sweep') event.target.classList.remove('stirred');
+        });
         this.sync(false);
     },
     updated() {
         this.sync(true);
     },
     destroyed() {
-        cancelAnimationFrame(this.frame);
+        for (const frame of this.frames.values()) cancelAnimationFrame(frame);
     },
     sync(animate) {
         // A level-up wraps xpCurrent DOWNWARD into the new level, so the bar would slide
@@ -192,10 +200,13 @@ export const AnimatedValues = {
         }
         this.level = level;
 
+        const live = new Set();
+
         for (const el of this.el.querySelectorAll('[data-value]')) {
             const key = el.dataset.key;
             const target = Number(el.dataset.value);
             const from = this.previous.get(key);
+            live.add(key);
             this.previous.set(key, target);
 
             if (!animate || from === undefined || from === target || !Number.isFinite(target))
@@ -204,8 +215,41 @@ export const AnimatedValues = {
             if (target > from)
                 this.shimmer(el);
 
-            this.count(el, from, target);
+            this.count(key, el, from, target);
         }
+
+        this.forget(this.previous, live);
+        this.stir(animate);
+    },
+    // A board holds whoever is winning, so what a run was worth is remembered only while it is on
+    // one. The sidebar's three keys never leave and this costs them nothing.
+    forget(memory, live) {
+        for (const key of memory.keys())
+            if (!live.has(key))
+                memory.delete(key);
+    },
+    // A row sweeps when its stamp moves, which is any write at all: a purchase and a death move it
+    // as surely as experience does, and somebody merely opening a tab never does.
+    stir(animate) {
+        const live = new Set();
+
+        for (const row of this.el.querySelectorAll('[data-stamp]')) {
+            const key = row.dataset.key;
+            const stamp = row.dataset.stamp;
+            const before = this.stamps.get(key);
+            live.add(key);
+            this.stamps.set(key, stamp);
+
+            if (!animate || before === undefined || before === stamp)
+                continue;
+
+            row.classList.remove('stirred');
+            // Force a reflow so a second write restarts the sweep instead of being ignored.
+            void row.offsetWidth;
+            row.classList.add('stirred');
+        }
+
+        this.forget(this.stamps, live);
     },
     shimmer(el) {
         const bar = el.closest('.bar-track')?.querySelector('.bar');
@@ -218,7 +262,8 @@ export const AnimatedValues = {
         bar.classList.add('shimmer-active');
         setTimeout(() => bar.classList.remove('shimmer-active'), 600);
     },
-    count(el, from, to) {
+    count(key, el, from, to) {
+        cancelAnimationFrame(this.frames.get(key));
         const format = el.dataset.format === 'adena' ? shortAdena : groupDigits;
         const settled = el.textContent;
         const started = performance.now();
@@ -229,14 +274,15 @@ export const AnimatedValues = {
 
             if (t < 1) {
                 el.textContent = format(from + (to - from) * eased);
-                this.frame = requestAnimationFrame(step);
+                this.frames.set(key, requestAnimationFrame(step));
             } else {
                 // Always ends on the server's own rendering, never this module's.
                 el.textContent = settled;
+                this.frames.delete(key);
             }
         };
 
-        this.frame = requestAnimationFrame(step);
+        this.frames.set(key, requestAnimationFrame(step));
     },
 };
 
