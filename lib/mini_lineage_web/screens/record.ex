@@ -103,7 +103,6 @@ defmodule MiniLineageWeb.Screens.Record do
         and {@voice.their} vitality currently sustains {@voice.object} at
         <span class="hp"><span
           id="char-hp"
-          class="animate-val"
           data-key="char-hp"
           data-value={@view.health}
         >{Format.number(@view.health)}</span>

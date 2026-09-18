@@ -145,7 +145,7 @@ defmodule MiniLineageWeb.Layouts do
             <div class="bar-track" id="hp-track">
               <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
               <span class="bar-text">
-                <span class="animate-val" data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
+                <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
                   @view.max_health
                 )}</span>
               </span>
@@ -164,7 +164,6 @@ defmodule MiniLineageWeb.Layouts do
               </div>
               <span class="bar-text">
                 <span
-                  class="animate-val"
                   data-key="xp"
                   data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
                 >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
@@ -177,7 +176,7 @@ defmodule MiniLineageWeb.Layouts do
           <div class="stat-row">
             <span class="stat-label">Adena</span>
             <span class="stat-value gold">🪙
-            <span class="animate-adena" data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
+            <span data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
               @view.adena
             )}</span></span>
           </div>
