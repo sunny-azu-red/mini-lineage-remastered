@@ -10,9 +10,9 @@
     /* ===== Surfaces =====
      * Every dark surface in the game sits on hue 267 at 19% — the violet the banner sweeps through
      * and both buttons are drawn in. 27% was too much of it over an area this size. */
-    --bg-deep: #141118;
-    --bg-surface: #231d2b;
-    --bg-panel: #1b1721;
+    --bg-deep: #141316;
+    --bg-surface: #232127;
+    --bg-panel: #1b191f;
 
     /* ===== Lifts =====
      * White at three strengths. A surface nested inside another is raised off it rather than sunk
@@ -28,9 +28,9 @@
      * violet secondary read as the one thing that had not been painted. The primary carries the
      * most of it at 19%, the secondary is quieter at 15%, and the surfaces meet the primary at 19%
      * from the other side, having come down from 27%. */
-    --border-control: #635278;
-    --border-arcane: #463c52;
-    --border-arcane-bright: #645775;
+    --border-control: #645b6f;
+    --border-arcane: #46414d;
+    --border-arcane-bright: #655e6e;
     --border-soft: rgba(255, 255, 255, 0.07);
 
     /* ===== Gold, the one accent ===== */

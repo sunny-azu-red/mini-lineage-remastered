@@ -46,10 +46,10 @@
      * in. The banner is still the brightest surface on the page and still the only coloured one —
      * the colour is arcane now rather than blue. */
     background: linear-gradient(135deg,
-            #141118 0%,
-            #201b27 30%,
-            #342b40 60%,
-            #231d2a 100%);
+            #141316 0%,
+            #201e24 30%,
+            #34303b 60%,
+            #232027 100%);
     border: 1px solid var(--border-soft);
     border-bottom: 2px solid var(--gold-dim);
     border-radius: var(--radius-lg);
@@ -155,10 +155,10 @@
     /* Desaturated alongside the resting gradient, or the hover would put back the blue the rest
      * of it just gave up. The lift is unchanged: every stop is 3-4 points lighter than at rest. */
     background: linear-gradient(135deg,
-            #1a1520 0%,
-            #2a2333 30%,
-            #3e334b 60%,
-            #2a2233 100%);
+            #1a171d 0%,
+            #2a272f 30%,
+            #3e3945 60%,
+            #2a262f 100%);
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 

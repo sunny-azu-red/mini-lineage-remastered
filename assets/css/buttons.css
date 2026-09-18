@@ -43,7 +43,7 @@
     border: 1px solid var(--border-control);
 
     /* Subtle single-layer gradient */
-    background: linear-gradient(180deg, #463a55 0%, #32293d 100%);
+    background: linear-gradient(180deg, #46404e 0%, #322e38 100%);
 
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 
@@ -105,7 +105,7 @@
 
 /* ===== Hover ===== */
 .btn:hover {
-    background: linear-gradient(180deg, #4f4260 0%, #3a3046 100%);
+    background: linear-gradient(180deg, #504959 0%, #3a3541 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.15),
@@ -133,7 +133,7 @@
 /* ===== Active / Press ===== */
 .btn:active,
 .btn.active {
-    background: linear-gradient(180deg, #231d2a 0%, #2c2436 100%);
+    background: linear-gradient(180deg, #232027 0%, #2c2832 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.2),
@@ -186,7 +186,7 @@
 
 /* ===== Secondary Variant ===== */
 .btn-secondary {
-    background: linear-gradient(180deg, #27212d 0%, #1b1720 100%);
+    background: linear-gradient(180deg, #27242a 0%, #1b191e 100%);
     border: 1px solid var(--border-arcane);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     color: var(--text-secondary);
@@ -195,7 +195,7 @@
 .btn-secondary::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(100, 87, 117, 0.35),
+            rgba(101, 94, 110, 0.35),
             transparent);
 }
 
@@ -206,22 +206,22 @@
             transparent 50%,
             rgba(0, 0, 0, 0.12) 100%),
         linear-gradient(180deg,
-            #322b3b 0%,
-            #27212d 50%,
-            #2d2735 100%);
+            #322f37 0%,
+            #27242a 50%,
+            #2d2b31 100%);
 
     border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(100, 87, 117, 0.15),
+        0 0 0 2px rgba(101, 94, 110, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .btn-secondary:active,
 .btn-secondary.active {
-    background: linear-gradient(180deg, #141117 0%, #1b1720 100%);
+    background: linear-gradient(180deg, #141315 0%, #1b191e 100%);
     border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(100, 87, 117, 0.2),
+        0 0 0 2px rgba(101, 94, 110, 0.2),
         inset 0 2px 3px rgba(0, 0, 0, 0.35);
     transform: none;
     transition: none;
