@@ -116,7 +116,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
     <p :if={@entry} phx-no-format>
       Set out on <.stamp id="record-set-out" at={@entry.inserted_at} />
-      {ending(@entry)} <.stamp id="record-last" at={@entry.updated_at} />.
+      {ending(@entry)} <.stamp id="record-last" at={@entry.last_action_at} />.
     </p>
 
     <h3>The Chronicle</h3>

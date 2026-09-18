@@ -68,6 +68,14 @@ defmodule MiniLineage.Characters.Store do
   # collision this updates on.
   defp upsert(id, session_id, player) do
     now = DateTime.utc_now()
+    # Every stored row carries a stamp, so nothing downstream has to cope with a date that is not
+    # there. The process sets it when the player acts; anything arriving without one was never an
+    # action, and the moment it was written is the best date it is ever going to have.
+    player = %{
+      player
+      | last_action_at: player.last_action_at || DateTime.to_unix(now, :millisecond)
+    }
+
     state = Serde.to_map(player)
 
     Repo.insert!(

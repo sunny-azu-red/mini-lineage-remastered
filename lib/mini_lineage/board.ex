@@ -142,6 +142,8 @@ defmodule MiniLineage.Board do
   # Selected into a plain map, never a %Record{}: the schema struct carries `session_id`, and an
   # entry that has the key at all is one `Repo.all(Record)` away from carrying the secret with it.
   # `active` is the one thing said about the session — whether there is one, never what it is.
+  # The date is `last_action_at` and not `updated_at`, which moves for things nobody did: a tick
+  # the backstop flushed, a tab closing, a run being started over.
   defp row(query) do
     select(query, [r], %{
       id: r.id,
@@ -152,7 +154,7 @@ defmodule MiniLineage.Board do
       dead: r.dead,
       disqualified: r.disqualified,
       inserted_at: r.inserted_at,
-      updated_at: r.updated_at,
+      last_action_at: r.last_action_at,
       active: not is_nil(r.session_id)
     })
   end

@@ -26,6 +26,9 @@ defmodule MiniLineage.Game.Player do
             effects: [],
             current_screen: nil,
             combat_until: nil,
+            # When the player last DID something, in epoch milliseconds. Written by the process,
+            # never by the game rules, which is why nothing in this module touches it.
+            last_action_at: nil,
             last_battle_narrative: nil
 
   def started?(%__MODULE__{race_id: r, health: h, adena: a}),

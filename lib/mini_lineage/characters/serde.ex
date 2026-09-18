@@ -8,8 +8,9 @@ defmodule MiniLineage.Characters.Serde do
   alias MiniLineage.Game.Player
 
   # The shape of the document, not of the character — which is why it is written here rather than
-  # carried on the struct. A reshape bumps this and `from_map/1` branches on it.
-  @version 1
+  # carried on the struct. A reshape bumps this and `from_map/1` branches on it. 2 added
+  # `last_action_at`; a version 1 document simply has none, and the migration filled those in.
+  @version 2
 
   @effect_types %{"buff" => :buff, "debuff" => :debuff, "aura" => :aura}
   @modifier_types ~w(attack defense crit max_health regen ambush_risk xp_multiplier adena_multiplier)a
@@ -35,7 +36,8 @@ defmodule MiniLineage.Characters.Serde do
       "total_enemies_killed" => p.total_enemies_killed,
       "effects" => Enum.map(p.effects, &effect_to_map/1),
       "current_screen" => p.current_screen,
-      "combat_until" => p.combat_until
+      "combat_until" => p.combat_until,
+      "last_action_at" => p.last_action_at
       # `last_battle_narrative` is deliberately absent: it lives in battle_log now, and was half
       # the bytes of every save. The process rehydrates it from there when it starts.
     }
@@ -65,7 +67,8 @@ defmodule MiniLineage.Characters.Serde do
       total_enemies_killed: m["total_enemies_killed"] || 0,
       effects: Enum.map(m["effects"] || [], &effect_from_map/1),
       current_screen: m["current_screen"],
-      combat_until: m["combat_until"]
+      combat_until: m["combat_until"],
+      last_action_at: m["last_action_at"]
     }
   end
 

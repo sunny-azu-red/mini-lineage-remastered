@@ -194,18 +194,56 @@ defmodule MiniLineage.BoardTest do
       entry = Board.entry(id)
 
       assert entry.inserted_at == born
-      assert DateTime.compare(entry.updated_at, born) == :gt
+      assert DateTime.compare(entry.last_action_at, born) == :gt
     end
 
     test "and archiving the run does not move it" do
       %{id: id, session: session} = run("Done", xp: 10, dead: true)
-      ended = Board.entry(id).updated_at
+      ended = Board.entry(id).last_action_at
 
       Characters.archive(session)
       on_exit(fn -> Characters.forget(session) end)
 
       # Retiring is bookkeeping, not play — it must not restamp a finished run.
-      assert Board.entry(id).updated_at == ended
+      assert Board.entry(id).last_action_at == ended
+    end
+
+    test "and neither does the passage of time, nor a tab closing on it" do
+      # The row is written for plenty that nobody did: a regenerating tick the backstop flushes,
+      # and the final flush when a process stops. A character sitting on its own death screen was
+      # moving its own date of death.
+      %{id: id, session: session} = run("Resting", xp: 10)
+      Characters.mutate(session, &{%{&1 | experience: 20}, :ok})
+      acted = Board.entry(id).last_action_at
+      on_exit(fn -> Characters.forget(session) end)
+
+      written = fn -> Repo.one(from r in Record, where: r.id == ^id, select: r.updated_at) end
+      before_write = written.()
+      Process.sleep(20)
+
+      # `health` is buffered — the passage of time, which is the tick's whole business.
+      Characters.mutate(session, &{%{&1 | health: &1.health - 1}, :ok})
+      assert Board.entry(id).last_action_at == acted
+
+      # Stopping flushes that buffered state, so the ROW moves and the DATE must not.
+      Characters.forget_process(session)
+
+      assert Board.entry(id).last_action_at == acted
+
+      assert DateTime.compare(written.(), before_write) == :gt,
+             "the row must still have been written, or this proves nothing"
+    end
+
+    test "but doing something does move it" do
+      %{id: id, session: session} = run("Busy", xp: 10)
+      Characters.mutate(session, &{%{&1 | experience: 20}, :ok})
+      first = Board.entry(id).last_action_at
+      on_exit(fn -> Characters.forget(session) end)
+
+      Process.sleep(20)
+      Characters.mutate(session, &{%{&1 | adena: &1.adena + 5}, :ok})
+
+      assert DateTime.compare(Board.entry(id).last_action_at, first) == :gt
     end
   end
 

@@ -99,7 +99,7 @@ defmodule MiniLineageWeb.Screens.Halls do
       <td class="num gold">{Format.number(@row.level)}</td>
       <td class="num xp">{Format.number(@row.total_xp)}</td>
       <td class="gold">🪙 {Format.adena(@row.adena)}</td>
-      <td><.stamp id={"seen-#{@row.id}"} at={@row.updated_at} /></td>
+      <td><.stamp id={"seen-#{@row.id}"} at={@row.last_action_at} /></td>
     </tr>
     """
   end

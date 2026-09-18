@@ -154,18 +154,26 @@ defmodule MiniLineage.Characters.Server do
     if opts[:log], do: TickLog.write(state.id, player, health_before, expired, changed?)
 
     if changed? do
+      # Decided BEFORE the stamp is applied, or the stamp — which is not buffered — would itself
+      # make every tick look like an action.
+      acted? = flush?(before, player)
+      player = if acted?, do: %{player | last_action_at: Clock.now_ms()}, else: player
+
       # Always broadcast: a viewer must see the tick whether or not it was worth a write.
       broadcast(state.session, player, state.id)
 
       state = log_battle(%{state | player: player}, before, player)
 
-      {result, arm_expiry(if(flush?(before, player), do: persist(state), else: mark(state)))}
+      {result, arm_expiry(if(acted?, do: persist(state), else: mark(state)))}
     else
       {result, state}
     end
   end
 
-  # Anything outside @buffered is the player's own doing, and is written before they see the result.
+  # Anything outside @buffered is the player's own doing, and is written before they see the
+  # result. It is also what dates a run in the Halls: `updated_at` moves whenever the row is
+  # written, which a regenerating tick and a closing tab both do, and neither is something anybody
+  # did.
   defp flush?(before, now) do
     before
     |> Map.from_struct()
