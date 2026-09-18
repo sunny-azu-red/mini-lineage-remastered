@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.Version do
   # What a build with no commit to name calls itself. Baked per environment, so the browser suites'
   # server on 4002 is never mistaken for the dev server on 4000. Safe as compile_env because it is
   # a constant of the environment, unlike the sha, which changes with every commit.
-  @label Application.compile_env(:mini_lineage, :build_label, "⚡ development")
+  @label Application.compile_env(:mini_lineage, :build_label, "⚡development")
 
   @doc """
   APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build — only two
