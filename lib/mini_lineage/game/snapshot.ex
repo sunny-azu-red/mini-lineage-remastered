@@ -68,7 +68,8 @@ defmodule MiniLineage.Game.Snapshot do
       consecutive_ambushes: 0,
       total_enemies_killed: 0
     },
-    last_battle: nil
+    last_battle: nil,
+    last_action_at: nil
   }
 
   def build(player) do
@@ -119,9 +120,17 @@ defmodule MiniLineage.Game.Snapshot do
         consecutive_ambushes: player.consecutive_ambushes,
         total_enemies_killed: player.total_enemies_killed
       },
-      last_battle: player.last_battle_narrative
+      last_battle: player.last_battle_narrative,
+      # The record's own date. Carried here rather than read back off the row, so a record that is
+      # being watched live restamps itself without a query.
+      last_action_at: at(player.last_action_at)
     }
   end
+
+  # The stamp is stored as epoch milliseconds, the way `combat_until` is; the template wants a
+  # DateTime, and a document written before the stamp existed has none.
+  defp at(nil), do: nil
+  defp at(ms), do: DateTime.from_unix!(ms, :millisecond)
 
   defp effect_view(effect) do
     %{

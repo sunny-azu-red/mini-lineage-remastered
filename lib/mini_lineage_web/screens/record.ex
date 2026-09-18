@@ -50,56 +50,73 @@ defmodule MiniLineageWeb.Screens.Record do
     # tense moves. The closing paragraph forks outright — its sentences change shape, not just
     # verbs, since there is no next level to reach and no journey ahead.
     ~H"""
-    <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
-    <p>{raw(@race.backstory)}</p>
-    <p>{raw(@race.traits)}</p>
+    <%!-- One hook over the whole record: it counts every [data-value] beneath it. The items and the
+          dates are not among them — an item does not tween into another item. --%>
+    <div id="record-figures" phx-hook="AnimatedValues">
+      <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
+      <p>{raw(@race.backstory)}</p>
+      <p>{raw(@race.traits)}</p>
 
-    <h2>Inventory &amp; Stats</h2>
-    <p phx-no-format>
-      {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <strong>{@view.weapon.name}</strong> granting
-      <span class="hp"><span id="char-stat-attack">{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <strong>{@view.armor.name}</strong> providing
-      <span class="defense"><span id="char-stat-defense">{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
-    </p>
-    <p>
-      Combined with {@voice.their} ancestry, {@voice.them} {if @dead, do: "struck", else: "strike"} with a total of
-      <span class="crit"><span id="char-stat-crit">{@crit}</span>% Critical Hit Chance</span>
-      and {if @dead, do: "mended", else: "mend"} wounds at
-      <span class="heal">+<span id="char-stat-regen">{@regen}</span> HP Regeneration</span>
-      per rest cycle, while navigating the roads with a <span class="minor"><span id="char-stat-ambush">{@ambush}</span>% Ambush Risk</span>.
-    </p>
-
-    <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
-    <p>
-      {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through <span class="tally">{Format.pluralize("battle", "battles", @view.counters.total_battles)}</span>, slaying
-      <span class="tally">{Format.pluralize(
-        @opponent.label,
-        @opponent.plural,
-        @view.counters.total_enemies_killed,
-        @opponent.emoji
-      )}</span>
-      <%= if @view.counters.total_ambushes > 0 do %>
-        and overcoming
-        <span class="minor">{Format.pluralize(
-          "cunning ambush",
-          "cunning ambushes",
-          @view.counters.total_ambushes
-        )}</span>
-      <% end %>
-      along the road.
-    </p>
-
-    <%= if @dead do %>
+      <h2>Inventory &amp; Stats</h2>
       <p phx-no-format>
+        {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <strong>{@view.weapon.name}</strong> granting
+        <span class="hp"><span id="char-stat-attack" data-key="rec-attack" data-value={@view.stats.attack}>{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <strong>{@view.armor.name}</strong> providing
+        <span class="defense"><span id="char-stat-defense" data-key="rec-defense" data-value={@view.stats.defense}>{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
+      </p>
+      <p>
+        Combined with {@voice.their} ancestry, {@voice.them} {if @dead, do: "struck", else: "strike"} with a total of
+        <span class="crit"><span id="char-stat-crit" data-key="rec-crit" data-value={@view.stats.crit}>{@crit}</span>% Critical Hit Chance</span>
+        and {if @dead, do: "mended", else: "mend"} wounds at
+        <span class="heal">+<span
+          id="char-stat-regen"
+          data-key="rec-regen"
+          data-value={@view.stats.regen}
+        >{@regen}</span>
+        HP Regeneration</span>
+        per rest cycle, while navigating the roads with a <span class="minor"><span id="char-stat-ambush" data-key="rec-ambush" data-value={@view.stats.ambush_risk}>{@ambush}</span>% Ambush Risk</span>.
+      </p>
+
+      <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
+      <p>
+        {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
+        <.counted
+          key="rec-battles"
+          count={@view.counters.total_battles}
+          singular="battle"
+          plural="battles"
+        />, slaying
+        <.counted
+          key="rec-slain"
+          count={@view.counters.total_enemies_killed}
+          singular={@opponent.label}
+          plural={@opponent.plural}
+          emoji={@opponent.emoji}
+        />
+        <%= if @view.counters.total_ambushes > 0 do %>
+          and overcoming
+          <.counted
+            key="rec-ambushes"
+            count={@view.counters.total_ambushes}
+            singular="cunning ambush"
+            plural="cunning ambushes"
+            class="minor"
+          />
+        <% end %>
+        along the road.
+      </p>
+
+      <%= if @dead do %>
+        <p phx-no-format>
         {@voice.they} fell at <span class="gold">Level {@level}</span>
-        with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp">{@xp_needed} XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and {@voice.their} purse held <span class="gold">🪙 {@purse} Adena</span>
+        with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and {@voice.their} purse held <span class="gold">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
         when the road ran out.
       </p>
-      <p class="hp">{@view.death_reason}</p>
-    <% else %>
-      <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
-      <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
+        <p class="hp">{@view.death_reason}</p>
+      <% else %>
+        <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
+        <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
         Experience wise, {@voice.them} are at <span class="gold">Level {@level}</span>
-        with a total of <span class="xp">{@experience} XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp">{@xp_needed} XP</span> to reach <span class="gold">Level {@next_level}</span><% end %>
+        with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> to reach <span class="gold">Level {@next_level}</span><% end %>
         and {@voice.their} vitality currently sustains {@voice.object} at
         <span class="hp"><span
           id="char-hp"
@@ -108,25 +125,26 @@ defmodule MiniLineageWeb.Screens.Record do
         >{Format.number(@view.health)}</span>
         / <span id="char-max-hp">{Format.number(@view.max_health)}</span>
         HP</span>
-        while {@voice.their} purse holds <span class="gold">🪙 {@purse} Adena</span>
+        while {@voice.their} purse holds <span class="gold">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
         for the journey ahead.
       </p>
-    <% end %>
+      <% end %>
 
-    <p :if={@entry} phx-no-format>
+      <p :if={@entry} phx-no-format>
       Set out on <.stamp id="record-set-out" at={@entry.inserted_at} />
-      {ending(@entry)} <.stamp id="record-last" at={@entry.last_action_at} />.
+      {ending(@entry)} <.stamp id="record-last" at={@view.last_action_at} />.
     </p>
 
-    <h3>The Chronicle</h3>
+      <h3>The Chronicle</h3>
 
-    <%= if @chronicle == [] do %>
-      <p>Not one blow struck. This tale is over before it began.</p>
-    <% else %>
-      <ol class="chronicle">
-        <li :for={fight <- @chronicle}>{raw(fight.narrative.outcome_line)}</li>
-      </ol>
-    <% end %>
+      <%= if @chronicle == [] do %>
+        <p>Not one blow struck. This tale is over before it began.</p>
+      <% else %>
+        <ol class="chronicle">
+          <li :for={fight <- @chronicle}>{raw(fight.narrative.outcome_line)}</li>
+        </ol>
+      <% end %>
+    </div>
     """
   end
 
@@ -138,6 +156,25 @@ defmodule MiniLineageWeb.Screens.Record do
 
   defp voice(false),
     do: %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
+
+  attr :key, :string, required: true
+  attr :count, :integer, required: true
+  attr :singular, :string, required: true
+  attr :plural, :string, required: true
+  attr :emoji, :string, default: nil
+  attr :class, :string, default: "tally"
+
+  # A figure and the noun it counts. Only the figure counts — a slain tally climbs by a group at a
+  # time, so it has distance to cover, while the noun beside it does not. At one there is no figure
+  # to tween at all: "a cunning ambush" is a word.
+  defp counted(%{count: 1} = assigns) do
+    ~H|<span class={@class}>{Format.pluralize(@singular, @plural, 1, @emoji)}</span>|
+  end
+
+  defp counted(assigns) do
+    ~H|<span class={@class}><span data-key={@key} data-value={@count}>{Format.number(@count)}</span> {@emoji &&
+  "#{@emoji} "}{@plural}</span>|
+  end
 
   # Three ways a record ends: fallen, still going, or missing — walked away from and past the day
   # anyone could pick it up again.

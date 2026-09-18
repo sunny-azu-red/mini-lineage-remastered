@@ -23,6 +23,13 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     )
   end
 
+  # What a reader sees, with the markup taken out. A figure and the noun it counts are separate
+  # elements now, because only the figure animates — so "12 battles" is prose, not markup, and
+  # asserting on it against raw HTML would only be asserting on where the spans happen to fall.
+  defp text_for(player, mine \\ true) do
+    player |> html_for(mine) |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
+  end
+
   defp living do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
     %{player | experience: 4_200, adena: 900, total_battles: 12, total_enemies_killed: 30}
@@ -120,8 +127,9 @@ defmodule MiniLineageWeb.FallenCharacterTest do
             ~w(char-stat-attack char-stat-defense char-stat-crit char-stat-regen char-stat-ambush),
           do: assert(html =~ id, id)
 
-      assert html =~ "12 battles"
-      assert html =~ "4,200 XP"
+      text = text_for(fallen())
+      assert text =~ "12 battles"
+      assert text =~ "4,200 XP"
     end
   end
 
@@ -135,8 +143,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
             %{living() | total_ambushes: 3},
             %{fallen() | total_ambushes: 3}
           ] do
-        text =
-          player |> html_for() |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
+        text = text_for(player)
 
         assert Regex.scan(~r/\S+ [,.]/, text) == [], text
       end
@@ -145,7 +152,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     test "counts ambushes only when there were any" do
       refute html_for(fallen()) =~ "overcoming"
       assert html_for(%{fallen() | total_ambushes: 3}) =~ "overcoming"
-      assert html_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
+      assert text_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
     end
 
     test "and gives the reason it ended the same weight as the death screen does" do

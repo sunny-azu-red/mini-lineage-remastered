@@ -6,7 +6,7 @@ defmodule MiniLineage.Characters.Server do
   """
   use GenServer, restart: :transient
 
-  alias MiniLineage.{BattleLog, Board}
+  alias MiniLineage.{BattleLog, Board, Characters}
   alias MiniLineage.Characters.{Store, TickLog}
   require Logger
 
@@ -159,12 +159,15 @@ defmodule MiniLineage.Characters.Server do
       acted? = flush?(before, player)
       player = if acted?, do: %{player | last_action_at: Clock.now_ms()}, else: player
 
-      # Always broadcast: a viewer must see the tick whether or not it was worth a write.
-      broadcast(state.session, player, state.id)
-
       state = log_battle(%{state | player: player}, before, player)
+      state = if acted?, do: persist(state), else: mark(state)
 
-      {result, arm_expiry(if(acted?, do: persist(state), else: mark(state)))}
+      # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
+      # write, though — a record being watched answers the push by reading its chronicle back, and
+      # a push that arrives first tells the reader about a fight the database does not have yet.
+      broadcast(state.session, state.player, state.id)
+
+      {result, arm_expiry(state)}
     else
       {result, state}
     end
@@ -278,11 +281,20 @@ defmodule MiniLineage.Characters.Server do
   end
 
   @doc false
-  def broadcast(session, player, character_id),
-    do:
-      Phoenix.PubSub.broadcast(
-        MiniLineage.PubSub,
-        "character:#{session}",
-        {:character_updated, player, character_id}
-      )
+  # Two topics for one change. The session's is the browser's own and carries what only its owner
+  # may act on; the record's is keyed by the PUBLIC id, because a record is a public page and
+  # anybody reading one should watch it move.
+  def broadcast(session, player, character_id) do
+    Phoenix.PubSub.broadcast(
+      MiniLineage.PubSub,
+      "character:#{session}",
+      {:character_updated, player, character_id}
+    )
+
+    Phoenix.PubSub.broadcast(
+      MiniLineage.PubSub,
+      Characters.record_topic(character_id),
+      {:record_updated, player, character_id}
+    )
+  end
 end

@@ -50,6 +50,7 @@ defmodule MiniLineageWeb.GameLive do
        boards: %{},
        record: nil,
        record_view: nil,
+       watching: nil,
        record_log: [],
        from: nil,
        statistics: nil,
@@ -121,15 +122,33 @@ defmodule MiniLineageWeb.GameLive do
         true -> entry.id |> Store.load() |> Snapshot.build()
       end
 
-    assign(socket,
+    socket
+    |> watch_record(entry && entry.id)
+    |> assign(
       record: entry,
       record_view: view,
       record_log: (entry && BattleLog.history(entry.id)) || []
     )
   end
 
-  defp assign_record(socket, _params),
+  defp assign_record(socket, _params), do: socket |> watch_record(nil) |> clear_record()
+
+  defp clear_record(socket),
     do: assign(socket, record: nil, record_view: nil, record_log: [])
+
+  # A record is watched only while it is the screen. Patching from one to another leaves the first,
+  # or a reader who walked the Halls would end up holding every record they opened.
+  defp watch_record(socket, id) do
+    case socket.assigns[:watching] do
+      ^id ->
+        socket
+
+      previous ->
+        if previous, do: Characters.unwatch_record(previous)
+        if id && connected?(socket), do: Characters.watch_record(id)
+        assign(socket, watching: id)
+    end
+  end
 
   # Where the reader came from, so the record can send them back there.
   defp assign_from(socket, %{"from" => from}), do: assign(socket, from: from)
@@ -284,6 +303,28 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   def handle_info({:board, boards}, socket), do: {:noreply, assign(socket, boards: boards)}
+
+  # The record on screen moved. The view is rebuilt from the player that came with the push, so
+  # nothing is read back; the chronicle is, but only when a fight has been added to it.
+  # `id` twice in the head is the guard — this tab is watching the record this push is about — and
+  # the map pattern is the other: a record that was never found has no counters to compare.
+  def handle_info(
+        {:record_updated, player, id},
+        %{assigns: %{watching: id, record_view: %{counters: shown}}} = socket
+      ) do
+    view = Snapshot.build(player)
+
+    {:noreply,
+     socket
+     |> assign(record_view: view)
+     |> then(
+       &if view.counters.total_battles != shown.total_battles,
+         do: assign(&1, record_log: BattleLog.history(id)),
+         else: &1
+     )}
+  end
+
+  def handle_info({:record_updated, _player, _id}, socket), do: {:noreply, socket}
 
   # ------------------------------------------------------------------ plumbing
 

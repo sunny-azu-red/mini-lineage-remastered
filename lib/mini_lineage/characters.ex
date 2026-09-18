@@ -47,6 +47,18 @@ defmodule MiniLineage.Characters do
 
   def subscribe(id), do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, "character:#{id}")
 
+  @doc """
+  The topic a record is watched on. Keyed by the PUBLIC id, unlike `subscribe/1`, whose topic is
+  the session — a secret, and so no way for one reader to watch another's run.
+  """
+  def record_topic(character_id), do: "record:#{character_id}"
+
+  def watch_record(character_id),
+    do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, record_topic(character_id))
+
+  def unwatch_record(character_id),
+    do: Phoenix.PubSub.unsubscribe(MiniLineage.PubSub, record_topic(character_id))
+
   @doc "Stops a character's process without touching its stored row."
   def forget_process(id), do: stop_process(id)
 
