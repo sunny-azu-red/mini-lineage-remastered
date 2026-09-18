@@ -42,34 +42,49 @@
      * Three steps of prose, then the values. The three steps are one hue at one saturation and
      * differ only in lightness: quieter text should get quieter, not bluer, and the lower two used
      * to swing to hue 219 under a primary at hue 40.
-     * --text-hp and --text-xp are lighter than the bar colours below: --hp-glow and --xp-glow
-     * measure 4.16:1 and 3.40:1 on the panel and AA wants 4.5, which matters for a word and not
-     * for a filled bar. */
+     * The values below are peers — they land in the same sentence — so they share a lightness and
+     * so read at one contrast, 5.2 on the panel for every one of them. They had ranged over L* 57
+     * to 66, which is what made the tally whisper.
+     * Chroma is NOT shared: each runs as far as sRGB allows, up to 72. Equalising it was the wrong
+     * goal — teal tops out near 39 whatever the lightness, so a shared chroma is a chroma of 39,
+     * and the whole set goes pale to meet the one hue that cannot keep up. */
     --text-primary: #d4d0c8;
     --text-secondary: #a3a099;
     --text-muted: #6b6861;
-    --text-hp: #e95849;
-    --text-xp: #ab74c2;
-    --text-defense: #1c90e3;
-    --text-tally: #3fb0a0;
+    --text-hp: #f25647;
+    --text-xp: #ce5fd3;
+    --text-defense: #288aff;
+    --text-tally: #009d8c;
 
-    /* ===== The bars, and the colours a value is named for ===== */
-    --hp-color: #c0392b;
-    --hp-glow: #e74c3c;
-    --xp-color: #7b2d8b;
-    --xp-glow: #9b59b6;
-    --critical: #e67e22;
-    --success: #27ae60;
-    --danger-border: #c0392b;
-    --info-border: #2980b9;
+    /* ===== The bars, and the colours a value is named for =====
+     * The two bars are built alike: one lightness for the bases, one for the glows, one chroma for
+     * all four. The HP bar had been both lighter and more chromatic than the XP bar. Matching them
+     * put both glows over AA on the panel — 4.55 and 4.53, where they had measured 4.16 and 3.40. */
+    --hp-color: #be271f;
+    --hp-glow: #e44c3b;
+    --xp-color: #a031a7;
+    --xp-glow: #c254c8;
+    --critical: #d7700f;
+    --success: #00a152;
+    --danger-border: #d74031;
+    --info-border: #0076e1;
+
+    /* ===== The alert voices =====
+     * One lightness, so the four read at one contrast on the panel, 7.2 apiece. These had been
+     * spelled out at each of their eight call sites while every other family lived in a token —
+     * the alert grounds were tokenised long ago and their voices were simply never done. */
+    --danger-text: #ff8164;
+    --success-text: #0fbe6e;
+    --warning-text: #e7c33d;
+    --info-text: #7aa4ff;
 
     /* ===== Washes =====
      * A hex custom property cannot be alpha'd in plain CSS, so each is its own colour spelled out:
      * a row the Halls marks, an alert's ground, the focus ring. */
-    --success-wash: rgba(39, 174, 96, 0.13);
+    --success-wash: rgba(0, 161, 82, 0.13);
     --gold-wash: rgba(201, 168, 76, 0.14);
     --danger-wash: rgba(146, 43, 33, 0.2);
-    --info-wash: rgba(26, 74, 110, 0.3);
+    --info-wash: rgba(46, 70, 116, 0.3);
     --focus-ring-color: rgba(201, 168, 76, 0.45);
 
     /* ===== Shape ===== */

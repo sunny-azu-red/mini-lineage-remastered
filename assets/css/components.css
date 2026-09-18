@@ -97,13 +97,13 @@
 }
 
 .effect-buff .effect-timer {
-    color: #58d68d;
-    border-color: rgba(46, 204, 113, 0.45);
+    color: var(--success-text);
+    border-color: rgba(15, 190, 110, 0.45);
 }
 
 .effect-debuff .effect-timer {
-    color: #e8785e;
-    border-color: rgba(231, 76, 60, 0.45);
+    color: var(--danger-text);
+    border-color: rgba(255, 129, 100, 0.45);
 }
 
 .effect-fade-in {
@@ -115,11 +115,11 @@
 }
 
 .effect-buff {
-    filter: drop-shadow(0 0 4px rgba(46, 204, 113, 0.2));
+    filter: drop-shadow(0 0 4px rgba(15, 190, 110, 0.2));
 }
 
 .effect-debuff {
-    filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.3));
+    filter: drop-shadow(0 0 4px rgba(255, 129, 100, 0.3));
 }
 
 @keyframes effect-fade-in {
@@ -170,7 +170,7 @@
     }
 
     50% {
-        background: rgba(192, 57, 43, 0.25);
+        background: rgba(190, 39, 31, 0.25);
     }
 }
 
@@ -223,14 +223,14 @@
 
 .hp-bar {
     background: linear-gradient(90deg, var(--hp-color) 0%, var(--hp-glow) 100%);
-    box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+    box-shadow: 0 0 8px rgba(228, 76, 59, 0.4);
     position: relative;
     overflow: hidden;
 }
 
 .xp-bar {
     background: linear-gradient(90deg, var(--xp-color) 0%, var(--xp-glow) 100%);
-    box-shadow: 0 0 8px rgba(155, 89, 182, 0.4);
+    box-shadow: 0 0 8px rgba(194, 84, 200, 0.4);
     position: relative;
     overflow: hidden;
 }
@@ -289,25 +289,25 @@
 .alert-info {
     background: var(--info-wash);
     border-color: var(--info-border);
-    color: #85c1e9;
+    color: var(--info-text);
 }
 
 .alert-success {
     background: var(--success-wash);
     border-color: var(--success);
-    color: #58d68d;
+    color: var(--success-text);
 }
 
 .alert-warning {
     background: linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(122, 98, 48, 0.35) 100%);
     border-color: var(--gold);
-    color: #ffd760;
+    color: var(--warning-text);
 }
 
 .alert-danger {
     background: var(--danger-wash);
     border-color: var(--danger-border);
-    color: #e8785e;
+    color: var(--danger-text);
 }
 
 /* Extra right padding so the dismiss "x" never overlaps longer message text */

@@ -143,44 +143,42 @@
     /* Instant feedback */
 }
 
-/* ===== Danger Variant ===== */
+/* ===== Danger Variant =====
+ * A destructive action carries the primary's weight, so it is built on the primary's own lightness
+ * ramp, six points below it, and differs from it in hue. Its chroma is 1.6x the primary's at every
+ * stop, because red at the primary's own chroma goes brown at these lightnesses where violet stays
+ * slate. The ground is LCh hue 0 rather than the palette's red at 36 — a step off the red toward
+ * the violet the rest of the game is painted in, which is what makes it read as dread rather than
+ * as an error. The edge stays --danger-border at 36 and reads as a warm highlight over it. */
 .btn-danger {
-    background: linear-gradient(180deg, #5c1a15 0%, #3d0f0b 100%);
-    border: 1px solid rgba(192, 57, 43, 0.7);
+    background: linear-gradient(180deg, #581d33 0%, #3c1121 100%);
+    border: 1px solid var(--danger-border);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    color: #e8786e;
+    /* The darker ground let this drop to the alert's own voice and still clear AA, at 5.23. */
+    color: var(--danger-text);
 }
 
 .btn-danger::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(231, 76, 60, 0.4),
+            rgba(228, 76, 59, 0.5),
             transparent);
 }
 
 .btn-danger:hover {
-    background:
-        linear-gradient(180deg,
-            rgba(255, 255, 255, 0.1) 0%,
-            transparent 50%,
-            rgba(0, 0, 0, 0.2) 100%),
-        linear-gradient(180deg,
-            #822520 0%,
-            #52140f 50%,
-            #671a14 100%);
-
-    border-color: rgba(231, 76, 60, 0.75);
+    background: linear-gradient(180deg, #64233b 0%, #461728 100%);
+    border-color: var(--hp-glow);
     box-shadow:
-        0 0 0 2px rgba(231, 76, 60, 0.15),
+        0 0 0 2px rgba(228, 76, 59, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .btn-danger:active,
 .btn-danger.active {
-    background: linear-gradient(180deg, #2e0c09 0%, #380e08 100%);
-    border-color: rgba(192, 57, 43, 0.9);
+    background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
+    border-color: var(--danger-border);
     box-shadow:
-        0 0 0 2px rgba(150, 30, 20, 0.2),
+        0 0 0 2px rgba(190, 39, 31, 0.2),
         inset 0 2px 4px rgba(0, 0, 0, 0.5);
     transform: none;
     transition: none;
