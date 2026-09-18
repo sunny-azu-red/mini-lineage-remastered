@@ -44,6 +44,33 @@ defmodule MiniLineage.BoardTest do
 
   defp names(race_id \\ nil), do: Enum.map(Map.get(Board.current(), race_id, []), & &1.name)
 
+  # Every repo query the block provokes, wherever it was run from. Counting them is the only way to
+  # assert that a refresh read nothing: the board it pushes looks the same either way.
+  defp measuring(fun) do
+    handler = {__MODULE__, make_ref()}
+    parent = self()
+
+    :telemetry.attach(
+      handler,
+      [:mini_lineage, :repo, :query],
+      fn _event, _measure, meta, _ -> send(parent, {handler, meta.query}) end,
+      nil
+    )
+
+    result = fun.()
+    :telemetry.detach(handler)
+
+    {result, drain(handler, [])}
+  end
+
+  defp drain(handler, acc) do
+    receive do
+      {^handler, query} -> drain(handler, [query | acc])
+    after
+      0 -> Enum.reverse(acc)
+    end
+  end
+
   describe "the ordering" do
     test "is experience, then wealth, and the two are not swapped" do
       run("Low", xp: 10, adena: 999)
@@ -358,6 +385,58 @@ defmodule MiniLineage.BoardTest do
       assert_receive {:board, _}, 2_000
       # Nothing more within a second: twenty writes produced one recomputation, not twenty.
       refute_receive {:board, _}, 1_000
+    end
+
+    test "a mount or an unmount lights a dot and costs nothing at all" do
+      # Presence is the commonest refresh there is — every page load is one on the way in and one
+      # on the way out — and it is the one thing on a row that moves without anybody writing.
+      %{id: id} = run("Watched", xp: 10)
+      Board.subscribe()
+      Board.character_changed()
+      assert_receive {:board, before}, 2_000
+      refute Enum.find(Map.get(before, nil), &(&1.id == id)).online
+
+      session = Characters.new_session_id()
+
+      Characters.mutate(session, fn p ->
+        {p, _} = Player.initialize(p, Constants.race(1), "Holder")
+        {p, :ok}
+      end)
+
+      Characters.attach(session, self())
+      on_exit(fn -> Characters.forget(session) end)
+      assert_receive {:board, _}, 2_000
+
+      {boards, queries} =
+        measuring(fn ->
+          Board.presence_changed()
+          assert_receive {:board, pushed}, 2_000
+          pushed
+        end)
+
+      assert queries == [], "a presence refresh ran #{length(queries)} quer(y/ies)"
+      assert Enum.find(Map.get(boards, nil), &(&1.name == "Holder")).online
+    end
+
+    test "but a write in the same window is still a write, and recomputes" do
+      Board.subscribe()
+      run("First", xp: 10)
+      Board.character_changed()
+      assert_receive {:board, _}, 2_000
+
+      run("Second", xp: 10_000)
+
+      {boards, queries} =
+        measuring(fn ->
+          # Presence first, so the window is opened by the cheap signal and claimed by the write.
+          Board.presence_changed()
+          Board.character_changed()
+          assert_receive {:board, pushed}, 2_000
+          pushed
+        end)
+
+      refute queries == [], "a window carrying a write must reach the database"
+      assert Enum.map(Map.get(boards, nil), & &1.name) == ["Second", "First"]
     end
 
     test "and a viewer who arrives late is served the same board, without a query of their own" do

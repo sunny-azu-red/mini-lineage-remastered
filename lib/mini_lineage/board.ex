@@ -3,7 +3,8 @@ defmodule MiniLineage.Board do
   The Halls of Champions: every run that has chosen a race, best first, alive or finished. A view
   of `characters`, not a table, so a run appears the moment it starts and keeps its place when it
   ends. This process coalesces the refresh into one recomputation per window and pushes it, rather
-  than letting every viewer re-query for every write.
+  than letting every viewer re-query for every write. A change of presence pushes too, and reads
+  nothing — a mount and an unmount are the commonest refreshes of all and neither moves a ranking.
   """
   use GenServer
 
@@ -24,8 +25,16 @@ defmodule MiniLineage.Board do
   def subscribe, do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, @topic)
 
   @doc "Tell the board a character was written. Cheap and asynchronous — never blocks the writer."
-  def character_changed do
-    if pid = Process.whereis(__MODULE__), do: send(pid, :changed)
+  def character_changed, do: signal(:changed)
+
+  @doc """
+  Tell the board who is holding a character open has changed. Costs no query: presence is the one
+  thing on a row that moves without a write, and it comes from the registry.
+  """
+  def presence_changed, do: signal(:presence)
+
+  defp signal(message) do
+    if pid = Process.whereis(__MODULE__), do: send(pid, message)
 
     :ok
   end
@@ -53,24 +62,33 @@ defmodule MiniLineage.Board do
 
   @impl true
   def init(:ok) do
-    {:ok, %{boards: compute(), timer: nil}}
+    {:ok, %{boards: compute(), timer: nil, pending: :none}}
   end
 
   @impl true
   def handle_call(:current, _from, state), do: {:reply, state.boards, state}
 
   @impl true
-  def handle_info(:changed, %{timer: nil} = state),
-    do: {:noreply, %{state | timer: Process.send_after(self(), :refresh, @coalesce_ms)}}
+  def handle_info(:changed, state), do: {:noreply, arm(state, :write)}
+  def handle_info(:presence, state), do: {:noreply, arm(state, :presence)}
 
-  # Already waiting to refresh: the write it is waiting for has simply been joined by another.
-  def handle_info(:changed, state), do: {:noreply, state}
-
+  # Every refresh pushes, whichever kind it was. Watching a run climb and a dot come on are the
+  # same screen, and only one of the two needs the database.
   def handle_info(:refresh, state) do
-    boards = compute()
+    boards = if state.pending == :write, do: compute(), else: remark(state.boards)
     Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:board, boards})
 
-    {:noreply, %{state | boards: boards, timer: nil}}
+    {:noreply, %{state | boards: boards, timer: nil, pending: :none}}
+  end
+
+  # A write anywhere in the window wins it: it may have moved a row that a re-stamp would leave
+  # standing. An existing timer is never restarted, or a busy game would defer its own refresh.
+  defp arm(state, kind) do
+    %{
+      state
+      | pending: if(state.pending == :write or kind == :write, do: :write, else: :presence),
+        timer: state.timer || Process.send_after(self(), :refresh, @coalesce_ms)
+    }
   end
 
   # One list per filter the screen offers, so a viewer on "Elves" is served by the same push as a
@@ -94,6 +112,16 @@ defmodule MiniLineage.Board do
   defp mark(rows, medals, online) do
     Enum.map(rows, fn row ->
       %{row | medal: Map.get(medals, row.id), online: MapSet.member?(online, row.id)}
+    end)
+  end
+
+  # Who is online, re-stamped onto the rows already held. The rankings cannot have moved — nothing
+  # was written — so this is the same board with different dots, and it queries nothing.
+  defp remark(boards) do
+    online = Characters.online()
+
+    Map.new(boards, fn {filter, rows} ->
+      {filter, Enum.map(rows, &%{&1 | online: MapSet.member?(online, &1.id)})}
     end)
   end
 

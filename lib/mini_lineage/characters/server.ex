@@ -264,7 +264,7 @@ defmodule MiniLineage.Characters.Server do
       {state.id, watched?}
     end)
 
-    Board.character_changed()
+    Board.presence_changed()
 
     state
   end
