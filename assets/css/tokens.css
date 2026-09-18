@@ -8,12 +8,11 @@
 
 :root {
     /* ===== Surfaces =====
-     * Every dark surface in the game sits on hue 267, the violet the banner sweeps through and the
-     * secondary button rests in. At this lightness the hue is barely legible on its own — the
-     * point is that nothing underneath the banner pulls against it. */
-    --bg-deep: #140f1a;
-    --bg-surface: #231f29;
-    --bg-panel: #1b1523;
+     * Every dark surface in the game sits on hue 267 at 19% — the violet the banner sweeps through
+     * and both buttons are drawn in. 27% was too much of it over an area this size. */
+    --bg-deep: #141118;
+    --bg-surface: #231d2b;
+    --bg-panel: #1b1721;
 
     /* ===== Lifts =====
      * White at three strengths. A surface nested inside another is raised off it rather than sunk
@@ -24,11 +23,12 @@
 
     /* ===== Borders =====
      * Every surface edge in the game is --border-soft, which has no hue. The other two are the
-     * controls' own, and they are no longer two steps of one colour: --border-control is the slate
-     * the primary button, the select and the input are drawn in, --border-arcane the violet the
-     * secondary is. Saturation reads far stronger at a control's lightness than at a surface's, so
-     * both sit near 14% where the surfaces sit at 27% and still look like the same dusk. */
-    --border-control: #585c72;
+     * controls' own: --border-control draws the primary button, the select and the input,
+     * --border-arcane the secondary. Both are the game's own violet now — a grey primary next to a
+     * violet secondary read as the one thing that had not been painted. The primary carries the
+     * most of it at 19%, the secondary is quieter at 15%, and the surfaces meet the primary at 19%
+     * from the other side, having come down from 27%. */
+    --border-control: #635278;
     --border-arcane: #463c52;
     --border-arcane-bright: #645775;
     --border-soft: rgba(255, 255, 255, 0.07);

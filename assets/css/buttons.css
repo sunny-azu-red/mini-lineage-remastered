@@ -43,7 +43,7 @@
     border: 1px solid var(--border-control);
 
     /* Subtle single-layer gradient */
-    background: linear-gradient(180deg, #3e4151 0%, #2c2f3a 100%);
+    background: linear-gradient(180deg, #463a55 0%, #32293d 100%);
 
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 
@@ -105,7 +105,7 @@
 
 /* ===== Hover ===== */
 .btn:hover {
-    background: linear-gradient(180deg, #464a5c 0%, #333643 100%);
+    background: linear-gradient(180deg, #4f4260 0%, #3a3046 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.15),
@@ -133,7 +133,7 @@
 /* ===== Active / Press ===== */
 .btn:active,
 .btn.active {
-    background: linear-gradient(180deg, #1f2028 0%, #272933 100%);
+    background: linear-gradient(180deg, #231d2a 0%, #2c2436 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.2),
