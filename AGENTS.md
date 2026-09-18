@@ -35,8 +35,10 @@ list wins — several generator defaults do not exist here.
 - Migrations commit their DDL implicitly, which ends the sandbox transaction. That is why
   `release_test` checks configuration rather than running one.
 - `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
-  a screen, a hook, the CSS. ExUnit reads 0% for the whole web layer because the browser suites
-  are not instrumented, not because it is untested.
+  a screen, a hook, a selector, a rule that changes what an element *is*. ExUnit reads 0% for the
+  whole web layer because the browser suites are not instrumented, not because it is untested.
+  A change that only moves colour values is the exception: no suite can fail on a hex, and running
+  them there buys nothing but minutes and their own flakes. `mix precommit`, then look at it.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
   put it back. A test written after the fix and never seen to fail is decoration.
 
@@ -153,6 +155,38 @@ carrying both still parses. Every text colour is a `--text-*` token.
 Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside the palette's own
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns
 neon — that search has been run twice and been wrong twice.
+
+**Judge colour in CIELCh, never in HSL.** HSL saturation is a coordinate, not a quantity: 27% on a
+panel at 8% lightness looks neutral and 27% on a button at 40% looks blue, which is why the
+controls had to sit well under the surfaces' number to read as the same slate. Lightness is `L*`,
+colourfulness is chroma, and both compare across hues where H, S and L do not.
+
+**Peers share a lightness. They do not share a chroma.** The colours that land in one sentence —
+`--text-hp`, `--critical`, `--success`, `--text-tally`, `--text-defense`, `--text-xp` — are all
+`L* 58` and so read at 5.2 on the panel, which is what makes them peers; they had ranged `L* 57` to
+`66` and the tally whispered. Equalising their chroma is the trap, and it was fallen into once: teal
+tops out near 39 at any lightness in sRGB, so a shared chroma *is* 39 and the whole set goes pale to
+meet the one hue that cannot keep up. True equality across those six peaks at 45, below where the
+palette already sat. Each runs to its own ceiling instead, capped at 72.
+
+**A panel is held off the page by lightness, and the number is 7.6 `L*`.** The blue palette held it
+with 8.6 `L*` *and* 13.5 chroma at once. Taking the chroma out was right; what nobody noticed is
+that the gap had also closed to 3.1 from both ends, leaving the panels held apart by their border
+and their shadow alone, which is tiring to read against. If the surfaces are ever restyled this gap
+is the thing to protect — it is the whole of the separation now.
+
+**A surface nested in another lifts off it, never sinks into it.** A table whose header band and
+container edge were darker than the panel read as a hole in it. `--panel-lift`, `--table-lift` and
+`--row-lift` are white at three strengths rather than hexes, so one lift works over any ground.
+
+**A mechanical colour transform runs in a single pass.** Desaturating the chrome, `#322b3b` was both
+an input and an output — the secondary button's hover top, and also what the primary's rest bottom
+desaturates to — so a sequential find-and-replace hits it twice. Build the whole map first, then
+substitute once.
+
+**A comment citing a measurement expires when the thing it was measured against moves.** The bar
+glows' comment claimed 4.55 and 4.53 on the panel; the panel then moved twice under it and it went
+quietly false. Moving a ground means re-measuring everything any comment asserts about it.
 
 **The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
 slugs and fills the race templates from code; caching that in `:dev` means editing a narrative
