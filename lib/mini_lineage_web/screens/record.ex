@@ -50,8 +50,11 @@ defmodule MiniLineageWeb.Screens.Record do
     # tense moves. The closing paragraph forks outright — its sentences change shape, not just
     # verbs, since there is no next level to reach and no journey ahead.
     ~H"""
-    <%!-- One hook over the whole record: it counts every [data-value] beneath it. The items and the
-          dates are not among them — an item does not tween into another item. --%>
+    <%!-- One hook over the whole record: it counts every [data-value] beneath it. Every figure is
+          one, including the ones that move by a single step today — measured, a tween of +1 shows
+          the old number for 137ms and then the new one, which is a delay and not a flicker, and
+          forty at once hold 60fps. What an item grants is not among them: that jumps with the item
+          whose name jumps beside it, and so do the dates. --%>
     <div id="record-figures" phx-hook="AnimatedValues">
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
       <p>{raw(@race.backstory)}</p>
@@ -107,23 +110,23 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <%= if @dead do %>
         <p phx-no-format>
-        {@voice.they} fell at <span class="gold">Level {@level}</span>
-        with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="gold">Level {@next_level}</span><% end %>, and {@voice.their} purse held <span class="gold">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
+        {@voice.they} fell at <span class="gold">Level <span data-key="rec-level" data-value={@view.level}>{@level}</span></span>
+        with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="gold">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>, and {@voice.their} purse held <span class="gold">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
         when the road ran out.
       </p>
         <p class="hp">{@view.death_reason}</p>
       <% else %>
         <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
         <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
-        Experience wise, {@voice.them} are at <span class="gold">Level {@level}</span>
-        with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> to reach <span class="gold">Level {@next_level}</span><% end %>
+        Experience wise, {@voice.them} are at <span class="gold">Level <span data-key="rec-level" data-value={@view.level}>{@level}</span></span>
+        with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> to reach <span class="gold">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>
         and {@voice.their} vitality currently sustains {@voice.object} at
         <span class="hp"><span
           id="char-hp"
           data-key="char-hp"
           data-value={@view.health}
         >{Format.number(@view.health)}</span>
-        / <span id="char-max-hp">{Format.number(@view.max_health)}</span>
+        / <span id="char-max-hp" data-key="rec-max-hp" data-value={@view.max_health}>{Format.number(@view.max_health)}</span>
         HP</span>
         while {@voice.their} purse holds <span class="gold">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
         for the journey ahead.

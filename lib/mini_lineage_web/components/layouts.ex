@@ -120,10 +120,7 @@ defmodule MiniLineageWeb.Layouts do
   attr :character_id, :string, default: nil
 
   defp sidebar(assigns) do
-    assigns =
-      assign(assigns,
-        race_line: "#{assigns.view.race_label} level #{Format.number(assigns.view.level)}"
-      )
+    assigns = assign(assigns, level: Format.number(assigns.view.level))
 
     ~H"""
     <div id="sidebar" phx-hook="AnimatedValues">
@@ -136,7 +133,10 @@ defmodule MiniLineageWeb.Layouts do
             <span class="stat-label">Race</span>
             <span class="stat-value">
               {if @view.dead, do: "☠️", else: @view.race_emoji}
-              <.link patch={Paths.for_character(@character_id, "game")}>{@race_line}</.link>
+              <%!-- Flush against the anchor: a newline inside one renders as a space, and the
+                    underline runs through it. --%>
+              <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
+              <span data-key="level" data-value={@view.level}>{@level}</span></.link>
             </span>
           </div>
 
@@ -145,9 +145,11 @@ defmodule MiniLineageWeb.Layouts do
             <div class="bar-track" id="hp-track">
               <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
               <span class="bar-text">
-                <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
-                  @view.max_health
-                )}</span>
+                <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span
+                  id="status-max-hp"
+                  data-key="max-hp"
+                  data-value={@view.max_health}
+                >{Format.number(@view.max_health)}</span>
               </span>
             </div>
           </div>
@@ -168,7 +170,9 @@ defmodule MiniLineageWeb.Layouts do
                   data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
                 >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
                   !@view.is_max_level
-                }>/{Format.number(@view.xp_required)}</span>
+                }>/<span data-key="xp-required" data-value={@view.xp_required}>{Format.number(
+                  @view.xp_required
+                )}</span></span>
               </span>
             </div>
           </div>
