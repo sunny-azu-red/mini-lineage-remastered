@@ -40,10 +40,10 @@
     border-radius: var(--radius);
 
     /* Single uniform border like the select element */
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--border-control);
 
     /* Subtle single-layer gradient */
-    background: linear-gradient(180deg, #31405e 0%, #1e2d48 100%);
+    background: linear-gradient(180deg, #3e4151 0%, #2c2f3a 100%);
 
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 
@@ -105,7 +105,7 @@
 
 /* ===== Hover ===== */
 .btn:hover {
-    background: linear-gradient(180deg, #384a6a 0%, #243352 100%);
+    background: linear-gradient(180deg, #464a5c 0%, #333643 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.15),
@@ -133,7 +133,7 @@
 /* ===== Active / Press ===== */
 .btn:active,
 .btn.active {
-    background: linear-gradient(180deg, #172030 0%, #1a2640 100%);
+    background: linear-gradient(180deg, #1f2028 0%, #272933 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.2),
@@ -188,8 +188,8 @@
 
 /* ===== Secondary Variant ===== */
 .btn-secondary {
-    background: linear-gradient(180deg, #222236 0%, #17172a 100%);
-    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #27212d 0%, #1b1720 100%);
+    border: 1px solid var(--border-arcane);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     color: var(--text-secondary);
 }
@@ -197,7 +197,7 @@
 .btn-secondary::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(74, 85, 128, 0.35),
+            rgba(100, 87, 117, 0.35),
             transparent);
 }
 
@@ -208,22 +208,22 @@
             transparent 50%,
             rgba(0, 0, 0, 0.12) 100%),
         linear-gradient(180deg,
-            #2c2c44 0%,
-            #202038 50%,
-            #28283e 100%);
+            #322b3b 0%,
+            #27212d 50%,
+            #2d2735 100%);
 
-    border-color: var(--border-bright);
+    border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(74, 85, 128, 0.15),
+        0 0 0 2px rgba(100, 87, 117, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .btn-secondary:active,
 .btn-secondary.active {
-    background: linear-gradient(180deg, #131320 0%, #191928 100%);
-    border-color: var(--border-bright);
+    background: linear-gradient(180deg, #141117 0%, #1b1720 100%);
+    border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(74, 85, 128, 0.2),
+        0 0 0 2px rgba(100, 87, 117, 0.2),
         inset 0 2px 3px rgba(0, 0, 0, 0.35);
     transform: none;
     transition: none;

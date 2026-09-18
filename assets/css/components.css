@@ -8,16 +8,18 @@
 /* ===== Panel Card ===== */
 .panel {
     background: var(--bg-panel);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-soft);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
 }
 
 .panel-header {
-    background: linear-gradient(180deg, var(--bg-panel-alt) 0%, #0d2a50 100%);
+    background: var(--panel-lift);
     line-height: 1.6;
-    border-bottom: 1px solid var(--border);
+    /* The banner closes on 2px of --gold-dim. A panel header closing on 1px of the same says the
+     * two are the same kind of thing, in the accent rather than in the blue. */
+    border-bottom: 1px solid var(--gold-dim);
     color: var(--gold);
     font-family: var(--font-heading);
     font-weight: 600;
@@ -146,7 +148,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 0;
-    border-bottom: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border-soft);
 }
 
 .status-panel .stat-row {

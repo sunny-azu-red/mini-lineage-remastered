@@ -7,16 +7,31 @@
  */
 
 :root {
-    /* ===== Surfaces ===== */
-    --bg-deep: #0f0f1a;
-    --bg-surface: #1a1a2e;
-    --bg-panel: #16213e;
-    --bg-panel-alt: #0f3460;
+    /* ===== Surfaces =====
+     * Every dark surface in the game sits on hue 267, the violet the banner sweeps through and the
+     * secondary button rests in. At this lightness the hue is barely legible on its own — the
+     * point is that nothing underneath the banner pulls against it. */
+    --bg-deep: #140f1a;
+    --bg-surface: #231f29;
+    --bg-panel: #1b1523;
 
-    /* ===== Borders ===== */
-    --border: #2e3560;
-    --border-bright: #4a5580;
-    --border-dark: #141730;
+    /* ===== Lifts =====
+     * White at three strengths. A surface nested inside another is raised off it rather than sunk
+     * into it — alpha, not hex, so one lift works over the panel and over the page alike. */
+    --panel-lift: rgba(255, 255, 255, 0.035);
+    --table-lift: rgba(255, 255, 255, 0.06);
+    --row-lift: rgba(255, 255, 255, 0.028);
+
+    /* ===== Borders =====
+     * Every surface edge in the game is --border-soft, which has no hue. The other two are the
+     * controls' own, and they are no longer two steps of one colour: --border-control is the slate
+     * the primary button, the select and the input are drawn in, --border-arcane the violet the
+     * secondary is. Saturation reads far stronger at a control's lightness than at a surface's, so
+     * both sit near 14% where the surfaces sit at 27% and still look like the same dusk. */
+    --border-control: #585c72;
+    --border-arcane: #463c52;
+    --border-arcane-bright: #645775;
+    --border-soft: rgba(255, 255, 255, 0.07);
 
     /* ===== Gold, the one accent ===== */
     --gold: #c9a84c;
@@ -24,12 +39,15 @@
     --gold-dim: #7a6230;
 
     /* ===== Text =====
-     * Three steps of prose, then the values. --text-hp and --text-xp are lighter than the bar
-     * colours below: --hp-glow and --xp-glow measure 4.16:1 and 3.40:1 on the panel and AA wants
-     * 4.5, which matters for a word and not for a filled bar. */
+     * Three steps of prose, then the values. The three steps are one hue at one saturation and
+     * differ only in lightness: quieter text should get quieter, not bluer, and the lower two used
+     * to swing to hue 219 under a primary at hue 40.
+     * --text-hp and --text-xp are lighter than the bar colours below: --hp-glow and --xp-glow
+     * measure 4.16:1 and 3.40:1 on the panel and AA wants 4.5, which matters for a word and not
+     * for a filled bar. */
     --text-primary: #d4d0c8;
-    --text-secondary: #9099aa;
-    --text-muted: #5a6070;
+    --text-secondary: #a3a099;
+    --text-muted: #6b6861;
     --text-hp: #e95849;
     --text-xp: #ab74c2;
     --text-defense: #1c90e3;

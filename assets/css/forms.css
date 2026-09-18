@@ -16,7 +16,7 @@
 .form-select,
 .form-input {
     background: var(--bg-surface);
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--border-control);
     border-radius: var(--radius);
     color: var(--text-primary);
     font-family: var(--font-body);

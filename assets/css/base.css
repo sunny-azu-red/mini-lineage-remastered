@@ -26,7 +26,7 @@ body {
 body {
     background-color: var(--bg-deep);
     background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(74, 85, 128, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 50%, rgba(100, 88, 114, 0.08) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(123, 45, 139, 0.06) 0%, transparent 50%);
     /* The tile is one viewport tall, so `repeat` would restart it mid-scroll. */
     background-repeat: no-repeat;
@@ -79,7 +79,7 @@ h2 {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-soft);
     padding-bottom: 6px;
     margin-top: 24px;
     margin-bottom: 12px;
@@ -114,7 +114,7 @@ p.last {
 .back {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-soft);
 }
 
 /* ===== Utility Classes ===== */

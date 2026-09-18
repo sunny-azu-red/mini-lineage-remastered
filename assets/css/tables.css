@@ -16,7 +16,7 @@
     -webkit-overflow-scrolling: touch;
     margin: 0px 0px 12px 0px;
     border-radius: var(--radius);
-    border: 1px solid var(--border-dark);
+    border: 1px solid var(--border-soft);
 }
 
 /* A column label is chrome, not a title. It had been wearing the panel header's gold, its heading
@@ -24,17 +24,17 @@
    twice. This is the body face, quiet, and wide enough in the tracking to hold a line of small
    capitals. The data is what should be loud in a table. */
 .data-table th {
-    background: var(--border-dark);
+    background: var(--table-lift);
     color: var(--text-secondary);
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.1em;
     /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
        column's own padding is a label hanging over the wrong edge. */
-    padding: 6px 10px;
+    padding: 6px 10px 4px 10px;
     text-align: left;
     text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-soft);
 }
 
 .data-table td {
@@ -42,7 +42,7 @@
 }
 
 .data-table tbody tr:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.022);
+    background: var(--row-lift);
 }
 
 /* Figures are tabular, which only pays off against an edge to line up on: the magnitude of a

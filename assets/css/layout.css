@@ -41,12 +41,16 @@
 }
 
 #site-header {
+    /* The same diagonal sweep it always had, at the saturation the rest of the game is painted in
+     * (27%, where these stops were near 50%) and on hue 267, the violet the secondary button rests
+     * in. The banner is still the brightest surface on the page and still the only coloured one —
+     * the colour is arcane now rather than blue. */
     background: linear-gradient(135deg,
-            #0a0f1e 0%,
-            #111830 30%,
-            #1a2550 60%,
-            #0f1a38 100%);
-    border: 1px solid var(--border);
+            #140f1a 0%,
+            #20182a 30%,
+            #342744 60%,
+            #231a2d 100%);
+    border: 1px solid var(--border-soft);
     border-bottom: 2px solid var(--gold-dim);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
@@ -148,11 +152,13 @@
 /* The link is inside the box, so the box highlights when the link is hovered. */
 #site-header:has(#header-link:hover) {
     border-bottom-color: var(--gold);
+    /* Desaturated alongside the resting gradient, or the hover would put back the blue the rest
+     * of it just gave up. The lift is unchanged: every stop is 3-4 points lighter than at rest. */
     background: linear-gradient(135deg,
-            #0d1428 0%,
-            #162040 30%,
-            #1e2c60 60%,
-            #111e44 100%);
+            #1a1322 0%,
+            #2a1f37 30%,
+            #3d2e50 60%,
+            #291f36 100%);
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 
@@ -187,6 +193,7 @@
     margin-top: 12px;
     color: var(--text-muted);
     font-size: 11px;
+    letter-spacing: .05em;
     opacity: 0.5;
 }
 
