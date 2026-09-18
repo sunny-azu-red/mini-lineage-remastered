@@ -104,14 +104,16 @@ defmodule MiniLineageWeb.Screens.Halls do
       <td class="name">
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
+        <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
         <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and holding the
-              width means no name shifts sideways when somebody arrives. --%>
+              width means no name shifts sideways when somebody arrives. Last in the cell for the
+              same reason — the width it holds while dark falls where nothing follows it, rather
+              than opening a gap between the name and the medal. --%>
         <span
           class={["online", @row.online && "lit"]}
           title={@row.online && "Online right now"}
           aria-hidden={if @row.online, do: "false", else: "true"}
         >•</span>
-        <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
       </td>
       <td class="num gold">
         <span data-key={"level-#{@row.id}"} data-value={@row.level}>{Format.number(@row.level)}</span>
