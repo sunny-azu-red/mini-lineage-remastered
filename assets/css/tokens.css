@@ -8,11 +8,15 @@
 
 :root {
     /* ===== Surfaces =====
-     * Every dark surface in the game sits on hue 267 at 19% — the violet the banner sweeps through
-     * and both buttons are drawn in. 27% was too much of it over an area this size. */
-    --bg-deep: #141316;
-    --bg-surface: #232127;
-    --bg-panel: #1b191f;
+     * Every dark surface sits on the game's violet at around 10%, which is nearly grey: the hue
+     * only really reads on the banner's bright corner and on --border-control.
+     * The panel stands 7.6 L* above the page. That gap is the whole of the separation now — the
+     * blue palette had 8.6 L* AND 13.5 chroma between them, and when the chroma went the gap had
+     * quietly closed to 3.1 from both ends, which left the panels held apart by their border and
+     * their shadow alone. */
+    --bg-deep: #0f0e11;
+    --bg-surface: #29262d;
+    --bg-panel: #201e25;
 
     /* ===== Lifts =====
      * White at three strengths. A surface nested inside another is raised off it rather than sunk
@@ -58,8 +62,9 @@
 
     /* ===== The bars, and the colours a value is named for =====
      * The two bars are built alike: one lightness for the bases, one for the glows, one chroma for
-     * all four. The HP bar had been both lighter and more chromatic than the XP bar. Matching them
-     * put both glows over AA on the panel — 4.55 and 4.53, where they had measured 4.16 and 3.40. */
+     * all four. The HP bar had been both lighter and more chromatic than the XP bar. Both glows
+     * measure 4.24 on the panel, up from 4.16 and 3.40 but still under AA's 4.5, which matters for
+     * a word and not for a filled bar. */
     --hp-color: #be271f;
     --hp-glow: #e44c3b;
     --xp-color: #a031a7;
