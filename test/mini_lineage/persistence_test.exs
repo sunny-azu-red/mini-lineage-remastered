@@ -98,6 +98,27 @@ defmodule MiniLineage.PersistenceTest do
       stop_supervised!(Collector)
     end
 
+    test "a flush tells whoever is reading the archives, so the Tome moves without a reload" do
+      Collector.subscribe()
+
+      # A player too: the archives read as nil until somebody has played, which is their own
+      # empty state and not something the push invented.
+      Statistics.increment(:total_players, 1)
+      Statistics.increment(:total_battles, 3)
+      Collector.flush()
+
+      assert_receive {:statistics, totals}, 2_000
+      assert totals.total_battles >= 3
+    end
+
+    test "and says nothing when there was nothing to write" do
+      Collector.subscribe()
+
+      Collector.flush()
+
+      refute_receive {:statistics, _}, 500
+    end
+
     test "every declared field is present, defaulted to zero" do
       Statistics.increment(:total_players)
       Collector.flush()

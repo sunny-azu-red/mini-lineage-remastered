@@ -7,6 +7,8 @@ defmodule MiniLineageWeb.Screens.Record do
 
   import MiniLineageWeb.Controls
 
+  alias MiniLineageWeb.Controls
+
   alias MiniLineage.Game.Format
 
   attr :view, :map, required: true
@@ -83,13 +85,13 @@ defmodule MiniLineageWeb.Screens.Record do
       <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
       <p>
         {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
-        <.counted
+        <Controls.counted
           key="rec-battles"
           count={@view.counters.total_battles}
           singular="battle"
           plural="battles"
         />, slaying
-        <.counted
+        <Controls.counted
           key="rec-slain"
           count={@view.counters.total_enemies_killed}
           singular={@opponent.label}
@@ -98,7 +100,7 @@ defmodule MiniLineageWeb.Screens.Record do
         />
         <%= if @view.counters.total_ambushes > 0 do %>
           and overcoming
-          <.counted
+          <Controls.counted
             key="rec-ambushes"
             count={@view.counters.total_ambushes}
             singular="cunning ambush"
@@ -160,25 +162,6 @@ defmodule MiniLineageWeb.Screens.Record do
 
   defp voice(false),
     do: %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
-
-  attr :key, :string, required: true
-  attr :count, :integer, required: true
-  attr :singular, :string, required: true
-  attr :plural, :string, required: true
-  attr :emoji, :string, default: nil
-  attr :class, :string, default: "tally"
-
-  # A figure and the noun it counts. Only the figure counts — a slain tally climbs by a group at a
-  # time, so it has distance to cover, while the noun beside it does not. At one there is no figure
-  # to tween at all: "a cunning ambush" is a word.
-  defp counted(%{count: 1} = assigns) do
-    ~H|<span class={@class}>{Format.pluralize(@singular, @plural, 1, @emoji)}</span>|
-  end
-
-  defp counted(assigns) do
-    ~H|<span class={@class}><span data-key={@key} data-value={@count}>{Format.number(@count)}</span> {@emoji &&
-  "#{@emoji} "}{@plural}</span>|
-  end
 
   # Three ways a record ends: fallen, still going, or missing — walked away from and past the day
   # anyone could pick it up again.

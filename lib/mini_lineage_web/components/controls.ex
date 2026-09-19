@@ -8,6 +8,7 @@ defmodule MiniLineageWeb.Controls do
   """
   use MiniLineageWeb, :html
 
+  alias MiniLineage.Game.Format
   alias MiniLineageWeb.Paths
 
   @doc "Whose hall this is. Every place that names one says it the same way."
@@ -175,6 +176,32 @@ defmodule MiniLineageWeb.Controls do
 
   defp button_class("btn"), do: "btn"
   defp button_class(variant), do: "btn #{variant}"
+
+  attr :key, :string, required: true
+  attr :count, :integer, required: true
+  attr :singular, :string, required: true
+  attr :plural, :string, required: true
+  attr :emoji, :string, default: nil
+  attr :class, :string, default: "tally"
+
+  @doc false
+  # A figure and the noun it counts. Only the figure counts — a tally of the slain climbs by a
+  # group at a time, so it has distance to cover, while the noun beside it does not. At one there
+  # is no figure to tween at all: "a cunning ambush" is a word.
+  def counted(%{count: 1} = assigns) do
+    ~H|<span class={@class}>{Format.pluralize(@singular, @plural, 1, @emoji)}</span>|
+  end
+
+  def counted(assigns) do
+    assigns =
+      assign(assigns,
+        noun: Enum.join(Enum.reject([assigns.emoji, assigns.plural], &is_nil/1), " ")
+      )
+
+    ~H"""
+    <span class={@class} phx-no-format><span data-key={@key} data-value={@count}>{Format.number(@count)}</span> {@noun}</span>
+    """
+  end
 
   # ------------------------------------------------------------------ stamps
 

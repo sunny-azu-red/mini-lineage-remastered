@@ -18,7 +18,12 @@ defmodule MiniLineage.Game.Statistics.Collector do
   # number of counters rather than by the wait; and a hard kill loses a minute of lifetime totals.
   @flush_ms 60_000
 
+  @topic "statistics"
+
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+
+  @doc "Subscribe to the archives. The message is `{:statistics, totals}`, or nil before anyone has played."
+  def subscribe, do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, @topic)
 
   @doc "Writes everything pending now. For tests and shutdown."
   def flush, do: GenServer.call(__MODULE__, :flush)
@@ -74,6 +79,10 @@ defmodule MiniLineage.Game.Statistics.Collector do
         on_conflict: from(s in "statistics", update: [inc: [value: fragment("EXCLUDED.value")]])
       )
 
+      # Only once the counters are actually in: the Tome reads them back, so a push that beat the
+      # write would tell a reader about totals the database does not have yet.
+      publish()
+
       %{}
     rescue
       error -> requeue(batch, error)
@@ -94,9 +103,21 @@ defmodule MiniLineage.Game.Statistics.Collector do
     # buffer, or the archives read as empty to the very player who just filled them.
     if Process.whereis(__MODULE__), do: flush()
 
+    totals()
+  end
+
+  defp totals do
     stored = Map.new(Repo.all(from s in "statistics", select: {s.name, s.value}))
     stats = Map.new(Statistics.fields(), &{&1, Map.get(stored, Atom.to_string(&1), 0)})
 
     if stats.total_players == 0, do: nil, else: stats
+  end
+
+  # One read per flush, however many people are reading the Tome — and `totals/0` rather than
+  # `read_all/0`, which would call this process from inside itself and wait for its own reply.
+  defp publish do
+    Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:statistics, totals()})
+  rescue
+    _ -> :ok
   end
 end

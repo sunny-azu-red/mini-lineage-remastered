@@ -188,6 +188,46 @@ substitute once.
 glows' comment claimed 4.55 and 4.53 on the panel; the panel then moved twice under it and it went
 quietly false. Moving a ground means re-measuring everything any comment asserts about it.
 
+**Every figure counts; only names and dates jump.** A number the player can watch change wears
+`data-key` and `data-value` and is animated by `AnimatedValues`, whose hook sits once over whatever
+contains them. What an item grants is a figure and counts with the rest — only the item's own name
+and the dates beside it jump, having nothing to count through. `data-format="adena"` counts in the
+short form; the frames keep the tenth that the settled value drops, because "2.0k" written "2k" is
+two characters narrower and the line jumps left and right across every round thousand.
+
+Animate a figure even where it can only move by one today. Measured: a tween of +1 renders the old
+number for 137ms and then the new one — a delay, not a flicker — and forty at once hold a median
+frame of 16.7ms, which is 60fps with nothing lost. A count reads its distance from the delta, never
+from a guess about how far a value can jump, so a turn that one day gives two fights or experience
+enough for two levels needs no markup change. The alternative is deciding per figure how far it can
+move and being wrong later. The level came off the Halls on that wrong guess and went back on.
+
+A figure and the noun it counts are separate elements, so `Controls.counted/1` exists: at one there
+is no figure to tween, because "a cunning ambush" is a word. That splitting is why a test asserting
+"12 battles" reads the stripped text and not the markup.
+
+**A screen that shows somebody's figures is pushed to, not polled.** Three topics carry them and
+they are keyed differently on purpose. `"character:#{session}"` is the browser's own and carries
+what only its owner may act on — its key is a secret, so nobody can watch anybody else, and it is
+the session because a run started over mints a new character id and the owner learns the new id
+FROM that push. `"record:#{character_id}"` is public, because a record is a public page.
+`"statistics"` carries the archives on every flush, one read per flush however many are reading.
+
+A push must not announce what cannot yet be read. `Server.run/2` broadcasts AFTER it persists, and
+the collector after its counters are in, because a reader answering a push by reading the database
+finds nothing otherwise — which is exactly how the chronicle came back empty. It costs about 1.2ms
+before a push lands and is worth it.
+
+Anything a record needs live rides in the snapshot rather than being read back: `last_action_at` is
+there so a watched record restamps itself without a query, and the chronicle is re-read only when
+the battle count has actually moved.
+
+**A browser suite tests the game, not its CSS.** The walkthrough is one character played normally.
+A 600ms sweep across the HP bar was checked there and failed about one run in three, taking the
+whole suite with it. The gain that triggers it is what matters and is checked instead. Known and
+unfixed: a LiveView patch that touches a bar rewrites its class from the template and takes the
+running sweep with it — measured at 2ms of its 600 whenever a patch lands, which is most purchases.
+
 **The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
 slugs and fills the race templates from code; caching that in `:dev` means editing a narrative
 changes nothing until the server restarts. `:e2e` and `:prod` cache, which is what ships.

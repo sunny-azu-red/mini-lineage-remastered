@@ -30,6 +30,7 @@ defmodule MiniLineageWeb.GameLive do
       Characters.attach(id)
       Characters.subscribe(id)
       Board.subscribe()
+      Collector.subscribe()
     end
 
     player = Characters.snapshot(id)
@@ -303,6 +304,10 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   def handle_info({:board, boards}, socket), do: {:noreply, assign(socket, boards: boards)}
+
+  # The archives move once a flush, whoever is reading them. Assigned wherever this tab is standing,
+  # the way the board is — the Tome is the only screen that renders them.
+  def handle_info({:statistics, stats}, socket), do: {:noreply, assign(socket, statistics: stats)}
 
   # The record on screen moved. The view is rebuilt from the player that came with the push, so
   # nothing is read back; the chronicle is, but only when a fight has been added to it.
