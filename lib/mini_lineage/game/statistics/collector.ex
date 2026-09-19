@@ -2,7 +2,11 @@ defmodule MiniLineage.Game.Statistics.Collector do
   @moduledoc """
   Batches the fire-and-forget counters and flushes them as atomic upserts. The reference issued one
   round trip per increment — a single fight fires seven — so they are coalesced over a short window
-  instead. Nothing reads these back mid-fight, so the delay is invisible.
+  instead.
+
+  Writing and telling are separate concerns here. A write is a round trip and is worth batching for
+  a minute; a broadcast is microseconds, so the Tome hears about a counter when it MOVES rather than
+  when it is written, and keeps its own running totals in memory to say so without a query.
   """
   use GenServer
 
@@ -13,10 +17,14 @@ defmodule MiniLineage.Game.Statistics.Collector do
   alias MiniLineage.Game.Statistics
   alias MiniLineage.Repo
 
-  # Generous on purpose. `read_all/0` drains the buffer before it queries, so the archives are
-  # never stale however long this is; increments coalesce by field, so a batch is capped at the
-  # number of counters rather than by the wait; and a hard kill loses a minute of lifetime totals.
+  # Generous on purpose, and only about durability: increments coalesce by field, so a batch is
+  # capped at the number of counters rather than by the wait, and a hard kill loses a minute of
+  # lifetime totals. What a reader sees does not wait for this.
   @flush_ms 60_000
+
+  # The same window the board coalesces on, and for the same reason: a fight moves seven counters
+  # and a realm at play moves them constantly, so the telling is gathered up rather than stuttered.
+  @push_ms 500
 
   @topic "statistics"
 
@@ -36,36 +44,55 @@ defmodule MiniLineage.Game.Statistics.Collector do
     Process.flag(:trap_exit, true)
     schedule()
 
-    {:ok, %{}}
+    {:ok, %{pending: %{}, totals: stored(), push: nil}}
   end
 
   @impl true
-  def handle_info({:increment, field, amount}, pending),
-    do: {:noreply, Map.update(pending, field, amount, &(&1 + amount))}
+  def handle_info({:increment, field, amount}, state) do
+    state = %{
+      state
+      | pending: Map.update(state.pending, field, amount, &(&1 + amount)),
+        totals: Map.update(state.totals, field, amount, &(&1 + amount))
+    }
 
-  def handle_info(:flush, pending) do
+    {:noreply, arm(state)}
+  end
+
+  def handle_info(:push, state) do
+    Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:statistics, view(state.totals)})
+
+    {:noreply, %{state | push: nil}}
+  end
+
+  def handle_info(:flush, state) do
     schedule()
 
-    {:noreply, write(pending)}
+    {:noreply, write(state)}
   end
 
   @impl true
-  def handle_call(:flush, _from, pending), do: {:reply, :ok, write(pending)}
+  def handle_call(:flush, _from, state), do: {:reply, :ok, write(state)}
 
-  def handle_call(:pending, _from, pending), do: {:reply, pending, pending}
+  def handle_call(:pending, _from, state), do: {:reply, state.pending, state}
 
   @impl true
-  def terminate(_reason, pending), do: write(pending)
+  def terminate(_reason, state), do: write(state)
 
   defp schedule, do: Process.send_after(self(), :flush, @flush_ms)
 
-  # Drains the buffer into ONE statement and returns whatever is still owed. Never raises — a
-  # counter is not worth this process, and its death would take the buffer too. A failed batch is
-  # re-queued by field, so the buffer stays bounded however long an outage runs.
-  defp write(pending) when map_size(pending) == 0, do: pending
+  # An open window is never restarted, or a realm at play would defer its own telling for ever.
+  defp arm(%{push: nil} = state),
+    do: %{state | push: Process.send_after(self(), :push, @push_ms)}
 
-  defp write(pending) do
-    batch = Enum.reject(pending, fn {_field, amount} -> amount == 0 end)
+  defp arm(state), do: state
+
+  # Drains the buffer into ONE statement. Never raises — a counter is not worth this process, and
+  # its death would take the buffer too. A failed batch is re-queued by field, so the buffer stays
+  # bounded however long an outage runs; `totals` already counted it and is left alone.
+  defp write(%{pending: pending} = state) when map_size(pending) == 0, do: state
+
+  defp write(state) do
+    batch = Enum.reject(state.pending, fn {_field, amount} -> amount == 0 end)
 
     entries =
       Enum.map(batch, fn {field, amount} -> %{name: Atom.to_string(field), value: amount} end)
@@ -79,13 +106,9 @@ defmodule MiniLineage.Game.Statistics.Collector do
         on_conflict: from(s in "statistics", update: [inc: [value: fragment("EXCLUDED.value")]])
       )
 
-      # Only once the counters are actually in: the Tome reads them back, so a push that beat the
-      # write would tell a reader about totals the database does not have yet.
-      publish()
-
-      %{}
+      %{state | pending: %{}}
     rescue
-      error -> requeue(batch, error)
+      error -> %{state | pending: requeue(batch, error)}
     end
   end
 
@@ -103,21 +126,14 @@ defmodule MiniLineage.Game.Statistics.Collector do
     # buffer, or the archives read as empty to the very player who just filled them.
     if Process.whereis(__MODULE__), do: flush()
 
-    totals()
+    view(stored())
   end
 
-  defp totals do
-    stored = Map.new(Repo.all(from s in "statistics", select: {s.name, s.value}))
-    stats = Map.new(Statistics.fields(), &{&1, Map.get(stored, Atom.to_string(&1), 0)})
+  defp stored do
+    rows = Map.new(Repo.all(from s in "statistics", select: {s.name, s.value}))
 
-    if stats.total_players == 0, do: nil, else: stats
+    Map.new(Statistics.fields(), &{&1, Map.get(rows, Atom.to_string(&1), 0)})
   end
 
-  # One read per flush, however many people are reading the Tome — and `totals/0` rather than
-  # `read_all/0`, which would call this process from inside itself and wait for its own reply.
-  defp publish do
-    Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:statistics, totals()})
-  rescue
-    _ -> :ok
-  end
+  defp view(totals), do: if(totals.total_players == 0, do: nil, else: totals)
 end

@@ -98,25 +98,39 @@ defmodule MiniLineage.PersistenceTest do
       stop_supervised!(Collector)
     end
 
-    test "a flush tells whoever is reading the archives, so the Tome moves without a reload" do
+    test "a counter moving tells whoever is reading, without waiting to be written" do
       Collector.subscribe()
 
       # A player too: the archives read as nil until somebody has played, which is their own
       # empty state and not something the push invented.
       Statistics.increment(:total_players, 1)
       Statistics.increment(:total_battles, 3)
-      Collector.flush()
 
       assert_receive {:statistics, totals}, 2_000
-      assert totals.total_battles >= 3
+      assert totals.total_battles == 3
+
+      # No flush was asked for and the timer is a minute away, so what the reader was just told is
+      # still owed to the database. Telling and writing are not the same errand.
+      assert Collector.pending()[:total_battles] == 3
     end
 
-    test "and says nothing when there was nothing to write" do
+    test "and says nothing at all while nothing moves" do
       Collector.subscribe()
 
       Collector.flush()
 
-      refute_receive {:statistics, _}, 500
+      refute_receive {:statistics, _}, 800
+    end
+
+    test "and gathers a flurry into one telling rather than one apiece" do
+      Collector.subscribe()
+      Statistics.increment(:total_players, 1)
+
+      for _ <- 1..20, do: Statistics.increment(:total_battles, 1)
+
+      assert_receive {:statistics, totals}, 2_000
+      assert totals.total_battles == 20
+      refute_receive {:statistics, _}, 800
     end
 
     test "every declared field is present, defaulted to zero" do

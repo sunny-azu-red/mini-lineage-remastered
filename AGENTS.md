@@ -211,7 +211,10 @@ they are keyed differently on purpose. `"character:#{session}"` is the browser's
 what only its owner may act on — its key is a secret, so nobody can watch anybody else, and it is
 the session because a run started over mints a new character id and the owner learns the new id
 FROM that push. `"record:#{character_id}"` is public, because a record is a public page.
-`"statistics"` carries the archives on every flush, one read per flush however many are reading.
+`"statistics"` carries the archives, and carries them when a counter MOVES rather than when it is
+written — the collector keeps its own running totals so it can say so without a query, gathered on
+the same 500ms window the board uses. Batching the write is about a round trip being expensive;
+a broadcast is microseconds, and tying one to the other made the Tome a minute stale.
 
 A push must not announce what cannot yet be read. `Server.run/2` broadcasts AFTER it persists, and
 the collector after its counters are in, because a reader answering a push by reading the database
