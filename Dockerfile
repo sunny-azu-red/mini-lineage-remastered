@@ -47,12 +47,16 @@ LABEL org.opencontainers.image.source="https://github.com/sunny-azu-red/mini-lin
 LABEL org.opencontainers.image.description="Mini-Lineage Remastered — a text-based RPG in Elixir and Phoenix LiveView"
 LABEL org.opencontainers.image.licenses="MIT"
 
+# Created BEFORE the copy so ownership is set as the files land. A `chown -R` afterwards writes a
+# second copy of the whole release into its own layer — 35MB of an 88MB image, for nothing. The
+# directory itself is chowned so the release can still put its runtime config under it.
+RUN addgroup -S app && adduser -S -G app app && chown app:app /app
+
 # The release brings its own ERTS; nothing here needs Elixir or Mix.
-COPY --from=builder /app/_build/prod/rel/mini_lineage ./
+COPY --from=builder --chown=app:app /app/_build/prod/rel/mini_lineage ./
 
 ENV PHX_SERVER=true
 
-RUN addgroup -S app && adduser -S -G app app && chown -R app:app /app
 USER app
 
 # Migrations run in the same container that serves, so a fresh database is never served against.
