@@ -2,7 +2,7 @@ defmodule MiniLineage.Game.CheatTest do
   @moduledoc "The Konami cheat: silent activation, and a permanent bar from the Halls of Champions."
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Constants, Player, Snapshot}
+  alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Statistics}
 
   defp living do
     {player, _flash} = Player.initialize(%Player{}, Constants.race(0), "Cheater")
@@ -38,5 +38,60 @@ defmodule MiniLineage.Game.CheatTest do
 
     assert Snapshot.build(player).disqualified
     assert Snapshot.build(%{player | dead: true}).disqualified
+  end
+
+  describe "what a disqualified run writes into the realm's history" do
+    # The collector is a plain process that takes {:increment, field, amount}. Standing in for it
+    # is how a rules test reads the counters without a database anywhere near it.
+    setup do
+      # The name frees itself when this test process dies, so nothing has to give it back.
+      Process.register(self(), MiniLineage.Game.Statistics.Collector)
+
+      :ok
+    end
+
+    defp counted do
+      receive do
+        {:increment, field, amount} -> [{field, amount} | counted()]
+      after
+        0 -> []
+      end
+    end
+
+    test "nothing, once the cheat is on" do
+      {player, _} = Actions.cheat(living())
+      _ = counted()
+
+      Statistics.increment_for(player, :total_battles)
+      Statistics.increment_for(player, :total_xp_gained, 4_000)
+
+      assert counted() == []
+    end
+
+    test "nor once a run has taken its own life" do
+      player = Player.commit_suicide(living())
+      _ = counted()
+
+      Statistics.increment_for(player, :total_deaths)
+
+      assert counted() == []
+    end
+
+    test "but an honest run still writes everything it does" do
+      player = living()
+      # Drained first: being born is itself counted, and this is about what happens after.
+      _ = counted()
+
+      Statistics.increment_for(player, :total_battles)
+
+      assert counted() == [{:total_battles, 1}]
+    end
+
+    test "and the disqualification itself is always counted, or nobody could be told of it" do
+      _ = counted()
+      {_player, _} = Actions.cheat(living())
+
+      assert {:total_players_cheated, 1} in counted()
+    end
   end
 end

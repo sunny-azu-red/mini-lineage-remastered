@@ -11,6 +11,16 @@ defmodule MiniLineage.Game.Statistics do
 
   def fields, do: @fields
 
+  @doc """
+  Counts a deed toward the realm's history unless the run doing it is disqualified. The Halls will
+  not list a coward or a cheat, so the Tome does not tell their deeds either — from the moment they
+  are disqualified, an aggregate having no way to give back what it was already told.
+  """
+  def increment_for(player, field, amount \\ 1)
+  def increment_for(%{coward: true}, _field, _amount), do: :ok
+  def increment_for(%{cheated: true}, _field, _amount), do: :ok
+  def increment_for(_player, field, amount), do: increment(field, amount)
+
   def increment(field, amount \\ 1) when field in @fields do
     case Process.whereis(__MODULE__.Collector) do
       nil -> :ok

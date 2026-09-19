@@ -69,8 +69,8 @@ defmodule MiniLineage.Game.Player do
     player = apply_effect(player, Constants.effect(:newbie_buff))
     player = %{player | health: stats(player).max_health}
 
-    Statistics.increment(:total_players)
-    Statistics.increment(:total_adena, player.adena)
+    Statistics.increment_for(player, :total_players)
+    Statistics.increment_for(player, :total_adena, player.adena)
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
     %{min_age: min_age, max_age: max_age, age_thresholds: thresholds, builds: builds} =
@@ -102,7 +102,7 @@ defmodule MiniLineage.Game.Player do
 
   def kill(player) do
     player = %{player | health: 0, dead: true, effects: []}
-    Statistics.increment(:total_deaths)
+    Statistics.increment_for(player, :total_deaths)
 
     resolve_death_reason(player)
   end
@@ -340,7 +340,7 @@ defmodule MiniLineage.Game.Player do
 
       %{modifiers: [%{type: :regen, value: rate}]} ->
         {player, healed} = restore_health(player, rate)
-        Statistics.increment(:total_hp_regen, healed)
+        Statistics.increment_for(player, :total_hp_regen, healed)
 
         {player, true}
     end
@@ -380,7 +380,7 @@ defmodule MiniLineage.Game.Player do
            refusal(item, "You do not have enough 🪙 Adena to buy #{item.emoji} #{item.name}!")}
 
         {player, true} ->
-          Statistics.increment(:total_adena_spent, item.cost)
+          Statistics.increment_for(player, :total_adena_spent, item.cost)
           complete_purchase(player, item, item_id, equipment)
       end
     end
@@ -405,8 +405,8 @@ defmodule MiniLineage.Game.Player do
     player = if effect, do: apply_effect(player, effect), else: player
 
     {player, healed} = restore_health(player, item.stat)
-    Statistics.increment(:total_food_bought)
-    Statistics.increment(:total_hp_healed, healed)
+    Statistics.increment_for(player, :total_food_bought)
+    Statistics.increment_for(player, :total_hp_healed, healed)
 
     buff =
       if effect,
@@ -422,7 +422,7 @@ defmodule MiniLineage.Game.Player do
 
   defp complete_purchase(player, item, item_id, equipment) do
     player = Map.put(player, equipment.slot, item_id)
-    Statistics.increment(equipment.stat)
+    Statistics.increment_for(player, equipment.stat)
 
     {player, %{success: true, text: bought_text(item, equipment.slot), item: item}}
   end
@@ -452,19 +452,19 @@ defmodule MiniLineage.Game.Player do
           total_enemies_killed: player.total_enemies_killed + result.enemies_killed
       }
 
-      if result.is_critical, do: Statistics.increment(:total_critical_hits)
-      Statistics.increment(:total_battles)
-      Statistics.increment(:total_enemies_killed, result.enemies_killed)
-      Statistics.increment(:total_adena_generated, result.adena_gained)
-      Statistics.increment(:total_adena, result.adena_gained)
-      Statistics.increment(:total_hp_lost, result.hp_lost)
-      Statistics.increment(:total_xp_gained, result.xp_gained)
-      Statistics.increment(:total_damage_blocked, result.damage_blocked)
+      if result.is_critical, do: Statistics.increment_for(player, :total_critical_hits)
+      Statistics.increment_for(player, :total_battles)
+      Statistics.increment_for(player, :total_enemies_killed, result.enemies_killed)
+      Statistics.increment_for(player, :total_adena_generated, result.adena_gained)
+      Statistics.increment_for(player, :total_adena, result.adena_gained)
+      Statistics.increment_for(player, :total_hp_lost, result.hp_lost)
+      Statistics.increment_for(player, :total_xp_gained, result.xp_gained)
+      Statistics.increment_for(player, :total_damage_blocked, result.damage_blocked)
 
       if Math.level_up?(old_xp, player.experience) do
         {player, healed} = restore_health(player, stats(player).max_health)
-        Statistics.increment(:total_levels_gained)
-        Statistics.increment(:total_hp_healed, healed)
+        Statistics.increment_for(player, :total_levels_gained)
+        Statistics.increment_for(player, :total_hp_healed, healed)
 
         {player, true}
       else

@@ -124,7 +124,7 @@ defmodule MiniLineage.Game.Actions do
           consecutive_ambushes: player.consecutive_ambushes + 1
       }
 
-      Statistics.increment(:total_ambushes)
+      Statistics.increment_for(player, :total_ambushes)
 
       if player.consecutive_ambushes >= 2,
         do: Player.apply_effect(player, Constants.effect(:ambush_debuff)),
