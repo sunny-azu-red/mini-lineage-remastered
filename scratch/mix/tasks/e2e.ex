@@ -37,11 +37,15 @@ defmodule Mix.Tasks.E2e do
     lock = Shell.lock!("_build/e2e.lock")
 
     try do
+      # Before the server, not only between the suites: `Board` caches what it reads at boot, so a
+      # server started against a table the last run left behind serves those rows until somebody
+      # writes. A server already running is used as it is, and keeps whatever it has.
+      Shell.step("resetting the board", Path.expand("e2e/reset.sh"), [])
       {owned, url} = Shell.ensure_server(port, @boot_timeout_ms)
 
       try do
         Enum.each(suites, fn suite ->
-          # Emptied per suite: each one assumes a board only it put entries on.
+          # Emptied per suite too: each one assumes a board only it put entries on.
           Shell.step("resetting the board", Path.expand("e2e/reset.sh"), [])
           Shell.step("#{suite} (#{url})", "node", [@suites[suite]], nil, [{"E2E_BASE_URL", url}])
         end)

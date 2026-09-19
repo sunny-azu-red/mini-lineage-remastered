@@ -91,7 +91,10 @@ export function controls(page) {
         await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
 
         return page.waitForFunction(
-            (prev) => document.querySelector('#screen')?.dataset.adena !== prev,
+            (prev) => {
+                const screen = document.querySelector('#screen');
+                return !!screen && screen.dataset.adena !== prev;
+            },
             before, { timeout: 5000 }).then(() => true).catch(() => false);
     };
 

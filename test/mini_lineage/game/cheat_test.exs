@@ -1,6 +1,9 @@
 defmodule MiniLineage.Game.CheatTest do
   @moduledoc "The Konami cheat: silent activation, and a permanent bar from the Halls of Champions."
-  use ExUnit.Case, async: true
+  # NOT async: the counter tests below stand in for the collector by claiming its registered name,
+  # which is global — every other module creating a character concurrently posts its own increments
+  # into this process's mailbox, and the drain reads them as the run under test's.
+  use ExUnit.Case, async: false
 
   alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Statistics}
 

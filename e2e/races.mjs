@@ -21,7 +21,8 @@ page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
 
 const { state, onScreen, goHome, travel, fight, buy, leaveShop, boardRows, activeFilter } = controls(page);
 const text = async (sel) => (await page.textContent(sel))?.replace(/\s+/g, ' ').trim() ?? '';
-const stat = async (id) => Number((await page.textContent(`#${id}`))?.replace(/,/g, ''));
+// The attribute, not the text: these figures count up to their value, so the text is a frame.
+const stat = (id) => page.getAttribute(`#${id}`, 'data-value').then(Number);
 
 try {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });

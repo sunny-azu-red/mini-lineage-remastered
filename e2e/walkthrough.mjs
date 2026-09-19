@@ -557,8 +557,16 @@ try {
 
     await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('...and is nowhere on the board',
-        !/Cheater/.test(await page.textContent('#main') ?? ''));
+    // Waited for, not read once: the board coalesces its refreshes, so a run disqualified a moment
+    // ago can still be on the copy this page was served. It has to LEAVE, which is the claim.
+    const unlisted = await page.waitForFunction(
+        () => {
+            const main = document.querySelector('#main');
+            return !!main && !/Cheater/.test(main.textContent);
+        },
+        null, { timeout: 8000 }).then(() => true).catch(() => false);
+    check('...and is nowhere on the board', unlisted,
+        (await page.textContent('#main') ?? '').replace(/\s+/g, ' ').slice(0, 160));
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...but the death screen never takes focus',

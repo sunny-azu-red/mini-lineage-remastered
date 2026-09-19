@@ -17,6 +17,20 @@ const check = (label, pass, detail = '') => {
 // Never `networkidle`: the LiveView websocket stays open, so it never settles.
 const connected = (page) => page.waitForSelector('.phx-connected', { timeout: 8000 });
 
+// `data-value`, never the text: every figure on the board counts up to its new value, so what is
+// rendered mid-tween is a frame and not a number anybody wrote. Read the text and a wait for the
+// figure to move returns on the first frame of the animation, hundreds short of the real one.
+const XP_CELL = '#main table.data-table [data-key^="xp-"]';
+const boardXp = (page) =>
+    page.evaluate((cell) => Number(document.querySelector(cell)?.dataset.value ?? -1), XP_CELL);
+
+const xpClimbedPast = (page, was) => page.waitForFunction(
+    ([cell, had]) => {
+        const xp = document.querySelector(cell);
+        return !!xp && Number(xp.dataset.value) > had;
+    },
+    [XP_CELL, was], { timeout: 8000 });
+
 try {
     const watcher = await (await browser.newContext()).newPage();
     const player = await (await browser.newContext()).newPage();
@@ -46,7 +60,7 @@ try {
         await watcher.locator('#main table.data-table tbody tr.alive .online').count() === 1,
         await watcher.locator('#main table.data-table tbody tr').first().textContent());
 
-    const before = (await watcher.textContent('#main table.data-table .xp'))?.trim();
+    const before = await boardXp(watcher);
 
     await player.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     await connected(player);
@@ -55,11 +69,11 @@ try {
         () => Number(document.querySelector('#screen')?.dataset.battles ?? 0) > 0,
         null, { timeout: 8000 }).catch(() => {});
 
-    const climbed = await watcher.waitForFunction(
-        (prev) => document.querySelector('#main table.data-table .xp')?.textContent?.trim() !== prev,
-        before, { timeout: 6000 }).then(() => true).catch(() => false);
+    const climbed = await xpClimbedPast(watcher, before).then(() => true).catch(() => false);
     check('...and climbs as they fight, without the watcher reloading anything', climbed,
-        `${before} -> ${(await watcher.textContent('#main table.data-table .xp'))?.trim()}`);
+        `${before} -> ${await boardXp(watcher)} XP`);
+
+    const fought = await boardXp(watcher);
 
     // A stranger's row is a link, and following it must never adopt their character.
     const href = await watcher.getAttribute('#main table.data-table a', 'href');
@@ -72,6 +86,24 @@ try {
         /LiveOne/.test(record) && /was last seen on/.test(record), record.slice(0, 90));
     check('...while the watcher stays a visitor, not that character',
         await watcher.evaluate(() => document.querySelector('#screen')?.dataset.started) === 'false');
+
+    // The chronicle is APPENDED to while it is being read, never re-read: the reader keeps the
+    // fights it already has. Dice-proof — the line is added whether that blow lands or kills.
+    const lines = () => watcher.locator('#main ol.chronicle li').count();
+    const told = await lines();
+    await player.click('#main button[phx-click="fight"]');
+    const gained = await watcher.waitForFunction(
+        (had) => document.querySelectorAll('#main ol.chronicle li').length > had,
+        told, { timeout: 8000 }).then(() => true).catch(() => false);
+    check('...and their chronicle gains the fight they have just had, as it is read',
+        gained, `${told} -> ${await lines()} line(s)`);
+
+    // The board coalesces its refreshes over half a second, so the fight above can still be in
+    // flight. Everything below compares one row read twice, and two readers straddling that window
+    // would be comparing two different moments of a live game.
+    await watcher.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await connected(watcher);
+    await xpClimbedPast(watcher, fought);
 
     await watcher.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await connected(watcher);
