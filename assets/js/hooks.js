@@ -150,19 +150,33 @@ const EASE_MS = 600;
 
 const groupDigits = (n) => Math.round(n).toLocaleString('en-US');
 
-export function shortAdena(value) {
+function shortenAdena(value, trimTenth) {
     const abs = Math.abs(value);
     const sign = value < 0 ? '-' : '';
     if (abs <= 999)
         return String(Math.round(value));
 
-    const short = (divisor, unit) =>
-        sign + (Math.floor((abs / divisor) * 10) / 10).toFixed(1).replace('.0', '') + unit;
+    const short = (divisor, unit) => {
+        const figure = (Math.floor((abs / divisor) * 10) / 10).toFixed(1);
+
+        return sign + (trimTenth ? figure.replace('.0', '') : figure) + unit;
+    };
 
     if (abs < 1e6) return short(1e3, 'k');
     if (abs < 1e9) return short(1e6, 'kk');
     return short(1e9, 'kkk');
 }
+
+/** How a purse is written. Twinned with `Format.adena`, and held to a table by both suites. */
+export const shortAdena = (value) => shortenAdena(value, true);
+
+/**
+ * The same figure mid-count, keeping the tenth that the settled one drops. A tween across a round
+ * thousand renders "2.0k" where the settled value says "2k", and those two characters vanishing
+ * and coming back is what throws the line left and right. Nothing anybody reads for longer than a
+ * frame: the count always lands on the server's own rendering.
+ */
+const countingAdena = (value) => shortenAdena(value, false);
 
 export const AnimatedValues = {
     mounted() {
@@ -264,7 +278,7 @@ export const AnimatedValues = {
     },
     count(key, el, from, to) {
         cancelAnimationFrame(this.frames.get(key));
-        const format = el.dataset.format === 'adena' ? shortAdena : groupDigits;
+        const format = el.dataset.format === 'adena' ? countingAdena : groupDigits;
         const settled = el.textContent;
         const started = performance.now();
 
