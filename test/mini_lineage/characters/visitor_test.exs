@@ -70,7 +70,8 @@ defmodule MiniLineage.Characters.VisitorTest do
             &Actions.set_screen(&1, "home"),
             &Actions.start(&1, "nonsense", "")
           ] do
-        Characters.mutate(session, fun)
+        {result, _player} = Characters.mutate(session, fun)
+        result
       end
 
     # The cheat is silent by design, so it answers {:ok, nil} rather than refusing out loud.

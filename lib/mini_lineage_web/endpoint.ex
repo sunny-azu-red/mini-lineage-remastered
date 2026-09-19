@@ -17,6 +17,20 @@ defmodule MiniLineageWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # A digested filename is content addressed, so it can be held for ever. Phoenix appends no
+  # `?vsn=d` to one, and that query is all Plug.Static caches this way by default — so without this
+  # every asset is revalidated on every load. Development keeps its names, and is left alone.
+  @digested_cache_control if code_reloading?,
+                            do: "public",
+                            else: "public, max-age=31536000, immutable"
+
+  plug Plug.Static,
+    at: "/assets",
+    from: {:mini_lineage, "priv/static/assets"},
+    gzip: not code_reloading?,
+    cache_control_for_etags: @digested_cache_control
+
+  # favicon.ico and robots.txt keep their names across a deploy, so they revalidate.
   plug Plug.Static,
     at: "/",
     from: :mini_lineage,

@@ -64,10 +64,12 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
 
+  # The player comes back with the result: it is already synced and swept, so a caller asking for it
+  # again in a second call would pay for a whole second pass to be told the same thing.
   def handle_call({:mutate, fun}, _from, state) do
     {result, state} = run(state, fun)
 
-    {:reply, result, state}
+    {:reply, {result, state.player}, state}
   end
 
   def handle_call(:snapshot, _from, state) do

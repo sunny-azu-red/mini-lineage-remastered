@@ -27,7 +27,10 @@ defmodule MiniLineage.Characters do
     player
   end
 
-  @doc "Applies `fun` inside the character's process. `fun` takes a player and returns `{player, result}`."
+  @doc """
+  Applies `fun` inside the character's process. `fun` takes a player and returns `{player, result}`;
+  this returns `{result, player}` — the character as the action left it, so nothing has to ask again.
+  """
   def mutate(id, fun), do: call(id, {:mutate, fun})
 
   def snapshot(id), do: call(id, :snapshot)
@@ -86,21 +89,32 @@ defmodule MiniLineage.Characters do
     :exit, reason when reason in [:noproc, :normal, :shutdown] -> :ok
   end
 
-  # An idle character stops itself, and its registry entry clears asynchronously — so a pid found
-  # by lookup may already be gone. Retry once against a freshly started process rather than
-  # surfacing that race to callers.
+  # An idle character stops itself and its registry entry clears asynchronously, so a looked-up pid
+  # may already be gone. The retry goes through the supervisor: registering a name is handled by the
+  # registry itself, behind the DOWN that clears the stale entry.
   defp call(id, message, retry? \\ true) do
-    GenServer.call(server(id), message)
+    GenServer.call(if(retry?, do: server(id), else: start(id)), message)
   catch
     :exit, {reason, _} when retry? and reason in [:noproc, :normal, :shutdown] ->
       call(id, message, false)
   end
 
+  # The registry is asked first, and only a character that is NOT running reaches the supervisor.
+  # Starting one runs its `init/1` — two queries — inside the supervisor's own loop, so every other
+  # player's reads and writes would queue behind it if they all went through there.
   defp server(id) do
+    case Registry.lookup(MiniLineage.Characters.Registry, id) do
+      [{pid, _}] -> pid
+      [] -> start(id)
+    end
+  end
+
+  defp start(id) do
     case DynamicSupervisor.start_child(MiniLineage.Characters.Supervisor, {Server, id}) do
       {:ok, pid} ->
         pid
 
+      # Two callers raced to start the same character; the other one won.
       {:error, {:already_started, pid}} ->
         pid
 

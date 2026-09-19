@@ -70,11 +70,16 @@ defmodule MiniLineage.BattleLog do
     |> to_battle()
   end
 
-  @doc "Every fight of one run, oldest first, for the page that tells its story."
-  def history(character_id) do
+  @doc """
+  The fights of one run, oldest first, for the page that tells its story — all of them, or only
+  those after the first `skip`. The table is append-only, so what a reader already has can never
+  change and a watched record needs only what was added since.
+  """
+  def history(character_id, skip \\ 0) do
     Entry
     |> where([e], e.character_id == ^character_id)
     |> order_by([e], asc: e.id)
+    |> offset(^skip)
     |> Repo.all()
     |> Enum.map(&to_battle/1)
   end

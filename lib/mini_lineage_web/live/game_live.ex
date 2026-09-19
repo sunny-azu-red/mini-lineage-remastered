@@ -302,41 +302,55 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}
   end
 
-  def handle_info({:board, boards}, socket), do: {:noreply, assign(socket, boards: boards)}
+  # Both are taken only on the screen that draws them. A realm at play moves a counter and a ranking
+  # every few hundred milliseconds, and assigning either anywhere else re-renders every connected
+  # player for a figure they cannot see. Arriving reads it afresh, in `load_screen_data/2`.
+  def handle_info({:board, boards}, %{assigns: %{screen: "highscores"}} = socket),
+    do: {:noreply, assign(socket, boards: boards)}
 
-  # The archives move once a flush, whoever is reading them. Assigned wherever this tab is standing,
-  # the way the board is — the Tome is the only screen that renders them.
-  def handle_info({:statistics, stats}, socket), do: {:noreply, assign(socket, statistics: stats)}
+  def handle_info({:board, _boards}, socket), do: {:noreply, socket}
 
-  # Rebuilt from the player the push carried, so nothing is read back — bar the chronicle, and only
-  # when a fight was added. `id` twice in the head guards that this tab watches this record; the
-  # map pattern guards the other way, since a record never found has no counters to compare.
+  def handle_info({:statistics, stats}, %{assigns: %{screen: "statistics"}} = socket),
+    do: {:noreply, assign(socket, statistics: stats)}
+
+  def handle_info({:statistics, _stats}, socket), do: {:noreply, socket}
+
+  # Rebuilt from the player the push carried, so nothing is read back bar the fights the chronicle
+  # has yet to see. `id` twice in the head guards that this tab watches this record; the map pattern
+  # guards the other way, since a record never found has nothing to compare against.
   def handle_info(
         {:record_updated, player, id},
-        %{assigns: %{watching: id, record_view: %{counters: shown}}} = socket
+        %{assigns: %{watching: id, record_view: %{counters: _} = shown}} = socket
       ) do
     view = Snapshot.build(player)
+    socket = assign(socket, record_view: view)
 
-    {:noreply,
-     socket
-     |> assign(record_view: view)
-     |> then(
-       &if view.counters.total_battles != shown.total_battles,
-         do: assign(&1, record_log: BattleLog.history(id)),
-         else: &1
-     )}
+    {:noreply, if(fought?(view, shown), do: append_chronicle(socket, id), else: socket)}
   end
 
   def handle_info({:record_updated, _player, _id}, socket), do: {:noreply, socket}
+
+  # Two signals, because neither alone is enough: the tally does not count the fight that killed
+  # them, and a narrative can repeat where the numbers do not.
+  defp fought?(view, shown) do
+    view.counters.total_battles != shown.counters.total_battles or
+      view.last_battle != shown.last_battle
+  end
+
+  # Appended, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
+  # every blow re-reads the entire history of a long run to add one line to it.
+  defp append_chronicle(socket, id) do
+    log = socket.assigns.record_log
+
+    assign(socket, record_log: log ++ BattleLog.history(id, length(log)))
+  end
 
   # ------------------------------------------------------------------ plumbing
 
   # Runs an action in the character's process and folds the result into the view. A failure lands on
   # the error screen rather than remounting; `catch` is for the process exiting, which is not a raise.
   defp apply_action(socket, fun) do
-    id = socket.assigns.session_id
-    result = Characters.mutate(id, fun)
-    player = Characters.snapshot(id)
+    {result, player} = Characters.mutate(socket.assigns.session_id, fun)
 
     socket
     |> assign(player: player, view: Snapshot.build(player))
@@ -377,10 +391,10 @@ defmodule MiniLineageWeb.GameLive do
 
   # An action moved you, so its flash comes along — creating a character lands on Town with its
   # welcome, dying lands on the death screen with its reason.
-  defp go(socket, screen, race_slug \\ nil) do
+  defp go(socket, screen) do
     socket
     |> assign(flash_fresh: true)
-    |> push_patch(to: Paths.for_screen(screen, race_slug))
+    |> push_patch(to: Paths.for_screen(screen))
   end
 
   # The PLAYER moved themselves, so nothing comes along. A link or the banner reaches
