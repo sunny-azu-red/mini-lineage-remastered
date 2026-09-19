@@ -102,7 +102,10 @@ defmodule MiniLineage.Game.Player do
 
   def kill(player) do
     player = %{player | health: 0, dead: true, effects: []}
-    Statistics.increment_for(player, :total_deaths)
+    # Not `increment_for`: the census counts everyone. Birth is counted before anybody can be
+    # disqualified, so excluding them here would leave souls arriving and never leaving — and
+    # the Tome tells the Weak Souls and the Heretics as a few OF the fallen.
+    Statistics.increment(:total_deaths)
 
     resolve_death_reason(player)
   end

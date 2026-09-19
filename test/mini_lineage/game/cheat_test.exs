@@ -72,9 +72,28 @@ defmodule MiniLineage.Game.CheatTest do
       player = Player.commit_suicide(living())
       _ = counted()
 
-      Statistics.increment_for(player, :total_deaths)
+      Statistics.increment_for(player, :total_battles)
 
       assert counted() == []
+    end
+
+    test "but the census counts everyone, or souls arrive and never leave" do
+      _ = counted()
+
+      # Taking your own life is still falling, and the Tome tells the Weak Souls as a few OF the
+      # fallen — a subset that outnumbers its whole is not a story anybody can read.
+      Player.commit_suicide(living())
+
+      assert {:total_deaths, 1} in counted()
+    end
+
+    test "and a heretic who dies is still one of the fallen" do
+      {player, _} = Actions.cheat(living())
+      _ = counted()
+
+      Player.kill(player)
+
+      assert {:total_deaths, 1} in counted()
     end
 
     test "but an honest run still writes everything it does" do
