@@ -173,10 +173,9 @@ defmodule MiniLineage.Characters.Server do
     end
   end
 
-  # Anything outside @buffered is the player's own doing, and is written before they see the
-  # result. It is also what dates a run in the Halls: `updated_at` moves whenever the row is
-  # written, which a regenerating tick and a closing tab both do, and neither is something anybody
-  # did.
+  # Anything outside @buffered is the player's own doing, written before they see the result — and
+  # what dates a run in the Halls, `updated_at` moving for a tick the backstop flushed and for a
+  # tab closing, neither of which anybody did.
   defp flush?(before, now) do
     before
     |> Map.from_struct()

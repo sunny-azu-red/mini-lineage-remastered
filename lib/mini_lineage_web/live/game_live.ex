@@ -288,10 +288,9 @@ defmodule MiniLineageWeb.GameLive do
     # Start rather than leaving this tab on a screen its character no longer qualifies for.
     reset? = Player.started?(socket.assigns.player) and not Player.started?(player)
 
-    # Starting over stops the process this tab attached to and starts another, which begins with no
-    # viewers and so reports itself unwatched. Every tab must attach again or the new run shows as
-    # offline in the Halls until somebody reloads. The id changes only here, so this costs nothing
-    # on an ordinary tick.
+    # Archiving stops the process this tab attached to, and the run it starts has no viewers, so it
+    # reports itself unwatched until every tab attaches again. The id moves only here, so an
+    # ordinary tick pays nothing for the check.
     if character_id != socket.assigns.character_id,
       do: Characters.attach(socket.assigns.session_id)
 
@@ -309,10 +308,9 @@ defmodule MiniLineageWeb.GameLive do
   # the way the board is — the Tome is the only screen that renders them.
   def handle_info({:statistics, stats}, socket), do: {:noreply, assign(socket, statistics: stats)}
 
-  # The record on screen moved. The view is rebuilt from the player that came with the push, so
-  # nothing is read back; the chronicle is, but only when a fight has been added to it.
-  # `id` twice in the head is the guard — this tab is watching the record this push is about — and
-  # the map pattern is the other: a record that was never found has no counters to compare.
+  # Rebuilt from the player the push carried, so nothing is read back — bar the chronicle, and only
+  # when a fight was added. `id` twice in the head guards that this tab watches this record; the
+  # map pattern guards the other way, since a record never found has no counters to compare.
   def handle_info(
         {:record_updated, player, id},
         %{assigns: %{watching: id, record_view: %{counters: shown}}} = socket

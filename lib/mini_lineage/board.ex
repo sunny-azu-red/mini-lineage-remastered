@@ -139,11 +139,9 @@ defmodule MiniLineage.Board do
   # still renders, which is why this is a board rule rather than a deletion.
   defp ranked, do: from(r in Record, where: not is_nil(r.race_id) and r.disqualified == false)
 
-  # Selected into a plain map, never a %Record{}: the schema struct carries `session_id`, and an
-  # entry that has the key at all is one `Repo.all(Record)` away from carrying the secret with it.
-  # `active` is the one thing said about the session — whether there is one, never what it is.
-  # The date is `last_action_at` and not `updated_at`, which moves for things nobody did: a tick
-  # the backstop flushed, a tab closing, a run being started over.
+  # A plain map, never a %Record{}: the struct carries `session_id`, and an entry holding the key
+  # at all is one `Repo.all(Record)` from carrying the secret. `active` says whether there is a
+  # session, never what it is, and the date is the last ACTION rather than the last write.
   defp row(query) do
     select(query, [r], %{
       id: r.id,

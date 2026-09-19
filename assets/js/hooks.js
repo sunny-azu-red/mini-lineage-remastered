@@ -122,10 +122,9 @@ export const PanelFocus = {
             return;
         }
 
-        // Arriving pulls focus in. An in-screen update reclaims it only from nothing, or right
-        // after the player pressed a button — LiveView restores focus to that button, which on a
-        // shop left it on Order rather than the picker you buy from next. Anything else you moved
-        // to yourself is left alone, so a tick never yanks focus off a half-tabbed select.
+        // Arriving pulls focus in. An update reclaims it only from nothing, or just after a press:
+        // LiveView restores focus to that button, which on a shop left it on Order rather than the
+        // picker. Anything you moved to yourself is left alone, so a tick never yanks it away.
         const acted = this.acted;
         this.acted = false;
         if (!arrived && document.activeElement !== document.body && !acted)
