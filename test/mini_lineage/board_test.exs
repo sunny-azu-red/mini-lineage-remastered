@@ -183,7 +183,7 @@ defmodule MiniLineage.BoardTest do
   describe "the date a row shows" do
     test "is when the run was last played, not when the character was born" do
       %{id: id, session: session} = run("Aging", xp: 10)
-      born = Board.entry(id).inserted_at
+      %{inserted_at: born, last_action_at: at_birth} = Board.entry(id)
 
       # Time passes, then the run ends. The old board stamped its rows when a legacy was written;
       # `inserted_at` on a character means something else entirely — the day it was rolled.
@@ -193,8 +193,13 @@ defmodule MiniLineage.BoardTest do
 
       entry = Board.entry(id)
 
+      # Each read compared against itself, never against the other. Ordering the played date
+      # against the born one asks whether two wall clock readings a second apart came back in
+      # order, and on a machine whose clock steps they do not — this one inverted them about once
+      # in six runs. Both are written from the same clock, so nothing here is papering over a bug:
+      # that playing moves the date FORWARD is the next test's, over a window of milliseconds.
       assert entry.inserted_at == born
-      assert DateTime.compare(entry.last_action_at, born) == :gt
+      refute entry.last_action_at == at_birth
     end
 
     test "and archiving the run does not move it" do

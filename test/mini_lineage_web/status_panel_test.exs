@@ -48,4 +48,21 @@ defmodule MiniLineageWeb.StatusPanelTest do
   test "the level is its own element, so it counts rather than jumps", %{html: html} do
     assert html =~ ~r|level\s+<span[^>]*data-key="level"[^>]*>5</span></a>|
   end
+
+  test "and so is what the gear grants, which only appears once there is gear that grants" do
+    crit? = &((Snapshot.item_view(&1)[:crit] || 0) > 0)
+    regen? = &((Snapshot.item_view(&1)[:regen] || 0) > 0)
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), "Sunny")
+
+    html =
+      sidebar_for(%{
+        player
+        | weapon_id: Enum.find_index(Constants.weapons(), crit?),
+          armor_id: Enum.find_index(Constants.armors(), regen?)
+      })
+
+    assert html =~ ~s|data-key="weapon-crit"|
+    assert html =~ ~s|data-key="armor-regen"|
+    assert Regex.scan(~r/\S+ [,.%]/, text(html)) == [], text(html)
+  end
 end

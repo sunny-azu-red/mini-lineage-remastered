@@ -131,6 +131,21 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       assert text =~ "12 battles"
       assert text =~ "4,200 XP"
     end
+
+    test "and what its gear granted counts too, rather than jumping with the gear" do
+      crit? = &((Snapshot.item_view(&1)[:crit] || 0) > 0)
+      regen? = &((Snapshot.item_view(&1)[:regen] || 0) > 0)
+
+      html =
+        html_for(%{
+          fallen()
+          | weapon_id: Enum.find_index(Constants.weapons(), crit?),
+            armor_id: Enum.find_index(Constants.armors(), regen?)
+        })
+
+      assert html =~ ~s|data-key="rec-weapon-crit"|
+      assert html =~ ~s|data-key="rec-armor-regen"|
+    end
   end
 
   describe "the prose itself" do

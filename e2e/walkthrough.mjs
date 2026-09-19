@@ -364,8 +364,14 @@ try {
                 () => document.activeElement?.getAttribute('phx-click') !== 'fight');
     }
 
+    // Named rather than counted. Every figure in the sidebar animates, and what a weapon or an
+    // armour grants joins them only once the gear grants something — so a count is a number that
+    // changes for reasons that are not a bug, while a missing name always is one.
+    const animated = await page.locator('#sidebar [data-value]')
+        .evaluateAll(els => els.map(e => e.dataset.key).sort());
+    const alwaysThere = ['adena', 'hp', 'level', 'max-hp', 'xp', 'xp-required'];
     check('the counters carry their live values for the animation',
-        await page.locator('#sidebar [data-value]').count() === 3);
+        alwaysThere.every(key => animated.includes(key)), animated.join(' '));
     check('the road ends at the grave', current.dead === true,
         `dead=${current.dead} after ${fightsFought} fights (cap 200)`);
     check('death pins the player to the death screen', (await state()).screen === 'death');

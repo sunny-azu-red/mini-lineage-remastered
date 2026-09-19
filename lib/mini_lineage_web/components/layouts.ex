@@ -195,13 +195,19 @@ defmodule MiniLineageWeb.Layouts do
           <div class="stat-row">
             <span class="stat-value" title="Equipped Armor">
               {@view.armor.emoji} {@view.armor.name}
-              <span :if={(@view.armor.regen || 0) > 0} class="heal">+{@view.armor.regen}</span>
+              <span :if={(@view.armor.regen || 0) > 0} class="heal">+<span
+                data-key="armor-regen"
+                data-value={@view.armor.regen}
+              >{@view.armor.regen}</span></span>
             </span>
           </div>
           <div class="stat-row">
             <span class="stat-value" title="Equipped Weapon">
               {@view.weapon.emoji} {@view.weapon.name}
-              <span :if={(@view.weapon.crit || 0) > 0} class="crit">{@view.weapon.crit}%</span>
+              <span :if={(@view.weapon.crit || 0) > 0} class="crit"><span
+                data-key="weapon-crit"
+                data-value={@view.weapon.crit}
+              >{@view.weapon.crit}</span>%</span>
             </span>
           </div>
         </div>

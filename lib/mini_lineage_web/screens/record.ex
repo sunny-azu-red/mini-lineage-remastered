@@ -53,8 +53,9 @@ defmodule MiniLineageWeb.Screens.Record do
     <%!-- One hook over the whole record: it counts every [data-value] beneath it. Every figure is
           one, including the ones that move by a single step today — measured, a tween of +1 shows
           the old number for 137ms and then the new one, which is a delay and not a flicker, and
-          forty at once hold 60fps. What an item grants is not among them: that jumps with the item
-          whose name jumps beside it, and so do the dates. --%>
+          forty at once hold 60fps. What an item grants counts too — buy a better blade while
+          somebody is reading this and the figure climbs. Only the item's own name and the dates
+          jump, having nothing to count through. --%>
     <div id="record-figures" phx-hook="AnimatedValues">
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
       <p>{raw(@race.backstory)}</p>
@@ -63,8 +64,8 @@ defmodule MiniLineageWeb.Screens.Record do
       <h2>Inventory &amp; Stats</h2>
       <p phx-no-format>
         {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <strong>{@view.weapon.name}</strong> granting
-        <span class="hp"><span id="char-stat-attack" data-key="rec-attack" data-value={@view.stats.attack}>{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+{@view.weapon.crit}% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <strong>{@view.armor.name}</strong> providing
-        <span class="defense"><span id="char-stat-defense" data-key="rec-defense" data-value={@view.stats.defense}>{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+{@view.armor.regen} HP Regeneration</span><% end %>.
+        <span class="hp"><span id="char-stat-attack" data-key="rec-attack" data-value={@view.stats.attack}>{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+<span data-key="rec-weapon-crit" data-value={@view.weapon.crit}>{@view.weapon.crit}</span>% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <strong>{@view.armor.name}</strong> providing
+        <span class="defense"><span id="char-stat-defense" data-key="rec-defense" data-value={@view.stats.defense}>{@defense}</span> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="heal">+<span data-key="rec-armor-regen" data-value={@view.armor.regen}>{@view.armor.regen}</span> HP Regeneration</span><% end %>.
       </p>
       <p>
         Combined with {@voice.their} ancestry, {@voice.them} {if @dead, do: "struck", else: "strike"} with a total of
