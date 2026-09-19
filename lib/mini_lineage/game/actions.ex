@@ -13,7 +13,6 @@ defmodule MiniLineage.Game.Actions do
     already_started: "You already have a character. Restart if you want to begin again.",
     dead: "You are dead. There is nothing left to do but restart.",
     not_dead: "You're still alive — this action is only for the fallen.",
-    ineligible: "Cowards and cheaters cannot be immortalized on the highscores.",
     invalid: "That is not something you can do."
   }
 

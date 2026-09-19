@@ -193,11 +193,9 @@ defmodule MiniLineage.BoardTest do
 
       entry = Board.entry(id)
 
-      # Each read compared against itself, never against the other. Ordering the played date
-      # against the born one asks whether two wall clock readings a second apart came back in
-      # order, and on a machine whose clock steps they do not — this one inverted them about once
-      # in six runs. Both are written from the same clock, so nothing here is papering over a bug:
-      # that playing moves the date FORWARD is the next test's, over a window of milliseconds.
+      # Each read compared against itself, never against the other: ordering the played date
+      # against the born one asks whether two wall-clock readings a second apart came back in
+      # order, and on a machine whose clock steps they do not. Moving forward is the next test's.
       assert entry.inserted_at == born
       refute entry.last_action_at == at_birth
     end

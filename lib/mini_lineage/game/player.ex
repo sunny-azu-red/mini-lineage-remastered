@@ -242,28 +242,26 @@ defmodule MiniLineage.Game.Player do
   defp resolve_zone_aura(player, before) do
     now = Clock.now_ms()
 
-    cond do
-      held_in_combat?(player) ->
-        {%{player | combat_until: nil}, to_active(Constants.effect(:combat_aura), nil)}
+    if held_in_combat?(player) do
+      {%{player | combat_until: nil}, to_active(Constants.effect(:combat_aura), nil)}
+    else
+      # An indefinite combat aura means they were standing in a combat zone last sync, so leaving
+      # now starts the disengage countdown. Re-entering cancels it (above); leaving again arms a
+      # fresh one, anchored to leaving rather than to the last fight.
+      player =
+        if before != nil and before.id == "combat" and before.expires_at == nil,
+          do: %{player | combat_until: now + Constants.zone().combat_linger_ms},
+          else: player
 
-      true ->
-        # An indefinite combat aura means they were standing in a combat zone last sync, so
-        # leaving now starts the disengage countdown. Re-entering cancels it (above); leaving
-        # again arms a fresh one, anchored to leaving rather than to the last fight.
-        player =
-          if before != nil and before.id == "combat" and before.expires_at == nil,
-            do: %{player | combat_until: now + Constants.zone().combat_linger_ms},
-            else: player
+      if player.combat_until != nil and player.combat_until > now do
+        {player, to_active(Constants.effect(:combat_aura), player.combat_until)}
+      else
+        player = %{player | combat_until: nil}
 
-        if player.combat_until != nil and player.combat_until > now do
-          {player, to_active(Constants.effect(:combat_aura), player.combat_until)}
-        else
-          player = %{player | combat_until: nil}
-
-          if player.current_screen in Constants.zone().resting_zones,
-            do: {player, to_active(Constants.effect(:resting_aura), nil)},
-            else: {player, nil}
-        end
+        if player.current_screen in Constants.zone().resting_zones,
+          do: {player, to_active(Constants.effect(:resting_aura), nil)},
+          else: {player, nil}
+      end
     end
   end
 
@@ -351,13 +349,12 @@ defmodule MiniLineage.Game.Player do
 
   # --------------------------------------------------------------- purchases
 
-  @equipment %{
-    "weapon" => %{slot: :weapon_id, stat: :total_weapons_bought},
-    "armor" => %{slot: :armor_id, stat: :total_armors_bought}
-  }
+  defp catalog_for("weapon"),
+    do: {Constants.weapons(), %{slot: :weapon_id, stat: :total_weapons_bought}}
 
-  defp catalog_for("weapon"), do: {Constants.weapons(), @equipment["weapon"]}
-  defp catalog_for("armor"), do: {Constants.armors(), @equipment["armor"]}
+  defp catalog_for("armor"),
+    do: {Constants.armors(), %{slot: :armor_id, stat: :total_armors_bought}}
+
   # Anything else falls through to food, matching the reference's `?? FOODS`.
   defp catalog_for(_type), do: {Constants.foods(), nil}
 

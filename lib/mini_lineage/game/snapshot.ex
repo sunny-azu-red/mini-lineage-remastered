@@ -152,14 +152,12 @@ defmodule MiniLineage.Game.Snapshot do
   defp modifier_text(mod) do
     config = Map.get(Constants.stat_modifier_labels(), mod.type, %{label: to_string(mod.type)})
 
-    cond do
-      Map.get(config, :multiplier?) ->
-        "#{mod.value}x #{config.label}"
-
-      true ->
-        sign = if mod.value > 0, do: "+", else: ""
-        unit = if Map.get(config, :percentage?), do: "%", else: ""
-        "#{sign}#{mod.value}#{unit} #{config.label}"
+    if Map.get(config, :multiplier?) do
+      "#{mod.value}x #{config.label}"
+    else
+      sign = if mod.value > 0, do: "+", else: ""
+      unit = if Map.get(config, :percentage?), do: "%", else: ""
+      "#{sign}#{mod.value}#{unit} #{config.label}"
     end
   end
 
@@ -175,14 +173,8 @@ defmodule MiniLineage.Game.Snapshot do
   def catalog do
     if Application.get_env(:mini_lineage, :cache_catalog, true) do
       case :persistent_term.get(@catalog_key, nil) do
-        nil ->
-          catalog = build_catalog()
-          :persistent_term.put(@catalog_key, catalog)
-
-          catalog
-
-        catalog ->
-          catalog
+        nil -> tap(build_catalog(), &:persistent_term.put(@catalog_key, &1))
+        catalog -> catalog
       end
     else
       build_catalog()
