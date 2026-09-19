@@ -32,6 +32,10 @@ list wins — several generator defaults do not exist here.
   `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
   mode bridges that, and shared mode means serial. This is our architecture, not the driver — it
   was just as true on MySQL.
+- **Nor can a test that claims a registered name.** `cheat_test.exs` stands in for the statistics
+  collector by registering itself under its name; the name is global, so every async module that
+  creates a character posts its own increments into that mailbox and the drain reads them as the
+  run under test's. It failed about one seed in eight.
 - Migrations commit their DDL implicitly, which ends the sandbox transaction. That is why
   `release_test` checks configuration rather than running one.
 - `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
@@ -240,6 +244,30 @@ nothing else: every action that could change it is guarded on `started?`, so not
 and nothing persists it. That is why the retirement only ever clears sessions and deletes nothing,
 and why `characters` has no row without a race. `visitor_test.exs` holds it.
 
+**A deed is gated; the census is not.** `Statistics.increment_for/3` drops everything a
+disqualified run *does* — its battles, its plunder, its blood — because the Halls will not list a
+coward or a cheat and an aggregate cannot give back what it was already told. Being born and dying
+come through the ungated `increment/2` instead: `total_players` is counted at `initialize`, before
+anybody can be disqualified, so the census already holds every future coward and heretic. Gate the
+exit, and souls arrive and are never accounted for leaving — which printed "0 Champions have
+fallen... while a Heretic was struck down", and the Tome tells the Weak Souls and the Heretics as a
+few *of* the fallen.
+
+**The registry can name a process that has just stopped.** `Characters.call/3` looks a character up
+in the registry directly, which is what keeps every read and write off the `DynamicSupervisor` —
+starting a character runs two queries inside the supervisor's own loop, and everyone else would
+queue behind them. The price is that a lookup reads ETS and can see an entry whose `DOWN` is still
+sitting in the registry's mailbox, so the RETRY goes through the supervisor: registering a name is
+handled by the registry itself, behind that DOWN, and by then the stale entry has gone.
+
+**A figure on a page is animated, so a browser suite reads `data-value` and never the text.** The
+Halls' XP cell counts up to its new number over 600ms, so `textContent` mid-tween is a frame: a
+wait for "has this figure moved" returned on the first one — 3, where the value was 62 — and every
+check downstream compared the wrong moment. The attribute is what the server wrote; the text is
+what the animation is showing. For the same reason a check against the BOARD waits rather than
+reads once: refreshes are coalesced, so a run disqualified a moment ago can still be on the copy
+that page was served.
+
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
 **A run ends three ways: fallen, going, or missing.** Dead is not the only way to be over — the
@@ -288,6 +316,11 @@ reason: `BEGIN` and `COMMIT` are two more trips.
 **An empty environment variable is not an absent one.** `System.get_env("DB_PORT", "5432")` returns
 `""`, not the default, and parsing it crashes at boot. Compose passes a missing key through as
 empty, so every `${VAR}` it forwards needs a `:-default`.
+
+**Ownership is set as the files land, never chowned afterwards.** `COPY --chown=app:app` costs
+nothing; a `RUN chown -R app:app /app` after the copy writes a second copy of the whole release into
+its own layer — 35MB of an 88MB image. The `/app` directory itself still needs chowning, because the
+release puts its runtime config under it.
 
 **Migrations ship inside the release image.** `MiniLineage.Release.migrate()` run from a stale
 image reports "Migrations already up" and means it — about the migrations that image carries.
