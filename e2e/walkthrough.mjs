@@ -437,6 +437,13 @@ try {
     check('...and tells the story fight by fight',
         await page.locator('#main ol.chronicle li').count() > 0,
         `${await page.locator('#main ol.chronicle li').count()} fights`);
+    // Every deflection line names the damage its armour took and the XP that clash was worth, and
+    // no outcome line mentions either — so this is the whole fight being told, not just its end.
+    // Scoped to the list because the paragraphs above talk about XP too. Dice-proof: every
+    // template in the pool carries both words.
+    const chronicle = (await page.textContent('#main ol.chronicle'))?.replace(/\s+/g, ' ') ?? '';
+    check('...the whole of each one, not only how it ended',
+        /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
     // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
     // the board never emits a session id is proved in board_test. What IS observable here is the
     // property that matters: reading a record does not make you that character.

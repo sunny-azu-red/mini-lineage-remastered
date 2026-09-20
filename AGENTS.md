@@ -226,8 +226,10 @@ finds nothing otherwise — which is exactly how the chronicle came back empty. 
 before a push lands and is worth it.
 
 Anything a record needs live rides in the snapshot rather than being read back: `last_action_at` is
-there so a watched record restamps itself without a query, and the chronicle is re-read only when
-the battle count has actually moved.
+there so a watched record restamps itself without a query. The chronicle is only ever APPENDED to —
+a run's fights never change, so a reader keeps the ones it has and asks for the rest. Two signals
+say a fight happened, because neither alone is enough: the tally does not count the fight that
+killed them, and a narrative can repeat where the numbers do not.
 
 **A browser suite tests the game, not its CSS.** The walkthrough is one character played normally.
 A 600ms sweep across the HP bar was checked there and failed about one run in three, taking the

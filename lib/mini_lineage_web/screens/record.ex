@@ -146,8 +146,16 @@ defmodule MiniLineageWeb.Screens.Record do
       <%= if @chronicle == [] do %>
         <p>Not one blow struck. This tale is over before it began.</p>
       <% else %>
+        <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
+              labels rather than history. A line added to `Narrative.build_battle/3` belongs here
+              too, or the chronicle quietly stops telling the whole of it. --%>
         <ol class="chronicle">
-          <li :for={fight <- @chronicle}>{raw(fight.narrative.outcome_line)}</li>
+          <li :for={fight <- @chronicle}>
+            <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
+              fight.narrative.kill_line
+            )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
+            <span :if={fight.narrative.ambush_line}>{raw(fight.narrative.ambush_line)}</span>
+          </li>
         </ol>
       <% end %>
     </div>

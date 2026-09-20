@@ -385,8 +385,9 @@ ol.chronicle {
     padding-left: 22px;
 }
 
+/* An entry is a paragraph now, not a line: 8px between them read as one running block. */
 ol.chronicle li {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     line-height: 1.6;
 }
 
