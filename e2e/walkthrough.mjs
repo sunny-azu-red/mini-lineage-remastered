@@ -444,6 +444,15 @@ try {
     const chronicle = (await page.textContent('#main ol.chronicle'))?.replace(/\s+/g, ' ') ?? '';
     check('...the whole of each one, not only how it ended',
         /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
+    // A log, not a wall: the page is the same height however long the run was, and it opens on the
+    // fight that ended this one rather than on the first blow of it.
+    const log = await page.evaluate(() => {
+        const ol = document.querySelector('#main ol.chronicle');
+        return { hidden: ol.scrollHeight - ol.clientHeight, fromBottom: ol.scrollHeight - ol.clientHeight - ol.scrollTop };
+    });
+    check('...in a box the run cannot outgrow', log.hidden > 0, `${log.hidden}px of it scrolled away`);
+    check('...already scrolled to the last fight it ever had', log.fromBottom <= 2,
+        `${log.fromBottom}px from the bottom`);
     // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
     // the board never emits a session id is proved in board_test. What IS observable here is the
     // property that matters: reading a record does not make you that character.

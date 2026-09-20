@@ -79,6 +79,10 @@ try {
     const href = await watcher.getAttribute('#main table.data-table a', 'href');
     check('...at a link to that run\'s own record', /^\/character\/\S+$/.test(href ?? ''), href ?? '');
 
+    // Read at phone width from here on: two fights wrap to more lines than the Chronicle's box can
+    // show, which is what makes following it down observable at all — and what a reader on a phone
+    // gets anyway.
+    await watcher.setViewportSize({ width: 360, height: 800 });
     await watcher.goto(`${BASE}${href}`, { waitUntil: 'domcontentloaded' });
     await connected(watcher);
     const record = (await watcher.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
@@ -97,6 +101,16 @@ try {
         told, { timeout: 8000 }).then(() => true).catch(() => false);
     check('...and their chronicle gains the fight they have just had, as it is read',
         gained, `${told} -> ${await lines()} line(s)`);
+
+    // And follows it down, the way a chat box does: the line that just arrived is the one on screen.
+    // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go.
+    const log = await watcher.evaluate(() => {
+        const ol = document.querySelector('#main ol.chronicle');
+        return { hidden: ol.scrollHeight - ol.clientHeight, at: ol.scrollTop };
+    });
+    check('...and follows it down without the reader scrolling',
+        log.hidden > 0 && log.hidden - log.at <= 2,
+        `${log.hidden}px scrolled away, sitting at ${log.at}`);
 
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window

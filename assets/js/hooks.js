@@ -300,6 +300,26 @@ export const AnimatedValues = {
 };
 
 /**
+ * A log that opens on its newest line, the way a chat box does. A run's Chronicle is as long as the
+ * run was, so without this a reader lands on the first fight of a hundred and has to scroll to find
+ * the one that just happened — or the one that ended it.
+ */
+export const ScrollToLatest = {
+    mounted() {
+        this.toBottom();
+    },
+    updated() {
+        this.toBottom();
+    },
+    toBottom() {
+        this.el.scrollTop = this.el.scrollHeight;
+        // And again next frame: the heading fonts arrive after mount, and every line they reflow
+        // moves the bottom out from under the first attempt.
+        requestAnimationFrame(() => (this.el.scrollTop = this.el.scrollHeight));
+    },
+};
+
+/**
  * Rewrites a server-rendered UTC stamp into the reader's own clock — the browser is the only thing
  * that knows it. Same shape as `Controls.short_date/1`, which stays as the no-JS fallback.
  */
@@ -324,4 +344,6 @@ function localDate(at) {
         + `${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }
 
-export const hooks = { SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, LocalTime };
+export const hooks = {
+    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, ScrollToLatest, LocalTime,
+};

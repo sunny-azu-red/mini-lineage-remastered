@@ -49,7 +49,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   # The entries on their own, so a claim about one is not answered by something elsewhere on a page
   # that talks about ambush risk in two other places.
   defp entries(chronicle) do
-    [_, list] = Regex.run(~r|<ol class="chronicle">(.*)</ol>|s, html_for(chronicle))
+    [_, list] = Regex.run(~r|<ol[^>]*class="chronicle"[^>]*>(.*)</ol>|s, html_for(chronicle))
 
     list |> String.split("<li") |> Enum.drop(1)
   end

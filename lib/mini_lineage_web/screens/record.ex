@@ -84,7 +84,9 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
       <p>
-        {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
+        {@voice.whose} journey across the realm {@defined} defined by conflict and survival.
+        <.road :if={@entry} entry={@entry} at={@view.last_action_at} voice={@voice} />
+        {@voice.they} {@fought} through
         <Controls.counted
           key="rec-battles"
           count={@view.counters.total_battles}
@@ -108,7 +110,7 @@ defmodule MiniLineageWeb.Screens.Record do
             class="minor"
           />
         <% end %>
-        along the road. <.road :if={@entry} entry={@entry} at={@view.last_action_at} voice={@voice} />
+        along the way.
       </p>
 
       <%= if @dead do %>
@@ -136,7 +138,7 @@ defmodule MiniLineageWeb.Screens.Record do
       </p>
       <% end %>
 
-      <h2 class="plain">The Chronicle</h2>
+      <h2>The Chronicle</h2>
 
       <%= if @chronicle == [] do %>
         <p>Not one blow struck. This tale is over before it began.</p>
@@ -144,7 +146,7 @@ defmodule MiniLineageWeb.Screens.Record do
         <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
               labels rather than history. A line added to `Narrative.build_battle/3` belongs here
               too, or the chronicle quietly stops telling the whole of it. --%>
-        <ol class="chronicle">
+        <ol id="chronicle" class="chronicle" phx-hook="ScrollToLatest">
           <li :for={fight <- @chronicle} class={if fight.ambushed, do: "alert alert-danger"}>
             <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
               fight.narrative.kill_line
@@ -177,9 +179,9 @@ defmodule MiniLineageWeb.Screens.Record do
   defp road(assigns) do
     ~H"""
     <span phx-no-format><%= case road_of(@entry) do %>
-      <% :closed -> %>It opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :open -> %>It opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :lost -> %>It opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
+      <% :closed -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :open -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :lost -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
     <% end %></span>
     """
   end
