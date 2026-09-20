@@ -107,10 +107,10 @@ defmodule MiniLineageWeb.ChronicleTest do
       [quiet, caught] = entries([fight([:ambush_line]), fight()])
 
       assert caught =~ "AMBUSH."
-      assert caught =~ ~s(class="ambushed")
+      assert caught =~ ~s(class="alert alert-danger")
       # And the fight nothing was waiting after is left alone, or the mark says nothing.
       refute quiet =~ "AMBUSH."
-      refute quiet =~ "ambushed"
+      refute quiet =~ "alert"
     end
   end
 end

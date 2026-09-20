@@ -150,7 +150,7 @@ defmodule MiniLineageWeb.Screens.Record do
               labels rather than history. A line added to `Narrative.build_battle/3` belongs here
               too, or the chronicle quietly stops telling the whole of it. --%>
         <ol class="chronicle">
-          <li :for={fight <- @chronicle} class={if fight.ambushed, do: "ambushed"}>
+          <li :for={fight <- @chronicle} class={if fight.ambushed, do: "alert alert-danger"}>
             <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
               fight.narrative.kill_line
             )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}

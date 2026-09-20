@@ -379,10 +379,13 @@
     color: var(--hp-color);
 }
 
-/* A run's fights, in order. */
+/* A run's fights, oldest first. Ordered because a chronicle is, but never numbered: the count is
+   already in the paragraph above it, and a column of figures beside prose only competes with it.
+   Unnumbered, there is nothing to indent past, so the entries sit in the prose's own column. */
 ol.chronicle {
     margin: 0 0 18px 0;
-    padding-left: 22px;
+    padding-left: 0;
+    list-style: none;
 }
 
 /* An entry is a paragraph now rather than a line, so it is spaced like one. */
@@ -391,17 +394,10 @@ ol.chronicle li {
     line-height: 1.6;
 }
 
-/* A fight that ended in an ambush wears it, the way the status panel wears low health: the padding
-   is cancelled by a negative margin on every side, so the wash gets its room and not one word of
-   the entry moves to give it any. No pulse — the panel warns about now, this is what already happened. */
-ol.chronicle li.ambushed {
-    background: var(--danger-wash);
-    border-radius: var(--radius);
-    padding: 6px;
-    margin: -6px -6px 6px -6px;
-}
-
-ol.chronicle li::marker {
-    color: var(--gold-dim);
-    font-size: 0.85em;
+/* An ambushed fight IS the alert the game raises anywhere else, held in the chronicle's own column
+   by the status panel's low-health trick — its inset cancelled by a negative margin, so the box
+   grows outward and no word moves. 9px plus the 3px border is 12, all the panel's padding affords. */
+ol.chronicle .alert {
+    padding-left: 9px;
+    margin: -9px -12px 3px -12px;
 }
