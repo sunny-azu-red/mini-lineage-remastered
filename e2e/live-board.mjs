@@ -73,6 +73,14 @@ try {
     check('...and climbs as they fight, without the watcher reloading anything', climbed,
         `${before} -> ${await boardXp(watcher)} XP`);
 
+    // One more before the record is opened. Two entries only just outgrow the Chronicle's box, and
+    // whether they do at all turns on a crit line landing — which is the dice deciding whether the
+    // check below can see anything. Three clear it however they read.
+    await player.click('#main button[phx-click="fight"]');
+    await player.waitForFunction(
+        () => Number(document.querySelector('#screen')?.dataset.battles ?? 0) > 1,
+        null, { timeout: 8000 }).catch(() => {});
+
     const fought = await boardXp(watcher);
 
     // A stranger's row is a link, and following it must never adopt their character.

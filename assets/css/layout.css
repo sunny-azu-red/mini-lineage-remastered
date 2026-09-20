@@ -174,7 +174,10 @@
     min-width: 0;
 }
 
-.inventory-panel {
+/* Panels stack. Whichever follows another is spaced off it, wherever they are — the sidebar's two,
+   and the record's Chronicle under the panel it belongs to. The first of a stack takes nothing,
+   which is what the relationship says rather than what a class per panel would have to remember. */
+.panel+.panel {
     margin-top: 12px;
 }
 
@@ -236,6 +239,11 @@
     .inventory-panel {
         order: 3;
         width: 100%;
+    }
+
+    /* `display: contents` flattens both columns into #content, whose own 12px gap now does the
+       spacing — a stacking margin on top of it would count the gap twice. */
+    .panel+.panel {
         margin-top: 0;
     }
 

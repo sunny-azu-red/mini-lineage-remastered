@@ -151,9 +151,9 @@ defmodule MiniLineageWeb.Screens.Record do
   """
   def chronicle(assigns) do
     ~H"""
-    <div class="panel chronicle-panel">
+    <div class="panel">
       <div class="panel-header flex">
-        <h2 class="header-name">The Chronicle</h2>
+        <span class="header-name">The Chronicle</span>
       </div>
       <div class="panel-body">
         <%= if @record_log == [] do %>

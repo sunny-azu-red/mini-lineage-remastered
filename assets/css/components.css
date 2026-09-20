@@ -379,11 +379,6 @@
     color: var(--hp-color);
 }
 
-/* Below the record's own panel, spaced off it the way the footer is. */
-.chronicle-panel {
-    margin-top: 12px;
-}
-
 /* A run's fights, oldest first, in a box that opens on the newest. Ordered because a chronicle is,
    but never numbered: the count is already in the paragraph above it. Capped and scrolled, so the
    page is the same height whether a run fought nine times or nine hundred — the panel around it is
@@ -395,6 +390,37 @@ ol.chronicle {
     max-height: 260px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+/* A scrollbar is chrome, so it wears the controls' own violet and warms to gold under the pointer,
+   the way the secondary button does — never the accent at rest. Firefox reads the two properties,
+   everything else the pseudo-elements, and a browser that knows neither keeps its own. */
+.table-container,
+ol.chronicle {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-arcane-bright) transparent;
+}
+
+.table-container::-webkit-scrollbar,
+ol.chronicle::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track,
+ol.chronicle::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb,
+ol.chronicle::-webkit-scrollbar-thumb {
+    background: var(--border-arcane-bright);
+    border-radius: var(--radius);
+}
+
+.table-container::-webkit-scrollbar-thumb:hover,
+ol.chronicle::-webkit-scrollbar-thumb:hover {
+    background: var(--gold-dim);
 }
 
 /* An entry is a paragraph now rather than a line, so it is spaced like one. The last gives its
