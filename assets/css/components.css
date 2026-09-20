@@ -385,10 +385,20 @@ ol.chronicle {
     padding-left: 22px;
 }
 
-/* An entry is a paragraph now, not a line: 8px between them read as one running block. */
+/* An entry is a paragraph now rather than a line, so it is spaced like one. */
 ol.chronicle li {
     margin-bottom: 12px;
     line-height: 1.6;
+}
+
+/* A fight that ended in an ambush wears it, the way the status panel wears low health: the padding
+   is cancelled by a negative margin on every side, so the wash gets its room and not one word of
+   the entry moves to give it any. No pulse — the panel warns about now, this is what already happened. */
+ol.chronicle li.ambushed {
+    background: var(--danger-wash);
+    border-radius: var(--radius);
+    padding: 6px;
+    margin: -6px -6px 6px -6px;
 }
 
 ol.chronicle li::marker {

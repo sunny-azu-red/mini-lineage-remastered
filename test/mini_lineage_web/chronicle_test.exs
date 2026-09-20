@@ -26,12 +26,17 @@ defmodule MiniLineageWeb.ChronicleTest do
   }
 
   # A line that did not happen is nil, never missing: `BattleLog.to_battle/1` names every key it
-  # reads back, so the component may reach for all of them. Only `narrative` is read here; the rest
-  # of a row is the numbers, which the paragraphs above the Chronicle carry.
-  defp fight(absent \\ []),
-    do: %{narrative: Map.merge(@lines, Map.new(absent, &{&1, nil}))}
+  # reads back, so the component may reach for all of them. The `ambushed` column and the ambush
+  # line come from one flag in `Narrative.build_battle/3`, so a fixture that sets them apart would
+  # be describing a row the game cannot write.
+  defp fight(absent \\ []) do
+    %{
+      narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
+      ambushed: :ambush_line not in absent
+    }
+  end
 
-  defp text_for(chronicle) do
+  defp html_for(chronicle) do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
 
     render_component(&Record.record/1,
@@ -39,6 +44,19 @@ defmodule MiniLineageWeb.ChronicleTest do
       catalog: Snapshot.catalog(),
       chronicle: chronicle
     )
+  end
+
+  # The entries on their own, so a claim about one is not answered by something elsewhere on a page
+  # that talks about ambush risk in two other places.
+  defp entries(chronicle) do
+    [_, list] = Regex.run(~r|<ol class="chronicle">(.*)</ol>|s, html_for(chronicle))
+
+    list |> String.split("<li") |> Enum.drop(1)
+  end
+
+  defp text_for(chronicle) do
+    chronicle
+    |> html_for()
     |> String.replace(~r/<[^>]+>/, "")
     |> String.replace(~r/\s+/, " ")
   end
@@ -81,6 +99,18 @@ defmodule MiniLineageWeb.ChronicleTest do
 
     test "and a run with no fights says so instead" do
       assert text_for([]) =~ "Not one blow struck"
+    end
+
+    # The class is the claim, not the colour: what red means lives in the stylesheet, and a test
+    # reading that back would only assert that CSS is spelled the way it is spelled.
+    test "wears the ambush it ended in, so a run of them is visible without reading a word" do
+      [quiet, caught] = entries([fight([:ambush_line]), fight()])
+
+      assert caught =~ "AMBUSH."
+      assert caught =~ ~s(class="ambushed")
+      # And the fight nothing was waiting after is left alone, or the mark says nothing.
+      refute quiet =~ "AMBUSH."
+      refute quiet =~ "ambushed"
     end
   end
 end
