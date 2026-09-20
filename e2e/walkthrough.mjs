@@ -429,8 +429,8 @@ try {
     await onScreen('character');
     const record = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('a run has a page of its own', (await state()).screen === 'character');
-    check('...which names it and says when it set out and when it fell',
-        /BrowserBot/.test(record) && /Set out on/.test(record) && /and fell on/.test(record),
+    check('...which names it and says when the road opened and when it closed over them',
+        /BrowserBot/.test(record) && /opened beneath/.test(record) && /closed over/.test(record),
         record.slice(0, 110));
     check('...in the second person, because it is the reader\'s own',
         /You were wielding/.test(record) && !/They were wielding/.test(record));

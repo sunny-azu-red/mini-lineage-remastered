@@ -391,13 +391,4 @@ ol.chronicle {
 /* An entry is a paragraph now rather than a line, so it is spaced like one. */
 ol.chronicle li {
     margin-bottom: 12px;
-    line-height: 1.6;
-}
-
-/* An ambushed fight IS the alert the game raises anywhere else, held in the chronicle's own column
-   by the status panel's low-health trick — its inset cancelled by a negative margin, so the box
-   grows outward and no word moves. 9px plus the 3px border is 12, all the panel's padding affords. */
-ol.chronicle .alert {
-    padding-left: 9px;
-    margin: -9px -12px 3px -12px;
 }

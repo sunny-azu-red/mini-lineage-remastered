@@ -108,7 +108,7 @@ defmodule MiniLineageWeb.Screens.Record do
             class="minor"
           />
         <% end %>
-        along the road.
+        along the road. <.road :if={@entry} entry={@entry} at={@view.last_action_at} voice={@voice} />
       </p>
 
       <%= if @dead do %>
@@ -136,12 +136,7 @@ defmodule MiniLineageWeb.Screens.Record do
       </p>
       <% end %>
 
-      <p :if={@entry} phx-no-format>
-      Set out on <.stamp id="record-set-out" at={@entry.inserted_at} />
-      {ending(@entry)} <.stamp id="record-last" at={@view.last_action_at} />.
-    </p>
-
-      <h3>The Chronicle</h3>
+      <h2 class="plain">The Chronicle</h2>
 
       <%= if @chronicle == [] do %>
         <p>Not one blow struck. This tale is over before it began.</p>
@@ -171,11 +166,30 @@ defmodule MiniLineageWeb.Screens.Record do
   defp voice(false),
     do: %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
 
-  # Three ways a record ends: fallen, still going, or missing — walked away from and past the day
-  # anyone could pick it up again.
-  defp ending(%{dead: true}), do: "and fell on"
-  defp ending(%{active: true}), do: "and was last seen on"
-  defp ending(_missing), do: "and has not been seen since"
+  attr :entry, :map, required: true
+  attr :at, :any, required: true
+  attr :voice, :map, required: true
+
+  @doc false
+  # Both ends of the road, in the paragraph already describing what happened between them. Its own
+  # component so each sentence can stay on one line: the formatter would break before the closing
+  # period, and a newline there renders as a space — which is what " ." is.
+  defp road(assigns) do
+    ~H"""
+    <span phx-no-format><%= case road_of(@entry) do %>
+      <% :closed -> %>It opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :open -> %>It opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :lost -> %>It opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
+    <% end %></span>
+    """
+  end
+
+  # Three ways a road ends: closed over them, still open, or lost with them still on it. `active` is
+  # "has a session", so a run walked away from past the retirement window is neither dead nor going —
+  # and the only one of the three whose last date names a direction rather than a day.
+  defp road_of(%{dead: true}), do: :closed
+  defp road_of(%{active: true}), do: :open
+  defp road_of(_missing), do: :lost
 
   # ---------------------------------------------------------------- the screen
 

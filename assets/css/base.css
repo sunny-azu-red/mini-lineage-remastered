@@ -90,9 +90,10 @@ h2:first-child {
 }
 
 /* A step below h2 and clearly one: same family, same case, same colour — the size and the missing
- * rule beneath it carry the difference. It had no rule at all before this, so "The Chronicle" was
- * rendering at the browser's own 1.17em, which happened to land near h2. */
-h3 {
+ * band beneath it carry the difference. "The Chronicle" wears it as an h2, being a section of the
+ * record like the two above it, where a third banded heading would crowd a page that is all prose. */
+h3,
+h2.plain {
     font-family: var(--font-heading);
     font-size: 15px;
     font-weight: 600;
@@ -101,6 +102,13 @@ h3 {
     text-transform: uppercase;
     margin-top: 20px;
     margin-bottom: 8px;
+}
+
+/* Only an h2 has a band and a shadow to give up. */
+h2.plain {
+    border-bottom: none;
+    padding-bottom: 0;
+    text-shadow: none;
 }
 
 p {

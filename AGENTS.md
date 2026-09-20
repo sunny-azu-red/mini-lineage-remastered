@@ -132,6 +132,11 @@ is the same kind. 12px is a control or the compact sidebar, 11px a column label 
 headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
 sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
 
+The one place a heading reads a step below what it is: `h2.plain` on the record's Chronicle. It is
+a section like the two above it and says so in the markup, but wears the h3 size and gives up the
+band, because a third banded heading crowds a page that is nothing but prose. Level and size part
+company there deliberately — do not "fix" it back to an h3.
+
 **Weight answers "which of these matters?", so a table never needs it.** Tabular figures are on
 `body`, not on a list of classes: the game is arithmetic, and a column of numbers wants to line up
 while an animating one wants to stay still — the HP counter runs inside a paragraph, and
