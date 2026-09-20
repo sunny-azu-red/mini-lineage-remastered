@@ -11,7 +11,6 @@ defmodule MiniLineageWeb.ChronicleTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Player, Snapshot}
   alias MiniLineageWeb.Screens.Record
 
   # Sentinels rather than real templates: a drawn line would make this a test of the pools.
@@ -36,18 +35,9 @@ defmodule MiniLineageWeb.ChronicleTest do
     }
   end
 
-  defp html_for(chronicle) do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+  defp html_for(record_log), do: render_component(&Record.chronicle/1, record_log: record_log)
 
-    render_component(&Record.record/1,
-      view: Snapshot.build(player),
-      catalog: Snapshot.catalog(),
-      chronicle: chronicle
-    )
-  end
-
-  # The entries on their own, so a claim about one is not answered by something elsewhere on a page
-  # that talks about ambush risk in two other places.
+  # The entries on their own, so a claim about one is not answered by the panel around them.
   defp entries(chronicle) do
     [_, list] = Regex.run(~r|<ol[^>]*class="chronicle"[^>]*>(.*)</ol>|s, html_for(chronicle))
 

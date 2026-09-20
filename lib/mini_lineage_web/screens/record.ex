@@ -14,7 +14,6 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :view, :map, required: true
   attr :catalog, :map, required: true
   attr :entry, :map, default: nil
-  attr :chronicle, :list, default: []
   attr :mine, :boolean, default: true
 
   @doc false
@@ -84,8 +83,11 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
       <p>
-        {@voice.whose} journey across the realm {@defined} defined by conflict and survival.
-        <.road :if={@entry} entry={@entry} at={@view.last_action_at} voice={@voice} />
+        {@voice.whose} journey across the realm {@defined} defined by conflict and survival<.road
+          entry={@entry}
+          at={@view.last_action_at}
+          voice={@voice}
+        />
         {@voice.they} {@fought} through
         <Controls.counted
           key="rec-battles"
@@ -137,24 +139,39 @@ defmodule MiniLineageWeb.Screens.Record do
         for the journey ahead.
       </p>
       <% end %>
+    </div>
+    """
+  end
 
-      <h2>The Chronicle</h2>
+  attr :record_log, :list, default: []
 
-      <%= if @chronicle == [] do %>
-        <p>Not one blow struck. This tale is over before it began.</p>
-      <% else %>
-        <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
-              labels rather than history. A line added to `Narrative.build_battle/3` belongs here
-              too, or the chronicle quietly stops telling the whole of it. --%>
-        <ol id="chronicle" class="chronicle" phx-hook="ScrollToLatest">
-          <li :for={fight <- @chronicle} class={if fight.ambushed, do: "alert alert-danger"}>
-            <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
-              fight.narrative.kill_line
-            )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
-            <span :if={fight.narrative.ambush_line}>{raw(fight.narrative.ambush_line)}</span>
-          </li>
-        </ol>
-      <% end %>
+  @doc """
+  A run's fights, in a panel of their own beneath the record's. Longer than everything else on the
+  page put together, so inside the panel they crowd out what the panel is named for.
+  """
+  def chronicle(assigns) do
+    ~H"""
+    <div class="panel chronicle-panel">
+      <div class="panel-header flex">
+        <h2 class="header-name">The Chronicle</h2>
+      </div>
+      <div class="panel-body">
+        <%= if @record_log == [] do %>
+          <p class="last">Not one blow struck. This tale is over before it began.</p>
+        <% else %>
+          <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
+                labels rather than history. A line added to `Narrative.build_battle/3` belongs here
+                too, or the chronicle quietly stops telling the whole of it. --%>
+          <ol id="chronicle" class="chronicle" phx-hook="ScrollToLatest">
+            <li :for={fight <- @record_log} class={if fight.ambushed, do: "alert alert-danger"}>
+              <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
+                fight.narrative.kill_line
+              )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
+              <span :if={fight.narrative.ambush_line}>{raw(fight.narrative.ambush_line)}</span>
+            </li>
+          </ol>
+        <% end %>
+      </div>
     </div>
     """
   end
@@ -168,20 +185,22 @@ defmodule MiniLineageWeb.Screens.Record do
   defp voice(false),
     do: %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
 
-  attr :entry, :map, required: true
+  attr :entry, :any, required: true
   attr :at, :any, required: true
   attr :voice, :map, required: true
 
   @doc false
-  # Both ends of the road, in the paragraph already describing what happened between them. Its own
-  # component so each sentence can stay on one line: the formatter would break before the closing
-  # period, and a newline there renders as a space — which is what " ." is.
+  # How the sentence above ends, carrying both ends of the road. It owns the full stop because a run
+  # with no row has no road to describe and the sentence has to close anyway. Its own component so
+  # each line stays whole: the formatter breaks at a tag, and a newline before the stop reads " .".
+  defp road(%{entry: nil} = assigns), do: ~H"."
+
   defp road(assigns) do
     ~H"""
     <span phx-no-format><%= case road_of(@entry) do %>
-      <% :closed -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :open -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :lost -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
+      <% :closed -> %> with the road opening beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closing over {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :open -> %> with the road opening beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and last carrying {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :lost -> %> with the road opening beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and swallowing {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
     <% end %></span>
     """
   end
@@ -200,7 +219,6 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :character_id, :string, default: nil
   attr :record, :map, default: nil
   attr :record_view, :map, default: nil
-  attr :record_log, :list, default: []
   attr :from, :string, default: nil
 
   def screen(%{record: nil} = assigns) do
@@ -220,7 +238,6 @@ defmodule MiniLineageWeb.Screens.Record do
       view={@record_view}
       catalog={@catalog}
       entry={@record}
-      chronicle={@record_log}
       mine={@record.id == @character_id}
     />
 

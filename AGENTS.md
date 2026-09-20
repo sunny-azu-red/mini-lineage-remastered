@@ -21,6 +21,9 @@ list wins — several generator defaults do not exist here.
   live in `Screens` itself, and the pages that outlive a run — `Screens.Shop`, `Screens.Record`,
   `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
   own (the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in `Controls`.
+  `Screens.aside/1` is the same dispatch for what a screen puts BELOW its panel rather than inside
+  it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
+  than everything else on that page put together and crowds out what the panel is named for.
 
 ### Working here
 

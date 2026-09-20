@@ -379,19 +379,22 @@
     color: var(--hp-color);
 }
 
+/* Below the record's own panel, spaced off it the way the footer is. */
+.chronicle-panel {
+    margin-top: 12px;
+}
+
 /* A run's fights, oldest first, in a box that opens on the newest. Ordered because a chronicle is,
    but never numbered: the count is already in the paragraph above it. Capped and scrolled, so the
-   page is the same height whether a run fought nine times or nine hundred — and bordered like the
-   board's own container, because text clipped at a bare edge reads as a rendering fault. */
+   page is the same height whether a run fought nine times or nine hundred — the panel around it is
+   the box, so this needs no edge of its own. */
 ol.chronicle {
-    margin: 0 0 18px 0;
-    padding: 12px;
+    margin: 0;
+    padding: 0;
     list-style: none;
     max-height: 260px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius);
 }
 
 /* An entry is a paragraph now rather than a line, so it is spaced like one. The last gives its

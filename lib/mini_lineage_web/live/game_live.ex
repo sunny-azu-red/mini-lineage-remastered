@@ -443,6 +443,10 @@ defmodule MiniLineageWeb.GameLive do
         ambush_line={@view.ambush_low_health}
       />
 
+      <:aside>
+        <Screens.aside screen={@screen} record={@record} record_log={@record_log} />
+      </:aside>
+
       <Screens.screen
         screen={@screen}
         view={@view}
@@ -451,7 +455,6 @@ defmodule MiniLineageWeb.GameLive do
         character_id={@character_id}
         record={@record}
         record_view={@record_view}
-        record_log={@record_log}
         from={@from}
         statistics={@statistics}
         race_filter={@race_filter}

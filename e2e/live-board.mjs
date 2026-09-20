@@ -82,12 +82,12 @@ try {
     // Read at phone width from here on: two fights wrap to more lines than the Chronicle's box can
     // show, which is what makes following it down observable at all — and what a reader on a phone
     // gets anyway.
-    await watcher.setViewportSize({ width: 360, height: 800 });
+    await watcher.setViewportSize({ width: 320, height: 800 });
     await watcher.goto(`${BASE}${href}`, { waitUntil: 'domcontentloaded' });
     await connected(watcher);
     const record = (await watcher.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('...showing a stranger\'s stats and their chronicle so far',
-        /LiveOne/.test(record) && /last carried/.test(record), record.slice(0, 90));
+        /LiveOne/.test(record) && /last carrying/.test(record), record.slice(0, 90));
     check('...while the watcher stays a visitor, not that character',
         await watcher.evaluate(() => document.querySelector('#screen')?.dataset.started) === 'false');
 

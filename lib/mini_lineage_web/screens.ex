@@ -44,7 +44,6 @@ defmodule MiniLineageWeb.Screens do
   attr :character_id, :string, default: nil
   attr :record, :map, default: nil
   attr :record_view, :map, default: nil
-  attr :record_log, :list, default: []
   attr :from, :string, default: nil
   attr :statistics, :map, default: nil
   attr :race_filter, :integer, default: nil
@@ -74,6 +73,19 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "highscores"} = assigns), do: Halls.screen(assigns)
   def screen(%{screen: "statistics"} = assigns), do: Tome.screen(assigns)
   def screen(assigns), do: error(assigns)
+
+  attr :screen, :string, required: true
+  attr :record, :map, default: nil
+  attr :record_log, :list, default: []
+
+  @doc """
+  What a screen puts BELOW the panel rather than inside it. Only the Chronicle so far, and only
+  where there is a run to have one — every other screen draws nothing here.
+  """
+  def aside(%{screen: "character", record: record} = assigns) when record != nil,
+    do: Record.chronicle(assigns)
+
+  def aside(assigns), do: ~H||
 
   @doc """
   Covers both failure modes the reference did: an action that threw, and the modelled `error`
