@@ -200,10 +200,11 @@
     border-top: 1px solid var(--gold-dim);
 }
 
-/* Rows hold their own vertical rhythm — 12px above and below each, and a rule between — so the
-   body must not hold it as well, or the first and the last would sit on twice everything else. */
+/* Rows hold their own padding, all four sides of it, so the body holds none: a row is then exactly
+   as wide as the panel, which is what lets a marked one colour itself wall to wall. The words sit
+   where they always did — the 12px simply moved out of the body and into each row. */
 .panel-body.rows {
-    padding: 0px 12px;
+    padding: 0;
 }
 
 /* ===== Status Panel ===== */
@@ -211,7 +212,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 0;
+    padding: 12px;
     border-bottom: 1px dashed var(--border-soft);
 }
 
@@ -241,7 +242,7 @@
 }
 
 .stat-row.bar {
-    padding: 10px 0;
+    padding: 10px 12px;
 }
 
 /* A row in danger, and an entry that ended in an ambush: one mark, in two places.
@@ -501,7 +502,7 @@ ol.chronicle {
 /* Rows, exactly as the sidebar's stats are rows: a dashed rule between them and none around the
    outside, so the list reads as a run of separate things rather than one block of prose. */
 ol.chronicle li {
-    padding: 12px 0;
+    padding: 12px;
     border-bottom: 1px dashed var(--border-soft);
 }
 
