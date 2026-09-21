@@ -154,12 +154,12 @@
 }
 
 .effect-buff .effect-timer {
-    color: var(--success-text);
+    color: var(--text-success-bright);
     border-color: rgba(15, 190, 110, 0.45);
 }
 
 .effect-debuff .effect-timer {
-    color: var(--danger-text);
+    color: var(--text-danger);
     border-color: rgba(255, 129, 100, 0.45);
 }
 
@@ -277,7 +277,7 @@ ol.chronicle li:last-child::after {
    the row to be on a panel; both of these are. */
 .stat-row.danger,
 ol.chronicle li.ambushed {
-    background-color: var(--danger-wash);
+    background-color: var(--wash-danger);
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
@@ -326,14 +326,14 @@ ol.chronicle li.ambushed {
 }
 
 .hp-bar {
-    background: linear-gradient(90deg, var(--hp-color) 0%, var(--hp-glow) 100%);
+    background: linear-gradient(90deg, var(--bar-hp) 0%, var(--glow-hp) 100%);
     box-shadow: 0 0 8px rgba(228, 76, 59, 0.4);
     position: relative;
     overflow: hidden;
 }
 
 .xp-bar {
-    background: linear-gradient(90deg, var(--xp-color) 0%, var(--xp-glow) 100%);
+    background: linear-gradient(90deg, var(--bar-xp) 0%, var(--glow-xp) 100%);
     box-shadow: 0 0 8px rgba(194, 84, 200, 0.4);
     position: relative;
     overflow: hidden;
@@ -391,27 +391,27 @@ ol.chronicle li.ambushed {
 }
 
 .alert-info {
-    background: var(--info-wash);
-    border-color: var(--info-border);
-    color: var(--info-text);
+    background: var(--wash-info);
+    border-color: var(--border-info);
+    color: var(--text-info);
 }
 
 .alert-success {
-    background: var(--success-wash);
-    border-color: var(--success);
-    color: var(--success-text);
+    background: var(--wash-success);
+    border-color: var(--text-success);
+    color: var(--text-success-bright);
 }
 
 .alert-warning {
     background: linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(122, 98, 48, 0.35) 100%);
     border-color: var(--gold);
-    color: var(--warning-text);
+    color: var(--text-warning);
 }
 
 .alert-danger {
-    background: var(--danger-wash);
-    border-color: var(--danger-border);
-    color: var(--danger-text);
+    background: var(--wash-danger);
+    border-color: var(--border-danger);
+    color: var(--text-danger);
 }
 
 /* Extra right padding so the dismiss "x" never overlaps longer message text */
@@ -470,7 +470,7 @@ ol.chronicle li.ambushed {
 .code-block {
     background: var(--bg-surface);
     border-radius: var(--radius-lg);
-    color: var(--hp-color);
+    color: var(--bar-hp);
     margin-bottom: 12px;
     overflow-x: auto;
     padding: 12px;
@@ -525,7 +525,7 @@ ol.chronicle {
 /* What was waiting at the end of a fight speaks in the alert's own voice, as it did while the
    fight was happening. */
 ol.chronicle .threat {
-    color: var(--danger-text);
+    color: var(--text-danger);
 }
 
 ol.chronicle li {

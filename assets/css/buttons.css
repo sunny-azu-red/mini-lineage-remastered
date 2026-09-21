@@ -149,13 +149,13 @@
  * stop, because red at the primary's own chroma goes brown at these lightnesses where violet stays
  * slate. The ground is LCh hue 0 rather than the palette's red at 36 — a step off the red toward
  * the violet the rest of the game is painted in, which is what makes it read as dread rather than
- * as an error. The edge stays --danger-border at 36 and reads as a warm highlight over it. */
+ * as an error. The edge stays --border-danger at 36 and reads as a warm highlight over it. */
 .btn-danger {
     background: linear-gradient(180deg, #581d33 0%, #3c1121 100%);
-    border: 1px solid var(--danger-border);
+    border: 1px solid var(--border-danger);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     /* The darker ground let this drop to the alert's own voice and still clear AA, at 5.23. */
-    color: var(--danger-text);
+    color: var(--text-danger);
 }
 
 .btn-danger::after {
@@ -167,7 +167,7 @@
 
 .btn-danger:hover {
     background: linear-gradient(180deg, #64233b 0%, #461728 100%);
-    border-color: var(--hp-glow);
+    border-color: var(--glow-hp);
     box-shadow:
         0 0 0 2px rgba(228, 76, 59, 0.15),
         0 1px 3px rgba(0, 0, 0, 0.4);
@@ -176,7 +176,7 @@
 .btn-danger:active,
 .btn-danger.active {
     background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
-    border-color: var(--danger-border);
+    border-color: var(--border-danger);
     box-shadow:
         0 0 0 2px rgba(190, 39, 31, 0.2),
         inset 0 2px 4px rgba(0, 0, 0, 0.5);

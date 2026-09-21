@@ -134,11 +134,11 @@ p.last {
    player is not meant to act on it, it is there so an unreachable backend still says what is
    loaded. A release names its commit instead and takes neither. */
 .build-development {
-    color: var(--critical);
+    color: var(--text-critical);
 }
 
 .build-testing {
-    color: var(--success);
+    color: var(--text-success);
 }
 
 /* ===== Values =====
@@ -158,7 +158,7 @@ p.last {
 .heal,
 .regen,
 .buff {
-    color: var(--success) !important;
+    color: var(--text-success) !important;
 }
 
 /* What a run is worth: its purse, its level, and the ambient state it stands in. */
@@ -191,7 +191,7 @@ p.last {
 }
 
 .crit {
-    color: var(--critical) !important;
+    color: var(--text-critical) !important;
 }
 
 /* What the arcane touches: experience earned, and a name the gods struck out for reaching past it. */

@@ -22,9 +22,9 @@ const token = (name) => getComputedStyle(document.documentElement).getPropertyVa
 topbar.config({
   barColors: {
     0: token("--text-hp"),
-    0.17: token("--critical"),
+    0.17: token("--text-critical"),
     0.33: token("--gold"),
-    0.5: token("--success"),
+    0.5: token("--text-success"),
     0.67: token("--text-tally"),
     0.83: token("--text-defense"),
     1: token("--text-xp"),

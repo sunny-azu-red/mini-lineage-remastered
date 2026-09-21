@@ -3,6 +3,17 @@
  * Mini-Lineage — Design Tokens
  * All CSS custom properties (variables) live here.
  * Every other CSS file reads from these tokens.
+ *
+ * NAMED FOR THE ROLE, NOT THE FAMILY: --<role>-<name>, never --<name>-<role>.
+ * The roles are --text-, --bg-, --border-, --wash-, --bar-, --glow-, --shadow-, --focus-, and
+ * the shape and type ones below. Type `color:` and you want a --text-; there is no second place
+ * to look and no second word order to remember. It also keeps one family honest across roles:
+ * HP is --text-hp in a sentence and --bar-hp in a meter, and neither can be mistaken for the
+ * other, which is exactly what --text-hp beside --hp-color used to invite.
+ *
+ * The one exception is GOLD, and it is an exception because it is a hue rather than a role: the
+ * accent is deliberately text, border, ground and glow, and prefixing it would mean four tokens
+ * holding one colour. A token is either a hue or a role; gold is the only hue.
  * ========================================================================
  */
 
@@ -37,6 +48,11 @@
     --border-arcane-bright: #655e6e;
     --border-soft: rgba(255, 255, 255, 0.07);
 
+    /* An alert's own edge, which is the one border in the game that carries a meaning rather than
+     * a depth. Measured with its voice below, not with the surfaces above. */
+    --border-danger: #d74031;
+    --border-info: #0076e1;
+
     /* ===== Gold, the one accent ===== */
     --gold: #c9a84c;
     --gold-hover: #e8c46a;
@@ -46,9 +62,11 @@
      * Three steps of prose, then the values. The three steps are one hue at one saturation and
      * differ only in lightness: quieter text should get quieter, not bluer, and the lower two used
      * to swing to hue 219 under a primary at hue 40.
-     * The values below are peers — they land in the same sentence — so they share a lightness and
-     * so read at one contrast, 5.2 on the panel for every one of them. They had ranged over L* 57
-     * to 66, which is what made the tally whisper.
+     * The six values below are peers — they land in the same sentence — so they share a lightness
+     * and so read at one contrast, 5.2 on the panel for every one of them: L* 58.0 to 58.1, end to
+     * end. They had ranged over L* 57 to 66, which is what made the tally whisper. Two of them sat
+     * under the bars until the names were made uniform, which is the sort of thing a family-first
+     * name hides: `--critical` filed nowhere in particular, `--text-critical` filed with its peers.
      * Chroma is NOT shared: each runs as far as sRGB allows, up to 72. Equalising it was the wrong
      * goal — teal tops out near 39 whatever the lightness, so a shared chroma is a chroma of 39,
      * and the whole set goes pale to meet the one hue that cannot keep up. */
@@ -59,37 +77,35 @@
     --text-xp: #ce5fd3;
     --text-defense: #288aff;
     --text-tally: #009d8c;
+    --text-critical: #d7700f;
+    --text-success: #00a152;
 
-    /* ===== The bars, and the colours a value is named for =====
-     * The two bars are built alike: one lightness for the bases, one for the glows, one chroma for
+    /* ===== The bars =====
+     * The two are built alike: one lightness for the bases, one for the glows, one chroma for
      * all four. The HP bar had been both lighter and more chromatic than the XP bar. Both glows
      * measure 4.24 on the panel, up from 4.16 and 3.40 but still under AA's 4.5, which matters for
      * a word and not for a filled bar. */
-    --hp-color: #be271f;
-    --hp-glow: #e44c3b;
-    --xp-color: #a031a7;
-    --xp-glow: #c254c8;
-    --critical: #d7700f;
-    --success: #00a152;
-    --danger-border: #d74031;
-    --info-border: #0076e1;
+    --bar-hp: #be271f;
+    --glow-hp: #e44c3b;
+    --bar-xp: #a031a7;
+    --glow-xp: #c254c8;
 
     /* ===== The alert voices =====
      * One lightness, so the four read at one contrast on the panel, 7.2 apiece. These had been
      * spelled out at each of their eight call sites while every other family lived in a token —
      * the alert grounds were tokenised long ago and their voices were simply never done. */
-    --danger-text: #ff8164;
-    --success-text: #0fbe6e;
-    --warning-text: #e7c33d;
-    --info-text: #7aa4ff;
+    --text-danger: #ff8164;
+    --text-success-bright: #0fbe6e;
+    --text-warning: #e7c33d;
+    --text-info: #7aa4ff;
 
     /* ===== Washes =====
      * A hex custom property cannot be alpha'd in plain CSS, so each is its own colour spelled out:
      * a row the Halls marks, an alert's ground, the focus ring. */
-    --success-wash: rgba(0, 161, 82, 0.13);
-    --gold-wash: rgba(201, 168, 76, 0.14);
-    --danger-wash: rgba(146, 43, 33, 0.2);
-    --info-wash: rgba(46, 70, 116, 0.3);
+    --wash-success: rgba(0, 161, 82, 0.13);
+    --wash-gold: rgba(201, 168, 76, 0.14);
+    --wash-danger: rgba(146, 43, 33, 0.2);
+    --wash-info: rgba(46, 70, 116, 0.3);
     --focus-ring-color: rgba(201, 168, 76, 0.45);
 
     /* ===== Shape ===== */

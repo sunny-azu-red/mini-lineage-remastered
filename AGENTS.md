@@ -178,9 +178,18 @@ the PAGE knows, not something a player reads. A name that belongs in neither bas
 neither file.
 
 An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
-vocabulary like any other value. The BADGE over its emoji does not: `--success-text` and
-`--danger-text` are lighter, and the pixel font needs them at that size. Every text colour is a
+vocabulary like any other value. The BADGE over its emoji does not: `--text-success-bright` and
+`--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
+
+**A token is named for its ROLE, never its family: `--<role>-<name>`.** `--text-`, `--bg-`,
+`--border-`, `--wash-`, `--bar-`, `--glow-`, `--shadow-`, `--focus-`. Type `color:` and there is
+one prefix to reach for and one word order to remember, and a family stays honest across roles —
+HP is `--text-hp` in a sentence and `--bar-hp` in a meter. That pair used to be `--text-hp` and
+`--hp-color`, two shades of one family disagreeing about word order, with `--success` the colour
+`.heal` wore and `--success-text` the one it did not. Gold is the single exception, because it is
+a hue rather than a role: the accent is deliberately text, border, ground and glow at once, and
+prefixing it would mean four tokens holding one colour.
 
 Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside the palette's own
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns
@@ -198,7 +207,7 @@ controls had to sit well under the surfaces' number to read as the same slate. L
 colourfulness is chroma, and both compare across hues where H, S and L do not.
 
 **Peers share a lightness. They do not share a chroma.** The colours that land in one sentence —
-`--text-hp`, `--critical`, `--success`, `--text-tally`, `--text-defense`, `--text-xp` — are all
+`--text-hp`, `--text-critical`, `--text-success`, `--text-tally`, `--text-defense`, `--text-xp` — are all
 `L* 58` and so read at 5.2 on the panel, which is what makes them peers; they had ranged `L* 57` to
 `66` and the tally whispered. Equalising their chroma is the trap, and it was fallen into once: teal
 tops out near 39 at any lightness in sRGB, so a shared chroma *is* 39 and the whole set goes pale to

@@ -71,13 +71,13 @@ th.name {
 /* A run that has not ended. `:not(.mine)` rather than declaration order, so yours stays gold
    however these rules get moved about. */
 .data-table tbody tr.character-row.alive:not(.mine) {
-    background-color: var(--success-wash);
-    box-shadow: inset 2px 0 0 var(--success);
+    background-color: var(--wash-success);
+    box-shadow: inset 2px 0 0 var(--text-success);
 }
 
 /* Your own run, findable without counting. */
 .data-table tbody tr.character-row.mine {
-    background-color: var(--gold-wash);
+    background-color: var(--wash-gold);
     box-shadow: inset 2px 0 0 var(--gold);
 }
 
@@ -87,7 +87,7 @@ th.name {
    table had been saying nothing, so the two disagreed about what you already have. Marked the way
    the Halls marks your own run, since it is the same sentence: this row is you. */
 .data-table tbody tr.owned {
-    background-color: var(--gold-wash);
+    background-color: var(--wash-gold);
     box-shadow: inset 2px 0 0 var(--gold);
 }
 
@@ -96,7 +96,7 @@ th.name {
 /* Somebody has this character open right now, as against merely alive. */
 /* Always in the DOM so it can fade; `.lit` is the only thing that changes when somebody arrives. */
 .character-row .online {
-    color: var(--success);
+    color: var(--text-success);
     opacity: 0;
     transition: opacity 400ms ease;
 }
