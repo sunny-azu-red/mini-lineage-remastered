@@ -299,6 +299,23 @@ export const AnimatedValues = {
     },
 };
 
+// Blocked or private storage just means the panel opens where the template says, every time.
+function recall(id) {
+    try {
+        return localStorage.getItem(`panel:${id}`);
+    } catch {
+        return null;
+    }
+}
+
+function keep(id, open) {
+    try {
+        localStorage.setItem(`panel:${id}`, open ? '1' : '0');
+    } catch {
+        // Nothing to do: the panel will simply not remember.
+    }
+}
+
 /**
  * A panel that does something: collapses on a click of its own header, and follows its content down
  * when it is a log rather than a document. Both are re-applied after every patch — the server
@@ -306,9 +323,17 @@ export const AnimatedValues = {
  */
 export const Panel = {
     mounted() {
-        this.toggle = this.el.querySelector(':scope > .panel-header .panel-toggle');
-        this.open = !this.toggle || this.toggle.getAttribute('aria-expanded') === 'true';
-        this.toggle?.addEventListener('click', () => this.show(!this.open));
+        this.toggle = this.el.querySelector(':scope > .panel-toggle');
+        // What the reader last did with THIS panel beats what the template opens it on. Keyed by
+        // the panel's id, so the preference is about the panel and not about whose record it is.
+        const kept = this.toggle && recall(this.el.id);
+        this.open = !this.toggle
+            || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
+
+        this.toggle?.addEventListener('click', () => {
+            this.show(!this.open);
+            keep(this.el.id, this.open);
+        });
         this.show(this.open);
     },
     updated() {

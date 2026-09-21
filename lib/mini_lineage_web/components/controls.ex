@@ -51,11 +51,18 @@ defmodule MiniLineageWeb.Controls do
       phx-hook={if @collapsible or @stick_to_bottom, do: "Panel"}
       data-stick={if @stick_to_bottom, do: "true"}
     >
-      <div class="panel-header flex">
-        <h1 :if={@heading} class="header-name" phx-no-format><.panel_title title={@title} collapsible={@collapsible} collapsed={@collapsed} /></h1>
-        <span :if={!@heading} class="header-name" phx-no-format><.panel_title title={@title} collapsible={@collapsible} collapsed={@collapsed} /></span>
+      <%!-- The whole band is the control, not the words in it: a header is a wide, obvious thing
+            to aim at, and a title you have to hit exactly is a worse target than no control. --%>
+      <.dynamic_tag
+        tag_name={if @collapsible, do: "button", else: "div"}
+        class={classes(["panel-header flex", @collapsible && "panel-toggle"])}
+        {folds(@collapsible, @collapsed)}
+      >
+        <h1 :if={@heading} class="header-name">{@title}</h1>
+        <span :if={!@heading} class="header-name">{@title}</span>
         {render_slot(@header)}
-      </div>
+        <span :if={@collapsible} class="panel-arrow" aria-hidden="true"></span>
+      </.dynamic_tag>
 
       <div
         id={@body_id}
@@ -78,19 +85,12 @@ defmodule MiniLineageWeb.Controls do
   defp cap(nil), do: []
   defp cap(pixels), do: [style: "max-height: #{pixels}px"]
 
-  attr :title, :string, required: true
-  attr :collapsible, :boolean, required: true
-  attr :collapsed, :boolean, required: true
-
-  # `aria-expanded` IS the state: the arrow turns off it, so what the mark says and what a screen
+  # A BUTTON rather than a link: this goes nowhere, and a link would say it did. Space activates a
+  # button and scrolls a link, which is the same reason `PanelFocus` will not focus one. And
+  # `aria-expanded` IS the state — the arrow turns off it, so what the mark shows and what a screen
   # reader is told cannot come apart.
-  defp panel_title(%{collapsible: false} = assigns), do: ~H"{@title}"
-
-  defp panel_title(assigns) do
-    ~H"""
-    <button type="button" class="panel-toggle" aria-expanded={to_string(!@collapsed)} phx-no-format><span class="panel-arrow" aria-hidden="true">▾</span>{@title}</button>
-    """
-  end
+  defp folds(false, _collapsed), do: []
+  defp folds(true, collapsed), do: [type: "button", "aria-expanded": to_string(!collapsed)]
 
   @doc "Whose hall this is. Every place that names one says it the same way."
   def hall_of(nil), do: "All"

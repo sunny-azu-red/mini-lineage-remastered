@@ -288,8 +288,14 @@ edge rather than inside the body's padding.
 
 **A collapse is the reader's, not the template's.** `hidden` and `aria-expanded` are rendered once
 for the opening state and belong to the `Panel` hook after that, re-applied on every `updated/0` —
-the same reason the HP bar's sweep has to be watched. The arrow turns off `aria-expanded`, so what
-the mark shows and what a screen reader is told cannot come apart.
+the same reason the HP bar's sweep has to be watched. What the reader last did is kept under
+`panel:<id>` in `localStorage` and beats the template on the next mount, so a fold survives a
+refresh and a walk away; the id keys the PANEL, not whose record it is.
+
+The whole header band is the control, and it is a BUTTON. It goes nowhere, and a link would say it
+did: Space activates a button and scrolls a link, which is the same reason `PanelFocus` refuses to
+focus one. `aria-expanded` sits on the header and IS the state — the chevron turns off it, and so
+does the band beneath it, which a shut panel does not draw because it is closing off nothing.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.
