@@ -227,8 +227,6 @@
     border-bottom: none;
 }
 
-/* Only the colour moves. The taper below is a background IMAGE, and a `background` shorthand here
-   would throw it away on the first frame. */
 @keyframes danger-pulse {
 
     0%,
@@ -245,20 +243,16 @@
     padding: 10px 12px;
 }
 
-/* A row in danger, and an entry that ended in an ambush: one mark, in two places.
-   The ground fades out at both ends rather than stopping at an edge, so there is no box to round
-   and nothing to pad or pull back — the row keeps exactly the shape it has when nothing is wrong,
-   which is the whole point: going low should colour a row, not move it.
-   The fade is the PANEL's own colour painted back over the wash, so it needs the row to be sitting
-   on a panel. Both of these are. */
+/* A row in danger, and an entry that ended in an ambush: one mark, in two places. A row runs the
+   full width of its panel, so the ground simply fills it — nothing to round, nothing to pad or pull
+   back, and the row keeps exactly the shape it has when nothing is wrong. Going low should colour a
+   row, not move it.
+   Clipped to the padding box, because the dashed rule beneath belongs to the list and not to this
+   row: left to the border box, the ground shows through the gaps in the dashes and turns them red. */
 .stat-row.danger,
 ol.chronicle li.ambushed {
     background-color: var(--danger-wash);
-    background-image: linear-gradient(90deg,
-            var(--bg-panel) 0,
-            transparent 24px,
-            transparent calc(100% - 24px),
-            var(--bg-panel) 100%);
+    background-clip: padding-box;
 }
 
 .stat-row.danger {
