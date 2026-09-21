@@ -118,15 +118,11 @@ p.last {
 }
 
 /* ===== Utilities =====
- * Not the game's vocabulary and not filed with it. What follows this section names things the
- * GAME knows about — a purse, an ambush, a blade — and every one of them is a value a player
- * reads. These name things the PAGE knows about, and a reader is not meant to read them at all.
- *
- * `.muted` is the whole of it: what is not a value, standing where a value would be. Two things
- * are — the "-" in a shop column for an item that grants no modifier, and the bullet between an
- * effect's name and what it does. One is an absence and the other is punctuation, and neither is
- * a quantity anybody reads. It takes no weight, because weight is for a figure competing inside a
- * sentence and both of these are the opposite of one. */
+ * Not the game's vocabulary and not filed with it. What follows names things a PLAYER reads — a
+ * purse, an ambush, a blade. These name things the PAGE knows, and are not meant to be read at
+ * all: `.muted` is what is not a value standing where one would be (the "-" in a shop column, the
+ * bullet between an effect's name and what it does), and the build classes say which server is
+ * answering. None of them takes weight, which is for a figure competing inside a sentence. */
 .muted {
     color: var(--text-muted) !important;
 }

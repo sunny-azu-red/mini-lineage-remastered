@@ -4,16 +4,11 @@
  * All CSS custom properties (variables) live here.
  * Every other CSS file reads from these tokens.
  *
- * NAMED FOR THE ROLE, NOT THE FAMILY: --<role>-<name>, never --<name>-<role>.
- * The roles are --text-, --bg-, --border-, --wash-, --bar-, --glow-, --shadow-, --focus-, and
- * the shape and type ones below. Type `color:` and you want a --text-; there is no second place
- * to look and no second word order to remember. It also keeps one family honest across roles:
- * HP is --text-hp in a sentence and --bar-hp in a meter, and neither can be mistaken for the
- * other, which is exactly what --text-hp beside --hp-color used to invite.
- *
- * The one exception is GOLD, and it is an exception because it is a hue rather than a role: the
- * accent is deliberately text, border, ground and glow, and prefixing it would mean four tokens
- * holding one colour. A token is either a hue or a role; gold is the only hue.
+ * Named for its ROLE, never its family: --<role>-<name>, the roles being --text- --bg- --border-
+ * --wash- --bar- --glow- --shadow- --focus-. Type `color:` and there is one prefix to reach for,
+ * and one family stays honest across roles: HP is --text-hp in a sentence and --bar-hp in a meter,
+ * where --text-hp beside --hp-color invited exactly the mix-up it sounds like. Gold is the one
+ * exception, a hue rather than a role, being deliberately text, border, ground and glow at once.
  * ========================================================================
  */
 
@@ -59,17 +54,12 @@
     --gold-dim: #7a6230;
 
     /* ===== Text =====
-     * Three steps of prose, then the values. The three steps are one hue at one saturation and
-     * differ only in lightness: quieter text should get quieter, not bluer, and the lower two used
-     * to swing to hue 219 under a primary at hue 40.
-     * The six values below are peers — they land in the same sentence — so they share a lightness
-     * and so read at one contrast, 5.2 on the panel for every one of them: L* 58.0 to 58.1, end to
-     * end. They had ranged over L* 57 to 66, which is what made the tally whisper. Two of them sat
-     * under the bars until the names were made uniform, which is the sort of thing a family-first
-     * name hides: `--critical` filed nowhere in particular, `--text-critical` filed with its peers.
-     * Chroma is NOT shared: each runs as far as sRGB allows, up to 72. Equalising it was the wrong
-     * goal — teal tops out near 39 whatever the lightness, so a shared chroma is a chroma of 39,
-     * and the whole set goes pale to meet the one hue that cannot keep up. */
+     * Three steps of prose: one hue at one saturation, differing only in lightness, because
+     * quieter text should get quieter and not bluer. Then the six values, peers because they land
+     * in one sentence — L* 58.0 to 58.1 end to end, so all six read at 5.2 on the panel, where
+     * they had ranged 57 to 66 and the tally whispered. Chroma is NOT shared: each runs to its own
+     * sRGB ceiling, since teal tops out near 39 at any lightness and equalising drags the whole
+     * set down to meet the one hue that cannot keep up. */
     --text-primary: #d4d0c8;
     --text-secondary: #a3a099;
     --text-muted: #6b6861;
