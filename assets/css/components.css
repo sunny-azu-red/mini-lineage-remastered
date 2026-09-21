@@ -526,6 +526,12 @@ ol.chronicle {
    margin up to the box's own padding, which is already holding that gap. */
 /* Rows, exactly as the sidebar's stats are rows: a dashed rule between them and none around the
    outside, so the list reads as a run of separate things rather than one block of prose. */
+/* What was waiting at the end of a fight speaks in the alert's own voice, as it did while the
+   fight was happening. */
+ol.chronicle .ambush {
+    color: var(--danger-text);
+}
+
 ol.chronicle li {
     padding: 12px;
     position: relative;

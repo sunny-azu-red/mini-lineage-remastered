@@ -174,7 +174,7 @@ defmodule MiniLineageWeb.Screens.Record do
             <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
               fight.narrative.kill_line
             )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
-            <span :if={fight.narrative.ambush_line}>{raw(fight.narrative.ambush_line)}</span>
+            <span :if={fight.narrative.ambush_line} class="ambush">{raw(fight.narrative.ambush_line)}</span>
           </li>
         </ol>
       <% end %>

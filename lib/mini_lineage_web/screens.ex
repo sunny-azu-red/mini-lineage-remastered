@@ -194,9 +194,12 @@ defmodule MiniLineageWeb.Screens do
     <.battle_narrative :if={@view.last_battle} narrative={@view.last_battle.narrative} />
 
     <%= if @view.ambushed do %>
+      <%!-- The glyph belongs to the line, not to this alert: the Chronicle tells the same line
+            later and would otherwise tell it bare. --%>
       <div class="alert alert-danger">
-        💢 {raw(
-          (@view.last_battle && @view.last_battle.narrative.ambush_line) || "You are being ambushed!"
+        {raw(
+          (@view.last_battle && @view.last_battle.narrative.ambush_line) ||
+            "💢 You are being ambushed!"
         )}
       </div>
       <div class="action-links">

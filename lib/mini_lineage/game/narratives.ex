@@ -80,13 +80,13 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @ambush [
-    "Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.",
-    "You forgot to check your back and you get stormed by {ambushEnemyGroup}.",
-    "You find yourself in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
-    "As you were walking along {ambushEnemyGroup} jumped out of the bushes.",
-    "You reached a dead-end and while turning around, you find yourself cornered by {ambushEnemyGroup}.",
-    "The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before you!",
-    "An arrow whistles past your ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
+    "💢 Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.",
+    "💢 You forgot to check your back and you get stormed by {ambushEnemyGroup}.",
+    "💢 You find yourself in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
+    "💢 As you were walking along {ambushEnemyGroup} jumped out of the bushes.",
+    "💢 You reached a dead-end and while turning around, you find yourself cornered by {ambushEnemyGroup}.",
+    "💢 The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before you!",
+    "💢 An arrow whistles past your ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
   ]
 
   @critical [
