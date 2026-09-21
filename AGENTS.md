@@ -20,7 +20,8 @@ list wins — several generator defaults do not exist here.
   everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the run's own four
   live in `Screens` itself, and the pages that outlive a run — `Screens.Shop`, `Screens.Record`,
   `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
-  own (the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in `Controls`.
+  own (the panel card, the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in
+  `Controls`.
   `Screens.aside/1` is the same dispatch for what a screen puts BELOW its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
   than everything else on that page put together and crowds out what the panel is named for.
@@ -272,6 +273,28 @@ check downstream compared the wrong moment. The attribute is what the server wro
 what the animation is showing. For the same reason a check against the BOARD waits rather than
 reads once: refreshes are coalesced, so a run disqualified a moment ago can still be on the copy
 that page was served.
+
+**Every panel in the game is one component.** `Controls.panel/1` draws the card — the header band,
+the title, the body — and the differences are options: `heading` for the screen's own h1, and only
+that one, `collapsible` and `collapsed` for a header that folds, `max_height` for a body that
+scrolls, `stick_to_bottom` for a log that opens on its newest line rather than its first. `id`
+names the PANEL, which is what its hook needs; `body_id` and everything else handed to it land on
+the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the data
+attributes a browser test reads. A panel takes a hook only when something about it moves, so the
+error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
+
+The cap belongs to the body and never to what it holds: the scrollbar then sits against the panel's
+edge rather than inside the body's padding.
+
+**A collapse is the reader's, not the template's.** `hidden` and `aria-expanded` are rendered once
+for the opening state and belong to the `Panel` hook after that, re-applied on every `updated/0` —
+the same reason the HP bar's sweep has to be watched. The arrow turns off `aria-expanded`, so what
+the mark shows and what a screen reader is told cannot come apart.
+
+**`class` and `style` render whatever they are given.** Every other attribute disappears when its
+value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.
+Build them before the tag — `classes/1` and `cap/1` in `Controls` — or spread a keyword list into
+it, which contributes no attribute at all when it is empty.
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 

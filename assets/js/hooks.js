@@ -300,22 +300,35 @@ export const AnimatedValues = {
 };
 
 /**
- * A log that opens on its newest line, the way a chat box does. A run's Chronicle is as long as the
- * run was, so without this a reader lands on the first fight of a hundred and has to scroll to find
- * the one that just happened — or the one that ended it.
+ * A panel that does something: collapses on a click of its own header, and follows its content down
+ * when it is a log rather than a document. Both are re-applied after every patch — the server
+ * renders the panel's opening state from the template, and the reader's is newer than that.
  */
-export const ScrollToLatest = {
+export const Panel = {
     mounted() {
-        this.toBottom();
+        this.toggle = this.el.querySelector(':scope > .panel-header .panel-toggle');
+        this.open = !this.toggle || this.toggle.getAttribute('aria-expanded') === 'true';
+        this.toggle?.addEventListener('click', () => this.show(!this.open));
+        this.show(this.open);
     },
     updated() {
-        this.toBottom();
+        this.show(this.open);
     },
-    toBottom() {
-        this.el.scrollTop = this.el.scrollHeight;
-        // And again next frame: the heading fonts arrive after mount, and every line they reflow
-        // moves the bottom out from under the first attempt.
-        requestAnimationFrame(() => (this.el.scrollTop = this.el.scrollHeight));
+    show(open) {
+        this.open = open;
+        const body = this.el.querySelector(':scope > .panel-body');
+        if (this.toggle) {
+            this.toggle.setAttribute('aria-expanded', String(open));
+            body.hidden = !open;
+        }
+
+        // A shut panel has no height to scroll, so the follow happens on the way open as well.
+        if (open && this.el.dataset.stick === 'true') {
+            body.scrollTop = body.scrollHeight;
+            // And again next frame: the heading fonts arrive after mount, and every line they
+            // reflow moves the bottom out from under the first attempt.
+            requestAnimationFrame(() => (body.scrollTop = body.scrollHeight));
+        }
     },
 };
 
@@ -345,5 +358,5 @@ function localDate(at) {
 }
 
 export const hooks = {
-    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, ScrollToLatest, LocalTime,
+    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, Panel, LocalTime,
 };

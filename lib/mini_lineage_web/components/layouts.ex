@@ -63,34 +63,31 @@ defmodule MiniLineageWeb.Layouts do
           />
 
           <div id="main">
-            <div class="panel">
-              <div class="panel-header flex">
-                <h1 class="header-name">{@title}</h1>
+            <%!-- The body needs no wrapper of its own: `h2:first-child` drops its top margin, and
+                  an extra element would qualify every screen's first heading even under an alert.
+                  The data attributes mirror live state, so a browser test need not scrape prose. --%>
+            <Controls.panel
+              title={@title}
+              heading
+              body_id="screen"
+              phx-hook="PanelFocus"
+              data-screen={@screen}
+              data-started={to_string(@view.started)}
+              data-dead={to_string(@view[:dead] || false)}
+              data-ambushed={to_string(@view[:ambushed] || false)}
+              data-level={@view[:level]}
+              data-health={@view[:health]}
+              data-max-health={@view[:max_health]}
+              data-adena={@view[:adena]}
+              data-battles={@view[:counters] && @view.counters.total_battles}
+            >
+              <:header>
                 <div class="header-effects" id="effects" phx-hook="EffectTimers">
                   <.effect_icon :for={effect <- effects_of(@view)} effect={effect} />
                 </div>
-              </div>
-
-              <%!-- No wrapper of its own: `h2:first-child` drops its top margin, and an extra
-                    element would qualify every screen's first heading even under an alert. The
-                    data attributes mirror live state, so a browser test need not scrape prose. --%>
-              <div
-                class="panel-body"
-                id="screen"
-                phx-hook="PanelFocus"
-                data-screen={@screen}
-                data-started={to_string(@view.started)}
-                data-dead={to_string(@view[:dead] || false)}
-                data-ambushed={to_string(@view[:ambushed] || false)}
-                data-level={@view[:level]}
-                data-health={@view[:health]}
-                data-max-health={@view[:max_health]}
-                data-adena={@view[:adena]}
-                data-battles={@view[:counters] && @view.counters.total_battles}
-              >
-                {render_slot(@inner_block)}
-              </div>
-            </div>
+              </:header>
+              {render_slot(@inner_block)}
+            </Controls.panel>
 
             {render_slot(@aside)}
 
@@ -130,94 +127,84 @@ defmodule MiniLineageWeb.Layouts do
 
     ~H"""
     <div id="sidebar" phx-hook="AnimatedValues">
-      <div class="panel status-panel">
-        <div class="panel-header flex">
-          <span class="header-name">{@view.name}</span>
-        </div>
-        <div class="panel-body small">
-          <div class="stat-row">
-            <span class="stat-label">Race</span>
-            <span class="stat-value">
-              {if @view.dead, do: "☠️", else: @view.race_emoji}
-              <%!-- Flush against the anchor: a newline inside one renders as a space, and the
+      <Controls.panel title={@view.name} class="status-panel" body_class="small">
+        <div class="stat-row">
+          <span class="stat-label">Race</span>
+          <span class="stat-value">
+            {if @view.dead, do: "☠️", else: @view.race_emoji}
+            <%!-- Flush against the anchor: a newline inside one renders as a space, and the
                     underline runs through it. --%>
-              <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
-              <span data-key="level" data-value={@view.level}>{@level}</span></.link>
+            <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
+            <span data-key="level" data-value={@view.level}>{@level}</span></.link>
+          </span>
+        </div>
+
+        <div class={"stat-row bar#{if @view.low_health, do: " danger"}"}>
+          <span class="stat-label">HP</span>
+          <div class="bar-track" id="hp-track">
+            <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
+            <span class="bar-text">
+              <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span
+                id="status-max-hp"
+                data-key="max-hp"
+                data-value={@view.max_health}
+              >{Format.number(@view.max_health)}</span>
             </span>
           </div>
+        </div>
 
-          <div class={"stat-row bar#{if @view.low_health, do: " danger"}"}>
-            <span class="stat-label">HP</span>
-            <div class="bar-track" id="hp-track">
-              <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
-              <span class="bar-text">
-                <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span
-                  id="status-max-hp"
-                  data-key="max-hp"
-                  data-value={@view.max_health}
-                >{Format.number(@view.max_health)}</span>
-              </span>
+        <div class="stat-row bar">
+          <span class="stat-label">XP</span>
+          <div class="bar-track">
+            <div
+              class="bar xp-bar"
+              id="xp-bar"
+              style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
+              data-level={@view.level}
+            >
             </div>
-          </div>
-
-          <div class="stat-row bar">
-            <span class="stat-label">XP</span>
-            <div class="bar-track">
-              <div
-                class="bar xp-bar"
-                id="xp-bar"
-                style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
-                data-level={@view.level}
-              >
-              </div>
-              <span class="bar-text">
-                <span
-                  data-key="xp"
-                  data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
-                >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
-                  !@view.is_max_level
-                }>/<span data-key="xp-required" data-value={@view.xp_required}>{Format.number(
-                  @view.xp_required
-                )}</span></span>
-              </span>
-            </div>
-          </div>
-
-          <div class="stat-row">
-            <span class="stat-label">Adena</span>
-            <span class="stat-value gold">🪙
-            <span data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
-              @view.adena
-            )}</span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel inventory-panel">
-        <div class="panel-header flex">
-          <span class="header-name">Inventory</span>
-        </div>
-        <div class="panel-body small">
-          <div class="stat-row">
-            <span class="stat-value" title="Equipped Armor">
-              {@view.armor.emoji} {@view.armor.name}
-              <span :if={(@view.armor.regen || 0) > 0} class="heal">+<span
-                data-key="armor-regen"
-                data-value={@view.armor.regen}
-              >{@view.armor.regen}</span></span>
-            </span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-value" title="Equipped Weapon">
-              {@view.weapon.emoji} {@view.weapon.name}
-              <span :if={(@view.weapon.crit || 0) > 0} class="crit"><span
-                data-key="weapon-crit"
-                data-value={@view.weapon.crit}
-              >{@view.weapon.crit}</span>%</span>
+            <span class="bar-text">
+              <span
+                data-key="xp"
+                data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
+              >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
+                !@view.is_max_level
+              }>/<span data-key="xp-required" data-value={@view.xp_required}>{Format.number(
+                @view.xp_required
+              )}</span></span>
             </span>
           </div>
         </div>
-      </div>
+
+        <div class="stat-row">
+          <span class="stat-label">Adena</span>
+          <span class="stat-value gold">🪙
+          <span data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
+            @view.adena
+          )}</span></span>
+        </div>
+      </Controls.panel>
+
+      <Controls.panel title="Inventory" class="inventory-panel" body_class="small">
+        <div class="stat-row">
+          <span class="stat-value" title="Equipped Armor">
+            {@view.armor.emoji} {@view.armor.name}
+            <span :if={(@view.armor.regen || 0) > 0} class="heal">+<span
+              data-key="armor-regen"
+              data-value={@view.armor.regen}
+            >{@view.armor.regen}</span></span>
+          </span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-value" title="Equipped Weapon">
+            {@view.weapon.emoji} {@view.weapon.name}
+            <span :if={(@view.weapon.crit || 0) > 0} class="crit"><span
+              data-key="weapon-crit"
+              data-value={@view.weapon.crit}
+            >{@view.weapon.crit}</span>%</span>
+          </span>
+        </div>
+      </Controls.panel>
     </div>
     """
   end

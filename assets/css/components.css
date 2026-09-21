@@ -35,6 +35,50 @@
     align-items: center;
 }
 
+/* Given a cap, a body scrolls — and the bar then sits against the panel's edge rather than inside
+   the body's padding, which is the whole reason the cap belongs here and not on what it holds. */
+.panel-body.scrolls {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* A header that is a button has to stop looking like one and go on looking like a header. */
+.panel-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.panel-toggle:hover {
+    color: var(--gold-hover);
+}
+
+/* The arrow turns off `aria-expanded`, which IS the state — so what the mark shows and what a
+   screen reader is told cannot come apart. */
+.panel-arrow {
+    flex-shrink: 0;
+    font-size: 0.7em;
+    transition: transform 120ms ease;
+}
+
+.panel-toggle[aria-expanded="false"] .panel-arrow {
+    transform: rotate(-90deg);
+}
+
 .header-effects {
     display: inline-flex;
     align-items: center;
@@ -379,47 +423,48 @@
     color: var(--hp-color);
 }
 
-/* A run's fights, oldest first, in a box that opens on the newest. Ordered because a chronicle is,
-   but never numbered: the count is already in the paragraph above it. Capped and scrolled, so the
-   page is the same height whether a run fought nine times or nine hundred — the panel around it is
-   the box, so this needs no edge of its own. */
+/* A run's fights, oldest first. Ordered because a chronicle is, but never numbered: the count is
+   already in the paragraph above it. The cap and the scroll are the panel's, not this list's. */
 ol.chronicle {
     margin: 0;
     padding: 0;
     list-style: none;
-    max-height: 260px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+}
+
+/* An entry borrows the alert's ground, not its voice: it is prose carrying its own value colours,
+   and an alert's text colour would speak over every one of them. */
+ol.chronicle .alert {
+    color: inherit;
 }
 
 /* A scrollbar is chrome, so it wears the controls' own violet and warms to gold under the pointer,
-   the way the secondary button does — never the accent at rest. Firefox reads the two properties,
-   everything else the pseudo-elements, and a browser that knows neither keeps its own. */
+   the way the secondary button does — never the accent at rest. Left at the platform's width: a
+   bar thin enough to look tidy is one you have to aim at. Firefox reads the standard property and
+   Chromium prefers it over the pseudo-elements, which are there for Safari, which has neither. */
 .table-container,
-ol.chronicle {
-    scrollbar-width: thin;
+.panel-body.scrolls {
     scrollbar-color: var(--border-arcane-bright) transparent;
 }
 
 .table-container::-webkit-scrollbar,
-ol.chronicle::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.panel-body.scrolls::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
 }
 
 .table-container::-webkit-scrollbar-track,
-ol.chronicle::-webkit-scrollbar-track {
+.panel-body.scrolls::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .table-container::-webkit-scrollbar-thumb,
-ol.chronicle::-webkit-scrollbar-thumb {
+.panel-body.scrolls::-webkit-scrollbar-thumb {
     background: var(--border-arcane-bright);
     border-radius: var(--radius);
 }
 
 .table-container::-webkit-scrollbar-thumb:hover,
-ol.chronicle::-webkit-scrollbar-thumb:hover {
+.panel-body.scrolls::-webkit-scrollbar-thumb:hover {
     background: var(--gold-dim);
 }
 

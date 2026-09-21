@@ -99,6 +99,9 @@ try {
     check('...while the watcher stays a visitor, not that character',
         await watcher.evaluate(() => document.querySelector('#screen')?.dataset.started) === 'false');
 
+    // The Chronicle opens shut, so a reader watching one has to ask for it first.
+    await watcher.click('#chronicle .panel-toggle');
+
     // The chronicle is APPENDED to while it is being read, never re-read: the reader keeps the
     // fights it already has. Dice-proof — the line is added whether that blow lands or kills.
     const lines = () => watcher.locator('#main ol.chronicle li').count();
@@ -113,8 +116,8 @@ try {
     // And follows it down, the way a chat box does: the line that just arrived is the one on screen.
     // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go.
     const log = await watcher.evaluate(() => {
-        const ol = document.querySelector('#main ol.chronicle');
-        return { hidden: ol.scrollHeight - ol.clientHeight, at: ol.scrollTop };
+        const body = document.querySelector('#chronicle .panel-body');
+        return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop };
     });
     check('...and follows it down without the reader scrolling',
         log.hidden > 0 && log.hidden - log.at <= 2,

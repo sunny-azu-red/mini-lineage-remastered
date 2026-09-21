@@ -151,28 +151,33 @@ defmodule MiniLineageWeb.Screens.Record do
   """
   def chronicle(assigns) do
     ~H"""
-    <div class="panel">
-      <div class="panel-header flex">
-        <span class="header-name">The Chronicle</span>
-      </div>
-      <div class="panel-body">
-        <%= if @record_log == [] do %>
-          <p class="last">Not one blow struck. This tale is over before it began.</p>
-        <% else %>
-          <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
-                labels rather than history. A line added to `Narrative.build_battle/3` belongs here
-                too, or the chronicle quietly stops telling the whole of it. --%>
-          <ol id="chronicle" class="chronicle" phx-hook="ScrollToLatest">
-            <li :for={fight <- @record_log} class={if fight.ambushed, do: "alert alert-danger"}>
-              <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
-                fight.narrative.kill_line
-              )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
-              <span :if={fight.narrative.ambush_line}>{raw(fight.narrative.ambush_line)}</span>
-            </li>
-          </ol>
-        <% end %>
-      </div>
-    </div>
+    <Controls.panel
+      id="chronicle"
+      title="The Chronicle"
+      collapsible
+      collapsed
+      max_height={260}
+      stick_to_bottom
+    >
+      <%= if @record_log == [] do %>
+        <p class="last">Not one blow struck. This tale is over before it began.</p>
+      <% else %>
+        <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
+              labels rather than history. A line added to `Narrative.build_battle/3` belongs here
+              too, or the chronicle quietly stops telling the whole of it. --%>
+        <ol class="chronicle">
+          <li
+            :for={fight <- @record_log}
+            {if fight.ambushed, do: [class: "alert alert-danger"], else: []}
+          >
+            <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
+              fight.narrative.kill_line
+            )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
+            <span :if={fight.narrative.ambush_line}>{raw(fight.narrative.ambush_line)}</span>
+          </li>
+        </ol>
+      <% end %>
+    </Controls.panel>
     """
   end
 

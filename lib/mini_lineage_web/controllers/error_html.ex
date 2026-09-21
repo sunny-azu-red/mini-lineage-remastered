@@ -43,18 +43,14 @@ defmodule MiniLineageWeb.ErrorHTML do
 
             <div id="content">
               <div id="main">
-                <div class="panel">
-                  <div class="panel-header flex">
-                    <h1 class="header-name">Error</h1>
+                <Controls.panel title="Error" heading>
+                  <:header>
                     <div class="header-effects" id="effects"></div>
-                  </div>
-
-                  <div class="panel-body">
-                    <p>{@message}</p>
-                    <pre :if={@detail} class="code-block">{@detail}</pre>
-                    <p class="last back"><a href={~p"/"}>Return to safer lands</a></p>
-                  </div>
-                </div>
+                  </:header>
+                  <p>{@message}</p>
+                  <pre :if={@detail} class="code-block">{@detail}</pre>
+                  <p class="last back"><a href={~p"/"}>Return to safer lands</a></p>
+                </Controls.panel>
 
                 <Layouts.footer />
               </div>

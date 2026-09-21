@@ -444,11 +444,20 @@ try {
     const chronicle = (await page.textContent('#main ol.chronicle'))?.replace(/\s+/g, ' ') ?? '';
     check('...the whole of each one, not only how it ended',
         /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
+
+    // It arrives folded away — it is the longest thing on the page and the record is what the page
+    // is for — and its own header is what opens it.
+    check('...folded into a panel of its own until it is asked for',
+        await page.locator('#chronicle .panel-body').isHidden());
+    await page.click('#chronicle .panel-toggle');
+    check('...which the Chronicle\'s own header opens',
+        await page.locator('#chronicle .panel-body').isVisible());
+
     // A log, not a wall: the page is the same height however long the run was, and it opens on the
     // fight that ended this one rather than on the first blow of it.
     const log = await page.evaluate(() => {
-        const ol = document.querySelector('#main ol.chronicle');
-        return { hidden: ol.scrollHeight - ol.clientHeight, fromBottom: ol.scrollHeight - ol.clientHeight - ol.scrollTop };
+        const body = document.querySelector('#chronicle .panel-body');
+        return { hidden: body.scrollHeight - body.clientHeight, fromBottom: body.scrollHeight - body.clientHeight - body.scrollTop };
     });
     check('...in a box the run cannot outgrow', log.hidden > 0, `${log.hidden}px of it scrolled away`);
     check('...already scrolled to the last fight it ever had', log.fromBottom <= 2,

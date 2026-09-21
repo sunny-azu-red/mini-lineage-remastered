@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
-  What every screen reaches for and no screen owns: the alerts, the one action form behind Town and
-  the shops, the way back, and a stamp on the reader's own clock.
+  What every screen reaches for and no screen owns: the panel card itself, the alerts, the one
+  action form behind Town and the shops, the way back, and a stamp on the reader's own clock.
 
   `raw/1` appears wherever a narrative or flash is rendered. Those strings are always composed by
   the server from the template tables — never from anything a player typed.
@@ -10,6 +10,87 @@ defmodule MiniLineageWeb.Controls do
 
   alias MiniLineage.Game.Format
   alias MiniLineageWeb.Paths
+
+  # ------------------------------------------------------------------- panels
+
+  @doc """
+  The card every part of the game is drawn on: a header band and a body under it.
+
+  `id` names the PANEL and is what its hook needs; `body_id` and every other attribute given here —
+  the body's own hook, its data attributes — land on the BODY, which is what a screen is addressed
+  by. A panel carries a hook only when something about it moves, so the error page, which has no
+  LiveView behind it, renders one that cannot ask for JavaScript.
+  """
+  attr :id, :string, default: nil
+  # The BODY's own id, kept apart from the panel's: the panel's is what the hook needs, and the
+  # body's is what the screen is addressed by.
+  attr :body_id, :string, default: nil
+  attr :title, :string, required: true
+
+  # The screen the panel names takes the page's one h1; every other panel titles itself with a span.
+  attr :heading, :boolean, default: false
+  attr :class, :any, default: nil
+  attr :body_class, :any, default: nil
+  attr :collapsible, :boolean, default: false
+  # Where a collapsible panel starts. The reader's own toggling outlives a patch but not a mount.
+  attr :collapsed, :boolean, default: false
+  # Pixels. Given one, the BODY scrolls — so the bar sits against the panel's edge rather than
+  # inside the body's padding, and the page is the same height however much is in it.
+  attr :max_height, :integer, default: nil
+  # A log rather than a document: it opens on its newest line and follows it down.
+  attr :stick_to_bottom, :boolean, default: false
+  attr :rest, :global
+  slot :header
+  slot :inner_block, required: true
+
+  def panel(assigns) do
+    ~H"""
+    <div
+      id={@id}
+      class={classes(["panel", @class])}
+      phx-hook={if @collapsible or @stick_to_bottom, do: "Panel"}
+      data-stick={if @stick_to_bottom, do: "true"}
+    >
+      <div class="panel-header flex">
+        <h1 :if={@heading} class="header-name" phx-no-format><.panel_title title={@title} collapsible={@collapsible} collapsed={@collapsed} /></h1>
+        <span :if={!@heading} class="header-name" phx-no-format><.panel_title title={@title} collapsible={@collapsible} collapsed={@collapsed} /></span>
+        {render_slot(@header)}
+      </div>
+
+      <div
+        id={@body_id}
+        class={classes(["panel-body", @body_class, @max_height && "scrolls"])}
+        hidden={@collapsible and @collapsed}
+        {cap(@max_height)}
+        {@rest}
+      >
+        {render_slot(@inner_block)}
+      </div>
+    </div>
+    """
+  end
+
+  # `class` and `style` are the two attributes HEEx renders whatever their value, so a nil in either
+  # leaves a stray `class="panel "` or `style=""` on every panel in the game. Both are built first,
+  # and an absent cap contributes no attribute rather than an empty one.
+  defp classes(parts), do: parts |> Enum.reject(&(&1 in [nil, false, ""])) |> Enum.join(" ")
+
+  defp cap(nil), do: []
+  defp cap(pixels), do: [style: "max-height: #{pixels}px"]
+
+  attr :title, :string, required: true
+  attr :collapsible, :boolean, required: true
+  attr :collapsed, :boolean, required: true
+
+  # `aria-expanded` IS the state: the arrow turns off it, so what the mark says and what a screen
+  # reader is told cannot come apart.
+  defp panel_title(%{collapsible: false} = assigns), do: ~H"{@title}"
+
+  defp panel_title(assigns) do
+    ~H"""
+    <button type="button" class="panel-toggle" aria-expanded={to_string(!@collapsed)} phx-no-format><span class="panel-arrow" aria-hidden="true">▾</span>{@title}</button>
+    """
+  end
 
   @doc "Whose hall this is. Every place that names one says it the same way."
   def hall_of(nil), do: "All"
