@@ -271,7 +271,7 @@ defmodule MiniLineageWeb.Layouts do
         class="version-link"
       >{@version}</a>
       <span :if={!@commit_url} class={Version.build_class(@version)}>{@version}</span>
-      © 2005 &ndash; {@year}
+      &copy; 2005 &ndash; {@year}
     </div>
     """
   end

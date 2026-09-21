@@ -182,14 +182,13 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
-**Write the character; reach for an entity only when writing it plainly would cost something.**
-Three things cost: a character the markup RESERVES (`&` is `&amp;`), a character that is INVISIBLE
-in the source (a non-breaking space has to be `&nbsp;`, or nobody can see it is there), and a
-character CONFUSABLE at a glance with another (`&ndash;` in the copyright's year range, because an
-en dash, an em dash and a hyphen are one smudge apart in a monospace editor and the source should
-say which was meant). Everything else is itself: `©`, `•`, and every emoji in the game. That is
-why the Halls' online mark is `•` and not `&bull;` — nothing else looks like a bullet, so spelling
-it out buys nothing and only makes one glyph read differently from the fifty around it.
+**If a character has a standard named entity, write the entity.** `&amp;` `&copy;` `&ndash;`
+`&bull;`, and `&nbsp;` `&mdash;` `&hellip;` if ever needed. Everything else is written as it is:
+ASCII prose, and every emoji in the game, none of which has a name to spell. The rule is worth
+having precisely because it asks nothing of whoever applies it — no judgement about which glyphs
+are confusable or which are legible enough to leave bare, both of which are arguments rather than
+rules, and both of which had already produced a footer with `&copy;` three lines from a literal
+`•`. A named entity exists or it does not, and that decides it.
 
 **The game's own prose joins its clauses; it does not hold them apart with a dash.** An em dash in
 a sentence a PLAYER reads becomes `because`, `and` or `nor`: "None of it fades, nor does what it

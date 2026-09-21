@@ -113,7 +113,7 @@ defmodule MiniLineageWeb.Screens.Halls do
           class={["online", @row.online && "lit"]}
           title={@row.online && "Online right now"}
           aria-hidden={if @row.online, do: "false", else: "true"}
-        >•</span>
+        >&bull;</span>
       </td>
       <td class="num level">
         <span data-key={"level-#{@row.id}"} data-value={@row.level}>{Format.number(@row.level)}</span>

@@ -187,7 +187,7 @@ defmodule MiniLineageWeb.Screens.Record do
           data-remaining-ms={effect.remaining_ms}
         >
           <strong class={effect.type}>{effect.emoji} {effect.label}</strong>
-          <span class="muted">•</span> {raw(Narrative.build_effect(effect, @voice))}
+          <span class="muted">&bull;</span> {raw(Narrative.build_effect(effect, @voice))}
           <%!-- Only the figure is dimmed, the way a date is: the words around it are the sentence,
                 and a whole clause in grey reads as an aside rather than the end of one. --%>
           <span :if={effect.remaining_ms}>{lapse(effect.type)}
