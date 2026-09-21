@@ -25,7 +25,7 @@ defmodule MiniLineage.Game.DeathTest do
     player = Player.commit_suicide(living())
 
     assert player.coward
-    assert player.death_reason == "🤡 You took the cowardly way out."
+    assert player.death_reason == Narratives.death_coward()
   end
 
   test "a cheater's line outranks the coward's" do

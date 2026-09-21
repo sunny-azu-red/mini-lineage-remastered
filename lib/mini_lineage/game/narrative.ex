@@ -80,14 +80,17 @@ defmodule MiniLineage.Game.Narrative do
         {to_string(mod.type), Format.modifier(mod.value, Map.get(config, :multiplier?, false))}
       end)
 
-    pronouns = Map.new(voice, fn {part, word} -> {to_string(part), word} end)
-
-    Format.fill_template(Narratives.effect_blurb(effect.id), Map.merge(values, pronouns))
+    Format.fill_template(Narratives.effect_blurb(effect.id), Map.merge(values, pronouns(voice)))
   end
 
   @doc "A death told to whoever is reading it: the fallen player themselves, or anybody else."
-  def death_reason(reason, true), do: reason
-  def death_reason(reason, false), do: Narratives.death_about(reason)
+  def death_reason(nil, _mine?), do: nil
+
+  def death_reason(reason, mine?),
+    do: reason |> Narratives.death_template() |> Format.fill_template(pronouns(mine?))
+
+  defp pronouns(mine?) when is_boolean(mine?), do: mine? |> Narratives.voice() |> pronouns()
+  defp pronouns(voice), do: Map.new(voice, fn {part, word} -> {to_string(part), word} end)
 
   def build_race_traits(race) do
     Format.fill_template(Narratives.race_traits(race.id), %{

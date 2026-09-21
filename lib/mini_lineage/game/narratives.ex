@@ -1,5 +1,6 @@
 defmodule MiniLineage.Game.Narratives do
   @moduledoc "Narrative templates. Each list is drawn from by index, so ORDER is load-bearing."
+  alias MiniLineage.Game.Format
 
   @race_traits %{
     0 =>
@@ -37,33 +38,6 @@ defmodule MiniLineage.Game.Narratives do
       ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_health} Max HP</span> stand between {object} and the dark.)
   }
 
-  # A death said about somebody else. The stored reason is written to the fallen player themselves,
-  # and their record is read by strangers as often as by them — so each one is paired with the same
-  # sentence turned around. Keyed by the string itself: nothing has to be migrated, and a reason
-  # from before this table, or one a test wrote, simply passes through as it stands.
-  @death_voiced %{
-    "🌑 The darkness takes you. Your journey ends here." =>
-      "🌑 The darkness takes them. Their journey ends here.",
-    "👻 Your strength fails, and the world fades to black." =>
-      "👻 Their strength fails, and the world fades to black.",
-    "💀 Fate has claimed your soul. Better luck in the next life." =>
-      "💀 Fate has claimed their soul. Better luck in the next life.",
-    "✨ Your life essence scatters into the aether." =>
-      "✨ Their life essence scatters into the aether.",
-    "🩸 Your story has come to a sudden, bloody conclusion." =>
-      "🩸 Their story has come to a sudden, bloody conclusion.",
-    "🥀 Your light flickers out in the cold silence of the dungeon." =>
-      "🥀 Their light flickers out in the cold silence of the dungeon.",
-    "🪦 You fought bravely... but not bravely enough." =>
-      "🪦 They fought bravely... but not bravely enough.",
-    "🦴 Your bones will decorate this floor for the next adventurer." =>
-      "🦴 Their bones will decorate this floor for the next adventurer.",
-    "🎭 You've met a terrible fate, haven't you?" => "🎭 They met a terrible fate, did they not?",
-    "👾 The gods saw your heresy and cast your memory into oblivion." =>
-      "👾 The gods saw their heresy and cast their memory into oblivion.",
-    "🤡 You took the cowardly way out." => "🤡 They took the cowardly way out."
-  }
-
   @welcome [
     "your destiny awaits in the dark!",
     "the fires of fate burn for you...",
@@ -76,17 +50,40 @@ defmodule MiniLineage.Game.Narratives do
     "your spirit shines in the dark..."
   ]
 
+  # The pronouns every voiced template is filled from. They/them takes the same verb forms as you,
+  # so a sentence written once reads correctly either way — nothing but these words moves.
+  @voices %{
+    true => %{they: "You", them: "you", object: "you", their: "your", whose: "Your"},
+    false => %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
+  }
+
+  # A death is read by whoever opens the record — the fallen player, or a stranger in the Halls —
+  # so it is written once with its pronouns left open rather than twice with them spelled out.
   @death [
-    "🌑 The darkness takes you. Your journey ends here.",
-    "👻 Your strength fails, and the world fades to black.",
-    "💀 Fate has claimed your soul. Better luck in the next life.",
-    "✨ Your life essence scatters into the aether.",
-    "🩸 Your story has come to a sudden, bloody conclusion.",
-    "🥀 Your light flickers out in the cold silence of the dungeon.",
-    "🪦 You fought bravely... but not bravely enough.",
-    "🦴 Your bones will decorate this floor for the next adventurer.",
-    "🎭 You've met a terrible fate, haven't you?"
+    "🌑 The darkness takes {object}. {whose} journey ends here.",
+    "👻 {whose} strength fails, and the world fades to black.",
+    "💀 Fate has claimed {their} soul. Better luck in the next life.",
+    "✨ {whose} life essence scatters into the aether.",
+    "🩸 {whose} story has come to a sudden, bloody conclusion.",
+    "🥀 {whose} light flickers out in the cold silence of the dungeon.",
+    "🪦 {they} fought bravely... but not bravely enough.",
+    "🦴 {whose} bones will decorate this floor for the next adventurer.",
+    "🎭 {they}'ve met a terrible fate, haven't {them}?"
   ]
+
+  # The two endings nobody is dealt: they are reached by doing something, so they are named rather
+  # than drawn, and kept here with the rest of the prose all the same.
+  @death_cheated "👾 The gods saw {their} heresy and cast {their} memory into oblivion."
+  @death_coward "🤡 {they} took the cowardly way out."
+
+  # Every death as it was written before they were templates, mapped back to the template it came
+  # from. Built from the one table above rather than typed out again, so there is still exactly one
+  # place each of these sentences exists.
+  @spoken Map.new(@voices[true], fn {part, word} -> {to_string(part), word} end)
+  @as_written Map.new(
+                [@death_cheated, @death_coward | @death],
+                &{Format.fill_template(&1, @spoken), &1}
+              )
 
   @ambush_low_health [
     "Your warm blood stains the ancient, cold earth of Aden...",
@@ -176,11 +173,21 @@ defmodule MiniLineage.Game.Narratives do
   @doc "What an active effect does, or nil for one nothing has been written about yet."
   def effect_blurb(id), do: Map.get(@effect_blurbs, id)
 
-  @doc "The same death told about somebody else. Anything unrecognised stands as it was written."
-  def death_about(reason), do: Map.get(@death_voiced, reason, reason)
+  @doc """
+  The template a stored reason came from. A run that died before deaths were written this way has
+  the finished second-person sentence on it instead, so each is matched against what it renders as
+  — derived from the one table above, never written down a second time.
+  """
+  def death_template(reason), do: Map.get(@as_written, reason, reason)
 
   def welcome, do: @welcome
   def death, do: @death
+  def death_cheated, do: @death_cheated
+  def death_coward, do: @death_coward
+
+  @doc "The pronoun set a template is filled from: the reader's own record, or somebody else's."
+  def voice(mine?), do: Map.fetch!(@voices, mine?)
+
   def ambush_low_health, do: @ambush_low_health
   def kill, do: @kill
   def deflection, do: @deflection

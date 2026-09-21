@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
   alias MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Format, Narrative}
+  alias MiniLineage.Game.{Format, Narrative, Narratives}
 
   attr :view, :map, required: true
   attr :catalog, :map, required: true
@@ -31,7 +31,9 @@ defmodule MiniLineageWeb.Screens.Record do
         race: race,
         opponent: opponent,
         dead: assigns.view.dead,
-        voice: voice(assigns.mine),
+        # Your own page speaks to you; somebody else's speaks about them. The same set the
+        # narratives are filled from, so a sentence and the page around it cannot disagree.
+        voice: Narratives.voice(assigns.mine),
         # Only the tense moves between a run still going and one that is over.
         defined: if(assigns.view.dead, do: "was", else: "has been"),
         fought: if(assigns.view.dead, do: "fought", else: "have fought"),
@@ -235,15 +237,6 @@ defmodule MiniLineageWeb.Screens.Record do
     </Controls.panel>
     """
   end
-
-  # Your own page speaks to you; somebody else's speaks about them. They/them is not only the right
-  # default for a character whose gender the game never records — it also takes the same verb forms
-  # as "you", so nothing but the pronouns moves between the two.
-  defp voice(true),
-    do: %{they: "You", them: "you", object: "you", their: "your", whose: "Your"}
-
-  defp voice(false),
-    do: %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
 
   attr :entry, :any, required: true
   attr :at, :any, required: true

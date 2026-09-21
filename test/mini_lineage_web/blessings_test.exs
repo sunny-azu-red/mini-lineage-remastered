@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.BlessingsTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Narratives, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Narrative, Narratives, Player, Snapshot}
   alias MiniLineageWeb.Screens.Record
 
   # Carrying exactly what it is handed: a new character is given the Newbie Blessing on the way in,
@@ -144,15 +144,13 @@ defmodule MiniLineageWeb.BlessingsTest do
       assert theirs =~ "They fought bravely"
     end
 
-    # The reasons are stored as written sentences, so a new one added with no turned-around twin
-    # would silently address a stranger as "you" on somebody else's record.
-    test "and every death the game can write has a twin that speaks about them" do
-      cheated = Player.resolve_death_reason(%Player{cheated: true})
-      coward = Player.resolve_death_reason(%Player{coward: true})
+    # A run that died before the reasons were written as templates has the finished second-person
+    # sentence stored on it, and must still be turned around for a stranger.
+    test "even one whose reason was written down before any of this" do
+      as_written = Narrative.death_reason(Narratives.death_coward(), true)
+      section = text(blessings(bearer([]), dead: true, reason: as_written, mine: false))
 
-      for reason <- [cheated.death_reason, coward.death_reason | Narratives.death()] do
-        refute Narratives.death_about(reason) == reason, "#{reason} is never turned around"
-      end
+      assert section =~ "They took the cowardly way out"
     end
   end
 end

@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Actions, Constants, Player, Snapshot}
+  alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Narrative}
   alias MiniLineageWeb.Screens
 
   defp hero do
@@ -48,7 +48,9 @@ defmodule MiniLineageWeb.DeathScreenTest do
         html = html_for(player)
 
         refute html =~ "alert", "#{label} is shown as an alert"
-        assert html =~ ~r|<p[^>]*>\s*#{Regex.escape(player.death_reason)}|, label
+        spoken = Narrative.death_reason(player.death_reason, true)
+
+        assert html =~ ~r|<p[^>]*>\s*#{Regex.escape(spoken)}|, label
       end
     end
 

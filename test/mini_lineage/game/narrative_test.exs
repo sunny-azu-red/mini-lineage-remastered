@@ -188,10 +188,24 @@ defmodule MiniLineage.Game.NarrativeTest do
   end
 
   describe "death lines" do
-    test "every one is real prose, with no placeholder and no blank" do
-      for template <- Narratives.death() do
-        assert unrendered(template) == []
-        refute String.trim(template) == ""
+    # Written once with its pronouns left open, so what has to hold is that it closes — for the
+    # fallen player reading their own record, and for the stranger reading it in the Halls.
+    test "every one is real prose for either reader, with no placeholder and no blank" do
+      for template <- [Narratives.death_cheated(), Narratives.death_coward() | Narratives.death()],
+          mine? <- [true, false] do
+        line = Narrative.death_reason(template, mine?)
+
+        assert unrendered(line) == [],
+               "#{template} left #{inspect(unrendered(line))} for #{mine?}"
+
+        refute String.trim(line) == ""
+      end
+    end
+
+    test "and reads differently depending on who is reading it" do
+      for template <- [Narratives.death_cheated(), Narratives.death_coward() | Narratives.death()] do
+        refute Narrative.death_reason(template, true) == Narrative.death_reason(template, false),
+               "#{template} says the same thing to a stranger as to the run it ended"
       end
     end
 

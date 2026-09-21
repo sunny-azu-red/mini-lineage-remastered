@@ -120,10 +120,10 @@ defmodule MiniLineage.Game.Player do
     do: player
 
   def resolve_death_reason(%{cheated: true} = player),
-    do: %{player | death_reason: "👾 The gods saw your heresy and cast your memory into oblivion."}
+    do: %{player | death_reason: Narratives.death_cheated()}
 
   def resolve_death_reason(%{coward: true} = player),
-    do: %{player | death_reason: "🤡 You took the cowardly way out."}
+    do: %{player | death_reason: Narratives.death_coward()}
 
   def resolve_death_reason(player),
     do: %{player | death_reason: Math.random_element(Narratives.death())}
