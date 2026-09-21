@@ -7,8 +7,11 @@ defmodule MiniLineage.Game.Version do
 
   # What a build with no commit to name calls itself. Baked per environment, so the browser suites'
   # server on 4002 is never mistaken for the dev server on 4000. Safe as compile_env because it is
-  # a constant of the environment, unlike the sha, which changes with every commit.
-  @label Application.compile_env(:mini_lineage, :build_label, "⚡development")
+  # a constant of the environment, unlike the sha, which changes with every commit. The glyph stays
+  # here rather than in the config: one name to set, and the two cannot fall out of step.
+  @name Application.compile_env(:mini_lineage, :build_label, "development")
+  @glyphs %{"development" => "🔥", "testing" => "🍃"}
+  @label Map.get(@glyphs, @name, "⚡") <> @name
 
   @doc """
   APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build — only two
@@ -31,6 +34,14 @@ defmodule MiniLineage.Game.Version do
   a release, and served exception messages to players.
   """
   def debug_build?, do: Application.get_env(:mini_lineage, :debug_build, true)
+
+  @doc """
+  The class the footer's badge wears, or nil for a build that names a commit. Matched against the
+  whole label rather than derived from it, so an APP_VERSION that is not a sha is not mistaken for
+  one of these.
+  """
+  def build_class(@label), do: "build-" <> @name
+  def build_class(_release), do: nil
 
   @doc "A short git sha and nothing else. Gates the footer's commit link."
   def release?(version), do: String.match?(version, ~r/^[0-9a-f]{7}$/i)

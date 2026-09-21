@@ -88,7 +88,7 @@ defmodule MiniLineageWeb.Screens.Tome do
             count={@statistics.total_critical_hits}
             singular="Critical Strike"
             plural="Critical Strikes"
-            class="crits"
+            class="crit"
           /> that turned the tide of every skirmish.
         </p>
         <p>

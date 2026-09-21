@@ -270,7 +270,7 @@ defmodule MiniLineageWeb.Layouts do
         rel="noopener noreferrer"
         class="version-link"
       >{@version}</a>
-      <span :if={!@commit_url} class="version-debug">{@version}</span>
+      <span :if={!@commit_url} class={Version.build_class(@version)}>{@version}</span>
       &copy; 2005 &ndash; {@year}
     </div>
     """

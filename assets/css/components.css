@@ -479,10 +479,6 @@ ol.chronicle li.ambushed {
 }
 
 /* ===== Version Badge ===== */
-.version-debug {
-    color: var(--hp-color);
-}
-
 /* A run's fights, oldest first. Ordered because a chronicle is, but never numbered: the count is
    already in the paragraph above it. The cap and the scroll are the panel's, not this list's. */
 ol.chronicle {

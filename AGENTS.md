@@ -162,13 +162,20 @@ whole point: the group is an observation about today, the name is the thing. A c
 its colour cannot say which of the things wearing it you meant — `.hp` was carrying health, Max HP,
 Physical Attack, deaths, and cheaters struck from the record, and no one of them could be retuned.
 
-So: `.hp .attack .deaths .heretics .debuff` are what a run loses and what takes it; `.heal .regen
-.buff` give it back; `.adena .level .aura` are what it is worth; `.ambush .date .timer` are read but
-not acted on; `.defense .damage` turn things aside; `.battles .kills .players .meals .items .cowards
-.crits` are things counted; `.crit` and `.xp` stand alone; `.item` is what a run carries, quieter
-than the sentence around it because a blade's NAME is not the news, the number beside it is.
-`.muted` is the exception that is not a value at all — by now only the `-` where a shop item has no
-modifier qualifies — and it takes no weight.
+So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal .regen .buff` give
+it back; `.adena .level .aura` are what it is worth; `.ambush .cowards .date .timer` are read but
+not acted on; `.defense .damage` turn things aside; `.battles .kills .players .meals .items` are
+things counted; `.crit` stands alone; `.xp .heretics` are what the arcane touches, earned or
+struck out for; `.item` is what a run carries, quieter than the sentence around it because a
+blade's NAME is not the news, the number beside it is.
+
+These are the game's vocabulary and they are filed under **Values**. What is not a value lives above
+them under **Utilities**, which is a deliberate separation and not a heading: `.muted` is the only
+absence the game has — the `-` in a shop column for an item that grants no modifier — and takes no
+weight, since weight is for a figure competing inside a sentence and that is its opposite.
+`.build-development` and `.build-testing` are there too: which build serves the page is something
+the PAGE knows, not something a player reads. A name that belongs in neither basket belongs in
+neither file.
 
 An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
 vocabulary like any other value. The BADGE over its emoji does not: `--success-text` and

@@ -47,7 +47,8 @@ try {
     // against real data, and every destructive check below it is pointed at the wrong game.
     const footer = await page.textContent('#copyright');
     check('the footer names this as the testing build', /testing/.test(footer ?? ''), footer?.trim());
-    check('...and flags it as a debug build', await page.locator('#copyright .version-debug').count() === 1);
+    check('...and flags it as a debug build, in the colour that build wears',
+        await page.locator('#copyright .build-testing').count() === 1);
 
     // ---- the two adena formatters agree -------------------------------------------------------
     // The count-up animation formats its own frames, so hooks.js carries a second implementation

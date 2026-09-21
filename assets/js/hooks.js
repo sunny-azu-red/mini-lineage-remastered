@@ -16,7 +16,7 @@ export const SoundToggle = {
     render() {
         const on = soundEnabled();
         const title = on ? 'Sound FX Enabled (Click to Mute)' : 'Sound FX Muted (Click to Unmute)';
-        this.el.className = `sound-toggle-btn${on ? '' : ' muted'}`;
+        this.el.className = `sound-toggle-btn${on ? '' : ' silenced'}`;
         this.el.title = title;
         this.el.setAttribute('aria-label', title);
         this.el.textContent = on ? '🔊' : '🔇';

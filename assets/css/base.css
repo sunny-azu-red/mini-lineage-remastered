@@ -117,21 +117,39 @@ p.last {
     border-top: 1px solid var(--border-soft);
 }
 
+/* ===== Utilities =====
+ * Not the game's vocabulary and not filed with it. What follows this section names things the
+ * GAME knows about — a purse, an ambush, a blade — and every one of them is a value a player
+ * reads. These name things the PAGE knows about, and a reader is not meant to read them at all.
+ *
+ * `.muted` is the whole of it: what is not a value, where a value would be. One place uses it —
+ * the "-" in a shop column for an item that grants no modifier — and that is not an oversight,
+ * it is the only thing in the game that is an absence rather than a quantity. It takes no weight,
+ * because weight is for a figure competing inside a sentence and this is the opposite of one. */
+.muted {
+    color: var(--text-muted) !important;
+}
+
+/* Which build is serving the page, in the footer beside the copyright. Not a value either: the
+   player is not meant to act on it, it is there so an unreachable backend still says what is
+   loaded. A release names its commit instead and takes neither. */
+.build-development {
+    color: var(--critical);
+}
+
+.build-testing {
+    color: var(--success);
+}
+
 /* ===== Values =====
  * A class per thing the game names, not per colour it happens to be drawn in. Several share a hue
  * today and are grouped for it; they are written apart so that one of them can be moved without
  * dragging the others with it, which is the whole reason they are not called after their colour. */
 
-/* Not a value at all: a "-" where an item has no modifier, a coward's tally. No weight, no hue. */
-.muted {
-    color: var(--text-muted) !important;
-}
-
 /* What a run has lost, and what is taking it from them. */
 .hp,
 .attack,
 .deaths,
-.heretics,
 .debuff {
     color: var(--text-hp) !important;
 }
@@ -152,6 +170,7 @@ p.last {
 
 /* Read but not acted on: a risk, a day, a clock, a way out nobody boasts of. */
 .ambush,
+.cowards,
 .date,
 .timer {
     color: var(--text-muted) !important;
@@ -168,9 +187,7 @@ p.last {
 .kills,
 .players,
 .meals,
-.items,
-.cowards,
-.crits {
+.items {
     color: var(--text-tally) !important;
 }
 
@@ -178,7 +195,9 @@ p.last {
     color: var(--critical) !important;
 }
 
-.xp {
+/* What the arcane touches: experience earned, and a name the gods struck out for reaching past it. */
+.xp,
+.heretics {
     color: var(--text-xp) !important;
 }
 
@@ -191,12 +210,12 @@ p.last {
 /* The weight answers "which of these matters?", so it belongs where something is competing — a
  * number inside a sentence, with nothing but hue to set it apart. A column answers that question
  * already, and weighting every cell in one only makes the table heavier. */
-:is(p, li) :is(.hp, .attack, .deaths, .heretics, .debuff,
+:is(p, li) :is(.hp, .attack, .deaths, .debuff,
     .heal, .regen, .buff,
     .adena, .level, .aura,
-    .ambush, .date, .timer,
+    .ambush, .cowards, .date, .timer,
     .defense, .damage,
-    .battles, .kills, .players, .meals, .items, .cowards, .crits,
-    .crit, .xp, .item) {
+    .battles, .kills, .players, .meals, .items,
+    .crit, .xp, .heretics, .item) {
     font-weight: var(--weight-value);
 }

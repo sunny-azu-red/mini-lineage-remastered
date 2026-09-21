@@ -141,11 +141,11 @@
     opacity: 1;
 }
 
-.sound-toggle-btn.muted {
+.sound-toggle-btn.silenced {
     opacity: 0.35;
 }
 
-.sound-toggle-btn.muted:hover {
+.sound-toggle-btn.silenced:hover {
     opacity: 0.8;
 }
 

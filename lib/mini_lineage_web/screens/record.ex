@@ -185,7 +185,6 @@ defmodule MiniLineageWeb.Screens.Record do
       <div id="record-effects" phx-hook="EffectTimers">
         <p
           :for={effect <- @effects}
-          class="effect-line"
           data-effect-id={effect.id}
           data-remaining-ms={effect.remaining_ms}
         >
