@@ -113,7 +113,7 @@ defmodule MiniLineageWeb.BlessingsTest do
 
       # The Mark is the one debuff with no end: a countdown on it would be a lie.
       refute section =~ ~s(data-timer="long")
-      assert text(section) =~ "It does not fade"
+      refute section =~ "data-remaining-ms=\""
     end
   end
 
