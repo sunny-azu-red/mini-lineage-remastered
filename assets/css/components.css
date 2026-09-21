@@ -62,9 +62,13 @@
     color: var(--gold-hover);
 }
 
-/* Drawn rather than typed: two borders make a chevron that is crisp at any size, takes the
-   header's own colour with it, and turns a clean quarter between the two states. It sits at the
-   far end, where `.header-name`'s `flex: 1` puts it and where it moves no word of the title. */
+/* Drawn rather than typed: two borders make a chevron that is crisp at any size, takes the header's
+   own colour with it, and turns half a circle between its two states. It sits at the far end, where
+   `.header-name`'s `flex: 1` puts it and where it moves no word of the title.
+   The translate is what centres it, and it goes INSIDE the rotate so that it turns with the mark:
+   the ink is an L in the corner of its own box, so rotated 45° its outline falls 2.48px off that
+   box's middle, and 2.48/√2 is the 1.75 that pulls it back along its own diagonal. One value, both
+   states — measured, the mark lands in the same place whichever way it points. */
 .panel-arrow {
     flex-shrink: 0;
     width: 9px;
@@ -72,7 +76,7 @@
     margin-right: 3px;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
-    transform: rotate(45deg);
+    transform: rotate(45deg) translate(-1.75px, -1.75px);
 }
 
 /* Set by the hook once a frame has been painted. A panel restored open from storage is rendered
@@ -85,7 +89,7 @@
 /* Shut it points up at the header that will open it, open it points down into what it opened —
    half a turn apart, which is the clearest pair of states two ends of one animation can have. */
 .panel-header[aria-expanded="false"] .panel-arrow {
-    transform: rotate(-135deg);
+    transform: rotate(-135deg) translate(-1.75px, -1.75px);
 }
 
 .header-effects {
