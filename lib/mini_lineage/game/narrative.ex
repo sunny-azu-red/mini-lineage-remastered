@@ -84,10 +84,7 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   @doc "A death told to whoever is reading it: the fallen player themselves, or anybody else."
-  def death_reason(nil, _mine?), do: nil
-
-  def death_reason(reason, mine?),
-    do: reason |> Narratives.death_template() |> Format.fill_template(pronouns(mine?))
+  def death_reason(reason, mine?), do: Format.fill_template(reason, pronouns(mine?))
 
   defp pronouns(mine?) when is_boolean(mine?), do: mine? |> Narratives.voice() |> pronouns()
   defp pronouns(voice), do: Map.new(voice, fn {part, word} -> {to_string(part), word} end)

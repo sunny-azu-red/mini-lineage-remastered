@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Narrative, Player, Snapshot}
   alias MiniLineageWeb.{Screens, Screens.Record}
 
   # The component, not the screen: these are about the prose, and `record/1` is what carries it
@@ -35,7 +35,8 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     %{player | experience: 4_200, adena: 900, total_battles: 12, total_enemies_killed: 30}
   end
 
-  defp fallen, do: %{Player.kill(living()) | death_reason: "The road ran out beneath you."}
+  defp fallen,
+    do: %{Player.kill(living()) | death_reason: "The road ran out beneath {object}."}
 
   describe "the way back, for someone who has died" do
     defp halls_for(player) do
@@ -171,14 +172,17 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     end
 
     test "and gives the reason it ended the same weight as the death screen does" do
-      # Not muted: it is the last line of the eulogy, not a footnote to it. The reason is drawn at
-      # random on death, so it is read off the same character that was rendered.
+      # Red and unmuted, as the death screen says it, and in the same breath as there being nothing
+      # left on the run — one paragraph, because they are one thought. Stored with its pronouns
+      # open, so what has to be on the page is what those fill to.
       player = fallen()
       html = html_for(player)
-      reason = Regex.escape(player.death_reason)
+      spoken = Regex.escape(Narrative.death_reason(player.death_reason, true))
 
-      assert html =~ ~r|<p[^>]*>#{reason}|, "the reason it ended is not on the page"
-      refute html =~ ~r|<p[^>]*class="[^"]*muted[^"]*"[^>]*>#{reason}|
+      assert html =~ ~r|<p[^>]*class="hp"[^>]*>[^<]*#{spoken}|,
+             "the reason it ended is not in the paragraph that closes the run"
+
+      refute html =~ ~r|<p[^>]*class="[^"]*muted[^"]*"[^>]*>[^<]*#{spoken}|
     end
   end
 

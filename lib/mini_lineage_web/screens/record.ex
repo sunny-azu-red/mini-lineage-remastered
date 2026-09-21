@@ -168,11 +168,15 @@ defmodule MiniLineageWeb.Screens.Record do
     <h2>Blessings &amp; Afflictions</h2>
 
     <%= if @dead do %>
-      <p>
+      <%!-- One paragraph and one colour: the run is over, and how it ended is not a separate
+            remark from there being nothing left on it. Red as the death screen says it. --%>
+      <p class="hp">
         Nothing walks with {@voice.object} any more. Every blessing lifted and every affliction
-        loosed its hold the moment {@voice.their} road ran out.
+        loosed its hold the moment {@voice.their} road ran out. {Narrative.death_reason(
+          @reason,
+          @mine
+        )}
       </p>
-      <p :if={@reason} class="hp">{Narrative.death_reason(@reason, @mine)}</p>
     <% else %>
       <%!-- One hook over the whole list rather than one per line: it repaints every countdown
             beneath it on the same second, and the server's own expiry timer takes the line away. --%>

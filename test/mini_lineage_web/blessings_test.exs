@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.BlessingsTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Narrative, Narratives, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Narratives, Player, Snapshot}
   alias MiniLineageWeb.Screens.Record
 
   # Carrying exactly what it is handed: a new character is given the Newbie Blessing on the way in,
@@ -118,7 +118,8 @@ defmodule MiniLineageWeb.BlessingsTest do
   end
 
   describe "a fallen run" do
-    @reason "🪦 You fought bravely... but not bravely enough."
+    # A reason as the game stores one: the sentence with its pronouns still open.
+    @reason "🪦 {they} fought bravely... but not bravely enough."
 
     test "carries nothing, and says so" do
       section = text(blessings(bearer([:newbie_buff]), dead: true, reason: @reason))
@@ -142,15 +143,6 @@ defmodule MiniLineageWeb.BlessingsTest do
 
       assert mine =~ "You fought bravely"
       assert theirs =~ "They fought bravely"
-    end
-
-    # A run that died before the reasons were written as templates has the finished second-person
-    # sentence stored on it, and must still be turned around for a stranger.
-    test "even one whose reason was written down before any of this" do
-      as_written = Narrative.death_reason(Narratives.death_coward(), true)
-      section = text(blessings(bearer([]), dead: true, reason: as_written, mine: false))
-
-      assert section =~ "They took the cowardly way out"
     end
   end
 end

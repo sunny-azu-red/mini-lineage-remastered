@@ -1,6 +1,5 @@
 defmodule MiniLineage.Game.Narratives do
   @moduledoc "Narrative templates. Each list is drawn from by index, so ORDER is load-bearing."
-  alias MiniLineage.Game.Format
 
   @race_traits %{
     0 =>
@@ -75,15 +74,6 @@ defmodule MiniLineage.Game.Narratives do
   # than drawn, and kept here with the rest of the prose all the same.
   @death_cheated "👾 The gods saw {their} heresy and cast {their} memory into oblivion."
   @death_coward "🤡 {they} took the cowardly way out."
-
-  # Every death as it was written before they were templates, mapped back to the template it came
-  # from. Built from the one table above rather than typed out again, so there is still exactly one
-  # place each of these sentences exists.
-  @spoken Map.new(@voices[true], fn {part, word} -> {to_string(part), word} end)
-  @as_written Map.new(
-                [@death_cheated, @death_coward | @death],
-                &{Format.fill_template(&1, @spoken), &1}
-              )
 
   @ambush_low_health [
     "Your warm blood stains the ancient, cold earth of Aden...",
@@ -172,13 +162,6 @@ defmodule MiniLineage.Game.Narratives do
 
   @doc "What an active effect does, or nil for one nothing has been written about yet."
   def effect_blurb(id), do: Map.get(@effect_blurbs, id)
-
-  @doc """
-  The template a stored reason came from. A run that died before deaths were written this way has
-  the finished second-person sentence on it instead, so each is matched against what it renders as
-  — derived from the one table above, never written down a second time.
-  """
-  def death_template(reason), do: Map.get(@as_written, reason, reason)
 
   def welcome, do: @welcome
   def death, do: @death
