@@ -114,20 +114,24 @@ try {
         gained, `${told} -> ${await lines()} line(s)`);
 
     // And follows it down, the way a chat box does: the line that just arrived is the one on screen.
-    // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go,
-    // and `foot` is where the last entry ends — a rounded `scrollHeight` once let the box stop a
-    // fraction past it, onto bare panel, which only showed where that entry was an ambush.
+    // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go.
     const log = await watcher.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
-        const last = body.querySelector('ol.chronicle li:last-child');
+        const ground = (el) => { const s = getComputedStyle(el); return `${s.backgroundColor} ${s.backgroundImage}`; };
         return {
             hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop,
-            foot: body.getBoundingClientRect().bottom - last.getBoundingClientRect().bottom,
+            ground: ground(body) === ground(body.querySelector('ol.chronicle li:last-child')),
         };
     });
     check('...and follows it down without the reader scrolling',
-        log.hidden > 0 && log.hidden - log.at <= 2 && Math.abs(log.foot) < 0.5,
-        `${log.hidden}px scrolled away, sitting at ${log.at}, ${log.foot}px under the last entry`);
+        log.hidden > 0 && log.hidden - log.at <= 2,
+        `${log.hidden}px scrolled away, sitting at ${log.at}`);
+
+    // How far a box CAN be scrolled is a rounded figure, so it comes to rest a fraction off its
+    // last entry however it is asked to — measured, snapped, reversed, they all land on the same
+    // number. The strip that leaves is the scrollport's own ground, which is why it carries the
+    // ground of whatever it ends on: there is then nothing of a different colour to show.
+    check('...with nothing of another colour showing beneath the last of them', log.ground);
 
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window

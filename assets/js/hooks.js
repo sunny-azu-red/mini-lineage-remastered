@@ -388,15 +388,6 @@ export const Panel = {
     toBottom() {
         const body = this.body();
         body.scrollTop = body.scrollHeight;
-
-        // And then back onto its real end, for whatever fraction the display scale still leaves:
-        // the clamp above is computed from a rounded `scrollHeight`, so it can sit past where the
-        // content stops. Whole pixels are the list's job (`ol.chronicle li`); this is the rest.
-        const last = body.firstElementChild?.lastElementChild;
-        if (!last) return;
-
-        const over = body.getBoundingClientRect().bottom - last.getBoundingClientRect().bottom;
-        if (over > 0) body.scrollTop -= over;
     },
 };
 
