@@ -9,10 +9,10 @@ defmodule MiniLineage.Game.Actions do
   alias MiniLineage.Game.{Battle, Constants, Math, Narrative, Player, Statistics}
 
   @errors %{
-    not_started: "You haven't started your journey yet — create a character first.",
+    not_started: "You haven't started your journey yet, so create a character first.",
     already_started: "You already have a character. Restart if you want to begin again.",
     dead: "You are dead. There is nothing left to do but restart.",
-    not_dead: "You're still alive — this action is only for the fallen.",
+    not_dead: "You're still alive, and this action is only for the fallen.",
     invalid: "That is not something you can do."
   }
 

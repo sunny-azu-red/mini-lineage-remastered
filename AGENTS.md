@@ -182,6 +182,21 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**Write the character; reach for an entity only when writing it plainly would cost something.**
+Three things cost: a character the markup RESERVES (`&` is `&amp;`), a character that is INVISIBLE
+in the source (a non-breaking space has to be `&nbsp;`, or nobody can see it is there), and a
+character CONFUSABLE at a glance with another (`&ndash;` in the copyright's year range, because an
+en dash, an em dash and a hyphen are one smudge apart in a monospace editor and the source should
+say which was meant). Everything else is itself: `©`, `•`, and every emoji in the game. That is
+why the Halls' online mark is `•` and not `&bull;` — nothing else looks like a bullet, so spelling
+it out buys nothing and only makes one glyph read differently from the fifty around it.
+
+**The game's own prose joins its clauses; it does not hold them apart with a dash.** An em dash in
+a sentence a PLAYER reads becomes `because`, `and` or `nor`: "None of it fades, nor does what it
+cost, because the Halls rank the living and the fallen alike". This is about the game's voice and
+not the codebase's — every `@moduledoc` and comment here is full of em dashes, deliberately, and
+they are none of a player's business.
+
 **A token is named for its ROLE, never its family: `--<role>-<name>`.** `--text-`, `--bg-`,
 `--border-`, `--wash-`, `--bar-`, `--glow-`, `--shadow-`, `--focus-`. Type `color:` and there is
 one prefix to reach for and one word order to remember, and a family stays honest across roles —
