@@ -128,7 +128,8 @@ defmodule MiniLineage.Game.Snapshot do
   end
 
   # The stamp is stored as epoch milliseconds, the way `combat_until` is; the template wants a
-  # DateTime, and a document written before the stamp existed has none.
+  # DateTime. A player who has never been through the character server — one built in a test —
+  # carries no stamp, and a view can be built for them bar the screens that show one.
   defp at(nil), do: nil
   defp at(ms), do: DateTime.from_unix!(ms, :millisecond)
 

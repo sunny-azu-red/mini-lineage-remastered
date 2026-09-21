@@ -8,9 +8,9 @@ defmodule MiniLineage.Characters.Serde do
   alias MiniLineage.Game.Player
 
   # The shape of the document, not of the character — which is why it is written here rather than
-  # carried on the struct. A reshape bumps this and `from_map/1` branches on it. 2 added
-  # `last_action_at`; a version 1 document simply has none, and the migration filled those in.
-  @version 2
+  # carried on the struct. A reshape bumps this and `from_map/1` branches on it; a document
+  # claiming a LATER one was written by a newer build, and this one must not guess at it.
+  @version 1
 
   @effect_types %{"buff" => :buff, "debuff" => :debuff, "aura" => :aura}
   @modifier_types ~w(attack defense crit max_health regen ambush_risk xp_multiplier adena_multiplier)a

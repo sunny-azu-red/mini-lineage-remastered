@@ -129,7 +129,7 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the shape the document was written in" do
     test "is recorded, so a later reshape has something to branch on" do
-      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 2
+      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 1
     end
 
     test "and a document without one is refused, not assumed to be this shape" do
@@ -145,7 +145,7 @@ defmodule MiniLineage.Characters.SerdeTest do
       # otherwise default every unrecognised field and write the loss straight back.
       newer = %Player{name: "Hero"} |> Serde.to_map() |> Map.put("version", 99)
 
-      assert_raise RuntimeError, ~r/version 99.*understands 2/, fn -> Serde.from_map(newer) end
+      assert_raise RuntimeError, ~r/version 99.*understands 1/, fn -> Serde.from_map(newer) end
     end
   end
 
