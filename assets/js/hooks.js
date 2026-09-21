@@ -333,11 +333,27 @@ export const Panel = {
         this.toggle?.addEventListener('click', () => {
             this.show(!this.open);
             keep(this.el.id, this.open);
+            if (this.open) this.reveal();
         });
         this.show(this.open);
+
+        // Two frames, so a paint has certainly happened: the chevron may only start animating once
+        // the restored state is already on screen, or every refresh spins it into place.
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() =>
+                this.el.querySelector('.panel-arrow')?.setAttribute('data-ready', '')));
     },
     updated() {
         this.show(this.open);
+    },
+    // What a reader just opened should be on screen without them going to look for it — and it is
+    // the BOTTOM that has to arrive, a log's newest lines being there. Only on a click: a panel
+    // restored open, or one patched while open, was never asked to move the page.
+    reveal() {
+        const box = this.el.getBoundingClientRect();
+        if (box.top >= 0 && box.bottom <= window.innerHeight) return;
+
+        this.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
     },
     show(open) {
         this.open = open;

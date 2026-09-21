@@ -130,6 +130,13 @@ changed and no second effect, so `.data-table td`, `h2`, `h3` and `.stat-value` 
 colour while `.stat-label` and `th` do. If a container is ever made secondary, the children that
 must stay primary will need to say so then; adding it in anticipation is how the two drift apart.
 
+**A panel header's contents are placed by the band, never by themselves.** These are capitals, and
+a font's em box carries descender room they never use, so centred they sit high — `.panel-header`
+is padded 9 over 7 to answer that, and every child moves with it. It used to be a `margin-top` on
+the title and half of one on the effects strip, which is why the chevron could not line up with the
+words: three things were being centred by three different rules. Line-height cannot do this job —
+it is symmetric by definition, and the correction is not.
+
 **Size is hierarchy, never container.** 13px is anything you read — prose, an alert, a table cell —
 because an alert set a step under the paragraph above it reads as a different kind of thing when it
 is the same kind. 12px is a control or the compact sidebar, 11px a column label or the footer. The
@@ -294,8 +301,15 @@ refresh and a walk away; the id keys the PANEL, not whose record it is.
 
 The whole header band is the control, and it is a BUTTON. It goes nowhere, and a link would say it
 did: Space activates a button and scrolls a link, which is the same reason `PanelFocus` refuses to
-focus one. `aria-expanded` sits on the header and IS the state — the chevron turns off it, and so
-does the band beneath it, which a shut panel does not draw because it is closing off nothing.
+focus one. `aria-expanded` sits on the header and IS the state, and the chevron turns off it. The
+gold line belongs to the BODY as a `border-top`, never to the header as a `border-bottom`: a shut
+panel then draws no line closing off what is not there, and leaves no pixel of one in the band.
+
+Opening by hand brings the panel into view, aligned on its BOTTOM, a log's newest lines being
+there. Only by hand — a panel restored open from storage, or patched while open, was never asked to
+move the page. Nor may it animate into a restored state: the chevron's transition is gated on a
+`data-ready` the hook sets two frames in, or every refresh spins it through a state the reader
+never left.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.

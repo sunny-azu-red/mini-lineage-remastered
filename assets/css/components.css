@@ -6,7 +6,10 @@
  */
 
 /* ===== Panel Card ===== */
+/* The margin is for `scrollIntoView`: a panel brought into view lands a gap above the fold rather
+   than flush against it. */
 .panel {
+    scroll-margin-bottom: 12px;
     background: var(--bg-panel);
     border: 1px solid var(--border-soft);
     border-radius: var(--radius);
@@ -14,17 +17,17 @@
     overflow: hidden;
 }
 
+/* The 9/7 is not symmetry going wrong: these are capitals, and a font's em box carries descender
+   room they never use, so centred they sit high. The correction is the band's, not the title's —
+   every child of the header moves with it, and the chevron cannot drift from the words. */
 .panel-header {
     background: var(--panel-lift);
     line-height: 1.6;
-    /* The banner closes on 2px of --gold-dim. A panel header closing on 1px of the same says the
-     * two are the same kind of thing, in the accent rather than in the blue. */
-    border-bottom: 1px solid var(--gold-dim);
     color: var(--gold);
     font-family: var(--font-heading);
     font-weight: 600;
     letter-spacing: 0.05em;
-    padding: 7px 12px;
+    padding: 9px 12px 7px;
     text-transform: uppercase;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
@@ -47,9 +50,9 @@
 .panel-toggle {
     width: 100%;
     margin: 0;
-    border-top: 0;
-    border-left: 0;
-    border-right: 0;
+    /* All four: the header draws no border of its own any more, so anything left here is the
+       platform's own 2px outset — which is 2px of height the other panels do not have. */
+    border: 0;
     font-size: inherit;
     text-align: left;
     cursor: pointer;
@@ -57,12 +60,6 @@
 
 .panel-toggle:hover {
     color: var(--gold-hover);
-}
-
-/* Shut, the band beneath the header closes off nothing. Transparent rather than removed, so the
-   panel keeps its height and the line does not jump as it goes. */
-.panel-header[aria-expanded="false"] {
-    border-bottom-color: transparent;
 }
 
 /* Drawn rather than typed: two borders make a chevron that is crisp at any size, takes the
@@ -75,13 +72,20 @@
     margin-right: 3px;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
-    transform: rotate(45deg) translate(-2px, -2px);
+    transform: rotate(45deg);
+}
+
+/* Set by the hook once a frame has been painted. A panel restored open from storage is rendered
+   shut and corrected on mount, and without this the chevron spins through that correction on every
+   refresh — animating a state the reader never left. */
+.panel-arrow[data-ready] {
     transition: transform 160ms ease;
 }
 
-/* Shut it points along the header, open it points into what it opened. */
+/* Shut it points up at the header that will open it, open it points down into what it opened —
+   half a turn apart, which is the clearest pair of states two ends of one animation can have. */
 .panel-header[aria-expanded="false"] .panel-arrow {
-    transform: rotate(-45deg) translate(-2px, -2px);
+    transform: rotate(-135deg);
 }
 
 .header-effects {
@@ -90,11 +94,11 @@
     gap: 7px;
     flex-shrink: 0;
     line-height: 1;
-    margin-top: 1px;
 }
 
 /* An <h1> in the main panel, a <span> in the sidebar's. Both need the panel header's own size and
- * weight rather than a heading's defaults. */
+ * weight rather than a heading's defaults, and the h1 needs its own margins taken away. Where it
+ * sits in the band is the band's business — see .panel-header. */
 .header-name {
     font-size: inherit;
     font-weight: inherit;
@@ -103,7 +107,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin: 2px 0 0;
+    margin: 0;
 }
 
 .effect-icon {
@@ -183,8 +187,13 @@
     }
 }
 
+/* The banner closes on 2px of --gold-dim. A panel closing on 1px of the same says the two are the
+   same kind of thing. It belongs to the BODY rather than to the header beneath which it used to
+   hang: a shut panel is then a header and nothing else, with no line closing off what is not there
+   and no pixel of it left behind in the band. */
 .panel-body {
     padding: 12px;
+    border-top: 1px solid var(--gold-dim);
 }
 
 .panel-body.small {
