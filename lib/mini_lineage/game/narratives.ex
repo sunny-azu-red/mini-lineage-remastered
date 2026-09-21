@@ -28,7 +28,7 @@ defmodule MiniLineage.Game.Narratives do
     "hexed" =>
       ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit}% Critical Hit Chance</span>.),
     "konami_cheat" =>
-      ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{crit}% Critical Hit Chance</span> and <span class="hp">{max_health} Max HP</span>. None of it fades. Nor does what it cost — the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
+      ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{crit}% Critical Hit Chance</span> and <span class="hp">{max_health} Max HP</span>. None of it fades, nor does what it cost, because the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
     "satisfied" =>
       ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_health} Max HP</span> for as long as it lasts.),
     "well_fed" =>
