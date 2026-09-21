@@ -164,7 +164,7 @@ Physical Attack, deaths, and cheaters struck from the record, and no one of them
 
 So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal .regen .buff` give
 it back; `.adena .level .aura` are what it is worth; `.ambush .cowards .date .timer` are read but
-not acted on; `.defense .damage` turn things aside; `.battles .kills .players .meals .items` are
+not acted on; `.defense .damage` turn things aside; `.battles .kills .players .purchases` are
 things counted; `.crit` stands alone; `.xp .heretics` are what the arcane touches, earned or
 struck out for; `.item` is what a run carries, quieter than the sentence around it because a
 blade's NAME is not the news, the number beside it is.

@@ -149,21 +149,21 @@ defmodule MiniLineageWeb.Screens.Tome do
             count={@statistics.total_weapons_bought}
             singular="Weapon"
             plural="Weapons"
-            class="items"
+            class="purchases"
           /> and
           <.counted
             key="tome-armors-bought"
             count={@statistics.total_armors_bought}
             singular="Armor"
             plural="Armors"
-            class="items"
+            class="purchases"
           /> to those who would be king, while the local Inn has served
           <.counted
             key="tome-food-bought"
             count={@statistics.total_food_bought}
             singular="Meal"
             plural="Meals"
-            class="meals"
+            class="purchases"
           /> to keep the fires of life burning.
         </p>
       <% else %>

@@ -186,8 +186,7 @@ p.last {
 .battles,
 .kills,
 .players,
-.meals,
-.items {
+.purchases {
     color: var(--text-tally) !important;
 }
 
@@ -215,7 +214,7 @@ p.last {
     .adena, .level, .aura,
     .ambush, .cowards, .date, .timer,
     .defense, .damage,
-    .battles, .kills, .players, .meals, .items,
+    .battles, .kills, .players, .purchases,
     .crit, .xp, .heretics, .item) {
     font-weight: var(--weight-value);
 }
