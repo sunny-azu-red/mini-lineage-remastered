@@ -117,68 +117,86 @@ p.last {
     border-top: 1px solid var(--border-soft);
 }
 
-/* ===== Utility Classes ===== */
+/* ===== Values =====
+ * A class per thing the game names, not per colour it happens to be drawn in. Several share a hue
+ * today and are grouped for it; they are written apart so that one of them can be moved without
+ * dragging the others with it, which is the whole reason they are not called after their colour. */
+
 /* Not a value at all: a "-" where an item has no modifier, a coward's tally. No weight, no hue. */
 .muted {
     color: var(--text-muted) !important;
 }
 
-/* A value you read but do not act on — an ambush risk you want low, the day a run was last seen.
- * It takes --text-muted's quiet and keeps the weight every other value has, which is the whole
- * reason it cannot just be `.muted`. */
-.minor {
-    color: var(--text-muted) !important;
-}
-
-.defense {
-    color: var(--text-defense) !important;
-}
-
-/* A count of things: battles fought, foes slain, meals served. Gold is for what a run is worth —
- * its purse and its level — and stops meaning that if every number wears it. */
-.tally {
-    color: var(--text-tally) !important;
-}
-
-.gold {
-    color: var(--gold) !important;
-}
-
-.heal {
-    color: var(--success) !important;
-}
-
-.hp {
+/* What a run has lost, and what is taking it from them. */
+.hp,
+.attack,
+.deaths,
+.heretics,
+.debuff {
     color: var(--text-hp) !important;
 }
 
-.xp {
-    color: var(--text-xp) !important;
+/* What gives it back. */
+.heal,
+.regen,
+.buff {
+    color: var(--success) !important;
+}
+
+/* What a run is worth: its purse, its level, and the ambient state it stands in. */
+.adena,
+.level,
+.aura {
+    color: var(--gold) !important;
+}
+
+/* Read but not acted on: a risk, a day, a clock, a way out nobody boasts of. */
+.ambush,
+.date,
+.timer {
+    color: var(--text-muted) !important;
+}
+
+/* What it turns aside. */
+.defense,
+.damage {
+    color: var(--text-defense) !important;
+}
+
+/* Things counted. Gold is for what a run is WORTH and stops meaning that if every figure wears it. */
+.battles,
+.kills,
+.players,
+.meals,
+.items,
+.cowards,
+.crits {
+    color: var(--text-tally) !important;
 }
 
 .crit {
     color: var(--critical) !important;
 }
 
-/* ===== Values =====
- * The weight answers "which of these matters?", so it belongs where something is competing — a
+.xp {
+    color: var(--text-xp) !important;
+}
+
+/* What it carries. Quieter than the sentence around it: the blade's NAME is not the news, the
+   number beside it is. */
+.item {
+    color: var(--text-secondary) !important;
+}
+
+/* The weight answers "which of these matters?", so it belongs where something is competing — a
  * number inside a sentence, with nothing but hue to set it apart. A column answers that question
  * already, and weighting every cell in one only makes the table heavier. */
-p .gold,
-p .hp,
-p .xp,
-p .crit,
-p .heal,
-p .defense,
-p .tally,
-p .minor,
-li .gold,
-li .hp,
-li .xp,
-li .crit,
-li .heal,
-li .defense,
-li .tally,
-li .minor {
+:is(p, li) :is(.hp, .attack, .deaths, .heretics, .debuff,
+    .heal, .regen, .buff,
+    .adena, .level, .aura,
+    .ambush, .date, .timer,
+    .defense, .damage,
+    .battles, .kills, .players, .meals, .items, .cowards, .crits,
+    .crit, .xp, .item) {
     font-weight: var(--weight-value);
 }

@@ -263,7 +263,7 @@ defmodule MiniLineageWeb.Controls do
   attr :singular, :string, required: true
   attr :plural, :string, required: true
   attr :emoji, :string, default: nil
-  attr :class, :string, default: "tally"
+  attr :class, :string, required: true
 
   @doc false
   # A figure and the noun it counts. Only the figure counts — a tally of the slain climbs by a
@@ -288,7 +288,7 @@ defmodule MiniLineageWeb.Controls do
 
   attr :id, :string, required: true
   attr :at, :any, required: true
-  attr :class, :string, default: "minor"
+  attr :class, :string, default: "date"
 
   @doc false
   # The text is UTC and correct without JS; the hook rewrites it to wherever the reader is.

@@ -75,7 +75,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
       html = html_for(Player.kill(hero()))
 
       # The reason you are reading this screen at all, then a footnote about the record.
-      assert html =~ ~r|<p[^>]*class="hp"[^>]*>[^<]*💀\|<p[^>]*class="hp"|
+      assert html =~ ~r|<p[^>]*class="deaths"[^>]*>[^<]*💀\|<p[^>]*class="deaths"|
       refute html =~ ~s(class="muted")
     end
 

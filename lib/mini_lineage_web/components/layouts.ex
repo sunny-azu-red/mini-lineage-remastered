@@ -180,7 +180,7 @@ defmodule MiniLineageWeb.Layouts do
 
         <div class="stat-row">
           <span class="stat-label">Adena</span>
-          <span class="stat-value gold">🪙
+          <span class="stat-value adena">🪙
           <span data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
             @view.adena
           )}</span></span>
@@ -191,7 +191,7 @@ defmodule MiniLineageWeb.Layouts do
         <div class="stat-row">
           <span class="stat-value" title="Equipped Armor">
             {@view.armor.emoji} {@view.armor.name}
-            <span :if={(@view.armor.regen || 0) > 0} class="heal">+<span
+            <span :if={(@view.armor.regen || 0) > 0} class="regen">+<span
               data-key="armor-regen"
               data-value={@view.armor.regen}
             >{@view.armor.regen}</span></span>

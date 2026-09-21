@@ -115,13 +115,13 @@ defmodule MiniLineageWeb.Screens.Halls do
           aria-hidden={if @row.online, do: "false", else: "true"}
         >•</span>
       </td>
-      <td class="num gold">
+      <td class="num level">
         <span data-key={"level-#{@row.id}"} data-value={@row.level}>{Format.number(@row.level)}</span>
       </td>
       <td class="num xp">
         <span data-key={"xp-#{@row.id}"} data-value={@row.total_xp}>{Format.number(@row.total_xp)}</span>
       </td>
-      <td class="gold">
+      <td class="adena">
         🪙
         <span data-key={"adena-#{@row.id}"} data-format="adena" data-value={@row.adena}>{Format.adena(
           @row.adena

@@ -179,21 +179,6 @@
     filter: drop-shadow(0 0 4px rgba(255, 129, 100, 0.3));
 }
 
-/* An effect spelled out, for a reader who has no way to hover the emoji that stands for it. An
- * ordinary paragraph, because that is what the rest of the page is — only the name is marked, and
- * it takes the colour its kind is drawn in everywhere else in the game. */
-.effect-line .effect-name {
-    color: var(--gold);
-}
-
-.effect-line.effect-buff .effect-name {
-    color: var(--success-text);
-}
-
-.effect-line.effect-debuff .effect-name {
-    color: var(--danger-text);
-}
-
 @keyframes effect-fade-in {
     from {
         opacity: 0;
@@ -320,7 +305,7 @@ ol.chronicle li.ambushed {
     line-height: 1;
 }
 
-.stat-value.gold {
+.stat-value.adena {
     color: var(--gold);
 }
 
@@ -543,7 +528,7 @@ ol.chronicle {
    outside, so the list reads as a run of separate things rather than one block of prose. */
 /* What was waiting at the end of a fight speaks in the alert's own voice, as it did while the
    fight was happening. */
-ol.chronicle .ambush {
+ol.chronicle .threat {
     color: var(--danger-text);
 }
 

@@ -151,23 +151,29 @@ while an animating one wants to stay still — the HP counter runs inside a para
 proportional digits reflow the line on every frame. The weight is scoped to `p` and `li`, because inside a sentence a number has nothing
 but hue to set it apart, while a column has answered that question already and weighting every
 cell of one only makes the table heavier. Measured before it was put back: the weapon shop read 93%
-bold, the character page 24%. `<strong>` follows the same rule — a name in a sentence takes it, a
-Name column does not. Only Inter 400, 500 and 600 are loaded; asking for 700 gets a fake.
+bold, the character page 24%. The list is one `:is(p, li) :is(…)` rather than two classes spelled
+out per selector, so adding a name to the vocabulary is one edit and not three. Only Inter 400, 500
+and 600 are loaded; asking for 700 gets a fake.
 
-`.minor` is the quiet value — an ambush risk you want low, the day a run was last seen, a coward's
-tally. It takes `--text-muted`'s colour and keeps the weight where weight applies, which is the
-whole reason it cannot
-just be `.muted`: that one is for what is not a value at all, and by now only the `-` where a shop
-item has no modifier qualifies.
+**A class per thing the game names, never per colour it is drawn in.** `.adena` and `.level` and
+`.aura` all resolve to `--gold` today and are grouped for it in `base.css`, but they are written
+apart, because the moment one of them should move the others must not come with it. That is the
+whole point: the group is an observation about today, the name is the thing. A class named after
+its colour cannot say which of the things wearing it you meant — `.hp` was carrying health, Max HP,
+Physical Attack, deaths, and cheaters struck from the record, and no one of them could be retuned.
 
-**One colour per concept, and weight for a name.** `.gold` is what a run is worth — its purse and
-its level — and stops meaning that if every number wears it, so counts of things take `.tally`:
-battles fought, foes slain, meals served, a group of enemies in a battle line. `.defense` exists
-because armour had been sharing the de-emphasis grey with ambush risk, and two stats should not
-read alike. `.muted` is the quiet one and the only quiet one — a timestamp, an absent modifier, a
-coward's tally, an ambush risk you want low; there is no second class for the same colour. Names —
-a weapon, an armour — take `<strong>`, so weight marks a name and hue marks a value and a sentence
-carrying both still parses. Every text colour is a `--text-*` token.
+So: `.hp .attack .deaths .heretics .debuff` are what a run loses and what takes it; `.heal .regen
+.buff` give it back; `.adena .level .aura` are what it is worth; `.ambush .date .timer` are read but
+not acted on; `.defense .damage` turn things aside; `.battles .kills .players .meals .items .cowards
+.crits` are things counted; `.crit` and `.xp` stand alone; `.item` is what a run carries, quieter
+than the sentence around it because a blade's NAME is not the news, the number beside it is.
+`.muted` is the exception that is not a value at all — by now only the `-` where a shop item has no
+modifier qualifies — and it takes no weight.
+
+An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
+vocabulary like any other value. The BADGE over its emoji does not: `--success-text` and
+`--danger-text` are lighter, and the pixel font needs them at that size. Every text colour is a
+token; adding a class means putting it in a group, never inventing a hex.
 
 Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside the palette's own
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns

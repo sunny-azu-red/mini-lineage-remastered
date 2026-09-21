@@ -70,7 +70,7 @@ defmodule MiniLineageWeb.BlessingsTest do
 
       assert section =~ ~s(<span class="hp">+20 Max HP</span>)
       assert section =~ ~s(<span class="defense">+2 Physical Defense</span>)
-      assert section =~ ~s(<span class="minor">-4% Ambush Risk</span>)
+      assert section =~ ~s(<span class="ambush">-4% Ambush Risk</span>)
     end
 
     # A multiplier is not a delta: "4x XP" is right where "+4x XP" would be nonsense.

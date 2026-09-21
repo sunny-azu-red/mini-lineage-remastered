@@ -263,7 +263,7 @@ defmodule MiniLineageWeb.Screens do
     # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
     # they are the last line of the run, and read as one.
     ~H"""
-    <p class="hp">{Narrative.death_reason(@view.death_reason, true)}</p>
+    <p class="deaths">{Narrative.death_reason(@view.death_reason, true)}</p>
 
     <p>{epitaph(@view)}</p>
 

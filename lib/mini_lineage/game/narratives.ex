@@ -3,13 +3,13 @@ defmodule MiniLineage.Game.Narratives do
 
   @race_traits %{
     0 =>
-      ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="gold">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="heal">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="minor">{ambush}% Ambush Risk</span>.),
+      ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="adena">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="regen">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
     1 =>
-      ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="gold">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="minor">{ambush}% Ambush Risk</span>.),
+      ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="adena">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
     2 =>
-      ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="gold">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="heal">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="minor">{ambush}% Ambush Risk</span>.),
+      ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="adena">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="regen">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
     3 =>
-      ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="gold">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="heal">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="minor">{ambush}% Ambush Risk</span>.)
+      ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="adena">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="regen">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
   }
 
   # What each effect actually does to a run, said in the page's own voice. `{them}` is the subject
@@ -22,13 +22,13 @@ defmodule MiniLineage.Game.Narratives do
     "combat" =>
       ~s(Steel is out and the air will not settle. Nothing mends while it is drawn, and until the fray lets go the roads out of it stay shut.),
     "regenerating" =>
-      ~s(Rest is doing its quiet work: <span class="heal">{regen} HP</span> knits back with every turn of the cycle, and will go on doing so until {them} stand whole again.),
+      ~s(Rest is doing its quiet work: <span class="regen">{regen} HP</span> knits back with every turn of the cycle, and will go on doing so until {them} stand whole again.),
     "newbie_blessing" =>
-      ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_health} Max HP</span> and <span class="defense">{defense} Physical Defense</span>, and turns the road's eye aside for <span class="minor">{ambush_risk}% Ambush Risk</span>.),
+      ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_health} Max HP</span> and <span class="defense">{defense} Physical Defense</span>, and turns the road's eye aside for <span class="ambush">{ambush_risk}% Ambush Risk</span>.),
     "hexed" =>
-      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="minor">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit}% Critical Hit Chance</span>.),
+      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit}% Critical Hit Chance</span>.),
     "konami_cheat" =>
-      ~s(The gods saw, and what they gave back is no kindness: <span class="xp">{xp_multiplier}x XP</span>, <span class="gold">{adena_multiplier}x Adena</span>, <span class="crit">{crit}% Critical Hit Chance</span> and <span class="hp">{max_health} Max HP</span>. It does not fade, and neither does what it costs — no name so marked is ever written in the Halls.),
+      ~s(The gods saw, and what they gave back is no kindness: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{crit}% Critical Hit Chance</span> and <span class="hp">{max_health} Max HP</span>. It does not fade, and neither does what it costs — no name so marked is ever written in the Halls.),
     "satisfied" =>
       ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_health} Max HP</span> for as long as it lasts.),
     "well_fed" =>
@@ -88,34 +88,34 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @kill [
-    ~s(Wielding your {weaponEmoji} <strong>{weaponName}</strong> with fury, you cut down <span class="tally">{enemyGroup}</span>.),
-    ~s(Your {weaponEmoji} <strong>{weaponName}</strong> cleaves through the battlefield, slaying <span class="tally">{enemyGroup}</span>.),
-    ~s(With a fierce war cry you lunge forward, striking down <span class="tally">{enemyGroup}</span> with your {weaponEmoji} <strong>{weaponName}</strong>.),
-    ~s(The <span class="tally">{enemyGroup}</span> stood no chance, your {weaponEmoji} <strong>{weaponName}</strong> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.),
-    ~s(A lethal dance of your {weaponEmoji} <strong>{weaponName}</strong> leaves fallen <span class="tally">{enemyGroup}</span> in your wake.),
-    ~s(Your strike is true. The {weaponEmoji} <strong>{weaponName}</strong> finds its mark against <span class="tally">{enemyGroup}</span>.)
+    ~s(Wielding your {weaponEmoji} <span class="item">{weaponName}</span> with fury, you cut down <span class="kills">{enemyGroup}</span>.),
+    ~s(Your {weaponEmoji} <span class="item">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
+    ~s(With a fierce war cry you lunge forward, striking down <span class="kills">{enemyGroup}</span> with your {weaponEmoji} <span class="item">{weaponName}</span>.),
+    ~s(The <span class="kills">{enemyGroup}</span> stood no chance, your {weaponEmoji} <span class="item">{weaponName}</span> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.),
+    ~s(A lethal dance of your {weaponEmoji} <span class="item">{weaponName}</span> leaves fallen <span class="kills">{enemyGroup}</span> in your wake.),
+    ~s(Your strike is true. The {weaponEmoji} <span class="item">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
   ]
 
   @deflection [
-    ~s(Your {armorEmoji} <strong>{armorName}</strong> absorbed a total of <span class="defense">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
-    ~s(The {armorEmoji} <strong>{armorName}</strong> held firm, deflecting <span class="defense">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
-    ~s(Blades glanced off your {armorEmoji} <strong>{armorName}</strong> for <span class="defense">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
-    ~s(Your {armorEmoji} <strong>{armorName}</strong> took the brunt of <span class="defense">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
-    ~s(Steel rings against your {armorEmoji} <strong>{armorName}</strong>, mitigating <span class="defense">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
+    ~s(Your {armorEmoji} <span class="item">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
+    ~s(The {armorEmoji} <span class="item">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
+    ~s(Blades glanced off your {armorEmoji} <span class="item">{armorName}</span> for <span class="damage">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
+    ~s(Your {armorEmoji} <span class="item">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
+    ~s(Steel rings against your {armorEmoji} <span class="item">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
   ]
 
   @outcome [
-    ~s(You limp away with <span class="hp">{hp} HP</span> remaining and <span class="gold">🪙 {adenaGained} Adena</span> to show for it.),
-    ~s(The skirmish leaves you at <span class="hp">{hp} HP</span>, but richer by <span class="gold">🪙 {adenaGained} Adena</span>.),
-    ~s(Breathing heavily, you stand with <span class="hp">{hp} HP</span> left and pocket <span class="gold">🪙 {adenaGained} Adena</span>.),
-    ~s(Wiping the grime of battle away, you survive with <span class="hp">{hp} HP</span> and claim the spoils of <span class="gold">🪙 {adenaGained} Adena</span>.)
+    ~s(You limp away with <span class="hp">{hp} HP</span> remaining and <span class="adena">🪙 {adenaGained} Adena</span> to show for it.),
+    ~s(The skirmish leaves you at <span class="hp">{hp} HP</span>, but richer by <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(Breathing heavily, you stand with <span class="hp">{hp} HP</span> left and pocket <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(Wiping the grime of battle away, you survive with <span class="hp">{hp} HP</span> and claim the spoils of <span class="adena">🪙 {adenaGained} Adena</span>.)
   ]
 
   @level_up [
-    ~s(A surge of divine energy washes over you! Your wounds vanish instantly as you stand tall with <span class="hp">{hp} HP</span> and <span class="gold">🪙 {adenaGained} Adena</span>.),
-    ~s(Victory has sharpened your soul. You feel completely restored, clutching <span class="gold">🪙 {adenaGained} Adena</span> with <span class="hp">{hp} HP</span>.),
-    ~s(You have transcended your limits! Your body mends in a flash of light, leaving you invigorated at <span class="hp">{hp} HP</span> with <span class="gold">🪙 {adenaGained} Adena</span>.),
-    ~s(The clash has awakened new strength within you. Wounds close and fatigue fades, topping you up to <span class="hp">{hp} HP</span> and gaining <span class="gold">🪙 {adenaGained} Adena</span>.)
+    ~s(A surge of divine energy washes over you! Your wounds vanish instantly as you stand tall with <span class="hp">{hp} HP</span> and <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(Victory has sharpened your soul. You feel completely restored, clutching <span class="adena">🪙 {adenaGained} Adena</span> with <span class="hp">{hp} HP</span>.),
+    ~s(You have transcended your limits! Your body mends in a flash of light, leaving you invigorated at <span class="hp">{hp} HP</span> with <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(The clash has awakened new strength within you. Wounds close and fatigue fades, topping you up to <span class="hp">{hp} HP</span> and gaining <span class="adena">🪙 {adenaGained} Adena</span>.)
   ]
 
   @ambush [

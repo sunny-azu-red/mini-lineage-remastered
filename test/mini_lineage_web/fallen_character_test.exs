@@ -179,7 +179,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       html = html_for(player)
       spoken = Regex.escape(Narrative.death_reason(player.death_reason, true))
 
-      assert html =~ ~r|<p[^>]*class="hp"[^>]*>[^<]*#{spoken}|,
+      assert html =~ ~r|<p[^>]*class="deaths"[^>]*>[^<]*#{spoken}|,
              "the reason it ended is not in the paragraph that closes the run"
 
       refute html =~ ~r|<p[^>]*class="[^"]*muted[^"]*"[^>]*>[^<]*#{spoken}|
