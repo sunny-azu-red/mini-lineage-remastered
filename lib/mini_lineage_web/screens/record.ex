@@ -158,6 +158,7 @@ defmodule MiniLineageWeb.Screens.Record do
       collapsed
       max_height={260}
       stick_to_bottom
+      body_class="rows"
     >
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
@@ -168,7 +169,7 @@ defmodule MiniLineageWeb.Screens.Record do
         <ol class="chronicle">
           <li
             :for={fight <- @record_log}
-            {if fight.ambushed, do: [class: "alert alert-danger"], else: []}
+            {if fight.ambushed, do: [class: "ambushed"], else: []}
           >
             <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
               fight.narrative.kill_line

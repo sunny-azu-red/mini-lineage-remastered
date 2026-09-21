@@ -127,7 +127,7 @@ defmodule MiniLineageWeb.Layouts do
 
     ~H"""
     <div id="sidebar" phx-hook="AnimatedValues">
-      <Controls.panel title={@view.name} class="status-panel" body_class="small">
+      <Controls.panel title={@view.name} class="status-panel" body_class="rows">
         <div class="stat-row">
           <span class="stat-label">Race</span>
           <span class="stat-value">
@@ -185,7 +185,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
       </Controls.panel>
 
-      <Controls.panel title="Inventory" class="inventory-panel" body_class="small">
+      <Controls.panel title="Inventory" class="inventory-panel" body_class="rows">
         <div class="stat-row">
           <span class="stat-value" title="Equipped Armor">
             {@view.armor.emoji} {@view.armor.name}

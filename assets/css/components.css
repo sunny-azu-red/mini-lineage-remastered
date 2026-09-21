@@ -200,7 +200,9 @@
     border-top: 1px solid var(--gold-dim);
 }
 
-.panel-body.small {
+/* Rows hold their own vertical rhythm — 12px above and below each, and a rule between — so the
+   body must not hold it as well, or the first and the last would sit on twice everything else. */
+.panel-body.rows {
     padding: 0px 12px;
 }
 
@@ -449,14 +451,15 @@ ol.chronicle {
     list-style: none;
 }
 
-/* An entry borrows the alert's ground, not its voice: it is prose carrying its own value colours,
-   and an alert's text colour would speak over every one of them. It takes the row's rhythm too,
-   and reaches out to the panel's walls for it — 9px plus its 3px border on the left, 12px on the
-   right, each pulled back by what the body pads, so the wash spreads and no word moves. */
-ol.chronicle .alert {
-    color: inherit;
-    padding: 12px 12px 12px 9px;
-    margin: 0 -12px;
+/* A fight that ended in an ambush wears it exactly as the status panel wears low health: the wash
+   and a radius, with its own side padding cancelled by a negative margin so the ground spreads past
+   the words without moving one of them. No border and no pulse — the panel is warning about now,
+   and this already happened. The prose keeps its own colours, an entry being prose. */
+ol.chronicle li.ambushed {
+    background: var(--danger-wash);
+    border-radius: var(--radius);
+    padding: 12px 6px;
+    margin: 0 -6px;
 }
 
 /* A scrollbar is chrome, so it wears the controls' own violet and warms to gold under the pointer,
@@ -492,19 +495,13 @@ ol.chronicle .alert {
 
 /* An entry is a paragraph now rather than a line, so it is spaced like one. The last gives its
    margin up to the box's own padding, which is already holding that gap. */
-/* Rows, the way the sidebar's stats are rows: a dashed rule between them and none around the
-   outside, so the list reads as a run of separate things rather than as one block of prose. The
-   ends give up the padding the panel body is already holding for them. */
+/* Rows, exactly as the sidebar's stats are rows: a dashed rule between them and none around the
+   outside, so the list reads as a run of separate things rather than one block of prose. */
 ol.chronicle li {
     padding: 12px 0;
     border-bottom: 1px dashed var(--border-soft);
 }
 
-ol.chronicle li:first-child {
-    padding-top: 0;
-}
-
 ol.chronicle li:last-child {
-    padding-bottom: 0;
     border-bottom: none;
 }
