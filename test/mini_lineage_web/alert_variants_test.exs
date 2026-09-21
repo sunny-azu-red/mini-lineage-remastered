@@ -35,7 +35,8 @@ defmodule MiniLineageWeb.AlertVariantsTest do
   end
 
   # A fight carries its flash only when it crossed a level, so the fighter is stood one XP short of
-  # the next one. Any fight at all clears it, whatever the dice do with the rest of the roll.
+  # the next one. Guaranteed rather than likely: at attack 7 a fight kills 2 enemies at worst and
+  # the stingiest possible roll is 34 XP against the 1 needed, and 25-odd damage cannot kill 170 HP.
   defp levelled do
     fighter = %{rich("battle") | experience: Math.xp_for_level(2) - 1, health: 500}
     {_player, {:ok, result}} = Actions.fight(fighter)
