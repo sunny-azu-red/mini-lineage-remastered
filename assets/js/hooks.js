@@ -324,6 +324,14 @@ function keep(id, open) {
 export const Panel = {
     mounted() {
         this.toggle = this.el.querySelector(':scope > .panel-toggle');
+        this.sticky = this.el.dataset.stick === 'true';
+        // A pin done on the frame the panel opens is only right for that frame. Anything that
+        // reflows the list afterwards — a web font arriving, a scrollbar taking its width — moves
+        // the bottom out from under it and leaves the box a pixel or so short of it. Following the
+        // list's own size puts the question beyond timing.
+        if (this.sticky)
+            this.follow = new ResizeObserver(() => this.open && this.toBottom());
+
         // What the reader last did with THIS panel beats what the template opens it on. Keyed by
         // the panel's id, so the preference is about the panel and not about whose record it is.
         const kept = this.toggle && recall(this.el.id);
@@ -346,6 +354,9 @@ export const Panel = {
     updated() {
         this.show(this.open);
     },
+    destroyed() {
+        this.follow?.disconnect();
+    },
     // What a reader just opened should be on screen without them going to look for it — and it is
     // the BOTTOM that has to arrive, a log's newest lines being there. Only on a click: a panel
     // restored open, or one patched while open, was never asked to move the page.
@@ -357,19 +368,26 @@ export const Panel = {
     },
     show(open) {
         this.open = open;
-        const body = this.el.querySelector(':scope > .panel-body');
+        const body = this.body();
         if (this.toggle) {
             this.toggle.setAttribute('aria-expanded', String(open));
             body.hidden = !open;
         }
 
-        // A shut panel has no height to scroll, so the follow happens on the way open as well.
-        if (open && this.el.dataset.stick === 'true') {
-            body.scrollTop = body.scrollHeight;
-            // And again next frame: the heading fonts arrive after mount, and every line they
-            // reflow moves the bottom out from under the first attempt.
-            requestAnimationFrame(() => (body.scrollTop = body.scrollHeight));
-        }
+        if (!this.sticky) return;
+
+        // A shut panel has nothing to watch and no height to scroll, so both wait for the way open.
+        const list = body.firstElementChild;
+        if (open && list) this.follow.observe(list);
+        else this.follow.disconnect();
+        if (open) this.toBottom();
+    },
+    body() {
+        return this.el.querySelector(':scope > .panel-body');
+    },
+    toBottom() {
+        const body = this.body();
+        body.scrollTop = body.scrollHeight;
     },
 };
 
