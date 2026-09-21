@@ -12,6 +12,58 @@ defmodule MiniLineage.Game.Narratives do
       ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="gold">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="heal">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="minor">{ambush}% Ambush Risk</span>.)
   }
 
+  # What each effect actually does to a run, said in the page's own voice. `{them}` is the subject
+  # mid-sentence, `{object}` the object, `{their}` the possessive — they/them takes the same verb
+  # forms as "you", so nothing but the pronouns moves between a reader's own record and a stranger's.
+  # Keyed by the ACTIVE id, which is what a view carries; the catalog key is not in the view.
+  @effect_blurbs %{
+    "resting" =>
+      ~s(No blade is drawn where {them} stand. Out of the fray {their} wounds have leave to knit, and what the road keeps in the dark is somebody else's trouble for now.),
+    "combat" =>
+      ~s(Steel is out and the air will not settle. Nothing mends while it is drawn, and until the fray lets go the roads out of it stay shut.),
+    "regenerating" =>
+      ~s(Rest is doing its quiet work: <span class="heal">{regen} HP</span> knits back with every turn of the cycle, and will go on doing so until {them} stand whole again.),
+    "newbie_blessing" =>
+      ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_health} Max HP</span> and <span class="defense">{defense} Physical Defense</span>, and turns the road's eye aside for <span class="minor">{ambush_risk}% Ambush Risk</span>.),
+    "hexed" =>
+      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="minor">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit}% Critical Hit Chance</span>.),
+    "konami_cheat" =>
+      ~s(The gods saw, and what they gave back is no kindness: <span class="xp">{xp_multiplier}x XP</span>, <span class="gold">{adena_multiplier}x Adena</span>, <span class="crit">{crit}% Critical Hit Chance</span> and <span class="hp">{max_health} Max HP</span>. It does not fade, and neither does what it costs — no name so marked is ever written in the Halls.),
+    "satisfied" =>
+      ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_health} Max HP</span> for as long as it lasts.),
+    "well_fed" =>
+      ~s(Properly fed for once, and it shows in the way {them} carry {object}: <span class="hp">{max_health} Max HP</span> while the meal holds.),
+    "gourmet_feast" =>
+      ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_health} Max HP</span> stand between {object} and the dark.)
+  }
+
+  # A death said about somebody else. The stored reason is written to the fallen player themselves,
+  # and their record is read by strangers as often as by them — so each one is paired with the same
+  # sentence turned around. Keyed by the string itself: nothing has to be migrated, and a reason
+  # from before this table, or one a test wrote, simply passes through as it stands.
+  @death_voiced %{
+    "🌑 The darkness takes you. Your journey ends here." =>
+      "🌑 The darkness takes them. Their journey ends here.",
+    "👻 Your strength fails, and the world fades to black." =>
+      "👻 Their strength fails, and the world fades to black.",
+    "💀 Fate has claimed your soul. Better luck in the next life." =>
+      "💀 Fate has claimed their soul. Better luck in the next life.",
+    "✨ Your life essence scatters into the aether." =>
+      "✨ Their life essence scatters into the aether.",
+    "🩸 Your story has come to a sudden, bloody conclusion." =>
+      "🩸 Their story has come to a sudden, bloody conclusion.",
+    "🥀 Your light flickers out in the cold silence of the dungeon." =>
+      "🥀 Their light flickers out in the cold silence of the dungeon.",
+    "🪦 You fought bravely... but not bravely enough." =>
+      "🪦 They fought bravely... but not bravely enough.",
+    "🦴 Your bones will decorate this floor for the next adventurer." =>
+      "🦴 Their bones will decorate this floor for the next adventurer.",
+    "🎭 You've met a terrible fate, haven't you?" => "🎭 They met a terrible fate, did they not?",
+    "👾 The gods saw your heresy and cast your memory into oblivion." =>
+      "👾 The gods saw their heresy and cast their memory into oblivion.",
+    "🤡 You took the cowardly way out." => "🤡 They took the cowardly way out."
+  }
+
   @welcome [
     "your destiny awaits in the dark!",
     "the fires of fate burn for you...",
@@ -120,6 +172,13 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   def race_traits(race_id), do: Map.fetch!(@race_traits, race_id)
+
+  @doc "What an active effect does, or nil for one nothing has been written about yet."
+  def effect_blurb(id), do: Map.get(@effect_blurbs, id)
+
+  @doc "The same death told about somebody else. Anything unrecognised stands as it was written."
+  def death_about(reason), do: Map.get(@death_voiced, reason, reason)
+
   def welcome, do: @welcome
   def death, do: @death
   def ambush_low_health, do: @ambush_low_health

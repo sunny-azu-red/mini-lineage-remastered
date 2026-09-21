@@ -33,6 +33,16 @@ export function timerLabel(remainingMs) {
     return seconds >= 60 ? `${Math.floor(seconds / 60)}m` : String(seconds);
 }
 
+/** The same time said in a sentence rather than on a badge. Twinned with `Format.remaining/1`. */
+export function remainingLabel(remainingMs) {
+    const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+    const minutes = Math.floor(seconds / 60), rest = seconds % 60;
+
+    if (!minutes) return `${rest}s`;
+
+    return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
+}
+
 /** Counts each effect down locally. The server sends a DURATION, so no two clocks are compared. */
 export const EffectTimers = {
     mounted() {
@@ -56,11 +66,14 @@ export const EffectTimers = {
             if (!Number.isFinite(remaining))
                 continue;
 
-            const label = icon.querySelector('.effect-timer');
+            // The badge over an emoji and the clause at the end of a sentence want the same time
+            // said two different ways, so the element that wears it says which.
+            const label = icon.querySelector('[data-timer]');
             if (!label)
                 continue;
 
-            label.textContent = timerLabel(remaining - elapsed);
+            const say = label.dataset.timer === 'long' ? remainingLabel : timerLabel;
+            label.textContent = say(remaining - elapsed);
         }
     },
 };

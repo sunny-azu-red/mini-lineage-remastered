@@ -67,15 +67,23 @@ try {
     // The server renders an effect's first frame and the hook repaints it every second, so these
     // must agree or the label changes shape the moment the hook takes over. Elixir reads the same
     // table in format_test.exs.
-    const timers = JSON.parse(readFileSync('test/fixtures/effect_timer.json', 'utf8')).cases;
-    const offBy = await page.evaluate(
-        (rows) => rows
-            .filter(([ms, expected]) => window.__timerLabel(ms) !== expected)
-            .map(([ms, expected]) => `${ms}: ${window.__timerLabel(ms)} != ${expected}`),
-        timers,
+    const timers = JSON.parse(readFileSync('test/fixtures/effect_timer.json', 'utf8'));
+    const disagreeing = (rows, fn) => page.evaluate(
+        ([rows, name]) => rows
+            .filter(([ms, expected]) => window[name](ms) !== expected)
+            .map(([ms, expected]) => `${ms}: ${window[name](ms)} != ${expected}`),
+        [rows, fn],
     );
+
+    const offBy = await disagreeing(timers.cases, '__timerLabel');
     check('the browser labels a countdown exactly as the server does', offBy.length === 0,
         offBy.join(' | '));
+
+    // And the longer one a character's page says out loud, which is a second formatter and so a
+    // second way for the two sides to drift.
+    const offBySpoken = await disagreeing(timers.spoken, '__remainingLabel');
+    check('...and says a remaining time in a sentence the same way', offBySpoken.length === 0,
+        offBySpoken.join(' | '));
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);

@@ -139,6 +139,9 @@ defmodule MiniLineage.Game.Snapshot do
       emoji: effect.emoji,
       label: effect.label,
       tooltip: tooltip(effect),
+      # Carried rather than only folded into the tooltip: the record explains an effect in prose,
+      # and the derived regen aura's rate is only ever known here.
+      modifiers: effect.modifiers,
       # A duration, not a deadline: the two machines' clocks never need reconciling.
       remaining_ms: effect.expires_at && max(0, effect.expires_at - Clock.now_ms())
     }

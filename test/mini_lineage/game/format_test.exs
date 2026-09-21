@@ -70,6 +70,31 @@ defmodule MiniLineage.Game.FormatTest do
         assert Format.countdown(ms) == expected, "#{ms}ms labelled #{Format.countdown(ms)}"
       end
     end
+
+    test "and so is the same time said in a sentence" do
+      # The badge has a few pixels and says "1m"; a paragraph has room to say "1m 30s". Twinned
+      # with `remainingLabel` in hooks.js off the same table, for the same reason.
+      %{"spoken" => cases} =
+        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
+
+      for [ms, expected] <- cases do
+        assert Format.remaining(ms) == expected, "#{ms}ms spoken as #{Format.remaining(ms)}"
+      end
+    end
+  end
+
+  describe "a modifier" do
+    # Every one of these is read as a change to a stat, so the sign is half the meaning: "-4% Ambush
+    # Risk" is a blessing and "+4%" is a curse, and without the mark neither says which.
+    test "carries its own sign, so a gift and a cost cannot be confused" do
+      assert Format.modifier(20) == "+20"
+      assert Format.modifier(-4) == "-4"
+      assert Format.modifier(0) == "0"
+    end
+
+    test "unless it multiplies, where a sign would be nonsense" do
+      assert Format.modifier(4, true) == "4"
+    end
   end
 
   describe "pluralize" do

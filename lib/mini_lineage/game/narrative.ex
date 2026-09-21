@@ -66,6 +66,29 @@ defmodule MiniLineage.Game.Narrative do
     Enum.at(pool, rem(:erlang.phash2({player.experience, player.total_ambushes}), length(pool)))
   end
 
+  @doc """
+  What an active effect does, in the reader's voice. The values are read off the effect rather than
+  its catalog entry, so the regen aura — whose rate is filled in at runtime — describes itself.
+  """
+  def build_effect(effect, voice) do
+    labels = Constants.stat_modifier_labels()
+
+    values =
+      Map.new(effect.modifiers, fn mod ->
+        config = Map.get(labels, mod.type, %{})
+
+        {to_string(mod.type), Format.modifier(mod.value, Map.get(config, :multiplier?, false))}
+      end)
+
+    pronouns = Map.new(voice, fn {part, word} -> {to_string(part), word} end)
+
+    Format.fill_template(Narratives.effect_blurb(effect.id), Map.merge(values, pronouns))
+  end
+
+  @doc "A death told to whoever is reading it: the fallen player themselves, or anybody else."
+  def death_reason(reason, true), do: reason
+  def death_reason(reason, false), do: Narratives.death_about(reason)
+
   def build_race_traits(race) do
     Format.fill_template(Narratives.race_traits(race.id), %{
       "hp" => Format.number(race.start_health),

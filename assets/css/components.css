@@ -167,16 +167,31 @@
     animation: effect-fade-in 0.4s ease-out forwards;
 }
 
-.effect-aura {
+.effect-icon.effect-aura {
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
 }
 
-.effect-buff {
+.effect-icon.effect-buff {
     filter: drop-shadow(0 0 4px rgba(15, 190, 110, 0.2));
 }
 
-.effect-debuff {
+.effect-icon.effect-debuff {
     filter: drop-shadow(0 0 4px rgba(255, 129, 100, 0.3));
+}
+
+/* An effect spelled out, for a reader who has no way to hover the emoji that stands for it. An
+ * ordinary paragraph, because that is what the rest of the page is — only the name is marked, and
+ * it takes the colour its kind is drawn in everywhere else in the game. */
+.effect-line .effect-name {
+    color: var(--gold);
+}
+
+.effect-line.effect-buff .effect-name {
+    color: var(--success-text);
+}
+
+.effect-line.effect-debuff .effect-name {
+    color: var(--danger-text);
 }
 
 @keyframes effect-fade-in {

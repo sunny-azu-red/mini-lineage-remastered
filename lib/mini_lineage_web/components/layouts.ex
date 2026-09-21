@@ -114,7 +114,9 @@ defmodule MiniLineageWeb.Layouts do
       title={@effect.tooltip}
     >
       <span class="effect-emoji">{@effect.emoji}</span>
-      <span :if={@effect.remaining_ms} class="effect-timer">{Format.countdown(@effect.remaining_ms)}</span>
+      <span :if={@effect.remaining_ms} class="effect-timer" data-timer>{Format.countdown(
+        @effect.remaining_ms
+      )}</span>
     </span>
     """
   end

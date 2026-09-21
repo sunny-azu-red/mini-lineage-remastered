@@ -53,6 +53,27 @@ defmodule MiniLineage.Game.Format do
     if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
   end
 
+  @doc """
+  The same time said in a sentence rather than on a badge: "4m 37s", "5m", "37s". Twinned with
+  `remainingLabel` in `hooks.js`, which repaints this every second.
+  """
+  def remaining(remaining_ms) do
+    seconds = max(0, ceil(remaining_ms / 1000))
+    {minutes, rest} = {div(seconds, 60), rem(seconds, 60)}
+
+    cond do
+      minutes == 0 -> "#{rest}s"
+      rest == 0 -> "#{minutes}m"
+      true -> "#{minutes}m #{rest}s"
+    end
+  end
+
+  @doc "A modifier as a reader meets it: a multiplier bare, anything else carrying its own sign."
+  def modifier(value, multiplier? \\ false)
+  def modifier(value, true), do: number(value)
+  def modifier(value, _additive) when value > 0, do: "+" <> number(value)
+  def modifier(value, _additive), do: number(value)
+
   def pluralize(singular, plural, count, emoji \\ nil) do
     icon = if emoji, do: "#{emoji} ", else: ""
 

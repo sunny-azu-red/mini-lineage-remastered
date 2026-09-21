@@ -3,7 +3,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/mini_lineage"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortAdena, timerLabel} from "./hooks"
+import {hooks as gameHooks, shortAdena, timerLabel, remainingLabel} from "./hooks"
 import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
@@ -76,3 +76,4 @@ if (process.env.NODE_ENV === "development") {
 // Exposed for the browser suite, which holds each of these and its Elixir twin to one table.
 window.__shortAdena = shortAdena;
 window.__timerLabel = timerLabel;
+window.__remainingLabel = remainingLabel;

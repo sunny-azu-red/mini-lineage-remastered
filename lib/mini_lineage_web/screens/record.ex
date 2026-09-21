@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
   alias MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.Format
+  alias MiniLineage.Game.{Format, Narrative}
 
   attr :view, :map, required: true
   attr :catalog, :map, required: true
@@ -61,6 +61,14 @@ defmodule MiniLineageWeb.Screens.Record do
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
       <p>{raw(@race.backstory)}</p>
       <p>{raw(@race.traits)}</p>
+
+      <.blessings
+        effects={@view.effects}
+        dead={@dead}
+        reason={@view.death_reason}
+        voice={@voice}
+        mine={@mine}
+      />
 
       <h2>Inventory &amp; Stats</h2>
       <p phx-no-format>
@@ -121,7 +129,6 @@ defmodule MiniLineageWeb.Screens.Record do
         with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="gold">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>, and {@voice.their} purse held <span class="gold">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
         when the road ran out.
       </p>
-        <p class="hp">{@view.death_reason}</p>
       <% else %>
         <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
         <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
@@ -142,6 +149,53 @@ defmodule MiniLineageWeb.Screens.Record do
     </div>
     """
   end
+
+  attr :effects, :list, required: true
+  attr :dead, :boolean, required: true
+  attr :reason, :string, default: nil
+  attr :voice, :map, required: true
+  attr :mine, :boolean, required: true
+
+  @doc false
+  # What is riding on a run right now, spelled out. The header wears these as emoji alone, which a
+  # phone can neither hover nor read — so the one page about a character is where they are explained.
+  # Nothing is fetched for it: the view already carries the effects, and it is rebuilt whenever one
+  # is applied or lapses, so paragraphs appear and go on their own.
+  defp blessings(assigns) do
+    ~H"""
+    <h2>Blessings &amp; Afflictions</h2>
+
+    <%= if @dead do %>
+      <p>
+        Nothing walks with {@voice.object} any more. Every blessing lifted and every affliction
+        loosed its hold the moment {@voice.their} road ran out.
+      </p>
+      <p :if={@reason} class="hp">{Narrative.death_reason(@reason, @mine)}</p>
+    <% else %>
+      <%!-- One hook over the whole list rather than one per line: it repaints every countdown
+            beneath it on the same second, and the server's own expiry timer takes the line away. --%>
+      <div id="record-effects" phx-hook="EffectTimers">
+        <p
+          :for={effect <- @effects}
+          class={"effect-line effect-#{effect.type}"}
+          data-effect-id={effect.id}
+          data-remaining-ms={effect.remaining_ms}
+        >
+          <strong class="effect-name">{effect.emoji} {effect.label}</strong>
+          &mdash; {raw(Narrative.build_effect(effect, @voice))}
+          <span :if={effect.remaining_ms} class="minor">{lapse(effect.type)}
+          <span data-timer="long">{Format.remaining(effect.remaining_ms)}</span>.</span>
+        </p>
+      </div>
+    <% end %>
+    """
+  end
+
+  # A buff is something you still have, a debuff something you are still under, and a lingering
+  # aura something that is settling — three different things for a clock to be counting down to.
+  defp lapse(:debuff), do: "It lifts in"
+  defp lapse(:aura), do: "It settles in"
+  defp lapse(_buff), do: "It holds for another"
 
   attr :record_log, :list, default: []
 

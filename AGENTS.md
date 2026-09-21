@@ -70,6 +70,8 @@ job, against the struct rather than the page.
 `Format.adena` and `shortAdena` in `hooks.js`: the count-up animation formats its own frames, and
 without a client-side copy the number would change format mid-count. `Format.countdown` and
 `timerLabel`: the server renders an effect's first frame and the hook repaints it every second.
+`Format.remaining` and `remainingLabel` are the same pair said in a sentence, for the record's
+Blessings & Afflictions — a badge has room for "1m" and a paragraph has room for "1m 30s".
 Each pair reads one fixture — `test/fixtures/adena_format.json`, `test/fixtures/effect_timer.json`
 — from `format_test.exs` on the Elixir side and `walkthrough.mjs` on the JavaScript one. Change
 either implementation, change its table, and both tests will tell you. Anything else the two

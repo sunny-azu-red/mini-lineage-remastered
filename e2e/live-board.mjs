@@ -135,6 +135,24 @@ try {
     check('...and stays put when the reader scrolls further down, rather than jumping up',
         settled >= log.at, `${log.at} -> ${settled}`);
 
+    // ---- what is riding on the run, explained rather than drawn -------------------------------
+    // The header wears these as emoji, which a phone can neither hover nor read; the record spells
+    // them out. The player is standing in a combat zone, so that is the aura the watcher must see.
+    const effects = () => watcher.textContent('#record-effects').then(t => t.replace(/\s+/g, ' '));
+    const combat = await effects();
+    check('...and what is riding on the run, spelled out rather than left to a hover',
+        /In Combat/.test(combat) && /Steel is out/.test(combat), combat.slice(0, 80));
+
+    // And they come and go on their own: walking out of the fray drops the combat aura for a
+    // resting one, and the watcher is told without asking for anything.
+    await player.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await connected(player);
+    const swapped = await watcher.waitForFunction(
+        () => /Resting/.test(document.querySelector('#record-effects')?.textContent ?? ''),
+        null, { timeout: 15000 }).then(() => true).catch(() => false);
+    check('...and change as the run does, with the reader asking for nothing', swapped,
+        (await effects()).slice(0, 80));
+
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window
     // would be comparing two different moments of a live game.
