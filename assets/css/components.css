@@ -274,15 +274,9 @@ ol.chronicle li:last-child::after {
    The ground comes up across a third of the row from each end, rather than a fixed distance: the
    sidebar's 193px row wants about 64px of it and the Chronicle's is three times as wide, so a
    number that suits one is wrong for the other. A share of the width suits both. It is the PANEL's colour laid back over the wash, so it wants
-   the row to be on a panel; both of these are.
-   The scrollport takes the ground too, when the entry it ends on is a marked one. How far a box can
-   be scrolled is a rounded figure, so it comes to rest a fraction either side of its final entry
-   rather than on it — and where that is a fraction short, the strip left over is the box's own
-   ground showing under a row that has one of its own. Given the same ground there is nothing to
-   see. The list is opaque, so this is only ever visible in that strip. */
+   the row to be on a panel; both of these are. */
 .stat-row.danger,
-ol.chronicle li.ambushed,
-.panel-body:has(> ol.chronicle > li:last-child.ambushed) {
+ol.chronicle li.ambushed {
     background-color: var(--danger-wash);
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
@@ -490,11 +484,8 @@ ol.chronicle li.ambushed,
 }
 
 /* A run's fights, oldest first. Ordered because a chronicle is, but never numbered: the count is
-   already in the paragraph above it. The cap and the scroll are the panel's, not this list's.
-   The panel's own colour, stated: the list covers the ground its scrollport carries, everywhere
-   the list reaches. What it does not reach is the strip the rounded scroll leaves at the bottom. */
+   already in the paragraph above it. The cap and the scroll are the panel's, not this list's. */
 ol.chronicle {
-    background-color: var(--bg-panel);
     margin: 0;
     padding: 0;
     list-style: none;

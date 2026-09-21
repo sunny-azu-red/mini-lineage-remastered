@@ -117,21 +117,23 @@ try {
     // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go.
     const log = await watcher.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
-        const ground = (el) => { const s = getComputedStyle(el); return `${s.backgroundColor} ${s.backgroundImage}`; };
-        return {
-            hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop,
-            ground: ground(body) === ground(body.querySelector('ol.chronicle li:last-child')),
-        };
+        return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop };
     });
     check('...and follows it down without the reader scrolling',
         log.hidden > 0 && log.hidden - log.at <= 2,
         `${log.hidden}px scrolled away, sitting at ${log.at}`);
 
-    // How far a box CAN be scrolled is a rounded figure, so it comes to rest a fraction off its
-    // last entry however it is asked to — measured, snapped, reversed, they all land on the same
-    // number. The strip that leaves is the scrollport's own ground, which is why it carries the
-    // ground of whatever it ends on: there is then nothing of a different colour to show.
-    check('...with nothing of another colour showing beneath the last of them', log.ground);
+    // And rests somewhere the reader's own scrolling agrees with. A box can be put a fraction past
+    // its content from script, but a wheel goes through the compositor, which corrects it — so a
+    // pin that overshoots shows up as the log jumping UP under the first flick DOWN.
+    const box = await watcher.locator('#chronicle .panel-body').boundingBox();
+    await watcher.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await watcher.mouse.wheel(0, 120);
+    await watcher.waitForTimeout(350);
+    const settled = await watcher.evaluate(() =>
+        document.querySelector('#chronicle .panel-body').scrollTop);
+    check('...and stays put when the reader scrolls further down, rather than jumping up',
+        settled >= log.at, `${log.at} -> ${settled}`);
 
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window

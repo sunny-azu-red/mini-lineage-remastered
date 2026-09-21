@@ -385,9 +385,19 @@ export const Panel = {
     body() {
         return this.el.querySelector(':scope > .panel-body');
     },
+    // `scrollHeight` is a whole number rounded up from a list whose height is rarely one, so asking
+    // for it asks to be a fraction past the end. The main thread allows that; the compositor, which
+    // is what a wheel or a finger goes through, does not — and corrects it on the reader's first
+    // move, which reads as the log jumping up under them. So the end is taken from the last entry
+    // itself, where it actually is, and rounded the only safe way: down.
     toBottom() {
         const body = this.body();
-        body.scrollTop = body.scrollHeight;
+        const last = body.firstElementChild?.lastElementChild;
+        if (!last) return;
+
+        const end = body.scrollTop + last.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom;
+        const grid = devicePixelRatio || 1;
+        body.scrollTop = Math.floor(end * grid) / grid;
     },
 };
 
