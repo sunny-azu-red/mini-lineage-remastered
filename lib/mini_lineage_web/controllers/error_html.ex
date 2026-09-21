@@ -49,7 +49,7 @@ defmodule MiniLineageWeb.ErrorHTML do
                   </:header>
                   <p>{@message}</p>
                   <pre :if={@detail} class="code-block">{@detail}</pre>
-                  <p class="last back"><a href={~p"/"}>Return to safer lands</a></p>
+                  <p class="last"><a href={~p"/"}>Return to safer lands</a></p>
                 </Controls.panel>
 
                 <Layouts.footer />
