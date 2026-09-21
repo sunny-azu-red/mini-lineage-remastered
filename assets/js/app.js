@@ -13,17 +13,21 @@ const liveSocket = new LiveSocket("/live", Socket, {
   hooks: {...colocatedHooks, ...gameHooks},
 })
 
-// Show progress bar on live navigation and form submits. The stops are the game's own value
-// colours in hue order — a rainbow the palette already had, rather than a borrowed one.
+// Show progress bar on live navigation and form submits. The stops ARE the game's own value
+// colours in hue order — a rainbow the palette already had, rather than a borrowed one. Read from
+// the tokens rather than copied out of them: copied once, six of the seven had quietly gone stale
+// behind a repaint of the palette. This script is deferred, so the stylesheet has already applied.
+const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
 topbar.config({
   barColors: {
-    0: "#e95849",     // hp
-    0.17: "#e67e22",  // crit
-    0.33: "#c9a84c",  // gold
-    0.5: "#27ae60",   // heal
-    0.67: "#3fb0a0",  // tally
-    0.83: "#1c90e3",  // defense
-    1: "#ab74c2",     // xp
+    0: token("--text-hp"),
+    0.17: token("--critical"),
+    0.33: token("--gold"),
+    0.5: token("--success"),
+    0.67: token("--text-tally"),
+    0.83: token("--text-defense"),
+    1: token("--text-xp"),
   },
   shadowColor: "rgba(0, 0, 0, .3)",
 })

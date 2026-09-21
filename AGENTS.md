@@ -171,6 +171,12 @@ Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside t
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns
 neon — that search has been run twice and been wrong twice.
 
+**A colour JavaScript needs is READ from its token, never copied beside it.** The loading bar's
+stops are the value colours in hue order, and they were spelled out in `app.js` — where six of the
+seven quietly went stale behind a repaint of the palette, because nothing in a stylesheet can fail
+when a hex in a script stops matching it. `getComputedStyle(document.documentElement)` answers with
+whatever the tokens say today; `app.js` is deferred, so the stylesheet has already applied.
+
 **Judge colour in CIELCh, never in HSL.** HSL saturation is a coordinate, not a quantity: 27% on a
 panel at 8% lightness looks neutral and 27% on a button at 40% looks blue, which is why the
 controls had to sit well under the surfaces' number to read as the same slate. Lightness is `L*`,
