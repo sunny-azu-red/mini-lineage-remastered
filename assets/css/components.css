@@ -226,15 +226,17 @@
     border-bottom: none;
 }
 
+/* Only the colour moves. The taper below is a background IMAGE, and a `background` shorthand here
+   would throw it away on the first frame. */
 @keyframes danger-pulse {
 
     0%,
     100% {
-        background: rgba(146, 43, 33, 0.15);
+        background-color: rgba(146, 43, 33, 0.15);
     }
 
     50% {
-        background: rgba(190, 39, 31, 0.25);
+        background-color: rgba(190, 39, 31, 0.25);
     }
 }
 
@@ -242,11 +244,23 @@
     padding: 10px 0;
 }
 
+/* A row in danger, and an entry that ended in an ambush: one mark, in two places.
+   The ground fades out at both ends rather than stopping at an edge, so there is no box to round
+   and nothing to pad or pull back — the row keeps exactly the shape it has when nothing is wrong,
+   which is the whole point: going low should colour a row, not move it.
+   The fade is the PANEL's own colour painted back over the wash, so it needs the row to be sitting
+   on a panel. Both of these are. */
+.stat-row.danger,
+ol.chronicle li.ambushed {
+    background-color: var(--danger-wash);
+    background-image: linear-gradient(90deg,
+            var(--bg-panel) 0,
+            transparent 24px,
+            transparent calc(100% - 24px),
+            var(--bg-panel) 100%);
+}
+
 .stat-row.danger {
-    background: var(--danger-wash);
-    border-radius: 6px;
-    padding: 10px 6px;
-    margin: 0 -6px;
     animation: danger-pulse .5s ease-in-out infinite;
 }
 
@@ -449,17 +463,6 @@ ol.chronicle {
     margin: 0;
     padding: 0;
     list-style: none;
-}
-
-/* A fight that ended in an ambush wears it exactly as the status panel wears low health: the wash
-   and a radius, with its own side padding cancelled by a negative margin so the ground spreads past
-   the words without moving one of them. No border and no pulse — the panel is warning about now,
-   and this already happened. The prose keeps its own colours, an entry being prose. */
-ol.chronicle li.ambushed {
-    background: var(--danger-wash);
-    border-radius: var(--radius);
-    padding: 12px 6px;
-    margin: 0 -6px;
 }
 
 /* A scrollbar is chrome, so it wears the controls' own violet and warms to gold under the pointer,
