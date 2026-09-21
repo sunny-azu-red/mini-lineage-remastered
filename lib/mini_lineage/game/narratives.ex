@@ -88,20 +88,20 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @kill [
-    ~s(Wielding your {weaponEmoji} <span class="item">{weaponName}</span> with fury, you cut down <span class="kills">{enemyGroup}</span>.),
-    ~s(Your {weaponEmoji} <span class="item">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
-    ~s(With a fierce war cry you lunge forward, striking down <span class="kills">{enemyGroup}</span> with your {weaponEmoji} <span class="item">{weaponName}</span>.),
-    ~s(The <span class="kills">{enemyGroup}</span> stood no chance, your {weaponEmoji} <span class="item">{weaponName}</span> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.),
-    ~s(A lethal dance of your {weaponEmoji} <span class="item">{weaponName}</span> leaves fallen <span class="kills">{enemyGroup}</span> in your wake.),
-    ~s(Your strike is true. The {weaponEmoji} <span class="item">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
+    ~s(Wielding your {weaponEmoji} <span class="equipped">{weaponName}</span> with fury, you cut down <span class="kills">{enemyGroup}</span>.),
+    ~s(Your {weaponEmoji} <span class="equipped">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
+    ~s(With a fierce war cry you lunge forward, striking down <span class="kills">{enemyGroup}</span> with your {weaponEmoji} <span class="equipped">{weaponName}</span>.),
+    ~s(The <span class="kills">{enemyGroup}</span> stood no chance, your {weaponEmoji} <span class="equipped">{weaponName}</span> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.),
+    ~s(A lethal dance of your {weaponEmoji} <span class="equipped">{weaponName}</span> leaves fallen <span class="kills">{enemyGroup}</span> in your wake.),
+    ~s(Your strike is true. The {weaponEmoji} <span class="equipped">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
   ]
 
   @deflection [
-    ~s(Your {armorEmoji} <span class="item">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
-    ~s(The {armorEmoji} <span class="item">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
-    ~s(Blades glanced off your {armorEmoji} <span class="item">{armorName}</span> for <span class="damage">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
-    ~s(Your {armorEmoji} <span class="item">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
-    ~s(Steel rings against your {armorEmoji} <span class="item">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
+    ~s(Your {armorEmoji} <span class="equipped">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
+    ~s(The {armorEmoji} <span class="equipped">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
+    ~s(Blades glanced off your {armorEmoji} <span class="equipped">{armorName}</span> for <span class="damage">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
+    ~s(Your {armorEmoji} <span class="equipped">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
+    ~s(Steel rings against your {armorEmoji} <span class="equipped">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
   ]
 
   @outcome [
