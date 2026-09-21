@@ -450,9 +450,13 @@ ol.chronicle {
 }
 
 /* An entry borrows the alert's ground, not its voice: it is prose carrying its own value colours,
-   and an alert's text colour would speak over every one of them. */
+   and an alert's text colour would speak over every one of them. It takes the row's rhythm too,
+   and reaches out to the panel's walls for it — 9px plus its 3px border on the left, 12px on the
+   right, each pulled back by what the body pads, so the wash spreads and no word moves. */
 ol.chronicle .alert {
     color: inherit;
+    padding: 12px 12px 12px 9px;
+    margin: 0 -12px;
 }
 
 /* A scrollbar is chrome, so it wears the controls' own violet and warms to gold under the pointer,
@@ -488,10 +492,19 @@ ol.chronicle .alert {
 
 /* An entry is a paragraph now rather than a line, so it is spaced like one. The last gives its
    margin up to the box's own padding, which is already holding that gap. */
+/* Rows, the way the sidebar's stats are rows: a dashed rule between them and none around the
+   outside, so the list reads as a run of separate things rather than as one block of prose. The
+   ends give up the padding the panel body is already holding for them. */
 ol.chronicle li {
-    margin-bottom: 12px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border-soft);
+}
+
+ol.chronicle li:first-child {
+    padding-top: 0;
 }
 
 ol.chronicle li:last-child {
-    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
 }
