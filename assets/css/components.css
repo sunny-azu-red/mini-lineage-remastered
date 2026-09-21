@@ -208,12 +208,17 @@
 }
 
 /* ===== Status Panel ===== */
+/* The rule between rows is drawn by ::after rather than by the row's own border, because the row
+   runs wall to wall and the rule does not. The border stays, transparent, to reserve the strip the
+   rule sits in — so every row is the same height and a marked one's ground, clipped to the padding
+   box, never reaches through the gaps in the dashes to tint them. */
 .stat-row {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 12px;
-    border-bottom: 1px dashed var(--border-soft);
+    position: relative;
+    border-bottom: 1px solid transparent;
 }
 
 .status-panel .stat-row {
@@ -223,10 +228,30 @@
     gap: 10px;
 }
 
-.stat-row:last-child {
-    border-bottom: none;
+.stat-row::after,
+ol.chronicle li::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -1px;
+    border-bottom: 1px dashed var(--border-soft);
 }
 
+/* The last row has no rule beneath it, so it reserves no strip for one — and with no border to
+   clip against, a marked one's ground runs all the way to the bottom of it. */
+.stat-row:last-child,
+ol.chronicle li:last-child {
+    border-bottom: 0;
+}
+
+.stat-row:last-child::after,
+ol.chronicle li:last-child::after {
+    content: none;
+}
+
+/* Only the colour moves. The fade is a background IMAGE, and a `background` shorthand here would
+   throw it away on the first frame. */
 @keyframes danger-pulse {
 
     0%,
@@ -243,15 +268,21 @@
     padding: 10px 12px;
 }
 
-/* A row in danger, and an entry that ended in an ambush: one mark, in two places. A row runs the
-   full width of its panel, so the ground simply fills it — nothing to round, nothing to pad or pull
-   back, and the row keeps exactly the shape it has when nothing is wrong. Going low should colour a
-   row, not move it.
-   Clipped to the padding box, because the dashed rule beneath belongs to the list and not to this
-   row: left to the border box, the ground shows through the gaps in the dashes and turns them red. */
+/* A row in danger, and an entry that ended in an ambush: one mark, in two places. Nothing to round,
+   nothing to pad or pull back — the row keeps exactly the shape it has when nothing is wrong, which
+   is the point: going low should colour a row, not move it.
+   The ground comes up across a third of the row from each end, rather than a fixed distance: the
+   sidebar's 193px row wants about 64px of it and the Chronicle's is three times as wide, so a
+   number that suits one is wrong for the other. A share of the width suits both. It is the PANEL's colour laid back over the wash, so it wants
+   the row to be on a panel; both of these are. */
 .stat-row.danger,
 ol.chronicle li.ambushed {
     background-color: var(--danger-wash);
+    background-image: linear-gradient(90deg,
+            var(--bg-panel) 0,
+            transparent 33%,
+            transparent 67%,
+            var(--bg-panel) 100%);
     background-clip: padding-box;
 }
 
@@ -497,9 +528,6 @@ ol.chronicle {
    outside, so the list reads as a run of separate things rather than one block of prose. */
 ol.chronicle li {
     padding: 12px;
-    border-bottom: 1px dashed var(--border-soft);
-}
-
-ol.chronicle li:last-child {
-    border-bottom: none;
+    position: relative;
+    border-bottom: 1px solid transparent;
 }
