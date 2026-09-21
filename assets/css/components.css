@@ -536,4 +536,8 @@ ol.chronicle li {
     padding: 12px;
     position: relative;
     border-bottom: 1px solid transparent;
+    /* Whole pixels rather than the body's 22.75: an entry that ends on a fraction makes the list a
+     * fraction tall, and a box can only be scrolled to a rounded idea of its own height — a hair
+     * past the last entry, onto bare panel. Invisible until that entry has a ground of its own. */
+    line-height: 23px;
 }

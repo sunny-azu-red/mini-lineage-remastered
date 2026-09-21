@@ -114,14 +114,20 @@ try {
         gained, `${told} -> ${await lines()} line(s)`);
 
     // And follows it down, the way a chat box does: the line that just arrived is the one on screen.
-    // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go.
+    // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go,
+    // and `foot` is where the last entry ends — a rounded `scrollHeight` once let the box stop a
+    // fraction past it, onto bare panel, which only showed where that entry was an ambush.
     const log = await watcher.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
-        return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop };
+        const last = body.querySelector('ol.chronicle li:last-child');
+        return {
+            hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop,
+            foot: body.getBoundingClientRect().bottom - last.getBoundingClientRect().bottom,
+        };
     });
     check('...and follows it down without the reader scrolling',
-        log.hidden > 0 && log.hidden - log.at <= 2,
-        `${log.hidden}px scrolled away, sitting at ${log.at}`);
+        log.hidden > 0 && log.hidden - log.at <= 2 && Math.abs(log.foot) < 0.5,
+        `${log.hidden}px scrolled away, sitting at ${log.at}, ${log.foot}px under the last entry`);
 
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window
