@@ -173,16 +173,18 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
     test "and gives the reason it ended the same weight as the death screen does" do
       # Red and unmuted, as the death screen says it, and in the same breath as there being nothing
-      # left on the run — one paragraph, because they are one thought. Stored with its pronouns
-      # open, so what has to be on the page is what those fill to.
+      # left on the run: one paragraph, because they are one thought, with the colour on the ending
+      # alone. Stored with its pronouns open, so what has to be on the page is what those fill to.
       player = fallen()
       html = html_for(player)
       spoken = Regex.escape(Narrative.death_reason(player.death_reason, true))
 
-      assert html =~ ~r|<p[^>]*class="deaths"[^>]*>[^<]*#{spoken}|,
-             "the reason it ended is not in the paragraph that closes the run"
+      assert html =~ ~r|<span class="deaths">#{spoken}</span>|,
+             "the reason it ended is not the part of the closing line that carries the colour"
 
-      refute html =~ ~r|<p[^>]*class="[^"]*muted[^"]*"[^>]*>[^<]*#{spoken}|
+      # And the line it closes is NOT red, or the colour stops meaning the ending.
+      assert html =~ ~r|<p[^>]*>\s*Nothing walks with|
+      refute html =~ ~r|<[^>]*class="[^"]*muted[^"]*"[^>]*>[^<]*#{spoken}|
     end
   end
 

@@ -170,14 +170,12 @@ defmodule MiniLineageWeb.Screens.Record do
     <h2>Blessings &amp; Afflictions</h2>
 
     <%= if @dead do %>
-      <%!-- One paragraph and one colour: the run is over, and how it ended is not a separate
-            remark from there being nothing left on it. Red as the death screen says it. --%>
-      <p class="deaths">
+      <%!-- One paragraph, because there being nothing left on the run and how it ended are one
+            thought. Only the ending takes the colour, the way the death screen says it. --%>
+      <p>
         Nothing walks with {@voice.object} any more. Every blessing lifted and every affliction
-        loosed its hold the moment {@voice.their} road ran out. {Narrative.death_reason(
-          @reason,
-          @mine
-        )}
+        loosed its hold the moment {@voice.their} road ran out.
+        <span class="deaths">{Narrative.death_reason(@reason, @mine)}</span>
       </p>
     <% else %>
       <%!-- One hook over the whole list rather than one per line: it repaints every countdown
@@ -189,7 +187,7 @@ defmodule MiniLineageWeb.Screens.Record do
           data-remaining-ms={effect.remaining_ms}
         >
           <strong class={effect.type}>{effect.emoji} {effect.label}</strong>
-          &mdash; {raw(Narrative.build_effect(effect, @voice))}
+          <span class="muted">•</span> {raw(Narrative.build_effect(effect, @voice))}
           <%!-- Only the figure is dimmed, the way a date is: the words around it are the sentence,
                 and a whole clause in grey reads as an aside rather than the end of one. --%>
           <span :if={effect.remaining_ms}>{lapse(effect.type)}
