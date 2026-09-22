@@ -17,6 +17,8 @@ defmodule MiniLineage.Game.Narratives do
   # forms as "you", so nothing but the pronouns moves between a reader's own record and a stranger's.
   # Keyed by the ACTIVE id, which is what a view carries; the catalog key is not in the view.
   @effect_blurbs %{
+    "ghost" =>
+      ~s(The road is behind {object} now, and nothing of it walks with {object} any more. What the realm keeps of {them} is written in the Halls and in the fights below, and neither can be added to.),
     "resting" =>
       ~s(No blade is drawn where {them} stand. Out of the fray {their} wounds have leave to knit, and what the road keeps in the dark is somebody else's trouble for now.),
     "combat" =>

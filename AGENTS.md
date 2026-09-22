@@ -182,6 +182,15 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**A fatal fight pays nothing, so its narrative may not say it did.** `resolve_battle_outcome/2`
+returns `{kill(player), false}` the moment health reaches zero — before the XP, the Adena,
+`total_battles`, `total_enemies_killed` and every `Statistics.increment_for`. The deflection line
+names the XP and the outcome line names the Adena and the HP they are left standing on, so both
+described a reward never given and a fighter who is dead. They are still DRAWN — the pools draw in
+order and skipping one would shift every later roll in that fight — and then dropped, and the
+outcome carries how it ended instead, in the second person the whole chronicle is written in. This
+is also why a run's chronicle can hold one more entry than `total_battles` says.
+
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
 action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
 `phx-click` among the four modules that render them — so the first clause lets every state reach

@@ -73,6 +73,9 @@ defmodule MiniLineage.Game.Constants do
       label: "Regenerating",
       modifiers: []
     },
+    # What is left of a run. Derived rather than applied: `kill/1` clears every effect a character
+    # had, so this is not something they carry but something they have become.
+    ghost_aura: %{id: "ghost", type: :aura, emoji: "👻", label: "Ghost", modifiers: []},
     newbie_buff: %{
       id: "newbie_blessing",
       type: :buff,

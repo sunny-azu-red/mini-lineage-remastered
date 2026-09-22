@@ -17,29 +17,45 @@ defmodule MiniLineageWeb.BlessingsTest do
   # and a fixture that kept it would answer every claim below with the same paragraph.
   defp bearer(effects) do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Wretch")
-    player = %{player | current_screen: "home", health: 10, effects: []}
+    # `last_action_at` because the record stamps a road with it, and a player built by hand has
+    # never been through the character server that sets one.
+    player = %{
+      player
+      | current_screen: "home",
+        health: 10,
+        effects: [],
+        last_action_at: MiniLineage.Game.Clock.now_ms()
+    }
 
     Enum.reduce(effects, player, &Player.apply_effect(&2, Constants.effect(&1)))
   end
 
+  # `entry` says whether anybody still holds the run: a fallen one that has been walked away from
+  # has nothing walking with it and draws no section at all.
   defp html_for(player, opts) do
-    view = Snapshot.build(player)
-    view = if opts[:dead], do: %{view | dead: true, death_reason: opts[:reason]}, else: view
+    player =
+      if opts[:dead], do: Player.kill(%{player | death_reason: opts[:reason]}), else: player
 
     render_component(&Record.record/1,
-      view: view,
+      view: Snapshot.build(player),
       catalog: Snapshot.catalog(),
-      entry: nil,
+      entry: %{
+        id: "x",
+        inserted_at: DateTime.utc_now(),
+        dead: player.dead,
+        active: Keyword.get(opts, :held, true)
+      },
       mine: Keyword.get(opts, :mine, true)
     )
   end
 
-  # The section alone, so a claim about it is not answered by the rest of the record.
+  # The section alone, so a claim about it is not answered by the rest of the record. Nil where the
+  # run draws none at all.
   defp blessings(player, opts \\ []) do
-    [_, section] =
-      Regex.run(~r|Blessings &amp; Afflictions</h2>(.*?)<h2|s, html_for(player, opts))
-
-    section
+    case Regex.run(~r|Blessings &amp; Afflictions</h2>(.*?)<h2|s, html_for(player, opts)) do
+      [_, section] -> section
+      nil -> nil
+    end
   end
 
   defp text(section),
@@ -121,25 +137,32 @@ defmodule MiniLineageWeb.BlessingsTest do
     # A reason as the game stores one: the sentence with its pronouns still open.
     @reason "🪦 {they} fought bravely... but not bravely enough."
 
-    test "carries nothing, and says so" do
+    # `kill/1` empties the effect list, so what is left is not carried but derived from being dead.
+    test "carries one thing, and it is what it has become" do
       section = text(blessings(bearer([:newbie_buff]), dead: true, reason: @reason))
 
-      assert section =~ "Nothing walks with you any more"
+      assert section =~ "Ghost"
       refute section =~ "Newbie Blessing"
     end
 
-    test "and tells how it ended, here rather than at the end of the journey" do
-      html = html_for(bearer([]), dead: true, reason: @reason)
-      [_, before_stats] = Regex.run(~r|Blessings &amp; Afflictions</h2>(.*?)<h2|s, html)
+    # A run nobody holds the session of has been walked away from. Nothing walks with it, and an
+    # empty section saying so is worse than no section.
+    test "and none at all once nobody is holding it" do
+      refute blessings(bearer([]), dead: true, reason: @reason, held: false)
+      assert blessings(bearer([]), dead: true, reason: @reason, held: true)
+    end
 
-      assert before_stats =~ "not bravely enough"
-      # Once, and in the section that is about what became of them.
+    test "and tells how it ended where the run ends, not where its effects are listed" do
+      html = html_for(bearer([]), dead: true, reason: @reason)
+
+      assert html =~ ~r|when the road ran out\.\s*<span class="deaths">|
+      # Once. It was told twice while it had a paragraph of its own as well.
       assert html |> String.split("not bravely enough") |> length() == 2
     end
 
     test "in the reader's own voice, whoever is reading" do
-      mine = text(blessings(bearer([]), dead: true, reason: @reason, mine: true))
-      theirs = text(blessings(bearer([]), dead: true, reason: @reason, mine: false))
+      mine = html_for(bearer([]), dead: true, reason: @reason, mine: true)
+      theirs = html_for(bearer([]), dead: true, reason: @reason, mine: false)
 
       assert mine =~ "You fought bravely"
       assert theirs =~ "They fought bravely"

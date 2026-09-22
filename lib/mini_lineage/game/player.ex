@@ -162,8 +162,10 @@ defmodule MiniLineage.Game.Player do
     %{player | effects: kept ++ [to_active(config, expires_at)]}
   end
 
-  @doc "Unexpired buffs/debuffs/auras, plus the derived regenerating aura."
-  def active_effects(%{dead: true}), do: []
+  @doc "Unexpired buffs/debuffs/auras, plus the derived regenerating and ghost auras."
+  # The dead carry nothing — `kill/1` empties the list — so the one thing they have is derived, the
+  # way the regen aura is. It holds no modifiers, so the stats pipeline folds in nothing.
+  def active_effects(%{dead: true}), do: [to_active(Constants.effect(:ghost_aura), nil)]
 
   def active_effects(player) do
     now = Clock.now_ms()

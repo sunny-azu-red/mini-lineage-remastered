@@ -88,9 +88,14 @@ defmodule MiniLineage.Game.SnapshotTest do
     end
   end
 
-  test "an ambushed character says so, and a dead one shows no effects" do
+  test "an ambushed character says so, and a dead one carries nothing but the ghost" do
     assert Snapshot.build(character(0, %{ambushed: true})).ambushed
-    assert Snapshot.build(Player.kill(character())).effects == []
+
+    # `kill/1` empties the effect list; the ghost is derived from being dead rather than carried,
+    # and holds no modifiers, so nothing a run had survives it and nothing new is folded in.
+    effects = Snapshot.build(Player.kill(character())).effects
+
+    assert [%{id: "ghost", type: :aura, modifiers: []}] = effects
   end
 
   test "disqualification is derived, never assumed" do

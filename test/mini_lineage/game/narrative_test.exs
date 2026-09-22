@@ -187,6 +187,45 @@ defmodule MiniLineage.Game.NarrativeTest do
     end
   end
 
+  describe "the fight that killed them" do
+    # `resolve_battle_outcome/2` returns the moment health reaches zero, BEFORE the XP, the Adena
+    # and every counter are credited. A line naming any of them describes a reward never given.
+    test "names no reward, because a fatal fight pays none" do
+      fighter = started(0, weapon_id: 3, armor_id: 3)
+      result = fixed_result()
+      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, result)
+
+      assert killed.dead
+      assert killed.experience == fighter.experience, "a fatal fight granted XP"
+      assert killed.adena == fighter.adena, "a fatal fight granted Adena"
+
+      narrative = Narrative.build_battle(killed, result, false)
+
+      refute narrative.deflection_line, "the deflection line names the XP that was never earned"
+      refute narrative.outcome_line =~ "Adena"
+      refute narrative.outcome_line =~ "HP"
+    end
+
+    test "and says how it ended in its place" do
+      fighter = started(0, weapon_id: 3, armor_id: 3)
+      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
+
+      narrative = Narrative.build_battle(killed, fixed_result(), false)
+
+      # Second person, as the whole chronicle is, and with its pronouns already filled.
+      assert narrative.outcome_line == Narrative.death_reason(killed.death_reason, true)
+      refute narrative.outcome_line =~ "{"
+    end
+
+    # The strike happened whatever it cost, and the chronicle would be poorer without it.
+    test "but still tells what the blow did" do
+      fighter = started(0, weapon_id: 3, armor_id: 3)
+      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
+
+      assert Narrative.build_battle(killed, fixed_result(), false).kill_line
+    end
+  end
+
   describe "death lines" do
     # Written once with its pronouns left open, so what has to hold is that it closes — for the
     # fallen player reading their own record, and for the stranger reading it in the Halls.

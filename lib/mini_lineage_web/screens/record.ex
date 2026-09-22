@@ -34,6 +34,12 @@ defmodule MiniLineageWeb.Screens.Record do
         # Your own page speaks to you; somebody else's speaks about them. The same set the
         # narratives are filled from, so a sentence and the page around it cannot disagree.
         voice: Narratives.voice(assigns.mine),
+        # A fallen run carries the ghost and nothing else. One nobody holds the session of carries
+        # not even that: there is nothing walking with a run that has been walked away from, so the
+        # section goes rather than standing empty over a single line about being gone.
+        walking:
+          assigns.view.effects != [] and
+            (not assigns.view.dead or (assigns.entry != nil and assigns.entry.active)),
         # Only the tense moves between a run still going and one that is over.
         defined: if(assigns.view.dead, do: "was", else: "has been"),
         fought: if(assigns.view.dead, do: "fought", else: "have fought"),
@@ -64,13 +70,7 @@ defmodule MiniLineageWeb.Screens.Record do
       <p>{raw(@race.backstory)}</p>
       <p>{raw(@race.traits)}</p>
 
-      <.blessings
-        effects={@view.effects}
-        dead={@dead}
-        reason={@view.death_reason}
-        voice={@voice}
-        mine={@mine}
-      />
+      <.blessings :if={@walking} effects={@view.effects} voice={@voice} />
 
       <h2>Inventory &amp; Stats</h2>
       <p phx-no-format>
@@ -131,7 +131,10 @@ defmodule MiniLineageWeb.Screens.Record do
         <p phx-no-format>
         {@voice.they} fell at <span class="level">Level <span data-key="rec-level" data-value={@view.level}>{@level}</span></span>
         with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="level">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>, and {@voice.their} purse held <span class="adena">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
-        when the road ran out.
+        when the road ran out. <span class="deaths">{Narrative.death_reason(
+          @view.death_reason,
+          @mine
+        )}</span>
       </p>
       <% else %>
         <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
@@ -155,46 +158,36 @@ defmodule MiniLineageWeb.Screens.Record do
   end
 
   attr :effects, :list, required: true
-  attr :dead, :boolean, required: true
-  attr :reason, :string, default: nil
   attr :voice, :map, required: true
-  attr :mine, :boolean, required: true
 
   @doc false
   # What is riding on a run right now, spelled out. The header wears these as emoji alone, which a
   # phone can neither hover nor read — so the one page about a character is where they are explained.
   # Nothing is fetched for it: the view already carries the effects, and it is rebuilt whenever one
   # is applied or lapses, so paragraphs appear and go on their own.
+  #
+  # A fallen run carries one thing, the ghost, derived from being dead rather than held. A fallen
+  # run nobody holds the session of carries not even that, and the caller draws no section at all:
+  # there is nothing walking with a run that has been walked away from.
   defp blessings(assigns) do
     ~H"""
     <h2>Blessings &amp; Afflictions</h2>
-
-    <%= if @dead do %>
-      <%!-- One paragraph, because there being nothing left on the run and how it ended are one
-            thought. Only the ending takes the colour, the way the death screen says it. --%>
-      <p>
-        Nothing walks with {@voice.object} any more. Every blessing lifted and every affliction
-        loosed its hold the moment {@voice.their} road ran out.
-        <span class="deaths">{Narrative.death_reason(@reason, @mine)}</span>
-      </p>
-    <% else %>
-      <%!-- One hook over the whole list rather than one per line: it repaints every countdown
+    <%!-- One hook over the whole list rather than one per line: it repaints every countdown
             beneath it on the same second, and the server's own expiry timer takes the line away. --%>
-      <div id="record-effects" phx-hook="EffectTimers">
-        <p
-          :for={effect <- @effects}
-          data-effect-id={effect.id}
-          data-remaining-ms={effect.remaining_ms}
-        >
-          <strong class={effect.type}>{effect.emoji} {effect.label}</strong>
-          <span class="muted">&bull;</span> {raw(Narrative.build_effect(effect, @voice))}
-          <%!-- Only the figure is dimmed, the way a date is: the words around it are the sentence,
+    <div id="record-effects" phx-hook="EffectTimers">
+      <p
+        :for={effect <- @effects}
+        data-effect-id={effect.id}
+        data-remaining-ms={effect.remaining_ms}
+      >
+        <strong class={effect.type}>{effect.emoji} {effect.label}</strong>
+        <span class="muted">&bull;</span> {raw(Narrative.build_effect(effect, @voice))}
+        <%!-- Only the figure is dimmed, the way a date is: the words around it are the sentence,
                 and a whole clause in grey reads as an aside rather than the end of one. --%>
-          <span :if={effect.remaining_ms}>{lapse(effect.type)}
-          <span class="timer" data-timer="long">{Format.remaining(effect.remaining_ms)}</span>.</span>
-        </p>
-      </div>
-    <% end %>
+        <span :if={effect.remaining_ms}>{lapse(effect.type)}
+        <span class="timer" data-timer="long">{Format.remaining(effect.remaining_ms)}</span>.</span>
+      </p>
+    </div>
     """
   end
 
