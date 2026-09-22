@@ -152,22 +152,18 @@ defmodule MiniLineageWeb.BlessingsTest do
       assert blessings(bearer([]), dead: true, reason: @reason, held: true)
     end
 
-    test "and tells how it ended where the run ends, not where its effects are listed" do
+    test "and leaves how it ended to the chronicle, which is where the fight is" do
       html = html_for(bearer([]), dead: true, reason: @reason)
 
-      # It opens the closing paragraph rather than trailing it: "when the road ran out" and "not
-      # bravely enough" are the same thought, and saying the tally first made them read as two.
-      assert html =~ ~r|<p[^>]*>\s*<span class="deaths">[^<]*</span>\s*You fell at|
-      # Once. It was told twice while it had a paragraph of its own as well.
-      assert html |> String.split("not bravely enough") |> length() == 2
+      # The record tallies; the last entry of the chronicle is the ending. Said in both, the page
+      # repeated itself two paragraphs apart.
+      refute html =~ "not bravely enough"
+      assert html =~ "You fell at"
     end
 
     test "in the reader's own voice, whoever is reading" do
-      mine = html_for(bearer([]), dead: true, reason: @reason, mine: true)
-      theirs = html_for(bearer([]), dead: true, reason: @reason, mine: false)
-
-      assert mine =~ "You fought bravely"
-      assert theirs =~ "They fought bravely"
+      assert text(blessings(bearer([]), dead: true, reason: @reason, mine: true)) =~ "with you"
+      assert text(blessings(bearer([]), dead: true, reason: @reason, mine: false)) =~ "with them"
     end
   end
 end

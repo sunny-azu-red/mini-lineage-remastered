@@ -107,8 +107,11 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       refute html =~ "char-vitality"
     end
 
-    test "closes on the reason it ended, the same line the death screen carries" do
-      assert html_for(fallen()) =~ "The road ran out beneath you."
+    # The record tallies the run; the CHRONICLE tells how it ended, as the last fight it ever had.
+    # Saying it in both left the page repeating itself two paragraphs apart.
+    test "tallies the run without repeating how it ended" do
+      refute html_for(fallen()) =~ "The road ran out beneath you."
+      assert html_for(fallen()) =~ "You fell at"
     end
 
     test "and reads as somebody else's when somebody else is reading it" do
@@ -171,20 +174,13 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       assert text_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
     end
 
-    test "and gives the reason it ended the same weight as the death screen does" do
-      # Red and unmuted, as the death screen says it, and closing the sentence about how the run
-      # ended rather than standing in a section about what walks with it. Stored with its pronouns
-      # open, so what has to be on the page is what those fill to.
-      player = fallen()
-      html = html_for(player)
-      spoken = Regex.escape(Narrative.death_reason(player.death_reason, true))
+    test "and leaves the ending to the one entry that is an ending" do
+      # How a run ended is the last line of its chronicle, in the red every ending in the game
+      # wears. The record's own prose counts what it did and stops there.
+      html = html_for(fallen())
 
-      assert html =~ ~r|<span class="deaths">#{spoken}</span>\s*You fell at|,
-             "the reason it ended does not open the line that tallies the run"
-
-      # And the tally it opens is NOT red, or the colour stops meaning the ending.
-      refute html =~ ~r|<span class="deaths">[^<]*You fell at|
-      refute html =~ ~r|<[^>]*class="[^"]*muted[^"]*"[^>]*>[^<]*#{spoken}|
+      refute html =~ ~s(<span class="deaths">)
+      assert html =~ "when the road ran out."
     end
   end
 

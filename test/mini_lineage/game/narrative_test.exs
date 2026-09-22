@@ -217,12 +217,19 @@ defmodule MiniLineage.Game.NarrativeTest do
       refute narrative.outcome_line =~ "{"
     end
 
-    # The strike happened whatever it cost, and the chronicle would be poorer without it.
-    test "but still tells what the blow did" do
+    # Nothing the fighter did in it counted — not the rewards, and not the kills, which are never
+    # added to `total_enemies_killed` either. The foes did not fall; the fighter did.
+    test "and claims no kill, because the ones it named were never counted" do
       fighter = started(0, weapon_id: 3, armor_id: 3)
+      before = fighter.total_enemies_killed
       {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
 
-      assert Narrative.build_battle(killed, fixed_result(), false).kill_line
+      assert killed.total_enemies_killed == before, "a fatal fight counted kills"
+
+      narrative = Narrative.build_battle(killed, fixed_result(), false)
+
+      refute narrative.kill_line
+      refute narrative.crit_line
     end
   end
 

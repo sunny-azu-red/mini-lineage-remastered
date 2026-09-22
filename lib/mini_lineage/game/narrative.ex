@@ -43,17 +43,18 @@ defmodule MiniLineage.Game.Narrative do
     ambush_template = Math.random_element(Narratives.ambush())
     next_move = Math.random_element(Narratives.moves())
 
-    # A fatal fight paid nothing. `resolve_battle_outcome/2` returns the moment health reaches zero,
-    # before the XP, the Adena and every counter are credited — so the two lines that name a reward
-    # describe one that was never given, and the outcome has the fighter standing at 0 HP. Both are
-    # drawn all the same and then dropped: the pool draws are load-bearing, and skipping one would
-    # shift every later roll in this fight and no other. What is said instead is how it ended, in
-    # the second person the whole chronicle is written in.
+    # A fatal fight is a total loss, and every line describing it was describing a win.
+    # `resolve_battle_outcome/2` returns the moment health reaches zero — before the XP, the Adena,
+    # the battle count and the KILL count — so nothing the fighter did in it counted: not the
+    # rewards the deflection and outcome lines named, and not the foes the kill line cut down. They
+    # did not die; the fighter did. Every line is drawn all the same, because the pools draw in
+    # order and skipping one would shift every later roll in this fight and no other, and then all
+    # of them are dropped for the one thing that is true, which is how it ended.
     died = player.dead
 
     %{
-      crit_line: crit_line,
-      kill_line: kill_line,
+      crit_line: unless(died, do: crit_line),
+      kill_line: unless(died, do: kill_line),
       deflection_line: unless(died, do: deflection_line),
       outcome_line: if(died, do: death_reason(player.death_reason, true), else: outcome_line),
       ambush_line: if(ambushed_after, do: Format.fill_template(ambush_template, data), else: nil),

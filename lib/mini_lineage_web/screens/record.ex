@@ -129,7 +129,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <%= if @dead do %>
         <p phx-no-format>
-        <span class="deaths">{Narrative.death_reason(@view.death_reason, @mine)}</span> {@voice.they} fell at <span class="level">Level <span data-key="rec-level" data-value={@view.level}>{@level}</span></span>
+        {@voice.they} fell at <span class="level">Level <span data-key="rec-level" data-value={@view.level}>{@level}</span></span>
         with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="level">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>, and {@voice.their} purse held <span class="adena">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span>
         when the road ran out.
       </p>
@@ -224,7 +224,11 @@ defmodule MiniLineageWeb.Screens.Record do
           >
             <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
               fight.narrative.kill_line
-            )} {raw(fight.narrative.deflection_line)} {raw(fight.narrative.outcome_line)}
+            )} {raw(fight.narrative.deflection_line)}
+            <%!-- The fight a run did not walk away from is the only entry that is an ending rather
+                  than a report, and it wears the colour every ending in the game wears. --%>
+            <span :if={fight.died} class="deaths">{raw(fight.narrative.outcome_line)}</span>
+            <span :if={!fight.died}>{raw(fight.narrative.outcome_line)}</span>
             <span :if={fight.narrative.ambush_line} class="threat">{raw(fight.narrative.ambush_line)}</span>
           </li>
         </ol>

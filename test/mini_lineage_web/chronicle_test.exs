@@ -31,7 +31,8 @@ defmodule MiniLineageWeb.ChronicleTest do
   defp fight(absent \\ []) do
     %{
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
-      ambushed: :ambush_line not in absent
+      ambushed: :ambush_line not in absent,
+      died: false
     }
   end
 
@@ -89,6 +90,15 @@ defmodule MiniLineageWeb.ChronicleTest do
 
     test "and a run with no fights says so instead" do
       assert text_for([]) =~ "Not one blow struck"
+    end
+
+    # The one entry that is an ending rather than a report. Every other line of that fight was
+    # dropped when it turned fatal, so this IS the entry, and it wears the colour an ending wears.
+    test "and an ending wears the colour every ending in the game wears" do
+      ended = %{fight([:crit_line, :kill_line, :deflection_line, :ambush_line]) | died: true}
+
+      assert html_for([ended]) =~ ~s(<span class="deaths">)
+      refute html_for([fight()]) =~ ~s(<span class="deaths">)
     end
 
     # The class is the claim, not the colour: what red means lives in the stylesheet, and a test
