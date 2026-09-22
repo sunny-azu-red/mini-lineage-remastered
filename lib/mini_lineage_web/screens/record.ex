@@ -235,7 +235,9 @@ defmodule MiniLineageWeb.Screens.Record do
                   than a report, and it wears the colour every ending in the game wears. --%>
             <span :if={fight.died} class="deaths">{raw(voiced(fight.narrative.outcome_line, @mine))}</span>
             <span :if={!fight.died}>{raw(voiced(fight.narrative.outcome_line, @mine))}</span>
-            <span :if={fight.narrative.ambush_line} class="threat">{raw(fight.narrative.ambush_line)}</span>
+            <span :if={fight.narrative.ambush_line} class="threat">{raw(
+              voiced(fight.narrative.ambush_line, @mine)
+            )}</span>
           </li>
         </ol>
       <% end %>

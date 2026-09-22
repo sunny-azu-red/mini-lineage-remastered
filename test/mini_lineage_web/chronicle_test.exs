@@ -36,7 +36,8 @@ defmodule MiniLineageWeb.ChronicleTest do
     }
   end
 
-  defp html_for(record_log), do: render_component(&Record.chronicle/1, record_log: record_log)
+  defp html_for(record_log, opts \\ []),
+    do: render_component(&Record.chronicle/1, Keyword.put(opts, :record_log, record_log))
 
   # The entries on their own, so a claim about one is not answered by the panel around them.
   defp entries(chronicle) do
@@ -50,6 +51,42 @@ defmodule MiniLineageWeb.ChronicleTest do
     |> html_for()
     |> String.replace(~r/<[^>]+>/, "")
     |> String.replace(~r/\s+/, " ")
+  end
+
+  # The defect this guards is silent: a line that is never voiced renders its pronouns as literal
+  # braces on the page, and every OTHER line on the same entry reads perfectly. Nothing fails, so
+  # nothing says so — which is exactly how an ambush line and a death line both shipped unvoiced.
+  describe "every line on an entry" do
+    @complete %{
+      narrative: %{
+        crit_line: "{whose} strike lands.",
+        kill_line: "{they} cut down the {object} before {them}.",
+        deflection_line: "{whose} armour held, and {them} learned from it.",
+        outcome_line: "{they} walk away, {self} again.",
+        ambush_line: "Something waits for {object}, and {them} cannot pass.",
+        fight_prompt: "PROMPT",
+        next_move: "MOVE"
+      },
+      ambushed: true,
+      died: false
+    }
+
+    for {who, mine?} <- [{"the run itself", true}, {"anybody else", false}] do
+      test "closes its pronouns for #{who}" do
+        html = html_for([@complete], mine: unquote(mine?))
+        [_, entry] = Regex.run(~r|<ol[^>]*class="chronicle"[^>]*>(.*)</ol>|s, html)
+
+        assert Regex.scan(~r/\{[a-z]+\}/, entry) == [],
+               "a line reached the page with its pronouns still open: #{entry}"
+      end
+    end
+
+    test "and an ending is told to whoever is reading it, not to the run that had it" do
+      ended = %{@complete | died: true, ambushed: false}
+
+      assert html_for([ended], mine: true) =~ "You walk away"
+      assert html_for([ended], mine: false) =~ "They walk away"
+    end
   end
 
   describe "an entry in the Chronicle" do

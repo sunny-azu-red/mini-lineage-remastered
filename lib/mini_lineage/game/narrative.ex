@@ -56,11 +56,17 @@ defmodule MiniLineage.Game.Narrative do
       crit_line: unless(died, do: crit_line),
       kill_line: unless(died, do: kill_line),
       deflection_line: unless(died, do: deflection_line),
-      outcome_line: if(died, do: death_reason(player.death_reason, true), else: outcome_line),
+      # The reason is stored as it is written, pronouns still open, like every other line here —
+      # filling it as "you" now would bake the fighter's own voice into a row strangers read.
+      outcome_line: if(died, do: player.death_reason, else: outcome_line),
       ambush_line: if(ambushed_after, do: Format.fill_template(ambush_template, data), else: nil),
       fight_prompt:
         if(ambushed_after, do: if(ambush_enemies == 1, do: "Face your Foe!", else: "Fight them!")),
-      next_move: next_move
+      # Drawn like everything else, so the dice land identically, and dropped like everything else:
+      # there is no next move after the last one, and "Sharpen your blade" is not advice a ghost
+      # can take. It reaches no page — the chronicle leaves out both buttons — but a row nobody
+      # reads is still a row that says something, and this one would be saying nonsense.
+      next_move: unless(died, do: next_move)
     }
   end
 

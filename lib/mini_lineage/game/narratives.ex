@@ -18,7 +18,7 @@ defmodule MiniLineage.Game.Narratives do
   # Keyed by the ACTIVE id, which is what a view carries; the catalog key is not in the view.
   @effect_blurbs %{
     "ghost" =>
-      ~s(The road is behind {object} now, and nothing of it walks with {object} any more... Perhaps {them} were written in the Halls, or perhaps not.),
+      ~s(The road is behind {object} now, and nothing of it walks with {object} any more...),
     "resting" =>
       ~s(No blade is drawn where {them} stand. Out of the fray {their} wounds have leave to knit, and what the road keeps in the dark is somebody else's trouble for now.),
     "combat" =>

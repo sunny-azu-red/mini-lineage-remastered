@@ -220,9 +220,16 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       narrative = Narrative.build_battle(killed, fixed_result(), false)
 
-      # Second person, as the whole chronicle is, and with its pronouns already filled.
-      assert narrative.outcome_line == Narrative.death_reason(killed.death_reason, true)
-      refute narrative.outcome_line =~ "{"
+      # Stored as written, pronouns still open, like every other line on the row — a reader is not
+      # known until somebody opens a page, and a run's ending is read by strangers too.
+      assert narrative.outcome_line == killed.death_reason
+
+      mine = Narrative.voiced(narrative.outcome_line, true)
+      theirs = Narrative.voiced(narrative.outcome_line, false)
+
+      refute mine == theirs, "an ending reads the same to a stranger as to the run that had it"
+      refute theirs =~ ~r/\byou\b/i, "an ending tells a stranger it happened to them"
+      refute mine =~ "{"
     end
 
     # Nothing the fighter did in it counted — not the rewards, and not the kills, which are never
@@ -238,6 +245,8 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       refute narrative.kill_line
       refute narrative.crit_line
+      # Nor a move to make next, there being no next.
+      refute narrative.next_move
     end
   end
 
