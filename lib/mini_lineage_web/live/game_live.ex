@@ -329,6 +329,14 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:record_updated, _player, _id}, socket), do: {:noreply, socket}
 
+  # A run that has been restarted away from. Its row is what changed rather than its state — the
+  # session it was held by is gone — so the ENTRY is read again, which is the one thing a push
+  # never carries. Only on a retirement, which happens once in a run's life.
+  def handle_info({:record_retired, id}, %{assigns: %{watching: id}} = socket),
+    do: {:noreply, assign(socket, record: Board.entry(id))}
+
+  def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
+
   # Two signals, because neither alone is enough: the tally does not count the fight that killed
   # them, and a narrative can repeat where the numbers do not.
   defp fought?(view, shown) do

@@ -269,6 +269,26 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute html =~ "hallowed pillars"
     end
 
+    # A run's page is live for whoever is reading it, and being RESTARTED away from changes what
+    # it should say — nothing holds it now, so nothing walks with it. Its process is gone by then,
+    # so it will never broadcast again, and what changed is the row rather than the state: the one
+    # thing a `:record_updated` push does not carry. Watched from another browser entirely, this
+    # left a ghost standing on a page whose run had been given up minutes earlier.
+    test "a run restarted away from stops saying anything walks with it", %{conn: conn} do
+      %{id: id, session: session} = run("Given Up", xp: 500, dead: true)
+
+      {:ok, live, html} = live(conn, ~p"/character/#{id}")
+      assert html =~ "Ghost"
+
+      Characters.archive(session)
+
+      # Delivered to the LiveView the way a real one is, rather than by re-mounting the page.
+      send(live.pid, {:record_retired, id})
+
+      refute render(live) =~ "Ghost"
+      refute render(live) =~ "Blessings"
+    end
+
     # A route the game has, for a thing it does not. Answered as a 404 like any other road that
     # leads nowhere, rather than as a page of its own saying the same in different words.
     test "and is a 404 for an id that is nobody", %{conn: conn} do

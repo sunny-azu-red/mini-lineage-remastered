@@ -182,6 +182,14 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**A record is live, and one thing about it lives outside the snapshot.** Everything a watched
+record needs rides in the push — that is why `last_action_at` is in the view rather than read back
+— but whether a run is still HELD is a column, not state, and a run that has been restarted away
+from has no process left to push anything at all. So `archive/1` broadcasts `{:record_retired, id}`
+on the topic of the run it is retiring, read BEFORE the archive because afterwards that session
+names the next character, and the LiveView answers it by reading the entry again. Once in a run's
+life, which is the only reason a query there is acceptable.
+
 **A stored line keeps its pronouns open; everything else is filled when it happens.** A fight's
 numbers and gear are facts about a moment, so they are filled then — but who the line is being told
 TO is not known until somebody opens a page, and the same row is read by the run itself and by

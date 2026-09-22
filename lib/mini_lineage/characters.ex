@@ -6,6 +6,7 @@ defmodule MiniLineage.Characters do
   A process is addressed by the SESSION — the secret in the cookie — because that is what a
   browser has. The character's public id lives inside the process and never comes back out here.
   """
+  alias MiniLineage.Board
   alias MiniLineage.Characters.{Server, Store}
 
   defdelegate new_session_id(), to: Store
@@ -16,6 +17,10 @@ defmodule MiniLineage.Characters do
   names the browser rather than the run.
   """
   def archive(session) do
+    # Read before it is given up: after the archive, this session names the NEXT character, and a
+    # broadcast about the run just retired would go out on the new run's topic.
+    retired = character_id(session)
+
     # Stopped first, so `terminate/2` writes the final state while the row is still its own.
     stop_process(session)
     Store.archive(session)
@@ -23,6 +28,17 @@ defmodule MiniLineage.Characters do
     # Starts the next character, and tells any other tab that this one is no longer the old run.
     player = snapshot(session)
     Server.broadcast(session, player, character_id(session))
+
+    # And whoever is reading the run that was left behind. A retired run is a different page — no
+    # session holds it, so nothing walks with it — and nothing else would ever tell them: its
+    # process is gone, so it will never broadcast again.
+    Phoenix.PubSub.broadcast(
+      MiniLineage.PubSub,
+      record_topic(retired),
+      {:record_retired, retired}
+    )
+
+    Board.character_changed()
 
     player
   end
