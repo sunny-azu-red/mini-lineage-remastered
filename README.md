@@ -362,8 +362,9 @@ mix e2e walkthrough     # just the first
 
 It empties the board, starts the isolated server, empties the board again before each suite, drives
 Chromium, and stops the server it started. The first of those is why: the board is cached in the
-running server, so one started against what the last run left behind would serve those rows. A server already running on that port is used as it is and left alone, so
-`e2e/serve.sh` in another terminal works too.
+running server, so one started against what the last run left behind would serve those rows. A server already running on that port is reused, so `e2e/serve.sh` in another terminal works too
+but only if it is newer than every source file, because nothing here recompiles a server it did not
+start. An older one is refused by name rather than quietly tested against.
 
 One run at a time: they share a database and each empties the board first, so a second `mix e2e`
 refuses and names the one already going.

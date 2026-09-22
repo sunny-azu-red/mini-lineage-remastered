@@ -165,15 +165,8 @@ defmodule MiniLineage.Scratch.Shell do
     url = "http://localhost:#{port}"
 
     if responding?(url) do
-      # Loud, because it is the one way a suite can pass against code that is not the checkout:
-      # nothing here recompiles a server it did not start.
-      Mix.shell().info([
-        :yellow,
-        "\n▶ using the server already on #{url} — it may be running OLDER CODE.",
-        "\n  Stop it and rerun to test this checkout.",
-        :reset
-      ])
-
+      refuse_if_stale(port, url)
+      Mix.shell().info([:cyan, "\n▶ using the server already on #{url}", :reset])
       {nil, url}
     else
       Mix.shell().info([:cyan, "\n▶ starting the e2e server on #{url}", :reset])
@@ -197,6 +190,57 @@ defmodule MiniLineage.Scratch.Shell do
 
       {os_pid, url}
     end
+  end
+
+  # Nothing here recompiles a server it did not start, so a reused one can be any age — and the
+  # suites would pass against code that is not the checkout. Which happened. If the process is
+  # older than the newest source file, it cannot have compiled it, and that is the whole test.
+  defp refuse_if_stale(port, url) do
+    with pid when is_binary(pid) <- listening_pid(port),
+         age when is_integer(age) <- process_age_s(pid),
+         {mtime, file} <- newest_source(),
+         started_at = System.os_time(:second) - age,
+         true <- mtime > started_at do
+      Mix.raise("""
+      the server on #{url} is older than this checkout, so the suites would test code it never
+      compiled. `mix e2e` starts a server, never recompiles one it finds.
+
+      It started #{age}s ago; #{file} changed #{System.os_time(:second) - mtime}s ago.
+
+      Stop it (pid #{pid}) and rerun. With nothing on the port, `mix e2e` starts its own.
+      """)
+    else
+      # No `ss`, no `ps`, or nothing newer: say what is being reused and let the run go on.
+      _ -> :ok
+    end
+  end
+
+  defp listening_pid(port) do
+    case System.cmd("ss", ["-ltnpH", "sport = :#{port}"], stderr_to_stdout: true) do
+      {out, 0} -> Regex.run(~r/pid=(\d+)/, out) |> then(&if &1, do: Enum.at(&1, 1))
+      _ -> nil
+    end
+  rescue
+    ErlangError -> nil
+  end
+
+  defp process_age_s(pid) do
+    case System.cmd("ps", ["-o", "etimes=", "-p", pid], stderr_to_stdout: true) do
+      {out, 0} -> out |> String.trim() |> Integer.parse() |> then(&if &1, do: elem(&1, 0))
+      _ -> nil
+    end
+  rescue
+    ErlangError -> nil
+  end
+
+  @sources ~w(lib assets config priv/repo)
+
+  defp newest_source do
+    @sources
+    |> Enum.flat_map(&Path.wildcard("#{&1}/**/*", match_dot: false))
+    |> Enum.reject(&File.dir?/1)
+    |> Enum.map(&{File.stat!(&1, time: :posix).mtime, &1})
+    |> Enum.max(fn -> nil end)
   end
 
   @doc "Stops a server this task started, and everything it spawned."
