@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Narrative, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Player, Snapshot}
   alias MiniLineageWeb.{Screens, Screens.Record}
 
   # The component, not the screen: these are about the prose, and `record/1` is what carries it

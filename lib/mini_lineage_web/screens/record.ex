@@ -34,12 +34,10 @@ defmodule MiniLineageWeb.Screens.Record do
         # Your own page speaks to you; somebody else's speaks about them. The same set the
         # narratives are filled from, so a sentence and the page around it cannot disagree.
         voice: Narratives.voice(assigns.mine),
-        # A fallen run carries the ghost and nothing else. One nobody holds the session of carries
-        # not even that: there is nothing walking with a run that has been walked away from, so the
-        # section goes rather than standing empty over a single line about being gone.
-        walking:
-          assigns.view.effects != [] and
-            (not assigns.view.dead or (assigns.entry != nil and assigns.entry.active)),
+        # Nothing walks with a run that has been walked away from, the ghost least of all. Decided
+        # here because only the row knows: `active_effects/1` is handed a player, and a player does
+        # not know who is still holding it.
+        effects: if(held?(assigns.entry), do: assigns.view.effects, else: []),
         # Only the tense moves between a run still going and one that is over.
         defined: if(assigns.view.dead, do: "was", else: "has been"),
         fought: if(assigns.view.dead, do: "fought", else: "have fought"),
@@ -70,7 +68,7 @@ defmodule MiniLineageWeb.Screens.Record do
       <p>{raw(@race.backstory)}</p>
       <p>{raw(@race.traits)}</p>
 
-      <.blessings :if={@walking} effects={@view.effects} voice={@voice} />
+      <.blessings :if={@effects != []} effects={@effects} voice={@voice} />
 
       <h2>Inventory &amp; Stats</h2>
       <p phx-no-format>
@@ -154,6 +152,9 @@ defmodule MiniLineageWeb.Screens.Record do
     """
   end
 
+  defp held?(%{active: true}), do: true
+  defp held?(_retired_or_missing), do: false
+
   attr :effects, :list, required: true
   attr :voice, :map, required: true
 
@@ -163,9 +164,8 @@ defmodule MiniLineageWeb.Screens.Record do
   # Nothing is fetched for it: the view already carries the effects, and it is rebuilt whenever one
   # is applied or lapses, so paragraphs appear and go on their own.
   #
-  # A fallen run carries one thing, the ghost, derived from being dead rather than held. A fallen
-  # run nobody holds the session of carries not even that, and the caller draws no section at all:
-  # there is nothing walking with a run that has been walked away from.
+  # Drawn only where there is something to draw: nothing walks with a run that has none, so the
+  # heading goes with the list rather than standing over an empty one.
   defp blessings(assigns) do
     ~H"""
     <h2>Blessings &amp; Afflictions</h2>

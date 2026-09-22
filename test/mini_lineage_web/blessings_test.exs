@@ -133,6 +133,21 @@ defmodule MiniLineageWeb.BlessingsTest do
     end
   end
 
+  # The heading belongs to the list, not to the page: it is drawn where there is something to draw
+  # and nowhere else, which is the rule the ghost is only one case of.
+  describe "a run with nothing riding on it" do
+    test "draws no section, rather than a heading over nothing" do
+      living = bearer([])
+
+      assert Snapshot.build(living).effects == []
+      refute blessings(living)
+    end
+
+    test "and gains one the moment something does" do
+      assert text(blessings(bearer([:newbie_buff]))) =~ "Newbie Blessing"
+    end
+  end
+
   describe "a fallen run" do
     # A reason as the game stores one: the sentence with its pronouns still open.
     @reason "🪦 {they} fought bravely... but not bravely enough."
