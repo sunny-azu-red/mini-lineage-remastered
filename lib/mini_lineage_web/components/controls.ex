@@ -154,7 +154,9 @@ defmodule MiniLineageWeb.Controls do
 
   def back_link(assigns) do
     # Named up here so the anchor can sit flush against its text: a newline inside a link renders
-    # as a space, and the underline covers it.
+    # as a space, and the underline covers it. The mark sits OUTSIDE the anchor, so the underline
+    # and the click land on the words rather than on a glyph pointing at them, and it is muted
+    # because it is not a word: it says which way this goes and nothing else.
     assigns =
       assign(assigns,
         href: Paths.for_screen(assigns.to || whence(assigns.started, assigns.dead)),
@@ -163,7 +165,7 @@ defmodule MiniLineageWeb.Controls do
 
     ~H"""
     <p class={@class}>
-      <.link patch={@href}>{@text}</.link>
+      <span class="muted">&laquo;</span> <.link patch={@href}>{@text}</.link>
     </p>
     """
   end
@@ -189,7 +191,7 @@ defmodule MiniLineageWeb.Controls do
 
     ~H"""
     <p class="last back">
-      <.link patch={@href}>{@text}</.link>
+      <span class="muted">&laquo;</span> <.link patch={@href}>{@text}</.link>
     </p>
     """
   end

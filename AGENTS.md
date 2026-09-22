@@ -182,6 +182,15 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**What a build may say about a fault depends on the build, not on what it knows.** The error page
+shows the WHOLE thing in a debug build — `Exception.format/3` on the kind, reason and stack Phoenix
+hands the view — because the alternative is reading "500 Internal Server Error" on the page and
+then going to find the terminal it actually happened in. A release shows none of it, whatever it
+was handed: a trace names modules, line numbers and arguments, and a player is not the audience for
+any of them. `Version.debug_build?/0` is the gate, and it is deliberately NOT tied to `release?/1`
+— an image built without APP_VERSION could not tell it was a release, and served traces to players.
+A 404 is not a fault and gets no trace either way, or the real ones drown in mistyped URLs.
+
 **If a character has a standard named entity, write the entity.** `&amp;` `&copy;` `&ndash;`
 `&bull;`, and `&nbsp;` `&mdash;` `&hellip;` if ever needed. Everything else is written as it is:
 ASCII prose, and every emoji in the game, none of which has a name to spell. The rule is worth

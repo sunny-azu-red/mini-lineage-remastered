@@ -469,6 +469,10 @@ ol.chronicle li.ambushed {
 /* ===== Code Block ===== */
 .code-block {
     background: var(--bg-surface);
+    /* A formatted stack trace runs to twenty frames. Capped so the way back stays on the screen,
+       and it scrolls on the same bar the Chronicle and the tables do. */
+    max-height: 340px;
+    overflow-y: auto;
     border-radius: var(--radius-lg);
     color: var(--bar-hp);
     margin-bottom: 12px;
@@ -492,29 +496,34 @@ ol.chronicle {
    bar thin enough to look tidy is one you have to aim at. Firefox reads the standard property and
    Chromium prefers it over the pseudo-elements, which are there for Safari, which has neither. */
 .table-container,
-.panel-body.scrolls {
+.panel-body.scrolls,
+.code-block {
     scrollbar-color: var(--border-arcane-bright) transparent;
 }
 
 .table-container::-webkit-scrollbar,
-.panel-body.scrolls::-webkit-scrollbar {
+.panel-body.scrolls::-webkit-scrollbar,
+.code-block::-webkit-scrollbar {
     width: 12px;
     height: 12px;
 }
 
 .table-container::-webkit-scrollbar-track,
-.panel-body.scrolls::-webkit-scrollbar-track {
+.panel-body.scrolls::-webkit-scrollbar-track,
+.code-block::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .table-container::-webkit-scrollbar-thumb,
-.panel-body.scrolls::-webkit-scrollbar-thumb {
+.panel-body.scrolls::-webkit-scrollbar-thumb,
+.code-block::-webkit-scrollbar-thumb {
     background: var(--border-arcane-bright);
     border-radius: var(--radius);
 }
 
 .table-container::-webkit-scrollbar-thumb:hover,
-.panel-body.scrolls::-webkit-scrollbar-thumb:hover {
+.panel-body.scrolls::-webkit-scrollbar-thumb:hover,
+.code-block::-webkit-scrollbar-thumb:hover {
     background: var(--gold-dim);
 }
 

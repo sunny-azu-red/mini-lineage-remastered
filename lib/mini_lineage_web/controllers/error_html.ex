@@ -16,10 +16,36 @@ defmodule MiniLineageWeb.ErrorHTML do
     reason = Phoenix.Controller.status_message_from_template(template)
 
     assigns
-    |> Map.put(:detail, if(Version.debug_build?(), do: "#{status} #{reason}"))
+    |> Map.put(:detail, detail(status, "#{status} #{reason}", assigns))
     |> Map.put(:message, message_for(status))
     |> page()
   end
+
+  # What the `<pre>` is for. A release shows nothing here whatever went wrong — a stack trace names
+  # modules, line numbers and arguments, and a player is not the audience for any of it. A debug
+  # build shows the whole fault, because the alternative is reading "500 Internal Server Error" on
+  # the page and then going to find the terminal it actually happened in.
+  defp detail(status, short, assigns) do
+    cond do
+      not Version.debug_build?() ->
+        nil
+
+      # A mistyped URL is not a fault, and a trace for one would bury the real ones.
+      status == "404" ->
+        short
+
+      # Phoenix hands the view what blew up. Rendered without one — a test, or a bare call — the
+      # status line is all there is to say.
+      is_map_key(assigns, :reason) ->
+        Exception.format(kind(assigns), assigns.reason, stack(assigns))
+
+      true ->
+        short
+    end
+  end
+
+  defp kind(assigns), do: Map.get(assigns, :kind, :error)
+  defp stack(assigns), do: Map.get(assigns, :stack, [])
 
   defp message_for("404"), do: "That road leads nowhere."
 
@@ -49,7 +75,11 @@ defmodule MiniLineageWeb.ErrorHTML do
                   </:header>
                   <p>{@message}</p>
                   <pre :if={@detail} class="code-block">{@detail}</pre>
-                  <p class="last"><a href={~p"/"}>Return to safer lands</a></p>
+                  <%!-- The rule above it is what parts the way back from the page. A build that
+                        showed the fault has a block sitting there already doing that. --%>
+                  <p class={if @detail, do: "last", else: "last back"}>
+                    <span class="muted">&laquo;</span> <a href={~p"/"}>Return to safer lands</a>
+                  </p>
                 </Controls.panel>
 
                 <Layouts.footer />
