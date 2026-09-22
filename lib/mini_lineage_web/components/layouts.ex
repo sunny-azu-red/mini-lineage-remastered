@@ -63,9 +63,8 @@ defmodule MiniLineageWeb.Layouts do
           />
 
           <div id="main">
-            <%!-- The body needs no wrapper of its own: `h2:first-child` drops its top margin, and
-                  an extra element would qualify every screen's first heading even under an alert.
-                  The data attributes mirror live state, so a browser test need not scrape prose. --%>
+            <%!-- No wrapper of its own: `h2:first-child` drops the top margin, and an extra
+                  element would qualify every screen's first heading even under an alert. --%>
             <Controls.panel
               title={@title}
               heading

@@ -91,11 +91,9 @@ defmodule MiniLineageWeb.Screens.Halls do
     assigns = assign(assigns, name: String.slice(assigns.row.name || "", 0, 20))
 
     ~H"""
-    <%!-- Keyed by the character and never by the row: the board reorders under a climb, so a key
-          tied to a position would count a stranger's total into this one's.
-          The stamp is what the row SHOWS, not when it was written. On `updated_at` the sweep fired
-          for writes with nothing to see — starting over clears the old run's session, which moves
-          the date and drops the green, and swept a row whose figures had not changed. --%>
+    <%!-- Keyed by the character, never the row: the board reorders under a climb. The stamp is
+          what the row SHOWS, not when it was written, so a write with nothing to see cannot
+          sweep it. --%>
     <tr
       class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}
       data-key={"row-#{@row.id}"}
@@ -105,10 +103,9 @@ defmodule MiniLineageWeb.Screens.Halls do
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
-        <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and holding the
-              width means no name shifts sideways when somebody arrives. Last in the cell for the
-              same reason — the width it holds while dark falls where nothing follows it, rather
-              than opening a gap between the name and the medal. --%>
+        <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and the width
+              it holds keeps names from shifting. Last in the cell, so that width falls where
+              nothing follows it. --%>
         <span
           class={["online", @row.online && "lit"]}
           title={@row.online && "Online right now"}

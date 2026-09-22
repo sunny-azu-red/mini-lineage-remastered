@@ -130,8 +130,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
 
     <%!-- `phx-update="ignore"`: the dead render is interactive before the socket connects, and the
-          first live render was resetting a race picked in that window back to the first option.
-          Nothing here is server-driven — the lineages are static and the name is the player's. --%>
+          first live render was resetting a race picked in that window. Nothing here is server-driven. --%>
     <form phx-submit="start">
       <div class="form-row" id="start-fields" phx-update="ignore">
         <input
@@ -271,9 +270,8 @@ defmodule MiniLineageWeb.Screens do
     # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
     # they are the last line of the run, and read as one.
     ~H"""
-    <%!-- The mark goes on a SPAN inside the paragraph rather than on the paragraph: weight is
-          carried by a value sitting inside a sentence, so `p.deaths` takes the colour and not the
-          weight, where `p > .deaths` takes both. The ending reads the same here as in the log. --%>
+    <%!-- On a SPAN inside the paragraph, not on the paragraph: the weight rule reaches a value
+          sitting inside a sentence, so `p.deaths` takes the colour without it. --%>
     <p><span class="deaths">{Narrative.death_reason(@view.death_reason, true)}</span></p>
 
     <p>{epitaph(@view)}</p>

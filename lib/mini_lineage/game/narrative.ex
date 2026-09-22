@@ -43,13 +43,9 @@ defmodule MiniLineage.Game.Narrative do
     ambush_template = Math.random_element(Narratives.ambush())
     next_move = Math.random_element(Narratives.moves())
 
-    # A fatal fight is a total loss, and every line describing it was describing a win.
-    # `resolve_battle_outcome/2` returns the moment health reaches zero — before the XP, the Adena,
-    # the battle count and the KILL count — so nothing the fighter did in it counted: not the
-    # rewards the deflection and outcome lines named, and not the foes the kill line cut down. They
-    # did not die; the fighter did. Every line is drawn all the same, because the pools draw in
-    # order and skipping one would shift every later roll in this fight and no other, and then all
-    # of them are dropped for the one thing that is true, which is how it ended.
+    # A fatal fight credits nothing: `resolve_battle_outcome/2` returns at zero health, before the
+    # XP, Adena, battle and kill counts. Every line is drawn all the same, so the pools stay in
+    # step, then all of them are dropped for the one that is true.
     died = player.dead
 
     %{
@@ -62,10 +58,8 @@ defmodule MiniLineage.Game.Narrative do
       ambush_line: if(ambushed_after, do: Format.fill_template(ambush_template, data), else: nil),
       fight_prompt:
         if(ambushed_after, do: if(ambush_enemies == 1, do: "Face your Foe!", else: "Fight them!")),
-      # Drawn like everything else, so the dice land identically, and dropped like everything else:
-      # there is no next move after the last one, and "Sharpen your blade" is not advice a ghost
-      # can take. It reaches no page — the chronicle leaves out both buttons — but a row nobody
-      # reads is still a row that says something, and this one would be saying nonsense.
+      # Drawn so the dice land identically, dropped because there is no next move after the last
+      # one, and "Sharpen your blade" is not advice a ghost can take.
       next_move: unless(died, do: next_move)
     }
   end

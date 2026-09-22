@@ -33,10 +33,8 @@ defmodule MiniLineageWeb.Router do
     live "/races", GameLive, :races
     live "/error", GameLive, :error
 
-    # No glob. An unrecognised path is not a screen, and answering one with a redirect to Town is a
-    # soft 404: the reader is told nothing, the address they typed is thrown away, and a mistyped
-    # asset is served HTML that the browser then fails to parse as CSS. Phoenix raises for what it
-    # does not route and `ErrorHTML` draws it in the game's own shell, which is already what a
-    # record for a character who does not exist does.
+    # No glob. Redirecting an unrecognised path to Town is a soft 404: nothing is said, the address
+    # is thrown away, and a mistyped stylesheet comes back as HTML. Phoenix raises for what it does
+    # not route, and `ErrorHTML` draws it in the game's own shell.
   end
 end

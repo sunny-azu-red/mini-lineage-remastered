@@ -5,10 +5,9 @@ defmodule MiniLineage.Game.Version do
   """
   @commit_url "https://github.com/sunny-azu-red/mini-lineage-remastered/commit/"
 
-  # What a build with no commit to name calls itself. Baked per environment, so the browser suites'
-  # server on 4002 is never mistaken for the dev server on 4000. Safe as compile_env because it is
-  # a constant of the environment, unlike the sha, which changes with every commit. The glyph stays
-  # here rather than in the config: one name to set, and the two cannot fall out of step.
+  # What a build with no commit to name calls itself, baked per environment so 4002 is never taken
+  # for 4000. Safe as compile_env, being a constant of the environment unlike the sha. The glyph
+  # lives here too, so the two cannot fall out of step.
   @name Application.compile_env(:mini_lineage, :build_label, "development")
   @glyphs %{"development" => "🔥", "testing" => "🍃"}
   @label Map.get(@glyphs, @name, "⚡") <> @name

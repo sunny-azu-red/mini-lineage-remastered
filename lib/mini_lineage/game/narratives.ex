@@ -12,10 +12,9 @@ defmodule MiniLineage.Game.Narratives do
       ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="adena">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="regen">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
   }
 
-  # What each effect actually does to a run, said in the page's own voice. `{them}` is the subject
-  # mid-sentence, `{object}` the object, `{their}` the possessive — they/them takes the same verb
-  # forms as "you", so nothing but the pronouns moves between a reader's own record and a stranger's.
-  # Keyed by the ACTIVE id, which is what a view carries; the catalog key is not in the view.
+  # What each effect does, in the page's own voice: `{them}` is the subject mid-sentence, `{object}`
+  # the object, `{their}` the possessive, `{self}` the reflexive. Keyed by the ACTIVE id, which is
+  # what a view carries.
   @effect_blurbs %{
     "ghost" =>
       ~s(The road is behind {object} now, and nothing of it walks with {object} any more...),

@@ -85,10 +85,9 @@ defmodule MiniLineageWeb.Controls do
   defp cap(nil), do: []
   defp cap(pixels), do: [style: "max-height: #{pixels}px"]
 
-  # A BUTTON rather than a link: this goes nowhere, and a link would say it did. Space activates a
-  # button and scrolls a link, which is the same reason `PanelFocus` will not focus one. And
-  # `aria-expanded` IS the state — the arrow turns off it, so what the mark shows and what a screen
-  # reader is told cannot come apart.
+  # A BUTTON rather than a link: this goes nowhere, and Space activates a button where it scrolls a
+  # link. `aria-expanded` IS the state the arrow turns off, so the mark and the screen reader
+  # cannot come apart.
   defp folds(false, _collapsed), do: []
   defp folds(true, collapsed), do: [type: "button", "aria-expanded": to_string(!collapsed)]
 
@@ -153,10 +152,9 @@ defmodule MiniLineageWeb.Controls do
   attr :to, :string, default: nil
 
   def back_link(assigns) do
-    # Named up here so the anchor can sit flush against its text: a newline inside a link renders
-    # as a space, and the underline covers it. The mark sits OUTSIDE the anchor, so the underline
-    # and the click land on the words rather than on a glyph pointing at them, and it is muted
-    # because it is not a word: it says which way this goes and nothing else.
+    # Named up here so the anchor sits flush against its text: a newline inside a link renders as a
+    # space the underline then covers. The mark sits OUTSIDE the anchor, so the click lands on the
+    # words, and is muted because it says which way this goes and nothing else.
     assigns =
       assign(assigns,
         href: Paths.for_screen(assigns.to || whence(assigns.started, assigns.dead)),

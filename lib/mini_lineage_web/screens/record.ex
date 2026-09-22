@@ -57,12 +57,8 @@ defmodule MiniLineageWeb.Screens.Record do
     # tense moves. The closing paragraph forks outright — its sentences change shape, not just
     # verbs, since there is no next level to reach and no journey ahead.
     ~H"""
-    <%!-- One hook over the whole record: it counts every [data-value] beneath it. Every figure is
-          one, including the ones that move by a single step today — measured, a tween of +1 shows
-          the old number for 137ms and then the new one, which is a delay and not a flicker, and
-          forty at once hold 60fps. What an item grants counts too — buy a better blade while
-          somebody is reading this and the figure climbs. Only the item's own name and the dates
-          jump, having nothing to count through. --%>
+    <%!-- One hook over the whole record: it counts every [data-value] beneath it, forty at once
+          at 60fps. Only names and dates jump, having nothing to count through. --%>
     <div id="record-figures" phx-hook="AnimatedValues">
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
       <p>{raw(@race.backstory)}</p>
@@ -155,13 +151,9 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :voice, :map, required: true
 
   @doc false
-  # What is riding on a run right now, spelled out. The header wears these as emoji alone, which a
-  # phone can neither hover nor read — so the one page about a character is where they are explained.
-  # Nothing is fetched for it: the view already carries the effects, and it is rebuilt whenever one
-  # is applied or lapses, so paragraphs appear and go on their own.
-  #
-  # Drawn only where there is something to draw: nothing walks with a run that has none, so the
-  # heading goes with the list rather than standing over an empty one.
+  # What is riding on a run, spelled out: the header wears these as emoji alone, which a phone can
+  # neither hover nor read. Nothing is fetched for it, and it is drawn only where there is
+  # something to draw, so the heading goes with the list rather than standing over an empty one.
   defp blessings(assigns) do
     ~H"""
     <h2>Blessings &amp; Afflictions</h2>
@@ -216,9 +208,8 @@ defmodule MiniLineageWeb.Screens.Record do
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>
-        <%!-- Every line the fight drew, in the order it drew them, bar the two that are button
-              labels rather than history. A line added to `Narrative.build_battle/3` belongs here
-              too, or the chronicle quietly stops telling the whole of it. --%>
+        <%!-- Every line the fight drew, in order, bar the two that were button labels. A line
+              added to `Narrative.build_battle/3` belongs here too. --%>
         <ol class="chronicle">
           <li
             :for={fight <- @record_log}
@@ -246,10 +237,9 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :voice, :map, required: true
 
   @doc false
-  # Both ends of the road, in the order they happened, as a sentence of its own ahead of what the
-  # run amounted to. Hung off "defined by conflict and survival" it had been a trailing "with"
-  # clause carrying two dates, which read as an afterthought and put the ending before the start.
-  # A run with no row has no road, and says nothing here rather than an empty clause.
+  # Both ends of the road, in the order they happened, as a sentence of its own: hung off "defined
+  # by conflict and survival" the dates read as an afterthought and arrived out of order. A run
+  # with no row has no road, and says nothing rather than an empty clause.
   defp road(%{entry: nil} = assigns), do: ~H""
 
   defp road(assigns) do

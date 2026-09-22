@@ -5,14 +5,9 @@ defmodule MiniLineage.Game.Access do
   """
   alias MiniLineage.Game.Player
 
-  # THE PIN IS ABOUT WHAT YOU MAY DO, NOT WHAT YOU MAY READ.
-  #
-  # These five carry no action at all — not one `phx-click` between a record, the Halls, the Tome,
-  # the Chronicles of Ancestry and the error page — so there is nothing on them for any state to be
-  # kept away from. A dead run may see where it now stands; an ambushed one may read its own record
-  # without escaping anything, because the ambush is not cleared by walking off and the moment they
-  # ask for a screen they can act on they are put back in the fight; and a fault is worth being told
-  # about whatever has happened to you.
+  # THE PIN IS ABOUT WHAT YOU MAY DO, NOT WHAT YOU MAY READ. These five carry no action at all, not
+  # one `phx-click` between them, so no state need be kept off them: an ambushed reader escapes
+  # nothing by looking, and a fault is worth being told about whatever has happened to you.
   @readable ~w(character highscores statistics races error)
 
   # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them,

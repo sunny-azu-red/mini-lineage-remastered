@@ -21,10 +21,9 @@ defmodule MiniLineageWeb.ErrorHTML do
     |> page()
   end
 
-  # What the `<pre>` is for. A release shows nothing here whatever went wrong — a stack trace names
-  # modules, line numbers and arguments, and a player is not the audience for any of it. A debug
-  # build shows the whole fault, because the alternative is reading "500 Internal Server Error" on
-  # the page and then going to find the terminal it actually happened in.
+  # What the `<pre>` is for. A release shows nothing here: a stack trace names modules, lines and
+  # arguments, and a player is not the audience. A debug build shows the whole fault, the
+  # alternative being to read "500 Internal Server Error" and go find the terminal.
   defp detail(status, short, assigns) do
     cond do
       not Version.debug_build?() ->
