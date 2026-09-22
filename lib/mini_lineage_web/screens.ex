@@ -263,7 +263,10 @@ defmodule MiniLineageWeb.Screens do
     # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
     # they are the last line of the run, and read as one.
     ~H"""
-    <p class="deaths">{Narrative.death_reason(@view.death_reason, true)}</p>
+    <%!-- The mark goes on a SPAN inside the paragraph rather than on the paragraph: weight is
+          carried by a value sitting inside a sentence, so `p.deaths` takes the colour and not the
+          weight, where `p > .deaths` takes both. The ending reads the same here as in the log. --%>
+    <p><span class="deaths">{Narrative.death_reason(@view.death_reason, true)}</span></p>
 
     <p>{epitaph(@view)}</p>
 

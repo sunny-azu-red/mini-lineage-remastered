@@ -50,7 +50,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
         refute html =~ "alert", "#{label} is shown as an alert"
         spoken = Narrative.death_reason(player.death_reason, true)
 
-        assert html =~ ~r|<p[^>]*>\s*#{Regex.escape(spoken)}|, label
+        assert html =~ ~r|<p[^>]*>\s*<span class="deaths">#{Regex.escape(spoken)}</span>|, label
       end
     end
 
@@ -74,8 +74,11 @@ defmodule MiniLineageWeb.DeathScreenTest do
     test "the ending is red and what became of it is not" do
       html = html_for(Player.kill(hero()))
 
-      # The reason you are reading this screen at all, then a footnote about the record.
-      assert html =~ ~r|<p[^>]*class="deaths"[^>]*>[^<]*💀\|<p[^>]*class="deaths"|
+      # The reason you are reading this screen at all, then a footnote about the record. On a SPAN
+      # inside the paragraph, which is what the weight rule reaches — a `p.deaths` is coloured but
+      # not weighted, and the ending should read here exactly as it reads in the chronicle.
+      assert html =~ ~r|<p[^>]*>\s*<span class="deaths">|
+      refute html =~ ~s(<p class="deaths">)
       refute html =~ ~s(class="muted")
     end
 
