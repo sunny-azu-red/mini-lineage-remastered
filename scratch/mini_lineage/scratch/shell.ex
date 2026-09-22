@@ -165,7 +165,15 @@ defmodule MiniLineage.Scratch.Shell do
     url = "http://localhost:#{port}"
 
     if responding?(url) do
-      Mix.shell().info([:cyan, "\n▶ using the server already on #{url}", :reset])
+      # Loud, because it is the one way a suite can pass against code that is not the checkout:
+      # nothing here recompiles a server it did not start.
+      Mix.shell().info([
+        :yellow,
+        "\n▶ using the server already on #{url} — it may be running OLDER CODE.",
+        "\n  Stop it and rerun to test this checkout.",
+        :reset
+      ])
+
       {nil, url}
     else
       Mix.shell().info([:cyan, "\n▶ starting the e2e server on #{url}", :reset])
