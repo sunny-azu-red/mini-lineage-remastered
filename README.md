@@ -240,8 +240,8 @@ the migrations it was built with, so a stale one reports "Migrations already up"
 rebuild before believing that.
 
 Production differs from development: rate limiting is **on** (60 battles and 30 shop actions per
-minute, 300 events/min overall), `force_ssl` redirects to `https://$PHX_HOST` for every host but
-`localhost` and `127.0.0.1`, the logger sits at `:info`, and there is no code reloader.
+minute, 300 events/min overall), `force_ssl` redirects every plain-http request to `https://` on the host it
+was asked for, `localhost` and `127.0.0.1` excepted, the logger sits at `:info`, and there is no code reloader.
 
 `LOG_LEVEL` and `RATE_LIMIT` override the last two per deployment, with no rebuild — both are read
 at boot rather than baked. Most other tuning is not: anything reached through `compile_env`, the
@@ -318,10 +318,15 @@ links the commit, or says `⚡ development`. There is no third answer.
 CI supplies it as `APP_VERSION`. A build from a checkout finds its own, which is why the
 Dockerfile takes a build arg rather than reading a `.git` a Portainer stack does not send.
 
-**Put TLS in front of it.** With a real `PHX_HOST`, `force_ssl` 301s every plain-http request to
-`https://$PHX_HOST`: right behind a proxy that terminates TLS and sets `X-Forwarded-Proto`, a
-redirect loop if exposed directly on port 80. `localhost` and `127.0.0.1` are excluded, which is
-how the compose healthcheck reaches the game.
+**Put TLS in front of it.** `force_ssl` 301s every plain-http request to `https://` on the host it
+was asked for: right behind a proxy that terminates TLS and sets `X-Forwarded-Proto`, a redirect
+loop if exposed directly on port 80. `localhost` and `127.0.0.1` are excluded, which is how the
+compose healthcheck reaches the game.
+
+**`PHX_HOST` is required, and it is not only about links.** `check_origin` is left at its default,
+so the LiveView socket refuses every origin that is not this host. Name it wrongly and the page
+loads, renders once and never connects again, with nothing in the log to say why; leave it unset
+and the release refuses to boot rather than pretending to be `example.com`.
 
 The image also sets `LANG=C.UTF-8` (the VM otherwise runs latin1, and this game is made of
 emoji), `ca-certificates` for a database reached over TLS, and `init: true`, since the release

@@ -148,7 +148,18 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  # Not defaulted. `check_origin` is unset, so Phoenix compares every websocket's Origin against
+  # this host: wrong, and the page renders once and never connects, with nothing in the log to say
+  # why. A deployment that cannot name its own host is not one that should boot.
+  host =
+    System.get_env("PHX_HOST") ||
+      raise """
+      environment variable PHX_HOST is missing.
+
+      It is the host this deployment answers on, and the LiveView socket refuses every origin that
+      is not it, so an unset one serves a page that loads and then does nothing. Set it to the
+      domain players reach, or to `localhost` for a local release.
+      """
 
   config :mini_lineage, MiniLineageWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
