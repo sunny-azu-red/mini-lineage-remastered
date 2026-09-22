@@ -15,7 +15,12 @@ defmodule MiniLineage.Game.Access do
   # What the dead may still reach. The Character screen becomes a retrospective rather than a status
   # page, and the Halls are where their run now stands — confining them to the death screen would
   # put the board they are on out of their reach. Nothing here can be acted on.
-  @dead_allowed ~w(death character highscores)
+  #
+  # `error` is here because something breaking is worth being told about whatever state you are in:
+  # `fail/2` pushes to it when the character process exits, and without this a dead player is
+  # bounced to their own ending with no sign that anything went wrong. Nothing can be acted on
+  # there either, so it costs the dead nothing to be allowed to read it.
+  @dead_allowed ~w(death character highscores error)
 
   @doc """
   Where the player is actually allowed to be. Death wins outright — checked first because killing

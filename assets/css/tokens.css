@@ -43,6 +43,14 @@
     --border-arcane-bright: #655e6e;
     --border-soft: rgba(255, 255, 255, 0.07);
 
+    /* The banner's own, and the only opaque surface edge in the game. It has to be: --border-soft
+     * is 7% white and composites over whatever it sits on, and the banner is the one surface whose
+     * background MOVES under its own border — near-black at the top-left, #34303b by 60%. Measured,
+     * the same edge read +22 against its background on the left and +8 at the lightest point, and
+     * vanished entirely down the right. This is what --border-soft renders as over the dark end,
+     * so the left and top look exactly as they did and the right gains the line it was missing. */
+    --border-banner: #353239;
+
     /* An alert's own edge, which is the one border in the game that carries a meaning rather than
      * a depth. Measured with its voice below, not with the surfaces above. */
     --border-danger: #d74031;

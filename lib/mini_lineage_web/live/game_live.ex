@@ -69,9 +69,7 @@ defmodule MiniLineageWeb.GameLive do
     requested = requested_screen(socket.assigns.live_action, socket.assigns.player)
     pinned = Access.pin_screen(requested, socket.assigns.player)
 
-    # An unrecognised path patches even when it resolved to where we already are, so the address bar
-    # never keeps a URL the game does not own.
-    if pinned != requested or socket.assigns.live_action == :unknown do
+    if pinned != requested do
       {:noreply, push_patch(socket, to: Paths.for_screen(pinned), replace: true)}
     else
       {:noreply,
@@ -85,7 +83,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # '/' is wherever the player's own state puts them. Death is a state, not a place, so it has no
   # URL of its own — an ambush is different, being somewhere you can stand, and keeps one.
-  defp requested_screen(action, player) when action in [:root, :unknown] do
+  defp requested_screen(:root, player) do
     cond do
       player.dead -> "death"
       Player.started?(player) -> "home"

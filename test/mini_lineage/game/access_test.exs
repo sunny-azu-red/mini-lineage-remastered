@@ -72,6 +72,12 @@ defmodule MiniLineage.Game.AccessTest do
       assert Access.pin_screen("character", dead()) == "character"
     end
 
+    # `fail/2` pushes to the error screen when the character process exits. Pinned away from it,
+    # a dead player is bounced to their own ending with no sign that anything broke at all.
+    test "and is told when something breaks, rather than quietly returned to their ending" do
+      assert Access.pin_screen("error", dead()) == "error"
+    end
+
     test "and those exceptions do not widen: everything else is still the death screen" do
       # The list above covers the screens a player would try; this is the guard against a new one
       # being added to @dead_allowed by accident.

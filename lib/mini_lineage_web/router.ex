@@ -33,9 +33,10 @@ defmodule MiniLineageWeb.Router do
     live "/races", GameLive, :races
     live "/error", GameLive, :error
 
-    # The game owns every URL. An unrecognised path is not an error — it resolves to Town (or Game
-    # Start, once pinned) and the address bar is corrected, exactly as the reference's SPA fallback
-    # did. Must stay last: a glob would otherwise shadow every route above it.
-    live "/*unknown", GameLive, :unknown
+    # No glob. An unrecognised path is not a screen, and answering one with a redirect to Town is a
+    # soft 404: the reader is told nothing, the address they typed is thrown away, and a mistyped
+    # asset is served HTML that the browser then fails to parse as CSS. Phoenix raises for what it
+    # does not route and `ErrorHTML` draws it in the game's own shell, which is already what a
+    # record for a character who does not exist does.
   end
 end

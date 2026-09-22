@@ -95,12 +95,15 @@ try {
     // click. Everywhere else this clicks, because a route only ever reached by URL is untested.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
-    // /death is no longer a route — Game Over shares '/' with Start and Town — so this also proves
-    // an address the game once owned still lands somewhere sensible.
-    await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
-    check('...and so does an address that used to be the death screen', (await state()).screen === 'start');
-    check('...which the game corrects rather than leaving in the bar',
-        new URL(page.url()).pathname === '/', page.url());
+    // /death is no longer a route — Game Over shares '/' with Start and Town — so an address the
+    // game once owned is now an address it does not have, and says so rather than moving anybody.
+    // Fetched rather than navigated to: a 404 in the address bar writes a console error, and this
+    // suite asserts there are none of those.
+    const gone = await page.request.get(`${BASE}/death`);
+    check('...and an address the game used to own now says it does not', gone.status() === 404,
+        String(gone.status()));
+    check('...in the game\'s own shell, not a bare server page',
+        (await gone.text()).includes('That road leads nowhere'));
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
     check('...but Chronicles of Ancestry is public', (await state()).screen === 'races');
 
@@ -111,13 +114,20 @@ try {
     check('...and offers a way out',
         await page.locator('#main a:has-text("Return to safer lands")').count() === 1);
 
-    // The reference served index.html for every non-API GET and its router resolved an unknown path
-    // to Home, rewriting the address bar. The game owns every URL; there is no 404 page to reach.
-    const unknown = await page.goto(`${BASE}/no-such-road`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('an unknown URL serves the game, not an error', unknown?.status() === 200, String(unknown?.status()));
-    check('...resolving to the screen a visitor belongs on', (await state()).screen === 'start');
-    check('...and correcting the address bar', new URL(page.url()).pathname === '/', page.url());
+    // An unrecognised path is not a screen. Answering one by moving the reader to Town is a soft
+    // 404: they are told nothing and the address they typed is thrown away. It says so instead,
+    // and the address survives — a redirect would have been the thing that hid the typo.
+    const unknown = await page.request.get(`${BASE}/no-such-road`);
+    check('an unknown URL says so rather than moving the reader', unknown.status() === 404,
+        String(unknown.status()));
+    check('...and leaves the address alone, so a typo is visible',
+        new URL(unknown.url()).pathname === '/no-such-road', unknown.url());
+
+    // A static path that reaches the router does not exist. Served the game instead, a mistyped
+    // stylesheet would come back as HTML and the page would quietly render unstyled.
+    const asset = await page.request.get(`${BASE}/assets/css/not-a-file.css`);
+    check('...and a missing asset does too, rather than answering with a page', asset.status() === 404,
+        String(asset.status()));
 
     // ---- create a character -------------------------------------------------------------------
     // Deliberately BEFORE the socket connects. The dead render is already interactive, and the

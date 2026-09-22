@@ -28,13 +28,12 @@ defmodule MiniLineageWeb.PathsTest do
   end
 
   test "and every route the router answers is one the game can link to" do
-    # `:root` and `:unknown` are the two the game never builds a link for: "/" is reached by name
-    # and an unknown path is whatever someone typed.
+    # `:root` is the one the game never builds a link for: "/" is reached by name.
     linkable =
       ~w(battle weapons armors inn suicide death character highscores statistics races error start home)
       |> MapSet.new(&Paths.for_screen/1)
 
-    for {action, path} <- routed(), action not in [:root, :unknown] do
+    for {action, path} <- routed(), action != :root do
       assert MapSet.member?(linkable, path) or String.contains?(path, ":"),
              "#{path} (#{action}) is served but nothing links to it"
     end

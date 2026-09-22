@@ -50,7 +50,7 @@
             #201e24 30%,
             #34303b 60%,
             #232027 100%);
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--border-banner);
     border-bottom: 2px solid var(--gold-dim);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);

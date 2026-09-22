@@ -182,6 +182,15 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**The game has no catch-all route, and that is deliberate.** A glob answering every unrecognised
+path resolves it to Town and rewrites the address, which is a soft 404: the reader is told nothing,
+the address they typed is discarded, and a static path that reaches the router — a mistyped
+stylesheet — is answered with HTML the browser then fails to parse as CSS, so the real fault is
+invisible. Phoenix raises for what it does not route and `ErrorHTML` draws it in the game's own
+shell. This is already what `/character/<unknown>` does, at its own URL, with its own words.
+`Access.pin_screen/2` redirects are a different thing and stay: moving somebody because they are
+NOT ALLOWED somewhere is not the same as moving them because the somewhere does not exist.
+
 **What a build may say about a fault depends on the build, not on what it knows.** The error page
 shows the WHOLE thing in a debug build — `Exception.format/3` on the kind, reason and stack Phoenix
 hands the view — because the alternative is reading "500 Internal Server Error" on the page and

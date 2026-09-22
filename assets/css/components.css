@@ -473,7 +473,7 @@ ol.chronicle li.ambushed {
        and it scrolls on the same bar the Chronicle and the tables do. */
     max-height: 340px;
     overflow-y: auto;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius);
     color: var(--bar-hp);
     margin-bottom: 12px;
     overflow-x: auto;
