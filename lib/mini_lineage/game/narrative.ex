@@ -92,8 +92,18 @@ defmodule MiniLineage.Game.Narrative do
     Format.fill_template(Narratives.effect_blurb(effect.id), Map.merge(values, pronouns(voice)))
   end
 
+  @doc """
+  A line told to whoever is reading it. Every battle template is stored with its pronouns still
+  open: the numbers and the gear are filled when the fight happens, because they are facts about
+  that moment, and who it is being told TO is not known until somebody opens a page. A run's own
+  battle screen fills them as "you"; a stranger reading the same row on a record fills them as
+  "they", and neither is a second copy of the sentence.
+  """
+  def voiced(nil, _mine?), do: nil
+  def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
+
   @doc "A death told to whoever is reading it: the fallen player themselves, or anybody else."
-  def death_reason(reason, mine?), do: Format.fill_template(reason, pronouns(mine?))
+  def death_reason(reason, mine?), do: voiced(reason, mine?)
 
   defp pronouns(mine?) when is_boolean(mine?), do: mine? |> Narratives.voice() |> pronouns()
   defp pronouns(voice), do: Map.new(voice, fn {part, word} -> {to_string(part), word} end)

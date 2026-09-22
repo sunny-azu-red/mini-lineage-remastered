@@ -18,7 +18,7 @@ defmodule MiniLineage.Game.Narratives do
   # Keyed by the ACTIVE id, which is what a view carries; the catalog key is not in the view.
   @effect_blurbs %{
     "ghost" =>
-      ~s(The road is behind {object} now, and nothing of it walks with {object} any more. What the realm keeps of {them} is written in the Halls and in the fights below, and neither can be added to.),
+      ~s(The road is behind {object} now, and nothing of it walks with {object} any more... Perhaps {them} were written in the Halls, or perhaps not.),
     "resting" =>
       ~s(No blade is drawn where {them} stand. Out of the fray {their} wounds have leave to knit, and what the road keeps in the dark is somebody else's trouble for now.),
     "combat" =>
@@ -54,8 +54,22 @@ defmodule MiniLineage.Game.Narratives do
   # The pronouns every voiced template is filled from. They/them takes the same verb forms as you,
   # so a sentence written once reads correctly either way — nothing but these words moves.
   @voices %{
-    true => %{they: "You", them: "you", object: "you", their: "your", whose: "Your"},
-    false => %{they: "They", them: "they", object: "them", their: "their", whose: "Their"}
+    true => %{
+      they: "You",
+      them: "you",
+      object: "you",
+      their: "your",
+      whose: "Your",
+      self: "yourself"
+    },
+    false => %{
+      they: "They",
+      them: "they",
+      object: "them",
+      their: "their",
+      whose: "Their",
+      self: "themselves"
+    }
   }
 
   # A death is read by whoever opens the record — the fallen player, or a stranger in the Halls —
@@ -90,44 +104,44 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @kill [
-    ~s(Wielding your {weaponEmoji} <span class="equipped">{weaponName}</span> with fury, you cut down <span class="kills">{enemyGroup}</span>.),
-    ~s(Your {weaponEmoji} <span class="equipped">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
-    ~s(With a fierce war cry you lunge forward, striking down <span class="kills">{enemyGroup}</span> with your {weaponEmoji} <span class="equipped">{weaponName}</span>.),
-    ~s(The <span class="kills">{enemyGroup}</span> stood no chance, your {weaponEmoji} <span class="equipped">{weaponName}</span> ended {isSingleEnemy ? 'its' : 'their'} {isSingleEnemy ? 'life' : 'lives'} swiftly.),
-    ~s(A lethal dance of your {weaponEmoji} <span class="equipped">{weaponName}</span> leaves fallen <span class="kills">{enemyGroup}</span> in your wake.),
-    ~s(Your strike is true. The {weaponEmoji} <span class="equipped">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
+    ~s(Wielding {their} {weaponEmoji} <span class="equipped">{weaponName}</span> with fury, {them} cut down <span class="kills">{enemyGroup}</span>.),
+    ~s({whose} {weaponEmoji} <span class="equipped">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
+    ~s(With a fierce war cry {them} lunge forward, striking down <span class="kills">{enemyGroup}</span> with {their} {weaponEmoji} <span class="equipped">{weaponName}</span>.),
+    ~s(The <span class="kills">{enemyGroup}</span> stood no chance against {their} {weaponEmoji} <span class="equipped">{weaponName}</span>, which cut {isSingleEnemy ? 'it' : 'them'} down swiftly.),
+    ~s(A lethal dance of {their} {weaponEmoji} <span class="equipped">{weaponName}</span> leaves fallen <span class="kills">{enemyGroup}</span> in {their} wake.),
+    ~s({whose} strike is true. The {weaponEmoji} <span class="equipped">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
   ]
 
   @deflection [
-    ~s(Your {armorEmoji} <span class="equipped">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span> but you still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
-    ~s(The {armorEmoji} <span class="equipped">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span> and the narrow escape nets you <span class="xp">{xpGained} XP</span>.),
-    ~s(Blades glanced off your {armorEmoji} <span class="equipped">{armorName}</span> for <span class="damage">{blocked} Damage</span> and you mastered your defense, granting <span class="xp">{xpGained} XP</span>.),
-    ~s(Your {armorEmoji} <span class="equipped">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span> yet you grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
-    ~s(Steel rings against your {armorEmoji} <span class="equipped">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as you refine your combat stance for <span class="xp">{xpGained} XP</span>.)
+    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span> but {them} still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
+    ~s(The {armorEmoji} <span class="equipped">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span> and the narrow escape nets {object} <span class="xp">{xpGained} XP</span>.),
+    ~s(Blades glanced off {their} {armorEmoji} <span class="equipped">{armorName}</span> for <span class="damage">{blocked} Damage</span> and {them} mastered {their} defense, granting <span class="xp">{xpGained} XP</span>.),
+    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span> yet {them} grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
+    ~s(Steel rings against {their} {armorEmoji} <span class="equipped">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as {them} refine {their} combat stance for <span class="xp">{xpGained} XP</span>.)
   ]
 
   @outcome [
-    ~s(You limp away with <span class="hp">{hp} HP</span> remaining and <span class="adena">🪙 {adenaGained} Adena</span> to show for it.),
-    ~s(The skirmish leaves you at <span class="hp">{hp} HP</span>, but richer by <span class="adena">🪙 {adenaGained} Adena</span>.),
-    ~s(Breathing heavily, you stand with <span class="hp">{hp} HP</span> left and pocket <span class="adena">🪙 {adenaGained} Adena</span>.),
-    ~s(Wiping the grime of battle away, you survive with <span class="hp">{hp} HP</span> and claim the spoils of <span class="adena">🪙 {adenaGained} Adena</span>.)
+    ~s({they} limp away with <span class="hp">{hp} HP</span> remaining and <span class="adena">🪙 {adenaGained} Adena</span> to show for it.),
+    ~s(The skirmish leaves {object} at <span class="hp">{hp} HP</span>, but richer by <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(Breathing heavily, {them} stand with <span class="hp">{hp} HP</span> left and pocket <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(Wiping the grime of battle away, {them} survive with <span class="hp">{hp} HP</span> and claim the spoils of <span class="adena">🪙 {adenaGained} Adena</span>.)
   ]
 
   @level_up [
-    ~s(A surge of divine energy washes over you! Your wounds vanish instantly as you stand tall with <span class="hp">{hp} HP</span> and <span class="adena">🪙 {adenaGained} Adena</span>.),
-    ~s(Victory has sharpened your soul. You feel completely restored, clutching <span class="adena">🪙 {adenaGained} Adena</span> with <span class="hp">{hp} HP</span>.),
-    ~s(You have transcended your limits! Your body mends in a flash of light, leaving you invigorated at <span class="hp">{hp} HP</span> with <span class="adena">🪙 {adenaGained} Adena</span>.),
-    ~s(The clash has awakened new strength within you. Wounds close and fatigue fades, topping you up to <span class="hp">{hp} HP</span> and gaining <span class="adena">🪙 {adenaGained} Adena</span>.)
+    ~s(A surge of divine energy washes over {object}! {whose} wounds vanish instantly as {them} stand tall with <span class="hp">{hp} HP</span> and <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(Victory has sharpened {their} soul. {they} feel completely restored, clutching <span class="adena">🪙 {adenaGained} Adena</span> with <span class="hp">{hp} HP</span>.),
+    ~s({they} have transcended {their} limits! {whose} body mends in a flash of light, leaving {object} invigorated at <span class="hp">{hp} HP</span> with <span class="adena">🪙 {adenaGained} Adena</span>.),
+    ~s(The clash has awakened new strength within {object}. Wounds close and fatigue fades, topping {object} up to <span class="hp">{hp} HP</span> and gaining <span class="adena">🪙 {adenaGained} Adena</span>.)
   ]
 
   @ambush [
-    "💢 Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} you and you can't escape.",
-    "💢 You forgot to check your back and you get stormed by {ambushEnemyGroup}.",
-    "💢 You find yourself in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
-    "💢 As you were walking along {ambushEnemyGroup} jumped out of the bushes.",
-    "💢 You reached a dead-end and while turning around, you find yourself cornered by {ambushEnemyGroup}.",
-    "💢 The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before you!",
-    "💢 An arrow whistles past your ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
+    "💢 Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} {object} and {them} can't escape.",
+    "💢 {they} forgot to check {their} back and {them} get stormed by {ambushEnemyGroup}.",
+    "💢 {they} find {self} in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
+    "💢 As {them} were walking along {ambushEnemyGroup} jumped out of the bushes.",
+    "💢 {they} reached a dead-end and while turning around, {them} find {self} cornered by {ambushEnemyGroup}.",
+    "💢 The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before {object}!",
+    "💢 An arrow whistles past {their} ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
   ]
 
   @critical [

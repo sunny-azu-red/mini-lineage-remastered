@@ -74,9 +74,17 @@ defmodule MiniLineage.Game.NarrativeTest do
             Narrative.build_battle(player, result, ambushed?)
           end)
 
-        for {key, line} <- narrative, is_binary(line) do
-          assert unrendered(line) == [],
-                 "#{key} left #{inspect(unrendered(line))} unrendered for race #{race_id}: #{line}"
+        # A stored line keeps its PRONOUNS open on purpose — who it is told to is not known until
+        # somebody opens a page — so what has to close is everything else, and then the pronouns
+        # too once a reader is known. Checked for both readers, since they fill different words.
+        for {key, line} <- narrative, is_binary(line), mine? <- [true, false] do
+          spoken = Narrative.voiced(line, mine?)
+
+          assert unrendered(spoken) == [],
+                 "#{key} left #{inspect(unrendered(spoken))} for race #{race_id}: #{spoken}"
+
+          refute spoken =~ ~r/\byou\b/i and not mine?,
+                 "#{key} says \"you\" to somebody reading about a stranger: #{spoken}"
         end
       end
     end

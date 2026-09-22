@@ -77,13 +77,17 @@ defmodule MiniLineageWeb.Screens do
   attr :screen, :string, required: true
   attr :record, :map, default: nil
   attr :record_log, :list, default: []
+  attr :character_id, :string, default: nil
 
   @doc """
   What a screen puts BELOW the panel rather than inside it. Only the Chronicle so far, and only
   where there is a run to have one — every other screen draws nothing here.
   """
-  def aside(%{screen: "character", record: record} = assigns) when record != nil,
-    do: Record.chronicle(assigns)
+  def aside(%{screen: "character", record: record} = assigns) when record != nil do
+    assigns = assign(assigns, mine: record.id == assigns.character_id)
+
+    ~H|<Record.chronicle record_log={@record_log} mine={@mine} />|
+  end
 
   def aside(assigns), do: ~H||
 
@@ -198,7 +202,7 @@ defmodule MiniLineageWeb.Screens do
             later and would otherwise tell it bare. --%>
       <div class="alert alert-danger">
         {raw(
-          (@view.last_battle && @view.last_battle.narrative.ambush_line) ||
+          (@view.last_battle && Narrative.voiced(@view.last_battle.narrative.ambush_line, true)) ||
             "💢 You are being ambushed!"
         )}
       </div>
@@ -226,10 +230,14 @@ defmodule MiniLineageWeb.Screens do
   defp battle_narrative(assigns) do
     ~H"""
     <p>
-      <span :if={@narrative.crit_line}>{raw(@narrative.crit_line)} </span>{raw(@narrative.kill_line)}
-      {raw(@narrative.deflection_line)}
+      <%!-- Always "you" here: this is the fighter reading their own fight as it happens. The same
+            row is filled with "they" when somebody else reads it off a record. --%>
+      <span :if={@narrative.crit_line}>{raw(Narrative.voiced(@narrative.crit_line, true))} </span>{raw(
+        Narrative.voiced(@narrative.kill_line, true)
+      )}
+      {raw(Narrative.voiced(@narrative.deflection_line, true))}
     </p>
-    <p>{raw(@narrative.outcome_line)}</p>
+    <p>{raw(Narrative.voiced(@narrative.outcome_line, true))}</p>
     """
   end
 

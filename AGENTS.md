@@ -182,6 +182,17 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**A stored line keeps its pronouns open; everything else is filled when it happens.** A fight's
+numbers and gear are facts about a moment, so they are filled then — but who the line is being told
+TO is not known until somebody opens a page, and the same row is read by the run itself and by
+strangers in the Halls. So the six pools the chronicle stores carry `{they} {them} {object} {their}
+{whose} {self}` and nothing second-person, `Format.fill_template` leaves them alone at build time
+because they are not in the data map, and `Narrative.voiced/2` closes them at render: `true` on a
+run's own battle screen, the reader's own voice in the chronicle. Verb agreement is free — they/them
+takes the same forms as you, which is the whole reason the game picked it — but REFERENTS are not:
+"your blade ended their lives" reads fine and "their blade ended their lives" does not, so a line
+naming both the fighter and the foe has to keep them apart by construction.
+
 **A fatal fight pays nothing, so its narrative may not say it did.** `resolve_battle_outcome/2`
 returns `{kill(player), false}` the moment health reaches zero — before the XP, the Adena,
 `total_battles`, `total_enemies_killed` and every `Statistics.increment_for`. Nothing it did counted, so no line

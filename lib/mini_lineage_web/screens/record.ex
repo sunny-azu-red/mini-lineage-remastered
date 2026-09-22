@@ -194,7 +194,13 @@ defmodule MiniLineageWeb.Screens.Record do
   defp lapse(:aura), do: "It settles in"
   defp lapse(_buff), do: "It holds for another"
 
+  # The chronicle is a run's fights read by whoever opened the page, so the pronouns are filled
+  # here rather than when the fight happened.
+  defp voiced(line, mine?), do: Narrative.voiced(line, mine?)
+
   attr :record_log, :list, default: []
+  # Whose fights these are, which decides whether they are told to them or about them.
+  attr :mine, :boolean, default: true
 
   @doc """
   A run's fights, in a panel of their own beneath the record's. Longer than everything else on the
@@ -222,13 +228,13 @@ defmodule MiniLineageWeb.Screens.Record do
             :for={fight <- @record_log}
             {if fight.ambushed, do: [class: "ambushed"], else: []}
           >
-            <span :if={fight.narrative.crit_line}>{raw(fight.narrative.crit_line)} </span>{raw(
-              fight.narrative.kill_line
-            )} {raw(fight.narrative.deflection_line)}
+            <span :if={fight.narrative.crit_line}>{raw(voiced(fight.narrative.crit_line, @mine))} </span>{raw(
+              voiced(fight.narrative.kill_line, @mine)
+            )} {raw(voiced(fight.narrative.deflection_line, @mine))}
             <%!-- The fight a run did not walk away from is the only entry that is an ending rather
                   than a report, and it wears the colour every ending in the game wears. --%>
-            <span :if={fight.died} class="deaths">{raw(fight.narrative.outcome_line)}</span>
-            <span :if={!fight.died}>{raw(fight.narrative.outcome_line)}</span>
+            <span :if={fight.died} class="deaths">{raw(voiced(fight.narrative.outcome_line, @mine))}</span>
+            <span :if={!fight.died}>{raw(voiced(fight.narrative.outcome_line, @mine))}</span>
             <span :if={fight.narrative.ambush_line} class="threat">{raw(fight.narrative.ambush_line)}</span>
           </li>
         </ol>

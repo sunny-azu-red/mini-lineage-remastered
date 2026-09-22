@@ -443,7 +443,12 @@ defmodule MiniLineageWeb.GameLive do
       />
 
       <:aside>
-        <Screens.aside screen={@screen} record={@record} record_log={@record_log} />
+        <Screens.aside
+          screen={@screen}
+          record={@record}
+          record_log={@record_log}
+          character_id={@character_id}
+        />
       </:aside>
 
       <Screens.screen
