@@ -211,9 +211,14 @@ try {
     check('a second tab sees the same character',
         await tab.getAttribute('#screen', 'data-health') === String(born.health));
 
-    // ---- a living character is kept out of character creation ---------------------------------
+    // ---- a living character is kept out of what it may ACT on, and nothing else ----------------
+    // The Tome carries no action, so there is nothing on it to be kept away from: the pin is about
+    // what may be done. Character creation is the opposite — a living run is past it.
     await page.goto(`${BASE}/statistics`, { waitUntil: 'domcontentloaded' });
-    check('a living character is bounced off Statistics', (await state()).screen === 'home');
+    check('a living character may still read the Tome', (await state()).screen === 'statistics');
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    check('...but is put back in Town rather than into character creation',
+        (await state()).screen === 'home');
 
     // ---- travel and buy -----------------------------------------------------------------------
     await goHome();

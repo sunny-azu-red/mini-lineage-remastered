@@ -269,10 +269,14 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute html =~ "hallowed pillars"
     end
 
-    test "and says so plainly for an id that is nobody", %{conn: conn} do
-      {:ok, _live, html} = live(conn, ~p"/character/not-a-real-id")
+    # A route the game has, for a thing it does not. Answered as a 404 like any other road that
+    # leads nowhere, rather than as a page of its own saying the same in different words.
+    test "and is a 404 for an id that is nobody", %{conn: conn} do
+      assert_raise MiniLineageWeb.NotFoundError, fn ->
+        live(conn, ~p"/character/not-a-real-id")
+      end
 
-      assert html =~ "No such name is written here"
+      assert Plug.Exception.status(%MiniLineageWeb.NotFoundError{}) == 404
     end
 
     test "viewing one does not make the viewer that character", %{conn: conn} do

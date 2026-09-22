@@ -17,11 +17,23 @@ defmodule MiniLineage.Game.AccessTest do
   defp dead, do: %{alive() | dead: true}
   defp ambushed, do: %{alive() | ambushed: true}
 
-  describe "a living character" do
-    for blocked <- ~w(statistics races start) do
-      test "cannot reach #{blocked} — those belong to character creation" do
-        assert Access.pin_screen(unquote(blocked), alive()) == "home"
+  # Nothing on these can be acted on — not one `phx-click` between them — so there is nothing for
+  # any state to be kept away from. The pin is about what may be DONE, not what may be read.
+  @readable ~w(character highscores statistics races error)
+
+  describe "every state" do
+    for screen <- @readable do
+      test "may read #{screen}, whoever they are" do
+        for player <- [unstarted(), alive(), ambushed(), dead()] do
+          assert Access.pin_screen(unquote(screen), player) == unquote(screen)
+        end
       end
+    end
+  end
+
+  describe "a living character" do
+    test "cannot reach character creation, being past it" do
+      assert Access.pin_screen("start", alive()) == "home"
     end
 
     # The serious one: the death screen offers "Play Again?", which resets the character.
@@ -43,15 +55,13 @@ defmodule MiniLineage.Game.AccessTest do
       end
     end
 
-    for allowed <- ~w(start statistics races highscores character) do
-      test "can reach #{allowed}" do
-        assert Access.pin_screen(unquote(allowed), unstarted()) == unquote(allowed)
-      end
+    test "can reach character creation, having no character yet" do
+      assert Access.pin_screen("start", unstarted()) == "start"
     end
   end
 
   describe "a dead character" do
-    for target <- ~w(home inn battle statistics start) do
+    for target <- ~w(home inn battle weapons start) do
       test "is pinned to the death screen when trying to reach #{target}" do
         assert Access.pin_screen(unquote(target), dead()) == "death"
       end
@@ -72,26 +82,30 @@ defmodule MiniLineage.Game.AccessTest do
       assert Access.pin_screen("character", dead()) == "character"
     end
 
-    # `fail/2` pushes to the error screen when the character process exits. Pinned away from it,
-    # a dead player is bounced to their own ending with no sign that anything broke at all.
-    test "and is told when something breaks, rather than quietly returned to their ending" do
-      assert Access.pin_screen("error", dead()) == "error"
-    end
-
-    test "and those exceptions do not widen: everything else is still the death screen" do
-      # The list above covers the screens a player would try; this is the guard against a new one
-      # being added to @dead_allowed by accident.
-      for screen <- ~w(home inn weapons armors battle suicide statistics races start) do
-        assert Access.pin_screen(screen, dead()) == "death", screen
+    test "and those exceptions do not widen: everything they could ACT on is still their ending" do
+      # The guard against a screen carrying an action being let through by accident.
+      for screen <- ~w(home inn weapons armors battle suicide start death) do
+        expected = if screen == "death", do: "death", else: "death"
+        assert Access.pin_screen(screen, dead()) == expected, screen
       end
     end
   end
 
   describe "an ambushed character" do
-    for target <- ~w(home inn weapons armors character highscores) do
+    for target <- ~w(home inn weapons armors suicide start) do
       test "is pinned to the battleground when trying to reach #{target}" do
         assert Access.pin_screen(unquote(target), ambushed()) == "battle"
       end
+    end
+
+    # Reading is not escaping. Walking off does not clear `ambushed`, so the moment they ask for a
+    # screen they could act on they are back in the fight, with the same ambush waiting on it.
+    test "but may still read, because none of that is a way out" do
+      for screen <- @readable do
+        assert Access.pin_screen(screen, ambushed()) == screen, screen
+      end
+
+      assert Access.pin_screen("home", ambushed()) == "battle"
     end
 
     # Death wins outright, because killing a player does not clear `ambushed`.

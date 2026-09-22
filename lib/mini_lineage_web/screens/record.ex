@@ -279,17 +279,6 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :record_view, :map, default: nil
   attr :from, :string, default: nil
 
-  def screen(%{record: nil} = assigns) do
-    ~H"""
-    <p>
-      No such name is written here. The Hall keeps only those who drew a blade, and this one either
-      never did or was never real.
-    </p>
-
-    <.halls_link race={came_from(assigns)} />
-    """
-  end
-
   def screen(assigns) do
     ~H"""
     <.record

@@ -22,7 +22,18 @@ defmodule MiniLineageWeb.BackLinksTest do
     [unstarted: %Player{}, alive: alive, dead: Player.kill(alive)]
   end
 
+  # The run a Character screen draws is not the player reading it — a visitor with no character of
+  # their own can open anybody's record. So the subject is its own started run, and a record is
+  # never nil: an id nobody has is a 404 long before anything is rendered.
+  defp subject do
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Somebody")
+
+    %{player | last_action_at: MiniLineage.Game.Clock.now_ms()}
+  end
+
   defp render(screen, player) do
+    viewing? = screen == "character"
+
     render_component(&Screens.screen/1,
       view: Snapshot.build(player),
       screen: screen,
@@ -30,8 +41,16 @@ defmodule MiniLineageWeb.BackLinksTest do
       boards: %{},
       statistics: nil,
       flash: %{},
-      record: nil,
-      record_view: nil,
+      record:
+        viewing? &&
+          %{
+            id: "somebody",
+            name: "Somebody",
+            inserted_at: DateTime.utc_now(),
+            active: true,
+            dead: false
+          },
+      record_view: viewing? && Snapshot.build(subject()),
       record_log: [],
       from: nil
     )

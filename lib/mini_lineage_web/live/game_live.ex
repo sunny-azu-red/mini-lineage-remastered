@@ -112,21 +112,22 @@ defmodule MiniLineageWeb.GameLive do
   # A run nobody can find is not an error: `Screens` draws an empty state for a nil record. Yours
   # is read from your own process rather than the document, because `health` is buffered.
   defp assign_record(socket, %{"id" => id}) do
-    entry = Board.entry(id)
+    # A record nobody can find is a 404, the same as a road the game never had. It used to be a
+    # page of its own answering with a 200, which made this the one place in the game where "does
+    # not exist" meant something different depending on which kind of thing was missing.
+    entry = Board.entry(id) || raise MiniLineageWeb.NotFoundError
 
     view =
-      cond do
-        is_nil(entry) -> nil
-        entry.id == socket.assigns.character_id -> socket.assigns.view
-        true -> entry.id |> Store.load() |> Snapshot.build()
-      end
+      if entry.id == socket.assigns.character_id,
+        do: socket.assigns.view,
+        else: entry.id |> Store.load() |> Snapshot.build()
 
     socket
-    |> watch_record(entry && entry.id)
+    |> watch_record(entry.id)
     |> assign(
       record: entry,
       record_view: view,
-      record_log: (entry && BattleLog.history(entry.id)) || []
+      record_log: BattleLog.history(entry.id)
     )
   end
 

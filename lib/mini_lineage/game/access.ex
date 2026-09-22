@@ -5,33 +5,32 @@ defmodule MiniLineage.Game.Access do
   """
   alias MiniLineage.Game.Player
 
-  # The only screens a visitor with no character may reach. A character's record is one of them:
-  # it is public, and linking to it from the Halls would be pointless otherwise.
-  @unstarted_allowed ~w(start statistics races highscores character error)
-
-  # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them.
-  @started_blocked ~w(start statistics races death)
-
-  # What the dead may still reach. The Character screen becomes a retrospective rather than a status
-  # page, and the Halls are where their run now stands — confining them to the death screen would
-  # put the board they are on out of their reach. Nothing here can be acted on.
+  # THE PIN IS ABOUT WHAT YOU MAY DO, NOT WHAT YOU MAY READ.
   #
-  # `error` is here because something breaking is worth being told about whatever state you are in:
-  # `fail/2` pushes to it when the character process exits, and without this a dead player is
-  # bounced to their own ending with no sign that anything went wrong. Nothing can be acted on
-  # there either, so it costs the dead nothing to be allowed to read it.
-  @dead_allowed ~w(death character highscores error)
+  # These five carry no action at all — not one `phx-click` between a record, the Halls, the Tome,
+  # the Chronicles of Ancestry and the error page — so there is nothing on them for any state to be
+  # kept away from. A dead run may see where it now stands; an ambushed one may read its own record
+  # without escaping anything, because the ambush is not cleared by walking off and the moment they
+  # ask for a screen they can act on they are put back in the fight; and a fault is worth being told
+  # about whatever has happened to you.
+  @readable ~w(character highscores statistics races error)
+
+  # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them,
+  # and 'start' is character creation, which they are past.
+  @started_blocked ~w(start death)
 
   @doc """
-  Where the player is actually allowed to be. Death wins outright — checked first because killing
-  a player does not clear `ambushed` — then an active ambush, then living-vs-absent character.
+  Where the player is actually allowed to be. What can be READ is answered first and for everyone;
+  after that, death wins outright — before the ambush, because killing a player does not clear
+  `ambushed` — then an active ambush, then living-vs-absent character.
   """
   def pin_screen(screen, player) do
     cond do
-      player.dead -> if screen in @dead_allowed, do: screen, else: "death"
+      screen in @readable -> screen
+      player.dead -> "death"
       player.ambushed -> "battle"
       Player.started?(player) -> if screen in @started_blocked, do: "home", else: screen
-      true -> if screen in @unstarted_allowed, do: screen, else: "start"
+      true -> "start"
     end
   end
 

@@ -182,6 +182,15 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 
+**`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
+action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
+`phx-click` among the four modules that render them — so the first clause lets every state reach
+every one of them and the rest of the cond only ever decides about screens that can be acted on.
+It had been three overlapping allowlists, which is how a living run could not read the Tome, a dead
+one could not be told that something had crashed, and an ambushed one could not look at its own
+record. Reading is not escaping: walking off does not clear `ambushed`, so the next screen they
+could act on puts them back in the fight with the same ambush waiting on it.
+
 **The game has no catch-all route, and that is deliberate.** A glob answering every unrecognised
 path resolves it to Town and rewrites the address, which is a soft 404: the reader is told nothing,
 the address they typed is discarded, and a static path that reaches the router — a mistyped
