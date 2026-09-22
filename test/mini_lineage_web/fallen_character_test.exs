@@ -179,11 +179,11 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       html = html_for(player)
       spoken = Regex.escape(Narrative.death_reason(player.death_reason, true))
 
-      assert html =~ ~r|when the road ran out\.\s*<span class="deaths">#{spoken}</span>|,
-             "the reason it ended does not close the line about the road running out"
+      assert html =~ ~r|<span class="deaths">#{spoken}</span>\s*You fell at|,
+             "the reason it ended does not open the line that tallies the run"
 
-      # And the line it closes is NOT red, or the colour stops meaning the ending.
-      assert html =~ ~r|<p[^>]*>\s*You fell at|
+      # And the tally it opens is NOT red, or the colour stops meaning the ending.
+      refute html =~ ~r|<span class="deaths">[^<]*You fell at|
       refute html =~ ~r|<[^>]*class="[^"]*muted[^"]*"[^>]*>[^<]*#{spoken}|
     end
   end

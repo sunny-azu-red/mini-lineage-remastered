@@ -155,7 +155,9 @@ defmodule MiniLineageWeb.BlessingsTest do
     test "and tells how it ended where the run ends, not where its effects are listed" do
       html = html_for(bearer([]), dead: true, reason: @reason)
 
-      assert html =~ ~r|when the road ran out\.\s*<span class="deaths">|
+      # It opens the closing paragraph rather than trailing it: "when the road ran out" and "not
+      # bravely enough" are the same thought, and saying the tally first made them read as two.
+      assert html =~ ~r|<p[^>]*>\s*<span class="deaths">[^<]*</span>\s*You fell at|
       # Once. It was told twice while it had a paragraph of its own as well.
       assert html |> String.split("not bravely enough") |> length() == 2
     end
