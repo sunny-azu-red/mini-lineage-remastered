@@ -48,7 +48,7 @@ LABEL org.opencontainers.image.description="Mini-Lineage Remastered — a text-b
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Created BEFORE the copy so ownership is set as the files land. A `chown -R` afterwards writes a
-# second copy of the whole release into its own layer — 35MB of an 88MB image, for nothing. The
+# second copy of the whole release into its own layer, 34MB of a 53MB image, for nothing. The
 # directory itself is chowned so the release can still put its runtime config under it.
 RUN addgroup -S app && adduser -S -G app app && chown app:app /app
 

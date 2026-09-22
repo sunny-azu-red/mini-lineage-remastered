@@ -190,6 +190,14 @@ on the topic of the run it is retiring, read BEFORE the archive because afterwar
 names the next character, and the LiveView answers it by reading the entry again. Once in a run's
 life, which is the only reason a query there is acceptable.
 
+**Nothing walks with a run that has been walked away from.** `Player.active_effects/1` derives 👻
+Ghost from being dead, but a player cannot know whether anybody still holds it — only the board row
+does, in `active`. So `Screens.Record.record/1` strips a retired run's effects, and draws *Blessings
+& Afflictions* on one condition: that the list is not empty. The heading belongs to the list, never
+to the page, so the rule holds for a living run with nothing riding on it too. Decide it in the
+component, which has both the view and the row: in the LiveView a component test goes around it and
+every `handle_info` that reassigns the record has to remember to apply it again.
+
 **A stored line keeps its pronouns open; everything else is filled when it happens.** A fight's
 numbers and gear are facts about a moment, so they are filled then — but who the line is being told
 TO is not known until somebody opens a page, and the same row is read by the run itself and by
