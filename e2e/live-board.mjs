@@ -95,7 +95,7 @@ try {
     await connected(watcher);
     const record = (await watcher.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('...showing a stranger\'s stats and their chronicle so far',
-        /LiveOne/.test(record) && /last carrying/.test(record), record.slice(0, 90));
+        /LiveOne/.test(record) && /last carried/.test(record), record.slice(0, 90));
     check('...while the watcher stays a visitor, not that character',
         await watcher.evaluate(() => document.querySelector('#screen')?.dataset.started) === 'false');
 

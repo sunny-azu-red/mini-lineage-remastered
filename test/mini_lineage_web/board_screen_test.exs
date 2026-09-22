@@ -203,8 +203,8 @@ defmodule MiniLineageWeb.BoardScreenTest do
       {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       # The road swallowed them; it did not close over them, which is what a grave is.
-      assert html =~ "swallowing"
-      refute html =~ "closing over"
+      assert html =~ "swallowed"
+      refute html =~ "closed over"
     end
 
     test "and never renders a session id anywhere on the page", %{conn: conn} do
@@ -255,7 +255,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
       assert html =~ "Remembered"
-      assert html =~ "closing over"
+      assert html =~ "closed over"
     end
 
     test "still renders a disqualified one — the record stands, unannotated", %{conn: conn} do

@@ -34,7 +34,7 @@ defmodule MiniLineage.Game.Narratives do
     "satisfied" =>
       ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_health} Max HP</span> for as long as it lasts.),
     "well_fed" =>
-      ~s(Properly fed for once, and it shows in the way {them} carry {object}: <span class="hp">{max_health} Max HP</span> while the meal holds.),
+      ~s(Properly fed for once, and it shows in the way {them} carry {self}: <span class="hp">{max_health} Max HP</span> while the meal holds.),
     "gourmet_feast" =>
       ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_health} Max HP</span> stand between {object} and the dark.)
   }
@@ -108,15 +108,15 @@ defmodule MiniLineage.Game.Narratives do
     ~s({whose} {weaponEmoji} <span class="equipped">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
     ~s(With a fierce war cry {them} lunge forward, striking down <span class="kills">{enemyGroup}</span> with {their} {weaponEmoji} <span class="equipped">{weaponName}</span>.),
     ~s(The <span class="kills">{enemyGroup}</span> stood no chance against {their} {weaponEmoji} <span class="equipped">{weaponName}</span>, which cut {isSingleEnemy ? 'it' : 'them'} down swiftly.),
-    ~s(A lethal dance of {their} {weaponEmoji} <span class="equipped">{weaponName}</span> leaves fallen <span class="kills">{enemyGroup}</span> in {their} wake.),
+    ~s(A lethal dance of {their} {weaponEmoji} <span class="equipped">{weaponName}</span> leaves <span class="kills">{enemyGroup}</span> fallen in {their} wake.),
     ~s({whose} strike is true. The {weaponEmoji} <span class="equipped">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
   ]
 
   @deflection [
-    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span> but {them} still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
-    ~s(The {armorEmoji} <span class="equipped">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span> and the narrow escape nets {object} <span class="xp">{xpGained} XP</span>.),
-    ~s(Blades glanced off {their} {armorEmoji} <span class="equipped">{armorName}</span> for <span class="damage">{blocked} Damage</span> and {them} mastered {their} defense, granting <span class="xp">{xpGained} XP</span>.),
-    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span> yet {them} grow tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
+    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span>, but {them} still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
+    ~s(The {armorEmoji} <span class="equipped">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span>, and the narrow escape netted {object} <span class="xp">{xpGained} XP</span>.),
+    ~s(Blades glanced off {their} {armorEmoji} <span class="equipped">{armorName}</span> for <span class="damage">{blocked} Damage</span>, and {them} mastered {their} defense, granting <span class="xp">{xpGained} XP</span>.),
+    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span>, yet {them} grew tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
     ~s(Steel rings against {their} {armorEmoji} <span class="equipped">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as {them} refine {their} combat stance for <span class="xp">{xpGained} XP</span>.)
   ]
 
@@ -135,11 +135,11 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @ambush [
-    "💢 Out of the blue {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} {object} and {them} can't escape.",
-    "💢 {they} forgot to check {their} back and {them} get stormed by {ambushEnemyGroup}.",
-    "💢 {they} find {self} in a delicate position, the {enemyEmoji} {enemyName} leader has come with reinforcements.",
-    "💢 As {them} were walking along {ambushEnemyGroup} jumped out of the bushes.",
-    "💢 {they} reached a dead-end and while turning around, {them} find {self} cornered by {ambushEnemyGroup}.",
+    "💢 Out of the blue, {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} {object}, and {them} can't escape.",
+    "💢 {they} forget to check {their} back, and {them} get stormed by {ambushEnemyGroup}.",
+    "💢 {they} find {self} in a delicate position: the {enemyEmoji} {enemyName} leader has come with reinforcements.",
+    "💢 As {them} were walking along, {ambushEnemyGroup} jumped out of the bushes.",
+    "💢 {they} reached a dead-end and, while turning around, {them} found {self} cornered by {ambushEnemyGroup}.",
     "💢 The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before {object}!",
     "💢 An arrow whistles past {their} ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
   ]

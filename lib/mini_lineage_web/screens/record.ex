@@ -91,12 +91,8 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
       <p>
-        {@voice.whose} journey across the realm {@defined} defined by conflict and survival<.road
-          entry={@entry}
-          at={@view.last_action_at}
-          voice={@voice}
-        />
-        {@voice.they} {@fought} through
+        <.road entry={@entry} at={@view.last_action_at} voice={@voice} />
+        {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
         <Controls.counted
           key="rec-battles"
           class="battles"
@@ -250,17 +246,18 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :voice, :map, required: true
 
   @doc false
-  # How the sentence above ends, carrying both ends of the road. It owns the full stop because a run
-  # with no row has no road to describe and the sentence has to close anyway. Its own component so
-  # each line stays whole: the formatter breaks at a tag, and a newline before the stop reads " .".
-  defp road(%{entry: nil} = assigns), do: ~H"."
+  # Both ends of the road, in the order they happened, as a sentence of its own ahead of what the
+  # run amounted to. Hung off "defined by conflict and survival" it had been a trailing "with"
+  # clause carrying two dates, which read as an afterthought and put the ending before the start.
+  # A run with no row has no road, and says nothing here rather than an empty clause.
+  defp road(%{entry: nil} = assigns), do: ~H""
 
   defp road(assigns) do
     ~H"""
     <span phx-no-format><%= case road_of(@entry) do %>
-      <% :closed -> %> with the road opening beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closing over {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :open -> %> with the road opening beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and last carrying {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :lost -> %> with the road opening beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} />, and swallowing {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
+      <% :closed -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :open -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
+      <% :lost -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
     <% end %></span>
     """
   end
