@@ -109,7 +109,7 @@ defmodule MiniLineage.Game.Actions do
       at: DateTime.utc_now()
     }
 
-    player = %{player | last_battle_narrative: last}
+    player = Player.log(%{player | last_battle_narrative: last}, %{kind: "fight", battle: last})
 
     flash =
       if not died and level_up? do

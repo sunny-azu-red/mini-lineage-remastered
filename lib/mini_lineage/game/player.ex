@@ -24,6 +24,9 @@ defmodule MiniLineage.Game.Player do
             consecutive_ambushes: 0,
             total_enemies_killed: 0,
             effects: [],
+            # What the run did this pass, for the process to write and then clear. Declared by the
+            # action because no diff can name the blade somebody bought.
+            pending_events: [],
             current_screen: nil,
             combat_until: nil,
             # When the player last DID something, in epoch milliseconds. Written by the process,
@@ -436,6 +439,13 @@ defmodule MiniLineage.Game.Player do
     do: "You have bought an Armor.\nYou are now wearing the mighty #{item.emoji} #{item.name}!"
 
   # ----------------------------------------------------------------- battle
+
+  @doc """
+  Notes something the run did, for the process to write and then clear.
+
+  Appended, because the order these are read in is the order they happened.
+  """
+  def log(player, event), do: %{player | pending_events: player.pending_events ++ [event]}
 
   @doc "Applies a resolved fight. Returns `{player, level_up?}`."
   def resolve_battle_outcome(player, result) do

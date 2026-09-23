@@ -13,6 +13,10 @@ defmodule MiniLineage.CharacterLog do
   # atom it turns into is one this module names itself.
   @narrative_keys ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
 
+  # A fight tells its story in seven lines; every other deed says one thing. Whitelisted here and
+  # not in the database, so a new kind is a line of Elixir rather than a migration.
+  @kinds ~w(fight start purchase level_up heresy ending effect)
+
   defmodule Entry do
     @moduledoc false
     use Ecto.Schema
@@ -82,6 +86,22 @@ defmodule MiniLineage.CharacterLog do
     |> to_battle()
   end
 
+  @doc "A built row as `insert_all` wants it: no struct meta, and no id to claim."
+  def params(%Entry{} = e), do: e |> Map.from_struct() |> Map.drop([:__meta__, :id])
+
+  @doc """
+  The row a deed produces: one sentence, its pronouns still open, stamped when it happened.
+  Built rather than written, for the same reason `row/2` is.
+  """
+  def event(character_id, kind, line, at) when kind in @kinds do
+    %Entry{
+      character_id: character_id,
+      kind: kind,
+      narrative: %{"line" => line},
+      inserted_at: at
+    }
+  end
+
   @doc """
   The last `limit` fights of one run, oldest first within that window.
 
@@ -114,7 +134,13 @@ defmodule MiniLineage.CharacterLog do
     |> Enum.map(&to_entry/1)
   end
 
-  defp to_entry(%Entry{} = e), do: e |> to_battle() |> Map.put(:id, e.id)
+  # What the Chronicle iterates. A fight keeps the shape the battle screen knows; everything else
+  # is one line, and the component tells them apart by `kind`.
+  defp to_entry(%Entry{kind: "fight"} = e),
+    do: e |> to_battle() |> Map.merge(%{id: e.id, kind: "fight"})
+
+  defp to_entry(%Entry{} = e),
+    do: %{id: e.id, kind: e.kind, at: e.inserted_at, line: e.narrative["line"]}
 
   defp to_battle(nil), do: nil
 

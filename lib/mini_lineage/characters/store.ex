@@ -8,6 +8,7 @@ defmodule MiniLineage.Characters.Store do
   """
   import Ecto.Query
 
+  alias MiniLineage.CharacterLog
   alias MiniLineage.Characters.{Record, Serde}
   alias MiniLineage.Game.Player
   alias MiniLineage.Repo
@@ -55,10 +56,10 @@ defmodule MiniLineage.Characters.Store do
 
   # One transaction: a fight written without the character that fought it would show in the log as
   # a battle its own totals do not include.
-  def save(id, session_id, %Player{} = player, battles) do
+  def save(id, session_id, %Player{} = player, rows) do
     Repo.transaction(fn ->
       upsert(id, session_id, player)
-      Enum.each(battles, &Repo.insert!/1)
+      Repo.insert_all(CharacterLog.Entry, Enum.map(rows, &CharacterLog.params/1))
     end)
 
     :ok

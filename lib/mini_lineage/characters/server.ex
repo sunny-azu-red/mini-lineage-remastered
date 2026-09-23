@@ -51,7 +51,7 @@ defmodule MiniLineage.Characters.Server do
       viewers: %{},
       stop_timer: nil,
       dirty_since: nil,
-      pending_battles: []
+      pending_rows: []
     }
 
     # Armed from the start rather than only when a viewer leaves: a process opened by a plain read
@@ -161,7 +161,7 @@ defmodule MiniLineage.Characters.Server do
       acted? = flush?(before, player)
       player = if acted?, do: %{player | last_action_at: Clock.now_ms()}, else: player
 
-      state = log_battle(%{state | player: player}, before, player)
+      state = drain_events(%{state | player: player}, player)
       state = if acted?, do: persist(state), else: mark(state)
 
       # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
@@ -184,19 +184,19 @@ defmodule MiniLineage.Characters.Server do
     |> Enum.any?(fn {field, was} -> field not in @buffered and Map.get(now, field) != was end)
   end
 
-  # A fight is the only thing that sets a new narrative, so this is how the process notices one
-  # without Actions having to reach for the database itself.
-  defp log_battle(state, before, now) do
-    if now.last_battle_narrative && now.last_battle_narrative != before.last_battle_narrative do
-      %{
-        state
-        | pending_battles:
-            state.pending_battles ++ [CharacterLog.row(state.id, now.last_battle_narrative)]
-      }
-    else
-      state
-    end
+  # Drained AFTER `flush?/2` has been asked: clear the list first and before and now are identical,
+  # so a purchase would never be written before the player is told it worked.
+  #
+  # It used to notice a fight by diffing `last_battle_narrative`, which cannot name a blade
+  # somebody bought and, more quietly, cannot see a fight whose map repeats the last one exactly.
+  defp drain_events(state, player) do
+    rows = Enum.map(player.pending_events, &row_for(state.id, &1))
+
+    %{state | player: %{player | pending_events: []}, pending_rows: state.pending_rows ++ rows}
   end
+
+  defp row_for(id, %{kind: "fight", battle: battle}), do: CharacterLog.row(id, battle)
+  defp row_for(id, %{kind: kind, line: line, at: at}), do: CharacterLog.event(id, kind, line, at)
 
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state
@@ -204,10 +204,10 @@ defmodule MiniLineage.Characters.Server do
   # Never raises. Once there is a buffer, letting a database error kill the process would take the
   # buffer with it — so a failure keeps the state dirty and the next flush carries it.
   defp persist(state) do
-    Store.save(state.id, state.session, state.player, state.pending_battles)
+    Store.save(state.id, state.session, state.player, state.pending_rows)
     Board.character_changed()
 
-    %{state | dirty_since: nil, pending_battles: []}
+    %{state | dirty_since: nil, pending_rows: []}
   rescue
     error ->
       Logger.error("💾 character #{state.id} failed to persist, still buffered: #{inspect(error)}")
