@@ -439,6 +439,24 @@ function localDate(at) {
         + `${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }
 
+// One hook over a list, rewriting every stamp beneath it. `LocalTime` is one element's own; this is
+// for a chronicle, where a hook per row would be a hundred for one job.
+export const LocalTimes = {
+    mounted() {
+        this.render();
+    },
+    updated() {
+        this.render();
+    },
+    render() {
+        for (const el of this.el.querySelectorAll('time[datetime]')) {
+            const at = new Date(el.dateTime);
+
+            if (!isNaN(at)) el.textContent = localDate(at);
+        }
+    },
+};
+
 export const hooks = {
-    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, Panel, LocalTime,
+    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, Panel, LocalTime, LocalTimes,
 };

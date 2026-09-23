@@ -32,7 +32,8 @@ defmodule MiniLineageWeb.ChronicleTest do
     %{
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
       ambushed: :ambush_line not in absent,
-      died: false
+      died: false,
+      at: ~U[2026-09-24 14:32:00Z]
     }
   end
 
@@ -49,6 +50,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   defp text_for(chronicle) do
     chronicle
     |> html_for()
+    |> String.replace(~r|<time[^>]*>.*?</time>|s, "")
     |> String.replace(~r/<[^>]+>/, "")
     |> String.replace(~r/\s+/, " ")
   end
@@ -68,7 +70,8 @@ defmodule MiniLineageWeb.ChronicleTest do
         next_move: "MOVE"
       },
       ambushed: true,
-      died: false
+      died: false,
+      at: ~U[2026-09-24 14:32:00Z]
     }
 
     for {who, mine?} <- [{"the run itself", true}, {"anybody else", false}] do
@@ -123,6 +126,23 @@ defmodule MiniLineageWeb.ChronicleTest do
       text = text_for([fight([:crit_line, :ambush_line]), fight([:crit_line])])
 
       assert text =~ "KILL. DEFLECT. OUTCOME. KILL. DEFLECT. OUTCOME. AMBUSH."
+    end
+
+    # The reader's own clock corrects it; the markup has to carry the instant for that to be
+    # possible, and the UTC text has to be right for a reader with no JS at all.
+    test "and says when it happened" do
+      [entry] = entries([fight()])
+
+      assert entry =~ ~s(datetime="2026-09-24T14:32:00Z")
+      assert entry =~ "24/09/26, 14:32"
+    end
+
+    # A hook per row is a hundred hooks doing one job, so the list carries it instead.
+    test "under one hook for the whole list, never one per entry" do
+      html = html_for([fight(), fight()])
+
+      assert html =~ ~s(phx-hook="LocalTimes")
+      refute html =~ ~r/phx-hook="LocalTime"/
     end
 
     test "and a run with no fights says so instead" do

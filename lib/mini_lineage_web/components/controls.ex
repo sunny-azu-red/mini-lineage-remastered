@@ -286,12 +286,21 @@ defmodule MiniLineageWeb.Controls do
 
   # ------------------------------------------------------------------ stamps
 
-  attr :id, :string, required: true
+  attr :id, :string, default: nil
   attr :at, :any, required: true
   attr :class, :string, default: "date"
+  # False where an ancestor carries `LocalTimes` and rewrites every stamp beneath it at once. A
+  # hundred stamps in one list is a hundred hooks for one job.
+  attr :hook, :boolean, default: true
 
   @doc false
   # The text is UTC and correct without JS; the hook rewrites it to wherever the reader is.
+  def stamp(%{hook: false} = assigns) do
+    ~H"""
+    <time class={@class} datetime={DateTime.to_iso8601(@at)}>{short_date(@at)}</time>
+    """
+  end
+
   def stamp(assigns) do
     ~H"""
     <time id={@id} class={@class} phx-hook="LocalTime" datetime={DateTime.to_iso8601(@at)}>{short_date(

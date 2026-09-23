@@ -97,8 +97,18 @@ defmodule MiniLineage.Game.Actions do
 
     narrative = Narrative.build_battle(player, outcome, ambushed)
 
-    # Persisted so a reconnect replays this exact narrative, same as the death reason.
-    last = %{narrative: narrative, outcome: outcome, ambushed: ambushed, died: died, sound: sound}
+    # Persisted so a reconnect replays this exact narrative, same as the death reason. Stamped here
+    # and not at the insert: a row can sit in the process buffer, and the Chronicle should say when
+    # the fight happened rather than when it was written.
+    last = %{
+      narrative: narrative,
+      outcome: outcome,
+      ambushed: ambushed,
+      died: died,
+      sound: sound,
+      at: DateTime.utc_now()
+    }
+
     player = %{player | last_battle_narrative: last}
 
     flash =

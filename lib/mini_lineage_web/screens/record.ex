@@ -210,11 +210,14 @@ defmodule MiniLineageWeb.Screens.Record do
       <% else %>
         <%!-- Every line the fight drew, in order, bar the two that were button labels. A line
               added to `Narrative.build_battle/3` belongs here too. --%>
-        <ol class="chronicle">
+        <%!-- One hook over the list: every stamp beneath it is rewritten to the reader's clock in
+              one pass, where a hook per row would be a hundred for one job. --%>
+        <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
           <li
             :for={fight <- @record_log}
             {if fight.ambushed, do: [class: "ambushed"], else: []}
           >
+            <.stamp at={fight.at} hook={false} class="date lead" />
             <span :if={fight.narrative.crit_line}>{raw(voiced(fight.narrative.crit_line, @mine))} </span>{raw(
               voiced(fight.narrative.kill_line, @mine)
             )} {raw(voiced(fight.narrative.deflection_line, @mine))}

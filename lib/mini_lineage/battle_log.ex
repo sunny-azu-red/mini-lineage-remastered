@@ -56,7 +56,8 @@ defmodule MiniLineage.BattleLog do
       ambushed: battle.ambushed == true,
       died: battle.died == true,
       narrative: Map.new(@narrative_keys, &{Atom.to_string(&1), Map.get(narrative, &1)}),
-      sound: battle.sound
+      sound: battle.sound,
+      inserted_at: battle.at
     }
   end
 
@@ -100,7 +101,8 @@ defmodule MiniLineage.BattleLog do
       },
       ambushed: e.ambushed,
       died: e.died,
-      sound: e.sound
+      sound: e.sound,
+      at: e.inserted_at
     }
   end
 end

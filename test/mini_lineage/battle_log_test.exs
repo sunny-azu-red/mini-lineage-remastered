@@ -194,7 +194,8 @@ defmodule MiniLineage.BattleLogTest do
       narrative: %{outcome_line: "x"},
       ambushed: false,
       died: false,
-      sound: nil
+      sound: nil,
+      at: DateTime.utc_now()
     }
   end
 end

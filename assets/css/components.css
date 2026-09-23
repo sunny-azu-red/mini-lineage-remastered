@@ -537,6 +537,13 @@ ol.chronicle .threat {
     color: var(--text-danger);
 }
 
+/* The stamp leads the line rather than sitting inside it, so position sets it apart and it does not
+ * need the weight every other value in a sentence carries. */
+ol.chronicle .date.lead {
+    font-weight: 400;
+    margin-right: 6px;
+}
+
 ol.chronicle li {
     padding: 12px;
     position: relative;
