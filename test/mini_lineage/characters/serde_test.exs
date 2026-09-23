@@ -81,7 +81,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "every field is written, and nothing that is not a field" do
       # Two deliberate exceptions, named so that a field forgotten by accident still fails here.
       # `version` describes the document rather than the character; `last_battle_narrative` is
-      # transient, kept on the struct for the screen and stored in battle_log instead.
+      # transient, kept on the struct for the screen and stored in character_log instead.
       struct_keys =
         %Player{}
         |> Map.from_struct()
@@ -103,7 +103,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "the last battle is not in the document, because it is half its bytes" do
-      # The fixture carries one; it belongs in battle_log, and the round trip drops it.
+      # The fixture carries one; it belongs in character_log, and the round trip drops it.
       refute Map.has_key?(Serde.to_map(populated()), "last_battle_narrative")
       assert Serde.from_map(Serde.to_map(populated())).last_battle_narrative == nil
     end

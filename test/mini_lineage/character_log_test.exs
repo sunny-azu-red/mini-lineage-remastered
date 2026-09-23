@@ -1,4 +1,4 @@
-defmodule MiniLineage.BattleLogTest do
+defmodule MiniLineage.CharacterLogTest do
   @moduledoc """
   Every fight a character has had, and what becomes of them when the run ends.
 
@@ -11,7 +11,7 @@ defmodule MiniLineage.BattleLogTest do
 
   import Ecto.Query
 
-  alias MiniLineage.{BattleLog, Characters}
+  alias MiniLineage.{CharacterLog, Characters}
   alias MiniLineage.Characters.{Record, Store}
   alias MiniLineage.Game.{Actions, Constants, Player}
 
@@ -36,7 +36,7 @@ defmodule MiniLineage.BattleLogTest do
   defp rows(session) do
     case stored_id(session) do
       nil -> []
-      id -> Repo.all(from e in BattleLog.Entry, where: e.character_id == ^id, order_by: e.id)
+      id -> Repo.all(from e in CharacterLog.Entry, where: e.character_id == ^id, order_by: e.id)
     end
   end
 
@@ -86,12 +86,32 @@ defmodule MiniLineage.BattleLogTest do
     end
   end
 
+  # `Server.init/1` rebuilds the battle screen from `last_for/1`. The table holds more than fights
+  # now, so without the kind in the query a player whose last deed was a purchase reconnects to a
+  # battle report with no lines and no numbers — which renders blank rather than failing.
+  describe "the last fight" do
+    test "is the last FIGHT, not the last thing that happened", %{session: session} do
+      start_character(session)
+      fight(session)
+      fought = CharacterLog.last_for(stored_id(session))
+
+      Repo.insert!(%CharacterLog.Entry{
+        character_id: stored_id(session),
+        kind: "purchase",
+        narrative: %{"line" => "bought a blade"},
+        inserted_at: DateTime.utc_now()
+      })
+
+      assert CharacterLog.last_for(stored_id(session)) == fought
+    end
+  end
+
   describe "the whole chronicle" do
     test "is every fight of one run, oldest first", %{session: session} do
       start_character(session)
       for _ <- 1..3, do: fight(session)
 
-      history = BattleLog.recent(stored_id(session))
+      history = CharacterLog.recent(stored_id(session))
 
       assert length(history) == 3
       assert Enum.all?(history, &is_binary(&1.narrative.outcome_line))
@@ -114,7 +134,7 @@ defmodule MiniLineage.BattleLogTest do
     test "and nothing at all for a run that never drew a blade", %{session: session} do
       start_character(session)
 
-      assert BattleLog.recent(stored_id(session)) == []
+      assert CharacterLog.recent(stored_id(session)) == []
     end
 
     # The whole history of a long run went through the socket on every page load to fill a 260px
@@ -125,7 +145,7 @@ defmodule MiniLineage.BattleLogTest do
 
       id = stored_id(session)
       all = Enum.map(rows(session), & &1.id)
-      windowed = BattleLog.recent(id, 3)
+      windowed = CharacterLog.recent(id, 3)
 
       assert length(windowed) == 3
       assert Enum.map(windowed, & &1.id) == Enum.take(all, -3)
@@ -136,11 +156,11 @@ defmodule MiniLineage.BattleLogTest do
       for _ <- 1..3, do: fight(session)
 
       id = stored_id(session)
-      held = BattleLog.recent(id, 2)
+      held = CharacterLog.recent(id, 2)
       cursor = List.last(held).id
 
       fight(session)
-      added = BattleLog.since(id, cursor)
+      added = CharacterLog.since(id, cursor)
 
       assert length(added) == 1
       assert hd(added).id > cursor
@@ -153,7 +173,7 @@ defmodule MiniLineage.BattleLogTest do
 
       id = stored_id(session)
 
-      assert BattleLog.since(id, List.last(BattleLog.recent(id)).id) == []
+      assert CharacterLog.since(id, List.last(CharacterLog.recent(id)).id) == []
     end
   end
 
@@ -171,7 +191,7 @@ defmodule MiniLineage.BattleLogTest do
       assert Repo.get(Record, character_id)
       assert Repo.get(Record, character_id).session_id == nil
 
-      assert Repo.all(from e in BattleLog.Entry, where: e.character_id == ^character_id) != []
+      assert Repo.all(from e in CharacterLog.Entry, where: e.character_id == ^character_id) != []
     end
 
     test "and the next run cannot inherit them, because it is a different character", %{
@@ -191,7 +211,7 @@ defmodule MiniLineage.BattleLogTest do
 
       assert stored_id(next) != first
       assert rows(next) == [], "the next run inherited the previous one's fights"
-      assert BattleLog.last_for(stored_id(next)) == nil
+      assert CharacterLog.last_for(stored_id(next)) == nil
     end
   end
 
@@ -206,14 +226,14 @@ defmodule MiniLineage.BattleLogTest do
 
       Store.delete(id)
 
-      assert Repo.all(from e in BattleLog.Entry, where: e.character_id == ^id) == []
+      assert Repo.all(from e in CharacterLog.Entry, where: e.character_id == ^id) == []
     end
 
     test "and refuses a fight belonging to no character at all" do
-      orphan = BattleLog.row("no-such-character", sample_battle())
+      orphan = CharacterLog.row("no-such-character", sample_battle())
 
       # Ecto wraps the driver's error, so the constraint surfaces as a ConstraintError.
-      assert_raise Ecto.ConstraintError, ~r/battle_log_character_id_fkey/, fn ->
+      assert_raise Ecto.ConstraintError, ~r/character_log_character_id_fkey/, fn ->
         Repo.insert!(orphan)
       end
     end

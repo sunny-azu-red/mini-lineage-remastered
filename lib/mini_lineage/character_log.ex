@@ -1,12 +1,12 @@
-defmodule MiniLineage.BattleLog do
+defmodule MiniLineage.CharacterLog do
   @moduledoc """
-  Every fight a character has had, in order. Its own table because it grows without limit and the
-  character's document is rewritten whole on every save. A fight belongs to its character for
-  good: starting over makes a new row, so no second life can inherit the first one's fights.
+  Everything a run did, in the order it did it: the fights, and the deeds around them. Its own
+  table because it grows without limit and the character's document is rewritten whole on every
+  save. An entry belongs to its character for good, so no second life inherits the first one's.
   """
   import Ecto.Query
 
-  alias MiniLineage.BattleLog.Entry
+  alias MiniLineage.CharacterLog.Entry
   alias MiniLineage.Repo
 
   # Named rather than derived from the row: the narrative comes back out of the database, and every
@@ -18,7 +18,7 @@ defmodule MiniLineage.BattleLog do
     use Ecto.Schema
 
     @timestamps_opts [type: :utc_datetime_usec, updated_at: false]
-    schema "battle_log" do
+    schema "character_log" do
       field :character_id, :string
 
       field :enemies_killed, :integer
@@ -31,6 +31,7 @@ defmodule MiniLineage.BattleLog do
       field :ambushed, :boolean
       field :died, :boolean
 
+      field :kind, :string
       field :narrative, :map
       field :sound, :string
 
@@ -57,6 +58,7 @@ defmodule MiniLineage.BattleLog do
       adena_gained: outcome.adena_gained,
       is_critical: outcome.is_critical,
       is_level_up: outcome.is_level_up,
+      kind: "fight",
       ambushed: battle.ambushed == true,
       died: battle.died == true,
       narrative: Map.new(@narrative_keys, &{Atom.to_string(&1), Map.get(narrative, &1)}),
@@ -65,10 +67,15 @@ defmodule MiniLineage.BattleLog do
     }
   end
 
-  @doc "The most recent fight, as the shape the battle screen renders. Nil before the first one."
+  @doc """
+  The most recent FIGHT, as the shape the battle screen renders. Nil before the first one.
+
+  The kind is the whole point: `Server.init/1` rebuilds the battle screen from this, so without it
+  a player who last bought a blade reconnects to a battle report with no lines and no numbers.
+  """
   def last_for(character_id) do
     Entry
-    |> where([e], e.character_id == ^character_id)
+    |> where([e], e.character_id == ^character_id and e.kind == "fight")
     |> order_by([e], desc: e.id)
     |> limit(1)
     |> Repo.one()

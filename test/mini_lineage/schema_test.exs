@@ -3,7 +3,7 @@ defmodule MiniLineage.SchemaTest do
   The indexes the game cannot go without.
 
   Named because one went missing silently: dropping a column drops any partial index whose
-  predicate mentions it, which is how `battle_log` lost its only useful index and started scanning
+  predicate mentions it, which is how `character_log` lost its only useful index and started scanning
   the whole table for every new character.
 
   A query-plan assertion would be truer, but Postgres rightly prefers a sequential scan over the
@@ -14,7 +14,7 @@ defmodule MiniLineage.SchemaTest do
   # {table, columns that must be indexed together, in order}
   @required [
     # The last fight of a run, and all of them in order.
-    {"battle_log", ["character_id", "id"]},
+    {"character_log", ["character_id", "id"]},
     # The board, and the board filtered to one lineage.
     {"characters", ["total_xp", "adena"]},
     {"characters", ["race_id", "total_xp", "adena"]},

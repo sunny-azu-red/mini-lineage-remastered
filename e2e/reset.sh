@@ -52,7 +52,7 @@ mix run --no-start -e '
   {:ok, conn} = Postgrex.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
   # One statement: TRUNCATE takes a list and resets the sequences a fresh board wants. CASCADE is
   # deliberately NOT used — naming both tables keeps this incapable of reaching one nobody listed,
-  # and battle_log must be named even though its foreign key would have carried it.
-  Postgrex.query!(conn, "TRUNCATE battle_log, characters RESTART IDENTITY", [])
-  IO.puts("reset #{database}: battle_log, characters")
+  # and character_log must be named even though its foreign key would have carried it.
+  Postgrex.query!(conn, "TRUNCATE character_log, characters RESTART IDENTITY", [])
+  IO.puts("reset #{database}: character_log, characters")
 ' >/dev/null

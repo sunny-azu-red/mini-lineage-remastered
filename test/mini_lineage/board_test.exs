@@ -14,7 +14,7 @@ defmodule MiniLineage.BoardTest do
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
-    Repo.query!("DELETE FROM battle_log")
+    Repo.query!("DELETE FROM character_log")
     Repo.query!("DELETE FROM characters")
 
     :ok

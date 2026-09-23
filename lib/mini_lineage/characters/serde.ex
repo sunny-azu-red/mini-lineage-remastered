@@ -38,7 +38,7 @@ defmodule MiniLineage.Characters.Serde do
       "current_screen" => p.current_screen,
       "combat_until" => p.combat_until,
       "last_action_at" => p.last_action_at
-      # `last_battle_narrative` is deliberately absent: it lives in battle_log now, and was half
+      # `last_battle_narrative` is deliberately absent: it lives in character_log now, and was half
       # the bytes of every save. The process rehydrates it from there when it starts.
     }
   end

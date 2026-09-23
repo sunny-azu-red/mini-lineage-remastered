@@ -24,7 +24,7 @@ defmodule MiniLineageWeb.ChronicleTest do
     next_move: "MOVE"
   }
 
-  # A line that did not happen is nil, never missing: `BattleLog.to_battle/1` names every key it
+  # A line that did not happen is nil, never missing: `CharacterLog.to_battle/1` names every key it
   # reads back, so the component may reach for all of them. The `ambushed` column and the ambush
   # line come from one flag in `Narrative.build_battle/3`, so a fixture that sets them apart would
   # be describing a row the game cannot write.

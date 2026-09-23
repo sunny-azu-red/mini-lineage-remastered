@@ -8,7 +8,7 @@ defmodule MiniLineageWeb.GameLive do
   """
   use MiniLineageWeb, :live_view
 
-  alias MiniLineage.{BattleLog, Board, Characters}
+  alias MiniLineage.{CharacterLog, Board, Characters}
   alias MiniLineage.Characters.Store
   require Logger
 
@@ -123,7 +123,7 @@ defmodule MiniLineageWeb.GameLive do
         do: socket.assigns.view,
         else: entry.id |> Store.load() |> Snapshot.build()
 
-    log = BattleLog.recent(entry.id)
+    log = CharacterLog.recent(entry.id)
 
     socket
     |> watch_record(entry.id)
@@ -357,7 +357,7 @@ defmodule MiniLineageWeb.GameLive do
   # every blow re-reads the entire history of a long run to add one line to it. The window grows
   # as the reader watches, and a refresh comes back to the last hundred.
   defp append_chronicle(socket, id) do
-    added = BattleLog.since(id, socket.assigns.record_log_cursor)
+    added = CharacterLog.since(id, socket.assigns.record_log_cursor)
 
     case added do
       [] ->

@@ -66,11 +66,16 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
              name: :characters_idle_index
            )
 
-    # One row per fight. Append-only, so unlike a character it is never rewritten — which is what
-    # lets it grow without limit where the character's own document must not.
-    create table(:battle_log) do
+    # One row per thing a run did. Append-only, so unlike a character it is never rewritten — which
+    # is what lets it grow without limit where the character's own document must not.
+    create table(:character_log) do
       add :character_id, references(:characters, type: :string, on_delete: :delete_all),
         null: false
+
+      # What happened. No CHECK and no enum: every new kind would be a migration, and the
+      # whitelist that matters is the one beside `@narrative_keys`, which is also what stops
+      # untrusted JSON minting atoms.
+      add :kind, :string, size: 16, null: false
 
       # The rendered lines, so a chronicle never has to re-roll the prose it already told.
       add :narrative, :map, null: false
@@ -89,9 +94,11 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
       timestamps(type: :timestamptz, updated_at: false)
     end
 
-    # Both questions this table is asked: a run's last fight, and all of them in order. Without it
-    # the commonest case — a character with no fights yet — scans the whole table backwards.
-    create index(:battle_log, [:character_id, :id])
+    # Every question this table is asked: a run's last fight, its newest entries, and everything
+    # after a cursor. Without it the commonest case — a character with nothing logged yet — scans
+    # the whole table backwards. No partial index on `kind`: dropping a column takes any index
+    # whose predicate mentions it, silently, which is how this table lost one before.
+    create index(:character_log, [:character_id, :id])
 
     # Counters, keyed by name. Written by upsert-with-increment, never read-modify-write.
     create table(:statistics, primary_key: false) do

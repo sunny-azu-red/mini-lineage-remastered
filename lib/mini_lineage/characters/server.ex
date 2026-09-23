@@ -6,7 +6,7 @@ defmodule MiniLineage.Characters.Server do
   """
   use GenServer, restart: :transient
 
-  alias MiniLineage.{BattleLog, Board, Characters}
+  alias MiniLineage.{CharacterLog, Board, Characters}
   alias MiniLineage.Characters.{Store, TickLog}
   require Logger
 
@@ -40,7 +40,7 @@ defmodule MiniLineage.Characters.Server do
 
     # The narrative is no longer in the document, so the screen is refilled from the log — one
     # query, and only when the process starts.
-    player = %{player | last_battle_narrative: BattleLog.last_for(id)}
+    player = %{player | last_battle_narrative: CharacterLog.last_for(id)}
     schedule_tick()
 
     state = %{
@@ -191,7 +191,7 @@ defmodule MiniLineage.Characters.Server do
       %{
         state
         | pending_battles:
-            state.pending_battles ++ [BattleLog.row(state.id, now.last_battle_narrative)]
+            state.pending_battles ++ [CharacterLog.row(state.id, now.last_battle_narrative)]
       }
     else
       state
