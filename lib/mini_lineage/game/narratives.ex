@@ -38,16 +38,18 @@ defmodule MiniLineage.Game.Narratives do
       ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_health} Max HP</span> stand between {object} and the dark.)
   }
 
+  # Open pronouns like every other stored line: this one greets the player as a flash and is kept
+  # in the Chronicle, where a stranger reads it about them rather than to them.
   @welcome [
-    "your destiny awaits in the dark!",
-    "the fires of fate burn for you...",
+    "{their} destiny awaits in the dark!",
+    "the fires of fate burn for {object}...",
     "a hero rises from the ashes now!",
-    "the world of Aden calls to you...",
-    "blood and iron define your soul!",
-    "steel and magic are your allies!",
-    "ancient echoes follow your feet!",
-    "a bold step toward your destiny!",
-    "your spirit shines in the dark..."
+    "the world of Aden calls to {object}...",
+    "blood and iron define {their} soul!",
+    "steel and magic are {their} allies!",
+    "ancient echoes follow {their} feet!",
+    "a bold step toward {their} destiny!",
+    "{whose} spirit shines in the dark..."
   ]
 
   # The pronouns every voiced template is filled from. They/them takes the same verb forms as you,
@@ -150,6 +152,17 @@ defmodule MiniLineage.Game.Narratives do
     ~s(🎯 <span class="crit">FATAL STRIKE!</span> 🎯)
   ]
 
+  # What a run did, one sentence apiece. Single templates rather than pools: a deed is rare next to
+  # a fight, and the item is what carries the interest.
+  @began ~s({they} chose the {raceEmoji} {raceLabel}, and {welcome})
+  @bought_weapon ~s({they} took up the {emoji} <span class="equipped">{name}</span>.)
+  @bought_armor ~s({they} put on the {emoji} <span class="equipped">{name}</span>.)
+  @ate ~s({they} ate the {emoji} <span class="equipped">{name}</span> and rose to <span class="hp">{hp} HP</span>.)
+  @levelled ~s({they} reached <span class="level">Level {level}</span>.)
+  @heresy ~s(👾 The gods saw {their} heresy, and the Halls closed the book on {object}.)
+  @effect_gained ~s({emoji} <strong class="{type}">{label}</strong> settles over {object}.)
+  @effect_lapsed ~s({emoji} <strong class="{type}">{label}</strong> leaves {object}.)
+
   @moves [
     "Investigate the shimmering lake",
     "Search the hollow log",
@@ -185,6 +198,15 @@ defmodule MiniLineage.Game.Narratives do
 
   @doc "The pronoun set a template is filled from: the reader's own record, or somebody else's."
   def voice(mine?), do: Map.fetch!(@voices, mine?)
+
+  def began, do: @began
+  def bought_weapon, do: @bought_weapon
+  def bought_armor, do: @bought_armor
+  def ate, do: @ate
+  def levelled, do: @levelled
+  def heresy, do: @heresy
+  def effect_gained, do: @effect_gained
+  def effect_lapsed, do: @effect_lapsed
 
   def ambush_low_health, do: @ambush_low_health
   def kill, do: @kill

@@ -105,6 +105,46 @@ defmodule MiniLineage.Game.Narrative do
   @doc "A death told to whoever is reading it: the fallen player themselves, or anybody else."
   def death_reason(reason, mine?), do: voiced(reason, mine?)
 
+  # ------------------------------------------------------------------ deeds
+  #
+  # The values are facts about a moment and are filled now; the pronouns are not known until
+  # somebody opens the page, so `fill_template/2` leaves them exactly as it leaves a fight's.
+
+  @doc "The line a run's beginning leaves behind. `welcome` still carries its own open pronouns."
+  def build_began(race, welcome) do
+    Format.fill_template(Narratives.began(), %{
+      "raceEmoji" => race.emoji,
+      "raceLabel" => race.label,
+      "welcome" => welcome
+    })
+  end
+
+  @doc "What a purchase leaves behind, which is the thing bought."
+  def build_purchase(:weapon_id, item), do: named(Narratives.bought_weapon(), item)
+  def build_purchase(:armor_id, item), do: named(Narratives.bought_armor(), item)
+
+  def build_meal(item, health) do
+    Narratives.ate()
+    |> named(item)
+    |> Format.fill_template(%{"hp" => Format.number(health)})
+  end
+
+  def build_levelled(level), do: Format.fill_template(Narratives.levelled(), %{"level" => level})
+
+  def build_heresy, do: Narratives.heresy()
+
+  @doc "An effect arriving or going. The blurb says what it does; this says that it happened."
+  def build_effect_change(template, effect) do
+    Format.fill_template(template, %{
+      "emoji" => effect.emoji,
+      "label" => effect.label,
+      "type" => to_string(effect.type)
+    })
+  end
+
+  defp named(template, item),
+    do: Format.fill_template(template, %{"emoji" => item.emoji, "name" => item.name})
+
   defp pronouns(mine?) when is_boolean(mine?), do: mine? |> Narratives.voice() |> pronouns()
   defp pronouns(voice), do: Map.new(voice, fn {part, word} -> {to_string(part), word} end)
 

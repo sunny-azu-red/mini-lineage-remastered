@@ -3,7 +3,7 @@ defmodule MiniLineage.Game.Player do
   Port of player.service.ts: the stat pipeline, effects, zone auras, purchases and the two tick
   jobs. Every function is pure — it takes a player and returns a new one.
   """
-  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narratives, Statistics}
+  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Narratives, Statistics}
 
   @zone_aura_ids ~w(resting combat)
 
@@ -92,9 +92,13 @@ defmodule MiniLineage.Game.Player do
     welcome =
       Format.fill_template(Math.random_element(Narratives.welcome()), %{"raceLabel" => race.label})
 
+    # The Chronicle keeps it with its pronouns open; the flash is read by the player themselves, so
+    # it is voiced here or the braces would go on the screen.
+    player = log(player, event("start", Narrative.build_began(race, welcome)))
+
     flash = %{
       text:
-        "You have chosen the #{race.emoji} #{race.label}, #{welcome}\n" <>
+        "You have chosen the #{race.emoji} #{race.label}, #{Narrative.voiced(welcome, true)}\n" <>
           "You are #{build} #{definition} of #{age} seasons, bearing a 🪙 #{Format.adena(player.adena)} Adena tribute.",
       type: :info,
       sound: "start"
@@ -422,12 +426,15 @@ defmodule MiniLineage.Game.Player do
       "You have bought #{item.emoji} #{item.name}.#{buff}\n" <>
         "You feel your strength returning, bringing you to #{Format.number(player.health)} HP."
 
+    player = log(player, event("purchase", Narrative.build_meal(item, player.health)))
+
     {player, %{success: true, text: text, item: item}}
   end
 
   defp complete_purchase(player, item, item_id, equipment) do
     player = Map.put(player, equipment.slot, item_id)
     Statistics.increment_for(player, equipment.stat)
+    player = log(player, event("purchase", Narrative.build_purchase(equipment.slot, item)))
 
     {player, %{success: true, text: bought_text(item, equipment.slot), item: item}}
   end
@@ -446,6 +453,9 @@ defmodule MiniLineage.Game.Player do
   Appended, because the order these are read in is the order they happened.
   """
   def log(player, event), do: %{player | pending_events: player.pending_events ++ [event]}
+
+  @doc "A deed, stamped when it happened rather than when the row reaches the database."
+  def event(kind, line), do: %{kind: kind, line: line, at: Clock.now()}
 
   @doc "Applies a resolved fight. Returns `{player, level_up?}`."
   def resolve_battle_outcome(player, result) do

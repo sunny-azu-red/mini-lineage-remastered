@@ -31,6 +31,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   defp fight(absent \\ []) do
     %{
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
+      kind: "fight",
       ambushed: :ambush_line not in absent,
       died: false,
       at: ~U[2026-09-24 14:32:00Z]
@@ -47,9 +48,9 @@ defmodule MiniLineageWeb.ChronicleTest do
     list |> String.split("<li") |> Enum.drop(1)
   end
 
-  defp text_for(chronicle) do
+  defp text_for(chronicle, opts \\ []) do
     chronicle
-    |> html_for()
+    |> html_for(opts)
     |> String.replace(~r|<time[^>]*>.*?</time>|s, "")
     |> String.replace(~r/<[^>]+>/, "")
     |> String.replace(~r/\s+/, " ")
@@ -69,6 +70,7 @@ defmodule MiniLineageWeb.ChronicleTest do
         fight_prompt: "PROMPT",
         next_move: "MOVE"
       },
+      kind: "fight",
       ambushed: true,
       died: false,
       at: ~U[2026-09-24 14:32:00Z]
@@ -89,6 +91,66 @@ defmodule MiniLineageWeb.ChronicleTest do
 
       assert html_for([ended], mine: true) =~ "You walk away"
       assert html_for([ended], mine: false) =~ "They walk away"
+    end
+  end
+
+  # Everything a run did that was not a fight: one sentence, and the same open pronouns.
+  defp deed(kind, line),
+    do: %{kind: kind, line: line, at: ~U[2026-09-24 14:33:00Z]}
+
+  describe "a deed in the Chronicle" do
+    test "is one line, told to whoever is reading it" do
+      bought = deed("purchase", "{they} took up the 🗡️ Sword.")
+
+      assert text_for([bought], mine: true) =~ "You took up the 🗡️ Sword."
+      assert text_for([bought], mine: false) =~ "They took up the 🗡️ Sword."
+    end
+
+    # A run that ends in a fight has the fight row to say so; one that ends by its own hand had
+    # nothing at all, and the Chronicle simply stopped.
+    test "and an ending wears the colour every ending in the game wears" do
+      [entry] = entries([deed("ending", "🤡 {they} took the cowardly way out.")])
+
+      assert entry =~ ~s(<span class="deaths">)
+      assert entry =~ "took the cowardly way out"
+    end
+
+    # The gods noticing is not the same as dying, and the game colours them differently.
+    test "and a heresy is marked, but it is not an ending" do
+      [entry] = entries([deed("heresy", "👾 The gods saw {their} heresy.")])
+
+      assert entry =~ ~s(<span class="heretics">)
+      refute entry =~ "deaths"
+    end
+
+    test "and carries no fight's clothes" do
+      [entry] = entries([deed("level_up", "{they} reached Level 4.")])
+
+      assert entry =~ "deed"
+      refute entry =~ "ambushed"
+    end
+
+    # The same silent defect the fight lines have: an unvoiced line renders its braces on the page
+    # and every other line on the same list reads perfectly.
+    test "and closes its pronouns, whoever is reading" do
+      every_kind = [
+        deed("start", "{they} chose the 🧟 Orc, and {their} destiny awaits."),
+        deed("purchase", "{they} took up the 🗡️ Sword."),
+        deed("level_up", "{they} reached Level 4."),
+        deed("heresy", "👾 The gods saw {their} heresy, and closed the book on {object}."),
+        deed("ending", "🤡 {they} took the cowardly way out.")
+      ]
+
+      for mine <- [true, false] do
+        [_, list] =
+          Regex.run(
+            ~r|<ol[^>]*class="chronicle"[^>]*>(.*)</ol>|s,
+            html_for(every_kind, mine: mine)
+          )
+
+        assert Regex.scan(~r/\{[a-z]+\}/, list) == [],
+               "a deed went unvoiced for mine: #{mine}"
+      end
     end
   end
 

@@ -33,6 +33,10 @@ defmodule MiniLineage.CharacterLogTest do
 
   defp fight(session), do: Characters.mutate(session, &Actions.fight/1)
 
+  # The table holds every deed now, so a claim about fighting says so rather than counting whatever
+  # the run happened to do.
+  defp fights(session), do: Enum.filter(rows(session), &(&1.kind == "fight"))
+
   defp rows(session) do
     case stored_id(session) do
       nil -> []
@@ -45,7 +49,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
       fight(session)
 
-      [row] = rows(session)
+      [row] = fights(session)
 
       assert row.character_id == stored_id(session)
       assert is_integer(row.enemies_killed) and is_integer(row.xp_gained)
@@ -58,7 +62,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
       fight(session)
 
-      assert [row] = rows(session)
+      assert [row] = fights(session)
       assert stored(session).total_battles == 1, "a fight was logged that the character forgot"
       assert row.narrative["outcome_line"] != nil
     end
@@ -67,7 +71,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
       for _ <- 1..3, do: fight(session)
 
-      assert length(rows(session)) == 3
+      assert length(fights(session)) == 3
       assert rows(session) == Enum.sort_by(rows(session), & &1.id)
     end
   end
@@ -113,12 +117,17 @@ defmodule MiniLineage.CharacterLogTest do
 
       history = CharacterLog.recent(stored_id(session))
 
-      assert length(history) == 3
-      assert Enum.all?(history, &is_binary(&1.narrative.outcome_line))
+      assert length(Enum.filter(history, &(&1.kind == "fight"))) == 3
+
+      assert Enum.all?(
+               Enum.filter(history, &(&1.kind == "fight")),
+               &is_binary(&1.narrative.outcome_line)
+             )
+
       # Oldest first: the page tells the run's story in the order it happened.
-      assert Enum.map(history, & &1.outcome) ==
+      assert history |> Enum.filter(&(&1.kind == "fight")) |> Enum.map(& &1.outcome) ==
                Enum.map(
-                 rows(session),
+                 fights(session),
                  &%{
                    enemies_killed: &1.enemies_killed,
                    hp_lost: &1.hp_lost,
@@ -131,10 +140,11 @@ defmodule MiniLineage.CharacterLogTest do
                )
     end
 
-    test "and nothing at all for a run that never drew a blade", %{session: session} do
+    test "and only its beginning for a run that never drew a blade", %{session: session} do
       start_character(session)
 
-      assert CharacterLog.recent(stored_id(session)) == []
+      assert [%{kind: "start"}] = CharacterLog.recent(stored_id(session))
+      assert fights(session) == []
     end
 
     # The whole history of a long run went through the socket on every page load to fill a 260px
@@ -210,7 +220,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(next)
 
       assert stored_id(next) != first
-      assert rows(next) == [], "the next run inherited the previous one's fights"
+      assert fights(next) == [], "the next run inherited the previous one's fights"
       assert CharacterLog.last_for(stored_id(next)) == nil
     end
   end

@@ -186,6 +186,12 @@ defmodule MiniLineageWeb.Screens.Record do
   # here rather than when the fight happened.
   defp voiced(line, mine?), do: Narrative.voiced(line, mine?)
 
+  # An ending wears the colour every ending wears, whether a blow or a blade of one's own ended it.
+  # A heresy is not an ending and is not red; it is the colour the Halls already mark a cheat in.
+  defp deed_class("ending"), do: "deaths"
+  defp deed_class("heresy"), do: "heretics"
+  defp deed_class(_deed), do: nil
+
   attr :record_log, :list, default: []
   # Whose fights these are, which decides whether they are told to them or about them.
   attr :mine, :boolean, default: true
@@ -208,26 +214,30 @@ defmodule MiniLineageWeb.Screens.Record do
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>
-        <%!-- Every line the fight drew, in order, bar the two that were button labels. A line
-              added to `Narrative.build_battle/3` belongs here too. --%>
         <%!-- One hook over the list: every stamp beneath it is rewritten to the reader's clock in
               one pass, where a hook per row would be a hundred for one job. --%>
         <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
           <li
-            :for={fight <- @record_log}
-            {if fight.ambushed, do: [class: "ambushed"], else: []}
+            :for={entry <- @record_log}
+            class={[entry.kind != "fight" && "deed", entry[:ambushed] && "ambushed"]}
           >
-            <.stamp at={fight.at} hook={false} class="date lead" />
-            <span :if={fight.narrative.crit_line}>{raw(voiced(fight.narrative.crit_line, @mine))} </span>{raw(
-              voiced(fight.narrative.kill_line, @mine)
-            )} {raw(voiced(fight.narrative.deflection_line, @mine))}
-            <%!-- The fight a run did not walk away from is the only entry that is an ending rather
-                  than a report, and it wears the colour every ending in the game wears. --%>
-            <span :if={fight.died} class="deaths">{raw(voiced(fight.narrative.outcome_line, @mine))}</span>
-            <span :if={!fight.died}>{raw(voiced(fight.narrative.outcome_line, @mine))}</span>
-            <span :if={fight.narrative.ambush_line} class="threat">{raw(
-              voiced(fight.narrative.ambush_line, @mine)
-            )}</span>
+            <.stamp at={entry.at} hook={false} class="date lead" />
+            <%= if entry.kind == "fight" do %>
+              <%!-- Every line the fight drew, in order, bar the two that were button labels. A
+                    line added to `Narrative.build_battle/3` belongs here too. --%>
+              <span :if={entry.narrative.crit_line}>{raw(voiced(entry.narrative.crit_line, @mine))} </span>{raw(
+                voiced(entry.narrative.kill_line, @mine)
+              )} {raw(voiced(entry.narrative.deflection_line, @mine))}
+              <%!-- The fight a run did not walk away from is the only entry that is an ending
+                    rather than a report, and it wears the colour every ending wears. --%>
+              <span :if={entry.died} class="deaths">{raw(voiced(entry.narrative.outcome_line, @mine))}</span>
+              <span :if={!entry.died}>{raw(voiced(entry.narrative.outcome_line, @mine))}</span>
+              <span :if={entry.narrative.ambush_line} class="threat">{raw(
+                voiced(entry.narrative.ambush_line, @mine)
+              )}</span>
+            <% else %>
+              <span class={[deed_class(entry.kind)]}>{raw(voiced(entry.line, @mine))}</span>
+            <% end %>
           </li>
         </ol>
       <% end %>

@@ -25,15 +25,17 @@ defmodule MiniLineage.CharacterLog do
     schema "character_log" do
       field :character_id, :string
 
-      field :enemies_killed, :integer
-      field :hp_lost, :integer
-      field :damage_blocked, :integer
-      field :xp_gained, :integer
-      field :adena_gained, :integer
-      field :is_critical, :boolean
-      field :is_level_up, :boolean
-      field :ambushed, :boolean
-      field :died, :boolean
+      # Defaulted here as well as in the table: `insert_all` sends the struct as it is and applies
+      # no column default, so a deed that is not a fight would send ten NULLs into NOT NULL.
+      field :enemies_killed, :integer, default: 0
+      field :hp_lost, :integer, default: 0
+      field :damage_blocked, :integer, default: 0
+      field :xp_gained, :integer, default: 0
+      field :adena_gained, :integer, default: 0
+      field :is_critical, :boolean, default: false
+      field :is_level_up, :boolean, default: false
+      field :ambushed, :boolean, default: false
+      field :died, :boolean, default: false
 
       field :kind, :string
       field :narrative, :map

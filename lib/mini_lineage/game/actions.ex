@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.Actions do
   Each declares its own preconditions. Client-side routing is convenience; these guards are the
   boundary. Notably `restart/1` requires a dead character, so a living one can never be wiped.
   """
-  alias MiniLineage.Game.{Battle, Constants, Math, Narrative, Player, Statistics}
+  alias MiniLineage.Game.{Battle, Clock, Constants, Math, Narrative, Player, Statistics}
 
   @errors %{
     not_started: "You haven't started your journey yet, so create a character first.",
@@ -106,10 +106,20 @@ defmodule MiniLineage.Game.Actions do
       ambushed: ambushed,
       died: died,
       sound: sound,
-      at: DateTime.utc_now()
+      at: Clock.now()
     }
 
     player = Player.log(%{player | last_battle_narrative: last}, %{kind: "fight", battle: last})
+
+    # After the fight and not inside it: the Chronicle reads in the order these are pushed, and a
+    # level reached before the blow that earned it reads backwards. A fatal fight levels nobody.
+    player =
+      if level_up? do
+        level = Math.level_for_xp(player.experience)
+        Player.log(player, Player.event("level_up", Narrative.build_levelled(level)))
+      else
+        player
+      end
 
     flash =
       if not died and level_up? do
@@ -196,6 +206,9 @@ defmodule MiniLineage.Game.Actions do
   def suicide(player) do
     guard(player, alive(), fn player ->
       player = Player.commit_suicide(player)
+      # A run that ends in a fight has the fight row to say so. This one has nothing, which is why
+      # a coward's Chronicle used to stop mid-sentence with no ending at all.
+      player = Player.log(player, Player.event("ending", player.death_reason))
       Statistics.increment(:total_players_suicided)
 
       {%{player | current_screen: "death"}, {:ok, nil}}
@@ -224,6 +237,7 @@ defmodule MiniLineage.Game.Actions do
       player = %{player | cheated: true}
       player = Player.apply_effect(player, Constants.effect(:konami_cheat))
       player = %{player | health: Player.stats(player).max_health}
+      player = Player.log(player, Player.event("heresy", Narrative.build_heresy()))
       Statistics.increment(:total_players_cheated)
 
       {player, {:ok, nil}}
