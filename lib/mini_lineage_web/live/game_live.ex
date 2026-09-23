@@ -53,6 +53,7 @@ defmodule MiniLineageWeb.GameLive do
        record_view: nil,
        watching: nil,
        record_log: [],
+       record_log_cursor: 0,
        from: nil,
        statistics: nil,
        key_buffer: [],
@@ -122,19 +123,27 @@ defmodule MiniLineageWeb.GameLive do
         do: socket.assigns.view,
         else: entry.id |> Store.load() |> Snapshot.build()
 
+    log = BattleLog.recent(entry.id)
+
     socket
     |> watch_record(entry.id)
     |> assign(
       record: entry,
       record_view: view,
-      record_log: BattleLog.history(entry.id)
+      record_log: log,
+      record_log_cursor: cursor(log)
     )
   end
 
   defp assign_record(socket, _params), do: socket |> watch_record(nil) |> clear_record()
 
+  # Where the window ends, so what arrives next is asked for by id rather than by how many are
+  # held — a capped first page means `length(log)` is no longer where the run got to.
+  defp cursor([]), do: 0
+  defp cursor(log), do: List.last(log).id
+
   defp clear_record(socket),
-    do: assign(socket, record: nil, record_view: nil, record_log: [])
+    do: assign(socket, record: nil, record_view: nil, record_log: [], record_log_cursor: 0)
 
   # A record is watched only while it is the screen. Patching from one to another leaves the first,
   # or a reader who walked the Halls would end up holding every record they opened.
@@ -345,11 +354,21 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   # Appended, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
-  # every blow re-reads the entire history of a long run to add one line to it.
+  # every blow re-reads the entire history of a long run to add one line to it. The window grows
+  # as the reader watches, and a refresh comes back to the last hundred.
   defp append_chronicle(socket, id) do
-    log = socket.assigns.record_log
+    added = BattleLog.since(id, socket.assigns.record_log_cursor)
 
-    assign(socket, record_log: log ++ BattleLog.history(id, length(log)))
+    case added do
+      [] ->
+        socket
+
+      _ ->
+        assign(socket,
+          record_log: socket.assigns.record_log ++ added,
+          record_log_cursor: cursor(added)
+        )
+    end
   end
 
   # ------------------------------------------------------------------ plumbing

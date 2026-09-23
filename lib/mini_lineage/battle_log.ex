@@ -38,6 +38,10 @@ defmodule MiniLineage.BattleLog do
     end
   end
 
+  # What a record opens with. The reader watches it grow from here, and a refresh comes back to the
+  # same window rather than to wherever it had grown to.
+  @window 100
+
   @doc """
   The row a fight produces. Built here rather than written, so the caller can put it in the same
   transaction as the character it belongs to — a logged fight the character does not remember is
@@ -72,18 +76,38 @@ defmodule MiniLineage.BattleLog do
   end
 
   @doc """
-  The fights of one run, oldest first, for the page that tells its story — all of them, or only
-  those after the first `skip`. The table is append-only, so what a reader already has can never
-  change and a watched record needs only what was added since.
+  The last `limit` fights of one run, oldest first within that window.
+
+  Capped, not paged: the whole history of a long run went through the socket on every page load to
+  fill a 260px box. `Record.road/1` above the panel already tells a reader when the road opened,
+  which is what the entries beyond the window would have said.
   """
-  def history(character_id, skip \\ 0) do
+  def recent(character_id, limit \\ @window) do
     Entry
     |> where([e], e.character_id == ^character_id)
-    |> order_by([e], asc: e.id)
-    |> offset(^skip)
+    |> order_by([e], desc: e.id)
+    |> limit(^limit)
     |> Repo.all()
-    |> Enum.map(&to_battle/1)
+    |> Enum.reverse()
+    |> Enum.map(&to_entry/1)
   end
+
+  @doc """
+  Everything written after `cursor`, oldest first, for a record being read as it happens.
+
+  A keyset and not an offset: an offset walks every row it skips, so a run that has fought five
+  hundred times pays for five hundred to append one. The table is append-only, so what a reader
+  already holds can never change.
+  """
+  def since(character_id, cursor) do
+    Entry
+    |> where([e], e.character_id == ^character_id and e.id > ^cursor)
+    |> order_by([e], asc: e.id)
+    |> Repo.all()
+    |> Enum.map(&to_entry/1)
+  end
+
+  defp to_entry(%Entry{} = e), do: e |> to_battle() |> Map.put(:id, e.id)
 
   defp to_battle(nil), do: nil
 

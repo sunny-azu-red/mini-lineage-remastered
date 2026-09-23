@@ -91,7 +91,7 @@ defmodule MiniLineage.BattleLogTest do
       start_character(session)
       for _ <- 1..3, do: fight(session)
 
-      history = BattleLog.history(stored_id(session))
+      history = BattleLog.recent(stored_id(session))
 
       assert length(history) == 3
       assert Enum.all?(history, &is_binary(&1.narrative.outcome_line))
@@ -114,7 +114,46 @@ defmodule MiniLineage.BattleLogTest do
     test "and nothing at all for a run that never drew a blade", %{session: session} do
       start_character(session)
 
-      assert BattleLog.history(stored_id(session)) == []
+      assert BattleLog.recent(stored_id(session)) == []
+    end
+
+    # The whole history of a long run went through the socket on every page load to fill a 260px
+    # box. The window is the newest end of it, because that is the end a reader is looking at.
+    test "is capped at the window, and it is the newest end", %{session: session} do
+      start_character(session)
+      for _ <- 1..5, do: fight(session)
+
+      id = stored_id(session)
+      all = Enum.map(rows(session), & &1.id)
+      windowed = BattleLog.recent(id, 3)
+
+      assert length(windowed) == 3
+      assert Enum.map(windowed, & &1.id) == Enum.take(all, -3)
+    end
+
+    test "and a reader already holding some asks only for what came after", %{session: session} do
+      start_character(session)
+      for _ <- 1..3, do: fight(session)
+
+      id = stored_id(session)
+      held = BattleLog.recent(id, 2)
+      cursor = List.last(held).id
+
+      fight(session)
+      added = BattleLog.since(id, cursor)
+
+      assert length(added) == 1
+      assert hd(added).id > cursor
+    end
+
+    # Nothing has been written since, so there is nothing to append and no reason to have asked.
+    test "and nothing when the cursor is already the last of them", %{session: session} do
+      start_character(session)
+      fight(session)
+
+      id = stored_id(session)
+
+      assert BattleLog.since(id, List.last(BattleLog.recent(id)).id) == []
     end
   end
 
