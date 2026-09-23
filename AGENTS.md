@@ -198,6 +198,29 @@ to the page, so the rule holds for a living run with nothing riding on it too. D
 component, which has both the view and the row: in the LiveView a component test goes around it and
 every `handle_info` that reassigns the record has to remember to apply it again.
 
+**A run declares what it did; the process decides whether to write it.** `Characters.Server` used
+to notice a fight by diffing `last_battle_narrative`, which cannot name a blade somebody bought and
+cannot see a fight whose map repeats the last one exactly. Actions append to `player.pending_events`
+instead, and `run/3` drains them — **after** `flush?/2` has been asked, or before and now are
+identical and the deed is never written before the player is told it worked. The rule the old
+comment was protecting still holds: the WRITE decision is derived from the struct, and only the
+NARRATION is declared.
+
+**An effect lapsing is the passage of time, so its row goes on the state and never on the player.**
+`pending_events` sits outside `@buffered`, so anything put there forces an immediate write; an
+expiring buff must ride along with the next action instead. Both gained and lapsed are decided in
+`Server.log_effects/4` rather than at the call site, which is also what puts a buff AFTER the meal
+that brought it. Auras never appear: `sync_zone_auras/1` flips them on nearly every pass.
+
+**`CharacterLog.last_for/1` filters on kind, and that is not tidying.** `Server.init/1` rebuilds the
+battle screen from it. The table holds deeds as well as fights, so without the filter a player whose
+last act was a purchase reconnects to a battle report with seven nil lines and an all-zero outcome —
+which renders blank rather than failing. No partial index for it; see the dropped-column rule below.
+
+**A watched record is told what happened, never left to infer it.** The `:record_updated` push
+carries whether a row was written. Guessing from the tallies missed every deed that is not a fight,
+because a purchase moves neither the battle count nor the last fight.
+
 **A stored line keeps its pronouns open; everything else is filled when it happens.** A fight's
 numbers and gear are facts about a moment, so they are filled then — but who the line is being told
 TO is not known until somebody opens a page, and the same row is read by the run itself and by
@@ -457,7 +480,7 @@ how the bug was found. Needing more than three lines means the knowledge belongs
 instead. CSS and HEEx need it least — a rule wanting a paragraph usually wants a better selector.
 Moduledocs may run to a short paragraph; nothing else may.
 
-**Dropping a column drops every index that mentions it — including in a WHERE.** `battle_log` lost
+**Dropping a column drops every index that mentions it — including in a WHERE.** `character_log` lost
 its only useful index that way, silently, and went back to scanning the whole table for every new
 character. `schema_test.exs` names the indexes the game cannot go without; add to it when you add
 one. A query-plan assertion cannot do this job — Postgres rightly prefers a sequential scan over
