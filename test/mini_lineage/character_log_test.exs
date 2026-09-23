@@ -110,6 +110,28 @@ defmodule MiniLineage.CharacterLogTest do
     end
   end
 
+  # A watcher appends its chronicle on the strength of this push. It used to be guessed at from the
+  # tallies instead, and a purchase moves neither the battle count nor the last fight, so every
+  # deed that was not a fight went unseen on a watched record until the reader refreshed.
+  describe "a deed reaching a watcher" do
+    test "says a row was written, for a purchase as much as a fight", %{session: session} do
+      start_character(session)
+      Characters.mutate(session, fn p -> {%{p | adena: 100_000}, :ok} end)
+      id = stored_id(session)
+      Phoenix.PubSub.subscribe(MiniLineage.PubSub, Characters.record_topic(id))
+
+      {result, _} = Characters.mutate(session, &Actions.purchase(&1, "weapon", 1))
+
+      assert match?({:ok, %{type: :success}}, result),
+             "the purchase did not happen: #{inspect(result)}"
+
+      assert_receive {:record_updated, _player, ^id, true}
+
+      Characters.mutate(session, &Actions.fight/1)
+      assert_receive {:record_updated, _player, ^id, true}
+    end
+  end
+
   describe "the whole chronicle" do
     test "is every fight of one run, oldest first", %{session: session} do
       start_character(session)

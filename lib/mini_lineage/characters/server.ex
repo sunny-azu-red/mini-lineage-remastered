@@ -166,12 +166,16 @@ defmodule MiniLineage.Characters.Server do
         |> drain_events(player)
         |> log_effects(before, player, expired)
 
+      # Whether anything reached the log this pass, captured before `persist/1` clears the buffer.
+      # A watcher reads its chronicle on the strength of it, and guessing from the tallies missed
+      # every deed that is not a fight.
+      wrote? = acted? and state.pending_rows != []
       state = if acted?, do: persist(state), else: mark(state)
 
       # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
       # write, though — a record being watched answers the push by reading its chronicle back, and
       # a push that arrives first tells the reader about a fight the database does not have yet.
-      broadcast(state.session, state.player, state.id)
+      broadcast(state.session, state.player, state.id, wrote?)
 
       {result, arm_expiry(state)}
     else
@@ -320,7 +324,7 @@ defmodule MiniLineage.Characters.Server do
   # Two topics for one change. The session's is the browser's own and carries what only its owner
   # may act on; the record's is keyed by the PUBLIC id, because a record is a public page and
   # anybody reading one should watch it move.
-  def broadcast(session, player, character_id) do
+  def broadcast(session, player, character_id, wrote? \\ false) do
     Phoenix.PubSub.broadcast(
       MiniLineage.PubSub,
       "character:#{session}",
@@ -330,7 +334,7 @@ defmodule MiniLineage.Characters.Server do
     Phoenix.PubSub.broadcast(
       MiniLineage.PubSub,
       Characters.record_topic(character_id),
-      {:record_updated, player, character_id}
+      {:record_updated, player, character_id, wrote?}
     )
   end
 end

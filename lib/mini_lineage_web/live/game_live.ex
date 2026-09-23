@@ -323,20 +323,22 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:statistics, _stats}, socket), do: {:noreply, socket}
 
-  # Rebuilt from the player the push carried, so nothing is read back bar the fights the chronicle
-  # has yet to see. `id` twice in the head guards that this tab watches this record; the map pattern
-  # guards the other way, since a record never found has nothing to compare against.
+  # Rebuilt from the player the push carried, so nothing is read back bar the entries the chronicle
+  # has yet to see. `id` twice in the head guards that this tab watches this record.
+  #
+  # The push says whether anything was logged, rather than this end guessing from the tallies: a
+  # purchase moves neither the battle count nor the last fight, so every deed that was not a fight
+  # went unseen until the reader refreshed.
   def handle_info(
-        {:record_updated, player, id},
-        %{assigns: %{watching: id, record_view: %{counters: _} = shown}} = socket
+        {:record_updated, player, id, wrote?},
+        %{assigns: %{watching: id}} = socket
       ) do
-    view = Snapshot.build(player)
-    socket = assign(socket, record_view: view)
+    socket = assign(socket, record_view: Snapshot.build(player))
 
-    {:noreply, if(fought?(view, shown), do: append_chronicle(socket, id), else: socket)}
+    {:noreply, if(wrote?, do: append_chronicle(socket, id), else: socket)}
   end
 
-  def handle_info({:record_updated, _player, _id}, socket), do: {:noreply, socket}
+  def handle_info({:record_updated, _player, _id, _wrote?}, socket), do: {:noreply, socket}
 
   # A run that has been restarted away from. Its row is what changed rather than its state — the
   # session it was held by is gone — so the ENTRY is read again, which is the one thing a push
@@ -345,13 +347,6 @@ defmodule MiniLineageWeb.GameLive do
     do: {:noreply, assign(socket, record: Board.entry(id))}
 
   def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
-
-  # Two signals, because neither alone is enough: the tally does not count the fight that killed
-  # them, and a narrative can repeat where the numbers do not.
-  defp fought?(view, shown) do
-    view.counters.total_battles != shown.counters.total_battles or
-      view.last_battle != shown.last_battle
-  end
 
   # Appended, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
   # every blow re-reads the entire history of a long run to add one line to it. The window grows

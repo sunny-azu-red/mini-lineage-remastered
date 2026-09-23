@@ -153,6 +153,20 @@ try {
     check('...and change as the run does, with the reader asking for nothing', swapped,
         (await effects()).slice(0, 80));
 
+    // A deed that is not a fight has to reach a watcher too. Whether to append used to be guessed
+    // at from the battle tally and the last fight, and a purchase moves neither — so on a record
+    // somebody else was reading, nothing but fighting ever appeared until they reloaded.
+    const heldBefore = await lines();
+    await player.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
+    await connected(player);
+    await player.selectOption('#main select[name="item_id"]', '0');
+    await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
+    const reached = await watcher.waitForFunction(
+        (had) => document.querySelectorAll('#main ol.chronicle li').length > had,
+        heldBefore, { timeout: 8000 }).then(() => true).catch(() => false);
+    check('...and a purchase reaches them as a fight does, being just as much a deed', reached,
+        `${heldBefore} -> ${await lines()} line(s)`);
+
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window
     // would be comparing two different moments of a live game.
