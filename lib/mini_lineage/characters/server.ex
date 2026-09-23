@@ -10,7 +10,7 @@ defmodule MiniLineage.Characters.Server do
   alias MiniLineage.Characters.{Store, TickLog}
   require Logger
 
-  alias MiniLineage.Game.{Clock, Constants, Player}
+  alias MiniLineage.Game.{Clock, Constants, Narrative, Narratives, Player}
 
   # Fires just past the deadline so the sweep reliably sees the effect as due.
   @expiry_grace_ms 25
@@ -161,7 +161,11 @@ defmodule MiniLineage.Characters.Server do
       acted? = flush?(before, player)
       player = if acted?, do: %{player | last_action_at: Clock.now_ms()}, else: player
 
-      state = drain_events(%{state | player: player}, player)
+      state =
+        %{state | player: player}
+        |> drain_events(player)
+        |> log_effects(before, player, expired)
+
       state = if acted?, do: persist(state), else: mark(state)
 
       # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
@@ -197,6 +201,37 @@ defmodule MiniLineage.Characters.Server do
 
   defp row_for(id, %{kind: "fight", battle: battle}), do: CharacterLog.row(id, battle)
   defp row_for(id, %{kind: kind, line: line, at: at}), do: CharacterLog.event(id, kind, line, at)
+
+  # Onto the state and never onto the player: an effect lapsing is the passage of time, and a
+  # pending event outside `@buffered` would turn every expiring buff into a write of its own.
+  #
+  # After whatever the action logged, so a buff settles over somebody after the meal that brought
+  # it. Auras are not deeds — `sync_zone_auras/1` flips them on nearly every pass, and logging
+  # them would drown everything else in 💤 and ⚔️.
+  defp log_effects(state, before, now, expired) do
+    held = Enum.map(before.effects, & &1.id)
+    gained = Enum.reject(now.effects, &(&1.id in held))
+
+    rows =
+      Enum.map(deeds(gained), &effect_row(state.id, Narratives.effect_gained(), &1)) ++
+        Enum.map(deeds(expired), &effect_row(state.id, Narratives.effect_lapsed(), &1))
+
+    %{state | pending_rows: state.pending_rows ++ rows}
+  end
+
+  # The Cheater's Mark is left out: the heresy has a line of its own that says it better, and it
+  # never lapses, so this would only ever repeat that one.
+  defp deeds(effects),
+    do: Enum.filter(effects, &(&1.type in [:buff, :debuff] and &1.id != "konami_cheat"))
+
+  defp effect_row(id, template, effect),
+    do:
+      CharacterLog.event(
+        id,
+        "effect",
+        Narrative.build_effect_change(template, effect),
+        Clock.now()
+      )
 
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state

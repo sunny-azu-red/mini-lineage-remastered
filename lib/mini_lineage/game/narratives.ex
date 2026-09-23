@@ -49,7 +49,7 @@ defmodule MiniLineage.Game.Narratives do
     "steel and magic are {their} allies!",
     "ancient echoes follow {their} feet!",
     "a bold step toward {their} destiny!",
-    "{whose} spirit shines in the dark..."
+    "{their} spirit shines in the dark..."
   ]
 
   # The pronouns every voiced template is filled from. They/them takes the same verb forms as you,

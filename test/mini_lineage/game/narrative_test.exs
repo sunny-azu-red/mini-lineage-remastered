@@ -9,7 +9,7 @@ defmodule MiniLineage.Game.NarrativeTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Narrative, Narratives, Player, Rng}
+  alias MiniLineage.Game.{Constants, Format, Narrative, Narratives, Player, Rng}
 
   @races 0..3
 
@@ -318,6 +318,24 @@ defmodule MiniLineage.Game.NarrativeTest do
       refute result.success
       assert String.contains?(result.text, Constants.weapon(2).name)
       assert unchanged.adena == player.adena
+    end
+  end
+
+  # The welcome is a fragment joined mid-sentence ("They chose the Orc, and ..."), so a pronoun in
+  # its sentence-initial form reads as "and Their spirit shines", which is how one shipped.
+  describe "the welcome a run begins with" do
+    test "is joined mid-sentence, so none of them starts a new one" do
+      race = Constants.race(1)
+
+      for template <- Narratives.welcome(), mine <- [true, false] do
+        line =
+          race
+          |> Narrative.build_began(Format.fill_template(template, %{"raceLabel" => race.label}))
+          |> Narrative.voiced(mine)
+
+        refute line =~ ~r/, and (Their|Your|They|You)\b/,
+               "a welcome capitalises mid-sentence: #{line}"
+      end
     end
   end
 end

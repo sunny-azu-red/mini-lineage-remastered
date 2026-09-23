@@ -143,7 +143,8 @@ defmodule MiniLineage.CharacterLogTest do
     test "and only its beginning for a run that never drew a blade", %{session: session} do
       start_character(session)
 
-      assert [%{kind: "start"}] = CharacterLog.recent(stored_id(session))
+      # The blessing it is born with is a deed done to it, so it is told like any other.
+      assert [%{kind: "start"}, %{kind: "effect"}] = CharacterLog.recent(stored_id(session))
       assert fights(session) == []
     end
 
