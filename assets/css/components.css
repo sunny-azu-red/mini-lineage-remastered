@@ -221,9 +221,11 @@
     border-bottom: 1px solid transparent;
 }
 
+/* The label column is as wide as ADENA, the widest label, at the label's own weight and tracking:
+ * a fixed track does not grow, and a label too wide for it runs into its value. */
 .status-panel .stat-row {
     display: grid;
-    grid-template-columns: 42px 1fr;
+    grid-template-columns: 46px 1fr;
     align-items: center;
     gap: 10px;
 }
@@ -291,12 +293,15 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     animation: danger-pulse .5s ease-in-out infinite;
 }
 
+/* Set as a table's header is — a field's label and a column's are the same kind of thing — bar the
+ * colour, which stays quieter than the value beside it. */
 .stat-label {
     font-size: 11px;
+    font-weight: 600;
     color: var(--text-secondary);
     text-align: right;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
     line-height: 1;
     margin-top: 1px;
 }
