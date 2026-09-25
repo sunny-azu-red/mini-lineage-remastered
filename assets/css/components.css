@@ -299,7 +299,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     color: var(--text-secondary);
     text-align: right;
     line-height: 1;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 /* The body's size, not a compact one: a value is read, wherever it stands. */
