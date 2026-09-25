@@ -251,13 +251,13 @@ from the stored row — which is why an effect is stored as the `buff` or `debuf
 read back out of its own HTML.
 
 **A deed is one sentence, told twice.** The chronicle stores it with its pronouns open; the alert
-its owner sees is the same sentence through `Narrative.alert/1`, voiced to them, colours and all.
-An alert is a `div`, not a `p` or an `li`, so its values take the colour and not the weight — by
-choice. The exception is what the alert is ABOUT: an `.item` or a `.buff` keeps the alert's own
-colour and takes the weight, and a refusal names its item with the same markup so it is styled
-alike. The welcome and the shop had built their alerts separately, and the
-two drifted until the alert said "You have bought" while the chronicle said "They ate". A food
-alert's buff line is that buff's own chronicle row, in the same words.
+its owner sees is the same sentence through `Narrative.alert/1`, voiced to them, colours and all. An
+alert is a `div`, not a `p` or an `li`, so its values take the colour and not the weight — by
+choice. The exception is what the alert is ABOUT: an `.item`, `.buff` or `.debuff` keeps the alert's
+own colour and takes the weight — the debuff before any item grants one, and a refusal names its
+item with the same markup so it is styled alike. The welcome and the shop had built their alerts
+separately, and the two drifted until the alert said "You have bought" while the chronicle said
+"They ate". A food alert's buff line is that buff's own chronicle row, in the same words.
 
 **A watched record is told what happened, never left to infer it.** The `:record_updated` push
 carries whether a row was written. Guessing from the tallies missed every deed that is not a fight,
