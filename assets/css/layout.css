@@ -169,8 +169,10 @@
     align-items: flex-start;
 }
 
+/* Wide enough for the widest item and its benefit at the body's size, with room for the Verdana
+ * fallback and an emoji font wider than Chromium's: "💀 The Forgotten Blade 15%". */
 #sidebar {
-    flex: 0 0 195px;
+    flex: 0 0 210px;
     min-width: 0;
 }
 

@@ -74,7 +74,7 @@ strong {
 h2 {
     font-family: var(--font-heading);
     line-height: 1.6;
-    font-size: 1.15rem;
+    font-size: 18px;
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;

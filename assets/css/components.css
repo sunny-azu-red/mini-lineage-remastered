@@ -301,8 +301,8 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     margin-top: 1px;
 }
 
+/* The body's size, not a compact one: a value is read, wherever it stands. */
 .stat-value {
-    font-size: 12px;
     line-height: 1;
 }
 
