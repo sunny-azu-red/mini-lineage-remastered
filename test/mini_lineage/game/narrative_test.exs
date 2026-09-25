@@ -197,56 +197,17 @@ defmodule MiniLineage.Game.NarrativeTest do
 
   describe "the fight that killed them" do
     # `resolve_battle_outcome/2` returns the moment health reaches zero, BEFORE the XP, the Adena
-    # and every counter are credited. A line naming any of them describes a reward never given.
-    test "names no reward, because a fatal fight pays none" do
+    # and every counter are credited. Its lines are drawn anyway and thrown away by the action.
+    test "pays nothing, not a reward and not a kill" do
       fighter = started(0, weapon_id: 3, armor_id: 3)
-      result = fixed_result()
-      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, result)
+      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
 
       assert killed.dead
       assert killed.experience == fighter.experience, "a fatal fight granted XP"
       assert killed.adena == fighter.adena, "a fatal fight granted Adena"
 
-      narrative = Narrative.build_battle(killed, result, false)
-
-      refute narrative.deflection_line, "the deflection line names the XP that was never earned"
-      refute narrative.outcome_line =~ "Adena"
-      refute narrative.outcome_line =~ "HP"
-    end
-
-    test "and says how it ended in its place" do
-      fighter = started(0, weapon_id: 3, armor_id: 3)
-      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
-
-      narrative = Narrative.build_battle(killed, fixed_result(), false)
-
-      # Stored as written, pronouns still open, like every other line on the row — a reader is not
-      # known until somebody opens a page, and a run's ending is read by strangers too.
-      assert narrative.outcome_line == killed.death_reason
-
-      mine = Narrative.voiced(narrative.outcome_line, true)
-      theirs = Narrative.voiced(narrative.outcome_line, false)
-
-      refute mine == theirs, "an ending reads the same to a stranger as to the run that had it"
-      refute theirs =~ ~r/\byou\b/i, "an ending tells a stranger it happened to them"
-      refute mine =~ "{"
-    end
-
-    # Nothing the fighter did in it counted — not the rewards, and not the kills, which are never
-    # added to `total_enemies_killed` either. The foes did not fall; the fighter did.
-    test "and claims no kill, because the ones it named were never counted" do
-      fighter = started(0, weapon_id: 3, armor_id: 3)
-      before = fighter.total_enemies_killed
-      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
-
-      assert killed.total_enemies_killed == before, "a fatal fight counted kills"
-
-      narrative = Narrative.build_battle(killed, fixed_result(), false)
-
-      refute narrative.kill_line
-      refute narrative.crit_line
-      # Nor a move to make next, there being no next.
-      refute narrative.next_move
+      assert killed.total_enemies_killed == fighter.total_enemies_killed,
+             "a fatal fight counted kills"
     end
   end
 

@@ -188,6 +188,7 @@ defmodule MiniLineage.CharacterLogTest do
 
     test "and a fatal fight is logged as the ending it is", %{session: session} do
       start_character(session)
+      fight(session)
       # A fight costs at least 1 HP whatever the dice say, so this one is fatal.
       Characters.mutate(session, &{%{&1 | health: 1}, :ok})
       fight(session)
@@ -201,7 +202,13 @@ defmodule MiniLineage.CharacterLogTest do
       # Its other lines were dropped when it turned fatal; how it ended is all that is left.
       assert ending.kind == "ending"
       assert ending.line == Characters.snapshot(session).death_reason
-      assert fights(session) == []
+      assert length(fights(session)) == 1
+
+      # Nothing of that fight is kept, and a restart does not bring back the one before it either:
+      # no screen a dead run can reach shows a fight.
+      assert Characters.snapshot(session).last_battle_narrative == nil
+      Characters.forget_process(session)
+      assert Characters.snapshot(session).last_battle_narrative == nil
     end
 
     test "and is stored as the buff or debuff it is",

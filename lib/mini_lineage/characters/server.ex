@@ -38,8 +38,9 @@ defmodule MiniLineage.Characters.Server do
     # rather than at the first save is what lets two tabs on one session agree on it.
     {id, player} = Store.load_by_session(session) || {Store.new_id(), %Player{}}
 
-    # The battle screen is refilled from the log, not the document: one query, and only at start.
-    player = %{player | last_battle_narrative: CharacterLog.last_for(id)}
+    # The battle screen is refilled from the log, not the document: one query, only at start, and
+    # never for the dead, who cannot stand on it.
+    player = %{player | last_battle_narrative: unless(player.dead, do: CharacterLog.last_for(id))}
     schedule_tick()
 
     state = %{

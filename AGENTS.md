@@ -308,9 +308,10 @@ counted, so no line describing it may claim otherwise: not the XP the deflection
 Adena and the HP the outcome line leaves them standing on, and not the foes the kill line cuts down
 — the game never counted those either, and it was the fighter who fell. Every line is still DRAWN,
 because the pools draw in order and skipping one would shift every later roll in that fight, and
-then all of them are dropped for how it ended. What is left is one sentence, the death reason, so
-the chronicle logs it as the `ending` it is, the same kind of row a suicide writes, and a fight row
-is always one the run walked away from. The chronicle's fights and `total_battles` agree.
+then none of them is kept, in the log or in memory: the chronicle logs the death reason as the
+`ending` it is, the same kind of row a suicide writes, and no screen a dead run can reach shows a
+fight, so `Server.init/1` does not rebuild one for it. A fight row is always one the run walked
+away from, so the chronicle's fights and `total_battles` agree.
 
 **A log row is its kind, its lines and its moment, and nothing else.** A fight's numbers were
 columns once, kept because they were "what you would aggregate", and nothing ever did: the totals

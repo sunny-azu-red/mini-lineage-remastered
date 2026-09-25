@@ -43,24 +43,15 @@ defmodule MiniLineage.Game.Narrative do
     ambush_template = Math.random_element(Narratives.ambush())
     next_move = Math.random_element(Narratives.moves())
 
-    # A fatal fight credits nothing: `resolve_battle_outcome/2` returns at zero health, before the
-    # XP, Adena, battle and kill counts. Every line is drawn all the same, so the pools stay in
-    # step, then all of them are dropped for the one that is true.
-    died = player.dead
-
     %{
-      crit_line: unless(died, do: crit_line),
-      kill_line: unless(died, do: kill_line),
-      deflection_line: unless(died, do: deflection_line),
-      # The reason is stored as it is written, pronouns still open, like every other line here —
-      # filling it as "you" now would bake the fighter's own voice into a row strangers read.
-      outcome_line: if(died, do: player.death_reason, else: outcome_line),
+      crit_line: crit_line,
+      kill_line: kill_line,
+      deflection_line: deflection_line,
+      outcome_line: outcome_line,
       ambush_line: if(ambushed_after, do: Format.fill_template(ambush_template, data), else: nil),
       fight_prompt:
         if(ambushed_after, do: if(ambush_enemies == 1, do: "Face your Foe!", else: "Fight them!")),
-      # Drawn so the dice land identically, dropped because there is no next move after the last
-      # one, and "Sharpen your blade" is not advice a ghost can take.
-      next_move: unless(died, do: next_move)
+      next_move: next_move
     }
   end
 
