@@ -123,6 +123,23 @@ defmodule MiniLineageWeb.ChronicleTest do
       refute entry =~ "deaths"
     end
 
+    # A value named inside a sentence, like Adena or a level: a classed span that takes its weight
+    # from the vocabulary. `<strong>` said "important" to no end, the weight rule outranks it.
+    test "names an effect the way it names any other value" do
+      hexed = MiniLineage.Game.Constants.effect(:ambush_debuff)
+
+      line =
+        MiniLineage.Game.Narrative.build_effect_change(
+          MiniLineage.Game.Narratives.effect_gained(),
+          hexed
+        )
+
+      [entry] = entries([deed("effect", line)])
+
+      assert entry =~ ~s(<span class="debuff">Hexed</span>)
+      refute entry =~ "<strong"
+    end
+
     test "and carries no fight's clothes" do
       [entry] = entries([deed("level_up", "{they} reached Level 4.")])
 

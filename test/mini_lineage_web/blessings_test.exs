@@ -54,6 +54,15 @@ defmodule MiniLineageWeb.BlessingsTest do
   defp text(section),
     do: section |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
 
+  describe "an effect's name" do
+    test "is a value like any other, not emphasis" do
+      section = blessings(bearer([:newbie_buff]))
+
+      assert section =~ ~s(<span class="buff">🐣 Newbie Blessing</span>)
+      refute section =~ "<strong"
+    end
+  end
+
   describe "every effect the game can apply" do
     # The catalog is closed and the prose is written by hand, so the two can drift apart in one
     # direction only: an effect added with no description would render as a name and nothing else.

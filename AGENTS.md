@@ -180,7 +180,8 @@ the PAGE knows, not something a player reads. A name that belongs in neither bas
 neither file.
 
 An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
-vocabulary like any other value. The BADGE over its emoji does not: `--text-success-bright` and
+vocabulary like any other value. A value is a classed `<span>`, never a `<strong>`: it takes its weight from
+the vocabulary's own rule, and `strong` stays for emphasis on a name that is not a value. The BADGE over its emoji does not: `--text-success-bright` and
 `--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
 token; adding a class means putting it in a group, never inventing a hex.
 

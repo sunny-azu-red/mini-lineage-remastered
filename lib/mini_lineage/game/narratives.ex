@@ -160,9 +160,9 @@ defmodule MiniLineage.Game.Narratives do
   @ate ~s({they} ate the {emoji} <span class="equipped">{name}</span> and rose to <span class="hp">{hp} HP</span>.)
   @levelled ~s({they} reached <span class="level">Level {level}</span>.)
   @heresy ~s(👾 The gods saw {their} heresy, and the Halls closed the book on {object}.)
-  @effect_gained ~s({emoji} <strong class="{type}">{label}</strong> settles over {object}.)
-  @effect_lapsed ~s({emoji} <strong class="{type}">{label}</strong> leaves {object}.)
-  @effect_ended ~s({emoji} <strong class="{type}">{label}</strong> fades with {their} last breath.)
+  @effect_gained ~s({emoji} <span class="{type}">{label}</span> settles over {object}.)
+  @effect_lapsed ~s({emoji} <span class="{type}">{label}</span> leaves {object}.)
+  @effect_ended ~s({emoji} <span class="{type}">{label}</span> fades with {their} last breath.)
 
   @moves [
     "Investigate the shimmering lake",

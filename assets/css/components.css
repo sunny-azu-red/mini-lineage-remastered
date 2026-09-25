@@ -541,7 +541,6 @@ ol.chronicle .threat {
  * need the weight every other value in a sentence carries. */
 ol.chronicle .date.lead {
     font-weight: 400;
-    margin-right: 6px;
 }
 
 ol.chronicle li {
