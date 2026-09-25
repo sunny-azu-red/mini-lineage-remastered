@@ -147,7 +147,7 @@ defmodule MiniLineage.CharacterLogTest do
       Characters.snapshot(session)
 
       assert_receive {:record_updated, _player, ^id, true}
-      assert Enum.any?(CharacterLog.recent(id), &(&1.kind == "effect" and &1.line =~ "leaves"))
+      assert Enum.any?(CharacterLog.recent(id), &(&1.kind == "blessing" and &1.line =~ "leaves"))
     end
   end
 
@@ -198,6 +198,21 @@ defmodule MiniLineage.CharacterLogTest do
                blessing.line =~ "fades with {their} last breath"
 
       assert fight.kind == "fight" and fight.died
+    end
+
+    test "and is stored as a Blessing or an Affliction, the way the page names them",
+         %{session: session} do
+      start_character(session)
+
+      Characters.mutate(
+        session,
+        &{Player.apply_effect(&1, Constants.effect(:ambush_debuff)), :ok}
+      )
+
+      kinds = stored_id(session) |> CharacterLog.recent() |> Enum.map(& &1.kind)
+
+      assert "blessing" in kinds and "affliction" in kinds
+      refute "effect" in kinds
     end
 
     test "and a meal that replaces a meal says the first one left", %{session: session} do
@@ -271,7 +286,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
 
       # The blessing it is born with is a deed done to it, so it is told like any other.
-      assert [%{kind: "start"}, %{kind: "effect"}] = CharacterLog.recent(stored_id(session))
+      assert [%{kind: "start"}, %{kind: "blessing"}] = CharacterLog.recent(stored_id(session))
       assert fights(session) == []
     end
 

@@ -48,10 +48,11 @@ defmodule MiniLineageWeb.ChronicleTest do
     list |> String.split("<li") |> Enum.drop(1)
   end
 
+  # The head is asserted on its own; stripped here so a claim about the prose is not answered by it.
   defp text_for(chronicle, opts \\ []) do
     chronicle
     |> html_for(opts)
-    |> String.replace(~r|<time[^>]*>.*?</time>|s, "")
+    |> String.replace(~r|<div class="entry-head">.*?</div>|s, "")
     |> String.replace(~r/<[^>]+>/, "")
     |> String.replace(~r/\s+/, " ")
   end
@@ -134,17 +135,63 @@ defmodule MiniLineageWeb.ChronicleTest do
           hexed
         )
 
-      [entry] = entries([deed("effect", line)])
+      [entry] = entries([deed("affliction", line)])
 
       assert entry =~ ~s(<span class="debuff">Hexed</span>)
       refute entry =~ "<strong"
     end
 
-    test "and carries no fight's clothes" do
-      [entry] = entries([deed("level_up", "{they} reached Level 4.")])
+    # A class only where the stylesheet paints one, each washed like the alert that would announce
+    # it; `class=""` on every quiet row was the AGENTS rule about class lists, broken.
+    test "wears a class only where it is painted" do
+      [start, bought, levelled, blessed, quiet] =
+        entries([
+          deed("start", "{they} chose the 🧟 Orc."),
+          deed("purchase", "{they} took up the 🗡️ Sword."),
+          deed("level_up", "{they} reached Level 4."),
+          deed("blessing", "🐣 Newbie Blessing settles over {object}."),
+          fight([:ambush_line])
+        ])
 
-      assert entry =~ "deed"
-      refute entry =~ "ambushed"
+      assert own_tag(start) =~ ~s(class="start")
+      assert own_tag(bought) =~ ~s(class="purchase")
+      assert own_tag(levelled) =~ ~s(class="level-up")
+      refute own_tag(blessed) =~ "class"
+      refute own_tag(quiet) =~ "class"
+    end
+
+    # Its head says when, then what kind of deed it was. Every ending is a Death, whether a blow or
+    # the run's own hand did it.
+    test "is headed by when it happened and what kind of thing it was" do
+      heads =
+        [
+          deed("start", "x"),
+          fight(),
+          %{fight() | died: true},
+          deed("purchase", "x"),
+          deed("level_up", "x"),
+          deed("blessing", "x"),
+          deed("affliction", "x"),
+          deed("heresy", "x"),
+          deed("ending", "x")
+        ]
+        |> entries()
+        |> Enum.map(&head/1)
+
+      assert heads == [
+               "Beginning",
+               "Battle",
+               "Death",
+               "Purchase",
+               "Level Up",
+               "Blessing",
+               "Affliction",
+               "Heresy",
+               "Death"
+             ]
+
+      assert hd(entries([fight()])) =~
+               ~r|<div class="entry-head">.*24/09/26, 14:32.*&bull; Battle\s*</div>|s
     end
 
     # The same silent defect the fight lines have: an unvoiced line renders its braces on the page
@@ -248,5 +295,13 @@ defmodule MiniLineageWeb.ChronicleTest do
       refute quiet =~ "AMBUSH."
       refute quiet =~ "ambushed"
     end
+  end
+
+  # The row's own opening tag, up to the first `>`: the spans inside carry classes of their own.
+  defp own_tag(entry), do: entry |> String.split(">", parts: 2) |> hd()
+
+  defp head(entry) do
+    [_, head] = Regex.run(~r|<div class="entry-head">(.*?)</div>|s, entry)
+    head |> String.split("&bull;") |> List.last() |> String.trim()
   end
 end

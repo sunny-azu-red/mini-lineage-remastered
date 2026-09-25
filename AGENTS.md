@@ -240,6 +240,14 @@ battle screen from it. The table holds deeds as well as fights, so without the f
 last act was a purchase reconnects to a battle report with seven nil lines and an all-zero outcome —
 which renders blank rather than failing. No partial index for it; see the dropped-column rule below.
 
+**A chronicle row carries a class only where the stylesheet paints it.** `ambushed`, `start`,
+`level-up` and `purchase` are washed in the colour of the alert that would announce them, each
+stating its own colour over one shared shape, so none is a default another overrides. Every other
+row has no `class` at all, spread in rather than listed: an unstyled `deed` class sat on every
+deed for a while, and a class list printed `class=""` on every quiet fight. The head names the kind
+from the stored row — which is why an effect is stored as `blessing` or `affliction`, never read
+back out of its own HTML.
+
 **A watched record is told what happened, never left to infer it.** The `:record_updated` push
 carries whether a row was written. Guessing from the tallies missed every deed that is not a fight,
 because a purchase moves neither the battle count nor the last fight.

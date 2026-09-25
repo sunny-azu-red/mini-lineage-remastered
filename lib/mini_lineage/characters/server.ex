@@ -301,8 +301,13 @@ defmodule MiniLineage.Characters.Server do
   defp deeds(effects),
     do: Enum.filter(effects, &(&1.type in [:buff, :debuff] and &1.id != "konami_cheat"))
 
+  # Stored as what the page calls it, so the chronicle can say which without reading its own HTML.
   defp effect_row(id, template, effect, at),
-    do: CharacterLog.event(id, "effect", Narrative.build_effect_change(template, effect), at)
+    do:
+      CharacterLog.event(id, kind_of(effect), Narrative.build_effect_change(template, effect), at)
+
+  defp kind_of(%{type: :buff}), do: "blessing"
+  defp kind_of(%{type: :debuff}), do: "affliction"
 
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state

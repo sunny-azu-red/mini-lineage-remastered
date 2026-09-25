@@ -187,9 +187,28 @@ defmodule MiniLineageWeb.Screens.Record do
 
   # An ending wears the colour every ending wears, whether a blow or a blade of one's own ended it.
   # A heresy is not an ending and is not red; it is the colour the Halls already mark a cheat in.
-  defp deed_class("ending"), do: "deaths"
-  defp deed_class("heresy"), do: "heretics"
-  defp deed_class(_deed), do: nil
+  # Spread rather than `class={...}`, which would print an empty class on every other line.
+  defp deed_colour("ending"), do: [class: "deaths"]
+  defp deed_colour("heresy"), do: [class: "heretics"]
+  defp deed_colour(_deed), do: []
+
+  # A class only on a row the stylesheet paints, each washed like the alert that would announce it.
+  defp painted(%{kind: "fight", ambushed: true}), do: [class: "ambushed"]
+  defp painted(%{kind: "start"}), do: [class: "start"]
+  defp painted(%{kind: "level_up"}), do: [class: "level-up"]
+  defp painted(%{kind: "purchase"}), do: [class: "purchase"]
+  defp painted(_entry), do: []
+
+  # Every ending is a Death, however it came.
+  defp kind_label(%{kind: "fight", died: true}), do: "Death"
+  defp kind_label(%{kind: "fight"}), do: "Battle"
+  defp kind_label(%{kind: "ending"}), do: "Death"
+  defp kind_label(%{kind: "start"}), do: "Beginning"
+  defp kind_label(%{kind: "purchase"}), do: "Purchase"
+  defp kind_label(%{kind: "level_up"}), do: "Level Up"
+  defp kind_label(%{kind: "heresy"}), do: "Heresy"
+  defp kind_label(%{kind: "blessing"}), do: "Blessing"
+  defp kind_label(%{kind: "affliction"}), do: "Affliction"
 
   attr :record_log, :list, default: []
   # Whose fights these are, which decides whether they are told to them or about them.
@@ -216,11 +235,10 @@ defmodule MiniLineageWeb.Screens.Record do
         <%!-- One hook over the list: every stamp beneath it is rewritten to the reader's clock in
               one pass, where a hook per row would be a hundred for one job. --%>
         <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
-          <li
-            :for={entry <- @record_log}
-            class={[entry.kind != "fight" && "deed", entry[:ambushed] && "ambushed"]}
-          >
-            <.stamp at={entry.at} hook={false} class="date lead" />
+          <li :for={entry <- @record_log} {painted(entry)}>
+            <div class="entry-head">
+              <.stamp at={entry.at} hook={false} /> &bull; {kind_label(entry)}
+            </div>
             <%= if entry.kind == "fight" do %>
               <%!-- Every line the fight drew, in order, bar the two that were button labels. A
                     line added to `Narrative.build_battle/3` belongs here too. --%>
@@ -235,7 +253,7 @@ defmodule MiniLineageWeb.Screens.Record do
                 voiced(entry.narrative.ambush_line, @mine)
               )}</span>
             <% else %>
-              <span class={[deed_class(entry.kind)]}>{raw(voiced(entry.line, @mine))}</span>
+              <span {deed_colour(entry.kind)}>{raw(voiced(entry.line, @mine))}</span>
             <% end %>
           </li>
         </ol>

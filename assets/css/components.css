@@ -275,9 +275,10 @@ ol.chronicle li:last-child::after {
    sidebar's 193px row wants about 64px of it and the Chronicle's is three times as wide, so a
    number that suits one is wrong for the other. A share of the width suits both. It is the PANEL's colour laid back over the wash, so it wants
    the row to be on a panel; both of these are. */
+/* The shape of every row the game marks: a wash that fades into the panel at both ends. The colour
+ * is each row's own, below, so none of them is a default another has to override. */
 .stat-row.danger,
-ol.chronicle li.ambushed {
-    background-color: var(--wash-danger);
+ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
@@ -533,13 +534,38 @@ ol.chronicle {
    outside, so the list reads as a run of separate things rather than one block of prose. */
 /* What was waiting at the end of a fight speaks in the alert's own voice, as it did while the
    fight was happening. */
-ol.chronicle .threat {
+/* Each washed like the alert that would announce it: danger for an ambush, info for a beginning,
+ * gold for a level (the warning alert's own colour, and the level's), success for a purchase. */
+.stat-row.danger,
+ol.chronicle li.ambushed {
+    background-color: var(--wash-danger);
+}
+
+/* An ambush is the one row with a line of its own to mark: what waits, in the alert's own voice. */
+ol.chronicle li.ambushed .threat {
     color: var(--text-danger);
 }
 
-/* The stamp leads the line rather than sitting inside it, so position sets it apart and it does not
- * need the weight every other value in a sentence carries. */
-ol.chronicle .date.lead {
+ol.chronicle li.start {
+    background-color: var(--wash-info);
+}
+
+ol.chronicle li.level-up {
+    background-color: var(--wash-gold);
+}
+
+ol.chronicle li.purchase {
+    background-color: var(--wash-success);
+}
+
+/* When, and what kind of thing: a label over the entry, so the size of one and none of the weight
+ * a value inside a sentence carries. */
+ol.chronicle .entry-head {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+ol.chronicle .entry-head .date {
     font-weight: 400;
 }
 
