@@ -99,8 +99,9 @@ defmodule MiniLineageWeb.Screens.Shop do
           </tr>
         </thead>
         <tbody>
-          <tr :for={item <- @items} class={[@owned_id == item.id && "owned"]}>
-            <td class="name">{item.emoji} {item.name}</td>
+          <%!-- Spread rather than a class list, which would print class="" on every other row. --%>
+          <tr :for={item <- @items} {if @owned_id == item.id, do: [class: "owned"], else: []}>
+            <td class="name">{item.emoji} <span class="item">{item.name}</span></td>
             <td class="num">
               <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>
                 {@modifier.prefix}{Map.get(item, @modifier.key)}{@modifier.suffix}

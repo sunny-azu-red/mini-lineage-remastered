@@ -189,7 +189,7 @@ defmodule MiniLineageWeb.Layouts do
       <Controls.panel title="Inventory" class="inventory-panel" body_class="rows">
         <div class="stat-row">
           <span class="stat-value" title="Equipped Armor">
-            {@view.armor.emoji} {@view.armor.name}
+            {@view.armor.emoji} <span class="item">{@view.armor.name}</span>
             <span :if={(@view.armor.regen || 0) > 0} class="regen">+<span
               data-key="armor-regen"
               data-value={@view.armor.regen}
@@ -198,7 +198,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
         <div class="stat-row">
           <span class="stat-value" title="Equipped Weapon">
-            {@view.weapon.emoji} {@view.weapon.name}
+            {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span>
             <span :if={(@view.weapon.crit || 0) > 0} class="crit"><span
               data-key="weapon-crit"
               data-value={@view.weapon.crit}
