@@ -16,8 +16,7 @@ defmodule MiniLineageWeb.ShopLabelsTest do
     render_component(&MiniLineageWeb.Screens.screen/1,
       view: Snapshot.build(%{player | current_screen: "weapons"}),
       screen: "weapons",
-      catalog: Snapshot.catalog(),
-      flash: %{}
+      catalog: Snapshot.catalog()
     )
   end
 

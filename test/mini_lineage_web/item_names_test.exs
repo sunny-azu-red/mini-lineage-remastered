@@ -20,8 +20,7 @@ defmodule MiniLineageWeb.ItemNamesTest do
     render_component(&Screens.screen/1,
       view: Snapshot.build(struct(hero(), [current_screen: screen] ++ gear)),
       screen: screen,
-      catalog: Snapshot.catalog(),
-      flash: %{}
+      catalog: Snapshot.catalog()
     )
   end
 
@@ -56,7 +55,6 @@ defmodule MiniLineageWeb.ItemNamesTest do
   test "and in the Inventory panel" do
     html =
       render_component(&MiniLineageWeb.Layouts.app/1,
-        flash: %{},
         title: "Home Town",
         view: Snapshot.build(hero()),
         screen: "home",

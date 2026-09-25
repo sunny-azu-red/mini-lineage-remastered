@@ -233,7 +233,7 @@ defmodule MiniLineageWeb.Screens.Record do
         <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
           <li :for={entry <- @record_log} :key={entry.id} {painted(entry)}>
             <div class="entry-head">
-              <.stamp at={entry.at} hook={false} /> &bull; {kind_label(entry)}
+              <.stamp at={entry.at} /> &bull; {kind_label(entry)}
             </div>
             <%= if entry.kind == "fight" do %>
               <%!-- Every line the fight drew, in order, bar the two that were button labels. A
@@ -268,7 +268,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
   defp road(assigns) do
     ~H"""
-    <span phx-no-format><%= case road_of(@dead, @entry) do %>
+    <span id="record-road" phx-hook="LocalTimes" phx-no-format><%= case road_of(@dead, @entry) do %>
       <% :closed -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
       <% :open -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
       <% :lost -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.

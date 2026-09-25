@@ -25,7 +25,12 @@ defmodule MiniLineage.Game.Statistics do
   def increment_for(%{cheated: true}, _field, _amount), do: :ok
   def increment_for(_player, field, amount), do: increment(field, amount)
 
-  def increment(field, amount \\ 1) when field in @fields do
+  def increment(field, amount \\ 1)
+
+  # Nothing moved, so nothing is sent: a zero would still arm a push of unchanged totals.
+  def increment(_field, 0), do: :ok
+
+  def increment(field, amount) when field in @fields do
     case Process.whereis(__MODULE__.Collector) do
       nil -> :ok
       pid -> send(pid, {:increment, field, amount})

@@ -42,8 +42,7 @@ body {
 
 /* ===== Links ===== */
 a:link,
-a:visited,
-a:active {
+a:visited {
     color: var(--gold);
     text-decoration: none;
     transition: color 0.15s ease;

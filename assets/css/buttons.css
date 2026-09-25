@@ -31,10 +31,9 @@
     justify-content: center;
     gap: 5px;
     white-space: nowrap;
-    vertical-align: middle;
     flex-shrink: 0;
 
-    /* Geometry — padding matches .form-select so heights align */
+    /* Geometry — the height matches .form-select's, so the two align in a row */
     padding: 0 16px;
     height: 31px;
     border-radius: var(--radius);
@@ -54,21 +53,18 @@
     line-height: 1;
     letter-spacing: 0.06em;
     color: var(--gold);
-    text-decoration: none;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 
     /* Interaction */
     cursor: pointer;
     appearance: none;
-    -webkit-appearance: none;
     position: relative;
     overflow: hidden;
 
+    /* A gradient does not interpolate, and no state changes the colour, so only these two ease. */
     transition:
-        background 0.18s ease,
         box-shadow 0.18s ease,
-        border-color 0.18s ease,
-        color 0.18s ease;
+        border-color 0.18s ease;
 }
 
 /* Shimmer pseudo-element — hidden by default */
@@ -138,9 +134,8 @@
     box-shadow:
         0 0 0 2px rgba(201, 168, 76, 0.2),
         inset 0 2px 4px rgba(0, 0, 0, 0.4);
-    transform: none;
-    transition: none;
     /* Instant feedback */
+    transition: none;
 }
 
 /* ===== Danger Variant =====
@@ -173,15 +168,12 @@
         0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.btn-danger:active,
-.btn-danger.active {
+.btn-danger:active {
     background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
     border-color: var(--border-danger);
     box-shadow:
         0 0 0 2px rgba(190, 39, 31, 0.2),
         inset 0 2px 4px rgba(0, 0, 0, 0.5);
-    transform: none;
-    transition: none;
 }
 
 /* ===== Secondary Variant ===== */
@@ -223,8 +215,6 @@
     box-shadow:
         0 0 0 2px rgba(101, 94, 110, 0.2),
         inset 0 2px 3px rgba(0, 0, 0, 0.35);
-    transform: none;
-    transition: none;
 }
 
 /* ===== Action link container ===== */
@@ -249,10 +239,7 @@
 
 /* ===== Disabled State =====
  * The native attribute, set while a request is in flight. */
-.btn:disabled,
-.btn-secondary:disabled,
-.btn-danger:disabled {
+.btn:disabled {
     opacity: 0.45;
     pointer-events: none;
-    cursor: not-allowed;
 }

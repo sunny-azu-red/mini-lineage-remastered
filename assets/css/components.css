@@ -42,14 +42,12 @@
    the body's padding, which is the whole reason the cap belongs here and not on what it holds. */
 .panel-body.scrolls {
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 /* A header that is a button has to stop looking like one and go on looking like a header. The
    size is the only one .panel-header does not set, and a button would take the platform's. */
 .panel-toggle {
     width: 100%;
-    margin: 0;
     /* All four: the header draws no border of its own any more, so anything left here is the
        platform's own 2px outset — which is 2px of height the other panels do not have. */
     border: 0;
@@ -101,8 +99,8 @@
 }
 
 /* An <h1> in the main panel, a <span> in the sidebar's. Both need the panel header's own size and
- * weight rather than a heading's defaults, and the h1 needs its own margins taken away. Where it
- * sits in the band is the band's business — see .panel-header. */
+ * weight rather than a heading's defaults. Where it sits in the band is the band's business — see
+ * .panel-header. */
 .header-name {
     font-size: inherit;
     font-weight: inherit;
@@ -111,7 +109,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin: 0;
 }
 
 .effect-icon {
@@ -129,7 +126,6 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
 }
 
 .effect-timer {
@@ -142,7 +138,6 @@
     font-weight: 400;
     /* Not inherited: the header band it sits in is gold. */
     color: var(--text-primary);
-    line-height: 1;
     pointer-events: none;
     white-space: nowrap;
     text-shadow:
@@ -299,13 +294,8 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     line-height: 1;
 }
 
-.stat-value.adena {
-    color: var(--gold);
-}
-
 /* ===== HP / XP Bars ===== */
 .bar-track {
-    flex: 1;
     position: relative;
     height: 18px;
     background: rgba(0, 0, 0, 0.4);
@@ -315,7 +305,6 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 
 .bar {
     height: 100%;
-    border-radius: 0px;
     transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -427,7 +416,6 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     background: none;
     border: none;
     padding: 4px;
-    margin: 0;
     font-size: 15px;
     line-height: 1;
     color: inherit;
@@ -486,8 +474,6 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 /* A run's chronicle, oldest first. Ordered because a chronicle is, but never numbered. The cap and
    the scroll are the panel's, not this list's. */
 ol.chronicle {
-    margin: 0;
-    padding: 0;
     list-style: none;
 }
 
@@ -529,7 +515,7 @@ ol.chronicle {
 
 /* Each washed like the alert that would announce it: danger for an ambush, info for a beginning,
  * gold for a level (the warning alert's own colour, and the level's), success for a purchase. */
-.stat-row.danger,
+/* A row in danger takes its ground from the pulse, which outranks any colour set here. */
 ol.chronicle li.ambushed {
     background-color: var(--wash-danger);
 }

@@ -65,7 +65,7 @@
     /* ===== Text =====
      * Three steps of prose: one hue at one saturation, differing only in lightness, because
      * quieter text should get quieter and not bluer. Then the six values, peers because they land
-     * in one sentence — L* 58.0 to 58.1 end to end, so all six read at 4.9 on the panel, where
+     * in one sentence — L* 57.9 to 58.1 end to end, so all six read at 4.9 on the panel, where
      * they had ranged 57 to 66 and the tally whispered. Chroma is NOT shared: each runs to its own
      * sRGB ceiling, since teal tops out near 39 at any lightness and equalising drags the whole
      * set down to meet the one hue that cannot keep up. */

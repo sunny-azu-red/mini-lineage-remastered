@@ -81,9 +81,9 @@ defmodule MiniLineage.Game.Actions do
     outcome = %{outcome | is_level_up: level_up?}
 
     died = player.dead
+    # Cleared above, so only a fight the run walked away from can raise it again.
     player = if died, do: player, else: roll_ambush(player)
-
-    ambushed = not died and player.ambushed
+    ambushed = player.ambushed
 
     # Precedence: death > level-up > ambush > crit > silence.
     sound =
@@ -100,14 +100,7 @@ defmodule MiniLineage.Game.Actions do
     # Persisted so a reconnect replays this exact narrative, same as the death reason. Stamped here
     # and not at the insert: a row can sit in the process buffer, and the Chronicle should say when
     # the fight happened rather than when it was written.
-    last = %{
-      narrative: narrative,
-      outcome: outcome,
-      ambushed: ambushed,
-      died: died,
-      sound: sound,
-      at: Clock.now()
-    }
+    last = %{narrative: narrative, at: Clock.now()}
 
     # A fatal fight paid nothing, so its lines, drawn to keep the dice in step, claim what never
     # happened and are not kept: the run's ending is how it ended, and no screen shows the rest.
@@ -119,11 +112,7 @@ defmodule MiniLineage.Game.Actions do
             line: player.death_reason,
             at: last.at
           }),
-        else:
-          Player.log(
-            %{player | last_battle_narrative: Map.take(last, [:narrative, :at])},
-            %{kind: "fight", battle: last}
-          )
+        else: Player.log(%{player | last_battle_narrative: last}, %{kind: "fight", battle: last})
 
     # After the fight and not inside it: the Chronicle reads in the order these are pushed, and a
     # level reached before the blow that earned it reads backwards. A fatal fight levels nobody.
@@ -135,8 +124,9 @@ defmodule MiniLineage.Game.Actions do
         player
       end
 
+    # A fatal fight never levels, so a level-up flash is never a dead one.
     flash =
-      if not died and level_up? do
+      if level_up? do
         %{
           text:
             "🎉 Congratulations! You have reached level #{Math.level_for_xp(player.experience)}.",
@@ -145,7 +135,7 @@ defmodule MiniLineage.Game.Actions do
         }
       end
 
-    {player, {:ok, Map.put(last, :flash, flash)}}
+    {player, {:ok, %{flash: flash, sound: sound}}}
   end
 
   defp roll_ambush(player) do
@@ -196,18 +186,14 @@ defmodule MiniLineage.Game.Actions do
   defp purchasable_ids(_type), do: []
 
   defp do_purchase(player, type, item_id) do
-    case Player.purchase(player, type, item_id) do
-      nil ->
-        {player, {:error, :invalid, "Unknown item."}}
+    {player, result} = Player.purchase(player, type, item_id)
 
-      {player, result} ->
-        # "Not enough 🪙 Adena" and "already own this" are successful actions with a danger
-        # flash, not errors.
-        sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
-        type_atom = if result.success, do: :success, else: :danger
+    # "Not enough 🪙 Adena" and "already own this" are successful actions with a danger flash, not
+    # errors.
+    sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
+    type_atom = if result.success, do: :success, else: :danger
 
-        {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
-    end
+    {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
   end
 
   # ------------------------------------------------------------------ player

@@ -472,7 +472,7 @@ defmodule MiniLineageWeb.GameLive do
         seconds = max(1, ceil(retry_after_ms / 1000))
 
         message =
-          if socket.assigns.view[:ambushed] && !socket.assigns.view[:dead] do
+          if socket.assigns.view.ambushed and not socket.assigns.view.dead do
             "You are in the middle of an ambush and moving too fast, try again in #{seconds}s."
           else
             "You are moving too fast, please take a breath and try again in #{seconds}s."
@@ -488,7 +488,6 @@ defmodule MiniLineageWeb.GameLive do
   def render(assigns) do
     ~H"""
     <Layouts.app
-      flash={@flash}
       title={@title}
       view={@view}
       screen={@screen}

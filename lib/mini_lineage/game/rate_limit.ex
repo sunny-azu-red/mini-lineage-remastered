@@ -9,8 +9,7 @@ defmodule MiniLineage.Game.RateLimit do
 
   @limits %{
     battle: %{window_ms: 60_000, limit: 60},
-    shop: %{window_ms: 60_000, limit: 30},
-    flood: %{window_ms: 60_000, limit: 300}
+    shop: %{window_ms: 60_000, limit: 30}
   }
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)

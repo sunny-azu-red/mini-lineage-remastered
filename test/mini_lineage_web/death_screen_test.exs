@@ -22,8 +22,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
     render_component(&Screens.screen/1,
       view: Snapshot.build(player),
       screen: "death",
-      catalog: Snapshot.catalog(),
-      flash: %{}
+      catalog: Snapshot.catalog()
     )
   end
 

@@ -81,7 +81,7 @@ defmodule MiniLineage.Characters do
   @doc "Stops a character's process without touching its stored row."
   def forget_process(id), do: stop_process(id)
 
-  @doc "Forgets a character entirely — used by tests and the expiry sweep."
+  @doc "Forgets a character entirely, process and row. For tests: the game itself deletes nothing."
   def forget(session) do
     stop_process(session)
 

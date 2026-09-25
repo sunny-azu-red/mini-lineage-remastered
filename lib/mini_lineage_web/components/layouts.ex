@@ -36,7 +36,6 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  attr :flash, :map, required: true
   attr :title, :string, default: "Loading"
   attr :view, :map, required: true
   attr :screen, :string, required: true
@@ -72,13 +71,13 @@ defmodule MiniLineageWeb.Layouts do
               phx-hook="PanelFocus"
               data-screen={@screen}
               data-started={to_string(@view.started)}
-              data-dead={to_string(@view[:dead] || false)}
-              data-ambushed={to_string(@view[:ambushed] || false)}
-              data-battles={@view[:counters] && @view.counters.total_battles}
+              data-dead={to_string(@view.dead)}
+              data-ambushed={to_string(@view.ambushed)}
+              data-battles={@view.counters.total_battles}
             >
               <:header>
                 <div class="header-effects" id="effects" phx-hook="EffectTimers">
-                  <.effect_icon :for={effect <- effects_of(@view)} effect={effect} />
+                  <.effect_icon :for={effect <- @view.effects} effect={effect} />
                 </div>
               </:header>
               {render_slot(@inner_block)}
@@ -94,9 +93,6 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  defp effects_of(%{started: true, effects: effects}), do: effects
-  defp effects_of(_view), do: []
-
   attr :effect, :map, required: true
 
   defp effect_icon(assigns) do
@@ -104,7 +100,6 @@ defmodule MiniLineageWeb.Layouts do
     <span
       class={"effect-icon effect-fade-in effect-#{@effect.type}"}
       data-effect-id={@effect.id}
-      data-label={@effect.label}
       data-remaining-ms={@effect.remaining_ms}
       title={@effect.tooltip}
     >

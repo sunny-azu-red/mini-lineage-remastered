@@ -35,7 +35,7 @@ defmodule MiniLineageWeb.Paths do
   def for_screen(screen, _slug) do
     case List.keyfind(@routes, screen, 0) do
       {_, path} -> path
-      # 'error' has no link-worthy URL and nothing to deep-link back into.
+      # Every screen the game patches to is routed above; nothing else has an address but home.
       nil -> "/"
     end
   end

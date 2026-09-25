@@ -545,7 +545,8 @@ behind by however long you have been resting.
 
 **Every absolute time a player sees goes through `<.stamp>`.** The database stores instants in
 `timestamptz` and the server runs in UTC, so only the browser knows what o'clock it is for the
-reader. The server-rendered text is the no-JS fallback; the `LocalTime` hook rewrites it. Durations
+reader. The server-rendered text is the no-JS fallback; one `LocalTimes` hook over whatever holds the
+stamps rewrites them all, never a hook per stamp. Durations
 (`data-remaining-ms`) are exempt — they are the same length everywhere.
 
 

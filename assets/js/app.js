@@ -1,7 +1,6 @@
 import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
-import {hooks as colocatedHooks} from "phoenix-colocated/mini_lineage"
 import topbar from "../vendor/topbar"
 import {hooks as gameHooks, shortAdena, timerLabel, remainingLabel} from "./hooks"
 import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
@@ -10,7 +9,7 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, ...gameHooks},
+  hooks: gameHooks,
 })
 
 // Show progress bar on live navigation and form submits. The stops ARE the game's own value

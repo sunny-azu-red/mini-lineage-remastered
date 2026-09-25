@@ -39,7 +39,6 @@ defmodule MiniLineageWeb.BackLinksTest do
       catalog: Snapshot.catalog(),
       boards: %{},
       statistics: nil,
-      flash: %{},
       record:
         viewing? &&
           %{

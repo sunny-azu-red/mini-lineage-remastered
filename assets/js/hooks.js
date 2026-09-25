@@ -418,20 +418,6 @@ export const Panel = {
  * Rewrites a server-rendered UTC stamp into the reader's own clock — the browser is the only thing
  * that knows it. Same shape as `Controls.short_date/1`, which stays as the no-JS fallback.
  */
-export const LocalTime = {
-    mounted() {
-        this.render();
-    },
-    updated() {
-        this.render();
-    },
-    render() {
-        const at = new Date(this.el.dateTime);
-
-        if (!isNaN(at)) this.el.textContent = localDate(at);
-    },
-};
-
 function localDate(at) {
     const pad = (n) => String(n).padStart(2, '0');
 
@@ -439,8 +425,8 @@ function localDate(at) {
         + `${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }
 
-// One hook over a list, rewriting every stamp beneath it. `LocalTime` is one element's own; this is
-// for a chronicle, where a hook per row would be a hundred for one job.
+// One hook over whatever holds stamps, rewriting every one beneath it to the reader's clock: a
+// hook per stamp would be a hundred for one job on a chronicle, and twenty-five on the Halls.
 export const LocalTimes = {
     mounted() {
         this.render();
@@ -458,5 +444,5 @@ export const LocalTimes = {
 };
 
 export const hooks = {
-    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, Panel, LocalTime, LocalTimes,
+    SoundToggle, EffectTimers, KonamiRelay, PanelFocus, AnimatedValues, Panel, LocalTimes,
 };

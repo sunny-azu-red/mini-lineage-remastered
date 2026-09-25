@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.Screens.Halls do
       </p>
     <% else %>
       <div class="table-container">
-        <table class="data-table">
+        <table id="halls-table" class="data-table" phx-hook="LocalTimes">
           <thead>
             <tr>
               <th class="name">Name</th>

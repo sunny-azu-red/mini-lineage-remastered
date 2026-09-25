@@ -18,7 +18,7 @@ defmodule MiniLineage.Game.Math do
   def crit_chance?(chance), do: roll_chance(chance)
   def ambush_chance?(chance), do: roll_chance(chance)
 
-  def ambush_enemy_count(enemies_killed, divisor \\ 4),
+  def ambush_enemy_count(enemies_killed, divisor),
     do: max(1, Kernel.floor(enemies_killed / divisor))
 
   # hp
@@ -71,22 +71,22 @@ defmodule MiniLineage.Game.Math do
   def level_up?(old_xp, new_xp), do: level_for_xp(new_xp) > level_for_xp(old_xp)
 
   # battle scaling
-  def enemy_count_range(attack, min_mult \\ 0.3, max_mult \\ 0.6),
+  def enemy_count_range(attack, min_mult, max_mult),
     do: %{
       min: max(1, Kernel.floor(attack * min_mult)),
       max: max(2, Kernel.floor(attack * max_mult))
     }
 
-  def danger_level(attack, multiplier \\ 0.6), do: Kernel.floor(attack * multiplier)
+  def danger_level(attack, multiplier), do: Kernel.floor(attack * multiplier)
 
   @doc "Sub-linear so stacking armor never reaches invincibility."
-  def damage_blocked(defense, exponent \\ 0.95, multiplier \\ 0.8),
+  def damage_blocked(defense, exponent, multiplier),
     do: max(1, Kernel.floor(:math.pow(defense, exponent) * multiplier))
 
-  def base_xp_gained(attack, exponent \\ 1.5, multiplier \\ 0.8),
+  def base_xp_gained(attack, exponent, multiplier),
     do: Kernel.floor(:math.pow(attack, exponent) * multiplier)
 
-  def base_adena_gained(attack, exponent \\ 2.65, multiplier \\ 0.05),
+  def base_adena_gained(attack, exponent, multiplier),
     do: Kernel.floor(:math.pow(attack, exponent) * multiplier)
 
   @doc "`Math.round`: halves go toward +infinity, unlike Elixir's round/1 which goes away from zero."

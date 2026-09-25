@@ -148,19 +148,25 @@ defmodule MiniLineageWeb.Controls do
   attr :dead, :boolean, default: false
   attr :label, :string, default: nil
   attr :class, :string, default: "last back"
-  # Named outright where "where you came from" is neither Town nor Game Start.
-  attr :to, :string, default: nil
 
   def back_link(assigns) do
-    # Named up here so the anchor sits flush against its text: a newline inside a link renders as a
-    # space the underline then covers. The mark sits OUTSIDE the anchor, so the click lands on the
-    # words, and is muted because it says which way this goes and nothing else.
-    assigns =
-      assign(assigns,
-        href: Paths.for_screen(assigns.to || whence(assigns.started, assigns.dead)),
-        text: assigns.label || whence_label(assigns.started, assigns.dead)
-      )
+    ~H"""
+    <.back
+      href={Paths.for_screen(whence(@started, @dead))}
+      text={@label || whence_label(@started, @dead)}
+      class={@class}
+    />
+    """
+  end
 
+  attr :href, :string, required: true
+  attr :text, :string, required: true
+  attr :class, :string, default: "last back"
+
+  # The anchor sits flush against its text: a newline inside a link renders as a space the underline
+  # then covers. The mark sits OUTSIDE it, so a click lands on the words, and is muted because it
+  # says which way this goes and nothing else.
+  defp back(assigns) do
     ~H"""
     <p class={@class}>
       <span class="muted">&laquo;</span> <.link patch={@href}>{@text}</.link>
@@ -181,16 +187,11 @@ defmodule MiniLineageWeb.Controls do
   attr :race, :map, default: nil
 
   def halls_link(assigns) do
-    assigns =
-      assign(assigns,
-        href: Paths.for_screen("highscores", assigns.race && assigns.race.slug),
-        text: "Go back to the Hall of #{hall_of(assigns.race)} Champions"
-      )
-
     ~H"""
-    <p class="last back">
-      <span class="muted">&laquo;</span> <.link patch={@href}>{@text}</.link>
-    </p>
+    <.back
+      href={Paths.for_screen("highscores", @race && @race.slug)}
+      text={"Go back to the Hall of #{hall_of(@race)} Champions"}
+    />
     """
   end
 
@@ -290,24 +291,13 @@ defmodule MiniLineageWeb.Controls do
 
   attr :id, :string, default: nil
   attr :at, :any, required: true
-  attr :class, :string, default: "date"
-  # False where an ancestor carries `LocalTimes` and rewrites every stamp beneath it at once. A
-  # hundred stamps in one list is a hundred hooks for one job.
-  attr :hook, :boolean, default: true
 
   @doc false
-  # The text is UTC and correct without JS; the hook rewrites it to wherever the reader is.
-  def stamp(%{hook: false} = assigns) do
-    ~H"""
-    <time class={@class} datetime={DateTime.to_iso8601(@at)}>{short_date(@at)}</time>
-    """
-  end
-
+  # The text is UTC and correct without JS. It carries no hook of its own: whatever holds it carries
+  # one `LocalTimes`, which rewrites every stamp beneath it to wherever the reader is.
   def stamp(assigns) do
     ~H"""
-    <time id={@id} class={@class} phx-hook="LocalTime" datetime={DateTime.to_iso8601(@at)}>{short_date(
-      @at
-    )}</time>
+    <time id={@id} class="date" datetime={DateTime.to_iso8601(@at)}>{short_date(@at)}</time>
     """
   end
 

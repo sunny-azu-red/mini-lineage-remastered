@@ -26,11 +26,6 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   pubsub_server: MiniLineage.PubSub,
   live_view: [signing_salt: "+jRa52uF"]
 
-# Configure LiveView
-config :phoenix_live_view,
-  # the attribute set on all root tags. Used for Phoenix.LiveView.ColocatedCSS.
-  root_tag_attribute: "phx-r"
-
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
@@ -38,7 +33,7 @@ config :esbuild,
     args:
       ~w(js/app.js css/app.css --bundle --target=es2022 --outdir=../priv/static/assets --external:/fonts/* --external:/images/* --alias:@=.),
     cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
+    env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__)]}
   ]
 
 # Configure Elixir's Logger

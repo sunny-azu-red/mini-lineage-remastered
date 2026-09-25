@@ -44,8 +44,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
         view: Snapshot.build(player),
         screen: "highscores",
         catalog: Snapshot.catalog(),
-        boards: %{},
-        flash: %{}
+        boards: %{}
       )
     end
 

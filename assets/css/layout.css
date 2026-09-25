@@ -30,14 +30,12 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 24px 12px 24px;
-    width: 100%;
+    padding: 12px 24px;
 }
 
 #header-link {
     text-decoration: none;
     color: inherit;
-    cursor: pointer;
 }
 
 #site-header {
@@ -56,6 +54,8 @@
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
+    /* Here and not on the hover, so the border eases back out as well as in. */
+    transition: border-color 0.2s ease;
 }
 
 /* Subtle shimmer line across the top */
@@ -98,7 +98,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: none;
     line-height: 1;
     padding-top: 6px;
 }
@@ -122,8 +121,6 @@
     right: 12px;
     background: transparent;
     border: none;
-    padding: 0;
-    margin: 0;
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 13px;
@@ -159,7 +156,6 @@
             #2a272f 30%,
             #3e3945 60%,
             #2a262f 100%);
-    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 /* ===== Two-column content ===== */
@@ -188,10 +184,6 @@
     min-width: 0;
 }
 
-#main-simple {
-    width: 100%;
-}
-
 /* ===== Copyright ===== */
 #copyright {
     text-align: center;
@@ -204,21 +196,15 @@
 
 #copyright a.version-link {
     color: inherit;
-    text-decoration: none;
 }
 
 #copyright a.version-link:hover {
     color: var(--gold);
-    text-decoration: underline;
 }
 
 /* ===== Responsive ===== */
 /* Stacked before the sidebar can squeeze the main column narrower than a phone would give it. */
 @media (max-width: 640px) {
-    #app {
-        padding: 12px;
-    }
-
     #content {
         flex-direction: column;
         align-items: stretch;
@@ -231,17 +217,14 @@
 
     .status-panel {
         order: 1;
-        width: 100%;
     }
 
     #main>.panel {
         order: 2;
-        width: 100%;
     }
 
     .inventory-panel {
         order: 3;
-        width: 100%;
     }
 
     /* `display: contents` flattens both columns into #content, whose own 12px gap now does the
@@ -250,9 +233,8 @@
         margin-top: 0;
     }
 
-    #content #copyright {
+    #copyright {
         order: 4;
-        width: 100%;
         margin-top: 0;
     }
 }

@@ -14,7 +14,6 @@ defmodule MiniLineageWeb.StatusPanelTest do
 
   defp sidebar_for(player) do
     render_component(&MiniLineageWeb.Layouts.app/1,
-      flash: %{},
       title: "Home Town",
       view: Snapshot.build(player),
       screen: "home",

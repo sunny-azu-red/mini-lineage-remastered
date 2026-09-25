@@ -65,7 +65,6 @@ defmodule MiniLineage.Game.Snapshot do
     counters: %{
       total_battles: 0,
       total_ambushes: 0,
-      consecutive_ambushes: 0,
       total_enemies_killed: 0
     },
     last_battle: nil
@@ -116,7 +115,6 @@ defmodule MiniLineage.Game.Snapshot do
       counters: %{
         total_battles: player.total_battles,
         total_ambushes: player.total_ambushes,
-        consecutive_ambushes: player.consecutive_ambushes,
         total_enemies_killed: player.total_enemies_killed
       },
       last_battle: player.last_battle_narrative

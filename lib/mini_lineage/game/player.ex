@@ -371,30 +371,25 @@ defmodule MiniLineage.Game.Player do
   defp catalog_for("armor"),
     do: {Constants.armors(), %{slot: :armor_id, stat: :total_armors_bought}}
 
-  # Anything else falls through to food, matching the reference's `?? FOODS`.
-  defp catalog_for(_type), do: {Constants.foods(), nil}
+  defp catalog_for("food"), do: {Constants.foods(), nil}
 
-  @doc "Returns `nil` for an unknown item; `{player, result}` otherwise — including a rejection."
-  def purchase(player, type, item_id) when is_integer(item_id) and item_id >= 0 do
+  @doc """
+  `{player, result}`, a refusal included. The item is one `Actions` has already validated, which is
+  the boundary: an id that is not on sale never reaches here.
+  """
+  def purchase(player, type, item_id) do
     {items, equipment} = catalog_for(type)
-
-    case Enum.at(items, item_id) do
-      nil -> nil
-      item -> do_purchase(player, item, item_id, equipment)
-    end
+    do_purchase(player, Enum.at(items, item_id), item_id, equipment)
   end
-
-  def purchase(_player, _type, _item_id), do: nil
 
   defp do_purchase(player, item, item_id, equipment) do
     if equipment != nil and Map.get(player, equipment.slot) == item_id do
-      {player, refusal(item, owned_text(item, equipment.slot))}
+      {player, refusal(owned_text(item, equipment.slot))}
     else
       case deduct_cost(player, item.cost) do
         {player, false} ->
           {player,
            refusal(
-             item,
              ~s(You do not have enough <span class="adena">🪙 Adena</span> to buy #{named(item)}!)
            )}
 
@@ -405,7 +400,7 @@ defmodule MiniLineage.Game.Player do
     end
   end
 
-  defp refusal(item, text), do: %{success: false, text: text, item: item}
+  defp refusal(text), do: %{success: false, text: text}
 
   defp effect_of(item) do
     case Map.get(item, :effect) do
@@ -441,16 +436,16 @@ defmodule MiniLineage.Game.Player do
             Narrative.alert(Narrative.build_effect_change(Narratives.effect_gained(), effect)),
         else: ""
 
-    {player, %{success: true, text: Narrative.alert(bought) <> settled, item: item}}
+    {player, %{success: true, text: Narrative.alert(bought) <> settled}}
   end
 
   defp complete_purchase(player, item, item_id, equipment) do
     player = Map.put(player, equipment.slot, item_id)
     Statistics.increment_for(player, equipment.stat)
-    bought = Narrative.build_purchase(equipment.slot, item)
+    bought = Narrative.build_purchase(item)
     player = log(player, event("purchase", bought))
 
-    {player, %{success: true, text: Narrative.alert(bought), item: item}}
+    {player, %{success: true, text: Narrative.alert(bought)}}
   end
 
   # ------------------------------------------------------------------- log
