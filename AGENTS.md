@@ -168,8 +168,8 @@ So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal
 it back; `.adena .level .aura` are what it is worth; `.ambush .cowards .date .timer` are read but
 not acted on; `.defense .damage` turn things aside; `.battles .kills .players .purchases` are
 things counted; `.crit` stands alone; `.xp .heretics` are what the arcane touches, earned or
-struck out for; `.equipped` is what a run carries, quieter than the sentence around it because a
-blade's NAME is not the news, the number beside it is.
+struck out for; `.item` is what a run wears, wields or eats, quieter than the sentence around it
+because a blade's NAME is not the news, the number beside it is.
 
 These are the game's vocabulary and they are filed under **Values**. What is not a value lives above
 them under **Utilities**, which is a deliberate separation and not a heading: `.muted` is the only
@@ -180,10 +180,11 @@ the PAGE knows, not something a player reads. A name that belongs in neither bas
 neither file.
 
 An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
-vocabulary like any other value. A value is a classed `<span>`, never a `<strong>`: it takes its weight from
-the vocabulary's own rule, and `strong` stays for emphasis on a name that is not a value. The BADGE over its emoji does not: `--text-success-bright` and
-`--text-danger` are lighter, and the pixel font needs them at that size. Every text colour is a
-token; adding a class means putting it in a group, never inventing a hex.
+vocabulary like any other value. A value is a classed `<span>`, never a `<strong>`: it takes its
+weight from the vocabulary's own rule, and `strong` stays for emphasis on a name that is not a
+value. The BADGE over its emoji does not: `--text-success-bright` and `--text-danger` are lighter,
+and the pixel font needs them at that size. Every text colour is a token; adding a class means
+putting it in a group, never inventing a hex.
 
 **A record is live, and one thing about it lives outside the snapshot.** Everything a watched
 record needs rides in the push or arrives with the chronicle it appends to — but whether a run is
@@ -217,11 +218,12 @@ when it was noticed, because a closed tab or a deploy notices late.
 
 An effect leaves three ways and every one is told: its timer, a meal replacing a meal, or the run
 ending — `kill/1` empties the list. What faded with the run goes BEFORE the ending, dated with it,
-because the ending is always the chronicle's last line. Several leave in the order they arrived,
-the order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
-rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run that leaves with a timed
-buff keeps its process up until the buff lapses, skipping the regen tick while it lingers so an
-absent player never heals. Auras never appear: `sync_zone_auras/1` flips them on nearly every pass.
+because the ending is always the chronicle's last line. Several leave in the order they arrived, the
+order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
+rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run
+that leaves with a timed buff keeps its process up until the buff lapses, skipping the regen tick
+while it lingers so an absent player never heals. Auras never appear: `sync_zone_auras/1` flips them
+on nearly every pass.
 
 **When a run was last seen is its last log entry, never a stamp stored beside it.** A stored
 `last_action_at` and the log were two copies of one fact, and the road on a record came to disagree
@@ -251,7 +253,9 @@ read back out of its own HTML.
 **A deed is one sentence, told twice.** The chronicle stores it with its pronouns open; the alert
 its owner sees is the same sentence through `Narrative.alert/1`, voiced to them, colours and all.
 An alert is a `div`, not a `p` or an `li`, so its values take the colour and not the weight — by
-choice. The welcome and the shop had built their alerts separately, and the
+choice. The exception is what the alert is ABOUT: an `.item` or a `.buff` keeps the alert's own
+colour and takes the weight, and a refusal names its item with the same markup so it is styled
+alike. The welcome and the shop had built their alerts separately, and the
 two drifted until the alert said "You have bought" while the chronicle said "They ate". A food
 alert's buff line is that buff's own chronicle row, in the same words.
 
@@ -272,14 +276,14 @@ naming both the fighter and the foe has to keep them apart by construction.
 
 **A fatal fight pays nothing, so its narrative may not say it did.** `resolve_battle_outcome/2`
 returns `{kill(player), false}` the moment health reaches zero — before the XP, the Adena,
-`total_battles`, `total_enemies_killed` and every `Statistics.increment_for`. Nothing it did counted, so no line
-describing it may claim otherwise: not the XP the deflection line names, not the Adena and the HP
-the outcome line leaves them standing on, and not the foes the kill line cuts down — the game never
-counted those either, and it was the fighter who fell. Every line is still DRAWN, because the pools
-draw in order and skipping one would shift every later roll in that fight, and then all of them are
-dropped for how it ended, in the second person the whole chronicle is written in and wearing
-`.deaths` as the death screen does. This
-is also why a run's chronicle can hold one more fight than `total_battles` says.
+`total_battles`, `total_enemies_killed` and every `Statistics.increment_for`. Nothing it did
+counted, so no line describing it may claim otherwise: not the XP the deflection line names, not the
+Adena and the HP the outcome line leaves them standing on, and not the foes the kill line cuts down
+— the game never counted those either, and it was the fighter who fell. Every line is still DRAWN,
+because the pools draw in order and skipping one would shift every later roll in that fight, and
+then all of them are dropped for how it ended, in the second person the whole chronicle is written
+in and wearing `.deaths` as the death screen does. This is also why a run's chronicle can hold one
+more fight than `total_battles` says.
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
 action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
@@ -347,12 +351,12 @@ controls had to sit well under the surfaces' number to read as the same slate. L
 colourfulness is chroma, and both compare across hues where H, S and L do not.
 
 **Peers share a lightness. They do not share a chroma.** The colours that land in one sentence —
-`--text-hp`, `--text-critical`, `--text-success`, `--text-tally`, `--text-defense`, `--text-xp` — are all
-`L* 58` and so read at 5.2 on the panel, which is what makes them peers; they had ranged `L* 57` to
-`66` and the tally whispered. Equalising their chroma is the trap, and it was fallen into once: teal
-tops out near 39 at any lightness in sRGB, so a shared chroma *is* 39 and the whole set goes pale to
-meet the one hue that cannot keep up. True equality across those six peaks at 45, below where the
-palette already sat. Each runs to its own ceiling instead, capped at 72.
+`--text-hp`, `--text-critical`, `--text-success`, `--text-tally`, `--text-defense`, `--text-xp` —
+are all `L* 58` and so read at 5.2 on the panel, which is what makes them peers; they had ranged `L*
+57` to `66` and the tally whispered. Equalising their chroma is the trap, and it was fallen into
+once: teal tops out near 39 at any lightness in sRGB, so a shared chroma *is* 39 and the whole set
+goes pale to meet the one hue that cannot keep up. True equality across those six peaks at 45, below
+where the palette already sat. Each runs to its own ceiling instead, capped at 72.
 
 **A panel is held off the page by lightness, and the number is 7.6 `L*`.** The blue palette held it
 with 8.6 `L*` *and* 13.5 chroma at once. Taking the chroma out was right; what nobody noticed is

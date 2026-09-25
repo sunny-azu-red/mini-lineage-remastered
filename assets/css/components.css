@@ -391,6 +391,13 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     transform: translateZ(0);
 }
 
+/* In an alert an item or a buff is what the message is ABOUT, not a figure inside it: it keeps the
+ * alert's own voice and takes the weight instead. Important only to outrank the vocabulary's own. */
+.alert :is(.item, .buff) {
+    color: inherit !important;
+    font-weight: var(--weight-value);
+}
+
 .alert-info {
     background: var(--wash-info);
     border-color: var(--border-info);

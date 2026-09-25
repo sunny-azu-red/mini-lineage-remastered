@@ -105,20 +105,20 @@ defmodule MiniLineage.Game.Narratives do
   ]
 
   @kill [
-    ~s(Wielding {their} {weaponEmoji} <span class="equipped">{weaponName}</span> with fury, {them} cut down <span class="kills">{enemyGroup}</span>.),
-    ~s({whose} {weaponEmoji} <span class="equipped">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
-    ~s(With a fierce war cry {them} lunge forward, striking down <span class="kills">{enemyGroup}</span> with {their} {weaponEmoji} <span class="equipped">{weaponName}</span>.),
-    ~s(The <span class="kills">{enemyGroup}</span> stood no chance against {their} {weaponEmoji} <span class="equipped">{weaponName}</span>, which cut {isSingleEnemy ? 'it' : 'them'} down swiftly.),
-    ~s(A lethal dance of {their} {weaponEmoji} <span class="equipped">{weaponName}</span> leaves <span class="kills">{enemyGroup}</span> fallen in {their} wake.),
-    ~s({whose} strike is true. The {weaponEmoji} <span class="equipped">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
+    ~s(Wielding {their} {weaponEmoji} <span class="item">{weaponName}</span> with fury, {them} cut down <span class="kills">{enemyGroup}</span>.),
+    ~s({whose} {weaponEmoji} <span class="item">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
+    ~s(With a fierce war cry {them} lunge forward, striking down <span class="kills">{enemyGroup}</span> with {their} {weaponEmoji} <span class="item">{weaponName}</span>.),
+    ~s(The <span class="kills">{enemyGroup}</span> stood no chance against {their} {weaponEmoji} <span class="item">{weaponName}</span>, which cut {isSingleEnemy ? 'it' : 'them'} down swiftly.),
+    ~s(A lethal dance of {their} {weaponEmoji} <span class="item">{weaponName}</span> leaves <span class="kills">{enemyGroup}</span> fallen in {their} wake.),
+    ~s({whose} strike is true. The {weaponEmoji} <span class="item">{weaponName}</span> finds its mark against <span class="kills">{enemyGroup}</span>.)
   ]
 
   @deflection [
-    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span>, but {them} still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
-    ~s(The {armorEmoji} <span class="equipped">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span>, and the narrow escape netted {object} <span class="xp">{xpGained} XP</span>.),
-    ~s(Blades glanced off {their} {armorEmoji} <span class="equipped">{armorName}</span> for <span class="damage">{blocked} Damage</span>, and {them} mastered {their} defense, granting <span class="xp">{xpGained} XP</span>.),
-    ~s({whose} {armorEmoji} <span class="equipped">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span>, yet {them} grew tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
-    ~s(Steel rings against {their} {armorEmoji} <span class="equipped">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as {them} refine {their} combat stance for <span class="xp">{xpGained} XP</span>.)
+    ~s({whose} {armorEmoji} <span class="item">{armorName}</span> absorbed a total of <span class="damage">{blocked} Damage</span>, but {them} still learned from the clash, earning <span class="xp">{xpGained} XP</span>.),
+    ~s(The {armorEmoji} <span class="item">{armorName}</span> held firm, deflecting <span class="damage">{blocked} Damage</span>, and the narrow escape netted {object} <span class="xp">{xpGained} XP</span>.),
+    ~s(Blades glanced off {their} {armorEmoji} <span class="item">{armorName}</span> for <span class="damage">{blocked} Damage</span>, and {them} mastered {their} defense, granting <span class="xp">{xpGained} XP</span>.),
+    ~s({whose} {armorEmoji} <span class="item">{armorName}</span> took the brunt of <span class="damage">{blocked} Damage</span>, yet {them} grew tougher from the blow, gaining <span class="xp">{xpGained} XP</span>.),
+    ~s(Steel rings against {their} {armorEmoji} <span class="item">{armorName}</span>, mitigating <span class="damage">{blocked} Damage</span> as {them} refine {their} combat stance for <span class="xp">{xpGained} XP</span>.)
   ]
 
   @outcome [
@@ -155,9 +155,8 @@ defmodule MiniLineage.Game.Narratives do
   # What a run did, one sentence apiece, and the same sentence its owner's alert says. Single
   # templates rather than pools: a deed is rare next to a fight, and the item carries the interest.
   @began ~s({they} chose the {raceEmoji} {raceLabel}, and {welcome} {they} set out as {build} {definition} of {age} seasons, bearing a <span class="adena">🪙 {adena} Adena</span> tribute.)
-  @bought_weapon ~s({they} bought the {emoji} <span class="equipped">{name}</span> for <span class="adena">🪙 {cost} Adena</span> and took it in hand.)
-  @bought_armor ~s({they} bought the {emoji} <span class="equipped">{name}</span> for <span class="adena">🪙 {cost} Adena</span> and donned it.)
-  @ate ~s({they} bought and ate the {emoji} <span class="equipped">{name}</span> for <span class="adena">🪙 {cost} Adena</span>, and {their} strength returned to <span class="hp">{hp} HP</span>.)
+  @bought_gear ~s({they} bought and equipped the {emoji} <span class="item">{name}</span> for <span class="adena">🪙 {cost} Adena</span>.)
+  @ate ~s({they} bought and ate the {emoji} <span class="item">{name}</span> for <span class="adena">🪙 {cost} Adena</span>, and {their} strength returned to <span class="hp">{hp} HP</span>.)
   @levelled ~s({they} reached <span class="level">Level {level}</span>.)
   @heresy ~s(👾 The gods saw {their} heresy, and the Halls closed the book on {object}.)
   @effect_gained ~s({emoji} <span class="{type}">{label}</span> settles over {object}.)
@@ -201,8 +200,7 @@ defmodule MiniLineage.Game.Narratives do
   def voice(mine?), do: Map.fetch!(@voices, mine?)
 
   def began, do: @began
-  def bought_weapon, do: @bought_weapon
-  def bought_armor, do: @bought_armor
+  def bought_gear, do: @bought_gear
   def ate, do: @ate
   def levelled, do: @levelled
   def heresy, do: @heresy

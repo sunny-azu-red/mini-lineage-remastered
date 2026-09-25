@@ -197,9 +197,9 @@ p.last {
     color: var(--text-xp) !important;
 }
 
-/* What it carries. Quieter than the sentence around it: the blade's NAME is not the news, the
+/* An item, worn or eaten. Quieter than the sentence around it: a blade's NAME is not the news, the
    number beside it is. */
-.equipped {
+.item {
     color: var(--text-secondary) !important;
 }
 
@@ -212,6 +212,6 @@ p.last {
     .ambush, .cowards, .date, .timer,
     .defense, .damage,
     .battles, .kills, .players, .purchases,
-    .crit, .xp, .heretics, .equipped) {
+    .crit, .xp, .heretics, .item) {
     font-weight: var(--weight-value);
 }

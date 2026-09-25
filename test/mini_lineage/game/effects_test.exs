@@ -84,17 +84,35 @@ defmodule MiniLineage.Game.EffectsTest do
       assert bought.line =~ "{they} bought and ate the 🌭"
       assert bought.line =~ "for <span class=\"adena\">🪙 60 Adena</span>"
       assert result.text =~ Narrative.alert(bought.line)
-      assert result.text =~ ~s(🥓 <span class="buff">Satisfied</span> settles over you.)
+      # One flowing message, the buff read on as the next sentence rather than broken onto a line.
+      assert result.text =~ ~s(HP</span>. 🥓 <span class="buff">Satisfied</span> settles over you.)
+      refute result.text =~ "\n"
       # The same colours as the chronicle row, because it is the same sentence.
       assert result.text =~ ~s(<span class="hp">)
     end
 
-    test "and about a blade, which also says what it cost" do
-      {armed, result} = Player.purchase(hero(), "weapon", 2)
-      [bought] = Enum.filter(armed.pending_events, &(&1.kind == "purchase"))
+    # "Bought and ate" for a meal, "bought and equipped" for anything worn or wielded.
+    test "and about a blade or an armour, which also say what they cost" do
+      for type <- ["weapon", "armor"] do
+        {armed, result} = Player.purchase(hero(), type, 2)
+        [bought] = Enum.filter(armed.pending_events, &(&1.kind == "purchase"))
 
-      assert bought.line =~ ~r/\{they\} bought the .+ for .+Adena.+ and took it in hand\./
-      assert result.text == Narrative.alert(bought.line)
+        assert bought.line =~
+                 ~r|^\{they\} bought and equipped the .+ <span class="item">.+</span> for <span class="adena">🪙 .+ Adena</span>\.$|
+
+        assert result.text == Narrative.alert(bought.line)
+      end
+    end
+
+    # Refused or not, an alert names the item the same way, so the stylesheet treats both alike.
+    test "and a refusal names the item the way a purchase does" do
+      {_, poor} = Player.purchase(%{hero() | adena: 0}, "food", 4)
+      {_, owned} = Player.purchase(hero(), "weapon", 0)
+
+      assert poor.text ==
+               ~s(You do not have enough 🪙 Adena to buy 🍗 <span class="item">Roasted Pheasant</span>!)
+
+      assert owned.text =~ ~r|^You are already wielding the .+ <span class="item">.+</span>!$|
     end
 
     test "and about the run's beginning, which says who it was" do

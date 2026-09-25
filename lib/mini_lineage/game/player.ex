@@ -392,8 +392,7 @@ defmodule MiniLineage.Game.Player do
     else
       case deduct_cost(player, item.cost) do
         {player, false} ->
-          {player,
-           refusal(item, "You do not have enough 🪙 Adena to buy #{item.emoji} #{item.name}!")}
+          {player, refusal(item, "You do not have enough 🪙 Adena to buy #{named(item)}!")}
 
         {player, true} ->
           Statistics.increment_for(player, :total_adena_spent, item.cost)
@@ -412,9 +411,12 @@ defmodule MiniLineage.Game.Player do
   end
 
   defp owned_text(item, :weapon_id),
-    do: "You are already wielding the #{item.emoji} #{item.name}!"
+    do: "You are already wielding the #{named(item)}!"
 
-  defp owned_text(item, :armor_id), do: "You are already wearing the #{item.emoji} #{item.name}!"
+  defp owned_text(item, :armor_id), do: "You are already wearing the #{named(item)}!"
+
+  # The same markup a purchase's sentence gives an item, so a refusal is styled like one.
+  defp named(item), do: ~s(#{item.emoji} <span class="item">#{item.name}</span>)
 
   defp complete_purchase(player, item, _item_id, nil) do
     effect = effect_of(item)
@@ -431,7 +433,7 @@ defmodule MiniLineage.Game.Player do
     settled =
       if effect,
         do:
-          "\n" <>
+          " " <>
             Narrative.alert(Narrative.build_effect_change(Narratives.effect_gained(), effect)),
         else: ""
 

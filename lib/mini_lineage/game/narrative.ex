@@ -124,8 +124,7 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   @doc "What a purchase leaves behind, which is the thing bought."
-  def build_purchase(:weapon_id, item), do: named(Narratives.bought_weapon(), item)
-  def build_purchase(:armor_id, item), do: named(Narratives.bought_armor(), item)
+  def build_purchase(_slot, item), do: named(Narratives.bought_gear(), item)
 
   def build_meal(item, health),
     do: Narratives.ate() |> named(item) |> Format.fill_template(%{"hp" => Format.number(health)})
