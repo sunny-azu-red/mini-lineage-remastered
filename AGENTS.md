@@ -149,7 +149,8 @@ sidebar value — because the same thing set a step smaller in one place reads a
 thing: an alert set a step under the paragraph above it did, and so did an item at 13px in a shop
 and 12px in the Inventory panel, which left the sidebar out of step with the page. 12px is a
 control, 11px a label — a column's, a field's, a chronicle entry's — set by one rule in `base.css`
-at weight 600 and 0.1em in capitals, each in its own colour and place, or the footer. A field
+at weight 600 and 0.1em in capitals, each in its own colour and place, or the footer. The figures
+inside the HP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A field
 label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender room
 capitals never use, and the one property that centres by letters, `text-box-trim`, is missing from
 Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade 15%", has to fit at

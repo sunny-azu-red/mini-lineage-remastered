@@ -347,6 +347,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     }
 }
 
+/* The one figure off the 13/12/11 scale: an 18px bar has no room for more than 10px. */
 .bar-text {
     line-height: 1;
     position: absolute;
