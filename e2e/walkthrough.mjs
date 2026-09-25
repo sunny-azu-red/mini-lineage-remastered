@@ -469,6 +469,23 @@ try {
     check('...the whole of each one, not only how it ended',
         /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
 
+    // Nothing arrives and silently stops existing: every effect seen settling is seen leaving —
+    // by its timer, by a meal replacing it, or with the run's last breath — and the ending is still
+    // the last line. Holds however the run died. One way only: the window can scroll an arrival out.
+    const entries = await page.locator('#main ol.chronicle li')
+        .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    const unaccounted = entries.flatMap((line, i) => {
+        const label = line.match(/([A-Z][\w' ]+?) settles over you\./)?.[1];
+        if (!label) return [];
+        const left = entries.slice(i + 1).some(later =>
+            later.includes(`${label} leaves you.`) || later.includes(`${label} fades with your last breath.`));
+        return left ? [] : [label];
+    });
+    check('...and every effect it gained, it is seen to lose', unaccounted.length === 0,
+        unaccounted.length ? `never left: ${unaccounted.join(', ')}` : `${entries.length} entries`);
+    check('...with the ending still the last word',
+        await page.locator('#main ol.chronicle li').last().locator('.deaths').count() === 1);
+
     // It arrives folded away — it is the longest thing on the page and the record is what the page
     // is for — and its own header is what opens it.
     check('...folded into a panel of its own until it is asked for',

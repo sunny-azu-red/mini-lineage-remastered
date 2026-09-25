@@ -162,6 +162,7 @@ defmodule MiniLineage.Game.Narratives do
   @heresy ~s(👾 The gods saw {their} heresy, and the Halls closed the book on {object}.)
   @effect_gained ~s({emoji} <strong class="{type}">{label}</strong> settles over {object}.)
   @effect_lapsed ~s({emoji} <strong class="{type}">{label}</strong> leaves {object}.)
+  @effect_ended ~s({emoji} <strong class="{type}">{label}</strong> fades with {their} last breath.)
 
   @moves [
     "Investigate the shimmering lake",
@@ -207,6 +208,7 @@ defmodule MiniLineage.Game.Narratives do
   def heresy, do: @heresy
   def effect_gained, do: @effect_gained
   def effect_lapsed, do: @effect_lapsed
+  def effect_ended, do: @effect_ended
 
   def ambush_low_health, do: @ambush_low_health
   def kill, do: @kill

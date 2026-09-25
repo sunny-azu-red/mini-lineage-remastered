@@ -153,7 +153,7 @@ defmodule MiniLineage.Game.Player do
 
     kept =
       Enum.reject(player.effects, fn e ->
-        (group != nil and e.group == group) or e.id == config.id or
+        (group != nil and e.group == group and e.id != config.id) or
           (e.expires_at != nil and e.expires_at <= now)
       end)
 
@@ -163,7 +163,16 @@ defmodule MiniLineage.Game.Player do
         ms -> now + ms
       end
 
-    %{player | effects: kept ++ [to_active(config, expires_at)]}
+    active = to_active(config, expires_at)
+
+    # Held in the order they arrived, which is the order the chronicle introduced them and the order
+    # they leave in. A refresh logs nothing, so it keeps its place rather than moving to the end.
+    effects =
+      if Enum.any?(kept, &(&1.id == config.id)),
+        do: Enum.map(kept, &if(&1.id == config.id, do: active, else: &1)),
+        else: kept ++ [active]
+
+    %{player | effects: effects}
   end
 
   @doc "Unexpired buffs/debuffs/auras, plus the derived regenerating and ghost auras."

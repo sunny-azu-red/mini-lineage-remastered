@@ -60,4 +60,16 @@ defmodule MiniLineage.Game.EffectsTest do
       assert Enum.any?(player.effects, &(&1.id == hexed.id))
     end
   end
+
+  # The chronicle says effects leave in the order they arrived. A refresh brings no new line, so it
+  # must not move the effect either, or one re-eaten meal would reorder the departures.
+  describe "the order effects are held in" do
+    test "is the order they arrived, and a refresh keeps its place" do
+      hexed = Constants.effect(:ambush_debuff)
+      player = hero() |> fed(2) |> Player.apply_effect(hexed) |> fed(2)
+
+      assert Enum.map(player.effects, & &1.id) |> Enum.reject(&(&1 in ~w(resting combat))) ==
+               ["newbie_blessing", "satisfied", "hexed"]
+    end
+  end
 end

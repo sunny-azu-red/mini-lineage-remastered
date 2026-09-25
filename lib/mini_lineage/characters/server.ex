@@ -188,7 +188,7 @@ defmodule MiniLineage.Characters.Server do
       state =
         %{state | player: player}
         |> log_lapsed(expired)
-        |> drain_events(player)
+        |> log_actions(before, player, expired)
         |> log_gained(before, player)
 
       # A row in the log is written now, whoever caused it: the log is what dates a run in the
@@ -230,6 +230,43 @@ defmodule MiniLineage.Characters.Server do
 
   defp row_for(id, %{kind: "fight", battle: battle}), do: CharacterLog.row(id, battle)
   defp row_for(id, %{kind: kind, line: line, at: at}), do: CharacterLog.event(id, kind, line, at)
+
+  # What the action did, and anything it took away that no timer did — a death empties the list, a
+  # meal replaces a meal. A death's losses go BEFORE the ending and are dated with it, because the
+  # ending is always the chronicle's last line; a replaced meal leaves after the meal that did it.
+  defp log_actions(state, before, now, expired) do
+    lapsed = Enum.map(expired, & &1.id)
+    held = Enum.map(now.effects, & &1.id)
+    taken = deeds(Enum.reject(before.effects, &(&1.id in held or &1.id in lapsed)))
+
+    if now.dead and not before.dead do
+      at = ending_at(now.pending_events)
+
+      state
+      |> log_taken(taken, Narratives.effect_ended(), at)
+      |> drain_events(now)
+    else
+      state
+      |> drain_events(now)
+      |> log_taken(taken, Narratives.effect_lapsed(), Clock.now())
+    end
+  end
+
+  defp log_taken(state, taken, template, at),
+    do: %{
+      state
+      | pending_rows:
+          state.pending_rows ++ Enum.map(taken, &effect_row(state.id, template, &1, at))
+    }
+
+  # The instant the run ended, so what faded with it is dated the same and the log stays in order.
+  defp ending_at(events) do
+    case List.last(events) do
+      %{kind: "fight", battle: %{at: at}} -> at
+      %{at: at} -> at
+      nil -> Clock.now()
+    end
+  end
 
   # Dated when the effect lapsed, not when this process noticed: a run that closed its tab, or a
   # process a deploy stopped, notices late, and the log would otherwise say the wrong time.

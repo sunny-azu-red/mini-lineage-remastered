@@ -212,7 +212,13 @@ NARRATION is declared.
 declares a lapse, so `Server.log_lapsed/2` and `log_gained/3` decide both, and a pass writes in the
 order things happened: lapses first — they were overdue before the pass began — then the action's
 own events, then what the action brought on. A lapse is dated at the effect's `expires_at`, never
-when it was noticed, because a closed tab or a deploy notices late. A run that leaves with a timed
+when it was noticed, because a closed tab or a deploy notices late.
+
+An effect leaves three ways and every one is told: its timer, a meal replacing a meal, or the run
+ending — `kill/1` empties the list. What faded with the run goes BEFORE the ending, dated with it,
+because the ending is always the chronicle's last line. Several leave in the order they arrived,
+the order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
+rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run that leaves with a timed
 buff keeps its process up until the buff lapses, skipping the regen tick while it lingers so an
 absent player never heals. Auras never appear: `sync_zone_auras/1` flips them on nearly every pass.
 

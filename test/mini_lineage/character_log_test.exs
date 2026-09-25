@@ -13,7 +13,7 @@ defmodule MiniLineage.CharacterLogTest do
 
   alias MiniLineage.{CharacterLog, Characters}
   alias MiniLineage.Characters.{Record, Store}
-  alias MiniLineage.Game.{Actions, Constants, Player}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Player}
 
   setup do
     session = Characters.new_session_id()
@@ -149,6 +149,89 @@ defmodule MiniLineage.CharacterLogTest do
       assert_receive {:record_updated, _player, ^id, true}
       assert Enum.any?(CharacterLog.recent(id), &(&1.kind == "effect" and &1.line =~ "leaves"))
     end
+  end
+
+  # An effect leaves by its timer, by the run ending, or by a meal replacing a meal. Only the timer
+  # used to be told; the other two left effects that simply stopped existing.
+  describe "an effect that ends before its time" do
+    test "fades with the run, in the order it arrived, just before the ending", %{
+      session: session
+    } do
+      start_character(session)
+      Characters.mutate(session, fn p -> {%{p | adena: 100_000}, :ok} end)
+      Characters.mutate(session, &Actions.purchase(&1, "food", 2))
+
+      # The clock moves between the ending and the logging of what faded with it, so a line dated
+      # when it was noticed cannot pass for one dated with the end.
+      ended_at = System.system_time(:millisecond) + 1_000
+
+      Characters.mutate(session, fn p ->
+        Clock.put_now(ended_at)
+        result = Actions.suicide(p)
+        Clock.put_now(ended_at + 60_000)
+        result
+      end)
+
+      log = CharacterLog.recent(stored_id(session))
+      [blessing, meal, ending] = Enum.take(log, -3)
+
+      assert ending.kind == "ending"
+      assert blessing.line =~ "Newbie Blessing" and blessing.line =~ "last breath"
+      assert meal.line =~ "Satisfied" and meal.line =~ "last breath"
+      # Simultaneous with the end, and dated so: the log stays in time order.
+      assert ending.at == Clock.to_datetime(ended_at)
+      assert blessing.at == ending.at and meal.at == ending.at
+    end
+
+    test "and a fatal fight is the ending it comes before", %{session: session} do
+      start_character(session)
+
+      Characters.mutate(session, fn p ->
+        dead = Player.kill(p)
+        {Player.log(dead, %{kind: "fight", battle: fatal(dead)}), :ok}
+      end)
+
+      [blessing, fight] = Enum.take(CharacterLog.recent(stored_id(session)), -2)
+
+      # Stored with the pronoun open, like every line in the log.
+      assert blessing.line =~ "Newbie Blessing" and
+               blessing.line =~ "fades with {their} last breath"
+
+      assert fight.kind == "fight" and fight.died
+    end
+
+    test "and a meal that replaces a meal says the first one left", %{session: session} do
+      start_character(session)
+      Characters.mutate(session, fn p -> {%{p | adena: 100_000}, :ok} end)
+      Characters.mutate(session, &Actions.purchase(&1, "food", 2))
+      Characters.mutate(session, &Actions.purchase(&1, "food", 3))
+
+      [ate, left, settled] =
+        stored_id(session) |> CharacterLog.recent() |> Enum.take(-3) |> Enum.map(& &1.line)
+
+      assert ate =~ "Hearty Mash"
+      assert left =~ "Satisfied" and left =~ "leaves"
+      assert settled =~ "Well Fed" and settled =~ "settles"
+    end
+  end
+
+  defp fatal(player) do
+    %{
+      narrative: %{outcome_line: player.death_reason},
+      outcome: %{
+        enemies_killed: 0,
+        hp_lost: 1,
+        damage_blocked: 0,
+        xp_gained: 0,
+        adena_gained: 0,
+        is_critical: false,
+        is_level_up: false
+      },
+      ambushed: false,
+      died: true,
+      sound: "death",
+      at: MiniLineage.Game.Clock.now()
+    }
   end
 
   defp overdue(%{id: "newbie_blessing"} = effect), do: %{effect | expires_at: 1}
