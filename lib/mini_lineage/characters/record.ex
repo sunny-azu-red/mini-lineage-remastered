@@ -17,7 +17,6 @@ defmodule MiniLineage.Characters.Record do
     field :adena, :integer, read_after_writes: true
     field :dead, :boolean, read_after_writes: true
     field :disqualified, :boolean, read_after_writes: true
-    field :last_action_at, :utc_datetime_usec, read_after_writes: true
 
     timestamps(type: :utc_datetime_usec)
   end

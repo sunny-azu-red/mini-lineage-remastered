@@ -27,8 +27,7 @@ defmodule MiniLineageWeb.BackLinksTest do
   # never nil: an id nobody has is a 404 long before anything is rendered.
   defp subject do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Somebody")
-
-    %{player | last_action_at: MiniLineage.Game.Clock.now_ms()}
+    player
   end
 
   defp render(screen, player) do
@@ -47,6 +46,7 @@ defmodule MiniLineageWeb.BackLinksTest do
             id: "somebody",
             name: "Somebody",
             inserted_at: DateTime.utc_now(),
+            last_seen_at: DateTime.utc_now(),
             active: true,
             dead: false
           },

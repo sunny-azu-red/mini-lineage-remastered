@@ -10,7 +10,7 @@ defmodule MiniLineage.Board do
 
   import Ecto.Query
 
-  alias MiniLineage.Characters
+  alias MiniLineage.{CharacterLog, Characters}
   alias MiniLineage.Characters.Record
   alias MiniLineage.Game.{Constants, Math}
   alias MiniLineage.Repo
@@ -53,9 +53,9 @@ defmodule MiniLineage.Board do
 
   @doc "One run by its public id, for its own page. Disqualified runs still render their own."
   def entry(id) do
-    Record
-    |> where([r], r.id == ^id and not is_nil(r.race_id))
+    from(r in Record, as: :row, where: r.id == ^id and not is_nil(r.race_id))
     |> row()
+    |> seen()
     |> Repo.one()
     |> decorate()
   end
@@ -94,16 +94,16 @@ defmodule MiniLineage.Board do
   # One list per filter the screen offers, so a viewer on "Elves" is served by the same push as a
   # viewer on "All" rather than querying for themselves.
   defp compute do
-    overall = top(nil)
+    filters = [nil | Enum.map(Constants.races(), & &1.id)]
+    boards = boards(filters)
+    overall = Map.get(boards, nil, [])
 
     medals =
       overall |> Enum.take(3) |> Enum.with_index(1) |> Map.new(&{elem(&1, 0).id, elem(&1, 1)})
 
     online = Characters.online()
 
-    Constants.races()
-    |> Map.new(&{&1.id, mark(top(&1.id), medals, online)})
-    |> Map.put(nil, mark(overall, medals, online))
+    Map.new(filters, &{&1, mark(Map.get(boards, &1, []), medals, online)})
   end
 
   # Three in the whole game wear a medal, so a lineage's own board shows one only where that
@@ -125,23 +125,58 @@ defmodule MiniLineage.Board do
     end)
   end
 
+  # Every board in ONE statement. It was one query per filter, and a round trip costs more than the
+  # query does: measured at 5.2ms for the five, 2.0ms as one, with the last-seen lookup included.
+  defp boards(filters) do
+    [first | rest] = Enum.map(filters, &from(t in subquery(top(&1)), select: t))
+
+    from(t in subquery(Enum.reduce(rest, first, &union_all(&2, ^&1))), as: :row)
+    |> seen()
+    |> order_by([t], asc: t.board)
+    |> by_rank()
+    |> Repo.all()
+    |> Enum.map(&decorate/1)
+    |> Enum.group_by(& &1.board, &Map.delete(&1, :board))
+  end
+
+  # A subquery per filter, because Ecto hangs a branch's ORDER BY and LIMIT on the whole union.
+  # SQL promises no order out of the union either, which is why `boards/1` sorts again.
   defp top(race_id) do
     ranked()
     |> then(&if race_id, do: where(&1, [r], r.race_id == ^race_id), else: &1)
-    |> order_by([r], desc: r.total_xp, desc: r.adena, asc: r.inserted_at, desc: r.id)
+    |> by_rank()
     |> limit(^Constants.highscores_limit())
     |> row()
-    |> Repo.all()
-    |> Enum.map(&decorate/1)
+    |> select_merge(%{board: type(^race_id, :integer)})
   end
+
+  defp by_rank(query),
+    do: order_by(query, [r], desc: r.total_xp, desc: r.adena, asc: r.inserted_at, desc: r.id)
 
   # A run is ranked once it has chosen a race. A coward's and a cheat's never is — their own page
   # still renders, which is why this is a board rule rather than a deletion.
   defp ranked, do: from(r in Record, where: not is_nil(r.race_id) and r.disqualified == false)
 
+  # When a run was last seen is the date of its last entry in the log, read rather than stored, so
+  # the Halls and the Chronicle cannot disagree about it. A `LIMIT 1` walk backwards down
+  # `(character_id, id)`: 8µs a row, and no deeper for a run that has fought twenty thousand times.
+  defp seen(query) do
+    last =
+      from(l in CharacterLog.Entry,
+        where: l.character_id == parent_as(:row).id,
+        order_by: [desc: l.id],
+        limit: 1,
+        select: %{at: l.inserted_at}
+      )
+
+    query
+    |> join(:left_lateral, [], l in subquery(last), on: true)
+    |> select_merge([r, ..., l], %{last_seen_at: coalesce(l.at, r.inserted_at)})
+  end
+
   # A plain map, never a %Record{}: the struct carries `session_id`, and an entry holding the key
   # at all is one `Repo.all(Record)` from carrying the secret. `active` says whether there is a
-  # session, never what it is, and the date is the last ACTION rather than the last write.
+  # session, never what it is.
   defp row(query) do
     select(query, [r], %{
       id: r.id,
@@ -152,7 +187,6 @@ defmodule MiniLineage.Board do
       dead: r.dead,
       disqualified: r.disqualified,
       inserted_at: r.inserted_at,
-      last_action_at: r.last_action_at,
       active: not is_nil(r.session_id)
     })
   end

@@ -36,8 +36,7 @@ defmodule MiniLineage.Characters.Serde do
       "total_enemies_killed" => p.total_enemies_killed,
       "effects" => Enum.map(p.effects, &effect_to_map/1),
       "current_screen" => p.current_screen,
-      "combat_until" => p.combat_until,
-      "last_action_at" => p.last_action_at
+      "combat_until" => p.combat_until
       # `last_battle_narrative` is deliberately absent: it lives in character_log now, and was half
       # the bytes of every save. The process rehydrates it from there when it starts.
     }
@@ -67,8 +66,7 @@ defmodule MiniLineage.Characters.Serde do
       total_enemies_killed: m["total_enemies_killed"] || 0,
       effects: Enum.map(m["effects"] || [], &effect_from_map/1),
       current_screen: m["current_screen"],
-      combat_until: m["combat_until"],
-      last_action_at: m["last_action_at"]
+      combat_until: m["combat_until"]
     }
   end
 

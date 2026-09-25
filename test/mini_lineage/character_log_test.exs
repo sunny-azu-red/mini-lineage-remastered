@@ -130,7 +130,29 @@ defmodule MiniLineage.CharacterLogTest do
       Characters.mutate(session, &Actions.fight/1)
       assert_receive {:record_updated, _player, ^id, true}
     end
+
+    # Nobody DID anything when a buff lapses, so it used to be buffered like regen: the row waited
+    # for the next action or the silent backstop, and a watcher only saw it after reloading.
+    test "says so when a buff lapses on its own, with nobody acting", %{session: session} do
+      start_character(session)
+      id = stored_id(session)
+
+      # Before the mutate: once the blessing is overdue, its own expiry timer may lapse it at once.
+      Phoenix.PubSub.subscribe(MiniLineage.PubSub, Characters.record_topic(id))
+
+      Characters.mutate(session, fn p ->
+        {%{p | effects: Enum.map(p.effects, &overdue/1)}, :ok}
+      end)
+
+      Characters.snapshot(session)
+
+      assert_receive {:record_updated, _player, ^id, true}
+      assert Enum.any?(CharacterLog.recent(id), &(&1.kind == "effect" and &1.line =~ "leaves"))
+    end
   end
+
+  defp overdue(%{id: "newbie_blessing"} = effect), do: %{effect | expires_at: 1}
+  defp overdue(effect), do: effect
 
   describe "the whole chronicle" do
     test "is every fight of one run, oldest first", %{session: session} do

@@ -17,15 +17,7 @@ defmodule MiniLineageWeb.BlessingsTest do
   # and a fixture that kept it would answer every claim below with the same paragraph.
   defp bearer(effects) do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Wretch")
-    # `last_action_at` because the record stamps a road with it, and a player built by hand has
-    # never been through the character server that sets one.
-    player = %{
-      player
-      | current_screen: "home",
-        health: 10,
-        effects: [],
-        last_action_at: MiniLineage.Game.Clock.now_ms()
-    }
+    player = %{player | current_screen: "home", health: 10, effects: []}
 
     Enum.reduce(effects, player, &Player.apply_effect(&2, Constants.effect(&1)))
   end
@@ -42,6 +34,7 @@ defmodule MiniLineageWeb.BlessingsTest do
       entry: %{
         id: "x",
         inserted_at: DateTime.utc_now(),
+        last_seen_at: DateTime.utc_now(),
         dead: player.dead,
         active: Keyword.get(opts, :held, true)
       },

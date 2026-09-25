@@ -124,7 +124,7 @@ defmodule MiniLineageWeb.Screens.Halls do
           @row.adena
         )}</span>
       </td>
-      <td><.stamp id={"seen-#{@row.id}"} at={@row.last_action_at} /></td>
+      <td><.stamp id={"seen-#{@row.id}"} at={@row.last_seen_at} /></td>
     </tr>
     """
   end

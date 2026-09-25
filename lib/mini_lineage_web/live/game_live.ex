@@ -359,9 +359,13 @@ defmodule MiniLineageWeb.GameLive do
         socket
 
       _ ->
+        last = List.last(added)
+
+        # The road above the panel is dated by the same entry, so it moves with the chronicle.
         assign(socket,
+          record: %{socket.assigns.record | last_seen_at: last.at},
           record_log: socket.assigns.record_log ++ added,
-          record_log_cursor: cursor(added)
+          record_log_cursor: last.id
         )
     end
   end

@@ -31,14 +31,6 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
         generated:
           "ALWAYS AS (((state->>'coward')::boolean) OR ((state->>'cheated')::boolean)) STORED"
 
-      # What the Halls date a run by, and not `updated_at`: the row is written for the passage of
-      # time too — a regenerating tick the backstop flushes, the last flush as a tab closes — and
-      # none of that is something anybody did. Stored as epoch milliseconds the way `combat_until`
-      # is, because text::timestamptz is STABLE and Postgres refuses it in a generated column.
-      add :last_action_at, :timestamptz,
-        generated:
-          "ALWAYS AS (to_timestamp(((state->>'last_action_at')::bigint) / 1000.0)) STORED"
-
       timestamps(type: :timestamptz)
     end
 

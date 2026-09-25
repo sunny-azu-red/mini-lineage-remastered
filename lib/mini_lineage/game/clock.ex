@@ -14,7 +14,10 @@ defmodule MiniLineage.Game.Clock do
   Built from microseconds because the log's timestamps are `:utc_datetime_usec`, and Ecto refuses
   a coarser one rather than padding it.
   """
-  def now, do: DateTime.from_unix!(now_ms() * 1_000, :microsecond)
+  def now, do: to_datetime(now_ms())
+
+  @doc "An epoch-millisecond instant, such as an effect's `expires_at`, as the log dates it."
+  def to_datetime(ms), do: DateTime.from_unix!(ms * 1_000, :microsecond)
 
   def now_ms do
     case Process.get(@key) do

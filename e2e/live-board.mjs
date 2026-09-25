@@ -167,6 +167,15 @@ try {
     check('...and a purchase reaches them as a fight does, being just as much a deed', reached,
         `${heldBefore} -> ${await lines()} line(s)`);
 
+    // The road above the panel is dated by the chronicle's last entry, and moves with it: two dates
+    // for one fact is how "last carried them on" came to disagree with the log beneath it.
+    const dates = await watcher.evaluate(() => ({
+        road: document.querySelector('#record-last')?.dateTime,
+        last: [...document.querySelectorAll('#main ol.chronicle li time')].at(-1)?.dateTime,
+    }));
+    check('...and the road is dated by that same entry, as it arrives', !!dates.road && dates.road === dates.last,
+        `road ${dates.road} · last entry ${dates.last}`);
+
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window
     // would be comparing two different moments of a live game.

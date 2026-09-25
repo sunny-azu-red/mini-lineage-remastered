@@ -5,7 +5,7 @@ defmodule MiniLineage.CharactersTest do
   """
   use MiniLineage.DataCase, async: false
 
-  alias MiniLineage.{Board, Characters}
+  alias MiniLineage.{Board, CharacterLog, Characters}
   alias MiniLineage.Characters.{Record, Store, Sweeper}
   alias MiniLineage.Game.{Constants, Player}
 
@@ -119,7 +119,53 @@ defmodule MiniLineage.CharactersTest do
 
   test "a character with no viewers stops on its own once the grace period elapses", %{id: id} do
     start_character(id)
+    Characters.mutate(id, &{%{&1 | effects: []}, :ok})
 
+    {pid, ref} = leave(id)
+
+    # State is already persisted, so stopping loses nothing.
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
+    assert Characters.snapshot(id).name == "Hero"
+  end
+
+  # Otherwise a buff lapsing after the tab closed would be logged whenever the player came back,
+  # or never, while a stranger's page had already stopped showing it.
+  test "but one with a buff still to lapse stays up to write it, and then stops", %{id: id} do
+    start_character(id)
+    lapses_at = System.system_time(:millisecond) + 400
+
+    Characters.mutate(
+      id,
+      &{%{&1 | effects: Enum.map(&1.effects, fn e -> lapsing(e, lapses_at) end)}, :ok}
+    )
+
+    {pid, ref} = leave(id)
+
+    refute_receive {:DOWN, ^ref, :process, ^pid, _}, 250
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
+
+    character = Characters.character_id(id)
+
+    assert Enum.any?(
+             CharacterLog.recent(character),
+             &(&1.kind == "effect" and &1.line =~ "leaves")
+           )
+  end
+
+  # Kept up for a lapse, it is still a player who has gone: nobody heals while they are away.
+  test "and does not heal the player while it waits", %{id: id} do
+    start_character(id)
+    Characters.mutate(id, &{%{&1 | health: 10}, :ok})
+
+    {pid, ref} = leave(id)
+    refute_receive {:DOWN, ^ref, :process, ^pid, _}, 250
+
+    send(pid, :tick)
+    assert :sys.get_state(pid).player.health == 10
+  end
+
+  # Attach a viewer and let it go, which is what arms the stop.
+  defp leave(id) do
     viewer = spawn(fn -> receive do: (:stop -> :ok) end)
     Characters.attach(id, viewer)
 
@@ -127,10 +173,11 @@ defmodule MiniLineage.CharactersTest do
     ref = Process.monitor(pid)
     send(viewer, :stop)
 
-    # State is already persisted, so stopping loses nothing.
-    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
-    assert Characters.snapshot(id).name == "Hero"
+    {pid, ref}
   end
+
+  defp lapsing(%{id: "newbie_blessing"} = effect, at), do: %{effect | expires_at: at}
+  defp lapsing(effect, _at), do: effect
 
   test "an unstarted character is never persisted, and never invents a health value", %{id: id} do
     # Elixir orders nil above every number, so the max-health clamp used to fire on nil health

@@ -50,6 +50,7 @@ defmodule MiniLineage.Characters.Server do
       expiry_timer: nil,
       viewers: %{},
       stop_timer: nil,
+      lingering: false,
       dirty_since: nil,
       pending_rows: []
     }
@@ -81,7 +82,7 @@ defmodule MiniLineage.Characters.Server do
 
   def handle_call({:attach, pid}, _from, state) do
     ref = Process.monitor(pid)
-    state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid)})
+    state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid), lingering: false})
 
     {:reply, :ok, publish(state)}
   end
@@ -92,12 +93,21 @@ defmodule MiniLineage.Characters.Server do
   def handle_info(:tick, state) do
     schedule_tick()
 
-    {:noreply, state |> backstop() |> on_timer(&Player.process_regen_tick/1)}
+    # Nobody heals while they are away: a process kept up only for a buff to lapse must not start
+    # regenerating a player who closed the tab minutes ago.
+    state = backstop(state)
+
+    {:noreply,
+     if(state.lingering, do: state, else: on_timer(state, &Player.process_regen_tick/1))}
   end
 
   def handle_info(:expiry, state) do
     # The sweep itself lives in run/2; this firing exists purely to make it happen on time.
-    {:noreply, on_timer(%{state | expiry_timer: nil}, &{&1, :ok})}
+    state = on_timer(%{state | expiry_timer: nil}, &{&1, :ok})
+
+    if state.lingering and not awaiting_lapse?(state.player),
+      do: {:stop, :normal, state},
+      else: {:noreply, state}
   end
 
   def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
@@ -107,8 +117,13 @@ defmodule MiniLineage.Characters.Server do
     {:noreply, if(map_size(viewers) == 0, do: schedule_stop(state), else: state)}
   end
 
-  def handle_info(:stop_if_idle, %{viewers: viewers} = state) when map_size(viewers) == 0,
-    do: {:stop, :normal, state}
+  # A buff still to lapse keeps it up until it does, so the lapse is written when it happens and
+  # pushed to whoever is reading, rather than whenever the player next comes back.
+  def handle_info(:stop_if_idle, %{viewers: viewers} = state) when map_size(viewers) == 0 do
+    if awaiting_lapse?(state.player),
+      do: {:noreply, %{state | stop_timer: nil, lingering: true}},
+      else: {:stop, :normal, state}
+  end
 
   def handle_info(:stop_if_idle, state), do: {:noreply, %{state | stop_timer: nil}}
 
@@ -132,7 +147,17 @@ defmodule MiniLineage.Characters.Server do
   defp backstop(%{dirty_since: nil} = state), do: state
 
   defp backstop(state) do
-    if Clock.now_ms() - state.dirty_since >= @backstop_ms, do: persist(state), else: state
+    if Clock.now_ms() - state.dirty_since >= @backstop_ms, do: retry(state), else: state
+  end
+
+  # Rows only wait here when a write failed. Once they land, a watcher has to hear about them.
+  defp retry(state) do
+    written = persist(state)
+
+    if state.pending_rows != [] and written.pending_rows == [],
+      do: broadcast(written.session, written.player, written.id, true)
+
+    written
   end
 
   defp flush_pending(%{dirty_since: nil} = state), do: state
@@ -156,21 +181,21 @@ defmodule MiniLineage.Characters.Server do
     if opts[:log], do: TickLog.write(state.id, player, health_before, expired, changed?)
 
     if changed? do
-      # Decided BEFORE the stamp is applied, or the stamp — which is not buffered — would itself
-      # make every tick look like an action.
       acted? = flush?(before, player)
-      player = if acted?, do: %{player | last_action_at: Clock.now_ms()}, else: player
 
+      # In the order they happened: a lapse was already overdue when this pass began, and a buff
+      # the action brought settles after it.
       state =
         %{state | player: player}
+        |> log_lapsed(expired)
         |> drain_events(player)
-        |> log_effects(before, player, expired)
+        |> log_gained(before, player)
 
-      # Whether anything reached the log this pass, captured before `persist/1` clears the buffer.
-      # A watcher reads its chronicle on the strength of it, and guessing from the tallies missed
-      # every deed that is not a fight.
-      wrote? = acted? and state.pending_rows != []
-      state = if acted?, do: persist(state), else: mark(state)
+      # A row in the log is written now, whoever caused it: the log is what dates a run in the
+      # Halls and on its own page, and somebody may be watching it.
+      pending? = state.pending_rows != []
+      state = if acted? or pending?, do: persist(state), else: mark(state)
+      wrote? = pending? and state.pending_rows == []
 
       # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
       # write, though — a record being watched answers the push by reading its chronicle back, and
@@ -206,36 +231,41 @@ defmodule MiniLineage.Characters.Server do
   defp row_for(id, %{kind: "fight", battle: battle}), do: CharacterLog.row(id, battle)
   defp row_for(id, %{kind: kind, line: line, at: at}), do: CharacterLog.event(id, kind, line, at)
 
-  # Onto the state and never onto the player: an effect lapsing is the passage of time, and a
-  # pending event outside `@buffered` would turn every expiring buff into a write of its own.
-  #
-  # After whatever the action logged, so a buff settles over somebody after the meal that brought
-  # it. Auras are not deeds — `sync_zone_auras/1` flips them on nearly every pass, and logging
-  # them would drown everything else in 💤 and ⚔️.
-  defp log_effects(state, before, now, expired) do
+  # Dated when the effect lapsed, not when this process noticed: a run that closed its tab, or a
+  # process a deploy stopped, notices late, and the log would otherwise say the wrong time.
+  defp log_lapsed(state, expired) do
+    rows =
+      Enum.map(deeds(expired), fn effect ->
+        lapsed_at = Clock.to_datetime(effect.expires_at)
+        effect_row(state.id, Narratives.effect_lapsed(), effect, lapsed_at)
+      end)
+
+    %{state | pending_rows: state.pending_rows ++ rows}
+  end
+
+  # Auras are not deeds: `sync_zone_auras/1` flips them on nearly every pass, and logging them would
+  # drown everything else in 💤 and ⚔️.
+  defp log_gained(state, before, now) do
     held = Enum.map(before.effects, & &1.id)
-    gained = Enum.reject(now.effects, &(&1.id in held))
 
     rows =
-      Enum.map(deeds(gained), &effect_row(state.id, Narratives.effect_gained(), &1)) ++
-        Enum.map(deeds(expired), &effect_row(state.id, Narratives.effect_lapsed(), &1))
+      now.effects
+      |> Enum.reject(&(&1.id in held))
+      |> deeds()
+      |> Enum.map(&effect_row(state.id, Narratives.effect_gained(), &1, Clock.now()))
 
     %{state | pending_rows: state.pending_rows ++ rows}
   end
 
   # The Cheater's Mark is left out: the heresy has a line of its own that says it better, and it
   # never lapses, so this would only ever repeat that one.
+  defp awaiting_lapse?(player), do: Enum.any?(deeds(player.effects), &(&1.expires_at != nil))
+
   defp deeds(effects),
     do: Enum.filter(effects, &(&1.type in [:buff, :debuff] and &1.id != "konami_cheat"))
 
-  defp effect_row(id, template, effect),
-    do:
-      CharacterLog.event(
-        id,
-        "effect",
-        Narrative.build_effect_change(template, effect),
-        Clock.now()
-      )
+  defp effect_row(id, template, effect, at),
+    do: CharacterLog.event(id, "effect", Narrative.build_effect_change(template, effect), at)
 
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state

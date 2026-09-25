@@ -68,8 +68,7 @@ defmodule MiniLineage.Game.Snapshot do
       consecutive_ambushes: 0,
       total_enemies_killed: 0
     },
-    last_battle: nil,
-    last_action_at: nil
+    last_battle: nil
   }
 
   def build(player) do
@@ -120,18 +119,9 @@ defmodule MiniLineage.Game.Snapshot do
         consecutive_ambushes: player.consecutive_ambushes,
         total_enemies_killed: player.total_enemies_killed
       },
-      last_battle: player.last_battle_narrative,
-      # The record's own date. Carried here rather than read back off the row, so a record that is
-      # being watched live restamps itself without a query.
-      last_action_at: at(player.last_action_at)
+      last_battle: player.last_battle_narrative
     }
   end
-
-  # The stamp is stored as epoch milliseconds, the way `combat_until` is; the template wants a
-  # DateTime. A player who has never been through the character server — one built in a test —
-  # carries no stamp, and a view can be built for them bar the screens that show one.
-  defp at(nil), do: nil
-  defp at(ms), do: DateTime.from_unix!(ms, :millisecond)
 
   defp effect_view(effect) do
     %{

@@ -87,7 +87,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
       <p>
-        <.road entry={@entry} at={@view.last_action_at} voice={@voice} />
+        <.road entry={@entry} at={@entry && @entry.last_seen_at} voice={@voice} />
         {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
         <Controls.counted
           key="rec-battles"

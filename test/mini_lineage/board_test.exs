@@ -9,9 +9,9 @@ defmodule MiniLineage.BoardTest do
   """
   use MiniLineage.DataCase, async: false
 
-  alias MiniLineage.{Board, Characters}
+  alias MiniLineage.{Board, CharacterLog, Characters}
   alias MiniLineage.Characters.{Record, Store}
-  alias MiniLineage.Game.{Constants, Player}
+  alias MiniLineage.Game.{Actions, Constants, Player}
 
   setup do
     Repo.query!("DELETE FROM character_log")
@@ -180,45 +180,38 @@ defmodule MiniLineage.BoardTest do
     end
   end
 
+  # When a run was last seen is its last entry in the log, read rather than stored, so the Halls,
+  # the record's own road and the bottom of its Chronicle cannot disagree about it.
   describe "the date a row shows" do
-    test "is when the run was last played, not when the character was born" do
-      %{id: id, session: session} = run("Aging", xp: 10)
-      %{inserted_at: born, last_action_at: at_birth} = Board.entry(id)
+    test "is the run's last entry in the log" do
+      %{id: id, session: session} = played("Logged")
+      Characters.mutate(session, &Actions.fight/1)
 
-      # Time passes, then the run ends. The old board stamped its rows when a legacy was written;
-      # `inserted_at` on a character means something else entirely — the day it was rolled.
-      Process.sleep(1_100)
-      Characters.mutate(session, &{%{&1 | dead: true, experience: 900}, :ok})
-      on_exit(fn -> Characters.forget(session) end)
+      assert Board.entry(id).last_seen_at == List.last(CharacterLog.recent(id)).at
+    end
 
+    test "and a run with nothing logged yet is dated by its birth" do
+      %{id: id} = run("Unwritten", xp: 10)
       entry = Board.entry(id)
 
-      # Each read compared against itself, never against the other: ordering the played date
-      # against the born one asks whether two wall-clock readings a second apart came back in
-      # order, and on a machine whose clock steps they do not. Moving forward is the next test's.
-      assert entry.inserted_at == born
-      refute entry.last_action_at == at_birth
+      assert entry.last_seen_at == entry.inserted_at
     end
 
     test "and archiving the run does not move it" do
-      %{id: id, session: session} = run("Done", xp: 10, dead: true)
-      ended = Board.entry(id).last_action_at
+      %{id: id, session: session} = played("Done")
+      ended = Board.entry(id).last_seen_at
 
       Characters.archive(session)
-      on_exit(fn -> Characters.forget(session) end)
 
       # Retiring is bookkeeping, not play — it must not restamp a finished run.
-      assert Board.entry(id).last_action_at == ended
+      assert Board.entry(id).last_seen_at == ended
     end
 
-    test "and neither does the passage of time, nor a tab closing on it" do
-      # The row is written for plenty that nobody did: a regenerating tick the backstop flushes,
-      # and the final flush when a process stops. A character sitting on its own death screen was
-      # moving its own date of death.
-      %{id: id, session: session} = run("Resting", xp: 10)
-      Characters.mutate(session, &{%{&1 | experience: 20}, :ok})
-      acted = Board.entry(id).last_action_at
-      on_exit(fn -> Characters.forget(session) end)
+    test "and neither does regeneration, nor a tab closing on it" do
+      # The row is written for plenty the log never hears of: a regenerating tick the backstop
+      # flushes, and the final flush when a process stops.
+      %{id: id, session: session} = played("Resting")
+      seen = Board.entry(id).last_seen_at
 
       written = fn -> Repo.one(from r in Record, where: r.id == ^id, select: r.updated_at) end
       before_write = written.()
@@ -226,29 +219,56 @@ defmodule MiniLineage.BoardTest do
 
       # `health` is buffered — the passage of time, which is the tick's whole business.
       Characters.mutate(session, &{%{&1 | health: &1.health - 1}, :ok})
-      assert Board.entry(id).last_action_at == acted
-
-      # Stopping flushes that buffered state, so the ROW moves and the DATE must not.
       Characters.forget_process(session)
 
-      assert Board.entry(id).last_action_at == acted
+      assert Board.entry(id).last_seen_at == seen
 
       assert DateTime.compare(written.(), before_write) == :gt,
              "the row must still have been written, or this proves nothing"
     end
 
-    test "but doing something does move it" do
-      %{id: id, session: session} = run("Busy", xp: 10)
-      Characters.mutate(session, &{%{&1 | experience: 20}, :ok})
-      first = Board.entry(id).last_action_at
-      on_exit(fn -> Characters.forget(session) end)
+    test "but a deed moves it" do
+      %{id: id, session: session} = played("Busy")
+      first = Board.entry(id).last_seen_at
 
       Process.sleep(20)
-      Characters.mutate(session, &{%{&1 | adena: &1.adena + 5}, :ok})
+      Characters.mutate(session, &Actions.fight/1)
 
-      assert DateTime.compare(Board.entry(id).last_action_at, first) == :gt
+      assert DateTime.compare(Board.entry(id).last_seen_at, first) == :gt
+    end
+
+    # Nobody did anything, but the log says it happened, so the Halls say so too — and at the moment
+    # the buff actually lapsed, not whenever the process got round to noticing.
+    test "and so does a buff wearing off, dated when it wore off" do
+      %{id: id, session: session} = played("Faded")
+      lapsed_at = 1_758_000_000_000
+
+      Characters.mutate(session, fn p ->
+        {%{p | effects: Enum.map(p.effects, &overdue(&1, lapsed_at))}, :ok}
+      end)
+
+      Characters.snapshot(session)
+
+      assert Board.entry(id).last_seen_at == DateTime.from_unix!(lapsed_at * 1000, :microsecond)
     end
   end
+
+  # A run started through its own process, which is what writes a log: `run/2` goes straight to the
+  # store and has none.
+  defp played(name) do
+    session = Characters.new_session_id()
+    on_exit(fn -> Characters.forget(session) end)
+
+    Characters.mutate(session, fn p ->
+      {p, _} = Player.initialize(p, Constants.race(0), name)
+      {%{p | current_screen: "battle", health: 5_000}, :ok}
+    end)
+
+    %{id: Characters.character_id(session), session: session}
+  end
+
+  defp overdue(%{id: "newbie_blessing"} = effect, at), do: %{effect | expires_at: at}
+  defp overdue(effect, _at), do: effect
 
   describe "whether a run is still being played" do
     test "is on the row itself, so the board can style it", %{} do
