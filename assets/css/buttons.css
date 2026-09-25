@@ -94,7 +94,7 @@
     height: 1px;
     background: linear-gradient(90deg,
             transparent,
-            rgba(201, 168, 76, 0.5),
+            color-mix(in srgb, var(--gold) 50%, transparent),
             transparent);
     pointer-events: none;
 }
@@ -104,7 +104,7 @@
     background: linear-gradient(180deg, #504959 0%, #3a3541 100%);
     border-color: var(--gold-dim);
     box-shadow:
-        0 0 0 2px rgba(201, 168, 76, 0.15),
+        0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.35);
     text-decoration: none;
 }
@@ -132,7 +132,7 @@
     background: linear-gradient(180deg, #232027 0%, #2c2832 100%);
     border-color: var(--gold-dim);
     box-shadow:
-        0 0 0 2px rgba(201, 168, 76, 0.2),
+        0 0 0 2px color-mix(in srgb, var(--gold) 20%, transparent),
         inset 0 2px 4px rgba(0, 0, 0, 0.4);
     /* Instant feedback */
     transition: none;
@@ -156,7 +156,7 @@
 .btn-danger::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(228, 76, 59, 0.5),
+            color-mix(in srgb, var(--glow-hp) 50%, transparent),
             transparent);
 }
 
@@ -164,7 +164,7 @@
     background: linear-gradient(180deg, #64233b 0%, #461728 100%);
     border-color: var(--glow-hp);
     box-shadow:
-        0 0 0 2px rgba(228, 76, 59, 0.15),
+        0 0 0 2px color-mix(in srgb, var(--glow-hp) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
@@ -172,7 +172,7 @@
     background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
     border-color: var(--border-danger);
     box-shadow:
-        0 0 0 2px rgba(190, 39, 31, 0.2),
+        0 0 0 2px color-mix(in srgb, var(--bar-hp) 20%, transparent),
         inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -187,7 +187,7 @@
 .btn-secondary::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(101, 94, 110, 0.35),
+            color-mix(in srgb, var(--border-arcane-bright) 35%, transparent),
             transparent);
 }
 
@@ -204,7 +204,7 @@
 
     border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(101, 94, 110, 0.15),
+        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -213,7 +213,7 @@
     background: linear-gradient(180deg, #141315 0%, #1b191e 100%);
     border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(101, 94, 110, 0.2),
+        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 20%, transparent),
         inset 0 2px 3px rgba(0, 0, 0, 0.35);
 }
 

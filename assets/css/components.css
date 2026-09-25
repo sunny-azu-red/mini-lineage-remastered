@@ -166,11 +166,11 @@
 }
 
 .effect-icon.effect-buff {
-    filter: drop-shadow(0 0 4px rgba(15, 190, 110, 0.2));
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-success) 20%, transparent));
 }
 
 .effect-icon.effect-debuff {
-    filter: drop-shadow(0 0 4px rgba(255, 129, 100, 0.3));
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-danger) 30%, transparent));
 }
 
 @keyframes effect-fade-in {
@@ -255,11 +255,11 @@ ol.chronicle li:last-child::after {
 
     0%,
     100% {
-        background-color: rgba(146, 43, 33, 0.15);
+        background-color: color-mix(in srgb, var(--wash-danger) 75%, transparent);
     }
 
     50% {
-        background-color: rgba(190, 39, 31, 0.25);
+        background-color: color-mix(in srgb, var(--bar-hp) 25%, transparent);
     }
 }
 
@@ -310,14 +310,14 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 
 .hp-bar {
     background: linear-gradient(90deg, var(--bar-hp) 0%, var(--glow-hp) 100%);
-    box-shadow: 0 0 8px rgba(228, 76, 59, 0.4);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--glow-hp) 40%, transparent);
     position: relative;
     overflow: hidden;
 }
 
 .xp-bar {
     background: linear-gradient(90deg, var(--bar-xp) 0%, var(--glow-xp) 100%);
-    box-shadow: 0 0 8px rgba(194, 84, 200, 0.4);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--glow-xp) 40%, transparent);
     position: relative;
     overflow: hidden;
 }
@@ -392,7 +392,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 }
 
 .alert-warning {
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(122, 98, 48, 0.35) 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 25%, transparent) 0%, color-mix(in srgb, var(--gold-dim) 35%, transparent) 100%);
     border-color: var(--gold);
     color: var(--text-warning);
 }

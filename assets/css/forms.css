@@ -33,7 +33,7 @@
 .form-input:hover,
 .form-input:focus {
     border-color: var(--gold-dim);
-    box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.15);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
 /* Keyboard focus, matching .btn:focus-visible. Must stay AFTER the :focus rule above — identical

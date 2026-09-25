@@ -61,6 +61,9 @@
     --gold: #c9a84c;
     --gold-hover: #e8c46a;
     --gold-dim: #7a6230;
+    /* The banner title's metal, lit at the top and shadowed at the foot. */
+    --gold-light: #e8d5a0;
+    --gold-deep: #8a6a28;
 
     /* ===== Text =====
      * Three steps of prose: one hue at one saturation, differing only in lightness, because
@@ -98,10 +101,10 @@
     --text-info: #7aa4ff;
 
     /* ===== Washes =====
-     * A hex custom property cannot be alpha'd in plain CSS, so each is its own colour spelled out:
-     * a row the Halls marks, an alert's ground, the focus ring. */
-    --wash-success: rgba(0, 161, 82, 0.13);
-    --wash-gold: rgba(201, 168, 76, 0.14);
+     * A ground rather than a voice: a row the Halls marks, an alert's. Drawn from its family's token
+     * where it has one, so the two cannot drift; the danger and info grounds have none. */
+    --wash-success: color-mix(in srgb, var(--border-success) 13%, transparent);
+    --wash-gold: color-mix(in srgb, var(--gold) 14%, transparent);
     --wash-danger: rgba(146, 43, 33, 0.2);
     --wash-info: rgba(46, 70, 116, 0.3);
     --focus-ring-color: rgba(201, 168, 76, 0.45);

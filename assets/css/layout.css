@@ -44,7 +44,7 @@
      * in. The banner is still the brightest surface on the page and still the only coloured one —
      * the colour is arcane now rather than blue. */
     background: linear-gradient(135deg,
-            #0f0e11 0%,
+            var(--bg-deep) 0%,
             #201e24 30%,
             #34303b 60%,
             #232027 100%);
@@ -79,12 +79,12 @@
     transform: translateX(-50%);
     width: 340px;
     height: 140px;
-    background: radial-gradient(ellipse, rgba(201, 168, 76, 0.07) 0%, transparent 70%);
+    background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 7%, transparent) 0%, transparent 70%);
     pointer-events: none;
 }
 
 .header-emblem {
-    width: auto;
+    color: var(--gold);
     height: 60px;
     flex-shrink: 0;
 }
@@ -94,7 +94,7 @@
     font-size: 26px;
     font-weight: 700;
     letter-spacing: 0.12em;
-    background: linear-gradient(180deg, #e8d5a0 0%, var(--gold) 50%, #8a6a28 100%);
+    background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-deep) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
