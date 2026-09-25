@@ -24,14 +24,10 @@
    band at this size, and gold is barely lighter than the names. */
 .data-table th {
     background: var(--table-lift);
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.1em;
     /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
        column's own padding is a label hanging over the wrong edge. */
     padding: 6px 10px 4px 10px;
     text-align: left;
-    text-transform: uppercase;
     border-bottom: 1px solid var(--border-soft);
 }
 

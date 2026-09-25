@@ -226,6 +226,10 @@
 .status-panel .stat-row {
     display: grid;
     grid-template-columns: 46px 1fr;
+    /* A bar's height, so a row of text is no shorter than a row holding a bar, and one padding for
+       all: a bar row's own smaller padding had been doing that job by hand. */
+    grid-template-rows: minmax(18px, auto);
+    padding-block: 10px;
     align-items: center;
     gap: 10px;
 }
@@ -266,10 +270,6 @@ ol.chronicle li:last-child::after {
     }
 }
 
-.stat-row.bar {
-    padding: 10px 12px;
-}
-
 /* A row in danger, and an entry that ended in an ambush: one mark, in two places. Nothing to round,
    nothing to pad or pull back — the row keeps exactly the shape it has when nothing is wrong, which
    is the point: going low should colour a row, not move it.
@@ -293,17 +293,13 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     animation: danger-pulse .5s ease-in-out infinite;
 }
 
-/* Set as a table's header is — a field's label and a column's are the same kind of thing — bar the
- * colour, which stays quieter than the value beside it. */
+/* Quieter than the value beside it. The nudge is optical: capitals centred by their box sit high,
+   the box keeping descender room they never use. */
 .stat-label {
-    font-size: 11px;
-    font-weight: 600;
     color: var(--text-secondary);
     text-align: right;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
     line-height: 1;
-    margin-top: 1px;
+    margin-top: 2px;
 }
 
 /* The body's size, not a compact one: a value is read, wherever it stands. */
@@ -570,15 +566,9 @@ ol.chronicle li.purchase {
     background-color: var(--wash-success);
 }
 
-/* When, and what kind of thing: a label over the entry, so the size of one and none of the weight
- * a value inside a sentence carries. */
+/* When, and what kind of thing: a label over the entry, set as every label is, in the date's colour. */
 ol.chronicle .entry-head {
-    font-size: 11px;
     color: var(--text-muted);
-}
-
-ol.chronicle .entry-head .date {
-    font-weight: 400;
 }
 
 ol.chronicle li {

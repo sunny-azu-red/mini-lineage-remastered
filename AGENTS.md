@@ -145,11 +145,14 @@ it is symmetric by definition, and the correction is not.
 sidebar value — because the same thing set a step smaller in one place reads as a different kind of
 thing: an alert set a step under the paragraph above it did, and so did an item at 13px in a shop
 and 12px in the Inventory panel, which left the sidebar out of step with the page. 12px is a
-control, 11px a label — a column's or a field's, set alike at weight 600 and 0.1em, the field's in a
-quieter colour — or the footer. The sidebar is 210px because its widest row, "💀 The Forgotten Blade
-15%", has to fit at 13px with room for the Verdana fallback and a wider emoji font; widen it before
-shrinking a value. The headings run h1 for the screen the panel names, h2 for a section inside it,
-h3 below that; the sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
+control, 11px a label — a column's, a field's, a chronicle entry's — set by one rule in `base.css`
+at weight 600 and 0.1em in capitals, each in its own colour and place, or the footer. A field
+label's 2px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender room
+capitals never use, and the one property that centres by letters, `text-box-trim`, is missing from
+Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade 15%", has to fit at
+13px with room for the Verdana fallback and a wider emoji font; widen it before shrinking a value.
+The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
+sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
 
 **Weight answers "which of these matters?", so a table never needs it.** Tabular figures are on
 `body`, not on a list of classes: the game is arithmetic, and a column of numbers wants to line up

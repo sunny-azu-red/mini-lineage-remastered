@@ -69,6 +69,17 @@ strong {
     font-weight: var(--weight-value);
 }
 
+/* A label is one kind of thing wherever it stands — a column's, a field's, a chronicle entry's — and
+   is set one way. Each keeps its own colour and its own place. */
+.data-table th,
+.stat-label,
+ol.chronicle .entry-head {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
 /* A heading is not prose: 1.6 rather than the body's 1.75, and the same as `.panel-header`, so the
  * two kinds of heading on a screen sit alike. */
 h2 {

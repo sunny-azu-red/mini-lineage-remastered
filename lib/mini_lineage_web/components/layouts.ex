@@ -140,7 +140,7 @@ defmodule MiniLineageWeb.Layouts do
           </span>
         </div>
 
-        <div class={"stat-row bar#{if @view.low_health, do: " danger"}"}>
+        <div class={"stat-row#{if @view.low_health, do: " danger"}"}>
           <span class="stat-label">HP</span>
           <div class="bar-track" id="hp-track">
             <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
@@ -154,7 +154,7 @@ defmodule MiniLineageWeb.Layouts do
           </div>
         </div>
 
-        <div class="stat-row bar">
+        <div class="stat-row">
           <span class="stat-label">XP</span>
           <div class="bar-track">
             <div
