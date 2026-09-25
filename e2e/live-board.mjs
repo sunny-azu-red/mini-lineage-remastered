@@ -211,8 +211,15 @@ try {
         };
     };
 
-    const tokyo = await stampIn('Asia/Tokyo');
-    const la = await stampIn('America/Los_Angeles');
+    // Read until both land on the same instant. A row's date moves whenever its log does — a buff
+    // lapsing counts — and the board coalesces its refreshes, so two page loads a moment apart can
+    // straddle one. The claim is one instant rendered twice, not that nothing ever moves.
+    let tokyo, la;
+    for (let tries = 0; tries < 5; tries++) {
+        tokyo = await stampIn('Asia/Tokyo');
+        la = await stampIn('America/Los_Angeles');
+        if (tokyo.iso === la.iso) break;
+    }
 
     check('a stamp is rendered in the reader\'s own timezone', tokyo.shown === tokyo.expected,
         `${tokyo.shown} vs ${tokyo.expected}`);
