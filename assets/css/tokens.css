@@ -77,9 +77,6 @@
     --text-tally: #009d8c;
     --text-critical: #d7700f;
     --text-success: #00a152;
-    /* Over something coloured rather than the panel: an effect's timer badge, and a bar's figure. */
-    --text-timer: #fff;
-    --text-bar: rgba(255, 255, 255, 0.7);
 
     /* ===== The bars =====
      * The two are built alike: one lightness for the bases, one for the glows, one chroma for
