@@ -199,31 +199,18 @@ defmodule MiniLineageWeb.GameLive do
 
   @impl true
   # An explicit click into Battle IS a user action, so it fights immediately — never on load.
-  # Its own clause: written as one `if`, the `{:noreply, _}` wrapper ended up inside the else
-  # branch, so travelling to Battle returned a bare socket and took the LiveView down.
-  def handle_event("navigate", %{"to" => "battle"}, socket) do
-    handle_event("fight", %{}, leave(socket, "battle"))
-  end
+  def handle_event("navigate", %{"to" => "battle"}, socket),
+    do: {:noreply, socket |> assign(game_flash: nil) |> fight("battle")}
 
   def handle_event("navigate", %{"to" => screen}, socket) do
     {:noreply, leave(socket, screen)}
   end
 
   def handle_event("start", %{"name" => name, "race_id" => race_id}, socket) do
-    {:noreply, socket |> apply_action(&Actions.start(&1, race_id, name)) |> go("home")}
+    {:noreply, apply_action(socket, &Actions.start(&1, race_id, name), "home")}
   end
 
-  def handle_event("fight", _params, socket) do
-    case throttle(socket, :battle) do
-      {:ok, socket} ->
-        socket = apply_action(socket, &Actions.fight/1)
-
-        {:noreply, if(socket.assigns.player.dead, do: go(socket, "death"), else: socket)}
-
-      {:limited, socket} ->
-        {:noreply, socket}
-    end
-  end
+  def handle_event("fight", _params, socket), do: {:noreply, fight(socket, nil)}
 
   def handle_event("purchase", %{"item_id" => ""}, socket), do: {:noreply, leave(socket, "home")}
 
@@ -243,7 +230,7 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   def handle_event("suicide", %{"confirm" => "yes"}, socket),
-    do: {:noreply, socket |> apply_action(&Actions.suicide/1) |> go("death")}
+    do: {:noreply, apply_action(socket, &Actions.suicide/1, "death")}
 
   def handle_event("suicide", _params, socket), do: {:noreply, leave(socket, "home")}
 
@@ -372,14 +359,17 @@ defmodule MiniLineageWeb.GameLive do
 
   # ------------------------------------------------------------------ plumbing
 
-  # Runs an action in the character's process and folds the result into the view. A failure lands on
-  # the error screen rather than remounting; `catch` is for the process exiting, which is not a raise.
-  defp apply_action(socket, fun) do
+  # Runs an action in the character's process and folds the result into the view. A socket holds one
+  # patch, so where the action leaves them is decided here, once: the error screen if it failed, the
+  # death screen if it killed them, else `to`. `catch` is for the process exiting, not a raise.
+  defp apply_action(socket, fun, to \\ nil) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
+    to = if player.dead and not socket.assigns.player.dead, do: "death", else: to
 
     socket
     |> assign(player: player, view: Snapshot.build(player))
     |> absorb(result)
+    |> then(&if(to, do: go(&1, to), else: &1))
   rescue
     error ->
       Logger.error(Exception.format(:error, error, __STACKTRACE__))
@@ -413,6 +403,14 @@ defmodule MiniLineageWeb.GameLive do
 
   defp play(socket, nil), do: socket
   defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})
+
+  # Travelling to the Battleground fights on arrival; a throttled fight still arrives.
+  defp fight(socket, to) do
+    case throttle(socket, :battle) do
+      {:ok, socket} -> apply_action(socket, &Actions.fight/1, to)
+      {:limited, socket} -> if(to, do: go(socket, to), else: socket)
+    end
+  end
 
   # An action moved you, so its flash comes along — creating a character lands on Town with its
   # welcome, dying lands on the death screen with its reason.
