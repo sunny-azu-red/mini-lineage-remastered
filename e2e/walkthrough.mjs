@@ -210,6 +210,8 @@ try {
     await tab.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a second tab sees the same character',
         await tab.getAttribute('#screen', 'data-health') === String(born.health));
+    // Clicking empty space leaves nothing focused, which is the player's choice to keep.
+    await tab.mouse.click(5, 5);
 
     // ---- a living character is kept out of what it may ACT on, and nothing else ----------------
     // The Tome carries no action, so there is nothing on it to be kept away from: the pin is about
@@ -276,6 +278,11 @@ try {
     ).then(() => check('the other tab sees the spend without acting', true))
         .catch(async () => check('the other tab sees the spend without acting', false,
             `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
+    // A push it did not act for, as a regen tick is: focus stays wherever the player left it.
+    await tab.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    check('...and a push it did not act for leaves focus where the player left it',
+        await tab.evaluate(() => document.activeElement === document.body),
+        await tab.evaluate(() => document.activeElement?.tagName));
     await tab.close();
 
     await goHome();

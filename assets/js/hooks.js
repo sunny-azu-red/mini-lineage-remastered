@@ -135,12 +135,12 @@ export const PanelFocus = {
             return;
         }
 
-        // Arriving pulls focus in. An update reclaims it only from nothing, or just after a press:
-        // LiveView restores focus to that button, which on a shop left it on Order rather than the
-        // picker. Anything you moved to yourself is left alone, so a tick never yanks it away.
+        // Arriving pulls focus in, and so does your own press: LiveView restores focus to that
+        // button, which on a shop left it on Order rather than the picker. Any other update is a
+        // push you did not ask for, and wherever you left focus, nowhere included, stays yours.
         const acted = this.acted;
         this.acted = false;
-        if (!arrived && document.activeElement !== document.body && !acted)
+        if (!arrived && !acted)
             return;
 
         // Links are out because Space scrolls them rather than activating them; hidden inputs
