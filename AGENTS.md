@@ -161,6 +161,18 @@ bold, the character page 24%. The list is one `:is(p, li) :is(…)` rather than 
 out per selector, so adding a name to the vocabulary is one edit and not three. Only Inter 400, 500
 and 600 are loaded; asking for 700 gets a fake.
 
+**A table has no minimum width, and gives no column the width; its rows decide.** Whatever they
+leave over is shared among every column in proportion to its content, so the gaps between figures
+grow only where there is room. A fixed gap of 24px took it from the name instead, and the armour
+shop's longest name wrapped on desktop, where that table has about a pixel to spare. A figure never
+wraps; a name may; on a phone a column's label may take two lines, never stranding a unit, which is
+why "C. Hit\u00A0%" binds its percent. A `min-width` had held the shops at 420px, which on a phone
+put the cost behind a sideways scroll. The columns stack below 640px, before the sidebar can squeeze
+a table narrower than a phone would give it. The Halls may still scroll on a phone: name, level and
+experience are on the left, and only the date waits off-screen. Check a table change by counting the
+lines in every cell at every width, not by whether it scrolls: a row's cells share one height, so a
+wrapped name makes the whole row look taller.
+
 **A class per thing the game names, never per colour it is drawn in.** `.adena` and `.level` and
 `.aura` all resolve to `--gold` today and are grouped for it in `base.css`, but they are written
 apart, because the moment one of them should move the others must not come with it. That is the

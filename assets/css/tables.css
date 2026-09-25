@@ -19,12 +19,9 @@
     border: 1px solid var(--border-soft);
 }
 
-/* A column label is chrome, not a title. It had been wearing the panel header's gold, its heading
-   face, its gradient and its shadow, differing only in size — so the two read as one thing said
-   twice. This is the body face, quiet, and wide enough in the tracking to hold a line of small
-   capitals. The data is what should be loud in a table. */
-/* No colour of its own: the body's, lighter than the item names beneath it. Level with them it
- * vanished; muted is illegible on the band at this size, and gold is barely lighter than the names. */
+/* A column label is chrome, not a title: the body face, tracked to hold small capitals, and no
+   colour of its own — the body's, lighter than the item names beneath it. Muted is illegible on the
+   band at this size, and gold is barely lighter than the names. */
 .data-table th {
     background: var(--table-lift);
     font-weight: 600;
@@ -54,17 +51,22 @@ th.num {
     text-align: right;
 }
 
-/* The name is what you are looking for, so it leads and it is the one column that may take the
-   width. `1%` on the rest makes them shrink to their content. */
-td.name,
-th.name {
-    width: 100%;
-}
+/* No column is given the width. What the rows leave over is shared among all of them in proportion
+   to their content, so the gaps grow only where there is room: a fixed gap took it from the name,
+   and the armour shop's longest wrapped on desktop. */
 
 /* Everything but the name is a figure or a date, and neither reads wrapped. */
 .data-table th:not(.name),
 .data-table td:not(.name) {
     white-space: nowrap;
+}
+
+/* On a phone the cost has to fit on screen, not behind a sideways scroll: a column's LABEL may take
+   two lines. Its figures still never do. */
+@media (max-width: 520px) {
+    .data-table th:not(.name) {
+        white-space: normal;
+    }
 }
 
 /* --- the Halls of Champions ------------------------------------------------------------------ */

@@ -14,11 +14,10 @@
     padding: 12px;
 }
 
-/* 680 until the sidebar grew by 15 to hold its widest row; the game grew with it, so the main
- * column kept every pixel it had. */
+/* A round 700, with the sidebar at 210 inside it. */
 #wrapper {
     width: 100%;
-    max-width: 695px;
+    max-width: 700px;
 }
 
 /* ===== Header Banner ===== */
@@ -215,7 +214,9 @@
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 520px) {
+/* Stacked before the sidebar can squeeze the main column narrower than a phone would give it: at
+ * 600px side by side, a shop's table had less room than on a 400px phone, and scrolled. */
+@media (max-width: 640px) {
     #app {
         padding: 12px;
     }

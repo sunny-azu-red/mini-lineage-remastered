@@ -47,7 +47,8 @@ defmodule MiniLineageWeb.Screens.Shop do
       owned_id: assigns.view.weapon.id,
       modifier: %{
         key: :crit,
-        header: "C. Hit %",
+        # The percent is bound to its word: on a phone the label may break, but never to strand "%".
+        header: "C. Hit\u00A0%",
         title: "Critical Hit Chance",
         class: "crit",
         prefix: "",
@@ -89,7 +90,7 @@ defmodule MiniLineageWeb.Screens.Shop do
     <p>{@intro_a}<br />{@intro_b}</p>
 
     <div class="table-container">
-      <table class="data-table" style="min-width:420px">
+      <table class="data-table">
         <thead>
           <tr>
             <th class="name">Name</th>
