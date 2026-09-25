@@ -23,9 +23,10 @@
    face, its gradient and its shadow, differing only in size — so the two read as one thing said
    twice. This is the body face, quiet, and wide enough in the tracking to hold a line of small
    capitals. The data is what should be loud in a table. */
+/* No colour of its own: the body's, lighter than the item names beneath it. Level with them it
+ * vanished; muted is illegible on the band at this size, and gold is barely lighter than the names. */
 .data-table th {
     background: var(--table-lift);
-    color: var(--text-secondary);
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.1em;

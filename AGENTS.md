@@ -130,9 +130,9 @@ letting the formatter break it inside the tag. Buttons are exempt, being padded 
 **Declare a property only where the element would not otherwise have it.** Either it does not
 inherit — form controls and buttons take no font or colour from `body`, which is measurable and was
 — or it differs from what it does. Restating the inherited value gives `body` a second place to be
-changed and no second effect, so `.data-table td`, `h2`, `h3` and `.stat-value` say nothing about
-colour while `.stat-label` and `th` do. If a container is ever made secondary, the children that
-must stay primary will need to say so then; adding it in anticipation is how the two drift apart.
+changed and no second effect, so `.data-table td` and `th`, `h2`, `h3` and `.stat-value` say nothing
+about colour while `.stat-label` does. If a container is ever made secondary, the children that must
+stay primary will need to say so then; adding it in anticipation is how the two drift apart.
 
 **A panel header's contents are placed by the band, never by themselves.** These are capitals, and
 a font's em box carries descender room they never use, so centred they sit high — `.panel-header`
