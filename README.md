@@ -16,7 +16,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 ### 🎧 Procedural 8-Bit Web Audio Engine
 - **Zero Audio Assets**: 100% synthesized in real time via the browser's native `AudioContext`, `OscillatorNode`, and `GainNode`.
 - **Event-Driven Soundscapes**: Seven declaratively-defined voices — Game Start, Critical Hit, Ambush Alarm, Level Up Fanfare, Inn Dining, Shop Purchase, and Death.
-- **Gesture-Safe Unlock**: A single capture-phase pointer/keyboard listener resumes the `AudioContext` on the very first user interaction — sounds fire from socket-ack handlers, not DOM markers, so nothing ever races a reload.
+- **Gesture-Safe Unlock**: A single capture-phase pointer/keyboard listener resumes the `AudioContext` on the very first user interaction — sounds fire from events the server pushes, not DOM markers, so nothing ever races a reload.
 - **Client Mute Controls**: Persistent audio toggle stored in `localStorage` with non-blocking UI controls.
 
 ### ⚡ Real-Time Engine & Zones
@@ -25,8 +25,8 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Disengaging Takes Five Seconds**: Leaving combat keeps ⚔️ *In Combat* for a 5-second countdown before 💤 *Resting* resumes regeneration. Standing in a combat zone keeps the flag indefinitely, so waiting on the Battleground never heals; stepping back in cancels the countdown.
 - **Regeneration Is Earned, Not Assumed**: 🌿 *Regenerating* is derived per snapshot rather than stored, so it appears and vanishes on its own: it needs the resting aura, a wound, and a positive HP-regen rate at once. An Orc (no innate regen) never sees it; a player at full health loses it the instant they top up.
 - **Every Effect, Spelled Out**: The banner wears buffs, debuffs and auras as emoji, which a phone can neither hover nor read — so a run's own page gives each one a paragraph under *Blessings & Afflictions*: what it is, what it is doing, and its modifiers coloured the way every other figure on the page is. Nothing is fetched for it, the view already carries them, and paragraphs appear and go on their own as effects are applied and lapse — the character's own expiry timer sees to the timing, so a buff leaves the page the second it ends rather than at the next tick, and the heading goes with the last of them. Told in the reader's voice: your own record speaks to you, somebody else's speaks about them.
-- **Non-Mutating Reads**: Connecting, reconnecting and refreshing only *read* state. A fight happens only on an explicit `battle:fight`, never on page load, so navigating away mid-ambush escapes nothing.
-- **LiveView Streaming**: One WebSocket carries the whole game. The server diffs the rendered HTML and pushes only what changed, with no page reloads. Multiple tabs on one session stay in sync over `Phoenix.PubSub`.
+- **Non-Mutating Reads**: Connecting, reconnecting and refreshing only *read* state. A fight happens only on an explicit `fight` event, never on page load, so navigating away mid-ambush escapes nothing.
+- **LiveView Diffs**: One WebSocket carries the whole game. The server diffs the rendered HTML and pushes only what changed, with no page reloads. Multiple tabs on one session stay in sync over `Phoenix.PubSub`.
 
 ### 🍖 Inn & Consumables
 - **Tiered Meals**: Five dishes from *Spiced Ale* to *Roasted Pheasant*. All restore HP; the top three also grant a timed buff (*Satisfied*, *Well Fed*, *Gourmet Feast*) that temporarily expands the maximum health pool. Only one food buff is active at a time — a new meal replaces the old one.
@@ -43,7 +43,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Versioned Documents**: Each character's state records the shape it was written in, so a later reshape has something to branch on, and a document from a newer build is refused rather than read with every unrecognised field defaulted away.
 - **Writes Follow the Player, Not the Clock**: A character lives in its process, so the database is durability rather than storage. What the player *did* — a fight, a purchase, a death — is written before they are told it worked, and so is anything that earns a line in the chronicle, a buff wearing off included: somebody may be reading that log live. The rest of the passage of time — passive regeneration, which screen they wandered to — rides along with the next write, or with the process stopping. A hard kill costs a little healing and nothing else.
-- **The Whole Run Is Kept**: Every deed appends a row to `character_log` — a fight's numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before, where the character's own document is rewritten whole on every save. An entry belongs to its run for good, and any run's chronicle can be read from its own page — folded away in a panel of its own until it is asked for, then a log that opens on the last thing the run ever did and follows new ones down, so a page is the same height whether a run fought nine times or nine hundred. It is **not only the fights**, and each deed is told in the very sentence its owner's alert said, so the two cannot disagree: who the run set out as, what it paid for everything it bought, the lineage it chose, the blades it took up, the meals it ate, the levels it reached, what settled over it and what left — whether a timer ended it, another meal replaced it, or it faded with the run's last breath, the losses just before the ending and in the order they arrived — the heresy if it committed one, and how it ended. A run that dies in a fight has the fight row to say so, but a suicide is not a fight, so a coward's chronicle used to stop mid-sentence with no ending at all. Auras are left out on purpose — ⚔️ and 💤 flip on nearly every action, and logging them would drown everything else. Each entry is headed by the instant it happened and what kind of thing it was — *Beginning*, *Battle*, *Purchase*, *Level Up*, *Buff*, *Debuff*, *Cheat*, and *Ending* for every ending however it came — and a beginning, a purchase, a level reached and an ambush are each washed in the colour of the alert that would announce them. The instant is rendered on the reader's own clock under **one** hook for the whole list rather than one per row, and the page opens on the **last hundred**: the whole history of a long run used to cross the socket on every load to fill a 260px box, and what lies beyond the window is what the sentence above the panel already says. New entries grow the window as you watch; a refresh comes back to a hundred. A fatal fight is the exception, and deliberately: `resolve_battle_outcome/2` returns the moment health reaches zero, *before* the XP, the Adena, the battle count **and the kill count** are credited — so nothing the fighter did in it counted. The lines naming a reward described one never given; the line naming the foes cut down described foes the game never recorded as dead, when it was the fighter who died. Every line is drawn all the same, so the dice land identically, and then all of them are dropped for the one thing that is true: **how it ended**, wearing the same red the death screen wears. The record's own prose tallies the run and leaves the ending to the chronicle, rather than both saying it two paragraphs apart. And every entry is told to whoever is reading it: a stored line keeps its pronouns open, so the run's own battle screen says "you cut down four Humans" and a stranger reading the same row on the same record says "they cut down four Humans" — one row, no second copy of the sentence. Each other entry is the whole of a fight, told the way it was told when it happened: the critical strike, the blow that landed, what the armour turned aside and what it was worth, how the fighter walked away, and the ambush that was waiting if one was. Only the two lines that were button labels are left out, having been an invitation rather than a record.
+- **The Whole Run Is Kept**: Every deed appends a row to `character_log` — a fight's numbers as columns because they are what you would aggregate, the rendered lines alongside because they are what you would read. It is the one thing allowed to grow without limit, since an append never rewrites what came before, where the character's own document is rewritten whole on every save. An entry belongs to its run for good, and any run's chronicle can be read from its own page — folded away in a panel of its own until it is asked for, then a log that opens on the last thing the run ever did and follows new ones down, so a page is the same height whether a run fought nine times or nine hundred. It is **not only the fights**, and each deed is told in the very sentence its owner's alert said, so the two cannot disagree: who the run set out as, what it paid for everything it bought, the lineage it chose, the blades it took up, the meals it ate, the levels it reached, what settled over it and what left — whether a timer ended it, another meal replaced it, or it faded with the run's last breath, the losses just before the ending and in the order they arrived — the heresy if it committed one, and how it ended. A run that dies in a fight has the fight row to say so, but a suicide is not a fight, so a coward's chronicle used to stop mid-sentence with no ending at all. Auras are left out on purpose — ⚔️ and 💤 flip on nearly every action, and logging them would drown everything else. Each entry is headed by the instant it happened and what kind of thing it was — *Beginning*, *Battle*, *Purchase*, *Level Up*, *Buff*, *Debuff*, *Cheat*, and *Ending* for every ending however it came — and a beginning, a purchase, a level reached and an ambush are each washed in the colour of the alert that would announce them. The instant is rendered on the reader's own clock under **one** hook for the whole list rather than one per row, and the page opens on the **last hundred**: the whole history of a long run used to cross the socket on every load to fill a 260px box, and what lies beyond the window is what the sentence above the panel already says. New entries grow the window as you watch; a refresh comes back to a hundred. A fatal fight is the exception, and deliberately: `resolve_battle_outcome/2` returns the moment health reaches zero, *before* the XP, the Adena, the battle count **and the kill count** are credited — so nothing the fighter did in it counted. The lines naming a reward described one never given; the line naming the foes cut down described foes the game never recorded as dead, when it was the fighter who died. Every line is drawn all the same, so the dice land identically, and then all of them are dropped for the one thing that is true: **how it ended**, wearing the same red the death screen wears. The record's own prose tallies the run and leaves the ending to the chronicle, rather than both saying it two paragraphs apart. And every entry is told to whoever is reading it: a stored line keeps its pronouns open, so the run's own battle screen says "you cut down four Humans" and a stranger reading the same row on the same record says "they cut down four Humans" — one row, no second copy of the sentence. A fight's entry is the whole of it, told the way it was told when it happened: the critical strike, the blow that landed, what the armour turned aside and what it was worth, how the fighter walked away, and the ambush that was waiting if one was. Only the two lines that were button labels are left out, having been an invitation rather than a record.
 - **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies, validation on every payload, and sliding-window rate limiting (60 battles and 30 shop actions per minute, plus a 300/min flood limiter). Rate limits are bypassed outside a release build so local development isn't throttled.
 - **A Live Hall of Champions**: The board is a view of the characters rather than a table of its own, so a run appears the moment it chooses a race and keeps its place when it ends — nobody is asked to write themselves in. It refreshes for every viewer as people play, coalesced into one recomputation per window rather than one query per viewer, and any row opens that run's full record at `/character/:id` — the same page your own sidebar link opens, told in the third person because it is somebody else's, and **live while you read it**: sit on a rival's record and watch their gear, their tallies and their chronicle move as they play. Suicide and the Konami cheat disqualify a run: it keeps its record and its own page, but the Halls will not list it — and from that moment its **deeds** stop writing the realm's history, so a cheat's ×4 winnings never reach the Tome of Lore. The **census** still counts it: everyone who sets foot is counted and so is everyone who falls, because the Tome tells the Weak Souls and the Heretics as a few *of* the fallen, and a part cannot outnumber its whole.
 - **The Board Reads At A Glance**: The first three overall wear 🥇🥈🥉, and they mean the same everywhere — filter to one lineage and its leader goes bare unless they are top three of *everyone*. A run has three ends: **fallen**, **going**, or **missing**. Going tints its row green; your own tints gold and wins where both apply; a green `•` beside the name means somebody is online with that character **right now** — read from the process registry, so it costs no query. Missing is the quiet one: a run abandoned past the retirement window keeps its record but loses its session, so it can never be picked up again and reads as plainly over, without pretending it died. A run is dated by **its last entry in the chronicle**, read from the log rather than stored beside it, so the Halls, the road on the run's own page and the bottom of its chronicle cannot disagree — they were two copies of one fact once, and drifted. A buff wearing off is an entry, so it dates the run; a regenerating tick and a closing tab write the row and log nothing, so they do not. The date costs one `LIMIT 1` walk down an index the log already had, and the whole board — every lineage and the date of every row — is **one statement**: measured on a million-entry log, a refresh went from 3.6ms to 2.3ms. Times are stored as instants and rendered on the reader's own clock.
@@ -56,11 +56,11 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Web**: Phoenix 1.8 with LiveView 1.2 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for exact per-effect expiry
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
-- **Audio Engine**: Web Audio API (procedural synthesizer), driven from a LiveView JS hook
+- **Audio Engine**: Web Audio API (procedural synthesizer), driven by events the server pushes over the socket
 - **Testing**: ExUnit, plus three Playwright suites that drive a real headless Chromium
 
 Requires **Elixir 1.20+ on OTP 28+**, and a reachable **PostgreSQL 12+** — the floor is `STORED`
-generated columns, which is what the board ranks on. Development and CI run 18.6; below that,
+generated columns, which is what the board ranks on. Development runs 18.6 and CI the current 18; below that,
 prefer whatever upstream still supports over the bare minimum.
 
 ## Running it
@@ -73,7 +73,10 @@ grep -q 'mini-lineage-remastered/env.sh' ~/.bashrc \
 exec bash                   # or just open a new terminal
 
 cd ~/mini-lineage-remastered
+cp .env.example .env        # then fill in the database it names
+cp .env.test.example .env.test
 mix setup                   # deps, database, assets, and the test browser
+mix test                    # also creates the throwaway database the browser suites share
 ```
 
 After that, every terminal already has what it needs and there is nothing to source:
@@ -99,8 +102,8 @@ npm downloads Playwright and the Chromium it drives, and nothing else. It builds
 JavaScript and CSS are bundled by esbuild, which is an **Elixir** package, so `mix assets.build`
 needs no Node.
 
-`mix setup` runs `npm ci` for you. `npm run test:e2e` forwards to `mix e2e`, so there is one way
-in, not two.
+`mix setup` runs `npm ci` for you. The npm scripts forward to mix — `test:e2e` to
+`mix e2e walkthrough`, `test:e2e:all` to `mix e2e` — so there is one way in, not two.
 
 ## Which database
 
@@ -114,7 +117,7 @@ Two files, the same key names in each: `config/runtime.exs` picks `.env.test` wh
 is `test` or `e2e`, so nothing has to remember a flag, and the throwaway database can live on
 another host entirely rather than merely under another name.
 
-An unreleased build names itself in the footer — `⚡ development` on 4000, `🔥 testing` on 4002 —
+An unreleased build names itself in the footer — `🔥development` on 4000, `🍃testing` on 4002 —
 so the two are never confused. A release names its commit instead.
 
 `mix dev` and `mix prod` read the same `.env`, so they play the same characters — and, because the
@@ -224,11 +227,14 @@ PHX_SERVER=true _build/prod/rel/mini_lineage/bin/mini_lineage start
 `.env` is looked for in the **working directory**; `ENV_FILE` names it anywhere else. A real
 environment variable always beats the file.
 
-If a migration has to come back out, the same binary rolls it back:
+If a migration has to come back out, the same binary rolls it back, given its version:
 
 ```bash
-bin/mini_lineage eval 'MiniLineage.Release.rollback(MiniLineage.Repo, 0)'
+bin/mini_lineage eval 'MiniLineage.Release.rollback(MiniLineage.Repo, 20261001000000)'
 ```
+
+That undoes the named migration and every one after it. The initial migration is the whole schema,
+so naming it, or `0`, drops every table.
 
 The build stamps itself with `git rev-parse --short=7 HEAD` and the footer links that commit.
 `APP_VERSION` overrides it, in the seven-character form, and is required wherever the build has no
@@ -243,7 +249,7 @@ Production differs from development: rate limiting is **on** (60 battles and 30 
 minute, 300 events/min overall), `force_ssl` redirects every plain-http request to `https://` on the host it
 was asked for, `localhost` and `127.0.0.1` excepted, the logger sits at `:info`, and there is no code reloader.
 
-`LOG_LEVEL` and `RATE_LIMIT` override the last two per deployment, with no rebuild — both are read
+`RATE_LIMIT` overrides the first and `LOG_LEVEL` the logger per deployment, with no rebuild — both are read
 at boot rather than baked. Most other tuning is not: anything reached through `compile_env`, the
 character TTL among it, is fixed when the image is built and a release refuses to start if the
 environment disagrees with what it was built with.
@@ -265,7 +271,7 @@ The image needs nothing from compose or Portainer. Build it, then run it:
 ```bash
 docker build --build-arg APP_VERSION=$(git rev-parse --short=7 HEAD) -t mini-lineage .
 
-docker run --rm -p 4000:4000 --env-file .env \
+docker run --rm --init -p 4000:4000 --env-file .env \
   --add-host host.docker.internal:host-gateway \
   -e DB_HOST=host.docker.internal \
   mini-lineage
@@ -305,15 +311,15 @@ the artifact that passed. It verifies the commit stamp inside the image before p
 image is tagged twice, `latest` and its seven-character commit, so `IMAGE_TAG` pins or rolls back
 to any of them; unset, it follows `main`.
 
-The image is built for **amd64 only**. On an ARM host the pull fails, and `platforms:` in the
-publish job is where that changes.
+The image is built for **amd64 only**. On an ARM host the pull fails; adding `platforms:` to the
+publish job's build step is where that changes.
 
 Two things to do once, on the package's page in GitHub: make it **public**, or Portainer will need a
 registry credential to pull it; and, if you want, link it to the repository. Then point the stack at
 this compose file and redeploy with **Re-pull image** on.
 
 The footer names the commit the running build came from, which is how you tell a deploy took: it
-links the commit, or says `⚡ development`. There is no third answer.
+links the commit, or names the unreleased build it is. There is no third answer.
 
 CI supplies it as `APP_VERSION`. A build from a checkout finds its own, which is why the
 Dockerfile takes a build arg rather than reading a `.git` a Portainer stack does not send.
@@ -328,9 +334,15 @@ so the LiveView socket refuses every origin that is not this host. Name it wrong
 loads, renders once and never connects again, with nothing in the log to say why; leave it unset
 and the release refuses to boot rather than pretending to be `example.com`.
 
-The image also sets `LANG=C.UTF-8` (the VM otherwise runs latin1, and this game is made of
-emoji), `ca-certificates` for a database reached over TLS, and `init: true`, since the release
-runs as PID 1 and does not reap what the ERTS spawns.
+**What a deployment must set**: `PHX_HOST`; `SECRET_KEY_BASE`, at least 64 bytes, from
+`mix phx.gen.secret`; and the database, as `DB_HOST`, `DB_DATABASE`, `DB_USERNAME` and
+`DB_PASSWORD` (`DB_PORT` defaults to 5432). Compose refuses to start without the first four rather
+than handing the release an empty value. A bare release also takes a single `DATABASE_URL`, which
+compose does not forward. `LOG_LEVEL`, `RATE_LIMIT`, `POOL_SIZE` and `ECTO_IPV6` are optional.
+
+The image sets `LANG=C.UTF-8` (the VM otherwise runs latin1, and this game is made of emoji) and
+carries `ca-certificates` for a database reached over TLS. Compose adds `init: true`, and the
+standalone run `--init`, since the release runs as PID 1 and does not reap what the ERTS spawns.
 
 ## The browser suites
 

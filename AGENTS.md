@@ -17,9 +17,10 @@ list wins — several generator defaults do not exist here.
   character goes through its process, never straight to the database.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
 - **One LiveView, one dispatcher, a module per page.** `GameLive` holds no game state and routes
-  everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the run's own four
-  live in `Screens` itself, and the pages that outlive a run — `Screens.Shop`, `Screens.Record`,
-  `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
+  everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the small ones —
+  start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
+  enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
+  have a module. Anything a page reaches for but does not
   own (the panel card, the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in
   `Controls`.
   `Screens.aside/1` is the same dispatch for what a screen puts BELOW its panel rather than inside
@@ -43,8 +44,8 @@ list wins — several generator defaults do not exist here.
 - Migrations commit their DDL implicitly, which ends the sandbox transaction. That is why
   `release_test` checks configuration rather than running one.
 - `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
-  a screen, a hook, a selector, a rule that changes what an element *is*. ExUnit reads 0% for the
-  whole web layer because the browser suites are not instrumented, not because it is untested.
+  a screen, a hook, a selector, a rule that changes what an element *is*. ExUnit's coverage understates
+  the web layer because the browser suites are not instrumented, not because it is untested.
   A change that only moves colour values is the exception: no suite can fail on a hex, and running
   them there buys nothing but minutes and their own flakes. `mix precommit`, then look at it.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
@@ -105,7 +106,7 @@ forget.
 `Access.pin_screen/2` decides which. Somewhere you can stand — the Battleground, a shop, the
 Character screen — gets a URL of its own. A state that happens to you does not.
 
-**Do not widen a guard to make something work.** `@dead_allowed` in `Access`, the check in
+**Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, the check in
 `e2e/reset.sh` that refuses the database `.env` names, the purchase preconditions: each one is the
 boundary, and there is a test asserting
 what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
@@ -197,8 +198,9 @@ Adena" is gold like "🪙 60 Adena" — and never on a label naming a field or a
 label as HP and XP do.
 
 These are the game's vocabulary and they are filed under **Values**. What is not a value lives above
-them under **Utilities**, which is a deliberate separation and not a heading: `.muted` is the only
-absence the game has — the `-` in a shop column for an item that grants no modifier — and takes no
+them under **Utilities**, which is a deliberate separation and not a heading: `.muted` is what is not a
+value standing where one would be — the `-` in a shop column for an item that grants no modifier,
+the `&laquo;` of a back link, the `&bull;` between an effect's name and what it does — and takes no
 weight, since weight is for a figure competing inside a sentence and that is its opposite.
 `.build-development` and `.build-testing` are there too: which build serves the page is something
 the PAGE knows, not something a player reads. A name that belongs in neither basket belongs in
@@ -312,7 +314,7 @@ more fight than `total_battles` says.
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
 action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
-`phx-click` among the four modules that render them — so the first clause lets every state reach
+`phx-click` on any of them — so the first clause lets every state reach
 every one of them and the rest of the cond only ever decides about screens that can be acted on.
 It had been three overlapping allowlists, which is how a living run could not read the Tome, a dead
 one could not be told that something had crashed, and an ambushed one could not look at its own
@@ -377,7 +379,7 @@ colourfulness is chroma, and both compare across hues where H, S and L do not.
 
 **Peers share a lightness. They do not share a chroma.** The colours that land in one sentence —
 `--text-hp`, `--text-critical`, `--text-success`, `--text-tally`, `--text-defense`, `--text-xp` —
-are all `L* 58` and so read at 5.2 on the panel, which is what makes them peers; they had ranged `L*
+are all `L* 58` and so read at 4.9 on the panel, which is what makes them peers; they had ranged `L*
 57` to `66` and the tally whispered. Equalising their chroma is the trap, and it was fallen into
 once: teal tops out near 39 at any lightness in sRGB, so a shared chroma *is* 39 and the whole set
 goes pale to meet the one hue that cannot keep up. True equality across those six peaks at 45, below
@@ -430,7 +432,7 @@ written — the collector keeps its own running totals so it can say so without 
 the same 500ms window the board uses. Batching the write is about a round trip being expensive;
 a broadcast is microseconds, and tying one to the other made the Tome a minute stale.
 
-A push must not announce what cannot yet be read. `Server.run/2` broadcasts AFTER it persists, and
+A push must not announce what cannot yet be read. `Server.run/3` broadcasts AFTER it persists, and
 the collector after its counters are in, because a reader answering a push by reading the database
 finds nothing otherwise — which is exactly how the chronicle came back empty. It costs about 1.2ms
 before a push lands and is worth it.
@@ -457,9 +459,9 @@ and why `characters` has no row without a race. `visitor_test.exs` holds it.
 
 **A deed is gated; the census is not.** `Statistics.increment_for/3` drops everything a
 disqualified run *does* — its battles, its plunder, its blood — because the Halls will not list a
-coward or a cheat and an aggregate cannot give back what it was already told. Being born and dying
-come through the ungated `increment/2` instead: `total_players` is counted at `initialize`, before
-anybody can be disqualified, so the census already holds every future coward and heretic. Gate the
+coward or a cheat and an aggregate cannot give back what it was already told. Being born is counted
+at `initialize`, before anybody can be disqualified, and dying through the ungated `increment/2`,
+so the census holds every future coward and heretic and lets every one of them go. Gate the
 exit, and souls arrive and are never accounted for leaving — which printed "0 Champions have
 fallen... while a Heretic was struck down", and the Tome tells the Weak Souls and the Heretics as a
 few *of* the fallen.
@@ -554,7 +556,7 @@ the few rows a test inserts.
 
 **A round trip costs ~0.8ms; the query usually costs less.** Measured against the real server, not
 guessed. So prefer one statement over a clever plan: splitting an OR-chain into two index-only
-COUNTs made `rank_of` *slower* until it was folded back into one `UNION ALL`. `EXPLAIN ANALYZE`
+COUNTs made a rank lookup *slower* until it was folded back into one `UNION ALL`. `EXPLAIN ANALYZE`
 reports server time and says nothing about the wire — time the wall clock before believing it.
 And time the code path that ships, not hand-written SQL: `Repo.query!` parses and plans on every
 call where Ecto caches the prepared statement, which put the old board at 5.2ms when it was 3.6ms.
