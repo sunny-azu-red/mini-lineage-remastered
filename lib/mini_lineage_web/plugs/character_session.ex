@@ -14,10 +14,13 @@ defmodule MiniLineageWeb.Plugs.CharacterSession do
   def init(opts), do: opts
 
   @impl true
-  def call(conn, _opts) do
-    case get_session(conn, :session_id) do
-      nil -> put_session(conn, :session_id, Characters.new_session_id())
-      _id -> conn
-    end
-  end
+  # Put on every visit, not only the first: a cookie is re-issued only when the session is written,
+  # and `max_age` would otherwise count from the first visit, however often the player came back.
+  def call(conn, _opts),
+    do:
+      put_session(
+        conn,
+        :session_id,
+        get_session(conn, :session_id) || Characters.new_session_id()
+      )
 end

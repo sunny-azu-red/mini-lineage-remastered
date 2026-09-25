@@ -87,7 +87,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
       <p>
-        <.road entry={@entry} at={@entry && @entry.last_seen_at} voice={@voice} />
+        <.road entry={@entry} dead={@view.dead} at={@entry && @entry.last_seen_at} voice={@voice} />
         {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
         <Controls.counted
           key="rec-battles"
@@ -256,6 +256,7 @@ defmodule MiniLineageWeb.Screens.Record do
   end
 
   attr :entry, :any, required: true
+  attr :dead, :boolean, required: true
   attr :at, :any, required: true
   attr :voice, :map, required: true
 
@@ -267,7 +268,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
   defp road(assigns) do
     ~H"""
-    <span phx-no-format><%= case road_of(@entry) do %>
+    <span phx-no-format><%= case road_of(@dead, @entry) do %>
       <% :closed -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
       <% :open -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
       <% :lost -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
@@ -278,9 +279,10 @@ defmodule MiniLineageWeb.Screens.Record do
   # Three ways a road ends: closed over them, still open, or lost with them still on it. `active` is
   # "has a session", so a run walked away from past the retirement window is neither dead nor going —
   # and the only one of the three whose last date names a direction rather than a day.
-  defp road_of(%{dead: true}), do: :closed
-  defp road_of(%{active: true}), do: :open
-  defp road_of(_missing), do: :lost
+  # Dead from the view, which every push brings; the entry is read once, and only says who holds it.
+  defp road_of(true, _entry), do: :closed
+  defp road_of(false, %{active: true}), do: :open
+  defp road_of(false, _missing), do: :lost
 
   # ---------------------------------------------------------------- the screen
 

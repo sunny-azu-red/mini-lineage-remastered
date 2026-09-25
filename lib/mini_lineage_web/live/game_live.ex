@@ -177,8 +177,11 @@ defmodule MiniLineageWeb.GameLive do
         page_title: Screens.page_title(screen, filter_race(socket))
       )
 
-    if connected?(socket) and Player.started?(socket.assigns.player) do
-      apply_action(socket, &Actions.set_screen(&1, screen))
+    # Not for the dead, whom no aura or pin reads it for; nor on the error screen, whose cause may be
+    # the very process this would call.
+    if connected?(socket) and Player.started?(socket.assigns.player) and
+         not socket.assigns.player.dead and screen != "error" do
+      apply_action(socket, &Actions.set_screen(&1, screen), nil, quiet: true)
     else
       socket
     end
@@ -355,13 +358,14 @@ defmodule MiniLineageWeb.GameLive do
   # Runs an action in the character's process and folds the result into the view. A socket holds one
   # patch, so where the action leaves them is decided here, once: the error screen if it failed, the
   # death screen if it killed them, else `to`. `catch` is for the process exiting, not a raise.
-  defp apply_action(socket, fun, to \\ nil) do
+  # `quiet` is for what the player did not do, arriving somewhere, which leaves their notice alone.
+  defp apply_action(socket, fun, to \\ nil, opts \\ []) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
     to = if player.dead and not socket.assigns.player.dead, do: "death", else: to
 
     socket
     |> assign(player: player, view: Snapshot.build(player))
-    |> absorb(result)
+    |> then(&if(opts[:quiet], do: &1, else: absorb(&1, result)))
     |> then(&if(to, do: go(&1, to), else: &1))
   rescue
     error ->

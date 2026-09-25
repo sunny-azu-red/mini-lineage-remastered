@@ -45,6 +45,10 @@ defmodule MiniLineageWeb.Endpoint do
     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :mini_lineage
   end
 
+  # The container's healthcheck, answered before the session and the request log: it sends no
+  # cookie, so as a page it minted a visitor and started a character process on every probe.
+  plug :health
+
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
@@ -57,4 +61,9 @@ defmodule MiniLineageWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   plug MiniLineageWeb.Router
+
+  defp health(%Plug.Conn{request_path: "/health"} = conn, _opts),
+    do: conn |> Plug.Conn.send_resp(200, "ok") |> Plug.Conn.halt()
+
+  defp health(conn, _opts), do: conn
 end

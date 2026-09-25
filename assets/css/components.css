@@ -472,13 +472,13 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     /* A formatted stack trace runs to twenty frames. Capped so the way back stays on the screen,
        and it scrolls on the same bar the Chronicle and the tables do. */
     max-height: 340px;
-    overflow-y: auto;
+    overflow: auto;
     border-radius: var(--radius);
-    color: var(--bar-hp);
+    color: var(--text-danger);
+    /* Stated: a bare `monospace` shrinks the inherited 13px to the browser's own ~10.6px. */
+    font-size: 13px;
     margin-bottom: 12px;
-    overflow-x: auto;
     padding: 12px;
-    text-align: left;
     white-space: pre-wrap;
 }
 

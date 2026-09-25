@@ -210,4 +210,27 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       refute html =~ "You fell at"
     end
   end
+
+  describe "the road, watched as the run falls" do
+    # The entry is read once, when the page opens, and only the view is pushed after that. A run
+    # that dies while somebody reads it must close its road, not leave it "carrying them on".
+    test "closes on the push that killed them" do
+      entry = %{
+        inserted_at: ~U[2026-09-20 10:00:00Z],
+        last_seen_at: ~U[2026-09-25 10:00:00Z],
+        dead: false,
+        active: true
+      }
+
+      html =
+        render_component(&Record.record/1,
+          view: Snapshot.build(fallen()),
+          catalog: Snapshot.catalog(),
+          entry: entry,
+          mine: false
+        )
+
+      assert html =~ "closed over them"
+    end
+  end
 end

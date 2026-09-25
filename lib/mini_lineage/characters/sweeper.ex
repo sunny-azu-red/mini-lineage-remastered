@@ -3,8 +3,8 @@ defmodule MiniLineage.Characters.Sweeper do
   Takes the session off characters nobody has played in a while.
 
   What it sweeps is the session, not the character: an abandoned run has still been played, so it
-  keeps its place in the Halls and gives up only the secret that ties it to a browser. The one
-  thing it does delete is a visitor who never chose a race, which is a row about nobody.
+  keeps its place in the Halls and gives up only the secret that ties it to a browser. Nothing is
+  deleted, and a visitor who never chose a race was never written at all.
   """
   use GenServer
 
@@ -40,11 +40,14 @@ defmodule MiniLineage.Characters.Sweeper do
   defp sweep do
     retired = Store.retire_idle()
 
-    if retired > 0,
-      do:
-        Logger.info(
-          "retired #{retired} character(s) idle for over #{Store.ttl_hours()}h onto the board"
-        )
+    # A retired run reads as missing in the Halls, which only a refresh can show.
+    if retired > 0 do
+      MiniLineage.Board.character_changed()
+
+      Logger.info(
+        "retired #{retired} character(s) idle for over #{Store.ttl_hours()}h onto the board"
+      )
+    end
 
     retired
   end

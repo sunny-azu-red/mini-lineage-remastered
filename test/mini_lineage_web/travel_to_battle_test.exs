@@ -43,4 +43,18 @@ defmodule MiniLineageWeb.TravelToBattleTest do
 
     assert_patch(view, ~p"/battle")
   end
+
+  test "travelling while throttled says so, rather than arriving in silence",
+       %{conn: conn, session: session} do
+    Application.put_env(:mini_lineage, :rate_limit, true)
+    on_exit(fn -> Application.put_env(:mini_lineage, :rate_limit, false) end)
+    Characters.mutate(session, &{%{&1 | health: 5_000}, {:ok, nil}})
+    {:ok, view, _} = live(conn, ~p"/")
+
+    for _ <- 1..60, do: MiniLineage.Game.RateLimit.check(session, :battle)
+    render_click(view, "navigate", %{"to" => "battle"})
+
+    assert_patch(view, ~p"/battle")
+    assert render(view) =~ "moving too fast"
+  end
 end

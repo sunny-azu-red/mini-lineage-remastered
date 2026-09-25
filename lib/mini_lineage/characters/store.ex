@@ -95,8 +95,8 @@ defmodule MiniLineage.Characters.Store do
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
   @doc """
-  Retires runs untouched for #{@ttl_hours}h — the cookie's own window, sliding because `updated_at`
-  moves on every save. A retired run keeps its place and its fights and gives up only its session,
+  Retires runs untouched for #{@ttl_hours}h — the cookie's own window: both slide, the
+  cookie re-issued on every visit and `updated_at` moving on every save. A retired run keeps its place and its fights and gives up only its session,
   which is what makes it MISSING rather than dead. Nothing is deleted. Returns how many were.
   """
   def retire_idle do

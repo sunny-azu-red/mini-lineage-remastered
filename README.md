@@ -327,7 +327,7 @@ Dockerfile takes a build arg rather than reading a `.git` a Portainer stack does
 **Put TLS in front of it.** `force_ssl` 301s every plain-http request to `https://` on the host it
 was asked for: right behind a proxy that terminates TLS and sets `X-Forwarded-Proto`, a redirect
 loop if exposed directly on port 80. `localhost` and `127.0.0.1` are excluded, which is how the
-compose healthcheck reaches the game.
+compose healthcheck reaches `/health`, which the endpoint answers before any session is minted.
 
 **`PHX_HOST` is required, and it is not only about links.** `check_origin` is left at its default,
 so the LiveView socket refuses every origin that is not this host. Name it wrongly and the page

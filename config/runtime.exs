@@ -139,7 +139,7 @@ if config_env() == :prod do
          MiniLineage.Repo,
          database_config ++
            [
-             pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+             pool_size: String.to_integer(env.("POOL_SIZE") || "10"),
              socket_options: maybe_ipv6
            ]
 
