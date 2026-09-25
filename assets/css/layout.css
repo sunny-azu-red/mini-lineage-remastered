@@ -14,7 +14,6 @@
     padding: 12px;
 }
 
-/* A round 700, with the sidebar at 210 inside it. */
 #wrapper {
     width: 100%;
     max-width: 700px;
@@ -214,8 +213,7 @@
 }
 
 /* ===== Responsive ===== */
-/* Stacked before the sidebar can squeeze the main column narrower than a phone would give it: at
- * 600px side by side, a shop's table had less room than on a 400px phone, and scrolled. */
+/* Stacked before the sidebar can squeeze the main column narrower than a phone would give it. */
 @media (max-width: 640px) {
     #app {
         padding: 12px;

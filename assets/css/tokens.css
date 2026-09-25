@@ -64,7 +64,7 @@
     /* ===== Text =====
      * Three steps of prose: one hue at one saturation, differing only in lightness, because
      * quieter text should get quieter and not bluer. Then the six values, peers because they land
-     * in one sentence — L* 58.0 to 58.1 end to end, so all six read at 5.2 on the panel, where
+     * in one sentence — L* 58.0 to 58.1 end to end, so all six read at 4.9 on the panel, where
      * they had ranged 57 to 66 and the tally whispered. Chroma is NOT shared: each runs to its own
      * sRGB ceiling, since teal tops out near 39 at any lightness and equalising drags the whole
      * set down to meet the one hue that cannot keep up. */
@@ -77,6 +77,9 @@
     --text-tally: #009d8c;
     --text-critical: #d7700f;
     --text-success: #00a152;
+    /* Over something coloured rather than the panel: an effect's timer badge, and a bar's figure. */
+    --text-timer: #fff;
+    --text-bar: rgba(255, 255, 255, 0.7);
 
     /* ===== The bars =====
      * The two are built alike: one lightness for the bases, one for the glows, one chroma for
@@ -89,9 +92,8 @@
     --glow-xp: #c254c8;
 
     /* ===== The alert voices =====
-     * One lightness, so the four read at one contrast on the panel, 7.2 apiece. These had been
-     * spelled out at each of their eight call sites while every other family lived in a token —
-     * the alert grounds were tokenised long ago and their voices were simply never done. */
+     * Danger, success and info share a lightness and read at 6.7 on the panel; warning is gold, and
+     * lighter, at 9.6. */
     --text-danger: #ff8164;
     --text-success-bright: #0fbe6e;
     --text-warning: #e7c33d;

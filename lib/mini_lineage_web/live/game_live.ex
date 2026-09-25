@@ -110,12 +110,9 @@ defmodule MiniLineageWeb.GameLive do
   defp filter_race(%{race_filter: id, catalog: catalog}),
     do: Enum.find(catalog.races, &(&1.id == id))
 
-  # A run nobody can find is not an error: `Screens` draws an empty state for a nil record. Yours
-  # is read from your own process rather than the document, because `health` is buffered.
+  # Yours is read from your own process rather than the document, because `health` is buffered.
   defp assign_record(socket, %{"id" => id}) do
-    # A record nobody can find is a 404, the same as a road the game never had. It used to be a
-    # page of its own answering with a 200, which made this the one place in the game where "does
-    # not exist" meant something different depending on which kind of thing was missing.
+    # A record nobody can find is a 404, the same as a road the game never had.
     entry = Board.entry(id) || raise MiniLineageWeb.NotFoundError
 
     view =
@@ -137,8 +134,8 @@ defmodule MiniLineageWeb.GameLive do
 
   defp assign_record(socket, _params), do: socket |> watch_record(nil) |> clear_record()
 
-  # Where the window ends, so what arrives next is asked for by id rather than by how many are
-  # held — a capped first page means `length(log)` is no longer where the run got to.
+  # Where the window ends, so what arrives next is asked for by id: a capped first page's length
+  # says nothing about where the run got to.
   defp cursor([]), do: 0
   defp cursor(log), do: List.last(log).id
 
@@ -310,12 +307,8 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:statistics, _stats}, socket), do: {:noreply, socket}
 
-  # Rebuilt from the player the push carried, so nothing is read back bar the entries the chronicle
-  # has yet to see. `id` twice in the head guards that this tab watches this record.
-  #
-  # The push says whether anything was logged, rather than this end guessing from the tallies: a
-  # purchase moves neither the battle count nor the last fight, so every deed that was not a fight
-  # went unseen until the reader refreshed.
+  # Rebuilt from the pushed player; only entries the chronicle has yet to see are read back. `id`
+  # twice guards that this tab watches this record, and the push says whether a row was written.
   def handle_info(
         {:record_updated, player, id, wrote?},
         %{assigns: %{watching: id}} = socket

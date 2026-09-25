@@ -26,7 +26,7 @@ defmodule MiniLineage.CharacterLog do
       field :character_id, :string
 
       # Defaulted here as well as in the table: `insert_all` sends the struct as it is and applies
-      # no column default, so a deed that is not a fight would send ten NULLs into NOT NULL.
+      # no column default, so a deed that is not a fight would send NULLs into NOT NULL.
       field :enemies_killed, :integer, default: 0
       field :hp_lost, :integer, default: 0
       field :damage_blocked, :integer, default: 0
@@ -49,11 +49,7 @@ defmodule MiniLineage.CharacterLog do
   # same window rather than to wherever it had grown to.
   @window 100
 
-  @doc """
-  The row a fight produces. Built here rather than written, so the caller can put it in the same
-  transaction as the character it belongs to — a logged fight the character does not remember is
-  worse than no log at all.
-  """
+  @doc "The row a fight produces, built rather than written so the caller can save it in the character's own transaction."
   def row(character_id, %{outcome: outcome, narrative: narrative} = battle) do
     %Entry{
       character_id: character_id,
@@ -74,10 +70,8 @@ defmodule MiniLineage.CharacterLog do
   end
 
   @doc """
-  The most recent FIGHT, as the shape the battle screen renders. Nil before the first one.
-
-  The kind is the whole point: `Server.init/1` rebuilds the battle screen from this, so without it
-  a player who last bought a blade reconnects to a battle report with no lines and no numbers.
+  The most recent FIGHT, as the battle screen renders it; nil before the first. Filtered on kind
+  because `Server.init/1` rebuilds that screen from it.
   """
   def last_for(character_id) do
     Entry
@@ -105,11 +99,8 @@ defmodule MiniLineage.CharacterLog do
   end
 
   @doc """
-  The last `limit` fights of one run, oldest first within that window.
-
-  Capped, not paged: the whole history of a long run went through the socket on every page load to
-  fill a 260px box. `Record.road/1` above the panel already tells a reader when the road opened,
-  which is what the entries beyond the window would have said.
+  The last `limit` entries of one run, oldest first. Capped, not paged: the road above the panel
+  already says when the run began.
   """
   def recent(character_id, limit \\ @window) do
     Entry
@@ -122,11 +113,8 @@ defmodule MiniLineage.CharacterLog do
   end
 
   @doc """
-  Everything written after `cursor`, oldest first, for a record being read as it happens.
-
-  A keyset and not an offset: an offset walks every row it skips, so a run that has fought five
-  hundred times pays for five hundred to append one. The table is append-only, so what a reader
-  already holds can never change.
+  Everything written after `cursor`, oldest first. A keyset, not an offset, so appending one entry
+  never walks the rows a reader already holds.
   """
   def since(character_id, cursor) do
     Entry

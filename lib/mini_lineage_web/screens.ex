@@ -160,6 +160,7 @@ defmodule MiniLineageWeb.Screens do
 
     <%!-- No placeholder: there is no "nowhere" to travel to, so the first destination is preselected. --%>
     <.select_action_form
+      id="travel-form"
       event="navigate"
       name="to"
       picked={@picked}
@@ -248,6 +249,7 @@ defmodule MiniLineageWeb.Screens do
     <p>Do you wish to depart this world?</p>
     <%!-- The two choices carry their own variants, which is why the variant may be a function. --%>
     <.select_action_form
+      id="suicide-form"
       event="suicide"
       name="confirm"
       picked={@picked}

@@ -119,6 +119,7 @@ defmodule MiniLineageWeb.Screens.Shop do
     </div>
 
     <.select_action_form
+      id="purchase-form"
       event="purchase"
       name="item_id"
       picked={@picked}

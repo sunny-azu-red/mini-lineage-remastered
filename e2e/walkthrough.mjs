@@ -494,8 +494,8 @@ try {
     check('...which the Chronicle\'s own header opens',
         await page.locator('#chronicle .panel-body').isVisible());
 
-    // A log, not a wall: the page is the same height however long the run was, and it opens on the
-    // fight that ended this one rather than on the first blow of it.
+    // A log, not a wall: the page is the same height however long the run was, and it opens on its
+    // ending rather than its beginning.
     const log = await page.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
         return { hidden: body.scrollHeight - body.clientHeight, fromBottom: body.scrollHeight - body.clientHeight - body.scrollTop };

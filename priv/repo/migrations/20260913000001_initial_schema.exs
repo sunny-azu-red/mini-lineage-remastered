@@ -64,9 +64,8 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
       add :character_id, references(:characters, type: :string, on_delete: :delete_all),
         null: false
 
-      # What happened. No CHECK and no enum: every new kind would be a migration, and the
-      # whitelist that matters is the one beside `@narrative_keys`, which is also what stops
-      # untrusted JSON minting atoms.
+      # What happened. No CHECK and no enum, so a new kind is not a migration: `CharacterLog`'s
+      # `@kinds` is the whitelist.
       add :kind, :string, size: 16, null: false
 
       # The rendered lines, so a chronicle never has to re-roll the prose it already told.
@@ -86,10 +85,8 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
       timestamps(type: :timestamptz, updated_at: false)
     end
 
-    # Every question this table is asked: a run's last fight, its newest entries, and everything
-    # after a cursor. Without it the commonest case — a character with nothing logged yet — scans
-    # the whole table backwards. No partial index on `kind`: dropping a column takes any index
-    # whose predicate mentions it, silently, which is how this table lost one before.
+    # Every question this table is asked: a run's last fight, its newest entries, everything after a
+    # cursor. No partial index on `kind`: dropping a column silently takes any index naming it.
     create index(:character_log, [:character_id, :id])
 
     # Counters, keyed by name. Written by upsert-with-increment, never read-modify-write.

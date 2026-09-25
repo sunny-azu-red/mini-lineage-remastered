@@ -140,7 +140,7 @@
     font-size: 8px;
     font-family: var(--font-pixel);
     font-weight: 400;
-    color: #fff;
+    color: var(--text-timer);
     line-height: 1;
     pointer-events: none;
     white-space: nowrap;
@@ -226,8 +226,7 @@
 .status-panel .stat-row {
     display: grid;
     grid-template-columns: 46px 1fr;
-    /* A bar's height, so a row of text is no shorter than a row holding a bar, and one padding for
-       all: a bar row's own smaller padding had been doing that job by hand. */
+    /* A bar's height, so a row of text is no shorter than a row holding a bar. */
     grid-template-rows: minmax(18px, auto);
     padding-block: 10px;
     align-items: center;
@@ -270,15 +269,9 @@ ol.chronicle li:last-child::after {
     }
 }
 
-/* A row in danger, and an entry that ended in an ambush: one mark, in two places. Nothing to round,
-   nothing to pad or pull back — the row keeps exactly the shape it has when nothing is wrong, which
-   is the point: going low should colour a row, not move it.
-   The ground comes up across a third of the row from each end, rather than a fixed distance: the
-   sidebar's 193px row wants about 64px of it and the Chronicle's is three times as wide, so a
-   number that suits one is wrong for the other. A share of the width suits both. It is the PANEL's colour laid back over the wash, so it wants
-   the row to be on a panel; both of these are. */
-/* The shape of every row the game marks: a wash that fades into the panel at both ends. The colour
- * is each row's own, below, so none of them is a default another has to override. */
+/* The shape of every row the game marks: a wash fading into the panel across a third from each end,
+   a share rather than a distance so one gradient suits a sidebar row and a chronicle entry. The
+   colour is each row's own, below, so none is a default another has to override. */
 .stat-row.danger,
 ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     background-image: linear-gradient(90deg,
@@ -375,7 +368,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     transform: translateY(-50%);
     text-align: center;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-bar);
     font-weight: 500;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
@@ -491,9 +484,9 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     white-space: pre-wrap;
 }
 
-/* ===== Version Badge ===== */
-/* A run's fights, oldest first. Ordered because a chronicle is, but never numbered: the count is
-   already in the paragraph above it. The cap and the scroll are the panel's, not this list's. */
+/* ===== Chronicle ===== */
+/* A run's chronicle, oldest first. Ordered because a chronicle is, but never numbered. The cap and
+   the scroll are the panel's, not this list's. */
 ol.chronicle {
     margin: 0;
     padding: 0;
@@ -536,12 +529,6 @@ ol.chronicle {
     background: var(--gold-dim);
 }
 
-/* An entry is a paragraph now rather than a line, so it is spaced like one. The last gives its
-   margin up to the box's own padding, which is already holding that gap. */
-/* Rows, exactly as the sidebar's stats are rows: a dashed rule between them and none around the
-   outside, so the list reads as a run of separate things rather than one block of prose. */
-/* What was waiting at the end of a fight speaks in the alert's own voice, as it did while the
-   fight was happening. */
 /* Each washed like the alert that would announce it: danger for an ambush, info for a beginning,
  * gold for a level (the warning alert's own colour, and the level's), success for a purchase. */
 .stat-row.danger,
@@ -571,6 +558,7 @@ ol.chronicle .entry-head {
     color: var(--text-muted);
 }
 
+/* Rows, as the sidebar's stats are: a rule between them and none around the outside. */
 ol.chronicle li {
     padding: 12px;
     position: relative;

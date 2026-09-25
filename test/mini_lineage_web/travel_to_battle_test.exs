@@ -20,6 +20,8 @@ defmodule MiniLineageWeb.TravelToBattleTest do
     session = Characters.new_session_id()
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Doomed")
     :ok = Store.save(Store.new_id(), session, %{player | health: 1})
+    # Mounting starts the character's process; left up, it flushes into whichever test runs next.
+    on_exit(fn -> Characters.forget(session) end)
 
     %{conn: init_test_session(conn, %{"session_id" => session}), session: session}
   end

@@ -38,8 +38,7 @@ defmodule MiniLineage.Characters.Server do
     # rather than at the first save is what lets two tabs on one session agree on it.
     {id, player} = Store.load_by_session(session) || {Store.new_id(), %Player{}}
 
-    # The narrative is no longer in the document, so the screen is refilled from the log — one
-    # query, and only when the process starts.
+    # The battle screen is refilled from the log, not the document: one query, and only at start.
     player = %{player | last_battle_narrative: CharacterLog.last_for(id)}
     schedule_tick()
 
@@ -93,10 +92,10 @@ defmodule MiniLineage.Characters.Server do
   def handle_info(:tick, state) do
     schedule_tick()
 
-    # Nobody heals while they are away: a process kept up only for a buff to lapse must not start
-    # regenerating a player who closed the tab minutes ago.
     state = backstop(state)
 
+    # Nobody heals while they are away: a process kept up only for a buff to lapse must not start
+    # regenerating a player who closed the tab minutes ago.
     {:noreply,
      if(state.lingering, do: state, else: on_timer(state, &Player.process_regen_tick/1))}
   end
@@ -208,9 +207,7 @@ defmodule MiniLineage.Characters.Server do
     end
   end
 
-  # Anything outside @buffered is the player's own doing, written before they see the result — and
-  # what dates a run in the Halls, `updated_at` moving for a tick the backstop flushed and for a
-  # tab closing, neither of which anybody did.
+  # Anything outside @buffered is the player's own doing, and is written before they see the result.
   defp flush?(before, now) do
     before
     |> Map.from_struct()
@@ -219,9 +216,6 @@ defmodule MiniLineage.Characters.Server do
 
   # Drained AFTER `flush?/2` has been asked: clear the list first and before and now are identical,
   # so a purchase would never be written before the player is told it worked.
-  #
-  # It used to notice a fight by diffing `last_battle_narrative`, which cannot name a blade
-  # somebody bought and, more quietly, cannot see a fight whose map repeats the last one exactly.
   defp drain_events(state, player) do
     rows = Enum.map(player.pending_events, &row_for(state.id, &1))
 
@@ -294,10 +288,10 @@ defmodule MiniLineage.Characters.Server do
     %{state | pending_rows: state.pending_rows ++ rows}
   end
 
-  # The Cheater's Mark is left out: the heresy has a line of its own that says it better, and it
-  # never lapses, so this would only ever repeat that one.
   defp awaiting_lapse?(player), do: Enum.any?(deeds(player.effects), &(&1.expires_at != nil))
 
+  # The Cheater's Mark is left out: the heresy has a line of its own that says it better, and it
+  # never lapses, so this would only ever repeat that one.
   defp deeds(effects),
     do: Enum.filter(effects, &(&1.type in [:buff, :debuff] and &1.id != "konami_cheat"))
 

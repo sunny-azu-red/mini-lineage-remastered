@@ -453,7 +453,7 @@ defmodule MiniLineage.Game.Player do
     {player, %{success: true, text: Narrative.alert(bought), item: item}}
   end
 
-  # ----------------------------------------------------------------- battle
+  # ------------------------------------------------------------------- log
 
   @doc """
   Notes something the run did, for the process to write and then clear.
@@ -464,6 +464,8 @@ defmodule MiniLineage.Game.Player do
 
   @doc "A deed, stamped when it happened rather than when the row reaches the database."
   def event(kind, line), do: %{kind: kind, line: line, at: Clock.now()}
+
+  # ----------------------------------------------------------------- battle
 
   @doc "Applies a resolved fight. Returns `{player, level_up?}`."
   def resolve_battle_outcome(player, result) do

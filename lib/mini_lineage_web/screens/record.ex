@@ -123,8 +123,7 @@ defmodule MiniLineageWeb.Screens.Record do
         with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, only <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> short of <span class="level">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>, and <%= if @view.adena > 0 do %>left <span class="adena">🪙 <span data-key="rec-adena" data-format="adena" data-value={@view.adena}>{@purse}</span> Adena</span> unspent<% else %>died with an empty purse<% end %>.
       </p>
       <% else %>
-        <%!-- The hook animates every [data-value] beneath it, so the HP figure counts as it regenerates. --%>
-        <p id="char-vitality" phx-hook="AnimatedValues" phx-no-format>
+        <p id="char-vitality" phx-no-format>
         Experience wise, {@voice.them} are at <span class="level">Level <span data-key="rec-level" data-value={@view.level}>{@level}</span></span>
         with a total of <span class="xp"><span data-key="rec-xp" data-value={@view.experience}>{@experience}</span> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><span data-key="rec-xp-needed" data-value={@view.xp_needed}>{@xp_needed}</span> XP</span> to reach <span class="level">Level <span data-key="rec-next-level" data-value={@view.level + 1}>{@next_level}</span></span><% end %>
         and {@voice.their} vitality currently sustains {@voice.object} at
@@ -181,8 +180,8 @@ defmodule MiniLineageWeb.Screens.Record do
   defp lapse(:aura), do: "It settles in"
   defp lapse(_buff), do: "It holds for another"
 
-  # The chronicle is a run's fights read by whoever opened the page, so the pronouns are filled
-  # here rather than when the fight happened.
+  # The chronicle is read by whoever opened the page, so its pronouns are filled here, not when it
+  # happened.
   defp voiced(line, mine?), do: Narrative.voiced(line, mine?)
 
   # An ending wears the colour every ending wears, whether a blow or a blade of one's own ended it.
@@ -211,12 +210,12 @@ defmodule MiniLineageWeb.Screens.Record do
   defp kind_label(%{kind: "debuff"}), do: "Debuff"
 
   attr :record_log, :list, default: []
-  # Whose fights these are, which decides whether they are told to them or about them.
+  # Whose chronicle this is, which decides whether it is told to them or about them.
   attr :mine, :boolean, default: true
 
   @doc """
-  A run's fights, in a panel of their own beneath the record's. Longer than everything else on the
-  page put together, so inside the panel they crowd out what the panel is named for.
+  A run's chronicle, in a panel of its own beneath the record's, where its length cannot crowd out
+  what that panel is named for.
   """
   def chronicle(assigns) do
     ~H"""
@@ -232,8 +231,6 @@ defmodule MiniLineageWeb.Screens.Record do
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>
-        <%!-- One hook over the list: every stamp beneath it is rewritten to the reader's clock in
-              one pass, where a hook per row would be a hundred for one job. --%>
         <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
           <li :for={entry <- @record_log} {painted(entry)}>
             <div class="entry-head">
@@ -245,8 +242,8 @@ defmodule MiniLineageWeb.Screens.Record do
               <span :if={entry.narrative.crit_line}>{raw(voiced(entry.narrative.crit_line, @mine))} </span>{raw(
                 voiced(entry.narrative.kill_line, @mine)
               )} {raw(voiced(entry.narrative.deflection_line, @mine))}
-              <%!-- The fight a run did not walk away from is the only entry that is an ending
-                    rather than a report, and it wears the colour every ending wears. --%>
+              <%!-- A fight the run did not walk away from is its ending, and wears the colour
+                    every ending wears. --%>
               <span :if={entry.died} class="deaths">{raw(voiced(entry.narrative.outcome_line, @mine))}</span>
               <span :if={!entry.died}>{raw(voiced(entry.narrative.outcome_line, @mine))}</span>
               <span :if={entry.narrative.ambush_line} class="threat">{raw(

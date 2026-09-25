@@ -73,9 +73,7 @@ try {
     check('...and climbs as they fight, without the watcher reloading anything', climbed,
         `${before} -> ${await boardXp(watcher)} XP`);
 
-    // One more before the record is opened. Two entries only just outgrow the Chronicle's box, and
-    // whether they do at all turns on a crit line landing — which is the dice deciding whether the
-    // check below can see anything. Three clear it however they read.
+    // One more before the record is opened, so the Chronicle outgrows its box however the lines read.
     await player.click('#main button[phx-click="fight"]');
     await player.waitForFunction(
         () => Number(document.querySelector('#screen')?.dataset.battles ?? 0) > 1,
@@ -87,9 +85,8 @@ try {
     const href = await watcher.getAttribute('#main table.data-table a', 'href');
     check('...at a link to that run\'s own record', /^\/character\/\S+$/.test(href ?? ''), href ?? '');
 
-    // Read at phone width from here on: two fights wrap to more lines than the Chronicle's box can
-    // show, which is what makes following it down observable at all — and what a reader on a phone
-    // gets anyway.
+    // Read at phone width from here on, where the entries overflow the Chronicle's box and following
+    // it down is observable at all.
     await watcher.setViewportSize({ width: 320, height: 800 });
     await watcher.goto(`${BASE}${href}`, { waitUntil: 'domcontentloaded' });
     await connected(watcher);
@@ -103,7 +100,7 @@ try {
     await watcher.click('#chronicle .panel-toggle');
 
     // The chronicle is APPENDED to while it is being read, never re-read: the reader keeps the
-    // fights it already has. Dice-proof — the line is added whether that blow lands or kills.
+    // entries it already has. Dice-proof — the line is added whether that blow lands or kills.
     const lines = () => watcher.locator('#main ol.chronicle li').count();
     const told = await lines();
     await player.click('#main button[phx-click="fight"]');
@@ -153,9 +150,8 @@ try {
     check('...and change as the run does, with the reader asking for nothing', swapped,
         (await effects()).slice(0, 80));
 
-    // A deed that is not a fight has to reach a watcher too. Whether to append used to be guessed
-    // at from the battle tally and the last fight, and a purchase moves neither — so on a record
-    // somebody else was reading, nothing but fighting ever appeared until they reloaded.
+    // A deed that is not a fight has to reach a watcher too: a purchase moves neither the battle
+    // tally nor the last fight.
     const heldBefore = await lines();
     await player.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
     await connected(player);
@@ -167,8 +163,7 @@ try {
     check('...and a purchase reaches them as a fight does, being just as much a deed', reached,
         `${heldBefore} -> ${await lines()} line(s)`);
 
-    // The road above the panel is dated by the chronicle's last entry, and moves with it: two dates
-    // for one fact is how "last carried them on" came to disagree with the log beneath it.
+    // The road above the panel is dated by the chronicle's last entry, and moves with it.
     const dates = await watcher.evaluate(() => ({
         road: document.querySelector('#record-last')?.dateTime,
         last: [...document.querySelectorAll('#main ol.chronicle li time')].at(-1)?.dateTime,

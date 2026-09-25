@@ -9,10 +9,8 @@ defmodule MiniLineage.Game.Clock do
   def put_now(ms) when is_integer(ms), do: Process.put(@key, ms)
 
   @doc """
-  The same instant as a `DateTime`, for a row that is dated rather than measured against.
-
-  Built from microseconds because the log's timestamps are `:utc_datetime_usec`, and Ecto refuses
-  a coarser one rather than padding it.
+  The same instant as a microsecond `DateTime`, for a dated row: the log is `:utc_datetime_usec`
+  and Ecto refuses a coarser one.
   """
   def now, do: to_datetime(now_ms())
 

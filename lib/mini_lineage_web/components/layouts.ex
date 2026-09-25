@@ -42,9 +42,9 @@ defmodule MiniLineageWeb.Layouts do
   attr :screen, :string, required: true
   attr :character_id, :string, default: nil
   slot :inner_block, required: true
-  # What belongs to the screen but not inside its panel. The Chronicle is the only one: a run's
-  # fights are longer than everything else on the page put together, and in the panel they crowd
-  # out what the panel is named for.
+
+  # What belongs to the screen but not inside its panel. The Chronicle is the only one: longer than
+  # everything else on the page, it would crowd out what the panel is named for.
   slot :aside
 
   def app(assigns) do

@@ -37,8 +37,7 @@ defmodule MiniLineage.Characters.Serde do
       "effects" => Enum.map(p.effects, &effect_to_map/1),
       "current_screen" => p.current_screen,
       "combat_until" => p.combat_until
-      # `last_battle_narrative` is deliberately absent: it lives in character_log now, and was half
-      # the bytes of every save. The process rehydrates it from there when it starts.
+      # `last_battle_narrative` is absent: it lives in character_log, and the process rehydrates it.
     }
   end
 

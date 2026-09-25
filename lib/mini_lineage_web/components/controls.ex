@@ -201,6 +201,8 @@ defmodule MiniLineageWeb.Controls do
   shops and Suicide. Submitting with the placeholder selected is a legitimate "go home", so the
   button is never disabled; until the PLAYER picks, it reads `default_label`.
   """
+  # LiveView restores a form's pick after a reconnect only when the form has an id.
+  attr :id, :string, required: true
   attr :event, :string, required: true
   attr :name, :string, required: true
   attr :options, :list, required: true
@@ -230,7 +232,7 @@ defmodule MiniLineageWeb.Controls do
       )
 
     ~H"""
-    <form phx-submit={@event} phx-change="pick">
+    <form id={@id} phx-submit={@event} phx-change="pick">
       {render_slot(@hidden)}
       <div class="form-row">
         <%!-- `selected` is rendered explicitly: re-rendering the option list to relabel the button

@@ -125,8 +125,7 @@ defmodule MiniLineage.Board do
     end)
   end
 
-  # Every board in ONE statement. It was one query per filter, and a round trip costs more than the
-  # query does: measured at 5.2ms for the five, 2.0ms as one, with the last-seen lookup included.
+  # Every board in ONE statement, because a round trip costs more than the query does.
   defp boards(filters) do
     [first | rest] = Enum.map(filters, &from(t in subquery(top(&1)), select: t))
 

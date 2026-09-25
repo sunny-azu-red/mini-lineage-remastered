@@ -19,9 +19,8 @@
     border: 1px solid var(--border-soft);
 }
 
-/* A column label is chrome, not a title: the body face, tracked to hold small capitals, and no
-   colour of its own — the body's, lighter than the item names beneath it. Muted is illegible on the
-   band at this size, and gold is barely lighter than the names. */
+/* No colour of its own: the body's, lighter than the item names beneath it. Muted is illegible on
+   the band at this size, and gold barely lighter than the names. */
 .data-table th {
     background: var(--table-lift);
     /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
@@ -46,10 +45,6 @@ td.num,
 th.num {
     text-align: right;
 }
-
-/* No column is given the width. What the rows leave over is shared among all of them in proportion
-   to their content, so the gaps grow only where there is room: a fixed gap took it from the name,
-   and the armour shop's longest wrapped on desktop. */
 
 /* Everything but the name is a figure or a date, and neither reads wrapped. */
 .data-table th:not(.name),

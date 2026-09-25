@@ -192,12 +192,7 @@ defmodule MiniLineage.Game.Actions do
         sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
         type_atom = if result.success, do: :success, else: :danger
 
-        # Only a shop flash breaks its lines. The reference converts newlines here and nowhere
-        # else, so the welcome message stays one flowing paragraph — copied rather than tidied,
-        # because tidying it would be a visible change.
-        text = String.replace(result.text, "\n", "<br>")
-
-        {player, {:ok, %{text: text, type: type_atom, sound: sound}}}
+        {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
     end
   end
 
@@ -206,8 +201,8 @@ defmodule MiniLineage.Game.Actions do
   def suicide(player) do
     guard(player, alive(), fn player ->
       player = Player.commit_suicide(player)
-      # A run that ends in a fight has the fight row to say so. This one has nothing, which is why
-      # a coward's Chronicle used to stop mid-sentence with no ending at all.
+
+      # A run that ends in a fight has the fight row to say so; this one needs an ending of its own.
       player = Player.log(player, Player.event("ending", player.death_reason))
       Statistics.increment(:total_players_suicided)
 

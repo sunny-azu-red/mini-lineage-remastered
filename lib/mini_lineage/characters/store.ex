@@ -44,9 +44,9 @@ defmodule MiniLineage.Characters.Store do
     end
   end
 
-  def save(id, session_id, player, battles \\ [])
+  def save(id, session_id, player, rows \\ [])
 
-  # No fight to stay consistent with, so no transaction. BEGIN and COMMIT are two more round trips,
+  # No log row to stay consistent with, so no transaction. BEGIN and COMMIT are two more round trips,
   # and at ~0.8ms each on this network they cost more than the write they were wrapping.
   def save(id, session_id, %Player{} = player, []) do
     upsert(id, session_id, player)
@@ -54,8 +54,8 @@ defmodule MiniLineage.Characters.Store do
     :ok
   end
 
-  # One transaction: a fight written without the character that fought it would show in the log as
-  # a battle its own totals do not include.
+  # One transaction: a log row written without its character would describe a run whose own totals
+  # do not include it.
   def save(id, session_id, %Player{} = player, rows) do
     Repo.transaction(fn ->
       upsert(id, session_id, player)
