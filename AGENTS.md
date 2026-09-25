@@ -94,10 +94,12 @@ row and gives the same session a new character; nothing needs a new cookie, and 
 needs to leave the socket.
 
 **Writes follow the player, not the clock.** What the player did is written before they are told it
-worked: creation, a fight, a purchase, death, the cheat. The passage of time — passive
-regeneration, which screen they wandered to — is buffered and rides along with the next of those,
-or with `terminate/2`. The decision is derived from the struct in `Characters.Server`, never
-declared at a call site, because a call site can forget.
+worked: creation, a fight, a purchase, death, the cheat. So is any row for the log, whoever caused
+it — a buff lapsing included — because the log dates the run and somebody may be watching it. The
+rest of the passage of time — passive regeneration, which screen they wandered to — is buffered and
+rides along with the next write, or with `terminate/2`. The decision is derived from the struct and
+the pending rows in `Characters.Server`, never declared at a call site, because a call site can
+forget.
 
 **The URL is where you are.** Start, Town and Game Over are one run's three states and share `/`;
 `Access.pin_screen/2` decides which. Somewhere you can stand — the Battleground, a shop, the
@@ -183,8 +185,8 @@ vocabulary like any other value. The BADGE over its emoji does not: `--text-succ
 token; adding a class means putting it in a group, never inventing a hex.
 
 **A record is live, and one thing about it lives outside the snapshot.** Everything a watched
-record needs rides in the push — that is why `last_action_at` is in the view rather than read back
-— but whether a run is still HELD is a column, not state, and a run that has been restarted away
+record needs rides in the push or arrives with the chronicle it appends to — but whether a run is
+still HELD is a column, not state, and a run that has been restarted away
 from has no process left to push anything at all. So `archive/1` broadcasts `{:record_retired, id}`
 on the topic of the run it is retiring, read BEFORE the archive because afterwards that session
 names the next character, and the LiveView answers it by reading the entry again. Once in a run's
@@ -206,11 +208,25 @@ identical and the deed is never written before the player is told it worked. The
 comment was protecting still holds: the WRITE decision is derived from the struct, and only the
 NARRATION is declared.
 
-**An effect lapsing is the passage of time, so its row goes on the state and never on the player.**
-`pending_events` sits outside `@buffered`, so anything put there forces an immediate write; an
-expiring buff must ride along with the next action instead. Both gained and lapsed are decided in
-`Server.log_effects/4` rather than at the call site, which is also what puts a buff AFTER the meal
-that brought it. Auras never appear: `sync_zone_auras/1` flips them on nearly every pass.
+**An effect is logged by the process that notices it, dated when it actually happened.** No action
+declares a lapse, so `Server.log_lapsed/2` and `log_gained/3` decide both, and a pass writes in the
+order things happened: lapses first — they were overdue before the pass began — then the action's
+own events, then what the action brought on. A lapse is dated at the effect's `expires_at`, never
+when it was noticed, because a closed tab or a deploy notices late. A run that leaves with a timed
+buff keeps its process up until the buff lapses, skipping the regen tick while it lingers so an
+absent player never heals. Auras never appear: `sync_zone_auras/1` flips them on nearly every pass.
+
+**When a run was last seen is its last log entry, never a stamp stored beside it.** A stored
+`last_action_at` and the log were two copies of one fact, and the road on a record came to disagree
+with the chronicle under it. `Board` reads the date with a lateral `LIMIT 1` down `(character_id,
+id)` — id order is time order, so no extra index — coalesced to the run's birth for a row with no
+entry yet. On a record the road reads the same entry from the board, and the LiveView moves it
+forward as it appends, so the two cannot drift even while being watched.
+
+**The board is one statement.** Every lineage's top 25 as a subquery — Ecto hangs a branch's
+`ORDER BY` and `LIMIT` on the whole union otherwise — combined with `UNION ALL`, dated, then sorted
+again, since SQL promises no order out of a union. Five round trips had cost more than the queries:
+measured on 20k runs and a million-entry log, 3.6ms became 2.3ms with the date lookups included.
 
 **`CharacterLog.last_for/1` filters on kind, and that is not tidying.** `Server.init/1` rebuilds the
 battle screen from it. The table holds deeds as well as fights, so without the filter a player whose
@@ -224,7 +240,7 @@ because a purchase moves neither the battle count nor the last fight.
 **A stored line keeps its pronouns open; everything else is filled when it happens.** A fight's
 numbers and gear are facts about a moment, so they are filled then — but who the line is being told
 TO is not known until somebody opens a page, and the same row is read by the run itself and by
-strangers in the Halls. So the six pools the chronicle stores carry `{they} {them} {object} {their}
+strangers in the Halls. So every pool the chronicle stores carries `{they} {them} {object} {their}
 {whose} {self}` and nothing second-person, `Format.fill_template` leaves them alone at build time
 because they are not in the data map, and `Narrative.voiced/2` closes them at render: `true` on a
 run's own battle screen, the reader's own voice in the chronicle. Verb agreement is free — they/them
@@ -241,7 +257,7 @@ counted those either, and it was the fighter who fell. Every line is still DRAWN
 draw in order and skipping one would shift every later roll in that fight, and then all of them are
 dropped for how it ended, in the second person the whole chronicle is written in and wearing
 `.deaths` as the death screen does. This
-is also why a run's chronicle can hold one more entry than `total_battles` says.
+is also why a run's chronicle can hold one more fight than `total_battles` says.
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
 action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
@@ -368,11 +384,10 @@ the collector after its counters are in, because a reader answering a push by re
 finds nothing otherwise — which is exactly how the chronicle came back empty. It costs about 1.2ms
 before a push lands and is worth it.
 
-Anything a record needs live rides in the snapshot rather than being read back: `last_action_at` is
-there so a watched record restamps itself without a query. The chronicle is only ever APPENDED to —
-a run's fights never change, so a reader keeps the ones it has and asks for the rest. Two signals
-say a fight happened, because neither alone is enough: the tally does not count the fight that
-killed them, and a narrative can repeat where the numbers do not.
+Anything a record needs live rides in the snapshot or in the entries appended to its chronicle,
+rather than being read back. The chronicle is only ever APPENDED to — a run's entries never change,
+so a reader keeps the ones it has and asks for the rest by cursor — and only when the push says a
+row was written.
 
 **A browser suite tests the game, not its CSS.** The walkthrough is one character played normally.
 A 600ms sweep across the HP bar was checked there and failed about one run in three, taking the
@@ -490,7 +505,9 @@ the few rows a test inserts.
 guessed. So prefer one statement over a clever plan: splitting an OR-chain into two index-only
 COUNTs made `rank_of` *slower* until it was folded back into one `UNION ALL`. `EXPLAIN ANALYZE`
 reports server time and says nothing about the wire — time the wall clock before believing it.
-`Store.save` skips its transaction when there is no fight to be consistent with, for the same
+And time the code path that ships, not hand-written SQL: `Repo.query!` parses and plans on every
+call where Ecto caches the prepared statement, which put the old board at 5.2ms when it was 3.6ms.
+`Store.save` skips its transaction when there is no log row to be consistent with, for the same
 reason: `BEGIN` and `COMMIT` are two more trips.
 
 **An empty environment variable is not an absent one.** `System.get_env("DB_PORT", "5432")` returns
@@ -499,7 +516,7 @@ empty, so every `${VAR}` it forwards needs a `:-default`.
 
 **Ownership is set as the files land, never chowned afterwards.** `COPY --chown=app:app` costs
 nothing; a `RUN chown -R app:app /app` after the copy writes a second copy of the whole release into
-its own layer — 35MB of an 88MB image. The `/app` directory itself still needs chowning, because the
+its own layer — 34MB of a 53MB image. The `/app` directory itself still needs chowning, because the
 release puts its runtime config under it.
 
 **Migrations ship inside the release image.** `MiniLineage.Release.migrate()` run from a stale
