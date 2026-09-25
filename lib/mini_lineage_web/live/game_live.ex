@@ -9,7 +9,6 @@ defmodule MiniLineageWeb.GameLive do
   use MiniLineageWeb, :live_view
 
   alias MiniLineage.{CharacterLog, Board, Characters}
-  alias MiniLineage.Characters.Store
   require Logger
 
   alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
@@ -29,8 +28,6 @@ defmodule MiniLineageWeb.GameLive do
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)
-      Board.subscribe()
-      Collector.subscribe()
     end
 
     player = Characters.snapshot(id)
@@ -45,10 +42,12 @@ defmodule MiniLineageWeb.GameLive do
        view: Snapshot.build(player),
        catalog: Snapshot.catalog(),
        screen: "start",
+       title: nil,
        race_filter: nil,
        notice: nil,
        game_flash: nil,
        boards: %{},
+       following: nil,
        record: nil,
        record_view: nil,
        watching: nil,
@@ -113,12 +112,13 @@ defmodule MiniLineageWeb.GameLive do
   # Yours is read from your own process rather than the document, because `health` is buffered.
   defp assign_record(socket, %{"id" => id}) do
     # A record nobody can find is a 404, the same as a road the game never had.
-    entry = Board.entry(id) || raise MiniLineageWeb.NotFoundError
+    {player, entry} =
+      Map.pop(Board.entry(id, player: true) || raise(MiniLineageWeb.NotFoundError), :player)
 
     view =
       if entry.id == socket.assigns.character_id,
         do: socket.assigns.view,
-        else: entry.id |> Store.load() |> Snapshot.build()
+        else: Snapshot.build(player)
 
     log = CharacterLog.recent(entry.id)
 
@@ -174,7 +174,10 @@ defmodule MiniLineageWeb.GameLive do
       assign(socket,
         screen: screen,
         picked: nil,
-        page_title: Screens.page_title(screen, filter_race(socket))
+        page_title: Screens.page_title(screen, filter_race(socket)),
+        # Assigned, not computed in the template: an expression over `assigns` is re-sent on
+        # every render, which re-sent the heading on every keystroke.
+        title: Screens.title(screen, filter_race(socket))
       )
 
     # Not for the dead, whom no aura or pin reads it for; nor on the error screen, whose cause may be
@@ -188,12 +191,39 @@ defmodule MiniLineageWeb.GameLive do
     |> load_screen_data(screen)
   end
 
-  defp load_screen_data(socket, "highscores"), do: assign(socket, boards: Board.current())
+  # Each is followed only while it is the screen, and subscribed BEFORE it is read, so a refresh
+  # landing in between arrives as a push rather than being lost. Left behind, both are dropped.
+  # Already followed, so the pushes have kept every filter current: a filter click reads nothing.
+  defp load_screen_data(%{assigns: %{following: :board}} = socket, "highscores"), do: socket
 
-  defp load_screen_data(socket, "statistics"),
-    do: assign(socket, statistics: Collector.read_all())
+  defp load_screen_data(socket, "highscores") do
+    socket = follow(socket, :board)
+    assign(socket, boards: Board.current(), statistics: nil)
+  end
 
-  defp load_screen_data(socket, _screen), do: socket
+  defp load_screen_data(socket, "statistics") do
+    socket = follow(socket, :statistics)
+    assign(socket, statistics: Collector.read_all(), boards: %{})
+  end
+
+  defp load_screen_data(socket, _screen),
+    do: socket |> follow(nil) |> assign(boards: %{}, statistics: nil)
+
+  defp follow(%{assigns: %{following: topic}} = socket, topic), do: socket
+
+  defp follow(socket, topic) do
+    if connected?(socket) do
+      unfollow(socket.assigns.following)
+      if topic == :board, do: Board.subscribe()
+      if topic == :statistics, do: Collector.subscribe()
+    end
+
+    assign(socket, following: topic)
+  end
+
+  defp unfollow(:board), do: Board.unsubscribe()
+  defp unfollow(:statistics), do: Collector.unsubscribe()
+  defp unfollow(nil), do: :ok
 
   # ----------------------------------------------------------------- events
 
@@ -277,6 +307,13 @@ defmodule MiniLineageWeb.GameLive do
   # ----------------------------------------------------------------- pushes
 
   @impl true
+  # The echo of this tab's own action, which `apply_action/4` has already folded in.
+  def handle_info(
+        {:character_updated, player, character_id},
+        %{assigns: %{player: player, character_id: character_id}} = socket
+      ),
+      do: {:noreply, socket}
+
   def handle_info({:character_updated, player, character_id}, socket) do
     # A push can invalidate where this tab is standing: another tab restarts the character, or the
     # server kills it. Re-pin against the new player, and treat a reset as a trip back to Game
@@ -297,9 +334,7 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}
   end
 
-  # Both are taken only on the screen that draws them. A realm at play moves a counter and a ranking
-  # every few hundred milliseconds, and assigning either anywhere else re-renders every connected
-  # player for a figure they cannot see. Arriving reads it afresh, in `load_screen_data/2`.
+  # Followed only on the screen that draws them; one already queued when the reader left is dropped.
   def handle_info({:board, boards}, %{assigns: %{screen: "highscores"}} = socket),
     do: {:noreply, assign(socket, boards: boards)}
 
@@ -316,7 +351,11 @@ defmodule MiniLineageWeb.GameLive do
         {:record_updated, player, id, wrote?},
         %{assigns: %{watching: id}} = socket
       ) do
-    socket = assign(socket, record_view: Snapshot.build(player))
+    # Your own record is the view the character topic has just built; only a stranger's is built here.
+    view =
+      if id == socket.assigns.character_id, do: socket.assigns.view, else: Snapshot.build(player)
+
+    socket = assign(socket, record_view: view)
 
     {:noreply, if(wrote?, do: append_chronicle(socket, id), else: socket)}
   end
@@ -450,7 +489,7 @@ defmodule MiniLineageWeb.GameLive do
     ~H"""
     <Layouts.app
       flash={@flash}
-      title={Screens.title(@screen, filter_race(assigns))}
+      title={@title}
       view={@view}
       screen={@screen}
       character_id={@character_id}

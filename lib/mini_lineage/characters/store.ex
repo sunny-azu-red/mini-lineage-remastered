@@ -30,17 +30,9 @@ defmodule MiniLineage.Characters.Store do
   def load_by_session(nil), do: nil
 
   def load_by_session(session_id) do
-    case Repo.one(from r in Record, where: r.session_id == ^session_id) do
+    case Repo.one(from r in Record, where: r.session_id == ^session_id, select: {r.id, r.state}) do
       nil -> nil
-      %Record{id: id, state: state} -> {id, Serde.from_map(state)}
-    end
-  end
-
-  @doc "One character by its public id, for a board link. Returns the player, alive or dead."
-  def load(id) do
-    case Repo.get(Record, id) do
-      nil -> nil
-      %Record{state: state} -> Serde.from_map(state)
+      {id, state} -> {id, Serde.from_map(state)}
     end
   end
 

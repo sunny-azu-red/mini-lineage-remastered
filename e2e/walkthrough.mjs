@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, traceAudio, controls } from './helpers.mjs';
+import { BASE, PURSE, reporter, traceAudio, controls } from './helpers.mjs';
 
 const TICK_MS = 6000; // the regen tick is 5s; allow a margin
 
@@ -209,7 +209,7 @@ try {
     await tab.goto(BASE, { waitUntil: 'domcontentloaded' });
     await tab.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a second tab sees the same character',
-        await tab.getAttribute('#screen', 'data-health') === String(born.health));
+        await tab.getAttribute('#sidebar [data-key="hp"]', 'data-value') === String(born.health));
     // Clicking empty space leaves nothing focused, which is the player's choice to keep.
     await tab.mouse.click(5, 5);
 
@@ -272,12 +272,12 @@ try {
     await travel('inn');
 
     await tab.waitForFunction(
-        (expected) => document.querySelector('#screen')?.dataset.adena === expected,
+        (expected) => document.querySelector('#sidebar [data-key="adena"]')?.dataset.value === expected,
         String(beforeMeal.adena - 7),
         { timeout: 8000 },
     ).then(() => check('the other tab sees the spend without acting', true))
         .catch(async () => check('the other tab sees the spend without acting', false,
-            `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
+            `tab adena ${await tab.getAttribute(PURSE, 'data-value')}`));
     // A push it did not act for, as a regen tick is: focus stays wherever the player left it.
     await tab.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
     check('...and a push it did not act for leaves focus where the player left it',

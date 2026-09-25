@@ -36,11 +36,18 @@ defmodule MiniLineage.Characters.Server do
 
     # The public id is discovered, or minted for a character that has never saved. Minting it here
     # rather than at the first save is what lets two tabs on one session agree on it.
-    {id, player} = Store.load_by_session(session) || {Store.new_id(), %Player{}}
-
     # The battle screen is refilled from the log, not the document: one query, only at start, and
-    # never for the dead, who cannot stand on it.
-    player = %{player | last_battle_narrative: unless(player.dead, do: CharacterLog.last_for(id))}
+    # only for a run that has one, which neither a fresh id nor the dead can.
+    {id, player} =
+      case Store.load_by_session(session) do
+        nil ->
+          {Store.new_id(), %Player{}}
+
+        {id, player} ->
+          {id,
+           %{player | last_battle_narrative: unless(player.dead, do: CharacterLog.last_for(id))}}
+      end
+
     schedule_tick()
 
     state = %{
@@ -49,9 +56,13 @@ defmodule MiniLineage.Characters.Server do
       player: player,
       expiry_timer: nil,
       viewers: %{},
+      watched: false,
       stop_timer: nil,
       lingering: false,
       dirty_since: nil,
+      # Whether the next write moves the board: an action or a log row, never a buffered field.
+      # Cleared only once a write lands, so a failed one still refreshes when the backstop retries.
+      board_stale: false,
       pending_rows: []
     }
 
@@ -96,9 +107,12 @@ defmodule MiniLineage.Characters.Server do
     state = backstop(state)
 
     # Nobody heals while they are away: a process kept up only for a buff to lapse must not start
-    # regenerating a player who closed the tab minutes ago.
+    # regenerating a player who closed the tab minutes ago. Nor the dead, whose tick does nothing.
     {:noreply,
-     if(state.lingering, do: state, else: on_timer(state, &Player.process_regen_tick/1))}
+     if(state.lingering or state.player.dead,
+       do: state,
+       else: on_timer(state, &Player.process_regen_tick/1)
+     )}
   end
 
   def handle_info(:expiry, state) do
@@ -194,7 +208,7 @@ defmodule MiniLineage.Characters.Server do
       # A row in the log is written now, whoever caused it: the log is what dates a run in the
       # Halls and on its own page, and somebody may be watching it.
       pending? = state.pending_rows != []
-      state = if acted? or pending?, do: persist(state), else: mark(state)
+      state = if acted? or pending?, do: persist(%{state | board_stale: true}), else: mark(state)
       wrote? = pending? and state.pending_rows == []
 
       # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
@@ -309,9 +323,9 @@ defmodule MiniLineage.Characters.Server do
   # buffer with it — so a failure keeps the state dirty and the next flush carries it.
   defp persist(state) do
     Store.save(state.id, state.session, state.player, state.pending_rows)
-    Board.character_changed()
+    if state.board_stale, do: Board.character_changed()
 
-    %{state | dirty_since: nil, pending_rows: []}
+    %{state | dirty_since: nil, pending_rows: [], board_stale: false}
   rescue
     error ->
       Logger.error("💾 character #{state.id} failed to persist, still buffered: #{inspect(error)}")
@@ -380,9 +394,10 @@ defmodule MiniLineage.Characters.Server do
       {state.id, watched?}
     end)
 
-    Board.presence_changed()
+    # The board shows who is online, so only a run it lists going on or off is news to it.
+    if watched? != state.watched and Player.started?(state.player), do: Board.presence_changed()
 
-    state
+    %{state | watched: watched?}
   end
 
   @doc false

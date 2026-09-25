@@ -29,6 +29,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   # line, so a fixture that sets them apart would be describing a row the game cannot produce.
   defp fight(absent \\ []) do
     %{
+      id: System.unique_integer([:positive]),
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
       kind: "fight",
       ambushed: :ambush_line not in absent,
@@ -60,6 +61,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   # nothing says so — which is exactly how an ambush line and a death line both shipped unvoiced.
   describe "every line on an entry" do
     @complete %{
+      id: 1,
       narrative: %{
         crit_line: "{whose} strike lands.",
         kill_line: "{they} cut down the {object} before {them}.",
@@ -85,7 +87,7 @@ defmodule MiniLineageWeb.ChronicleTest do
     end
 
     test "and an ending is told to whoever is reading it, not to the run that had it" do
-      ended = %{kind: "ending", line: @complete.narrative.outcome_line, at: @complete.at}
+      ended = %{id: 2, kind: "ending", line: @complete.narrative.outcome_line, at: @complete.at}
 
       assert html_for([ended], mine: true) =~ "You walk away"
       assert html_for([ended], mine: false) =~ "They walk away"
@@ -94,7 +96,12 @@ defmodule MiniLineageWeb.ChronicleTest do
 
   # Everything a run did that was not a fight: one sentence, and the same open pronouns.
   defp deed(kind, line),
-    do: %{kind: kind, line: line, at: ~U[2026-09-24 14:33:00Z]}
+    do: %{
+      id: System.unique_integer([:positive]),
+      kind: kind,
+      line: line,
+      at: ~U[2026-09-24 14:33:00Z]
+    }
 
   describe "a deed in the Chronicle" do
     test "is one line, told to whoever is reading it" do

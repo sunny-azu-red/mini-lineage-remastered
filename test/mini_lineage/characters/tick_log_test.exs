@@ -89,12 +89,11 @@ defmodule MiniLineage.Characters.TickLogTest do
     assert tick(id) =~ "(Full)"
   end
 
-  test "the dead are dead", %{id: id} do
+  # Nothing can happen to them in five seconds: no regeneration, no effect left to lapse.
+  test "the dead do not tick at all", %{id: id} do
     Characters.mutate(id, &{Player.kill(&1), :ok})
 
-    log = tick(id)
-    assert log =~ "Dead"
-    assert log =~ "(Paused)"
+    refute tick(id) =~ "[TICK"
   end
 
   test "a race with no regeneration is idle rather than mid-heal", %{id: _id} do

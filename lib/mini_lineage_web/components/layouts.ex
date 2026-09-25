@@ -74,10 +74,6 @@ defmodule MiniLineageWeb.Layouts do
               data-started={to_string(@view.started)}
               data-dead={to_string(@view[:dead] || false)}
               data-ambushed={to_string(@view[:ambushed] || false)}
-              data-level={@view[:level]}
-              data-health={@view[:health]}
-              data-max-health={@view[:max_health]}
-              data-adena={@view[:adena]}
               data-battles={@view[:counters] && @view.counters.total_battles}
             >
               <:header>

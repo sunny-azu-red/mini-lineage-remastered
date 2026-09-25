@@ -231,7 +231,7 @@ defmodule MiniLineageWeb.Screens.Record do
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>
         <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
-          <li :for={entry <- @record_log} {painted(entry)}>
+          <li :for={entry <- @record_log} :key={entry.id} {painted(entry)}>
             <div class="entry-head">
               <.stamp at={entry.at} hook={false} /> &bull; {kind_label(entry)}
             </div>
@@ -307,15 +307,15 @@ defmodule MiniLineageWeb.Screens.Record do
     <%= if @from == "game" do %>
       <.back_link started={@view.started} dead={@view.dead} />
     <% else %>
-      <.halls_link race={came_from(assigns)} />
+      <.halls_link race={came_from(@from, @catalog)} />
     <% end %>
     """
   end
 
   # Looked up rather than trusted: `from` arrives in the URL, and only a lineage the game knows
   # about may decide where a link points.
-  defp came_from(%{from: slug, catalog: catalog}) when is_binary(slug),
+  defp came_from(slug, catalog) when is_binary(slug),
     do: Enum.find(catalog.races, &(&1.slug == slug))
 
-  defp came_from(_assigns), do: nil
+  defp came_from(_slug, _catalog), do: nil
 end

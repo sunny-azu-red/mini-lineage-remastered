@@ -11,7 +11,7 @@ defmodule MiniLineage.Board do
   import Ecto.Query
 
   alias MiniLineage.{CharacterLog, Characters}
-  alias MiniLineage.Characters.Record
+  alias MiniLineage.Characters.{Record, Serde}
   alias MiniLineage.Game.{Constants, Math}
   alias MiniLineage.Repo
 
@@ -23,6 +23,8 @@ defmodule MiniLineage.Board do
 
   @doc "Subscribe to pushed refreshes. The message is `{:board, boards}`, keyed by race filter."
   def subscribe, do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, @topic)
+
+  def unsubscribe, do: Phoenix.PubSub.unsubscribe(MiniLineage.PubSub, @topic)
 
   @doc "Tell the board a character was written. Cheap and asynchronous — never blocks the writer."
   def character_changed, do: signal(:changed)
@@ -51,14 +53,22 @@ defmodule MiniLineage.Board do
     end
   end
 
-  @doc "One run by its public id, for its own page. Disqualified runs still render their own."
-  def entry(id) do
+  @doc """
+  One run by its public id, for its own page. Disqualified runs still render their own. With
+  `player: true` it carries the character too, read from the same row rather than a second query.
+  """
+  def entry(id, opts \\ []) do
     from(r in Record, as: :row, where: r.id == ^id and not is_nil(r.race_id))
     |> row()
+    |> then(&if(opts[:player], do: select_merge(&1, [r], %{player: r.state}), else: &1))
     |> seen()
     |> Repo.one()
     |> decorate()
+    |> hydrate()
   end
+
+  defp hydrate(%{player: state} = entry), do: %{entry | player: Serde.from_map(state)}
+  defp hydrate(entry), do: entry
 
   @impl true
   def init(:ok) do
@@ -72,11 +82,13 @@ defmodule MiniLineage.Board do
   def handle_info(:changed, state), do: {:noreply, arm(state, :write)}
   def handle_info(:presence, state), do: {:noreply, arm(state, :presence)}
 
-  # Every refresh pushes, whichever kind it was. Watching a run climb and a dot come on are the
-  # same screen, and only one of the two needs the database.
+  # Either kind of refresh pushes, but only a board that moved: a climb and a dot coming on are the
+  # same screen, only one of the two needs the database, and a write off the board moves neither.
   def handle_info(:refresh, state) do
     boards = if state.pending == :write, do: compute(), else: remark(state.boards)
-    Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:board, boards})
+
+    if boards != state.boards,
+      do: Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:board, boards})
 
     {:noreply, %{state | boards: boards, timer: nil, pending: :none}}
   end

@@ -3,6 +3,7 @@
  * controls, and a helper that drifts between them is a bug neither run would report.
  */
 export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
+export const PURSE = '#sidebar [data-key="adena"]';
 
 /**
  * The four lineages as the UI must present them, with the newbie blessing already applied — what a
@@ -46,15 +47,20 @@ export function controls(page) {
     /** The character's live state, read off the one element that mirrors it. */
     const state = async () => {
         const raw = await page.locator('#screen').evaluate(node => ({ ...node.dataset }));
+        // The figures are the sidebar's own `data-value`, which is what the server wrote rather
+        // than a frame of the count-up; null on a screen that draws no sidebar.
+        const figures = await page.evaluate(() => Object.fromEntries(
+            [...document.querySelectorAll('#sidebar [data-key][data-value]')]
+                .map(el => [el.dataset.key, Number(el.dataset.value)])));
         return {
             screen: raw.screen,
             started: raw.started === 'true',
             dead: raw.dead === 'true',
             ambushed: raw.ambushed === 'true',
-            level: raw.level ? Number(raw.level) : null,
-            health: raw.health ? Number(raw.health) : null,
-            maxHealth: raw.maxHealth ? Number(raw.maxHealth) : null,
-            adena: raw.adena ? Number(raw.adena) : null,
+            level: figures.level ?? null,
+            health: figures.hp ?? null,
+            maxHealth: figures['max-hp'] ?? null,
+            adena: figures.adena ?? null,
         };
     };
 
@@ -86,14 +92,14 @@ export function controls(page) {
      * Returns false when the purchase was refused.
      */
     const buy = async (itemId) => {
-        const before = await page.getAttribute('#screen', 'data-adena');
+        const before = await page.getAttribute(PURSE, 'data-value');
         await page.selectOption('#main select[name="item_id"]', String(itemId), { timeout: 5000 });
         await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
 
         return page.waitForFunction(
             (prev) => {
-                const screen = document.querySelector('#screen');
-                return !!screen && screen.dataset.adena !== prev;
+                const purse = document.querySelector('#sidebar [data-key="adena"]');
+                return !!purse && purse.dataset.value !== prev;
             },
             before, { timeout: 5000 }).then(() => true).catch(() => false);
     };

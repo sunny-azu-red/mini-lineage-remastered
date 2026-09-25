@@ -68,6 +68,7 @@ defmodule MiniLineageWeb.Screens.Halls do
           <tbody id="halls-rows" phx-hook="AnimatedValues">
             <.character_row
               :for={row <- @rows}
+              :key={row.id}
               catalog={@catalog}
               row={row}
               mine={row.id == @character_id}

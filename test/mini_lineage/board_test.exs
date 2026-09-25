@@ -464,19 +464,51 @@ defmodule MiniLineage.BoardTest do
         {p, :ok}
       end)
 
-      Characters.attach(session, self())
       on_exit(fn -> Characters.forget(session) end)
+      # The birth is a write, and recomputes; the attach after it is presence alone.
       assert_receive {:board, _}, 2_000
 
       {boards, queries} =
         measuring(fn ->
-          Board.presence_changed()
+          Characters.attach(session, self())
           assert_receive {:board, pushed}, 2_000
           pushed
         end)
 
       assert queries == [], "a presence refresh ran #{length(queries)} quer(y/ies)"
       assert Enum.find(Map.get(boards, nil), &(&1.name == "Holder")).online
+    end
+
+    # A second tab on a run already online changes no dot, and a board that did not move is not
+    # sent to every reader of the Halls again.
+    test "and a board that did not move is not pushed at all" do
+      %{id: _} = run("Idle", xp: 10)
+      Board.subscribe()
+      Board.character_changed()
+      assert_receive {:board, _}, 2_000
+
+      Board.presence_changed()
+      refute_receive {:board, _}, 1_000
+    end
+
+    # Health and the screen are buffered and on no row of the board, so the write that finally
+    # flushes them, when a tab closes or the backstop fires, has nothing to recompute.
+    test "and a write only of what it does not show arms no refresh" do
+      session = Characters.new_session_id()
+      on_exit(fn -> Characters.forget(session) end)
+      Board.subscribe()
+
+      Characters.mutate(session, fn p ->
+        {p, _} = Player.initialize(p, Constants.race(1), "Resting")
+        {p, :ok}
+      end)
+
+      assert_receive {:board, _}, 2_000
+
+      Characters.mutate(session, &{%{&1 | health: &1.health - 1}, :ok})
+      Characters.forget_process(session)
+
+      assert :sys.get_state(MiniLineage.Board).timer == nil
     end
 
     test "but a write in the same window is still a write, and recomputes" do

@@ -33,6 +33,8 @@ defmodule MiniLineage.Game.Statistics.Collector do
   @doc "Subscribe to the archives. The message is `{:statistics, totals}`, or nil before anyone has played."
   def subscribe, do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, @topic)
 
+  def unsubscribe, do: Phoenix.PubSub.unsubscribe(MiniLineage.PubSub, @topic)
+
   @doc "Writes everything pending now. For tests and shutdown."
   def flush, do: GenServer.call(__MODULE__, :flush)
 
@@ -72,6 +74,7 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   @impl true
   def handle_call(:flush, _from, state), do: {:reply, :ok, write(state)}
+  def handle_call(:totals, _from, state), do: {:reply, view(state.totals), state}
 
   def handle_call(:pending, _from, state), do: {:reply, state.pending, state}
 
@@ -122,11 +125,12 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   @doc "Every counter, or nil when nobody has ever played, so the client can show its empty state."
   def read_all do
-    # Read-your-writes: a brand-new player's own total_players must not still be sitting in the
-    # buffer, or the archives read as empty to the very player who just filled them.
-    if Process.whereis(__MODULE__), do: flush()
-
-    view(stored())
+    # The running totals are stored plus pending, so a new player reads their own birth without a
+    # write to force it out or a query to read it back.
+    case Process.whereis(__MODULE__) do
+      nil -> view(stored())
+      pid -> GenServer.call(pid, :totals)
+    end
   end
 
   defp stored do

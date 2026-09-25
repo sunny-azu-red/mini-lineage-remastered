@@ -4,6 +4,7 @@ defmodule MiniLineage.PersistenceTest do
 
   alias MiniLineage.Game.Statistics
   import ExUnit.CaptureLog
+  import Ecto.Query
 
   alias MiniLineage.Game.Statistics.Collector
 
@@ -87,8 +88,9 @@ defmodule MiniLineage.PersistenceTest do
       log = capture_log(fn -> Collector.flush() end)
 
       assert log =~ "counter(s) re-queued", "the failure went by unannounced"
-      # Nothing reached the database — the archives still read as never-played...
-      assert Collector.read_all() == nil
+      # Nothing reached the database, though a reader already sees the counters move...
+      assert Repo.all(from(s in "statistics", select: s.name)) == []
+      assert Collector.read_all().total_battles == 4
       # ...and nothing was lost on the way either.
       assert Collector.pending()[:total_battles] == 4
       assert Collector.pending()[:total_players] == 1

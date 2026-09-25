@@ -11,12 +11,13 @@ defmodule MiniLineage.Characters.Record do
     field :session_id, :string
     field :state, :map
 
-    field :name, :string, read_after_writes: true
-    field :race_id, :integer, read_after_writes: true
-    field :total_xp, :integer, read_after_writes: true
-    field :adena, :integer, read_after_writes: true
-    field :dead, :boolean, read_after_writes: true
-    field :disqualified, :boolean, read_after_writes: true
+    # Never written by Ecto, and never read back after a save, which throws the row away.
+    field :name, :string, writable: :never
+    field :race_id, :integer, writable: :never
+    field :total_xp, :integer, writable: :never
+    field :adena, :integer, writable: :never
+    field :dead, :boolean, writable: :never
+    field :disqualified, :boolean, writable: :never
 
     timestamps(type: :utc_datetime_usec)
   end
