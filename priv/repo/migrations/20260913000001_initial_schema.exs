@@ -52,11 +52,9 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
              name: :characters_board_by_race_index
            )
 
-    # The hourly retirement only ever looks at runs still attached to a browser.
-    create index(:characters, [:updated_at],
-             where: "session_id IS NOT NULL",
-             name: :characters_idle_index
-           )
+    # No index on `updated_at`: it moves on every save, so indexing it made each one, a regen tick's
+    # included, write every index here rather than update in place. The hourly retirement walks
+    # the session index above, which holds exactly the runs it asks about.
 
     # One row per thing a run did. Append-only, so unlike a character it is never rewritten — which
     # is what lets it grow without limit where the character's own document must not.

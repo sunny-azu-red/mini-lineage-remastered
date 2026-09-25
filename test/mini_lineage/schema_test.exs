@@ -18,10 +18,9 @@ defmodule MiniLineage.SchemaTest do
     # The board, and the board filtered to one lineage.
     {"characters", ["total_xp", "adena"]},
     {"characters", ["race_id", "total_xp", "adena"]},
-    # A browser finding the character it is playing, on every mount.
-    {"characters", ["session_id"]},
-    # The hourly retirement.
-    {"characters", ["updated_at"]}
+    # A browser finding the character it is playing, on every mount; and the hourly retirement,
+    # which asks about exactly the runs this holds.
+    {"characters", ["session_id"]}
   ]
 
   for {table, columns} <- @required do
