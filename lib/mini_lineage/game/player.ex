@@ -28,7 +28,6 @@ defmodule MiniLineage.Game.Player do
             # action because no diff can name the blade somebody bought.
             pending_events: [],
             current_screen: nil,
-            combat_until: nil,
             last_battle_narrative: nil
 
   def started?(%__MODULE__{race_id: r, health: h, adena: a}),
@@ -256,39 +255,40 @@ defmodule MiniLineage.Game.Player do
     player.ambushed == true or player.current_screen in Constants.zone().combat_zones
   end
 
+  # The disengage countdown lives on the combat aura itself, as its expiry: there is no second copy
+  # of it on the player to keep in step.
   defp resolve_zone_aura(player, before) do
-    now = Clock.now_ms()
+    cond do
+      held_in_combat?(player) ->
+        to_active(Constants.effect(:combat_aura), nil)
 
-    if held_in_combat?(player) do
-      {%{player | combat_until: nil}, to_active(Constants.effect(:combat_aura), nil)}
-    else
-      # An indefinite combat aura means they were standing in a combat zone last sync, so leaving
-      # now starts the disengage countdown. Re-entering cancels it (above); leaving again arms a
-      # fresh one, anchored to leaving rather than to the last fight.
-      player =
-        if before != nil and before.id == "combat" and before.expires_at == nil,
-          do: %{player | combat_until: now + Constants.zone().combat_linger_ms},
-          else: player
+      until = lingering_until(before) ->
+        to_active(Constants.effect(:combat_aura), until)
 
-      if player.combat_until != nil and player.combat_until > now do
-        {player, to_active(Constants.effect(:combat_aura), player.combat_until)}
-      else
-        player = %{player | combat_until: nil}
+      player.current_screen in Constants.zone().resting_zones ->
+        to_active(Constants.effect(:resting_aura), nil)
 
-        if player.current_screen in Constants.zone().resting_zones,
-          do: {player, to_active(Constants.effect(:resting_aura), nil)},
-          else: {player, nil}
-      end
+      true ->
+        nil
     end
   end
+
+  # Indefinite means they stood in a combat zone at the last sync, so leaving now starts the
+  # countdown, anchored to leaving rather than to the last fight. A countdown still running holds.
+  defp lingering_until(%{id: "combat", expires_at: nil}),
+    do: Clock.now_ms() + Constants.zone().combat_linger_ms
+
+  defp lingering_until(%{id: "combat", expires_at: until}),
+    do: if(until > Clock.now_ms(), do: until)
+
+  defp lingering_until(_before), do: nil
 
   @doc "Re-derives the zone aura from `current_screen`. Returns `{player, changed?}`."
   def sync_zone_auras(player) do
     before = Enum.find(player.effects, &(&1.id in @zone_aura_ids))
     player = %{player | effects: Enum.reject(player.effects, &(&1.id in @zone_aura_ids))}
 
-    {player, after_aura} =
-      if player.dead, do: {player, nil}, else: resolve_zone_aura(player, before)
+    after_aura = if player.dead, do: nil, else: resolve_zone_aura(player, before)
 
     player =
       if after_aura, do: %{player | effects: player.effects ++ [after_aura]}, else: player

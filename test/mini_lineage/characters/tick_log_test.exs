@@ -72,8 +72,7 @@ defmodule MiniLineage.Characters.TickLogTest do
 
     Characters.mutate(
       id,
-      &{%{&1 | combat_until: 0, effects: Enum.reject(&1.effects, fn e -> e.id == "combat" end)},
-       :ok}
+      &{%{&1 | effects: Enum.reject(&1.effects, fn e -> e.id == "combat" end)}, :ok}
     )
 
     move(id, "statistics")

@@ -19,7 +19,7 @@ defmodule MiniLineage.Characters.Server do
 
   # The passage of time and where the player is standing; everything else is something they did.
   # Derived from the struct, not declared per call site, because a call site can forget to flush.
-  @buffered ~w(health current_screen effects combat_until)a
+  @buffered ~w(health current_screen effects)a
 
   # A connected but idle player triggers neither an action nor a stop, so nothing would write.
   @backstop_ms 60_000

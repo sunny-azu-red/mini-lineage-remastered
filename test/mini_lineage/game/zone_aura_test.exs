@@ -35,7 +35,6 @@ defmodule MiniLineage.Game.ZoneAuraTest do
 
       assert aura(moved).id == "combat"
       assert aura(moved).expires_at == nil, "#{zone} must not carry a countdown"
-      assert moved.combat_until == nil
     end
   end
 
@@ -72,7 +71,6 @@ defmodule MiniLineage.Game.ZoneAuraTest do
     {player, _} = move(player, "battle")
 
     assert aura(player).expires_at == nil
-    assert player.combat_until == nil
   end
 
   test "stepping out again arms a FRESH countdown, anchored to leaving", %{player: player} do
@@ -96,7 +94,6 @@ defmodule MiniLineage.Game.ZoneAuraTest do
 
     assert changed?
     assert aura(player).id == "resting"
-    assert player.combat_until == nil
   end
 
   test "once it elapses, a screen in neither zone gets no aura at all", %{player: player} do

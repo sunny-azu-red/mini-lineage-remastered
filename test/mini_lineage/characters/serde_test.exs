@@ -30,7 +30,6 @@ defmodule MiniLineage.Characters.SerdeTest do
       consecutive_ambushes: 2,
       total_enemies_killed: 118,
       current_screen: "battle",
-      combat_until: 1_700_000_005_000,
       effects: [
         %{
           id: "satisfied",

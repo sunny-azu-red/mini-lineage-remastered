@@ -32,8 +32,7 @@ defmodule MiniLineage.Characters.Serde do
       "consecutive_ambushes" => p.consecutive_ambushes,
       "total_enemies_killed" => p.total_enemies_killed,
       "effects" => Enum.map(p.effects, &effect_to_map/1),
-      "current_screen" => p.current_screen,
-      "combat_until" => p.combat_until
+      "current_screen" => p.current_screen
       # `last_battle_narrative` is absent: it lives in character_log, and the process rehydrates it.
     }
   end
@@ -61,8 +60,7 @@ defmodule MiniLineage.Characters.Serde do
       consecutive_ambushes: m["consecutive_ambushes"] || 0,
       total_enemies_killed: m["total_enemies_killed"] || 0,
       effects: Enum.flat_map(m["effects"] || [], &effect_from_map/1),
-      current_screen: m["current_screen"],
-      combat_until: m["combat_until"]
+      current_screen: m["current_screen"]
     }
   end
 
