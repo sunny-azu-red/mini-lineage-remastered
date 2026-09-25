@@ -112,14 +112,17 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
+  # Compose forwards a key it was never given as an empty string, which `||` would take as set.
+  env = fn name -> if (value = System.get_env(name)) not in [nil, ""], do: value end
+
   # DATABASE_URL still works for a host that offers only one, but it cannot carry a password with
   # URL-unsafe characters unless they are percent-encoded, so the discrete keys win when both are set.
   database_config =
     cond do
-      database = System.get_env("DB_DATABASE") ->
+      database = env.("DB_DATABASE") ->
         credentials ++ [database: database]
 
-      url = System.get_env("DATABASE_URL") ->
+      url = env.("DATABASE_URL") ->
         [url: url]
 
       true ->
@@ -142,7 +145,7 @@ if config_env() == :prod do
 
   # Signs the session cookie. Must be at least 64 bytes, or every request fails.
   secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
+    env.("SECRET_KEY_BASE") ||
       raise """
       environment variable SECRET_KEY_BASE is missing.
       You can generate one by calling: mix phx.gen.secret
@@ -152,7 +155,7 @@ if config_env() == :prod do
   # this host: wrong, and the page renders once and never connects, with nothing in the log to say
   # why. A deployment that cannot name its own host is not one that should boot.
   host =
-    System.get_env("PHX_HOST") ||
+    env.("PHX_HOST") ||
       raise """
       environment variable PHX_HOST is missing.
 

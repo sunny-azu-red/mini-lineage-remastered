@@ -11,15 +11,15 @@ services:
       - "${PORT:-4000}:${PORT:-4000}"
     environment:
       - PORT=${PORT:-4000}
-      - PHX_HOST=${PHX_HOST:-localhost}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-      # Defaulted, not bare: compose passes a missing key through as an EMPTY value, and an empty
-      # DB_PORT is not the same as an absent one — runtime.exs would try to parse "" and crash.
-      - DB_HOST=${DB_HOST:-127.0.0.1}
+      # Every key is required or defaulted, never bare: compose passes a missing one through as an
+      # EMPTY value, which is not an absent one. 127.0.0.1 here would be the container itself.
+      - PHX_HOST=${PHX_HOST:?set PHX_HOST to the host players reach}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:?generate one with mix phx.gen.secret}
+      - DB_HOST=${DB_HOST:?set DB_HOST to where Postgres is reachable from the container}
       - DB_PORT=${DB_PORT:-5432}
-      - DB_DATABASE=${DB_DATABASE}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE:?set DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-}
       # Optional, and defaulted to what prod.exs already sets, so leaving them unset changes nothing.
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - RATE_LIMIT=${RATE_LIMIT:-true}
