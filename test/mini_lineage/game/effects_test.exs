@@ -109,8 +109,9 @@ defmodule MiniLineage.Game.EffectsTest do
       {_, poor} = Player.purchase(%{hero() | adena: 0}, "food", 4)
       {_, owned} = Player.purchase(hero(), "weapon", 0)
 
+      # The currency in a sentence wears its colour with or without a figure, as it does beside one.
       assert poor.text ==
-               ~s(You do not have enough 🪙 Adena to buy 🍗 <span class="item">Roasted Pheasant</span>!)
+               ~s(You do not have enough <span class="adena">🪙 Adena</span> to buy 🍗 <span class="item">Roasted Pheasant</span>!)
 
       assert owned.text =~ ~r|^You are already wielding the .+ <span class="item">.+</span>!$|
     end

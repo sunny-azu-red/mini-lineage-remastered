@@ -307,7 +307,7 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       refute result.success
       assert String.contains?(result.text, weapon.name)
-      assert String.contains?(result.text, "not have enough 🪙 Adena")
+      assert String.contains?(result.text, ~s(not have enough <span class="adena">🪙 Adena</span>))
       assert unchanged.adena == 0
     end
 

@@ -171,7 +171,10 @@ counted; `.crit` stands alone; `.xp .heretics` are what the arcane touches, earn
 for; `.item` is what a run wears, wields or eats, quieter than the sentence around it because a
 blade's NAME is not the news, the number beside it is. `.item` is on every item written as text —
 prose, the shop tables, the Inventory panel — so one rule recolours them all; the shop's `<select>`
-is the deliberate exception, an `<option>` holding no markup and a form control looking like one.
+is the deliberate exception, an `<option>` holding no markup and a form control looking like one. A
+value's class goes where the thing is named in a sentence, figure or no figure — "not enough 🪙
+Adena" is gold like "🪙 60 Adena" — and never on a label naming a field or a column, which stays a
+label as HP and XP do.
 
 These are the game's vocabulary and they are filed under **Values**. What is not a value lives above
 them under **Utilities**, which is a deliberate separation and not a heading: `.muted` is the only
