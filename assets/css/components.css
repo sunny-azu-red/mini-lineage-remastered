@@ -373,9 +373,9 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 }
 
 /* In an alert an item or an effect is what the message is ABOUT, not a figure inside it: it keeps
- * the alert's own voice and takes the weight instead. Important only to outrank the vocabulary's. */
+ * the alert's own voice and takes the weight instead. Two classes to the vocabulary's one, so it wins. */
 .alert :is(.item, .buff, .debuff) {
-    color: inherit !important;
+    color: inherit;
     font-weight: var(--weight-value);
 }
 

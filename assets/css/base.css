@@ -134,7 +134,7 @@ p.last {
  * bullet between an effect's name and what it does), and the build classes say which server is
  * answering. None of them takes weight, which is for a figure competing inside a sentence. */
 .muted {
-    color: var(--text-muted) !important;
+    color: var(--text-muted);
 }
 
 /* Which build is serving the page, in the footer beside the copyright. Not a value either: the
@@ -158,21 +158,21 @@ p.last {
 .attack,
 .deaths,
 .debuff {
-    color: var(--text-hp) !important;
+    color: var(--text-hp);
 }
 
 /* What gives it back. */
 .heal,
 .regen,
 .buff {
-    color: var(--text-heal) !important;
+    color: var(--text-heal);
 }
 
 /* What a run is worth: its purse, its level, and the ambient state it stands in. */
 .adena,
 .level,
 .aura {
-    color: var(--gold) !important;
+    color: var(--gold);
 }
 
 /* Read but not acted on: a risk, a day, a clock, a way out nobody boasts of. */
@@ -180,13 +180,13 @@ p.last {
 .cowards,
 .date,
 .timer {
-    color: var(--text-muted) !important;
+    color: var(--text-muted);
 }
 
 /* What it turns aside. */
 .defense,
 .damage {
-    color: var(--text-defense) !important;
+    color: var(--text-defense);
 }
 
 /* Things counted. Gold is for what a run is WORTH and stops meaning that if every figure wears it. */
@@ -194,23 +194,23 @@ p.last {
 .kills,
 .players,
 .purchases {
-    color: var(--text-tally) !important;
+    color: var(--text-tally);
 }
 
 .crit {
-    color: var(--text-critical) !important;
+    color: var(--text-critical);
 }
 
 /* What the arcane touches: experience earned, and a name the gods struck out for reaching past it. */
 .xp,
 .heretics {
-    color: var(--text-xp) !important;
+    color: var(--text-xp);
 }
 
 /* An item, worn or eaten. Quieter than the sentence around it: a blade's NAME is not the news, the
    number beside it is. */
 .item {
-    color: var(--text-secondary) !important;
+    color: var(--text-secondary);
 }
 
 /* The weight answers "which of these matters?", so it belongs where something is competing — a
