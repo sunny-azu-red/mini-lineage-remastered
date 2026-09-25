@@ -5,15 +5,12 @@ defmodule MiniLineage.Characters.Serde do
   Written out field by field rather than derived: the stored document is untrusted input, and
   every atom it turns back into is one this module names itself.
   """
-  alias MiniLineage.Game.Player
+  alias MiniLineage.Game.{Constants, Player}
 
   # The shape of the document, not of the character — which is why it is written here rather than
   # carried on the struct. A reshape bumps this and `from_map/1` branches on it; a document
   # claiming a LATER one was written by a newer build, and this one must not guess at it.
   @version 1
-
-  @effect_types %{"buff" => :buff, "debuff" => :debuff, "aura" => :aura}
-  @modifier_types ~w(attack defense crit max_health regen ambush_risk xp_multiplier adena_multiplier)a
 
   def to_map(%Player{} = p) do
     %{
@@ -63,7 +60,7 @@ defmodule MiniLineage.Characters.Serde do
       total_ambushes: m["total_ambushes"] || 0,
       consecutive_ambushes: m["consecutive_ambushes"] || 0,
       total_enemies_killed: m["total_enemies_killed"] || 0,
-      effects: Enum.map(m["effects"] || [], &effect_from_map/1),
+      effects: Enum.flat_map(m["effects"] || [], &effect_from_map/1),
       current_screen: m["current_screen"],
       combat_until: m["combat_until"]
     }
@@ -72,37 +69,17 @@ defmodule MiniLineage.Characters.Serde do
   def from_map(%{}),
     do: raise("character document carries no version; every one this build writes does")
 
-  defp effect_to_map(e) do
-    %{
-      "id" => e.id,
-      "type" => Atom.to_string(e.type),
-      "group" => e.group,
-      "emoji" => e.emoji,
-      "label" => e.label,
-      "modifiers" =>
-        Enum.map(e.modifiers, &%{"type" => Atom.to_string(&1.type), "value" => &1.value}),
-      "expires_at" => e.expires_at
-    }
-  end
+  # Which effect, and until when: everything else is the catalog's, so a retuned effect reaches the
+  # runs already carrying it, and a document cannot say what an effect does.
+  defp effect_to_map(e), do: %{"id" => e.id, "expires_at" => e.expires_at}
 
-  defp effect_from_map(e) do
-    %{
-      id: e["id"],
-      type: Map.get(@effect_types, e["type"], :buff),
-      group: e["group"],
-      emoji: e["emoji"],
-      label: e["label"],
-      modifiers: Enum.flat_map(e["modifiers"] || [], &modifier_from_map/1),
-      expires_at: e["expires_at"]
-    }
-  end
-
-  defp modifier_from_map(%{"type" => type, "value" => value}) do
-    case Enum.find(@modifier_types, &(Atom.to_string(&1) == type)) do
+  # An id the catalog does not have names nothing, and is dropped rather than guessed at.
+  defp effect_from_map(%{"id" => id} = e) do
+    case Constants.effect_by_id(id) do
       nil -> []
-      atom -> [%{type: atom, value: value}]
+      config -> [Player.to_active(config, e["expires_at"])]
     end
   end
 
-  defp modifier_from_map(_), do: []
+  defp effect_from_map(_malformed), do: []
 end

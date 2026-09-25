@@ -258,6 +258,11 @@ defmodule MiniLineage.Game.Constants do
   def race(id), do: Enum.at(@races, id) || hd(@races)
   def effects, do: @effects
   def effect(key), do: Map.fetch!(@effects, key)
+
+  @effects_by_id Map.new(@effects, fn {_key, effect} -> {effect.id, effect} end)
+
+  @doc "The catalog entry an effect's stored id names, or nil for one it does not have."
+  def effect_by_id(id), do: Map.get(@effects_by_id, id)
   def armors, do: @armors
   def weapons, do: @weapons
   def foods, do: @foods

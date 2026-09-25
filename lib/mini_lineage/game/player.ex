@@ -135,7 +135,8 @@ defmodule MiniLineage.Game.Player do
 
   # ------------------------------------------------------------------ effects
 
-  defp to_active(config, expires_at) do
+  @doc "An effect as a run carries it: its catalog entry, and until when."
+  def to_active(config, expires_at) do
     %{
       id: config.id,
       type: config.type,

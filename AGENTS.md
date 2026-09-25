@@ -83,7 +83,9 @@ a process and only ever read whole, so it is one `jsonb` blob — but the fields
 are GENERATED columns over that document, never written by application code, so they cannot drift
 from it. Under PG18 write `STORED` explicitly or you get a VIRTUAL column that cannot be indexed.
 Anything that grows with play — a battle history, an inventory, a mail box — gets its own table.
-Put it in the document and every save rewrites all of it, buffering or not.
+Put it in the document and every save rewrites all of it, buffering or not. An effect is stored as
+its id and its expiry and nothing else: the catalog is what it does, so a retuned effect reaches the
+runs already carrying it, and an id the catalog no longer has is dropped on load.
 
 **A character has two ids and they must never be confused.** `id` is public and goes in board
 links; `session_id` is the cookie and is a credential. A public id that is also a session lets

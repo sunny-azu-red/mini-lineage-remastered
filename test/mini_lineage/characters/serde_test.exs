@@ -151,60 +151,48 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
   end
 
+  describe "an effect in the document" do
+    # The catalog says what an effect is; the document only which one, and until when.
+    test "is written as which one it is and until when, and nothing else" do
+      [stored | _] = Serde.to_map(populated())["effects"]
+
+      assert stored == %{"id" => "satisfied", "expires_at" => 1_700_000_090_000}
+    end
+
+    test "is read back from the catalog, whatever else a document claims about it" do
+      loaded =
+        Serde.from_map(%{
+          "version" => 1,
+          "effects" => [
+            %{"id" => "satisfied", "expires_at" => 5, "label" => "Forged", "modifiers" => [%{}]}
+          ]
+        })
+
+      assert [
+               %{
+                 id: "satisfied",
+                 label: "Satisfied",
+                 expires_at: 5,
+                 modifiers: [%{type: :max_health}]
+               }
+             ] =
+               loaded.effects
+    end
+
+    # An id the catalog no longer has, or never had, names nothing, so it is dropped rather than
+    # guessed at, and no atom is minted from it.
+    test "is dropped when the catalog does not know it" do
+      hostile = "definitely_not_an_effect_#{System.unique_integer([:positive])}"
+
+      loaded =
+        Serde.from_map(%{"version" => 1, "effects" => [%{"id" => hostile}, %{"id" => "resting"}]})
+
+      assert [%{id: "resting"}] = loaded.effects
+      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
+    end
+  end
+
   describe "a hostile document" do
-    test "cannot mint an atom through an effect's type" do
-      hostile = "definitely_not_an_effect_type_#{System.unique_integer([:positive])}"
-
-      loaded =
-        Serde.from_map(%{
-          "version" => 1,
-          "effects" => [
-            %{
-              "id" => "x",
-              "type" => hostile,
-              "modifiers" => []
-            }
-          ]
-        })
-
-      assert [%{type: :buff}] = loaded.effects
-      # Names the exact string rather than watching a global counter, which any concurrent atom
-      # creation would move.
-      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
-    end
-
-    test "cannot mint an atom through a modifier's type, and the modifier is dropped" do
-      hostile = "not_a_stat_#{System.unique_integer([:positive])}"
-
-      loaded =
-        Serde.from_map(%{
-          "version" => 1,
-          "effects" => [
-            %{
-              "id" => "x",
-              "type" => "buff",
-              "modifiers" => [
-                %{"type" => hostile, "value" => 999},
-                %{"type" => "attack", "value" => 3}
-              ]
-            }
-          ]
-        })
-
-      assert [%{modifiers: [%{type: :attack, value: 3}]}] = loaded.effects
-      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
-    end
-
-    test "a malformed modifier is dropped rather than crashing the load" do
-      loaded =
-        Serde.from_map(%{
-          "version" => 1,
-          "effects" => [%{"id" => "x", "type" => "buff", "modifiers" => ["nonsense", %{}, nil]}]
-        })
-
-      assert [%{modifiers: []}] = loaded.effects
-    end
-
     test "missing fields fall back to a playable character rather than nil arithmetic" do
       loaded = Serde.from_map(%{"version" => 1})
 
