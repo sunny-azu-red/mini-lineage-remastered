@@ -48,7 +48,7 @@ defmodule MiniLineage.Game.Narratives do
     "blood and iron define {their} soul!",
     "steel and magic are {their} allies!",
     "ancient echoes follow {their} feet!",
-    "a bold step toward {their} destiny!",
+    "{them} take a bold step toward {their} destiny!",
     "{their} spirit shines in the dark..."
   ]
 
@@ -152,12 +152,12 @@ defmodule MiniLineage.Game.Narratives do
     ~s(🎯 <span class="crit">FATAL STRIKE!</span> 🎯)
   ]
 
-  # What a run did, one sentence apiece. Single templates rather than pools: a deed is rare next to
-  # a fight, and the item is what carries the interest.
-  @began ~s({they} chose the {raceEmoji} {raceLabel}, and {welcome})
-  @bought_weapon ~s({they} took up the {emoji} <span class="equipped">{name}</span>.)
-  @bought_armor ~s({they} put on the {emoji} <span class="equipped">{name}</span>.)
-  @ate ~s({they} ate the {emoji} <span class="equipped">{name}</span> and rose to <span class="hp">{hp} HP</span>.)
+  # What a run did, one sentence apiece, and the same sentence its owner's alert says. Single
+  # templates rather than pools: a deed is rare next to a fight, and the item carries the interest.
+  @began ~s({they} chose the {raceEmoji} {raceLabel}, and {welcome} {they} set out as {build} {definition} of {age} seasons, bearing a <span class="adena">🪙 {adena} Adena</span> tribute.)
+  @bought_weapon ~s({they} bought the {emoji} <span class="equipped">{name}</span> for <span class="adena">🪙 {cost} Adena</span> and took it in hand.)
+  @bought_armor ~s({they} bought the {emoji} <span class="equipped">{name}</span> for <span class="adena">🪙 {cost} Adena</span> and donned it.)
+  @ate ~s({they} bought and ate the {emoji} <span class="equipped">{name}</span> for <span class="adena">🪙 {cost} Adena</span>, and {their} strength returned to <span class="hp">{hp} HP</span>.)
   @levelled ~s({they} reached <span class="level">Level {level}</span>.)
   @heresy ~s(👾 The gods saw {their} heresy, and the Halls closed the book on {object}.)
   @effect_gained ~s({emoji} <span class="{type}">{label}</span> settles over {object}.)

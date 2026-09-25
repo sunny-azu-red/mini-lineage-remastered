@@ -161,7 +161,7 @@ try {
 
     // ---- a flash belongs to its action, and to nothing after it -------------------------------
     check('creating a character flashes its welcome',
-        /You have chosen the/.test(await page.textContent('#main .alert') ?? ''));
+        /You chose the/.test(await page.textContent('#main .alert') ?? ''));
 
     // Panel heading and document title, both carried over from the reference verbatim.
     check('Town is headed "Home Town"',
@@ -254,7 +254,7 @@ try {
     await page.waitForSelector('#main .alert', { timeout: 8000 });
     // Scoped to #main: the sidebar's panels carry .panel-body too.
     const mealText = await page.textContent('#main .alert');
-    check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
+    check('ordering a meal reports back', /You bought and ate/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
     // LiveView restores focus to the button that submitted, which left a keyboard player on Order
     // with the picker they buy from next unreachable without reaching for the mouse.

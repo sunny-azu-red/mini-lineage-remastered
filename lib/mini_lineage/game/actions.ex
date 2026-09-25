@@ -237,7 +237,7 @@ defmodule MiniLineage.Game.Actions do
       player = %{player | cheated: true}
       player = Player.apply_effect(player, Constants.effect(:konami_cheat))
       player = %{player | health: Player.stats(player).max_health}
-      player = Player.log(player, Player.event("heresy", Narrative.build_heresy()))
+      player = Player.log(player, Player.event("cheat", Narrative.build_heresy()))
       Statistics.increment(:total_players_cheated)
 
       {player, {:ok, nil}}

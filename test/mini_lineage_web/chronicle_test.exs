@@ -118,7 +118,7 @@ defmodule MiniLineageWeb.ChronicleTest do
 
     # The gods noticing is not the same as dying, and the game colours them differently.
     test "and a heresy is marked, but it is not an ending" do
-      [entry] = entries([deed("heresy", "👾 The gods saw {their} heresy.")])
+      [entry] = entries([deed("cheat", "👾 The gods saw {their} heresy.")])
 
       assert entry =~ ~s(<span class="heretics">)
       refute entry =~ "deaths"
@@ -135,7 +135,7 @@ defmodule MiniLineageWeb.ChronicleTest do
           hexed
         )
 
-      [entry] = entries([deed("affliction", line)])
+      [entry] = entries([deed("debuff", line)])
 
       assert entry =~ ~s(<span class="debuff">Hexed</span>)
       refute entry =~ "<strong"
@@ -149,7 +149,7 @@ defmodule MiniLineageWeb.ChronicleTest do
           deed("start", "{they} chose the 🧟 Orc."),
           deed("purchase", "{they} took up the 🗡️ Sword."),
           deed("level_up", "{they} reached Level 4."),
-          deed("blessing", "🐣 Newbie Blessing settles over {object}."),
+          deed("buff", "🐣 Newbie Blessing settles over {object}."),
           fight([:ambush_line])
         ])
 
@@ -160,8 +160,8 @@ defmodule MiniLineageWeb.ChronicleTest do
       refute own_tag(quiet) =~ "class"
     end
 
-    # Its head says when, then what kind of deed it was. Every ending is a Death, whether a blow or
-    # the run's own hand did it.
+    # Its head says when, then what kind of deed it was. Every ending is an Ending, whether a blow
+    # or the run's own hand did it, the pair of the Beginning.
     test "is headed by when it happened and what kind of thing it was" do
       heads =
         [
@@ -170,9 +170,9 @@ defmodule MiniLineageWeb.ChronicleTest do
           %{fight() | died: true},
           deed("purchase", "x"),
           deed("level_up", "x"),
-          deed("blessing", "x"),
-          deed("affliction", "x"),
-          deed("heresy", "x"),
+          deed("buff", "x"),
+          deed("debuff", "x"),
+          deed("cheat", "x"),
           deed("ending", "x")
         ]
         |> entries()
@@ -181,13 +181,13 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert heads == [
                "Beginning",
                "Battle",
-               "Death",
+               "Ending",
                "Purchase",
                "Level Up",
-               "Blessing",
-               "Affliction",
-               "Heresy",
-               "Death"
+               "Buff",
+               "Debuff",
+               "Cheat",
+               "Ending"
              ]
 
       assert hd(entries([fight()])) =~
@@ -201,7 +201,7 @@ defmodule MiniLineageWeb.ChronicleTest do
         deed("start", "{they} chose the 🧟 Orc, and {their} destiny awaits."),
         deed("purchase", "{they} took up the 🗡️ Sword."),
         deed("level_up", "{they} reached Level 4."),
-        deed("heresy", "👾 The gods saw {their} heresy, and closed the book on {object}."),
+        deed("cheat", "👾 The gods saw {their} heresy, and closed the book on {object}."),
         deed("ending", "🤡 {they} took the cowardly way out.")
       ]
 

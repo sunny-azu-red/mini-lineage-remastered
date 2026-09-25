@@ -306,8 +306,7 @@ defmodule MiniLineage.Characters.Server do
     do:
       CharacterLog.event(id, kind_of(effect), Narrative.build_effect_change(template, effect), at)
 
-  defp kind_of(%{type: :buff}), do: "blessing"
-  defp kind_of(%{type: :debuff}), do: "affliction"
+  defp kind_of(%{type: type}) when type in [:buff, :debuff], do: Atom.to_string(type)
 
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state

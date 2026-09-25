@@ -328,9 +328,17 @@ defmodule MiniLineage.Game.NarrativeTest do
       race = Constants.race(1)
 
       for template <- Narratives.welcome(), mine <- [true, false] do
+        welcome = Format.fill_template(template, %{"raceLabel" => race.label})
+
         line =
           race
-          |> Narrative.build_began(Format.fill_template(template, %{"raceLabel" => race.label}))
+          |> Narrative.build_began(%{
+            welcome: welcome,
+            build: "a hardy",
+            definition: "youth",
+            age: 19,
+            adena: 450
+          })
           |> Narrative.voiced(mine)
 
         refute line =~ ~r/, and (Their|Your|They|You)\b/,

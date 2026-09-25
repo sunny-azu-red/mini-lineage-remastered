@@ -245,8 +245,15 @@ which renders blank rather than failing. No partial index for it; see the droppe
 stating its own colour over one shared shape, so none is a default another overrides. Every other
 row has no `class` at all, spread in rather than listed: an unstyled `deed` class sat on every
 deed for a while, and a class list printed `class=""` on every quiet fight. The head names the kind
-from the stored row — which is why an effect is stored as `blessing` or `affliction`, never read
-back out of its own HTML.
+from the stored row — which is why an effect is stored as the `buff` or `debuff` it is, never
+read back out of its own HTML.
+
+**A deed is one sentence, told twice.** The chronicle stores it with its pronouns open; the alert
+its owner sees is the same sentence through `Narrative.alert/1`, voiced to them, colours and all.
+An alert is a `div`, not a `p` or an `li`, so its values take the colour and not the weight — by
+choice. The welcome and the shop had built their alerts separately, and the
+two drifted until the alert said "You have bought" while the chronicle said "They ate". A food
+alert's buff line is that buff's own chronicle row, in the same words.
 
 **A watched record is told what happened, never left to infer it.** The `:record_updated` push
 carries whether a row was written. Guessing from the tallies missed every deed that is not a fight,

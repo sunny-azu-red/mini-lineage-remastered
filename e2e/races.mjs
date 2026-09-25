@@ -51,7 +51,7 @@ try {
 
         const born = await state();
         check(`the ${race.label} is welcomed by name`,
-            new RegExp(`You have chosen the.*${race.label}`).test(await text('#main .alert')),
+            new RegExp(`You chose the.*${race.label}`).test(await text('#main .alert')),
             await text('#main .alert'));
         check(`...and starts on the ${race.label}'s own purse`, born.adena === race.adena,
             `${born.adena}, expected ${race.adena}`);

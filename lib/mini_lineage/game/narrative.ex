@@ -110,12 +110,16 @@ defmodule MiniLineage.Game.Narrative do
   # The values are facts about a moment and are filled now; the pronouns are not known until
   # somebody opens the page, so `fill_template/2` leaves them exactly as it leaves a fight's.
 
-  @doc "The line a run's beginning leaves behind. `welcome` still carries its own open pronouns."
-  def build_began(race, welcome) do
+  @doc "Who a run set out as. `welcome` still carries its own open pronouns."
+  def build_began(race, traits) do
     Format.fill_template(Narratives.began(), %{
       "raceEmoji" => race.emoji,
       "raceLabel" => race.label,
-      "welcome" => welcome
+      "welcome" => traits.welcome,
+      "build" => traits.build,
+      "definition" => traits.definition,
+      "age" => traits.age,
+      "adena" => Format.adena(traits.adena)
     })
   end
 
@@ -123,11 +127,8 @@ defmodule MiniLineage.Game.Narrative do
   def build_purchase(:weapon_id, item), do: named(Narratives.bought_weapon(), item)
   def build_purchase(:armor_id, item), do: named(Narratives.bought_armor(), item)
 
-  def build_meal(item, health) do
-    Narratives.ate()
-    |> named(item)
-    |> Format.fill_template(%{"hp" => Format.number(health)})
-  end
+  def build_meal(item, health),
+    do: Narratives.ate() |> named(item) |> Format.fill_template(%{"hp" => Format.number(health)})
 
   def build_levelled(level), do: Format.fill_template(Narratives.levelled(), %{"level" => level})
 
@@ -142,8 +143,19 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
-  defp named(template, item),
-    do: Format.fill_template(template, %{"emoji" => item.emoji, "name" => item.name})
+  defp named(template, item) do
+    Format.fill_template(template, %{
+      "emoji" => item.emoji,
+      "name" => item.name,
+      "cost" => Format.adena(item.cost)
+    })
+  end
+
+  @doc """
+  A stored line as its owner's alert: the same sentence, colours and all, told to them. One sentence
+  for both, so what the alert says and what the chronicle keeps cannot drift apart.
+  """
+  def alert(line), do: voiced(line, true)
 
   defp pronouns(mine?) when is_boolean(mine?), do: mine? |> Narratives.voice() |> pronouns()
   defp pronouns(voice), do: Map.new(voice, fn {part, word} -> {to_string(part), word} end)

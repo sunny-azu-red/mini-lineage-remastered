@@ -189,7 +189,7 @@ defmodule MiniLineageWeb.Screens.Record do
   # A heresy is not an ending and is not red; it is the colour the Halls already mark a cheat in.
   # Spread rather than `class={...}`, which would print an empty class on every other line.
   defp deed_colour("ending"), do: [class: "deaths"]
-  defp deed_colour("heresy"), do: [class: "heretics"]
+  defp deed_colour("cheat"), do: [class: "heretics"]
   defp deed_colour(_deed), do: []
 
   # A class only on a row the stylesheet paints, each washed like the alert that would announce it.
@@ -199,16 +199,16 @@ defmodule MiniLineageWeb.Screens.Record do
   defp painted(%{kind: "purchase"}), do: [class: "purchase"]
   defp painted(_entry), do: []
 
-  # Every ending is a Death, however it came.
-  defp kind_label(%{kind: "fight", died: true}), do: "Death"
+  # Every ending is an Ending, however it came: the pair of the Beginning.
+  defp kind_label(%{kind: "fight", died: true}), do: "Ending"
   defp kind_label(%{kind: "fight"}), do: "Battle"
-  defp kind_label(%{kind: "ending"}), do: "Death"
+  defp kind_label(%{kind: "ending"}), do: "Ending"
   defp kind_label(%{kind: "start"}), do: "Beginning"
   defp kind_label(%{kind: "purchase"}), do: "Purchase"
   defp kind_label(%{kind: "level_up"}), do: "Level Up"
-  defp kind_label(%{kind: "heresy"}), do: "Heresy"
-  defp kind_label(%{kind: "blessing"}), do: "Blessing"
-  defp kind_label(%{kind: "affliction"}), do: "Affliction"
+  defp kind_label(%{kind: "cheat"}), do: "Cheat"
+  defp kind_label(%{kind: "buff"}), do: "Buff"
+  defp kind_label(%{kind: "debuff"}), do: "Debuff"
 
   attr :record_log, :list, default: []
   # Whose fights these are, which decides whether they are told to them or about them.

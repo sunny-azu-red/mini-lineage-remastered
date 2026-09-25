@@ -148,7 +148,7 @@ defmodule MiniLineage.CharactersTest do
 
     assert Enum.any?(
              CharacterLog.recent(character),
-             &(&1.kind == "blessing" and &1.line =~ "leaves")
+             &(&1.kind == "buff" and &1.line =~ "leaves")
            )
   end
 

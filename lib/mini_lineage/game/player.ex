@@ -89,17 +89,18 @@ defmodule MiniLineage.Game.Player do
     welcome =
       Format.fill_template(Math.random_element(Narratives.welcome()), %{"raceLabel" => race.label})
 
-    # The Chronicle keeps it with its pronouns open; the flash is read by the player themselves, so
-    # it is voiced here or the braces would go on the screen.
-    player = log(player, event("start", Narrative.build_began(race, welcome)))
-
-    flash = %{
-      text:
-        "You have chosen the #{race.emoji} #{race.label}, #{Narrative.voiced(welcome, true)}\n" <>
-          "You are #{build} #{definition} of #{age} seasons, bearing a 🪙 #{Format.adena(player.adena)} Adena tribute.",
-      type: :info,
-      sound: "start"
+    traits = %{
+      welcome: welcome,
+      build: build,
+      definition: definition,
+      age: age,
+      adena: player.adena
     }
+
+    began = Narrative.build_began(race, traits)
+    player = log(player, event("start", began))
+
+    flash = %{text: Narrative.alert(began), type: :info, sound: "start"}
 
     {player, flash}
   end
@@ -423,33 +424,28 @@ defmodule MiniLineage.Game.Player do
     Statistics.increment_for(player, :total_food_bought)
     Statistics.increment_for(player, :total_hp_healed, healed)
 
-    buff =
+    bought = Narrative.build_meal(item, player.health)
+    player = log(player, event("purchase", bought))
+
+    # The buff has a row of its own in the chronicle; the alert says it in that row's words.
+    settled =
       if effect,
-        do: "\nYou feel invigorated by the #{effect.emoji} #{effect.label} buff!",
+        do:
+          "\n" <>
+            Narrative.alert(Narrative.build_effect_change(Narratives.effect_gained(), effect)),
         else: ""
 
-    text =
-      "You have bought #{item.emoji} #{item.name}.#{buff}\n" <>
-        "You feel your strength returning, bringing you to #{Format.number(player.health)} HP."
-
-    player = log(player, event("purchase", Narrative.build_meal(item, player.health)))
-
-    {player, %{success: true, text: text, item: item}}
+    {player, %{success: true, text: Narrative.alert(bought) <> settled, item: item}}
   end
 
   defp complete_purchase(player, item, item_id, equipment) do
     player = Map.put(player, equipment.slot, item_id)
     Statistics.increment_for(player, equipment.stat)
-    player = log(player, event("purchase", Narrative.build_purchase(equipment.slot, item)))
+    bought = Narrative.build_purchase(equipment.slot, item)
+    player = log(player, event("purchase", bought))
 
-    {player, %{success: true, text: bought_text(item, equipment.slot), item: item}}
+    {player, %{success: true, text: Narrative.alert(bought), item: item}}
   end
-
-  defp bought_text(item, :weapon_id),
-    do: "You have bought a Weapon.\nYou are now wielding the swift #{item.emoji} #{item.name}!"
-
-  defp bought_text(item, :armor_id),
-    do: "You have bought an Armor.\nYou are now wearing the mighty #{item.emoji} #{item.name}!"
 
   # ----------------------------------------------------------------- battle
 

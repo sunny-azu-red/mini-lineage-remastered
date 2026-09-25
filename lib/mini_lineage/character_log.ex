@@ -15,7 +15,7 @@ defmodule MiniLineage.CharacterLog do
 
   # A fight tells its story in seven lines; every other deed says one thing. Whitelisted here and
   # not in the database, so a new kind is a line of Elixir rather than a migration.
-  @kinds ~w(fight start purchase level_up heresy ending blessing affliction)
+  @kinds ~w(fight start purchase level_up cheat ending buff debuff)
 
   defmodule Entry do
     @moduledoc false

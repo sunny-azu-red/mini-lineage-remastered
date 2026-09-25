@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.EffectsTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Player}
+  alias MiniLineage.Game.{Constants, Narrative, Player}
 
   defp fed(player, food_id) do
     {player, _} = Player.purchase(player, "food", food_id)
@@ -70,6 +70,44 @@ defmodule MiniLineage.Game.EffectsTest do
 
       assert Enum.map(player.effects, & &1.id) |> Enum.reject(&(&1 in ~w(resting combat))) ==
                ["newbie_blessing", "satisfied", "hexed"]
+    end
+  end
+
+  # A deed is written once: the chronicle keeps it with its pronouns open, and the alert is the same
+  # sentence told to its owner. Two texts written in two places had drifted into saying different
+  # things, the alert "You have bought" and the chronicle "They ate".
+  describe "an alert and the chronicle" do
+    test "say the same thing about a meal, the buff it brought included" do
+      {fed, result} = Player.purchase(%{hero() | health: 50}, "food", 2)
+      [bought] = Enum.filter(fed.pending_events, &(&1.kind == "purchase"))
+
+      assert bought.line =~ "{they} bought and ate the 🌭"
+      assert bought.line =~ "for <span class=\"adena\">🪙 60 Adena</span>"
+      assert result.text =~ Narrative.alert(bought.line)
+      assert result.text =~ ~s(🥓 <span class="buff">Satisfied</span> settles over you.)
+      # The same colours as the chronicle row, because it is the same sentence.
+      assert result.text =~ ~s(<span class="hp">)
+    end
+
+    test "and about a blade, which also says what it cost" do
+      {armed, result} = Player.purchase(hero(), "weapon", 2)
+      [bought] = Enum.filter(armed.pending_events, &(&1.kind == "purchase"))
+
+      assert bought.line =~ ~r/\{they\} bought the .+ for .+Adena.+ and took it in hand\./
+      assert result.text == Narrative.alert(bought.line)
+    end
+
+    test "and about the run's beginning, which says who it was" do
+      {born, flash} = Player.initialize(%Player{}, Constants.race(2), "Hero")
+      [began] = Enum.filter(born.pending_events, &(&1.kind == "start"))
+
+      assert flash.text == Narrative.alert(began.line)
+
+      assert began.line =~
+               ~r/\{they\} set out as a \w+ (youth|adult|elder) of \d+ seasons, bearing a /
+
+      assert began.line =~ "🪙 450 Adena</span> tribute."
+      refute flash.text =~ ~r/\{[a-z]+\}/
     end
   end
 end
