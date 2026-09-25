@@ -48,7 +48,11 @@ defmodule MiniLineageWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <div id="app" phx-hook="KonamiRelay">
+    <div id="app">
+      <%!-- Every keypress is a round trip, so the relay exists only while the sequence can do
+            something: a started, living run not already marked. Its own element, so arming and
+            disarming mount and destroy the hook rather than patching an attribute. --%>
+      <div :if={Access.konami?(@view)} id="konami-relay" phx-hook="KonamiRelay" hidden></div>
       <div id="wrapper">
         <div id="header">
           <Layouts.site_header />

@@ -226,7 +226,8 @@ defmodule MiniLineage.Game.Actions do
   full. Every failure path is a no-op — the relay has no ack to report one to.
   """
   def cheat(player) do
-    if not Player.started?(player) or player.dead do
+    # Once, not again: a second sequence would refill health, log the heresy and count it twice.
+    if not Player.started?(player) or player.dead or player.cheated do
       {player, {:ok, nil}}
     else
       player = %{player | cheated: true}

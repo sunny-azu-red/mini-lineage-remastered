@@ -299,9 +299,17 @@ defmodule MiniLineageWeb.GameLive do
     sequence = MiniLineage.Game.Constants.konami_sequence()
     buffer = Enum.take(socket.assigns.key_buffer ++ [key], -length(sequence))
 
-    if buffer == sequence,
-      do: {:noreply, socket |> assign(key_buffer: []) |> apply_action(&Actions.cheat/1)},
-      else: {:noreply, assign(socket, key_buffer: buffer)}
+    cond do
+      # The page relays only for a run the sequence can touch; this is for a client that does not.
+      not Access.konami?(socket.assigns.view) ->
+        {:noreply, socket}
+
+      buffer == sequence ->
+        {:noreply, socket |> assign(key_buffer: []) |> apply_action(&Actions.cheat/1)}
+
+      true ->
+        {:noreply, assign(socket, key_buffer: buffer)}
+    end
   end
 
   # ----------------------------------------------------------------- pushes

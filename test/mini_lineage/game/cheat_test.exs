@@ -28,6 +28,17 @@ defmodule MiniLineage.Game.CheatTest do
     assert player.effects == []
   end
 
+  # A second sequence used to refill health again, log the heresy again and count the heretic twice.
+  test "works once: a run already marked is healed and counted no more" do
+    {cheated, _} = Actions.cheat(living())
+    wounded = %{cheated | health: 10}
+
+    {again, {:ok, nil}} = Actions.cheat(wounded)
+
+    assert again.health == 10
+    assert again.pending_events == wounded.pending_events
+  end
+
   test "is a silent no-op for the dead" do
     {player, {:ok, nil}} = Actions.cheat(%{living() | dead: true})
 

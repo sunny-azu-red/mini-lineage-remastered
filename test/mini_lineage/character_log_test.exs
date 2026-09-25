@@ -295,8 +295,9 @@ defmodule MiniLineage.CharacterLogTest do
       fight(session)
       added = CharacterLog.since(id, cursor)
 
-      assert length(added) == 1
-      assert hd(added).id > cursor
+      # Counted by kind: the fight may cross a level, which the dice decide, and log a row of its own.
+      assert Enum.count(added, &(&1.kind == "fight")) == 1
+      assert Enum.all?(added, &(&1.id > cursor))
     end
 
     # Nothing has been written since, so there is nothing to append and no reason to have asked.
