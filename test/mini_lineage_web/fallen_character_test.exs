@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
   alias MiniLineageWeb.{Screens, Screens.Record}
 
   # The component, not the screen: these are about the prose, and `record/1` is what carries it
@@ -180,7 +180,22 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       html = html_for(fallen())
 
       refute html =~ ~s(<span class="deaths">)
-      assert html =~ "when the road ran out."
+      assert text_for(fallen()) =~ "Adena unspent."
+    end
+
+    # The road above already dates the end, so this closes on what the fall left behind rather than
+    # announcing a second time that the road ran out. Each branch has to read as a sentence.
+    test "and says what the fall left behind, however it stood" do
+      assert text_for(%{fallen() | adena: 3_400}) =~
+               ~r/only [\d,]+ XP short of Level \d+, and left 🪙 [\d.,k]+ Adena unspent\.\s*$/
+
+      assert text_for(%{fallen() | adena: 0}) =~ ~r/, and died with an empty purse\.\s*$/
+      refute text_for(%{fallen() | adena: 0}) =~ "unspent"
+
+      at_the_top = %{fallen() | experience: Math.xp_for_level(Constants.max_level())}
+
+      assert text_for(at_the_top) =~
+               ~r/at the zenith of martial prowess, and left 🪙 [\d.,k]+ Adena unspent\.\s*$/
     end
   end
 
