@@ -68,19 +68,9 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
       # `@kinds` is the whitelist.
       add :kind, :string, size: 16, null: false
 
-      # The rendered lines, so a chronicle never has to re-roll the prose it already told.
+      # The rendered lines, so a chronicle never has to re-roll the prose it already told. Nothing
+      # else: what a reader is told is all in them, and the totals live in `statistics`.
       add :narrative, :map, null: false
-
-      add :enemies_killed, :integer, null: false, default: 0
-      add :hp_lost, :integer, null: false, default: 0
-      add :damage_blocked, :integer, null: false, default: 0
-      add :xp_gained, :integer, null: false, default: 0
-      add :adena_gained, :integer, null: false, default: 0
-      add :is_critical, :boolean, null: false, default: false
-      add :is_level_up, :boolean, null: false, default: false
-      add :ambushed, :boolean, null: false, default: false
-      add :died, :boolean, null: false, default: false
-      add :sound, :string, size: 16
 
       timestamps(type: :timestamptz, updated_at: false)
     end

@@ -109,7 +109,15 @@ defmodule MiniLineage.Game.Actions do
       at: Clock.now()
     }
 
-    player = Player.log(%{player | last_battle_narrative: last}, %{kind: "fight", battle: last})
+    # A fatal fight's only line left is how it ended, so it is logged as the ending it is.
+    deed =
+      if died,
+        do: %{kind: "ending", line: player.death_reason, at: last.at},
+        else: %{kind: "fight", battle: last}
+
+    # The screen keeps what the log can give it back, so a reconnect rebuilds the same thing.
+    shown = Map.take(last, [:narrative, :at])
+    player = Player.log(%{player | last_battle_narrative: shown}, deed)
 
     # After the fight and not inside it: the Chronicle reads in the order these are pushed, and a
     # level reached before the blow that earned it reads backwards. A fatal fight levels nobody.

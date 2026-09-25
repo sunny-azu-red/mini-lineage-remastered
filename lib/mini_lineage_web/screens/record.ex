@@ -199,7 +199,6 @@ defmodule MiniLineageWeb.Screens.Record do
   defp painted(_entry), do: []
 
   # Every ending is an Ending, however it came: the pair of the Beginning.
-  defp kind_label(%{kind: "fight", died: true}), do: "Ending"
   defp kind_label(%{kind: "fight"}), do: "Battle"
   defp kind_label(%{kind: "ending"}), do: "Ending"
   defp kind_label(%{kind: "start"}), do: "Beginning"
@@ -242,10 +241,7 @@ defmodule MiniLineageWeb.Screens.Record do
               <span :if={entry.narrative.crit_line}>{raw(voiced(entry.narrative.crit_line, @mine))} </span>{raw(
                 voiced(entry.narrative.kill_line, @mine)
               )} {raw(voiced(entry.narrative.deflection_line, @mine))}
-              <%!-- A fight the run did not walk away from is its ending, and wears the colour
-                    every ending wears. --%>
-              <span :if={entry.died} class="deaths">{raw(voiced(entry.narrative.outcome_line, @mine))}</span>
-              <span :if={!entry.died}>{raw(voiced(entry.narrative.outcome_line, @mine))}</span>
+              {raw(voiced(entry.narrative.outcome_line, @mine))}
               <span :if={entry.narrative.ambush_line} class="threat">{raw(
                 voiced(entry.narrative.ambush_line, @mine)
               )}</span>

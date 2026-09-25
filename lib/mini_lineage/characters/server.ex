@@ -256,7 +256,6 @@ defmodule MiniLineage.Characters.Server do
   # The instant the run ended, so what faded with it is dated the same and the log stays in order.
   defp ending_at(events) do
     case List.last(events) do
-      %{kind: "fight", battle: %{at: at}} -> at
       %{at: at} -> at
       nil -> Clock.now()
     end

@@ -45,16 +45,19 @@ defmodule MiniLineage.CharacterLogTest do
   end
 
   describe "a fight" do
-    test "is recorded with the numbers, not just the prose", %{session: session} do
+    test "is recorded as the lines it was told in", %{session: session} do
       start_character(session)
       fight(session)
 
       [row] = fights(session)
 
       assert row.character_id == stored_id(session)
-      assert is_integer(row.enemies_killed) and is_integer(row.xp_gained)
-      assert is_boolean(row.is_critical) and is_boolean(row.ambushed)
-      # The rendered lines ride alongside, so a log screen never has to re-roll the prose.
+      # Every line by name, a line that did not happen as nil, so a log never re-rolls the prose.
+      assert row.narrative |> Map.keys() |> Enum.sort() ==
+               Enum.sort(
+                 ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)
+               )
+
       assert is_binary(row.narrative["outcome_line"])
     end
 
@@ -183,21 +186,22 @@ defmodule MiniLineage.CharacterLogTest do
       assert blessing.at == ending.at and meal.at == ending.at
     end
 
-    test "and a fatal fight is the ending it comes before", %{session: session} do
+    test "and a fatal fight is logged as the ending it is", %{session: session} do
       start_character(session)
+      # A fight costs at least 1 HP whatever the dice say, so this one is fatal.
+      Characters.mutate(session, &{%{&1 | health: 1}, :ok})
+      fight(session)
 
-      Characters.mutate(session, fn p ->
-        dead = Player.kill(p)
-        {Player.log(dead, %{kind: "fight", battle: fatal(dead)}), :ok}
-      end)
-
-      [blessing, fight] = Enum.take(CharacterLog.recent(stored_id(session)), -2)
+      [blessing, ending] = Enum.take(CharacterLog.recent(stored_id(session)), -2)
 
       # Stored with the pronoun open, like every line in the log.
       assert blessing.line =~ "Newbie Blessing" and
                blessing.line =~ "fades with {their} last breath"
 
-      assert fight.kind == "fight" and fight.died
+      # Its other lines were dropped when it turned fatal; how it ended is all that is left.
+      assert ending.kind == "ending"
+      assert ending.line == Characters.snapshot(session).death_reason
+      assert fights(session) == []
     end
 
     test "and is stored as the buff or debuff it is",
@@ -229,25 +233,6 @@ defmodule MiniLineage.CharacterLogTest do
     end
   end
 
-  defp fatal(player) do
-    %{
-      narrative: %{outcome_line: player.death_reason},
-      outcome: %{
-        enemies_killed: 0,
-        hp_lost: 1,
-        damage_blocked: 0,
-        xp_gained: 0,
-        adena_gained: 0,
-        is_critical: false,
-        is_level_up: false
-      },
-      ambushed: false,
-      died: true,
-      sound: "death",
-      at: MiniLineage.Game.Clock.now()
-    }
-  end
-
   defp overdue(%{id: "newbie_blessing"} = effect), do: %{effect | expires_at: 1}
   defp overdue(effect), do: effect
 
@@ -266,19 +251,8 @@ defmodule MiniLineage.CharacterLogTest do
              )
 
       # Oldest first: the page tells the run's story in the order it happened.
-      assert history |> Enum.filter(&(&1.kind == "fight")) |> Enum.map(& &1.outcome) ==
-               Enum.map(
-                 fights(session),
-                 &%{
-                   enemies_killed: &1.enemies_killed,
-                   hp_lost: &1.hp_lost,
-                   damage_blocked: &1.damage_blocked,
-                   xp_gained: &1.xp_gained,
-                   adena_gained: &1.adena_gained,
-                   is_critical: &1.is_critical,
-                   is_level_up: &1.is_level_up
-                 }
-               )
+      assert history |> Enum.filter(&(&1.kind == "fight")) |> Enum.map(& &1.id) ==
+               Enum.map(fights(session), & &1.id)
     end
 
     test "and only its beginning for a run that never drew a blade", %{session: session} do
@@ -391,22 +365,5 @@ defmodule MiniLineage.CharacterLogTest do
     end
   end
 
-  defp sample_battle do
-    %{
-      outcome: %{
-        enemies_killed: 1,
-        hp_lost: 0,
-        damage_blocked: 0,
-        xp_gained: 1,
-        adena_gained: 1,
-        is_critical: false,
-        is_level_up: false
-      },
-      narrative: %{outcome_line: "x"},
-      ambushed: false,
-      died: false,
-      sound: nil,
-      at: DateTime.utc_now()
-    }
-  end
+  defp sample_battle, do: %{narrative: %{outcome_line: "x"}, at: DateTime.utc_now()}
 end

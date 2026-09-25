@@ -24,22 +24,8 @@ defmodule MiniLineage.CharacterLog do
     @timestamps_opts [type: :utc_datetime_usec, updated_at: false]
     schema "character_log" do
       field :character_id, :string
-
-      # Defaulted here as well as in the table: `insert_all` sends the struct as it is and applies
-      # no column default, so a deed that is not a fight would send NULLs into NOT NULL.
-      field :enemies_killed, :integer, default: 0
-      field :hp_lost, :integer, default: 0
-      field :damage_blocked, :integer, default: 0
-      field :xp_gained, :integer, default: 0
-      field :adena_gained, :integer, default: 0
-      field :is_critical, :boolean, default: false
-      field :is_level_up, :boolean, default: false
-      field :ambushed, :boolean, default: false
-      field :died, :boolean, default: false
-
       field :kind, :string
       field :narrative, :map
-      field :sound, :string
 
       timestamps()
     end
@@ -49,23 +35,16 @@ defmodule MiniLineage.CharacterLog do
   # same window rather than to wherever it had grown to.
   @window 100
 
-  @doc "The row a fight produces, built rather than written so the caller can save it in the character's own transaction."
-  def row(character_id, %{outcome: outcome, narrative: narrative} = battle) do
+  @doc """
+  The row a fight produces: its lines and nothing else, since the lines say everything a reader is
+  told. Built rather than written so the caller can save it in the character's own transaction.
+  """
+  def row(character_id, %{narrative: narrative, at: at}) do
     %Entry{
       character_id: character_id,
-      enemies_killed: outcome.enemies_killed,
-      hp_lost: outcome.hp_lost,
-      damage_blocked: outcome.damage_blocked,
-      xp_gained: outcome.xp_gained,
-      adena_gained: outcome.adena_gained,
-      is_critical: outcome.is_critical,
-      is_level_up: outcome.is_level_up,
       kind: "fight",
-      ambushed: battle.ambushed == true,
-      died: battle.died == true,
       narrative: Map.new(@narrative_keys, &{Atom.to_string(&1), Map.get(narrative, &1)}),
-      sound: battle.sound,
-      inserted_at: battle.at
+      inserted_at: at
     }
   end
 
@@ -125,9 +104,11 @@ defmodule MiniLineage.CharacterLog do
   end
 
   # What the Chronicle iterates. A fight keeps the shape the battle screen knows; everything else
-  # is one line, and the component tells them apart by `kind`.
-  defp to_entry(%Entry{kind: "fight"} = e),
-    do: e |> to_battle() |> Map.merge(%{id: e.id, kind: "fight"})
+  # is one line, and the component tells them apart by `kind`. Only an ambush draws an ambush line.
+  defp to_entry(%Entry{kind: "fight"} = e) do
+    battle = to_battle(e)
+    Map.merge(battle, %{id: e.id, kind: "fight", ambushed: battle.narrative.ambush_line != nil})
+  end
 
   defp to_entry(%Entry{} = e),
     do: %{id: e.id, kind: e.kind, at: e.inserted_at, line: e.narrative["line"]}
@@ -137,18 +118,6 @@ defmodule MiniLineage.CharacterLog do
   defp to_battle(%Entry{} = e) do
     %{
       narrative: Map.new(@narrative_keys, &{&1, Map.get(e.narrative, Atom.to_string(&1))}),
-      outcome: %{
-        enemies_killed: e.enemies_killed,
-        hp_lost: e.hp_lost,
-        damage_blocked: e.damage_blocked,
-        xp_gained: e.xp_gained,
-        adena_gained: e.adena_gained,
-        is_critical: e.is_critical,
-        is_level_up: e.is_level_up
-      },
-      ambushed: e.ambushed,
-      died: e.died,
-      sound: e.sound,
       at: e.inserted_at
     }
   end

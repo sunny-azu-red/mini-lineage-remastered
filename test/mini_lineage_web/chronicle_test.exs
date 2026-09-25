@@ -25,15 +25,13 @@ defmodule MiniLineageWeb.ChronicleTest do
   }
 
   # A line that did not happen is nil, never missing: `CharacterLog.to_battle/1` names every key it
-  # reads back, so the component may reach for all of them. The `ambushed` column and the ambush
-  # line come from one flag in `Narrative.build_battle/3`, so a fixture that sets them apart would
-  # be describing a row the game cannot write.
+  # reads back, so the component may reach for all of them. `ambushed` is derived from the ambush
+  # line, so a fixture that sets them apart would be describing a row the game cannot produce.
   defp fight(absent \\ []) do
     %{
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
       kind: "fight",
       ambushed: :ambush_line not in absent,
-      died: false,
       at: ~U[2026-09-24 14:32:00Z]
     }
   end
@@ -73,7 +71,6 @@ defmodule MiniLineageWeb.ChronicleTest do
       },
       kind: "fight",
       ambushed: true,
-      died: false,
       at: ~U[2026-09-24 14:32:00Z]
     }
 
@@ -88,7 +85,7 @@ defmodule MiniLineageWeb.ChronicleTest do
     end
 
     test "and an ending is told to whoever is reading it, not to the run that had it" do
-      ended = %{@complete | died: true, ambushed: false}
+      ended = %{kind: "ending", line: @complete.narrative.outcome_line, at: @complete.at}
 
       assert html_for([ended], mine: true) =~ "You walk away"
       assert html_for([ended], mine: false) =~ "They walk away"
@@ -167,7 +164,6 @@ defmodule MiniLineageWeb.ChronicleTest do
         [
           deed("start", "x"),
           fight(),
-          %{fight() | died: true},
           deed("purchase", "x"),
           deed("level_up", "x"),
           deed("buff", "x"),
@@ -181,7 +177,6 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert heads == [
                "Beginning",
                "Battle",
-               "Ending",
                "Purchase",
                "Level Up",
                "Buff",
@@ -275,13 +270,9 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert text_for([]) =~ "Not one blow struck"
     end
 
-    # The one entry that is an ending rather than a report. Every other line of that fight was
-    # dropped when it turned fatal, so this IS the entry, and it wears the colour an ending wears.
-    test "and an ending wears the colour every ending in the game wears" do
-      ended = %{fight([:crit_line, :kill_line, :deflection_line, :ambush_line]) | died: true}
-
-      assert html_for([ended]) =~ ~s(<span class="deaths">)
-      refute html_for([fight()]) =~ ~s(<span class="deaths">)
+    # A fatal fight is logged as an ending, so a fight row is always one the run walked away from.
+    test "and is never drawn as an ending" do
+      refute html_for([fight()]) =~ ~s(class="deaths")
     end
 
     # The class is the claim, not the colour: what red means lives in the stylesheet, and a test

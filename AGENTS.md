@@ -266,8 +266,8 @@ measured on 20k runs and a million-entry log, 3.6ms became 2.3ms with the date l
 
 **`CharacterLog.last_for/1` filters on kind, and that is not tidying.** `Server.init/1` rebuilds the
 battle screen from it. The table holds deeds as well as fights, so without the filter a player whose
-last act was a purchase reconnects to a battle report with seven nil lines and an all-zero outcome —
-which renders blank rather than failing. No partial index for it; see the dropped-column rule below.
+last act was a purchase reconnects to a battle report of seven nil lines — which renders blank
+rather than failing. No partial index for it; see the dropped-column rule below.
 
 **A chronicle row carries a class only where the stylesheet paints it.** `ambushed`, `start`,
 `level-up` and `purchase` are washed in the colour of the alert that would announce them, each
@@ -308,9 +308,14 @@ counted, so no line describing it may claim otherwise: not the XP the deflection
 Adena and the HP the outcome line leaves them standing on, and not the foes the kill line cuts down
 — the game never counted those either, and it was the fighter who fell. Every line is still DRAWN,
 because the pools draw in order and skipping one would shift every later roll in that fight, and
-then all of them are dropped for how it ended, in the second person the whole chronicle is written
-in and wearing `.deaths` as the death screen does. This is also why a run's chronicle can hold one
-more fight than `total_battles` says.
+then all of them are dropped for how it ended. What is left is one sentence, the death reason, so
+the chronicle logs it as the `ending` it is, the same kind of row a suicide writes, and a fight row
+is always one the run walked away from. The chronicle's fights and `total_battles` agree.
+
+**A log row is its kind, its lines and its moment, and nothing else.** A fight's numbers were
+columns once, kept because they were "what you would aggregate", and nothing ever did: the totals
+live in `statistics` as running counters. Whether a fight was ambushed is whether it has an
+`ambush_line`. A column goes back when something sorts or filters on it, and not before.
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
 action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
