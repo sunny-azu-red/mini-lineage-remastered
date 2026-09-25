@@ -14,9 +14,11 @@
     padding: 12px;
 }
 
+/* 680 until the sidebar grew by 15 to hold its widest row; the game grew with it, so the main
+ * column kept every pixel it had. */
 #wrapper {
     width: 100%;
-    max-width: 680px;
+    max-width: 695px;
 }
 
 /* ===== Header Banner ===== */
