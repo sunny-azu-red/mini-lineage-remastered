@@ -54,6 +54,7 @@
     /* An alert's own edge, which is the one border in the game that carries a meaning rather than
      * a depth. Measured with its voice below, not with the surfaces above. */
     --border-danger: #d74031;
+    --border-success: #00a152;
     --border-info: #0076e1;
 
     /* ===== Gold, the one accent ===== */
@@ -76,7 +77,7 @@
     --text-defense: #288aff;
     --text-tally: #009d8c;
     --text-critical: #d7700f;
-    --text-success: #00a152;
+    --text-heal: #00a152;
 
     /* ===== The bars =====
      * The two are built alike: one lightness for the bases, one for the glows, one chroma for
@@ -92,7 +93,7 @@
      * Danger, success and info share a lightness and read at 6.7 on the panel; warning is gold, and
      * lighter, at 9.6. */
     --text-danger: #ff8164;
-    --text-success-bright: #0fbe6e;
+    --text-success: #0fbe6e;
     --text-warning: #e7c33d;
     --text-info: #7aa4ff;
 

@@ -155,13 +155,11 @@
 }
 
 .effect-buff .effect-timer {
-    color: var(--text-success-bright);
-    border-color: rgba(15, 190, 110, 0.45);
+    color: var(--text-success);
 }
 
 .effect-debuff .effect-timer {
     color: var(--text-danger);
-    border-color: rgba(255, 129, 100, 0.45);
 }
 
 .effect-fade-in {
@@ -400,8 +398,8 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 
 .alert-success {
     background: var(--wash-success);
-    border-color: var(--text-success);
-    color: var(--text-success-bright);
+    border-color: var(--border-success);
+    color: var(--text-success);
 }
 
 .alert-warning {

@@ -209,7 +209,7 @@ neither file.
 An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
 vocabulary like any other value. A value is a classed `<span>`, never a `<strong>`: it takes its
 weight from the vocabulary's own rule, and `strong` stays for emphasis on a name that is not a
-value. The BADGE over its emoji does not: `--text-success-bright` and `--text-danger` are lighter,
+value. The BADGE over its emoji does not: `--text-success` and `--text-danger` are lighter,
 and the pixel font needs them at that size. Every text colour is a token; adding a class means
 putting it in a group, never inventing a hex.
 
@@ -362,6 +362,10 @@ HP is `--text-hp` in a sentence and `--bar-hp` in a meter. That pair used to be 
 a hue rather than a role: the accent is deliberately text, border, ground and glow at once, and
 prefixing it would mean four tokens holding one colour.
 
+The two sets of text colour are named apart: a value for the thing it marks (`--text-hp`,
+`--text-heal`, `--text-tally`), an alert voice for its kind (`--text-danger`, `--text-success`,
+`--text-warning`, `--text-info`). Green had been both, so the voice got `-bright` bolted on.
+
 Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside the palette's own
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns
 neon — that search has been run twice and been wrong twice.
@@ -378,7 +382,7 @@ controls had to sit well under the surfaces' number to read as the same slate. L
 colourfulness is chroma, and both compare across hues where H, S and L do not.
 
 **Peers share a lightness. They do not share a chroma.** The colours that land in one sentence —
-`--text-hp`, `--text-critical`, `--text-success`, `--text-tally`, `--text-defense`, `--text-xp` —
+`--text-hp`, `--text-critical`, `--text-heal`, `--text-tally`, `--text-defense`, `--text-xp` —
 are all `L* 58` and so read at 4.9 on the panel, which is what makes them peers; they had ranged `L*
 57` to `66` and the tally whispered. Equalising their chroma is the trap, and it was fallen into
 once: teal tops out near 39 at any lightness in sRGB, so a shared chroma *is* 39 and the whole set

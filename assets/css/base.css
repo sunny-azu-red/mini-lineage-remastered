@@ -146,7 +146,7 @@ p.last {
 }
 
 .build-testing {
-    color: var(--text-success);
+    color: var(--text-heal);
 }
 
 /* ===== Values =====
@@ -166,7 +166,7 @@ p.last {
 .heal,
 .regen,
 .buff {
-    color: var(--text-success) !important;
+    color: var(--text-heal) !important;
 }
 
 /* What a run is worth: its purse, its level, and the ambient state it stands in. */

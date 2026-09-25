@@ -66,7 +66,7 @@ th.num {
    however these rules get moved about. */
 .data-table tbody tr.character-row.alive:not(.mine) {
     background-color: var(--wash-success);
-    box-shadow: inset 2px 0 0 var(--text-success);
+    box-shadow: inset 2px 0 0 var(--text-heal);
 }
 
 /* Your own run, findable without counting. */
@@ -90,7 +90,7 @@ th.num {
 /* Somebody has this character open right now, as against merely alive. */
 /* Always in the DOM so it can fade; `.lit` is the only thing that changes when somebody arrives. */
 .character-row .online {
-    color: var(--text-success);
+    color: var(--text-heal);
     opacity: 0;
     transition: opacity 400ms ease;
 }
