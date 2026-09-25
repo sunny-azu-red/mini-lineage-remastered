@@ -140,6 +140,7 @@
     font-size: 8px;
     font-family: var(--font-pixel);
     font-weight: 400;
+    /* Not inherited: the header band it sits in is gold. */
     color: var(--text-primary);
     line-height: 1;
     pointer-events: none;
@@ -368,7 +369,6 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     transform: translateY(-50%);
     text-align: center;
     font-size: 10px;
-    color: var(--text-primary);
     font-weight: 500;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
