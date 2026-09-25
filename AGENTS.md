@@ -166,12 +166,13 @@ leave over is shared among every column in proportion to its content, so the gap
 grow only where there is room. A fixed gap of 24px took it from the name instead, and the armour
 shop's longest name wrapped on desktop, where that table has about a pixel to spare. A figure never
 wraps; a name may; on a phone a column's label may take two lines, never stranding a unit, which is
-why "C. Hit\u00A0%" binds its percent. A `min-width` had held the shops at 420px, which on a phone
-put the cost behind a sideways scroll. The columns stack below 640px, before the sidebar can squeeze
-a table narrower than a phone would give it. The Halls may still scroll on a phone: name, level and
-experience are on the left, and only the date waits off-screen. Check a table change by counting the
-lines in every cell at every width, not by whether it scrolls: a row's cells share one height, so a
-wrapped name makes the whole row look taller.
+why "C. Hit&nbsp;%" binds its percent — an entity, rendered with `raw/1`, since the label is
+interpolated and would otherwise print it literally. A `min-width` had held the shops at 420px,
+which on a phone put the cost behind a sideways scroll. The columns stack below 640px, before the
+sidebar can squeeze a table narrower than a phone would give it. The Halls may still scroll on a
+phone: name, level and experience are on the left, and only the date waits off-screen. Check a table
+change by counting the lines in every cell at every width, not by whether it scrolls: a row's cells
+share one height, so a wrapped name makes the whole row look taller.
 
 **A class per thing the game names, never per colour it is drawn in.** `.adena` and `.level` and
 `.aura` all resolve to `--gold` today and are grouped for it in `base.css`, but they are written

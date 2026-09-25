@@ -48,7 +48,7 @@ defmodule MiniLineageWeb.Screens.Shop do
       modifier: %{
         key: :crit,
         # The percent is bound to its word: on a phone the label may break, but never to strand "%".
-        header: "C. Hit\u00A0%",
+        header: "C. Hit&nbsp;%",
         title: "Critical Hit Chance",
         class: "crit",
         prefix: "",
@@ -94,8 +94,10 @@ defmodule MiniLineageWeb.Screens.Shop do
         <thead>
           <tr>
             <th class="name">Name</th>
-            <th class="num" title={@modifier.title}>{@modifier.header}</th>
-            <th class="num" title={@stat_title}>{@stat_header}</th>
+            <%!-- Raw so a label is written the way the game writes markup, with its entities; they
+                  are constants from this module, never anything a player typed. --%>
+            <th class="num" title={@modifier.title}>{raw(@modifier.header)}</th>
+            <th class="num" title={@stat_title}>{raw(@stat_header)}</th>
             <th>Adena</th>
           </tr>
         </thead>
