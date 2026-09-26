@@ -89,7 +89,8 @@ h2 {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    border-bottom: 1px solid var(--border-soft);
+    /* Dashed, as every divider inside a panel is: the sidebar's rows, the Chronicle's, the back link's. */
+    border-bottom: 1px dashed var(--border-soft);
     padding-bottom: 6px;
     margin-top: 24px;
     margin-bottom: 12px;
@@ -124,7 +125,7 @@ p.last {
 .back {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid var(--border-soft);
+    border-top: 1px dashed var(--border-soft);
 }
 
 /* ===== Utilities =====

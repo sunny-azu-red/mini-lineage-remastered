@@ -114,7 +114,7 @@ defmodule MiniLineageWeb.Screens do
 
   defp start_screen(assigns) do
     ~H"""
-    <h2>A New Bloodline Rises</h2>
+    <h2>🐣 A New Bloodline Rises</h2>
     <p>
       Will you forge a fresh path, or honor the ancestors resting within the <.link patch={
         Paths.for_screen("highscores")

@@ -105,7 +105,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           unprepared.
         </p>
 
-        <h2>🩸 The Toll of Survival</h2>
+        <h2>❤️‍🩹 The Toll of Survival</h2>
         <p>
           Hardship is measured in blood and resilience. Our champions have shed <span class="hp"><span data-key="tome-hp-lost" data-value={@statistics.total_hp_lost}>{Format.number(@statistics.total_hp_lost)}</span> HP</span>, flesh torn by tooth and
           claw. Yet, the craft of the blacksmith has proven its worth, as armor deflected <span class="damage"><span data-key="tome-damage-blocked" data-value={@statistics.total_damage_blocked}>{Format.number(@statistics.total_damage_blocked)}</span> Damage</span>.
