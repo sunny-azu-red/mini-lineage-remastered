@@ -431,9 +431,12 @@ try {
     await onScreen('character');
     const eulogy = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('the dead may look back at who they were', (await state()).screen === 'character');
+    // The skull marks the heading that says the journey ended, never the one naming the lineage.
+    const ancestry = (await page.textContent('#main h2')) ?? '';
     check('...keeping its ancestry rather than swapping in a skull',
-        !eulogy.includes('☠️') && eulogy.includes('of Orc Ancestry'),
-        await page.textContent('#main h2'));
+        !ancestry.includes('☠️') && ancestry.includes('of Orc Ancestry') && ancestry.includes('🧟'),
+        ancestry);
+    check('...and closing on the skull instead', eulogy.includes('☠️ Your Journey Has Ended'));
     check('...speaking of the run in the past', /Your Journey Has Ended/.test(eulogy) && /You fell at/.test(eulogy),
         eulogy.slice(eulogy.indexOf('Your Journey'), eulogy.indexOf('Your Journey') + 60));
     check('...and never as though it were still going',
