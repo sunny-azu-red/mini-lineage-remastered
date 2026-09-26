@@ -357,10 +357,10 @@ try {
     check('fighting wounds the character', current.health < current.maxHealth,
         `${current.health}/${current.maxHealth} after arrival and ${fightsFought} further fight(s)`);
     check('...and narrates the encounter', await page.locator('#main p').count() > 0);
-    // Never fires in practice — eight fights neither spend an Orc's opening health nor stay
-    // ambushed throughout — but it says so outright rather than skipping the meal in silence.
-    check('...and leaves it free to walk to the Inn', !current.dead && !current.ambushed,
-        `dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s)`);
+    // Only a long run of ambushes can end the Orc or hold it here before the Inn. That is the game
+    // working, not failing, so the meal is then skipped and the run says so.
+    if (current.dead || current.ambushed)
+        console.log(`   (no meal this run: dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s))`);
 
     if (!current.dead && !current.ambushed) {
         await goHome();

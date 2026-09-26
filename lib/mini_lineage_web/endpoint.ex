@@ -46,7 +46,7 @@ defmodule MiniLineageWeb.Endpoint do
   end
 
   # The container's healthcheck, answered before the session and the request log: it sends no
-  # cookie, so as a page it minted a visitor and started a character process on every probe.
+  # cookie, so as a page it would mint a visitor and start a character process on every probe.
   plug :health
 
   plug Plug.RequestId

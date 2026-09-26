@@ -12,6 +12,8 @@ list wins — several generator defaults do not exist here.
 - **There is no authentication**, so no `current_scope`, no `live_session` scoping, no user table.
   A browser is tied to a character by a signed session cookie and nothing else.
 - **There are no LiveView streams.** One character's state is one assign.
+- **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
+  else, so a `ColocatedHook` would compile and never run. A hook goes in `hooks.js`.
 - The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
   character goes through its process, never straight to the database.
@@ -443,7 +445,9 @@ FROM that push. `"record:#{character_id}"` is public, because a record is a publ
 `"statistics"` carries the archives, and carries them when a counter MOVES rather than when it is
 written — the collector keeps its own running totals so it can say so without a query, gathered on
 the same 500ms window the board uses. Batching the write is about a round trip being expensive;
-a broadcast is microseconds, and tying one to the other made the Tome a minute stale.
+a broadcast is microseconds, and tying one to the other made the Tome a minute stale. The board's
+topic and this one are followed only on the screen that draws them, and the board pushes only a
+board that moved: every other tab would be sent each push only to drop it.
 
 A push must not announce what cannot yet be read. `Server.run/3` broadcasts AFTER it persists, and
 the collector after its counters are in, because a reader answering a push by reading the database

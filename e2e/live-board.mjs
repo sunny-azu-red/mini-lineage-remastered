@@ -17,6 +17,21 @@ const check = (label, pass, detail = '') => {
 // Never `networkidle`: the LiveView websocket stays open, so it never settles.
 const connected = (page) => page.waitForSelector('.phx-connected', { timeout: 8000 });
 
+// A fight can end in an ambush, which pins the fighter to the Battleground and refuses any walk
+// away from it: the dice's call, so it is fought out before a walk, never hoped against.
+const fightOffAmbush = async (page) => {
+    for (let fights = 0; fights < 20; fights++) {
+        const screen = await page.evaluate(() => ({ ...document.querySelector('#screen')?.dataset }));
+        if (screen.ambushed !== 'true' || screen.dead === 'true') return;
+
+        await page.click('#main button[phx-click="fight"]');
+        await page.waitForFunction((had) => {
+            const now = document.querySelector('#screen')?.dataset;
+            return now && (Number(now.battles ?? 0) > had || now.dead === 'true');
+        }, Number(screen.battles ?? 0), { timeout: 8000 });
+    }
+};
+
 // `data-value`, never the text: every figure on the board counts up to its new value, so what is
 // rendered mid-tween is a frame and not a number anybody wrote. Read the text and a wait for the
 // figure to move returns on the first frame of the animation, hundreds short of the real one.
@@ -142,6 +157,7 @@ try {
 
     // And they come and go on their own: walking out of the fray drops the combat aura for a
     // resting one, and the watcher is told without asking for anything.
+    await fightOffAmbush(player);
     await player.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await connected(player);
     const swapped = await watcher.waitForFunction(
