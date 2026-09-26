@@ -147,7 +147,7 @@ defmodule MiniLineage.CharactersTest do
     character = Characters.character_id(id)
 
     assert Enum.any?(
-             CharacterLog.recent(character),
+             character |> CharacterLog.page() |> elem(0),
              &(&1.kind == "buff" and &1.line =~ "leaves")
            )
   end

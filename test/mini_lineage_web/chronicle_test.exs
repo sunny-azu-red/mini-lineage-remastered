@@ -265,7 +265,7 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert entry =~ "24/09/26, 14:32"
     end
 
-    # A hook per row is a hundred hooks doing one job, so the list carries it instead.
+    # A hook per row is fifty hooks doing one job, so the list carries it instead.
     test "under one hook for the whole list, never one per entry" do
       html = html_for([fight(), fight()])
 

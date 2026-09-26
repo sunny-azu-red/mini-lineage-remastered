@@ -209,6 +209,8 @@ defmodule MiniLineageWeb.Screens.Record do
   defp kind_label(%{kind: "debuff"}), do: "Debuff"
 
   attr :record_log, :list, default: []
+  # Whether entries older than the first one held remain to be asked for.
+  attr :older, :boolean, default: false
   # Whose chronicle this is, which decides whether it is told to them or about them.
   attr :mine, :boolean, default: true
 
@@ -225,13 +227,27 @@ defmodule MiniLineageWeb.Screens.Record do
       collapsed
       max_height={260}
       stick_to_bottom
+      load_older="older_chronicle"
       body_class={@record_log != [] && "rows"}
     >
+      <:unread>📜 New entries below</:unread>
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>
-        <ol id="chronicle-log" class="chronicle" phx-hook="LocalTimes">
-          <li :for={entry <- @record_log} :key={entry.id} {painted(entry)}>
+        <%!-- An id per row, so a page put in front moves the rows held rather than rewriting them,
+              and the hook can find the one the reader was looking at again. --%>
+        <ol
+          id="chronicle-log"
+          class="chronicle"
+          phx-hook="LocalTimes"
+          data-older-than={@older && hd(@record_log).id}
+        >
+          <li
+            :for={entry <- @record_log}
+            :key={entry.id}
+            id={"chronicle-#{entry.id}"}
+            {painted(entry)}
+          >
             <div class="entry-head">
               <.stamp at={entry.at} /> &bull; {kind_label(entry)}
             </div>

@@ -18,3 +18,6 @@ config :mini_lineage, cache_catalog: true
 # Its own name in the footer: this server and the dev one are both unreleased builds, and telling
 # them apart at a glance is the whole point of the label.
 config :mini_lineage, build_label: "testing"
+
+# A page the suites can outgrow with a dozen dice-free purchases; the paging is the same at 50.
+config :mini_lineage, chronicle_page: 10

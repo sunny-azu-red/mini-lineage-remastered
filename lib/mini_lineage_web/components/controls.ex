@@ -37,11 +37,15 @@ defmodule MiniLineageWeb.Controls do
   # Pixels. Given one, the BODY scrolls — so the bar sits against the panel's edge rather than
   # inside the body's padding, and the page is the same height however much is in it.
   attr :max_height, :integer, default: nil
-  # A log rather than a document: it opens on its newest line and follows it down.
+  # A log rather than a document: it opens on its newest line and follows it down, unless the
+  # reader has scrolled up to read, when `unread` floats over its foot instead.
   attr :stick_to_bottom, :boolean, default: false
+  # The event a log asks for its previous page with, when its list carries `data-older-than`.
+  attr :load_older, :string, default: nil
   attr :rest, :global
   slot :header
   slot :inner_block, required: true
+  slot :unread
 
   def panel(assigns) do
     ~H"""
@@ -50,6 +54,7 @@ defmodule MiniLineageWeb.Controls do
       class={classes(["panel", @class])}
       phx-hook={if @collapsible or @stick_to_bottom, do: "Panel"}
       data-stick={if @stick_to_bottom, do: "true"}
+      data-load-older={@load_older}
     >
       <%!-- The whole band is the control, not the words in it: a header is a wide, obvious thing
             to aim at, and a title you have to hit exactly is a worse target than no control. --%>
@@ -73,6 +78,9 @@ defmodule MiniLineageWeb.Controls do
       >
         {render_slot(@inner_block)}
       </div>
+
+      <%!-- Shown only by the hook, and only for entries that arrived while the reader was up. --%>
+      <button :if={@unread != []} type="button" class="btn panel-unread" hidden>{render_slot(@unread)}</button>
     </div>
     """
   end

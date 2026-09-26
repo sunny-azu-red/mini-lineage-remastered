@@ -4,6 +4,7 @@
  * two players, and it watches one player's page move because of what the OTHER one did.
  */
 import { chromium } from 'playwright';
+import { readToBeginning } from './helpers.mjs';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 const browser = await chromium.launch();
@@ -186,6 +187,99 @@ try {
     }));
     check('...and the road is dated by that same entry, as it arrives', !!dates.road && dates.road === dates.last,
         `road ${dates.road} · last entry ${dates.last}`);
+
+    // ---- a reader scrolled up to read is left there, and told what arrived below ------------
+    // Spiced Ale from here on: one row a purchase and no dice, so every arrival is certain.
+    const logState = () => watcher.evaluate(() => {
+        const body = document.querySelector('#chronicle .panel-body');
+        return {
+            top: body.scrollTop,
+            fromBottom: body.scrollHeight - body.clientHeight - body.scrollTop,
+            unread: !document.querySelector('#chronicle .panel-unread').hidden,
+        };
+    });
+    // Brought into view first, as a reader would: a wheel over a point below the fold scrolls nothing.
+    const overLog = async () => {
+        await watcher.locator('#chronicle').scrollIntoViewIfNeeded();
+        const box = await watcher.locator('#chronicle .panel-body').boundingBox();
+        await watcher.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    };
+    const buyAle = async () => {
+        const had = await lines();
+        await player.selectOption('#main select[name="item_id"]', '0');
+        await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
+        return watcher.waitForFunction(
+            (had) => document.querySelectorAll('#main ol.chronicle li').length > had,
+            had, { timeout: 8000 }).then(() => true).catch(() => false);
+    };
+
+    await overLog();
+    await watcher.mouse.wheel(0, -120);
+    await watcher.waitForTimeout(350);
+    const up = await logState();
+    check('a reader who scrolls up the Chronicle is told of nothing while nothing has happened',
+        up.fromBottom > 2 && !up.unread, JSON.stringify(up));
+
+    const arrived = await buyAle();
+    const paused = await logState();
+    check('...and is left on the line they were reading when an entry arrives below it',
+        arrived && Math.abs(paused.top - up.top) <= 1, `${up.top} -> ${paused.top}`);
+    check('...told instead that there is more below', paused.unread);
+
+    await watcher.click('#chronicle .panel-unread');
+    const caught = await logState();
+    check('...which takes them down to it, the way opening the Chronicle does',
+        caught.fromBottom <= 2 && !caught.unread, JSON.stringify(caught));
+
+    await buyAle();
+    const following = await logState();
+    check('...and from there it follows the log down again',
+        following.fromBottom <= 2 && !following.unread, JSON.stringify(following));
+
+    // ---- and a long one arrives a page at a time -----------------------------------------------
+    // The suites' page is ten (config/e2e.exs), so this outgrows it twice over.
+    while (await lines() <= 21)
+        if (!(await buyAle())) break;
+
+    await watcher.reload({ waitUntil: 'domcontentloaded' });
+    await connected(watcher);
+    const settledOpen = await watcher.waitForFunction(() => {
+        const body = document.querySelector('#chronicle .panel-body');
+        return !body.hidden && body.scrollHeight - body.clientHeight - body.scrollTop <= 2;
+    }, null, { timeout: 5000 }).then(() => true).catch(() => false);
+    check('a Chronicle left open is open again after a refresh, on its newest line', settledOpen,
+        JSON.stringify(await logState()));
+
+    const firstPage = await lines();
+    check('...holding only its newest page, with an older one to ask for',
+        firstPage === 10 && await watcher.locator('#chronicle-log[data-older-than]').count() === 1,
+        `${firstPage} entries`);
+
+    const reading = await watcher.locator('#chronicle-log li').first().getAttribute('id');
+    await overLog();
+    await watcher.mouse.wheel(0, -100000);
+    const paged = await watcher.waitForFunction(
+        (had) => document.querySelectorAll('#chronicle-log li').length > had,
+        firstPage, { timeout: 8000 }).then(() => true).catch(() => false);
+    check('...and scrolling towards its beginning hands over the page before it', paged,
+        `${firstPage} -> ${await lines()} entries`);
+
+    // Were the reader's place lost, the box would sit at the top of the page just put in front, ten
+    // entries above the one they had scrolled to.
+    const kept = await watcher.evaluate((id) => {
+        const box = document.querySelector('#chronicle .panel-body').getBoundingClientRect();
+        const entry = document.getElementById(id).getBoundingClientRect();
+        return { inView: entry.bottom > box.top && entry.top < box.bottom,
+                 unread: !document.querySelector('#chronicle .panel-unread').hidden };
+    }, reading);
+    check('...without moving the reader off the line they had reached', kept.inView);
+    check('...or claiming anything arrived below', !kept.unread);
+
+    const whole = await readToBeginning(watcher);
+    check('...and so on back to its Beginning, where it stops asking',
+        whole && await watcher.locator('#chronicle-log li').first().getAttribute('class') === 'start'
+            && await watcher.locator('#chronicle-log[data-older-than]').count() === 0,
+        `${await lines()} entries`);
 
     // The board coalesces its refreshes over half a second, so the fight above can still be in
     // flight. Everything below compares one row read twice, and two readers straddling that window

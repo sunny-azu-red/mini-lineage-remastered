@@ -530,6 +530,13 @@ move the page. Nor may it animate into a restored state: the chevron's transitio
 `data-ready` the hook sets two frames in, or every refresh spins it through a state the reader
 never left.
 
+**A log follows only a reader at its end.** Whether they are is decided by their own last scroll,
+never re-measured after a patch, which grows the list without moving it. A reader scrolled up keeps
+the line they were on across every patch, restored from that entry's DOM id since a patch briefly
+re-hides the body, and `.panel-unread` appears only for entries appended while they were away. The
+Chronicle opens on its newest page and prepends the one before by keyset when the reader nears the
+top. The page is 50 and ten in `:e2e`, so a suite can outgrow it without a minute of shopping.
+
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.
 Build them before the tag — `classes/1` and `cap/1` in `Controls` — or spread a keyword list into

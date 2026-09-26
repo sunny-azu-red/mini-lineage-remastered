@@ -53,6 +53,7 @@ defmodule MiniLineageWeb.GameLive do
        watching: nil,
        record_log: [],
        record_log_cursor: 0,
+       record_log_older: false,
        from: nil,
        statistics: nil,
        key_buffer: [],
@@ -120,7 +121,7 @@ defmodule MiniLineageWeb.GameLive do
         do: socket.assigns.view,
         else: Snapshot.build(player)
 
-    log = CharacterLog.recent(entry.id)
+    {log, older?} = CharacterLog.page(entry.id)
 
     socket
     |> watch_record(entry.id)
@@ -128,7 +129,8 @@ defmodule MiniLineageWeb.GameLive do
       record: entry,
       record_view: view,
       record_log: log,
-      record_log_cursor: cursor(log)
+      record_log_cursor: cursor(log),
+      record_log_older: older?
     )
   end
 
@@ -139,8 +141,15 @@ defmodule MiniLineageWeb.GameLive do
   defp cursor([]), do: 0
   defp cursor(log), do: List.last(log).id
 
-  defp clear_record(socket),
-    do: assign(socket, record: nil, record_view: nil, record_log: [], record_log_cursor: 0)
+  defp clear_record(socket) do
+    assign(socket,
+      record: nil,
+      record_view: nil,
+      record_log: [],
+      record_log_cursor: 0,
+      record_log_older: false
+    )
+  end
 
   # A record is watched only while it is the screen. Patching from one to another leaves the first,
   # or a reader who walked the Halls would end up holding every record they opened.
@@ -314,6 +323,12 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
+  # The reader scrolled near the chronicle's beginning. Asked by the entry it already opens on, so
+  # a second ask in flight reads the same page and is dropped rather than put in front twice.
+  def handle_event("older_chronicle", %{"before" => before}, socket) do
+    {:reply, %{}, prepend_chronicle(socket, before)}
+  end
+
   # ----------------------------------------------------------------- pushes
 
   @impl true
@@ -382,7 +397,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # Appended, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
   # every blow re-reads the entire history of a long run to add one line to it. The window grows
-  # as the reader watches, and a refresh comes back to the last hundred.
+  # as the reader watches, and a refresh comes back to the newest page.
   defp append_chronicle(socket, id) do
     added = CharacterLog.since(id, socket.assigns.record_log_cursor)
 
@@ -401,6 +416,18 @@ defmodule MiniLineageWeb.GameLive do
         )
     end
   end
+
+  defp prepend_chronicle(
+         %{assigns: %{record: %{id: id}, record_log: [first | _] = log}} = socket,
+         before
+       )
+       when first.id == before do
+    {older, more?} = CharacterLog.page(id, first.id)
+
+    assign(socket, record_log: older ++ log, record_log_older: more?)
+  end
+
+  defp prepend_chronicle(socket, _before), do: socket
 
   # ------------------------------------------------------------------ plumbing
 
@@ -516,6 +543,7 @@ defmodule MiniLineageWeb.GameLive do
           screen={@screen}
           record={@record}
           record_log={@record_log}
+          record_log_older={@record_log_older}
           character_id={@character_id}
         />
       </:aside>

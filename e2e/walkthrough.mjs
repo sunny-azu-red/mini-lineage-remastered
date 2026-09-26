@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, PURSE, reporter, traceAudio, controls } from './helpers.mjs';
+import { BASE, PURSE, reporter, traceAudio, controls, readToBeginning } from './helpers.mjs';
 
 const TICK_MS = 6000; // the regen tick is 5s; allow a margin
 
@@ -471,31 +471,6 @@ try {
     check('...and tells the story fight by fight',
         await page.locator('#main ol.chronicle li').count() > 0,
         `${await page.locator('#main ol.chronicle li').count()} fights`);
-    // Every deflection line names the damage its armour took and the XP that clash was worth, and
-    // no outcome line mentions either — so this is the whole fight being told, not just its end.
-    // Scoped to the list because the paragraphs above talk about XP too. Dice-proof: every
-    // template in the pool carries both words.
-    const chronicle = (await page.textContent('#main ol.chronicle'))?.replace(/\s+/g, ' ') ?? '';
-    check('...the whole of each one, not only how it ended',
-        /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
-
-    // Nothing arrives and silently stops existing: every effect seen settling is seen leaving —
-    // by its timer, by a meal replacing it, or with the run's last breath — and the ending is still
-    // the last line. Holds however the run died. One way only: the window can scroll an arrival out.
-    const entries = await page.locator('#main ol.chronicle li')
-        .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()));
-    const unaccounted = entries.flatMap((line, i) => {
-        const label = line.match(/([A-Z][\w' ]+?) settles over you\./)?.[1];
-        if (!label) return [];
-        const left = entries.slice(i + 1).some(later =>
-            later.includes(`${label} leaves you.`) || later.includes(`${label} fades with your last breath.`));
-        return left ? [] : [label];
-    });
-    check('...and every effect it gained, it is seen to lose', unaccounted.length === 0,
-        unaccounted.length ? `never left: ${unaccounted.join(', ')}` : `${entries.length} entries`);
-    check('...with the ending still the last word',
-        await page.locator('#main ol.chronicle li').last().locator('.deaths').count() === 1);
-
     // It arrives folded away — it is the longest thing on the page and the record is what the page
     // is for — and its own header is what opens it.
     check('...folded into a panel of its own until it is asked for',
@@ -513,6 +488,36 @@ try {
     check('...in a box the run cannot outgrow', log.hidden > 0, `${log.hidden}px of it scrolled away`);
     check('...already scrolled to the last fight it ever had', log.fromBottom <= 2,
         `${log.fromBottom}px from the bottom`);
+
+    // The checks below are about the whole run, and the box opens on its newest page only.
+    check('...and hands over the rest of the run as the reader scrolls back through it',
+        await readToBeginning(page), `${await page.locator('#main ol.chronicle li').count()} entries`);
+
+    // Every deflection line names the damage its armour took and the XP that clash was worth, and
+    // no outcome line mentions either — so this is the whole fight being told, not just its end.
+    // Scoped to the list because the paragraphs above talk about XP too. Dice-proof: every
+    // template in the pool carries both words.
+    const chronicle = (await page.textContent('#main ol.chronicle'))?.replace(/\s+/g, ' ') ?? '';
+    check('...the whole of each one, not only how it ended',
+        /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
+
+    // Nothing arrives and silently stops existing: every effect seen settling is seen leaving —
+    // by its timer, by a meal replacing it, or with the run's last breath — and the ending is still
+    // the last line. Holds however the run died.
+    const entries = await page.locator('#main ol.chronicle li')
+        .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    const unaccounted = entries.flatMap((line, i) => {
+        const label = line.match(/([A-Z][\w' ]+?) settles over you\./)?.[1];
+        if (!label) return [];
+        const left = entries.slice(i + 1).some(later =>
+            later.includes(`${label} leaves you.`) || later.includes(`${label} fades with your last breath.`));
+        return left ? [] : [label];
+    });
+    check('...and every effect it gained, it is seen to lose', unaccounted.length === 0,
+        unaccounted.length ? `never left: ${unaccounted.join(', ')}` : `${entries.length} entries`);
+    check('...with the ending still the last word',
+        await page.locator('#main ol.chronicle li').last().locator('.deaths').count() === 1);
+
     // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
     // the board never emits a session id is proved in board_test. What IS observable here is the
     // property that matters: reading a record does not make you that character.

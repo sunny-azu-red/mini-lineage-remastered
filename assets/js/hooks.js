@@ -329,17 +329,30 @@ function keep(id, open) {
  * A panel that does something: collapses on a click of its own header, and follows its content down
  * when it is a log rather than a document. Both are re-applied after every patch — the server
  * renders the panel's opening state from the template, and the reader's is newer than that.
+ *
+ * A log follows only a reader sitting at its end. One who has scrolled up to read keeps their
+ * place whatever lands, is told when something arrived below them, and near the top is handed
+ * the page before the first they hold.
  */
 export const Panel = {
     mounted() {
         this.toggle = this.el.querySelector(':scope > .panel-toggle');
         this.sticky = this.el.dataset.stick === 'true';
+        this.unread = this.el.querySelector(':scope > .panel-unread');
+        // Whether the reader is at the end, as of their own last scroll: a patch grows the list
+        // without moving it, so asking again afterwards would always answer no.
+        this.pinned = true;
+        this.unseen = false;
+        this.lastEntry = this.list()?.lastElementChild?.id;
         // A pin done on the frame the panel opens is only right for that frame. Anything that
         // reflows the list afterwards — a web font arriving, a scrollbar taking its width — moves
         // the bottom out from under it and leaves the box a pixel or so short of it. Following the
         // list's own size puts the question beyond timing.
-        if (this.sticky)
-            this.follow = new ResizeObserver(() => this.open && this.toBottom());
+        if (this.sticky) {
+            this.follow = new ResizeObserver(() => this.open && this.pinned && this.toBottom());
+            this.body().addEventListener('scroll', () => this.scrolled(), { passive: true });
+            this.unread?.addEventListener('click', () => this.catchUp());
+        }
 
         // What the reader last did with THIS panel beats what the template opens it on. Keyed by
         // the panel's id, so the preference is about the panel and not about whose record it is.
@@ -348,6 +361,7 @@ export const Panel = {
             || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
 
         this.toggle?.addEventListener('click', () => {
+            if (!this.open) this.catchUp(false);
             this.show(!this.open);
             keep(this.el.id, this.open);
             if (this.open) this.reveal();
@@ -360,8 +374,18 @@ export const Panel = {
             requestAnimationFrame(() =>
                 this.el.querySelector('.panel-arrow')?.setAttribute('data-ready', '')));
     },
+    beforeUpdate() {
+        this.anchor = this.sticky && this.open && !this.pinned ? this.place() : null;
+    },
     updated() {
         this.show(this.open);
+        if (!this.sticky) return;
+
+        this.keepPlace();
+        const last = this.list()?.lastElementChild?.id;
+        if (last !== this.lastEntry && this.open && !this.pinned) this.unseen = true;
+        this.lastEntry = last;
+        this.paintUnread();
     },
     destroyed() {
         this.follow?.disconnect();
@@ -388,13 +412,64 @@ export const Panel = {
         // A shut panel has nothing to watch and no height to scroll, so both wait for the way open.
         // Let go first: the list that was watched may have been replaced, the empty state by the first
         // entry, and observing the new one alone would keep the old one watched too.
-        const list = body.firstElementChild;
+        const list = this.list();
         this.follow.disconnect();
         if (open && list) this.follow.observe(list);
-        if (open) this.toBottom();
+        if (open && this.pinned) this.toBottom();
+        this.paintUnread();
     },
     body() {
         return this.el.querySelector(':scope > .panel-body');
+    },
+    list() {
+        return this.body().firstElementChild;
+    },
+    // How far the last entry hangs below the box. Measured the way `toBottom` pins, from the entry
+    // itself, so a pin always reads as pinned.
+    below() {
+        const last = this.list()?.lastElementChild;
+
+        return last ? last.getBoundingClientRect().bottom - this.body().getBoundingClientRect().bottom : 0;
+    },
+    scrolled() {
+        const body = this.body();
+        this.pinned = this.below() <= 4;
+        if (this.pinned && this.unseen) this.catchUp(false);
+        // A box's height from the top, so the page is usually in before the reader reaches it.
+        if (body.scrollTop < body.clientHeight) this.loadOlder();
+    },
+    // The entry at the top of the box and where it sits, so a page put in front of it, or a push
+    // that briefly hides the body, leaves the reader looking at the same line.
+    place() {
+        const top = this.body().getBoundingClientRect().top;
+        const entry = [...(this.list()?.children ?? [])].find(li => li.getBoundingClientRect().bottom > top);
+
+        return entry && { id: entry.id, offset: entry.getBoundingClientRect().top - top };
+    },
+    keepPlace() {
+        const entry = this.anchor && document.getElementById(this.anchor.id);
+        if (!entry || !this.open) return;
+
+        const body = this.body();
+        body.scrollTop += entry.getBoundingClientRect().top - body.getBoundingClientRect().top - this.anchor.offset;
+    },
+    loadOlder() {
+        const before = this.list()?.dataset.olderThan;
+        const event = this.el.dataset.loadOlder;
+        if (!before || !event || this.loading) return;
+
+        this.loading = true;
+        this.pushEvent(event, { before: Number(before) }, () => { this.loading = false; });
+    },
+    // Back to the newest line, as opening the panel does; `scroll` is false where the caller pins.
+    catchUp(scroll = true) {
+        this.pinned = true;
+        this.unseen = false;
+        this.paintUnread();
+        if (scroll) this.toBottom();
+    },
+    paintUnread() {
+        if (this.unread) this.unread.hidden = !(this.open && this.unseen);
     },
     // `scrollHeight` is a whole number rounded up from a list whose height is rarely one, so asking
     // for it asks to be a fraction past the end. The main thread allows that; the compositor, which
@@ -424,7 +499,7 @@ function localDate(at) {
 }
 
 // One hook over whatever holds stamps, rewriting every one beneath it to the reader's clock: a
-// hook per stamp would be a hundred for one job on a chronicle, and twenty-five on the Halls.
+// hook per stamp would be fifty for one job on a chronicle, and twenty-five on the Halls.
 export const LocalTimes = {
     mounted() {
         this.render();

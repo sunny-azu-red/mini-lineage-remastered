@@ -33,6 +33,9 @@ defmodule MiniLineage.CharacterLogTest do
 
   defp fight(session), do: Characters.mutate(session, &Actions.fight/1)
 
+  # The newest page, which is every entry a run as short as these has.
+  defp recent(id), do: id |> CharacterLog.page() |> elem(0)
+
   # The table holds every deed now, so a claim about fighting says so rather than counting whatever
   # the run happened to do.
   defp fights(session), do: Enum.filter(rows(session), &(&1.kind == "fight"))
@@ -150,7 +153,7 @@ defmodule MiniLineage.CharacterLogTest do
       Characters.snapshot(session)
 
       assert_receive {:record_updated, _player, ^id, true}
-      assert Enum.any?(CharacterLog.recent(id), &(&1.kind == "buff" and &1.line =~ "leaves"))
+      assert Enum.any?(recent(id), &(&1.kind == "buff" and &1.line =~ "leaves"))
     end
   end
 
@@ -175,7 +178,7 @@ defmodule MiniLineage.CharacterLogTest do
         result
       end)
 
-      log = CharacterLog.recent(stored_id(session))
+      log = recent(stored_id(session))
       [blessing, meal, ending] = Enum.take(log, -3)
 
       assert ending.kind == "ending"
@@ -193,7 +196,7 @@ defmodule MiniLineage.CharacterLogTest do
       Characters.mutate(session, &{%{&1 | health: 1}, :ok})
       fight(session)
 
-      [blessing, ending] = Enum.take(CharacterLog.recent(stored_id(session)), -2)
+      [blessing, ending] = Enum.take(recent(stored_id(session)), -2)
 
       # Stored with the pronoun open, like every line in the log.
       assert blessing.line =~ "Newbie Blessing" and
@@ -220,7 +223,7 @@ defmodule MiniLineage.CharacterLogTest do
         &{Player.apply_effect(&1, Constants.effect(:ambush_debuff)), :ok}
       )
 
-      kinds = stored_id(session) |> CharacterLog.recent() |> Enum.map(& &1.kind)
+      kinds = stored_id(session) |> recent() |> Enum.map(& &1.kind)
 
       assert "buff" in kinds and "debuff" in kinds
     end
@@ -232,7 +235,7 @@ defmodule MiniLineage.CharacterLogTest do
       Characters.mutate(session, &Actions.purchase(&1, "food", 3))
 
       [ate, left, settled] =
-        stored_id(session) |> CharacterLog.recent() |> Enum.take(-3) |> Enum.map(& &1.line)
+        stored_id(session) |> recent() |> Enum.take(-3) |> Enum.map(& &1.line)
 
       assert ate =~ "Hearty Mash"
       assert left =~ "Satisfied" and left =~ "leaves"
@@ -248,7 +251,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
       for _ <- 1..3, do: fight(session)
 
-      history = CharacterLog.recent(stored_id(session))
+      history = recent(stored_id(session))
 
       assert length(Enum.filter(history, &(&1.kind == "fight"))) == 3
 
@@ -266,7 +269,7 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
 
       # The blessing it is born with is a deed done to it, so it is told like any other.
-      assert [%{kind: "start"}, %{kind: "buff"}] = CharacterLog.recent(stored_id(session))
+      assert [%{kind: "start"}, %{kind: "buff"}] = recent(stored_id(session))
       assert fights(session) == []
     end
 
@@ -278,7 +281,7 @@ defmodule MiniLineage.CharacterLogTest do
 
       id = stored_id(session)
       all = Enum.map(rows(session), & &1.id)
-      windowed = CharacterLog.recent(id, 3)
+      {windowed, true} = CharacterLog.page(id, nil, 3)
 
       assert length(windowed) == 3
       assert Enum.map(windowed, & &1.id) == Enum.take(all, -3)
@@ -289,7 +292,7 @@ defmodule MiniLineage.CharacterLogTest do
       for _ <- 1..3, do: fight(session)
 
       id = stored_id(session)
-      held = CharacterLog.recent(id, 2)
+      {held, true} = CharacterLog.page(id, nil, 2)
       cursor = List.last(held).id
 
       fight(session)
@@ -307,7 +310,7 @@ defmodule MiniLineage.CharacterLogTest do
 
       id = stored_id(session)
 
-      assert CharacterLog.since(id, List.last(CharacterLog.recent(id)).id) == []
+      assert CharacterLog.since(id, List.last(recent(id)).id) == []
     end
   end
 

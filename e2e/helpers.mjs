@@ -153,3 +153,25 @@ export function controls(page) {
 
     return { state, onScreen, goHome, buttonSettles, buy, leaveShop, travel, fight, boardRows, activeFilter };
 }
+
+/**
+ * Scrolls an open Chronicle up, a page at a time, until it has no older page left to ask for — the
+ * whole run, where a check needs all of it. False if a page it asked for never arrived.
+ */
+export async function readToBeginning(page) {
+    const entries = () => page.locator('#chronicle-log li').count();
+    await page.locator('#chronicle').scrollIntoViewIfNeeded();
+    const box = await page.locator('#chronicle .panel-body').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+    while (await page.locator('#chronicle-log[data-older-than]').count()) {
+        const had = await entries();
+        await page.mouse.wheel(0, -100000);
+        const grew = await page.waitForFunction(
+            (had) => document.querySelectorAll('#chronicle-log li').length > had,
+            had, { timeout: 5000 }).then(() => true).catch(() => false);
+        if (!grew) return false;
+    }
+
+    return true;
+}

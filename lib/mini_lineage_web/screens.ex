@@ -77,6 +77,7 @@ defmodule MiniLineageWeb.Screens do
   attr :screen, :string, required: true
   attr :record, :map, default: nil
   attr :record_log, :list, default: []
+  attr :record_log_older, :boolean, default: false
   attr :character_id, :string, default: nil
 
   @doc """
@@ -86,7 +87,7 @@ defmodule MiniLineageWeb.Screens do
   def aside(%{screen: "character", record: record} = assigns) when record != nil do
     assigns = assign(assigns, mine: record.id == assigns.character_id)
 
-    ~H|<Record.chronicle record_log={@record_log} mine={@mine} />|
+    ~H|<Record.chronicle record_log={@record_log} older={@record_log_older} mine={@mine} />|
   end
 
   def aside(assigns), do: ~H||
