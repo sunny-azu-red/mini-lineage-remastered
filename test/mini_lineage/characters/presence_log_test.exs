@@ -6,25 +6,14 @@ defmodule MiniLineage.Characters.PresenceLogTest do
   """
   use MiniLineage.DataCase, async: false
 
-  import ExUnit.CaptureLog
-
-  require Logger
-
   alias MiniLineage.Characters
-
-  # The suite logs at :warning; the line is :debug, as the tick log's is.
-  setup do
-    previous = Logger.level()
-    Logger.configure(level: :debug)
-    on_exit(fn -> Logger.configure(level: previous) end)
-  end
 
   test "says who is watching as viewers join and leave, and how they left" do
     session = Characters.new_session_id()
     on_exit(fn -> Characters.forget(session) end)
 
     log =
-      capture_log([level: :debug], fn ->
+      capture_debug(fn ->
         tab = spawn(fn -> receive do: (:close -> :ok) end)
         Characters.attach(session, tab)
         ref = Process.monitor(tab)

@@ -54,6 +54,21 @@ defmodule MiniLineage.DataCase do
   end
 
   @doc """
+  What `fun` logs at :debug. The suite runs at :warning, so the level is raised for this call alone:
+  raised for a whole test, everything around the capture prints, a viewer attaching or leaving.
+  """
+  def capture_debug(fun) do
+    previous = Logger.level()
+    Logger.configure(level: :debug)
+
+    try do
+      ExUnit.CaptureLog.capture_log([level: :debug], fun)
+    after
+      Logger.configure(level: previous)
+    end
+  end
+
+  @doc """
   Holds a character's process open for the rest of the test. With no viewer attached it stops
   itself once the idle grace elapses, which is deliberately short in this environment.
   """

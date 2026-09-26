@@ -6,17 +6,10 @@ defmodule MiniLineage.Characters.TickLogTest do
   """
   use MiniLineage.DataCase, async: false
 
-  import ExUnit.CaptureLog
-
   alias MiniLineage.Characters
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
-    # The test environment silences everything below :warning, and the line under test is a debug.
-    previous = Logger.level()
-    Logger.configure(level: :debug)
-    on_exit(fn -> Logger.configure(level: previous) end)
-
     id = Characters.new_session_id()
     on_exit(fn -> Characters.forget(id) end)
     hold(id)
@@ -32,7 +25,7 @@ defmodule MiniLineage.Characters.TickLogTest do
   defp tick(id) do
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
 
-    capture_log([level: :debug], fn ->
+    capture_debug(fn ->
       send(pid, :tick)
       # One round trip, so the tick has certainly been handled before the capture stops.
       Characters.snapshot(id)
