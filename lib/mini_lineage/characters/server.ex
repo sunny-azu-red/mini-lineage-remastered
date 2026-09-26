@@ -95,7 +95,7 @@ defmodule MiniLineage.Characters.Server do
     ref = Process.monitor(pid)
     state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid), lingering: false})
 
-    {:reply, :ok, publish(state)}
+    {:reply, :ok, publish(state, "joined")}
   end
 
   # ------------------------------------------------------------------- infos
@@ -124,9 +124,10 @@ defmodule MiniLineage.Characters.Server do
       else: {:noreply, state}
   end
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
+  # The reason says how the tab went: a clean close, or a socket found dead only by its heartbeat.
+  def handle_info({:DOWN, ref, :process, _pid, reason}, state) do
     viewers = Map.delete(state.viewers, ref)
-    state = publish(%{state | viewers: viewers})
+    state = publish(%{state | viewers: viewers}, "left: #{inspect(reason)}")
 
     {:noreply, if(map_size(viewers) == 0, do: schedule_stop(state), else: state)}
   end
@@ -387,7 +388,7 @@ defmodule MiniLineage.Characters.Server do
 
   # Which character this process is, and whether anyone is watching it. Kept in the registry entry
   # so presence is one in-memory read rather than a message to every character.
-  defp publish(state) do
+  defp publish(state, why \\ nil) do
     watched? = map_size(state.viewers) > 0
 
     Registry.update_value(MiniLineage.Characters.Registry, state.session, fn _ ->
@@ -396,8 +397,17 @@ defmodule MiniLineage.Characters.Server do
 
     # The board shows who is online, so only a run it lists going on or off is news to it.
     if watched? != state.watched and Player.started?(state.player), do: Board.presence_changed()
+    if why, do: presence_log(state.id, watched?, map_size(state.viewers), why)
 
     %{state | watched: watched?}
+  end
+
+  # `[PRESENCE:<id>] Online | 2 viewers (joined)`, in the tick log's shape and at its level.
+  defp presence_log(id, watched?, viewers, why) do
+    Logger.debug(fn ->
+      "[PRESENCE:#{String.slice(id, 0, 7)}] #{if watched?, do: "Online", else: "Offline"} | " <>
+        "#{viewers} viewer#{if viewers == 1, do: "", else: "s"} (#{why})"
+    end)
   end
 
   @doc false

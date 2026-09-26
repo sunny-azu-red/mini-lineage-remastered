@@ -6,6 +6,9 @@ import {hooks as gameHooks, shortAdena, timerLabel, remainingLabel} from "./hook
 import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+// Phoenix remembers a fallback for the tab, so one slow connect or a restart kept it long-polling,
+// whose closed tabs the server only notices by missing polls. Every load tries the WebSocket first.
+try { sessionStorage.removeItem("phx:fallback:LongPoll") } catch (_) { }
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},

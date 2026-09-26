@@ -15,7 +15,9 @@ defmodule MiniLineageWeb.Endpoint do
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
+    # A closed long-poll tab is noticed only by its missing polls, within 1.5 to 3 windows: 5s
+    # rather than Phoenix's 10 puts a closed tab offline in seconds, for one idle poll per window.
+    longpoll: [window_ms: 5_000, connect_info: [session: @session_options]]
 
   # A digested filename is content addressed, so it can be held for ever. Phoenix appends no
   # `?vsn=d` to one, and that query is all Plug.Static caches this way by default — so without this

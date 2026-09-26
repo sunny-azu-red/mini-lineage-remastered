@@ -1,0 +1,25 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const BASE = 'http://localhost:4002';
+const ready = (p) => p.waitForFunction(() => window.liveSocket?.isConnected());
+const create = async (ctx, name) => {
+  const p = await ctx.newPage(); await p.goto(BASE + '/'); await ready(p);
+  await p.fill('#main input[name="name"]', name); await p.selectOption('#main select[name="race_id"]', '0');
+  await p.click('#main form button[type="submit"]'); await p.waitForSelector('#screen[data-screen="home"]');
+  return p;
+};
+const name = 'Y' + Math.random().toString(36).slice(2, 7);
+const sctx = await b.newContext();
+const spectator = await create(sctx, 'S' + name);
+const pctx = await b.newContext();
+const player = await create(pctx, name);
+await spectator.goto(BASE + '/highscores'); await ready(spectator);
+const dots = () => spectator.evaluate(() => [...document.querySelectorAll('#halls-rows tr')].map(r => `${r.querySelector('td a')?.textContent}:${/lit/.test(r.querySelector('.online')?.className) ? 'ON' : 'off'}`).join(' '));
+for (let i = 0; i < 20 && !(await dots()).includes(name + ':ON'); i++) await spectator.waitForTimeout(250);
+console.log('before close      :', await dots());
+await player.close();
+await spectator.waitForTimeout(3000);
+console.log('3s after close    :', await dots());
+await spectator.reload(); await ready(spectator); await spectator.waitForTimeout(500);
+console.log('after a reload    :', await dots());
+await b.close();

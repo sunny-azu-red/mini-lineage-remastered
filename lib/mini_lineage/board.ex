@@ -10,6 +10,8 @@ defmodule MiniLineage.Board do
 
   import Ecto.Query
 
+  require Logger
+
   alias MiniLineage.{CharacterLog, Characters}
   alias MiniLineage.Characters.{Record, Serde}
   alias MiniLineage.Game.{Constants, Math}
@@ -87,8 +89,13 @@ defmodule MiniLineage.Board do
   def handle_info(:refresh, state) do
     boards = if state.pending == :write, do: compute(), else: remark(state.boards)
 
-    if boards != state.boards,
-      do: Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:board, boards})
+    moved? = boards != state.boards
+    if moved?, do: Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:board, boards})
+
+    Logger.debug(fn ->
+      "[BOARD] #{if moved?, do: "Pushed", else: "Unchanged"} | #{state.pending} " <>
+        "(#{Characters.online() |> MapSet.size()} online)"
+    end)
 
     {:noreply, %{state | boards: boards, timer: nil, pending: :none}}
   end
