@@ -92,13 +92,13 @@ defmodule MiniLineageWeb.Screens.Halls do
     assigns = assign(assigns, name: String.slice(assigns.row.name || "", 0, 20))
 
     ~H"""
-    <%!-- Keyed by the character, never the row: the board reorders under a climb. The stamp is
-          what the row SHOWS, not when it was written, so a write with nothing to see cannot
-          sweep it. --%>
+    <%!-- Keyed by the character, never the row: the board reorders under a climb. The stamp is the
+          run's last chronicle entry, so every deed sweeps it, a buff lapsing too, and nothing that
+          is not a deed can: regeneration logs nothing, and a dot coming on is not a deed. --%>
     <tr
       class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}
       data-key={"row-#{@row.id}"}
-      data-stamp={"#{@row.level}/#{@row.total_xp}/#{@row.adena}/#{@row.dead}"}
+      data-stamp={DateTime.to_iso8601(@row.last_seen_at)}
     >
       <td class="name">
         {race_emoji(@catalog, @row.race_id)}

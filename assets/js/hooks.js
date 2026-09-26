@@ -250,8 +250,8 @@ export const AnimatedValues = {
             if (!live.has(key))
                 memory.delete(key);
     },
-    // A row sweeps when its stamp moves, which is any write at all: a purchase and a death move it
-    // as surely as experience does, and somebody merely opening a tab never does.
+    // A row sweeps when its stamp moves: the Halls stamp a row with its last chronicle entry, so any
+    // deed sweeps it and somebody merely opening a tab never does.
     stir(animate) {
         const live = new Set();
 
