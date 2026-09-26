@@ -30,12 +30,14 @@ defmodule MiniLineageWeb.Endpoint do
     gzip: not code_reloading?,
     cache_control_for_etags: @digested_cache_control
 
-  # favicon.ico and robots.txt keep their names across a deploy, so they revalidate.
+  # `only_matching` for the favicon: a release links it by its digested name, `favicon-<hash>.ico`,
+  # which `only` does not match, so the icon fell through to the router's 404.
   plug Plug.Static,
     at: "/",
     from: :mini_lineage,
     gzip: not code_reloading?,
     only: MiniLineageWeb.static_paths(),
+    only_matching: ~w(favicon),
     raise_on_missing_only: code_reloading?
 
   if code_reloading? do
