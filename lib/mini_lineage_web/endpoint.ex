@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.Endpoint do
     same_site: "Lax",
     http_only: true,
     secure: Application.compile_env(:mini_lineage, :secure_cookie, false),
-    max_age: Application.compile_env(:mini_lineage, :character_ttl_hours, 24) * 60 * 60
+    max_age: Application.compile_env!(:mini_lineage, :character_ttl_hours) * 60 * 60
   ]
 
   socket "/live", Phoenix.LiveView.Socket,

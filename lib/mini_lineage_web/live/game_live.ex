@@ -177,7 +177,9 @@ defmodule MiniLineageWeb.GameLive do
         page_title: Screens.page_title(screen, filter_race(socket)),
         # Assigned, not computed in the template: an expression over `assigns` is re-sent on
         # every render, which re-sent the heading on every keystroke.
-        title: Screens.title(screen, filter_race(socket))
+        title: Screens.title(screen, filter_race(socket)),
+        # A fault belongs to the error screen it brought you to, not to the next visit to it.
+        error_detail: if(screen == "error", do: socket.assigns.error_detail)
       )
 
     # Not for the dead, whom no aura or pin reads it for; nor on the error screen, whose cause may be

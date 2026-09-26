@@ -47,7 +47,6 @@ export function remainingLabel(remainingMs) {
 export const EffectTimers = {
     mounted() {
         this.stamp();
-        this.interval = setInterval(() => this.paint(), 1000);
     },
     updated() {
         this.stamp();
@@ -55,25 +54,22 @@ export const EffectTimers = {
     destroyed() {
         clearInterval(this.interval);
     },
+    // Ticks only while there is a timer to count: most pages, Game Start among them, have none.
     stamp() {
         this.stampedAt = Date.now();
+        const timing = this.el.querySelector('[data-remaining-ms]') !== null;
+        if (timing && !this.interval) this.interval = setInterval(() => this.paint(), 1000);
+        if (!timing && this.interval) this.interval = clearInterval(this.interval);
         this.paint();
     },
+    // Every timed element carries its duration and a [data-timer] to write it into; the badge over
+    // an emoji and the clause at the end of a sentence say the same time two ways.
     paint() {
         const elapsed = Date.now() - this.stampedAt;
         for (const icon of this.el.querySelectorAll('[data-remaining-ms]')) {
-            const remaining = Number(icon.dataset.remainingMs);
-            if (!Number.isFinite(remaining))
-                continue;
-
-            // The badge over an emoji and the clause at the end of a sentence want the same time
-            // said two different ways, so the element that wears it says which.
             const label = icon.querySelector('[data-timer]');
-            if (!label)
-                continue;
-
             const say = label.dataset.timer === 'long' ? remainingLabel : timerLabel;
-            label.textContent = say(remaining - elapsed);
+            label.textContent = say(Number(icon.dataset.remainingMs) - elapsed);
         }
     },
 };
@@ -390,9 +386,11 @@ export const Panel = {
         if (!this.sticky) return;
 
         // A shut panel has nothing to watch and no height to scroll, so both wait for the way open.
+        // Let go first: the list that was watched may have been replaced, the empty state by the first
+        // entry, and observing the new one alone would keep the old one watched too.
         const list = body.firstElementChild;
+        this.follow.disconnect();
         if (open && list) this.follow.observe(list);
-        else this.follow.disconnect();
         if (open) this.toBottom();
     },
     body() {

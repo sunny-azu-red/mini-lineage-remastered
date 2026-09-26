@@ -13,7 +13,8 @@ defmodule MiniLineage.Characters.Store do
   alias MiniLineage.Game.Player
   alias MiniLineage.Repo
 
-  @ttl_hours Application.compile_env(:mini_lineage, :character_ttl_hours, 24)
+  # No fallback: config.exs sets it for every environment, and a default here could only disagree.
+  @ttl_hours Application.compile_env!(:mini_lineage, :character_ttl_hours)
 
   @doc "A fresh public character id. Opaque, and it appears in every board link."
   def new_id, do: token()
