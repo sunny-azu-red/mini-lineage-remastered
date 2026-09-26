@@ -230,7 +230,7 @@ defmodule MiniLineageWeb.Screens.Record do
       load_older="older_chronicle"
       body_class={@record_log != [] && "rows"}
     >
-      <:unread>📜 New entries below</:unread>
+      <:unread>👁️ New entries below</:unread>
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>

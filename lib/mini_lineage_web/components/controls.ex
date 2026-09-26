@@ -80,7 +80,9 @@ defmodule MiniLineageWeb.Controls do
       </div>
 
       <%!-- Shown only by the hook, and only for entries that arrived while the reader was up. --%>
-      <button :if={@unread != []} type="button" class="btn panel-unread" hidden>{render_slot(@unread)}</button>
+      <button :if={@unread != []} type="button" class="btn btn-sm panel-unread" hidden>{render_slot(
+        @unread
+      )}</button>
     </div>
     """
   end

@@ -64,15 +64,21 @@
 }
 
 /* The lines darken towards the foot behind the button, wall to wall, 12px past it either way, so
-   it reads as over the log rather than as one more line of it. */
+   it reads as over the log rather than as one more line of it. Eased, not linear: nearly solid
+   under the button, gone by the top. */
 .panel:has(> .panel-unread:not([hidden]))::after {
     content: '';
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 55px;
-    background: linear-gradient(to top, var(--bg-deep), transparent);
+    height: 50px;
+    background: linear-gradient(to top,
+            var(--bg-deep) 0%,
+            color-mix(in srgb, var(--bg-deep) 92%, transparent) 30%,
+            color-mix(in srgb, var(--bg-deep) 60%, transparent) 60%,
+            color-mix(in srgb, var(--bg-deep) 20%, transparent) 85%,
+            transparent 100%);
     pointer-events: none;
 }
 
