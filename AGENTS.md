@@ -39,6 +39,8 @@ list wins — several generator defaults do not exist here.
   `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
   mode bridges that, and shared mode means serial. This is our architecture, not the driver — it
   was just as true on MySQL.
+- **Nor can a test that changes global state** — Application env, an OS variable. Another async
+  module reads it mid-flip; `error_html_test` turns the debug build off and deletes APP_VERSION.
 - **Nor can a test that claims a registered name.** `cheat_test.exs` stands in for the statistics
   collector by registering itself under its name; the name is global, so every async module that
   creates a character posts its own increments into that mailbox and the drain reads them as the
