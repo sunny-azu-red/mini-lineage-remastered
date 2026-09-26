@@ -77,12 +77,14 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   describe "a fallen character" do
     test "keeps its ancestry's emoji rather than swapping in a skull" do
-      # A skull in place of the badge loses the one glyph that says which lineage this was, to
-      # repeat something the prose below already says in words.
-      html = html_for(fallen())
+      # A skull in place of the badge loses the one glyph that says which lineage this was. The
+      # skull marks the heading that says the journey ended, and nothing else.
+      [ancestry | _] =
+        Regex.scan(~r|<h2>(.*?)</h2>|s, html_for(fallen()), capture: :all_but_first)
 
-      assert html =~ Constants.race(1).emoji
-      refute html =~ "☠️"
+      assert hd(ancestry) =~ Constants.race(1).emoji
+      refute hd(ancestry) =~ "☠️"
+      assert html_for(fallen()) =~ "<h2>☠️ Your Journey Has Ended</h2>"
     end
 
     test "speaks of the run in the past" do

@@ -15,7 +15,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           long way at a time — exactly what a count is for. --%>
     <div id="tome-figures" phx-hook="AnimatedValues">
       <%= if @statistics do %>
-        <h2>The Legacy of the Realm</h2>
+        <h2>📜 The Legacy of the Realm</h2>
         <p>
           In the age of steel and magic,
           <.counted
@@ -64,7 +64,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           to bypass the laws of the realm.
         </p>
 
-        <h2>Echoes of the Battlefield</h2>
+        <h2>⚔️ Echoes of the Battlefield</h2>
         <p>
           The drums of war never truly fall silent because
           <.counted
@@ -105,7 +105,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           unprepared.
         </p>
 
-        <h2>The Toll of Survival</h2>
+        <h2>🩸 The Toll of Survival</h2>
         <p>
           Hardship is measured in blood and resilience. Our champions have shed <span class="hp"><span data-key="tome-hp-lost" data-value={@statistics.total_hp_lost}>{Format.number(@statistics.total_hp_lost)}</span> HP</span>, flesh torn by tooth and
           claw. Yet, the craft of the blacksmith has proven its worth, as armor deflected <span class="damage"><span data-key="tome-damage-blocked" data-value={@statistics.total_damage_blocked}>{Format.number(@statistics.total_damage_blocked)}</span> Damage</span>.
@@ -121,7 +121,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           was restored through the natural mending of the soul.
         </p>
 
-        <h2>The Flow of Fortune</h2>
+        <h2>🪙 The Flow of Fortune</h2>
         <p>
           Wealth flows like a river through the pockets of the daring. A massive sum of
           <span class="adena">🪙

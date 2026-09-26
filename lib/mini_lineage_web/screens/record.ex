@@ -66,7 +66,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <.blessings :if={@effects != []} effects={@effects} voice={@voice} />
 
-      <h2>Inventory &amp; Stats</h2>
+      <h2>🎒 Inventory &amp; Stats</h2>
       <p phx-no-format>
         {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span> granting
         <span class="attack"><span id="char-stat-attack" data-key="rec-attack" data-value={@view.stats.attack}>{@attack}</span> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+<span data-key="rec-weapon-crit" data-value={@view.weapon.crit}>{@view.weapon.crit}</span>% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <span class="item">{@view.armor.name}</span> providing
@@ -85,7 +85,7 @@ defmodule MiniLineageWeb.Screens.Record do
         per rest cycle, while navigating the roads with a <span class="ambush"><span id="char-stat-ambush" data-key="rec-ambush" data-value={@view.stats.ambush_risk}>{@ambush}</span>% Ambush Risk</span>.
       </p>
 
-      <h2>{if @dead, do: "#{@voice.whose} Journey Has Ended", else: "The Journey So Far"}</h2>
+      <h2>{if @dead, do: "☠️ #{@voice.whose} Journey Has Ended", else: "🧭 The Journey So Far"}</h2>
       <p>
         <.road entry={@entry} dead={@view.dead} at={@entry && @entry.last_seen_at} voice={@voice} />
         {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
@@ -154,7 +154,7 @@ defmodule MiniLineageWeb.Screens.Record do
   # something to draw, so the heading goes with the list rather than standing over an empty one.
   defp blessings(assigns) do
     ~H"""
-    <h2>Blessings &amp; Afflictions</h2>
+    <h2>✨ Blessings &amp; Afflictions</h2>
     <%!-- One hook over the whole list rather than one per line: it repaints every countdown
             beneath it on the same second, and the server's own expiry timer takes the line away. --%>
     <div id="record-effects" phx-hook="EffectTimers">
