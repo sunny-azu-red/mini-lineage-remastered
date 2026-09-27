@@ -136,10 +136,10 @@ defmodule MiniLineageWeb.GameLive do
 
   defp assign_record(socket, _params), do: socket |> watch_record(nil) |> clear_record()
 
-  # Where the window ends, so what arrives next is asked for by id: a capped first page's length
+  # The newest entry held, so what arrives next is asked for by id: a capped first page's length
   # says nothing about where the run got to.
   defp cursor([]), do: 0
-  defp cursor(log), do: List.last(log).id
+  defp cursor([newest | _]), do: newest.id
 
   defp clear_record(socket) do
     assign(socket,
@@ -323,10 +323,10 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  # The reader scrolled near the chronicle's beginning. Asked by the entry it already opens on, so
-  # a second ask in flight reads the same page and is dropped rather than put in front twice.
+  # The reader scrolled near the oldest entry held. Asked by that entry, so a second ask in flight
+  # reads the same page and is dropped rather than put on the end twice.
   def handle_event("older_chronicle", %{"before" => before}, socket) do
-    {:reply, %{}, prepend_chronicle(socket, before)}
+    {:reply, %{}, older_chronicle(socket, before)}
   end
 
   # ----------------------------------------------------------------- pushes
@@ -395,7 +395,7 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
 
-  # Appended, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
+  # Added, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
   # every blow re-reads the entire history of a long run to add one line to it. The window grows
   # as the reader watches, and a refresh comes back to the newest page.
   defp append_chronicle(socket, id) do
@@ -406,28 +406,30 @@ defmodule MiniLineageWeb.GameLive do
         socket
 
       _ ->
-        last = List.last(added)
+        [newest | _] = added
 
         # The road above the panel is dated by the same entry, so it moves with the chronicle.
         assign(socket,
-          record: %{socket.assigns.record | last_seen_at: last.at},
-          record_log: socket.assigns.record_log ++ added,
-          record_log_cursor: last.id
+          record: %{socket.assigns.record | last_seen_at: newest.at},
+          record_log: added ++ socket.assigns.record_log,
+          record_log_cursor: newest.id
         )
     end
   end
 
-  defp prepend_chronicle(
-         %{assigns: %{record: %{id: id}, record_log: [first | _] = log}} = socket,
+  defp older_chronicle(
+         %{assigns: %{record: %{id: id}, record_log: [_ | _] = log}} = socket,
          before
-       )
-       when first.id == before do
-    {older, more?} = CharacterLog.page(id, first.id)
-
-    assign(socket, record_log: older ++ log, record_log_older: more?)
+       ) do
+    if List.last(log).id == before do
+      {older, more?} = CharacterLog.page(id, before)
+      assign(socket, record_log: log ++ older, record_log_older: more?)
+    else
+      socket
+    end
   end
 
-  defp prepend_chronicle(socket, _before), do: socket
+  defp older_chronicle(socket, _before), do: socket
 
   # ------------------------------------------------------------------ plumbing
 
@@ -538,7 +540,7 @@ defmodule MiniLineageWeb.GameLive do
         ambush_line={@view.ambush_low_health}
       />
 
-      <:aside>
+      <:aside :if={Screens.aside?(@screen, @record)}>
         <Screens.aside
           screen={@screen}
           record={@record}

@@ -123,10 +123,10 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
       # They/them, because the game records no gender — and because it takes the same verb forms
       # as "you", so only the pronouns move between the two pages.
-      assert html =~ "Their journey across the realm"
+      assert html =~ "They embark with"
       assert html =~ "They are wielding"
       refute html =~ "You are wielding"
-      refute html =~ "Your journey"
+      refute html =~ "You embark"
       # The heading names them; the prose never does.
       assert html =~ "Aurelia of"
     end

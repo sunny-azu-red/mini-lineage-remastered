@@ -4,7 +4,7 @@
  * two players, and it watches one player's page move because of what the OTHER one did.
  */
 import { chromium } from 'playwright';
-import { readToBeginning } from './helpers.mjs';
+import { readWhole } from './helpers.mjs';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 const browser = await chromium.launch();
@@ -112,41 +112,34 @@ try {
     check('...while the watcher stays a visitor, not that character',
         await watcher.evaluate(() => document.querySelector('#screen')?.dataset.started) === 'false');
 
-    // The Chronicle opens shut, so a reader watching one has to ask for it first.
+    // On a phone the Chronicle stacks under the record and folds, so a reader asks for it first.
+    check('...its Chronicle folded under the record, on a phone',
+        await watcher.locator('#chronicle .panel-body').isHidden());
     await watcher.click('#chronicle .panel-toggle');
+    check('...until its own header opens it', await watcher.locator('#chronicle .panel-body').isVisible());
 
-    // The chronicle is APPENDED to while it is being read, never re-read: the reader keeps the
+    // The chronicle is ADDED to while it is being read, never re-read: the reader keeps the
     // entries it already has. Dice-proof — the line is added whether that blow lands or kills.
-    const lines = () => watcher.locator('#main ol.chronicle li').count();
+    const lines = () => watcher.locator('#chronicle-log li').count();
+    const newest = () => watcher.locator('#chronicle-log li').first().getAttribute('id');
     const told = await lines();
+    const topBefore = await newest();
     await player.click('#main button[phx-click="fight"]');
     const gained = await watcher.waitForFunction(
-        (had) => document.querySelectorAll('#main ol.chronicle li').length > had,
+        (had) => document.querySelectorAll('#chronicle-log li').length > had,
         told, { timeout: 8000 }).then(() => true).catch(() => false);
     check('...and their chronicle gains the fight they have just had, as it is read',
         gained, `${told} -> ${await lines()} line(s)`);
 
-    // And follows it down, the way a chat box does: the line that just arrived is the one on screen.
-    // `hidden` is asserted too, or a box nothing overflows would pass this by having nowhere to go.
+    // Newest first, so it arrives at the top, in view, with nothing having had to move for it.
+    // `shown`, or a box of no height would pass by having nothing to show.
     const log = await watcher.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
-        return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop };
+        return { at: body.scrollTop, shown: body.clientHeight };
     });
-    check('...and follows it down without the reader scrolling',
-        log.hidden > 0 && log.hidden - log.at <= 2,
-        `${log.hidden}px scrolled away, sitting at ${log.at}`);
-
-    // And rests somewhere the reader's own scrolling agrees with. A box can be put a fraction past
-    // its content from script, but a wheel goes through the compositor, which corrects it — so a
-    // pin that overshoots shows up as the log jumping UP under the first flick DOWN.
-    const box = await watcher.locator('#chronicle .panel-body').boundingBox();
-    await watcher.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await watcher.mouse.wheel(0, 120);
-    await watcher.waitForTimeout(350);
-    const settled = await watcher.evaluate(() =>
-        document.querySelector('#chronicle .panel-body').scrollTop);
-    check('...and stays put when the reader scrolls further down, rather than jumping up',
-        settled >= log.at, `${log.at} -> ${settled}`);
+    check('...on top, where a reader at the top already is',
+        log.shown >= 100 && log.at === 0 && await newest() !== topBefore,
+        `${log.shown}px shown, sitting at ${log.at}`);
 
     // ---- what is riding on the run, explained rather than drawn -------------------------------
     // The header wears these as emoji, which a phone can neither hover nor read; the record spells
@@ -175,26 +168,25 @@ try {
     await player.selectOption('#main select[name="item_id"]', '0');
     await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
     const reached = await watcher.waitForFunction(
-        (had) => document.querySelectorAll('#main ol.chronicle li').length > had,
+        (had) => document.querySelectorAll('#chronicle-log li').length > had,
         heldBefore, { timeout: 8000 }).then(() => true).catch(() => false);
     check('...and a purchase reaches them as a fight does, being just as much a deed', reached,
         `${heldBefore} -> ${await lines()} line(s)`);
 
-    // The road above the panel is dated by the chronicle's last entry, and moves with it.
+    // The road above the panel is dated by the chronicle's newest entry, and moves with it.
     const dates = await watcher.evaluate(() => ({
         road: document.querySelector('#record-last')?.dateTime,
-        last: [...document.querySelectorAll('#main ol.chronicle li time')].at(-1)?.dateTime,
+        last: document.querySelector('#chronicle-log li time')?.dateTime,
     }));
     check('...and the road is dated by that same entry, as it arrives', !!dates.road && dates.road === dates.last,
         `road ${dates.road} · last entry ${dates.last}`);
 
-    // ---- a reader scrolled up to read is left there, and told what arrived below ------------
+    // ---- a reader scrolled down to read is left there, and told what arrived above -----------
     // Spiced Ale from here on: one row a purchase and no dice, so every arrival is certain.
     const logState = () => watcher.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
         return {
             top: body.scrollTop,
-            fromBottom: body.scrollHeight - body.clientHeight - body.scrollTop,
             unread: !document.querySelector('#chronicle .panel-unread').hidden,
         };
     });
@@ -209,75 +201,80 @@ try {
         await player.selectOption('#main select[name="item_id"]', '0');
         await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
         return watcher.waitForFunction(
-            (had) => document.querySelectorAll('#main ol.chronicle li').length > had,
+            (had) => document.querySelectorAll('#chronicle-log li').length > had,
             had, { timeout: 8000 }).then(() => true).catch(() => false);
     };
 
     await overLog();
-    await watcher.mouse.wheel(0, -120);
+    await watcher.mouse.wheel(0, 120);
     await watcher.waitForTimeout(350);
-    const up = await logState();
-    check('a reader who scrolls up the Chronicle is told of nothing while nothing has happened',
-        up.fromBottom > 2 && !up.unread, JSON.stringify(up));
+    const down = await logState();
+    const reading = await watcher.evaluate(() => {
+        const box = document.querySelector('#chronicle .panel-body').getBoundingClientRect();
+        const entry = [...document.querySelectorAll('#chronicle-log li')].find(li => li.getBoundingClientRect().bottom > box.top);
+        return { id: entry.id, offset: entry.getBoundingClientRect().top - box.top };
+    });
+    check('a reader who scrolls down the Chronicle is told of nothing while nothing has happened',
+        down.top > 2 && !down.unread, JSON.stringify(down));
 
     const arrived = await buyAle();
-    const paused = await logState();
-    check('...and is left on the line they were reading when an entry arrives below it',
-        arrived && Math.abs(paused.top - up.top) <= 1, `${up.top} -> ${paused.top}`);
-    check('...told instead that there is more below', paused.unread);
+    const held = await watcher.evaluate((id) =>
+        document.getElementById(id).getBoundingClientRect().top
+            - document.querySelector('#chronicle .panel-body').getBoundingClientRect().top, reading.id);
+    check('...and is left on the line they were reading when an entry arrives above it',
+        arrived && Math.abs(held - reading.offset) <= 1, `${reading.offset} -> ${held}`);
+    check('...told instead that there is more above', (await logState()).unread);
 
     await watcher.click('#chronicle .panel-unread');
     const caught = await logState();
-    check('...which takes them down to it, the way opening the Chronicle does',
-        caught.fromBottom <= 2 && !caught.unread, JSON.stringify(caught));
+    check('...which takes them up to it', caught.top === 0 && !caught.unread, JSON.stringify(caught));
 
+    const topNow = await newest();
     await buyAle();
     const following = await logState();
-    check('...and from there it follows the log down again',
-        following.fromBottom <= 2 && !following.unread, JSON.stringify(following));
+    check('...and from there the newest is always in view again',
+        following.top === 0 && !following.unread && await newest() !== topNow, JSON.stringify(following));
 
     // ---- and a long one arrives a page at a time -----------------------------------------------
     // The suites' page is ten (config/e2e.exs), so this outgrows it twice over.
     while (await lines() <= 21)
         if (!(await buyAle())) break;
 
+    // Nothing about the last visit is kept: a refresh opens on the fold, and then on the newest.
     await watcher.reload({ waitUntil: 'domcontentloaded' });
     await connected(watcher);
-    const settledOpen = await watcher.waitForFunction(() => {
-        const body = document.querySelector('#chronicle .panel-body');
-        return !body.hidden && body.scrollHeight - body.clientHeight - body.scrollTop <= 2;
-    }, null, { timeout: 5000 }).then(() => true).catch(() => false);
-    check('a Chronicle left open is open again after a refresh, on its newest line', settledOpen,
-        JSON.stringify(await logState()));
+    check('a refreshed Chronicle is folded again on a phone, whatever the reader left it as',
+        await watcher.locator('#chronicle .panel-body').isHidden());
+    await watcher.click('#chronicle .panel-toggle');
+    check('...and opens on its newest entry', (await logState()).top === 0);
 
     const firstPage = await lines();
     check('...holding only its newest page, with an older one to ask for',
         firstPage === 10 && await watcher.locator('#chronicle-log[data-older-than]').count() === 1,
         `${firstPage} entries`);
 
-    const reading = await watcher.locator('#chronicle-log li').first().getAttribute('id');
+    const deepest = await watcher.locator('#chronicle-log li').last().getAttribute('id');
     await overLog();
-    await watcher.mouse.wheel(0, -100000);
+    await watcher.mouse.wheel(0, 100000);
     const paged = await watcher.waitForFunction(
         (had) => document.querySelectorAll('#chronicle-log li').length > had,
         firstPage, { timeout: 8000 }).then(() => true).catch(() => false);
-    check('...and scrolling towards its beginning hands over the page before it', paged,
+    check('...and scrolling towards its end hands over the page before it', paged,
         `${firstPage} -> ${await lines()} entries`);
 
-    // Were the reader's place lost, the box would sit at the top of the page just put in front, ten
-    // entries above the one they had scrolled to.
+    // The page goes on below the reader, so the entry they scrolled down to stays where it was.
     const kept = await watcher.evaluate((id) => {
         const box = document.querySelector('#chronicle .panel-body').getBoundingClientRect();
         const entry = document.getElementById(id).getBoundingClientRect();
         return { inView: entry.bottom > box.top && entry.top < box.bottom,
                  unread: !document.querySelector('#chronicle .panel-unread').hidden };
-    }, reading);
+    }, deepest);
     check('...without moving the reader off the line they had reached', kept.inView);
-    check('...or claiming anything arrived below', !kept.unread);
+    check('...or claiming anything arrived above', !kept.unread);
 
-    const whole = await readToBeginning(watcher);
+    const whole = await readWhole(watcher);
     check('...and so on back to its Beginning, where it stops asking',
-        whole && await watcher.locator('#chronicle-log li').first().getAttribute('class') === 'start'
+        whole && await watcher.locator('#chronicle-log li').last().getAttribute('class') === 'start'
             && await watcher.locator('#chronicle-log[data-older-than]').count() === 0,
         `${await lines()} entries`);
 

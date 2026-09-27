@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, PURSE, reporter, traceAudio, controls, readToBeginning } from './helpers.mjs';
+import { BASE, PURSE, reporter, traceAudio, controls, readWhole } from './helpers.mjs';
 
 const TICK_MS = 6000; // the regen tick is 5s; allow a margin
 
@@ -469,43 +469,56 @@ try {
     check('...in the second person, because it is the reader\'s own',
         /You were wielding/.test(record) && !/They were wielding/.test(record));
     check('...and tells the story fight by fight',
-        await page.locator('#main ol.chronicle li').count() > 0,
-        `${await page.locator('#main ol.chronicle li').count()} fights`);
-    // It arrives folded away — it is the longest thing on the page and the record is what the page
-    // is for — and its own header is what opens it.
-    check('...folded into a panel of its own until it is asked for',
-        await page.locator('#chronicle .panel-body').isHidden());
-    await page.click('#chronicle .panel-toggle');
-    check('...which the Chronicle\'s own header opens',
-        await page.locator('#chronicle .panel-body').isVisible());
+        await page.locator('#chronicle-log li').count() > 0,
+        `${await page.locator('#chronicle-log li').count()} fights`);
+    // Beside the record, growing with what it holds up to a cap rather than to the record's height,
+    // and open: there is room for it here, so its header is no control.
+    const beside = await page.evaluate(() => {
+        const record = document.querySelector('#main > .panel').getBoundingClientRect();
+        const log = document.querySelector('#chronicle').getBoundingClientRect();
+        const body = document.querySelector('#chronicle .panel-body');
+        return { right: log.left >= record.right, top: log.top - record.top, box: body.clientHeight,
+                 control: !document.querySelector('#chronicle .panel-header').disabled };
+    });
+    // The footer belongs to the main column, as on Town: under the record, however long the log.
+    const footerGap = await page.evaluate(() =>
+        document.querySelector('#copyright').getBoundingClientRect().top
+            - document.querySelector('#main > .panel').getBoundingClientRect().bottom);
+    check('...with the footer under the record, not under whichever column is longer',
+        Math.abs(footerGap - 12) <= 1, `${footerGap}px below the record`);
+    check('...in a panel of its own beside the record, open, and never a fold',
+        beside.right && Math.abs(beside.top) <= 1 && !beside.control
+            && await page.locator('#chronicle .panel-body').isVisible(),
+        JSON.stringify(beside));
 
-    // A log, not a wall: the page is the same height however long the run was, and it opens on its
-    // ending rather than its beginning.
+    // A log, not a wall: capped however long the run was, and opening on its ending, newest first.
     const log = await page.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
-        return { hidden: body.scrollHeight - body.clientHeight, fromBottom: body.scrollHeight - body.clientHeight - body.scrollTop };
+        return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop, shown: body.clientHeight };
     });
-    check('...in a box the run cannot outgrow', log.hidden > 0, `${log.hidden}px of it scrolled away`);
-    check('...already scrolled to the last fight it ever had', log.fromBottom <= 2,
-        `${log.fromBottom}px from the bottom`);
+    check('...in a box the run cannot outgrow', log.shown >= 100 && log.shown <= 640 && log.hidden > 0,
+        `${log.shown}px shown, ${log.hidden}px of it scrolled away`);
+    check('...opening on how it ended', log.at === 0
+        && await page.locator('#chronicle-log li').first().locator('.deaths').count() === 1,
+        `sitting at ${log.at}`);
 
     // The checks below are about the whole run, and the box opens on its newest page only.
     check('...and hands over the rest of the run as the reader scrolls back through it',
-        await readToBeginning(page), `${await page.locator('#main ol.chronicle li').count()} entries`);
+        await readWhole(page), `${await page.locator('#chronicle-log li').count()} entries`);
 
     // Every deflection line names the damage its armour took and the XP that clash was worth, and
     // no outcome line mentions either — so this is the whole fight being told, not just its end.
     // Scoped to the list because the paragraphs above talk about XP too. Dice-proof: every
     // template in the pool carries both words.
-    const chronicle = (await page.textContent('#main ol.chronicle'))?.replace(/\s+/g, ' ') ?? '';
+    const chronicle = (await page.textContent('#chronicle-log'))?.replace(/\s+/g, ' ') ?? '';
     check('...the whole of each one, not only how it ended',
         /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
 
     // Nothing arrives and silently stops existing: every effect seen settling is seen leaving —
-    // by its timer, by a meal replacing it, or with the run's last breath — and the ending is still
-    // the last line. Holds however the run died.
-    const entries = await page.locator('#main ol.chronicle li')
-        .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    // by its timer, by a meal replacing it, or with the run's last breath. Read in the order it
+    // happened, which is the list upside down.
+    const entries = (await page.locator('#chronicle-log li')
+        .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()))).reverse();
     const unaccounted = entries.flatMap((line, i) => {
         const label = line.match(/([A-Z][\w' ]+?) settles over you\./)?.[1];
         if (!label) return [];
@@ -515,8 +528,8 @@ try {
     });
     check('...and every effect it gained, it is seen to lose', unaccounted.length === 0,
         unaccounted.length ? `never left: ${unaccounted.join(', ')}` : `${entries.length} entries`);
-    check('...with the ending still the last word',
-        await page.locator('#main ol.chronicle li').last().locator('.deaths').count() === 1);
+    check('...and its Beginning at the very end, once it has all been read',
+        await page.locator('#chronicle-log li').last().getAttribute('class') === 'start');
 
     // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
     // the board never emits a session id is proved in board_test. What IS observable here is the

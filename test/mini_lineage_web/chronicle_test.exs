@@ -38,7 +38,11 @@ defmodule MiniLineageWeb.ChronicleTest do
   end
 
   defp html_for(record_log, opts \\ []),
-    do: render_component(&Record.chronicle/1, Keyword.put(opts, :record_log, record_log))
+    do:
+      render_component(
+        &Record.chronicle/1,
+        opts |> Keyword.put(:record_log, record_log) |> Keyword.put(:record_id, "run")
+      )
 
   # The entries on their own, so a claim about one is not answered by the panel around them.
   defp entries(chronicle) do
@@ -250,7 +254,7 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert text =~ "KILL. DEFLECT. OUTCOME."
     end
 
-    test "is one of however many the run has, oldest first" do
+    test "is one of however many the run has, in the order it is handed them" do
       text = text_for([fight([:crit_line, :ambush_line]), fight([:crit_line])])
 
       assert text =~ "KILL. DEFLECT. OUTCOME. KILL. DEFLECT. OUTCOME. AMBUSH."

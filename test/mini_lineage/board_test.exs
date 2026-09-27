@@ -188,7 +188,7 @@ defmodule MiniLineage.BoardTest do
       Characters.mutate(session, &Actions.fight/1)
 
       assert Board.entry(id).last_seen_at ==
-               id |> CharacterLog.page() |> elem(0) |> List.last() |> Map.fetch!(:at)
+               id |> CharacterLog.page() |> elem(0) |> hd() |> Map.fetch!(:at)
     end
 
     test "and a run with nothing logged yet is dated by its birth" do

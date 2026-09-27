@@ -158,30 +158,69 @@
             #2a262f 100%);
 }
 
-/* ===== Two-column content ===== */
+/* ===== Columns =====
+   The main column and one beside it: the sidebar to its left on the game's screens, the aside to
+   its right on a record. Both are the same thing at a fixed width, so one breakpoint stacks either. */
 #content {
     display: flex;
     gap: 12px;
     align-items: flex-start;
 }
 
-/* Wide enough for the widest item and its benefit at the body's size, with room for the Verdana
- * fallback and an emoji font wider than Chromium's: "💀 The Forgotten Blade 15%". */
-#sidebar {
-    flex: 0 0 210px;
+#main {
+    flex: 1;
     min-width: 0;
 }
 
-/* Panels stack. Whichever follows another is spaced off it, wherever they are — the sidebar's two,
-   and the record's Chronicle under the panel it belongs to. The first of a stack takes nothing,
-   which is what the relationship says rather than what a class per panel would have to remember. */
+.side {
+    flex: 0 0 var(--side-width);
+    min-width: 0;
+}
+
+/* Wide enough for the widest item and its benefit at the body's size, with room for the Verdana
+ * fallback and an emoji font wider than Chromium's: "💀 The Forgotten Blade 15%". */
+#sidebar {
+    --side-width: 210px;
+}
+
+/* Room for a fight's lines at a few words to the line. The page widens by what it takes, so the
+   main panel keeps the width it has alone. */
+#aside {
+    --side-width: 300px;
+}
+
+#wrapper:has(#aside) {
+    max-width: 1000px;
+}
+
+/* Panels stack. Whichever follows another is spaced off it, wherever they are — the sidebar's two
+   among them. The first of a stack takes nothing, which is what the relationship says rather than
+   what a class per panel would have to remember. */
 .panel+.panel {
     margin-top: 12px;
 }
 
-#main {
-    flex: 1;
-    min-width: 0;
+/* A side column never decides how long the page is, so what scrolls in it stops at a cap. */
+.side .panel-body.scrolls {
+    max-height: 640px;
+}
+
+/* Beside the main panel there is room for a side one, so it does not fold: its header stops being
+   a control, and `--folds` tells the hook so. Child combinators, to outrank the fold itself. */
+.side>.panel {
+    --folds: 0;
+}
+
+.side>.panel>.panel-toggle {
+    pointer-events: none;
+}
+
+.side>.panel>.panel-toggle+.panel-body {
+    display: block;
+}
+
+.side .panel-arrow {
+    display: none;
 }
 
 /* ===== Copyright ===== */
@@ -203,32 +242,34 @@
 }
 
 /* ===== Responsive ===== */
-/* Stacked before the sidebar can squeeze the main column narrower than a phone would give it. */
+/* Stacked before a side column can squeeze the main one narrower than a phone would give it. Both
+   columns flatten into #content, so a side column's panels can stand either side of the main one:
+   the vitals above it, everything else below, and the footer last. */
 @media (max-width: 640px) {
     #content {
         flex-direction: column;
         align-items: stretch;
     }
 
-    #sidebar,
-    #main {
+    #main,
+    .side {
         display: contents;
-    }
-
-    .status-panel {
-        order: 1;
     }
 
     #main>.panel {
         order: 2;
     }
 
-    .inventory-panel {
+    .side>.panel {
         order: 3;
     }
 
-    /* `display: contents` flattens both columns into #content, whose own 12px gap now does the
-       spacing — a stacking margin on top of it would count the gap twice. */
+    .side>.status-panel {
+        order: 1;
+    }
+
+    /* The flattened columns take #content's own 12px gap, and a stacking margin on top of it would
+       count the gap twice. */
     .panel+.panel {
         margin-top: 0;
     }
@@ -236,5 +277,26 @@
     #copyright {
         order: 4;
         margin-top: 0;
+    }
+
+    /* A smaller cap, and a fold that starts shut, so the main panel is what the page ends on. */
+    .side .panel-body.scrolls {
+        max-height: 260px;
+    }
+
+    .side>.panel {
+        --folds: 1;
+    }
+
+    .side>.panel>.panel-toggle {
+        pointer-events: auto;
+    }
+
+    .side>.panel>.panel-toggle[aria-expanded="false"]+.panel-body {
+        display: none;
+    }
+
+    .side .panel-arrow {
+        display: block;
     }
 }

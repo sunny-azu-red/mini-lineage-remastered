@@ -33,8 +33,9 @@ defmodule MiniLineage.CharacterLogTest do
 
   defp fight(session), do: Characters.mutate(session, &Actions.fight/1)
 
-  # The newest page, which is every entry a run as short as these has.
-  defp recent(id), do: id |> CharacterLog.page() |> elem(0)
+  # The newest page, which is every entry a run as short as these has, put back in the order it
+  # happened: the Chronicle reads newest first, and these claims are about what came after what.
+  defp recent(id), do: id |> CharacterLog.page() |> elem(0) |> Enum.reverse()
 
   # The table holds every deed now, so a claim about fighting says so rather than counting whatever
   # the run happened to do.
@@ -284,7 +285,7 @@ defmodule MiniLineage.CharacterLogTest do
       {windowed, true} = CharacterLog.page(id, nil, 3)
 
       assert length(windowed) == 3
-      assert Enum.map(windowed, & &1.id) == Enum.take(all, -3)
+      assert Enum.map(windowed, & &1.id) == all |> Enum.take(-3) |> Enum.reverse()
     end
 
     test "and a reader already holding some asks only for what came after", %{session: session} do
@@ -292,8 +293,8 @@ defmodule MiniLineage.CharacterLogTest do
       for _ <- 1..3, do: fight(session)
 
       id = stored_id(session)
-      {held, true} = CharacterLog.page(id, nil, 2)
-      cursor = List.last(held).id
+      {[newest | _], true} = CharacterLog.page(id, nil, 2)
+      cursor = newest.id
 
       fight(session)
       added = CharacterLog.since(id, cursor)

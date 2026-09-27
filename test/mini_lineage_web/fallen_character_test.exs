@@ -66,6 +66,31 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   end
 
   describe "the voice" do
+    # The lineage's lore belongs to the Chronicles of Ancestry; the record says what it gave this
+    # run, to whoever is reading it, and nothing about how the journey has been defined.
+    test "tells what the lineage gave the run, to its reader, and no lore" do
+      race = Constants.race(1)
+
+      assert text_for(living(), true) =~ "You embark with a fortified"
+      assert text_for(living(), false) =~ "They embark with a fortified"
+      refute text_for(living()) =~ String.slice(race.backstory, 0, 40)
+      refute text_for(living()) =~ "defined by conflict"
+    end
+
+    # Even to a player of that very lineage: the page describes a people, not the run reading it.
+    test "while the Chronicles of Ancestry speak of every lineage as a visitor would" do
+      html =
+        render_component(&Screens.screen/1,
+          view: Snapshot.build(living()),
+          screen: "races",
+          catalog: Snapshot.catalog()
+        )
+
+      assert length(Regex.scan(~r/They embark/, html)) == length(Snapshot.catalog().races)
+      refute html =~ "You embark"
+      refute html =~ ~r/\{[a-z]+\}/
+    end
+
     test "is second person on your own record" do
       html = html_for(fallen())
 
@@ -120,7 +145,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       html = html_for(fallen(), false)
 
       assert html =~ "Their Journey Has Ended"
-      assert html =~ "Their journey across the realm was"
+      assert html =~ "They fought through"
       assert html =~ "They fell at"
       refute html =~ "You fell at"
     end

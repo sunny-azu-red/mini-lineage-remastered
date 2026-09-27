@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.ChroniclePagesTest do
   @moduledoc """
-  A long Chronicle as a page: it opens on its newest fifty entries, and hands over the fifty
-  before whichever it opens on each time the reader's hook asks, until there are none left.
+  A long Chronicle as a page: it opens on its newest twenty-five entries, newest first, and hands
+  over the twenty-five before the last it holds each time the reader's hook asks, until there are none left.
 
   The scrolling that asks is the browser's, and `live-board.mjs` drives it; this is what the ask
   gets back.
@@ -48,26 +48,32 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     end
   end
 
-  test "opens on the newest fifty, and says there are more", %{conn: conn} do
+  test "opens on the newest twenty-five, newest first, and says there are more", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/character/#{run_with(120)}")
 
-    assert lines(html) == Enum.map(71..120, &"Deed #{&1}.")
+    assert lines(html) == Enum.map(120..96//-1, &"Deed #{&1}.")
     assert older_than(html)
   end
 
-  test "hands over the fifty before, then the rest, then stops asking", %{conn: conn} do
+  test "hands over the twenty-five before, and so on to the first, then stops asking", %{
+    conn: conn
+  } do
     {:ok, view, html} = live(conn, ~p"/character/#{run_with(120)}")
 
     html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-    assert lines(html) == Enum.map(21..120, &"Deed #{&1}.")
+    assert lines(html) == Enum.map(120..71//-1, &"Deed #{&1}.")
 
-    html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-    assert lines(html) == Enum.map(1..120, &"Deed #{&1}.")
+    html =
+      Enum.reduce(1..3, html, fn _, html ->
+        render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      end)
+
+    assert lines(html) == Enum.map(120..1//-1, &"Deed #{&1}.")
     refute older_than(html)
   end
 
-  # Two scroll events can both ask before the first answer lands; the second names an entry the
-  # chronicle no longer opens on, and must not put the same page in front a second time.
+  # Two scroll events can both ask before the first answer lands; the second names an entry that is
+  # no longer the last held, and must not put the same page on the end a second time.
   test "and an ask that is already answered changes nothing", %{conn: conn} do
     {:ok, view, html} = live(conn, ~p"/character/#{run_with(120)}")
     before = older_than(html)
@@ -75,13 +81,31 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     render_hook(view, "older_chronicle", %{"before" => before})
     html = render_hook(view, "older_chronicle", %{"before" => before})
 
-    assert length(held(html) |> Enum.to_list()) == 100
+    assert length(held(html) |> Enum.to_list()) == 50
+  end
+
+  # Newest first, so what is written while it is read goes on top, and nothing already held moves.
+  test "puts an entry written while it is read on top of the rest", %{conn: conn} do
+    id = run_with(30)
+    {:ok, view, html} = live(conn, ~p"/character/#{id}")
+    held = lines(html)
+
+    at = DateTime.utc_now()
+
+    Repo.insert_all(CharacterLog.Entry, [
+      CharacterLog.params(CharacterLog.event(id, "purchase", "Deed 31.", at))
+    ])
+
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Longlived")
+    send(view.pid, {:record_updated, player, id, true})
+
+    assert lines(render(view)) == ["Deed 31." | held]
   end
 
   test "and a run that fits on one page never offers another", %{conn: conn} do
-    {:ok, _view, html} = live(conn, ~p"/character/#{run_with(50)}")
+    {:ok, _view, html} = live(conn, ~p"/character/#{run_with(25)}")
 
-    assert length(lines(html)) == 50
+    assert length(lines(html)) == 25
     refute older_than(html)
   end
 end

@@ -1,7 +1,8 @@
 defmodule MiniLineageWeb.Layouts do
   @moduledoc """
   The page shell. Element ids and class names are load-bearing: the carried-over stylesheet keys
-  off `#app`/`#wrapper`/`#header`/`#content`/`#sidebar`/`#main`/`.panel`.
+  off `#app`/`#wrapper`/`#header`/`#content`/`#main`/`.panel`. `#sidebar` and `#aside` are one kind
+  of thing, a `.side` column, left of the main one and right of it.
   """
   use MiniLineageWeb, :html
 
@@ -42,8 +43,9 @@ defmodule MiniLineageWeb.Layouts do
   attr :character_id, :string, default: nil
   slot :inner_block, required: true
 
-  # What belongs to the screen but not inside its panel. The Chronicle is the only one: longer than
-  # everything else on the page, it would crowd out what the panel is named for.
+  # What belongs to the screen but not inside its panel, in a column beside it on a page widened to
+  # hold one. The Chronicle is the only one: longer than everything else on the page, it would
+  # crowd out what the panel is named for.
   slot :aside
 
   def app(assigns) do
@@ -87,10 +89,10 @@ defmodule MiniLineageWeb.Layouts do
               {render_slot(@inner_block)}
             </Controls.panel>
 
-            {render_slot(@aside)}
-
             <Layouts.footer />
           </div>
+
+          <div :if={@aside != []} id="aside" class="side">{render_slot(@aside)}</div>
         </div>
       </div>
     </div>
@@ -122,7 +124,7 @@ defmodule MiniLineageWeb.Layouts do
     assigns = assign(assigns, level: Format.number(assigns.view.level))
 
     ~H"""
-    <div id="sidebar" phx-hook="AnimatedValues">
+    <div id="sidebar" class="side" phx-hook="AnimatedValues">
       <Controls.panel title={@view.name} class="status-panel" body_class="rows">
         <div class="stat-row">
           <span class="stat-label">Race</span>

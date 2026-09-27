@@ -25,9 +25,12 @@ list wins — several generator defaults do not exist here.
   have a module. Anything a page reaches for but does not
   own (the panel card, the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in
   `Controls`.
-  `Screens.aside/1` is the same dispatch for what a screen puts BELOW its panel rather than inside
+  `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
-  than everything else on that page put together and crowds out what the panel is named for.
+  than everything else on that page put together and crowds out what the panel is named for. The aside
+  and the sidebar are one `.side` column, left of the main one or right of it, each at its own fixed
+  width, so one breakpoint stacks either and every rule about a side column is written once. A page
+  with an aside widens by what it takes, and its footer stays under the main panel, as on Town.
 
 ### Working here
 
@@ -502,40 +505,43 @@ that page was served.
 
 **Every panel in the game is one component.** `Controls.panel/1` draws the card — the header band,
 the title, the body — and the differences are options: `heading` for the screen's own h1, and only
-that one, `collapsible` and `collapsed` for a header that folds, `max_height` for a body that
-scrolls, `stick_to_bottom` for a log that opens on its newest line rather than its first. `id`
-names the PANEL, which is what its hook needs; `body_id` and everything else handed to it land on
-the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the data
+that one, `collapsible` and `collapsed` for a header that folds, `max_height` or `scrolls` for a
+body that scrolls under a cap of its own or the stylesheet's, `log` for a list read newest first.
+`id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it land
+on the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the data
 attributes a browser test reads. A panel takes a hook only when something about it moves, so the
 error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
 
 The cap belongs to the body and never to what it holds: the scrollbar then sits against the panel's
 edge rather than inside the body's padding.
 
-**A collapse is the reader's, not the template's.** `hidden` and `aria-expanded` are rendered once
-for the opening state and belong to the `Panel` hook after that, re-applied on every `updated/0` —
-the same reason the HP bar's sweep has to be watched. What the reader last did is kept under
-`panel:<id>` in `localStorage` and beats the template on the next mount, so a fold survives a
-refresh and a walk away; the id keys the PANEL, not whose record it is.
+**A collapse is the reader's, not the template's.** `aria-expanded` is rendered once for the
+opening state and belongs to the `Panel` hook after that, re-applied on every `updated/0` — the
+same reason the HP bar's sweep has to be watched. It is the WHOLE state: the stylesheet hides a
+folded body off it, never a `hidden` attribute, so a layout with room for a panel can keep it open
+before any script runs, and says so to the hook with `--folds: 0`, where the header is disabled.
+What the reader last did is kept under `panel:<id>` in `localStorage` and beats the template on the
+next mount, unless `remember={false}`; `subject` starts the hook over when a patch swaps whose
+content it holds, since the element survives the patch.
 
 The whole header band is the control, and it is a BUTTON. It goes nowhere, and a link would say it
 did: Space activates a button and scrolls a link, which is the same reason `PanelFocus` refuses to
-focus one. `aria-expanded` sits on the header and IS the state, and the chevron turns off it. The
-gold line belongs to the BODY as a `border-top`, never to the header as a `border-bottom`: a shut
-panel then draws no line closing off what is not there, and leaves no pixel of one in the band.
+focus one. The chevron turns off `aria-expanded`. The gold line belongs to the BODY as a
+`border-top`, never to the header as a `border-bottom`: a shut panel then draws no line closing off
+what is not there, and leaves no pixel of one in the band.
 
-Opening by hand brings the panel into view, aligned on its BOTTOM, a log's newest lines being
-there. Only by hand — a panel restored open from storage, or patched while open, was never asked to
-move the page. Nor may it animate into a restored state: the chevron's transition is gated on a
-`data-ready` the hook sets two frames in, or every refresh spins it through a state the reader
-never left.
+Opening by hand brings the panel into view. Only by hand — a panel restored open from storage, or
+patched while open, was never asked to move the page. Nor may it animate into a restored state: the
+chevron's transition is gated on a `data-ready` the hook sets two frames in, or every refresh spins
+it through a state the reader never left.
 
-**A log follows only a reader at its end.** Whether they are is decided by their own last scroll,
-never re-measured after a patch, which grows the list without moving it. A reader scrolled up keeps
-the line they were on across every patch, restored from that entry's DOM id since a patch briefly
-re-hides the body, and `.panel-unread` appears only for entries appended while they were away. The
-Chronicle opens on its newest page and prepends the one before by keyset when the reader nears the
-top. The page is 50 and ten in `:e2e`, so a suite can outgrow it without a minute of shopping.
+**A log reads newest first, so a reader at its top follows it for free.** Nothing scrolls to keep
+them there. One scrolled down keeps the line they were on across every patch, restored from that
+entry's DOM id, and `.panel-unread` appears over the top only for entries that arrived while they
+were away. The Chronicle opens on its newest 25 and puts the page before the last it holds on the
+end, by keyset, when the reader nears it. Ten in `:e2e`, so a suite outgrows it without a minute of
+shopping. Beside the record it grows to 640px and never folds; stacked on a phone it folds, and
+starts folded on every visit and every record.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.

@@ -31,15 +31,27 @@ defmodule MiniLineageWeb.Controls do
   attr :heading, :boolean, default: false
   attr :class, :any, default: nil
   attr :body_class, :any, default: nil
+
+  # Folds on a click of its header, wherever the stylesheet's `--folds` is not 0: a layout may keep
+  # a panel open where there is room for it, and the hook reads the answer rather than a breakpoint.
   attr :collapsible, :boolean, default: false
   # Where a collapsible panel starts. The reader's own toggling outlives a patch but not a mount.
   attr :collapsed, :boolean, default: false
+  # Whether the reader's last fold is kept for the next mount. False starts every visit afresh.
+  attr :remember, :boolean, default: true
+  # Whose content the panel holds. When it changes the hook starts over, as a fresh mount would,
+  # since patching from one record to the next keeps the same element.
+  attr :subject, :string, default: nil
   # Pixels. Given one, the BODY scrolls — so the bar sits against the panel's edge rather than
   # inside the body's padding, and the page is the same height however much is in it.
   attr :max_height, :integer, default: nil
-  # A log rather than a document: it opens on its newest line and follows it down, unless the
-  # reader has scrolled up to read, when `unread` floats over its foot instead.
-  attr :stick_to_bottom, :boolean, default: false
+
+  # A body that scrolls in whatever height the stylesheet gives it, where a layout decides the cap.
+  attr :scrolls, :boolean, default: false
+
+  # A log rather than a document, its newest line first. A reader scrolled down into it keeps their
+  # place when an entry arrives, and `unread` floats over its top to say so.
+  attr :log, :boolean, default: false
   # The event a log asks for its previous page with, when its list carries `data-older-than`.
   attr :load_older, :string, default: nil
   attr :rest, :global
@@ -52,9 +64,11 @@ defmodule MiniLineageWeb.Controls do
     <div
       id={@id}
       class={classes(["panel", @class])}
-      phx-hook={if @collapsible or @stick_to_bottom, do: "Panel"}
-      data-stick={if @stick_to_bottom, do: "true"}
+      phx-hook={if @collapsible or @log, do: "Panel"}
+      data-log={if @log, do: "true"}
       data-load-older={@load_older}
+      data-remember={if !@remember, do: "false"}
+      data-subject={@subject}
     >
       <%!-- The whole band is the control, not the words in it: a header is a wide, obvious thing
             to aim at, and a title you have to hit exactly is a worse target than no control. --%>
@@ -71,15 +85,14 @@ defmodule MiniLineageWeb.Controls do
 
       <div
         id={@body_id}
-        class={classes(["panel-body", @body_class, @max_height && "scrolls"])}
-        hidden={@collapsible and @collapsed}
+        class={classes(["panel-body", @body_class, (@max_height || @scrolls) && "scrolls"])}
         {cap(@max_height)}
         {@rest}
       >
         {render_slot(@inner_block)}
       </div>
 
-      <%!-- Shown only by the hook, and only for entries that arrived while the reader was up. --%>
+      <%!-- Shown only by the hook, and only for entries that arrived while the reader was away. --%>
       <button :if={@unread != []} type="button" class="btn btn-sm panel-unread" hidden>{render_slot(
         @unread
       )}</button>

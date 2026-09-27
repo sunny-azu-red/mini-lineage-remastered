@@ -33,7 +33,7 @@ defmodule MiniLineage.CharacterLog do
 
   # What a record opens with, and what each scroll towards its beginning asks for. Smaller in the
   # browser suites, which could not otherwise reach a second page without a minute of shopping.
-  @window Application.compile_env(:mini_lineage, :chronicle_page, 50)
+  @window Application.compile_env(:mini_lineage, :chronicle_page, 25)
 
   @doc """
   The row a fight produces: its lines and nothing else, since the lines say everything a reader is
@@ -78,8 +78,8 @@ defmodule MiniLineage.CharacterLog do
   end
 
   @doc """
-  The `limit` entries before `cursor`, the newest when it is nil, oldest first — and whether any
-  older remain. One row over the limit is read to answer that, rather than a count.
+  The `limit` entries before `cursor`, the newest when it is nil, newest first as the Chronicle
+  reads — and whether any older remain. One row over the limit is read to answer that.
   """
   def page(character_id, cursor \\ nil, limit \\ @window) do
     rows =
@@ -90,20 +90,20 @@ defmodule MiniLineage.CharacterLog do
       |> limit(^(limit + 1))
       |> Repo.all()
 
-    {rows |> Enum.take(limit) |> Enum.reverse() |> Enum.map(&to_entry/1), length(rows) > limit}
+    {rows |> Enum.take(limit) |> Enum.map(&to_entry/1), length(rows) > limit}
   end
 
   defp older_than(query, nil), do: query
   defp older_than(query, cursor), do: where(query, [e], e.id < ^cursor)
 
   @doc """
-  Everything written after `cursor`, oldest first. A keyset, not an offset, so appending one entry
+  Everything written after `cursor`, newest first. A keyset, not an offset, so adding one entry
   never walks the rows a reader already holds.
   """
   def since(character_id, cursor) do
     Entry
     |> where([e], e.character_id == ^character_id and e.id > ^cursor)
-    |> order_by([e], asc: e.id)
+    |> order_by([e], desc: e.id)
     |> Repo.all()
     |> Enum.map(&to_entry/1)
   end

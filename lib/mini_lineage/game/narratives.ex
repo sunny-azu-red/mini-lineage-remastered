@@ -1,15 +1,17 @@
 defmodule MiniLineage.Game.Narratives do
   @moduledoc "Narrative templates. Each list is drawn from by index, so ORDER is load-bearing."
 
+  # Open pronouns, like the chronicle's: your own record speaks to you, and a stranger's record and
+  # the Chronicles of Ancestry speak about them. `Narrative.voiced/2` closes them at render.
   @race_traits %{
     0 =>
-      ~s(They embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="adena">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. Their adaptable biology allows for <span class="regen">+{regen} Regeneration</span> during moments of rest, while their vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s({they} embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="adena">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. {whose} adaptable biology allows for <span class="regen">+{regen} Regeneration</span> during moments of rest, while {their} vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
     1 =>
-      ~s(They embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="adena">🪙 {adena} Adena</span>, though their raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. Their iron-like biology denies them natural mending, requiring constant sustenance to fuel their recovery, while their unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s({they} embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="adena">🪙 {adena} Adena</span>, though {their} raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. {whose} iron-like biology denies {object} natural mending, requiring constant sustenance to fuel {their} recovery, while {their} unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
     2 =>
-      ~s(They embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="adena">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. Their spiritual biology allows for a potent <span class="regen">+{regen} Regeneration</span> during moments of rest, while their ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s({they} embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="adena">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. {whose} spiritual biology allows for a potent <span class="regen">+{regen} Regeneration</span> during moments of rest, while {their} ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
     3 =>
-      ~s(They embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="adena">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. Their shadow-touched biology allows for a swift <span class="regen">+{regen} Regeneration</span> during moments of rest, while their predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
+      ~s({they} embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="adena">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. {whose} shadow-touched biology allows for a swift <span class="regen">+{regen} Regeneration</span> during moments of rest, while {their} predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
   }
 
   # What each effect does, in the page's own voice: `{them}` is the subject mid-sentence, `{object}`

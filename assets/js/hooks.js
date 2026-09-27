@@ -326,47 +326,35 @@ function keep(id, open) {
 }
 
 /**
- * A panel that does something: collapses on a click of its own header, and follows its content down
- * when it is a log rather than a document. Both are re-applied after every patch — the server
- * renders the panel's opening state from the template, and the reader's is newer than that.
+ * A panel that does something: folds on a click of its own header, and keeps a reader's place when
+ * it is a log. Both are re-applied after every patch — the server renders the panel's opening state
+ * from the template, and the reader's is newer than that.
  *
- * A log follows only a reader sitting at its end. One who has scrolled up to read keeps their
- * place whatever lands, is told when something arrived below them, and near the top is handed
- * the page before the first they hold.
+ * A log reads newest first. A reader at its top sees what arrives without anything moving; one who
+ * has scrolled down keeps their place whatever lands above, is told something did, and near the
+ * end is handed the page after the last they hold.
  */
 export const Panel = {
     mounted() {
         this.toggle = this.el.querySelector(':scope > .panel-toggle');
-        this.sticky = this.el.dataset.stick === 'true';
+        this.log = this.el.dataset.log === 'true';
         this.unread = this.el.querySelector(':scope > .panel-unread');
-        // Whether the reader is at the end, as of their own last scroll: a patch grows the list
-        // without moving it, so asking again afterwards would always answer no.
-        this.pinned = true;
-        this.unseen = false;
-        this.lastEntry = this.list()?.lastElementChild?.id;
-        // A pin done on the frame the panel opens is only right for that frame. Anything that
-        // reflows the list afterwards — a web font arriving, a scrollbar taking its width — moves
-        // the bottom out from under it and leaves the box a pixel or so short of it. Following the
-        // list's own size puts the question beyond timing.
-        if (this.sticky) {
-            this.follow = new ResizeObserver(() => this.open && this.pinned && this.toBottom());
+        this.remember = this.el.dataset.remember !== 'false';
+        this.start();
+
+        this.toggle?.addEventListener('click', () => {
+            if (!this.folds()) return;
+            this.show(!this.open);
+            if (this.remember) keep(this.el.id, this.open);
+            if (this.open) this.reveal();
+        });
+        if (this.log) {
             this.body().addEventListener('scroll', () => this.scrolled(), { passive: true });
             this.unread?.addEventListener('click', () => this.catchUp());
         }
-
-        // What the reader last did with THIS panel beats what the template opens it on. Keyed by
-        // the panel's id, so the preference is about the panel and not about whose record it is.
-        const kept = this.toggle && recall(this.el.id);
-        this.open = !this.toggle
-            || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
-
-        this.toggle?.addEventListener('click', () => {
-            if (!this.open) this.catchUp(false);
-            this.show(!this.open);
-            keep(this.el.id, this.open);
-            if (this.open) this.reveal();
-        });
-        this.show(this.open);
+        // Where the panel may fold is the stylesheet's to say, and it can change with the width.
+        this.onResize = () => this.show(this.open);
+        window.addEventListener('resize', this.onResize);
 
         // Two frames, so a paint has certainly happened: the chevron may only start animating once
         // the restored state is already on screen, or every refresh spins it into place.
@@ -374,48 +362,64 @@ export const Panel = {
             requestAnimationFrame(() =>
                 this.el.querySelector('.panel-arrow')?.setAttribute('data-ready', '')));
     },
+    // What a mount decides, and what a new subject decides again: the same element can be patched
+    // from one record's log to the next, and nothing about the last one's reading carries over.
+    start() {
+        this.subject = this.el.dataset.subject;
+        this.pinned = true;
+        this.unseen = false;
+        this.firstEntry = this.list()?.firstElementChild?.id;
+        this.body().scrollTop = 0;
+        // What the reader last did with THIS panel beats what the template opens it on, where the
+        // panel keeps it. Keyed by the panel's id, so it is about the panel and not whose it is.
+        const kept = this.toggle && this.remember ? recall(this.el.id) : null;
+        this.open = !this.toggle
+            || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
+        this.show(this.open);
+    },
     beforeUpdate() {
-        this.anchor = this.sticky && this.open && !this.pinned ? this.place() : null;
+        this.anchor = this.log && this.shown() && !this.pinned ? this.place() : null;
     },
     updated() {
+        if (this.el.dataset.subject !== this.subject) return this.start();
+
         this.show(this.open);
-        if (!this.sticky) return;
+        if (!this.log) return;
 
         this.keepPlace();
-        const last = this.list()?.lastElementChild?.id;
-        if (last !== this.lastEntry && this.open && !this.pinned) this.unseen = true;
-        this.lastEntry = last;
+        const first = this.list()?.firstElementChild?.id;
+        if (first !== this.firstEntry && this.shown() && !this.pinned) this.unseen = true;
+        this.firstEntry = first;
         this.paintUnread();
     },
     destroyed() {
-        this.follow?.disconnect();
+        window.removeEventListener('resize', this.onResize);
     },
-    // What a reader just opened should be on screen without them going to look for it — and it is
-    // the BOTTOM that has to arrive, a log's newest lines being there. Only on a click: a panel
-    // restored open, or one patched while open, was never asked to move the page.
+    // Whether this panel folds where it stands; a layout with room for it says 0.
+    folds() {
+        return !!this.toggle && getComputedStyle(this.el).getPropertyValue('--folds').trim() !== '0';
+    },
+    shown() {
+        return this.open || !this.folds();
+    },
+    // What a reader just opened should be on screen without them going to look for it. Only on a
+    // click: a panel restored open, or one patched while open, was never asked to move the page.
     reveal() {
         const box = this.el.getBoundingClientRect();
         if (box.top >= 0 && box.bottom <= window.innerHeight) return;
 
-        this.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        this.el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
+    // The fold is `aria-expanded` alone, and the stylesheet hides a folded body. Where the panel
+    // cannot fold its header is no control at all, so it says nothing and takes no focus.
     show(open) {
         this.open = open;
-        const body = this.body();
         if (this.toggle) {
-            this.toggle.setAttribute('aria-expanded', String(open));
-            body.hidden = !open;
+            const folds = this.folds();
+            this.toggle.disabled = !folds;
+            if (folds) this.toggle.setAttribute('aria-expanded', String(open));
+            else this.toggle.removeAttribute('aria-expanded');
         }
-
-        if (!this.sticky) return;
-
-        // A shut panel has nothing to watch and no height to scroll, so both wait for the way open.
-        // Let go first: the list that was watched may have been replaced, the empty state by the first
-        // entry, and observing the new one alone would keep the old one watched too.
-        const list = this.list();
-        this.follow.disconnect();
-        if (open && list) this.follow.observe(list);
-        if (open && this.pinned) this.toBottom();
         this.paintUnread();
     },
     body() {
@@ -424,22 +428,15 @@ export const Panel = {
     list() {
         return this.body().firstElementChild;
     },
-    // How far the last entry hangs below the box. Measured the way `toBottom` pins, from the entry
-    // itself, so a pin always reads as pinned.
-    below() {
-        const last = this.list()?.lastElementChild;
-
-        return last ? last.getBoundingClientRect().bottom - this.body().getBoundingClientRect().bottom : 0;
-    },
     scrolled() {
         const body = this.body();
-        this.pinned = this.below() <= 4;
+        this.pinned = body.scrollTop <= 2;
         if (this.pinned && this.unseen) this.catchUp(false);
-        // A box's height from the top, so the page is usually in before the reader reaches it.
-        if (body.scrollTop < body.clientHeight) this.loadOlder();
+        // A box's height from the end, so the page is usually in before the reader reaches it.
+        if (body.scrollHeight - body.clientHeight - body.scrollTop < body.clientHeight) this.loadOlder();
     },
-    // The entry at the top of the box and where it sits, so a page put in front of it, or a push
-    // that briefly hides the body, leaves the reader looking at the same line.
+    // The entry at the top of the box and where it sits, so an entry arriving above it, or a push
+    // that briefly re-renders the header, leaves the reader looking at the same line.
     place() {
         const top = this.body().getBoundingClientRect().top;
         const entry = [...(this.list()?.children ?? [])].find(li => li.getBoundingClientRect().bottom > top);
@@ -448,7 +445,7 @@ export const Panel = {
     },
     keepPlace() {
         const entry = this.anchor && document.getElementById(this.anchor.id);
-        if (!entry || !this.open) return;
+        if (!entry || !this.shown()) return;
 
         const body = this.body();
         body.scrollTop += entry.getBoundingClientRect().top - body.getBoundingClientRect().top - this.anchor.offset;
@@ -461,29 +458,15 @@ export const Panel = {
         this.loading = true;
         this.pushEvent(event, { before: Number(before) }, () => { this.loading = false; });
     },
-    // Back to the newest line, as opening the panel does; `scroll` is false where the caller pins.
+    // Back to the newest line; `scroll` is false where the reader has just scrolled there.
     catchUp(scroll = true) {
         this.pinned = true;
         this.unseen = false;
         this.paintUnread();
-        if (scroll) this.toBottom();
+        if (scroll) this.body().scrollTop = 0;
     },
     paintUnread() {
-        if (this.unread) this.unread.hidden = !(this.open && this.unseen);
-    },
-    // `scrollHeight` is a whole number rounded up from a list whose height is rarely one, so asking
-    // for it asks to be a fraction past the end. The main thread allows that; the compositor, which
-    // is what a wheel or a finger goes through, does not — and corrects it on the reader's first
-    // move, which reads as the log jumping up under them. So the end is taken from the last entry
-    // itself, where it actually is, and rounded the only safe way: down.
-    toBottom() {
-        const body = this.body();
-        const last = body.firstElementChild?.lastElementChild;
-        if (!last) return;
-
-        const end = body.scrollTop + last.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom;
-        const grid = devicePixelRatio || 1;
-        body.scrollTop = Math.floor(end * grid) / grid;
+        if (this.unread) this.unread.hidden = !(this.shown() && this.unseen);
     },
 };
 

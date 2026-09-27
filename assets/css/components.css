@@ -44,36 +44,47 @@
     overflow-y: auto;
 }
 
-/* A log keeps a scrolled-up reader's place itself, from the line they were reading; the browser's
-   own anchoring would pick its own line, and does nothing at the very top, where pages land. */
-.panel[data-stick] > .panel-body {
+/* A log keeps a scrolled-down reader's place itself, from the line they were reading, when an
+   entry lands above it; the browser's own anchoring would pick its own line. */
+.panel[data-log] > .panel-body {
     overflow-anchor: none;
 }
 
-.panel:has(> .panel-unread) {
-    position: relative;
+/* One column, the body's row shared with the pill and the band over its top edge, so both sit under
+   the header whatever height the header is. */
+.panel[data-log] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
 }
 
-/* Floats over the foot of the log it belongs to, never over the page, above the band below. */
+.panel[data-log] > .panel-header {
+    grid-area: 1 / 1;
+}
+
+.panel[data-log] > .panel-body,
+.panel[data-log] > .panel-unread,
+.panel[data-log]:has(> .panel-unread:not([hidden]))::after {
+    grid-area: 2 / 1;
+}
+
 .panel > .panel-unread {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
+    align-self: start;
+    justify-self: center;
+    margin-top: 12px;
+    z-index: 2;
 }
 
-/* The lines darken towards the foot behind the button, wall to wall, 12px past it either way, so
+/* The lines darken towards the header behind the button, wall to wall, 12px past it either way, so
    it reads as over the log rather than as one more line of it. Eased, not linear: nearly solid
-   under the button, gone by the top. */
-.panel:has(> .panel-unread:not([hidden]))::after {
+   under the button, gone by its foot. Clear of the body's gold line, which is the header's edge. */
+.panel[data-log]:has(> .panel-unread:not([hidden]))::after {
     content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    align-self: start;
     height: 50px;
-    background: linear-gradient(to top,
+    margin-top: 1px;
+    /* Over the rows, which are positioned and would otherwise paint their text through it. */
+    z-index: 1;
+    background: linear-gradient(to bottom,
             var(--bg-deep) 0%,
             color-mix(in srgb, var(--bg-deep) 92%, transparent) 30%,
             color-mix(in srgb, var(--bg-deep) 60%, transparent) 60%,
@@ -84,6 +95,12 @@
 
 /* `.btn` is a flex box, which outranks the attribute's own `display: none`. */
 .panel > .panel-unread[hidden] {
+    display: none;
+}
+
+/* The fold is the header's `aria-expanded` and nothing else, so a layout that keeps a panel open
+   can say so here, before any script has run. */
+.panel-toggle[aria-expanded="false"] + .panel-body {
     display: none;
 }
 

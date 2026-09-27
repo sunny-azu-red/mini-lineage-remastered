@@ -81,16 +81,25 @@ defmodule MiniLineageWeb.Screens do
   attr :character_id, :string, default: nil
 
   @doc """
-  What a screen puts BELOW the panel rather than inside it. Only the Chronicle so far, and only
-  where there is a run to have one — every other screen draws nothing here.
+  What a screen puts BESIDE the panel rather than inside it. Only the Chronicle so far, and only
+  where there is a run to have one; `aside?/2` says whether there is anything to draw, since the
+  column and the page's width go with it.
   """
-  def aside(%{screen: "character", record: record} = assigns) when record != nil do
-    assigns = assign(assigns, mine: record.id == assigns.character_id)
+  def aside(assigns) do
+    assigns = assign(assigns, mine: assigns.record.id == assigns.character_id)
 
-    ~H|<Record.chronicle record_log={@record_log} older={@record_log_older} mine={@mine} />|
+    ~H"""
+    <Record.chronicle
+      record_log={@record_log}
+      record_id={@record.id}
+      older={@record_log_older}
+      mine={@mine}
+    />
+    """
   end
 
-  def aside(assigns), do: ~H||
+  def aside?("character", record), do: record != nil
+  def aside?(_screen, _record), do: false
 
   @doc """
   Covers both failure modes the reference did: an action that threw, and the modelled `error`
@@ -187,7 +196,8 @@ defmodule MiniLineageWeb.Screens do
     <%= for race <- @catalog.races do %>
       <h2>{race.emoji} {race.label}</h2>
       <p>{raw(race.backstory)}</p>
-      <p>{raw(race.traits)}</p>
+      <%!-- Read by a visitor, who is not the lineage being described. --%>
+      <p>{raw(Narrative.voiced(race.traits, false))}</p>
     <% end %>
 
     <.back_link started={@view.started} dead={@view.dead} />

@@ -162,11 +162,24 @@ defmodule MiniLineage.Game.NarrativeTest do
   end
 
   describe "race traits" do
-    test "render for every race with nothing left unfilled" do
-      for race_id <- @races do
-        traits = Narrative.build_race_traits(Constants.race(race_id))
+    # Their pronouns stay open until a reader is known, like a stored line's; nothing else may.
+    test "render for every race with nothing left unfilled, whoever reads them" do
+      for race_id <- @races, mine <- [true, false] do
+        traits =
+          race_id |> Constants.race() |> Narrative.build_race_traits() |> Narrative.voiced(mine)
+
         assert unrendered(traits) == [], "race #{race_id}: #{inspect(unrendered(traits))}"
         refute traits == ""
+      end
+    end
+
+    test "speak to the run itself, and about it to anybody else" do
+      for race_id <- @races do
+        traits = Narrative.build_race_traits(Constants.race(race_id))
+
+        assert Narrative.voiced(traits, true) =~ ~r/^You embark/
+        refute Narrative.voiced(traits, true) =~ ~r/\b(They|Their|their|them)\b/
+        assert Narrative.voiced(traits, false) =~ ~r/^They embark/
       end
     end
 

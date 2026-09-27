@@ -39,7 +39,6 @@ defmodule MiniLineageWeb.Screens.Record do
         # not know who is still holding it.
         effects: if(held?(assigns.entry), do: assigns.view.effects, else: []),
         # Only the tense moves between a run still going and one that is over.
-        defined: if(assigns.view.dead, do: "was", else: "has been"),
         fought: if(assigns.view.dead, do: "fought", else: "have fought"),
         attack: Format.number(assigns.view.stats.attack),
         defense: Format.number(assigns.view.stats.defense),
@@ -61,8 +60,9 @@ defmodule MiniLineageWeb.Screens.Record do
           at 60fps. Only names and dates jump, having nothing to count through. --%>
     <div id="record-figures" phx-hook="AnimatedValues">
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
-      <p>{raw(@race.backstory)}</p>
-      <p>{raw(@race.traits)}</p>
+      <%!-- What the lineage gave this run, told to its reader; the lore is the Chronicles of
+            Ancestry's to tell. --%>
+      <p>{raw(voiced(@race.traits, @mine))}</p>
 
       <.blessings :if={@effects != []} effects={@effects} voice={@voice} />
 
@@ -88,7 +88,7 @@ defmodule MiniLineageWeb.Screens.Record do
       <h2>{if @dead, do: "☠️ #{@voice.whose} Journey Has Ended", else: "🧭 The Journey So Far"}</h2>
       <p>
         <.road entry={@entry} dead={@view.dead} at={@entry && @entry.last_seen_at} voice={@voice} />
-        {@voice.whose} journey across the realm {@defined} defined by conflict and survival. {@voice.they} {@fought} through
+        {@voice.they} {@fought} through
         <Controls.counted
           key="rec-battles"
           class="battles"
@@ -209,14 +209,15 @@ defmodule MiniLineageWeb.Screens.Record do
   defp kind_label(%{kind: "debuff"}), do: "Debuff"
 
   attr :record_log, :list, default: []
-  # Whether entries older than the first one held remain to be asked for.
+  attr :record_id, :string, required: true
+  # Whether entries older than the last one held remain to be asked for.
   attr :older, :boolean, default: false
   # Whose chronicle this is, which decides whether it is told to them or about them.
   attr :mine, :boolean, default: true
 
   @doc """
-  A run's chronicle, in a panel of its own beneath the record's, where its length cannot crowd out
-  what that panel is named for.
+  A run's chronicle, newest first, in a panel of its own beside the record's; where the two stack
+  it folds, and starts folded on every visit, so its length never crowds out the record.
   """
   def chronicle(assigns) do
     ~H"""
@@ -225,12 +226,14 @@ defmodule MiniLineageWeb.Screens.Record do
       title="The Chronicle"
       collapsible
       collapsed
-      max_height={260}
-      stick_to_bottom
+      remember={false}
+      subject={@record_id}
+      scrolls
+      log
       load_older="older_chronicle"
       body_class={@record_log != [] && "rows"}
     >
-      <:unread>👁️ New entries below</:unread>
+      <:unread>👁️ New entries above</:unread>
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>
@@ -240,7 +243,7 @@ defmodule MiniLineageWeb.Screens.Record do
           id="chronicle-log"
           class="chronicle"
           phx-hook="LocalTimes"
-          data-older-than={@older && hd(@record_log).id}
+          data-older-than={@older && List.last(@record_log).id}
         >
           <li
             :for={entry <- @record_log}
