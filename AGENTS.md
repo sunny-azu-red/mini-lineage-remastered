@@ -541,7 +541,8 @@ entry's DOM id, and `.panel-unread` appears over the top only for entries that a
 were away. The Chronicle opens on its newest 25 and puts the page before the last it holds on the
 end, by keyset, when the reader nears it. Ten in `:e2e`, so a suite outgrows it without a minute of
 shopping. Beside the record it grows to 640px and never folds; stacked on a phone it folds, and
-starts folded on every visit and every record.
+starts folded on every visit and every record. The Inventory folds there too but opens unfolded and
+remembers, being the reader's own on every screen rather than a different run's each visit.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.

@@ -1,8 +1,7 @@
 defmodule MiniLineageWeb.PanelTest do
   @moduledoc """
-  What `Controls.panel/1` renders for the options no screen happens to use today. A fold has no
-  panel in the game since the Chronicle moved beside the record, so nothing else would notice it
-  going wrong until one gets it again.
+  What `Controls.panel/1` renders for a fold, apart from any screen. The panels that fold in the game
+  do so only on a phone, where the unit suite never looks.
   """
   use ExUnit.Case, async: true
 

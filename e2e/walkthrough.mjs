@@ -213,6 +213,27 @@ try {
     // Clicking empty space leaves nothing focused, which is the player's choice to keep.
     await tab.mouse.click(5, 5);
 
+    // ---- the Inventory folds on a phone, and stays as the reader left it -----------------------
+    const inventory = page.locator('#inventory .panel-body');
+    const folded = () => inventory.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
+    check('beside the main panel the Inventory has no fold to offer',
+        await page.locator('#inventory .panel-toggle').isDisabled() && await inventory.isVisible());
+    const desktop = page.viewportSize();
+    await page.setViewportSize({ width: 320, height: 800 });
+    // The hook hears of the new width from a resize event, which lands after the call returns.
+    const offered = await page.waitForFunction(
+        () => !document.querySelector('#inventory .panel-toggle').disabled, null, { timeout: 3000 })
+        .then(() => true, () => false);
+    check('...stacked on a phone it folds, and opens unfolded', offered && await inventory.isVisible());
+    await page.click('#inventory .panel-toggle');
+    check('...until its header folds it', await folded());
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and a refresh keeps the fold, the panel being the reader\'s own', await folded());
+    await page.click('#inventory .panel-toggle');
+    check('...until they open it again', await inventory.isVisible());
+    await page.setViewportSize(desktop);
+
     // ---- a living character is kept out of what it may ACT on, and nothing else ----------------
     // The Tome carries no action, so there is nothing on it to be kept away from: the pin is about
     // what may be done. Character creation is the opposite — a living run is past it.

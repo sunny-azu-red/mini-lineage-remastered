@@ -183,7 +183,15 @@ defmodule MiniLineageWeb.Layouts do
         </div>
       </Controls.panel>
 
-      <Controls.panel title="Inventory" class="inventory-panel" body_class="rows">
+      <%!-- Stacked under the main panel on a phone it folds, open until the reader says otherwise:
+            it is theirs on every screen, so their fold is kept rather than asked again. --%>
+      <Controls.panel
+        id="inventory"
+        title="Inventory"
+        class="inventory-panel"
+        body_class="rows"
+        collapsible
+      >
         <div class="stat-row">
           <span class="stat-value" title="Equipped Armor">
             {@view.armor.emoji} <span class="item">{@view.armor.name}</span>
