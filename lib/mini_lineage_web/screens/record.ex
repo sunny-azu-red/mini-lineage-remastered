@@ -252,7 +252,8 @@ defmodule MiniLineageWeb.Screens.Record do
             {painted(entry)}
           >
             <div class="entry-head">
-              <.stamp at={entry.at} /> &bull; {kind_label(entry)}
+              <span><.stamp at={entry.at} /> &bull; {kind_label(entry)}</span>
+              <span>&num;{entry.number}</span>
             </div>
             <%= if entry.kind == "fight" do %>
               <%!-- Every line the fight drew, in order, bar the two that were button labels. A

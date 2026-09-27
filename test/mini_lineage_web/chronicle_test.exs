@@ -30,6 +30,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   defp fight(absent \\ []) do
     %{
       id: System.unique_integer([:positive]),
+      number: 1,
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
       kind: "fight",
       ambushed: :ambush_line not in absent,
@@ -66,6 +67,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   describe "every line on an entry" do
     @complete %{
       id: 1,
+      number: 1,
       narrative: %{
         crit_line: "{whose} strike lands.",
         kill_line: "{they} cut down the {object} before {them}.",
@@ -91,7 +93,13 @@ defmodule MiniLineageWeb.ChronicleTest do
     end
 
     test "and an ending is told to whoever is reading it, not to the run that had it" do
-      ended = %{id: 2, kind: "ending", line: @complete.narrative.outcome_line, at: @complete.at}
+      ended = %{
+        id: 2,
+        number: 2,
+        kind: "ending",
+        line: @complete.narrative.outcome_line,
+        at: @complete.at
+      }
 
       assert html_for([ended], mine: true) =~ "You walk away"
       assert html_for([ended], mine: false) =~ "They walk away"
@@ -102,6 +110,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   defp deed(kind, line),
     do: %{
       id: System.unique_integer([:positive]),
+      number: 1,
       kind: kind,
       line: line,
       at: ~U[2026-09-24 14:33:00Z]
@@ -197,7 +206,16 @@ defmodule MiniLineageWeb.ChronicleTest do
              ]
 
       assert hd(entries([fight()])) =~
-               ~r|<div class="entry-head">.*24/09/26, 14:32.*&bull; Battle\s*</div>|s
+               ~r|<div class="entry-head">\s*<span>.*24/09/26, 14:32.*&bull; Battle</span>|s
+    end
+
+    # The row id is the whole table's and says nothing about the run; the number is its place in it,
+    # and stands apart from the date so the two never read as one label.
+    test "and names its place in the run on the right, apart from when and what it was" do
+      [entry] = entries([%{deed("purchase", "x") | id: 9_041, number: 7}])
+
+      assert entry =~ ~r|&bull; Purchase</span>\s*<span>&num;7</span>\s*</div>|
+      refute entry =~ "&num;9041"
     end
 
     # The same silent defect the fight lines have: an unvoiced line renders its braces on the page
@@ -303,7 +321,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   defp own_tag(entry), do: entry |> String.split(">", parts: 2) |> hd()
 
   defp head(entry) do
-    [_, head] = Regex.run(~r|<div class="entry-head">(.*?)</div>|s, entry)
+    [_, head] = Regex.run(~r|<div class="entry-head">\s*<span>(.*?)</span>|s, entry)
     head |> String.split("&bull;") |> List.last() |> String.trim()
   end
 end

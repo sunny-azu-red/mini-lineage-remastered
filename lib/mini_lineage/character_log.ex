@@ -79,44 +79,60 @@ defmodule MiniLineage.CharacterLog do
 
   @doc """
   The `limit` entries before `cursor`, the newest when it is nil, newest first as the Chronicle
-  reads — and whether any older remain. One row over the limit is read to answer that.
+  reads — and whether any older remain. One row over the limit is read to answer that. Each is
+  numbered by its place in the run, counted in the same statement: nothing is ever deleted from a
+  run's log, so the newest on the page is the count of the rows up to it.
   """
   def page(character_id, cursor \\ nil, limit \\ @window) do
+    held = Entry |> where([e], e.character_id == ^character_id) |> older_than(cursor)
+
     rows =
-      Entry
-      |> where([e], e.character_id == ^character_id)
-      |> older_than(cursor)
+      held
       |> order_by([e], desc: e.id)
       |> limit(^(limit + 1))
+      |> select([e], {e, subquery(select(held, [e], count()))})
       |> Repo.all()
 
-    {rows |> Enum.take(limit) |> Enum.map(&to_entry/1), length(rows) > limit}
+    entries =
+      rows
+      |> Enum.take(limit)
+      |> Enum.with_index(fn {e, count}, i -> to_entry(e, count - i) end)
+
+    {entries, length(rows) > limit}
   end
 
   defp older_than(query, nil), do: query
   defp older_than(query, cursor), do: where(query, [e], e.id < ^cursor)
 
   @doc """
-  Everything written after `cursor`, newest first. A keyset, not an offset, so adding one entry
-  never walks the rows a reader already holds.
+  Everything written after `cursor`, newest first, numbered on from `above`, the number of the
+  entry at the cursor. A keyset, not an offset, so adding one entry never walks the rows a reader
+  already holds, nor counts them.
   """
-  def since(character_id, cursor) do
+  def since(character_id, cursor, above) do
     Entry
     |> where([e], e.character_id == ^character_id and e.id > ^cursor)
-    |> order_by([e], desc: e.id)
+    |> order_by([e], asc: e.id)
     |> Repo.all()
-    |> Enum.map(&to_entry/1)
+    |> Enum.with_index(fn e, i -> to_entry(e, above + i + 1) end)
+    |> Enum.reverse()
   end
 
   # What the Chronicle iterates. A fight keeps the shape the battle screen knows; everything else
   # is one line, and the component tells them apart by `kind`. Only an ambush draws an ambush line.
-  defp to_entry(%Entry{kind: "fight"} = e) do
+  defp to_entry(%Entry{kind: "fight"} = e, number) do
     battle = to_battle(e)
-    Map.merge(battle, %{id: e.id, kind: "fight", ambushed: battle.narrative.ambush_line != nil})
+
+    Map.merge(battle, %{
+      id: e.id,
+      number: number,
+      kind: "fight",
+      ambushed: battle.narrative.ambush_line != nil
+    })
   end
 
-  defp to_entry(%Entry{} = e),
-    do: %{id: e.id, kind: e.kind, at: e.inserted_at, line: e.narrative["line"]}
+  defp to_entry(%Entry{} = e, number),
+    do: %{id: e.id, number: number, kind: e.kind, at: e.inserted_at, line: e.narrative["line"]}
 
   defp to_battle(nil), do: nil
 

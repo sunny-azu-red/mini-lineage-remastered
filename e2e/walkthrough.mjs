@@ -552,6 +552,10 @@ try {
         unaccounted.length ? `never left: ${unaccounted.join(', ')}` : `${entries.length} entries`);
     check('...and its Beginning at the very end, once it has all been read',
         await page.locator('#chronicle-log li').last().getAttribute('class') === 'start');
+    // Counted per page rather than stored, so the pages stitched together must count down unbroken.
+    const numbers = await page.locator('#chronicle-log .entry-head > span:last-child').allTextContents();
+    check('...numbered by its place in the run, down to the Beginning as #1',
+        numbers.every((n, i) => n === `#${numbers.length - i}`), numbers.slice(-3).join(' '));
 
     // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
     // the board never emits a session id is proved in board_test. What IS observable here is the

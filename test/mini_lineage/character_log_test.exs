@@ -270,7 +270,9 @@ defmodule MiniLineage.CharacterLogTest do
       start_character(session)
 
       # The blessing it is born with is a deed done to it, so it is told like any other.
-      assert [%{kind: "start"}, %{kind: "buff"}] = recent(stored_id(session))
+      assert [%{kind: "start", number: 1}, %{kind: "buff", number: 2}] =
+               recent(stored_id(session))
+
       assert fights(session) == []
     end
 
@@ -297,11 +299,14 @@ defmodule MiniLineage.CharacterLogTest do
       cursor = newest.id
 
       fight(session)
-      added = CharacterLog.since(id, cursor)
+      added = CharacterLog.since(id, cursor, newest.number)
 
       # Counted by kind: the fight may cross a level, which the dice decide, and log a row of its own.
       assert Enum.count(added, &(&1.kind == "fight")) == 1
       assert Enum.all?(added, &(&1.id > cursor))
+      # Numbered on from the newest held, however many rows the dice made of it.
+      assert Enum.map(added, & &1.number) ==
+               Enum.to_list((newest.number + length(added))..(newest.number + 1)//-1)
     end
 
     # Nothing has been written since, so there is nothing to append and no reason to have asked.
@@ -311,7 +316,8 @@ defmodule MiniLineage.CharacterLogTest do
 
       id = stored_id(session)
 
-      assert CharacterLog.since(id, List.last(recent(id)).id) == []
+      last = List.last(recent(id))
+      assert CharacterLog.since(id, last.id, last.number) == []
     end
   end
 

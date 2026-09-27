@@ -141,6 +141,9 @@ defmodule MiniLineageWeb.GameLive do
   defp cursor([]), do: 0
   defp cursor([newest | _]), do: newest.id
 
+  defp top_number([]), do: 0
+  defp top_number([newest | _]), do: newest.number
+
   defp clear_record(socket) do
     assign(socket,
       record: nil,
@@ -399,7 +402,8 @@ defmodule MiniLineageWeb.GameLive do
   # every blow re-reads the entire history of a long run to add one line to it. The window grows
   # as the reader watches, and a refresh comes back to the newest page.
   defp append_chronicle(socket, id) do
-    added = CharacterLog.since(id, socket.assigns.record_log_cursor)
+    %{record_log: held, record_log_cursor: cursor} = socket.assigns
+    added = CharacterLog.since(id, cursor, top_number(held))
 
     case added do
       [] ->

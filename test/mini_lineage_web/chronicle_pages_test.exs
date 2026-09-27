@@ -34,9 +34,12 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
 
   defp held(html), do: html |> LazyHTML.from_document() |> LazyHTML.query("#chronicle-log li")
 
-  defp lines(html), do: html |> held() |> Enum.map(&LazyHTML.text/1) |> Enum.map(&deed/1)
+  defp lines(html), do: texts(html, "#chronicle-log > li > span")
 
-  defp deed(text), do: text |> String.split("Purchase") |> List.last() |> String.trim()
+  defp numbers(html), do: texts(html, "#chronicle-log .entry-head > span:last-child")
+
+  defp texts(html, selector),
+    do: html |> LazyHTML.from_document() |> LazyHTML.query(selector) |> Enum.map(&LazyHTML.text/1)
 
   defp older_than(html) do
     case html
@@ -72,6 +75,22 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     refute older_than(html)
   end
 
+  # Counted rather than stored, so every page has to count from the right place: the first row of
+  # the run is #1 however many pages it took to reach it.
+  test "numbers every entry by its place in the run, from the newest page to the first", %{
+    conn: conn
+  } do
+    {:ok, view, html} = live(conn, ~p"/character/#{run_with(120)}")
+    assert numbers(html) == Enum.map(120..96//-1, &"##{&1}")
+
+    html =
+      Enum.reduce(1..4, html, fn _, html ->
+        render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      end)
+
+    assert numbers(html) == Enum.map(120..1//-1, &"##{&1}")
+  end
+
   # Two scroll events can both ask before the first answer lands; the second names an entry that is
   # no longer the last held, and must not put the same page on the end a second time.
   test "and an ask that is already answered changes nothing", %{conn: conn} do
@@ -99,7 +118,9 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), "Longlived")
     send(view.pid, {:record_updated, player, id, true})
 
-    assert lines(render(view)) == ["Deed 31." | held]
+    html = render(view)
+    assert lines(html) == ["Deed 31." | held]
+    assert Enum.take(numbers(html), 2) == ["#31", "#30"]
   end
 
   test "and a run that fits on one page never offers another", %{conn: conn} do

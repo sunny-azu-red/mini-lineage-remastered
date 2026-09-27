@@ -330,6 +330,11 @@ columns once, kept because they were "what you would aggregate", and nothing eve
 live in `statistics` as running counters. Whether a fight was ambushed is whether it has an
 `ambush_line`. A column goes back when something sorts or filters on it, and not before.
 
+So an entry's `#` is counted, never stored: its place in the run is how many of the run's rows
+come up to it, one uncorrelated `count()` in the page's own statement, and `since/3` numbers on
+from the entry the reader holds. It holds only because nothing deletes a single row of a run's log;
+the row id is the whole table's and never reaches the page.
+
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
 action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
 `phx-click` on any of them — so the first clause lets every state reach

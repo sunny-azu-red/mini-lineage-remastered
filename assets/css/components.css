@@ -596,8 +596,12 @@ ol.chronicle li.purchase {
     background-color: var(--wash-success);
 }
 
-/* When, and what kind of thing: a label over the entry, set as every label is, in the date's colour. */
+/* When and what kind of thing on the left, which one in the run on the right: a label over the
+   entry, set as every label is, in the date's colour. */
 ol.chronicle .entry-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
     color: var(--text-muted);
 }
 
