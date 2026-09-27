@@ -30,7 +30,9 @@ list wins — several generator defaults do not exist here.
   than everything else on that page put together and crowds out what the panel is named for. The aside
   and the sidebar are one `.side` column, left of the main one or right of it, each at its own fixed
   width, so one breakpoint stacks either and every rule about a side column is written once. A page
-  with an aside widens by what it takes, and its footer stays under the main panel, as on Town.
+  with an aside widens by what it takes, and its footer stays under the main panel, as on Town. The
+  aside grows with what it holds up to the main panel's height and no further: a grid row the
+  footer is not in, with the aside sized as if empty so the panel alone decides it.
 
 ### Working here
 
@@ -539,8 +541,9 @@ it through a state the reader never left.
 them there. One scrolled down keeps the line they were on across every patch, restored from that
 entry's DOM id, and `.panel-unread` appears over the top only for entries that arrived while they
 were away. The Chronicle opens on its newest 25 and puts the page before the last it holds on the
-end, by keyset, when the reader nears it. Ten in `:e2e`, so a suite outgrows it without a minute of
-shopping. Beside the record it grows to 640px and never folds; stacked on a phone it folds, and
+end, by keyset, when the reader nears it, or at once when a page does not fill the box, since a
+box that cannot scroll cannot ask. Ten in `:e2e`, so a suite outgrows it without a minute of
+shopping. Beside the record it grows with what it holds up to the record's height and never folds; stacked on a phone it folds, and
 starts folded on every visit and every record. The Inventory folds there too but opens unfolded and
 remembers, being the reader's own on every screen rather than a different run's each visit.
 

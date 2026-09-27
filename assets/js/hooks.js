@@ -421,6 +421,12 @@ export const Panel = {
             else this.toggle.removeAttribute('aria-expanded');
         }
         this.paintUnread();
+        this.fill();
+    },
+    // A box its entries do not fill cannot be scrolled to ask for the next page, so it asks now.
+    fill() {
+        const body = this.log && this.shown() && this.body();
+        if (body && body.scrollHeight <= body.clientHeight) this.loadOlder();
     },
     body() {
         return this.el.querySelector(':scope > .panel-body');

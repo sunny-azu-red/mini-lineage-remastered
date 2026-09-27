@@ -492,13 +492,13 @@ try {
     check('...and tells the story fight by fight',
         await page.locator('#chronicle-log li').count() > 0,
         `${await page.locator('#chronicle-log li').count()} fights`);
-    // Beside the record, growing with what it holds up to a cap rather than to the record's height,
-    // and open: there is room for it here, so its header is no control.
+    // Beside the record, growing with what it holds up to the record's height and no further, and
+    // open: there is room for it here, so its header is no control. This run fills it.
     const beside = await page.evaluate(() => {
         const record = document.querySelector('#main > .panel').getBoundingClientRect();
         const log = document.querySelector('#chronicle').getBoundingClientRect();
-        const body = document.querySelector('#chronicle .panel-body');
-        return { right: log.left >= record.right, top: log.top - record.top, box: body.clientHeight,
+        return { right: log.left >= record.right, top: log.top - record.top,
+                 bottom: log.bottom - record.bottom,
                  control: !document.querySelector('#chronicle .panel-header').disabled };
     });
     // The footer belongs to the main column, as on Town: under the record, however long the log.
@@ -507,17 +507,18 @@ try {
             - document.querySelector('#main > .panel').getBoundingClientRect().bottom);
     check('...with the footer under the record, not under whichever column is longer',
         Math.abs(footerGap - 12) <= 1, `${footerGap}px below the record`);
-    check('...in a panel of its own beside the record, open, and never a fold',
-        beside.right && Math.abs(beside.top) <= 1 && !beside.control
+    check('...in a panel of its own beside the record, as tall as it, open, and never a fold',
+        beside.right && Math.abs(beside.top) <= 1 && Math.abs(beside.bottom) <= 1 && !beside.control
             && await page.locator('#chronicle .panel-body').isVisible(),
         JSON.stringify(beside));
 
-    // A log, not a wall: capped however long the run was, and opening on its ending, newest first.
+    // A log, not a wall: held to the record however long the run was, and opening on its ending,
+    // newest first.
     const log = await page.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
         return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop, shown: body.clientHeight };
     });
-    check('...in a box the run cannot outgrow', log.shown >= 100 && log.shown <= 640 && log.hidden > 0,
+    check('...in a box the run cannot outgrow', log.shown >= 100 && log.hidden > 0,
         `${log.shown}px shown, ${log.hidden}px of it scrolled away`);
     check('...opening on how it ended', log.at === 0
         && await page.locator('#chronicle-log li').first().locator('.deaths').count() === 1,
@@ -629,6 +630,12 @@ try {
         await page.textContent('#main .header-name'));
     check('...which names the character and its ancestry',
         /Cheater/.test(await page.textContent('#main h2') ?? ''));
+    // A run a moment old has a line or two, and its Chronicle is as long as they are.
+    const young = await page.evaluate(() => ({
+        record: document.querySelector('#main > .panel').getBoundingClientRect().height,
+        log: document.querySelector('#chronicle').getBoundingClientRect().height,
+    }));
+    check('...its Chronicle only as tall as what it holds', young.log < young.record, JSON.stringify(young));
 
     // The cheat is entered here: the screen has no <select> for the arrow keys to walk, and
     // nothing on arrival that could kill the cheater before the sequence lands.

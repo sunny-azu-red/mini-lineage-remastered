@@ -186,7 +186,7 @@
 /* Room for a fight's lines at a few words to the line. The page widens by what it takes, so the
    main panel keeps the width it has alone. */
 #aside {
-    --side-width: 300px;
+    --side-width: 310px;
 }
 
 #wrapper:has(#aside) {
@@ -200,9 +200,36 @@
     margin-top: 12px;
 }
 
-/* A side column never decides how long the page is, so what scrolls in it stops at a cap. */
-.side .panel-body.scrolls {
-    max-height: 640px;
+/* Beside the record the Chronicle grows to the record's height and scrolls past it. A grid,
+   so the aside spans the record's row and not the footer's; sized as if empty, so that row is the
+   record's alone. */
+@media (width > 640px) {
+    #content:has(#aside) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        /* The footer keeps its own margin, as it has beside the sidebar. */
+        row-gap: 0;
+    }
+
+    #content:has(#aside) #main {
+        display: contents;
+    }
+
+    #content:has(#aside) #main>* {
+        grid-column: 1;
+    }
+
+    #aside {
+        grid-area: 1 / 2;
+        width: var(--side-width);
+        contain: size;
+    }
+
+    #aside>.panel {
+        max-height: 100%;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
 }
 
 /* Beside the main panel there is room for a side one, so it does not fold: its header stops being
@@ -279,7 +306,7 @@
         margin-top: 0;
     }
 
-    /* A smaller cap, and a fold that starts shut, so the main panel is what the page ends on. */
+    /* A cap, and a fold that starts shut, so the main panel is what the page ends on. */
     .side .panel-body.scrolls {
         max-height: 260px;
     }
