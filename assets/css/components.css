@@ -46,7 +46,7 @@
 
 /* A log keeps a scrolled-down reader's place itself, from the line they were reading, when an
    entry lands above it; the browser's own anchoring would pick its own line. */
-.panel[data-log] > .panel-body {
+.panel[data-log]>.panel-body {
     overflow-anchor: none;
 }
 
@@ -57,17 +57,17 @@
     grid-template-columns: minmax(0, 1fr);
 }
 
-.panel[data-log] > .panel-header {
+.panel[data-log]>.panel-header {
     grid-area: 1 / 1;
 }
 
-.panel[data-log] > .panel-body,
-.panel[data-log] > .panel-unread,
+.panel[data-log]>.panel-body,
+.panel[data-log]>.panel-unread,
 .panel[data-log]:has(> .panel-unread:not([hidden]))::after {
     grid-area: 2 / 1;
 }
 
-.panel > .panel-unread {
+.panel>.panel-unread {
     align-self: start;
     justify-self: center;
     margin-top: 12px;
@@ -80,27 +80,25 @@
 .panel[data-log]:has(> .panel-unread:not([hidden]))::after {
     content: '';
     align-self: start;
-    height: 50px;
+    height: 60px;
     margin-top: 1px;
     /* Over the rows, which are positioned and would otherwise paint their text through it. */
     z-index: 1;
     background: linear-gradient(to bottom,
             var(--bg-deep) 0%,
-            color-mix(in srgb, var(--bg-deep) 92%, transparent) 30%,
-            color-mix(in srgb, var(--bg-deep) 60%, transparent) 60%,
-            color-mix(in srgb, var(--bg-deep) 20%, transparent) 85%,
+            color-mix(in srgb, var(--bg-deep) 70%, transparent) 30%,
             transparent 100%);
     pointer-events: none;
 }
 
 /* `.btn` is a flex box, which outranks the attribute's own `display: none`. */
-.panel > .panel-unread[hidden] {
+.panel>.panel-unread[hidden] {
     display: none;
 }
 
 /* The fold is the header's `aria-expanded` and nothing else, so a layout that keeps a panel open
    can say so here, before any script has run. */
-.panel-toggle[aria-expanded="false"] + .panel-body {
+.panel-toggle[aria-expanded="false"]+.panel-body {
     display: none;
 }
 
