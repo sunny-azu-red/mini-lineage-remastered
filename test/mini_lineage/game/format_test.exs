@@ -4,7 +4,8 @@ defmodule MiniLineage.Game.FormatTest do
 
   Adena is shortened once it passes a thousand, and the boundaries are where a formatter goes
   wrong: 999 and 1,000 sit either side of one, and a value that lands exactly on a unit must not
-  read as "1.0k". The client animates the same figure with its own copy of this in hooks.js, but
+  read as "1.0k". The client animates the same figure with its own copy of this in
+  hooks/animated-values.js, but
   every count ends on the server's text, so only this side is ever read.
   """
   use ExUnit.Case, async: true
@@ -49,7 +50,7 @@ defmodule MiniLineage.Game.FormatTest do
 
   describe "the values the JavaScript must agree on" do
     test "adena is formatted the same way here" do
-      # The count-up animation formats its own intermediate frames, so hooks.js carries a second
+      # The count-up animation formats its own intermediate frames, so hooks/animated-values.js carries a second
       # implementation of this — it cannot be removed without the number jumping format mid-count.
       # Both sides read this file, so a divergence fails a test instead of wobbling on screen.
       %{"cases" => cases} =
@@ -61,7 +62,7 @@ defmodule MiniLineage.Game.FormatTest do
     end
 
     test "and so is a countdown" do
-      # The server renders the first frame and `timerLabel` in hooks.js repaints it every second,
+      # The server renders the first frame and `timerLabel` in hooks/effect-timers.js repaints it every second,
       # so a divergence shows as the number changing shape the instant the hook takes over.
       %{"cases" => cases} =
         "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
@@ -73,7 +74,7 @@ defmodule MiniLineage.Game.FormatTest do
 
     test "and so is the same time said in a sentence" do
       # The badge has a few pixels and says "1m"; a paragraph has room to say "1m 30s". Twinned
-      # with `remainingLabel` in hooks.js off the same table, for the same reason.
+      # with `remainingLabel` in hooks/effect-timers.js off the same table, for the same reason.
       %{"spoken" => cases} =
         "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
 

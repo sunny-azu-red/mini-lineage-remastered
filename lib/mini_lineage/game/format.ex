@@ -45,7 +45,7 @@ defmodule MiniLineage.Game.Format do
 
   @doc """
   An effect's remaining time, as the icon wears it: seconds until a minute, whole minutes after.
-  Twinned with `timerLabel` in `hooks.js`, which repaints this every second.
+  Twinned with `timerLabel` in `hooks/effect-timers.js`, which repaints this every second.
   """
   def countdown(remaining_ms) do
     seconds = max(0, ceil(remaining_ms / 1000))
@@ -55,7 +55,7 @@ defmodule MiniLineage.Game.Format do
 
   @doc """
   The same time said in a sentence rather than on a badge: "4m 37s", "5m", "37s". Twinned with
-  `remainingLabel` in `hooks.js`, which repaints this every second.
+  `remainingLabel` in `hooks/effect-timers.js`, which repaints this every second.
   """
   def remaining(remaining_ms) do
     seconds = max(0, ceil(remaining_ms / 1000))

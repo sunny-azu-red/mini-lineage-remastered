@@ -51,7 +51,7 @@ try {
         await page.locator('#copyright .build-testing').count() === 1);
 
     // ---- the two adena formatters agree -------------------------------------------------------
-    // The count-up animation formats its own frames, so hooks.js carries a second implementation
+    // The count-up animation formats its own frames, so hooks/animated-values.js carries a second implementation
     // of Format.adena. It cannot be removed — the number would jump format mid-count — so both
     // sides are held to one table instead. Elixir reads it in format_test.exs.
     const { cases } = JSON.parse(readFileSync('test/fixtures/adena_format.json', 'utf8'));

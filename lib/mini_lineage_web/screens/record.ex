@@ -229,11 +229,11 @@ defmodule MiniLineageWeb.Screens.Record do
       remember={false}
       subject={@record_id}
       scrolls
-      log
+      log={:newest_first}
       load_older="older_chronicle"
+      unread={{"new entry", "new entries"}}
       body_class={@record_log != [] && "rows"}
     >
-      <:unread>👁️ New entries above</:unread>
       <%= if @record_log == [] do %>
         <p class="last">Not one blow struck. This tale is over before it began.</p>
       <% else %>

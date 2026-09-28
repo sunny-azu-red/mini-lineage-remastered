@@ -181,13 +181,18 @@ try {
     check('...and the road is dated by that same entry, as it arrives', !!dates.road && dates.road === dates.last,
         `road ${dates.road} · last entry ${dates.last}`);
 
-    // ---- a reader scrolled down to read is left there, and told what arrived above -----------
+    // ---- a reader scrolled down to read is left there, and shown what arrived above -----------
     // Spiced Ale from here on: one row a purchase and no dice, so every arrival is certain.
     const logState = () => watcher.evaluate(() => {
         const body = document.querySelector('#chronicle .panel-body');
+        const pill = document.querySelector('#chronicle .panel-unread');
+        const marked = [...document.querySelectorAll('#chronicle-log [data-unread]')];
+        const line = marked[0]?.getBoundingClientRect().bottom;
         return {
             top: body.scrollTop,
-            unread: !document.querySelector('#chronicle .panel-unread').hidden,
+            pill: pill.hidden ? null : pill.textContent.trim(),
+            marked: marked.map(li => `${li.id}:${li.dataset.unread}`),
+            fromBottom: line === undefined ? null : body.getBoundingClientRect().bottom - line,
         };
     });
     // Brought into view first, as a reader would: a wheel over a point below the fold scrolls nothing.
@@ -215,7 +220,7 @@ try {
         return { id: entry.id, offset: entry.getBoundingClientRect().top - box.top };
     });
     check('a reader who scrolls down the Chronicle is told of nothing while nothing has happened',
-        down.top > 2 && !down.unread, JSON.stringify(down));
+        down.top > 2 && !down.pill && !down.marked.length, JSON.stringify(down));
 
     const arrived = await buyAle();
     const held = await watcher.evaluate((id) =>
@@ -223,17 +228,67 @@ try {
             - document.querySelector('#chronicle .panel-body').getBoundingClientRect().top, reading.id);
     check('...and is left on the line they were reading when an entry arrives above it',
         arrived && Math.abs(held - reading.offset) <= 1, `${reading.offset} -> ${held}`);
-    check('...told instead that there is more above', (await logState()).unread);
+    const first = await newest();
+    let away = await logState();
+    check('...with the line drawn under it, where their reading left off',
+        away.marked.join() === `${first}:1`, away.marked.join());
+    check('...and a pill saying how much arrived', away.pill === '👁️ 1 new entry', away.pill);
+
+    // Until the batch is taller than the box, so the jump has somewhere to land short of the top.
+    let batch = 1;
+    const outgrown = () => watcher.evaluate(() => {
+        const body = document.querySelector('#chronicle .panel-body');
+        const line = document.querySelector('#chronicle-log [data-unread]')?.getBoundingClientRect().bottom ?? 0;
+        return line - document.getElementById('chronicle-log').getBoundingClientRect().top > 1.5 * body.clientHeight;
+    });
+    while (batch < 15 && !(await outgrown()))
+        if (await buyAle()) batch++;
+    away = await logState();
+    check('...the line staying under the first of them as more arrive, counting the batch',
+        away.marked.join() === `${first}:${batch}`, `${away.marked.join()} after ${batch}`);
+    check('...and so does the pill', away.pill === `👁️ ${batch} new entries`, away.pill);
+
+    await watcher.click('#chronicle .panel-unread');
+    const jumped = await logState();
+    check('the pill takes them back to where they left off, the line on the bottom edge of the box',
+        jumped.fromBottom !== null && Math.abs(jumped.fromBottom - 24) <= 1, JSON.stringify(jumped));
+    check('...counting only what is still above them', /^👁️ \d+ more above$/.test(jumped.pill ?? ''), jumped.pill);
 
     await watcher.click('#chronicle .panel-unread');
     const caught = await logState();
-    check('...which takes them up to it', caught.top === 0 && !caught.unread, JSON.stringify(caught));
+    check('...and a second click takes them up to the newest, with nothing left to tell',
+        caught.top === 0 && !caught.pill && !caught.marked.length, JSON.stringify(caught));
 
     const topNow = await newest();
     await buyAle();
     const following = await logState();
     check('...and from there the newest is always in view again',
-        following.top === 0 && !following.unread && await newest() !== topNow, JSON.stringify(following));
+        following.top === 0 && !following.pill && !following.marked.length && await newest() !== topNow,
+        JSON.stringify(following));
+
+    // ---- a tab in the background is away too, and comes back to the view it left --------------
+    const topEntry = await newest();
+    const at = () => watcher.evaluate((id) => document.getElementById(id).getBoundingClientRect().top
+        - document.querySelector('#chronicle .panel-body').getBoundingClientRect().top, topEntry);
+    const wasAt = await at();
+    await watcher.evaluate(() => {
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => window.__hidden });
+        window.__hidden = true;
+    });
+    for (let n = 0; n < 3; n++) await buyAle();
+    await watcher.evaluate(() => {
+        window.__hidden = false;
+        document.dispatchEvent(new Event('visibilitychange'));
+        delete document.hidden;
+    });
+    const returned = await logState();
+    // Half a pixel a patch: a scroll offset is whole pixels and a row here is not.
+    check('a reader whose tab was in the background comes back to the line they left',
+        Math.abs((await at()) - wasAt) <= 2, `${wasAt} -> ${await at()}`);
+    check('...shown what arrived meanwhile, the line just above them',
+        returned.pill === '👁️ 3 new entries' && returned.marked.length === 1, JSON.stringify(returned));
+    await watcher.click('#chronicle .panel-unread');
+    await watcher.click('#chronicle .panel-unread').catch(() => {});
 
     // ---- and a long one arrives a page at a time -----------------------------------------------
     // The suites' page is ten (config/e2e.exs), so this outgrows it twice over.
@@ -267,10 +322,11 @@ try {
         const box = document.querySelector('#chronicle .panel-body').getBoundingClientRect();
         const entry = document.getElementById(id).getBoundingClientRect();
         return { inView: entry.bottom > box.top && entry.top < box.bottom,
-                 unread: !document.querySelector('#chronicle .panel-unread').hidden };
+                 unread: !document.querySelector('#chronicle .panel-unread').hidden,
+                 marked: document.querySelectorAll('#chronicle-log [data-unread]').length };
     }, deepest);
     check('...without moving the reader off the line they had reached', kept.inView);
-    check('...or claiming anything arrived above', !kept.unread);
+    check('...or claiming anything arrived above', !kept.unread && !kept.marked);
 
     const whole = await readWhole(watcher);
     check('...and so on back to its Beginning, where it stops asking',

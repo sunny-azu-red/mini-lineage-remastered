@@ -49,15 +49,18 @@ defmodule MiniLineageWeb.Controls do
   # A body that scrolls in whatever height the stylesheet gives it, where a layout decides the cap.
   attr :scrolls, :boolean, default: false
 
-  # A log rather than a document, its newest line first. A reader scrolled down into it keeps their
-  # place when an entry arrives, and `unread` floats over its top to say so.
-  attr :log, :boolean, default: false
+  # A log rather than a document, in the order it reads: a chronicle newest first, a chat oldest
+  # first. Its present edge is the newest line's; a reader away from it keeps their place when an
+  # entry arrives, and is shown what arrived while they were away.
+  attr :log, :atom, values: [nil, :newest_first, :oldest_first], default: nil
   # The event a log asks for its previous page with, when its list carries `data-older-than`.
   attr :load_older, :string, default: nil
+
+  # What the pill over the present edge counts, singular and plural: `{"new entry", "new entries"}`.
+  attr :unread, :any, default: nil
   attr :rest, :global
   slot :header
   slot :inner_block, required: true
-  slot :unread
 
   def panel(assigns) do
     ~H"""
@@ -65,7 +68,7 @@ defmodule MiniLineageWeb.Controls do
       id={@id}
       class={classes(["panel", @class])}
       phx-hook={if @collapsible or @log, do: "Panel"}
-      data-log={if @log, do: "true"}
+      data-log={@log && String.replace(to_string(@log), "_", "-")}
       data-load-older={@load_older}
       data-remember={if !@remember, do: "false"}
       data-subject={@subject}
@@ -92,10 +95,17 @@ defmodule MiniLineageWeb.Controls do
         {render_slot(@inner_block)}
       </div>
 
-      <%!-- Shown only by the hook, and only for entries that arrived while the reader was away. --%>
-      <button :if={@unread != []} type="button" class="btn btn-sm panel-unread" hidden>{render_slot(
-        @unread
-      )}</button>
+      <%!-- Shown and worded only by the hook, and only for entries that arrived while the reader
+            was away; `rest` is what it says once they have reached the first of them. --%>
+      <button
+        :if={@unread}
+        type="button"
+        class="btn btn-sm panel-unread"
+        data-one={elem(@unread, 0)}
+        data-many={elem(@unread, 1)}
+        data-rest={if @log == :oldest_first, do: "more below", else: "more above"}
+        hidden
+      >👁️ <span></span></button>
     </div>
     """
   end

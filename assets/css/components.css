@@ -67,28 +67,75 @@
     grid-area: 2 / 1;
 }
 
+/* The pill sits over the log's present edge: the top of one read newest first, the bottom of a chat. */
+.panel[data-log] {
+    --present: start;
+    --toward-past: to bottom;
+}
+
+.panel[data-log="oldest-first"] {
+    --present: end;
+    --toward-past: to top;
+}
+
 .panel>.panel-unread {
-    align-self: start;
+    align-self: var(--present);
     justify-self: center;
-    margin-top: 12px;
+    margin-block: 12px;
     z-index: 2;
 }
 
-/* The lines darken towards the header behind the button, wall to wall, 12px past it either way, so
-   it reads as over the log rather than as one more line of it. Eased, not linear: nearly solid
-   under the button, gone by its foot. Clear of the body's gold line, which is the header's edge. */
+/* The lines darken towards the present edge behind the button, wall to wall, 12px past it either
+   way, so it reads as over the log rather than as one more line of it. Eased, not linear: nearly
+   solid under the button, gone by its foot. Clear of the body's gold line, which is the header's edge. */
 .panel[data-log]:has(> .panel-unread:not([hidden]))::after {
     content: '';
-    align-self: start;
+    align-self: var(--present);
     height: 60px;
     margin-top: 1px;
     /* Over the rows, which are positioned and would otherwise paint their text through it. */
     z-index: 1;
-    background: linear-gradient(to bottom,
+    background: linear-gradient(var(--toward-past),
             var(--bg-deep) 0%,
             color-mix(in srgb, var(--bg-deep) 70%, transparent) 30%,
             transparent 100%);
     pointer-events: none;
+}
+
+/* Where a reader's absence began: under the entry on its past side, in either order, standing in
+   for that entry's own rule so it sits exactly between the two, with the batch's count at its end.
+   The count is the later pseudo so it paints over the line, and both under the pill's band. */
+.panel[data-log] [data-unread] {
+    position: relative;
+}
+
+.panel[data-log] [data-unread]::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -1px;
+    border-bottom: 1px solid var(--text-info);
+    z-index: 1;
+}
+
+/* Over the entry's own rule, which a row may draw in this same pseudo. */
+.panel[data-log] [data-unread]::after {
+    content: attr(data-unread) " unread";
+    position: absolute;
+    left: auto;
+    right: 12px;
+    bottom: -9px;
+    display: flex;
+    align-items: center;
+    height: 17px;
+    /* Optical, as a field label's is: capitals centred by their box sit high. */
+    padding: 1px 6px 0;
+    border: 0;
+    border-radius: 3px;
+    background: var(--text-info);
+    color: var(--bg-deep);
+    z-index: 1;
 }
 
 /* `.btn` is a flex box, which outranks the attribute's own `display: none`. */

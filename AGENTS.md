@@ -13,7 +13,8 @@ list wins — several generator defaults do not exist here.
   A browser is tied to a character by a signed session cookie and nothing else.
 - **There are no LiveView streams.** One character's state is one assign.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
-  else, so a `ColocatedHook` would compile and never run. A hook goes in `hooks.js`.
+  else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
+  `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing else.
 - The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
   character goes through its process, never straight to the database.
@@ -77,7 +78,7 @@ rendered HTML passes or fails on the roll. Where a test renders a drawn line, fi
 job, against the struct rather than the page.
 
 **A formatter with a client-side twin is held to a table.** Two are duplicated on purpose.
-`Format.adena` and `shortAdena` in `hooks.js`: the count-up animation formats its own frames, and
+`Format.adena` and `shortAdena` in `hooks/animated-values.js`: the count-up animation formats its own frames, and
 without a client-side copy the number would change format mid-count. `Format.countdown` and
 `timerLabel`: the server renders an effect's first frame and the hook repaints it every second.
 `Format.remaining` and `remainingLabel` are the same pair said in a sentence, for the record's
@@ -542,10 +543,21 @@ patched while open, was never asked to move the page. Nor may it animate into a 
 chevron's transition is gated on a `data-ready` the hook sets two frames in, or every refresh spins
 it through a state the reader never left.
 
-**A log reads newest first, so a reader at its top follows it for free.** Nothing scrolls to keep
-them there. One scrolled down keeps the line they were on across every patch, restored from that
-entry's DOM id, and `.panel-unread` appears over the top only for entries that arrived while they
-were away. The Chronicle opens on its newest 25 and puts the page before the last it holds on the
+**A log has a present edge, and what a reader missed is drawn on the past side of it.**
+`Controls.panel`'s `log` names the order it reads, `:newest_first` for the Chronicle and
+`:oldest_first` for a chat, and everything a log does is one `Log` class in `hooks/log.js`, written
+against the present edge and the past one, so a chat is one attribute and not a second copy. A
+reader at the present sees each arrival, for free newest first and scrolled down to it oldest first.
+One away from it, scrolled off or in a hidden tab, keeps the line they were on across every patch,
+restored from that entry's DOM id, and what lands meanwhile is drawn: a line under the entry on the
+batch's past side counting it, "3 unread", and a pill over the present edge counting what has not
+yet been half in view, which ticks down as it comes in. Its first click puts the line 24px inside
+the past edge, where the reader left off, and its next goes to the present. Reaching the present is
+caught up, but the line stays until it has been reached and read past, so a reader who gets to the
+top by hand can still scroll down to where they were. It is all the reader's and never the page's:
+nothing is sent or kept, and the line is an attribute the hook re-applies after every patch, since
+a patch rewrites it and would remove any element the hook inserted. `e2e/log.mjs` holds both orders
+to this by mounting the real hook on a log of its own, because the game has no chat yet. The Chronicle opens on its newest 25 and puts the page before the last it holds on the
 end, by keyset, when the reader nears it, or at once when a page does not fill the box, since a
 box that cannot scroll cannot ask. Ten in `:e2e`, so a suite outgrows it without a minute of
 shopping. Beside the record it grows with what it holds up to the record's height and never folds; stacked on a phone it folds, and

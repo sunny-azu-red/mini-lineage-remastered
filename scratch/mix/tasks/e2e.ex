@@ -6,6 +6,7 @@ defmodule Mix.Tasks.E2e do
       mix e2e walkthrough    # one character, played normally
       mix e2e races          # every lineage
       mix e2e live-board     # two players at once, watching the board move
+      mix e2e log            # a log in both orders it reads, the Chronicle's and a chat's
 
   One command, one terminal. It starts the isolated server on the port `.env.test` names, empties
   that database's board, drives Chromium through the suites, and stops the server it started. A
@@ -20,7 +21,8 @@ defmodule Mix.Tasks.E2e do
   @suites %{
     "walkthrough" => "e2e/walkthrough.mjs",
     "races" => "e2e/races.mjs",
-    "live-board" => "e2e/live-board.mjs"
+    "live-board" => "e2e/live-board.mjs",
+    "log" => "e2e/log.mjs"
   }
   @boot_timeout_ms 90_000
 
@@ -28,7 +30,7 @@ defmodule Mix.Tasks.E2e do
   def run(args) do
     suites =
       case args do
-        [] -> ["walkthrough", "races", "live-board"]
+        [] -> ["walkthrough", "races", "live-board", "log"]
         given -> Enum.map(given, &validate!/1)
       end
 
