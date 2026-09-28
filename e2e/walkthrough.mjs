@@ -344,20 +344,19 @@ try {
     // Focus that cannot be seen is not an affordance. Arriving by mouse leaves the button focused
     // but not :focus-visible, so the ring has to come from plain :focus — as it does on a select.
     // Named by colour, not merely "differs from idle": the base drop shadow alone would pass that.
-    const RING = 'rgba(201, 168, 76, 0.45)'; // --focus-ring-color, the full ring
-    const armedRing = () => page.evaluate(() => {
+    // The ring is the text's own colour, so an ambush on arrival arms the red Fight and rings red.
+    const ringed = (tell) => {
         const el = document.activeElement;
-        return el?.matches('#main .btn')
-            ? getComputedStyle(el).boxShadow
-            : `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
-    });
+        if (!el?.matches('#main .btn')) return tell && `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
+        const style = getComputedStyle(el);
+        return (style.borderTopColor === style.color && style.boxShadow.includes('0px 0px 0px 2px'))
+            || (tell && `${style.color} edged ${style.borderTopColor}, ${style.boxShadow}`);
+    };
     // Waits: the ring transitions in, so reading straight after arrival catches a mid-flight value.
-    await page.waitForFunction(
-        ring => document.activeElement?.matches('#main .btn')
-            && getComputedStyle(document.activeElement).boxShadow.includes(ring),
-        RING, { timeout: 3000 }).catch(() => { });
-    check('...and the button it arms is visibly focused, not merely focused',
-        (await armedRing()).includes(RING), await armedRing());
+    // A function, never a string: the game's CSP refuses eval, and the wait would fail at once.
+    await page.waitForFunction(ringed, false, { timeout: 3000 }).catch(() => { });
+    const armed = await page.evaluate(ringed, true);
+    check('...and the button it arms is visibly focused, not merely focused', armed === true, String(armed));
 
     let fightsFought = 0;
     let focusLeftTheFight = false;

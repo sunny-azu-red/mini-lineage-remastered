@@ -40,19 +40,23 @@ defmodule MiniLineageWeb.Screens.Halls do
     <%!-- `top` is load-bearing: it pulls the row up to the panel edge and puts the 12px gap
           below it instead, where the table needs it. --%>
     <div class="action-links top">
-      <.link
+      <.button
+        variant={:secondary}
+        size={:sm}
+        active={is_nil(@race_filter)}
         patch={Paths.for_screen("highscores")}
-        class={"btn btn-secondary btn-sm#{if is_nil(@race_filter), do: " active"}"}
       >
         All
-      </.link>
-      <.link
+      </.button>
+      <.button
         :for={race <- @catalog.races}
+        variant={:secondary}
+        size={:sm}
+        active={@race_filter == race.id}
         patch={Paths.for_screen("highscores", race.slug)}
-        class={"btn btn-secondary btn-sm#{if @race_filter == race.id, do: " active"}"}
       >
         {race.emoji} {race.label}
-      </.link>
+      </.button>
       <.reset_sort table="halls-table" sort={@sort} />
     </div>
 

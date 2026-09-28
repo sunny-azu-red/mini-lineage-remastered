@@ -24,8 +24,8 @@ list wins — several generator defaults do not exist here.
   start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
   enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
   have a module. Anything a page reaches for but does not
-  own (the panel card, the table, the alerts, the select-and-button form, `<.back_link>`,
-  `<.stamp>`, `<.reset_sort>`) is in `Controls`.
+  own (the panel card, the table, the button, the alerts, the select-and-button form,
+  `<.back_link>`, `<.stamp>`, `<.reset_sort>`) is in `Controls`.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
   than everything else on that page put together and crowds out what the panel is named for. The aside
@@ -58,6 +58,8 @@ list wins — several generator defaults do not exist here.
   the web layer because the browser suites are not instrumented, not because it is untested.
   A change that only moves colour values is the exception: no suite can fail on a hex, and running
   them there buys nothing but minutes and their own flakes. `mix precommit`, then look at it.
+- **A browser check hands Playwright a function, never a string.** The CSP refuses `eval`, so
+  `waitForFunction("…")` throws at once, and behind a `.catch` it reads as a wait that returned.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
   put it back. A test written after the fix and never seen to fail is decoration.
 - **A new component, hook or shared control is written into this file in the change that adds
@@ -577,6 +579,16 @@ the record it grows with what it holds up to the record's height and never folds
 it folds, and starts folded on every visit and every record. The Inventory folds there too but opens
 unfolded and remembers, being the reader's own on every screen rather than a different run's each
 visit.
+
+**Every button in the game is one component, and the element is what it does.** `Controls.button/1`
+is the only thing that writes `btn`: `variant` is `:primary`, `:secondary` or `:danger`, `size={:sm}`
+makes it small, `active` presses one of a set in. With `patch` it is an `<a>`, because it goes
+somewhere — Retreat, a Halls filter, the Hall of Champions — and a reader may want that in a new
+tab; without, a `<button>`, because it does something. Never make a link a button to change how it
+looks: the variant decides the look, all of it, and the element nothing. That is why base.css's link
+colours say `a:not(.btn)`: `a:link` outranks one class, and it was painting secondary links gold.
+Every state is drawn in the variant's own colour, the focus ring included, which is `currentColor`
+so a new variant rings in its own without a rule of its own.
 
 **Every table in the game is one component, and its sort is the server's.** `Controls.data_table/1`
 draws the container, the header row and the `<table>`; the rows are the caller's `<tbody>`, and

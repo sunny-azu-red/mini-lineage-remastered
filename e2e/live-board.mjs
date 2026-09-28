@@ -438,6 +438,34 @@ try {
         byDate && halls.stamps[0] > halls.stamps[1] && halls.sorted.join() === 'Date:descending' && halls.reset,
         JSON.stringify(halls));
 
+    // A filter goes somewhere and the reset does something, so one is a link and one a button,
+    // and the variant alone decides how either looks. A link's own colour had been winning.
+    const FILTER = '.action-links a.btn-secondary:not(.active)';
+    const lookOf = (selector) => watcher.evaluate((sel) => {
+        const style = getComputedStyle(document.querySelector(sel));
+        return `${style.color} ${style.transitionProperty} ${style.textDecorationLine}`;
+    }, selector);
+    const atRest = [await lookOf(FILTER), await lookOf('#halls-table-reset')];
+    await watcher.hover(FILTER);
+    const filterHover = await lookOf(FILTER);
+    await watcher.hover('#halls-table-reset');
+    const hovered = [filterHover, await lookOf('#halls-table-reset')];
+    check('...the filters beside it drawn as the same secondary button, links though they are',
+        atRest[0] === atRest[1] && hovered[0] === hovered[1], JSON.stringify({ atRest, hovered }));
+
+    // The pointer is still over the reset, so its ring is also checked against its own hover.
+    const ringOf = (selector) => watcher.evaluate(async (sel) => {
+        const el = document.querySelector(sel);
+        el.focus();
+        await Promise.all(el.getAnimations().map((a) => a.finished));
+        const style = getComputedStyle(el);
+        el.blur();
+        return style.borderTopColor === style.color || `${style.color} ringed ${style.borderTopColor}`;
+    }, selector);
+    const rings = [await ringOf('#halls-table-reset'), await ringOf(FILTER)];
+    check('...and focused, ringed in their own text\'s colour rather than the primary\'s gold',
+        rings.every((ring) => ring === true), JSON.stringify(rings));
+
     // Ale, never a fight: a purchase is always a row, and nothing about it is the dice's.
     await player.selectOption('#main select[name="item_id"]', '0');
     await player.click('#main form[phx-submit="purchase"] button[type="submit"]');

@@ -36,7 +36,7 @@
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-/* Keyboard focus, matching .btn:focus-visible. Must stay AFTER the :focus rule above — identical
+/* Keyboard focus, in the primary .btn's gold ring. Must stay AFTER the :focus rule above — identical
    specificity, so declaration order is the only reason this wins. */
 .form-select:focus-visible,
 .form-input:focus-visible {

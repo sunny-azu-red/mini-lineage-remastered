@@ -101,15 +101,15 @@ defmodule MiniLineageWeb.Controls do
 
       <%!-- Shown and worded only by the hook, and only for entries that arrived while the reader
             was away; `rest` is what it says once they have reached the first of them. --%>
-      <button
+      <.button
         :if={@unread}
-        type="button"
-        class="btn btn-sm panel-unread"
+        size={:sm}
+        class="panel-unread"
         data-one={elem(@unread, 0)}
         data-many={elem(@unread, 1)}
         data-rest={if @log == :oldest_first, do: "more below", else: "more above"}
         hidden
-      >👁️ <span></span></button>
+      >👁️ <span></span></.button>
     </div>
     """
   end
@@ -131,6 +131,45 @@ defmodule MiniLineageWeb.Controls do
   @doc "Whose hall this is. Every place that names one says it the same way."
   def hall_of(nil), do: "All"
   def hall_of(race), do: race.label
+
+  # ----------------------------------------------------------------- buttons
+
+  @doc """
+  Every `.btn` in the game. With `patch` it is a link, because it goes somewhere and a reader may
+  want it in a new tab; without, a `<button>`, because it does something. The variant decides how
+  it looks, never the element.
+  """
+  attr :variant, :atom, default: :primary, values: [:primary, :secondary, :danger]
+  attr :size, :atom, default: :normal, values: [:normal, :sm]
+  # The one of a set that is already chosen, pressed in: the Halls' current filter.
+  attr :active, :boolean, default: false
+  attr :patch, :string, default: nil
+  attr :type, :string, default: "button"
+  attr :class, :string, default: nil
+  attr :rest, :global, include: ~w(disabled form name value)
+  slot :inner_block, required: true
+
+  def button(assigns) do
+    assigns =
+      assign(assigns,
+        classes:
+          classes([
+            "btn",
+            variant_class(assigns.variant),
+            assigns.size == :sm && "btn-sm",
+            assigns.active && "active",
+            assigns.class
+          ])
+      )
+
+    ~H"""
+    <.link :if={@patch} patch={@patch} class={@classes} {@rest}>{render_slot(@inner_block)}</.link>
+    <button :if={!@patch} type={@type} class={@classes} {@rest}>{render_slot(@inner_block)}</button>
+    """
+  end
+
+  defp variant_class(:primary), do: nil
+  defp variant_class(variant), do: "btn-#{variant}"
 
   # ------------------------------------------------------------------ tables
 
@@ -214,16 +253,17 @@ defmodule MiniLineageWeb.Controls do
 
   def reset_sort(assigns) do
     ~H"""
-    <button
+    <.button
       :if={@sort}
       id={"#{@table}-reset"}
-      type="button"
-      class="btn btn-secondary btn-sm reset-sort"
+      variant={:secondary}
+      size={:sm}
+      class="reset-sort"
       phx-click="reset_sort"
       phx-value-table={@table}
     >
       Reset Sort
-    </button>
+    </.button>
     """
   end
 
@@ -377,8 +417,8 @@ defmodule MiniLineageWeb.Controls do
   attr :picked, :string, default: nil
   attr :default_label, :string, required: true
   attr :active_label, :any, required: true
-  attr :default_variant, :string, default: "btn-secondary"
-  attr :active_variant, :any, default: "btn"
+  attr :default_variant, :atom, default: :secondary
+  attr :active_variant, :any, default: :primary
   slot :hidden
 
   def select_action_form(assigns) do
@@ -390,12 +430,7 @@ defmodule MiniLineageWeb.Controls do
         label:
           if(chosen?, do: resolve(assigns.active_label, picked), else: assigns.default_label),
         variant:
-          button_class(
-            if(chosen?,
-              do: resolve(assigns.active_variant, picked),
-              else: assigns.default_variant
-            )
-          )
+          if(chosen?, do: resolve(assigns.active_variant, picked), else: assigns.default_variant)
       )
 
     ~H"""
@@ -415,7 +450,7 @@ defmodule MiniLineageWeb.Controls do
             {option.label}
           </option>
         </select>
-        <button type="submit" class={@variant}>{@label}</button>
+        <.button type="submit" variant={@variant}>{@label}</.button>
       </div>
     </form>
     """
@@ -423,9 +458,6 @@ defmodule MiniLineageWeb.Controls do
 
   defp resolve(fun, value) when is_function(fun, 1), do: fun.(value)
   defp resolve(value, _picked), do: value
-
-  defp button_class("btn"), do: "btn"
-  defp button_class(variant), do: "btn #{variant}"
 
   attr :key, :string, required: true
   attr :count, :integer, required: true

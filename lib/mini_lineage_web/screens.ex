@@ -160,7 +160,7 @@ defmodule MiniLineageWeb.Screens do
         <select name="race_id" class="form-select">
           <option :for={race <- @catalog.races} value={race.id}>{race.emoji} {race.label}</option>
         </select>
-        <button type="submit" class="btn">🚩 Start</button>
+        <.button type="submit">🚩 Start</.button>
       </div>
     </form>
     """
@@ -188,8 +188,7 @@ defmodule MiniLineageWeb.Screens do
       ]}
       default_label="🧭 Travel"
       active_label={fn value -> if value == "suicide", do: "⚰️ Perish", else: "🧭 Travel" end}
-      default_variant="btn"
-      active_variant="btn"
+      default_variant={:primary}
     />
     """
   end
@@ -223,19 +222,19 @@ defmodule MiniLineageWeb.Screens do
         )}
       </div>
       <div class="action-links">
-        <button type="button" class="btn btn-danger" phx-click="fight">
+        <.button variant={:danger} phx-click="fight">
           ⚔️ {(@view.last_battle && @view.last_battle.narrative.fight_prompt) || "Fight!"}
-        </button>
+        </.button>
       </div>
     <% else %>
       <p :if={!@view.last_battle}>
         The road out of town is quiet for now. Will you seek out a fight?
       </p>
       <div class="action-links">
-        <button type="button" class="btn" phx-click="fight">
+        <.button phx-click="fight">
           {if @view.last_battle, do: "⚡ #{@view.last_battle.narrative.next_move}", else: "⚔️ Fight!"}
-        </button>
-        <.link patch={Paths.for_screen("home")} class="btn btn-secondary">Retreat</.link>
+        </.button>
+        <.button variant={:secondary} patch={Paths.for_screen("home")}>Retreat</.button>
       </div>
     <% end %>
     """
@@ -275,8 +274,7 @@ defmodule MiniLineageWeb.Screens do
       ]}
       default_label="Return"
       active_label={fn value -> if value == "yes", do: "Do it 🥀", else: "Phew 😅" end}
-      default_variant="btn-secondary"
-      active_variant={fn value -> if value == "yes", do: "btn-danger", else: "btn-secondary" end}
+      active_variant={fn value -> if value == "yes", do: :danger, else: :secondary end}
     />
     """
   end
@@ -296,14 +294,13 @@ defmodule MiniLineageWeb.Screens do
 
     <div class="action-links">
       <%!-- Not offered to a run the Hall will not list: the epitaph above has just said so. --%>
-      <.link
+      <.button
         :if={@race && not @view.disqualified}
         patch={Paths.for_screen("highscores", @race.slug)}
-        class="btn"
       >
         📜 The Hall of {hall_of(@race)} Champions
-      </.link>
-      <button type="button" class="btn btn-secondary" phx-click="restart">Play Again?</button>
+      </.button>
+      <.button variant={:secondary} phx-click="restart">Play Again?</.button>
     </div>
     """
   end

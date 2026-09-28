@@ -25,7 +25,7 @@
 
 /* ===== Base Button ===== */
 .btn {
-    /* Layout — inline-flex fixes height mismatch between <button> and <a> */
+    /* Layout — inline-flex, so a <button> and an <a> come out the same height */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -54,6 +54,8 @@
     letter-spacing: 0.06em;
     color: var(--gold);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    /* An <a> takes the platform's underline; base.css leaves a .btn to this file. */
+    text-decoration: none;
 
     /* Interaction */
     cursor: pointer;
@@ -106,7 +108,6 @@
     box-shadow:
         0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.35);
-    text-decoration: none;
 }
 
 /* Trigger shimmer animation on hover */
@@ -117,11 +118,12 @@
 /* ===== Focus =====
  * One ring however focus arrived, and stronger than :hover — it is the whole affordance for Space.
  * :focus, not :focus-visible: Chrome gives a <select> the latter on click but withholds it from a
- * button until a keypress, so the two disagreed. */
-.btn:focus {
-    border-color: var(--gold);
+ * button until a keypress, so the two disagreed. In the text's colour, so every variant rings in
+ * its own; `:not(:active)` outranks each variant's hover and yields to its press. */
+.btn:focus:not(:active) {
+    border-color: currentColor;
     box-shadow:
-        var(--focus-ring),
+        0 0 0 2px color-mix(in srgb, currentColor 45%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.35);
     outline: none;
 }

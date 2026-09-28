@@ -40,15 +40,17 @@ body {
     min-height: 100dvh;
 }
 
-/* ===== Links ===== */
-a:link,
-a:visited {
+/* ===== Links =====
+ * Not a .btn: `a:link` outranks one class, so a link drawn as a button took this colour over its
+ * variant's and this transition over its own. */
+a:not(.btn):link,
+a:not(.btn):visited {
     color: var(--gold);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
-a:hover {
+a:not(.btn):hover {
     color: var(--gold-hover);
     text-decoration: underline;
 }
