@@ -583,8 +583,12 @@ because the game records no gender, and because it takes the same verb forms as 
 but the pronouns moves — which is why the prose forks only where the sentences change shape, not
 wherever a verb does.
 
-Yours reads from your own process, not the stored document: `health` is buffered, so the row is
-behind by however long you have been resting.
+Every record reads from the run's process while one is up, never the stored document: where it
+stands, its auras and its health are buffered, so the row is behind by however long it has been
+resting — a visitor refreshing a run that walked home from a fight was shown it still In Combat.
+Yours is your own view; anybody else's is `Characters.running/1`, found by the PUBLIC id through
+the registry's value and never started by it, since a stopped process flushed on the way out. Only
+with none up is the document read.
 
 **Every absolute time a player sees goes through `<.stamp>`.** The database stores instants in
 `timestamptz` and the server runs in UTC, so only the browser knows what o'clock it is for the

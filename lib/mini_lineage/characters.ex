@@ -51,6 +51,22 @@ defmodule MiniLineage.Characters do
 
   def snapshot(id), do: call(id, :snapshot)
 
+  @doc """
+  The character with this PUBLIC id as its process holds it, or nil when none is running. Never
+  starts one: a process that has stopped wrote what it was buffering on the way out.
+  """
+  def running(character_id) do
+    case Registry.select(MiniLineage.Characters.Registry, [
+           {{:_, :"$1", {character_id, :_}}, [], [:"$1"]}
+         ]) do
+      [pid] -> GenServer.call(pid, :snapshot)
+      [] -> nil
+    end
+  catch
+    # Stopped between the lookup and the call, which leaves the row current.
+    :exit, {reason, _} when reason in [:noproc, :normal, :shutdown] -> nil
+  end
+
   @doc "This session's character's PUBLIC id — what the board links to. Safe to render."
   def character_id(session), do: call(session, :character_id)
 

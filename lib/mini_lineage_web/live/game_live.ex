@@ -110,7 +110,8 @@ defmodule MiniLineageWeb.GameLive do
   defp filter_race(%{race_filter: id, catalog: catalog}),
     do: Enum.find(catalog.races, &(&1.id == id))
 
-  # Yours is read from your own process rather than the document, because `health` is buffered.
+  # Read from the run's process while one is up rather than the document, because where it stands,
+  # its auras and its health are buffered and the row can be a minute behind.
   defp assign_record(socket, %{"id" => id}) do
     # A record nobody can find is a 404, the same as a road the game never had.
     {player, entry} =
@@ -119,7 +120,7 @@ defmodule MiniLineageWeb.GameLive do
     view =
       if entry.id == socket.assigns.character_id,
         do: socket.assigns.view,
-        else: Snapshot.build(player)
+        else: Snapshot.build(Characters.running(entry.id) || player)
 
     {log, older?} = CharacterLog.page(entry.id)
 
