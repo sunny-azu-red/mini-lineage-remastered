@@ -122,12 +122,17 @@ try {
     // entries it already has. Dice-proof — the line is added whether that blow lands or kills.
     const lines = () => watcher.locator('#chronicle-log li').count();
     const newest = () => watcher.locator('#chronicle-log li').first().getAttribute('id');
+    // Told by the newest entry changing, never by the count: at the present the oldest goes as it lands.
+    const arrivedOver = (top) => watcher.waitForFunction(
+        (top) => document.querySelector('#chronicle-log li')?.id !== top,
+        top, { timeout: 8000 }).then(() => true).catch(() => false);
+    // How many entries the run has, which the newest one's number says, however many are held.
+    const written = () => watcher.evaluate(() => Number(document
+        .querySelector('#chronicle-log .entry-head > span:last-child')?.textContent.replace('#', '') ?? 0));
     const told = await lines();
     const topBefore = await newest();
     await player.click('#main button[phx-click="fight"]');
-    const gained = await watcher.waitForFunction(
-        (had) => document.querySelectorAll('#chronicle-log li').length > had,
-        told, { timeout: 8000 }).then(() => true).catch(() => false);
+    const gained = await arrivedOver(topBefore);
     check('...and their chronicle gains the fight they have just had, as it is read',
         gained, `${told} -> ${await lines()} line(s)`);
 
@@ -163,13 +168,12 @@ try {
     // A deed that is not a fight has to reach a watcher too: a purchase moves neither the battle
     // tally nor the last fight.
     const heldBefore = await lines();
+    const topAtInn = await newest();
     await player.goto(`${BASE}/inn`, { waitUntil: 'domcontentloaded' });
     await connected(player);
     await player.selectOption('#main select[name="item_id"]', '0');
     await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
-    const reached = await watcher.waitForFunction(
-        (had) => document.querySelectorAll('#chronicle-log li').length > had,
-        heldBefore, { timeout: 8000 }).then(() => true).catch(() => false);
+    const reached = await arrivedOver(topAtInn);
     check('...and a purchase reaches them as a fight does, being just as much a deed', reached,
         `${heldBefore} -> ${await lines()} line(s)`);
 
@@ -202,12 +206,10 @@ try {
         await watcher.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     };
     const buyAle = async () => {
-        const had = await lines();
+        const top = await newest();
         await player.selectOption('#main select[name="item_id"]', '0');
         await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
-        return watcher.waitForFunction(
-            (had) => document.querySelectorAll('#chronicle-log li').length > had,
-            had, { timeout: 8000 }).then(() => true).catch(() => false);
+        return arrivedOver(top);
     };
 
     await overLog();
@@ -292,7 +294,7 @@ try {
 
     // ---- and a long one arrives a page at a time -----------------------------------------------
     // The suites' page is ten (config/e2e.exs), so this outgrows it twice over.
-    while (await lines() <= 21)
+    while (await written() <= 21)
         if (!(await buyAle())) break;
 
     // Nothing about the last visit is kept: a refresh opens on the fold, and then on the newest.
@@ -307,6 +309,11 @@ try {
     check('...holding only its newest page, with an older one to ask for',
         firstPage === 10 && await watcher.locator('#chronicle-log[data-older-than]').count() === 1,
         `${firstPage} entries`);
+
+    // One in and one out, so a reader following a fight does not see the scrollbar jump.
+    const followed = await buyAle();
+    check('...and a reader there lets the oldest go as the newest lands, holding one page',
+        followed && await lines() === firstPage, `${await lines()} entries`);
 
     const deepest = await watcher.locator('#chronicle-log li').last().getAttribute('id');
     await overLog();

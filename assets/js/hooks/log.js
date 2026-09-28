@@ -11,7 +11,7 @@ const LINE_MARGIN = 24;
  *
  * All of it is the reader's and none of it the page's: nothing is sent, and a new mount or subject
  * starts clean. The line and the pill are re-applied after every patch, which rewrites both. The one
- * thing asked of the server is to let the oldest go, by a reader at the present holding too many.
+ * thing the server is told is whether the reader is at the present, where it lets the oldest go.
  */
 export class Log {
     constructor(panel) {
@@ -31,6 +31,8 @@ export class Log {
     }
     start() {
         this.pinned = true;
+        // What the server was last told; it assumes the present, where a log opens.
+        this.told = true;
         // The entry the line is drawn under, and how many arrived above it (below it, in a chat).
         this.edge = null;
         this.unseen = new Set();
@@ -77,7 +79,7 @@ export class Log {
         this.pinned = this.atPresent();
         this.arrived(away);
         this.look();
-        this.trim();
+        this.report();
     }
     // What landed on the present side of the newest entry held before the patch.
     arrived(away) {
@@ -144,7 +146,7 @@ export class Log {
         // A box's height from the past edge, so the page is usually in before the reader reaches it.
         const left = this.bottom ? body.scrollTop : body.scrollHeight - body.clientHeight - body.scrollTop;
         if (left < body.clientHeight) this.loadOlder();
-        this.trim();
+        this.report();
     }
     // To where the reader left off, with the line on the box's past edge; from there, or with the
     // line in view or behind them, to the present.
@@ -192,14 +194,13 @@ export class Log {
         const body = this.body();
         body.scrollTop += entry.getBoundingClientRect().top - body.getBoundingClientRect().top - this.anchor.offset;
     }
-    // Only from the present, where the reader is furthest from what goes, and never past the line:
-    // the entry it is under is named, so it stays with everything on its present side.
-    trim() {
-        const event = this.el.dataset.trim;
-        if (!event || !this.pinned || this.trimming || !('overfull' in (this.list()?.dataset ?? {}))) return;
+    // Only as it changes: a reader following a fight at the present sends nothing per arrival.
+    report() {
+        const event = this.el.dataset.atPresent;
+        if (!event || this.pinned === this.told) return;
 
-        this.trimming = true;
-        this.panel.pushEvent(event, { keep: this.edge?.id ?? null }, () => { this.trimming = false; });
+        this.told = this.pinned;
+        this.panel.pushEvent(event, { at: this.pinned });
     }
     loadOlder() {
         const before = this.list()?.dataset.olderThan;

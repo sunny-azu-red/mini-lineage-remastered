@@ -9,7 +9,6 @@ defmodule MiniLineageWeb.Screens.Record do
 
   alias MiniLineageWeb.Controls
 
-  alias MiniLineage.CharacterLog
   alias MiniLineage.Game.{Format, Narrative, Narratives}
 
   attr :view, :map, required: true
@@ -209,14 +208,6 @@ defmodule MiniLineageWeb.Screens.Record do
   defp kind_label(%{kind: "buff"}), do: "Buff"
   defp kind_label(%{kind: "debuff"}), do: "Debuff"
 
-  # A reader at the present holding more pages than this asks for all but the newest to go.
-  @held_pages 3
-
-  defp overfull?(log), do: length(log) > @held_pages * CharacterLog.window()
-
-  @doc "An entry's DOM id, which is also how a reader names the one their unread line is under."
-  def entry_id(entry), do: "chronicle-#{entry.id}"
-
   attr :record_log, :list, default: []
   attr :record_id, :string, required: true
   # Whether entries older than the last one held remain to be asked for.
@@ -240,7 +231,7 @@ defmodule MiniLineageWeb.Screens.Record do
       scrolls
       log={:newest_first}
       load_older="older_chronicle"
-      trim="trim_chronicle"
+      at_present="chronicle_at_present"
       unread={{"new entry", "new entries"}}
       body_class={@record_log != [] && "rows"}
     >
@@ -254,12 +245,11 @@ defmodule MiniLineageWeb.Screens.Record do
           class="chronicle"
           phx-hook="LocalTimes"
           data-older-than={@older && List.last(@record_log).id}
-          data-overfull={overfull?(@record_log)}
         >
           <li
             :for={entry <- @record_log}
             :key={entry.id}
-            id={entry_id(entry)}
+            id={"chronicle-#{entry.id}"}
             {painted(entry)}
           >
             <div class="entry-head">

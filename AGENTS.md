@@ -555,18 +555,24 @@ yet been half in view, which ticks down as it comes in. Its first click puts the
 the past edge, where the reader left off, and its next goes to the present. Reaching the present is
 caught up, but the line stays until it has been reached and read past, so a reader who gets to the
 top by hand can still scroll down to where they were. It is all the reader's and never the page's:
-nothing about it is sent or kept, and the line is an attribute the hook re-applies after every patch, since
-a patch rewrites it and would remove any element the hook inserted. `e2e/log.mjs` holds both orders
-to this by mounting the real hook on a log of its own, because the game has no chat yet. The Chronicle opens on its newest 25 and puts the page before the last it holds on the
-end, by keyset, when the reader nears it, or at once when a page does not fill the box, since a
-box that cannot scroll cannot ask. Ten in `:e2e`, so a suite outgrows it without a minute of
-shopping. What it holds is bounded from the present: a reader there holding more than three pages
-— `data-overfull` — asks with the panel's `trim` event for all but the newest page to go, naming
-the entry its line is under so that stays with everything above it, and what went is asked for
-again by the same keyset. Only from there, because a reader anywhere else may be reading what would
-go; so a tab left away from the present still holds every arrival, and that is the case left open. Beside the record it grows with what it holds up to the record's height and never folds; stacked on a phone it folds, and
-starts folded on every visit and every record. The Inventory folds there too but opens unfolded and
-remembers, being the reader's own on every screen rather than a different run's each visit.
+nothing about it is kept, only whether they are at the present is sent, and the line is an attribute
+the hook re-applies after every patch, since a patch rewrites it and would remove any element the
+hook inserted. `e2e/log.mjs` holds both orders to this by mounting the real hook on a log of its
+own, because the game has no chat yet. The Chronicle opens on its newest 25 and puts the page before
+the last it holds on the end, by keyset, when the reader nears it, or at once when a page does not
+fill the box, since a box that cannot scroll cannot ask. Ten in `:e2e`, so a suite outgrows it
+without a minute of shopping. What it holds is bounded from the present: a reader there lets the
+oldest go as the newest lands, in the same patch, so the list holds one height and the scrollbar
+never jumps, as it did when a batch went at once. It never holds under a page, nor over what the
+reader had, so one who comes back from deep in the past is not cut back either. The hook says
+whether the reader is at the present with the panel's `at_present` event, only as that changes and
+never per arrival, and the server assumes it on mount; a trim that races the reader leaving drops an
+entry a page away from them. A reader anywhere else holds everything, since they may be reading what
+would go, so a tab left away from the present still grows, and that is the case left open. Beside
+the record it grows with what it holds up to the record's height and never folds; stacked on a phone
+it folds, and starts folded on every visit and every record. The Inventory folds there too but opens
+unfolded and remembers, being the reader's own on every screen rather than a different run's each
+visit.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.

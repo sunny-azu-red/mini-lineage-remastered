@@ -41,13 +41,6 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
   defp texts(html, selector),
     do: html |> LazyHTML.from_document() |> LazyHTML.query(selector) |> Enum.map(&LazyHTML.text/1)
 
-  defp overfull?(html),
-    do:
-      html
-      |> LazyHTML.from_document()
-      |> LazyHTML.query("#chronicle-log[data-overfull]")
-      |> Enum.any?()
-
   defp older_than(html) do
     case html
          |> LazyHTML.from_document()
@@ -110,84 +103,83 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     assert length(held(html) |> Enum.to_list()) == 50
   end
 
+  # What the watched run writes next, as its process would announce it.
+  defp write(view, id, n) do
+    at = DateTime.utc_now()
+
+    Repo.insert_all(CharacterLog.Entry, [
+      CharacterLog.params(CharacterLog.event(id, "purchase", "Deed #{n}.", at))
+    ])
+
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Longlived")
+    send(view.pid, {:record_updated, player, id, true})
+    render(view)
+  end
+
+  # Asked by the name the page gives its hook, so the two cannot drift apart.
+  defp at_present(view, html, at) do
+    [event] =
+      html
+      |> LazyHTML.from_document()
+      |> LazyHTML.query("#chronicle")
+      |> LazyHTML.attribute("data-at-present")
+
+    render_hook(view, event, %{"at" => at})
+  end
+
   # Newest first, so what is written while it is read goes on top, and nothing already held moves.
   test "puts an entry written while it is read on top of the rest", %{conn: conn} do
     id = run_with(30)
     {:ok, view, html} = live(conn, ~p"/character/#{id}")
     held = lines(html)
+    at_present(view, html, false)
 
-    at = DateTime.utc_now()
-
-    Repo.insert_all(CharacterLog.Entry, [
-      CharacterLog.params(CharacterLog.event(id, "purchase", "Deed 31.", at))
-    ])
-
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Longlived")
-    send(view.pid, {:record_updated, player, id, true})
-
-    html = render(view)
+    html = write(view, id, 31)
     assert lines(html) == ["Deed 31." | held]
     assert Enum.take(numbers(html), 2) == ["#31", "#30"]
   end
 
-  # A reader at the present of a long watch would otherwise hold every entry they were ever shown,
-  # in the page and in this process both.
-  describe "a reader holding more than three pages" do
-    setup %{conn: conn} do
-      {:ok, view, html} = live(conn, ~p"/character/#{run_with(120)}")
+  # A watch on a long fight would otherwise hold every entry it was shown, in the page and here both,
+  # and letting a batch go at once jumps the scrollbar.
+  describe "a reader at the present" do
+    test "lets the oldest go as the newest lands, holding one height", %{conn: conn} do
+      id = run_with(30)
+      {:ok, view, _html} = live(conn, ~p"/character/#{id}")
 
-      html =
-        Enum.reduce(1..2, html, fn _, html ->
-          render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-        end)
-
-      %{view: view, html: html}
-    end
-
-    test "is told so, and not a page before", %{view: view, html: html} do
-      refute overfull?(html)
+      html = write(view, id, 31)
+      assert lines(html) == Enum.map(31..7//-1, &"Deed #{&1}.")
 
       html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-      assert overfull?(html)
+      assert lines(html) == Enum.map(31..1//-1, &"Deed #{&1}.")
     end
 
-    test "is let back to the newest page, and the rest is asked for again", %{
-      view: view,
-      html: html
-    } do
-      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-      # Asked by the name the page gives its hook, so the two cannot drift apart.
-      [event] =
-        html
-        |> LazyHTML.from_document()
-        |> LazyHTML.query("#chronicle")
-        |> LazyHTML.attribute("data-trim")
-
-      html = render_hook(view, event, %{"keep" => nil})
-
-      assert lines(html) == Enum.map(120..96//-1, &"Deed #{&1}.")
-      refute overfull?(html)
-
-      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-      assert numbers(html) == Enum.map(120..71//-1, &"##{&1}")
-    end
-
-    test "but keeps the entry their unread line is under, and all above it", %{
-      view: view,
-      html: html
-    } do
-      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-      line = html |> held() |> Enum.at(39) |> LazyHTML.attribute("id") |> hd()
-
-      html = render_hook(view, "trim_chronicle", %{"keep" => line})
-      assert lines(html) == Enum.map(120..81//-1, &"Deed #{&1}.")
-    end
-
-    test "and an entry they no longer hold trims nothing", %{view: view, html: html} do
+    test "and holds what it had loaded, rather than cutting back to a page", %{conn: conn} do
+      id = run_with(60)
+      {:ok, view, html} = live(conn, ~p"/character/#{id}")
       render_hook(view, "older_chronicle", %{"before" => older_than(html)})
-      html = render_hook(view, "trim_chronicle", %{"keep" => "chronicle-0"})
 
-      assert length(lines(html)) == 100
+      html = write(view, id, 61)
+      assert lines(html) == Enum.map(61..12//-1, &"Deed #{&1}.")
+    end
+
+    test "while a run shorter than a page grows to one", %{conn: conn} do
+      id = run_with(3)
+      {:ok, view, _html} = live(conn, ~p"/character/#{id}")
+
+      html = write(view, id, 4)
+      assert lines(html) == Enum.map(4..1//-1, &"Deed #{&1}.")
+      refute older_than(html)
+    end
+
+    test "and one who comes back to it holds steady from there", %{conn: conn} do
+      id = run_with(30)
+      {:ok, view, html} = live(conn, ~p"/character/#{id}")
+      at_present(view, html, false)
+      html = write(view, id, 31)
+      at_present(view, html, true)
+
+      html = write(view, id, 32)
+      assert lines(html) == Enum.map(32..7//-1, &"Deed #{&1}.")
     end
   end
 

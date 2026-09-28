@@ -63,7 +63,7 @@ defmodule MiniLineageWeb.PanelTest do
         id="l"
         title="L"
         log={:newest_first}
-        trim="trim_log"
+        at_present="log_at_present"
         unread={{"new entry", "new entries"}}
       >
         body
@@ -72,7 +72,7 @@ defmodule MiniLineageWeb.PanelTest do
 
     assert html =~ ~s(phx-hook="Panel")
     assert LazyHTML.attribute(tag(html, "#l"), "data-log") == ["newest-first"]
-    assert LazyHTML.attribute(tag(html, "#l"), "data-trim") == ["trim_log"]
+    assert LazyHTML.attribute(tag(html, "#l"), "data-at-present") == ["log_at_present"]
     pill = tag(html, "#l > button.panel-unread")
     assert LazyHTML.attribute(pill, "hidden") == [""]
     assert LazyHTML.attribute(pill, "data-one") == ["new entry"]

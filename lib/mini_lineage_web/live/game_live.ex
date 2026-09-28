@@ -54,6 +54,7 @@ defmodule MiniLineageWeb.GameLive do
        record_log: [],
        record_log_cursor: 0,
        record_log_older: false,
+       record_log_present: true,
        from: nil,
        statistics: nil,
        key_buffer: [],
@@ -131,7 +132,9 @@ defmodule MiniLineageWeb.GameLive do
       record_view: view,
       record_log: log,
       record_log_cursor: cursor(log),
-      record_log_older: older?
+      record_log_older: older?,
+      # A record opens on its newest entry, so its reader is there until the hook says otherwise.
+      record_log_present: true
     )
   end
 
@@ -151,7 +154,8 @@ defmodule MiniLineageWeb.GameLive do
       record_view: nil,
       record_log: [],
       record_log_cursor: 0,
-      record_log_older: false
+      record_log_older: false,
+      record_log_present: true
     )
   end
 
@@ -333,10 +337,9 @@ defmodule MiniLineageWeb.GameLive do
     {:reply, %{}, older_chronicle(socket, before)}
   end
 
-  # The reader is at the present holding more than a refresh would give them, and names the entry
-  # their unread line is under, if any, so it is kept with everything above it.
-  def handle_event("trim_chronicle", %{"keep" => keep}, socket) do
-    {:reply, %{}, trim_chronicle(socket, keep)}
+  # Sent only as the reader leaves the newest entry or comes back to it, never per arrival.
+  def handle_event("chronicle_at_present", %{"at" => at}, socket) when is_boolean(at) do
+    {:noreply, assign(socket, record_log_present: at)}
   end
 
   # ----------------------------------------------------------------- pushes
@@ -406,8 +409,9 @@ defmodule MiniLineageWeb.GameLive do
   def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
 
   # Added, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
-  # every blow re-reads the entire history of a long run to add one line to it. The window grows
-  # as the reader watches, and a refresh comes back to the newest page.
+  # every blow re-reads the entire history of a long run to add one line to it. At the present the
+  # oldest goes as the newest lands, so the list holds one height, never under a page nor over what
+  # the reader had; anywhere else it grows, since they may be reading what would go.
   defp append_chronicle(socket, id) do
     %{record_log: held, record_log_cursor: cursor} = socket.assigns
     added = CharacterLog.since(id, cursor, top_number(held))
@@ -418,12 +422,15 @@ defmodule MiniLineageWeb.GameLive do
 
       _ ->
         [newest | _] = added
+        kept = if socket.assigns.record_log_present, do: max(CharacterLog.window(), length(held))
+        log = if kept, do: Enum.take(added ++ held, kept), else: added ++ held
 
         # The road above the panel is dated by the same entry, so it moves with the chronicle.
         assign(socket,
           record: %{socket.assigns.record | last_seen_at: newest.at},
-          record_log: added ++ socket.assigns.record_log,
-          record_log_cursor: newest.id
+          record_log: log,
+          record_log_cursor: newest.id,
+          record_log_older: socket.assigns.record_log_older or length(log) < length(added ++ held)
         )
     end
   end
@@ -441,17 +448,6 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   defp older_chronicle(socket, _before), do: socket
-
-  # Back to a page, as a refresh opens on; what goes is asked for again by the same keyset. An entry
-  # named but not held is a stale ask, and is dropped.
-  defp trim_chronicle(%{assigns: %{record_log: log}} = socket, keep) do
-    through = if keep, do: Enum.find_index(log, &(Screens.Record.entry_id(&1) == keep)), else: 0
-    kept = max(CharacterLog.window(), (through || 0) + 1)
-
-    if through && length(log) > kept,
-      do: assign(socket, record_log: Enum.take(log, kept), record_log_older: true),
-      else: socket
-  end
 
   # ------------------------------------------------------------------ plumbing
 
