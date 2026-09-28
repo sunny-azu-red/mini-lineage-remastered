@@ -2,7 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortAdena, timerLabel, remainingLabel} from "./hooks"
+import {hooks as gameHooks, recallAll, shortAdena, timerLabel, remainingLabel} from "./hooks"
 import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
@@ -11,7 +11,9 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 try { sessionStorage.removeItem("phx:fallback:LongPoll") } catch (_) { }
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken},
+  // A table's sort goes to the server, which orders its rows; a panel's fold never needs to. A
+  // function, so a rejoin after a deploy reads what was kept since the page loaded.
+  params: () => ({_csrf_token: csrfToken, tables: recallAll("table")}),
   hooks: gameHooks,
 })
 

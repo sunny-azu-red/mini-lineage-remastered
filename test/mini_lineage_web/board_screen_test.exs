@@ -86,7 +86,12 @@ defmodule MiniLineageWeb.BoardScreenTest do
       run("Alone", xp: 10)
 
       {:ok, _live, html} = live(conn, ~p"/highscores")
-      headers = Regex.scan(~r/<th[^>]*>\s*([^<]*?)\s*<\/th>/, html) |> Enum.map(&List.last/1)
+
+      headers =
+        html
+        |> LazyHTML.from_document()
+        |> LazyHTML.query("#halls-table th")
+        |> Enum.map(&String.trim(LazyHTML.text(&1)))
 
       assert headers == ["Name", "Level", "Total XP", "Wealth", "Date"]
     end

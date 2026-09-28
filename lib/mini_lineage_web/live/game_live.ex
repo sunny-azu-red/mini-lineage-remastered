@@ -13,7 +13,7 @@ defmodule MiniLineageWeb.GameLive do
 
   alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
-  alias MiniLineageWeb.{Paths, Screens}
+  alias MiniLineageWeb.{Controls, Paths, Screens}
 
   @impl true
   def mount(_params, %{"session_id" => id}, socket) when is_binary(id) do
@@ -60,9 +60,23 @@ defmodule MiniLineageWeb.GameLive do
        key_buffer: [],
        error_detail: nil,
        picked: nil,
-       flash_fresh: false
+       flash_fresh: false,
+       sorts: kept_sorts(get_connect_params(socket))
      )}
   end
+
+  # The reader's sorts arrive with the socket, so a remembered one is already on the first connected
+  # render. Read against what each table offers today, since storage is the reader's to edit.
+  defp kept_sorts(%{"tables" => kept}) when is_map(kept) do
+    Enum.reduce(kept, %{}, fn {table, value}, sorts ->
+      case Controls.decode_sort(value, Screens.sorts(table)) do
+        nil -> sorts
+        sort -> Map.put(sorts, table, sort)
+      end
+    end)
+  end
+
+  defp kept_sorts(_params), do: %{}
 
   # ------------------------------------------------------------- navigation
 
@@ -342,6 +356,22 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, assign(socket, record_log_present: at)}
   end
 
+  # A sort orders rows the socket already holds, so it reads nothing and gates nothing: it is
+  # this tab's view of a table, not something a run does.
+  def handle_event("sort", %{"table" => table, "key" => key}, socket) do
+    case Screens.sorts(table) do
+      %{^key => first} ->
+        sort = Controls.next_sort(socket.assigns.sorts[table], key, first)
+        {:noreply, put_sort(socket, table, sort)}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("reset_sort", %{"table" => table}, socket),
+    do: {:noreply, put_sort(socket, table, nil)}
+
   # ----------------------------------------------------------------- pushes
 
   @impl true
@@ -450,6 +480,12 @@ defmodule MiniLineageWeb.GameLive do
   defp older_chronicle(socket, _before), do: socket
 
   # ------------------------------------------------------------------ plumbing
+
+  defp put_sort(socket, table, nil),
+    do: assign(socket, sorts: Map.delete(socket.assigns.sorts, table))
+
+  defp put_sort(socket, table, sort),
+    do: assign(socket, sorts: Map.put(socket.assigns.sorts, table, sort))
 
   # Runs an action in the character's process and folds the result into the view. A socket holds one
   # patch, so where the action leaves them is decided here, once: the error screen if it failed, the
@@ -581,6 +617,7 @@ defmodule MiniLineageWeb.GameLive do
         race_filter={@race_filter}
         detail={@error_detail}
         picked={@picked}
+        sorts={@sorts}
       />
     </Layouts.app>
     """

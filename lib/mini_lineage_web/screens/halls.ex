@@ -11,18 +11,28 @@ defmodule MiniLineageWeb.Screens.Halls do
   alias MiniLineage.Game.Format
   alias MiniLineageWeb.Paths
 
+  # What each column sorts by, and which way a first click takes it: a figure highest first, a
+  # date newest first, a name from A. No sort at all is the ranking, which no one column is.
+  @sorts %{"name" => :asc, "level" => :desc, "xp" => :desc, "wealth" => :desc, "date" => :desc}
+
+  @doc "The columns the Halls sort on, for the LiveView to check a click or a kept sort against."
+  def sorts, do: @sorts
+
   attr :view, :map, required: true
   attr :catalog, :map, required: true
   attr :boards, :map, default: %{}
   attr :character_id, :string, default: nil
   attr :race_filter, :integer, default: nil
+  attr :sorts, :map, default: %{}
 
   def screen(assigns) do
     filter = Enum.find(assigns.catalog.races, &(&1.id == assigns.race_filter))
+    sort = assigns.sorts["halls-table"]
 
     assigns =
       assign(assigns,
-        rows: Map.get(assigns.boards, assigns.race_filter, []),
+        rows: assigns.boards |> Map.get(assigns.race_filter, []) |> sort_rows(sort, &sort_key/2),
+        sort: sort,
         filter_slug: filter && filter.slug
       )
 
@@ -43,6 +53,7 @@ defmodule MiniLineageWeb.Screens.Halls do
       >
         {race.emoji} {race.label}
       </.link>
+      <.reset_sort table="halls-table" sort={@sort} />
     </div>
 
     <%= if @rows == [] do %>
@@ -52,31 +63,25 @@ defmodule MiniLineageWeb.Screens.Halls do
         eternity?
       </p>
     <% else %>
-      <div class="table-container">
-        <table id="halls-table" class="data-table" phx-hook="LocalTimes">
-          <thead>
-            <tr>
-              <th class="name">Name</th>
-              <th class="num">Level</th>
-              <th class="num">Total XP</th>
-              <th>Wealth</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <%!-- The hook animates every [data-value] beneath it and sweeps every [data-stamp] whose
+      <.data_table id="halls-table" sort={@sort} phx-hook="LocalTimes">
+        <:col class="name" sort="name">Name</:col>
+        <:col class="num" sort="level">Level</:col>
+        <:col class="num" sort="xp">Total XP</:col>
+        <:col sort="wealth">Wealth</:col>
+        <:col sort="date">Date</:col>
+        <%!-- The hook animates every [data-value] beneath it and sweeps every [data-stamp] whose
                 stamp has moved, so one hook covers the whole board. --%>
-          <tbody id="halls-rows" phx-hook="AnimatedValues">
-            <.character_row
-              :for={row <- @rows}
-              :key={row.id}
-              catalog={@catalog}
-              row={row}
-              mine={row.id == @character_id}
-              from={@filter_slug}
-            />
-          </tbody>
-        </table>
-      </div>
+        <tbody id="halls-rows" phx-hook="AnimatedValues">
+          <.character_row
+            :for={row <- @rows}
+            :key={row.id}
+            catalog={@catalog}
+            row={row}
+            mine={row.id == @character_id}
+            from={@filter_slug}
+          />
+        </tbody>
+      </.data_table>
     <% end %>
 
     <.back_link started={@view.started} dead={@view.dead} class="last" />
@@ -129,6 +134,12 @@ defmodule MiniLineageWeb.Screens.Halls do
     </tr>
     """
   end
+
+  defp sort_key(row, "name"), do: String.downcase(row.name || "")
+  defp sort_key(row, "level"), do: row.level
+  defp sort_key(row, "xp"), do: row.total_xp
+  defp sort_key(row, "wealth"), do: row.adena
+  defp sort_key(row, "date"), do: DateTime.to_unix(row.last_seen_at, :microsecond)
 
   # A run is going while it has neither died nor lost its session. Without one it is missing: it
   # can never be played again, so it is over even though it never died.

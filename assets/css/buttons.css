@@ -230,6 +230,14 @@
     margin-bottom: 12px;
 }
 
+/* Across from the filters it undoes nothing of: they choose which rows, it chooses their order. On
+   a phone the filters wrap, and pushed right it would sit alone at the end of a line of its own. */
+@media (width > 640px) {
+    .reset-sort {
+        margin-left: auto;
+    }
+}
+
 /* ===== Sizing Variants ===== */
 .btn-sm {
     padding: 0 10px;

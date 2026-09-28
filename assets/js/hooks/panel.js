@@ -1,21 +1,5 @@
 import { Log } from './log';
-
-// Blocked or private storage just means the panel opens where the template says, every time.
-function recall(id) {
-    try {
-        return localStorage.getItem(`panel:${id}`);
-    } catch {
-        return null;
-    }
-}
-
-function keep(id, open) {
-    try {
-        localStorage.setItem(`panel:${id}`, open ? '1' : '0');
-    } catch {
-        // Nothing to do: the panel will simply not remember.
-    }
-}
+import { keep, recall } from './kept';
 
 /**
  * A panel that does something: folds on a click of its own header, and is a log when it says so,
@@ -32,7 +16,7 @@ export const Panel = {
         this.toggle?.addEventListener('click', () => {
             if (!this.folds()) return;
             this.show(!this.open);
-            if (this.remember) keep(this.el.id, this.open);
+            if (this.remember) keep('panel', this.el.id, this.open ? '1' : '0');
             if (this.open) this.reveal();
         });
         // Where the panel may fold is the stylesheet's to say, and it can change with the width.
@@ -51,7 +35,7 @@ export const Panel = {
         this.subject = this.el.dataset.subject;
         // What the reader last did with THIS panel beats what the template opens it on, where the
         // panel keeps it. Keyed by the panel's id, so it is about the panel and not whose it is.
-        const kept = this.toggle && this.remember ? recall(this.el.id) : null;
+        const kept = this.toggle && this.remember ? recall('panel', this.el.id) : null;
         this.open = !this.toggle
             || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
         this.show(this.open);

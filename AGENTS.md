@@ -24,8 +24,8 @@ list wins — several generator defaults do not exist here.
   start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
   enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
   have a module. Anything a page reaches for but does not
-  own (the panel card, the alerts, the select-and-button form, `<.back_link>`, `<.stamp>`) is in
-  `Controls`.
+  own (the panel card, the table, the alerts, the select-and-button form, `<.back_link>`,
+  `<.stamp>`, `<.reset_sort>`) is in `Controls`.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
   than everything else on that page put together and crowds out what the panel is named for. The aside
@@ -60,6 +60,10 @@ list wins — several generator defaults do not exist here.
   them there buys nothing but minutes and their own flakes. `mix precommit`, then look at it.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
   put it back. A test written after the fix and never seen to fail is decoration.
+- **A new component, hook or shared control is written into this file in the change that adds
+  it.** What is described here is what the next change reaches for; one nobody wrote down gets
+  built a second time beside it, slightly different. Before writing a control, look here and in
+  `Controls` for the one that already does it, and extend that one with an option instead.
 
 ### Rules that are not negotiable
 
@@ -573,6 +577,35 @@ the record it grows with what it holds up to the record's height and never folds
 it folds, and starts folded on every visit and every record. The Inventory folds there too but opens
 unfolded and remembers, being the reader's own on every screen rather than a different run's each
 visit.
+
+**Every table in the game is one component, and its sort is the server's.** `Controls.data_table/1`
+draws the container, the header row and the `<table>`; the rows are the caller's `<tbody>`, and
+anything else handed to it lands on the `<table>`, where a screen's own hook goes. A `:col` with
+`sort` is a header button; `next_sort/3` cycles it through its first direction, the other one, and
+none, and the screen orders its rows with `sort_rows/3`. No sort is the screen's own order, which
+no one column is, so on arrival no header is lit. The sort is stable, so rows equal on the column
+keep their rank and do not trade places on every push. It is the server's though it reads nothing:
+the Halls are patched whenever the board moves, and a sort done in the DOM would be undone by every
+patch and redone after it, moving every row twice.
+
+`remember` keeps it under `table:<id>`. The `Table` hook writes a change and never what a mount
+finds, so a second tab opening on an older sort cannot overwrite a newer one. `app.js` hands every
+kept sort over as the socket connects, so the first connected render already has it, and
+`Screens.sorts/1` checks what comes back, since storage is the reader's to edit. `<.reset_sort>`
+shows only while a sort is on, and the screen places it. A sort control changes how the table is
+viewed, not what the run does, so `PanelFocus` neither focuses one nor lets a click on one move
+focus. The shops use the component unsorted: five items whose figures rise with their price have
+one order worth reading.
+
+**What the reader chooses is kept as `<kind>:<id>`, through `hooks/kept.js` and nowhere else.**
+`panel:chronicle` is a fold, `table:halls-table` a sort, and `recall`, `keep` and `recallAll` are
+the only code that touches `localStorage` for them, so a new thing that remembers takes a kind and
+writes no storage code of its own. The sound switch's `soundEnabled` predates the scheme and is
+the one exception. What differs is who needs it. A fold is the browser's alone: the
+server renders the template's state and the hook corrects it on mount. A sort decides the order the
+server draws, so every kept one goes to the server as the socket connects, which is why `hooks.js`
+re-exports `recallAll` for `app.js`. Give a kind to the server only when the server must know it to
+render.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.

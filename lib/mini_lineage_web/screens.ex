@@ -49,6 +49,7 @@ defmodule MiniLineageWeb.Screens do
   attr :race_filter, :integer, default: nil
   attr :detail, :string, default: nil
   attr :picked, :string, default: nil
+  attr :sorts, :map, default: %{}
 
   # A character can be reset from another tab while this one is still showing a screen that needs
   # one. `pin_screen/2` will move us on the next params pass; until then, draw nothing rather than
@@ -97,6 +98,10 @@ defmodule MiniLineageWeb.Screens do
     />
     """
   end
+
+  @doc "The columns a table sorts on, by its id, or nil for a table that does not sort."
+  def sorts("halls-table"), do: Halls.sorts()
+  def sorts(_table), do: nil
 
   def aside?("character", record), do: record != nil
   def aside?(_screen, _record), do: false

@@ -393,6 +393,84 @@ try {
     check('...so two clocks disagree about one moment, as they should',
         tokyo.shown !== la.shown, `Tokyo ${tokyo.shown} · LA ${la.shown}`);
 
+    // ---- a sorted board, kept by the reader and kept up by the pushes -------------------------
+    // A second run, born after everything LiveOne has done, so it is the one seen last.
+    const second = await (await browser.newContext()).newPage();
+    second.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
+    await second.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await connected(second);
+    await second.fill('#main input[name="name"]', 'LiveTwo');
+    await second.selectOption('#main select[name="race_id"]', '0');
+    await second.click('#main button[type="submit"]');
+    await second.waitForSelector('#screen[data-screen="home"]', { timeout: 8000 });
+
+    await watcher.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await connected(watcher);
+    const board = () => watcher.evaluate(() => ({
+        names: [...document.querySelectorAll('#halls-rows tr td.name a')].map(a => a.textContent.trim()),
+        stamps: [...document.querySelectorAll('#halls-rows tr')].map(tr => tr.dataset.stamp),
+        sorted: [...document.querySelectorAll('#halls-table th[aria-sort]')]
+            .map(th => `${th.textContent.trim()}:${th.getAttribute('aria-sort')}`),
+        reset: !!document.querySelector('#halls-table-reset'),
+    }));
+    const boardIs = (names) => watcher.waitForFunction((want) =>
+        [...document.querySelectorAll('#halls-rows tr td.name a')].map(a => a.textContent.trim()).join() === want,
+        names.join(), { timeout: 8000 }).then(() => true).catch(() => false);
+    const sortBy = (key) => watcher.click(`#halls-table button[phx-value-key="${key}"]`);
+
+    await boardIs(['LiveOne', 'LiveTwo']);
+    let halls = await board();
+    check('the Halls open on the ranking, no column sorted and nothing to reset',
+        halls.names.join() === 'LiveOne,LiveTwo' && !halls.sorted.length && !halls.reset, JSON.stringify(halls));
+
+    const focused = () => watcher.evaluate(() => {
+        const el = document.activeElement;
+        return el?.matches('.sort, .reset-sort') ? el.getAttribute('phx-value-key') ?? el.id : null;
+    });
+    check('...nor is a header handed focus on arrival, where Space would sort it', await focused() === null);
+
+    await sortBy('date');
+    const byDate = await boardIs(['LiveTwo', 'LiveOne']);
+    halls = await board();
+    check('...focus staying on the header clicked, not the reset that appeared',
+        await focused() === 'date', await focused());
+    check('...and a click on Date puts whoever was seen last on top',
+        byDate && halls.stamps[0] > halls.stamps[1] && halls.sorted.join() === 'Date:descending' && halls.reset,
+        JSON.stringify(halls));
+
+    // Ale, never a fight: a purchase is always a row, and nothing about it is the dice's.
+    await player.selectOption('#main select[name="item_id"]', '0');
+    await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
+    check('...and whoever plays next rises to the top as they do, the sort outliving the push',
+        await boardIs(['LiveOne', 'LiveTwo']) && (await board()).sorted.join() === 'Date:descending');
+
+    await watcher.reload({ waitUntil: 'domcontentloaded' });
+    await connected(watcher);
+    halls = await board();
+    check('...and a refresh opens on the sort the reader left',
+        halls.names.join() === 'LiveOne,LiveTwo' && halls.sorted.join() === 'Date:descending', JSON.stringify(halls));
+
+    await sortBy('date');
+    check('...a second click reverses it', await boardIs(['LiveTwo', 'LiveOne'])
+        && (await board()).sorted.join() === 'Date:ascending');
+    await sortBy('date');
+    await boardIs(['LiveOne', 'LiveTwo']);
+    halls = await board();
+    check('...and a third returns to the ranking, taking the reset away with it',
+        !halls.sorted.length && !halls.reset, JSON.stringify(halls));
+
+    await watcher.reload({ waitUntil: 'domcontentloaded' });
+    await connected(watcher);
+    check('...and a refresh forgets the sort that was undone', !(await board()).sorted.length);
+
+    await sortBy('name');
+    await watcher.waitForSelector('#halls-table-reset', { timeout: 8000 });
+    await watcher.click('#halls-table-reset');
+    await watcher.waitForSelector('#halls-table-reset', { state: 'detached', timeout: 8000 });
+    halls = await board();
+    check('Reset Sort puts the ranking back and takes itself away',
+        halls.names.join() === 'LiveOne,LiveTwo' && !halls.sorted.length, JSON.stringify(halls));
+
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {
     check(`live board threw: ${err.message}`, false);

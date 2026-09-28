@@ -89,34 +89,29 @@ defmodule MiniLineageWeb.Screens.Shop do
     ~H"""
     <p>{@intro_a}<br />{@intro_b}</p>
 
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="name">Name</th>
-            <%!-- Raw so a label is written the way the game writes markup, with its entities; they
-                  are constants from this module, never anything a player typed. --%>
-            <th class="num" title={@modifier.title}>{raw(@modifier.header)}</th>
-            <th class="num" title={@stat_title}>{raw(@stat_header)}</th>
-            <th>Adena</th>
-          </tr>
-        </thead>
-        <tbody>
-          <%!-- Spread rather than a class list, which would print class="" on every other row. --%>
-          <tr :for={item <- @items} {if @owned_id == item.id, do: [class: "owned"], else: []}>
-            <td class="name">{item.emoji} <span class="item">{item.name}</span></td>
-            <td class="num">
-              <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>
-                {@modifier.prefix}{Map.get(item, @modifier.key)}{@modifier.suffix}
-              </span>
-              <span :if={(Map.get(item, @modifier.key) || 0) <= 0} class="muted">-</span>
-            </td>
-            <td class={["num", @stat_class]}>{Format.number(item.stat)}</td>
-            <td class="adena">🪙 {Format.adena(item.cost)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <%!-- Unsorted: five items whose figures rise with their price have one order worth reading.
+          Raw so a label is written the way the game writes markup, with its entities; they are
+          constants from this module, never anything a player typed. --%>
+    <.data_table id={"#{@type}-table"}>
+      <:col class="name">Name</:col>
+      <:col class="num" title={@modifier.title}>{raw(@modifier.header)}</:col>
+      <:col class="num" title={@stat_title}>{raw(@stat_header)}</:col>
+      <:col>Adena</:col>
+      <tbody>
+        <%!-- Spread rather than a class list, which would print class="" on every other row. --%>
+        <tr :for={item <- @items} {if @owned_id == item.id, do: [class: "owned"], else: []}>
+          <td class="name">{item.emoji} <span class="item">{item.name}</span></td>
+          <td class="num">
+            <span :if={(Map.get(item, @modifier.key) || 0) > 0} class={@modifier.class}>
+              {@modifier.prefix}{Map.get(item, @modifier.key)}{@modifier.suffix}
+            </span>
+            <span :if={(Map.get(item, @modifier.key) || 0) <= 0} class="muted">-</span>
+          </td>
+          <td class={["num", @stat_class]}>{Format.number(item.stat)}</td>
+          <td class="adena">🪙 {Format.adena(item.cost)}</td>
+        </tr>
+      </tbody>
+    </.data_table>
 
     <.select_action_form
       id="purchase-form"

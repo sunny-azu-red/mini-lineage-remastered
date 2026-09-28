@@ -9,6 +9,8 @@
 .data-table {
     width: 100%;
     border-collapse: collapse;
+    /* A header's, whether the cell holds the label or a sort button holds it for the cell. */
+    --th-padding: 6px 10px 4px 10px;
 }
 
 .table-container {
@@ -24,7 +26,7 @@
     background: var(--table-lift);
     /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
        column's own padding is a label hanging over the wrong edge. */
-    padding: 6px 10px 4px 10px;
+    padding: var(--th-padding);
     text-align: left;
     border-bottom: 1px solid var(--border-soft);
 }
@@ -57,6 +59,70 @@ th.num {
     .data-table th:not(.name) {
         white-space: normal;
     }
+
+    /* Here every column is already at its narrowest, so the arrow's room is kept only where it is
+       drawn: reserved on every sortable header, it put 33px more of the Halls behind the scroll. */
+    .data-table th:not([aria-sort]) .sort-arrow {
+        display: none;
+    }
+}
+
+/* --- a sortable column ---------------------------------------------------------------------- */
+
+/* The whole cell is the target, so the button takes the header's padding. A button inherits no
+   type and no colour, so it is handed the label's. */
+.data-table th:has(> .sort) {
+    padding: 0;
+}
+
+.data-table .sort {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: var(--th-padding);
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+/* A right-aligned label keeps its edge, and the arrow goes on the side it leaves free. */
+.data-table th.num .sort {
+    flex-direction: row-reverse;
+}
+
+.data-table .sort:hover {
+    color: var(--gold-hover);
+}
+
+.data-table th[aria-sort] {
+    color: var(--gold);
+}
+
+/* The panel's chevron at a label's size, and the same centring: the translate is a quarter of the
+   box less its stroke. Down is descending, up ascending, and it holds its room until it sorts, so a
+   column does not widen as it takes the sort. */
+.sort-arrow {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translate(-1.125px, -1.125px);
+    visibility: hidden;
+}
+
+.data-table th[aria-sort] .sort-arrow {
+    visibility: visible;
+}
+
+.data-table th[aria-sort="ascending"] .sort-arrow {
+    transform: rotate(-135deg) translate(-1.125px, -1.125px);
 }
 
 /* --- the Halls of Champions ------------------------------------------------------------------ */
