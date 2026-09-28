@@ -41,6 +41,13 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
   defp texts(html, selector),
     do: html |> LazyHTML.from_document() |> LazyHTML.query(selector) |> Enum.map(&LazyHTML.text/1)
 
+  defp overfull?(html),
+    do:
+      html
+      |> LazyHTML.from_document()
+      |> LazyHTML.query("#chronicle-log[data-overfull]")
+      |> Enum.any?()
+
   defp older_than(html) do
     case html
          |> LazyHTML.from_document()
@@ -121,6 +128,67 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     html = render(view)
     assert lines(html) == ["Deed 31." | held]
     assert Enum.take(numbers(html), 2) == ["#31", "#30"]
+  end
+
+  # A reader at the present of a long watch would otherwise hold every entry they were ever shown,
+  # in the page and in this process both.
+  describe "a reader holding more than three pages" do
+    setup %{conn: conn} do
+      {:ok, view, html} = live(conn, ~p"/character/#{run_with(120)}")
+
+      html =
+        Enum.reduce(1..2, html, fn _, html ->
+          render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+        end)
+
+      %{view: view, html: html}
+    end
+
+    test "is told so, and not a page before", %{view: view, html: html} do
+      refute overfull?(html)
+
+      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      assert overfull?(html)
+    end
+
+    test "is let back to the newest page, and the rest is asked for again", %{
+      view: view,
+      html: html
+    } do
+      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      # Asked by the name the page gives its hook, so the two cannot drift apart.
+      [event] =
+        html
+        |> LazyHTML.from_document()
+        |> LazyHTML.query("#chronicle")
+        |> LazyHTML.attribute("data-trim")
+
+      html = render_hook(view, event, %{"keep" => nil})
+
+      assert lines(html) == Enum.map(120..96//-1, &"Deed #{&1}.")
+      refute overfull?(html)
+
+      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      assert numbers(html) == Enum.map(120..71//-1, &"##{&1}")
+    end
+
+    test "but keeps the entry their unread line is under, and all above it", %{
+      view: view,
+      html: html
+    } do
+      html = render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      line = html |> held() |> Enum.at(39) |> LazyHTML.attribute("id") |> hd()
+
+      html = render_hook(view, "trim_chronicle", %{"keep" => line})
+      assert lines(html) == Enum.map(120..81//-1, &"Deed #{&1}.")
+    end
+
+    test "and an entry they no longer hold trims nothing", %{view: view, html: html} do
+      render_hook(view, "older_chronicle", %{"before" => older_than(html)})
+      html = render_hook(view, "trim_chronicle", %{"keep" => "chronicle-0"})
+
+      assert length(lines(html)) == 100
+    end
   end
 
   test "and a run that fits on one page never offers another", %{conn: conn} do

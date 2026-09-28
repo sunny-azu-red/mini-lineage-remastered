@@ -35,6 +35,9 @@ defmodule MiniLineage.CharacterLog do
   # browser suites, which could not otherwise reach a second page without a minute of shopping.
   @window Application.compile_env(:mini_lineage, :chronicle_page, 25)
 
+  @doc "How many entries a page holds, and so what a refresh opens on."
+  def window, do: @window
+
   @doc """
   The row a fight produces: its lines and nothing else, since the lines say everything a reader is
   told. Built rather than written so the caller can save it in the character's own transaction.

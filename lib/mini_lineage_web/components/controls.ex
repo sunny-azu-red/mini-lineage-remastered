@@ -55,6 +55,9 @@ defmodule MiniLineageWeb.Controls do
   attr :log, :atom, values: [nil, :newest_first, :oldest_first], default: nil
   # The event a log asks for its previous page with, when its list carries `data-older-than`.
   attr :load_older, :string, default: nil
+  # The event a reader at the present asks with to let the oldest go, when its list carries
+  # `data-overfull`.
+  attr :trim, :string, default: nil
 
   # What the pill over the present edge counts, singular and plural: `{"new entry", "new entries"}`.
   attr :unread, :any, default: nil
@@ -70,6 +73,7 @@ defmodule MiniLineageWeb.Controls do
       phx-hook={if @collapsible or @log, do: "Panel"}
       data-log={@log && String.replace(to_string(@log), "_", "-")}
       data-load-older={@load_older}
+      data-trim={@trim}
       data-remember={if !@remember, do: "false"}
       data-subject={@subject}
     >

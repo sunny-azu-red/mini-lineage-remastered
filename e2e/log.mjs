@@ -28,7 +28,7 @@ async function mount(order) {
         const held = Array.from({ length: 20 }, (_, i) => entry(i + 1));
         document.body.insertAdjacentHTML('beforeend', `
             <div id="harness" style="position: fixed; top: 0; left: 0; width: 320px; z-index: 99">
-              <div id="log" class="panel" data-log="${order}" data-load-older="older_log">
+              <div id="log" class="panel" data-log="${order}" data-load-older="older_log" data-trim="trim_log">
                 <div class="panel-header flex"><span class="header-name">Log</span></div>
                 <div class="panel-body rows scrolls" style="max-height: ${BOX}px">
                   <ol class="chronicle" data-older-than="1">${(chat ? held : held.reverse()).join('')}</ol>
@@ -68,6 +68,14 @@ const PATCH = (change) => {
         for (const n of change.older) chat ? list.prepend(entry(n)) : list.append(entry(n));
         delete list.dataset.olderThan;
     }
+    // What the server lets go, from the past edge, and whether it holds too many.
+    if (change.trim) {
+        const items = [...list.children];
+        for (const li of chat ? items.slice(0, change.trim) : items.slice(-change.trim)) li.remove();
+        list.dataset.olderThan = '1';
+    }
+    if (change.overfull) list.dataset.overfull = '';
+    else delete list.dataset.overfull;
     for (const li of list.querySelectorAll('[data-unread]')) li.removeAttribute('data-unread');
     const pill = hook.el.querySelector('.panel-unread');
     pill.hidden = true;
@@ -189,6 +197,36 @@ try {
         s = await state();
         check('reaching the present by hand is caught up', !s.pill, s.pill);
         check('...but keeps the line, which the reader has not reached yet', s.marked.length === 1, s.marked.join());
+
+        // ---- holding too many: asked only from the present, and never past the line --------------
+        const trims = () => page.evaluate(() => window.__pushed.filter(p => p.event === 'trim_log'));
+        await patch({ overfull: true });
+        let asked = await trims();
+        check('a reader at the present holding too many asks for the oldest to go, keeping the line',
+            asked.length === 1 && asked[0].payload.keep === s.marked[0].split(':')[0], JSON.stringify(asked));
+
+        await mount(order);
+        await scrollBy(150, chat);
+        await patch({ overfull: true });
+        check('...but not one away from it, who may be reading what would go', !(await trims()).length);
+
+        await page.evaluate((chat) => {
+            const body = document.querySelector('#log .panel-body');
+            body.scrollTop = chat ? body.scrollHeight : 0;
+        }, chat);
+        await settle();
+        asked = await trims();
+        check('...until they are back at it, with no line to keep',
+            asked.length === 1 && asked[0].payload.keep === null, JSON.stringify(asked));
+
+        const standing = await view();
+        await patch({ trim: 10 });
+        s = await state();
+        const stood = await view(standing.id);
+        check('...and letting it go leaves them at the present, on the line they were reading',
+            fromPresent(s, chat) <= 2 && Math.abs(stood.offset - standing.offset) <= 1,
+            `${JSON.stringify(standing)} -> ${JSON.stringify(stood)}`);
+        check('...asking nothing more once it holds few enough', (await trims()).length === 1);
 
         // ---- a hidden tab is away, even at the present ------------------------------------------
         // Six arrive and the tab comes back in one task: a background tab runs no frames, so no

@@ -333,6 +333,12 @@ defmodule MiniLineageWeb.GameLive do
     {:reply, %{}, older_chronicle(socket, before)}
   end
 
+  # The reader is at the present holding more than a refresh would give them, and names the entry
+  # their unread line is under, if any, so it is kept with everything above it.
+  def handle_event("trim_chronicle", %{"keep" => keep}, socket) do
+    {:reply, %{}, trim_chronicle(socket, keep)}
+  end
+
   # ----------------------------------------------------------------- pushes
 
   @impl true
@@ -435,6 +441,17 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   defp older_chronicle(socket, _before), do: socket
+
+  # Back to a page, as a refresh opens on; what goes is asked for again by the same keyset. An entry
+  # named but not held is a stale ask, and is dropped.
+  defp trim_chronicle(%{assigns: %{record_log: log}} = socket, keep) do
+    through = if keep, do: Enum.find_index(log, &(Screens.Record.entry_id(&1) == keep)), else: 0
+    kept = max(CharacterLog.window(), (through || 0) + 1)
+
+    if through && length(log) > kept,
+      do: assign(socket, record_log: Enum.take(log, kept), record_log_older: true),
+      else: socket
+  end
 
   # ------------------------------------------------------------------ plumbing
 
