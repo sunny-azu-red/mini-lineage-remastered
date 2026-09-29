@@ -17,7 +17,8 @@ permissions:
 jobs:
   test:
     name: suite
-    runs-on: ubuntu-latest
+    # Pinned in all three jobs, so the runner changes when this does and not when a label moves.
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     services:
@@ -90,7 +91,7 @@ jobs:
   browser:
     name: browser suites
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
 
     services:
@@ -153,7 +154,7 @@ jobs:
     name: publish (ghcr)
     needs: [test, browser]
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
 
     permissions:
