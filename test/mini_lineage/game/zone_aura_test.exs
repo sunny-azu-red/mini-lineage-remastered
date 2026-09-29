@@ -35,10 +35,27 @@ defmodule MiniLineage.Game.ZoneAuraTest do
   end
 
   test "a resting zone rests you", %{player: player} do
-    for zone <- ~w(home inn weapons armors character highscores) do
+    for zone <- ~w(home inn weapons armors character highscores statistics races) do
       {moved, _} = move(player, zone)
 
       assert aura(moved).id == "resting", zone
+    end
+  end
+
+  # Derived from the router, so a new screen is covered the day it is routed. `/` is Town to a living
+  # run, and the error page is never recorded as where anybody stands.
+  test "every screen a living run can stand on is a zone", %{player: player} do
+    routed =
+      for %{metadata: %{phoenix_live_view: {_, action, _, _}}} <-
+            Phoenix.Router.routes(MiniLineageWeb.Router),
+          action not in [:root, :error],
+          uniq: true,
+          do: Atom.to_string(action)
+
+    for screen <- ["home" | routed] do
+      {moved, _} = move(player, screen)
+
+      assert aura(moved), "#{screen} gives a living run no aura, so it neither rests nor fights"
     end
   end
 
@@ -51,9 +68,11 @@ defmodule MiniLineage.Game.ZoneAuraTest do
     assert aura(player).expires_at == @now + @linger
   end
 
+  # The error page is the one screen in neither list, and the LiveView never records it; these hold
+  # the fallback all the same.
   test "the countdown follows you anywhere, even a screen in neither zone", %{player: player} do
     {player, _} = move(player, "battle")
-    {player, _} = move(player, "statistics")
+    {player, _} = move(player, "error")
 
     assert aura(player).id == "combat"
     assert aura(player).expires_at == @now + @linger
@@ -94,10 +113,10 @@ defmodule MiniLineage.Game.ZoneAuraTest do
 
   test "once it elapses, a screen in neither zone gets no aura at all", %{player: player} do
     {player, _} = move(player, "battle")
-    {player, _} = move(player, "statistics")
+    {player, _} = move(player, "error")
 
     Clock.put_now(@now + @linger + 1)
-    {player, _} = move(player, "statistics")
+    {player, _} = move(player, "error")
 
     assert aura(player) == nil
   end

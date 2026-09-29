@@ -59,16 +59,16 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "a screen in neither zone list is its own case", %{id: id} do
-    # Reached by disengaging and letting the countdown lapse somewhere that rests nobody.
+    # Only the error page is in neither list, and nothing records it; the fallback holds anyway.
     move(id, "battle", %{health: 40})
-    move(id, "statistics")
+    move(id, "error")
 
     Characters.mutate(
       id,
       &{%{&1 | effects: Enum.reject(&1.effects, fn e -> e.id == "combat" end)}, :ok}
     )
 
-    move(id, "statistics")
+    move(id, "error")
 
     log = tick(id)
     assert log =~ "No Zone", "not 'Resting' — regeneration is off here"

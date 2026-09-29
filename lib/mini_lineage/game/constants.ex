@@ -225,7 +225,7 @@ defmodule MiniLineage.Game.Constants do
 
   @zone %{
     combat_zones: ~w(battle suicide death),
-    resting_zones: ~w(home inn weapons armors character highscores),
+    resting_zones: ~w(home inn weapons armors character highscores statistics races),
     combat_linger_ms: 5_000
   }
 
