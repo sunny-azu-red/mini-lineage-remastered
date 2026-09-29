@@ -472,7 +472,7 @@ defmodule MiniLineageWeb.Controls do
 
   # ------------------------------------------------------------------ stamps
 
-  @cap_ms :timer.hours(24 * Application.compile_env(:mini_lineage, :stamp_relative_days, 7))
+  @cap_ms :timer.hours(24 * Application.compile_env!(:mini_lineage, :stamp_relative_days))
 
   attr :id, :string, default: nil
   attr :at, :any, required: true

@@ -158,7 +158,7 @@ defmodule MiniLineage.Game.Snapshot do
   a whole view. Not cached in development, where an edited template must show without a restart.
   """
   def catalog do
-    if Application.get_env(:mini_lineage, :cache_catalog, true) do
+    if Application.fetch_env!(:mini_lineage, :cache_catalog) do
       case :persistent_term.get(@catalog_key, nil) do
         nil -> tap(build_catalog(), &:persistent_term.put(@catalog_key, &1))
         catalog -> catalog

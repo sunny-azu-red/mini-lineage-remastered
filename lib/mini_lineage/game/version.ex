@@ -7,7 +7,7 @@ defmodule MiniLineage.Game.Version do
 
   # What a build with no commit calls itself, per environment so 4002 is never taken for 4000.
   # compile_env is safe here, being constant per environment, unlike the sha.
-  @name Application.compile_env(:mini_lineage, :build_label, "development")
+  @name Application.compile_env!(:mini_lineage, :build_label)
   @glyphs %{"development" => "🔥", "testing" => "🍃"}
   @label Map.get(@glyphs, @name, "⚡") <> @name
 
@@ -29,7 +29,7 @@ defmodule MiniLineage.Game.Version do
   Whether this build may show its internals. Deliberately not `release?/1`: an image built without
   APP_VERSION cannot tell it is a release.
   """
-  def debug_build?, do: Application.get_env(:mini_lineage, :debug_build, true)
+  def debug_build?, do: Application.fetch_env!(:mini_lineage, :debug_build)
 
   @doc """
   The footer badge's class, or nil for a build that names a commit. Matched on the whole label, so

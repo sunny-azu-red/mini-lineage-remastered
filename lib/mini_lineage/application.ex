@@ -22,7 +22,7 @@ defmodule MiniLineage.Application do
         {Phoenix.PubSub, name: MiniLineage.PubSub}
       ] ++
         for {setting, child} <- @optional,
-            Application.get_env(:mini_lineage, setting, true),
+            Application.fetch_env!(:mini_lineage, setting),
             do: child
 
     # Last, so nothing serves a request before the pieces behind it are up.

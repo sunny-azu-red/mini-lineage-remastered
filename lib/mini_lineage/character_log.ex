@@ -31,7 +31,7 @@ defmodule MiniLineage.CharacterLog do
   end
 
   # One page of the Chronicle. Smaller in the browser suites, so they can reach a second page.
-  @window Application.compile_env(:mini_lineage, :chronicle_page, 25)
+  @window Application.compile_env!(:mini_lineage, :chronicle_page)
 
   @doc "How many entries a page holds, and so what a refresh opens on."
   def window, do: @window

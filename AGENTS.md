@@ -718,6 +718,12 @@ Mix compare the baked sha against the current one and refuse every task after th
 Read a value that moves with `Application.get_env/2` at runtime, and put a build-time requirement
 in a release step in `mix.exs`, which runs at the moment a thing becomes deployable.
 
+**A setting an environment overrides is defaulted in `config.exs` and nowhere else.** The code reads
+it with `compile_env!` or `fetch_env!`, never with a default of its own, so there is one value to
+change and a missing key fails at compile or boot rather than falling back to a stale copy. Only
+`:app_version` is optional. A value no environment changes is not a setting: it is a rule of the
+game and lives in `Constants`.
+
 <!-- usage-rules-start -->
 
 <!-- phoenix:elixir-start -->

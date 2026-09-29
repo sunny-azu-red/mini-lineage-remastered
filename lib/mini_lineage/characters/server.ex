@@ -15,7 +15,7 @@ defmodule MiniLineage.Characters.Server do
   # Fires just past the deadline so the sweep reliably sees the effect as due.
   @expiry_grace_ms 25
   # How long the process outlives its last viewer before stopping. Its buffer is flushed on the way.
-  @idle_grace_ms Application.compile_env(:mini_lineage, :character_idle_grace_ms, 10_000)
+  @idle_grace_ms Application.compile_env!(:mini_lineage, :character_idle_grace_ms)
 
   # The passage of time and where the player is standing; everything else is something they did.
   # Derived from the struct, not declared per call site, because a call site can forget to flush.

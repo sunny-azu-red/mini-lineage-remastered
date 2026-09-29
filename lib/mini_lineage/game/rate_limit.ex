@@ -37,7 +37,7 @@ defmodule MiniLineage.Game.RateLimit do
 
   @doc "Returns `:ok`, or `{:error, retry_after_ms}` when the window is full."
   def check(key, limiter) when is_map_key(@limits, limiter) do
-    if Application.get_env(:mini_lineage, :rate_limit, false),
+    if Application.fetch_env!(:mini_lineage, :rate_limit),
       do: consume(key, limiter),
       else: :ok
   end
