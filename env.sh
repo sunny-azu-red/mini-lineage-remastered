@@ -17,8 +17,11 @@ done
 unset _ml_lib
 
 # nvm only loads itself in an interactive shell, so a script or mix task would otherwise miss it.
+# A Node already on the PATH at the pinned version is left alone: CI's comes from setup-node, which
+# the runner's own nvm has never heard of.
 _ml_nvmrc="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/.nvmrc"
-if [ -f "$_ml_nvmrc" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
+if [ -f "$_ml_nvmrc" ] && [ "$(node --version 2>/dev/null)" != "v$(cat "$_ml_nvmrc")" ] &&
+  [ -s "$HOME/.nvm/nvm.sh" ]; then
   # shellcheck disable=SC1091
   command -v nvm >/dev/null 2>&1 || . "$HOME/.nvm/nvm.sh" --no-use
   nvm use --silent "$(cat "$_ml_nvmrc")" >/dev/null 2>&1 \
