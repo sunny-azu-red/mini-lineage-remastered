@@ -52,7 +52,7 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 
 ## 🛠️ Tech Stack
 
-- **Runtime**: Elixir 1.20 on OTP 28, served by Bandit
+- **Runtime**: Elixir 1.20 on OTP 29, served by Bandit
 - **Web**: Phoenix 1.8 with LiveView 1.2 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for effect expiry
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document

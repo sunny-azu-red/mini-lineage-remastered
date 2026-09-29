@@ -1,5 +1,5 @@
 # Pinned to what CI tests on; CI fails if the two drift.
-FROM hexpm/elixir:1.20.4-erlang-28.5.0.6-alpine-3.22.5 AS builder
+FROM hexpm/elixir:1.20.4-erlang-29.1.1-alpine-3.24.2 AS builder
 
 # Nothing to apk add: every production dependency is pure Elixir or Erlang.
 WORKDIR /app
@@ -30,7 +30,7 @@ ENV APP_VERSION=${APP_VERSION}
 RUN mix assets.deploy && mix release
 
 # --- runtime ---
-FROM alpine:3.22.5 AS runner
+FROM alpine:3.24.2 AS runner
 
 # What the ERTS links against, and ca-certificates for a database reached over TLS.
 RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
