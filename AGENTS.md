@@ -89,7 +89,9 @@ without a client-side copy the number would change format mid-count. `Format.cou
 `timerLabel`: the server renders an effect's first frame and the hook repaints it every second.
 `Format.remaining` and `remainingLabel` are the same pair said in a sentence, for the record's
 Blessings & Afflictions — a badge has room for "1m" and a paragraph has room for "1m 30s".
-Each pair reads one fixture — `test/fixtures/adena_format.json`, `test/fixtures/effect_timer.json`
+`Format.stamp` and `stampLabel` in `hooks/stamps.js`, with `stamp_title` and `stampTitle`: the
+server draws a stamp's first frame and the hook ages it. Each pair reads one fixture —
+`test/fixtures/adena_format.json`, `test/fixtures/effect_timer.json`, `test/fixtures/stamp_format.json`
 — from `format_test.exs` on the Elixir side and `walkthrough.mjs` on the JavaScript one. Change
 either implementation, change its table, and both tests will tell you. Anything else the two
 languages both format wants the same treatment before it gets a second copy.
@@ -645,12 +647,21 @@ Yours is your own view; anybody else's is `Characters.running/1`, found by the P
 the registry's value and never started by it, since a stopped process flushed on the way out. Only
 with none up is the document read.
 
-**Every absolute time a player sees goes through `<.stamp>`.** The database stores instants in
-`timestamptz` and the server runs in UTC, so only the browser knows what o'clock it is for the
-reader. The server-rendered text is the no-JS fallback; one `LocalTimes` hook over whatever holds the
-stamps rewrites them all, never a hook per stamp. Durations
-(`data-remaining-ms`) are exempt — they are the same length everywhere.
-
+**Every time a player sees goes through `<.stamp>`, and it says an age until it names a date.**
+"4m ago" inside `:stamp_relative_days` (7), the date past it, the whole instant in its `title`.
+`form` is how terse it is: "4m" and "12 Sep" (`:short`, a log's head) or "4 minutes" and "12
+September" (`:long`, the default); the rest shape only a date: `on` for "on 12 September", `time` for its clock, `at_time` for "at 9:05 am"
+rather than ", 9:05 am". An age takes none of them, so the stamp carries every preposition and
+prose writes none: "The road opened beneath your feet <.stamp on time at_time />" reads either way.
+The clock is twelve-hour and the game's own, never the browser's locale, or the twins would part.
+A log keeps the time, since a day of play crowds one date; the board names a day. The server draws the first
+frame, right in UTC and right without JS; one `Stamps` hook, spread onto the container by
+`stamps/0`, ages and localises every stamp beneath it on one page-wide 15s clock that stops once
+nothing is still an age. It ticks in the browser, never from LiveView: a server tick is a render
+and a diff per reader per minute, change tracking would have to be defeated to make one, and only
+the browser knows the reader's zone anyway. It ages from the server's clock, `data-now`, read once
+on mount, so a wrong clock in the browser cannot make its first repaint disagree with the server's
+frame. Durations (`data-remaining-ms`) are not stamps — they are the same length everywhere.
 
 **Do not over-explain.** One to three lines, why not what, never a paragraph. A hard limit, not a
 preference — it is the rule broken most often.

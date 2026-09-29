@@ -93,7 +93,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
         |> LazyHTML.query("#halls-table th")
         |> Enum.map(&String.trim(LazyHTML.text(&1)))
 
-      assert headers == ["Name", "Level", "Total XP", "Wealth", "Date"]
+      assert headers == ["Name", "Level", "Total XP", "Wealth", "Last Sighted"]
     end
 
     test "marks a run still being played, and leaves a finished one plain", %{conn: conn} do

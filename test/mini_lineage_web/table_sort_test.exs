@@ -80,12 +80,12 @@ defmodule MiniLineageWeb.TableSortTest do
 
       click(view, "date")
       assert names(view) == ["bronze", "gold", "Silver"]
-      assert sorted(view) == [{"Date", "descending"}]
+      assert sorted(view) == [{"Last Sighted", "descending"}]
       assert has_element?(view, "#halls-table-reset")
 
       click(view, "date")
       assert names(view) == ["Silver", "gold", "bronze"]
-      assert sorted(view) == [{"Date", "ascending"}]
+      assert sorted(view) == [{"Last Sighted", "ascending"}]
 
       click(view, "date")
       assert names(view) == ["gold", "Silver", "bronze"]
@@ -163,7 +163,7 @@ defmodule MiniLineageWeb.TableSortTest do
       {:ok, view, _html} = live(conn, ~p"/highscores")
 
       assert names(view) == ["Silver", "gold", "bronze"]
-      assert sorted(view) == [{"Date", "ascending"}]
+      assert sorted(view) == [{"Last Sighted", "ascending"}]
     end
 
     test "treat anything kept that the table does not offer as no sort at all", %{conn: conn} do

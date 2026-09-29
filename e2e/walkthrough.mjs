@@ -86,6 +86,23 @@ try {
     check('...and says a remaining time in a sentence the same way', offBySpoken.length === 0,
         offBySpoken.join(' | '));
 
+    // ---- and so do the two stamp formatters ------------------------------------------------------
+    // The server draws a stamp's first frame and the hook ages it from there. The table is UTC, so
+    // the browser is asked for UTC too; the page itself leaves that off and uses the reader's zone.
+    const stamps = JSON.parse(readFileSync('test/fixtures/stamp_format.json', 'utf8'));
+    const misdated = await page.evaluate(({ now, cap_ms, cases, titles }) => [
+        ...cases
+            .map(([at, form, flags, want]) => [at, form, flags, want, window.__stampLabel(Date.parse(at), Date.parse(now), cap_ms, form,
+                { on: flags.includes('on'), time: flags.includes('time'), atTime: flags.includes('at_time') }, true)])
+            .filter(([, , , want, got]) => got !== want)
+            .map(([at, form, flags, want, got]) => `${at} ${form} [${flags}]: ${got} != ${want}`),
+        ...titles
+            .filter(([at, want]) => window.__stampTitle(Date.parse(at), true) !== want)
+            .map(([at, want]) => `title ${at}: ${window.__stampTitle(Date.parse(at), true)} != ${want}`),
+    ], stamps);
+    check('the browser dates a stamp exactly as the server does', misdated.length === 0,
+        misdated.join(' | '));
+
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
     check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));

@@ -11,6 +11,7 @@ defmodule MiniLineageWeb.ChronicleTest do
 
   import Phoenix.LiveViewTest
 
+  alias MiniLineage.Game.Clock
   alias MiniLineageWeb.Screens.Record
 
   # Sentinels rather than real templates: a drawn line would make this a test of the pools.
@@ -37,6 +38,8 @@ defmodule MiniLineageWeb.ChronicleTest do
       at: ~U[2026-09-24 14:32:00Z]
     }
   end
+
+  defp ms(at), do: DateTime.to_unix(at, :millisecond)
 
   defp html_for(record_log, opts \\ []),
     do:
@@ -205,8 +208,10 @@ defmodule MiniLineageWeb.ChronicleTest do
                "Ending"
              ]
 
+      Clock.put_now(ms(~U[2026-09-24 14:36:00Z]))
+
       assert hd(entries([fight()])) =~
-               ~r|<div class="entry-head">\s*<span>.*24/09/26, 14:32.*&bull; Battle</span>|s
+               ~r|<div class="entry-head">\s*<span>.*4m ago.*&bull; Battle</span>|s
     end
 
     # The row id is the whole table's and says nothing about the run; the number is its place in it,
@@ -278,21 +283,25 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert text =~ "KILL. DEFLECT. OUTCOME. KILL. DEFLECT. OUTCOME. AMBUSH."
     end
 
-    # The reader's own clock corrects it; the markup has to carry the instant for that to be
-    # possible, and the UTC text has to be right for a reader with no JS at all.
-    test "and says when it happened" do
-      [entry] = entries([fight()])
+    # Short, being a log's head: an age while the run is recent, and past the cap a date that keeps
+    # its time, since a day of play crowds one date with entries.
+    test "and says when it happened, as an age and then as a date" do
+      Clock.put_now(ms(~U[2026-09-24 19:32:00Z]))
+      [recent] = entries([fight()])
 
-      assert entry =~ ~s(datetime="2026-09-24T14:32:00Z")
-      assert entry =~ "24/09/26, 14:32"
+      assert recent =~ ~s(datetime="2026-09-24T14:32:00Z")
+      assert recent =~ ~s(title="24 Sep 2026, 2:32 pm")
+      assert recent =~ ">5h ago</time>"
+
+      Clock.put_now(ms(~U[2026-10-01 14:32:00Z]))
+      assert hd(entries([fight()])) =~ ">24 Sep, 2:32 pm</time>"
     end
 
     # A hook per row is fifty hooks doing one job, so the list carries it instead.
     test "under one hook for the whole list, never one per entry" do
       html = html_for([fight(), fight()])
 
-      assert html =~ ~s(phx-hook="LocalTimes")
-      refute html =~ ~r/phx-hook="LocalTime"/
+      assert [_] = Regex.scan(~r/phx-hook="Stamps"/, html)
     end
 
     test "and a run with no fights says so instead" do

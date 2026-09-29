@@ -67,12 +67,12 @@ defmodule MiniLineageWeb.Screens.Halls do
         eternity?
       </p>
     <% else %>
-      <.data_table id="halls-table" sort={@sort} phx-hook="LocalTimes">
+      <.data_table id="halls-table" sort={@sort} {stamps()}>
         <:col class="name" sort="name">Name</:col>
         <:col class="num" sort="level">Level</:col>
         <:col class="num" sort="xp">Total XP</:col>
         <:col sort="wealth">Wealth</:col>
-        <:col sort="date">Date</:col>
+        <:col sort="date">Last Sighted</:col>
         <%!-- The hook animates every [data-value] beneath it and sweeps every [data-stamp] whose
                 stamp has moved, so one hook covers the whole board. --%>
         <tbody id="halls-rows" phx-hook="AnimatedValues">

@@ -243,7 +243,7 @@ defmodule MiniLineageWeb.Screens.Record do
         <ol
           id="chronicle-log"
           class="chronicle"
-          phx-hook="LocalTimes"
+          {stamps()}
           data-older-than={@older && List.last(@record_log).id}
         >
           <li
@@ -253,7 +253,7 @@ defmodule MiniLineageWeb.Screens.Record do
             {painted(entry)}
           >
             <div class="entry-head">
-              <span><.stamp at={entry.at} /> &bull; {kind_label(entry)}</span>
+              <span><.stamp at={entry.at} form={:short} time /> &bull; {kind_label(entry)}</span>
               <span>&num;{entry.number}</span>
             </div>
             <%= if entry.kind == "fight" do %>
@@ -289,17 +289,17 @@ defmodule MiniLineageWeb.Screens.Record do
 
   defp road(assigns) do
     ~H"""
-    <span id="record-road" phx-hook="LocalTimes" phx-no-format><%= case road_of(@dead, @entry) do %>
-      <% :closed -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and closed over {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :open -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and last carried {@voice.object} on <.stamp id="record-last" at={@at} />.
-      <% :lost -> %>The road opened beneath {@voice.their} feet on <.stamp id="record-set-out" at={@entry.inserted_at} /> and swallowed {@voice.object} somewhere past <.stamp id="record-last" at={@at} />.
+    <span id="record-road" {stamps()} phx-no-format><%= case road_of(@dead, @entry) do %>
+      <% :closed -> %>The road opened beneath {@voice.their} feet <.stamp id="record-set-out" at={@entry.inserted_at} on time at_time /> and closed over {@voice.object} <.stamp id="record-last" at={@at} on time at_time />.
+      <% :open -> %>The road opened beneath {@voice.their} feet <.stamp id="record-set-out" at={@entry.inserted_at} on time at_time /> and last carried {@voice.object} <.stamp id="record-last" at={@at} on time at_time />.
+      <% :lost -> %>The road opened beneath {@voice.their} feet <.stamp id="record-set-out" at={@entry.inserted_at} on time at_time /> and swallowed {@voice.object} after {@voice.them} were last sighted <.stamp id="record-last" at={@at} on time at_time />.
     <% end %></span>
     """
   end
 
   # Three ways a road ends: closed over them, still open, or lost with them still on it. `active` is
-  # "has a session", so a run walked away from past the retirement window is neither dead nor going —
-  # and the only one of the three whose last date names a direction rather than a day.
+  # "has a session", so a run walked away from past the retirement window is neither dead nor going.
+  # Each stamp carries its own "on", so every road reads whether its ends are ages or dates.
   # Dead from the view, which every push brings; the entry is read once, and only says who holds it.
   defp road_of(true, _entry), do: :closed
   defp road_of(false, %{active: true}), do: :open

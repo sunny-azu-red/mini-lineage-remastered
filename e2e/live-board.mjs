@@ -355,24 +355,24 @@ try {
 
     // ---- the same instant, read from two different clocks ------------------------------------
     // The server stores an instant and knows nothing about where anyone is, so the conversion has
-    // to happen in the browser. Two contexts, two timezones, one row.
+    // to happen in the browser. Two contexts, two timezones, one row. A recent row says its age,
+    // which is the same everywhere, so the claim is on the tooltip, which always names the instant.
     const stampIn = async (timezoneId) => {
         const page = await (await browser.newContext({ timezoneId })).newPage();
         await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
         await connected(page);
-        const cell = page.locator('#main table.data-table tbody tr td').last();
-        await page.waitForFunction(
-            () => document.querySelector('#main table.data-table tbody tr td:last-child time'),
-            null, { timeout: 6000 });
+        const stamp = page.locator('#main table.data-table tbody tr td:last-child time').first();
+        await stamp.waitFor({ timeout: 6000 });
+        const iso = await stamp.getAttribute('datetime');
         return {
-            shown: (await cell.textContent()).trim(),
-            iso: await cell.locator('time').getAttribute('datetime'),
+            shown: await stamp.getAttribute('title'),
+            iso,
             // What that instant IS in this timezone, computed by the browser itself.
             expected: await page.evaluate((iso) => {
-                const d = new Date(iso), p = (n) => String(n).padStart(2, '0');
-                return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`
-                    + `, ${p(d.getHours())}:${p(d.getMinutes())}`;
-            }, await cell.locator('time').getAttribute('datetime')),
+                const d = new Date(iso), p = (n) => String(n).padStart(2, '0'), h = d.getHours();
+                const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
+                return `${d.getDate()} ${month} ${d.getFullYear()}, ${h % 12 || 12}:${p(d.getMinutes())} ${h < 12 ? 'am' : 'pm'}`;
+            }, iso),
         };
     };
 
@@ -386,12 +386,54 @@ try {
         if (tokyo.iso === la.iso) break;
     }
 
-    check('a stamp is rendered in the reader\'s own timezone', tokyo.shown === tokyo.expected,
+    check('a stamp is dated in the reader\'s own timezone', tokyo.shown === tokyo.expected,
         `${tokyo.shown} vs ${tokyo.expected}`);
     check('...and in the other reader\'s, from the same instant',
         la.shown === la.expected && tokyo.iso === la.iso, `${la.shown} vs ${la.expected}`);
     check('...so two clocks disagree about one moment, as they should',
         tokyo.shown !== la.shown, `Tokyo ${tokyo.shown} · LA ${la.shown}`);
+
+    // ---- a stamp ages on the page, from the frame the server drew ------------------------------
+    // Three hours fast: the hook must age from the server's clock, or a deed done a moment ago
+    // reads "3h ago" the instant it takes over. The clock is Playwright's, so no assertion waits on
+    // a real minute passing; the one real interval assumed is under a minute from deed to read.
+    const aging = await (await browser.newContext()).newPage();
+    await aging.clock.install({ time: Date.now() + 3 * 3_600_000 });
+    const boughtAt = Date.now() - 1000;
+    await player.selectOption('#main select[name="item_id"]', '0');
+    await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
+    await aging.goto(`${BASE}${href}`, { waitUntil: 'domcontentloaded' });
+    await connected(aging);
+    await aging.waitForFunction((since) =>
+        Date.parse(document.querySelector('#chronicle-log li time')?.dateTime ?? 0) >= since,
+        boughtAt, { timeout: 8000, polling: 100 }).catch(() => {});
+    const labels = () => aging.evaluate(() => ({
+        head: document.querySelector('#chronicle-log li time')?.textContent,
+        road: document.querySelector('#record-last')?.textContent,
+    }));
+
+    let said = await labels();
+    check('a deed a moment old reads as just now, whatever the reader\'s clock says',
+        said.head === 'just now' && said.road === 'just now', JSON.stringify(said));
+
+    await aging.clock.fastForward(2 * 60_000);
+    said = await labels();
+    check('...and ages on the page with nobody asking, short in the Chronicle and long in the road',
+        said.head === '2m ago' && said.road === '2 minutes ago', JSON.stringify(said));
+
+    await aging.clock.fastForward(3 * 3_600_000);
+    said = await labels();
+    check('...into hours', said.head === '3h ago' && said.road === '3 hours ago', JSON.stringify(said));
+
+    // Past the cap both keep the time, a log's after a comma and a sentence's after the "at" it
+    // needs, and the sentence names its month in full.
+    await aging.clock.fastForward(7 * 24 * 3_600_000);
+    said = await labels();
+    check('...and past a week names the date instead',
+        /^\d{1,2} [A-Z][a-z]{2}, \d{1,2}:\d\d [ap]m$/.test(said.head)
+            && /^on \d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) at \d{1,2}:\d\d [ap]m$/.test(said.road),
+        JSON.stringify(said));
+    await aging.context().close();
 
     // ---- a sorted board, kept by the reader and kept up by the pushes -------------------------
     // A second run, born after everything LiveOne has done, so it is the one seen last.
@@ -434,8 +476,8 @@ try {
     halls = await board();
     check('...focus staying on the header clicked, not the reset that appeared',
         await focused() === 'date', await focused());
-    check('...and a click on Date puts whoever was seen last on top',
-        byDate && halls.stamps[0] > halls.stamps[1] && halls.sorted.join() === 'Date:descending' && halls.reset,
+    check('...and a click on Last Sighted puts whoever was seen last on top',
+        byDate && halls.stamps[0] > halls.stamps[1] && halls.sorted.join() === 'Last Sighted:descending' && halls.reset,
         JSON.stringify(halls));
 
     // A filter goes somewhere and the reset does something, so one is a link and one a button,
@@ -470,17 +512,17 @@ try {
     await player.selectOption('#main select[name="item_id"]', '0');
     await player.click('#main form[phx-submit="purchase"] button[type="submit"]');
     check('...and whoever plays next rises to the top as they do, the sort outliving the push',
-        await boardIs(['LiveOne', 'LiveTwo']) && (await board()).sorted.join() === 'Date:descending');
+        await boardIs(['LiveOne', 'LiveTwo']) && (await board()).sorted.join() === 'Last Sighted:descending');
 
     await watcher.reload({ waitUntil: 'domcontentloaded' });
     await connected(watcher);
     halls = await board();
     check('...and a refresh opens on the sort the reader left',
-        halls.names.join() === 'LiveOne,LiveTwo' && halls.sorted.join() === 'Date:descending', JSON.stringify(halls));
+        halls.names.join() === 'LiveOne,LiveTwo' && halls.sorted.join() === 'Last Sighted:descending', JSON.stringify(halls));
 
     await sortBy('date');
     check('...a second click reverses it', await boardIs(['LiveTwo', 'LiveOne'])
-        && (await board()).sorted.join() === 'Date:ascending');
+        && (await board()).sorted.join() === 'Last Sighted:ascending');
     await sortBy('date');
     await boardIs(['LiveOne', 'LiveTwo']);
     halls = await board();

@@ -1,14 +1,14 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
   What every screen reaches for and no screen owns: the panel card itself, the alerts, the one
-  action form behind Town and the shops, the way back, and a stamp on the reader's own clock.
+  action form behind Town and the shops, the way back, and a stamp that ages on the reader's own clock.
 
   `raw/1` appears wherever a narrative or flash is rendered. Those strings are always composed by
   the server from the template tables — never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.Format
+  alias MiniLineage.Game.{Clock, Format}
   alias MiniLineageWeb.Paths
 
   # ------------------------------------------------------------------- panels
@@ -487,22 +487,56 @@ defmodule MiniLineageWeb.Controls do
 
   # ------------------------------------------------------------------ stamps
 
+  @cap_ms :timer.hours(24 * Application.compile_env(:mini_lineage, :stamp_relative_days, 7))
+
   attr :id, :string, default: nil
   attr :at, :any, required: true
+  # `:short` for a log's heads ("4m ago"); `:long` for a sentence and a board ("4 minutes ago").
+  attr :form, :atom, default: :long, values: [:short, :long]
 
-  @doc false
-  # The text is UTC and correct without JS. It carries no hook of its own: whatever holds it carries
-  # one `LocalTimes`, which rewrites every stamp beneath it to wherever the reader is.
+  # A date's shape, never an age's: "on 12 Sep" in a sentence, the clock beside it, and "at 9:05 am"
+  # rather than ", 9:05 am" where it is spoken. An age takes none of them, so prose writes none.
+  attr :on, :boolean, default: false
+  attr :time, :boolean, default: false
+  attr :at_time, :boolean, default: false
+
+  @doc """
+  When something happened: its age inside the cap, its date past it, and the whole instant in the
+  tooltip. The server's text is right without JS; whatever holds stamps spreads `stamps/0` and one
+  `Stamps` hook ages every one beneath it and moves the dates to the reader's own zone.
+  """
   def stamp(assigns) do
+    at = DateTime.to_unix(assigns.at, :millisecond)
+
+    assigns =
+      assign(assigns,
+        iso: DateTime.to_iso8601(assigns.at),
+        label:
+          Format.stamp(at, Clock.now_ms(), @cap_ms, assigns.form,
+            on: assigns.on,
+            time: assigns.time,
+            at_time: assigns.at_time
+          ),
+        title: Format.stamp_title(at)
+      )
+
     ~H"""
-    <time id={@id} class="date" datetime={DateTime.to_iso8601(@at)}>{short_date(@at)}</time>
+    <time
+      id={@id}
+      class="date"
+      datetime={@iso}
+      title={@title}
+      data-form={@form}
+      data-on={@on}
+      data-time={@time}
+      data-at-time={@at_time}
+    >{@label}</time>
     """
   end
 
-  defp short_date(at) do
-    pad = &String.pad_leading(Integer.to_string(&1), 2, "0")
-
-    "#{pad.(at.day)}/#{pad.(at.month)}/#{String.slice(Integer.to_string(at.year), -2..-1)}, " <>
-      "#{pad.(at.hour)}:#{pad.(at.minute)}"
-  end
+  @doc """
+  What a container of stamps spreads onto itself. The hook reads the server's clock once, on mount,
+  so a reader whose clock is wrong still ages each stamp from the frame the server drew.
+  """
+  def stamps, do: ["phx-hook": "Stamps", "data-now": Clock.now_ms(), "data-cap-ms": @cap_ms]
 end

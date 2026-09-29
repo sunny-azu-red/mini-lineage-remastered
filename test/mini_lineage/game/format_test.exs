@@ -84,6 +84,30 @@ defmodule MiniLineage.Game.FormatTest do
     end
   end
 
+  describe "a stamp" do
+    # The server renders a stamp's first frame and `stampLabel` in hooks/stamps.js repaints it as it
+    # ages, so a divergence shows as the label changing shape the instant the hook takes over.
+    defp stamps, do: "test/fixtures/stamp_format.json" |> File.read!() |> Jason.decode!()
+
+    defp ms(iso), do: iso |> DateTime.from_iso8601() |> elem(1) |> DateTime.to_unix(:millisecond)
+
+    test "is labelled from the same table the browser is held to" do
+      %{"now" => now, "cap_ms" => cap, "cases" => cases} = stamps()
+
+      for [at, form, flags, expected] <- cases do
+        opts = Enum.map(flags, &{String.to_existing_atom(&1), true})
+        label = Format.stamp(ms(at), ms(now), cap, String.to_existing_atom(form), opts)
+        assert label == expected, "#{at} #{form} #{inspect(flags)} labelled #{label}"
+      end
+    end
+
+    test "and titled with the whole instant, from the same table" do
+      for [at, expected] <- stamps()["titles"] do
+        assert Format.stamp_title(ms(at)) == expected
+      end
+    end
+  end
+
   describe "a modifier" do
     # Every one of these is read as a change to a stat, so the sign is half the meaning: "-4% Ambush
     # Risk" is a blessing and "+4%" is a curse, and without the mark neither says which.

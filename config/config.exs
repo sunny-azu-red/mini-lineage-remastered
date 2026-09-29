@@ -4,6 +4,9 @@ import Config
 # is issued for, so the two cannot disagree about whether a character is still there.
 config :mini_lineage, character_ttl_hours: 24 * 30
 
+# How long a `<.stamp>` says an age ("4m ago") before it names the date instead.
+config :mini_lineage, stamp_relative_days: 7
+
 # May this build show its internals? Overridden in prod.exs. Not derived from the version: a
 # deployment that stamps no sha should lose the footer's commit link, never gain a stack trace.
 config :mini_lineage, debug_build: true

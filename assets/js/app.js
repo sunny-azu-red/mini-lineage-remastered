@@ -2,7 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, recallAll, shortAdena, timerLabel, remainingLabel} from "./hooks"
+import {hooks as gameHooks, recallAll, shortAdena, timerLabel, remainingLabel, stampLabel, stampTitle} from "./hooks"
 import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
@@ -81,3 +81,5 @@ if (process.env.NODE_ENV === "development") {
 window.__shortAdena = shortAdena;
 window.__timerLabel = timerLabel;
 window.__remainingLabel = remainingLabel;
+window.__stampLabel = stampLabel;
+window.__stampTitle = stampTitle;
