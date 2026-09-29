@@ -1,22 +1,29 @@
+# Build output and local state.
 _build/
 deps/
+cover/
+node_modules/
+.elixir_ls/
+erl_crash.dump
+.git/
+.env
+.env.test
+
+# What a local `mix assets.build` or `assets.deploy` leaves in priv/static; the image builds its own.
 priv/static/assets/
 priv/static/cache_manifest.json
+priv/static/*-*.*
+priv/static/*.gz
+
+# Development, tests and CI, which the release never reads.
 e2e/
 scratch/
 test/
-erl_crash.dump
-.elixir_ls/
-node_modules/
-.env
-cover/
-.git/
+.github/
 env.sh
 package.json
 package-lock.json
-.github/
-README.md
-AGENTS.md
 Dockerfile
 docker-compose.yml
-.env.test
+README.md
+AGENTS.md
