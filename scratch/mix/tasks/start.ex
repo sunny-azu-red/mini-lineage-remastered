@@ -30,7 +30,7 @@ defmodule Mix.Tasks.Start do
 
     Shell.step("Migrations", release, ["eval", "MiniLineage.Release.migrate()"])
 
-    Mix.shell().info([:green, "\n▶ Serving. Ctrl-C twice to stop.\n", :reset])
+    Mix.shell().info([:green, "\n▶ Serving. Stop it with `mix stop`; Ctrl-C does not.\n", :reset])
     Shell.step("Server", release, ["start"], nil, [{"PHX_SERVER", "true"}])
   end
 end
