@@ -1,8 +1,7 @@
 defmodule MiniLineage.Game.Battle do
   @moduledoc """
-  Port of battle.service.ts. Every roll is bound to its own variable in the order the reference
-  draws it — crit, enemy count, hp lost, xp, adena — because that order is pinned by the golden
-  master and Elixir makes no promise about operand evaluation order.
+  Every roll is bound to its own variable, in the order the golden master pins — crit, enemy count,
+  hp lost, xp, adena — because Elixir makes no promise about operand evaluation order.
   """
   alias MiniLineage.Game.{Constants, Math, Player}
 

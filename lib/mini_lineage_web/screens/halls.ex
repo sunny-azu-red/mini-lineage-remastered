@@ -11,8 +11,7 @@ defmodule MiniLineageWeb.Screens.Halls do
   alias MiniLineage.Game.Format
   alias MiniLineageWeb.Paths
 
-  # What each column sorts by, and which way a first click takes it: a figure highest first, a
-  # date newest first, a name from A. No sort at all is the ranking, which no one column is.
+  # Which way a first click takes each column. No sort at all is the ranking, which no column is.
   @sorts %{"name" => :asc, "level" => :desc, "xp" => :desc, "wealth" => :desc, "date" => :desc}
 
   @doc "The columns the Halls sort on, for the LiveView to check a click or a kept sort against."
@@ -37,8 +36,7 @@ defmodule MiniLineageWeb.Screens.Halls do
       )
 
     ~H"""
-    <%!-- `top` is load-bearing: it pulls the row up to the panel edge and puts the 12px gap
-          below it instead, where the table needs it. --%>
+    <%!-- `top` pulls the row up to the panel edge and puts the gap below it, for the table. --%>
     <div class="action-links top">
       <.button
         variant={:secondary}
@@ -73,8 +71,7 @@ defmodule MiniLineageWeb.Screens.Halls do
         <:col class="num" sort="xp">Total XP</:col>
         <:col sort="wealth">Wealth</:col>
         <:col sort="date">Last Sighted</:col>
-        <%!-- The hook animates every [data-value] beneath it and sweeps every [data-stamp] whose
-                stamp has moved, so one hook covers the whole board. --%>
+        <%!-- One hook for the whole board: every [data-value] and [data-stamp] beneath it. --%>
         <tbody id="halls-rows" phx-hook="AnimatedValues">
           <.character_row
             :for={row <- @rows}
@@ -102,8 +99,7 @@ defmodule MiniLineageWeb.Screens.Halls do
 
     ~H"""
     <%!-- Keyed by the character, never the row: the board reorders under a climb. The stamp is the
-          run's last chronicle entry, so every deed sweeps it, a buff lapsing too, and nothing that
-          is not a deed can: regeneration logs nothing, and a dot coming on is not a deed. --%>
+          last chronicle entry, so only a logged deed sweeps the row, never regeneration. --%>
     <tr
       class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}
       data-key={"row-#{@row.id}"}
@@ -113,9 +109,8 @@ defmodule MiniLineageWeb.Screens.Halls do
         {race_emoji(@catalog, @row.race_id)}
         <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
-        <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and the width
-              it holds keeps names from shifting. Last in the cell, so that width falls where
-              nothing follows it. --%>
+        <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and its width
+              keeps names from shifting. Last in the cell, so that width falls where nothing follows. --%>
         <span
           class={["online", @row.online && "lit"]}
           title={@row.online && "Online right now"}

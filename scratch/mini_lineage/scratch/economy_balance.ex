@@ -33,7 +33,7 @@ defmodule MiniLineage.Scratch.EconomyBalance.Runner do
 end
 
 defmodule MiniLineage.Scratch.EconomyBalance do
-  @moduledoc "Port of scratch/check_economy_balance.ts — can a career fund every piece of gear in it?"
+  @moduledoc "Can a career fund every piece of gear in it?"
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.{Constants, Math}
   alias MiniLineage.Scratch.EconomyBalance.Runner

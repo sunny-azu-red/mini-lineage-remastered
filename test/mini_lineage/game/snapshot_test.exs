@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.SnapshotTest do
   @moduledoc """
-  The Player -> view mapping, including the states the cross-stack audit could not reach because
-  they need particular rolls: max level, low health, and a character that no longer exists.
+  The Player -> view mapping, including the states that need particular rolls: max level, low
+  health, and a character that no longer exists.
   """
   use ExUnit.Case, async: true
 
@@ -13,8 +13,7 @@ defmodule MiniLineage.Game.SnapshotTest do
   end
 
   test "a character that does not exist has EVERY key one that does has" do
-    # The absence of this invariant meant a screen still rendering when a character was reset
-    # raised instead of drawing, and the LiveView remounted without a word.
+    # A screen still rendering as a character is reset must draw, not raise and remount silently.
     started = Snapshot.build(character())
     empty = Snapshot.build(%Player{})
 

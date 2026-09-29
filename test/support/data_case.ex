@@ -81,10 +81,9 @@ defmodule MiniLineage.DataCase do
   end
 
   @doc """
-  Pins the dice inside a character's own process, which is where its fights are rolled: a source
-  installed in the test process never reaches them, and `health: 5_000` does not survive the sweep
-  before the next action, which clamps it to max health. At 0.5 nothing crits and nothing ambushes,
-  whatever the race. Lasts as long as the process does.
+  Pins the dice inside a character's own process, where its fights are rolled: a test-process
+  source never reaches them, and the sweep clamps `health: 5_000` back to max. At 0.5 nothing
+  crits and nothing ambushes, for as long as the process lives.
   """
   def pin_dice(session, value \\ 0.5) do
     MiniLineage.Characters.mutate(session, fn player ->
@@ -93,14 +92,7 @@ defmodule MiniLineage.DataCase do
     end)
   end
 
-  @doc """
-  A helper that transforms changeset errors into a map of messages.
-
-      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
-      assert "password is too short" in errors_on(changeset).password
-      assert %{password: ["password is too short"]} = errors_on(changeset)
-
-  """
+  @doc "Transforms changeset errors into a map of messages."
   def errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
       Regex.replace(~r"%{(\w+)}", message, fn _, key ->

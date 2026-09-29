@@ -17,10 +17,8 @@ const liveSocket = new LiveSocket("/live", Socket, {
   hooks: gameHooks,
 })
 
-// Show progress bar on live navigation and form submits. The stops ARE the game's own value
-// colours in hue order — a rainbow the palette already had, rather than a borrowed one. Read from
-// the tokens rather than copied out of them: copied once, six of the seven had quietly gone stale
-// behind a repaint of the palette. This script is deferred, so the stylesheet has already applied.
+// The stops are the value colours in hue order, READ from their tokens so a repaint cannot leave
+// them stale. This script is deferred, so the stylesheet has already applied.
 const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
 topbar.config({
@@ -38,14 +36,11 @@ topbar.config({
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
-// Audio: the preference is restored before anything can ask to play, and the context is unlocked
-// on the first gesture. Sounds fire from server pushes, never from DOM markers, so nothing races
-// a reload.
+// Sounds fire from server pushes, never from DOM markers, so nothing races a reload.
 restoreSoundPreference()
 installUnlock()
 window.addEventListener("phx:play-sound", event => playSound(event.detail.name))
 
-// connect if there are any LiveViews on the page
 liveSocket.connect()
 
 // For the console: liveSocket.enableDebug(), .enableLatencySim(1000), .disableLatencySim()

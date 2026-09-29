@@ -78,10 +78,9 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the document covers the struct" do
     test "every field is written, and nothing that is not a field" do
-      # Three deliberate exceptions, named so that a field forgotten by accident still fails here.
-      # `version` describes the document rather than the character; `last_battle_narrative` is
-      # transient, kept on the struct for the screen and stored in character_log instead; and
-      # `pending_events` lives only until the process writes it, which is the same pass.
+      # Named, so a field forgotten by accident still fails: `version` describes the document,
+      # `last_battle_narrative` is stored in character_log, and `pending_events` lives only until
+      # the same pass writes it.
       struct_keys =
         %Player{}
         |> Map.from_struct()

@@ -2,12 +2,9 @@ defmodule MiniLineage.ReleaseTest do
   @moduledoc """
   How a deployed release migrates, having no Mix to do it with.
 
-  Configuration only: running a migration commits its DDL implicitly, which ends the sandbox
-  transaction, and reloading the file warns about redefining the module. The migrations themselves
-  are exercised every time the browser suites start their server.
-
-  What is pinned here is the one silent failure: with `:ecto_repos` unset, `migrate/0` iterates an
-  empty list, reports nothing wrong, and a deploy serves an unmigrated database.
+  Configuration only, because a migration commits its DDL implicitly and ends the sandbox
+  transaction. What is pinned is the one silent failure: with `:ecto_repos` unset, `migrate/0`
+  iterates an empty list and a deploy serves an unmigrated database.
   """
   use ExUnit.Case, async: true
 

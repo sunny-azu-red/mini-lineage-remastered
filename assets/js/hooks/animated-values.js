@@ -27,10 +27,8 @@ function shortenAdena(value, trimTenth) {
 export const shortAdena = (value) => shortenAdena(value, true);
 
 /**
- * The same figure mid-count, keeping the tenth that the settled one drops. A tween across a round
- * thousand renders "2.0k" where the settled value says "2k", and those two characters vanishing
- * and coming back is what throws the line left and right. Nothing anybody reads for longer than a
- * frame: the count always lands on the server's own rendering.
+ * Mid-count, keeping the tenth the settled figure drops: "2.0k" becoming "2k" and back throws the
+ * line left and right. The count always lands on the server's own rendering.
  */
 const countingAdena = (value) => shortenAdena(value, false);
 

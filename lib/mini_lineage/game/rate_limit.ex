@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.RateLimit do
   @moduledoc """
-  In-memory sliding window, no external dependency. Bypassed entirely unless enabled, so local
-  development is never throttled — matching the reference, which keyed that off a release build.
+  In-memory sliding window. Bypassed entirely unless enabled, so local development is never
+  throttled.
   """
   use GenServer
 

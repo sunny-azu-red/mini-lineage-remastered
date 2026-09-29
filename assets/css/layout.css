@@ -1,9 +1,4 @@
-/*
- * ========================================================================
- * Mini-Lineage — Layout
- * App shell, header banner, two-column content area, responsive.
- * ========================================================================
- */
+/* Mini-Lineage — Layout: app shell, header banner, columns, responsive. */
 
 /* ===== App Shell ===== */
 #app {
@@ -24,8 +19,8 @@
     margin-bottom: 12px;
 }
 
-/* Shared by the linked and unlinked headers so both space identically. The layout lives on the
-   element itself: `display: contents` removes its box from hit-testing, leaving the gaps dead. */
+/* Shared by the linked and unlinked headers. Not `display: contents`, which drops its box from
+   hit-testing and leaves the gaps dead. */
 .header-clickable-area {
     display: flex;
     align-items: center;
@@ -39,10 +34,6 @@
 }
 
 #site-header {
-    /* The same diagonal sweep it always had, at the saturation the rest of the game is painted in
-     * (27%, where these stops were near 50%) and on hue 267, the violet the secondary button rests
-     * in. The banner is still the brightest surface on the page and still the only coloured one —
-     * the colour is arcane now rather than blue. */
     background: linear-gradient(135deg,
             var(--bg-deep) 0%,
             #201e24 30%,
@@ -58,7 +49,6 @@
     transition: border-color 0.2s ease;
 }
 
-/* Subtle shimmer line across the top */
 #site-header::before {
     content: '';
     position: absolute;
@@ -70,7 +60,6 @@
     opacity: 0.4;
 }
 
-/* Radial glow in the background */
 #site-header::after {
     content: '';
     position: absolute;
@@ -149,8 +138,7 @@
 /* The link is inside the box, so the box highlights when the link is hovered. */
 #site-header:has(#header-link:hover) {
     border-bottom-color: var(--gold);
-    /* Desaturated alongside the resting gradient, or the hover would put back the blue the rest
-     * of it just gave up. The lift is unchanged: every stop is 3-4 points lighter than at rest. */
+    /* Every stop 3-4 points lighter than the resting gradient's; retune the two together. */
     background: linear-gradient(135deg,
             #1a171d 0%,
             #2a272f 30%,
@@ -159,8 +147,7 @@
 }
 
 /* ===== Columns =====
-   The main column and one beside it: the sidebar to its left on the game's screens, the aside to
-   its right on a record. Both are the same thing at a fixed width, so one breakpoint stacks either. */
+   The sidebar and the aside are one `.side` column at fixed widths; one breakpoint stacks either. */
 #content {
     display: flex;
     gap: 12px;
@@ -177,14 +164,12 @@
     min-width: 0;
 }
 
-/* Wide enough for the widest item and its benefit at the body's size, with room for the Verdana
- * fallback and an emoji font wider than Chromium's: "💀 The Forgotten Blade 15%". */
+/* Fits "💀 The Forgotten Blade 15%" at 13px, with room for Verdana and a wider emoji font. */
 #sidebar {
     --side-width: 210px;
 }
 
-/* Room for a fight's lines at a few words to the line. The page widens by what it takes, so the
-   main panel keeps the width it has alone. */
+/* The page widens by what the aside takes, so the main panel keeps the width it has alone. */
 #aside {
     --side-width: 310px;
 }
@@ -193,16 +178,13 @@
     max-width: 1000px;
 }
 
-/* Panels stack. Whichever follows another is spaced off it, wherever they are — the sidebar's two
-   among them. The first of a stack takes nothing, which is what the relationship says rather than
-   what a class per panel would have to remember. */
+/* Whichever panel follows another is spaced off it, wherever they stand. */
 .panel+.panel {
     margin-top: 12px;
 }
 
-/* Beside the record the Chronicle grows to the record's height and scrolls past it. A grid,
-   so the aside spans the record's row and not the footer's; sized as if empty, so that row is the
-   record's alone. */
+/* A grid, so the aside spans the record's row and not the footer's; `contain: size` sizes it as if
+   empty, so the record alone decides that row's height. */
 @media (width > 640px) {
     #content:has(#aside) {
         display: grid;
@@ -232,8 +214,8 @@
     }
 }
 
-/* Beside the main panel there is room for a side one, so it does not fold: its header stops being
-   a control, and `--folds` tells the hook so. Child combinators, to outrank the fold itself. */
+/* Beside the main panel a side one does not fold, and `--folds` tells the hook so. Child
+   combinators, to outrank the fold itself. */
 .side>.panel {
     --folds: 0;
 }
@@ -269,9 +251,8 @@
 }
 
 /* ===== Responsive ===== */
-/* Stacked before a side column can squeeze the main one narrower than a phone would give it. Both
-   columns flatten into #content, so a side column's panels can stand either side of the main one:
-   the vitals above it, everything else below, and the footer last. */
+/* Stacked before a side column can squeeze the main one narrower than a phone. Both flatten into
+   #content, so the vitals go above the main panel and every other side panel below it. */
 @media (max-width: 640px) {
     #content {
         flex-direction: column;
@@ -295,8 +276,7 @@
         order: 1;
     }
 
-    /* The flattened columns take #content's own 12px gap, and a stacking margin on top of it would
-       count the gap twice. */
+    /* #content's gap already spaces the flattened panels. */
     .panel+.panel {
         margin-top: 0;
     }

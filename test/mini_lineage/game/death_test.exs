@@ -64,8 +64,8 @@ defmodule MiniLineage.Game.DeathTest do
     assert dead.total_battles == 3, "and it does not count as a battle fought"
   end
 
-  # Nobody writes a legacy any more: a run is in the Halls from the moment it picks a race. What is
-  # left to decide is who is barred, and that is now a property of the run rather than of an action.
+  # A run is in the Halls from the moment it picks a race, so being barred is a property of the
+  # run rather than of an action.
   test "cowards and cheaters are barred from the Halls, alive or dead" do
     dead = Player.kill(living())
 

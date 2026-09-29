@@ -12,8 +12,8 @@ defmodule MiniLineageWeb.Layouts do
   embed_templates "layouts/*"
 
   @doc """
-  The document head. Shared with the error page, which is rendered without a LiveView — so the
-  two cannot drift apart on fonts or stylesheets the way they already did once.
+  The document head, shared with the error page, which has no LiveView, so the two cannot drift
+  apart on fonts or stylesheets.
   """
   attr :scripts, :boolean, default: true
 
@@ -43,17 +43,14 @@ defmodule MiniLineageWeb.Layouts do
   attr :character_id, :string, default: nil
   slot :inner_block, required: true
 
-  # What belongs to the screen but not inside its panel, in a column beside it on a page widened to
-  # hold one. The Chronicle is the only one: longer than everything else on the page, it would
-  # crowd out what the panel is named for.
+  # What the screen puts beside its panel rather than in it, in a column the page widens to hold.
   slot :aside
 
   def app(assigns) do
     ~H"""
     <div id="app">
       <%!-- Every keypress is a round trip, so the relay exists only while the sequence can do
-            something: a started, living run not already marked. Its own element, so arming and
-            disarming mount and destroy the hook rather than patching an attribute. --%>
+            something; its own element, so arming mounts the hook rather than patching one. --%>
       <div :if={Access.konami?(@view)} id="konami-relay" phx-hook="KonamiRelay" hidden></div>
       <div id="wrapper">
         <div id="header">
@@ -130,8 +127,7 @@ defmodule MiniLineageWeb.Layouts do
           <span class="stat-label">Race</span>
           <span class="stat-value">
             {if @view.dead, do: "☠️", else: @view.race_emoji}
-            <%!-- Flush against the anchor: a newline inside one renders as a space, and the
-                    underline runs through it. --%>
+            <%!-- Flush against the anchor: a newline inside one renders as an underlined space. --%>
             <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
             <span data-key="level" data-value={@view.level}>{@level}</span></.link>
           </span>
@@ -183,8 +179,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
       </Controls.panel>
 
-      <%!-- Stacked under the main panel on a phone it folds, open until the reader says otherwise:
-            it is theirs on every screen, so their fold is kept rather than asked again. --%>
+      <%!-- Folds on a phone, open until the reader says otherwise: theirs on every screen, so kept. --%>
       <Controls.panel
         id="inventory"
         title="Inventory"

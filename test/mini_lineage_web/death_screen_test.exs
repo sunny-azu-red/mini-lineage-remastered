@@ -29,9 +29,8 @@ defmodule MiniLineageWeb.DeathScreenTest do
   defp endings do
     {cheater, _} = Actions.cheat(hero())
 
-    # A death in battle draws its line at random, and some of them carry an apostrophe that HEEx
-    # escapes — matching the raw string would then pass or fail on the roll. The coward's and the
-    # cheater's are fixed strings already. That every line comes from the pool is death_test's job.
+    # A drawn death line may carry an apostrophe HEEx escapes, so matching it would pass or fail
+    # on the roll. That every line comes from the pool is death_test's job.
     fell = %{Player.kill(hero()) | death_reason: "The road ran out beneath you."}
 
     [
@@ -73,9 +72,8 @@ defmodule MiniLineageWeb.DeathScreenTest do
     test "the ending is red and what became of it is not" do
       html = html_for(Player.kill(hero()))
 
-      # The reason you are reading this screen at all, then a footnote about the record. On a SPAN
-      # inside the paragraph, which is what the weight rule reaches — a `p.deaths` is coloured but
-      # not weighted, and the ending should read here exactly as it reads in the chronicle.
+      # On a SPAN inside the paragraph, which is what the weight rule reaches: a `p.deaths` is
+      # coloured but not weighted, and the ending should read as it does in the chronicle.
       assert html =~ ~r|<p[^>]*>\s*<span class="deaths">|
       refute html =~ ~s(<p class="deaths">)
       refute html =~ ~s(class="muted")
@@ -93,8 +91,8 @@ defmodule MiniLineageWeb.DeathScreenTest do
     end
 
     test "points at the Halls of its own lineage, not back at its own record" do
-      # The sidebar is on this screen and already links the record, so a second link to it was a
-      # second door into the same room. Where a run stands among its own is new.
+      # The sidebar already links the record, so a second link would be a second door into the
+      # same room.
       html = html_for(Player.kill(hero()))
 
       assert html =~ ~s(href="/highscores/orc")

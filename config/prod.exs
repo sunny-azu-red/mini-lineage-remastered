@@ -1,7 +1,6 @@
 import Config
 
-# Stamped at BUILD time: a release has no git checkout to ask at boot. Only the footer's commit
-# link depends on it.
+# Stamped at build time, since a release has no checkout to ask. Only the footer's link reads it.
 app_version =
   case System.get_env("APP_VERSION") do
     given when is_binary(given) and given != "" ->
@@ -20,8 +19,7 @@ app_version =
 
 config :mini_lineage, :app_version, app_version
 
-# The requirement that a release names its commit lives in mix.exs, as a release step: this file is
-# read by every mix task, and the sha changes with every commit, so neither is the place for it.
+# That a release names its commit is enforced by a release step in mix.exs, not here.
 
 # Whatever the version turned out to be, a production build tells a player nothing.
 config :mini_lineage, debug_build: false

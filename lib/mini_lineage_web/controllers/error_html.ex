@@ -21,9 +21,8 @@ defmodule MiniLineageWeb.ErrorHTML do
     |> page()
   end
 
-  # What the `<pre>` is for. A release shows nothing here: a stack trace names modules, lines and
-  # arguments, and a player is not the audience. A debug build shows the whole fault, the
-  # alternative being to read "500 Internal Server Error" and go find the terminal.
+  # The `<pre>`: the whole fault in a debug build, nothing in a release, since a trace names modules,
+  # lines and arguments and a player is not the audience.
   defp detail(status, short, assigns) do
     cond do
       not Version.debug_build?() ->
@@ -33,8 +32,7 @@ defmodule MiniLineageWeb.ErrorHTML do
       status == "404" ->
         short
 
-      # Phoenix hands the view what blew up. Rendered without one — a test, or a bare call — the
-      # status line is all there is to say.
+      # Rendered without a reason, by a test or a bare call, the status line is all there is.
       is_map_key(assigns, :reason) ->
         Exception.format(kind(assigns), assigns.reason, stack(assigns))
 
@@ -74,8 +72,7 @@ defmodule MiniLineageWeb.ErrorHTML do
                   </:header>
                   <p>{@message}</p>
                   <pre :if={@detail} class="code-block">{@detail}</pre>
-                  <%!-- The rule above it is what parts the way back from the page. A build that
-                        showed the fault has a block sitting there already doing that. --%>
+                  <%!-- Without a fault's block above it, `back` draws the rule parting the way back. --%>
                   <p class={if @detail, do: "last", else: "last back"}>
                     <span class="muted">&laquo;</span> <a href={~p"/"}>Return to safer lands</a>
                   </p>

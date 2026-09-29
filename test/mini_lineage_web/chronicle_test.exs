@@ -2,10 +2,9 @@ defmodule MiniLineageWeb.ChronicleTest do
   @moduledoc """
   The Chronicle on a run's own page: every line a fight drew, in the order it drew them.
 
-  Not a browser test, because the browser cannot make the dice land — a crit and an ambush are
-  rolled, so the two lines that only appear for them would be asserted on a coin toss. Here the
-  narrative is handed in, and what is checked is which of its lines reach the page and in what
-  order.
+  Not a browser test, because a crit and an ambush are rolled, so the lines only they draw would
+  be asserted on a coin toss. Here the narrative is handed in, and what is checked is which of its
+  lines reach the page and in what order.
   """
   use ExUnit.Case, async: true
 
@@ -65,8 +64,7 @@ defmodule MiniLineageWeb.ChronicleTest do
   end
 
   # The defect this guards is silent: a line that is never voiced renders its pronouns as literal
-  # braces on the page, and every OTHER line on the same entry reads perfectly. Nothing fails, so
-  # nothing says so — which is exactly how an ambush line and a death line both shipped unvoiced.
+  # braces on the page, and every OTHER line on the same entry reads perfectly.
   describe "every line on an entry" do
     @complete %{
       id: 1,
@@ -145,7 +143,7 @@ defmodule MiniLineageWeb.ChronicleTest do
     end
 
     # A value named inside a sentence, like Adena or a level: a classed span that takes its weight
-    # from the vocabulary. `<strong>` said "important" to no end, the weight rule outranks it.
+    # from the vocabulary, never a `<strong>`.
     test "names an effect the way it names any other value" do
       hexed = MiniLineage.Game.Constants.effect(:ambush_debuff)
 
@@ -162,7 +160,7 @@ defmodule MiniLineageWeb.ChronicleTest do
     end
 
     # A class only where the stylesheet paints one, each washed like the alert that would announce
-    # it; `class=""` on every quiet row was the AGENTS rule about class lists, broken.
+    # it, and never a `class=""` on a quiet row.
     test "wears a class only where it is painted" do
       [start, bought, levelled, blessed, quiet] =
         entries([

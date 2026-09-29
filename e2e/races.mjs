@@ -1,7 +1,6 @@
 /**
- * Every lineage played through, which the walkthrough cannot: it commits to one race, so a wrong
- * purse or an unreachable board in the other three would ship unseen. Asserts what the screens
- * show, never how a fight rolls — the dice are real here, so nothing claims a level or a hit.
+ * Every lineage played through, which the walkthrough cannot: it commits to one race. Asserts what
+ * the screens show, never how a fight rolls: the dice are real here.
  */
 import { chromium } from 'playwright';
 import { BASE, RACES, reporter, controls } from './helpers.mjs';

@@ -1,14 +1,12 @@
 import Config
 
-# How long a character survives unplayed — a SLIDING window, and the same span the session cookie
-# is issued for, so the two cannot disagree about whether a character is still there.
+# How long an unplayed run keeps its session: a sliding window, and the session cookie's max_age.
 config :mini_lineage, character_ttl_hours: 24 * 30
 
 # How long a `<.stamp>` says an age ("4m ago") before it names the date instead.
 config :mini_lineage, stamp_relative_days: 7
 
-# May this build show its internals? Overridden in prod.exs. Not derived from the version: a
-# deployment that stamps no sha should lose the footer's commit link, never gain a stack trace.
+# Whether the error page may show a stack trace. Off in prod.exs, never derived from the version.
 config :mini_lineage, debug_build: true
 
 # A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.

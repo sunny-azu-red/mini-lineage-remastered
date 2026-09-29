@@ -1,8 +1,4 @@
-/**
- * Procedural 8-bit Web Audio synth. No assets: every sound is built from oscillators and gain
- * envelopes at play time. Ported from the reference implementation with the SOUNDS table
- * unchanged — retuning a voice is a deliberate change, not a side effect of the port.
- */
+/** Procedural 8-bit Web Audio synth: every sound is oscillators and gain envelopes, no assets. */
 
 let audioCtx = null;
 let enabled = true;
@@ -124,10 +120,7 @@ export function playSound(name) {
         playNote(ctx, ctx.currentTime, note);
 }
 
-/**
- * Resumes the shared AudioContext on the very first user gesture anywhere on the page, so the
- * context is always unlocked before anything asks to play a sound.
- */
+/** Resumes the AudioContext on the first gesture, before anything can ask to play. */
 export function installUnlock() {
     const unlock = () => {
         try {

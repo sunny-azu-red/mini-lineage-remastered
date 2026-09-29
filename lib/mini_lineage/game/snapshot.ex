@@ -1,5 +1,5 @@
 defmodule MiniLineage.Game.Snapshot do
-  @moduledoc "The single Player -> view-model mapping. Reuses the math and player modules."
+  @moduledoc "The single Player -> view-model mapping."
   alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Player}
 
   def item_view(item) do
@@ -29,9 +29,8 @@ defmodule MiniLineage.Game.Snapshot do
   end
 
   @doc """
-  Always the SAME shape, whether or not a character exists. A view missing keys means any screen
-  still rendering when a character is reset — in this tab or another — raises instead of drawing,
-  and the LiveView silently remounts, swallowing whatever it was about to say.
+  Always the SAME shape, whether or not a character exists: a screen still rendering when its
+  character is reset would otherwise raise, and the LiveView silently remount.
   """
   @empty %{
     started: false,
@@ -110,7 +109,6 @@ defmodule MiniLineage.Game.Snapshot do
       cheated: player.cheated,
       death_reason: player.death_reason,
       ambush_low_health: Narrative.ambush_low_health(player),
-      # Not "may they write a legacy" any more — they are already on the board, or barred from it.
       disqualified: player.coward or player.cheated,
       counters: %{
         total_battles: player.total_battles,
@@ -156,11 +154,8 @@ defmodule MiniLineage.Game.Snapshot do
   @catalog_key {__MODULE__, :catalog}
 
   @doc """
-  The static catalog. Nothing in it changes at runtime, so it is built once per VM rather than on
-  every mount — slugifying and filling the race templates cost more than building a whole view.
-
-  Not cached in development: the race templates live in code, and a cache per VM means editing one
-  changes nothing until the server is restarted.
+  The static catalog, built once per VM: slugifying and filling the race templates costs more than
+  a whole view. Not cached in development, where an edited template must show without a restart.
   """
   def catalog do
     if Application.get_env(:mini_lineage, :cache_catalog, true) do

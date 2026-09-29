@@ -1,13 +1,12 @@
 defmodule MiniLineage.Game.Access do
   @moduledoc """
   The one place every navigation rule is enforced. An in-app link, a typed URL and the Back button
-  all funnel through `pin_screen/2`, so they cannot disagree — historically they did.
+  all funnel through `pin_screen/2`, so they cannot disagree.
   """
   alias MiniLineage.Game.Player
 
-  # THE PIN IS ABOUT WHAT YOU MAY DO, NOT WHAT YOU MAY READ. These five carry no action at all, not
-  # one `phx-click` between them, so no state need be kept off them: an ambushed reader escapes
-  # nothing by looking, and a fault is worth being told about whatever has happened to you.
+  # The pin gates what may be DONE, not read: these carry no `phx-click`, so no state is kept off
+  # them. An ambushed reader escapes nothing by looking.
   @readable ~w(character highscores statistics races error)
 
   # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them,

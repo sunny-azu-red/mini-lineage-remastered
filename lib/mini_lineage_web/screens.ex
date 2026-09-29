@@ -1,9 +1,6 @@
 defmodule MiniLineageWeb.Screens do
   @moduledoc """
-  Which screen is drawn, and the run's own four: Game Start, Town, the Battleground, the ending.
-  The pages that outlive a run have modules of their own.
-
-  Markup and class names are carried over from the reference, so the stylesheet applies unchanged.
+  Which screen is drawn, and the small ones drawn here; the big pages have modules of their own.
   `raw/1` renders narratives, which the server composes from the template tables and never from
   anything a player typed.
   """
@@ -15,7 +12,6 @@ defmodule MiniLineageWeb.Screens do
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.{Halls, Record, Shop, Tome}
 
-  # The panel heading and the document title for each screen, carried over verbatim.
   @titles %{
     "start" => "Game Start",
     "home" => "Home Town",
@@ -51,9 +47,8 @@ defmodule MiniLineageWeb.Screens do
   attr :picked, :string, default: nil
   attr :sorts, :map, default: %{}
 
-  # A character can be reset from another tab while this one is still showing a screen that needs
-  # one. `pin_screen/2` will move us on the next params pass; until then, draw nothing rather than
-  # reach into a view that has no character in it.
+  # Another tab can reset the character under a screen that needs one; draw nothing until
+  # `pin_screen/2` moves us on the next params pass.
   @requires_character ~w(home battle weapons armors inn suicide death)
 
   def screen(%{view: %{started: false}, screen: screen} = assigns)
@@ -82,9 +77,8 @@ defmodule MiniLineageWeb.Screens do
   attr :character_id, :string, default: nil
 
   @doc """
-  What a screen puts BESIDE the panel rather than inside it. Only the Chronicle so far, and only
-  where there is a run to have one; `aside?/2` says whether there is anything to draw, since the
-  column and the page's width go with it.
+  What a screen puts BESIDE the panel rather than inside it. `aside?/2` says whether there is
+  anything to draw, since the column and the page's width go with it.
   """
   def aside(assigns) do
     assigns = assign(assigns, mine: assigns.record.id == assigns.character_id)
@@ -107,9 +101,8 @@ defmodule MiniLineageWeb.Screens do
   def aside?(_screen, _record), do: false
 
   @doc """
-  Covers both failure modes the reference did: an action that threw, and the modelled `error`
-  screen. The detail is the thrown message, and it is shown only in a non-release build — a
-  deployed game must never hand a stack trace to a player.
+  An action that threw, or the `error` screen. The detail is the thrown message, shown only in a
+  debug build: a player is never handed a stack trace.
   """
   attr :view, :map, required: true
   attr :detail, :string, default: nil
@@ -145,7 +138,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
 
     <%!-- `phx-update="ignore"`: the dead render is interactive before the socket connects, and the
-          first live render was resetting a race picked in that window. Nothing here is server-driven. --%>
+          first live render would reset a race picked in that window. --%>
     <form phx-submit="start">
       <div class="form-row" id="start-fields" phx-update="ignore">
         <input
@@ -245,8 +238,7 @@ defmodule MiniLineageWeb.Screens do
   defp battle_narrative(assigns) do
     ~H"""
     <p>
-      <%!-- Always "you" here: this is the fighter reading their own fight as it happens. The same
-            row is filled with "they" when somebody else reads it off a record. --%>
+      <%!-- Always "you": the fighter reading their own fight, where a record's reader gets "they". --%>
       <span :if={@narrative.crit_line}>{raw(Narrative.voiced(@narrative.crit_line, true))} </span>{raw(
         Narrative.voiced(@narrative.kill_line, true)
       )}
@@ -256,9 +248,8 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Going through with it is danger, not primary: red is the last warning before the red death
-  # message it leads to. Its emoji trails the label rather than leading it, the one place the game
-  # does that.
+  # Going through with it is danger, not primary: red is the last warning before the red death.
+  # Its emoji trails the label, the one place the game does that.
   defp suicide(assigns) do
     ~H"""
     <p>Do you wish to depart this world?</p>
@@ -325,9 +316,8 @@ defmodule MiniLineageWeb.Screens do
   # ---------------------------------------------------------------- the alert
 
   @doc """
-  Whether to warn about low health. Shown wherever HP is on screen, but suppressed on Suicide and
-  in the Inn — the Inn's whole call to action already IS "buy food", and the warning would be
-  telling you to go where you are standing.
+  Whether to warn about low health: wherever HP is on screen, but not on Suicide, nor in the Inn,
+  where it would tell you to go where you are standing.
   """
   def low_health_alert?(view, screen) do
     view.started and not view.dead and view.low_health and Access.sidebar?(screen) and

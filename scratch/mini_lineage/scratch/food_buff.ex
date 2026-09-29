@@ -1,6 +1,6 @@
 defmodule MiniLineage.Scratch.FoodBuff do
   @moduledoc """
-  Port of scratch/simulate_food_buff.ts — does a food buff pay for itself over its own duration?
+  Does a food buff pay for itself over its own duration?
 
   Max-HP gain and duration are read from the effect config rather than restated, so a rebalance
   cannot leave this report quoting numbers the game no longer uses.
@@ -82,7 +82,7 @@ defmodule MiniLineage.Scratch.FoodBuff do
     }
 
     base = if food, do: Player.apply_effect(base, Constants.effect(food.effect)), else: base
-    # The reference started every battle at full health so the buff's max-HP gain was in play.
+    # Every battle starts at full health, so the buff's max-HP gain is in play.
     player = %{base | health: Player.stats(base).max_health}
 
     totals =

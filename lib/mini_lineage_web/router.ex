@@ -14,8 +14,7 @@ defmodule MiniLineageWeb.Router do
   scope "/", MiniLineageWeb do
     pipe_through :browser
 
-    # Every screen is the same LiveView, so moving between them is a patch, not a full mount —
-    # and `Access.pin_screen/2` in handle_params/3 is the only gate any of them pass through.
+    # One LiveView, so moving between screens is a patch; `Access.pin_screen/2` is the only gate.
     live "/", GameLive, :root
     live "/battle", GameLive, :battle
     live "/shop/weapons", GameLive, :weapons
@@ -23,8 +22,7 @@ defmodule MiniLineageWeb.Router do
     live "/inn", GameLive, :inn
     live "/suicide", GameLive, :suicide
 
-    # One record, one route. Every character's is public — it is on the board — so there is nothing
-    # here to gate, and yours is simply the one whose id matches your session's.
+    # Every record is public, being on the board, so there is nothing here to gate.
     live "/character/:id", GameLive, :character
     live "/highscores", GameLive, :highscores
     live "/highscores/:race", GameLive, :highscores
@@ -32,8 +30,7 @@ defmodule MiniLineageWeb.Router do
     live "/races", GameLive, :races
     live "/error", GameLive, :error
 
-    # No glob. Redirecting an unrecognised path to Town is a soft 404: nothing is said, the address
-    # is thrown away, and a mistyped stylesheet comes back as HTML. Phoenix raises for what it does
-    # not route, and `ErrorHTML` draws it in the game's own shell.
+    # No glob: a catch-all is a soft 404. Phoenix raises for what it does not route and `ErrorHTML`
+    # draws it.
   end
 end

@@ -1,12 +1,10 @@
-# The builder's Elixir and OTP are pinned to the versions the game is developed and tested against.
+# Pinned to what CI tests on; CI fails if the two drift.
 FROM hexpm/elixir:1.20.4-erlang-28.5.0.6-alpine-3.22.5 AS builder
 
-# Nothing to apk add: the base image carries Elixir and OTP, every production dependency is pure
-# Elixir or Erlang, and APP_VERSION arrives as a build arg because there is no .git in the context.
+# Nothing to apk add: every production dependency is pure Elixir or Erlang.
 WORKDIR /app
 
-# Without a UTF-8 locale the VM runs with latin1 name encoding and warns that Elixir "may
-# malfunction". This game is made of emoji; it needs the real thing.
+# Without it the VM runs latin1, and this game is made of emoji.
 ENV LANG=C.UTF-8
 ENV MIX_ENV=prod
 
@@ -22,34 +20,31 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer; a deploy has no .git to ask. Declared after the dependency
-# layers so a new commit does not rebuild them. The ENV is NOT redundant: BuildKit keys a layer on
-# an ARG only when the command mentions it, and mix reads this from the environment.
+# The commit the footer names; there is no .git in the context. After the dependency layers so a
+# new commit does not rebuild them. The ENV is not redundant: BuildKit keys a layer on an ARG only
+# when the command mentions it.
 ARG APP_VERSION
 ENV APP_VERSION=${APP_VERSION}
 
-# `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
-# here, so the build needs no database and no secret.
+# runtime.exs is read at boot, so the build needs no database and no secret.
 RUN mix assets.deploy && mix release
 
 # --- runtime ---
 FROM alpine:3.22.5 AS runner
 
-# ca-certificates so the database can be reached over TLS; the rest is what the ERTS links against.
+# What the ERTS links against, and ca-certificates for a database reached over TLS.
 RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
 WORKDIR /app
 
 ENV LANG=C.UTF-8
 
-# Links the package to this repository on GitHub, which gives it the README and makes where an
-# image came from answerable from the image itself.
+# Links the ghcr package to this repository.
 LABEL org.opencontainers.image.source="https://github.com/sunny-azu-red/mini-lineage-remastered"
 LABEL org.opencontainers.image.description="Mini-Lineage Remastered — a text-based RPG in Elixir and Phoenix LiveView"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Created BEFORE the copy so ownership is set as the files land. A `chown -R` afterwards writes a
-# second copy of the whole release into its own layer, 34MB of a 53MB image, for nothing. The
-# directory itself is chowned so the release can still put its runtime config under it.
+# Before the copy, so --chown sets ownership as files land; a `chown -R` after would duplicate the
+# release into a layer of its own. /app itself is chowned for the release's runtime config.
 RUN addgroup -S app && adduser -S -G app app && chown app:app /app
 
 # The release brings its own ERTS; nothing here needs Elixir or Mix.

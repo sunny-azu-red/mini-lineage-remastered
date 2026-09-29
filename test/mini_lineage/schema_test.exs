@@ -1,13 +1,8 @@
 defmodule MiniLineage.SchemaTest do
   @moduledoc """
-  The indexes the game cannot go without.
-
-  Named because one went missing silently: dropping a column drops any partial index whose
-  predicate mentions it, which is how `character_log` lost its only useful index and started scanning
-  the whole table for every new character.
-
-  A query-plan assertion would be truer, but Postgres rightly prefers a sequential scan over the
-  few rows a test inserts, so it would pass either way.
+  The indexes the game cannot go without, named because dropping a column silently drops any
+  partial index whose predicate mentions it. A query-plan assertion cannot stand in: Postgres
+  rightly prefers a sequential scan over the few rows a test inserts.
   """
   use MiniLineage.DataCase, async: false
 

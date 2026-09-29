@@ -1,20 +1,16 @@
 name: CI
 
-# A branch with a PR open would otherwise run everything twice — once for the push and once for the
-# pull request — and the browser suites are minutes each time. The PR is what gates a merge, and
-# main is what gets published, so those are the two that need to run.
+# Pushes only on main, which publishes: a branch with a PR open would otherwise run twice.
 on:
   push:
     branches: [main]
   pull_request:
 
-# Supersede a pull request's older runs, but never interrupt main: cancelling mid-publish could
-# leave one tag pushed and the other not.
+# Never cancel main: mid-publish, one tag could be pushed and the other not.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Read-only by default; `publish` asks for the one thing it needs and nothing else does.
 permissions:
   contents: read
 
@@ -22,12 +18,10 @@ jobs:
   test:
     name: suite
     runs-on: ubuntu-latest
-    # A hung step should cost minutes, not the six hours a runner will otherwise give it.
     timeout-minutes: 20
 
     services:
-      # The major the game is deployed against. 5433 on the host so a developer running this
-      # locally cannot collide with their own Postgres on 5432.
+      # The major the game is deployed against; 5433 so a local run misses the developer's own.
       postgres:
         image: postgres:18
         env:
@@ -55,10 +49,8 @@ jobs:
       - name: Fetch dependencies
         run: mix deps.get
 
-      # The image is built on a pinned base rather than by this action, so nothing but a check keeps
-      # the two on the same Elixir and OTP. The second half is the pairing nothing else would
-      # notice: the release links against the builder's musl and openssl, so the stage that runs it
-      # has to be the same Alpine the stage that built it was.
+      # Nothing else keeps the image on the Elixir and OTP tested here, nor its runtime on the
+      # builder's Alpine, whose musl and openssl the release links against.
       - name: The Dockerfile builds on what this tested
         run: |
           otp=$(grep -oP 'otp-version: "\K[^"]+' .github/actions/setup-elixir/action.yml)
@@ -77,9 +69,7 @@ jobs:
       - name: Compile without warnings
         run: mix compile --warnings-as-errors
 
-      # Includes the golden master, which pins this rewrite to the reference's exact arithmetic.
-      # --warnings-as-errors because the step above compiles lib only; a warning in a test file
-      # would otherwise reach main unnoticed.
+      # --warnings-as-errors again: the step above compiles lib only.
       - name: Test
         run: mix test --warnings-as-errors
 
@@ -92,8 +82,7 @@ jobs:
       - name: Build a production release
         env:
           MIX_ENV: prod
-        # The sha is truncated to seven characters because that is what Version.release?/1 accepts,
-        # and being a release is what stops the app showing error detail to players.
+        # Seven characters, the form Version.release?/1 accepts.
         run: |
           export APP_VERSION="${GITHUB_SHA::7}"
           mix do deps.get --only prod + assets.deploy + release
@@ -130,7 +119,6 @@ jobs:
 
       - uses: ./.github/actions/setup-elixir
 
-      # The version is .nvmrc's, which env.sh selects in development, so both run the same Node.
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -141,15 +129,13 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      # CI has no .env.test — the variables above stand in for it, as they always have for .env.
+      # The job's env stands in for .env.test.
       - name: Create the browser suites' database
         env:
           MIX_ENV: e2e
         run: mix do deps.get + ecto.create
 
-      # `mix e2e` starts the server, empties the board and stops the server again, so there is
-      # nothing here to keep in step with how a developer runs it. One step per suite, so the log
-      # says which one failed without anyone opening it.
+      # `mix e2e` serves, resets and stops by itself. One step per suite names the one that failed.
       - name: Drive one character through a real browser
         run: mix e2e walkthrough
 
@@ -162,8 +148,7 @@ jobs:
       - name: Read a log in both orders it reads
         run: mix e2e log
 
-  # Only from main, and only behind both green jobs: what is published is what was tested. The
-  # image carries the commit, so a deployment names itself without anyone remembering to say so.
+  # Only from main, behind both green jobs: what is published is what was tested.
   publish:
     name: publish (ghcr)
     needs: [test, browser]
@@ -190,8 +175,7 @@ jobs:
         id: version
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      # Loaded, not pushed. Publishing first would leave a broken image tagged `latest` whenever the
-      # check below failed, and `latest` is what a deployment pulls.
+      # Loaded, not pushed: a failed check below must not leave a broken `latest`.
       - name: Build
         uses: docker/build-push-action@v7
         with:
@@ -202,12 +186,10 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}
-          # Layers survive between runs, so only what actually changed is rebuilt.
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Every way the stamp can fail to reach `mix release` is silent — a footer that names no
-      # commit. Read it back out of the release config before this image is allowed out.
+      # A missing stamp is silent, so read it back out of the release config before pushing.
       - name: Check the image is stamped with its commit
         run: |
           docker run --rm --entrypoint sh \

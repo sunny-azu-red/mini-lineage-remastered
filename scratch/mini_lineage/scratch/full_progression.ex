@@ -1,7 +1,7 @@
 defmodule MiniLineage.Scratch.FullProgression do
   @moduledoc """
-  Port of scratch/simulate_full_progression.ts — one character from level 1 to the cap, buying the
-  next gear tier the moment it is affordable and eating whenever health drops below 40%.
+  One character from level 1 to the cap, buying the next gear tier the moment it is affordable
+  and eating whenever health drops below 40%.
   """
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.{Battle, Constants, Math, Player}
@@ -100,7 +100,7 @@ defmodule MiniLineage.Scratch.FullProgression do
       else: state
   end
 
-  # Health is measured against the race's base pool, not the buffed maximum, as the reference did.
+  # Health is measured against the race's base pool, not the buffed maximum, as the study did.
   defp feed(state) do
     max_hp = state.race.start_health
 

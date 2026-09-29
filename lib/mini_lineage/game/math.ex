@@ -1,8 +1,8 @@
 defmodule MiniLineage.Game.Math do
   @moduledoc """
-  Port of math.service.ts. JS number semantics are reproduced deliberately: `js_round/1` rounds
-  halves toward +infinity, and `roll_chance/1` short-circuits at both ends WITHOUT drawing — an
-  ambush risk of exactly 0 consumes no randomness, which the golden master's draw order depends on.
+  JS number semantics are reproduced deliberately: `js_round/1` rounds halves toward +infinity, and
+  `roll_chance/1` short-circuits at both ends WITHOUT drawing — an ambush risk of exactly 0 consumes
+  no randomness, which the golden master's draw order depends on.
   """
   alias MiniLineage.Game.{Constants, Rng}
 

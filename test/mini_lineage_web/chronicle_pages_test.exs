@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.ChroniclePagesTest do
   @moduledoc """
   A long Chronicle as a page: it opens on its newest twenty-five entries, newest first, and hands
-  over the twenty-five before the last it holds each time the reader's hook asks, until there are none left.
-
-  The scrolling that asks is the browser's, and `live-board.mjs` drives it; this is what the ask
-  gets back.
+  over the twenty-five before the last it holds each time the hook asks. The scrolling that asks
+  is the browser's, driven by `live-board.mjs`; this is what the ask gets back.
   """
   use MiniLineageWeb.ConnCase, async: false
 
@@ -139,8 +137,8 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
     assert Enum.take(numbers(html), 2) == ["#31", "#30"]
   end
 
-  # A watch on a long fight would otherwise hold every entry it was shown, in the page and here both,
-  # and letting a batch go at once jumps the scrollbar.
+  # A watch on a long fight would otherwise hold every entry it was shown, in the page and here
+  # both, and letting a batch go at once jumps the scrollbar.
   describe "a reader at the present" do
     test "lets the oldest go as the newest lands, holding one height", %{conn: conn} do
       id = run_with(30)

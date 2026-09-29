@@ -1,5 +1,5 @@
 defmodule MiniLineage.Game.Format do
-  @moduledoc "Ports of shared/format.ts. Kept dependency-free and exact — narratives read off these."
+  @moduledoc "Kept dependency-free and exact — narratives read off these."
 
   @doc "Thousands separators, matching `toLocaleString('en-US')`."
   def number(n) when is_integer(n) do
@@ -72,10 +72,9 @@ defmodule MiniLineage.Game.Format do
   @full_months ~w(January February March April May June July August September October November December)
 
   @doc """
-  When something happened, as `<.stamp>` says it: an age inside `cap_ms` ("4m ago", or "4 minutes
-  ago" in the `:long` form), a date past it ("2 Sep", or "2 September"). `opts` shape only the date: `on:` gives it the "on" a
-  sentence needs, `time:` adds the clock, `at_time:` joins it with "at" rather than a comma. UTC,
-  and twinned with `stampLabel` in `hooks/stamps.js`, which repaints it in the reader's own zone.
+  When something happened, as `<.stamp>` says it: an age inside `cap_ms`, a date past it, shaped by
+  `on:`, `time:` and `at_time:`. UTC, and twinned with `stampLabel` in `hooks/stamps.js`, which
+  repaints it in the reader's own zone.
   """
   def stamp(at_ms, now_ms, cap_ms, form, opts \\ []) do
     age = now_ms - at_ms
@@ -160,7 +159,8 @@ defmodule MiniLineage.Game.Format do
   @placeholder ~r/\{(\w+)\}/
 
   @doc ~S"""
-  Fills `{key}` and `{key ? 'yes' : 'no'}`. An unknown key is left verbatim, as in the reference.
+  Fills `{key}` and `{key ? 'yes' : 'no'}`. An unknown key is left verbatim, so open pronouns
+  survive until render.
   """
   def fill_template(nil, _data), do: ""
   def fill_template("", _data), do: ""

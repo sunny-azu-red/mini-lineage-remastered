@@ -3,9 +3,8 @@ defmodule MiniLineage.Game.NarrativeTest do
   Holds the prose the player actually reads.
 
   `Format.fill_template/2` leaves an unrecognised `{placeholder}` in the string rather than
-  raising, so a mistyped variable ships to the player verbatim. These tests drive EVERY template in
-  EVERY list, for every race, and fail on any brace that survives rendering — which no sampled
-  transcript can promise, since a sample only ever exercises the templates it happened to draw.
+  raising, so a typo ships verbatim. These drive EVERY template in EVERY list, for every race, and
+  fail on any brace that survives, which no sampled transcript can promise.
   """
   use ExUnit.Case, async: true
 
@@ -74,9 +73,8 @@ defmodule MiniLineage.Game.NarrativeTest do
             Narrative.build_battle(player, result, ambushed?)
           end)
 
-        # A stored line keeps its PRONOUNS open on purpose — who it is told to is not known until
-        # somebody opens a page — so what has to close is everything else, and then the pronouns
-        # too once a reader is known. Checked for both readers, since they fill different words.
+        # A stored line keeps its PRONOUNS open until a reader is known, so everything else must
+        # close, and then the pronouns too, for both readers.
         for {key, line} <- narrative, is_binary(line), mine? <- [true, false] do
           spoken = Narrative.voiced(line, mine?)
 
@@ -296,7 +294,7 @@ defmodule MiniLineage.Game.NarrativeTest do
   end
 
   # The welcome is a fragment joined mid-sentence ("They chose the Orc, and ..."), so a pronoun in
-  # its sentence-initial form reads as "and Their spirit shines", which is how one shipped.
+  # its sentence-initial form would read "and Their spirit shines".
   describe "the welcome a run begins with" do
     test "is joined mid-sentence, so none of them starts a new one" do
       race = Constants.race(1)

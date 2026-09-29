@@ -1,8 +1,8 @@
 defmodule MiniLineage.CharacterLog do
   @moduledoc """
-  Everything a run did, in the order it did it: the fights, and the deeds around them. Its own
-  table because it grows without limit and the character's document is rewritten whole on every
-  save. An entry belongs to its character for good, so no second life inherits the first one's.
+  Everything a run did, in order: the fights, and the deeds around them. Its own table because it
+  grows without limit and the character's document is rewritten whole on every save. An entry
+  belongs to its character for good, so no second life inherits the first one's.
   """
   import Ecto.Query
 
@@ -13,8 +13,7 @@ defmodule MiniLineage.CharacterLog do
   # atom it turns into is one this module names itself.
   @narrative_keys ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
 
-  # A fight tells its story in seven lines; every other deed says one thing. Whitelisted here and
-  # not in the database, so a new kind is a line of Elixir rather than a migration.
+  # Whitelisted here and not in the database, so a new kind is a line of Elixir, not a migration.
   @kinds ~w(fight start purchase level_up cheat ending buff debuff)
 
   defmodule Entry do
@@ -31,16 +30,15 @@ defmodule MiniLineage.CharacterLog do
     end
   end
 
-  # What a record opens with, and what each scroll towards its beginning asks for. Smaller in the
-  # browser suites, which could not otherwise reach a second page without a minute of shopping.
+  # One page of the Chronicle. Smaller in the browser suites, so they can reach a second page.
   @window Application.compile_env(:mini_lineage, :chronicle_page, 25)
 
   @doc "How many entries a page holds, and so what a refresh opens on."
   def window, do: @window
 
   @doc """
-  The row a fight produces: its lines and nothing else, since the lines say everything a reader is
-  told. Built rather than written so the caller can save it in the character's own transaction.
+  The row a fight produces: its lines and nothing else. Built rather than written, so the caller can
+  save it in the character's own transaction.
   """
   def row(character_id, %{narrative: narrative, at: at}) do
     %Entry{
@@ -69,7 +67,6 @@ defmodule MiniLineage.CharacterLog do
 
   @doc """
   The row a deed produces: one sentence, its pronouns still open, stamped when it happened.
-  Built rather than written, for the same reason `row/2` is.
   """
   def event(character_id, kind, line, at) when kind in @kinds do
     %Entry{
@@ -81,10 +78,9 @@ defmodule MiniLineage.CharacterLog do
   end
 
   @doc """
-  The `limit` entries before `cursor`, the newest when it is nil, newest first as the Chronicle
-  reads — and whether any older remain. One row over the limit is read to answer that. Each is
-  numbered by its place in the run, counted in the same statement: nothing is ever deleted from a
-  run's log, so the newest on the page is the count of the rows up to it.
+  The `limit` entries before `cursor` (the newest when nil), newest first, and whether older ones
+  remain. Numbered by counting the run's rows in the same statement, which holds only because
+  nothing is ever deleted from a run's log.
   """
   def page(character_id, cursor \\ nil, limit \\ @window) do
     held = Entry |> where([e], e.character_id == ^character_id) |> older_than(cursor)
@@ -108,9 +104,8 @@ defmodule MiniLineage.CharacterLog do
   defp older_than(query, cursor), do: where(query, [e], e.id < ^cursor)
 
   @doc """
-  Everything written after `cursor`, newest first, numbered on from `above`, the number of the
-  entry at the cursor. A keyset, not an offset, so adding one entry never walks the rows a reader
-  already holds, nor counts them.
+  Everything written after `cursor`, newest first, numbered on from `above`, the cursor entry's
+  number. A keyset, so an append never walks or counts the rows a reader already holds.
   """
   def since(character_id, cursor, above) do
     Entry
@@ -121,8 +116,8 @@ defmodule MiniLineage.CharacterLog do
     |> Enum.reverse()
   end
 
-  # What the Chronicle iterates. A fight keeps the shape the battle screen knows; everything else
-  # is one line, and the component tells them apart by `kind`. Only an ambush draws an ambush line.
+  # A fight keeps the shape the battle screen knows; everything else is one line, told apart by
+  # `kind`. Only an ambush draws an ambush line.
   defp to_entry(%Entry{kind: "fight"} = e, number) do
     battle = to_battle(e)
 

@@ -1,8 +1,7 @@
 defmodule MiniLineage.Game.CheatTest do
   @moduledoc "The Konami cheat: silent activation, and a permanent bar from the Halls of Champions."
-  # NOT async: the counter tests below stand in for the collector by claiming its registered name,
-  # which is global — every other module creating a character concurrently posts its own increments
-  # into this process's mailbox, and the drain reads them as the run under test's.
+  # NOT async: the counter tests claim the collector's global name, so any concurrent module
+  # creating a character would post its increments into this mailbox.
   use ExUnit.Case, async: false
 
   alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Statistics}
@@ -28,7 +27,6 @@ defmodule MiniLineage.Game.CheatTest do
     assert player.effects == []
   end
 
-  # A second sequence used to refill health again, log the heresy again and count the heretic twice.
   test "works once: a run already marked is healed and counted no more" do
     {cheated, _} = Actions.cheat(living())
     wounded = %{cheated | health: 10}
@@ -46,8 +44,8 @@ defmodule MiniLineage.Game.CheatTest do
   end
 
   test "bars the Halls for good" do
-    # Nothing is refused any more — the run is simply not ranked, and it carries the mark that says
-    # so from the moment the sequence lands, alive or dead.
+    # Nothing is refused: the run is simply not ranked, and carries the mark from the moment the
+    # sequence lands, alive or dead.
     {player, _} = Actions.cheat(living())
 
     assert Snapshot.build(player).disqualified

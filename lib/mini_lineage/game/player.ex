@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.Player do
   @moduledoc """
-  Port of player.service.ts: the stat pipeline, effects, zone auras, purchases and the two tick
-  jobs. Every function is pure — it takes a player and returns a new one.
+  The stat pipeline, effects, zone auras, purchases and the two tick jobs. Every function takes a
+  player and returns a new one.
   """
   alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Narratives, Statistics}
 
@@ -106,9 +106,7 @@ defmodule MiniLineage.Game.Player do
 
   def kill(player) do
     player = %{player | health: 0, dead: true, effects: []}
-    # Not `increment_for`: the census counts everyone. Birth is counted before anybody can be
-    # disqualified, so excluding them here would leave souls arriving and never leaving — and
-    # the Tome tells the Weak Souls and the Heretics as a few OF the fallen.
+    # Not `increment_for`: the census counts everyone, or the disqualified arrive and never leave.
     Statistics.increment(:total_deaths)
 
     resolve_death_reason(player)
@@ -326,9 +324,8 @@ defmodule MiniLineage.Game.Player do
   """
   def process_effect_expiry(%{dead: true} = player), do: {player, false}
 
-  # An unstarted character has no health to clamp, and Elixir orders nil ABOVE every number — so
-  # `health > max_health` is true for nil and would invent a health value. JS compares undefined
-  # the other way, which is why the reference needs no such guard.
+  # Elixir orders nil ABOVE every number, so `health > max_health` would invent a health value for
+  # an unstarted character.
   def process_effect_expiry(%{health: health} = player) when not is_integer(health),
     do: {player, false}
 
@@ -452,9 +449,8 @@ defmodule MiniLineage.Game.Player do
   # ------------------------------------------------------------------- log
 
   @doc """
-  Notes something the run did, for the process to write and then clear.
-
-  Appended, because the order these are read in is the order they happened.
+  Notes something the run did, for the process to write and then clear. Appended, because they
+  are read in the order they happened.
   """
   def log(player, event), do: %{player | pending_events: player.pending_events ++ [event]}
 

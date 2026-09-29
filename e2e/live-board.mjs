@@ -1,7 +1,6 @@
 /**
- * The Halls, live. The other two drive a single browser, so a board that refreshed only for
- * whoever caused the change would pass them both. Two contexts here means two session cookies and
- * two players, and it watches one player's page move because of what the OTHER one did.
+ * The Halls, live. Two contexts are two session cookies and two players, so this watches one
+ * player's page move because of what the OTHER one did, which a single browser cannot see.
  */
 import { chromium } from 'playwright';
 import { readWhole } from './helpers.mjs';
@@ -33,9 +32,8 @@ const fightOffAmbush = async (page) => {
     }
 };
 
-// `data-value`, never the text: every figure on the board counts up to its new value, so what is
-// rendered mid-tween is a frame and not a number anybody wrote. Read the text and a wait for the
-// figure to move returns on the first frame of the animation, hundreds short of the real one.
+// `data-value`, never the text: figures count up, so the text mid-tween is a frame and a wait for
+// it to move returns on the first one.
 const XP_CELL = '#main table.data-table [data-key^="xp-"]';
 const boardXp = (page) =>
     page.evaluate((cell) => Number(document.querySelector(cell)?.dataset.value ?? -1), XP_CELL);
@@ -366,9 +364,8 @@ try {
         await watcher.locator('#main input[name="name"]').count() === 1);
 
     // ---- the same instant, read from two different clocks ------------------------------------
-    // The server stores an instant and knows nothing about where anyone is, so the conversion has
-    // to happen in the browser. Two contexts, two timezones, one row. A recent row says its age,
-    // which is the same everywhere, so the claim is on the tooltip, which always names the instant.
+    // The server stores an instant and the browser converts it: two contexts, two timezones, one
+    // row. A recent row says its age, the same everywhere, so the claim is on the tooltip.
     const stampIn = async (timezoneId) => {
         const page = await (await browser.newContext({ timezoneId })).newPage();
         await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
@@ -406,9 +403,9 @@ try {
         tokyo.shown !== la.shown, `Tokyo ${tokyo.shown} · LA ${la.shown}`);
 
     // ---- a stamp ages on the page, from the frame the server drew ------------------------------
-    // Three hours fast: the hook must age from the server's clock, or a deed done a moment ago
-    // reads "3h ago" the instant it takes over. The clock is Playwright's, so no assertion waits on
-    // a real minute passing; the one real interval assumed is under a minute from deed to read.
+    // Three hours fast: the hook must age from the server's clock, or a moment-old deed reads "3h
+    // ago" as it takes over. Playwright owns the clock; the one real interval assumed is under a
+    // minute from deed to read.
     const aging = await (await browser.newContext()).newPage();
     await aging.clock.install({ time: Date.now() + 3 * 3_600_000 });
     const boughtAt = Date.now() - 1000;
@@ -493,8 +490,8 @@ try {
         byDate && halls.stamps[0] > halls.stamps[1] && halls.sorted.join() === 'Last Sighted:descending' && halls.reset,
         JSON.stringify(halls));
 
-    // A filter goes somewhere and the reset does something, so one is a link and one a button,
-    // and the variant alone decides how either looks. A link's own colour had been winning.
+    // A filter goes somewhere and the reset does something, so one is a link and one a button, and
+    // the variant alone decides how either looks.
     const FILTER = '.action-links a.btn-secondary:not(.active)';
     const lookOf = (selector) => watcher.evaluate((sel) => {
         const style = getComputedStyle(document.querySelector(sel));

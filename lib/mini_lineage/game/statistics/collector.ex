@@ -1,12 +1,8 @@
 defmodule MiniLineage.Game.Statistics.Collector do
   @moduledoc """
-  Batches the fire-and-forget counters and flushes them as atomic upserts. The reference issued one
-  round trip per increment — a single fight fires seven — so they are coalesced over a short window
-  instead.
-
-  Writing and telling are separate concerns here. A write is a round trip and is worth batching for
-  a minute; a broadcast is microseconds, so the Tome hears about a counter when it MOVES rather than
-  when it is written, and keeps its own running totals in memory to say so without a query.
+  Batches the fire-and-forget counters and flushes them as atomic upserts. Writing and telling are
+  separate: a write is a round trip and is batched for a minute, while the Tome hears about a
+  counter when it MOVES, from running totals kept in memory.
   """
   use GenServer
 
@@ -17,13 +13,11 @@ defmodule MiniLineage.Game.Statistics.Collector do
   alias MiniLineage.Game.Statistics
   alias MiniLineage.Repo
 
-  # Generous on purpose, and only about durability: increments coalesce by field, so a batch is
-  # capped at the number of counters rather than by the wait, and a hard kill loses a minute of
-  # lifetime totals. What a reader sees does not wait for this.
+  # Only about durability: increments coalesce by field, so a batch is capped at the number of
+  # counters, and a hard kill loses a minute of totals. What a reader sees does not wait for this.
   @flush_ms 60_000
 
-  # The same window the board coalesces on, and for the same reason: a fight moves seven counters
-  # and a realm at play moves them constantly, so the telling is gathered up rather than stuttered.
+  # The board's window, for the same reason: a fight moves seven counters at once.
   @push_ms 500
 
   @topic "statistics"
@@ -89,9 +83,8 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   defp arm(state), do: state
 
-  # Drains the buffer into ONE statement. Never raises — a counter is not worth this process, and
-  # its death would take the buffer too. A failed batch is re-queued by field, so the buffer stays
-  # bounded however long an outage runs; `totals` already counted it and is left alone.
+  # ONE statement, and never raises: this process dying would take the buffer. A failed batch is
+  # re-queued by field, so the buffer stays bounded; `totals` already counted it.
   defp write(%{pending: pending} = state) when map_size(pending) == 0, do: state
 
   defp write(state) do
@@ -100,9 +93,7 @@ defmodule MiniLineage.Game.Statistics.Collector do
     entries =
       Enum.map(batch, fn {field, amount} -> %{name: Atom.to_string(field), value: amount} end)
 
-    # `rescue` rather than an error tuple: `insert_all` raises, and so does a value the driver
-    # cannot encode. A raise here would take the process down and the buffer with it — which is
-    # the very thing re-queueing exists to prevent.
+    # `rescue`, not an error tuple: `insert_all` raises, as does a value the driver cannot encode.
     try do
       Repo.insert_all("statistics", entries,
         conflict_target: :name,
@@ -125,8 +116,7 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   @doc "Every counter, or nil when nobody has ever played, so the client can show its empty state."
   def read_all do
-    # The running totals are stored plus pending, so a new player reads their own birth without a
-    # write to force it out or a query to read it back.
+    # Stored plus pending, so a new player reads their own birth with no write or query.
     case Process.whereis(__MODULE__) do
       nil -> view(stored())
       pid -> GenServer.call(pid, :totals)

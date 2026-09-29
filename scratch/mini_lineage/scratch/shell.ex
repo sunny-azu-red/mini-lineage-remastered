@@ -3,8 +3,8 @@ defmodule MiniLineage.Scratch.Shell do
   Runs one step of a build as its own OS process, and stops the build if it fails.
 
   Separate processes because MIX_ENV is fixed for the life of one: the tests need `:test` and
-  everything after them needs `:prod`, so no single `mix` invocation — and no alias — can do both.
-  Setting it per process also means an exported MIX_ENV cannot decide it for us.
+  everything after them `:prod`, so no single `mix` invocation or alias can do both, and an
+  exported MIX_ENV cannot decide it for us.
   """
   @release "_build/prod/rel/mini_lineage/bin/mini_lineage"
 
@@ -37,9 +37,8 @@ defmodule MiniLineage.Scratch.Shell do
   @doc """
   Blocks until an OS process is gone, or the timeout elapses. True if it went.
 
-  `bin/... stop` returns as soon as its RPC is sent, and the VM takes another moment to actually
-  go — longer with a browser still attached. Until it does, the port and the node name are still
-  taken, so anything that reports success on the strength of that command alone is guessing.
+  `bin/... stop` returns as soon as its RPC is sent, and until the VM actually goes the port and
+  the node name are still taken.
   """
   def await_exit(pid, timeout_ms \\ 20_000) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
@@ -61,12 +60,9 @@ defmodule MiniLineage.Scratch.Shell do
   @doc """
   Claims the right to run the browser suites on this machine, or says who already has it.
 
-  Waiting would be worse than refusing: a run that queues behind another gets its server stopped
-  the moment the first one finishes, and then drives a dead port. Both suites also empty the
-  board and assume only their own entries are on it, so two at once corrupt each other's results
-  rather than merely racing — which is what a stray suite run alongside a soak actually did.
-
-  `mkdir` is the lock: it either creates the directory or it does not, with no window between.
+  Waiting would be worse than refusing: a queued run gets its server stopped the moment the first
+  finishes. Every suite empties the board and assumes only its own entries are on it, so two at
+  once corrupt each other's results. `mkdir` is the lock, being atomic.
   """
   def lock!(path) do
     File.mkdir_p!(Path.dirname(path))
@@ -94,8 +90,7 @@ defmodule MiniLineage.Scratch.Shell do
           once makes both report nonsense. Wait for that one, or stop it.
           """)
         else
-          # Its owner is gone — a killed run, or a reboot. Take it over rather than blocking on a
-          # directory nothing is holding.
+          # Its owner is gone, a killed run or a reboot: take it over.
           File.rm_rf!(path)
           lock!(path)
         end
@@ -108,9 +103,8 @@ defmodule MiniLineage.Scratch.Shell do
   @doc """
   Fails early, and by name, when the browser cannot start.
 
-  Playwright's Chromium needs shared libraries this machine could not install system-wide, and
-  without them it dies with a linker error buried in eighty lines of Chrome flags. `env.sh` puts
-  them on LD_LIBRARY_PATH; this says so plainly rather than letting the run discover it.
+  Playwright's Chromium needs shared libraries that `env.sh` puts on LD_LIBRARY_PATH, and without
+  them it dies with a linker error buried in eighty lines of Chrome flags.
   """
   def require_browser! do
     unless System.find_executable("node") do
@@ -207,9 +201,8 @@ defmodule MiniLineage.Scratch.Shell do
     end
   end
 
-  # Nothing here recompiles a server it did not start, so a reused one can be any age — and the
-  # suites would pass against code that is not the checkout. Which happened. If the process is
-  # older than the newest source file, it cannot have compiled it, and that is the whole test.
+  # A reused server is never recompiled, so the suites could pass against code that is not the
+  # checkout. A process older than the newest source file cannot have compiled it.
   defp refuse_if_stale(port, url) do
     with pid when is_binary(pid) <- listening_pid(port),
          age when is_integer(age) <- process_age_s(pid),

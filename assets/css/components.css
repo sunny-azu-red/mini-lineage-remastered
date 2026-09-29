@@ -1,13 +1,7 @@
-/*
- * ========================================================================
- * Mini-Lineage — Components
- * Panel cards, status sidebar, HP/XP bars, alerts.
- * ========================================================================
- */
+/* Mini-Lineage — Components: panels, logs, the status sidebar, bars, alerts, the chronicle. */
 
 /* ===== Panel Card ===== */
-/* The margin is for `scrollIntoView`: a panel brought into view lands a gap above the fold rather
-   than flush against it. */
+/* The margin is for `scrollIntoView`, so a panel lands a gap above the fold, not flush with it. */
 .panel {
     scroll-margin-bottom: 12px;
     background: var(--bg-panel);
@@ -17,9 +11,8 @@
     overflow: hidden;
 }
 
-/* The 9/7 is not symmetry going wrong: these are capitals, and a font's em box carries descender
-   room they never use, so centred they sit high. The correction is the band's, not the title's —
-   every child of the header moves with it, and the chevron cannot drift from the words. */
+/* 9/7 on purpose: capitals centred by their em box sit high. The band corrects it, never a child,
+   so everything in the header moves together. */
 .panel-header {
     background: var(--panel-lift);
     line-height: 1.6;
@@ -38,20 +31,17 @@
     align-items: center;
 }
 
-/* Given a cap, a body scrolls — and the bar then sits against the panel's edge rather than inside
-   the body's padding, which is the whole reason the cap belongs here and not on what it holds. */
+/* The cap is the body's, never its content's, so the scrollbar sits against the panel's edge. */
 .panel-body.scrolls {
     overflow-y: auto;
 }
 
-/* A log keeps a scrolled-down reader's place itself, from the line they were reading, when an
-   entry lands above it; the browser's own anchoring would pick its own line. */
+/* The `Log` hook keeps the reader's place itself; the browser's anchoring would pick its own line. */
 .panel[data-log]>.panel-body {
     overflow-anchor: none;
 }
 
-/* One column, the body's row shared with the pill and the band over its top edge, so both sit under
-   the header whatever height the header is. */
+/* The pill and its band share the body's grid cell, so both sit under the header at any height. */
 .panel[data-log] {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -85,9 +75,8 @@
     z-index: 2;
 }
 
-/* The lines darken towards the present edge behind the button, wall to wall, 12px past it either
-   way, so it reads as over the log rather than as one more line of it. Eased, not linear: nearly
-   solid under the button, gone by its foot. Clear of the body's gold line, which is the header's edge. */
+/* The log darkens behind the pill so it reads as over the log, not as one more line of it. The
+   1px keeps it clear of the body's gold line. */
 .panel[data-log]:has(> .panel-unread:not([hidden]))::after {
     content: '';
     align-self: var(--present);
@@ -102,9 +91,8 @@
     pointer-events: none;
 }
 
-/* Where a reader's absence began: under the entry on its past side, in either order, standing in
-   for that entry's own rule so it sits exactly between the two, with the batch's count at its end.
-   The count is the later pseudo so it paints over the line, and both under the pill's band. */
+/* Where a reader's absence began, in place of that entry's own rule, with the batch's count at its
+   end. The count is the later pseudo so it paints over the line; both stay under the pill's band. */
 .panel[data-log] [data-unread] {
     position: relative;
 }
@@ -143,18 +131,15 @@
     display: none;
 }
 
-/* The fold is the header's `aria-expanded` and nothing else, so a layout that keeps a panel open
-   can say so here, before any script has run. */
+/* The fold is `aria-expanded` alone, so a layout can keep a panel open before any script runs. */
 .panel-toggle[aria-expanded="false"]+.panel-body {
     display: none;
 }
 
-/* A header that is a button has to stop looking like one and go on looking like a header. The
-   size is the only one .panel-header does not set, and a button would take the platform's. */
+/* A header that is a button, still looking like a header; a button takes the platform's size. */
 .panel-toggle {
     width: 100%;
-    /* All four: the header draws no border of its own any more, so anything left here is the
-       platform's own 2px outset — which is 2px of height the other panels do not have. */
+    /* All four, or the platform's 2px outset makes this header taller than the others. */
     border: 0;
     font-size: inherit;
     text-align: left;
@@ -165,13 +150,8 @@
     color: var(--gold-hover);
 }
 
-/* Drawn rather than typed: two borders make a chevron that is crisp at any size, takes the header's
-   own colour with it, and turns half a circle between its two states. It sits at the far end, where
-   `.header-name`'s `flex: 1` puts it and where it moves no word of the title.
-   The translate is what centres it, and it goes INSIDE the rotate so that it turns with the mark:
-   the ink is an L in the corner of its own box, so rotated 45° its outline falls 2.48px off that
-   box's middle, and 2.48/√2 is the 1.75 that pulls it back along its own diagonal. One value, both
-   states — measured, the mark lands in the same place whichever way it points. */
+/* The translate centres the L-shaped ink and goes INSIDE the rotate, so one value centres both
+   states: rotated, the outline falls 2.48px off centre, and 2.48/√2 is the 1.75. */
 .panel-arrow {
     flex-shrink: 0;
     width: 9px;
@@ -182,15 +162,11 @@
     transform: rotate(45deg) translate(-1.75px, -1.75px);
 }
 
-/* Set by the hook once a frame has been painted. A panel restored open from storage is rendered
-   shut and corrected on mount, and without this the chevron spins through that correction on every
-   refresh — animating a state the reader never left. */
+/* Set by the hook once painted, or a restored fold spins the chevron on every refresh. */
 .panel-arrow[data-ready] {
     transition: transform 160ms ease;
 }
 
-/* Shut it points up at the header that will open it, open it points down into what it opened —
-   half a turn apart, which is the clearest pair of states two ends of one animation can have. */
 .panel-header[aria-expanded="false"] .panel-arrow {
     transform: rotate(-135deg) translate(-1.75px, -1.75px);
 }
@@ -203,9 +179,7 @@
     line-height: 1;
 }
 
-/* An <h1> in the main panel, a <span> in the sidebar's. Both need the panel header's own size and
- * weight rather than a heading's defaults. Where it sits in the band is the band's business — see
- * .panel-header. */
+/* An <h1> in the main panel, a <span> in the sidebar's: both take the header's size, not an h1's. */
 .header-name {
     font-size: inherit;
     font-weight: inherit;
@@ -290,27 +264,20 @@
     }
 }
 
-/* The banner closes on 2px of --gold-dim. A panel closing on 1px of the same says the two are the
-   same kind of thing. It belongs to the BODY rather than to the header beneath which it used to
-   hang: a shut panel is then a header and nothing else, with no line closing off what is not there
-   and no pixel of it left behind in the band. */
+/* The gold line is the BODY's, never the header's, so a shut panel draws none. */
 .panel-body {
     padding: 12px;
     border-top: 1px solid var(--gold-dim);
 }
 
-/* Rows hold their own padding, all four sides of it, so the body holds none: a row is then exactly
-   as wide as the panel, which is what lets a marked one colour itself wall to wall. The words sit
-   where they always did — the 12px simply moved out of the body and into each row. */
+/* Rows hold the padding, so a marked row can colour itself wall to wall. */
 .panel-body.rows {
     padding: 0;
 }
 
 /* ===== Status Panel ===== */
-/* The rule between rows is drawn by ::after rather than by the row's own border, because the row
-   runs wall to wall and the rule does not. The border stays, transparent, to reserve the strip the
-   rule sits in — so every row is the same height and a marked one's ground, clipped to the padding
-   box, never reaches through the gaps in the dashes to tint them. */
+/* The rule is ::after, being inset where the row is not. The transparent border reserves its strip,
+   so a marked row's ground, clipped to the padding box, never tints the gaps in the dashes. */
 .stat-row {
     display: flex;
     align-items: center;
@@ -320,8 +287,7 @@
     border-bottom: 1px solid transparent;
 }
 
-/* The label column is as wide as ADENA, the widest label, at the label's own weight and tracking:
- * a fixed track does not grow, and a label too wide for it runs into its value. */
+/* 46px is ADENA, the widest label: a fixed track does not grow, and a wider label hits its value. */
 .status-panel .stat-row {
     display: grid;
     grid-template-columns: 46px 1fr;
@@ -342,8 +308,7 @@ ol.chronicle li::after {
     border-bottom: 1px dashed var(--border-soft);
 }
 
-/* The last row has no rule beneath it, so it reserves no strip for one — and with no border to
-   clip against, a marked one's ground runs all the way to the bottom of it. */
+/* No rule under the last row, so no strip, and a marked one's ground runs to its foot. */
 .stat-row:last-child,
 ol.chronicle li:last-child {
     border-bottom: 0;
@@ -368,9 +333,7 @@ ol.chronicle li:last-child::after {
     }
 }
 
-/* The shape of every row the game marks: a wash fading into the panel across a third from each end,
-   a share rather than a distance so one gradient suits a sidebar row and a chronicle entry. The
-   colour is each row's own, below, so none is a default another has to override. */
+/* The shape of every marked row; the colour is each row's own, so none overrides a default. */
 .stat-row.danger,
 ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     background-image: linear-gradient(90deg,
@@ -385,8 +348,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     animation: danger-pulse .5s ease-in-out infinite;
 }
 
-/* Quieter than the value beside it. The nudge is optical: capitals centred by their box sit high,
-   the box keeping descender room they never use. */
+/* The 1px is optical: capitals centred by their box sit high. */
 .stat-label {
     color: var(--text-secondary);
     text-align: right;
@@ -394,7 +356,6 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     margin-top: 1px;
 }
 
-/* The body's size, not a compact one: a value is read, wherever it stands. */
 .stat-value {
     line-height: 1;
 }
@@ -478,8 +439,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     transform: translateZ(0);
 }
 
-/* In an alert an item or an effect is what the message is ABOUT, not a figure inside it: it keeps
- * the alert's own voice and takes the weight instead. Two classes to the vocabulary's one, so it wins. */
+/* What an alert is ABOUT keeps the alert's voice and takes the weight; two classes, so it wins. */
 .alert :is(.item, .buff, .debuff) {
     color: inherit;
     font-weight: var(--weight-value);
@@ -509,7 +469,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     color: var(--text-danger);
 }
 
-/* Extra right padding so the dismiss "x" never overlaps longer message text */
+/* Room for the dismiss "x". */
 .alert-dismissible {
     padding-right: 30px;
 }
@@ -563,8 +523,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 /* ===== Code Block ===== */
 .code-block {
     background: var(--bg-surface);
-    /* A formatted stack trace runs to twenty frames. Capped so the way back stays on the screen,
-       and it scrolls on the same bar the Chronicle and the tables do. */
+    /* Capped so the way back past a stack trace stays on screen. */
     max-height: 340px;
     overflow: auto;
     border-radius: var(--radius);
@@ -577,16 +536,13 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 }
 
 /* ===== Chronicle ===== */
-/* A run's chronicle, oldest first. Ordered because a chronicle is, but never numbered. The cap and
-   the scroll are the panel's, not this list's. */
+/* Ordered but never numbered. The cap and the scroll are the panel's, not this list's. */
 ol.chronicle {
     list-style: none;
 }
 
-/* A scrollbar is chrome, so it wears the controls' own violet and warms to gold under the pointer,
-   the way the secondary button does — never the accent at rest. Left at the platform's width: a
-   bar thin enough to look tidy is one you have to aim at. Firefox reads the standard property and
-   Chromium prefers it over the pseudo-elements, which are there for Safari, which has neither. */
+/* Chrome, so the controls' violet and never the accent at rest. The standard property serves Firefox
+   and Chromium; the pseudo-elements are for Safari. */
 .table-container,
 .panel-body.scrolls,
 .code-block {
@@ -619,14 +575,12 @@ ol.chronicle {
     background: var(--gold-dim);
 }
 
-/* Each washed like the alert that would announce it: danger for an ambush, info for a beginning,
- * gold for a level (the warning alert's own colour, and the level's), success for a purchase. */
-/* A row in danger takes its ground from the pulse, which outranks any colour set here. */
+/* Each washed like the alert that would announce it. */
 ol.chronicle li.ambushed {
     background-color: var(--wash-danger);
 }
 
-/* An ambush is the one row with a line of its own to mark: what waits, in the alert's own voice. */
+/* What waits, in the alert's own voice. */
 ol.chronicle li.ambushed .threat {
     color: var(--text-danger);
 }
@@ -643,8 +597,7 @@ ol.chronicle li.purchase {
     background-color: var(--wash-success);
 }
 
-/* When and what kind of thing on the left, which one in the run on the right: a label over the
-   entry, set as every label is, in the date's colour. */
+/* When and what on the left, the entry's number on the right, in the date's colour. */
 ol.chronicle .entry-head {
     display: flex;
     justify-content: space-between;

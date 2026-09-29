@@ -1,5 +1,5 @@
 defmodule MiniLineage.Scratch.FoodVsRegen do
-  @moduledoc "Port of scratch/check_food_vs_regen.ts — buying 50 HP versus waiting for it."
+  @moduledoc "Buying 50 HP versus waiting for it."
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.Constants
 

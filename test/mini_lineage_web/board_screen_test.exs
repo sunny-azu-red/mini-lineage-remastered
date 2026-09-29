@@ -1,10 +1,7 @@
 defmodule MiniLineageWeb.BoardScreenTest do
   @moduledoc """
-  The Halls of Champions as a page: what it renders, and that a push actually changes it.
-
-  The live board is the point of the redesign, and a process that computes a correct ranking
-  nobody ever sees would pass every test in `BoardTest`. This is the other half — the LiveView
-  receiving that push and re-rendering it.
+  The Halls of Champions as a page: what it renders, and that a push actually changes it. A
+  correct ranking nobody sees would pass every test in `BoardTest`; this is the other half.
   """
   use MiniLineageWeb.ConnCase, async: false
 
@@ -275,11 +272,8 @@ defmodule MiniLineageWeb.BoardScreenTest do
       refute html =~ "hallowed pillars"
     end
 
-    # A run's page is live for whoever is reading it, and being RESTARTED away from changes what
-    # it should say — nothing holds it now, so nothing walks with it. Its process is gone by then,
-    # so it will never broadcast again, and what changed is the row rather than the state: the one
-    # thing a `:record_updated` push does not carry. Watched from another browser entirely, this
-    # left a ghost standing on a page whose run had been given up minutes earlier.
+    # Restarted away from, a run has no process left to broadcast, and what changed is the row
+    # rather than the state: the one thing a `:record_updated` push does not carry.
     test "a run restarted away from stops saying anything walks with it", %{conn: conn} do
       %{id: id, session: session} = run("Given Up", xp: 500, dead: true)
 

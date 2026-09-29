@@ -11,6 +11,6 @@ defmodule MiniLineage.Scratch.Report do
   def signed(number, decimals),
     do: if(number >= 0, do: "+", else: "") <> fixed(number, decimals)
 
-  @doc "Thousands separators, as `toLocaleString('en-US')` gave the reference scripts."
+  @doc "Thousands separators, en-US style."
   def num(n), do: Format.number(n)
 end

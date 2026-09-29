@@ -47,7 +47,7 @@ defmodule MiniLineage.CharactersTest do
     start_character(id)
     Characters.mutate(id, &{%{&1 | adena: 0}, :ok})
 
-    # The reference needed a promise mutex for this; here it is the process itself.
+    # No lock: the process itself serialises them.
     1..50
     |> Task.async_stream(fn _ -> Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok}) end,
       max_concurrency: 25
@@ -189,16 +189,16 @@ defmodule MiniLineage.CharactersTest do
   defp lapsing(effect, _at), do: effect
 
   test "an unstarted character is never persisted, and never invents a health value", %{id: id} do
-    # Elixir orders nil above every number, so the max-health clamp used to fire on nil health
-    # and write a row for a visitor who had done nothing.
+    # Elixir orders nil above every number, so a max-health clamp on nil health would write a row
+    # for a visitor who had done nothing.
     assert Characters.snapshot(id) == %Player{}
     assert Characters.snapshot(id).health == nil
     assert stored(id) == nil
   end
 
   test "the tick leaves a visitor who has no character alone", %{id: id} do
-    # Reading the start page is what materializes the process. Its first tick used to raise on
-    # `nil - nil` in the tick log, and the transient restart re-armed the timer to do it again.
+    # Reading the start page materializes the process, and a tick on nil health must not raise:
+    # the transient restart would re-arm the timer to do it again.
     hold(id)
     assert Characters.snapshot(id) == %Player{}
 
@@ -211,8 +211,8 @@ defmodule MiniLineage.CharactersTest do
   end
 
   test "a process opened by a read alone stops itself, having never had a viewer", %{id: id} do
-    # A dead render, a crawler or a health check reads and never connects. The stop timer used to
-    # be armed only as a viewer left, so a process that never had one ticked forever.
+    # A dead render, a crawler or a health check reads and never connects, so no viewer ever
+    # leaves to arm the stop.
     assert Characters.snapshot(id) == %Player{}
 
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
@@ -222,8 +222,8 @@ defmodule MiniLineage.CharactersTest do
   end
 
   describe "the idle retirement" do
-    # Nothing ages out of the table any more. A run nobody has come back to has still been played,
-    # so it keeps its place in the Halls and gives up only the session that tied it to a browser.
+    # A run nobody has come back to has still been played, so it keeps its place in the Halls and
+    # gives up only the session that tied it to a browser.
     defp backdate(session) do
       stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
 

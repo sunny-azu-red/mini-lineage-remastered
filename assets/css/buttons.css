@@ -1,10 +1,4 @@
-/*
- * ========================================================================
- * Mini-Lineage — Button Styles
- * Lineage 2-inspired fantasy button design
- * Uses design tokens defined in tokens.css (:root variables)
- * ========================================================================
- */
+/* Mini-Lineage — Buttons. `Controls.button/1` is the only thing that writes `btn`. */
 
 /* ===== Shared shimmer keyframe ===== */
 @keyframes btn-shimmer {
@@ -25,7 +19,7 @@
 
 /* ===== Base Button ===== */
 .btn {
-    /* Layout — inline-flex, so a <button> and an <a> come out the same height */
+    /* Inline-flex, so a <button> and an <a> come out the same height. */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -33,20 +27,17 @@
     white-space: nowrap;
     flex-shrink: 0;
 
-    /* Geometry — the height matches .form-select's, so the two align in a row */
+    /* The height is .form-select's, so the two align in a row. */
     padding: 0 16px;
     height: 31px;
     border-radius: var(--radius);
 
-    /* Single uniform border like the select element */
     border: 1px solid var(--border-control);
 
-    /* Subtle single-layer gradient */
     background: linear-gradient(180deg, #46404e 0%, #322e38 100%);
 
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 
-    /* Typography */
     font-family: var(--font-heading);
     font-size: 12px;
     font-weight: 600;
@@ -57,7 +48,6 @@
     /* An <a> takes the platform's underline; base.css leaves a .btn to this file. */
     text-decoration: none;
 
-    /* Interaction */
     cursor: pointer;
     appearance: none;
     position: relative;
@@ -69,7 +59,6 @@
         border-color 0.18s ease;
 }
 
-/* Shimmer pseudo-element — hidden by default */
 .btn::before {
     content: '';
     position: absolute;
@@ -86,7 +75,6 @@
     pointer-events: none;
 }
 
-/* Gold accent line at top */
 .btn::after {
     content: '';
     position: absolute;
@@ -110,16 +98,13 @@
         0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-/* Trigger shimmer animation on hover */
 .btn:hover::before {
     animation: btn-shimmer 0.55s ease forwards;
 }
 
 /* ===== Focus =====
- * One ring however focus arrived, and stronger than :hover — it is the whole affordance for Space.
- * :focus, not :focus-visible: Chrome gives a <select> the latter on click but withholds it from a
- * button until a keypress, so the two disagreed. In the text's colour, so every variant rings in
- * its own; `:not(:active)` outranks each variant's hover and yields to its press. */
+ * :focus, not :focus-visible, which Chrome gives a <select> on click and a button only on a key.
+ * `currentColor`, so each variant rings in its own; `:not(:active)` beats hover, yields to press. */
 .btn:focus:not(:active) {
     border-color: currentColor;
     box-shadow:
@@ -136,22 +121,17 @@
     box-shadow:
         0 0 0 2px color-mix(in srgb, var(--gold) 20%, transparent),
         inset 0 2px 4px rgba(0, 0, 0, 0.4);
-    /* Instant feedback */
     transition: none;
 }
 
 /* ===== Danger Variant =====
- * A destructive action carries the primary's weight, so it is built on the primary's own lightness
- * ramp, six points below it, and differs from it in hue. Its chroma is 1.6x the primary's at every
- * stop, because red at the primary's own chroma goes brown at these lightnesses where violet stays
- * slate. The ground is LCh hue 0 rather than the palette's red at 36 — a step off the red toward
- * the violet the rest of the game is painted in, which is what makes it read as dread rather than
- * as an error. The edge stays --border-danger at 36 and reads as a warm highlight over it. */
+ * The primary's lightness ramp six L* lower, at 1.6x its chroma, since red goes brown where violet
+ * stays slate. LCh hue 0, a step toward the violet, so it reads as dread and not as an error. */
 .btn-danger {
     background: linear-gradient(180deg, #581d33 0%, #3c1121 100%);
     border: 1px solid var(--border-danger);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    /* The darker ground let this drop to the alert's own voice and still clear AA, at 5.23. */
+    /* The alert's own voice, which clears AA on this darker ground at 5.23. */
     color: var(--text-danger);
 }
 
@@ -232,8 +212,8 @@
     margin-bottom: 12px;
 }
 
-/* Across from the filters it undoes nothing of: they choose which rows, it chooses their order. On
-   a phone the filters wrap, and pushed right it would sit alone at the end of a line of its own. */
+/* Across from the filters, since it undoes none of them. Not on a phone, where they wrap and it
+   would sit alone at the end of a line. */
 @media (width > 640px) {
     .reset-sort {
         margin-left: auto;
@@ -246,8 +226,7 @@
     height: 26px;
 }
 
-/* ===== Disabled State =====
- * The native attribute, set while a request is in flight. */
+/* ===== Disabled State ===== */
 .btn:disabled {
     opacity: 0.45;
     pointer-events: none;

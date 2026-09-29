@@ -1,10 +1,7 @@
 defmodule MiniLineageWeb.BackLinksTest do
   @moduledoc """
-  Every way back, across every state that can reach it.
-
-  A back link can be wrong without looking broken: the Halls sent a dead player to '/', which
-  renders their ending, while promising to continue a journey that was over. The destination was
-  right and only the words lied, so following it proved nothing.
+  Every way back, across every state that can reach it. A back link can be wrong without looking
+  broken: the destination can be right while its words promise a journey that is over.
   """
   use ExUnit.Case, async: true
 

@@ -3,9 +3,8 @@ defmodule MiniLineage.Game.ProgressionTest do
   The derived numbers a player reads off the sidebar and the Character screen: the level curve, the
   XP bar, the HP bar, and the stat pipeline that feeds them.
 
-  The golden master pins nine integers after 400 fights, which catches a change in the arithmetic
-  but says nothing about its shape. These state the properties directly, across the whole curve and
-  every gear tier, so a break names itself instead of surfacing as one shifted total.
+  The golden master catches a change in the arithmetic but not its shape. These state the
+  properties across the whole curve and every gear tier, so a break names itself.
   """
   use ExUnit.Case, async: true
 

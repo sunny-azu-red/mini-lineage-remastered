@@ -1,10 +1,8 @@
 defmodule MiniLineage.Board do
   @moduledoc """
   The Halls of Champions: every run that has chosen a race, best first, alive or finished. A view
-  of `characters`, not a table, so a run appears the moment it starts and keeps its place when it
-  ends. This process coalesces the refresh into one recomputation per window and pushes it, rather
-  than letting every viewer re-query for every write. A change of presence pushes too, and reads
-  nothing — a mount and an unmount are the commonest refreshes of all and neither moves a ranking.
+  of `characters`, not a table. This process coalesces refreshes into one recomputation per window
+  and pushes it; a change of presence pushes too, and reads nothing, since it moves no ranking.
   """
   use GenServer
 
@@ -45,8 +43,7 @@ defmodule MiniLineage.Board do
 
   @doc """
   Every board as it stands, for a viewer who has just arrived. Computed in the caller when the
-  process is not running — which is how tests read a board without a timer firing queries at them
-  from outside their sandbox.
+  process is not running, so tests read a board without a timer querying outside their sandbox.
   """
   def current do
     case Process.whereis(__MODULE__) do
@@ -125,9 +122,8 @@ defmodule MiniLineage.Board do
     Map.new(filters, &{&1, mark(Map.get(boards, &1, []), medals, online)})
   end
 
-  # Three in the whole game wear a medal, so a lineage's own board shows one only where that
-  # character would have worn it on the full board too. Presence comes from the registry, so it
-  # costs no query and is as live as the push carrying it.
+  # Three in the whole game wear a medal, so a lineage's board shows one only where the full board
+  # does. Presence comes from the registry and costs no query.
   defp mark(rows, medals, online) do
     Enum.map(rows, fn row ->
       %{row | medal: Map.get(medals, row.id), online: MapSet.member?(online, row.id)}
@@ -175,9 +171,8 @@ defmodule MiniLineage.Board do
   # still renders, which is why this is a board rule rather than a deletion.
   defp ranked, do: from(r in Record, where: not is_nil(r.race_id) and r.disqualified == false)
 
-  # When a run was last seen is the date of its last entry in the log, read rather than stored, so
-  # the Halls and the Chronicle cannot disagree about it. A `LIMIT 1` walk backwards down
-  # `(character_id, id)`: 8µs a row, and no deeper for a run that has fought twenty thousand times.
+  # Last seen is the run's last log entry, read rather than stored so the Halls and the Chronicle
+  # cannot disagree: a `LIMIT 1` walk backwards down `(character_id, id)`.
   defp seen(query) do
     last =
       from(l in CharacterLog.Entry,

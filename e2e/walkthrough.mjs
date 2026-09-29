@@ -1,7 +1,6 @@
 /**
- * One character, played normally, end to end — `mix e2e walkthrough`. It asserts only what the
- * browser alone can see: CSP enforcement, a stale bundle, focus, a push wiping the panel. How a
- * fight rolls belongs to the unit suite, which can seed the dice; every lineage to races.mjs.
+ * One character, played normally, end to end: `mix e2e walkthrough`. It asserts only what the
+ * browser alone can see; the dice belong to the unit suite, every lineage to races.mjs.
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
@@ -43,18 +42,16 @@ try {
     check('...including the display font', /Cinzel|Silkscreen/i.test(font), font);
     check('LiveView connects through the CSP', true);
 
-    // The footer names the running build, flagged when it is not a release. This server is the e2e
-    // one, so it must say so — a run that reports "development" is driving the dev server on 4000,
-    // against real data, and every destructive check below it is pointed at the wrong game.
+    // This server is the e2e one: a footer reading "development" means the run is driving the dev
+    // server on 4000, against real data.
     const footer = await page.textContent('#copyright');
     check('the footer names this as the testing build', /testing/.test(footer ?? ''), footer?.trim());
     check('...and flags it as a debug build, in the colour that build wears',
         await page.locator('#copyright .build-testing').count() === 1);
 
     // ---- the two adena formatters agree -------------------------------------------------------
-    // The count-up animation formats its own frames, so hooks/animated-values.js carries a second implementation
-    // of Format.adena. It cannot be removed — the number would jump format mid-count — so both
-    // sides are held to one table instead. Elixir reads it in format_test.exs.
+    // The count-up formats its own frames in hooks/animated-values.js, so both sides of
+    // Format.adena read one table; Elixir reads it in format_test.exs.
     const { cases } = JSON.parse(readFileSync('test/fixtures/adena_format.json', 'utf8'));
     const mismatched = await page.evaluate(
         (rows) => rows
@@ -66,9 +63,7 @@ try {
         mismatched.join(' | '));
 
     // ---- and so do the two countdown formatters ------------------------------------------------
-    // The server renders an effect's first frame and the hook repaints it every second, so these
-    // must agree or the label changes shape the moment the hook takes over. Elixir reads the same
-    // table in format_test.exs.
+    // The server renders an effect's first frame and the hook repaints it, so both read one table.
     const timers = JSON.parse(readFileSync('test/fixtures/effect_timer.json', 'utf8'));
     const disagreeing = (rows, fn) => page.evaluate(
         ([rows, name]) => rows
@@ -81,8 +76,7 @@ try {
     check('the browser labels a countdown exactly as the server does', offBy.length === 0,
         offBy.join(' | '));
 
-    // And the longer one a character's page says out loud, which is a second formatter and so a
-    // second way for the two sides to drift.
+    // And the longer one a character's page says out loud, a second formatter to drift.
     const offBySpoken = await disagreeing(timers.spoken, '__remainingLabel');
     check('...and says a remaining time in a sentence the same way', offBySpoken.length === 0,
         offBySpoken.join(' | '));
@@ -113,10 +107,8 @@ try {
     // click. Everywhere else this clicks, because a route only ever reached by URL is untested.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
-    // /death is no longer a route — Game Over shares '/' with Start and Town — so an address the
-    // game once owned is now an address it does not have, and says so rather than moving anybody.
-    // Fetched rather than navigated to: a 404 in the address bar writes a console error, and this
-    // suite asserts there are none of those.
+    // Game Over shares '/', so /death is an address the game does not have. Fetched, not navigated:
+    // a 404 in the address bar writes a console error, and this suite asserts there are none.
     const gone = await page.request.get(`${BASE}/death`);
     check('...and an address the game used to own now says it does not', gone.status() === 404,
         String(gone.status()));
@@ -132,9 +124,8 @@ try {
     check('...and offers a way out',
         await page.locator('#main a:has-text("Return to safer lands")').count() === 1);
 
-    // An unrecognised path is not a screen. Answering one by moving the reader to Town is a soft
-    // 404: they are told nothing and the address they typed is thrown away. It says so instead,
-    // and the address survives — a redirect would have been the thing that hid the typo.
+    // An unrecognised path is a 404 at the address typed, never a soft redirect to Town that hides
+    // the typo.
     const unknown = await page.request.get(`${BASE}/no-such-road`);
     check('an unknown URL says so rather than moving the reader', unknown.status() === 404,
         String(unknown.status()));
@@ -148,9 +139,8 @@ try {
         String(asset.status()));
 
     // ---- create a character -------------------------------------------------------------------
-    // Deliberately BEFORE the socket connects. The dead render is already interactive, and the
-    // first live render used to reset a race chosen in that window back to the first option — so a
-    // player on a slow connection picked an Orc and got a Human.
+    // Deliberately BEFORE the socket connects: the dead render is interactive, and the first live
+    // render must not reset a race chosen in that window.
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#main select[name="race_id"]', { timeout: 8000 });
     await page.fill('#main input[name="name"]', 'BrowserBot');
@@ -297,8 +287,7 @@ try {
     const mealText = await page.textContent('#main .alert');
     check('ordering a meal reports back', /You bought and ate/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
-    // LiveView restores focus to the button that submitted, which left a keyboard player on Order
-    // with the picker they buy from next unreachable without reaching for the mouse.
+    // LiveView restores focus to the submitting button; the picker is what a keyboard player needs.
     check('...and buying hands focus back to the picker, not the button just pressed',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
         await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
@@ -349,8 +338,7 @@ try {
         `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
 
     // ---- the battleground ---------------------------------------------------------------------
-    // From the Town form, not a typed URL: travelling is its own path, and it once crashed the
-    // LiveView while the URL worked perfectly.
+    // From the Town form, not a typed URL: travelling is its own code path.
     await goHome();
     const battlesBeforeTravel = Number(await page.getAttribute('#screen', 'data-battles'));
     await travel('battle');
@@ -359,10 +347,9 @@ try {
         || (await state()).dead,
         `battles ${battlesBeforeTravel} -> ${await page.getAttribute('#screen', 'data-battles')}`);
 
-    // Focus that cannot be seen is not an affordance. Arriving by mouse leaves the button focused
-    // but not :focus-visible, so the ring has to come from plain :focus — as it does on a select.
-    // Named by colour, not merely "differs from idle": the base drop shadow alone would pass that.
-    // The ring is the text's own colour, so an ambush on arrival arms the red Fight and rings red.
+    // Arriving by mouse focuses without :focus-visible, so the ring must come from plain :focus.
+    // Named by colour, since the base drop shadow alone differs from idle; the ring is the text's
+    // own colour, so an ambush on arrival rings red.
     const ringed = (tell) => {
         const el = document.activeElement;
         if (!el?.matches('#main .btn')) return tell && `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
@@ -409,9 +396,7 @@ try {
 
         check('a meal heals the wounded', bought && healed.health > wounded.health,
             `${wounded.health} -> ${healed.health}`);
-        // The sweep across the HP bar is not checked here. This suite is one character played
-        // normally, and a 600ms CSS effect is not that — it was failing about one run in three and
-        // taking the whole suite with it. The gain is what matters and is checked above.
+        // The HP bar's 600ms sweep is not checked: it is CSS, not play; the gain is checked above.
         await leaveShop();
         await travel('battle');
         current = await state();
@@ -419,8 +404,7 @@ try {
 
     // ---- the road ends at the grave -------------------------------------------------------------
     // Fights on without shopping, so health only falls and this terminates. Nothing is claimed
-    // about the level reached or the damage taken: the dice own that, and balance_golden_test.exs
-    // is where they can be held still.
+    // about the level reached: the dice own that.
     for (let i = 0; i < 200 && !current.dead && current.screen === 'battle'; i++) {
         await fight();
         fightsFought++;
@@ -432,9 +416,8 @@ try {
                 () => document.activeElement?.getAttribute('phx-click') !== 'fight');
     }
 
-    // Named rather than counted. Every figure in the sidebar animates, and what a weapon or an
-    // armour grants joins them only once the gear grants something — so a count is a number that
-    // changes for reasons that are not a bug, while a missing name always is one.
+    // Named rather than counted: gear joins the sidebar's figures only once it grants something,
+    // so a count changes for reasons that are not a bug.
     const animated = await page.locator('#sidebar [data-value]')
         .evaluateAll(els => els.map(e => e.dataset.key).sort());
     const alwaysThere = ['adena', 'hp', 'level', 'max-hp', 'xp', 'xp-required'];
@@ -545,17 +528,15 @@ try {
     check('...and hands over the rest of the run as the reader scrolls back through it',
         await readWhole(page), `${await page.locator('#chronicle-log li').count()} entries`);
 
-    // Every deflection line names the damage its armour took and the XP that clash was worth, and
-    // no outcome line mentions either — so this is the whole fight being told, not just its end.
-    // Scoped to the list because the paragraphs above talk about XP too. Dice-proof: every
+    // Every deflection line names the damage and the XP, and no outcome line does, so this is the
+    // whole fight told. Scoped to the list, as the paragraphs above mention XP. Dice-proof: every
     // template in the pool carries both words.
     const chronicle = (await page.textContent('#chronicle-log'))?.replace(/\s+/g, ' ') ?? '';
     check('...the whole of each one, not only how it ended',
         /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
 
-    // Nothing arrives and silently stops existing: every effect seen settling is seen leaving —
-    // by its timer, by a meal replacing it, or with the run's last breath. Read in the order it
-    // happened, which is the list upside down.
+    // Every effect seen settling is seen leaving: by its timer, by a meal, or with the run's last
+    // breath. Read in the order it happened, which is the list upside down.
     const entries = (await page.locator('#chronicle-log li')
         .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()))).reverse();
     const unaccounted = entries.flatMap((line, i) => {
@@ -574,9 +555,8 @@ try {
     check('...numbered by its place in the run, down to the Beginning as #1',
         numbers.every((n, i) => n === `#${numbers.length - i}`), numbers.slice(-3).join(' '));
 
-    // The session cookie is HttpOnly, so the browser cannot compare the two ids directly — that
-    // the board never emits a session id is proved in board_test. What IS observable here is the
-    // property that matters: reading a record does not make you that character.
+    // The session cookie is HttpOnly, so the ids cannot be compared here (board_test does that);
+    // what is observable is that reading a record does not make you that character.
     check('...without the reader becoming the character', (await state()).started === true);
 
     await page.click('#main .back a');

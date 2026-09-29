@@ -1,16 +1,13 @@
 defmodule MiniLineage.Characters.TickLog do
   @moduledoc """
   The one line a tick writes: `[TICK:<id>] <Zone> | HP: <old> -> <new>/<max> (<status>)`.
-
-  Its own module because none of it is state — it reads a player and says what just happened to
-  them, which is the whole of what `Characters.Server` wanted it for.
   """
   require Logger
 
   alias MiniLineage.Game.{Format, Player}
 
   @doc "Writes the line for one firing. `health_before` is captured ahead of the sweep's clamp."
-  # A function, so none of it is computed at the `:info` a release logs at.
+  # A function, so none of it is computed at the `:info` level a release logs at.
   def write(id, player, health_before, expired, changed?) do
     Logger.debug(fn ->
       stats = Player.stats(player)
@@ -22,8 +19,7 @@ defmodule MiniLineage.Characters.TickLog do
     end)
   end
 
-  # Read off the RESTING aura, not the absence of combat: a screen in neither list is its own case,
-  # not a mislabelled "Resting".
+  # Read off the RESTING aura, not the absence of combat: a screen in neither list is "No Zone".
   defp zone(player) do
     cond do
       has?(player, "combat") -> "In Combat"

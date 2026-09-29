@@ -1,9 +1,4 @@
-/*
- * ========================================================================
- * Mini-Lineage — Tables
- * .data-table, utility span/td classes
- * ========================================================================
- */
+/* Mini-Lineage — Tables */
 
 /* ===== Data Table ===== */
 .data-table {
@@ -20,12 +15,10 @@
     border: 1px solid var(--border-soft);
 }
 
-/* No colour of its own: the body's, lighter than the item names beneath it. Muted is illegible on
-   the band at this size, and gold barely lighter than the names. */
+/* No colour of its own: muted is illegible on the band at this size. */
 .data-table th {
     background: var(--table-lift);
-    /* Tighter than a cell vertically, identical horizontally — a label that does not sit on its
-       column's own padding is a label hanging over the wrong edge. */
+    /* A cell's horizontal padding, so a label sits over its column's edge. */
     padding: var(--th-padding);
     text-align: left;
     border-bottom: 1px solid var(--border-soft);
@@ -39,9 +32,7 @@
     background-color: var(--row-lift);
 }
 
-/* Figures are tabular, which only pays off against an edge to line up on: the magnitude of a
-   column becomes a shape you can read without reading any of the numbers. The header follows its
-   column, or the edge it labels is not the edge it sits over. */
+/* Tabular figures need an edge to line up on, and the header follows its column. */
 td.num,
 th.num {
     text-align: right;
@@ -53,15 +44,13 @@ th.num {
     white-space: nowrap;
 }
 
-/* On a phone the cost has to fit on screen, not behind a sideways scroll: a column's LABEL may take
-   two lines. Its figures still never do. */
+/* On a phone a column's LABEL may take two lines, so the cost is not behind a sideways scroll. */
 @media (max-width: 520px) {
     .data-table th:not(.name) {
         white-space: normal;
     }
 
-    /* Here every column is already at its narrowest, so the arrow's room is kept only where it is
-       drawn: reserved on every sortable header, it put 33px more of the Halls behind the scroll. */
+    /* Every column is at its narrowest here, so the arrow keeps its room only where it is drawn. */
     .data-table th:not([aria-sort]) .sort-arrow {
         display: none;
     }
@@ -69,8 +58,7 @@ th.num {
 
 /* --- a sortable column ---------------------------------------------------------------------- */
 
-/* The whole cell is the target, so the button takes the header's padding. A button inherits no
-   type and no colour, so it is handed the label's. */
+/* The whole cell is the target, so the button takes the header's padding and inherits its type. */
 .data-table th:has(> .sort) {
     padding: 0;
 }
@@ -104,8 +92,7 @@ th.num {
     color: var(--gold);
 }
 
-/* The panel's chevron at a label's size, and the same centring: the translate is a quarter of the
-   box less its stroke. Down is descending, up ascending, and it holds its room until it sorts, so a
+/* The panel's chevron at a label's size; the translate centres it. Hidden rather than absent, so a
    column does not widen as it takes the sort. */
 .sort-arrow {
     flex-shrink: 0;
@@ -127,14 +114,12 @@ th.num {
 
 /* --- the Halls of Champions ------------------------------------------------------------------ */
 
-/* A run that has not ended. `:not(.mine)` rather than declaration order, so yours stays gold
-   however these rules get moved about. */
+/* `:not(.mine)` rather than declaration order, so yours stays gold however the rules move. */
 .data-table tbody tr.character-row.alive:not(.mine) {
     background-color: var(--wash-success);
     box-shadow: inset 2px 0 0 var(--text-heal);
 }
 
-/* Your own run, findable without counting. */
 .data-table tbody tr.character-row.mine {
     background-color: var(--wash-gold);
     box-shadow: inset 2px 0 0 var(--gold);
@@ -142,9 +127,7 @@ th.num {
 
 /* --- the shops ------------------------------------------------------------------------------- */
 
-/* What you are already wearing or wielding. The picker below says "(Owned)" and refuses it; the
-   table had been saying nothing, so the two disagreed about what you already have. Marked the way
-   the Halls marks your own run, since it is the same sentence: this row is you. */
+/* What you already wear or wield, marked as the Halls mark your own run: this row is you. */
 .data-table tbody tr.owned {
     background-color: var(--wash-gold);
     box-shadow: inset 2px 0 0 var(--gold);
@@ -152,8 +135,7 @@ th.num {
 
 /* --- the Halls of Champions ------------------------------------------------------------------ */
 
-/* Somebody has this character open right now, as against merely alive. */
-/* Always in the DOM so it can fade; `.lit` is the only thing that changes when somebody arrives. */
+/* Somebody has this character open. Always in the DOM so it can fade; only `.lit` changes. */
 .character-row .online {
     color: var(--text-heal);
     opacity: 0;
@@ -164,33 +146,23 @@ th.num {
     opacity: 1;
 }
 
-/* A write sweeps the row it touched, the same diagonal the level-up banner wears.
-   A background and not an overlay, which cost two attempts to learn: an absolutely positioned
-   ::after on a <tr> paints ON TOP of the cells, and `z-index: -1` does not move it — measured, the
-   washed cell was identical either way, because table painting does not honour it. A background is
-   painted beneath cell content by definition. It is why the row colours above set
-   `background-color` and not the `background` shorthand, which would blank this out.
-   Being beneath does not make it invisible through the glyphs: at 13px they are antialiased, so
-   every text pixel is part ground, and a band passing behind briefly lifts them. That is what a
-   shine is. It is held to 0.12 and 420ms so it passes any one figure in about a tenth of a
-   second, which reads as a sweep rather than as the value dimming. */
+/* A background, not an overlay: a <tr>'s ::after paints over the cells whatever its z-index. So
+   the row colours above set `background-color`, never the `background` shorthand, which would
+   blank this out. */
 .data-table tbody tr.character-row.stirred {
     background-image: linear-gradient(105deg,
             transparent 40%,
             rgba(255, 255, 255, 0.12) 50%,
             transparent 60%);
-    /* Not the default `repeat`: the image is two and a half rows wide, so a tiled one shows its
-       band twice over and reads as two sweeps. */
+    /* The image is wider than the row, so a tiled one would sweep twice. */
     background-repeat: no-repeat;
     background-size: 250% 100%;
     background-position: -5% 0;
     animation: row-sweep 420ms linear forwards;
 }
 
-/* A background-position percentage aligns that point of the image with that point of the box, and
-   the image is the larger, so the percentages run backwards: -5% puts the band just off the RIGHT
-   and 105% just off the left. The range is narrow on purpose — any wider and the band spends most
-   of the animation outside the row and reads as a flicker. Linear, so it crosses evenly. */
+/* The image is larger than the box, so the percentages run backwards: -5% is just off the RIGHT.
+   Narrow on purpose, or the band spends the animation outside the row and reads as a flicker. */
 @keyframes row-sweep {
     to {
         background-position: 105% 0;

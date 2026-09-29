@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.Statistics do
   @moduledoc """
-  Fire-and-forget global counters, mirroring the reference's `void statisticsRepository.increment`.
-  A no-op until the collector is running, so the rules core stays runnable with no database.
+  Fire-and-forget global counters. A no-op until the collector is running, so the rules core stays
+  runnable with no database.
   """
   @fields ~w(total_adena total_adena_generated total_adena_spent total_ambushes total_armors_bought
              total_battles total_critical_hits total_damage_blocked total_deaths total_enemies_killed
@@ -12,13 +12,8 @@ defmodule MiniLineage.Game.Statistics do
   def fields, do: @fields
 
   @doc """
-  Counts a DEED toward the realm's history unless the run doing it is disqualified. The Halls will
-  not list a coward or a cheat, so the Tome does not tell their battles, their plunder or their
-  blood either — from the moment they are disqualified, an aggregate having no way to give back
-  what it was already told.
-
-  The census is not a deed and does not come through here: everyone who sets foot is counted, and
-  so is everyone who falls, or the realm would have souls arriving and never leaving.
+  Counts a DEED unless the run is disqualified: the Tome tells no coward's or cheat's battles. The
+  census (births and deaths) is not a deed and goes through `increment/2`, ungated.
   """
   def increment_for(player, field, amount \\ 1)
   def increment_for(%{coward: true}, _field, _amount), do: :ok

@@ -179,8 +179,7 @@ defmodule MiniLineageWeb.BlessingsTest do
     test "and leaves how it ended to the chronicle, which is where the fight is" do
       html = html_for(bearer([]), dead: true, reason: @reason)
 
-      # The record tallies; the last entry of the chronicle is the ending. Said in both, the page
-      # repeated itself two paragraphs apart.
+      # The record tallies; the last entry of the chronicle is the ending, and is not said twice.
       refute html =~ "not bravely enough"
       assert html =~ "You fell at"
     end

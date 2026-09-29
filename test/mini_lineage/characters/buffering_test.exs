@@ -2,11 +2,9 @@ defmodule MiniLineage.Characters.BufferingTest do
   @moduledoc """
   What reaches the database, and when.
 
-  A character is held in its process, so the database is durability rather than storage. Writing on
-  every change cost roughly twenty writes per fight — almost all of them passive regeneration — so
-  what the player did is written before they are told it worked, and the passage of time rides
-  along with it. These tests pin both halves of that: that an action is durable immediately, and
-  that a tick is not, because a bug in either direction is invisible from the game.
+  What the player did is written before they are told it worked, and the passage of time rides
+  along with the next write. These pin both halves, that an action is durable at once and a tick
+  is not, because a bug in either direction is invisible from the game.
   """
   use MiniLineage.DataCase, async: false
 

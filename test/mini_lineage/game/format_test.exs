@@ -2,11 +2,8 @@ defmodule MiniLineage.Game.FormatTest do
   @moduledoc """
   The numbers as a player reads them.
 
-  Adena is shortened once it passes a thousand, and the boundaries are where a formatter goes
-  wrong: 999 and 1,000 sit either side of one, and a value that lands exactly on a unit must not
-  read as "1.0k". The client animates the same figure with its own copy of this in
-  hooks/animated-values.js, but
-  every count ends on the server's text, so only this side is ever read.
+  Adena is shortened past a thousand, and the boundaries are where a formatter goes wrong: 999
+  and 1,000 sit either side of one, and a value landing exactly on a unit must not read "1.0k".
   """
   use ExUnit.Case, async: true
 
@@ -50,9 +47,8 @@ defmodule MiniLineage.Game.FormatTest do
 
   describe "the values the JavaScript must agree on" do
     test "adena is formatted the same way here" do
-      # The count-up animation formats its own intermediate frames, so hooks/animated-values.js carries a second
-      # implementation of this — it cannot be removed without the number jumping format mid-count.
-      # Both sides read this file, so a divergence fails a test instead of wobbling on screen.
+      # hooks/animated-values.js formats the count-up's own frames with a twin of this. Both read
+      # this table, so a divergence fails a test instead of wobbling on screen.
       %{"cases" => cases} =
         "test/fixtures/adena_format.json" |> File.read!() |> Jason.decode!()
 
@@ -62,7 +58,7 @@ defmodule MiniLineage.Game.FormatTest do
     end
 
     test "and so is a countdown" do
-      # The server renders the first frame and `timerLabel` in hooks/effect-timers.js repaints it every second,
+      # The server renders the first frame and `timerLabel` in hooks/effect-timers.js repaints it,
       # so a divergence shows as the number changing shape the instant the hook takes over.
       %{"cases" => cases} =
         "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()

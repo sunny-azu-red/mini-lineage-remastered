@@ -52,8 +52,7 @@ defmodule MiniLineageWeb.StaleSessionTest do
 
   describe "the store" do
     test "never builds a query from a session id that is not there" do
-      # `where: r.session_id == ^nil` is not a query Ecto will build, and the ArgumentError it
-      # raises instead came back as a CaseClauseError three frames away from the cause.
+      # `where: r.session_id == ^nil` is not a query Ecto will build, so nil is answered first.
       assert Store.load_by_session(nil) == nil
     end
   end

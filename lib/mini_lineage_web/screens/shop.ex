@@ -89,9 +89,8 @@ defmodule MiniLineageWeb.Screens.Shop do
     ~H"""
     <p>{@intro_a}<br />{@intro_b}</p>
 
-    <%!-- Unsorted: five items whose figures rise with their price have one order worth reading.
-          Raw so a label is written the way the game writes markup, with its entities; they are
-          constants from this module, never anything a player typed. --%>
+    <%!-- Unsorted: figures rising with the price have one order worth reading. `raw/1` for the
+          labels' entities; they are this module's constants, never anything a player typed. --%>
     <.data_table id={"#{@type}-table"}>
       <:col class="name">Name</:col>
       <:col class="num" title={@modifier.title}>{raw(@modifier.header)}</:col>

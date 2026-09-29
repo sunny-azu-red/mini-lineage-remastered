@@ -11,8 +11,7 @@ defmodule MiniLineageWeb.Screens.Tome do
 
   def screen(assigns) do
     ~H"""
-    <%!-- The archives move whenever the collector flushes, which with a realm full of players is a
-          long way at a time — exactly what a count is for. --%>
+    <%!-- The archives move a long way per flush, which is what a count is for. --%>
     <div id="tome-figures" phx-hook="AnimatedValues">
       <%= if @statistics do %>
         <h2>📜 The Legacy of the Realm</h2>

@@ -34,10 +34,8 @@ defmodule MiniLineage.Characters.Server do
     # ordinary shutdown would discard whatever is buffered.
     Process.flag(:trap_exit, true)
 
-    # The public id is discovered, or minted for a character that has never saved. Minting it here
-    # rather than at the first save is what lets two tabs on one session agree on it.
-    # The battle screen is refilled from the log, not the document: one query, only at start, and
-    # only for a run that has one, which neither a fresh id nor the dead can.
+    # Minted here rather than at the first save, so two tabs on one session agree on the id. The
+    # battle screen is refilled from the log, once, and never for the dead.
     {id, player} =
       case Store.load_by_session(session) do
         nil ->
@@ -147,9 +145,8 @@ defmodule MiniLineage.Characters.Server do
 
   # ------------------------------------------------------------------- core
 
-  # Neither timer has anything to do for a visitor who has not created a character: nothing to
-  # regenerate, no effects to expire, and no health for the tick log to describe. Both keep
-  # running, because the character may yet be created in here.
+  # A visitor gives neither timer anything to do, but both keep running: the character may yet be
+  # created in here.
   defp on_timer(state, fun) do
     if Player.started?(state.player) do
       {_result, state} = run(state, fun, log: true)
@@ -212,9 +209,8 @@ defmodule MiniLineage.Characters.Server do
       state = if acted? or pending?, do: persist(%{state | board_stale: true}), else: mark(state)
       wrote? = pending? and state.pending_rows == []
 
-      # Always broadcast: a viewer must see the tick whether or not it was worth a write. AFTER the
-      # write, though — a record being watched answers the push by reading its chronicle back, and
-      # a push that arrives first tells the reader about a fight the database does not have yet.
+      # Always broadcast, whether or not it was worth a write, but AFTER the write: a watched record
+      # answers the push by reading its chronicle back.
       broadcast(state.session, state.player, state.id, wrote?)
 
       {result, arm_expiry(state)}

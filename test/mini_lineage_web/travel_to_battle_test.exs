@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.TravelToBattleTest do
   @moduledoc """
   Travelling to the Battleground fights on arrival, so one click both moves the player and can
-  kill them. A socket holds a single patch, and this is where it once asked for two.
+  kill them, and a socket holds a single patch.
   """
   use MiniLineageWeb.ConnCase, async: false
 

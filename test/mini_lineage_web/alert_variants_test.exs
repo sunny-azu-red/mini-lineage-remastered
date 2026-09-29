@@ -2,11 +2,9 @@ defmodule MiniLineageWeb.AlertVariantsTest do
   @moduledoc """
   Every alert the game can raise has a rule to be drawn by, and every rule has an alert.
 
-  `flash_alert/1` builds its class from the type the action returned — `alert-\#{@flash.type}` — so
-  a type nothing styles renders unstyled, and a rule nothing raises is dead weight in the sheet.
-  Neither is visible from either side alone: grepping the stylesheet cannot see a type decided by
-  `if result.success, do: :success, else: :danger`, and grepping for that atom cannot see whether
-  anything draws it. This reads both ends and compares them.
+  `flash_alert/1` builds its class from the type the action returned, so a type nothing styles
+  renders unstyled and a rule nothing raises is dead weight. Neither end can see that alone, so
+  this reads both and compares them.
   """
   use ExUnit.Case, async: true
 

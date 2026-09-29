@@ -2,10 +2,8 @@ defmodule MiniLineage.CharacterLogTest do
   @moduledoc """
   Every fight a character has had, and what becomes of them when the run ends.
 
-  The log is the one thing here allowed to grow without limit, because it is append-only. What
-  used to be delicate — claiming a run's fights for the board, discarding them when it was
-  abandoned — is gone: a run is never reset in place, so its fights have exactly one owner for as
-  long as they exist.
+  The log is append-only, so it is the one thing here allowed to grow without limit. A run is never
+  reset in place, so its fights have exactly one owner for as long as they exist.
   """
   use MiniLineage.DataCase, async: false
 
@@ -38,8 +36,7 @@ defmodule MiniLineage.CharacterLogTest do
   # happened: the Chronicle reads newest first, and these claims are about what came after what.
   defp recent(id), do: id |> CharacterLog.page() |> elem(0) |> Enum.reverse()
 
-  # The table holds every deed now, so a claim about fighting says so rather than counting whatever
-  # the run happened to do.
+  # The table holds every deed, so a claim about fighting says so.
   defp fights(session), do: Enum.filter(rows(session), &(&1.kind == "fight"))
 
   defp rows(session) do
@@ -98,9 +95,8 @@ defmodule MiniLineage.CharacterLogTest do
     end
   end
 
-  # `Server.init/1` rebuilds the battle screen from `last_for/1`. The table holds more than fights
-  # now, so without the kind in the query a player whose last deed was a purchase reconnects to a
-  # battle report with no lines and no numbers — which renders blank rather than failing.
+  # `Server.init/1` rebuilds the battle screen from `last_for/1`: without the kind in the query, a
+  # last deed that was a purchase reconnects to a battle report that renders blank.
   describe "the last fight" do
     test "is the last FIGHT, not the last thing that happened", %{session: session} do
       start_character(session)
@@ -118,9 +114,8 @@ defmodule MiniLineage.CharacterLogTest do
     end
   end
 
-  # A watcher appends its chronicle on the strength of this push. It used to be guessed at from the
-  # tallies instead, and a purchase moves neither the battle count nor the last fight, so every
-  # deed that was not a fight went unseen on a watched record until the reader refreshed.
+  # A watcher appends its chronicle on the strength of this push: a purchase moves neither the
+  # battle count nor the last fight, so the tallies cannot say a row was written.
   describe "a deed reaching a watcher" do
     test "says a row was written, for a purchase as much as a fight", %{session: session} do
       start_character(session)
@@ -139,8 +134,7 @@ defmodule MiniLineage.CharacterLogTest do
       assert_receive {:record_updated, _player, ^id, true}
     end
 
-    # Nobody DID anything when a buff lapses, so it used to be buffered like regen: the row waited
-    # for the next action or the silent backstop, and a watcher only saw it after reloading.
+    # Nobody acts when a buff lapses, but its row is for the log, so it is written, not buffered.
     test "says so when a buff lapses on its own, with nobody acting", %{session: session} do
       start_character(session)
       id = stored_id(session)
@@ -159,8 +153,7 @@ defmodule MiniLineage.CharacterLogTest do
     end
   end
 
-  # An effect leaves by its timer, by the run ending, or by a meal replacing a meal. Only the timer
-  # used to be told; the other two left effects that simply stopped existing.
+  # An effect leaves by its timer, by the run ending, or by a meal replacing a meal: each is told.
   describe "an effect that ends before its time" do
     test "fades with the run, in the order it arrived, just before the ending", %{
       session: session
@@ -277,8 +270,8 @@ defmodule MiniLineage.CharacterLogTest do
       assert fights(session) == []
     end
 
-    # The whole history of a long run went through the socket on every page load to fill a 260px
-    # box. The window is the newest end of it, because that is the end a reader is looking at.
+    # The newest end, because that is the end a reader is looking at; the whole history would
+    # otherwise go through the socket on every page load.
     test "is capped at the window, and it is the newest end", %{session: session} do
       start_character(session)
       for _ <- 1..5, do: fight(session)
@@ -302,7 +295,7 @@ defmodule MiniLineage.CharacterLogTest do
       fight(session)
       added = CharacterLog.since(id, cursor, newest.number)
 
-      # Counted by kind: the fight may cross a level, which the dice decide, and log a row of its own.
+      # Counted by kind: the fight may cross a level, which the dice decide, and log its own row.
       assert Enum.count(added, &(&1.kind == "fight")) == 1
       assert Enum.all?(added, &(&1.id > cursor))
       # Numbered on from the newest held, however many rows the dice made of it.
@@ -362,8 +355,7 @@ defmodule MiniLineage.CharacterLogTest do
 
   describe "the foreign key" do
     test "takes a character's fights with it when the character does go", %{session: session} do
-      # The only row still deleted is a visitor who never chose a race; this proves the cascade
-      # that carries their fights, without depending on the sweep to produce one.
+      # Nothing in the game deletes a row, so the cascade is proved by deleting one directly.
       start_character(session)
       fight(session)
       id = stored_id(session)

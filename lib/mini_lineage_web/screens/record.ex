@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.Screens.Record do
   @moduledoc """
   One run's whole story, at `/character/:id`. Public because it is on the board, so there is
-  nothing here to gate — yours is simply the one whose id matches your session's.
+  nothing here to gate.
   """
   use MiniLineageWeb, :html
 
@@ -23,20 +23,16 @@ defmodule MiniLineageWeb.Screens.Record do
     race = Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id))
     opponent = Enum.find(assigns.catalog.races, &(&1.id == race.enemy_race_id))
 
-    # Numbers named up here so each stat and its punctuation fit on one line below. The HEEx
-    # formatter breaks a long line at a tag boundary, and a newline there renders as a space —
-    # which is how "Physical Defense ." happens.
+    # Numbers named up here so each stat and its punctuation fit on one line: the formatter breaks
+    # a long line at a tag, and a newline there renders as a space before the full stop.
     assigns =
       assign(assigns,
         race: race,
         opponent: opponent,
         dead: assigns.view.dead,
-        # Your own page speaks to you; somebody else's speaks about them. The same set the
-        # narratives are filled from, so a sentence and the page around it cannot disagree.
+        # The set the narratives are filled from, so a sentence and the page cannot disagree.
         voice: Narratives.voice(assigns.mine),
-        # Nothing walks with a run that has been walked away from, the ghost least of all. Decided
-        # here because only the row knows: `active_effects/1` is handed a player, and a player does
-        # not know who is still holding it.
+        # Nothing walks with a run walked away from; decided here because only the row knows.
         effects: if(held?(assigns.entry), do: assigns.view.effects, else: []),
         # Only the tense moves between a run still going and one that is over.
         fought: if(assigns.view.dead, do: "fought", else: "have fought"),
@@ -52,12 +48,9 @@ defmodule MiniLineageWeb.Screens.Record do
         purse: Format.adena(assigns.view.adena)
       )
 
-    # The numbers are shared, so a living and a fallen character can never drift apart; only the
-    # tense moves. The closing paragraph forks outright — its sentences change shape, not just
-    # verbs, since there is no next level to reach and no journey ahead.
+    # The closing paragraph forks outright: its sentences change shape, not just their tense.
     ~H"""
-    <%!-- One hook over the whole record: it counts every [data-value] beneath it, forty at once
-          at 60fps. Only names and dates jump, having nothing to count through. --%>
+    <%!-- One hook counts every [data-value] beneath it; only names and dates jump. --%>
     <div id="record-figures" phx-hook="AnimatedValues">
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
       <%!-- What the lineage gave this run, told to its reader; the lore is the Chronicles of
@@ -149,14 +142,12 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :voice, :map, required: true
 
   @doc false
-  # What is riding on a run, spelled out: the header wears these as emoji alone, which a phone can
-  # neither hover nor read. Nothing is fetched for it, and it is drawn only where there is
-  # something to draw, so the heading goes with the list rather than standing over an empty one.
+  # What is riding on a run, spelled out: the header's emoji alone a phone can neither hover nor
+  # read. Drawn only when the list is not empty, since the heading belongs to the list.
   defp blessings(assigns) do
     ~H"""
     <h2>✨ Blessings &amp; Afflictions</h2>
-    <%!-- One hook over the whole list rather than one per line: it repaints every countdown
-            beneath it on the same second, and the server's own expiry timer takes the line away. --%>
+    <%!-- One hook repaints every countdown on the same second; the server's expiry removes a line. --%>
     <div id="record-effects" phx-hook="EffectTimers">
       <p
         :for={effect <- @effects}
@@ -165,8 +156,7 @@ defmodule MiniLineageWeb.Screens.Record do
       >
         <span class={effect.type}>{effect.emoji} {effect.label}</span>
         <span class="muted">&bull;</span> {raw(Narrative.build_effect(effect, @voice))}
-        <%!-- Only the figure is dimmed, the way a date is: the words around it are the sentence,
-                and a whole clause in grey reads as an aside rather than the end of one. --%>
+        <%!-- Only the figure is dimmed, like a date: a whole clause in grey reads as an aside. --%>
         <span :if={effect.remaining_ms}>{lapse(effect.type)}
         <span class="timer" data-timer="long">{Format.remaining(effect.remaining_ms)}</span>.</span>
       </p>
@@ -184,9 +174,8 @@ defmodule MiniLineageWeb.Screens.Record do
   # happened.
   defp voiced(line, mine?), do: Narrative.voiced(line, mine?)
 
-  # An ending wears the colour every ending wears, whether a blow or a blade of one's own ended it.
-  # A heresy is not an ending and is not red; it is the colour the Halls already mark a cheat in.
-  # Spread rather than `class={...}`, which would print an empty class on every other line.
+  # Every ending is red, a suicide's too; a heresy is not an ending, and wears the Halls' cheat
+  # colour. Spread rather than `class={...}`, which would print an empty class on every other line.
   defp deed_colour("ending"), do: [class: "deaths"]
   defp deed_colour("cheat"), do: [class: "heretics"]
   defp deed_colour(_deed), do: []
@@ -282,9 +271,8 @@ defmodule MiniLineageWeb.Screens.Record do
   attr :voice, :map, required: true
 
   @doc false
-  # Both ends of the road, in the order they happened, as a sentence of its own: hung off "defined
-  # by conflict and survival" the dates read as an afterthought and arrived out of order. A run
-  # with no row has no road, and says nothing rather than an empty clause.
+  # Both ends of the road, in order, as a sentence of its own. A run with no row says nothing
+  # rather than an empty clause.
   defp road(%{entry: nil} = assigns), do: ~H""
 
   defp road(assigns) do
@@ -297,10 +285,8 @@ defmodule MiniLineageWeb.Screens.Record do
     """
   end
 
-  # Three ways a road ends: closed over them, still open, or lost with them still on it. `active` is
-  # "has a session", so a run walked away from past the retirement window is neither dead nor going.
-  # Each stamp carries its own "on", so every road reads whether its ends are ages or dates.
-  # Dead from the view, which every push brings; the entry is read once, and only says who holds it.
+  # `active` is "has a session", so a retired run is neither dead nor going: lost. Dead comes from
+  # the view, which every push brings; the entry is read once, and only says who holds it.
   defp road_of(true, _entry), do: :closed
   defp road_of(false, %{active: true}), do: :open
   defp road_of(false, _missing), do: :lost

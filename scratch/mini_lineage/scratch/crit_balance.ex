@@ -1,6 +1,6 @@
 defmodule MiniLineage.Scratch.CritBalance do
   @moduledoc """
-  Port of scratch/check_crit_balance.ts — the study that chose the 1.9x crit multiplier.
+  The study that chose the 1.9x crit multiplier.
 
   It rolls its own combat rather than calling `Battle.simulate/1`, because it needs to force the
   crit branch and vary the multiplier. The draw order is Battle's, since that order is pinned by
@@ -104,8 +104,8 @@ defmodule MiniLineage.Scratch.CritBalance do
     }
   end
 
-  # Enemy counts are compared to one decimal, rewards as whole numbers — as the reference printed
-  # them, so the percentages below are computed from the rounded figures it showed.
+  # Enemy counts to one decimal, rewards as whole numbers, and the percentages below computed from
+  # those rounded figures: the report reproduces the original study's.
   defp report("Enemies Defeated" = heading, unit, normal, c15, c19, key) do
     n = fixed(normal[key], 1)
     a = fixed(c15[key], 1)

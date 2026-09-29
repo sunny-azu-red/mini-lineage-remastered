@@ -1,11 +1,9 @@
 defmodule MiniLineage.BoardTest do
   @moduledoc """
-  The Halls of Champions, which are now a view of the characters rather than a table of their own.
+  The Halls of Champions, a view of the characters rather than a table of their own.
 
-  Two things matter most here and neither is the ordering. A run must appear the moment it starts
-  and keep its place when it ends, because that is the whole point of the redesign. And the board
-  must never render a session id — it is the secret that lets a browser play a character, and the
-  board is the one place every character is listed by name.
+  What matters most is not the ordering: a run appears the moment it starts and keeps its place
+  when it ends, and the board never renders a session id, the secret that plays a character.
   """
   use MiniLineage.DataCase, async: false
 
@@ -401,8 +399,7 @@ defmodule MiniLineage.BoardTest do
       %{session: session} = run("Named", xp: 10)
       [entry] = Map.get(Board.current(), nil)
 
-      # The strongest form of this: the secret does not appear ANYWHERE in the entry, under any
-      # key. A board link must never be usable as a cookie.
+      # Under any key at all: a board link must never be usable as a cookie.
       refute session in Map.values(entry)
       refute Map.has_key?(entry, :session_id)
       assert entry.id != session

@@ -1,17 +1,15 @@
 import Config
 
-# runtime.exs is the ONLY configuration a release evaluates — config.exs and friends are baked in
-# at build time — so everything that reads the environment belongs here, and `mix phx.server` and
-# `bin/mini_lineage start` behave the same way.
+# The only configuration a release evaluates at boot, so everything read from the environment
+# belongs here.
 
 # Credentials live in .env, the throwaway database's in .env.test — chosen here so every entry
 # point agrees. ENV_FILE names the file elsewhere; a real environment variable beats it.
 default_env_file = if config_env() in [:test, :e2e], do: ".env.test", else: ".env"
 env_file = System.get_env("ENV_FILE") || Path.expand(default_env_file, File.cwd!())
 
-# A quoted value is taken verbatim, so it may contain anything. An unquoted one ends at the first
-# " #", which is how a trailing comment is written — a bare # with no space before it is part of
-# the value, so a password containing one survives.
+# A quoted value is verbatim. An unquoted one ends at the first " #", so a bare # inside a password
+# survives.
 read_value = fn
   "\"" <> rest -> rest |> String.split("\"") |> hd()
   "'" <> rest -> rest |> String.split("'") |> hd()
@@ -60,17 +58,14 @@ if config_env() in [:dev, :e2e] do
            ]
 end
 
-# dev and prod read the same .env and so play the same characters, but a cookie is only readable
-# by the secret that signed it — so without this, switching between `mix dev` and `mix prod` looks
-# to the browser like a brand-new visitor while its character sits in the database untouched.
+# dev and prod read one .env, so they must sign cookies alike or switching loses the character.
 if config_env() in [:dev, :e2e] do
   if secret = System.get_env("SECRET_KEY_BASE") do
     config :mini_lineage, MiniLineageWeb.Endpoint, secret_key_base: secret
   end
 end
 
-# Both are read at runtime by the code that uses them, so they are settable per deployment without
-# a rebuild. Neither may be a compile_env, and neither has a compile-time default to disagree with.
+# Read at runtime, so settable per deployment without a rebuild; neither may become a compile_env.
 if level = System.get_env("LOG_LEVEL") do
   levels = ~w(emergency alert critical error warning notice info debug)
 
@@ -115,8 +110,7 @@ if config_env() == :prod do
   # Compose forwards a key it was never given as an empty string, which `||` would take as set.
   env = fn name -> if (value = System.get_env(name)) not in [nil, ""], do: value end
 
-  # DATABASE_URL still works for a host that offers only one, but it cannot carry a password with
-  # URL-unsafe characters unless they are percent-encoded, so the discrete keys win when both are set.
+  # The discrete keys win over DATABASE_URL: a URL cannot carry an unencoded unsafe password.
   database_config =
     cond do
       database = env.("DB_DATABASE") ->
@@ -151,9 +145,8 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  # Not defaulted. `check_origin` is unset, so Phoenix compares every websocket's Origin against
-  # this host: wrong, and the page renders once and never connects, with nothing in the log to say
-  # why. A deployment that cannot name its own host is not one that should boot.
+  # Not defaulted: check_origin compares every websocket against it, and a wrong host renders a
+  # page that never connects, silently.
   host =
     env.("PHX_HOST") ||
       raise """

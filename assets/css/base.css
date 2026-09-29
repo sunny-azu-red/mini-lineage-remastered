@@ -1,13 +1,6 @@
-/*
- * ========================================================================
- * Mini-Lineage — Base
- * Reset, body background, global typography, links.
- * ========================================================================
- */
+/* Mini-Lineage — Base: reset, typography, links, and the game's value vocabulary. */
 
-/* A property is declared where the element would not otherwise have it: because it does not inherit
- * (form controls and buttons inherit no font or colour), or because it differs from what it does.
- * Restating the inherited value gives `body` a second place to be changed and no second effect. */
+/* Declare a property only where it is not inherited (controls take no font or colour) or differs. */
 
 /* ===== Reset ===== */
 *,
@@ -32,8 +25,7 @@ body {
     background-repeat: no-repeat;
     color: var(--text-primary);
     font-family: var(--font-body);
-    /* The game is arithmetic: a level, a purse, a countdown, an HP bar mid-animation. Figures line
-     * up everywhere rather than in a list of places somebody has to remember to extend. */
+    /* Everywhere, not per class: columns line up and an animating figure does not reflow its line. */
     font-variant-numeric: tabular-nums;
     font-size: 13px;
     line-height: 1.75;
@@ -41,8 +33,7 @@ body {
 }
 
 /* ===== Links =====
- * Not a .btn: `a:link` outranks one class, so a link drawn as a button took this colour over its
- * variant's and this transition over its own. */
+ * Not a .btn: `a:link` outranks one class, and would paint a button-link over its variant. */
 a:not(.btn):link,
 a:not(.btn):visited {
     color: var(--gold);
@@ -64,14 +55,12 @@ a:not(.btn):hover {
 }
 
 /* ===== Typography ===== */
-/* A name, not a value: the weight marks it out, the colour stays the body's. Was --text-secondary,
- * which made the emphasised text dimmer than the text around it. */
+/* A name, not a value: the weight marks it out, the colour stays the body's. */
 strong {
     font-weight: var(--weight-value);
 }
 
-/* A label is one kind of thing wherever it stands — a column's, a field's, a chronicle entry's — and
-   is set one way. Each keeps its own colour and its own place. */
+/* Every label is set one way, wherever it stands; each keeps its own colour and place. */
 .data-table th,
 .stat-label,
 ol.chronicle .entry-head,
@@ -82,8 +71,7 @@ ol.chronicle .entry-head,
     text-transform: uppercase;
 }
 
-/* A heading is not prose: 1.6 rather than the body's 1.75, and the same as `.panel-header`, so the
- * two kinds of heading on a screen sit alike. */
+/* 1.6, as `.panel-header`, so the two kinds of heading on a screen sit alike. */
 h2 {
     font-family: var(--font-heading);
     line-height: 1.6;
@@ -92,7 +80,7 @@ h2 {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    /* Dashed, as every divider inside a panel is: the sidebar's rows, the Chronicle's, the back link's. */
+    /* Dashed, as every divider inside a panel is. */
     border-bottom: 1px dashed var(--border-soft);
     padding-bottom: 6px;
     margin-top: 24px;
@@ -103,9 +91,7 @@ h2:first-child {
     margin-top: 0;
 }
 
-/* The third level, kept defined though nothing wears it today: a step below h2 and clearly one —
- * same family, same case, same colour, with the size and the missing band carrying the difference.
- * Without it an h3 renders at the browser's own 1.17em, which lands near h2 and reads as a peer. */
+/* Unused today but kept: the browser's own h3 lands near h2 and reads as a peer. */
 h3 {
     font-family: var(--font-heading);
     font-size: 15px;
@@ -132,18 +118,13 @@ p.last {
 }
 
 /* ===== Utilities =====
- * Not the game's vocabulary and not filed with it. What follows names things a PLAYER reads — a
- * purse, an ambush, a blade. These name things the PAGE knows, and are not meant to be read at
- * all: `.muted` is what is not a value standing where one would be (the "-" in a shop column, the
- * bullet between an effect's name and what it does), and the build classes say which server is
- * answering. None of them takes weight, which is for a figure competing inside a sentence. */
+ * What the PAGE knows, not what a player reads, so not the vocabulary below and never weighted.
+ * `.muted` is a non-value standing where a value would be. */
 .muted {
     color: var(--text-muted);
 }
 
-/* Which build is serving the page, in the footer beside the copyright. Not a value either: the
-   player is not meant to act on it, it is there so an unreachable backend still says what is
-   loaded. A release names its commit instead and takes neither. */
+/* Which build serves the page, in the footer; a release names its commit and takes neither. */
 .build-development {
     color: var(--text-critical);
 }
@@ -153,9 +134,8 @@ p.last {
 }
 
 /* ===== Values =====
- * A class per thing the game names, not per colour it happens to be drawn in. Several share a hue
- * today and are grouped for it; they are written apart so that one of them can be moved without
- * dragging the others with it, which is the whole reason they are not called after their colour. */
+ * A class per thing the game names, never per colour: grouped by today's hue, written apart so one
+ * can move without the others. */
 
 /* What a run has lost, and what is taking it from them. */
 .hp,
@@ -211,15 +191,12 @@ p.last {
     color: var(--text-xp);
 }
 
-/* An item, worn or eaten. Quieter than the sentence around it: a blade's NAME is not the news, the
-   number beside it is. */
+/* Quieter than the sentence around it: a blade's NAME is not the news, the number beside it is. */
 .item {
     color: var(--text-secondary);
 }
 
-/* The weight answers "which of these matters?", so it belongs where something is competing — a
- * number inside a sentence, with nothing but hue to set it apart. A column answers that question
- * already, and weighting every cell in one only makes the table heavier. */
+/* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. */
 :is(p, li) :is(.hp, .attack, .deaths, .debuff,
     .heal, .regen, .buff,
     .adena, .level, .aura,

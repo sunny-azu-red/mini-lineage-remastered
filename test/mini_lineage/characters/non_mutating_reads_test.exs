@@ -2,10 +2,9 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
   @moduledoc """
   Reading a character never plays it.
 
-  Connecting, reconnecting and refreshing all go through the same `run/3` as an action, so nothing
-  structural stops a read from fighting — only the fact that no read asks it to. That is what makes
-  navigating away mid-ambush pointless rather than merely punished: the ambush is still there when
-  you come back, and coming back did not resolve it.
+  Connecting, reconnecting and refreshing go through the same `run/3` as an action, so only the
+  fact that no read asks it to stops a read from fighting. An ambush is still there when you come
+  back, and coming back did not resolve it.
   """
   use MiniLineage.DataCase, async: false
 

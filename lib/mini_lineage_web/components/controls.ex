@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
-  What every screen reaches for and no screen owns: the panel card itself, the alerts, the one
-  action form behind Town and the shops, the way back, and a stamp that ages on the reader's own clock.
-
-  `raw/1` appears wherever a narrative or flash is rendered. Those strings are always composed by
-  the server from the template tables — never from anything a player typed.
+  What every screen reaches for and no screen owns: the panel, the button, the table, the alerts,
+  the action form, the way back, and the stamp. `raw/1` renders narratives and flashes, which the
+  server composes from the template tables — never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
@@ -16,14 +14,11 @@ defmodule MiniLineageWeb.Controls do
   @doc """
   The card every part of the game is drawn on: a header band and a body under it.
 
-  `id` names the PANEL and is what its hook needs; `body_id` and every other attribute given here —
-  the body's own hook, its data attributes — land on the BODY, which is what a screen is addressed
-  by. A panel carries a hook only when something about it moves, so the error page, which has no
-  LiveView behind it, renders one that cannot ask for JavaScript.
+  `id` names the PANEL, for its hook; `body_id` and every other attribute land on the BODY, which
+  is what a screen is addressed by. A panel carries a hook only when something about it moves, so
+  the error page, with no LiveView, renders one that asks for no JavaScript.
   """
   attr :id, :string, default: nil
-  # The BODY's own id, kept apart from the panel's: the panel's is what the hook needs, and the
-  # body's is what the screen is addressed by.
   attr :body_id, :string, default: nil
   attr :title, :string, required: true
 
@@ -32,31 +27,29 @@ defmodule MiniLineageWeb.Controls do
   attr :class, :any, default: nil
   attr :body_class, :any, default: nil
 
-  # Folds on a click of its header, wherever the stylesheet's `--folds` is not 0: a layout may keep
-  # a panel open where there is room for it, and the hook reads the answer rather than a breakpoint.
+  # Folds wherever the stylesheet's `--folds` is not 0: a layout may keep a panel open where there
+  # is room, and the hook reads the answer rather than a breakpoint.
   attr :collapsible, :boolean, default: false
-  # Where a collapsible panel starts. The reader's own toggling outlives a patch but not a mount.
+  # Where a collapsible panel starts, until the reader's kept fold says otherwise.
   attr :collapsed, :boolean, default: false
   # Whether the reader's last fold is kept for the next mount. False starts every visit afresh.
   attr :remember, :boolean, default: true
-  # Whose content the panel holds. When it changes the hook starts over, as a fresh mount would,
-  # since patching from one record to the next keeps the same element.
+  # Whose content the panel holds; when it changes the hook starts over, since patching from one
+  # record to the next keeps the same element.
   attr :subject, :string, default: nil
-  # Pixels. Given one, the BODY scrolls — so the bar sits against the panel's edge rather than
-  # inside the body's padding, and the page is the same height however much is in it.
+  # Pixels. The BODY scrolls, so the bar sits against the panel's edge, not inside its padding.
   attr :max_height, :integer, default: nil
 
   # A body that scrolls in whatever height the stylesheet gives it, where a layout decides the cap.
   attr :scrolls, :boolean, default: false
 
   # A log rather than a document, in the order it reads: a chronicle newest first, a chat oldest
-  # first. Its present edge is the newest line's; a reader away from it keeps their place when an
-  # entry arrives, and is shown what arrived while they were away.
+  # first. The `Log` hook keeps a reader's place away from the present and counts what they missed.
   attr :log, :atom, values: [nil, :newest_first, :oldest_first], default: nil
   # The event a log asks for its previous page with, when its list carries `data-older-than`.
   attr :load_older, :string, default: nil
-  # The event the reader says with whether they are at the present, sent only as that changes, so
-  # the server can let the oldest go as the newest lands.
+
+  # Sent only as whether the reader is at the present changes, so the server can let the oldest go.
   attr :at_present, :string, default: nil
 
   # What the pill over the present edge counts, singular and plural: `{"new entry", "new entries"}`.
@@ -114,17 +107,15 @@ defmodule MiniLineageWeb.Controls do
     """
   end
 
-  # `class` and `style` are the two attributes HEEx renders whatever their value, so a nil in either
-  # leaves a stray `class="panel "` or `style=""` on every panel in the game. Both are built first,
-  # and an absent cap contributes no attribute rather than an empty one.
+  # HEEx renders `class` and `style` whatever their value, so both are built first and an absent
+  # cap contributes no attribute at all.
   defp classes(parts), do: parts |> Enum.reject(&(&1 in [nil, false, ""])) |> Enum.join(" ")
 
   defp cap(nil), do: []
   defp cap(pixels), do: [style: "max-height: #{pixels}px"]
 
-  # A BUTTON rather than a link: this goes nowhere, and Space activates a button where it scrolls a
-  # link. `aria-expanded` IS the state the arrow turns off, so the mark and the screen reader
-  # cannot come apart.
+  # A BUTTON rather than a link: this goes nowhere, and Space activates a button but scrolls a link.
+  # `aria-expanded` IS the state the arrow turns off, so the mark and the screen reader agree.
   defp folds(false, _collapsed), do: []
   defp folds(true, collapsed), do: [type: "button", "aria-expanded": to_string(!collapsed)]
 
@@ -177,10 +168,9 @@ defmodule MiniLineageWeb.Controls do
   Every table in the game: the container, the header row, and a sort wherever a column names one.
   The rows are the caller's, as a `<tbody>` in the inner block, already in `sort`'s order.
 
-  A `:col` with `sort` is a button that sends `sort` with this table's id and that key; the
-  LiveView cycles it through `next_sort/3` and the screen orders its rows with `sort_rows/3`, so a
-  live patch never fights the order. `remember` keeps the reader's sort under `table:<id>`, which
-  `app.js` hands back as the socket connects.
+  A `:col` with `sort` is a button sending `sort`; the LiveView cycles it with `next_sort/3` and
+  the screen orders its rows with `sort_rows/3`, so a patch never fights the order. `remember`
+  keeps it under `table:<id>`.
   """
   attr :id, :string, required: true
   # `{key, :asc | :desc}`, or nil for the order the rows arrived in.
@@ -245,8 +235,8 @@ defmodule MiniLineageWeb.Controls do
   defp aria_sort(_sort, _key), do: nil
 
   @doc """
-  Offers to reset a table's sort, and only while it has one. The screen places it, since where
-  it belongs is beside that screen's own controls rather than over the table.
+  Offers to reset a table's sort, only while it has one. The screen places it beside its own
+  controls.
   """
   attr :table, :string, required: true
   attr :sort, :any, default: nil
@@ -276,8 +266,8 @@ defmodule MiniLineageWeb.Controls do
   defp flip(:desc), do: :asc
 
   @doc """
-  Rows in `sort`'s order by `key_of.(row, key)`. Stable, so rows equal on the column keep the order
-  they came in, which is what stops equal rows trading places on every live patch.
+  Rows in `sort`'s order by `key_of.(row, key)`. Stable, so rows equal on the column do not trade
+  places on every live patch.
   """
   def sort_rows(rows, nil, _key_of), do: rows
   def sort_rows(rows, {key, dir}, key_of), do: Enum.sort_by(rows, &key_of.(&1, key), dir)
@@ -304,9 +294,8 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------ alerts
 
   @doc """
-  A rejected action, surfaced inline on the current screen rather than as a full-screen error.
-  Dismissed by its own corner glyph — never by clicking the banner, which would make it far too
-  easy to lose the message by accident.
+  A rejected action, inline on the current screen. Dismissed by its corner glyph, never by a
+  click on the banner, which would lose the message too easily.
   """
   attr :message, :string, required: true
 
@@ -322,8 +311,7 @@ defmodule MiniLineageWeb.Controls do
   end
 
   @doc """
-  The result of an action. One-shot and NOT dismissible: it belongs to the action that produced it
-  and disappears the moment you leave the screen, so there is nothing to dismiss.
+  The result of an action. Not dismissible: it disappears the moment you leave the screen.
   """
   attr :flash, :map, required: true
 
@@ -369,9 +357,8 @@ defmodule MiniLineageWeb.Controls do
   attr :text, :string, required: true
   attr :class, :string, default: "last back"
 
-  # The anchor sits flush against its text: a newline inside a link renders as a space the underline
-  # then covers. The mark sits OUTSIDE it, so a click lands on the words, and is muted because it
-  # says which way this goes and nothing else.
+  # The anchor sits flush against its text. The mark sits OUTSIDE it, so a click lands on the
+  # words, and is muted because it says which way this goes and nothing else.
   defp back(assigns) do
     ~H"""
     <p class={@class}>
@@ -380,8 +367,7 @@ defmodule MiniLineageWeb.Controls do
     """
   end
 
-  # The dead go back to their own ending. Patching to Town would be bounced there anyway, so this
-  # is about the promise the link makes, not where it lands.
+  # The dead go back to their ending: Town would bounce them there anyway, but the link says so.
   defp whence(_started, true), do: "death"
   defp whence(true, _dead), do: "home"
   defp whence(false, _dead), do: "start"
@@ -467,9 +453,8 @@ defmodule MiniLineageWeb.Controls do
   attr :class, :string, required: true
 
   @doc false
-  # A figure and the noun it counts. Only the figure counts — a tally of the slain climbs by a
-  # group at a time, so it has distance to cover, while the noun beside it does not. At one there
-  # is no figure to tween at all: "a cunning ambush" is a word.
+  # A figure and the noun it counts, apart, so only the figure tweens. At one there is no figure
+  # at all: "a cunning ambush" is a word.
   def counted(%{count: 1} = assigns) do
     ~H|<span class={@class}>{Format.pluralize(@singular, @plural, 1, @emoji)}</span>|
   end

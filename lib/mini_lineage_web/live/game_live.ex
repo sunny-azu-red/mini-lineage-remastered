@@ -36,7 +36,7 @@ defmodule MiniLineageWeb.GameLive do
      socket
      |> assign(
        session_id: id,
-       # Public, fixed for the life of this session, and the only id that may be rendered.
+       # Public, and the only id that may be rendered.
        character_id: Characters.character_id(id),
        player: player,
        view: Snapshot.build(player),
@@ -65,8 +65,8 @@ defmodule MiniLineageWeb.GameLive do
      )}
   end
 
-  # The reader's sorts arrive with the socket, so a remembered one is already on the first connected
-  # render. Read against what each table offers today, since storage is the reader's to edit.
+  # Kept sorts arrive with the socket, so the first connected render has them. Checked against each
+  # table, since storage is the reader's to edit.
   defp kept_sorts(%{"tables" => kept}) when is_map(kept) do
     Enum.reduce(kept, %{}, fn {table, value}, sorts ->
       case Controls.decode_sort(value, Screens.sorts(table)) do
@@ -98,7 +98,7 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   # '/' is wherever the player's own state puts them. Death is a state, not a place, so it has no
-  # URL of its own — an ambush is different, being somewhere you can stand, and keeps one.
+  # URL of its own.
   defp requested_screen(:root, player) do
     cond do
       player.dead -> "death"
@@ -119,14 +119,13 @@ defmodule MiniLineageWeb.GameLive do
   # survives the trip means the button appears to do nothing.
   defp assign_race_filter(socket, _params), do: assign(socket, race_filter: nil)
 
-  # Which hall is being read, so every place that names one says the same thing.
   defp filter_race(%{assigns: assigns}), do: filter_race(assigns)
 
   defp filter_race(%{race_filter: id, catalog: catalog}),
     do: Enum.find(catalog.races, &(&1.id == id))
 
-  # Read from the run's process while one is up rather than the document, because where it stands,
-  # its auras and its health are buffered and the row can be a minute behind.
+  # Read from the run's process while one is up: where it stands, its auras and its health are
+  # buffered, so the row can be behind.
   defp assign_record(socket, %{"id" => id}) do
     # A record nobody can find is a 404, the same as a road the game never had.
     {player, entry} =
@@ -187,15 +186,13 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  # Where the reader came from, so the record can send them back there.
   defp assign_from(socket, %{"from" => from}), do: assign(socket, from: from)
   defp assign_from(socket, _params), do: assign(socket, from: nil)
 
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
-    # A flash belongs to the action that produced it and survives exactly one arrival, so an action
-    # that both flashes and moves you — creating a character, dying — does not clear its own
-    # message on the way. A notice is different: it reports a refusal and waits to be dismissed.
+    # A flash survives exactly one arrival, so an action that flashes and moves you does not clear
+    # its own message. A notice reports a refusal and waits to be dismissed.
     socket =
       if socket.assigns[:flash_fresh],
         do: assign(socket, flash_fresh: false),
@@ -224,9 +221,8 @@ defmodule MiniLineageWeb.GameLive do
     |> load_screen_data(screen)
   end
 
-  # Each is followed only while it is the screen, and subscribed BEFORE it is read, so a refresh
-  # landing in between arrives as a push rather than being lost. Left behind, both are dropped.
-  # Already followed, so the pushes have kept every filter current: a filter click reads nothing.
+  # Followed only while it is the screen, and subscribed BEFORE it is read, so a refresh between
+  # arrives as a push. Already followed, the pushes have kept every filter current.
   defp load_screen_data(%{assigns: %{following: :board}} = socket, "highscores"), do: socket
 
   defp load_screen_data(socket, "highscores") do
@@ -280,9 +276,8 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
     case throttle(socket, :shop) do
       {:ok, socket} ->
-        # `picked: nil` puts the select back on "🚪 Home Town" once the shop has answered —
-        # after a refusal too, matching the reference, which remounts the form on any completed
-        # attempt rather than only a successful one.
+        # `picked: nil` puts the select back on "🚪 Home Town" once the shop has answered, a
+        # refusal included.
         socket = apply_action(socket, &Actions.purchase(&1, type, item_id))
 
         {:noreply, assign(socket, picked: nil)}
@@ -302,9 +297,8 @@ defmodule MiniLineageWeb.GameLive do
 
     if Actions.may_restart?(socket.assigns.player) do
       player = Characters.archive(session)
-      # Archiving stops the process this tab attached to, so the run it starts has no viewers and
-      # reports itself unwatched. This tab attaches to the new one here rather than off its own
-      # broadcast, which it will not have handled before the assign below moves the id past it.
+      # Archiving stops the process this tab attached to. Attach to the new one here, not off the
+      # broadcast, which the assign below would move the id past before it is handled.
       Characters.attach(session)
 
       {:noreply,
@@ -383,14 +377,11 @@ defmodule MiniLineageWeb.GameLive do
       do: {:noreply, socket}
 
   def handle_info({:character_updated, player, character_id}, socket) do
-    # A push can invalidate where this tab is standing: another tab restarts the character, or the
-    # server kills it. Re-pin against the new player, and treat a reset as a trip back to Game
-    # Start rather than leaving this tab on a screen its character no longer qualifies for.
+    # Another tab restarting the character, or the server killing it, can invalidate where this
+    # tab stands: re-pin, and treat a reset as a trip back to Game Start.
     reset? = Player.started?(socket.assigns.player) and not Player.started?(player)
 
-    # Archiving stops the process this tab attached to, and the run it starts has no viewers, so it
-    # reports itself unwatched until every tab attaches again. The id moves only here, so an
-    # ordinary tick pays nothing for the check.
+    # A new run has no viewers until every tab attaches to it again.
     if character_id != socket.assigns.character_id,
       do: Characters.attach(socket.assigns.session_id)
 
@@ -430,18 +421,16 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:record_updated, _player, _id, _wrote?}, socket), do: {:noreply, socket}
 
-  # A run that has been restarted away from. Its row is what changed rather than its state — the
-  # session it was held by is gone — so the ENTRY is read again, which is the one thing a push
-  # never carries. Only on a retirement, which happens once in a run's life.
+  # Its row changed, not its state, so the ENTRY is read again, which no push carries. Once in a
+  # run's life.
   def handle_info({:record_retired, id}, %{assigns: %{watching: id}} = socket),
     do: {:noreply, assign(socket, record: Board.entry(id))}
 
   def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
 
-  # Added, never re-read: a run's chronicle only ever grows, so asking for the whole of it on
-  # every blow re-reads the entire history of a long run to add one line to it. At the present the
-  # oldest goes as the newest lands, so the list holds one height, never under a page nor over what
-  # the reader had; anywhere else it grows, since they may be reading what would go.
+  # A chronicle only grows, so only what is new is read. At the present the oldest goes as the
+  # newest lands, never under a page nor over what the reader had; elsewhere it grows, since they
+  # may be reading what would go.
   defp append_chronicle(socket, id) do
     %{record_log: held, record_log_cursor: cursor} = socket.assigns
     added = CharacterLog.since(id, cursor, top_number(held))
@@ -487,10 +476,9 @@ defmodule MiniLineageWeb.GameLive do
   defp put_sort(socket, table, sort),
     do: assign(socket, sorts: Map.put(socket.assigns.sorts, table, sort))
 
-  # Runs an action in the character's process and folds the result into the view. A socket holds one
-  # patch, so where the action leaves them is decided here, once: the error screen if it failed, the
-  # death screen if it killed them, else `to`. `catch` is for the process exiting, not a raise.
-  # `quiet` is for what the player did not do, arriving somewhere, which leaves their notice alone.
+  # A socket holds one patch, so where an action leaves them is decided here, once: error, death,
+  # else `to`. `catch` is for the process exiting. `quiet` is for what the player did not do,
+  # arriving somewhere, which leaves their notice alone.
   defp apply_action(socket, fun, to \\ nil, opts \\ []) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
     to = if player.dead and not socket.assigns.player.dead, do: "death", else: to
@@ -509,7 +497,7 @@ defmodule MiniLineageWeb.GameLive do
       fail(socket, "the character process exited: #{inspect(reason)}")
   end
 
-  # The detail is withheld from a release build: a deployed game must never hand a player a stack.
+  # Withheld outside a debug build: a player is never handed a stack.
   defp fail(socket, detail) do
     detail = if Version.debug_build?(), do: detail
 
@@ -549,9 +537,8 @@ defmodule MiniLineageWeb.GameLive do
     |> push_patch(to: Paths.for_screen(screen))
   end
 
-  # The PLAYER moved themselves, so nothing comes along. A link or the banner reaches
-  # handle_params with no flag at all and is dropped there; these events need saying so, because
-  # a flash from an earlier action is still sitting in the assigns.
+  # The PLAYER moved themselves, so nothing comes along. A link is dropped in handle_params with no
+  # flag; these events must say so, since an earlier flash is still in the assigns.
   defp leave(socket, screen), do: socket |> assign(game_flash: nil) |> go(screen)
 
   # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries

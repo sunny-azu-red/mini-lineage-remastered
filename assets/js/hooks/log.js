@@ -2,16 +2,9 @@
 const LINE_MARGIN = 24;
 
 /**
- * What a panel does when it is a log, in either order it can read. Its present edge holds the
- * newest line — the top of a chronicle, the bottom of a chat — and the past edge is where the next
- * page is asked for. A reader at the present edge sees each arrival, and is followed down to it in a
- * chat. One away from it keeps the line they were on, and what lands meanwhile is theirs to catch
- * up on: a line on its past side counting the batch, and a pill counting what they have not had in
- * view yet, which jumps first to the line and then to the present.
- *
- * All of it is the reader's and none of it the page's: nothing is sent, and a new mount or subject
- * starts clean. The line and the pill are re-applied after every patch, which rewrites both. The one
- * thing the server is told is whether the reader is at the present, where it lets the oldest go.
+ * A panel that is a log, newest first or oldest first; the rules are AGENTS.md's. The line and the
+ * pill are re-applied after every patch, which rewrites both, and the server is told only whether
+ * the reader is at the present.
  */
 export class Log {
     constructor(panel) {

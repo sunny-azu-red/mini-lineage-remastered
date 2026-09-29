@@ -11,17 +11,15 @@ defmodule MiniLineage.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      # Reports rather than gates. The browser walkthrough is where the web layer is exercised and
-      # it is not instrumented, so this number understates what is actually covered — a threshold
-      # here would fail honestly-tested code and teach everyone to ignore it.
+      # Reports, never gates: the browser suites are not instrumented, so the figure understates.
       test_coverage: [summary: [threshold: 0]],
       listeners: [Phoenix.CodeReloader],
       releases: [mini_lineage: [steps: [&require_stamp!/1, :assemble]]]
     ]
   end
 
-  # A release always names its commit. Checked at assembly, not compile time: the sha moves with
-  # every commit, and a compile-time check makes `mix prod` fail after each one.
+  # A release always names its commit. Checked at assembly: a compile-time check fails every task
+  # after the next commit.
   defp require_stamp!(release) do
     if Application.get_env(:mini_lineage, :app_version) in [nil, ""] do
       Mix.raise("""
@@ -45,9 +43,7 @@ defmodule MiniLineage.MixProject do
 
   def cli do
     [
-      # Bare `mix` otherwise runs Mix's own default, `run`, which boots the app, finds the endpoint
-      # configured not to serve, and exits having printed nothing. It belongs here rather than in
-      # `project/0`: once cli/0 exists, Mix reads the setting from it alone.
+      # Bare `mix` would otherwise `run`, boot an endpoint that does not serve, and exit silently.
       default_task: "dev",
       preferred_envs: [precommit: :test]
     ]
@@ -55,7 +51,7 @@ defmodule MiniLineage.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
 
-  # The balance simulations and their `mix balance` task are a dev tool; a release must not carry them.
+  # The balance simulations and dev Mix tasks; a release must not carry them.
   defp elixirc_paths(:dev), do: ["lib", "scratch"]
   defp elixirc_paths(_), do: ["lib"]
 
@@ -82,7 +78,6 @@ defmodule MiniLineage.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      # `npm run test:coverage` had no counterpart; --cover is built in, this just names it.
       "test.coverage": ["test --cover"],
       "assets.setup": ["esbuild.install --if-missing"],
       "assets.build": ["esbuild mini_lineage"],

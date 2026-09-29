@@ -1,10 +1,8 @@
 defmodule MiniLineage.Game.Actions do
   @moduledoc """
   Every state-changing action, as a function from a player to `{player, result}` — the shape
-  `Characters.mutate/2` runs inside the character's process.
-
-  Each declares its own preconditions. Client-side routing is convenience; these guards are the
-  boundary. Notably `restart/1` requires a dead character, so a living one can never be wiped.
+  `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
+  client-side routing is convenience, these guards are the boundary.
   """
   alias MiniLineage.Game.{Battle, Clock, Constants, Math, Narrative, Player, Statistics}
 
@@ -97,9 +95,8 @@ defmodule MiniLineage.Game.Actions do
 
     narrative = Narrative.build_battle(player, outcome, ambushed)
 
-    # Persisted so a reconnect replays this exact narrative, same as the death reason. Stamped here
-    # and not at the insert: a row can sit in the process buffer, and the Chronicle should say when
-    # the fight happened rather than when it was written.
+    # Stamped here, not at the insert: a row can sit in the process buffer, and the Chronicle says
+    # when the fight happened rather than when it was written.
     last = %{narrative: narrative, at: Clock.now()}
 
     # A fatal fight paid nothing, so its lines, drawn to keep the dice in step, claim what never
@@ -124,7 +121,6 @@ defmodule MiniLineage.Game.Actions do
         player
       end
 
-    # A fatal fight never levels, so a level-up flash is never a dead one.
     flash =
       if level_up? do
         %{
@@ -168,9 +164,8 @@ defmodule MiniLineage.Game.Actions do
     end)
   end
 
-  # The boundary, not a convenience: it rejects anything that is not a number, and the starting
-  # weapon and armor, which cost nothing and are never for sale — buying one would be a free
-  # downgrade.
+  # The boundary: rejects anything not a number, and the starting weapon and armor, which are
+  # never for sale — buying one would be a free downgrade.
   defp validate_item(type, item_id) do
     with {id, ""} <- Integer.parse(to_string(item_id)),
          true <- id in purchasable_ids(type) do
@@ -188,8 +183,7 @@ defmodule MiniLineage.Game.Actions do
   defp do_purchase(player, type, item_id) do
     {player, result} = Player.purchase(player, type, item_id)
 
-    # "Not enough 🪙 Adena" and "already own this" are successful actions with a danger flash, not
-    # errors.
+    # "Not enough 🪙 Adena" and "already own this" are successful actions with a danger flash.
     sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
     type_atom = if result.success, do: :success, else: :danger
 

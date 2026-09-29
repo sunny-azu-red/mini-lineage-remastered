@@ -23,9 +23,8 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     )
   end
 
-  # What a reader sees, with the markup taken out. A figure and the noun it counts are separate
-  # elements now, because only the figure animates — so "12 battles" is prose, not markup, and
-  # asserting on it against raw HTML would only be asserting on where the spans happen to fall.
+  # What a reader sees, with the markup taken out: a figure and the noun it counts are separate
+  # elements, so "12 battles" is prose to assert on, not markup.
   defp text_for(player, mine \\ true) do
     player |> html_for(mine) |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
   end
@@ -133,8 +132,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       refute html =~ "char-vitality"
     end
 
-    # The record tallies the run; the CHRONICLE tells how it ended, as the last fight it ever had.
-    # Saying it in both left the page repeating itself two paragraphs apart.
+    # The record tallies the run; the CHRONICLE tells how it ended, and the page does not repeat it.
     test "tallies the run without repeating how it ended" do
       refute html_for(fallen()) =~ "The road ran out beneath you."
       assert html_for(fallen()) =~ "You fell at"

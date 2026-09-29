@@ -1,10 +1,7 @@
 defmodule MiniLineage.Characters.Sweeper do
   @moduledoc """
-  Takes the session off characters nobody has played in a while.
-
-  What it sweeps is the session, not the character: an abandoned run has still been played, so it
-  keeps its place in the Halls and gives up only the secret that ties it to a browser. Nothing is
-  deleted, and a visitor who never chose a race was never written at all.
+  Takes the session off characters nobody has played in a while. The run keeps its place in the
+  Halls and gives up only the secret that ties it to a browser; nothing is deleted.
   """
   use GenServer
 
@@ -16,7 +13,7 @@ defmodule MiniLineage.Characters.Sweeper do
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
-  @doc "Sweeps now and reports how many were retired. For tests and for a hand at the console."
+  @doc "Sweeps now and reports how many were retired. For tests and the console."
   def sweep_now, do: GenServer.call(__MODULE__, :sweep)
 
   @impl true

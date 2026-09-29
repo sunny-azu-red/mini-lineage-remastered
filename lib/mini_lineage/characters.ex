@@ -29,9 +29,7 @@ defmodule MiniLineage.Characters do
     player = snapshot(session)
     Server.broadcast(session, player, character_id(session))
 
-    # And whoever is reading the run that was left behind. A retired run is a different page — no
-    # session holds it, so nothing walks with it — and nothing else would ever tell them: its
-    # process is gone, so it will never broadcast again.
+    # And whoever is reading the retired run: its process is gone, so nothing else will tell them.
     Phoenix.PubSub.broadcast(
       MiniLineage.PubSub,
       record_topic(retired),
@@ -131,9 +129,8 @@ defmodule MiniLineage.Characters do
       call(id, message, false)
   end
 
-  # The registry is asked first, and only a character that is NOT running reaches the supervisor.
-  # Starting one runs its `init/1` — two queries — inside the supervisor's own loop, so every other
-  # player's reads and writes would queue behind it if they all went through there.
+  # Only a character that is NOT running reaches the supervisor: starting one runs `init/1`'s two
+  # queries inside the supervisor's own loop, and everyone else would queue behind it.
   defp server(id) do
     case Registry.lookup(MiniLineage.Characters.Registry, id) do
       [{pid, _}] -> pid
@@ -150,8 +147,7 @@ defmodule MiniLineage.Characters do
       {:error, {:already_started, pid}} ->
         pid
 
-      # Anything else is the character's own `init/1` having raised. Without this the failure
-      # surfaced as a CaseClauseError here, naming this line instead of the one that broke.
+      # The character's own `init/1` raised; reraised so the trace names the line that broke.
       {:error, {exception, stacktrace}} when is_exception(exception) ->
         reraise(exception, stacktrace)
 

@@ -74,8 +74,7 @@ defmodule MiniLineage.Game.EffectsTest do
   end
 
   # A deed is written once: the chronicle keeps it with its pronouns open, and the alert is the same
-  # sentence told to its owner. Two texts written in two places had drifted into saying different
-  # things, the alert "You have bought" and the chronicle "They ate".
+  # sentence told to its owner.
   describe "an alert and the chronicle" do
     test "say the same thing about a meal, the buff it brought included" do
       {fed, result} = Player.purchase(%{hero() | health: 50}, "food", 2)

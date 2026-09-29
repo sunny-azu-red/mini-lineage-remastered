@@ -1,13 +1,9 @@
 defmodule MiniLineage.Characters.VisitorTest do
   @moduledoc """
-  A browser that never creates a character must leave nothing behind.
+  A browser that never creates a character must leave nothing behind: a visitor is held in memory
+  and written only once they choose a lineage, or the table fills with rows about nobody.
 
-  The sweep deletes runs that have a session and no race, so this is the property that keeps that
-  DELETE from ever having work to do: a visitor is held in memory and written only once they
-  choose a lineage. Without it the table fills with rows about nobody.
-
-  Counted as deltas rather than totals — the browser suites share this database and do not roll
-  back, so the table is rarely empty when a test starts.
+  Counted as deltas, because the browser suites share this database and do not roll back.
   """
   use MiniLineage.DataCase, async: false
 

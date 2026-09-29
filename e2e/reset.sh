@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Empties the browser suites' board so a run starts from nothing. Without it, characters an
-# earlier run buried fill the top and a fresh one can no longer rank — a failure about leftovers
-# wearing the costume of a failure about the game. CI gets this free from a new database each run.
+# Empties the browser suites' board so a run starts from nothing: characters an earlier run
+# buried would fill the top and a fresh one could no longer rank. CI gets a new database anyway.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 if [ -f ./env.sh ]; then
@@ -10,9 +9,8 @@ if [ -f ./env.sh ]; then
 fi
 export MIX_ENV=e2e
 
-# The guard is the point: these tables exist in the database people play on too, and this must be
-# incapable of reaching it. It compares against what .env names rather than hunting for a "_test"
-# suffix, which stopped meaning anything once the throwaway database got a file of its own.
+# The guard is the point: these tables exist in the database people play on too. It compares
+# against what .env names, not a "_test" suffix.
 mix run --no-start -e '
   {:ok, _} = Application.ensure_all_started(:postgrex)
   config = Application.get_env(:mini_lineage, MiniLineage.Repo)
@@ -50,9 +48,8 @@ mix run --no-start -e '
   end
 
   {:ok, conn} = Postgrex.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
-  # One statement: TRUNCATE takes a list and resets the sequences a fresh board wants. CASCADE is
-  # deliberately NOT used — naming both tables keeps this incapable of reaching one nobody listed,
-  # and character_log must be named even though its foreign key would have carried it.
+  # CASCADE is deliberately NOT used: naming both tables keeps this incapable of reaching one
+  # nobody listed. RESTART IDENTITY resets the sequences a fresh board wants.
   Postgrex.query!(conn, "TRUNCATE character_log, characters RESTART IDENTITY", [])
   IO.puts("reset #{database}: character_log, characters")
 ' >/dev/null

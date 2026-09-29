@@ -7,9 +7,8 @@ defmodule MiniLineage.Characters.Serde do
   """
   alias MiniLineage.Game.{Constants, Player}
 
-  # The shape of the document, not of the character — which is why it is written here rather than
-  # carried on the struct. A reshape bumps this and `from_map/1` branches on it; a document
-  # claiming a LATER one was written by a newer build, and this one must not guess at it.
+  # The shape of the document, not of the character. A reshape bumps this and `from_map/1` branches
+  # on it; a document claiming a LATER one was written by a newer build, and must not be guessed at.
   @version 1
 
   def to_map(%Player{} = p) do
@@ -68,7 +67,7 @@ defmodule MiniLineage.Characters.Serde do
     do: raise("character document carries no version; every one this build writes does")
 
   # Which effect, and until when: everything else is the catalog's, so a retuned effect reaches the
-  # runs already carrying it, and a document cannot say what an effect does.
+  # runs already carrying it.
   defp effect_to_map(e), do: %{"id" => e.id, "expires_at" => e.expires_at}
 
   # An id the catalog does not have names nothing, and is dropped rather than guessed at.

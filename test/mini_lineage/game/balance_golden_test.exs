@@ -1,14 +1,11 @@
 defmodule MiniLineage.Game.BalanceGoldenTest do
   @moduledoc """
-  GOLDEN MASTER for game balance — a direct port of test/backend/service/balance.golden.test.ts.
+  GOLDEN MASTER for game balance: 400 fights per character across all four races and five fixed
+  seeds, through the real battle math, shops, level curve, ambushes and narrative draws, pinned
+  exactly to the TypeScript reference's numbers.
 
-  Plays 400 fights per character across all four races and five fixed RNG seeds, driving the real
-  battle math, stat pipeline, shop logic, level curve, ambush rolls and narrative draws, then pins
-  the resulting progression exactly. The expected values are the TypeScript reference's, unchanged.
-
-  One deterministic stream, so it also pins the ORDER randomness is consumed in: adding, removing
-  or reordering a draw anywhere in the fight path fails here even when every function is still
-  correct. The clock is frozen, because the reference's numbers assume no buff ever expires.
+  One stream, so it also pins the ORDER randomness is consumed in. The clock is frozen, because
+  the reference's numbers assume no buff ever expires.
   """
   use ExUnit.Case, async: true
 

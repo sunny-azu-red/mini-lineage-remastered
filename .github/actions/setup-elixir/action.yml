@@ -4,7 +4,7 @@ description: The toolchain the game is developed against, and the cache of what 
 runs:
   using: composite
   steps:
-    # Pinned here alone, so the two jobs that need them cannot drift apart.
+    # Pinned here alone; the Dockerfile is checked against these.
     - uses: erlef/setup-beam@v1
       with:
         otp-version: "28.5.0.6"

@@ -1,5 +1,5 @@
 defmodule MiniLineage.Game.Narrative do
-  @moduledoc "Port of narrative.service.ts. Each `pick` draws once — reordering shifts every later roll."
+  @moduledoc "Each `pick` draws once — reordering shifts every later roll."
   alias MiniLineage.Game.{Constants, Format, Math, Narratives}
 
   defp pick(templates, data), do: Format.fill_template(Math.random_element(templates), data)
@@ -57,8 +57,7 @@ defmodule MiniLineage.Game.Narrative do
 
   @doc """
   The warning shown while ambushed and near death. Hashed from the run rather than rolled, because
-  the banner re-renders on every tick and a fresh roll would flicker through nine lines as the
-  player reads it. Its inputs only move when a fight does, which is what ends the ambush anyway.
+  the banner re-renders on every tick and a fresh roll would flicker as the player reads it.
   """
   def ambush_low_health(player) do
     pool = Narratives.ambush_low_health()
@@ -84,11 +83,8 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   @doc """
-  A line told to whoever is reading it. Every battle template is stored with its pronouns still
-  open: the numbers and the gear are filled when the fight happens, because they are facts about
-  that moment, and who it is being told TO is not known until somebody opens a page. A run's own
-  battle screen fills them as "you"; a stranger reading the same row on a record fills them as
-  "they", and neither is a second copy of the sentence.
+  A stored line told to whoever is reading it: its open pronouns filled as "you" on the run's own
+  screen, and as "they" for anybody else.
   """
   def voiced(nil, _mine?), do: nil
   def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
@@ -97,9 +93,7 @@ defmodule MiniLineage.Game.Narrative do
   def death_reason(reason, mine?), do: voiced(reason, mine?)
 
   # ------------------------------------------------------------------ deeds
-  #
-  # The values are facts about a moment and are filled now; the pronouns are not known until
-  # somebody opens the page, so `fill_template/2` leaves them exactly as it leaves a fight's.
+  # Values are filled now; the pronouns stay open until render, as a fight's do.
 
   @doc "Who a run set out as. `welcome` still carries its own open pronouns."
   def build_began(race, traits) do
@@ -142,8 +136,8 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   @doc """
-  A stored line as its owner's alert: the same sentence, colours and all, told to them. One sentence
-  for both, so what the alert says and what the chronicle keeps cannot drift apart.
+  A stored line as its owner's alert: the same sentence, colours and all, so the alert and the
+  chronicle cannot drift apart.
   """
   def alert(line), do: voiced(line, true)
 

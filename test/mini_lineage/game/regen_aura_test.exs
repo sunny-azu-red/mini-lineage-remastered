@@ -1,11 +1,8 @@
 defmodule MiniLineage.Game.RegenAuraTest do
   @moduledoc """
   🌿 Regenerating is derived per read rather than stored, so it appears and vanishes on its own. It
-  wants three things at once — the resting aura, a wound, and a positive rate — and its rate is the
-  TOTAL one, so armor and food show up in the tooltip the same as ancestry does.
-
-  Nothing was checking any of it: the aura is cosmetic, so a wrong one costs no health and no test
-  went red.
+  wants the resting aura, a wound and a positive rate, and its rate is the TOTAL one, so armor and
+  food show up in the tooltip the same as ancestry does.
   """
   use ExUnit.Case, async: true
 

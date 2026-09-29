@@ -1,16 +1,6 @@
-# Puts this project's toolchain on your PATH.
-#
-# Everything it needs lives under ~/.local rather than system-wide, because this machine has no
-# root: the Erlang and Elixir builds, the shared libraries the ERTS links against, and the ones
-# Playwright's Chromium links against. Without these, `mix` is not a command and the browser
-# suites cannot launch.
-#
-# Add this to ~/.bashrc and you never think about it again:
-#
+# Puts the no-root toolchain under ~/.local (OTP, Elixir, ERTS and Chromium libraries) and .nvmrc's
+# Node on the PATH. Idempotent; missing directories are skipped. From ~/.bashrc:
 #     [ -f ~/mini-lineage-remastered/env.sh ] && source ~/mini-lineage-remastered/env.sh
-#
-# Safe to source repeatedly, and safe on a machine where any of it was installed properly:
-# directories that do not exist are skipped.
 
 case ":$PATH:" in
   *":$HOME/.local/lib/otp/bin:"*) ;;
@@ -26,8 +16,7 @@ for _ml_lib in "$HOME/.local/usr/lib/x86_64-linux-gnu" "$HOME/.local/lib/playwri
 done
 unset _ml_lib
 
-# Node comes from nvm, at the version .nvmrc pins, which CI reads too. nvm only puts itself on the
-# PATH of an interactive shell, so a script, a mix task or an editor terminal would otherwise miss it.
+# nvm only loads itself in an interactive shell, so a script or mix task would otherwise miss it.
 _ml_nvmrc="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/.nvmrc"
 if [ -f "$_ml_nvmrc" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
   # shellcheck disable=SC1091

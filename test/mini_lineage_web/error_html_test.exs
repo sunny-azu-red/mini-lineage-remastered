@@ -108,7 +108,7 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
 
     test "and still none when nobody stamped a version" do
       # The image built without APP_VERSION cannot name its commit. That must cost it the footer
-      # link and nothing else — tying the two is how a deployed release came to serve stack traces.
+      # link and nothing else, never the gate on stack traces.
       System.delete_env("APP_VERSION")
       stamped = Application.get_env(:mini_lineage, :app_version)
       Application.delete_env(:mini_lineage, :app_version)

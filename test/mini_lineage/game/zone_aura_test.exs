@@ -1,12 +1,8 @@
 defmodule MiniLineage.Game.ZoneAuraTest do
   @moduledoc """
-  The disengage countdown — the most intricate rule in the port, and the one nothing was checking.
-
-  Leaving a combat zone does not rest you instantly: ⚔️ In Combat stays with a 5-second countdown,
-  and only when that elapses does 💤 Resting take over. Standing in a combat zone keeps you flagged
-  indefinitely with no countdown at all, so waiting on the Battleground never restores a point of
-  health. The countdown is anchored to LEAVING, so stepping back in cancels it and stepping out
-  again starts a fresh one.
+  The disengage countdown. Leaving a combat zone keeps ⚔️ In Combat for 5 seconds before 💤 Resting
+  takes over, and standing in one keeps you flagged indefinitely, so waiting on the Battleground
+  heals nothing. The countdown is anchored to LEAVING: stepping back in cancels it.
   """
   use ExUnit.Case, async: true
 

@@ -1,9 +1,7 @@
 /**
- * A log, in both orders it can read: newest first as the Chronicle does, oldest first as a chat
- * would. The game has only the first, so this mounts the real `Panel` hook on a log of its own, in
- * the real stylesheet, and plays the patches LiveView would — stripping what the hook painted, as a
- * patch does, so everything it must re-apply is seen re-applied. The markup is `Controls.panel`'s,
- * and panel_test.exs holds the server to the attributes it reads here.
+ * A log in both orders: newest first as the Chronicle reads, oldest first as a chat would. The game
+ * has only the first, so this mounts the real `Panel` hook on a log of its own and plays LiveView's
+ * patches, which strip what the hook painted. panel_test.exs holds the server to this markup.
  */
 import { chromium } from 'playwright';
 import { BASE, reporter } from './helpers.mjs';

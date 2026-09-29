@@ -4,8 +4,7 @@ defmodule Mix.Tasks.Prod do
   @moduledoc """
       mix prod
 
-  `mix build` then `mix start`, exactly as `npm run prod` was `npm run build && npm run start`.
-  It stops at the first failing test and deploys nothing.
+  `mix build` then `mix start`. It stops at the first failing test and deploys nothing.
 
   Compiled only in :dev, so no release carries the task that builds it.
   """

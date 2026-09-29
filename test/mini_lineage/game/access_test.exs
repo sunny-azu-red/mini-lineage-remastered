@@ -1,8 +1,7 @@
 defmodule MiniLineage.Game.AccessTest do
   @moduledoc """
-  The screen-access policy, stated once, end to end. Ported from the reference's acceptance suite:
-  the rules are only meaningful together, and every navigation funnels through `pin_screen/2`, so
-  an in-app link, a typed URL and the Back button cannot disagree.
+  The screen-access policy, stated once, end to end: the rules are only meaningful together, and
+  every navigation funnels through `pin_screen/2`, so a link, a typed URL and Back cannot disagree.
   """
   use ExUnit.Case, async: true
 

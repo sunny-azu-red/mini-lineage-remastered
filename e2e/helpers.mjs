@@ -1,6 +1,6 @@
 /**
- * Shared machinery for walkthrough.mjs and races.mjs. They drive the same game through the same
- * controls, and a helper that drifts between them is a bug neither run would report.
+ * Shared machinery for the browser suites. They drive the same game through the same controls,
+ * and a helper that drifts between them is a bug no run would report.
  */
 export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 export const PURSE = '#sidebar [data-key="adena"]';
