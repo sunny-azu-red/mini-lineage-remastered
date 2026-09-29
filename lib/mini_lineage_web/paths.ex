@@ -7,7 +7,6 @@ defmodule MiniLineageWeb.Paths do
     {"armors", "/shop/armors"},
     {"inn", "/inn"},
     {"suicide", "/suicide"},
-    {"character", "/character"},
     {"highscores", "/highscores"},
     {"statistics", "/statistics"},
     {"races", "/races"},
@@ -15,6 +14,15 @@ defmodule MiniLineageWeb.Paths do
   ]
 
   @highscores_prefix "/highscores/"
+  @character_prefix "/character/"
+
+  @doc """
+  A run's own record, addressed by its PUBLIC id — never by the session playing it. `from` is how
+  the record knows where to send the reader back to.
+  """
+  def for_character(id, from \\ nil)
+  def for_character(id, nil), do: @character_prefix <> id
+  def for_character(id, from), do: "#{@character_prefix}#{id}?from=#{from}"
 
   @doc """
   'start', 'home' and 'death' all live at '/': they are the three states of one run, told apart by
@@ -27,7 +35,7 @@ defmodule MiniLineageWeb.Paths do
   def for_screen(screen, _slug) do
     case List.keyfind(@routes, screen, 0) do
       {_, path} -> path
-      # 'error' has no link-worthy URL and nothing to deep-link back into.
+      # Every screen the game patches to is routed above; nothing else has an address but home.
       nil -> "/"
     end
   end

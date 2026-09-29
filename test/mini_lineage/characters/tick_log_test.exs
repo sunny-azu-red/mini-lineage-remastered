@@ -6,20 +6,11 @@ defmodule MiniLineage.Characters.TickLogTest do
   """
   use MiniLineage.DataCase, async: false
 
-  import ExUnit.CaptureLog
-
-  require Logger
-
   alias MiniLineage.Characters
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
-    # The test environment silences everything below :warning, and the line under test is a debug.
-    previous = Logger.level()
-    Logger.configure(level: :debug)
-    on_exit(fn -> Logger.configure(level: previous) end)
-
-    id = Characters.new_id()
+    id = Characters.new_session_id()
     on_exit(fn -> Characters.forget(id) end)
     hold(id)
 
@@ -34,7 +25,7 @@ defmodule MiniLineage.Characters.TickLogTest do
   defp tick(id) do
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
 
-    capture_log([level: :debug], fn ->
+    capture_debug(fn ->
       send(pid, :tick)
       # One round trip, so the tick has certainly been handled before the capture stops.
       Characters.snapshot(id)
@@ -68,17 +59,16 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "a screen in neither zone list is its own case", %{id: id} do
-    # Reached by disengaging and letting the countdown lapse somewhere that rests nobody.
+    # Only the error page is in neither list, and nothing records it; the fallback holds anyway.
     move(id, "battle", %{health: 40})
-    move(id, "statistics")
+    move(id, "error")
 
     Characters.mutate(
       id,
-      &{%{&1 | combat_until: 0, effects: Enum.reject(&1.effects, fn e -> e.id == "combat" end)},
-       :ok}
+      &{%{&1 | effects: Enum.reject(&1.effects, fn e -> e.id == "combat" end)}, :ok}
     )
 
-    move(id, "statistics")
+    move(id, "error")
 
     log = tick(id)
     assert log =~ "No Zone", "not 'Resting' — regeneration is off here"
@@ -91,16 +81,15 @@ defmodule MiniLineage.Characters.TickLogTest do
     assert tick(id) =~ "(Full)"
   end
 
-  test "the dead are dead", %{id: id} do
+  # Nothing can happen to them in five seconds: no regeneration, no effect left to lapse.
+  test "the dead do not tick at all", %{id: id} do
     Characters.mutate(id, &{Player.kill(&1), :ok})
 
-    log = tick(id)
-    assert log =~ "Dead"
-    assert log =~ "(Paused)"
+    refute tick(id) =~ "[TICK"
   end
 
   test "a race with no regeneration is idle rather than mid-heal", %{id: _id} do
-    orc = Characters.new_id()
+    orc = Characters.new_session_id()
     on_exit(fn -> Characters.forget(orc) end)
     hold(orc)
 
@@ -116,7 +105,7 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "a visitor who has not created a character is not described at all" do
-    visitor = Characters.new_id()
+    visitor = Characters.new_session_id()
     on_exit(fn -> Characters.forget(visitor) end)
     hold(visitor)
 

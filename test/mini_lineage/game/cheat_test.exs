@@ -1,8 +1,10 @@
 defmodule MiniLineage.Game.CheatTest do
-  @moduledoc "The Konami cheat: silent activation, and a permanent bar from the highscores."
-  use ExUnit.Case, async: true
+  @moduledoc "The Konami cheat: silent activation, and a permanent bar from the Halls of Champions."
+  # NOT async: the counter tests claim the collector's global name, so any concurrent module
+  # creating a character would post its increments into this mailbox.
+  use ExUnit.Case, async: false
 
-  alias MiniLineage.Game.{Actions, Constants, Player}
+  alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Statistics}
 
   defp living do
     {player, _flash} = Player.initialize(%Player{}, Constants.race(0), "Cheater")
@@ -25,16 +27,102 @@ defmodule MiniLineage.Game.CheatTest do
     assert player.effects == []
   end
 
+  test "works once: a run already marked is healed and counted no more" do
+    {cheated, _} = Actions.cheat(living())
+    wounded = %{cheated | health: 10}
+
+    {again, {:ok, nil}} = Actions.cheat(wounded)
+
+    assert again.health == 10
+    assert again.pending_events == wounded.pending_events
+  end
+
   test "is a silent no-op for the dead" do
     {player, {:ok, nil}} = Actions.cheat(%{living() | dead: true})
 
     refute player.cheated
   end
 
-  test "bars the highscores for good" do
+  test "bars the Halls for good" do
+    # Nothing is refused: the run is simply not ranked, and carries the mark from the moment the
+    # sequence lands, alive or dead.
     {player, _} = Actions.cheat(living())
-    {_player, result} = Actions.submit_highscore(%{player | dead: true})
 
-    assert {:error, :ineligible, _message} = result
+    assert Snapshot.build(player).disqualified
+    assert Snapshot.build(%{player | dead: true}).disqualified
+  end
+
+  describe "what a disqualified run writes into the realm's history" do
+    # The collector is a plain process that takes {:increment, field, amount}. Standing in for it
+    # is how a rules test reads the counters without a database anywhere near it.
+    setup do
+      # The name frees itself when this test process dies, so nothing has to give it back.
+      Process.register(self(), MiniLineage.Game.Statistics.Collector)
+
+      :ok
+    end
+
+    defp counted do
+      receive do
+        {:increment, field, amount} -> [{field, amount} | counted()]
+      after
+        0 -> []
+      end
+    end
+
+    test "nothing, once the cheat is on" do
+      {player, _} = Actions.cheat(living())
+      _ = counted()
+
+      Statistics.increment_for(player, :total_battles)
+      Statistics.increment_for(player, :total_xp_gained, 4_000)
+
+      assert counted() == []
+    end
+
+    test "nor once a run has taken its own life" do
+      player = Player.commit_suicide(living())
+      _ = counted()
+
+      Statistics.increment_for(player, :total_battles)
+
+      assert counted() == []
+    end
+
+    test "but the census counts everyone, or souls arrive and never leave" do
+      _ = counted()
+
+      # Taking your own life is still falling, and the Tome tells the Weak Souls as a few OF the
+      # fallen — a subset that outnumbers its whole is not a story anybody can read.
+      Player.commit_suicide(living())
+
+      assert {:total_deaths, 1} in counted()
+    end
+
+    test "and a heretic who dies is still one of the fallen" do
+      {player, _} = Actions.cheat(living())
+      _ = counted()
+
+      Player.kill(player)
+
+      assert {:total_deaths, 1} in counted()
+    end
+
+    test "but an honest run still writes everything it does" do
+      player = living()
+      # Drained first: being born is itself counted, and this is about what happens after.
+      _ = counted()
+
+      Statistics.increment_for(player, :total_battles)
+
+      assert counted() == [{:total_battles, 1}]
+    end
+
+    test "and the disqualification itself is always counted, or nobody could be told of it" do
+      _ = counted()
+      {_player, _} = Actions.cheat(living())
+
+      assert {:total_players_cheated, 1} in counted()
+    end
   end
 end

@@ -69,16 +69,6 @@ defmodule MiniLineage.Game.RateLimitTest do
     end
   end
 
-  describe "the flood limiter" do
-    test "catches what the per-action limits do not", %{key: key} do
-      # 300 a minute across everything: a client firing a mix of actions stays under both the
-      # battle and shop limits and is still stopped.
-      for _ <- 1..300, do: assert(RateLimit.check(key, :flood) == :ok)
-
-      assert {:error, _} = RateLimit.check(key, :flood)
-    end
-  end
-
   describe "the sweep" do
     test "drops entries no window still counts, so the table does not grow forever", %{key: key} do
       plant(key, :shop, 50, 61_000)

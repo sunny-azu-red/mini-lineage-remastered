@@ -1,55 +1,57 @@
 name: CI
 
-# A branch with a PR open would otherwise run everything twice — once for the push and once for the
-# pull request — and the walkthrough is two minutes each time. The PR is what gates a merge, and
-# main is what gets published, so those are the two that need to run.
+# Pushes only on main, which publishes: a branch with a PR open would otherwise run twice.
 on:
   push:
     branches: [main]
   pull_request:
 
-# Supersede a pull request's older runs, but never interrupt main: cancelling mid-publish could
-# leave one tag pushed and the other not.
+# Never cancel main: mid-publish, one tag could be pushed and the other not.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: suite
-    runs-on: ubuntu-latest
+    # Pinned in all three jobs, so the runner changes when this does and not when a label moves.
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
 
     services:
-      # MariaDB, not MySQL — it is what the game is deployed against.
-      mariadb:
-        image: mariadb:10.11
+      # The major the game is deployed against; 5433 so a local run misses the developer's own.
+      postgres:
+        image: postgres:18
         env:
-          MARIADB_ROOT_PASSWORD: pass
-          MARIADB_DATABASE: lineage_remastered_test
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: lineage_remastered_test
         ports:
-          - 3307:3306
+          - 5433:5432
         options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s --health-timeout=5s --health-retries=10
 
     env:
       DB_HOST: 127.0.0.1
-      DB_PORT: 3307
-      DB_USERNAME: root
+      DB_PORT: 5433
+      DB_USERNAME: postgres
       DB_PASSWORD: pass
       DB_DATABASE: lineage_remastered_test
       MIX_ENV: test
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-elixir
 
       - name: Fetch dependencies
         run: mix deps.get
 
-      # The image is built on a pinned base rather than by this action, so nothing but a check keeps
-      # the two on the same Elixir and OTP.
+      # Nothing else keeps the image on the Elixir and OTP tested here, nor its runtime on the
+      # builder's Alpine, whose musl and openssl the release links against.
       - name: The Dockerfile builds on what this tested
         run: |
           otp=$(grep -oP 'otp-version: "\K[^"]+' .github/actions/setup-elixir/action.yml)
@@ -57,15 +59,18 @@ jobs:
           grep -q "hexpm/elixir:${ex}-erlang-${otp}-" Dockerfile \
             || { echo "::error::Dockerfile pins a different Elixir/OTP than CI installs"; exit 1; }
 
+          builder=$(grep -oP 'hexpm/elixir:.*-alpine-\K[0-9.]+' Dockerfile)
+          runner=$(grep -oP '^FROM alpine:\K[0-9.]+' Dockerfile)
+          [ -n "$builder" ] && [ "$builder" = "$runner" ] \
+            || { echo "::error::builder is alpine ${builder:-?} but the runtime is alpine ${runner:-?}"; exit 1; }
+
       - name: Check formatting
         run: mix format --check-formatted
 
       - name: Compile without warnings
         run: mix compile --warnings-as-errors
 
-      # Includes the golden master, which pins this rewrite to the reference's exact arithmetic.
-      # --warnings-as-errors because the step above compiles lib only; a warning in a test file
-      # would otherwise reach main unnoticed.
+      # --warnings-as-errors again: the step above compiles lib only.
       - name: Test
         run: mix test --warnings-as-errors
 
@@ -78,46 +83,46 @@ jobs:
       - name: Build a production release
         env:
           MIX_ENV: prod
-        # The sha is truncated to seven characters because that is what Version.release?/1 accepts,
-        # and being a release is what stops the app showing error detail to players.
+        # Seven characters, the form Version.release?/1 accepts.
         run: |
           export APP_VERSION="${GITHUB_SHA::7}"
           mix do deps.get --only prod + assets.deploy + release
 
-  walkthrough:
-    name: walkthrough (browser)
+  browser:
+    name: browser suites
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
 
     services:
-      mariadb:
-        image: mariadb:10.11
+      postgres:
+        image: postgres:18
         env:
-          MARIADB_ROOT_PASSWORD: pass
-          MARIADB_DATABASE: lineage_remastered_test
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: lineage_remastered_test
         ports:
-          - 3307:3306
+          - 5433:5432
         options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s --health-timeout=5s --health-retries=10
 
     env:
       DB_HOST: 127.0.0.1
-      DB_PORT: 3307
-      DB_USERNAME: root
+      DB_PORT: 5433
+      DB_USERNAME: postgres
       DB_PASSWORD: pass
       DB_DATABASE: lineage_remastered_test
       PORT: 4002
       E2E_BASE_URL: http://localhost:4002
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-elixir
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install Playwright and its browser
@@ -125,35 +130,39 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      # CI has no .env.test — the variables above stand in for it, as they always have for .env.
+      # The job's env stands in for .env.test.
       - name: Create the browser suites' database
         env:
           MIX_ENV: e2e
         run: mix do deps.get + ecto.create
 
-      # `mix e2e` starts the server, empties the board and stops the server again, so there is
-      # nothing here to keep in step with how a developer runs it. One step per suite, so the log
-      # says which one failed without anyone opening it.
+      # `mix e2e` serves, resets and stops by itself. One step per suite names the one that failed.
       - name: Drive one character through a real browser
         run: mix e2e walkthrough
 
       - name: Play every lineage
         run: mix e2e races
 
-  # Only from main, and only behind both green jobs: what is published is what was tested. The
-  # image carries the commit, so a deployment names itself without anyone remembering to say so.
+      - name: Watch the board move for somebody else
+        run: mix e2e live-board
+
+      - name: Read a log in both orders it reads
+        run: mix e2e log
+
+  # Only from main, behind both green jobs: what is published is what was tested.
   publish:
     name: publish (ghcr)
-    needs: [test, walkthrough]
+    needs: [test, browser]
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
 
     permissions:
       contents: read
       packages: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: docker/setup-buildx-action@v4
 
@@ -167,8 +176,7 @@ jobs:
         id: version
         run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      # Loaded, not pushed. Publishing first would leave a broken image tagged `latest` whenever the
-      # check below failed, and `latest` is what a deployment pulls.
+      # Loaded, not pushed: a failed check below must not leave a broken `latest`.
       - name: Build
         uses: docker/build-push-action@v7
         with:
@@ -179,12 +187,10 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}
-          # Layers survive between runs, so only what actually changed is rebuilt.
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Every way the stamp can fail to reach `mix release` is silent — a footer that names no
-      # commit. Read it back out of the release config before this image is allowed out.
+      # A missing stamp is silent, so read it back out of the release config before pushing.
       - name: Check the image is stamped with its commit
         run: |
           docker run --rm --entrypoint sh \

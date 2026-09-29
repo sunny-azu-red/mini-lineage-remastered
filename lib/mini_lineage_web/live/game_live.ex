@@ -8,18 +8,23 @@ defmodule MiniLineageWeb.GameLive do
   """
   use MiniLineageWeb, :live_view
 
-  alias MiniLineage.Characters
+  alias MiniLineage.{CharacterLog, Board, Characters}
   require Logger
 
   alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
-  alias MiniLineage.Highscores
-  alias MiniLineageWeb.{Paths, Screens}
+  alias MiniLineageWeb.{Controls, Paths, Screens}
 
   @impl true
-  def mount(_params, session, socket) do
-    id = session["character_id"]
+  def mount(_params, %{"session_id" => id}, socket) when is_binary(id) do
+    mount_character(id, socket)
+  end
 
+  # A cookie the plug never saw — a tab left open across a deploy. A LiveView cannot issue one, so
+  # bounce through a real request. The plug always sets one, so this cannot come round twice.
+  def mount(_params, _session, socket), do: {:ok, redirect(socket, to: ~p"/")}
+
+  defp mount_character(id, socket) do
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)
@@ -30,22 +35,48 @@ defmodule MiniLineageWeb.GameLive do
     {:ok,
      socket
      |> assign(
-       character_id: id,
+       session_id: id,
+       # Public, and the only id that may be rendered.
+       character_id: Characters.character_id(id),
        player: player,
        view: Snapshot.build(player),
        catalog: Snapshot.catalog(),
        screen: "start",
+       title: nil,
        race_filter: nil,
        notice: nil,
        game_flash: nil,
-       highscores: [],
+       boards: %{},
+       following: nil,
+       record: nil,
+       record_view: nil,
+       watching: nil,
+       record_log: [],
+       record_log_cursor: 0,
+       record_log_older: false,
+       record_log_present: true,
+       from: nil,
        statistics: nil,
        key_buffer: [],
        error_detail: nil,
        picked: nil,
-       flash_fresh: false
+       flash_fresh: false,
+       sorts: kept_sorts(get_connect_params(socket))
      )}
   end
+
+  # Kept sorts arrive with the socket, so the first connected render has them. Checked against each
+  # table, since storage is the reader's to edit.
+  defp kept_sorts(%{"tables" => kept}) when is_map(kept) do
+    Enum.reduce(kept, %{}, fn {table, value}, sorts ->
+      case Controls.decode_sort(value, Screens.sorts(table)) do
+        nil -> sorts
+        sort -> Map.put(sorts, table, sort)
+      end
+    end)
+  end
+
+  defp kept_sorts(_params), do: %{}
 
   # ------------------------------------------------------------- navigation
 
@@ -54,22 +85,21 @@ defmodule MiniLineageWeb.GameLive do
     requested = requested_screen(socket.assigns.live_action, socket.assigns.player)
     pinned = Access.pin_screen(requested, socket.assigns.player)
 
-    # An unrecognised path patches even when it resolved to where we already are, so the address bar
-    # never keeps a URL the game does not own.
-    if pinned != requested or socket.assigns.live_action == :unknown do
+    if pinned != requested do
       {:noreply, push_patch(socket, to: Paths.for_screen(pinned), replace: true)}
     else
-      {:noreply, socket |> assign_race_filter(params) |> enter(pinned)}
+      {:noreply,
+       socket
+       |> assign_race_filter(params)
+       |> assign_record(params)
+       |> assign_from(params)
+       |> enter(pinned)}
     end
   end
 
-  # '/' is wherever the player's own state puts them: Game Start for a visitor, Town for a
-  # character, Game Over for one who has died. Death is a state rather than a place — you never
-  # travel to it — so it has no URL of its own, and neither do the other two.
-  #
-  # An ambush is different: it pins you to the Battleground, which is somewhere you can stand, and
-  # keeps its own URL.
-  defp requested_screen(action, player) when action in [:root, :unknown] do
+  # '/' is wherever the player's own state puts them. Death is a state, not a place, so it has no
+  # URL of its own.
+  defp requested_screen(:root, player) do
     cond do
       player.dead -> "death"
       Player.started?(player) -> "home"
@@ -89,72 +119,165 @@ defmodule MiniLineageWeb.GameLive do
   # survives the trip means the button appears to do nothing.
   defp assign_race_filter(socket, _params), do: assign(socket, race_filter: nil)
 
+  defp filter_race(%{assigns: assigns}), do: filter_race(assigns)
+
+  defp filter_race(%{race_filter: id, catalog: catalog}),
+    do: Enum.find(catalog.races, &(&1.id == id))
+
+  # Read from the run's process while one is up: where it stands, its auras and its health are
+  # buffered, so the row can be behind.
+  defp assign_record(socket, %{"id" => id}) do
+    # A record nobody can find is a 404, the same as a road the game never had.
+    {player, entry} =
+      Map.pop(Board.entry(id, player: true) || raise(MiniLineageWeb.NotFoundError), :player)
+
+    view =
+      if entry.id == socket.assigns.character_id,
+        do: socket.assigns.view,
+        else: Snapshot.build(Characters.running(entry.id) || player)
+
+    {log, older?} = CharacterLog.page(entry.id)
+
+    socket
+    |> watch_record(entry.id)
+    |> assign(
+      record: entry,
+      record_view: view,
+      record_log: log,
+      record_log_cursor: cursor(log),
+      record_log_older: older?,
+      # A record opens on its newest entry, so its reader is there until the hook says otherwise.
+      record_log_present: true
+    )
+  end
+
+  defp assign_record(socket, _params), do: socket |> watch_record(nil) |> clear_record()
+
+  # The newest entry held, so what arrives next is asked for by id: a capped first page's length
+  # says nothing about where the run got to.
+  defp cursor([]), do: 0
+  defp cursor([newest | _]), do: newest.id
+
+  defp top_number([]), do: 0
+  defp top_number([newest | _]), do: newest.number
+
+  defp clear_record(socket) do
+    assign(socket,
+      record: nil,
+      record_view: nil,
+      record_log: [],
+      record_log_cursor: 0,
+      record_log_older: false,
+      record_log_present: true
+    )
+  end
+
+  # A record is watched only while it is the screen. Patching from one to another leaves the first,
+  # or a reader who walked the Halls would end up holding every record they opened.
+  defp watch_record(socket, id) do
+    case socket.assigns[:watching] do
+      ^id ->
+        socket
+
+      previous ->
+        if previous, do: Characters.unwatch_record(previous)
+        if id && connected?(socket), do: Characters.watch_record(id)
+        assign(socket, watching: id)
+    end
+  end
+
+  defp assign_from(socket, %{"from" => from}), do: assign(socket, from: from)
+  defp assign_from(socket, _params), do: assign(socket, from: nil)
+
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
-    # A flash belongs to the action that produced it and survives exactly one arrival, so an action
-    # that both flashes and moves you — creating a character, dying — does not clear its own
-    # message on the way. A notice is different: it reports a refusal and waits to be dismissed.
+    # A flash survives exactly one arrival, so an action that flashes and moves you does not clear
+    # its own message. A notice reports a refusal and waits to be dismissed.
     socket =
       if socket.assigns[:flash_fresh],
         do: assign(socket, flash_fresh: false),
         else: assign(socket, game_flash: nil)
 
-    socket = assign(socket, screen: screen, picked: nil, page_title: Screens.page_title(screen))
+    socket =
+      assign(socket,
+        screen: screen,
+        picked: nil,
+        page_title: Screens.page_title(screen, filter_race(socket)),
+        # Assigned, not computed in the template: an expression over `assigns` is re-sent on
+        # every render.
+        title: Screens.title(screen, filter_race(socket)),
+        # A fault belongs to the error screen it brought you to, not to the next visit to it.
+        error_detail: if(screen == "error", do: socket.assigns.error_detail)
+      )
 
-    if connected?(socket) and Player.started?(socket.assigns.player) do
-      apply_action(socket, &Actions.set_screen(&1, screen))
+    # Not for the dead, whom no aura or pin reads it for; nor on the error screen, whose cause may be
+    # the very process this would call.
+    if connected?(socket) and Player.started?(socket.assigns.player) and
+         not socket.assigns.player.dead and screen != "error" do
+      apply_action(socket, &Actions.set_screen(&1, screen), nil, quiet: true)
     else
       socket
     end
     |> load_screen_data(screen)
   end
 
-  defp load_screen_data(socket, "highscores"),
-    do: assign(socket, highscores: Highscores.list(socket.assigns.race_filter))
+  # Followed only while it is the screen, and subscribed BEFORE it is read, so a refresh between
+  # arrives as a push. Already followed, the pushes have kept every filter current.
+  defp load_screen_data(%{assigns: %{following: :board}} = socket, "highscores"), do: socket
 
-  defp load_screen_data(socket, "statistics"),
-    do: assign(socket, statistics: Collector.read_all())
+  defp load_screen_data(socket, "highscores") do
+    socket = follow(socket, :board)
+    assign(socket, boards: Board.current(), statistics: nil)
+  end
 
-  defp load_screen_data(socket, _screen), do: socket
+  defp load_screen_data(socket, "statistics") do
+    socket = follow(socket, :statistics)
+    assign(socket, statistics: Collector.read_all(), boards: %{})
+  end
+
+  defp load_screen_data(socket, _screen),
+    do: socket |> follow(nil) |> assign(boards: %{}, statistics: nil)
+
+  defp follow(%{assigns: %{following: topic}} = socket, topic), do: socket
+
+  defp follow(socket, topic) do
+    if connected?(socket) do
+      unfollow(socket.assigns.following)
+      if topic == :board, do: Board.subscribe()
+      if topic == :statistics, do: Collector.subscribe()
+    end
+
+    assign(socket, following: topic)
+  end
+
+  defp unfollow(:board), do: Board.unsubscribe()
+  defp unfollow(:statistics), do: Collector.unsubscribe()
+  defp unfollow(nil), do: :ok
 
   # ----------------------------------------------------------------- events
 
   @impl true
   # An explicit click into Battle IS a user action, so it fights immediately — never on load.
-  # Its own clause: written as one `if`, the `{:noreply, _}` wrapper ended up inside the else
-  # branch, so travelling to Battle returned a bare socket and took the LiveView down.
-  def handle_event("navigate", %{"to" => "battle"}, socket) do
-    handle_event("fight", %{}, leave(socket, "battle"))
-  end
+  def handle_event("navigate", %{"to" => "battle"}, socket),
+    do: {:noreply, socket |> assign(game_flash: nil) |> fight("battle")}
 
   def handle_event("navigate", %{"to" => screen}, socket) do
     {:noreply, leave(socket, screen)}
   end
 
   def handle_event("start", %{"name" => name, "race_id" => race_id}, socket) do
-    {:noreply, socket |> apply_action(&Actions.start(&1, race_id, name)) |> go("home")}
+    {:noreply, apply_action(socket, &Actions.start(&1, race_id, name), "home")}
   end
 
-  def handle_event("fight", _params, socket) do
-    case throttle(socket, :battle) do
-      {:ok, socket} ->
-        socket = apply_action(socket, &Actions.fight/1)
-
-        {:noreply, if(socket.assigns.player.dead, do: go(socket, "death"), else: socket)}
-
-      {:limited, socket} ->
-        {:noreply, socket}
-    end
-  end
+  def handle_event("fight", _params, socket), do: {:noreply, fight(socket, nil)}
 
   def handle_event("purchase", %{"item_id" => ""}, socket), do: {:noreply, leave(socket, "home")}
 
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
     case throttle(socket, :shop) do
       {:ok, socket} ->
-        # `picked: nil` puts the select back on "🚪 Home Town" once the shop has answered —
-        # after a refusal too, matching the reference, which remounts the form on any completed
-        # attempt rather than only a successful one.
+        # `picked: nil` puts the select back on "🚪 Home Town" once the shop has answered, a
+        # refusal included.
         socket = apply_action(socket, &Actions.purchase(&1, type, item_id))
 
         {:noreply, assign(socket, picked: nil)}
@@ -165,19 +288,31 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   def handle_event("suicide", %{"confirm" => "yes"}, socket),
-    do: {:noreply, socket |> apply_action(&Actions.suicide/1) |> go("death")}
+    do: {:noreply, apply_action(socket, &Actions.suicide/1, "death")}
 
   def handle_event("suicide", _params, socket), do: {:noreply, leave(socket, "home")}
 
-  def handle_event("submit_highscore", _params, socket) do
-    socket = apply_action(socket, &Actions.submit_highscore/1)
-    slug = get_in(socket.assigns, [:last_result, :race_slug])
+  def handle_event("restart", _params, socket) do
+    session = socket.assigns.session_id
 
-    {:noreply, go(socket, "highscores", slug)}
+    if Actions.may_restart?(socket.assigns.player) do
+      player = Characters.archive(session)
+      # Archiving stops the process this tab attached to. Attach to the new one here, not off the
+      # broadcast, which the assign below would move the id past before it is handled.
+      Characters.attach(session)
+
+      {:noreply,
+       socket
+       |> assign(
+         player: player,
+         view: Snapshot.build(player),
+         character_id: Characters.character_id(session)
+       )
+       |> go("start")}
+    else
+      {:noreply, socket}
+    end
   end
-
-  def handle_event("restart", _params, socket),
-    do: {:noreply, socket |> apply_action(&Actions.restart/1) |> go("start")}
 
   # `_target` names the field that changed, so one handler serves every action form.
   def handle_event("pick", %{"_target" => [field]} = params, socket),
@@ -191,37 +326,167 @@ defmodule MiniLineageWeb.GameLive do
     sequence = MiniLineage.Game.Constants.konami_sequence()
     buffer = Enum.take(socket.assigns.key_buffer ++ [key], -length(sequence))
 
-    if buffer == sequence,
-      do: {:noreply, socket |> assign(key_buffer: []) |> apply_action(&Actions.cheat/1)},
-      else: {:noreply, assign(socket, key_buffer: buffer)}
+    cond do
+      # The page relays only for a run the sequence can touch; this is for a client that does not.
+      not Access.konami?(socket.assigns.view) ->
+        {:noreply, socket}
+
+      buffer == sequence ->
+        {:noreply, socket |> assign(key_buffer: []) |> apply_action(&Actions.cheat/1)}
+
+      true ->
+        {:noreply, assign(socket, key_buffer: buffer)}
+    end
   end
+
+  # The reader scrolled near the oldest entry held. Asked by that entry, so a second ask in flight
+  # reads the same page and is dropped rather than put on the end twice.
+  def handle_event("older_chronicle", %{"before" => before}, socket) do
+    {:reply, %{}, older_chronicle(socket, before)}
+  end
+
+  # Sent only as the reader leaves the newest entry or comes back to it, never per arrival.
+  def handle_event("chronicle_at_present", %{"at" => at}, socket) when is_boolean(at) do
+    {:noreply, assign(socket, record_log_present: at)}
+  end
+
+  # A sort orders rows the socket already holds, so it reads nothing and gates nothing: it is
+  # this tab's view of a table, not something a run does.
+  def handle_event("sort", %{"table" => table, "key" => key}, socket) do
+    case Screens.sorts(table) do
+      %{^key => first} ->
+        sort = Controls.next_sort(socket.assigns.sorts[table], key, first)
+        {:noreply, put_sort(socket, table, sort)}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("reset_sort", %{"table" => table}, socket),
+    do: {:noreply, put_sort(socket, table, nil)}
 
   # ----------------------------------------------------------------- pushes
 
   @impl true
-  def handle_info({:character_updated, player}, socket) do
-    # A push can invalidate where this tab is standing: another tab restarts the character, or the
-    # server kills it. Re-pin against the new player, and treat a reset as a trip back to Game
-    # Start rather than leaving this tab on a screen its character no longer qualifies for.
+  # The echo of this tab's own action, which `apply_action/4` has already folded in.
+  def handle_info(
+        {:character_updated, player, character_id},
+        %{assigns: %{player: player, character_id: character_id}} = socket
+      ),
+      do: {:noreply, socket}
+
+  def handle_info({:character_updated, player, character_id}, socket) do
+    # Another tab restarting the character, or the server killing it, can invalidate where this
+    # tab stands: re-pin, and treat a reset as a trip back to Game Start.
     reset? = Player.started?(socket.assigns.player) and not Player.started?(player)
-    socket = assign(socket, player: player, view: Snapshot.build(player))
+
+    # A new run has no viewers until every tab attaches to it again.
+    if character_id != socket.assigns.character_id,
+      do: Characters.attach(socket.assigns.session_id)
+
+    socket =
+      assign(socket, player: player, view: Snapshot.build(player), character_id: character_id)
+
     target = Access.pin_screen(if(reset?, do: "start", else: socket.assigns.screen), player)
 
     {:noreply, if(target == socket.assigns.screen, do: socket, else: leave(socket, target))}
   end
 
+  # Followed only on the screen that draws them; one already queued when the reader left is dropped.
+  def handle_info({:board, boards}, %{assigns: %{screen: "highscores"}} = socket),
+    do: {:noreply, assign(socket, boards: boards)}
+
+  def handle_info({:board, _boards}, socket), do: {:noreply, socket}
+
+  def handle_info({:statistics, stats}, %{assigns: %{screen: "statistics"}} = socket),
+    do: {:noreply, assign(socket, statistics: stats)}
+
+  def handle_info({:statistics, _stats}, socket), do: {:noreply, socket}
+
+  # Rebuilt from the pushed player; only entries the chronicle has yet to see are read back. `id`
+  # twice guards that this tab watches this record, and the push says whether a row was written.
+  def handle_info(
+        {:record_updated, player, id, wrote?},
+        %{assigns: %{watching: id}} = socket
+      ) do
+    # Your own record is the view the character topic has just built; only a stranger's is built here.
+    view =
+      if id == socket.assigns.character_id, do: socket.assigns.view, else: Snapshot.build(player)
+
+    socket = assign(socket, record_view: view)
+
+    {:noreply, if(wrote?, do: append_chronicle(socket, id), else: socket)}
+  end
+
+  def handle_info({:record_updated, _player, _id, _wrote?}, socket), do: {:noreply, socket}
+
+  # Its row changed, not its state, so the ENTRY is read again, which no push carries. Once in a
+  # run's life.
+  def handle_info({:record_retired, id}, %{assigns: %{watching: id}} = socket),
+    do: {:noreply, assign(socket, record: Board.entry(id))}
+
+  def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
+
+  # A chronicle only grows, so only what is new is read. At the present the oldest goes as the
+  # newest lands, never under a page nor over what the reader had; elsewhere it grows, since they
+  # may be reading what would go.
+  defp append_chronicle(socket, id) do
+    %{record_log: held, record_log_cursor: cursor} = socket.assigns
+    added = CharacterLog.since(id, cursor, top_number(held))
+
+    case added do
+      [] ->
+        socket
+
+      _ ->
+        [newest | _] = added
+        kept = if socket.assigns.record_log_present, do: max(CharacterLog.window(), length(held))
+        log = if kept, do: Enum.take(added ++ held, kept), else: added ++ held
+
+        # The road above the panel is dated by the same entry, so it moves with the chronicle.
+        assign(socket,
+          record: %{socket.assigns.record | last_seen_at: newest.at},
+          record_log: log,
+          record_log_cursor: newest.id,
+          record_log_older: socket.assigns.record_log_older or length(log) < length(added ++ held)
+        )
+    end
+  end
+
+  defp older_chronicle(
+         %{assigns: %{record: %{id: id}, record_log: [_ | _] = log}} = socket,
+         before
+       ) do
+    if List.last(log).id == before do
+      {older, more?} = CharacterLog.page(id, before)
+      assign(socket, record_log: log ++ older, record_log_older: more?)
+    else
+      socket
+    end
+  end
+
+  defp older_chronicle(socket, _before), do: socket
+
   # ------------------------------------------------------------------ plumbing
 
-  # Runs an action in the character's process and folds the result into the view. A failure lands on
-  # the error screen rather than remounting; `catch` is for the process exiting, which is not a raise.
-  defp apply_action(socket, fun) do
-    id = socket.assigns.character_id
-    result = Characters.mutate(id, fun)
-    player = Characters.snapshot(id)
+  defp put_sort(socket, table, nil),
+    do: assign(socket, sorts: Map.delete(socket.assigns.sorts, table))
+
+  defp put_sort(socket, table, sort),
+    do: assign(socket, sorts: Map.put(socket.assigns.sorts, table, sort))
+
+  # A socket holds one patch, so where an action leaves them is decided here, once: error, death,
+  # else `to`. `catch` is for the process exiting. `quiet` is for what the player did not do,
+  # arriving somewhere, which leaves their notice alone.
+  defp apply_action(socket, fun, to \\ nil, opts \\ []) do
+    {result, player} = Characters.mutate(socket.assigns.session_id, fun)
+    to = if player.dead and not socket.assigns.player.dead, do: "death", else: to
 
     socket
     |> assign(player: player, view: Snapshot.build(player))
-    |> absorb(result)
+    |> then(&if(opts[:quiet], do: &1, else: absorb(&1, result)))
+    |> then(&if(to, do: go(&1, to), else: &1))
   rescue
     error ->
       Logger.error(Exception.format(:error, error, __STACKTRACE__))
@@ -232,7 +497,7 @@ defmodule MiniLineageWeb.GameLive do
       fail(socket, "the character process exited: #{inspect(reason)}")
   end
 
-  # The detail is withheld from a release build: a deployed game must never hand a player a stack.
+  # Withheld outside a debug build: a player is never handed a stack.
   defp fail(socket, detail) do
     detail = if Version.debug_build?(), do: detail
 
@@ -242,42 +507,44 @@ defmodule MiniLineageWeb.GameLive do
   defp absorb(socket, {:error, _code, message}),
     do: assign(socket, notice: message, game_flash: nil)
 
-  defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil, last_result: nil)
+  defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil)
 
   defp absorb(socket, {:ok, %{text: _} = flash}),
-    do:
-      socket
-      |> assign(notice: nil, game_flash: flash, last_result: nil)
-      |> play(flash[:sound])
+    do: socket |> assign(notice: nil, game_flash: flash) |> play(flash[:sound])
 
   defp absorb(socket, {:ok, result}) do
-    flash = Map.get(result, :flash)
-
     socket
-    |> assign(notice: nil, game_flash: flash, last_result: result)
+    |> assign(notice: nil, game_flash: Map.get(result, :flash))
     |> play(Map.get(result, :sound))
   end
 
   defp play(socket, nil), do: socket
   defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})
 
-  # An action moved you, so its flash comes along — creating a character lands on Town with its
-  # welcome, dying lands on the death screen with its reason.
-  defp go(socket, screen, race_slug \\ nil) do
-    socket
-    |> assign(flash_fresh: true)
-    |> push_patch(to: Paths.for_screen(screen, race_slug))
+  # Travelling to the Battleground fights on arrival; a throttled fight still arrives.
+  defp fight(socket, to) do
+    case throttle(socket, :battle) do
+      {:ok, socket} -> apply_action(socket, &Actions.fight/1, to)
+      {:limited, socket} -> if(to, do: go(socket, to), else: socket)
+    end
   end
 
-  # The PLAYER moved themselves, so nothing comes along. A link or the banner reaches
-  # handle_params with no flag at all and is dropped there; these events need saying so, because
-  # a flash from an earlier action is still sitting in the assigns.
+  # An action moved you, so its flash comes along — creating a character lands on Town with its
+  # welcome, dying lands on the death screen with its reason.
+  defp go(socket, screen) do
+    socket
+    |> assign(flash_fresh: true)
+    |> push_patch(to: Paths.for_screen(screen))
+  end
+
+  # The PLAYER moved themselves, so nothing comes along. A link is dropped in handle_params with no
+  # flag; these events must say so, since an earlier flash is still in the assigns.
   defp leave(socket, screen), do: socket |> assign(game_flash: nil) |> go(screen)
 
   # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries
   # only one generic message. Flavour, not security.
   defp throttle(socket, limiter) do
-    case RateLimit.check(socket.assigns.character_id, limiter) do
+    case RateLimit.check(socket.assigns.session_id, limiter) do
       :ok ->
         {:ok, socket}
 
@@ -285,8 +552,8 @@ defmodule MiniLineageWeb.GameLive do
         seconds = max(1, ceil(retry_after_ms / 1000))
 
         message =
-          if socket.assigns.view[:ambushed] && !socket.assigns.view[:dead] do
-            "You are in the middle of an ambush and moving too fast, please wait a moment."
+          if socket.assigns.view.ambushed and not socket.assigns.view.dead do
+            "You are in the middle of an ambush and moving too fast, try again in #{seconds}s."
           else
             "You are moving too fast, please take a breath and try again in #{seconds}s."
           end
@@ -300,24 +567,44 @@ defmodule MiniLineageWeb.GameLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} title={Screens.title(@screen)} view={@view} screen={@screen}>
-      <Screens.notice :if={@notice} message={@notice} />
-      <Screens.flash_alert :if={@game_flash} flash={@game_flash} />
-      <Screens.low_health
+    <Layouts.app
+      title={@title}
+      view={@view}
+      screen={@screen}
+      character_id={@character_id}
+    >
+      <Controls.notice :if={@notice} message={@notice} />
+      <Controls.flash_alert :if={@game_flash} flash={@game_flash} />
+      <Controls.low_health
         :if={Screens.low_health_alert?(@view, @screen)}
         ambushed={@view.ambushed}
         ambush_line={@view.ambush_low_health}
       />
 
+      <:aside :if={Screens.aside?(@screen, @record)}>
+        <Screens.aside
+          screen={@screen}
+          record={@record}
+          record_log={@record_log}
+          record_log_older={@record_log_older}
+          character_id={@character_id}
+        />
+      </:aside>
+
       <Screens.screen
         screen={@screen}
         view={@view}
         catalog={@catalog}
-        highscores={@highscores}
+        boards={@boards}
+        character_id={@character_id}
+        record={@record}
+        record_view={@record_view}
+        from={@from}
         statistics={@statistics}
         race_filter={@race_filter}
         detail={@error_detail}
         picked={@picked}
+        sorts={@sorts}
       />
     </Layouts.app>
     """

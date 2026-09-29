@@ -4,9 +4,9 @@ defmodule Mix.Tasks.Build do
   @moduledoc """
       mix build
 
-  Tests first, and it stops there if any fail — the same gate `prebuild` gave `npm run build`.
-  Then production dependencies, minified and digested assets, and the release itself, stamped with
-  the current commit so it identifies as a release rather than a debug build.
+  Tests first, and it stops there if any fail. Then production dependencies, minified and digested
+  assets, and the release itself, stamped with the current commit so it identifies as a release
+  rather than a debug build.
 
   Builds without serving. `mix prod` is this followed by `mix start`.
   """

@@ -7,7 +7,10 @@ defmodule MiniLineage.Game.JsParityTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Format, Math}
+  alias MiniLineage.Game.{Constants, Format, Math}
+
+  # The shipped tuning, so a rebalance is checked against what it ships rather than a stale copy.
+  @battle Constants.battle()
 
   @damage_blocked [
     {0, 1},
@@ -85,15 +88,35 @@ defmodule MiniLineage.Game.JsParityTest do
 
   test "damage_blocked matches Math.pow(d, 0.95) * 0.8, floored" do
     for {defense, expected} <- @damage_blocked,
-        do: assert(Math.damage_blocked(defense) == expected)
+        do:
+          assert(
+            Math.damage_blocked(
+              defense,
+              @battle.damage_blocked.exponent,
+              @battle.damage_blocked.scaling
+            ) == expected
+          )
   end
 
   test "base_xp_gained matches Math.pow(a, 1.5) * 0.8, floored" do
-    for {attack, expected} <- @base_xp, do: assert(Math.base_xp_gained(attack) == expected)
+    for {attack, expected} <- @base_xp,
+        do:
+          assert(
+            Math.base_xp_gained(attack, @battle.xp_gained.exponent, @battle.xp_gained.scaling) ==
+              expected
+          )
   end
 
   test "base_adena_gained matches Math.pow(a, 2.65) * 0.05, floored" do
-    for {attack, expected} <- @base_adena, do: assert(Math.base_adena_gained(attack) == expected)
+    for {attack, expected} <- @base_adena,
+        do:
+          assert(
+            Math.base_adena_gained(
+              attack,
+              @battle.adena_gained.exponent,
+              @battle.adena_gained.scaling
+            ) == expected
+          )
   end
 
   test "xp_for_level matches Math.round(130L^2 + 130L)" do

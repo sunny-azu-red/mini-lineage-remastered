@@ -1,5 +1,5 @@
 defmodule MiniLineage.Scratch.AmbushOdds do
-  @moduledoc "Port of scratch/check_ambush_odds.ts — does each race ambush at its advertised rate?"
+  @moduledoc "Does each race ambush at its advertised rate?"
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.{Constants, Math}
 

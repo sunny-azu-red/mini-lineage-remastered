@@ -1,7 +1,6 @@
 import Config
 
-# We don't run a server during test. If one is required,
-# you can enable the server option below.
+# Nothing serves here: the browser suites run under :e2e, on their own port.
 config :mini_lineage, MiniLineageWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "55QIFRf6Cq76U5q1dMFfAHYYYJhBDJNByo7OxWqvnWqrhJTInC5yGdrN7RPpb5LF",
@@ -28,3 +27,4 @@ config :phoenix,
 config :mini_lineage, character_idle_grace_ms: 150
 
 config :mini_lineage, start_statistics_collector: false
+config :mini_lineage, start_board: false

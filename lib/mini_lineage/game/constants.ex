@@ -73,6 +73,9 @@ defmodule MiniLineage.Game.Constants do
       label: "Regenerating",
       modifiers: []
     },
+    # What is left of a run. Derived rather than applied: `kill/1` clears every effect a character
+    # had, so this is not something they carry but something they have become.
+    ghost_aura: %{id: "ghost", type: :aura, emoji: "👻", label: "Ghost", modifiers: []},
     newbie_buff: %{
       id: "newbie_blessing",
       type: :buff,
@@ -222,7 +225,7 @@ defmodule MiniLineage.Game.Constants do
 
   @zone %{
     combat_zones: ~w(battle suicide death),
-    resting_zones: ~w(home inn weapons armors character highscores),
+    resting_zones: ~w(home inn weapons armors character highscores statistics races),
     combat_linger_ms: 5_000
   }
 
@@ -255,6 +258,11 @@ defmodule MiniLineage.Game.Constants do
   def race(id), do: Enum.at(@races, id) || hd(@races)
   def effects, do: @effects
   def effect(key), do: Map.fetch!(@effects, key)
+
+  @effects_by_id Map.new(@effects, fn {_key, effect} -> {effect.id, effect} end)
+
+  @doc "The catalog entry an effect's stored id names, or nil for one it does not have."
+  def effect_by_id(id), do: Map.get(@effects_by_id, id)
   def armors, do: @armors
   def weapons, do: @weapons
   def foods, do: @foods

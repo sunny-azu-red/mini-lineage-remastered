@@ -1,9 +1,6 @@
-/*
- * ========================================================================
- * Mini-Lineage — Base
- * Reset, body background, global typography, links.
- * ========================================================================
- */
+/* Mini-Lineage — Base: reset, typography, links, and the game's value vocabulary. */
+
+/* Declare a property only where it is not inherited (controls take no font or colour) or differs. */
 
 /* ===== Reset ===== */
 *,
@@ -22,58 +19,69 @@ body {
 body {
     background-color: var(--bg-deep);
     background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(74, 85, 128, 0.08) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(123, 45, 139, 0.06) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 50%, rgba(100, 94, 108, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--bar-xp) 6%, transparent) 0%, transparent 50%);
+    /* The tile is one viewport tall, so `repeat` would restart it mid-scroll. */
+    background-repeat: no-repeat;
     color: var(--text-primary);
     font-family: var(--font-body);
+    /* Everywhere, not per class: columns line up and an animating figure does not reflow its line. */
+    font-variant-numeric: tabular-nums;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.75;
     min-height: 100dvh;
 }
 
-/* ===== Links ===== */
-a:link,
-a:visited,
-a:active {
+/* ===== Links =====
+ * Not a .btn: `a:link` outranks one class, and would paint a button-link over its variant. */
+a:not(.btn):link,
+a:not(.btn):visited {
     color: var(--gold);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
-a:hover {
+a:not(.btn):hover {
     color: var(--gold-hover);
     text-decoration: underline;
 }
 
-/*
- * ===== Keyboard Focus =====
- * The default for everything focusable that is NOT a bordered control: links, the alert dismiss
- * ×, the sound toggle. An offset outline rather than the flush box-shadow ring those controls
- * use, because a zero-offset ring sits hard against the glyphs of an inline link and reads as
- * cramped — and an outline follows a link that wraps across lines, where a box-shadow does not.
- *
- * .btn and the form controls override this with their own flush ring. Both are (0,2,0) against
- * this rule's (0,1,0), so they win on specificity and cascade order is not load-bearing.
- */
+/* ===== Keyboard Focus =====
+ * For anything focusable that is not a bordered control. An outline, not a ring: it follows a
+ * link that wraps across lines. .btn and the form controls win on specificity, not order. */
 :focus-visible {
     outline: 2px solid var(--focus-ring-color);
     outline-offset: 2px;
 }
 
 /* ===== Typography ===== */
+/* A name, not a value: the weight marks it out, the colour stays the body's. */
 strong {
-    color: var(--text-secondary);
+    font-weight: var(--weight-value);
 }
 
+/* Every label is set one way, wherever it stands; each keeps its own colour and place. */
+.data-table th,
+.stat-label,
+ol.chronicle .entry-head,
+.panel[data-log] [data-unread]::after {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* 1.6, as `.panel-header`, so the two kinds of heading on a screen sit alike. */
 h2 {
-    color: var(--text-primary);
     font-family: var(--font-heading);
-    font-size: 1.15rem;
+    line-height: 1.6;
+    font-size: 18px;
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    border-bottom: 1px solid var(--border);
+    /* Dashed, as every divider inside a panel is. */
+    border-bottom: 1px dashed var(--border-soft);
     padding-bottom: 6px;
     margin-top: 24px;
     margin-bottom: 12px;
@@ -81,6 +89,18 @@ h2 {
 
 h2:first-child {
     margin-top: 0;
+}
+
+/* Unused today but kept: the browser's own h3 lands near h2 and reads as a peer. */
+h3 {
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.6;
+    text-transform: uppercase;
+    margin-top: 20px;
+    margin-bottom: 8px;
 }
 
 p {
@@ -94,30 +114,95 @@ p.last {
 .back {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid var(--border);
+    border-top: 1px dashed var(--border-soft);
 }
 
-/* ===== Utility Classes ===== */
+/* ===== Utilities =====
+ * What the PAGE knows, not what a player reads, so not the vocabulary below and never weighted.
+ * `.muted` is a non-value standing where a value would be. */
 .muted {
-    color: var(--text-muted) !important;
+    color: var(--text-muted);
 }
 
-.gold {
-    color: var(--gold) !important;
+/* Which build serves the page, in the footer; a release names its commit and takes neither. */
+.build-development {
+    color: var(--text-critical);
 }
 
-.heal {
-    color: var(--success) !important;
+.build-testing {
+    color: var(--text-heal);
 }
 
-.hp {
-    color: var(--hp-glow) !important;
+/* ===== Values =====
+ * A class per thing the game names, never per colour: grouped by today's hue, written apart so one
+ * can move without the others. */
+
+/* What a run has lost, and what is taking it from them. */
+.hp,
+.attack,
+.deaths,
+.debuff {
+    color: var(--text-hp);
 }
 
-.xp {
-    color: var(--xp-glow) !important;
+/* What gives it back. */
+.heal,
+.regen,
+.buff {
+    color: var(--text-heal);
+}
+
+/* What a run is worth: its purse, its level, and the ambient state it stands in. */
+.adena,
+.level,
+.aura {
+    color: var(--gold);
+}
+
+/* Read but not acted on: a risk, a day, a clock, a way out nobody boasts of. */
+.ambush,
+.cowards,
+.date,
+.timer {
+    color: var(--text-muted);
+}
+
+/* What it turns aside. */
+.defense,
+.damage {
+    color: var(--text-defense);
+}
+
+/* Things counted. Gold is for what a run is WORTH and stops meaning that if every figure wears it. */
+.battles,
+.kills,
+.players,
+.purchases {
+    color: var(--text-tally);
 }
 
 .crit {
-    color: var(--critical) !important;
+    color: var(--text-critical);
+}
+
+/* What the arcane touches: experience earned, and a name the gods struck out for reaching past it. */
+.xp,
+.heretics {
+    color: var(--text-xp);
+}
+
+/* Quieter than the sentence around it: a blade's NAME is not the news, the number beside it is. */
+.item {
+    color: var(--text-secondary);
+}
+
+/* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. */
+:is(p, li) :is(.hp, .attack, .deaths, .debuff,
+    .heal, .regen, .buff,
+    .adena, .level, .aura,
+    .ambush, .cowards, .date, .timer,
+    .defense, .damage,
+    .battles, .kills, .players, .purchases,
+    .crit, .xp, .heretics, .item) {
+    font-weight: var(--weight-value);
 }

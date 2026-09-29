@@ -1,15 +1,13 @@
 /**
- * Shared machinery for the browser suites. Both entry points drive the same game through the same
- * controls, and a helper that drifts between them is a bug neither run would report.
+ * Shared machinery for the browser suites. They drive the same game through the same controls,
+ * and a helper that drifts between them is a bug no run would report.
  */
 export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
+export const PURSE = '#sidebar [data-key="adena"]';
 
 /**
- * The four playable lineages, as the UI must present them.
- *
- * These numbers are the newbie blessing's +20 max health and -4 ambush risk already applied, which
- * is what a player actually sees on a fresh character. The balance behind them belongs to
- * balance_golden_test.exs; what is checked here is only that the screens show it.
+ * The four lineages as the UI must present them, with the newbie blessing already applied — what a
+ * player sees on a fresh character. The balance behind them is balance_golden_test.exs's job.
  */
 export const RACES = [
     { id: 0, label: 'Human',     emoji: '🧙', health: 120, adena: 300, crit: 4,  regen: 1, ambush: 4,  plural: 'Humans' },
@@ -49,15 +47,20 @@ export function controls(page) {
     /** The character's live state, read off the one element that mirrors it. */
     const state = async () => {
         const raw = await page.locator('#screen').evaluate(node => ({ ...node.dataset }));
+        // The figures are the sidebar's own `data-value`, which is what the server wrote rather
+        // than a frame of the count-up; null on a screen that draws no sidebar.
+        const figures = await page.evaluate(() => Object.fromEntries(
+            [...document.querySelectorAll('#sidebar [data-key][data-value]')]
+                .map(el => [el.dataset.key, Number(el.dataset.value)])));
         return {
             screen: raw.screen,
             started: raw.started === 'true',
             dead: raw.dead === 'true',
             ambushed: raw.ambushed === 'true',
-            level: raw.level ? Number(raw.level) : null,
-            health: raw.health ? Number(raw.health) : null,
-            maxHealth: raw.maxHealth ? Number(raw.maxHealth) : null,
-            adena: raw.adena ? Number(raw.adena) : null,
+            level: figures.level ?? null,
+            health: figures.hp ?? null,
+            maxHealth: figures['max-hp'] ?? null,
+            adena: figures.adena ?? null,
         };
     };
 
@@ -89,12 +92,15 @@ export function controls(page) {
      * Returns false when the purchase was refused.
      */
     const buy = async (itemId) => {
-        const before = await page.getAttribute('#screen', 'data-adena');
+        const before = await page.getAttribute(PURSE, 'data-value');
         await page.selectOption('#main select[name="item_id"]', String(itemId), { timeout: 5000 });
         await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
 
         return page.waitForFunction(
-            (prev) => document.querySelector('#screen')?.dataset.adena !== prev,
+            (prev) => {
+                const purse = document.querySelector('#sidebar [data-key="adena"]');
+                return !!purse && purse.dataset.value !== prev;
+            },
             before, { timeout: 5000 }).then(() => true).catch(() => false);
     };
 
@@ -146,4 +152,26 @@ export function controls(page) {
         (await page.textContent('#main .action-links a.active'))?.replace(/\s+/g, ' ').trim();
 
     return { state, onScreen, goHome, buttonSettles, buy, leaveShop, travel, fight, boardRows, activeFilter };
+}
+
+/**
+ * Scrolls an open Chronicle down, a page at a time, until it has no older page left to ask for —
+ * the whole run, where a check needs all of it. False if a page it asked for never arrived.
+ */
+export async function readWhole(page) {
+    const entries = () => page.locator('#chronicle-log li').count();
+    await page.locator('#chronicle').scrollIntoViewIfNeeded();
+    const box = await page.locator('#chronicle .panel-body').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+    while (await page.locator('#chronicle-log[data-older-than]').count()) {
+        const had = await entries();
+        await page.mouse.wheel(0, 100000);
+        const grew = await page.waitForFunction(
+            (had) => document.querySelectorAll('#chronicle-log li').length > had,
+            had, { timeout: 5000 }).then(() => true).catch(() => false);
+        if (!grew) return false;
+    }
+
+    return true;
 }

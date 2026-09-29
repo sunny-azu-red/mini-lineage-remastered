@@ -1,9 +1,9 @@
 defmodule MiniLineage.Game.Player do
   @moduledoc """
-  Port of player.service.ts: the stat pipeline, effects, zone auras, purchases and the two tick
-  jobs. Every function is pure — it takes a player and returns a new one.
+  The stat pipeline, effects, zone auras, purchases and the two tick jobs. Every function takes a
+  player and returns a new one.
   """
-  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narratives, Statistics}
+  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Narratives, Statistics}
 
   @zone_aura_ids ~w(resting combat)
 
@@ -24,15 +24,14 @@ defmodule MiniLineage.Game.Player do
             consecutive_ambushes: 0,
             total_enemies_killed: 0,
             effects: [],
+            # What the run did this pass, for the process to write and then clear. Declared by the
+            # action because no diff can name the blade somebody bought.
+            pending_events: [],
             current_screen: nil,
-            combat_until: nil,
             last_battle_narrative: nil
 
   def started?(%__MODULE__{race_id: r, health: h, adena: a}),
     do: r != nil and h != nil and a != nil
-
-  @doc "Clears every game field. The reference preserves session bookkeeping; we hold none."
-  def reset(_player), do: %__MODULE__{}
 
   defp equipment(player) do
     %{
@@ -60,14 +59,17 @@ defmodule MiniLineage.Game.Player do
         total_ambushes: 0,
         consecutive_ambushes: 0,
         total_enemies_killed: 0,
-        effects: []
+        effects: [],
+        # A new character remembers no fight. Left alone it would keep whatever the process was
+        # rehydrated with, and the Battleground would open on someone else's last stand.
+        last_battle_narrative: nil
     }
 
     player = apply_effect(player, Constants.effect(:newbie_buff))
     player = %{player | health: stats(player).max_health}
 
-    Statistics.increment(:total_players)
-    Statistics.increment(:total_adena, player.adena)
+    Statistics.increment_for(player, :total_players)
+    Statistics.increment_for(player, :total_adena, player.adena)
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
     %{min_age: min_age, max_age: max_age, age_thresholds: thresholds, builds: builds} =
@@ -86,19 +88,25 @@ defmodule MiniLineage.Game.Player do
     welcome =
       Format.fill_template(Math.random_element(Narratives.welcome()), %{"raceLabel" => race.label})
 
-    flash = %{
-      text:
-        "You have chosen the #{race.emoji} #{race.label}, #{welcome}\n" <>
-          "You are #{build} #{definition} of #{age} seasons, bearing a 🪙 #{Format.adena(player.adena)} Adena tribute.",
-      type: :info,
-      sound: "start"
+    traits = %{
+      welcome: welcome,
+      build: build,
+      definition: definition,
+      age: age,
+      adena: player.adena
     }
+
+    began = Narrative.build_began(race, traits)
+    player = log(player, event("start", began))
+
+    flash = %{text: Narrative.alert(began), type: :info, sound: "start"}
 
     {player, flash}
   end
 
   def kill(player) do
     player = %{player | health: 0, dead: true, effects: []}
+    # Not `increment_for`: the census counts everyone, or the disqualified arrive and never leave.
     Statistics.increment(:total_deaths)
 
     resolve_death_reason(player)
@@ -114,17 +122,18 @@ defmodule MiniLineage.Game.Player do
     do: player
 
   def resolve_death_reason(%{cheated: true} = player),
-    do: %{player | death_reason: "👾 The gods saw your heresy and cast your memory into oblivion."}
+    do: %{player | death_reason: Narratives.death_cheated()}
 
   def resolve_death_reason(%{coward: true} = player),
-    do: %{player | death_reason: "🤡 You took the cowardly way out."}
+    do: %{player | death_reason: Narratives.death_coward()}
 
   def resolve_death_reason(player),
     do: %{player | death_reason: Math.random_element(Narratives.death())}
 
   # ------------------------------------------------------------------ effects
 
-  defp to_active(config, expires_at) do
+  @doc "An effect as a run carries it: its catalog entry, and until when."
+  def to_active(config, expires_at) do
     %{
       id: config.id,
       type: config.type,
@@ -143,7 +152,7 @@ defmodule MiniLineage.Game.Player do
 
     kept =
       Enum.reject(player.effects, fn e ->
-        (group != nil and e.group == group) or e.id == config.id or
+        (group != nil and e.group == group and e.id != config.id) or
           (e.expires_at != nil and e.expires_at <= now)
       end)
 
@@ -153,11 +162,22 @@ defmodule MiniLineage.Game.Player do
         ms -> now + ms
       end
 
-    %{player | effects: kept ++ [to_active(config, expires_at)]}
+    active = to_active(config, expires_at)
+
+    # Held in the order they arrived, which is the order the chronicle introduced them and the order
+    # they leave in. A refresh logs nothing, so it keeps its place rather than moving to the end.
+    effects =
+      if Enum.any?(kept, &(&1.id == config.id)),
+        do: Enum.map(kept, &if(&1.id == config.id, do: active, else: &1)),
+        else: kept ++ [active]
+
+    %{player | effects: effects}
   end
 
-  @doc "Unexpired buffs/debuffs/auras, plus the derived regenerating aura."
-  def active_effects(%{dead: true}), do: []
+  @doc "Unexpired buffs/debuffs/auras, plus the derived regenerating and ghost auras."
+  # The dead carry nothing — `kill/1` empties the list — so the one thing they have is derived, the
+  # way the regen aura is. It holds no modifiers, so the stats pipeline folds in nothing.
+  def active_effects(%{dead: true}), do: [to_active(Constants.effect(:ghost_aura), nil)]
 
   def active_effects(player) do
     now = Clock.now_ms()
@@ -168,19 +188,14 @@ defmodule MiniLineage.Game.Player do
       else: effects
   end
 
-  # Mirrors stats/1's modifier list by hand rather than calling it, to avoid recursion.
+  # Takes the effect list rather than reading it back off the player: `active_effects/1` is one of
+  # the callers, and asking it for the stats it is still deciding would not terminate.
   defp regen_aura(player, effects) do
-    %{race: race, weapon: weapon, armor: armor} = equipment(player)
+    stats = stats_from(player, effects)
 
-    all = modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
-    sum = fn type -> Enum.reduce(all, 0, &if(&1.type == type, do: &2 + &1.value, else: &2)) end
-
-    effective_max = max(1, race.start_health + sum.(:max_health))
-    total_regen = max(0, race.regen + sum.(:regen))
-
-    if player.health < effective_max and total_regen > 0 do
+    if player.health < stats.max_health and stats.regen > 0 do
       config = Constants.effect(:regen_aura)
-      [to_active(%{config | modifiers: [%{type: :regen, value: total_regen}]}, nil)]
+      [to_active(%{config | modifiers: [%{type: :regen, value: stats.regen}]}, nil)]
     else
       []
     end
@@ -188,6 +203,13 @@ defmodule MiniLineage.Game.Player do
 
   @doc "Layered pipeline: race base -> equipment stats -> equipment/effect modifiers -> clamps."
   def stats(player) do
+    # 'regenerating' is derived FROM regen, so folding it back in would double-count.
+    effects = Enum.reject(active_effects(player), &(&1.id == "regenerating"))
+
+    stats_from(player, effects)
+  end
+
+  defp stats_from(player, effects) do
     %{race: race, weapon: weapon, armor: armor} = equipment(player)
 
     base = %{
@@ -201,14 +223,8 @@ defmodule MiniLineage.Game.Player do
       adena_multiplier: 1.0
     }
 
-    # 'regenerating' is derived FROM regen, so folding it back in would double-count.
     modifiers =
-      modifiers_of(weapon) ++
-        modifiers_of(armor) ++
-        (player
-         |> active_effects()
-         |> Enum.reject(&(&1.id == "regenerating"))
-         |> Enum.flat_map(& &1.modifiers))
+      modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
 
     stats =
       Enum.reduce(modifiers, base, fn mod, acc ->
@@ -237,41 +253,40 @@ defmodule MiniLineage.Game.Player do
     player.ambushed == true or player.current_screen in Constants.zone().combat_zones
   end
 
+  # The disengage countdown lives on the combat aura itself, as its expiry: there is no second copy
+  # of it on the player to keep in step.
   defp resolve_zone_aura(player, before) do
-    now = Clock.now_ms()
-
     cond do
       held_in_combat?(player) ->
-        {%{player | combat_until: nil}, to_active(Constants.effect(:combat_aura), nil)}
+        to_active(Constants.effect(:combat_aura), nil)
+
+      until = lingering_until(before) ->
+        to_active(Constants.effect(:combat_aura), until)
+
+      player.current_screen in Constants.zone().resting_zones ->
+        to_active(Constants.effect(:resting_aura), nil)
 
       true ->
-        # An indefinite combat aura means they were standing in a combat zone last sync, so
-        # leaving now starts the disengage countdown. Re-entering cancels it (above); leaving
-        # again arms a fresh one, anchored to leaving rather than to the last fight.
-        player =
-          if before != nil and before.id == "combat" and before.expires_at == nil,
-            do: %{player | combat_until: now + Constants.zone().combat_linger_ms},
-            else: player
-
-        if player.combat_until != nil and player.combat_until > now do
-          {player, to_active(Constants.effect(:combat_aura), player.combat_until)}
-        else
-          player = %{player | combat_until: nil}
-
-          if player.current_screen in Constants.zone().resting_zones,
-            do: {player, to_active(Constants.effect(:resting_aura), nil)},
-            else: {player, nil}
-        end
+        nil
     end
   end
+
+  # Indefinite means they stood in a combat zone at the last sync, so leaving now starts the
+  # countdown, anchored to leaving rather than to the last fight. A countdown still running holds.
+  defp lingering_until(%{id: "combat", expires_at: nil}),
+    do: Clock.now_ms() + Constants.zone().combat_linger_ms
+
+  defp lingering_until(%{id: "combat", expires_at: until}),
+    do: if(until > Clock.now_ms(), do: until)
+
+  defp lingering_until(_before), do: nil
 
   @doc "Re-derives the zone aura from `current_screen`. Returns `{player, changed?}`."
   def sync_zone_auras(player) do
     before = Enum.find(player.effects, &(&1.id in @zone_aura_ids))
     player = %{player | effects: Enum.reject(player.effects, &(&1.id in @zone_aura_ids))}
 
-    {player, after_aura} =
-      if player.dead, do: {player, nil}, else: resolve_zone_aura(player, before)
+    after_aura = if player.dead, do: nil, else: resolve_zone_aura(player, before)
 
     player =
       if after_aura, do: %{player | effects: player.effects ++ [after_aura]}, else: player
@@ -309,9 +324,8 @@ defmodule MiniLineage.Game.Player do
   """
   def process_effect_expiry(%{dead: true} = player), do: {player, false}
 
-  # An unstarted character has no health to clamp, and Elixir orders nil ABOVE every number — so
-  # `health > max_health` is true for nil and would invent a health value. JS compares undefined
-  # the other way, which is why the reference needs no such guard.
+  # Elixir orders nil ABOVE every number, so `health > max_health` would invent a health value for
+  # an unstarted character.
   def process_effect_expiry(%{health: health} = player) when not is_integer(health),
     do: {player, false}
 
@@ -330,74 +344,61 @@ defmodule MiniLineage.Game.Player do
 
   @doc """
   Natural HP regeneration, earned by resting. Periodic cadence only. Returns `{player, healed?}`.
-
-  Requires the resting aura outright, rather than merely the absence of combat: a screen in
-  neither zone list used to regenerate silently, with no 🌿 aura to show for it.
+  Driven by the 🌿 aura rather than a second copy of its conditions, so the two cannot come apart.
   """
   def process_regen_tick(%{dead: true} = player), do: {player, false}
 
   def process_regen_tick(player) do
-    if Enum.any?(active_effects(player), &(&1.id == "resting")) do
-      stats = stats(player)
-
-      if stats.regen > 0 and player.health < stats.max_health do
-        {player, healed} = restore_health(player, stats.regen)
-
-        if healed > 0 do
-          Statistics.increment(:total_hp_regen, healed)
-          {player, true}
-        else
-          {player, false}
-        end
-      else
+    case Enum.find(active_effects(player), &(&1.id == "regenerating")) do
+      nil ->
         {player, false}
-      end
-    else
-      {player, false}
+
+      %{modifiers: [%{type: :regen, value: rate}]} ->
+        {player, healed} = restore_health(player, rate)
+        Statistics.increment_for(player, :total_hp_regen, healed)
+
+        {player, true}
     end
   end
 
   # --------------------------------------------------------------- purchases
 
-  @equipment %{
-    "weapon" => %{slot: :weapon_id, stat: :total_weapons_bought},
-    "armor" => %{slot: :armor_id, stat: :total_armors_bought}
-  }
+  defp catalog_for("weapon"),
+    do: {Constants.weapons(), %{slot: :weapon_id, stat: :total_weapons_bought}}
 
-  defp catalog_for("weapon"), do: {Constants.weapons(), @equipment["weapon"]}
-  defp catalog_for("armor"), do: {Constants.armors(), @equipment["armor"]}
-  # Anything else falls through to food, matching the reference's `?? FOODS`.
-  defp catalog_for(_type), do: {Constants.foods(), nil}
+  defp catalog_for("armor"),
+    do: {Constants.armors(), %{slot: :armor_id, stat: :total_armors_bought}}
 
-  @doc "Returns `nil` for an unknown item; `{player, result}` otherwise — including a rejection."
-  def purchase(player, type, item_id) when is_integer(item_id) and item_id >= 0 do
+  defp catalog_for("food"), do: {Constants.foods(), nil}
+
+  @doc """
+  `{player, result}`, a refusal included. The item is one `Actions` has already validated, which is
+  the boundary: an id that is not on sale never reaches here.
+  """
+  def purchase(player, type, item_id) do
     {items, equipment} = catalog_for(type)
-
-    case Enum.at(items, item_id) do
-      nil -> nil
-      item -> do_purchase(player, item, item_id, equipment)
-    end
+    do_purchase(player, Enum.at(items, item_id), item_id, equipment)
   end
-
-  def purchase(_player, _type, _item_id), do: nil
 
   defp do_purchase(player, item, item_id, equipment) do
     if equipment != nil and Map.get(player, equipment.slot) == item_id do
-      {player, refusal(item, owned_text(item, equipment.slot))}
+      {player, refusal(owned_text(item, equipment.slot))}
     else
       case deduct_cost(player, item.cost) do
         {player, false} ->
           {player,
-           refusal(item, "You do not have enough Adena to buy #{item.emoji} #{item.name}!")}
+           refusal(
+             ~s(You do not have enough <span class="adena">🪙 Adena</span> to buy #{named(item)}!)
+           )}
 
         {player, true} ->
-          Statistics.increment(:total_adena_spent, item.cost)
+          Statistics.increment_for(player, :total_adena_spent, item.cost)
           complete_purchase(player, item, item_id, equipment)
       end
     end
   end
 
-  defp refusal(item, text), do: %{success: false, text: text, item: item}
+  defp refusal(text), do: %{success: false, text: text}
 
   defp effect_of(item) do
     case Map.get(item, :effect) do
@@ -407,42 +408,54 @@ defmodule MiniLineage.Game.Player do
   end
 
   defp owned_text(item, :weapon_id),
-    do: "You are already wielding the #{item.emoji} #{item.name}!"
+    do: "You are already wielding the #{named(item)}!"
 
-  defp owned_text(item, :armor_id), do: "You are already wearing the #{item.emoji} #{item.name}!"
+  defp owned_text(item, :armor_id), do: "You are already wearing the #{named(item)}!"
+
+  # The same markup a purchase's sentence gives an item, so a refusal is styled like one.
+  defp named(item), do: ~s(#{item.emoji} <span class="item">#{item.name}</span>)
 
   defp complete_purchase(player, item, _item_id, nil) do
     effect = effect_of(item)
     player = if effect, do: apply_effect(player, effect), else: player
 
     {player, healed} = restore_health(player, item.stat)
-    Statistics.increment(:total_food_bought)
-    Statistics.increment(:total_hp_healed, healed)
+    Statistics.increment_for(player, :total_food_bought)
+    Statistics.increment_for(player, :total_hp_healed, healed)
 
-    buff =
+    bought = Narrative.build_meal(item, player.health)
+    player = log(player, event("purchase", bought))
+
+    # The buff has a row of its own in the chronicle; the alert says it in that row's words.
+    settled =
       if effect,
-        do: "\nYou feel invigorated by the #{effect.emoji} #{effect.label} buff!",
+        do:
+          " " <>
+            Narrative.alert(Narrative.build_effect_change(Narratives.effect_gained(), effect)),
         else: ""
 
-    text =
-      "You have bought #{item.emoji} #{item.name}.#{buff}\n" <>
-        "You feel your strength returning, bringing you to #{Format.number(player.health)} HP."
-
-    {player, %{success: true, text: text, item: item}}
+    {player, %{success: true, text: Narrative.alert(bought) <> settled}}
   end
 
   defp complete_purchase(player, item, item_id, equipment) do
     player = Map.put(player, equipment.slot, item_id)
-    Statistics.increment(equipment.stat)
+    Statistics.increment_for(player, equipment.stat)
+    bought = Narrative.build_purchase(item)
+    player = log(player, event("purchase", bought))
 
-    {player, %{success: true, text: bought_text(item, equipment.slot), item: item}}
+    {player, %{success: true, text: Narrative.alert(bought)}}
   end
 
-  defp bought_text(item, :weapon_id),
-    do: "You have bought a Weapon.\nYou are now wielding the swift #{item.emoji} #{item.name}!"
+  # ------------------------------------------------------------------- log
 
-  defp bought_text(item, :armor_id),
-    do: "You have bought an Armor.\nYou are now wearing the mighty #{item.emoji} #{item.name}!"
+  @doc """
+  Notes something the run did, for the process to write and then clear. Appended, because they
+  are read in the order they happened.
+  """
+  def log(player, event), do: %{player | pending_events: player.pending_events ++ [event]}
+
+  @doc "A deed, stamped when it happened rather than when the row reaches the database."
+  def event(kind, line), do: %{kind: kind, line: line, at: Clock.now()}
 
   # ----------------------------------------------------------------- battle
 
@@ -463,19 +476,19 @@ defmodule MiniLineage.Game.Player do
           total_enemies_killed: player.total_enemies_killed + result.enemies_killed
       }
 
-      if result.is_critical, do: Statistics.increment(:total_critical_hits)
-      Statistics.increment(:total_battles)
-      Statistics.increment(:total_enemies_killed, result.enemies_killed)
-      Statistics.increment(:total_adena_generated, result.adena_gained)
-      Statistics.increment(:total_adena, result.adena_gained)
-      Statistics.increment(:total_hp_lost, result.hp_lost)
-      Statistics.increment(:total_xp_gained, result.xp_gained)
-      Statistics.increment(:total_damage_blocked, result.damage_blocked)
+      if result.is_critical, do: Statistics.increment_for(player, :total_critical_hits)
+      Statistics.increment_for(player, :total_battles)
+      Statistics.increment_for(player, :total_enemies_killed, result.enemies_killed)
+      Statistics.increment_for(player, :total_adena_generated, result.adena_gained)
+      Statistics.increment_for(player, :total_adena, result.adena_gained)
+      Statistics.increment_for(player, :total_hp_lost, result.hp_lost)
+      Statistics.increment_for(player, :total_xp_gained, result.xp_gained)
+      Statistics.increment_for(player, :total_damage_blocked, result.damage_blocked)
 
       if Math.level_up?(old_xp, player.experience) do
         {player, healed} = restore_health(player, stats(player).max_health)
-        Statistics.increment(:total_levels_gained)
-        Statistics.increment(:total_hp_healed, healed)
+        Statistics.increment_for(player, :total_levels_gained)
+        Statistics.increment_for(player, :total_hp_healed, healed)
 
         {player, true}
       else

@@ -1,5 +1,5 @@
 defmodule MiniLineage.Scratch.LevelingSpeed do
-  @moduledoc "Port of scratch/check_leveling_speed.ts — battles spent on each level, assuming ideal gear."
+  @moduledoc "Battles spent on each level, assuming ideal gear."
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.{Battle, Constants, Math, Player}
 
@@ -32,7 +32,7 @@ defmodule MiniLineage.Scratch.LevelingSpeed do
     end
   end
 
-  # Gear is tiered off the level being left behind, matching the reference's `currentLevel`.
+  # Gear is tiered off the level being left behind, as the original study tiered it.
   defp grind_to(player, from_level, target, fought) do
     if Math.level_for_xp(player.experience) >= target do
       {player, fought}

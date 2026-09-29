@@ -5,16 +5,15 @@ defmodule MiniLineage.Game.Version do
   """
   @commit_url "https://github.com/sunny-azu-red/mini-lineage-remastered/commit/"
 
-  # What a build with no commit to name calls itself. Baked per environment, so the browser suites'
-  # server on 4002 is never mistaken for the dev server on 4000. Safe as compile_env because it is
-  # a constant of the environment, unlike the sha, which changes with every commit.
-  @label Application.compile_env(:mini_lineage, :build_label, "⚡ development")
+  # What a build with no commit calls itself, per environment so 4002 is never taken for 4000.
+  # compile_env is safe here, being constant per environment, unlike the sha.
+  @name Application.compile_env!(:mini_lineage, :build_label)
+  @glyphs %{"development" => "🔥", "testing" => "🍃"}
+  @label Map.get(@glyphs, @name, "⚡") <> @name
 
   @doc """
-  APP_VERSION at runtime, else the sha config/prod.exs stamped in, else a debug build. Only two
-  answers: a production build that could name no commit fails to build at all.
-
-  An empty APP_VERSION counts as absent — a Docker build arg left unset arrives as "".
+  APP_VERSION at runtime, else the sha config/prod.exs stamped in, else the debug label. An empty
+  APP_VERSION counts as absent, because an unset Docker build arg arrives as "".
   """
   def current do
     with nil <- present(System.get_env("APP_VERSION")),
@@ -27,12 +26,17 @@ defmodule MiniLineage.Game.Version do
   defp present(_), do: nil
 
   @doc """
-  Whether this build may show its internals — false in a production one, whatever its version.
-
-  Kept apart from `release?/1` on purpose. Tying the two meant an image built without APP_VERSION
-  could not tell it was a release, and went on serving exception messages to players.
+  Whether this build may show its internals. Deliberately not `release?/1`: an image built without
+  APP_VERSION cannot tell it is a release.
   """
-  def debug_build?, do: Application.get_env(:mini_lineage, :debug_build, true)
+  def debug_build?, do: Application.fetch_env!(:mini_lineage, :debug_build)
+
+  @doc """
+  The footer badge's class, or nil for a build that names a commit. Matched on the whole label, so
+  an APP_VERSION that is not a sha is not mistaken for a debug build.
+  """
+  def build_class(@label), do: "build-" <> @name
+  def build_class(_release), do: nil
 
   @doc "A short git sha and nothing else. Gates the footer's commit link."
   def release?(version), do: String.match?(version, ~r/^[0-9a-f]{7}$/i)

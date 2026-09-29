@@ -1,7 +1,6 @@
 defmodule MiniLineage.Game.PurchaseGuardTest do
   @moduledoc """
-  The purchase boundary. The reference enforced this with a Zod schema before any handler ran;
-  here `Actions.purchase/3` is the only gate, so it has to reject the same things.
+  The purchase boundary: `Actions.purchase/3` is the only gate, with no schema in front of it.
   """
   use ExUnit.Case, async: true
 

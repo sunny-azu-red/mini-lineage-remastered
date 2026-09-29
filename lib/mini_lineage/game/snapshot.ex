@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
-  @moduledoc "The single Player -> view-model mapping. Reuses the math and player modules."
-  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player}
+  @moduledoc "The single Player -> view-model mapping."
+  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Player}
 
   def item_view(item) do
     modifiers = Map.get(item, :modifiers) || effect_modifiers(item)
@@ -29,9 +29,8 @@ defmodule MiniLineage.Game.Snapshot do
   end
 
   @doc """
-  Always the SAME shape, whether or not a character exists. A view missing keys means any screen
-  still rendering when a character is reset — in this tab or another — raises instead of drawing,
-  and the LiveView silently remounts, swallowing whatever it was about to say.
+  Always the SAME shape, whether or not a character exists: a screen still rendering when its
+  character is reset would otherwise raise, and the LiveView silently remount.
   """
   @empty %{
     started: false,
@@ -61,11 +60,10 @@ defmodule MiniLineage.Game.Snapshot do
     cheated: false,
     death_reason: nil,
     ambush_low_health: nil,
-    highscore_eligible: false,
+    disqualified: false,
     counters: %{
       total_battles: 0,
       total_ambushes: 0,
-      consecutive_ambushes: 0,
       total_enemies_killed: 0
     },
     last_battle: nil
@@ -111,11 +109,10 @@ defmodule MiniLineage.Game.Snapshot do
       cheated: player.cheated,
       death_reason: player.death_reason,
       ambush_low_health: Narrative.ambush_low_health(player),
-      highscore_eligible: player.dead and not player.coward and not player.cheated,
+      disqualified: player.coward or player.cheated,
       counters: %{
         total_battles: player.total_battles,
         total_ambushes: player.total_ambushes,
-        consecutive_ambushes: player.consecutive_ambushes,
         total_enemies_killed: player.total_enemies_killed
       },
       last_battle: player.last_battle_narrative
@@ -129,9 +126,11 @@ defmodule MiniLineage.Game.Snapshot do
       emoji: effect.emoji,
       label: effect.label,
       tooltip: tooltip(effect),
+      # Carried rather than only folded into the tooltip: the record explains an effect in prose,
+      # and the derived regen aura's rate is only ever known here.
+      modifiers: effect.modifiers,
       # A duration, not a deadline: the two machines' clocks never need reconciling.
-      remaining_ms:
-        effect.expires_at && max(0, effect.expires_at - MiniLineage.Game.Clock.now_ms())
+      remaining_ms: effect.expires_at && max(0, effect.expires_at - Clock.now_ms())
     }
   end
 
@@ -143,19 +142,33 @@ defmodule MiniLineage.Game.Snapshot do
   defp modifier_text(mod) do
     config = Map.get(Constants.stat_modifier_labels(), mod.type, %{label: to_string(mod.type)})
 
-    cond do
-      Map.get(config, :multiplier?) ->
-        "#{mod.value}x #{config.label}"
-
-      true ->
-        sign = if mod.value > 0, do: "+", else: ""
-        unit = if Map.get(config, :percentage?), do: "%", else: ""
-        "#{sign}#{mod.value}#{unit} #{config.label}"
+    if Map.get(config, :multiplier?) do
+      "#{mod.value}x #{config.label}"
+    else
+      sign = if mod.value > 0, do: "+", else: ""
+      unit = if Map.get(config, :percentage?), do: "%", else: ""
+      "#{sign}#{mod.value}#{unit} #{config.label}"
     end
   end
 
-  @doc "The static catalog. Nothing in it changes at runtime."
+  @catalog_key {__MODULE__, :catalog}
+
+  @doc """
+  The static catalog, built once per VM: slugifying and filling the race templates costs more than
+  a whole view. Not cached in development, where an edited template must show without a restart.
+  """
   def catalog do
+    if Application.fetch_env!(:mini_lineage, :cache_catalog) do
+      case :persistent_term.get(@catalog_key, nil) do
+        nil -> tap(build_catalog(), &:persistent_term.put(@catalog_key, &1))
+        catalog -> catalog
+      end
+    else
+      build_catalog()
+    end
+  end
+
+  defp build_catalog do
     %{
       races:
         Enum.map(Constants.races(), fn race ->

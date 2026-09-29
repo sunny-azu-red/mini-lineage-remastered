@@ -1,5 +1,5 @@
 defmodule MiniLineage.Game.Narrative do
-  @moduledoc "Port of narrative.service.ts. Each `pick` draws once — reordering shifts every later roll."
+  @moduledoc "Each `pick` draws once — reordering shifts every later roll."
   alias MiniLineage.Game.{Constants, Format, Math, Narratives}
 
   defp pick(templates, data), do: Format.fill_template(Math.random_element(templates), data)
@@ -56,18 +56,93 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   @doc """
-  The warning shown while ambushed and near death.
-
-  Drawn from the pool by a hash of the run rather than at random, because the banner re-renders on
-  every tick: a fresh roll each time would have it flickering through nine lines while the player
-  reads it. The inputs only move when a fight does, which is also the only thing that ends an
-  ambush, so it holds still for exactly as long as the warning is on screen.
+  The warning shown while ambushed and near death. Hashed from the run rather than rolled, because
+  the banner re-renders on every tick and a fresh roll would flicker as the player reads it.
   """
   def ambush_low_health(player) do
     pool = Narratives.ambush_low_health()
 
     Enum.at(pool, rem(:erlang.phash2({player.experience, player.total_ambushes}), length(pool)))
   end
+
+  @doc """
+  What an active effect does, in the reader's voice. The values are read off the effect rather than
+  its catalog entry, so the regen aura — whose rate is filled in at runtime — describes itself.
+  """
+  def build_effect(effect, voice) do
+    labels = Constants.stat_modifier_labels()
+
+    values =
+      Map.new(effect.modifiers, fn mod ->
+        config = Map.get(labels, mod.type, %{})
+
+        {to_string(mod.type), Format.modifier(mod.value, Map.get(config, :multiplier?, false))}
+      end)
+
+    Format.fill_template(Narratives.effect_blurb(effect.id), Map.merge(values, pronouns(voice)))
+  end
+
+  @doc """
+  A stored line told to whoever is reading it: its open pronouns filled as "you" on the run's own
+  screen, and as "they" for anybody else.
+  """
+  def voiced(nil, _mine?), do: nil
+  def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
+
+  @doc "A death told to whoever is reading it: the fallen player themselves, or anybody else."
+  def death_reason(reason, mine?), do: voiced(reason, mine?)
+
+  # ------------------------------------------------------------------ deeds
+  # Values are filled now; the pronouns stay open until render, as a fight's do.
+
+  @doc "Who a run set out as. `welcome` still carries its own open pronouns."
+  def build_began(race, traits) do
+    Format.fill_template(Narratives.began(), %{
+      "raceEmoji" => race.emoji,
+      "raceLabel" => race.label,
+      "welcome" => traits.welcome,
+      "build" => traits.build,
+      "definition" => traits.definition,
+      "age" => traits.age,
+      "adena" => Format.adena(traits.adena)
+    })
+  end
+
+  @doc "What a purchase leaves behind, which is the thing bought."
+  def build_purchase(item), do: named(Narratives.bought_gear(), item)
+
+  def build_meal(item, health),
+    do: Narratives.ate() |> named(item) |> Format.fill_template(%{"hp" => Format.number(health)})
+
+  def build_levelled(level), do: Format.fill_template(Narratives.levelled(), %{"level" => level})
+
+  def build_heresy, do: Narratives.heresy()
+
+  @doc "An effect arriving or going. The blurb says what it does; this says that it happened."
+  def build_effect_change(template, effect) do
+    Format.fill_template(template, %{
+      "emoji" => effect.emoji,
+      "label" => effect.label,
+      "type" => to_string(effect.type)
+    })
+  end
+
+  defp named(template, item) do
+    Format.fill_template(template, %{
+      "emoji" => item.emoji,
+      "name" => item.name,
+      "cost" => Format.adena(item.cost)
+    })
+  end
+
+  @doc """
+  A stored line as its owner's alert: the same sentence, colours and all, so the alert and the
+  chronicle cannot drift apart.
+  """
+  def alert(line), do: voiced(line, true)
+
+  defp pronouns(mine?) when is_boolean(mine?), do: mine? |> Narratives.voice() |> pronouns()
+  defp pronouns(voice), do: Map.new(voice, fn {part, word} -> {to_string(part), word} end)
 
   def build_race_traits(race) do
     Format.fill_template(Narratives.race_traits(race.id), %{

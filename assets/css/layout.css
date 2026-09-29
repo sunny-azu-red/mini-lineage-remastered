@@ -1,9 +1,4 @@
-/*
- * ========================================================================
- * Mini-Lineage — Layout
- * App shell, header banner, two-column content area, responsive.
- * ========================================================================
- */
+/* Mini-Lineage — Layout: app shell, header banner, columns, responsive. */
 
 /* ===== App Shell ===== */
 #app {
@@ -16,7 +11,7 @@
 
 #wrapper {
     width: 100%;
-    max-width: 680px;
+    max-width: 700px;
 }
 
 /* ===== Header Banner ===== */
@@ -24,45 +19,36 @@
     margin-bottom: 12px;
 }
 
-/*
- * `.header-clickable-area` carries the flex layout (gap/alignment between emblem/title/subtitle)
- * shared by both branches SiteHeader can render: the clickable `<a id="header-link">` when
- * navigation is allowed, and a plain, unwrapped `<div>` when it isn't (ambushed/dead) — so the
- * spacing looks identical either way. Putting the layout ON the element itself (rather than
- * `display: contents` on the anchor, which was the old approach) is the fix: `display: contents`
- * makes an element's own box disappear entirely for hit-testing, so only its children (the
- * emblem/title/subtitle) were ever clickable, not the gaps/padding around them. Now the anchor's
- * own box genuinely spans the whole emblem+title+subtitle+gaps+padding region.
- */
+/* Shared by the linked and unlinked headers. Not `display: contents`, which drops its box from
+   hit-testing and leaves the gaps dead. */
 .header-clickable-area {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 24px 12px 24px;
-    width: 100%;
+    padding: 12px 24px;
 }
 
 #header-link {
     text-decoration: none;
     color: inherit;
-    cursor: pointer;
 }
 
 #site-header {
     background: linear-gradient(135deg,
-            #0a0f1e 0%,
-            #111830 30%,
-            #1a2550 60%,
-            #0f1a38 100%);
-    border: 1px solid var(--border);
+            var(--bg-deep) 0%,
+            #201e24 30%,
+            #34303b 60%,
+            #232027 100%);
+    border: 1px solid var(--border-banner);
     border-bottom: 2px solid var(--gold-dim);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
+    /* Here and not on the hover, so the border eases back out as well as in. */
+    transition: border-color 0.2s ease;
 }
 
-/* Subtle shimmer line across the top */
 #site-header::before {
     content: '';
     position: absolute;
@@ -74,7 +60,6 @@
     opacity: 0.4;
 }
 
-/* Radial glow in the background */
 #site-header::after {
     content: '';
     position: absolute;
@@ -83,12 +68,12 @@
     transform: translateX(-50%);
     width: 340px;
     height: 140px;
-    background: radial-gradient(ellipse, rgba(201, 168, 76, 0.07) 0%, transparent 70%);
+    background: radial-gradient(ellipse, color-mix(in srgb, var(--gold) 7%, transparent) 0%, transparent 70%);
     pointer-events: none;
 }
 
 .header-emblem {
-    width: auto;
+    color: var(--gold);
     height: 60px;
     flex-shrink: 0;
 }
@@ -98,11 +83,10 @@
     font-size: 26px;
     font-weight: 700;
     letter-spacing: 0.12em;
-    background: linear-gradient(180deg, #e8d5a0 0%, var(--gold) 50%, #8a6a28 100%);
+    background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-deep) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: none;
     line-height: 1;
     padding-top: 6px;
 }
@@ -111,7 +95,7 @@
     position: absolute;
     bottom: 12px;
     right: 12px;
-    font-size: 10px;
+    font-size: 11px;
     font-family: var(--font-heading);
     color: var(--gold-dim);
     letter-spacing: 0.25em;
@@ -126,9 +110,8 @@
     right: 12px;
     background: transparent;
     border: none;
-    padding: 0;
-    margin: 0;
     color: var(--text-primary);
+    font-family: var(--font-body);
     font-size: 13px;
     line-height: 1;
     display: flex;
@@ -144,43 +127,31 @@
     opacity: 1;
 }
 
-.sound-toggle-btn.muted {
+.sound-toggle-btn.silenced {
     opacity: 0.35;
 }
 
-.sound-toggle-btn.muted:hover {
+.sound-toggle-btn.silenced:hover {
     opacity: 0.8;
 }
 
-/*
- * `#header-link` is now nested INSIDE `#site-header` (see the doc comment above), so the hover
- * relationship is the reverse of the old ancestor-wraps-box markup: highlight the box when the
- * link inside it is hovered.
- */
+/* The link is inside the box, so the box highlights when the link is hovered. */
 #site-header:has(#header-link:hover) {
     border-bottom-color: var(--gold);
+    /* Every stop 3-4 points lighter than the resting gradient's; retune the two together. */
     background: linear-gradient(135deg,
-            #0d1428 0%,
-            #162040 30%,
-            #1e2c60 60%,
-            #111e44 100%);
-    transition: background 0.2s ease, border-color 0.2s ease;
+            #1a171d 0%,
+            #2a272f 30%,
+            #3e3945 60%,
+            #2a262f 100%);
 }
 
-/* ===== Two-column content ===== */
+/* ===== Columns =====
+   The sidebar and the aside are one `.side` column at fixed widths; one breakpoint stacks either. */
 #content {
     display: flex;
     gap: 12px;
     align-items: flex-start;
-}
-
-#sidebar {
-    flex: 0 0 195px;
-    min-width: 0;
-}
-
-.inventory-panel {
-    margin-top: 12px;
 }
 
 #main {
@@ -188,8 +159,77 @@
     min-width: 0;
 }
 
-#main-simple {
-    width: 100%;
+.side {
+    flex: 0 0 var(--side-width);
+    min-width: 0;
+}
+
+/* Fits "💀 The Forgotten Blade 15%" at 13px, with room for Verdana and a wider emoji font. */
+#sidebar {
+    --side-width: 210px;
+}
+
+/* The page widens by what the aside takes, so the main panel keeps the width it has alone. */
+#aside {
+    --side-width: 310px;
+}
+
+#wrapper:has(#aside) {
+    max-width: 1000px;
+}
+
+/* Whichever panel follows another is spaced off it, wherever they stand. */
+.panel+.panel {
+    margin-top: 12px;
+}
+
+/* A grid, so the aside spans the record's row and not the footer's; `contain: size` sizes it as if
+   empty, so the record alone decides that row's height. */
+@media (width > 640px) {
+    #content:has(#aside) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        /* The footer keeps its own margin, as it has beside the sidebar. */
+        row-gap: 0;
+    }
+
+    #content:has(#aside) #main {
+        display: contents;
+    }
+
+    #content:has(#aside) #main>* {
+        grid-column: 1;
+    }
+
+    #aside {
+        grid-area: 1 / 2;
+        width: var(--side-width);
+        contain: size;
+    }
+
+    #aside>.panel {
+        max-height: 100%;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+}
+
+/* Beside the main panel a side one does not fold, and `--folds` tells the hook so. Child
+   combinators, to outrank the fold itself. */
+.side>.panel {
+    --folds: 0;
+}
+
+.side>.panel>.panel-toggle {
+    pointer-events: none;
+}
+
+.side>.panel>.panel-toggle+.panel-body {
+    display: block;
+}
+
+.side .panel-arrow {
+    display: none;
 }
 
 /* ===== Copyright ===== */
@@ -198,54 +238,72 @@
     margin-top: 12px;
     color: var(--text-muted);
     font-size: 11px;
+    letter-spacing: .05em;
     opacity: 0.5;
 }
 
 #copyright a.version-link {
     color: inherit;
-    text-decoration: none;
 }
 
 #copyright a.version-link:hover {
     color: var(--gold);
-    text-decoration: underline;
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 520px) {
-    #app {
-        padding: 12px;
-    }
-
+/* Stacked before a side column can squeeze the main one narrower than a phone. Both flatten into
+   #content, so the vitals go above the main panel and every other side panel below it. */
+@media (max-width: 640px) {
     #content {
         flex-direction: column;
         align-items: stretch;
     }
 
-    #sidebar,
-    #main {
+    #main,
+    .side {
         display: contents;
-    }
-
-    .status-panel {
-        order: 1;
-        width: 100%;
     }
 
     #main>.panel {
         order: 2;
-        width: 100%;
     }
 
-    .inventory-panel {
+    .side>.panel {
         order: 3;
-        width: 100%;
+    }
+
+    .side>.status-panel {
+        order: 1;
+    }
+
+    /* #content's gap already spaces the flattened panels. */
+    .panel+.panel {
         margin-top: 0;
     }
 
-    #content #copyright {
+    #copyright {
         order: 4;
-        width: 100%;
         margin-top: 0;
+    }
+
+    /* A cap, and a fold that starts shut, so the main panel is what the page ends on. */
+    .side .panel-body.scrolls {
+        max-height: 260px;
+    }
+
+    .side>.panel {
+        --folds: 1;
+    }
+
+    .side>.panel>.panel-toggle {
+        pointer-events: auto;
+    }
+
+    .side>.panel>.panel-toggle[aria-expanded="false"]+.panel-body {
+        display: none;
+    }
+
+    .side .panel-arrow {
+        display: block;
     }
 }

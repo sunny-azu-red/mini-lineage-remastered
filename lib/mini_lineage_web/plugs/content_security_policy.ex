@@ -22,8 +22,8 @@ defmodule MiniLineageWeb.Plugs.ContentSecurityPolicy do
   @impl true
   def init(opts), do: opts
 
-  # `upgrade-insecure-requests` is emitted only on an https origin. Helmet sends it unconditionally,
-  # which silently rewrote every plain-http redirect target to https and killed navigation.
+  # `upgrade-insecure-requests` only on https: over plain http it rewrites every redirect target to
+  # https and breaks navigation.
   @impl true
   def call(%Plug.Conn{scheme: scheme} = conn, _opts) do
     directives =

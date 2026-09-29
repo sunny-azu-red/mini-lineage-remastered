@@ -1,11 +1,11 @@
 defmodule MiniLineage.Game.SnapshotTest do
   @moduledoc """
-  The Player -> view mapping, including the states the cross-stack audit could not reach because
-  they need particular rolls: max level, low health, and a character that no longer exists.
+  The Player -> view mapping, including the states that need particular rolls: max level, low
+  health, and a character that no longer exists.
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Snapshot}
 
   defp character(race_id \\ 0, overrides \\ %{}) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), "Subject")
@@ -13,8 +13,7 @@ defmodule MiniLineage.Game.SnapshotTest do
   end
 
   test "a character that does not exist has EVERY key one that does has" do
-    # The absence of this invariant meant a screen still rendering when a character was reset
-    # raised instead of drawing, and the LiveView remounted without a word.
+    # A screen still rendering as a character is reset must draw, not raise and remount silently.
     started = Snapshot.build(character())
     empty = Snapshot.build(%Player{})
 
@@ -23,6 +22,29 @@ defmodule MiniLineage.Game.SnapshotTest do
     assert empty.effects == []
     assert empty.last_battle == nil
     assert empty.counters.total_battles == 0
+  end
+
+  describe "the catalog" do
+    # Built once per VM and kept in :persistent_term, so a field that is not in fact constant would
+    # be frozen at whatever it was on the first mount and never noticed again.
+    test "is what building it from the constants would give you" do
+      assert Snapshot.catalog() == %{
+               races:
+                 Enum.map(Constants.races(), fn race ->
+                   Map.merge(race, %{
+                     slug: Format.slugify(race.label),
+                     traits: Narrative.build_race_traits(race)
+                   })
+                 end),
+               weapons: Enum.map(Constants.weapons(), &Snapshot.item_view/1),
+               armors: Enum.map(Constants.armors(), &Snapshot.item_view/1),
+               foods: Enum.map(Constants.foods(), &Snapshot.item_view/1)
+             }
+    end
+
+    test "and the same map every time it is asked" do
+      assert Snapshot.catalog() == Snapshot.catalog()
+    end
   end
 
   describe "at the top of the curve" do
@@ -65,18 +87,23 @@ defmodule MiniLineage.Game.SnapshotTest do
     end
   end
 
-  test "an ambushed character says so, and a dead one shows no effects" do
+  test "an ambushed character says so, and a dead one carries nothing but the ghost" do
     assert Snapshot.build(character(0, %{ambushed: true})).ambushed
-    assert Snapshot.build(Player.kill(character())).effects == []
+
+    # `kill/1` empties the effect list; the ghost is derived from being dead rather than carried,
+    # and holds no modifiers, so nothing a run had survives it and nothing new is folded in.
+    effects = Snapshot.build(Player.kill(character())).effects
+
+    assert [%{id: "ghost", type: :aura, modifiers: []}] = effects
   end
 
-  test "eligibility for the board is derived, never assumed" do
+  test "disqualification is derived, never assumed" do
     dead = Player.kill(character())
 
-    assert Snapshot.build(dead).highscore_eligible
-    refute Snapshot.build(%{dead | coward: true}).highscore_eligible
-    refute Snapshot.build(%{dead | cheated: true}).highscore_eligible
-    refute Snapshot.build(character()).highscore_eligible, "the living are not eligible"
+    refute Snapshot.build(dead).disqualified
+    refute Snapshot.build(character()).disqualified, "the living are ranked like anyone else"
+    assert Snapshot.build(%{dead | coward: true}).disqualified
+    assert Snapshot.build(%{dead | cheated: true}).disqualified
   end
 
   test "effect tooltips name every modifier, with its unit" do

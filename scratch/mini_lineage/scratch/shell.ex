@@ -3,8 +3,8 @@ defmodule MiniLineage.Scratch.Shell do
   Runs one step of a build as its own OS process, and stops the build if it fails.
 
   Separate processes because MIX_ENV is fixed for the life of one: the tests need `:test` and
-  everything after them needs `:prod`, so no single `mix` invocation — and no alias — can do both.
-  Setting it per process also means an exported MIX_ENV cannot decide it for us.
+  everything after them `:prod`, so no single `mix` invocation or alias can do both, and an
+  exported MIX_ENV cannot decide it for us.
   """
   @release "_build/prod/rel/mini_lineage/bin/mini_lineage"
 
@@ -37,9 +37,8 @@ defmodule MiniLineage.Scratch.Shell do
   @doc """
   Blocks until an OS process is gone, or the timeout elapses. True if it went.
 
-  `bin/... stop` returns as soon as its RPC is sent, and the VM takes another moment to actually
-  go — longer with a browser still attached. Until it does, the port and the node name are still
-  taken, so anything that reports success on the strength of that command alone is guessing.
+  `bin/... stop` returns as soon as its RPC is sent, and until the VM actually goes the port and
+  the node name are still taken.
   """
   def await_exit(pid, timeout_ms \\ 20_000) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
@@ -61,12 +60,9 @@ defmodule MiniLineage.Scratch.Shell do
   @doc """
   Claims the right to run the browser suites on this machine, or says who already has it.
 
-  Waiting would be worse than refusing: a run that queues behind another gets its server stopped
-  the moment the first one finishes, and then drives a dead port. Both suites also empty the
-  board and assume only their own entries are on it, so two at once corrupt each other's results
-  rather than merely racing — which is what a stray suite run alongside a soak actually did.
-
-  `mkdir` is the lock: it either creates the directory or it does not, with no window between.
+  Waiting would be worse than refusing: a queued run gets its server stopped the moment the first
+  finishes. Every suite empties the board and assumes only its own entries are on it, so two at
+  once corrupt each other's results. `mkdir` is the lock, being atomic.
   """
   def lock!(path) do
     File.mkdir_p!(Path.dirname(path))
@@ -94,8 +90,7 @@ defmodule MiniLineage.Scratch.Shell do
           once makes both report nonsense. Wait for that one, or stop it.
           """)
         else
-          # Its owner is gone — a killed run, or a reboot. Take it over rather than blocking on a
-          # directory nothing is holding.
+          # Its owner is gone, a killed run or a reboot: take it over.
           File.rm_rf!(path)
           lock!(path)
         end
@@ -108,9 +103,8 @@ defmodule MiniLineage.Scratch.Shell do
   @doc """
   Fails early, and by name, when the browser cannot start.
 
-  Playwright's Chromium needs shared libraries this machine could not install system-wide, and
-  without them it dies with a linker error buried in eighty lines of Chrome flags. `env.sh` puts
-  them on LD_LIBRARY_PATH; this says so plainly rather than letting the run discover it.
+  Playwright's Chromium needs shared libraries that `env.sh` puts on LD_LIBRARY_PATH, and without
+  them it dies with a linker error buried in eighty lines of Chrome flags.
   """
   def require_browser! do
     unless System.find_executable("node") do
@@ -120,6 +114,21 @@ defmodule MiniLineage.Scratch.Shell do
       It comes from nvm, which only loads itself for an interactive shell. `source env.sh` picks
       it up, and adding that to ~/.bashrc keeps it picked up.
       """)
+    end
+
+    # CI installs exactly .nvmrc's version, so a different one here is a run CI would not repeat.
+    pinned = "v" <> String.trim(File.read!(".nvmrc"))
+
+    case System.cmd("node", ["--version"]) do
+      {^pinned <> "\n", 0} ->
+        :ok
+
+      {found, _} ->
+        Mix.raise("""
+        Node is #{String.trim(found)}, but .nvmrc pins #{pinned}, which is what CI runs.
+
+            nvm install #{String.trim_leading(pinned, "v")} && source env.sh
+        """)
     end
 
     unless File.dir?("node_modules/playwright") do
@@ -165,6 +174,7 @@ defmodule MiniLineage.Scratch.Shell do
     url = "http://localhost:#{port}"
 
     if responding?(url) do
+      refuse_if_stale(port, url)
       Mix.shell().info([:cyan, "\n▶ using the server already on #{url}", :reset])
       {nil, url}
     else
@@ -189,6 +199,56 @@ defmodule MiniLineage.Scratch.Shell do
 
       {os_pid, url}
     end
+  end
+
+  # A reused server is never recompiled, so the suites could pass against code that is not the
+  # checkout. A process older than the newest source file cannot have compiled it.
+  defp refuse_if_stale(port, url) do
+    with pid when is_binary(pid) <- listening_pid(port),
+         age when is_integer(age) <- process_age_s(pid),
+         {mtime, file} <- newest_source(),
+         started_at = System.os_time(:second) - age,
+         true <- mtime > started_at do
+      Mix.raise("""
+      the server on #{url} is older than this checkout, so the suites would test code it never
+      compiled. `mix e2e` starts a server, never recompiles one it finds.
+
+      It started #{age}s ago; #{file} changed #{System.os_time(:second) - mtime}s ago.
+
+      Stop it (pid #{pid}) and rerun. With nothing on the port, `mix e2e` starts its own.
+      """)
+    else
+      # No `ss`, no `ps`, or nothing newer: say what is being reused and let the run go on.
+      _ -> :ok
+    end
+  end
+
+  defp listening_pid(port) do
+    case System.cmd("ss", ["-ltnpH", "sport = :#{port}"], stderr_to_stdout: true) do
+      {out, 0} -> Regex.run(~r/pid=(\d+)/, out) |> then(&if &1, do: Enum.at(&1, 1))
+      _ -> nil
+    end
+  rescue
+    ErlangError -> nil
+  end
+
+  defp process_age_s(pid) do
+    case System.cmd("ps", ["-o", "etimes=", "-p", pid], stderr_to_stdout: true) do
+      {out, 0} -> out |> String.trim() |> Integer.parse() |> then(&if &1, do: elem(&1, 0))
+      _ -> nil
+    end
+  rescue
+    ErlangError -> nil
+  end
+
+  @sources ~w(lib assets config priv/repo)
+
+  defp newest_source do
+    @sources
+    |> Enum.flat_map(&Path.wildcard("#{&1}/**/*", match_dot: false))
+    |> Enum.reject(&File.dir?/1)
+    |> Enum.map(&{File.stat!(&1, time: :posix).mtime, &1})
+    |> Enum.max(fn -> nil end)
   end
 
   @doc "Stops a server this task started, and everything it spawned."

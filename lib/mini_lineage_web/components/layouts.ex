@@ -1,18 +1,19 @@
 defmodule MiniLineageWeb.Layouts do
   @moduledoc """
   The page shell. Element ids and class names are load-bearing: the carried-over stylesheet keys
-  off `#app`/`#wrapper`/`#header`/`#content`/`#sidebar`/`#main`/`.panel`.
+  off `#app`/`#wrapper`/`#header`/`#content`/`#main`/`.panel`. `#sidebar` and `#aside` are one kind
+  of thing, a `.side` column, left of the main one and right of it.
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Format, Version}
-  alias MiniLineageWeb.{Paths, Screens}
+  alias MiniLineage.Game.{Access, Format, Version}
+  alias MiniLineageWeb.Paths
 
   embed_templates "layouts/*"
 
   @doc """
-  The document head. Shared with the error page, which is rendered without a LiveView — so the
-  two cannot drift apart on fonts or stylesheets the way they already did once.
+  The document head, shared with the error page, which has no LiveView, so the two cannot drift
+  apart on fonts or stylesheets.
   """
   attr :scripts, :boolean, default: true
 
@@ -27,7 +28,7 @@ defmodule MiniLineageWeb.Layouts do
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&family=Silkscreen:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&family=Silkscreen:wght@400&display=swap"
       rel="stylesheet"
     />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
@@ -36,66 +37,64 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  attr :flash, :map, required: true
   attr :title, :string, default: "Loading"
   attr :view, :map, required: true
   attr :screen, :string, required: true
+  attr :character_id, :string, default: nil
   slot :inner_block, required: true
+
+  # What the screen puts beside its panel rather than in it, in a column the page widens to hold.
+  slot :aside
 
   def app(assigns) do
     ~H"""
-    <div id="app" phx-hook="KonamiRelay">
+    <div id="app">
+      <%!-- Every keypress is a round trip, so the relay exists only while the sequence can do
+            something; its own element, so arming mounts the hook rather than patching one. --%>
+      <div :if={Access.konami?(@view)} id="konami-relay" phx-hook="KonamiRelay" hidden></div>
       <div id="wrapper">
         <div id="header">
           <Layouts.site_header />
         </div>
 
         <div id="content">
-          <.sidebar :if={@view.started && Screens.sidebar?(@screen)} view={@view} />
+          <.sidebar
+            :if={@view.started && Access.sidebar?(@screen)}
+            view={@view}
+            character_id={@character_id}
+          />
 
           <div id="main">
-            <div class="panel">
-              <div class="panel-header flex">
-                <span class="header-name">{@title}</span>
+            <%!-- No wrapper of its own: `h2:first-child` drops the top margin, and an extra
+                  element would qualify every screen's first heading even under an alert. --%>
+            <Controls.panel
+              title={@title}
+              heading
+              body_id="screen"
+              phx-hook="PanelFocus"
+              data-screen={@screen}
+              data-started={to_string(@view.started)}
+              data-dead={to_string(@view.dead)}
+              data-ambushed={to_string(@view.ambushed)}
+              data-battles={@view.counters.total_battles}
+            >
+              <:header>
                 <div class="header-effects" id="effects" phx-hook="EffectTimers">
-                  <.effect_icon :for={effect <- effects_of(@view)} effect={effect} />
+                  <.effect_icon :for={effect <- @view.effects} effect={effect} />
                 </div>
-              </div>
-
-              <%!-- The screen renders straight into the panel body, with no wrapper of its own:
-                    `h2:first-child` drops its top margin, and an extra element would make every
-                    screen's first heading qualify even when an alert sits above it.
-
-                    The character's live state is mirrored here so a browser test can assert on
-                    game state rather than scraping prose. --%>
-              <div
-                class="panel-body"
-                id="screen"
-                phx-hook="PanelFocus"
-                data-screen={@screen}
-                data-started={to_string(@view.started)}
-                data-dead={to_string(@view[:dead] || false)}
-                data-ambushed={to_string(@view[:ambushed] || false)}
-                data-level={@view[:level]}
-                data-health={@view[:health]}
-                data-max-health={@view[:max_health]}
-                data-adena={@view[:adena]}
-                data-battles={@view[:counters] && @view.counters.total_battles}
-              >
-                {render_slot(@inner_block)}
-              </div>
-            </div>
+              </:header>
+              {render_slot(@inner_block)}
+            </Controls.panel>
 
             <Layouts.footer />
           </div>
+
+          <div :if={@aside != []} id="aside" class="side">{render_slot(@aside)}</div>
         </div>
       </div>
     </div>
     """
   end
-
-  defp effects_of(%{started: true, effects: effects}), do: effects
-  defp effects_of(_view), do: []
 
   attr :effect, :map, required: true
 
@@ -104,103 +103,109 @@ defmodule MiniLineageWeb.Layouts do
     <span
       class={"effect-icon effect-fade-in effect-#{@effect.type}"}
       data-effect-id={@effect.id}
-      data-label={@effect.label}
       data-remaining-ms={@effect.remaining_ms}
       title={@effect.tooltip}
     >
       <span class="effect-emoji">{@effect.emoji}</span>
-      <span :if={@effect.remaining_ms} class="effect-timer">{effect_timer(@effect.remaining_ms)}</span>
+      <span :if={@effect.remaining_ms} class="effect-timer" data-timer>{Format.countdown(
+        @effect.remaining_ms
+      )}</span>
     </span>
     """
   end
 
-  defp effect_timer(remaining_ms) do
-    seconds = max(0, ceil(remaining_ms / 1000))
-
-    if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
-  end
-
   attr :view, :map, required: true
+  attr :character_id, :string, default: nil
 
   defp sidebar(assigns) do
+    assigns = assign(assigns, level: Format.number(assigns.view.level))
+
     ~H"""
-    <div id="sidebar" phx-hook="AnimatedValues">
-      <div class="panel status-panel">
-        <div class="panel-header flex">
-          <span class="header-name">{@view.name}</span>
+    <div id="sidebar" class="side" phx-hook="AnimatedValues">
+      <Controls.panel title={@view.name} class="status-panel" body_class="rows">
+        <div class="stat-row">
+          <span class="stat-label">Race</span>
+          <span class="stat-value">
+            {if @view.dead, do: "☠️", else: @view.race_emoji}
+            <%!-- Flush against the anchor: a newline inside one renders as an underlined space. --%>
+            <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
+            <span data-key="level" data-value={@view.level}>{@level}</span></.link>
+          </span>
         </div>
-        <div class="panel-body small">
-          <div class="stat-row">
-            <span class="stat-label">Race</span>
-            <span class="stat-value">
-              {if @view.dead, do: "☠️", else: @view.race_emoji}
-              <.link patch={Paths.for_screen("character")}>
-                {@view.race_label} level {Format.number(@view.level)}
-              </.link>
+
+        <div class={"stat-row#{if @view.low_health, do: " danger"}"}>
+          <span class="stat-label">HP</span>
+          <div class="bar-track" id="hp-track">
+            <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
+            <span class="bar-text">
+              <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span
+                id="status-max-hp"
+                data-key="max-hp"
+                data-value={@view.max_health}
+              >{Format.number(@view.max_health)}</span>
             </span>
           </div>
+        </div>
 
-          <div class={"stat-row bar#{if @view.low_health, do: " danger"}"}>
-            <span class="stat-label">HP</span>
-            <div class="bar-track" id="hp-track">
-              <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
-              <span class="bar-text">
-                <span class="animate-val" data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span id="status-max-hp">{Format.number(
-                  @view.max_health
-                )}</span>
-              </span>
+        <div class="stat-row">
+          <span class="stat-label">XP</span>
+          <div class="bar-track">
+            <div
+              class="bar xp-bar"
+              id="xp-bar"
+              style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
+              data-level={@view.level}
+            >
             </div>
-          </div>
-
-          <div class="stat-row bar">
-            <span class="stat-label">XP</span>
-            <div class="bar-track">
-              <div
-                class="bar xp-bar"
-                id="xp-bar"
-                style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
-                data-level={@view.level}
-              >
-              </div>
-              <span class="bar-text">
-                <span
-                  class="animate-val"
-                  data-key="xp"
-                  data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
-                >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
-                  !@view.is_max_level
-                }>/{Format.number(@view.xp_required)}</span>
-              </span>
-            </div>
-          </div>
-
-          <div class="stat-row">
-            <span class="stat-label">Adena</span>
-            <span class="stat-value gold">🪙
-            <span class="animate-adena" data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
-              @view.adena
-            )}</span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel inventory-panel">
-        <div class="panel-header">Inventory</div>
-        <div class="panel-body small">
-          <div class="stat-row">
-            <span class="stat-value" title="Equipped Armor">
-              {@view.armor.emoji} {@view.armor.name}
-              <span :if={(@view.armor.regen || 0) > 0} class="heal">+{@view.armor.regen}</span>
-            </span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-value" title="Equipped Weapon">
-              {@view.weapon.emoji} {@view.weapon.name}
-              <span :if={(@view.weapon.crit || 0) > 0} class="crit">{@view.weapon.crit}%</span>
+            <span class="bar-text">
+              <span
+                data-key="xp"
+                data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
+              >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
+                !@view.is_max_level
+              }>/<span data-key="xp-required" data-value={@view.xp_required}>{Format.number(
+                @view.xp_required
+              )}</span></span>
             </span>
           </div>
         </div>
-      </div>
+
+        <div class="stat-row">
+          <span class="stat-label">Adena</span>
+          <span class="stat-value adena">🪙
+          <span data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
+            @view.adena
+          )}</span></span>
+        </div>
+      </Controls.panel>
+
+      <%!-- Folds on a phone, open until the reader says otherwise: theirs on every screen, so kept. --%>
+      <Controls.panel
+        id="inventory"
+        title="Inventory"
+        class="inventory-panel"
+        body_class="rows"
+        collapsible
+      >
+        <div class="stat-row">
+          <span class="stat-value" title="Equipped Armor">
+            {@view.armor.emoji} <span class="item">{@view.armor.name}</span>
+            <span :if={(@view.armor.regen || 0) > 0} class="regen">+<span
+              data-key="armor-regen"
+              data-value={@view.armor.regen}
+            >{@view.armor.regen}</span></span>
+          </span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-value" title="Equipped Weapon">
+            {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span>
+            <span :if={(@view.weapon.crit || 0) > 0} class="crit"><span
+              data-key="weapon-crit"
+              data-value={@view.weapon.crit}
+            >{@view.weapon.crit}</span>%</span>
+          </span>
+        </div>
+      </Controls.panel>
     </div>
     """
   end
@@ -223,7 +228,7 @@ defmodule MiniLineageWeb.Layouts do
         <svg class="header-emblem" xmlns="http://www.w3.org/2000/svg" viewBox="58 0 50 157">
           <g>
             <path
-              fill="#c9a84c"
+              fill="currentColor"
               d="M88.696 135.174c0 14.37 8.958 19.79 8.958 19.79-5.312-8.229-4.688-19.9-4.688-19.9l-.105-111.5c-.103-13.23 5-21.04 5-21.04-9.584 8.645-9.166 21.04-9.166 21.04v111.6m-18.999-.09c0 14.38-8.96 19.79-8.96 19.79 5.313-8.23 4.689-19.9 4.689-19.9l.104-111.5c.104-13.23-5-21.04-5-21.04 9.584 8.646 9.167 21.04 9.167 21.04v111.6"
             />
           </g>
@@ -263,10 +268,8 @@ defmodule MiniLineageWeb.Layouts do
         target="_blank"
         rel="noopener noreferrer"
         class="version-link"
-      >
-        {@version}
-      </a>
-      <span :if={!@commit_url} class="version-debug">{@version}</span>
+      >{@version}</a>
+      <span :if={!@commit_url} class={Version.build_class(@version)}>{@version}</span>
       &copy; 2005 &ndash; {@year}
     </div>
     """

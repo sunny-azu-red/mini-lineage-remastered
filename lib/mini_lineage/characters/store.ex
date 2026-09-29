@@ -1,53 +1,97 @@
 defmodule MiniLineage.Characters.Store do
-  @moduledoc "Persistence for characters. The only place that knows the state is stored as JSON."
+  @moduledoc """
+  Persistence for characters, and the only place that knows the state is stored as JSON. `id` is
+  public and permanent; `session_id` is the cookie's secret, and a run that has ended gives it up.
+  """
   import Ecto.Query
 
+  alias MiniLineage.CharacterLog
   alias MiniLineage.Characters.{Record, Serde}
   alias MiniLineage.Game.Player
   alias MiniLineage.Repo
 
-  @ttl_hours Application.compile_env(:mini_lineage, :character_ttl_hours, 24)
+  # No fallback: config.exs sets it for every environment, and a default here could only disagree.
+  @ttl_hours Application.compile_env!(:mini_lineage, :character_ttl_hours)
 
-  @doc "A fresh, unstarted character id. Opaque — it is what the session cookie carries."
-  def new_id, do: Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
+  @doc "A fresh public character id. Opaque, and it appears in every board link."
+  def new_id, do: token()
 
-  def load(id) do
-    case Repo.get(Record, id) do
+  @doc "A fresh session id. Opaque, and it is what the session cookie carries."
+  def new_session_id, do: token()
+
+  defp token, do: Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
+
+  @doc """
+  The character this browser is playing, as `{id, player}`, or nil before it has saved anything.
+  Only ever finds a run still in progress — archiving clears the session it looks for.
+  """
+  def load_by_session(nil), do: nil
+
+  def load_by_session(session_id) do
+    case Repo.one(from r in Record, where: r.session_id == ^session_id, select: {r.id, r.state}) do
       nil -> nil
-      %Record{state: state} -> Serde.from_map(state)
+      {id, state} -> {id, Serde.from_map(state)}
     end
   end
 
-  # MySQL has no conflict target — `on_conflict` compiles to ON DUPLICATE KEY UPDATE, which keys
-  # off the primary key on its own.
-  def save(id, %Player{} = player, battles \\ []) do
-    now = DateTime.utc_now()
-    state = Serde.to_map(player)
+  def save(id, session_id, player, rows \\ [])
 
-    # One transaction: a fight written without the character that fought it would show in the log
-    # as a battle its own totals do not include.
+  # No log row to be consistent with, so no transaction: BEGIN and COMMIT are two more round trips.
+  def save(id, session_id, %Player{} = player, []) do
+    upsert(id, session_id, player)
+
+    :ok
+  end
+
+  # One transaction: a log row written without its character describes totals the run does not have.
+  def save(id, session_id, %Player{} = player, rows) do
     Repo.transaction(fn ->
-      Repo.insert!(%Record{id: id, state: state, inserted_at: now, updated_at: now},
-        on_conflict: [set: [state: state, updated_at: now]]
-      )
-
-      Enum.each(battles, &Repo.insert!/1)
+      upsert(id, session_id, player)
+      Repo.insert_all(CharacterLog.Entry, Enum.map(rows, &CharacterLog.params/1))
     end)
 
     :ok
   end
 
+  # The conflict target is named, so a second unique index added later cannot quietly change which
+  # collision this updates on.
+  defp upsert(id, session_id, player) do
+    now = DateTime.utc_now()
+    state = Serde.to_map(player)
+
+    Repo.insert!(
+      %Record{id: id, session_id: session_id, state: state, inserted_at: now, updated_at: now},
+      on_conflict: [set: [state: state, updated_at: now]],
+      conflict_target: :id
+    )
+  end
+
+  @doc """
+  Ends a run: the row keeps its id, its stats and its fights, and gives up its session.
+  """
+  def archive(session_id) do
+    {count, _} =
+      Repo.update_all(
+        from(r in Record, where: r.session_id == ^session_id),
+        set: [session_id: nil]
+      )
+
+    count
+  end
+
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
   @doc """
-  Drops characters untouched for #{@ttl_hours}h. Sliding, because `updated_at` moves every time the
-  character is saved — so the window is "since you last played", not "since you started".
+  Takes the session off runs untouched for #{@ttl_hours}h, the cookie's own sliding window, which
+  makes them MISSING rather than dead. Nothing is deleted. Returns how many were retired.
   """
-  def sweep_expired do
+  def retire_idle do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)
-    {count, _} = Repo.delete_all(from r in Record, where: r.updated_at < ^cutoff)
+    idle = from r in Record, where: not is_nil(r.session_id) and r.updated_at < ^cutoff
 
-    count
+    {retired, _} = Repo.update_all(idle, set: [session_id: nil])
+
+    retired
   end
 
   def ttl_hours, do: @ttl_hours

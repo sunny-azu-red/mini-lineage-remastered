@@ -1,7 +1,6 @@
 services:
   mini-lineage:
-    # What CI built and tested. No `build:` on purpose — given one, Portainer builds the working
-    # tree instead of pulling, and deploys something nothing ran against.
+    # What CI built and tested. No `build:`: given one, Portainer builds instead of pulling.
     image: ghcr.io/sunny-azu-red/mini-lineage-remastered:${IMAGE_TAG:-latest}
     container_name: mini-lineage
     restart: always
@@ -11,17 +10,21 @@ services:
       - "${PORT:-4000}:${PORT:-4000}"
     environment:
       - PORT=${PORT:-4000}
-      - PHX_HOST=${PHX_HOST:-localhost}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_DATABASE=${DB_DATABASE}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-    # restart: always covers a crash; this covers a process that is up but no longer answering.
-    # localhost is excluded from force_ssl, so this reaches the game rather than a redirect.
+      # Required or defaulted, never bare: compose passes a missing key through as EMPTY.
+      # 127.0.0.1 as DB_HOST would be the container itself.
+      - PHX_HOST=${PHX_HOST:?set PHX_HOST to the host players reach}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:?generate one with mix phx.gen.secret}
+      - DB_HOST=${DB_HOST:?set DB_HOST to where Postgres is reachable from the container}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:?set DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      # Optional; the defaults are prod.exs's own.
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - RATE_LIMIT=${RATE_LIMIT:-true}
+    # Catches a process that is up but not answering. localhost is exempt from force_ssl.
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-4000}/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-4000}/health"]
       interval: 30s
       timeout: 5s
       retries: 3

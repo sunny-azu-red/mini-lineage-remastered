@@ -1,5 +1,5 @@
 defmodule MiniLineage.Scratch.ItemEfficiency do
-  @moduledoc "Port of scratch/check_item_efficiency.ts — adena paid per point of attack or defense."
+  @moduledoc "Adena paid per point of attack or defense."
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.Constants
 

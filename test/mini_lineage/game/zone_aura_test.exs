@@ -1,12 +1,8 @@
 defmodule MiniLineage.Game.ZoneAuraTest do
   @moduledoc """
-  The disengage countdown — the most intricate rule in the port, and the one nothing was checking.
-
-  Leaving a combat zone does not rest you instantly: ⚔️ In Combat stays with a 5-second countdown,
-  and only when that elapses does 💤 Resting take over. Standing in a combat zone keeps you flagged
-  indefinitely with no countdown at all, so waiting on the Battleground never restores a point of
-  health. The countdown is anchored to LEAVING, so stepping back in cancels it and stepping out
-  again starts a fresh one.
+  The disengage countdown. Leaving a combat zone keeps ⚔️ In Combat for 5 seconds before 💤 Resting
+  takes over, and standing in one keeps you flagged indefinitely, so waiting on the Battleground
+  heals nothing. The countdown is anchored to LEAVING: stepping back in cancels it.
   """
   use ExUnit.Case, async: true
 
@@ -35,15 +31,31 @@ defmodule MiniLineage.Game.ZoneAuraTest do
 
       assert aura(moved).id == "combat"
       assert aura(moved).expires_at == nil, "#{zone} must not carry a countdown"
-      assert moved.combat_until == nil
     end
   end
 
   test "a resting zone rests you", %{player: player} do
-    for zone <- ~w(home inn weapons armors character highscores) do
+    for zone <- ~w(home inn weapons armors character highscores statistics races) do
       {moved, _} = move(player, zone)
 
       assert aura(moved).id == "resting", zone
+    end
+  end
+
+  # Derived from the router, so a new screen is covered the day it is routed. `/` is Town to a living
+  # run, and the error page is never recorded as where anybody stands.
+  test "every screen a living run can stand on is a zone", %{player: player} do
+    routed =
+      for %{metadata: %{phoenix_live_view: {_, action, _, _}}} <-
+            Phoenix.Router.routes(MiniLineageWeb.Router),
+          action not in [:root, :error],
+          uniq: true,
+          do: Atom.to_string(action)
+
+    for screen <- ["home" | routed] do
+      {moved, _} = move(player, screen)
+
+      assert aura(moved), "#{screen} gives a living run no aura, so it neither rests nor fights"
     end
   end
 
@@ -56,9 +68,11 @@ defmodule MiniLineage.Game.ZoneAuraTest do
     assert aura(player).expires_at == @now + @linger
   end
 
+  # The error page is the one screen in neither list, and the LiveView never records it; these hold
+  # the fallback all the same.
   test "the countdown follows you anywhere, even a screen in neither zone", %{player: player} do
     {player, _} = move(player, "battle")
-    {player, _} = move(player, "statistics")
+    {player, _} = move(player, "error")
 
     assert aura(player).id == "combat"
     assert aura(player).expires_at == @now + @linger
@@ -72,7 +86,6 @@ defmodule MiniLineage.Game.ZoneAuraTest do
     {player, _} = move(player, "battle")
 
     assert aura(player).expires_at == nil
-    assert player.combat_until == nil
   end
 
   test "stepping out again arms a FRESH countdown, anchored to leaving", %{player: player} do
@@ -96,15 +109,14 @@ defmodule MiniLineage.Game.ZoneAuraTest do
 
     assert changed?
     assert aura(player).id == "resting"
-    assert player.combat_until == nil
   end
 
   test "once it elapses, a screen in neither zone gets no aura at all", %{player: player} do
     {player, _} = move(player, "battle")
-    {player, _} = move(player, "statistics")
+    {player, _} = move(player, "error")
 
     Clock.put_now(@now + @linger + 1)
-    {player, _} = move(player, "statistics")
+    {player, _} = move(player, "error")
 
     assert aura(player) == nil
   end

@@ -1,31 +1,46 @@
 import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
-import {hooks as colocatedHooks} from "phoenix-colocated/mini_lineage"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortAdena} from "./hooks"
+import {hooks as gameHooks, recallAll, shortAdena, timerLabel, remainingLabel, stampLabel, stampTitle} from "./hooks"
 import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+// Phoenix remembers a fallback for the tab, so one slow connect or a restart kept it long-polling,
+// whose closed tabs the server only notices by missing polls. Every load tries the WebSocket first.
+try { sessionStorage.removeItem("phx:fallback:LongPoll") } catch (_) { }
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, ...gameHooks},
+  // A table's sort goes to the server, which orders its rows; a panel's fold never needs to. A
+  // function, so a rejoin after a deploy reads what was kept since the page loaded.
+  params: () => ({_csrf_token: csrfToken, tables: recallAll("table")}),
+  hooks: gameHooks,
 })
 
-// Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+// The stops are the value colours in hue order, READ from their tokens so a repaint cannot leave
+// them stale. This script is deferred, so the stylesheet has already applied.
+const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
+topbar.config({
+  barColors: {
+    0: token("--text-hp"),
+    0.17: token("--text-critical"),
+    0.33: token("--gold"),
+    0.5: token("--text-heal"),
+    0.67: token("--text-tally"),
+    0.83: token("--text-defense"),
+    1: token("--text-xp"),
+  },
+  shadowColor: "rgba(0, 0, 0, .3)",
+})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
-// Audio: the preference is restored before anything can ask to play, and the context is unlocked
-// on the first gesture. Sounds fire from server pushes, never from DOM markers, so nothing races
-// a reload.
+// Sounds fire from server pushes, never from DOM markers, so nothing races a reload.
 restoreSoundPreference()
 installUnlock()
 window.addEventListener("phx:play-sound", event => playSound(event.detail.name))
 
-// connect if there are any LiveViews on the page
 liveSocket.connect()
 
 // For the console: liveSocket.enableDebug(), .enableLatencySim(1000), .disableLatencySim()
@@ -57,5 +72,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 
-// Exposed for the browser suite, which holds this and Format.adena to one table.
+// Exposed for the browser suite, which holds each of these and its Elixir twin to one table.
 window.__shortAdena = shortAdena;
+window.__timerLabel = timerLabel;
+window.__remainingLabel = remainingLabel;
+window.__stampLabel = stampLabel;
+window.__stampTitle = stampTitle;

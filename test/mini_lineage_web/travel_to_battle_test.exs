@@ -1,0 +1,60 @@
+defmodule MiniLineageWeb.TravelToBattleTest do
+  @moduledoc """
+  Travelling to the Battleground fights on arrival, so one click both moves the player and can
+  kill them, and a socket holds a single patch.
+  """
+  use MiniLineageWeb.ConnCase, async: false
+
+  import Phoenix.LiveViewTest
+
+  alias MiniLineage.{Characters, Repo}
+  alias MiniLineage.Characters.Store
+  alias MiniLineage.Game.{Constants, Player}
+
+  setup %{conn: conn} do
+    Repo.query!("DELETE FROM character_log")
+    Repo.query!("DELETE FROM characters")
+
+    # A fight costs at least ten before armour and an Orc has no regeneration, so 1 HP is fatal
+    # whatever the dice say.
+    session = Characters.new_session_id()
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Doomed")
+    :ok = Store.save(Store.new_id(), session, %{player | health: 1})
+    # Mounting starts the character's process; left up, it flushes into whichever test runs next.
+    on_exit(fn -> Characters.forget(session) end)
+
+    %{conn: init_test_session(conn, %{"session_id" => session}), session: session}
+  end
+
+  test "a fatal first fight lands on the death screen", %{conn: conn} do
+    {:ok, view, _} = live(conn, ~p"/")
+
+    render_click(view, "navigate", %{"to" => "battle"})
+
+    assert_patch(view, ~p"/")
+    assert render(view) =~ "Game Over"
+  end
+
+  test "a fight survived lands on the Battleground", %{conn: conn, session: session} do
+    {:ok, view, _} = live(conn, ~p"/")
+    Characters.mutate(session, &{%{&1 | health: 5_000}, {:ok, nil}})
+
+    render_click(view, "navigate", %{"to" => "battle"})
+
+    assert_patch(view, ~p"/battle")
+  end
+
+  test "travelling while throttled says so, rather than arriving in silence",
+       %{conn: conn, session: session} do
+    Application.put_env(:mini_lineage, :rate_limit, true)
+    on_exit(fn -> Application.put_env(:mini_lineage, :rate_limit, false) end)
+    Characters.mutate(session, &{%{&1 | health: 5_000}, {:ok, nil}})
+    {:ok, view, _} = live(conn, ~p"/")
+
+    for _ <- 1..60, do: MiniLineage.Game.RateLimit.check(session, :battle)
+    render_click(view, "navigate", %{"to" => "battle"})
+
+    assert_patch(view, ~p"/battle")
+    assert render(view) =~ "moving too fast"
+  end
+end

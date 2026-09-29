@@ -3,13 +3,12 @@ defmodule MiniLineage.Game.NarrativeTest do
   Holds the prose the player actually reads.
 
   `Format.fill_template/2` leaves an unrecognised `{placeholder}` in the string rather than
-  raising, so a mistyped variable ships to the player verbatim. These tests drive EVERY template in
-  EVERY list, for every race, and fail on any brace that survives rendering — which no sampled
-  transcript can promise, since a sample only ever exercises the templates it happened to draw.
+  raising, so a typo ships verbatim. These drive EVERY template in EVERY list, for every race, and
+  fail on any brace that survives, which no sampled transcript can promise.
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Narrative, Narratives, Player, Rng}
+  alias MiniLineage.Game.{Constants, Format, Narrative, Narratives, Player, Rng}
 
   @races 0..3
 
@@ -74,9 +73,16 @@ defmodule MiniLineage.Game.NarrativeTest do
             Narrative.build_battle(player, result, ambushed?)
           end)
 
-        for {key, line} <- narrative, is_binary(line) do
-          assert unrendered(line) == [],
-                 "#{key} left #{inspect(unrendered(line))} unrendered for race #{race_id}: #{line}"
+        # A stored line keeps its PRONOUNS open until a reader is known, so everything else must
+        # close, and then the pronouns too, for both readers.
+        for {key, line} <- narrative, is_binary(line), mine? <- [true, false] do
+          spoken = Narrative.voiced(line, mine?)
+
+          assert unrendered(spoken) == [],
+                 "#{key} left #{inspect(unrendered(spoken))} for race #{race_id}: #{spoken}"
+
+          refute spoken =~ ~r/\byou\b/i and not mine?,
+                 "#{key} says \"you\" to somebody reading about a stranger: #{spoken}"
         end
       end
     end
@@ -154,11 +160,24 @@ defmodule MiniLineage.Game.NarrativeTest do
   end
 
   describe "race traits" do
-    test "render for every race with nothing left unfilled" do
-      for race_id <- @races do
-        traits = Narrative.build_race_traits(Constants.race(race_id))
+    # Their pronouns stay open until a reader is known, like a stored line's; nothing else may.
+    test "render for every race with nothing left unfilled, whoever reads them" do
+      for race_id <- @races, mine <- [true, false] do
+        traits =
+          race_id |> Constants.race() |> Narrative.build_race_traits() |> Narrative.voiced(mine)
+
         assert unrendered(traits) == [], "race #{race_id}: #{inspect(unrendered(traits))}"
         refute traits == ""
+      end
+    end
+
+    test "speak to the run itself, and about it to anybody else" do
+      for race_id <- @races do
+        traits = Narrative.build_race_traits(Constants.race(race_id))
+
+        assert Narrative.voiced(traits, true) =~ ~r/^You embark/
+        refute Narrative.voiced(traits, true) =~ ~r/\b(They|Their|their|them)\b/
+        assert Narrative.voiced(traits, false) =~ ~r/^They embark/
       end
     end
 
@@ -187,11 +206,41 @@ defmodule MiniLineage.Game.NarrativeTest do
     end
   end
 
+  describe "the fight that killed them" do
+    # `resolve_battle_outcome/2` returns the moment health reaches zero, BEFORE the XP, the Adena
+    # and every counter are credited. Its lines are drawn anyway and thrown away by the action.
+    test "pays nothing, not a reward and not a kill" do
+      fighter = started(0, weapon_id: 3, armor_id: 3)
+      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
+
+      assert killed.dead
+      assert killed.experience == fighter.experience, "a fatal fight granted XP"
+      assert killed.adena == fighter.adena, "a fatal fight granted Adena"
+
+      assert killed.total_enemies_killed == fighter.total_enemies_killed,
+             "a fatal fight counted kills"
+    end
+  end
+
   describe "death lines" do
-    test "every one is real prose, with no placeholder and no blank" do
-      for template <- Narratives.death() do
-        assert unrendered(template) == []
-        refute String.trim(template) == ""
+    # Written once with its pronouns left open, so what has to hold is that it closes — for the
+    # fallen player reading their own record, and for the stranger reading it in the Halls.
+    test "every one is real prose for either reader, with no placeholder and no blank" do
+      for template <- [Narratives.death_cheated(), Narratives.death_coward() | Narratives.death()],
+          mine? <- [true, false] do
+        line = Narrative.death_reason(template, mine?)
+
+        assert unrendered(line) == [],
+               "#{template} left #{inspect(unrendered(line))} for #{mine?}"
+
+        refute String.trim(line) == ""
+      end
+    end
+
+    test "and reads differently depending on who is reading it" do
+      for template <- [Narratives.death_cheated(), Narratives.death_coward() | Narratives.death()] do
+        refute Narrative.death_reason(template, true) == Narrative.death_reason(template, false),
+               "#{template} says the same thing to a stranger as to the run it ended"
       end
     end
 
@@ -230,7 +279,7 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       refute result.success
       assert String.contains?(result.text, weapon.name)
-      assert String.contains?(result.text, "not have enough Adena")
+      assert String.contains?(result.text, ~s(not have enough <span class="adena">🪙 Adena</span>))
       assert unchanged.adena == 0
     end
 
@@ -241,6 +290,32 @@ defmodule MiniLineage.Game.NarrativeTest do
       refute result.success
       assert String.contains?(result.text, Constants.weapon(2).name)
       assert unchanged.adena == player.adena
+    end
+  end
+
+  # The welcome is a fragment joined mid-sentence ("They chose the Orc, and ..."), so a pronoun in
+  # its sentence-initial form would read "and Their spirit shines".
+  describe "the welcome a run begins with" do
+    test "is joined mid-sentence, so none of them starts a new one" do
+      race = Constants.race(1)
+
+      for template <- Narratives.welcome(), mine <- [true, false] do
+        welcome = Format.fill_template(template, %{"raceLabel" => race.label})
+
+        line =
+          race
+          |> Narrative.build_began(%{
+            welcome: welcome,
+            build: "a hardy",
+            definition: "youth",
+            age: 19,
+            adena: 450
+          })
+          |> Narrative.voiced(mine)
+
+        refute line =~ ~r/, and (Their|Your|They|You)\b/,
+               "a welcome capitalises mid-sentence: #{line}"
+      end
     end
   end
 end

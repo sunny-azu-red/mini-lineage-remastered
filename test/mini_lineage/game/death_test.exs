@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.DeathTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Constants, Narratives, Player, Rng}
+  alias MiniLineage.Game.{Actions, Constants, Narratives, Player, Rng, Snapshot}
 
   defp living do
     {player, _} = Player.initialize(%Player{}, Constants.race(0), "Doomed")
@@ -25,7 +25,7 @@ defmodule MiniLineage.Game.DeathTest do
     player = Player.commit_suicide(living())
 
     assert player.coward
-    assert player.death_reason == "🤡 You took the cowardly way out."
+    assert player.death_reason == Narratives.death_coward()
   end
 
   test "a cheater's line outranks the coward's" do
@@ -64,26 +64,34 @@ defmodule MiniLineage.Game.DeathTest do
     assert dead.total_battles == 3, "and it does not count as a battle fought"
   end
 
-  # The successful submission writes a row, so it lives in the database suite; these refusals are
-  # refused by the guard before any write is attempted.
-  test "cowards and cheaters may not write a legacy" do
+  # A run is in the Halls from the moment it picks a race, so being barred is a property of the
+  # run rather than of an action.
+  test "cowards and cheaters are barred from the Halls, alive or dead" do
     dead = Player.kill(living())
 
     for barred <- [%{dead | coward: true}, %{dead | cheated: true}] do
-      assert {_p, {:error, :ineligible, _}} = Actions.submit_highscore(barred)
+      assert Snapshot.build(barred).disqualified
     end
   end
 
-  test "and neither may the living" do
-    assert {_p, {:error, :not_dead, _}} = Actions.submit_highscore(living())
+  test "and an ordinary run, living or finished, is not" do
+    refute Snapshot.build(living()).disqualified
+    refute Snapshot.build(Player.kill(living())).disqualified
   end
 
-  test "only the fallen may start over — a living character can never be wiped" do
-    assert {player, {:error, :not_dead, _}} = Actions.restart(living())
-    assert player.name == "Doomed"
+  test "a new character remembers no fight, whatever the struct it is built on" do
+    # `initialize/3` overwrites a %Player{} that may have been rehydrated from storage, so every
+    # field carried over from the previous run has to be named here or it survives the reroll.
+    fought = %{living() | last_battle_narrative: %{narrative: %{}, outcome: %{}}}
+    {fresh, _} = Player.initialize(fought, Constants.race(1), "Second")
 
-    assert {fresh, {:ok, nil}} = Actions.restart(%{living() | dead: true})
-    assert fresh == %Player{}
+    assert fresh.last_battle_narrative == nil
+    assert fresh.total_battles == 0
+  end
+
+  test "only the fallen may start over — a living character can never be left behind" do
+    refute Actions.may_restart?(living())
+    assert Actions.may_restart?(%{living() | dead: true})
   end
 
   test "every death message is drawn from the table, never invented" do

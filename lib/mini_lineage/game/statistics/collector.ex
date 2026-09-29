@@ -1,22 +1,33 @@
 defmodule MiniLineage.Game.Statistics.Collector do
   @moduledoc """
-  Batches the fire-and-forget counters and flushes them as atomic upserts. The reference issued one
-  round trip per increment — a single fight fires seven — so they are coalesced over a short window
-  instead. Nothing reads these back mid-fight, so the delay is invisible.
+  Batches the fire-and-forget counters and flushes them as atomic upserts. Writing and telling are
+  separate: a write is a round trip and is batched for a minute, while the Tome hears about a
+  counter when it MOVES, from running totals kept in memory.
   """
   use GenServer
+
+  import Ecto.Query
 
   require Logger
 
   alias MiniLineage.Game.Statistics
   alias MiniLineage.Repo
 
-  # Generous on purpose. `read_all/0` drains the buffer before it queries, so the archives are
-  # never stale however long this is; increments coalesce by field, so a batch is capped at the
-  # number of counters rather than by the wait; and a hard kill loses a minute of lifetime totals.
+  # Only about durability: increments coalesce by field, so a batch is capped at the number of
+  # counters, and a hard kill loses a minute of totals. What a reader sees does not wait for this.
   @flush_ms 60_000
 
+  # The board's window, for the same reason: a fight moves seven counters at once.
+  @push_ms 500
+
+  @topic "statistics"
+
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+
+  @doc "Subscribe to the archives. The message is `{:statistics, totals}`, or nil before anyone has played."
+  def subscribe, do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, @topic)
+
+  def unsubscribe, do: Phoenix.PubSub.unsubscribe(MiniLineage.PubSub, @topic)
 
   @doc "Writes everything pending now. For tests and shutdown."
   def flush, do: GenServer.call(__MODULE__, :flush)
@@ -29,54 +40,69 @@ defmodule MiniLineage.Game.Statistics.Collector do
     Process.flag(:trap_exit, true)
     schedule()
 
-    {:ok, %{}}
+    {:ok, %{pending: %{}, totals: stored(), push: nil}}
   end
 
   @impl true
-  def handle_info({:increment, field, amount}, pending),
-    do: {:noreply, Map.update(pending, field, amount, &(&1 + amount))}
+  def handle_info({:increment, field, amount}, state) do
+    state = %{
+      state
+      | pending: Map.update(state.pending, field, amount, &(&1 + amount)),
+        totals: Map.update(state.totals, field, amount, &(&1 + amount))
+    }
 
-  def handle_info(:flush, pending) do
+    {:noreply, arm(state)}
+  end
+
+  def handle_info(:push, state) do
+    Phoenix.PubSub.broadcast(MiniLineage.PubSub, @topic, {:statistics, view(state.totals)})
+
+    {:noreply, %{state | push: nil}}
+  end
+
+  def handle_info(:flush, state) do
     schedule()
 
-    {:noreply, write(pending)}
+    {:noreply, write(state)}
   end
 
   @impl true
-  def handle_call(:flush, _from, pending), do: {:reply, :ok, write(pending)}
+  def handle_call(:flush, _from, state), do: {:reply, :ok, write(state)}
+  def handle_call(:totals, _from, state), do: {:reply, view(state.totals), state}
 
-  def handle_call(:pending, _from, pending), do: {:reply, pending, pending}
+  def handle_call(:pending, _from, state), do: {:reply, state.pending, state}
 
   @impl true
-  def terminate(_reason, pending), do: write(pending)
+  def terminate(_reason, state), do: write(state)
 
   defp schedule, do: Process.send_after(self(), :flush, @flush_ms)
 
-  # Drains the buffer into ONE statement and returns whatever is still owed. Never raises — a
-  # counter is not worth this process, and its death would take the buffer too. A failed batch is
-  # re-queued by field, so the buffer stays bounded however long an outage runs.
-  defp write(pending) when map_size(pending) == 0, do: pending
+  # An open window is never restarted, or a realm at play would defer its own telling for ever.
+  defp arm(%{push: nil} = state),
+    do: %{state | push: Process.send_after(self(), :push, @push_ms)}
 
-  defp write(pending) do
-    batch = Enum.reject(pending, fn {_field, amount} -> amount == 0 end)
+  defp arm(state), do: state
 
-    values = Enum.map_join(batch, ", ", fn _ -> "(?, ?)" end)
-    params = Enum.flat_map(batch, fn {field, amount} -> [Atom.to_string(field), amount] end)
+  # ONE statement, and never raises: this process dying would take the buffer. A failed batch is
+  # re-queued by field, so the buffer stays bounded; `totals` already counted it.
+  defp write(%{pending: pending} = state) when map_size(pending) == 0, do: state
 
-    sql =
-      "INSERT INTO statistics (name, value) VALUES #{values} " <>
-        "ON DUPLICATE KEY UPDATE value = value + VALUES(value)"
+  defp write(state) do
+    batch = Enum.reject(state.pending, fn {_field, amount} -> amount == 0 end)
 
-    # `rescue` as well as the error tuple: a value the driver cannot even encode RAISES rather
-    # than returning one, and a raise here would take the process down and the buffer with it —
-    # which is the very thing re-queueing exists to prevent.
+    entries =
+      Enum.map(batch, fn {field, amount} -> %{name: Atom.to_string(field), value: amount} end)
+
+    # `rescue`, not an error tuple: `insert_all` raises, as does a value the driver cannot encode.
     try do
-      case Repo.query(sql, params) do
-        {:ok, _result} -> %{}
-        {:error, error} -> requeue(batch, error)
-      end
+      Repo.insert_all("statistics", entries,
+        conflict_target: :name,
+        on_conflict: from(s in "statistics", update: [inc: [value: fragment("EXCLUDED.value")]])
+      )
+
+      %{state | pending: %{}}
     rescue
-      error -> requeue(batch, error)
+      error -> %{state | pending: requeue(batch, error)}
     end
   end
 
@@ -90,14 +116,18 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   @doc "Every counter, or nil when nobody has ever played, so the client can show its empty state."
   def read_all do
-    # Read-your-writes: a brand-new player's own total_players must not still be sitting in the
-    # buffer, or the archives read as empty to the very player who just filled them.
-    if Process.whereis(__MODULE__), do: flush()
-
-    %{rows: rows} = Repo.query!("SELECT name, value FROM statistics")
-    stored = Map.new(rows, fn [name, value] -> {name, value} end)
-    stats = Map.new(Statistics.fields(), &{&1, Map.get(stored, Atom.to_string(&1), 0)})
-
-    if stats.total_players == 0, do: nil, else: stats
+    # Stored plus pending, so a new player reads their own birth with no write or query.
+    case Process.whereis(__MODULE__) do
+      nil -> view(stored())
+      pid -> GenServer.call(pid, :totals)
+    end
   end
+
+  defp stored do
+    rows = Map.new(Repo.all(from s in "statistics", select: {s.name, s.value}))
+
+    Map.new(Statistics.fields(), &{&1, Map.get(rows, Atom.to_string(&1), 0)})
+  end
+
+  defp view(totals), do: if(totals.total_players == 0, do: nil, else: totals)
 end

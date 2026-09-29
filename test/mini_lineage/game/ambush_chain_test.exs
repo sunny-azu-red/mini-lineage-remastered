@@ -21,9 +21,9 @@ defmodule MiniLineage.Game.AmbushChainTest do
 
   test "one ambush is not enough to hex" do
     always_ambush()
-    {player, {:ok, result}} = Actions.fight(orc())
+    {player, _} = Actions.fight(orc())
 
-    assert result.ambushed
+    assert player.ambushed
     assert player.consecutive_ambushes == 1
     refute hexed?(player)
   end
@@ -52,9 +52,9 @@ defmodule MiniLineage.Game.AmbushChainTest do
     assert player.consecutive_ambushes == 1
 
     never_ambush()
-    {player, {:ok, result}} = Actions.fight(player)
+    {player, _} = Actions.fight(player)
 
-    refute result.ambushed
+    refute player.ambushed
     assert player.consecutive_ambushes == 0
   end
 
@@ -64,9 +64,9 @@ defmodule MiniLineage.Game.AmbushChainTest do
     assert ambushed.ambushed
 
     # Navigating away mid-ambush is not punished — the next fight simply resolves it.
-    {resolved, {:ok, result}} = Actions.fight(%{ambushed | current_screen: "inn"})
+    {resolved, _} = Actions.fight(%{ambushed | current_screen: "inn"})
 
-    assert result.outcome.xp_gained > 0
+    assert resolved.experience > ambushed.experience
     assert resolved.current_screen == "battle"
   end
 end

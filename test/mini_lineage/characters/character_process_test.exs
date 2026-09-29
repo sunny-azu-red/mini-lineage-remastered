@@ -5,12 +5,12 @@ defmodule MiniLineage.CharactersTest do
   """
   use MiniLineage.DataCase, async: false
 
-  alias MiniLineage.Characters
+  alias MiniLineage.{Board, CharacterLog, Characters}
   alias MiniLineage.Characters.{Record, Store, Sweeper}
   alias MiniLineage.Game.{Constants, Player}
 
   setup do
-    id = Characters.new_id()
+    id = Characters.new_session_id()
     on_exit(fn -> Characters.forget(id) end)
 
     {:ok, id: id}
@@ -47,7 +47,7 @@ defmodule MiniLineage.CharactersTest do
     start_character(id)
     Characters.mutate(id, &{%{&1 | adena: 0}, :ok})
 
-    # The reference needed a promise mutex for this; here it is the process itself.
+    # No lock: the process itself serialises them.
     1..50
     |> Task.async_stream(fn _ -> Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok}) end,
       max_concurrency: 25
@@ -63,10 +63,10 @@ defmodule MiniLineage.CharactersTest do
     start_character(id)
     Characters.mutate(id, &{%{&1 | adena: 4242}, :ok})
 
-    written = Store.load(id)
+    written = stored(id)
     Characters.mutate(id, &{&1, :ok})
 
-    assert Store.load(id) == written
+    assert stored(id) == written
   end
 
   test "an effect expires on its own timer, pushing the change without anyone reading", %{id: id} do
@@ -86,11 +86,11 @@ defmodule MiniLineage.CharactersTest do
     end)
 
     # The mutation's own broadcast still carries the blessing...
-    assert_receive {:character_updated, mutated}, 1_000
+    assert_receive {:character_updated, mutated, _id}, 1_000
     assert Enum.any?(mutated.effects, &(&1.id == "newbie_blessing"))
 
     # ...and the timer's does not. Nothing read the character in between.
-    assert_receive {:character_updated, expired}, 2_000
+    assert_receive {:character_updated, expired, _id}, 2_000
     refute Enum.any?(expired.effects, &(&1.id == "newbie_blessing"))
   end
 
@@ -119,7 +119,53 @@ defmodule MiniLineage.CharactersTest do
 
   test "a character with no viewers stops on its own once the grace period elapses", %{id: id} do
     start_character(id)
+    Characters.mutate(id, &{%{&1 | effects: []}, :ok})
 
+    {pid, ref} = leave(id)
+
+    # State is already persisted, so stopping loses nothing.
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
+    assert Characters.snapshot(id).name == "Hero"
+  end
+
+  # Otherwise a buff lapsing after the tab closed would be logged whenever the player came back,
+  # or never, while a stranger's page had already stopped showing it.
+  test "but one with a buff still to lapse stays up to write it, and then stops", %{id: id} do
+    start_character(id)
+    lapses_at = System.system_time(:millisecond) + 1_000
+
+    Characters.mutate(
+      id,
+      &{%{&1 | effects: Enum.map(&1.effects, fn e -> lapsing(e, lapses_at) end)}, :ok}
+    )
+
+    {pid, ref} = leave(id)
+
+    await_lingering(pid)
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 3_000
+
+    character = Characters.character_id(id)
+
+    assert Enum.any?(
+             character |> CharacterLog.page() |> elem(0),
+             &(&1.kind == "buff" and &1.line =~ "leaves")
+           )
+  end
+
+  # Kept up for a lapse, it is still a player who has gone: nobody heals while they are away.
+  test "and does not heal the player while it waits", %{id: id} do
+    start_character(id)
+    Characters.mutate(id, &{%{&1 | health: 10}, :ok})
+
+    {pid, _ref} = leave(id)
+    await_lingering(pid)
+
+    send(pid, :tick)
+    assert :sys.get_state(pid).player.health == 10
+  end
+
+  # Attach a viewer and let it go, which is what arms the stop.
+  defp leave(id) do
     viewer = spawn(fn -> receive do: (:stop -> :ok) end)
     Characters.attach(id, viewer)
 
@@ -127,22 +173,32 @@ defmodule MiniLineage.CharactersTest do
     ref = Process.monitor(pid)
     send(viewer, :stop)
 
-    # State is already persisted, so stopping loses nothing.
-    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
-    assert Characters.snapshot(id).name == "Hero"
+    {pid, ref}
   end
 
+  # The idle stop has fired and kept the run up, read off the state rather than timed.
+  defp await_lingering(pid, attempts \\ 100) do
+    cond do
+      :sys.get_state(pid).lingering -> :ok
+      attempts == 0 -> flunk("the idle stop never left the run lingering")
+      true -> Process.sleep(20) && await_lingering(pid, attempts - 1)
+    end
+  end
+
+  defp lapsing(%{id: "newbie_blessing"} = effect, at), do: %{effect | expires_at: at}
+  defp lapsing(effect, _at), do: effect
+
   test "an unstarted character is never persisted, and never invents a health value", %{id: id} do
-    # Elixir orders nil above every number, so the max-health clamp used to fire on nil health
-    # and write a row for a visitor who had done nothing.
+    # Elixir orders nil above every number, so a max-health clamp on nil health would write a row
+    # for a visitor who had done nothing.
     assert Characters.snapshot(id) == %Player{}
     assert Characters.snapshot(id).health == nil
-    assert MiniLineage.Characters.Store.load(id) == nil
+    assert stored(id) == nil
   end
 
   test "the tick leaves a visitor who has no character alone", %{id: id} do
-    # Reading the start page is what materializes the process. Its first tick used to raise on
-    # `nil - nil` in the tick log, and the transient restart re-armed the timer to do it again.
+    # Reading the start page materializes the process, and a tick on nil health must not raise:
+    # the transient restart would re-arm the timer to do it again.
     hold(id)
     assert Characters.snapshot(id) == %Player{}
 
@@ -155,8 +211,8 @@ defmodule MiniLineage.CharactersTest do
   end
 
   test "a process opened by a read alone stops itself, having never had a viewer", %{id: id} do
-    # A dead render, a crawler or a health check reads and never connects. The stop timer used to
-    # be armed only as a viewer left, so a process that never had one ticked forever.
+    # A dead render, a crawler or a health check reads and never connects, so no viewer ever
+    # leaves to arm the stop.
     assert Characters.snapshot(id) == %Player{}
 
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
@@ -165,53 +221,65 @@ defmodule MiniLineage.CharactersTest do
     assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
   end
 
-  describe "the idle sweep" do
-    test "leaves a character somebody is still playing", %{id: id} do
-      start_character(id)
-      # Counting rows rather than the sweep's return value: this database is shared with the
-      # browser walkthrough, so a global count of zero is never a safe thing to assert.
-      MiniLineage.Characters.Store.sweep_expired()
+  describe "the idle retirement" do
+    # A run nobody has come back to has still been played, so it keeps its place in the Halls and
+    # gives up only the session that tied it to a browser.
+    defp backdate(session) do
+      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
 
-      assert Characters.snapshot(id).name == "Hero"
+      Repo.update_all(from(r in Record, where: r.session_id == ^session),
+        set: [updated_at: stale]
+      )
     end
 
-    test "drops one nobody has touched for longer than the window", %{id: id} do
+    test "leaves a character somebody is still playing", %{id: id} do
       start_character(id)
+      Store.retire_idle()
+
+      assert Characters.snapshot(id).name == "Hero"
+      assert stored(id), "a character in play lost its session"
+    end
+
+    test "takes the session off one nobody has touched, and keeps the character", %{id: id} do
+      start_character(id)
+      character_id = stored_id(id)
       Characters.forget_process(id)
+      backdate(id)
 
-      # Backdated past the window, as if the browser had been closed that long ago.
-      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+      assert Store.retire_idle() >= 1
 
-      assert MiniLineage.Characters.Store.sweep_expired() >= 1
-      assert Store.load(id) == nil
+      # The session is gone, so nothing can pick this run up again...
+      assert stored(id) == nil
+      # ...but the run itself is still here, and still in the Halls.
+      assert Repo.get(Record, character_id)
+      assert Board.entry(character_id).name == "Hero"
     end
 
     test "the scheduled sweeper does the same work, through its own process", %{id: id} do
       start_character(id)
+      character_id = stored_id(id)
       Characters.forget_process(id)
-
-      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+      backdate(id)
 
       # Through the GenServer rather than Store directly: the hourly path has its own handler, and
       # nothing else exercises it.
       assert Sweeper.sweep_now() >= 1
-      assert Store.load(id) == nil
+      assert stored(id) == nil
+      assert Repo.get(Record, character_id)
     end
 
     test "the window slides: playing again resets the clock", %{id: id} do
       start_character(id)
       Characters.forget_process(id)
-
-      stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [updated_at: stale])
+      backdate(id)
 
       # Touching the character writes it again, which moves updated_at to now.
       Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok})
 
-      MiniLineage.Characters.Store.sweep_expired()
+      Store.retire_idle()
+
       assert Characters.snapshot(id).name == "Hero"
+      assert stored(id), "a character played a moment ago was retired"
     end
   end
 end

@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.RateLimit do
   @moduledoc """
-  In-memory sliding window, no external dependency. Bypassed entirely unless enabled, so local
-  development is never throttled — matching the reference, which keyed that off a release build.
+  In-memory sliding window. Bypassed entirely unless enabled, so local development is never
+  throttled.
   """
   use GenServer
 
@@ -9,8 +9,7 @@ defmodule MiniLineage.Game.RateLimit do
 
   @limits %{
     battle: %{window_ms: 60_000, limit: 60},
-    shop: %{window_ms: 60_000, limit: 30},
-    flood: %{window_ms: 60_000, limit: 300}
+    shop: %{window_ms: 60_000, limit: 30}
   }
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -38,7 +37,7 @@ defmodule MiniLineage.Game.RateLimit do
 
   @doc "Returns `:ok`, or `{:error, retry_after_ms}` when the window is full."
   def check(key, limiter) when is_map_key(@limits, limiter) do
-    if Application.get_env(:mini_lineage, :rate_limit, false),
+    if Application.fetch_env!(:mini_lineage, :rate_limit),
       do: consume(key, limiter),
       else: :ok
   end

@@ -1,28 +1,26 @@
-/*
- * ========================================================================
- * Mini-Lineage — Components
- * Panel cards, status sidebar, HP/XP bars, alerts.
- * ========================================================================
- */
+/* Mini-Lineage — Components: panels, logs, the status sidebar, bars, alerts, the chronicle. */
 
 /* ===== Panel Card ===== */
+/* The margin is for `scrollIntoView`, so a panel lands a gap above the fold, not flush with it. */
 .panel {
+    scroll-margin-bottom: 12px;
     background: var(--bg-panel);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-soft);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
 }
 
+/* 9/7 on purpose: capitals centred by their em box sit high. The band corrects it, never a child,
+   so everything in the header moves together. */
 .panel-header {
-    background: linear-gradient(180deg, var(--bg-panel-alt) 0%, #0d2a50 100%);
-    border-bottom: 1px solid var(--border);
+    background: var(--panel-lift);
+    line-height: 1.6;
     color: var(--gold);
     font-family: var(--font-heading);
-    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.05em;
-    padding: 7px 12px;
+    padding: 9px 12px 7px;
     text-transform: uppercase;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
@@ -33,23 +31,163 @@
     align-items: center;
 }
 
+/* The cap is the body's, never its content's, so the scrollbar sits against the panel's edge. */
+.panel-body.scrolls {
+    overflow-y: auto;
+}
+
+/* The `Log` hook keeps the reader's place itself; the browser's anchoring would pick its own line. */
+.panel[data-log]>.panel-body {
+    overflow-anchor: none;
+}
+
+/* The pill and its band share the body's grid cell, so both sit under the header at any height. */
+.panel[data-log] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.panel[data-log]>.panel-header {
+    grid-area: 1 / 1;
+}
+
+.panel[data-log]>.panel-body,
+.panel[data-log]>.panel-unread,
+.panel[data-log]:has(> .panel-unread:not([hidden]))::after {
+    grid-area: 2 / 1;
+}
+
+/* The pill sits over the log's present edge: the top of one read newest first, the bottom of a chat. */
+.panel[data-log] {
+    --present: start;
+    --toward-past: to bottom;
+}
+
+.panel[data-log="oldest-first"] {
+    --present: end;
+    --toward-past: to top;
+}
+
+.panel>.panel-unread {
+    align-self: var(--present);
+    justify-self: center;
+    margin-block: 12px;
+    z-index: 2;
+}
+
+/* The log darkens behind the pill so it reads as over the log, not as one more line of it. The
+   1px keeps it clear of the body's gold line. */
+.panel[data-log]:has(> .panel-unread:not([hidden]))::after {
+    content: '';
+    align-self: var(--present);
+    height: 60px;
+    margin-top: 1px;
+    /* Over the rows, which are positioned and would otherwise paint their text through it. */
+    z-index: 1;
+    background: linear-gradient(var(--toward-past),
+            var(--bg-deep) 0%,
+            color-mix(in srgb, var(--bg-deep) 70%, transparent) 30%,
+            transparent 100%);
+    pointer-events: none;
+}
+
+/* Where a reader's absence began, in place of that entry's own rule, with the batch's count at its
+   end. The count is the later pseudo so it paints over the line; both stay under the pill's band. */
+.panel[data-log] [data-unread] {
+    position: relative;
+}
+
+.panel[data-log] [data-unread]::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -1px;
+    border-bottom: 1px solid var(--text-info);
+    z-index: 1;
+}
+
+/* Over the entry's own rule, which a row may draw in this same pseudo. */
+.panel[data-log] [data-unread]::after {
+    content: attr(data-unread) " unread";
+    position: absolute;
+    left: auto;
+    right: 12px;
+    bottom: -9px;
+    display: flex;
+    align-items: center;
+    height: 17px;
+    /* Optical, as a field label's is: capitals centred by their box sit high. */
+    padding: 1px 6px 0;
+    border: 0;
+    border-radius: 3px;
+    background: var(--text-info);
+    color: var(--bg-deep);
+    z-index: 1;
+}
+
+/* `.btn` is a flex box, which outranks the attribute's own `display: none`. */
+.panel>.panel-unread[hidden] {
+    display: none;
+}
+
+/* The fold is `aria-expanded` alone, so a layout can keep a panel open before any script runs. */
+.panel-toggle[aria-expanded="false"]+.panel-body {
+    display: none;
+}
+
+/* A header that is a button, still looking like a header; a button takes the platform's size. */
+.panel-toggle {
+    width: 100%;
+    /* All four, or the platform's 2px outset makes this header taller than the others. */
+    border: 0;
+    font-size: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.panel-toggle:hover {
+    color: var(--gold-hover);
+}
+
+/* The translate centres the L-shaped ink and goes INSIDE the rotate, so one value centres both
+   states: rotated, the outline falls 2.48px off centre, and 2.48/√2 is the 1.75. */
+.panel-arrow {
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    margin-right: 3px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg) translate(-1.75px, -1.75px);
+}
+
+/* Set by the hook once painted, or a restored fold spins the chevron on every refresh. */
+.panel-arrow[data-ready] {
+    transition: transform 160ms ease;
+}
+
+.panel-header[aria-expanded="false"] .panel-arrow {
+    transform: rotate(-135deg) translate(-1.75px, -1.75px);
+}
+
 .header-effects {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    font-size: 13px;
     flex-shrink: 0;
     line-height: 1;
-    margin-top: 1px;
 }
 
+/* An <h1> in the main panel, a <span> in the sidebar's: both take the header's size, not an h1's. */
 .header-name {
+    font-size: inherit;
+    font-weight: inherit;
     flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-top: 2px;
 }
 
 .effect-icon {
@@ -67,8 +205,6 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    line-height: 1;
 }
 
 .effect-timer {
@@ -79,8 +215,8 @@
     font-size: 8px;
     font-family: var(--font-pixel);
     font-weight: 400;
-    color: #fff;
-    line-height: 1;
+    /* Not inherited: the header band it sits in is gold. */
+    color: var(--text-primary);
     pointer-events: none;
     white-space: nowrap;
     text-shadow:
@@ -93,29 +229,27 @@
 }
 
 .effect-buff .effect-timer {
-    color: #58d68d;
-    border-color: rgba(46, 204, 113, 0.45);
+    color: var(--text-success);
 }
 
 .effect-debuff .effect-timer {
-    color: #e8785e;
-    border-color: rgba(231, 76, 60, 0.45);
+    color: var(--text-danger);
 }
 
 .effect-fade-in {
     animation: effect-fade-in 0.4s ease-out forwards;
 }
 
-.effect-aura {
+.effect-icon.effect-aura {
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
 }
 
-.effect-buff {
-    filter: drop-shadow(0 0 4px rgba(46, 204, 113, 0.2));
+.effect-icon.effect-buff {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-success) 20%, transparent));
 }
 
-.effect-debuff {
-    filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.3));
+.effect-icon.effect-debuff {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-danger) 30%, transparent));
 }
 
 @keyframes effect-fade-in {
@@ -130,110 +264,104 @@
     }
 }
 
+/* The gold line is the BODY's, never the header's, so a shut panel draws none. */
 .panel-body {
     padding: 12px;
-    font-size: 13px;
-    color: var(--text-primary);
+    border-top: 1px solid var(--gold-dim);
 }
 
-.panel-body.small {
-    padding: 0px 12px;
-}
-
-.loading-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    min-height: 186px;
-    color: var(--text-secondary);
-    font-family: var(--font-heading);
-    letter-spacing: 0.04em;
-}
-
-.loading-spinner {
-    width: 34px;
-    height: 34px;
-    border: 3px solid var(--border);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: loading-spin 0.8s linear infinite;
-}
-
-@keyframes loading-spin {
-    to {
-        transform: rotate(360deg);
-    }
+/* Rows hold the padding, so a marked row can colour itself wall to wall. */
+.panel-body.rows {
+    padding: 0;
 }
 
 /* ===== Status Panel ===== */
+/* The rule is ::after, being inset where the row is not. The transparent border reserves its strip,
+   so a marked row's ground, clipped to the padding box, never tints the gaps in the dashes. */
 .stat-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 12px;
+    position: relative;
+    border-bottom: 1px solid transparent;
 }
 
+/* 46px is ADENA, the widest label: a fixed track does not grow, and a wider label hits its value. */
 .status-panel .stat-row {
     display: grid;
-    grid-template-columns: 42px 1fr;
+    grid-template-columns: 46px 1fr;
+    /* A bar's height, so a row of text is no shorter than a row holding a bar. */
+    grid-template-rows: minmax(18px, auto);
+    padding-block: 10px;
     align-items: center;
     gap: 10px;
 }
 
-.stat-row:last-child {
-    border-bottom: none;
+.stat-row::after,
+ol.chronicle li::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -1px;
+    border-bottom: 1px dashed var(--border-soft);
 }
 
+/* No rule under the last row, so no strip, and a marked one's ground runs to its foot. */
+.stat-row:last-child,
+ol.chronicle li:last-child {
+    border-bottom: 0;
+}
+
+.stat-row:last-child::after,
+ol.chronicle li:last-child::after {
+    content: none;
+}
+
+/* Only the colour moves. The fade is a background IMAGE, and a `background` shorthand here would
+   throw it away on the first frame. */
 @keyframes danger-pulse {
 
     0%,
     100% {
-        background: rgba(146, 43, 33, 0.15);
+        background-color: color-mix(in srgb, var(--wash-danger) 75%, transparent);
     }
 
     50% {
-        background: rgba(192, 57, 43, 0.25);
+        background-color: color-mix(in srgb, var(--bar-hp) 25%, transparent);
     }
 }
 
-.stat-row.bar {
-    padding: 10px 0;
+/* The shape of every marked row; the colour is each row's own, so none overrides a default. */
+.stat-row.danger,
+ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
+    background-image: linear-gradient(90deg,
+            var(--bg-panel) 0,
+            transparent 33%,
+            transparent 67%,
+            var(--bg-panel) 100%);
+    background-clip: padding-box;
 }
 
 .stat-row.danger {
-    background: rgba(146, 43, 33, 0.2);
-    border-radius: 6px;
-    padding: 10px 6px;
-    margin: 0 -6px;
     animation: danger-pulse .5s ease-in-out infinite;
 }
 
+/* The 1px is optical: capitals centred by their box sit high. */
 .stat-label {
-    font-size: 11px;
     color: var(--text-secondary);
     text-align: right;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     line-height: 1;
     margin-top: 1px;
 }
 
 .stat-value {
-    color: var(--text-primary);
-    font-size: 12px;
     line-height: 1;
-}
-
-.stat-value.gold {
-    color: var(--gold);
 }
 
 /* ===== HP / XP Bars ===== */
 .bar-track {
-    flex: 1;
     position: relative;
     height: 18px;
     background: rgba(0, 0, 0, 0.4);
@@ -243,20 +371,19 @@
 
 .bar {
     height: 100%;
-    border-radius: 0px;
     transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hp-bar {
-    background: linear-gradient(90deg, var(--hp-color) 0%, var(--hp-glow) 100%);
-    box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+    background: linear-gradient(90deg, var(--bar-hp) 0%, var(--glow-hp) 100%);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--glow-hp) 40%, transparent);
     position: relative;
     overflow: hidden;
 }
 
 .xp-bar {
-    background: linear-gradient(90deg, var(--xp-color) 0%, var(--xp-glow) 100%);
-    box-shadow: 0 0 8px rgba(155, 89, 182, 0.4);
+    background: linear-gradient(90deg, var(--bar-xp) 0%, var(--glow-xp) 100%);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--glow-xp) 40%, transparent);
     position: relative;
     overflow: hidden;
 }
@@ -286,7 +413,9 @@
     }
 }
 
+/* The one figure off the 13/12/11 scale: an 18px bar has no room for more than 10px. */
 .bar-text {
+    line-height: 1;
     position: absolute;
     left: 0;
     right: 0;
@@ -294,7 +423,6 @@
     transform: translateY(-50%);
     text-align: center;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.7);
     font-weight: 500;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
@@ -305,38 +433,43 @@
     border-radius: var(--radius);
     padding: 9px 12px;
     margin-bottom: 12px;
-    font-size: 12px;
     border-left: 3px solid;
     position: relative;
     overflow: hidden;
     transform: translateZ(0);
 }
 
+/* What an alert is ABOUT keeps the alert's voice and takes the weight; two classes, so it wins. */
+.alert :is(.item, .buff, .debuff) {
+    color: inherit;
+    font-weight: var(--weight-value);
+}
+
 .alert-info {
-    background: rgba(26, 74, 110, 0.3);
-    border-color: var(--info-border);
-    color: #85c1e9;
+    background: var(--wash-info);
+    border-color: var(--border-info);
+    color: var(--text-info);
 }
 
 .alert-success {
-    background: rgba(39, 174, 96, 0.15);
-    border-color: var(--success);
-    color: #58d68d;
+    background: var(--wash-success);
+    border-color: var(--border-success);
+    color: var(--text-success);
 }
 
 .alert-warning {
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(122, 98, 48, 0.35) 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 25%, transparent) 0%, color-mix(in srgb, var(--gold-dim) 35%, transparent) 100%);
     border-color: var(--gold);
-    color: #ffd760;
+    color: var(--text-warning);
 }
 
 .alert-danger {
-    background: rgba(146, 43, 33, 0.2);
-    border-color: var(--danger-border);
-    color: #e8785e;
+    background: var(--wash-danger);
+    border-color: var(--border-danger);
+    color: var(--text-danger);
 }
 
-/* Extra right padding so the dismiss "x" never overlaps longer message text */
+/* Room for the dismiss "x". */
 .alert-dismissible {
     padding-right: 30px;
 }
@@ -349,7 +482,6 @@
     background: none;
     border: none;
     padding: 4px;
-    margin: 0;
     font-size: 15px;
     line-height: 1;
     color: inherit;
@@ -391,16 +523,91 @@
 /* ===== Code Block ===== */
 .code-block {
     background: var(--bg-surface);
-    border-radius: var(--radius-lg);
-    color: var(--hp-color);
+    /* Capped so the way back past a stack trace stays on screen. */
+    max-height: 340px;
+    overflow: auto;
+    border-radius: var(--radius);
+    color: var(--text-danger);
+    /* Stated: a bare `monospace` shrinks the inherited 13px to the browser's own ~10.6px. */
+    font-size: 13px;
     margin-bottom: 12px;
-    overflow-x: auto;
     padding: 12px;
-    text-align: left;
     white-space: pre-wrap;
 }
 
-/* ===== Version Badge ===== */
-.version-debug {
-    color: var(--hp-color);
+/* ===== Chronicle ===== */
+/* Ordered but never numbered. The cap and the scroll are the panel's, not this list's. */
+ol.chronicle {
+    list-style: none;
+}
+
+/* Chrome, so the controls' violet and never the accent at rest. The standard property serves Firefox
+   and Chromium; the pseudo-elements are for Safari. */
+.table-container,
+.panel-body.scrolls,
+.code-block {
+    scrollbar-color: var(--border-arcane-bright) transparent;
+}
+
+.table-container::-webkit-scrollbar,
+.panel-body.scrolls::-webkit-scrollbar,
+.code-block::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.table-container::-webkit-scrollbar-track,
+.panel-body.scrolls::-webkit-scrollbar-track,
+.code-block::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb,
+.panel-body.scrolls::-webkit-scrollbar-thumb,
+.code-block::-webkit-scrollbar-thumb {
+    background: var(--border-arcane-bright);
+    border-radius: var(--radius);
+}
+
+.table-container::-webkit-scrollbar-thumb:hover,
+.panel-body.scrolls::-webkit-scrollbar-thumb:hover,
+.code-block::-webkit-scrollbar-thumb:hover {
+    background: var(--gold-dim);
+}
+
+/* Each washed like the alert that would announce it. */
+ol.chronicle li.ambushed {
+    background-color: var(--wash-danger);
+}
+
+/* What waits, in the alert's own voice. */
+ol.chronicle li.ambushed .threat {
+    color: var(--text-danger);
+}
+
+ol.chronicle li.start {
+    background-color: var(--wash-info);
+}
+
+ol.chronicle li.level-up {
+    background-color: var(--wash-gold);
+}
+
+ol.chronicle li.purchase {
+    background-color: var(--wash-success);
+}
+
+/* When and what on the left, the entry's number on the right, in the date's colour. */
+ol.chronicle .entry-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+/* Rows, as the sidebar's stats are: a rule between them and none around the outside. */
+ol.chronicle li {
+    padding: 12px;
+    position: relative;
+    border-bottom: 1px solid transparent;
 }

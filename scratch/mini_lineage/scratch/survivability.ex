@@ -1,7 +1,7 @@
 defmodule MiniLineage.Scratch.Survivability do
   @moduledoc """
-  Port of scratch/check_survivability.ts. A battle costing more than the race's whole starting
-  pool counts as a lethal risk, so this is the deadliness of one fight, not of a career.
+  A battle costing more than the race's whole starting pool counts as a lethal risk, so this is
+  the deadliness of one fight, not of a career.
   """
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.{Battle, Constants, Player}

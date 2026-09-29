@@ -1,19 +1,15 @@
 import Config
 
-# runtime.exs is the ONLY configuration a release evaluates — config.exs and friends are baked in
-# at build time — so everything that reads the environment belongs here, and `mix phx.server` and
-# `bin/mini_lineage start` behave the same way.
+# The only configuration a release evaluates at boot, so everything read from the environment
+# belongs here.
 
-# Credentials live in .env, and the throwaway database's in .env.test — chosen here rather than by
-# each script, so `mix test`, `mix e2e` and e2e/serve.sh all agree without anyone passing a flag.
-# A release has no repo checkout, so the file is looked for in the working directory; ENV_FILE
-# names it anywhere else. A real environment variable beats the file.
+# Credentials live in .env, the throwaway database's in .env.test — chosen here so every entry
+# point agrees. ENV_FILE names the file elsewhere; a real environment variable beats it.
 default_env_file = if config_env() in [:test, :e2e], do: ".env.test", else: ".env"
 env_file = System.get_env("ENV_FILE") || Path.expand(default_env_file, File.cwd!())
 
-# A quoted value is taken verbatim, so it may contain anything. An unquoted one ends at the first
-# " #", which is how a trailing comment is written — a bare # with no space before it is part of
-# the value, so a password containing one survives.
+# A quoted value is verbatim. An unquoted one ends at the first " #", so a bare # inside a password
+# survives.
 read_value = fn
   "\"" <> rest -> rest |> String.split("\"") |> hd()
   "'" <> rest -> rest |> String.split("'") |> hd()
@@ -32,10 +28,10 @@ if File.exists?(env_file) do
 end
 
 credentials = [
-  username: System.get_env("DB_USERNAME", "root"),
+  username: System.get_env("DB_USERNAME", "postgres"),
   password: System.get_env("DB_PASSWORD", ""),
   hostname: System.get_env("DB_HOST", "127.0.0.1"),
-  port: String.to_integer(System.get_env("DB_PORT", "3306"))
+  port: String.to_integer(System.get_env("DB_PORT", "5432"))
 ]
 
 if config_env() == :test do
@@ -60,6 +56,28 @@ if config_env() in [:dev, :e2e] do
              show_sensitive_data_on_connection_error: true,
              pool_size: 10
            ]
+end
+
+# dev and prod read one .env, so they must sign cookies alike or switching loses the character.
+if config_env() in [:dev, :e2e] do
+  if secret = System.get_env("SECRET_KEY_BASE") do
+    config :mini_lineage, MiniLineageWeb.Endpoint, secret_key_base: secret
+  end
+end
+
+# Read at runtime, so settable per deployment without a rebuild; neither may become a compile_env.
+if level = System.get_env("LOG_LEVEL") do
+  levels = ~w(emergency alert critical error warning notice info debug)
+
+  unless level in levels do
+    raise "LOG_LEVEL is #{inspect(level)}; it must be one of #{Enum.join(levels, ", ")}"
+  end
+
+  config :logger, level: String.to_existing_atom(level)
+end
+
+if throttle = System.get_env("RATE_LIMIT") do
+  config :mini_lineage, rate_limit: throttle in ~w(true 1)
 end
 
 # A release does not serve unless told to: PHX_SERVER=true bin/mini_lineage start.
@@ -89,14 +107,16 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
-  # DATABASE_URL still works for a host that offers only one, but it cannot carry a password with
-  # URL-unsafe characters unless they are percent-encoded, so the discrete keys win when both are set.
+  # Compose forwards a key it was never given as an empty string, which `||` would take as set.
+  env = fn name -> if (value = System.get_env(name)) not in [nil, ""], do: value end
+
+  # The discrete keys win over DATABASE_URL: a URL cannot carry an unencoded unsafe password.
   database_config =
     cond do
-      database = System.get_env("DB_DATABASE") ->
+      database = env.("DB_DATABASE") ->
         credentials ++ [database: database]
 
-      url = System.get_env("DATABASE_URL") ->
+      url = env.("DATABASE_URL") ->
         [url: url]
 
       true ->
@@ -113,19 +133,29 @@ if config_env() == :prod do
          MiniLineage.Repo,
          database_config ++
            [
-             pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+             pool_size: String.to_integer(env.("POOL_SIZE") || "10"),
              socket_options: maybe_ipv6
            ]
 
   # Signs the session cookie. Must be at least 64 bytes, or every request fails.
   secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
+    env.("SECRET_KEY_BASE") ||
       raise """
       environment variable SECRET_KEY_BASE is missing.
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  # Not defaulted: check_origin compares every websocket against it, and a wrong host renders a
+  # page that never connects, silently.
+  host =
+    env.("PHX_HOST") ||
+      raise """
+      environment variable PHX_HOST is missing.
+
+      It is the host this deployment answers on, and the LiveView socket refuses every origin that
+      is not it, so an unset one serves a page that loads and then does nothing. Set it to the
+      domain players reach, or to `localhost` for a local release.
+      """
 
   config :mini_lineage, MiniLineageWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

@@ -1,5 +1,5 @@
 defmodule MiniLineage.Scratch.AdenaCrit do
-  @moduledoc "Port of scratch/check_adena_crit.ts — how much richer a critical hit actually leaves you."
+  @moduledoc "How much richer a critical hit actually leaves you."
   import MiniLineage.Scratch.Report
   alias MiniLineage.Game.{Battle, Math, Player}
 

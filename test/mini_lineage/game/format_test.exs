@@ -2,10 +2,8 @@ defmodule MiniLineage.Game.FormatTest do
   @moduledoc """
   The numbers as a player reads them.
 
-  Adena is shortened once it passes a thousand, and the boundaries are where a formatter goes
-  wrong: 999 and 1,000 sit either side of one, and a value that lands exactly on a unit must not
-  read as "1.0k". The client animates the same figure with its own copy of this in hooks.js, but
-  every count ends on the server's text, so only this side is ever read.
+  Adena is shortened past a thousand, and the boundaries are where a formatter goes wrong: 999
+  and 1,000 sit either side of one, and a value landing exactly on a unit must not read "1.0k".
   """
   use ExUnit.Case, async: true
 
@@ -48,16 +46,75 @@ defmodule MiniLineage.Game.FormatTest do
   end
 
   describe "the values the JavaScript must agree on" do
-    test "are formatted the same way here" do
-      # The count-up animation formats its own intermediate frames, so hooks.js carries a second
-      # implementation of this — it cannot be removed without the number jumping format mid-count.
-      # Both sides read this file, so a divergence fails a test instead of wobbling on screen.
+    test "adena is formatted the same way here" do
+      # hooks/animated-values.js formats the count-up's own frames with a twin of this. Both read
+      # this table, so a divergence fails a test instead of wobbling on screen.
       %{"cases" => cases} =
         "test/fixtures/adena_format.json" |> File.read!() |> Jason.decode!()
 
       for [value, expected] <- cases do
         assert Format.adena(value) == expected, "#{value} formatted as #{Format.adena(value)}"
       end
+    end
+
+    test "and so is a countdown" do
+      # The server renders the first frame and `timerLabel` in hooks/effect-timers.js repaints it,
+      # so a divergence shows as the number changing shape the instant the hook takes over.
+      %{"cases" => cases} =
+        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
+
+      for [ms, expected] <- cases do
+        assert Format.countdown(ms) == expected, "#{ms}ms labelled #{Format.countdown(ms)}"
+      end
+    end
+
+    test "and so is the same time said in a sentence" do
+      # The badge has a few pixels and says "1m"; a paragraph has room to say "1m 30s". Twinned
+      # with `remainingLabel` in hooks/effect-timers.js off the same table, for the same reason.
+      %{"spoken" => cases} =
+        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
+
+      for [ms, expected] <- cases do
+        assert Format.remaining(ms) == expected, "#{ms}ms spoken as #{Format.remaining(ms)}"
+      end
+    end
+  end
+
+  describe "a stamp" do
+    # The server renders a stamp's first frame and `stampLabel` in hooks/stamps.js repaints it as it
+    # ages, so a divergence shows as the label changing shape the instant the hook takes over.
+    defp stamps, do: "test/fixtures/stamp_format.json" |> File.read!() |> Jason.decode!()
+
+    defp ms(iso), do: iso |> DateTime.from_iso8601() |> elem(1) |> DateTime.to_unix(:millisecond)
+
+    test "is labelled from the same table the browser is held to" do
+      %{"now" => now, "cap_ms" => cap, "cases" => cases} = stamps()
+
+      for [at, form, flags, expected] <- cases do
+        opts = Enum.map(flags, &{String.to_existing_atom(&1), true})
+        label = Format.stamp(ms(at), ms(now), cap, String.to_existing_atom(form), opts)
+        assert label == expected, "#{at} #{form} #{inspect(flags)} labelled #{label}"
+      end
+    end
+
+    test "and titled with the whole instant, from the same table" do
+      for [at, expected] <- stamps()["titles"] do
+        assert Format.stamp_title(ms(at)) == expected
+      end
+    end
+  end
+
+  describe "a modifier" do
+    # Every one of these is read as a change to a stat, so the sign is half the meaning: "-4% Ambush
+    # Risk" is a blessing and "+4%" is a curse, and without the mark neither says which.
+    test "carries its own sign, so a gift and a cost cannot be confused" do
+      assert Format.modifier(20) == "+20"
+      assert Format.modifier(-4) == "-4"
+      assert Format.modifier(0) == "0"
+    end
+
+    test "unless it multiplies, where a sign would be nonsense" do
+      assert Format.modifier(4, true) == "4"
     end
   end
 

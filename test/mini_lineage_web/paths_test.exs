@@ -28,13 +28,12 @@ defmodule MiniLineageWeb.PathsTest do
   end
 
   test "and every route the router answers is one the game can link to" do
-    # `:root` and `:unknown` are the two the game never builds a link for: "/" is reached by name
-    # and an unknown path is whatever someone typed.
+    # `:root` is the one the game never builds a link for: "/" is reached by name.
     linkable =
       ~w(battle weapons armors inn suicide death character highscores statistics races error start home)
       |> MapSet.new(&Paths.for_screen/1)
 
-    for {action, path} <- routed(), action not in [:root, :unknown] do
+    for {action, path} <- routed(), action != :root do
       assert MapSet.member?(linkable, path) or String.contains?(path, ":"),
              "#{path} (#{action}) is served but nothing links to it"
     end
@@ -49,7 +48,8 @@ defmodule MiniLineageWeb.PathsTest do
       # An ambush pins you to the Battleground, which is somewhere you are rather than something
       # that happened to you, so it keeps a URL.
       assert Paths.for_screen("battle") == "/battle"
-      assert Paths.for_screen("character") == "/character"
+      # A record is addressed by whose it is, so it has no screen-level path at all.
+      assert Paths.for_character("abc123") == "/character/abc123"
     end
   end
 

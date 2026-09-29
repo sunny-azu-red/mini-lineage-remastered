@@ -10,7 +10,6 @@ defmodule MiniLineageWeb do
     quote do
       use Phoenix.Router, helpers: false
 
-      # Import common connection and controller functions to use in pipelines
       import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
@@ -29,24 +28,19 @@ defmodule MiniLineageWeb do
     quote do
       use Phoenix.Component
 
-      # Import convenience functions from controllers
       import Phoenix.Controller, only: [get_csrf_token: 0]
 
-      # Include general helpers for rendering HTML
       unquote(html_helpers())
     end
   end
 
   defp html_helpers do
     quote do
-      # HTML escaping functionality
       import Phoenix.HTML
 
-      # Common modules used in templates
       alias Phoenix.LiveView.JS
-      alias MiniLineageWeb.Layouts
+      alias MiniLineageWeb.{Controls, Layouts}
 
-      # Routes generation with the ~p sigil
       unquote(verified_routes())
     end
   end

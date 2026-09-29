@@ -1,13 +1,7 @@
 defmodule MiniLineage.Game.VersionTest do
   @moduledoc """
-  What the running build calls itself.
-
-  This is not cosmetic. `release?/1` is what withholds error detail from players, so a build that
-  fails to identify itself as a release keeps handing out exception messages — which is exactly
-  what happened before config/prod.exs stamped the sha: a deployed release reported "development",
-  linked no commit, and showed the reason on its error pages.
-
-  Not async: these move APP_VERSION and the stamped application env, both global.
+  What the running build calls itself, and whether it may show a player its internals. Not async:
+  these move global env.
   """
   use ExUnit.Case, async: false
 
@@ -54,14 +48,22 @@ defmodule MiniLineage.Game.VersionTest do
     end
 
     test "and with neither, it says plainly that it is a debug build" do
-      assert Version.current() == "⚡ development"
+      assert Version.current() == "🔥development"
       refute Version.release?(Version.current())
     end
 
     test "the label is the build's own, so two unreleased servers are told apart" do
       # `Application.compile_env`, so :test reports the default while config/e2e.exs gives the
-      # browser suites' server "🔥 testing". Nothing at runtime can move it, which is the point.
-      assert Version.current() == "⚡ development"
+      # browser suites' server "🍃testing". Nothing at runtime can move it, which is the point.
+      assert Version.current() == "🔥development"
+      assert Version.build_class(Version.current()) == "build-development"
+    end
+
+    test "and a build that names a commit wears no badge of its own" do
+      # The class is matched against the whole label, so a version that is not this build's — a
+      # sha, or an APP_VERSION that is neither — takes none of the debug colours.
+      assert Version.build_class("1a2b3c4") == nil
+      assert Version.build_class("some-tag") == nil
     end
 
     test "and whatever a build calls itself, it is never taken for a commit" do
@@ -74,7 +76,7 @@ defmodule MiniLineage.Game.VersionTest do
     test "and there is no third answer: a nameless production build never gets built" do
       # mix.exs refuses to assemble a release without a stamp, so the only way to reach the
       # fallback above is to be a debug build. A deployed footer therefore always names a commit.
-      assert Version.current() == "⚡ development"
+      assert Version.current() == "🔥development"
     end
   end
 
@@ -89,7 +91,7 @@ defmodule MiniLineage.Game.VersionTest do
     end
 
     test "nor does anything else that might end up in the field" do
-      refute Version.release?("⚡ development")
+      refute Version.release?("⚡development")
       refute Version.release?("")
       refute Version.release?("v1.5.0")
       refute Version.release?("7095a4")
@@ -105,7 +107,7 @@ defmodule MiniLineage.Game.VersionTest do
     end
 
     test "and there is none for a build that is not a release" do
-      assert Version.commit_url("⚡ development") == nil
+      assert Version.commit_url("⚡development") == nil
     end
   end
 

@@ -1,0 +1,161 @@
+defmodule MiniLineageWeb.Screens.Halls do
+  @moduledoc """
+  The Hall of Champions, filtered to one lineage or to all of them. A view of the characters rather
+  than a table of its own, so a run appears the moment it chooses a race and keeps its place when
+  it ends.
+  """
+  use MiniLineageWeb, :html
+
+  import MiniLineageWeb.Controls
+
+  alias MiniLineage.Game.Format
+  alias MiniLineageWeb.Paths
+
+  # Which way a first click takes each column. No sort at all is the ranking, which no column is.
+  @sorts %{"name" => :asc, "level" => :desc, "xp" => :desc, "wealth" => :desc, "date" => :desc}
+
+  @doc "The columns the Halls sort on, for the LiveView to check a click or a kept sort against."
+  def sorts, do: @sorts
+
+  attr :view, :map, required: true
+  attr :catalog, :map, required: true
+  attr :boards, :map, default: %{}
+  attr :character_id, :string, default: nil
+  attr :race_filter, :integer, default: nil
+  attr :sorts, :map, default: %{}
+
+  def screen(assigns) do
+    filter = Enum.find(assigns.catalog.races, &(&1.id == assigns.race_filter))
+    sort = assigns.sorts["halls-table"]
+
+    assigns =
+      assign(assigns,
+        rows: assigns.boards |> Map.get(assigns.race_filter, []) |> sort_rows(sort, &sort_key/2),
+        sort: sort,
+        filter_slug: filter && filter.slug
+      )
+
+    ~H"""
+    <%!-- `top` pulls the row up to the panel edge and puts the gap below it, for the table. --%>
+    <div class="action-links top">
+      <.button
+        variant={:secondary}
+        size={:sm}
+        active={is_nil(@race_filter)}
+        patch={Paths.for_screen("highscores")}
+      >
+        All
+      </.button>
+      <.button
+        :for={race <- @catalog.races}
+        variant={:secondary}
+        size={:sm}
+        active={@race_filter == race.id}
+        patch={Paths.for_screen("highscores", race.slug)}
+      >
+        {race.emoji} {race.label}
+      </.button>
+      <.reset_sort table="halls-table" sort={@sort} />
+    </div>
+
+    <%= if @rows == [] do %>
+      <p>
+        The Hall is silent. No soul has yet earned a place among these hallowed pillars. The
+        chronicle of champions awaits its first entry. Will your name be the first to echo through
+        eternity?
+      </p>
+    <% else %>
+      <.data_table id="halls-table" sort={@sort} {stamps()}>
+        <:col class="name" sort="name">Name</:col>
+        <:col class="num" sort="level">Level</:col>
+        <:col class="num" sort="xp">Total XP</:col>
+        <:col sort="wealth">Wealth</:col>
+        <:col sort="date">Last Sighted</:col>
+        <%!-- One hook for the whole board: every [data-value] and [data-stamp] beneath it. --%>
+        <tbody id="halls-rows" phx-hook="AnimatedValues">
+          <.character_row
+            :for={row <- @rows}
+            :key={row.id}
+            catalog={@catalog}
+            row={row}
+            mine={row.id == @character_id}
+            from={@filter_slug}
+          />
+        </tbody>
+      </.data_table>
+    <% end %>
+
+    <.back_link started={@view.started} dead={@view.dead} class="last" />
+    """
+  end
+
+  attr :catalog, :map, required: true
+  attr :row, :map, required: true
+  attr :mine, :boolean, default: false
+  attr :from, :string, default: nil
+
+  defp character_row(assigns) do
+    assigns = assign(assigns, name: String.slice(assigns.row.name || "", 0, 20))
+
+    ~H"""
+    <%!-- Keyed by the character, never the row: the board reorders under a climb. The stamp is the
+          last chronicle entry, so only a logged deed sweeps the row, never regeneration. --%>
+    <tr
+      class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}
+      data-key={"row-#{@row.id}"}
+      data-stamp={DateTime.to_iso8601(@row.last_seen_at)}
+    >
+      <td class="name">
+        {race_emoji(@catalog, @row.race_id)}
+        <.link patch={Paths.for_character(@row.id, @from)}>{@name}</.link>
+        <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
+        <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and its width
+              keeps names from shifting. Last in the cell, so that width falls where nothing follows. --%>
+        <span
+          class={["online", @row.online && "lit"]}
+          title={@row.online && "Online right now"}
+          aria-hidden={if @row.online, do: "false", else: "true"}
+        >&bull;</span>
+      </td>
+      <td class="num level">
+        <span data-key={"level-#{@row.id}"} data-value={@row.level}>{Format.number(@row.level)}</span>
+      </td>
+      <td class="num xp">
+        <span data-key={"xp-#{@row.id}"} data-value={@row.total_xp}>{Format.number(@row.total_xp)}</span>
+      </td>
+      <td class="adena">
+        🪙
+        <span data-key={"adena-#{@row.id}"} data-format="adena" data-value={@row.adena}>{Format.adena(
+          @row.adena
+        )}</span>
+      </td>
+      <td><.stamp id={"seen-#{@row.id}"} at={@row.last_seen_at} /></td>
+    </tr>
+    """
+  end
+
+  defp sort_key(row, "name"), do: String.downcase(row.name || "")
+  defp sort_key(row, "level"), do: row.level
+  defp sort_key(row, "xp"), do: row.total_xp
+  defp sort_key(row, "wealth"), do: row.adena
+  defp sort_key(row, "date"), do: DateTime.to_unix(row.last_seen_at, :microsecond)
+
+  # A run is going while it has neither died nor lost its session. Without one it is missing: it
+  # can never be played again, so it is over even though it never died.
+  defp still_going?(row), do: not row.dead and row.active
+
+  defp medal(1), do: "🥇"
+  defp medal(2), do: "🥈"
+  defp medal(3), do: "🥉"
+
+  defp medal_title(1), do: "First in the Hall"
+  defp medal_title(2), do: "Second in the Hall"
+  defp medal_title(3), do: "Third in the Hall"
+
+  defp race_emoji(catalog, race_id) do
+    case Enum.find(catalog.races, &(&1.id == race_id)) do
+      nil -> "❓"
+      race -> race.emoji
+    end
+  end
+end

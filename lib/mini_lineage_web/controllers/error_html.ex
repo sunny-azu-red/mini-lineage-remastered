@@ -16,10 +16,33 @@ defmodule MiniLineageWeb.ErrorHTML do
     reason = Phoenix.Controller.status_message_from_template(template)
 
     assigns
-    |> Map.put(:detail, if(Version.debug_build?(), do: "#{status} #{reason}"))
+    |> Map.put(:detail, detail(status, "#{status} #{reason}", assigns))
     |> Map.put(:message, message_for(status))
     |> page()
   end
+
+  # The `<pre>`: the whole fault in a debug build, nothing in a release, since a trace names modules,
+  # lines and arguments and a player is not the audience.
+  defp detail(status, short, assigns) do
+    cond do
+      not Version.debug_build?() ->
+        nil
+
+      # A mistyped URL is not a fault, and a trace for one would bury the real ones.
+      status == "404" ->
+        short
+
+      # Rendered without a reason, by a test or a bare call, the status line is all there is.
+      is_map_key(assigns, :reason) ->
+        Exception.format(kind(assigns), assigns.reason, stack(assigns))
+
+      true ->
+        short
+    end
+  end
+
+  defp kind(assigns), do: Map.get(assigns, :kind, :error)
+  defp stack(assigns), do: Map.get(assigns, :stack, [])
 
   defp message_for("404"), do: "That road leads nowhere."
 
@@ -43,18 +66,17 @@ defmodule MiniLineageWeb.ErrorHTML do
 
             <div id="content">
               <div id="main">
-                <div class="panel">
-                  <div class="panel-header flex">
-                    <span class="header-name">Error</span>
+                <Controls.panel title="Error" heading>
+                  <:header>
                     <div class="header-effects" id="effects"></div>
-                  </div>
-
-                  <div class="panel-body">
-                    <p>{@message}</p>
-                    <pre :if={@detail} class="code-block">{@detail}</pre>
-                    <p class="last back"><a href={~p"/"}>Return to safer lands</a></p>
-                  </div>
-                </div>
+                  </:header>
+                  <p>{@message}</p>
+                  <pre :if={@detail} class="code-block">{@detail}</pre>
+                  <%!-- Without a fault's block above it, `back` draws the rule parting the way back. --%>
+                  <p class={if @detail, do: "last", else: "last back"}>
+                    <span class="muted">&laquo;</span> <a href={~p"/"}>Return to safer lands</a>
+                  </p>
+                </Controls.panel>
 
                 <Layouts.footer />
               </div>

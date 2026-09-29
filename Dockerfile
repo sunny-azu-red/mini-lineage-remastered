@@ -1,11 +1,10 @@
-# The builder's Elixir and OTP are pinned to the versions the game is developed and tested against.
-FROM hexpm/elixir:1.19.6-erlang-28.5.0.6-alpine-3.22.5 AS builder
+# Pinned to what CI tests on; CI fails if the two drift.
+FROM hexpm/elixir:1.20.4-erlang-29.1.1-alpine-3.24.2 AS builder
 
-RUN apk add --no-cache build-base git
+# Nothing to apk add: every production dependency is pure Elixir or Erlang.
 WORKDIR /app
 
-# Without a UTF-8 locale the VM runs with latin1 name encoding and warns that Elixir "may
-# malfunction". This game is made of emoji; it needs the real thing.
+# Without it the VM runs latin1, and this game is made of emoji.
 ENV LANG=C.UTF-8
 ENV MIX_ENV=prod
 
@@ -21,41 +20,38 @@ COPY assets assets
 COPY priv priv
 COPY lib lib
 
-# Names the commit in the footer. CI passes it; config/prod.exs reads it. Not read from a .git —
-# a deploy has none.
-#
-# Declared here, after the dependency layers, so a new commit does not rebuild them. The ENV is
-# not redundant: BuildKit keys a layer on an ARG only when the command mentions it, and mix reads
-# this from the environment instead — so without it the release below could be served from cache
-# and carry the previous build's commit.
+# The commit the footer names; there is no .git in the context. After the dependency layers so a
+# new commit does not rebuild them. The ENV is not redundant: BuildKit keys a layer on an ARG only
+# when the command mentions it.
 ARG APP_VERSION
 ENV APP_VERSION=${APP_VERSION}
 
-# `mix assets.deploy` compiles, minifies and digests; config/runtime.exs is read at boot, not
-# here, so the build needs no database and no secret.
+# runtime.exs is read at boot, so the build needs no database and no secret.
 RUN mix assets.deploy && mix release
 
 # --- runtime ---
-FROM alpine:3.22.5 AS runner
+FROM alpine:3.24.2 AS runner
 
-# ca-certificates so the database can be reached over TLS; the rest is what the ERTS links against.
+# What the ERTS links against, and ca-certificates for a database reached over TLS.
 RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
 WORKDIR /app
 
 ENV LANG=C.UTF-8
 
-# Links the package to this repository on GitHub, which gives it the README and makes where an
-# image came from answerable from the image itself.
+# Links the ghcr package to this repository.
 LABEL org.opencontainers.image.source="https://github.com/sunny-azu-red/mini-lineage-remastered"
 LABEL org.opencontainers.image.description="Mini-Lineage Remastered — a text-based RPG in Elixir and Phoenix LiveView"
 LABEL org.opencontainers.image.licenses="MIT"
 
+# Before the copy, so --chown sets ownership as files land; a `chown -R` after would duplicate the
+# release into a layer of its own. /app itself is chowned for the release's runtime config.
+RUN addgroup -S app && adduser -S -G app app && chown app:app /app
+
 # The release brings its own ERTS; nothing here needs Elixir or Mix.
-COPY --from=builder /app/_build/prod/rel/mini_lineage ./
+COPY --from=builder --chown=app:app /app/_build/prod/rel/mini_lineage ./
 
 ENV PHX_SERVER=true
 
-RUN addgroup -S app && adduser -S -G app app && chown -R app:app /app
 USER app
 
 # Migrations run in the same container that serves, so a fresh database is never served against.

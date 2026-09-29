@@ -5,7 +5,6 @@ defmodule MiniLineageWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug MiniLineageWeb.Plugs.CharacterSession
-    plug :fetch_live_flash
     plug :put_root_layout, html: {MiniLineageWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
@@ -15,24 +14,23 @@ defmodule MiniLineageWeb.Router do
   scope "/", MiniLineageWeb do
     pipe_through :browser
 
-    # Every screen is the same LiveView, so moving between them is a patch, not a full mount —
-    # and `Access.pin_screen/2` in handle_params/3 is the only gate any of them pass through.
+    # One LiveView, so moving between screens is a patch; `Access.pin_screen/2` is the only gate.
     live "/", GameLive, :root
     live "/battle", GameLive, :battle
     live "/shop/weapons", GameLive, :weapons
     live "/shop/armors", GameLive, :armors
     live "/inn", GameLive, :inn
     live "/suicide", GameLive, :suicide
-    live "/character", GameLive, :character
+
+    # Every record is public, being on the board, so there is nothing here to gate.
+    live "/character/:id", GameLive, :character
     live "/highscores", GameLive, :highscores
     live "/highscores/:race", GameLive, :highscores
     live "/statistics", GameLive, :statistics
     live "/races", GameLive, :races
     live "/error", GameLive, :error
 
-    # The game owns every URL. An unrecognised path is not an error — it resolves to Town (or Game
-    # Start, once pinned) and the address bar is corrected, exactly as the reference's SPA fallback
-    # did. Must stay last: a glob would otherwise shadow every route above it.
-    live "/*unknown", GameLive, :unknown
+    # No glob: a catch-all is a soft 404. Phoenix raises for what it does not route and `ErrorHTML`
+    # draws it.
   end
 end

@@ -30,7 +30,6 @@ defmodule MiniLineage.Characters.SerdeTest do
       consecutive_ambushes: 2,
       total_enemies_killed: 118,
       current_screen: "battle",
-      combat_until: 1_700_000_005_000,
       effects: [
         %{
           id: "satisfied",
@@ -79,15 +78,16 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the document covers the struct" do
     test "every field is written, and nothing that is not a field" do
-      # Two deliberate exceptions, named so that a field forgotten by accident still fails here.
-      # `version` describes the document rather than the character; `last_battle_narrative` is
-      # transient, kept on the struct for the screen and stored in battle_log instead.
+      # Named, so a field forgotten by accident still fails: `version` describes the document,
+      # `last_battle_narrative` is stored in character_log, and `pending_events` lives only until
+      # the same pass writes it.
       struct_keys =
         %Player{}
         |> Map.from_struct()
         |> Map.keys()
         |> MapSet.new()
         |> MapSet.delete(:last_battle_narrative)
+        |> MapSet.delete(:pending_events)
 
       written =
         %Player{}
@@ -103,7 +103,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "the last battle is not in the document, because it is half its bytes" do
-      # The fixture carries one; it belongs in battle_log, and the round trip drops it.
+      # The fixture carries one; it belongs in character_log, and the round trip drops it.
       refute Map.has_key?(Serde.to_map(populated()), "last_battle_narrative")
       assert Serde.from_map(Serde.to_map(populated())).last_battle_narrative == nil
     end
@@ -132,11 +132,12 @@ defmodule MiniLineage.Characters.SerdeTest do
       assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 1
     end
 
-    test "a document written before versioning is the shape we have now" do
-      # Every row already in the database predates this key, and none of them need converting.
-      before_versioning = %Player{} |> Serde.to_map() |> Map.delete("version")
+    test "and a document without one is refused, not assumed to be this shape" do
+      # Nothing this build has ever written lacks the key, so a document that does is not a row
+      # from an older build — it is a document the game did not write.
+      unversioned = %Player{} |> Serde.to_map() |> Map.delete("version")
 
-      assert Serde.from_map(before_versioning) == %Player{}
+      assert_raise RuntimeError, ~r/carries no version/, fn -> Serde.from_map(unversioned) end
     end
 
     test "and one from a newer build is refused rather than quietly misread" do
@@ -148,59 +149,50 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
   end
 
+  describe "an effect in the document" do
+    # The catalog says what an effect is; the document only which one, and until when.
+    test "is written as which one it is and until when, and nothing else" do
+      [stored | _] = Serde.to_map(populated())["effects"]
+
+      assert stored == %{"id" => "satisfied", "expires_at" => 1_700_000_090_000}
+    end
+
+    test "is read back from the catalog, whatever else a document claims about it" do
+      loaded =
+        Serde.from_map(%{
+          "version" => 1,
+          "effects" => [
+            %{"id" => "satisfied", "expires_at" => 5, "label" => "Forged", "modifiers" => [%{}]}
+          ]
+        })
+
+      assert [
+               %{
+                 id: "satisfied",
+                 label: "Satisfied",
+                 expires_at: 5,
+                 modifiers: [%{type: :max_health}]
+               }
+             ] =
+               loaded.effects
+    end
+
+    # An id the catalog no longer has, or never had, names nothing, so it is dropped rather than
+    # guessed at, and no atom is minted from it.
+    test "is dropped when the catalog does not know it" do
+      hostile = "definitely_not_an_effect_#{System.unique_integer([:positive])}"
+
+      loaded =
+        Serde.from_map(%{"version" => 1, "effects" => [%{"id" => hostile}, %{"id" => "resting"}]})
+
+      assert [%{id: "resting"}] = loaded.effects
+      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
+    end
+  end
+
   describe "a hostile document" do
-    test "cannot mint an atom through an effect's type" do
-      hostile = "definitely_not_an_effect_type_#{System.unique_integer([:positive])}"
-
-      loaded =
-        Serde.from_map(%{
-          "effects" => [
-            %{
-              "id" => "x",
-              "type" => hostile,
-              "modifiers" => []
-            }
-          ]
-        })
-
-      assert [%{type: :buff}] = loaded.effects
-      # Names the exact string rather than watching a global counter, which any concurrent atom
-      # creation would move.
-      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
-    end
-
-    test "cannot mint an atom through a modifier's type, and the modifier is dropped" do
-      hostile = "not_a_stat_#{System.unique_integer([:positive])}"
-
-      loaded =
-        Serde.from_map(%{
-          "effects" => [
-            %{
-              "id" => "x",
-              "type" => "buff",
-              "modifiers" => [
-                %{"type" => hostile, "value" => 999},
-                %{"type" => "attack", "value" => 3}
-              ]
-            }
-          ]
-        })
-
-      assert [%{modifiers: [%{type: :attack, value: 3}]}] = loaded.effects
-      assert_raise ArgumentError, fn -> String.to_existing_atom(hostile) end
-    end
-
-    test "a malformed modifier is dropped rather than crashing the load" do
-      loaded =
-        Serde.from_map(%{
-          "effects" => [%{"id" => "x", "type" => "buff", "modifiers" => ["nonsense", %{}, nil]}]
-        })
-
-      assert [%{modifiers: []}] = loaded.effects
-    end
-
     test "missing fields fall back to a playable character rather than nil arithmetic" do
-      loaded = Serde.from_map(%{})
+      loaded = Serde.from_map(%{"version" => 1})
 
       assert loaded.total_battles == 0
       assert loaded.total_ambushes == 0
@@ -212,7 +204,8 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "a truthy-looking string is not a truthy flag" do
-      loaded = Serde.from_map(%{"dead" => "yes", "cheated" => 1, "coward" => "true"})
+      loaded =
+        Serde.from_map(%{"version" => 1, "dead" => "yes", "cheated" => 1, "coward" => "true"})
 
       refute loaded.dead
       refute loaded.cheated

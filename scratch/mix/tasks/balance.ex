@@ -2,8 +2,8 @@ defmodule Mix.Tasks.Balance do
   @shortdoc "Runs a balance simulation against the live game constants"
 
   @moduledoc """
-  The balance studies that tuned this game, ported from `scratch/*.ts`. They read the shipped
-  constants, so a rebalance is re-measured by rerunning them rather than by editing them.
+  The balance studies that tuned this game. They read the shipped constants, so a rebalance is
+  re-measured by rerunning them rather than by editing them.
 
       mix balance                 # list the simulations
       mix balance ambush_odds     # run one

@@ -1,14 +1,6 @@
 /**
- * Plays every lineage through a normal game, which the main walkthrough cannot: it commits to one
- * race, so a fault in the other three — a wrong purse, a missing backstory, a race that cannot
- * reach the board — would ship unseen.
- *
- * Asserts identity and arithmetic the screens must show, never how a fight rolls. What each race
- * is worth in combat belongs to balance_golden_test.exs, which can seed the dice; here the dice
- * are real, so nothing is claimed about levels reached or damage dealt.
- *
- * Usage: start the isolated server (`e2e/serve.sh`), then
- *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node e2e/races.mjs
+ * Every lineage played through, which the walkthrough cannot: it commits to one race. Asserts what
+ * the screens show, never how a fight rolls: the dice are real here.
  */
 import { chromium } from 'playwright';
 import { BASE, RACES, reporter, controls } from './helpers.mjs';
@@ -28,7 +20,8 @@ page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
 
 const { state, onScreen, goHome, travel, fight, buy, leaveShop, boardRows, activeFilter } = controls(page);
 const text = async (sel) => (await page.textContent(sel))?.replace(/\s+/g, ' ').trim() ?? '';
-const stat = async (id) => Number((await page.textContent(`#${id}`))?.replace(/,/g, ''));
+// The attribute, not the text: these figures count up to their value, so the text is a frame.
+const stat = (id) => page.getAttribute(`#${id}`, 'data-value').then(Number);
 
 try {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
@@ -57,7 +50,7 @@ try {
 
         const born = await state();
         check(`the ${race.label} is welcomed by name`,
-            new RegExp(`You have chosen the.*${race.label}`).test(await text('#main .alert')),
+            new RegExp(`You chose the.*${race.label}`).test(await text('#main .alert')),
             await text('#main .alert'));
         check(`...and starts on the ${race.label}'s own purse`, born.adena === race.adena,
             `${born.adena}, expected ${race.adena}`);
@@ -115,7 +108,7 @@ try {
                 (await text('#sidebar')).includes('Elven Needle'), await text('#sidebar .panel-body'));
         else
             check('...and is told why, rather than shown an error page',
-                /do not have enough Adena/.test(await text('#main .alert-danger')),
+                /do not have enough 🪙 Adena/.test(await text('#main .alert-danger')),
                 await text('#main .alert-danger'));
 
         await leaveShop();
@@ -138,13 +131,21 @@ try {
         check('...and lands on the death screen', died.screen === 'death');
 
         await page.waitForSelector('.phx-connected', { timeout: 8000 });
-        check(`a fallen ${race.label} may write its legacy`,
-            await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
-        await page.click('#main button:has-text("Write your Legacy")');
-        await onScreen('highscores');
-        check(`...and the ${race.label} reaches the board`,
+
+        // Nothing is submitted: the run has been in the Halls since it chose a race, so this only
+        // confirms it is still there now that it has ended.
+        await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        check(`...and the ${race.label} stands on the board unbidden`,
             (await text('#main table.data-table')).includes(name));
-        check('submitting also clears the character', (await state()).started === false);
+
+        // Play Again is a patch, not a page load: the session outlives the run.
+        await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        await page.click('#main button[phx-click="restart"]');
+        await onScreen('start');
+        check('playing again leaves the run behind and clears the character',
+            (await state()).started === false);
     }
 
     // ---- the board can be read one lineage at a time -------------------------------------------
@@ -160,7 +161,7 @@ try {
         await page.click(`#main .action-links a:has-text("${race.label}") >> nth=0`);
         await page.waitForFunction(
             expected => document.querySelector('#main .action-links a.active')?.textContent.includes(expected),
-            race.label, { timeout: 5000 }).catch(() => {});
+            race.label, { timeout: 5000 }).catch(() => { });
 
         const rows = await boardRows();
         check(`filtering to ${race.plural} shows only ${race.plural}`,

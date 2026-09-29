@@ -1,28 +1,27 @@
 defmodule MiniLineage.Game.Actions do
   @moduledoc """
   Every state-changing action, as a function from a player to `{player, result}` — the shape
-  `Characters.mutate/2` runs inside the character's process.
-
-  Each declares its own preconditions. Client-side routing is convenience; these guards are the
-  boundary. Notably `restart/1` requires a dead character, so a living one can never be wiped.
+  `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
+  client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Battle, Constants, Math, Narrative, Player, Statistics}
-  alias MiniLineage.Highscores
+  alias MiniLineage.Game.{Battle, Clock, Constants, Math, Narrative, Player, Statistics}
 
   @errors %{
-    not_started: "You haven't started your journey yet — create a character first.",
+    not_started: "You haven't started your journey yet, so create a character first.",
     already_started: "You already have a character. Restart if you want to begin again.",
     dead: "You are dead. There is nothing left to do but restart.",
-    not_dead: "You're still alive — this action is only for the fallen.",
-    ineligible: "Cowards and cheaters cannot be immortalized on the highscores.",
+    not_dead: "You're still alive, and this action is only for the fallen.",
     invalid: "That is not something you can do."
   }
 
-  defp guard(player, checks) do
+  defp refusal(player, checks) do
     Enum.find_value(checks, fn {code, failed?} ->
       if failed?.(player), do: {player, {:error, code, @errors[code]}}
     end)
   end
+
+  # The first failing precondition IS the result; `fun` runs only when every one of them holds.
+  defp guard(player, checks, fun), do: refusal(player, checks) || fun.(player)
 
   defp started, do: [{:not_started, &(not Player.started?(&1))}]
   defp alive, do: started() ++ [{:dead, & &1.dead}]
@@ -30,18 +29,21 @@ defmodule MiniLineage.Game.Actions do
   # ------------------------------------------------------------------- start
 
   def start(player, race_id, name) do
-    with nil <- guard(player, [{:already_started, &Player.started?/1}]),
-         {:ok, race_id, name} <- validate_start(race_id, name) do
-      {player, flash} = Player.initialize(player, Constants.race(race_id), name)
+    guard(player, [{:already_started, &Player.started?/1}], fn player ->
+      case validate_start(race_id, name) do
+        :invalid -> {player, {:error, :invalid, @errors.invalid}}
+        {:ok, race_id, name} -> begin(player, race_id, name)
+      end
+    end)
+  end
 
-      # Stamped here so a fresh character never renders auraless.
-      {player, _} = Player.sync_zone_auras(%{player | current_screen: "home"})
+  defp begin(player, race_id, name) do
+    {player, flash} = Player.initialize(player, Constants.race(race_id), name)
 
-      {player, {:ok, flash}}
-    else
-      {_player, _error} = refusal -> refusal
-      :invalid -> {player, {:error, :invalid, @errors.invalid}}
-    end
+    # Stamped here so a fresh character never renders auraless.
+    {player, _} = Player.sync_zone_auras(%{player | current_screen: "home"})
+
+    {player, {:ok, flash}}
   end
 
   defp validate_start(race_id, name) do
@@ -65,12 +67,7 @@ defmodule MiniLineage.Game.Actions do
   fighting again, with no penalty for having navigated away. Simulation runs ONLY from here,
   never on mount, reconnect or page load.
   """
-  def fight(player) do
-    case guard(player, alive()) do
-      nil -> do_fight(player)
-      refusal -> refusal
-    end
-  end
+  def fight(player), do: guard(player, alive(), &do_fight/1)
 
   defp do_fight(player) do
     # Stamped directly rather than relying on a separate screen report, which could land out of
@@ -82,9 +79,9 @@ defmodule MiniLineage.Game.Actions do
     outcome = %{outcome | is_level_up: level_up?}
 
     died = player.dead
+    # Cleared above, so only a fight the run walked away from can raise it again.
     player = if died, do: player, else: roll_ambush(player)
-
-    ambushed = not died and player.ambushed
+    ambushed = player.ambushed
 
     # Precedence: death > level-up > ambush > crit > silence.
     sound =
@@ -98,12 +95,34 @@ defmodule MiniLineage.Game.Actions do
 
     narrative = Narrative.build_battle(player, outcome, ambushed)
 
-    # Persisted so a reconnect replays this exact narrative, same as the death reason.
-    last = %{narrative: narrative, outcome: outcome, ambushed: ambushed, died: died, sound: sound}
-    player = %{player | last_battle_narrative: last}
+    # Stamped here, not at the insert: a row can sit in the process buffer, and the Chronicle says
+    # when the fight happened rather than when it was written.
+    last = %{narrative: narrative, at: Clock.now()}
+
+    # A fatal fight paid nothing, so its lines, drawn to keep the dice in step, claim what never
+    # happened and are not kept: the run's ending is how it ended, and no screen shows the rest.
+    player =
+      if died,
+        do:
+          Player.log(%{player | last_battle_narrative: nil}, %{
+            kind: "ending",
+            line: player.death_reason,
+            at: last.at
+          }),
+        else: Player.log(%{player | last_battle_narrative: last}, %{kind: "fight", battle: last})
+
+    # After the fight and not inside it: the Chronicle reads in the order these are pushed, and a
+    # level reached before the blow that earned it reads backwards. A fatal fight levels nobody.
+    player =
+      if level_up? do
+        level = Math.level_for_xp(player.experience)
+        Player.log(player, Player.event("level_up", Narrative.build_levelled(level)))
+      else
+        player
+      end
 
     flash =
-      if not died and level_up? do
+      if level_up? do
         %{
           text:
             "🎉 Congratulations! You have reached level #{Math.level_for_xp(player.experience)}.",
@@ -112,7 +131,7 @@ defmodule MiniLineage.Game.Actions do
         }
       end
 
-    {player, {:ok, Map.put(last, :flash, flash)}}
+    {player, {:ok, %{flash: flash, sound: sound}}}
   end
 
   defp roll_ambush(player) do
@@ -124,7 +143,7 @@ defmodule MiniLineage.Game.Actions do
           consecutive_ambushes: player.consecutive_ambushes + 1
       }
 
-      Statistics.increment(:total_ambushes)
+      Statistics.increment_for(player, :total_ambushes)
 
       if player.consecutive_ambushes >= 2,
         do: Player.apply_effect(player, Constants.effect(:ambush_debuff)),
@@ -137,21 +156,16 @@ defmodule MiniLineage.Game.Actions do
   # -------------------------------------------------------------------- shop
 
   def purchase(player, type, item_id) do
-    case guard(player, alive()) do
-      nil ->
-        case validate_item(type, item_id) do
-          :invalid -> {player, {:error, :invalid, "Unknown item."}}
-          {:ok, item_id} -> do_purchase(player, type, item_id)
-        end
-
-      refusal ->
-        refusal
-    end
+    guard(player, alive(), fn player ->
+      case validate_item(type, item_id) do
+        :invalid -> {player, {:error, :invalid, "Unknown item."}}
+        {:ok, item_id} -> do_purchase(player, type, item_id)
+      end
+    end)
   end
 
-  # The boundary, not a convenience: it rejects anything that is not a number, and the starting
-  # weapon and armor, which cost nothing and are never for sale — buying one would be a free
-  # downgrade.
+  # The boundary: rejects anything not a number, and the starting weapon and armor, which are
+  # never for sale — buying one would be a free downgrade.
   defp validate_item(type, item_id) do
     with {id, ""} <- Integer.parse(to_string(item_id)),
          true <- id in purchasable_ids(type) do
@@ -167,102 +181,59 @@ defmodule MiniLineage.Game.Actions do
   defp purchasable_ids(_type), do: []
 
   defp do_purchase(player, type, item_id) do
-    case Player.purchase(player, type, item_id) do
-      nil ->
-        {player, {:error, :invalid, "Unknown item."}}
+    {player, result} = Player.purchase(player, type, item_id)
 
-      {player, result} ->
-        # "Not enough Adena" and "already own this" are successful actions with a danger
-        # flash, not errors.
-        sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
-        type_atom = if result.success, do: :success, else: :danger
+    # "Not enough 🪙 Adena" and "already own this" are successful actions with a danger flash.
+    sound = if result.success, do: if(type == "food", do: "eat", else: "buy")
+    type_atom = if result.success, do: :success, else: :danger
 
-        # Only a shop flash breaks its lines. The reference converts newlines here and nowhere
-        # else, so the welcome message stays one flowing paragraph — copied rather than tidied,
-        # because tidying it would be a visible change.
-        text = String.replace(result.text, "\n", "<br>")
-
-        {player, {:ok, %{text: text, type: type_atom, sound: sound}}}
-    end
+    {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
   end
 
   # ------------------------------------------------------------------ player
 
   def suicide(player) do
-    case guard(player, alive()) do
-      nil ->
-        player = Player.commit_suicide(player)
-        Statistics.increment(:total_players_suicided)
+    guard(player, alive(), fn player ->
+      player = Player.commit_suicide(player)
 
-        {%{player | current_screen: "death"}, {:ok, nil}}
+      # A run that ends in a fight has the fight row to say so; this one needs an ending of its own.
+      player = Player.log(player, Player.event("ending", player.death_reason))
+      Statistics.increment(:total_players_suicided)
 
-      refusal ->
-        refusal
-    end
+      {%{player | current_screen: "death"}, {:ok, nil}}
+    end)
   end
 
   # No `alive` guard: a dead player is pinned to 'death' anyway, and dead players get no aura, so
   # recording their screen is harmless.
   def set_screen(player, screen) do
-    case guard(player, started()) do
-      nil ->
-        {player, _} = Player.sync_zone_auras(%{player | current_screen: screen})
-        {player, {:ok, nil}}
-
-      refusal ->
-        refusal
-    end
+    guard(player, started(), fn player ->
+      {player, _} = Player.sync_zone_auras(%{player | current_screen: screen})
+      {player, {:ok, nil}}
+    end)
   end
 
   # -------------------------------------------------------------- end of run
-
-  def submit_highscore(player) do
-    checks =
-      started() ++
-        [{:not_dead, &(not &1.dead)}, {:ineligible, &(&1.coward or &1.cheated)}]
-
-    case guard(player, checks) do
-      nil ->
-        highscore_id =
-          Highscores.insert(%{
-            name: player.name,
-            experience: player.experience,
-            race_id: player.race_id,
-            adena: player.adena,
-            level: Math.level_for_xp(player.experience)
-          })
-
-        slug = MiniLineage.Game.Format.slugify(Constants.race(player.race_id).label)
-
-        {Player.reset(player), {:ok, %{race_slug: slug, highscore_id: highscore_id}}}
-
-      refusal ->
-        refusal
-    end
-  end
 
   @doc """
   Konami cheat. Activation is silent by design: no flash, just the debuff icon and HP snapping to
   full. Every failure path is a no-op — the relay has no ack to report one to.
   """
   def cheat(player) do
-    if not Player.started?(player) or player.dead do
+    # Once, not again: a second sequence would refill health, log the heresy and count it twice.
+    if not Player.started?(player) or player.dead or player.cheated do
       {player, {:ok, nil}}
     else
       player = %{player | cheated: true}
       player = Player.apply_effect(player, Constants.effect(:konami_cheat))
       player = %{player | health: Player.stats(player).max_health}
+      player = Player.log(player, Player.event("cheat", Narrative.build_heresy()))
       Statistics.increment(:total_players_cheated)
 
       {player, {:ok, nil}}
     end
   end
 
-  @doc "Only the fallen may start over — a living character can never be wiped."
-  def restart(player) do
-    case guard(player, [{:not_dead, &(not &1.dead)}]) do
-      nil -> {Player.reset(player), {:ok, nil}}
-      refusal -> refusal
-    end
-  end
+  @doc "Only the fallen may start over. `Characters.archive/1` does the leaving behind."
+  def may_restart?(player), do: refusal(player, [{:not_dead, &(not &1.dead)}]) == nil
 end

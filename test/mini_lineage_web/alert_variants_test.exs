@@ -1,0 +1,72 @@
+defmodule MiniLineageWeb.AlertVariantsTest do
+  @moduledoc """
+  Every alert the game can raise has a rule to be drawn by, and every rule has an alert.
+
+  `flash_alert/1` builds its class from the type the action returned, so a type nothing styles
+  renders unstyled and a rule nothing raises is dead weight. Neither end can see that alone, so
+  this reads both and compares them.
+  """
+  use ExUnit.Case, async: true
+
+  alias MiniLineage.Game.{Actions, Constants, Math, Player}
+
+  @sheet "assets/css/components.css"
+
+  defp flash_type(fun) do
+    {_player, {:ok, flash}} = fun.()
+    flash.type
+  end
+
+  defp rich(screen) do
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Buyer")
+    %{player | adena: 100_000, current_screen: screen}
+  end
+
+  # Every variant the game can put on an alert, and the thing a player does to see it.
+  defp raised do
+    %{
+      success: flash_type(fn -> Actions.purchase(rich("weapons"), "weapon", 1) end),
+      danger: flash_type(fn -> Actions.purchase(%{rich("weapons") | adena: 0}, "weapon", 5) end),
+      info: elem(Player.initialize(%Player{}, Constants.race(1), "Newborn"), 1).type,
+      warning: levelled()
+    }
+  end
+
+  # A fight carries its flash only when it crossed a level, so the fighter is stood one XP short of
+  # the next one. Guaranteed rather than likely: at attack 7 a fight kills 2 enemies at worst and
+  # the stingiest possible roll is 34 XP against the 1 needed, and 25-odd damage cannot kill 170 HP.
+  defp levelled do
+    fighter = %{rich("battle") | experience: Math.xp_for_level(2) - 1, health: 500}
+    {_player, {:ok, result}} = Actions.fight(fighter)
+
+    result.flash.type
+  end
+
+  defp styled do
+    @sheet
+    |> File.read!()
+    |> then(&Regex.scan(~r/^\.alert-([a-z]+)\s*\{/m, &1))
+    |> Enum.map(fn [_, name] -> String.to_atom(name) end)
+    |> MapSet.new()
+  end
+
+  test "every alert the game raises is one the stylesheet draws" do
+    for {expected, actual} <- raised() do
+      assert actual == expected, "the #{expected} path now raises #{inspect(actual)}"
+      assert actual in styled(), "nothing in #{@sheet} draws .alert-#{actual}"
+    end
+  end
+
+  # `.alert-dismissible` is a modifier and `.alert-dismiss` is the corner glyph that closes one.
+  # Both are parts of an alert rather than voices it can speak in, so neither answers to a type.
+  @not_voices MapSet.new([:dismissible, :dismiss])
+
+  test "and every one the stylesheet draws is one the game can raise" do
+    unclaimed =
+      styled()
+      |> MapSet.difference(MapSet.new(Map.keys(raised())))
+      |> MapSet.difference(@not_voices)
+
+    assert Enum.to_list(unclaimed) == [], "nothing raises these"
+  end
+end

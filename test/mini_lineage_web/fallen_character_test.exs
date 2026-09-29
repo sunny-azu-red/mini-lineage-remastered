@@ -10,16 +10,23 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Player, Snapshot}
-  alias MiniLineageWeb.Screens
+  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
+  alias MiniLineageWeb.{Screens, Screens.Record}
 
-  defp html_for(player) do
-    render_component(&Screens.screen/1,
+  # The component, not the screen: these are about the prose, and `record/1` is what carries it
+  # for a reader of any kind.
+  defp html_for(player, mine \\ true) do
+    render_component(&Record.record/1,
       view: Snapshot.build(player),
-      screen: "character",
       catalog: Snapshot.catalog(),
-      flash: %{}
+      mine: mine
     )
+  end
+
+  # What a reader sees, with the markup taken out: a figure and the noun it counts are separate
+  # elements, so "12 battles" is prose to assert on, not markup.
+  defp text_for(player, mine \\ true) do
+    player |> html_for(mine) |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
   end
 
   defp living do
@@ -27,12 +34,81 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     %{player | experience: 4_200, adena: 900, total_battles: 12, total_enemies_killed: 30}
   end
 
-  defp fallen, do: %{Player.kill(living()) | death_reason: "The road ran out beneath you."}
+  defp fallen,
+    do: %{Player.kill(living()) | death_reason: "The road ran out beneath {object}."}
+
+  describe "the way back, for someone who has died" do
+    defp halls_for(player) do
+      render_component(&Screens.screen/1,
+        view: Snapshot.build(player),
+        screen: "highscores",
+        catalog: Snapshot.catalog(),
+        boards: %{}
+      )
+    end
+
+    test "leads to their ending, and says so" do
+      # The destination was already right — '/' renders the death screen for the dead — but the
+      # label promised a journey that is over.
+      html = halls_for(fallen())
+
+      assert html =~ "Return to your final rest"
+      refute html =~ "Continue your journey"
+    end
+
+    test "while the living are told to carry on" do
+      html = halls_for(living())
+
+      assert html =~ "Continue your journey"
+      refute html =~ "Return to your final rest"
+    end
+  end
+
+  describe "the voice" do
+    # The lineage's lore belongs to the Chronicles of Ancestry; the record says what it gave this
+    # run, to whoever is reading it, and nothing about how the journey has been defined.
+    test "tells what the lineage gave the run, to its reader, and no lore" do
+      race = Constants.race(1)
+
+      assert text_for(living(), true) =~ "You embark with a fortified"
+      assert text_for(living(), false) =~ "They embark with a fortified"
+      refute text_for(living()) =~ String.slice(race.backstory, 0, 40)
+      refute text_for(living()) =~ "defined by conflict"
+    end
+
+    # Even to a player of that very lineage: the page describes a people, not the run reading it.
+    test "while the Chronicles of Ancestry speak of every lineage as a visitor would" do
+      html =
+        render_component(&Screens.screen/1,
+          view: Snapshot.build(living()),
+          screen: "races",
+          catalog: Snapshot.catalog()
+        )
+
+      assert length(Regex.scan(~r/They embark/, html)) == length(Snapshot.catalog().races)
+      refute html =~ "You embark"
+      refute html =~ ~r/\{[a-z]+\}/
+    end
+
+    test "is second person on your own record" do
+      html = html_for(fallen())
+
+      assert html =~ "You were wielding"
+      assert html =~ "Your Journey Has Ended"
+      refute html =~ "They were wielding"
+    end
+  end
 
   describe "a fallen character" do
-    test "is marked by the skull, not by its ancestry's emoji" do
-      assert html_for(fallen()) =~ "☠️"
-      refute html_for(fallen()) =~ Constants.race(1).emoji
+    test "keeps its ancestry's emoji rather than swapping in a skull" do
+      # A skull in place of the badge loses the one glyph that says which lineage this was. The
+      # skull marks the heading that says the journey ended, and nothing else.
+      [ancestry | _] =
+        Regex.scan(~r|<h2>(.*?)</h2>|s, html_for(fallen()), capture: :all_but_first)
+
+      assert hd(ancestry) =~ Constants.race(1).emoji
+      refute hd(ancestry) =~ "☠️"
+      assert html_for(fallen()) =~ "<h2>☠️ Your Journey Has Ended</h2>"
     end
 
     test "speaks of the run in the past" do
@@ -56,17 +132,20 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       refute html =~ "char-vitality"
     end
 
-    test "closes on the reason it ended, the same line the death screen carries" do
-      assert html_for(fallen()) =~ "The road ran out beneath you."
+    # The record tallies the run; the CHRONICLE tells how it ended, and the page does not repeat it.
+    test "tallies the run without repeating how it ended" do
+      refute html_for(fallen()) =~ "The road ran out beneath you."
+      assert html_for(fallen()) =~ "You fell at"
     end
 
-    test "and its way back leads to the death screen, which is the root" do
-      # Start, Town and Game Over are one run's three states and share '/'. The Character screen is
-      # somewhere you navigated to, so it has a URL; the screen it returns you to does not.
-      html = html_for(fallen())
+    test "and reads as somebody else's when somebody else is reading it" do
+      # Never the name in the prose — the heading has already said whose record this is.
+      html = html_for(fallen(), false)
 
-      assert html =~ "Return to your final rest"
-      assert html =~ ~s|href="/"|
+      assert html =~ "Their Journey Has Ended"
+      assert html =~ "They fought through"
+      assert html =~ "They fell at"
+      refute html =~ "You fell at"
     end
 
     test "still shows the numbers the living screen shows, from the same markup" do
@@ -76,8 +155,24 @@ defmodule MiniLineageWeb.FallenCharacterTest do
             ~w(char-stat-attack char-stat-defense char-stat-crit char-stat-regen char-stat-ambush),
           do: assert(html =~ id, id)
 
-      assert html =~ "12 battles"
-      assert html =~ "4,200 XP"
+      text = text_for(fallen())
+      assert text =~ "12 battles"
+      assert text =~ "4,200 XP"
+    end
+
+    test "and what its gear granted counts too, rather than jumping with the gear" do
+      crit? = &((Snapshot.item_view(&1)[:crit] || 0) > 0)
+      regen? = &((Snapshot.item_view(&1)[:regen] || 0) > 0)
+
+      html =
+        html_for(%{
+          fallen()
+          | weapon_id: Enum.find_index(Constants.weapons(), crit?),
+            armor_id: Enum.find_index(Constants.armors(), regen?)
+        })
+
+      assert html =~ ~s|data-key="rec-weapon-crit"|
+      assert html =~ ~s|data-key="rec-armor-regen"|
     end
   end
 
@@ -91,8 +186,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
             %{living() | total_ambushes: 3},
             %{fallen() | total_ambushes: 3}
           ] do
-        text =
-          player |> html_for() |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
+        text = text_for(player)
 
         assert Regex.scan(~r/\S+ [,.]/, text) == [], text
       end
@@ -101,18 +195,31 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     test "counts ambushes only when there were any" do
       refute html_for(fallen()) =~ "overcoming"
       assert html_for(%{fallen() | total_ambushes: 3}) =~ "overcoming"
-      assert html_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
+      assert text_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
     end
 
-    test "and gives the reason it ended the same weight as the death screen does" do
-      # Not muted: it is the last line of the eulogy, not a footnote to it. The reason is drawn at
-      # random on death, so it is read off the same character that was rendered.
-      player = fallen()
-      html = html_for(player)
-      reason = Regex.escape(player.death_reason)
+    test "and leaves the ending to the one entry that is an ending" do
+      # How a run ended is the last line of its chronicle, in the red every ending in the game
+      # wears. The record's own prose counts what it did and stops there.
+      html = html_for(fallen())
 
-      assert html =~ ~r|<p[^>]*>#{reason}|, "the reason it ended is not on the page"
-      refute html =~ ~r|<p[^>]*class="[^"]*muted[^"]*"[^>]*>#{reason}|
+      refute html =~ ~s(<span class="deaths">)
+      assert text_for(fallen()) =~ "Adena unspent."
+    end
+
+    # The road above already dates the end, so this closes on what the fall left behind rather than
+    # announcing a second time that the road ran out. Each branch has to read as a sentence.
+    test "and says what the fall left behind, however it stood" do
+      assert text_for(%{fallen() | adena: 3_400}) =~
+               ~r/only [\d,]+ XP short of Level \d+, and left 🪙 [\d.,k]+ Adena unspent\.\s*$/
+
+      assert text_for(%{fallen() | adena: 0}) =~ ~r/, and died with an empty purse\.\s*$/
+      refute text_for(%{fallen() | adena: 0}) =~ "unspent"
+
+      at_the_top = %{fallen() | experience: Math.xp_for_level(Constants.max_level())}
+
+      assert text_for(at_the_top) =~
+               ~r/at the zenith of martial prowess, and left 🪙 [\d.,k]+ Adena unspent\.\s*$/
     end
   end
 
@@ -122,9 +229,32 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
       assert html =~ "are wielding"
       assert html =~ "The Journey So Far"
-      assert html =~ "Continue your journey"
+      assert html =~ "The Journey So Far"
       refute html =~ "☠️"
       refute html =~ "You fell at"
+    end
+  end
+
+  describe "the road, watched as the run falls" do
+    # The entry is read once, when the page opens, and only the view is pushed after that. A run
+    # that dies while somebody reads it must close its road, not leave it "carrying them on".
+    test "closes on the push that killed them" do
+      entry = %{
+        inserted_at: ~U[2026-09-20 10:00:00Z],
+        last_seen_at: ~U[2026-09-25 10:00:00Z],
+        dead: false,
+        active: true
+      }
+
+      html =
+        render_component(&Record.record/1,
+          view: Snapshot.build(fallen()),
+          catalog: Snapshot.catalog(),
+          entry: entry,
+          mine: false
+        )
+
+      assert html =~ "closed over them"
     end
   end
 end

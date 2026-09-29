@@ -1,19 +1,10 @@
 /**
- * Drives the real game in a real browser. Unit tests and jsdom cannot see CSP enforcement, a
- * stale bundle, or a background push wiping the panel — every browser-only bug in this project
- * lived in exactly that gap.
- *
- * One character, played normally, end to end. What it asserts is what the browser alone can see:
- * screens render, controls answer, focus lands where the keyboard needs it. How a fight rolls
- * belongs to the unit suite, which can seed the dice; nothing here claims a level was reached.
- * Every lineage is covered by races.mjs.
- *
- * Usage: start the isolated server (`e2e/serve.sh`), then
- *   LD_LIBRARY_PATH=~/.local/lib/playwright-deps node e2e/walkthrough.mjs
+ * One character, played normally, end to end: `mix e2e walkthrough`. It asserts only what the
+ * browser alone can see; the dice belong to the unit suite, every lineage to races.mjs.
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, traceAudio, controls } from './helpers.mjs';
+import { BASE, PURSE, reporter, traceAudio, controls, readWhole } from './helpers.mjs';
 
 const TICK_MS = 6000; // the regen tick is 5s; allow a margin
 
@@ -29,8 +20,9 @@ const failedRequests = [];
 page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
 page.on('requestfailed', r => {
-    // Google Fonts may be unreachable offline; that is not the app's fault.
-    if (r.url().startsWith(BASE))
+    // Google Fonts may be unreachable offline; that is not the app's fault. Nor is a request the
+    // browser cancelled on navigating away, which a socket fallen back to long-polling always has.
+    if (r.url().startsWith(BASE) && r.failure()?.errorText !== 'net::ERR_ABORTED')
         failedRequests.push(`${r.method()} ${r.url()} :: ${r.failure()?.errorText}`);
 });
 
@@ -50,17 +42,16 @@ try {
     check('...including the display font', /Cinzel|Silkscreen/i.test(font), font);
     check('LiveView connects through the CSP', true);
 
-    // The footer names the running build, flagged when it is not a release. This server is the e2e
-    // one, so it must say so — a run that reports "development" is driving the dev server on 4000,
-    // against real data, and every destructive check below it is pointed at the wrong game.
+    // This server is the e2e one: a footer reading "development" means the run is driving the dev
+    // server on 4000, against real data.
     const footer = await page.textContent('#copyright');
     check('the footer names this as the testing build', /testing/.test(footer ?? ''), footer?.trim());
-    check('...and flags it as a debug build', await page.locator('#copyright .version-debug').count() === 1);
+    check('...and flags it as a debug build, in the colour that build wears',
+        await page.locator('#copyright .build-testing').count() === 1);
 
     // ---- the two adena formatters agree -------------------------------------------------------
-    // The count-up animation formats its own frames, so hooks.js carries a second implementation
-    // of Format.adena. It cannot be removed — the number would jump format mid-count — so both
-    // sides are held to one table instead. Elixir reads it in format_test.exs.
+    // The count-up formats its own frames in hooks/animated-values.js, so both sides of
+    // Format.adena read one table; Elixir reads it in format_test.exs.
     const { cases } = JSON.parse(readFileSync('test/fixtures/adena_format.json', 'utf8'));
     const mismatched = await page.evaluate(
         (rows) => rows
@@ -71,6 +62,42 @@ try {
     check('the browser formats adena exactly as the server does', mismatched.length === 0,
         mismatched.join(' | '));
 
+    // ---- and so do the two countdown formatters ------------------------------------------------
+    // The server renders an effect's first frame and the hook repaints it, so both read one table.
+    const timers = JSON.parse(readFileSync('test/fixtures/effect_timer.json', 'utf8'));
+    const disagreeing = (rows, fn) => page.evaluate(
+        ([rows, name]) => rows
+            .filter(([ms, expected]) => window[name](ms) !== expected)
+            .map(([ms, expected]) => `${ms}: ${window[name](ms)} != ${expected}`),
+        [rows, fn],
+    );
+
+    const offBy = await disagreeing(timers.cases, '__timerLabel');
+    check('the browser labels a countdown exactly as the server does', offBy.length === 0,
+        offBy.join(' | '));
+
+    // And the longer one a character's page says out loud, a second formatter to drift.
+    const offBySpoken = await disagreeing(timers.spoken, '__remainingLabel');
+    check('...and says a remaining time in a sentence the same way', offBySpoken.length === 0,
+        offBySpoken.join(' | '));
+
+    // ---- and so do the two stamp formatters ------------------------------------------------------
+    // The server draws a stamp's first frame and the hook ages it from there. The table is UTC, so
+    // the browser is asked for UTC too; the page itself leaves that off and uses the reader's zone.
+    const stamps = JSON.parse(readFileSync('test/fixtures/stamp_format.json', 'utf8'));
+    const misdated = await page.evaluate(({ now, cap_ms, cases, titles }) => [
+        ...cases
+            .map(([at, form, flags, want]) => [at, form, flags, want, window.__stampLabel(Date.parse(at), Date.parse(now), cap_ms, form,
+                { on: flags.includes('on'), time: flags.includes('time'), atTime: flags.includes('at_time') }, true)])
+            .filter(([, , , want, got]) => got !== want)
+            .map(([at, form, flags, want, got]) => `${at} ${form} [${flags}]: ${got} != ${want}`),
+        ...titles
+            .filter(([at, want]) => window.__stampTitle(Date.parse(at), true) !== want)
+            .map(([at, want]) => `title ${at}: ${window.__stampTitle(Date.parse(at), true)} != ${want}`),
+    ], stamps);
+    check('the browser dates a stamp exactly as the server does', misdated.length === 0,
+        misdated.join(' | '));
+
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
     check('...and sameSite Lax', cookie?.sameSite === 'Lax', String(cookie?.sameSite));
@@ -80,12 +107,13 @@ try {
     // click. Everywhere else this clicks, because a route only ever reached by URL is untested.
     await page.goto(`${BASE}/battle`, { waitUntil: 'domcontentloaded' });
     check('a typed URL into Battle bounces a visitor to Game Start', (await state()).screen === 'start');
-    // /death is no longer a route — Game Over shares '/' with Start and Town — so this also proves
-    // an address the game once owned still lands somewhere sensible.
-    await page.goto(`${BASE}/death`, { waitUntil: 'domcontentloaded' });
-    check('...and so does an address that used to be the death screen', (await state()).screen === 'start');
-    check('...which the game corrects rather than leaving in the bar',
-        new URL(page.url()).pathname === '/', page.url());
+    // Game Over shares '/', so /death is an address the game does not have. Fetched, not navigated:
+    // a 404 in the address bar writes a console error, and this suite asserts there are none.
+    const gone = await page.request.get(`${BASE}/death`);
+    check('...and an address the game used to own now says it does not', gone.status() === 404,
+        String(gone.status()));
+    check('...in the game\'s own shell, not a bare server page',
+        (await gone.text()).includes('That road leads nowhere'));
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
     check('...but Chronicles of Ancestry is public', (await state()).screen === 'races');
 
@@ -96,19 +124,34 @@ try {
     check('...and offers a way out',
         await page.locator('#main a:has-text("Return to safer lands")').count() === 1);
 
-    // The reference served index.html for every non-API GET and its router resolved an unknown path
-    // to Home, rewriting the address bar. The game owns every URL; there is no 404 page to reach.
-    const unknown = await page.goto(`${BASE}/no-such-road`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('an unknown URL serves the game, not an error', unknown?.status() === 200, String(unknown?.status()));
-    check('...resolving to the screen a visitor belongs on', (await state()).screen === 'start');
-    check('...and correcting the address bar', new URL(page.url()).pathname === '/', page.url());
+    // An unrecognised path is a 404 at the address typed, never a soft redirect to Town that hides
+    // the typo.
+    const unknown = await page.request.get(`${BASE}/no-such-road`);
+    check('an unknown URL says so rather than moving the reader', unknown.status() === 404,
+        String(unknown.status()));
+    check('...and leaves the address alone, so a typo is visible',
+        new URL(unknown.url()).pathname === '/no-such-road', unknown.url());
+
+    // A static path that reaches the router does not exist. Served the game instead, a mistyped
+    // stylesheet would come back as HTML and the page would quietly render unstyled.
+    const asset = await page.request.get(`${BASE}/assets/css/not-a-file.css`);
+    check('...and a missing asset does too, rather than answering with a page', asset.status() === 404,
+        String(asset.status()));
 
     // ---- create a character -------------------------------------------------------------------
+    // Deliberately BEFORE the socket connects: the dead render is interactive, and the first live
+    // render must not reset a race chosen in that window.
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.waitForSelector('#main select[name="race_id"]', { timeout: 8000 });
     await page.fill('#main input[name="name"]', 'BrowserBot');
     await page.selectOption('#main select[name="race_id"]', '1'); // Orc: 150 HP, survives a while
+
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('a choice made before the socket connects survives the first live render',
+        await page.inputValue('#main select[name="race_id"]') === '1'
+        && await page.inputValue('#main input[name="name"]') === 'BrowserBot',
+        `${await page.inputValue('#main select[name="race_id"]')} / ${await page.inputValue('#main input[name="name"]')}`);
+
     await page.click('#main button[type="submit"]');
     await onScreen('home');
 
@@ -126,7 +169,7 @@ try {
 
     // ---- a flash belongs to its action, and to nothing after it -------------------------------
     check('creating a character flashes its welcome',
-        /You have chosen the/.test(await page.textContent('#main .alert') ?? ''));
+        /You chose the/.test(await page.textContent('#main .alert') ?? ''));
 
     // Panel heading and document title, both carried over from the reference verbatim.
     check('Town is headed "Home Town"',
@@ -139,14 +182,14 @@ try {
         await page.evaluate(() => document.activeElement?.tagName));
 
     // ---- the action button answers to the selection ---------------------------------------------
-    let btn = await buttonSettles('Travel');
-    check('Town offers to Travel before anything is picked', btn.label === 'Travel', JSON.stringify(btn));
+    let btn = await buttonSettles('🧭 Travel');
+    check('Town offers to Travel before anything is picked', btn.label === '🧭 Travel', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'suicide');
     btn = await buttonSettles('⚰️ Perish');
     check('...and turns into Perish when Suicide is chosen', btn.label === '⚰️ Perish', JSON.stringify(btn));
     await page.selectOption('#main select[name="to"]', 'inn');
-    btn = await buttonSettles('Travel');
-    check('...and back to Travel for anywhere else', btn.label === 'Travel', JSON.stringify(btn));
+    btn = await buttonSettles('🧭 Travel');
+    check('...and back to Travel for anywhere else', btn.label === '🧭 Travel', JSON.stringify(btn));
 
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
@@ -174,11 +217,39 @@ try {
     await tab.goto(BASE, { waitUntil: 'domcontentloaded' });
     await tab.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a second tab sees the same character',
-        await tab.getAttribute('#screen', 'data-health') === String(born.health));
+        await tab.getAttribute('#sidebar [data-key="hp"]', 'data-value') === String(born.health));
+    // Clicking empty space leaves nothing focused, which is the player's choice to keep.
+    await tab.mouse.click(5, 5);
 
-    // ---- a living character is kept out of character creation ---------------------------------
+    // ---- the Inventory folds on a phone, and stays as the reader left it -----------------------
+    const inventory = page.locator('#inventory .panel-body');
+    const folded = () => inventory.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
+    check('beside the main panel the Inventory has no fold to offer',
+        await page.locator('#inventory .panel-toggle').isDisabled() && await inventory.isVisible());
+    const desktop = page.viewportSize();
+    await page.setViewportSize({ width: 320, height: 800 });
+    // The hook hears of the new width from a resize event, which lands after the call returns.
+    const offered = await page.waitForFunction(
+        () => !document.querySelector('#inventory .panel-toggle').disabled, null, { timeout: 3000 })
+        .then(() => true, () => false);
+    check('...stacked on a phone it folds, and opens unfolded', offered && await inventory.isVisible());
+    await page.click('#inventory .panel-toggle');
+    check('...until its header folds it', await folded());
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and a refresh keeps the fold, the panel being the reader\'s own', await folded());
+    await page.click('#inventory .panel-toggle');
+    check('...until they open it again', await inventory.isVisible());
+    await page.setViewportSize(desktop);
+
+    // ---- a living character is kept out of what it may ACT on, and nothing else ----------------
+    // The Tome carries no action, so there is nothing on it to be kept away from: the pin is about
+    // what may be done. Character creation is the opposite — a living run is past it.
     await page.goto(`${BASE}/statistics`, { waitUntil: 'domcontentloaded' });
-    check('a living character is bounced off Statistics', (await state()).screen === 'home');
+    check('a living character may still read the Tome', (await state()).screen === 'statistics');
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    check('...but is put back in Town rather than into character creation',
+        (await state()).screen === 'home');
 
     // ---- travel and buy -----------------------------------------------------------------------
     await goHome();
@@ -214,10 +285,9 @@ try {
     await page.waitForSelector('#main .alert', { timeout: 8000 });
     // Scoped to #main: the sidebar's panels carry .panel-body too.
     const mealText = await page.textContent('#main .alert');
-    check('ordering a meal reports back', /You have bought/.test(mealText), mealText?.trim().slice(0, 60));
+    check('ordering a meal reports back', /You bought and ate/.test(mealText), mealText?.trim().slice(0, 60));
     check('...and the purse reflects the spend', (await state()).adena === beforeMeal.adena - 7);
-    // LiveView restores focus to the button that submitted, which left a keyboard player on Order
-    // with the picker they buy from next unreachable without reaching for the mouse.
+    // LiveView restores focus to the submitting button; the picker is what a keyboard player needs.
     check('...and buying hands focus back to the picker, not the button just pressed',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id',
         await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.getAttribute('name') ?? '')));
@@ -230,12 +300,17 @@ try {
     await travel('inn');
 
     await tab.waitForFunction(
-        (expected) => document.querySelector('#screen')?.dataset.adena === expected,
+        (expected) => document.querySelector('#sidebar [data-key="adena"]')?.dataset.value === expected,
         String(beforeMeal.adena - 7),
         { timeout: 8000 },
     ).then(() => check('the other tab sees the spend without acting', true))
-     .catch(async () => check('the other tab sees the spend without acting', false,
-        `tab adena ${await tab.getAttribute('#screen', 'data-adena')}`));
+        .catch(async () => check('the other tab sees the spend without acting', false,
+            `tab adena ${await tab.getAttribute(PURSE, 'data-value')}`));
+    // A push it did not act for, as a regen tick is: focus stays wherever the player left it.
+    await tab.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    check('...and a push it did not act for leaves focus where the player left it',
+        await tab.evaluate(() => document.activeElement === document.body),
+        await tab.evaluate(() => document.activeElement?.tagName));
     await tab.close();
 
     await goHome();
@@ -246,7 +321,7 @@ try {
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
     await page.waitForSelector('#main .alert-danger', { timeout: 8000 });
     check('an unaffordable weapon is refused, not an error page',
-        /do not have enough Adena/.test(await page.textContent('#main .alert-danger')));
+        /do not have enough 🪙 Adena/.test(await page.textContent('#main .alert-danger')));
 
     // ---- a background tick must not disturb the open panel ------------------------------------
     // Pick an option and leave it UNSUBMITTED: a submitted form re-renders and legitimately
@@ -263,8 +338,7 @@ try {
         `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
 
     // ---- the battleground ---------------------------------------------------------------------
-    // From the Town form, not a typed URL: travelling is its own path, and it once crashed the
-    // LiveView while the URL worked perfectly.
+    // From the Town form, not a typed URL: travelling is its own code path.
     await goHome();
     const battlesBeforeTravel = Number(await page.getAttribute('#screen', 'data-battles'));
     await travel('battle');
@@ -273,23 +347,21 @@ try {
         || (await state()).dead,
         `battles ${battlesBeforeTravel} -> ${await page.getAttribute('#screen', 'data-battles')}`);
 
-    // Focus that cannot be seen is not an affordance. Arriving by mouse leaves the button focused
-    // but not :focus-visible, so the ring has to come from plain :focus — as it does on a select.
-    // Named by colour, not merely "differs from idle": the base drop shadow alone would pass that.
-    const RING = 'rgba(201, 168, 76, 0.45)'; // --focus-ring-color, the full ring
-    const armedRing = () => page.evaluate(() => {
+    // Arriving by mouse focuses without :focus-visible, so the ring must come from plain :focus.
+    // Named by colour, since the base drop shadow alone differs from idle; the ring is the text's
+    // own colour, so an ambush on arrival rings red.
+    const ringed = (tell) => {
         const el = document.activeElement;
-        return el?.matches('#main .btn')
-            ? getComputedStyle(el).boxShadow
-            : `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
-    });
+        if (!el?.matches('#main .btn')) return tell && `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
+        const style = getComputedStyle(el);
+        return (style.borderTopColor === style.color && style.boxShadow.includes('0px 0px 0px 2px'))
+            || (tell && `${style.color} edged ${style.borderTopColor}, ${style.boxShadow}`);
+    };
     // Waits: the ring transitions in, so reading straight after arrival catches a mid-flight value.
-    await page.waitForFunction(
-        ring => document.activeElement?.matches('#main .btn')
-            && getComputedStyle(document.activeElement).boxShadow.includes(ring),
-        RING, { timeout: 3000 }).catch(() => {});
-    check('...and the button it arms is visibly focused, not merely focused',
-        (await armedRing()).includes(RING), await armedRing());
+    // A function, never a string: the game's CSP refuses eval, and the wait would fail at once.
+    await page.waitForFunction(ringed, false, { timeout: 3000 }).catch(() => { });
+    const armed = await page.evaluate(ringed, true);
+    check('...and the button it arms is visibly focused, not merely focused', armed === true, String(armed));
 
     let fightsFought = 0;
     let focusLeftTheFight = false;
@@ -297,14 +369,11 @@ try {
     check('the battleground is reachable with a living character', current.screen === 'battle',
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
-    // ---- a gain shimmers, and damage never does -------------------------------------------------
-    // Driven, not waited for. Arriving already fought once, and an Orc regenerates nothing, so it
-    // stays hurt until it eats — which makes the heal, and the sweep it triggers, something this
-    // run causes rather than something it hopes the dice allow.
-    // Also fights an ambush out: an ambushed player is pinned to the Battleground, so the Inn is
-    // unreachable until it is answered, and an ambush is answered only by fighting again.
+    // ---- a fight wounds, and a meal heals --------------------------------------------------------
+    // Driven, not waited for: an Orc regenerates nothing, so it stays hurt until it eats and the
+    // heal is caused rather than hoped for. Also fights out any ambush, which pins it here.
     while (fightsFought < 8 && !current.dead
-           && (current.health === current.maxHealth || current.ambushed)) {
+        && (current.health === current.maxHealth || current.ambushed)) {
         await fight();
         fightsFought++;
         current = await state();
@@ -313,24 +382,21 @@ try {
     check('fighting wounds the character', current.health < current.maxHealth,
         `${current.health}/${current.maxHealth} after arrival and ${fightsFought} further fight(s)`);
     check('...and narrates the encounter', await page.locator('#main p').count() > 0);
-    // Never fires in practice — eight fights neither spend an Orc's opening health nor stay
-    // ambushed throughout — but it says so outright rather than skipping the shimmer in silence.
-    check('...and leaves it free to walk to the Inn', !current.dead && !current.ambushed,
-        `dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s)`);
+    // Only a long run of ambushes can end the Orc or hold it here before the Inn. That is the game
+    // working, not failing, so the meal is then skipped and the run says so.
+    if (current.dead || current.ambushed)
+        console.log(`   (no meal this run: dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s))`);
 
     if (!current.dead && !current.ambushed) {
         await goHome();
         await travel('inn');
         const wounded = await state();
-        // Armed before the purchase: the sweep lasts 600ms and is gone by the time adena settles.
-        const shimmer = page.waitForSelector('#sidebar .hp-bar.shimmer-active', { timeout: 3000 })
-            .then(() => true).catch(() => false);
         const bought = await buy(0); // Spiced Ale, 7 adena — inside every lineage's opening purse
         const healed = await state();
 
         check('a meal heals the wounded', bought && healed.health > wounded.health,
             `${wounded.health} -> ${healed.health}`);
-        check('...and the gain sweeps a shimmer across the HP bar', await shimmer);
+        // The HP bar's 600ms sweep is not checked: it is CSS, not play; the gain is checked above.
         await leaveShop();
         await travel('battle');
         current = await state();
@@ -338,8 +404,7 @@ try {
 
     // ---- the road ends at the grave -------------------------------------------------------------
     // Fights on without shopping, so health only falls and this terminates. Nothing is claimed
-    // about the level reached or the damage taken: the dice own that, and balance_golden_test.exs
-    // is where they can be held still.
+    // about the level reached: the dice own that.
     for (let i = 0; i < 200 && !current.dead && current.screen === 'battle'; i++) {
         await fight();
         fightsFought++;
@@ -351,8 +416,13 @@ try {
                 () => document.activeElement?.getAttribute('phx-click') !== 'fight');
     }
 
+    // Named rather than counted: gear joins the sidebar's figures only once it grants something,
+    // so a count changes for reasons that are not a bug.
+    const animated = await page.locator('#sidebar [data-value]')
+        .evaluateAll(els => els.map(e => e.dataset.key).sort());
+    const alwaysThere = ['adena', 'hp', 'level', 'max-hp', 'xp', 'xp-required'];
     check('the counters carry their live values for the animation',
-        await page.locator('#sidebar [data-value]').count() === 3);
+        alwaysThere.every(key => animated.includes(key)), animated.join(' '));
     check('the road ends at the grave', current.dead === true,
         `dead=${current.dead} after ${fightsFought} fights (cap 200)`);
     check('death pins the player to the death screen', (await state()).screen === 'death');
@@ -360,9 +430,9 @@ try {
         new URL(page.url()).pathname === '/', page.url());
     check('the Fight button stays under the keyboard between fights', !focusLeftTheFight,
         `${fightsFought} fights`);
-    // Dying in battle morphs the Fight button into "Write your Legacy!" in place, so focus rides
-    // across with it — and the Space that fought submits a score nobody has read yet.
-    check('...but dying releases it, so no stray Space writes a legacy',
+    // Dying in battle replaces the Fight button in place, so focus would ride across with it — and
+    // the Space that fought would retire the run before the player has read a word of its ending.
+    check('...but dying releases it, so no stray Space starts the next run',
         await page.evaluate(() => !document.querySelector('#screen')?.contains(document.activeElement)),
         await page.evaluate(() => document.activeElement?.tagName + '/' + (document.activeElement?.textContent?.trim().slice(0, 20) ?? '')));
 
@@ -382,7 +452,12 @@ try {
     await onScreen('character');
     const eulogy = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
     check('the dead may look back at who they were', (await state()).screen === 'character');
-    check('...marked by the skull rather than their ancestry', eulogy.includes('☠️'));
+    // The skull marks the heading that says the journey ended, never the one naming the lineage.
+    const ancestry = (await page.textContent('#main h2')) ?? '';
+    check('...keeping its ancestry rather than swapping in a skull',
+        !ancestry.includes('☠️') && ancestry.includes('of Orc Ancestry') && ancestry.includes('🧟'),
+        ancestry);
+    check('...and closing on the skull instead', eulogy.includes('☠️ Your Journey Has Ended'));
     check('...speaking of the run in the past', /Your Journey Has Ended/.test(eulogy) && /You fell at/.test(eulogy),
         eulogy.slice(eulogy.indexOf('Your Journey'), eulogy.indexOf('Your Journey') + 60));
     check('...and never as though it were still going',
@@ -390,28 +465,111 @@ try {
 
     await page.click('#main .back a');
     await onScreen('death');
-    check('...and its way back is the death screen', (await state()).screen === 'death');
-    // The whole point of the detour: reviewing a character must not cost its legacy.
-    check('...with the legacy still there to write',
-        await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
+    check('...and its way back is where it was opened from', (await state()).screen === 'death');
+    // The whole point of the detour: reviewing a run must not disturb it.
+    check('...and the sidebar still reaches its record',
+        await page.locator('#sidebar .stat-row a').count() === 1);
 
-    // ---- submit a highscore, then restart -----------------------------------------------------
+    // ---- the run is already in the Halls, and has been since it started -----------------------
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('a legitimate death may write its legacy',
-        await page.locator('#main button:has-text("Write your Legacy")').count() === 1);
-    await page.click('#main button:has-text("Write your Legacy")');
-    await onScreen('highscores');
-    const board = await page.textContent('#main table.data-table');
-    check('the highscore appears on the board', /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
-    check('submitting also clears the character', (await state()).started === false);
+    check('nothing asks the dead to write themselves in — they are already there',
+        await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
 
-    // Here, not on arrival: BrowserBot's Orc entry is what makes the board non-empty and the Elf
-    // filter narrower than All. Submitting lands on /highscores/<own race>, so widen first — and
-    // each wait names the path it expects, since "not /highscores" was already true.
-    await page.click('#main .action-links a:has-text("All")');
-    await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
+    // The ending offers the Halls of its own lineage — the sidebar is what reaches the record.
+    check('the ending points at the Halls of its own lineage',
+        (await page.getAttribute('#main .action-links a', 'href')) === '/highscores/orc',
+        await page.getAttribute('#main .action-links a', 'href'));
+
+    await page.click('#sidebar .stat-row a');
+    await onScreen('character');
+    const record = (await page.textContent('#main'))?.replace(/\s+/g, ' ') ?? '';
+    check('a run has a page of its own', (await state()).screen === 'character');
+    check('...which names it and says when the road opened and when it closed over them',
+        /BrowserBot/.test(record) && /opened beneath/.test(record) && /closed over/.test(record),
+        record.slice(0, 110));
+    check('...in the second person, because it is the reader\'s own',
+        /You were wielding/.test(record) && !/They were wielding/.test(record));
+    check('...and tells the story fight by fight',
+        await page.locator('#chronicle-log li').count() > 0,
+        `${await page.locator('#chronicle-log li').count()} fights`);
+    // Beside the record, growing with what it holds up to the record's height and no further, and
+    // open: there is room for it here, so its header is no control. This run fills it.
+    const beside = await page.evaluate(() => {
+        const record = document.querySelector('#main > .panel').getBoundingClientRect();
+        const log = document.querySelector('#chronicle').getBoundingClientRect();
+        return { right: log.left >= record.right, top: log.top - record.top,
+                 bottom: log.bottom - record.bottom,
+                 control: !document.querySelector('#chronicle .panel-header').disabled };
+    });
+    // The footer belongs to the main column, as on Town: under the record, however long the log.
+    const footerGap = await page.evaluate(() =>
+        document.querySelector('#copyright').getBoundingClientRect().top
+            - document.querySelector('#main > .panel').getBoundingClientRect().bottom);
+    check('...with the footer under the record, not under whichever column is longer',
+        Math.abs(footerGap - 12) <= 1, `${footerGap}px below the record`);
+    check('...in a panel of its own beside the record, as tall as it, open, and never a fold',
+        beside.right && Math.abs(beside.top) <= 1 && Math.abs(beside.bottom) <= 1 && !beside.control
+            && await page.locator('#chronicle .panel-body').isVisible(),
+        JSON.stringify(beside));
+
+    // A log, not a wall: held to the record however long the run was, and opening on its ending,
+    // newest first.
+    const log = await page.evaluate(() => {
+        const body = document.querySelector('#chronicle .panel-body');
+        return { hidden: body.scrollHeight - body.clientHeight, at: body.scrollTop, shown: body.clientHeight };
+    });
+    check('...in a box the run cannot outgrow', log.shown >= 100 && log.hidden > 0,
+        `${log.shown}px shown, ${log.hidden}px of it scrolled away`);
+    check('...opening on how it ended', log.at === 0
+        && await page.locator('#chronicle-log li').first().locator('.deaths').count() === 1,
+        `sitting at ${log.at}`);
+
+    // The checks below are about the whole run, and the box opens on its newest page only.
+    check('...and hands over the rest of the run as the reader scrolls back through it',
+        await readWhole(page), `${await page.locator('#chronicle-log li').count()} entries`);
+
+    // Every deflection line names the damage and the XP, and no outcome line does, so this is the
+    // whole fight told. Scoped to the list, as the paragraphs above mention XP. Dice-proof: every
+    // template in the pool carries both words.
+    const chronicle = (await page.textContent('#chronicle-log'))?.replace(/\s+/g, ' ') ?? '';
+    check('...the whole of each one, not only how it ended',
+        /Damage/.test(chronicle) && /XP/.test(chronicle), chronicle.slice(0, 150));
+
+    // Every effect seen settling is seen leaving: by its timer, by a meal, or with the run's last
+    // breath. Read in the order it happened, which is the list upside down.
+    const entries = (await page.locator('#chronicle-log li')
+        .evaluateAll(els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()))).reverse();
+    const unaccounted = entries.flatMap((line, i) => {
+        const label = line.match(/([A-Z][\w' ]+?) settles over you\./)?.[1];
+        if (!label) return [];
+        const left = entries.slice(i + 1).some(later =>
+            later.includes(`${label} leaves you.`) || later.includes(`${label} fades with your last breath.`));
+        return left ? [] : [label];
+    });
+    check('...and every effect it gained, it is seen to lose', unaccounted.length === 0,
+        unaccounted.length ? `never left: ${unaccounted.join(', ')}` : `${entries.length} entries`);
+    check('...and its Beginning at the very end, once it has all been read',
+        await page.locator('#chronicle-log li').last().getAttribute('class') === 'start');
+    // Counted per page rather than stored, so the pages stitched together must count down unbroken.
+    const numbers = await page.locator('#chronicle-log .entry-head > span:last-child').allTextContents();
+    check('...numbered by its place in the run, down to the Beginning as #1',
+        numbers.every((n, i) => n === `#${numbers.length - i}`), numbers.slice(-3).join(' '));
+
+    // The session cookie is HttpOnly, so the ids cannot be compared here (board_test does that);
+    // what is observable is that reading a record does not make you that character.
+    check('...without the reader becoming the character', (await state()).started === true);
+
+    await page.click('#main .back a');
+    await onScreen('death');
+
+    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    const board = await page.textContent('#main table.data-table');
+    check('and the run stands on the board without ever being submitted',
+        /BrowserBot/.test(board ?? ''), board?.replace(/\s+/g, ' ').trim().slice(0, 80));
+
     const allRows = await boardRows();
-    check('the board has the entry just written', allRows > 0, `${allRows} rows`);
+    check('the board has the run on it', allRows > 0, `${allRows} rows`);
 
     await page.click('#main .action-links a:has-text("Elf") >> nth=0');
     await page.waitForFunction(() => location.pathname === '/highscores/elf', null, { timeout: 5000 });
@@ -420,7 +578,7 @@ try {
         elfRows < allRows && (await activeFilter())?.includes('Elf'),
         `${allRows} rows -> ${elfRows}, active "${await activeFilter()}"`);
     check('...and a filter matching nobody says so rather than showing an empty table',
-        elfRows > 0 || /The halls are silent/.test(await page.textContent('#main') ?? ''));
+        elfRows > 0 || /The Hall is silent/.test(await page.textContent('#main') ?? ''));
 
     await page.click('#main .action-links a:has-text("All")');
     await page.waitForFunction(() => location.pathname === '/highscores', null, { timeout: 5000 });
@@ -428,12 +586,37 @@ try {
         await boardRows() === allRows && (await activeFilter())?.trim() === 'All',
         `${await boardRows()} rows, active ${await activeFilter()}`);
 
-    await page.click('#main .last a');
+    // ---- starting over, without leaving the socket -------------------------------------------
+    // Taken from the board, because after Play Again this session is a different character.
+    const previousRecord = await page.getAttribute('#main table.data-table a', 'href');
+
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+
+    // No navigation: if this ever became a page load again, the id would change across it.
+    const socketBefore = await page.evaluate(() => document.querySelector('[data-phx-main]')?.id);
+    await page.click('#main button[phx-click="restart"]');
     await onScreen('start');
-    check('and the board\'s own back link leads to a fresh start', (await state()).screen === 'start');
+    check('Play Again leads to a fresh start', (await state()).screen === 'start');
+    check('...without reloading the page', socketBefore ===
+        await page.evaluate(() => document.querySelector('[data-phx-main]')?.id), socketBefore);
     check('...with a fresh name field', await page.locator('#main input[name="name"]').count() === 1);
 
-    // ---- the Konami cheat, last: it bars the highscores ---------------------------------------
+    // The retired run is still readable at the address it had: it kept its id and its place.
+    await page.goto(`${BASE}${previousRecord}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    const left = (await page.textContent('#main') ?? '').replace(/\s+/g, ' ');
+    check('...and the run left behind still stands at its own address',
+        /BrowserBot/.test(left), previousRecord);
+    check('...told in the third person now that it is somebody else\'s',
+        /BrowserBot&#39;s|BrowserBot's/.test(left) || /They were wielding/.test(left),
+        left.slice(left.indexOf('Inventory'), left.indexOf('Inventory') + 60));
+    check('...without making the visitor that character',
+        (await state()).started === false);
+
+    // ---- the Konami cheat, last: it bars the Halls --------------------------------------------
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await page.fill('#main input[name="name"]', 'Cheater');
     await page.selectOption('#main select[name="race_id"]', '0');
     await page.click('#main button[type="submit"]');
@@ -448,6 +631,12 @@ try {
         await page.textContent('#main .header-name'));
     check('...which names the character and its ancestry',
         /Cheater/.test(await page.textContent('#main h2') ?? ''));
+    // A run a moment old has a line or two, and its Chronicle is as long as they are.
+    const young = await page.evaluate(() => ({
+        record: document.querySelector('#main > .panel').getBoundingClientRect().height,
+        log: document.querySelector('#chronicle').getBoundingClientRect().height,
+    }));
+    check('...its Chronicle only as tall as what it holds', young.log < young.record, JSON.stringify(young));
 
     // The cheat is entered here: the screen has no <select> for the arrow keys to walk, and
     // nothing on arrival that could kill the cheater before the sequence lands.
@@ -462,12 +651,12 @@ try {
     // Links are deliberately not focused — Space scrolls a link instead of activating it — so a
     // screen whose only controls are links correctly takes no focus at all.
     check('a screen with no controls does not steal focus',
-        await page.evaluate(() => document.activeElement === document.body), 
+        await page.evaluate(() => document.activeElement === document.body),
         await page.evaluate(() => document.activeElement?.tagName));
 
     await page.click('#main .back a');
     await onScreen('home');
-    check('the Character screen\'s back link continues the journey', (await state()).screen === 'home');
+    check('a record opened from the panel returns to the game', (await state()).screen === 'home');
 
     await travel('suicide');
     let endBtn = await buttonSettles('Return');
@@ -478,7 +667,7 @@ try {
         endBtn.label === 'Phew 😅' && endBtn.cls === 'btn btn-secondary', JSON.stringify(endBtn));
     await page.selectOption('#main select[name="confirm"]', 'yes');
     endBtn = await buttonSettles('Do it 🥀');
-    check('...but going through with it is',
+    check('...but going through with it is the last warning, in the red death wears',
         endBtn.label === 'Do it 🥀' && endBtn.cls === 'btn btn-danger', JSON.stringify(endBtn));
     await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
     await onScreen('death');
@@ -486,8 +675,23 @@ try {
     check('...and the death screen is headed "Game Over"',
         (await page.textContent('#main .header-name'))?.trim() === 'Game Over',
         await page.textContent('#main .header-name'));
-    check('...and may NOT write a legacy',
-        await page.locator('#main button:has-text("Write your Legacy")').count() === 0);
+    check('...and is told the scribes have unmade the run',
+        /scraped your name from the stone/.test(await page.textContent('#main') ?? ''));
+
+    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    // Waited for, not read once: the board coalesces its refreshes, so a run disqualified a moment
+    // ago can still be on the copy this page was served. It has to LEAVE, which is the claim.
+    const unlisted = await page.waitForFunction(
+        () => {
+            const main = document.querySelector('#main');
+            return !!main && !/Cheater/.test(main.textContent);
+        },
+        null, { timeout: 8000 }).then(() => true).catch(() => false);
+    check('...and is nowhere on the board', unlisted,
+        (await page.textContent('#main') ?? '').replace(/\s+/g, ' ').slice(0, 160));
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...but the death screen never takes focus',
         await page.evaluate(() => document.activeElement === document.body || document.activeElement?.tagName === 'HTML'));
 

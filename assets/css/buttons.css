@@ -1,10 +1,4 @@
-/*
- * ========================================================================
- * Mini-Lineage — Button Styles
- * Lineage 2-inspired fantasy button design
- * Uses design tokens defined in tokens.css (:root variables)
- * ========================================================================
- */
+/* Mini-Lineage — Buttons. `Controls.button/1` is the only thing that writes `btn`. */
 
 /* ===== Shared shimmer keyframe ===== */
 @keyframes btn-shimmer {
@@ -25,53 +19,46 @@
 
 /* ===== Base Button ===== */
 .btn {
-    /* Layout — inline-flex fixes height mismatch between <button> and <a> */
+    /* Inline-flex, so a <button> and an <a> come out the same height. */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
     white-space: nowrap;
-    vertical-align: middle;
     flex-shrink: 0;
 
-    /* Geometry — padding matches .form-select so heights align */
+    /* The height is .form-select's, so the two align in a row. */
     padding: 0 16px;
     height: 31px;
     border-radius: var(--radius);
 
-    /* Single uniform border like the select element */
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--border-control);
 
-    /* Subtle single-layer gradient */
-    background: linear-gradient(180deg, #31405e 0%, #1e2d48 100%);
+    background: linear-gradient(180deg, #46404e 0%, #322e38 100%);
 
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 
-    /* Typography */
     font-family: var(--font-heading);
     font-size: 12px;
     font-weight: 600;
     line-height: 1;
     letter-spacing: 0.06em;
     color: var(--gold);
-    text-decoration: none;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    /* An <a> takes the platform's underline; base.css leaves a .btn to this file. */
+    text-decoration: none;
 
-    /* Interaction */
     cursor: pointer;
     appearance: none;
-    -webkit-appearance: none;
     position: relative;
     overflow: hidden;
 
+    /* A gradient does not interpolate, and no state changes the colour, so only these two ease. */
     transition:
-        background 0.18s ease,
         box-shadow 0.18s ease,
-        border-color 0.18s ease,
-        color 0.18s ease;
+        border-color 0.18s ease;
 }
 
-/* Shimmer pseudo-element — hidden by default */
 .btn::before {
     content: '';
     position: absolute;
@@ -88,7 +75,6 @@
     pointer-events: none;
 }
 
-/* Gold accent line at top */
 .btn::after {
     content: '';
     position: absolute;
@@ -98,40 +84,31 @@
     height: 1px;
     background: linear-gradient(90deg,
             transparent,
-            rgba(201, 168, 76, 0.5),
+            color-mix(in srgb, var(--gold) 50%, transparent),
             transparent);
     pointer-events: none;
 }
 
 /* ===== Hover ===== */
 .btn:hover {
-    background: linear-gradient(180deg, #384a6a 0%, #243352 100%);
+    background: linear-gradient(180deg, #504959 0%, #3a3541 100%);
     border-color: var(--gold-dim);
     box-shadow:
-        0 0 0 2px rgba(201, 168, 76, 0.15),
+        0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.35);
-    text-decoration: none;
 }
 
-/* Trigger shimmer animation on hover */
 .btn:hover::before {
     animation: btn-shimmer 0.55s ease forwards;
 }
 
-/*
- * ===== Focus =====
- * One ring, whatever moved focus here. This is the entire affordance telling you what Space will
- * do, so it is deliberately stronger than :hover's.
- *
- * :focus, not :focus-visible. Chrome grants :focus-visible to a <select> whether it was clicked or
- * tabbed to, but withholds it from a button until a keypress — so the panel's own auto-focus lit
- * the travel picker while leaving the Battleground's button looking untouched, and the ring turned
- * up only once you pressed Tab. Keying on :focus is what makes the two agree.
- */
-.btn:focus {
-    border-color: var(--gold);
+/* ===== Focus =====
+ * :focus, not :focus-visible, which Chrome gives a <select> on click and a button only on a key.
+ * `currentColor`, so each variant rings in its own; `:not(:active)` beats hover, yields to press. */
+.btn:focus:not(:active) {
+    border-color: currentColor;
     box-shadow:
-        var(--focus-ring),
+        0 0 0 2px color-mix(in srgb, currentColor 45%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.35);
     outline: none;
 }
@@ -139,63 +116,52 @@
 /* ===== Active / Press ===== */
 .btn:active,
 .btn.active {
-    background: linear-gradient(180deg, #172030 0%, #1a2640 100%);
+    background: linear-gradient(180deg, #232027 0%, #2c2832 100%);
     border-color: var(--gold-dim);
     box-shadow:
-        0 0 0 2px rgba(201, 168, 76, 0.2),
+        0 0 0 2px color-mix(in srgb, var(--gold) 20%, transparent),
         inset 0 2px 4px rgba(0, 0, 0, 0.4);
-    transform: none;
     transition: none;
-    /* Instant feedback */
 }
 
-/* ===== Danger Variant ===== */
+/* ===== Danger Variant =====
+ * The primary's lightness ramp six L* lower, at 1.6x its chroma, since red goes brown where violet
+ * stays slate. LCh hue 0, a step toward the violet, so it reads as dread and not as an error. */
 .btn-danger {
-    background: linear-gradient(180deg, #5c1a15 0%, #3d0f0b 100%);
-    border: 1px solid rgba(192, 57, 43, 0.7);
+    background: linear-gradient(180deg, #581d33 0%, #3c1121 100%);
+    border: 1px solid var(--border-danger);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    color: #e8786e;
+    /* The alert's own voice, which clears AA on this darker ground at 5.23. */
+    color: var(--text-danger);
 }
 
 .btn-danger::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(231, 76, 60, 0.4),
+            color-mix(in srgb, var(--glow-hp) 50%, transparent),
             transparent);
 }
 
 .btn-danger:hover {
-    background:
-        linear-gradient(180deg,
-            rgba(255, 255, 255, 0.1) 0%,
-            transparent 50%,
-            rgba(0, 0, 0, 0.2) 100%),
-        linear-gradient(180deg,
-            #822520 0%,
-            #52140f 50%,
-            #671a14 100%);
-
-    border-color: rgba(231, 76, 60, 0.75);
+    background: linear-gradient(180deg, #64233b 0%, #461728 100%);
+    border-color: var(--glow-hp);
     box-shadow:
-        0 0 0 2px rgba(231, 76, 60, 0.15),
+        0 0 0 2px color-mix(in srgb, var(--glow-hp) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.btn-danger:active,
-.btn-danger.active {
-    background: linear-gradient(180deg, #2e0c09 0%, #380e08 100%);
-    border-color: rgba(192, 57, 43, 0.9);
+.btn-danger:active {
+    background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
+    border-color: var(--border-danger);
     box-shadow:
-        0 0 0 2px rgba(150, 30, 20, 0.2),
+        0 0 0 2px color-mix(in srgb, var(--bar-hp) 20%, transparent),
         inset 0 2px 4px rgba(0, 0, 0, 0.5);
-    transform: none;
-    transition: none;
 }
 
 /* ===== Secondary Variant ===== */
 .btn-secondary {
-    background: linear-gradient(180deg, #222236 0%, #17172a 100%);
-    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #27242a 0%, #1b191e 100%);
+    border: 1px solid var(--border-arcane);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     color: var(--text-secondary);
 }
@@ -203,7 +169,7 @@
 .btn-secondary::after {
     background: linear-gradient(90deg,
             transparent,
-            rgba(74, 85, 128, 0.35),
+            color-mix(in srgb, var(--border-arcane-bright) 35%, transparent),
             transparent);
 }
 
@@ -214,25 +180,23 @@
             transparent 50%,
             rgba(0, 0, 0, 0.12) 100%),
         linear-gradient(180deg,
-            #2c2c44 0%,
-            #202038 50%,
-            #28283e 100%);
+            #322f37 0%,
+            #27242a 50%,
+            #2d2b31 100%);
 
-    border-color: var(--border-bright);
+    border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(74, 85, 128, 0.15),
+        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 15%, transparent),
         0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .btn-secondary:active,
 .btn-secondary.active {
-    background: linear-gradient(180deg, #131320 0%, #191928 100%);
-    border-color: var(--border-bright);
+    background: linear-gradient(180deg, #141315 0%, #1b191e 100%);
+    border-color: var(--border-arcane-bright);
     box-shadow:
-        0 0 0 2px rgba(74, 85, 128, 0.2),
+        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 20%, transparent),
         inset 0 2px 3px rgba(0, 0, 0, 0.35);
-    transform: none;
-    transition: none;
 }
 
 /* ===== Action link container ===== */
@@ -248,23 +212,22 @@
     margin-bottom: 12px;
 }
 
+/* Across from the filters, since it undoes none of them. Not on a phone, where they wrap and it
+   would sit alone at the end of a line. */
+@media (width > 640px) {
+    .reset-sort {
+        margin-left: auto;
+    }
+}
+
 /* ===== Sizing Variants ===== */
 .btn-sm {
     padding: 0 10px;
     height: 26px;
-    font-size: 11px;
 }
 
-/*
- * ===== Disabled State =====
- * The native `disabled` attribute — set by SelectActionForm and the action buttons while a
- * request is in flight, replacing the old app's `.btn-disabled` classList toggling + setTimeout
- * debounce hack.
- */
-.btn:disabled,
-.btn-secondary:disabled,
-.btn-danger:disabled {
+/* ===== Disabled State ===== */
+.btn:disabled {
     opacity: 0.45;
     pointer-events: none;
-    cursor: not-allowed;
 }
