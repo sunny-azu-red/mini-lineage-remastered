@@ -122,6 +122,21 @@ defmodule MiniLineage.Scratch.Shell do
       """)
     end
 
+    # CI installs exactly .nvmrc's version, so a different one here is a run CI would not repeat.
+    pinned = "v" <> String.trim(File.read!(".nvmrc"))
+
+    case System.cmd("node", ["--version"]) do
+      {^pinned <> "\n", 0} ->
+        :ok
+
+      {found, _} ->
+        Mix.raise("""
+        Node is #{String.trim(found)}, but .nvmrc pins #{pinned}, which is what CI runs.
+
+            nvm install #{String.trim_leading(pinned, "v")} && source env.sh
+        """)
+    end
+
     unless File.dir?("node_modules/playwright") do
       Mix.raise("Playwright is not installed — run `mix setup`, or `npm ci` on its own.")
     end

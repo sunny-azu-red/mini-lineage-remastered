@@ -41,7 +41,9 @@ defmodule Mix.Tasks.E2e do
     try do
       # Before the server, not only between the suites: `Board` caches what it reads at boot, so a
       # server started against a table the last run left behind serves those rows until somebody
-      # writes. A server already running is used as it is, and keeps whatever it has.
+      # writes. A server already running is used as it is, and keeps whatever it has. Migrated
+      # first, since the server that would have is not up yet and CI's database is new every run.
+      Shell.step("migrating", "mix", ["ecto.migrate", "--quiet"], "e2e")
       Shell.step("resetting the board", Path.expand("e2e/reset.sh"), [])
       {owned, url} = Shell.ensure_server(port, @boot_timeout_ms)
 

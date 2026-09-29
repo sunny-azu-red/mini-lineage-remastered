@@ -41,6 +41,9 @@ list wins — several generator defaults do not exist here.
   `.env` would hand it `PORT=4000` and it would sit waiting on the development server. It gets away
   with this only because a Mix task does not start the application; adding `app.start` would break
   it silently.
+- **Node is `.nvmrc`'s and nowhere else.** It runs only Playwright. CI reads it through
+  `node-version-file`, `env.sh` selects it through nvm, and `mix e2e` refuses any other, so a
+  version is changed in that one file and never written into the workflow.
 - **Database tests cannot be `async: true`.** A character lives in a GenServer started by a
   `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
   mode bridges that, and shared mode means serial. This is our architecture, not the driver — it

@@ -26,13 +26,16 @@ for _ml_lib in "$HOME/.local/usr/lib/x86_64-linux-gnu" "$HOME/.local/lib/playwri
 done
 unset _ml_lib
 
-# Node comes from nvm, which only puts itself on the PATH of an interactive shell — so a script,
-# a mix task or an editor terminal can find `mix` and still not find `node`.
-if ! command -v node >/dev/null 2>&1 && [ -s "$HOME/.nvm/nvm.sh" ]; then
+# Node comes from nvm, at the version .nvmrc pins, which CI reads too. nvm only puts itself on the
+# PATH of an interactive shell, so a script, a mix task or an editor terminal would otherwise miss it.
+_ml_nvmrc="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/.nvmrc"
+if [ -f "$_ml_nvmrc" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
   # shellcheck disable=SC1091
-  . "$HOME/.nvm/nvm.sh" --no-use
-  nvm use --silent default >/dev/null 2>&1 || nvm use --silent node >/dev/null 2>&1
+  command -v nvm >/dev/null 2>&1 || . "$HOME/.nvm/nvm.sh" --no-use
+  nvm use --silent "$(cat "$_ml_nvmrc")" >/dev/null 2>&1 \
+    || echo "env.sh: Node $(cat "$_ml_nvmrc") is not installed; run: nvm install $(cat "$_ml_nvmrc")" >&2
 fi
+unset _ml_nvmrc
 
 # This game is made of emoji, and the VM warns that Elixir may malfunction under latin1.
 [ -n "${LANG:-}" ] || export LANG=C.UTF-8
