@@ -14,7 +14,11 @@ list wins — several generator defaults do not exist here.
 - **There are no LiveView streams.** One character's state is one assign.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
   else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
-  `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing else.
+  `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing but that list and what
+  `app.js` imports through it. The hooks are `AnimatedValues`, `EffectTimers` (the banner's badges
+  and the record's remaining time), `KonamiRelay`, `Panel` (driving the `Log` class in `log.js`),
+  `PanelFocus`, `SoundToggle` (over the synth in `soundfx.js`), `Stamps` and `Table`; `kept.js` is
+  storage.
 - The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
   character goes through its process, never straight to the database.
@@ -24,8 +28,10 @@ list wins — several generator defaults do not exist here.
   start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
   enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
   have a module. Anything a page reaches for but does not
-  own (the panel card, the table, the button, the alerts, the select-and-button form,
-  `<.back_link>`, `<.stamp>`, `<.reset_sort>`) is in `Controls`.
+  own (`<.panel>`, `<.data_table>`, `<.button>`, the alerts `<.notice>`, `<.flash_alert>` and
+  `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
+  `<.reset_sort>`, `<.counted>`) is in `Controls`; `Layouts` holds the shell's `head`,
+  `site_header` and `footer`, which `ErrorHTML` draws too.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
   than everything else on that page put together and crowds out what the panel is named for. The aside
@@ -89,10 +95,10 @@ rendered HTML passes or fails on the roll. Where a test renders a drawn line, fi
 (`%{Player.kill(p) | death_reason: "..."}`); that it came from the pool at all is a separate test's
 job, against the struct rather than the page.
 
-**A formatter with a client-side twin is held to a table.** Two are duplicated on purpose.
+**A formatter with a client-side twin is held to a table.** Four are duplicated on purpose.
 `Format.adena` and `shortAdena` in `hooks/animated-values.js`: the count-up animation formats its own frames, and
 without a client-side copy the number would change format mid-count. `Format.countdown` and
-`timerLabel`: the server renders an effect's first frame and the hook repaints it every second.
+`timerLabel` in `hooks/effect-timers.js`: the server renders an effect's first frame and the hook repaints it every second.
 `Format.remaining` and `remainingLabel` are the same pair said in a sentence, for the record's
 Blessings & Afflictions — a badge has room for "1m" and a paragraph has room for "1m 30s".
 `Format.stamp` and `stampLabel` in `hooks/stamps.js`, with `stamp_title` and `stampTitle`: the
@@ -351,8 +357,8 @@ from the entry the reader holds. It holds only because nothing deletes a single 
 the row id is the whole table's and never reaches the page.
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
-action between them — `character`, `highscores`, `statistics`, `races`, `error`, and not one
-`phx-click` on any of them — so the first clause lets every state reach
+action between them — `character`, `highscores`, `statistics`, `races`, `error`: a sort button
+reorders the view and the Chronicle pages itself, and neither touches the run — so the first clause lets every state reach
 every one of them and the rest of the cond only ever decides about screens that can be acted on.
 It had been three overlapping allowlists, which is how a living run could not read the Tome, a dead
 one could not be told that something had crashed, and an ambushed one could not look at its own
@@ -655,9 +661,9 @@ with none up is the document read.
 
 **Every time a player sees goes through `<.stamp>`, and it says an age until it names a date.**
 "4m ago" inside `:stamp_relative_days` (7), the date past it, the whole instant in its `title`.
-`form` is how terse it is: "4m" and "12 Sep" (`:short`, a log's head) or "4 minutes" and "12
-September" (`:long`, the default); the rest shape only a date: `on` for "on 12 September", `time` for its clock, `at_time` for "at 9:05 am"
-rather than ", 9:05 am". An age takes none of them, so the stamp carries every preposition and
+`form` is how terse it is: "4m ago" and "12 Sep" (`:short`, a log's head) or "4 minutes ago" and
+"12 September" (`:long`, the default); the rest shape only a date: `on` for "on 12 September",
+`time` for its clock, `at_time` for "at 9:05 am" rather than ", 9:05 am". An age takes none of them, so the stamp carries every preposition and
 prose writes none: "The road opened beneath your feet <.stamp on time at_time />" reads either way.
 The clock is twelve-hour and the game's own, never the browser's locale, or the twins would part.
 A log keeps the time, since a day of play crowds one date; the board names a day. The server draws the first
