@@ -19,18 +19,8 @@ defmodule MiniLineageWeb.Endpoint do
     # rather than Phoenix's 10 puts a closed tab offline in seconds, for one idle poll per window.
     longpoll: [window_ms: 5_000, connect_info: [session: @session_options]]
 
-  # A digested filename is content addressed, so it can be held for ever. Plug.Static only does so
-  # for a `?vsn=d` query, which Phoenix does not append to one, so without this every load revalidates.
-  @digested_cache_control if code_reloading?,
-                            do: "public",
-                            else: "public, max-age=31536000, immutable"
-
-  plug Plug.Static,
-    at: "/assets",
-    from: {:mini_lineage, "priv/static/assets"},
-    gzip: not code_reloading?,
-    cache_control_for_etags: @digested_cache_control
-
+  # A digested link carries `?vsn=d`, which Plug.Static already holds for a year; anything else
+  # revalidates, so an undigested name is never served stale after a deploy.
   # `only_matching`: a release links the favicon as `favicon-<hash>.ico`, which `only` does not match.
   plug Plug.Static,
     at: "/",
