@@ -18,10 +18,11 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
 
     Characters.mutate(id, fn player ->
       {player, _} = Player.initialize(player, Constants.race(1), "Hero")
-      # Tanky enough that no roll below is fatal: a fatal fight counts no battle, and these
-      # compare counters across a read.
-      {%{player | current_screen: "battle", health: 5_000}, :ok}
+      {%{player | current_screen: "battle"}, :ok}
     end)
+
+    # A fatal fight counts no battle, and these compare counters across a read.
+    pin_dice(id)
 
     {:ok, id: id}
   end

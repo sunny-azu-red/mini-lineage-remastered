@@ -214,7 +214,19 @@ try {
 
     await overLog();
     await watcher.mouse.wheel(0, 120);
-    await watcher.waitForTimeout(350);
+    // A wheel may scroll smoothly, and the offset read below is only worth anything once it stops.
+    await watcher.waitForFunction(() => document.querySelector('#chronicle .panel-body').scrollTop > 2,
+        null, { timeout: 3000 }).catch(() => {});
+    await watcher.evaluate(() => new Promise((resolve) => {
+        const body = document.querySelector('#chronicle .panel-body');
+        let last = body.scrollTop, still = 0;
+        const step = () => {
+            still = body.scrollTop === last ? still + 1 : 0;
+            last = body.scrollTop;
+            if (still >= 5) resolve(); else requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }));
     const down = await logState();
     const reading = await watcher.evaluate(() => {
         const box = document.querySelector('#chronicle .panel-body').getBoundingClientRect();
@@ -426,12 +438,13 @@ try {
     check('...into hours', said.head === '3h ago' && said.road === '3 hours ago', JSON.stringify(said));
 
     // Past the cap both keep the time, a log's after a comma and a sentence's after the "at" it
-    // needs, and the sentence names its month in full.
+    // needs, and the sentence names its month in full. A week on from late December is next
+    // year, so the year the stamp then names is allowed for.
     await aging.clock.fastForward(7 * 24 * 3_600_000);
     said = await labels();
     check('...and past a week names the date instead',
-        /^\d{1,2} [A-Z][a-z]{2}, \d{1,2}:\d\d [ap]m$/.test(said.head)
-            && /^on \d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) at \d{1,2}:\d\d [ap]m$/.test(said.road),
+        /^\d{1,2} [A-Z][a-z]{2}( \d{4})?, \d{1,2}:\d\d [ap]m$/.test(said.head)
+            && /^on \d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December)( \d{4})? at \d{1,2}:\d\d [ap]m$/.test(said.road),
         JSON.stringify(said));
     await aging.context().close();
 

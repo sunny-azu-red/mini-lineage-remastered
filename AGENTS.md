@@ -75,6 +75,9 @@ Each of these is here because it was got wrong once.
 (`Rng.put_source/1`, or `Test.Lcg` for the golden master's stream), or make the character tanky
 enough that no roll changes the answer — `health: 5_000` is the idiom. A fatal fight counts no
 battle, which is all it takes to make a counter assertion pass for months and fail in CI once.
+Both hold only where `Actions` is called in the test process. A fight through a character's
+GenServer rolls that process's dice, and the sweep before it clamps 5,000 back to max health:
+there, `DataCase.pin_dice/2` installs the source inside the process.
 What the dice decide belongs in `balance_golden_test.exs`, which seeds them.
 
 A randomly drawn *string* is the same trap wearing a disguise. Death reasons and narrative lines

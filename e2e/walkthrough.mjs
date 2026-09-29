@@ -21,8 +21,9 @@ const failedRequests = [];
 page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
 page.on('requestfailed', r => {
-    // Google Fonts may be unreachable offline; that is not the app's fault.
-    if (r.url().startsWith(BASE))
+    // Google Fonts may be unreachable offline; that is not the app's fault. Nor is a request the
+    // browser cancelled on navigating away, which a socket fallen back to long-polling always has.
+    if (r.url().startsWith(BASE) && r.failure()?.errorText !== 'net::ERR_ABORTED')
         failedRequests.push(`${r.method()} ${r.url()} :: ${r.failure()?.errorText}`);
 });
 

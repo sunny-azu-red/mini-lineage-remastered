@@ -27,6 +27,10 @@ defmodule MiniLineage.Characters.BufferingTest do
       {player, _flash} = Player.initialize(player, Constants.race(0), "Hero")
       {%{player | current_screen: "home"}, :ok}
     end)
+
+    # Unheld, the idle stop leaves it lingering for the blessing's lapse, and a lingering run
+    # does not regenerate: every tick below would depend on beating a 150ms timer.
+    hold(id)
   end
 
   defp pid_for(id) do

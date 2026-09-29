@@ -132,7 +132,7 @@ defmodule MiniLineage.CharactersTest do
   # or never, while a stranger's page had already stopped showing it.
   test "but one with a buff still to lapse stays up to write it, and then stops", %{id: id} do
     start_character(id)
-    lapses_at = System.system_time(:millisecond) + 400
+    lapses_at = System.system_time(:millisecond) + 1_000
 
     Characters.mutate(
       id,
@@ -141,8 +141,8 @@ defmodule MiniLineage.CharactersTest do
 
     {pid, ref} = leave(id)
 
-    refute_receive {:DOWN, ^ref, :process, ^pid, _}, 250
-    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
+    await_lingering(pid)
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 3_000
 
     character = Characters.character_id(id)
 
@@ -157,8 +157,8 @@ defmodule MiniLineage.CharactersTest do
     start_character(id)
     Characters.mutate(id, &{%{&1 | health: 10}, :ok})
 
-    {pid, ref} = leave(id)
-    refute_receive {:DOWN, ^ref, :process, ^pid, _}, 250
+    {pid, _ref} = leave(id)
+    await_lingering(pid)
 
     send(pid, :tick)
     assert :sys.get_state(pid).player.health == 10
@@ -174,6 +174,15 @@ defmodule MiniLineage.CharactersTest do
     send(viewer, :stop)
 
     {pid, ref}
+  end
+
+  # The idle stop has fired and kept the run up, read off the state rather than timed.
+  defp await_lingering(pid, attempts \\ 100) do
+    cond do
+      :sys.get_state(pid).lingering -> :ok
+      attempts == 0 -> flunk("the idle stop never left the run lingering")
+      true -> Process.sleep(20) && await_lingering(pid, attempts - 1)
+    end
   end
 
   defp lapsing(%{id: "newbie_blessing"} = effect, at), do: %{effect | expires_at: at}

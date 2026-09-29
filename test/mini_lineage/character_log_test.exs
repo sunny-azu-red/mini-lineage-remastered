@@ -25,10 +25,11 @@ defmodule MiniLineage.CharacterLogTest do
   defp start_character(session, race_id \\ 1) do
     Characters.mutate(session, fn player ->
       {player, _flash} = Player.initialize(player, Constants.race(race_id), "Hero")
-      # Tanky enough to survive every fight below. A fatal fight does not count a battle, so
-      # without this a lucky-unlucky roll would make these assertions come and go.
-      {%{player | current_screen: "battle", health: 5_000}, :ok}
+      {%{player | current_screen: "battle"}, :ok}
     end)
+
+    # A fatal fight does not count a battle, so an unlucky roll would make these come and go.
+    pin_dice(session)
   end
 
   defp fight(session), do: Characters.mutate(session, &Actions.fight/1)

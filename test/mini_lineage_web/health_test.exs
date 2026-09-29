@@ -12,6 +12,7 @@ defmodule MiniLineageWeb.HealthTest do
 
     assert conn.status == 200
     assert get_resp_header(conn, "set-cookie") == []
-    assert Registry.count(MiniLineage.Characters.Registry) == before
+    # Never grows, rather than equals: a visitor an earlier test left may stop in between.
+    assert Registry.count(MiniLineage.Characters.Registry) <= before
   end
 end

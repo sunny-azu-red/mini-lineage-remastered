@@ -10,8 +10,15 @@ defmodule MiniLineageWeb.BlessingsTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Narratives, Player, Snapshot}
+  alias MiniLineage.Game.{Clock, Constants, Narratives, Player, Snapshot}
   alias MiniLineageWeb.Screens.Record
+
+  # Held still, so a second passing between applying an effect and drawing it cannot change the
+  # time left it is drawn with.
+  setup do
+    Clock.put_now(System.system_time(:millisecond))
+    :ok
+  end
 
   # Carrying exactly what it is handed: a new character is given the Newbie Blessing on the way in,
   # and a fixture that kept it would answer every claim below with the same paragraph.

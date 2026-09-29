@@ -262,8 +262,10 @@ defmodule MiniLineage.BoardTest do
 
     Characters.mutate(session, fn p ->
       {p, _} = Player.initialize(p, Constants.race(0), name)
-      {%{p | current_screen: "battle", health: 5_000}, :ok}
+      {%{p | current_screen: "battle"}, :ok}
     end)
+
+    pin_dice(session)
 
     %{id: Characters.character_id(session), session: session}
   end

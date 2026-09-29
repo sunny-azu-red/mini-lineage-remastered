@@ -81,6 +81,19 @@ defmodule MiniLineage.DataCase do
   end
 
   @doc """
+  Pins the dice inside a character's own process, which is where its fights are rolled: a source
+  installed in the test process never reaches them, and `health: 5_000` does not survive the sweep
+  before the next action, which clamps it to max health. At 0.5 nothing crits and nothing ambushes,
+  whatever the race. Lasts as long as the process does.
+  """
+  def pin_dice(session, value \\ 0.5) do
+    MiniLineage.Characters.mutate(session, fn player ->
+      MiniLineage.Game.Rng.put_source(fn -> value end)
+      {player, :ok}
+    end)
+  end
+
+  @doc """
   A helper that transforms changeset errors into a map of messages.
 
       assert {:error, changeset} = Accounts.create_user(%{password: "short"})

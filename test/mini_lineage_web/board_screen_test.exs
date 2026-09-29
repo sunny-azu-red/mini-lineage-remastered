@@ -243,9 +243,10 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
     test "and a viewer who mounts after the refresh sees it straight away", %{conn: conn} do
       # `current/0` answers from the cache, so this is what a second viewer arriving later gets.
+      Board.subscribe()
       run("Settled", xp: 10)
       Board.character_changed()
-      Process.sleep(700)
+      assert_receive {:board, _}, 3_000
 
       {:ok, _live, html} = live(conn, ~p"/highscores")
 
@@ -318,7 +319,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
   end
 
   # LiveView has no "wait for a pushed re-render" helper, so this polls the rendered markup.
-  defp wait_for(live, text, attempts \\ 20) do
+  defp wait_for(live, text, attempts \\ 60) do
     cond do
       render(live) =~ text -> true
       attempts == 0 -> false
