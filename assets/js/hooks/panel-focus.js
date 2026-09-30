@@ -47,10 +47,9 @@ export const PanelFocus = {
             return;
 
         // Links are out because Space scrolls them rather than activating them; hidden inputs
-        // because they match `input` without being focusable; `.alert-dismiss` because it comes
-        // before the screen's own content and would eat the first Space.
+        // because they match `input` without being focusable.
         const control = this.el.querySelector(
-            `input:not([type="hidden"]), select, button:not(.alert-dismiss, ${VIEW_CONTROLS})`,
+            `input:not([type="hidden"]), select, button:not(${VIEW_CONTROLS})`,
         );
         if (control && !control.matches(':disabled'))
             control.focus({ preventScroll: true });

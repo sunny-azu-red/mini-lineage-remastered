@@ -208,12 +208,12 @@ defmodule MiniLineageWeb.Screens do
     <%= if @view.ambushed do %>
       <%!-- The glyph belongs to the line, not to this alert: the Chronicle tells the same line
             later and would otherwise tell it bare. --%>
-      <div class="alert alert-danger">
+      <.alert kind={:danger}>
         {raw(
           (@view.last_battle && Narrative.voiced(@view.last_battle.narrative.ambush_line, true)) ||
             "💢 You are being ambushed!"
         )}
-      </div>
+      </.alert>
       <div class="action-links">
         <.button variant={:danger} phx-click="fight">
           ⚔️ {(@view.last_battle && @view.last_battle.narrative.fight_prompt) || "Fight!"}

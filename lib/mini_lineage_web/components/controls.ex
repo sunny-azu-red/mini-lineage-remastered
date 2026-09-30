@@ -294,29 +294,23 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------ alerts
 
   @doc """
-  A rejected action, inline on the current screen. Dismissed by its corner glyph, never by a
-  click on the banner, which would lose the message too easily.
+  Every alert in the game. None is dismissible: what it says belongs to the screen it stands on.
   """
-  attr :message, :string, required: true
+  attr :kind, :atom, required: true, values: [:info, :success, :warning, :danger]
+  attr :rest, :global
+  slot :inner_block, required: true
 
-  def notice(assigns) do
-    ~H"""
-    <div class="alert alert-danger alert-dismissible">
-      {@message}
-      <button type="button" class="alert-dismiss" aria-label="Dismiss" phx-click="dismiss_notice">
-        ×
-      </button>
-    </div>
-    """
+  def alert(assigns) do
+    ~H|<div class={"alert alert-#{@kind}"} {@rest}>{render_slot(@inner_block)}</div>|
   end
 
   @doc """
-  The result of an action. Not dismissible: it disappears the moment you leave the screen.
+  The result of an action, a refusal included. It disappears the moment you leave the screen.
   """
   attr :flash, :map, required: true
 
   def flash_alert(assigns) do
-    ~H|<div class={"alert alert-#{@flash.type}"}>{raw(@flash.text)}</div>|
+    ~H|<.alert kind={@flash.type}>{raw(@flash.text)}</.alert>|
   end
 
   attr :ambushed, :boolean, default: false
@@ -324,7 +318,7 @@ defmodule MiniLineageWeb.Controls do
 
   def low_health(assigns) do
     ~H"""
-    <div id="low-health-alert" class="alert alert-danger">
+    <.alert id="low-health-alert" kind={:danger}>
       Your HP is dangerously low!<br />
       <%= if @ambushed do %>
         {@ambush_line}
@@ -332,7 +326,7 @@ defmodule MiniLineageWeb.Controls do
         You should buy some food from the 🍺 <.link patch={Paths.for_screen("inn")}>Inn</.link>
         to regain your strength.
       <% end %>
-    </div>
+    </.alert>
     """
   end
 

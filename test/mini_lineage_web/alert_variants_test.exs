@@ -2,7 +2,7 @@ defmodule MiniLineageWeb.AlertVariantsTest do
   @moduledoc """
   Every alert the game can raise has a rule to be drawn by, and every rule has an alert.
 
-  `flash_alert/1` builds its class from the type the action returned, so a type nothing styles
+  `alert/1` builds its class from the type the action returned, so a type nothing styles
   renders unstyled and a rule nothing raises is dead weight. Neither end can see that alone, so
   this reads both and compares them.
   """
@@ -57,15 +57,10 @@ defmodule MiniLineageWeb.AlertVariantsTest do
     end
   end
 
-  # `.alert-dismissible` is a modifier and `.alert-dismiss` is the corner glyph that closes one.
-  # Both are parts of an alert rather than voices it can speak in, so neither answers to a type.
-  @not_voices MapSet.new([:dismissible, :dismiss])
-
   test "and every one the stylesheet draws is one the game can raise" do
     unclaimed =
       styled()
       |> MapSet.difference(MapSet.new(Map.keys(raised())))
-      |> MapSet.difference(@not_voices)
 
     assert Enum.to_list(unclaimed) == [], "nothing raises these"
   end

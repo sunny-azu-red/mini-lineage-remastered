@@ -44,7 +44,6 @@ defmodule MiniLineageWeb.GameLive do
        screen: "start",
        title: nil,
        race_filter: nil,
-       notice: nil,
        game_flash: nil,
        boards: %{},
        following: nil,
@@ -192,7 +191,7 @@ defmodule MiniLineageWeb.GameLive do
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
     # A flash survives exactly one arrival, so an action that flashes and moves you does not clear
-    # its own message. A notice reports a refusal and waits to be dismissed.
+    # its own message.
     socket =
       if socket.assigns[:flash_fresh],
         do: assign(socket, flash_fresh: false),
@@ -317,8 +316,6 @@ defmodule MiniLineageWeb.GameLive do
   # `_target` names the field that changed, so one handler serves every action form.
   def handle_event("pick", %{"_target" => [field]} = params, socket),
     do: {:noreply, assign(socket, picked: params[field])}
-
-  def handle_event("dismiss_notice", _params, socket), do: {:noreply, assign(socket, notice: nil)}
 
   # The Konami buffer lives here rather than in the character, so nothing about the sequence is
   # persisted and a second tab cannot half-complete it.
@@ -478,7 +475,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # A socket holds one patch, so where an action leaves them is decided here, once: error, death,
   # else `to`. `catch` is for the process exiting. `quiet` is for what the player did not do,
-  # arriving somewhere, which leaves their notice alone.
+  # arriving somewhere, which leaves their flash alone.
   defp apply_action(socket, fun, to \\ nil, opts \\ []) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
     to = if player.dead and not socket.assigns.player.dead, do: "death", else: to
@@ -504,19 +501,21 @@ defmodule MiniLineageWeb.GameLive do
     socket |> assign(error_detail: detail) |> go("error")
   end
 
-  defp absorb(socket, {:error, _code, message}),
-    do: assign(socket, notice: message, game_flash: nil)
+  defp absorb(socket, {:error, _code, message}), do: refuse(socket, message)
 
-  defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil)
+  defp absorb(socket, {:ok, nil}), do: socket
 
   defp absorb(socket, {:ok, %{text: _} = flash}),
-    do: socket |> assign(notice: nil, game_flash: flash) |> play(flash[:sound])
+    do: socket |> assign(game_flash: flash) |> play(flash[:sound])
 
   defp absorb(socket, {:ok, result}) do
     socket
-    |> assign(notice: nil, game_flash: Map.get(result, :flash))
+    |> assign(game_flash: Map.get(result, :flash))
     |> play(Map.get(result, :sound))
   end
+
+  # A refusal is a flash like any other, so it too belongs to the screen it is raised on.
+  defp refuse(socket, message), do: assign(socket, game_flash: %{text: message, type: :danger})
 
   defp play(socket, nil), do: socket
   defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})
@@ -558,7 +557,7 @@ defmodule MiniLineageWeb.GameLive do
             "You are moving too fast, please take a breath and try again in #{seconds}s."
           end
 
-        {:limited, assign(socket, notice: message)}
+        {:limited, refuse(socket, message)}
     end
   end
 
@@ -573,7 +572,6 @@ defmodule MiniLineageWeb.GameLive do
       screen={@screen}
       character_id={@character_id}
     >
-      <Controls.notice :if={@notice} message={@notice} />
       <Controls.flash_alert :if={@game_flash} flash={@game_flash} />
       <Controls.low_health
         :if={Screens.low_health_alert?(@view, @screen)}

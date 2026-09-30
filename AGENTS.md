@@ -28,8 +28,8 @@ list wins — several generator defaults do not exist here.
   start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
   enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
   have a module. Anything a page reaches for but does not
-  own (`<.panel>`, `<.data_table>`, `<.button>`, the alerts `<.notice>`, `<.flash_alert>` and
-  `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
+  own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
+  and `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
   `<.reset_sort>`, `<.counted>`) is in `Controls`; `Layouts` holds the shell's `head`,
   `site_header` and `footer`, which `ErrorHTML` draws too.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
@@ -603,6 +603,12 @@ looks: the variant decides the look, all of it, and the element nothing. That is
 colours say `a:not(.btn)`: `a:link` outranks one class, and it was painting secondary links gold.
 Every state is drawn in the variant's own colour, the focus ring included, which is `currentColor`
 so a new variant rings in its own without a rule of its own.
+
+**Every alert in the game is one component, and none is dismissed.** `Controls.alert/1` is the only
+thing that writes `alert`: `kind` is `:info`, `:success`, `:warning` or `:danger`, and anything else
+handed to it lands on the `div`. What an action says, a refusal or a throttle included, is its flash,
+dropped on the next arrival unless the action itself moved you there. A dismissible notice sat beside
+it once, and since nothing cleared it on arrival the throttle warning followed players everywhere.
 
 **Every table in the game is one component, and its sort is the server's.** `Controls.data_table/1`
 draws the container, the header row and the `<table>`; the rows are the caller's `<tbody>`, and
