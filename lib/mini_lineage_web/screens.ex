@@ -110,11 +110,7 @@ defmodule MiniLineageWeb.Screens do
   def error(assigns) do
     ~H"""
     <p>An unexpected error occurred on the server, please try again in a moment.</p>
-    <pre :if={@detail} class="code-block">{@detail}</pre>
-
-    <%!-- Deliberately vague: this screen is reachable started or not, and "safer lands" is true
-          of Town and Game Start alike. --%>
-    <.back_link started={@view.started} dead={@view.dead} label="Return to safer lands" class="last" />
+    <.fault detail={@detail} />
     """
   end
 

@@ -30,7 +30,7 @@ list wins — several generator defaults do not exist here.
   have a module. Anything a page reaches for but does not
   own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
   and `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
-  `<.reset_sort>`, `<.counted>`) is in `Controls`; `Layouts` holds the shell's `head`,
+  `<.reset_sort>`, `<.figure>` and `<.counted>` built on it, `<.fault>`) is in `Controls`; `Layouts` holds the shell's `head`,
   `site_header` and `footer`, which `ErrorHTML` draws too.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
@@ -376,12 +376,14 @@ NOT ALLOWED somewhere is not the same as moving them because the somewhere does 
 
 **What a build may say about a fault depends on the build, not on what it knows.** The error page
 shows the WHOLE thing in a debug build — `Exception.format/3` on the kind, reason and stack Phoenix
-hands the view — because the alternative is reading "500 Internal Server Error" on the page and
-then going to find the terminal it actually happened in. A release shows none of it, whatever it
-was handed: a trace names modules, line numbers and arguments, and a player is not the audience for
-any of them. `Version.debug_build?/0` is the gate, and it is deliberately NOT tied to `release?/1`
-— an image built without APP_VERSION could not tell it was a release, and served traces to players.
-A 404 is not a fault and gets no trace either way, or the real ones drown in mistyped URLs.
+hands the view — because the alternative is reading "500 Internal Server Error" on the page and then
+going to find the terminal it actually happened in. A release shows none of it, whatever it was
+handed: a trace names modules, line numbers and arguments, and a player is not the audience for any
+of them. `Version.debug_build?/0` is the gate, and it is deliberately NOT tied to `release?/1` — an
+image built without APP_VERSION could not tell it was a release, and served traces to players. A 404
+is not a fault and gets no trace either way, or the real ones drown in mistyped URLs. Both error
+pages draw the trace and the way out through `<.fault>`: drawn apart, the in-game screen had lost
+the rule over its way back that the Phoenix page kept.
 
 **If a character has a standard named entity, write the entity.** `&amp;` `&copy;` `&ndash;`
 `&bull;`, and `&nbsp;` `&mdash;` `&hellip;` if ever needed. Everything else is written as it is:
@@ -452,12 +454,14 @@ substitute once.
 glows' comment claimed 4.55 and 4.53 on the panel; the panel then moved twice under it and it went
 quietly false. Moving a ground means re-measuring everything any comment asserts about it.
 
-**Every figure counts; only names and dates jump.** A number the player can watch change wears
-`data-key` and `data-value` and is animated by `AnimatedValues`, whose hook sits once over whatever
-contains them. What an item grants is a figure and counts with the rest — only the item's own name
-and the dates beside it jump, having nothing to count through. `data-format="adena"` counts in the
-short form; the frames keep the tenth that the settled value drops, because "2.0k" written "2k" is
-two characters narrower and the line jumps left and right across every round thousand.
+**Every figure counts; only names and dates jump.** A number the player can watch change is a
+`<.figure>`, animated by `AnimatedValues`, whose hook sits once over whatever contains them. The
+component writes `data-value` and the text from one value, and `format={:adena}` both the short form
+and the `data-format` that counts in it, so the two cannot be written apart. What an item grants is
+a figure and counts with the rest — only the item's own name and the dates beside it jump, having
+nothing to count through. Adena counts in the short form; the frames keep the tenth that the settled
+value drops, because "2.0k" written "2k" is two characters narrower and the line jumps left and
+right across every round thousand.
 
 Animate a figure even where it can only move by one today. Measured: a tween of +1 renders the old
 number for 137ms and then the new one — a delay, not a flicker — and forty at once hold a median

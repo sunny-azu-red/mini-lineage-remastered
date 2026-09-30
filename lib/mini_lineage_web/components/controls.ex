@@ -353,14 +353,41 @@ defmodule MiniLineageWeb.Controls do
   attr :href, :string, required: true
   attr :text, :string, required: true
   attr :class, :string, default: "last back"
+  # False where no LiveView is behind the page, which a patch would need.
+  attr :interactive?, :boolean, default: true
 
   # The anchor sits flush against its text. The mark sits OUTSIDE it, so a click lands on the
   # words, and is muted because it says which way this goes and nothing else.
   defp back(assigns) do
     ~H"""
     <p class={@class}>
-      <span class="muted">&laquo;</span> <.link patch={@href}>{@text}</.link>
+      <span class="muted">&laquo;</span>
+      <.link
+        patch={if @interactive?, do: @href}
+        href={unless @interactive?, do: @href}
+      >{@text}</.link>
     </p>
+    """
+  end
+
+  attr :detail, :string, default: nil
+  attr :interactive?, :boolean, default: true
+
+  @doc """
+  What a fault may show, and the way out of it, on both error pages: the game's own screen and the
+  one Phoenix draws, which has no LiveView behind it. Withholding the trace is the caller's call.
+  """
+  def fault(assigns) do
+    ~H"""
+    <pre :if={@detail} class="code-block">{@detail}</pre>
+    <%!-- "Safer lands" is true of Town and Game Start alike, and `/` is whichever the run is in. A
+          fault's block parts the way back already; without one, the rule does. --%>
+    <.back
+      href={Paths.for_screen("home")}
+      text="Return to safer lands"
+      class={if @detail, do: "last", else: "last back"}
+      interactive?={@interactive?}
+    />
     """
   end
 
@@ -443,6 +470,24 @@ defmodule MiniLineageWeb.Controls do
   defp resolve(value, _picked), do: value
 
   attr :key, :string, required: true
+  attr :value, :integer, required: true
+  attr :format, :atom, default: :number, values: [:number, :adena]
+  attr :rest, :global
+
+  @doc """
+  A figure the player can watch change, which `AnimatedValues` counts from the value it last saw.
+  The value is written once, so what the count heads for and the text it lands on cannot differ.
+  """
+  def figure(assigns) do
+    assigns = assign(assigns, text: figure_text(assigns.format, assigns.value))
+
+    ~H|<span data-key={@key} data-value={@value} data-format={@format == :adena && "adena"} {@rest}>{@text}</span>|
+  end
+
+  defp figure_text(:adena, value), do: Format.adena(value)
+  defp figure_text(:number, value), do: Format.number(value)
+
+  attr :key, :string, required: true
   attr :count, :integer, required: true
   attr :singular, :string, required: true
   attr :plural, :string, required: true
@@ -463,7 +508,7 @@ defmodule MiniLineageWeb.Controls do
       )
 
     ~H"""
-    <span class={@class} phx-no-format><span data-key={@key} data-value={@count}>{Format.number(@count)}</span> {@noun}</span>
+    <span class={@class} phx-no-format><.figure key={@key} value={@count} /> {@noun}</span>
     """
   end
 

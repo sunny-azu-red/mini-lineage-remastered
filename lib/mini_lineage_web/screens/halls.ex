@@ -8,7 +8,6 @@ defmodule MiniLineageWeb.Screens.Halls do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.Format
   alias MiniLineageWeb.Paths
 
   # Which way a first click takes each column. No sort at all is the ranking, which no column is.
@@ -118,16 +117,13 @@ defmodule MiniLineageWeb.Screens.Halls do
         >&bull;</span>
       </td>
       <td class="num level">
-        <span data-key={"level-#{@row.id}"} data-value={@row.level}>{Format.number(@row.level)}</span>
+        <.figure key={"level-#{@row.id}"} value={@row.level} />
       </td>
       <td class="num xp">
-        <span data-key={"xp-#{@row.id}"} data-value={@row.total_xp}>{Format.number(@row.total_xp)}</span>
+        <.figure key={"xp-#{@row.id}"} value={@row.total_xp} />
       </td>
       <td class="adena">
-        🪙
-        <span data-key={"adena-#{@row.id}"} data-format="adena" data-value={@row.adena}>{Format.adena(
-          @row.adena
-        )}</span>
+        🪙 <.figure key={"adena-#{@row.id}"} value={@row.adena} format={:adena} />
       </td>
       <td><.stamp id={"seen-#{@row.id}"} at={@row.last_seen_at} /></td>
     </tr>

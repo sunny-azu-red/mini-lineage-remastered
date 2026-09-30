@@ -71,11 +71,7 @@ defmodule MiniLineageWeb.ErrorHTML do
                     <div class="header-effects" id="effects"></div>
                   </:header>
                   <p>{@message}</p>
-                  <pre :if={@detail} class="code-block">{@detail}</pre>
-                  <%!-- Without a fault's block above it, `back` draws the rule parting the way back. --%>
-                  <p class={if @detail, do: "last", else: "last back"}>
-                    <span class="muted">&laquo;</span> <a href={~p"/"}>Return to safer lands</a>
-                  </p>
+                  <Controls.fault detail={@detail} interactive?={false} />
                 </Controls.panel>
 
                 <Layouts.footer />
