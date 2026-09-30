@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.{CharacterLog, Board, Characters}
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Format, Player, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
   alias MiniLineageWeb.{Controls, Paths, Screens}
 
@@ -425,6 +425,12 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
 
+  # The warning that set the timer, and only that one: a newer warning has a timer of its own.
+  def handle_info({:flash_expired, ref}, %{assigns: %{game_flash: %{expires: ref}}} = socket),
+    do: {:noreply, assign(socket, game_flash: nil)}
+
+  def handle_info({:flash_expired, _ref}, socket), do: {:noreply, socket}
+
   # A chronicle only grows, so only what is new is read. At the present the oldest goes as the
   # newest lands, never under a page nor over what the reader had; elsewhere it grows, since they
   # may be reading what would go.
@@ -540,26 +546,42 @@ defmodule MiniLineageWeb.GameLive do
   # flag; these events must say so, since an earlier flash is still in the assigns.
   defp leave(socket, screen), do: socket |> assign(game_flash: nil) |> go(screen)
 
-  # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries
-  # only one generic message. Flavour, not security.
+  # The warning counts down in the page and is taken down by the server once the window reopens,
+  # since a patch would put back anything the browser removed.
   defp throttle(socket, limiter) do
     case RateLimit.check(socket.assigns.session_id, limiter) do
       :ok ->
         {:ok, socket}
 
       {:error, retry_after_ms} ->
-        seconds = max(1, ceil(retry_after_ms / 1000))
+        ref = make_ref()
+        Process.send_after(self(), {:flash_expired, ref}, retry_after_ms)
+        text = throttled(limiter, socket.assigns.view, countdown(retry_after_ms))
 
-        message =
-          if socket.assigns.view.ambushed and not socket.assigns.view.dead do
-            "You are in the middle of an ambush and moving too fast, try again in #{seconds}s."
-          else
-            "You are moving too fast, please take a breath and try again in #{seconds}s."
-          end
-
-        {:limited, refuse(socket, message)}
+        {:limited, assign(socket, game_flash: %{text: text, type: :danger, expires: ref})}
     end
   end
+
+  # The shape `EffectTimers` repaints, as the record's Blessings & Afflictions say a time.
+  defp countdown(ms) do
+    label = ~s(<span data-timer="long">#{Format.remaining(ms)}</span>)
+    ~s(<span data-remaining-ms="#{ms}">#{label}</span>)
+  end
+
+  # What happened, closed by its emoji rather than a stop, then what to do about it: a line each,
+  # so the wait is never stranded. Only the ambush waits out the pause, so only it is told apart.
+  defp throttled(:battle, %{ambushed: true, dead: false}, wait),
+    do:
+      "Your arm cannot swing that fast 💢<br />" <>
+        "The ambush waits, so strike again in&nbsp;#{wait}."
+
+  defp throttled(:battle, _view, wait),
+    do: "You are out of breath 😮‍💨<br />Rest a moment and seek another fight in&nbsp;#{wait}."
+
+  defp throttled(:shop, _view, wait),
+    do:
+      "The shopkeeper cannot keep up with you ⏳<br />" <>
+        "Give them a moment and try again in&nbsp;#{wait}."
 
   # ------------------------------------------------------------------ render
 

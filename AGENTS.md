@@ -15,8 +15,8 @@ list wins — several generator defaults do not exist here.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
   else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
   `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing but that list and what
-  `app.js` imports through it. The hooks are `AnimatedValues`, `EffectTimers` (the banner's badges
-  and the record's remaining time), `KonamiRelay`, `Panel` (driving the `Log` class in `log.js`),
+  `app.js` imports through it. The hooks are `AnimatedValues`, `EffectTimers` (the banner's badges,
+  the record's remaining time and a throttle warning's wait), `KonamiRelay`, `Panel` (driving the `Log` class in `log.js`),
   `PanelFocus`, `SoundToggle` (over the synth in `soundfx.js`), `Stamps` and `Table`; `kept.js` is
   storage.
 - The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
@@ -608,7 +608,9 @@ so a new variant rings in its own without a rule of its own.
 thing that writes `alert`: `kind` is `:info`, `:success`, `:warning` or `:danger`, and anything else
 handed to it lands on the `div`. What an action says, a refusal or a throttle included, is its flash,
 dropped on the next arrival unless the action itself moved you there. A dismissible notice sat beside
-it once, and since nothing cleared it on arrival the throttle warning followed players everywhere.
+it once, and since nothing cleared it on arrival the throttle warning followed players everywhere. A
+throttle's wait counts down through `EffectTimers`, and the server takes the warning down when the
+window reopens, since a patch would put back anything the browser removed.
 
 **Every table in the game is one component, and its sort is the server's.** `Controls.data_table/1`
 draws the container, the header row and the `<table>`; the rows are the caller's `<tbody>`, and

@@ -305,12 +305,15 @@ defmodule MiniLineageWeb.Controls do
   end
 
   @doc """
-  The result of an action, a refusal included. It disappears the moment you leave the screen.
+  The result of an action, a refusal included. It disappears the moment you leave the screen, and a
+  throttle's counts down to when it goes on its own.
   """
   attr :flash, :map, required: true
 
   def flash_alert(assigns) do
-    ~H|<.alert kind={@flash.type}>{raw(@flash.text)}</.alert>|
+    ~H"""
+    <.alert id="flash" kind={@flash.type} phx-hook="EffectTimers">{raw(@flash.text)}</.alert>
+    """
   end
 
   attr :ambushed, :boolean, default: false
@@ -319,7 +322,7 @@ defmodule MiniLineageWeb.Controls do
   def low_health(assigns) do
     ~H"""
     <.alert id="low-health-alert" kind={:danger}>
-      Your HP is dangerously low!<br />
+      Your HP is dangerously low ‼️<br />
       <%= if @ambushed do %>
         {@ambush_line}
       <% else %>
