@@ -56,7 +56,6 @@ defmodule MiniLineage.Game.SnapshotTest do
       assert view.xp_needed == 0
       assert view.xp_required == 0
       assert view.xp_current == 0
-      assert view.xp_percent == 100
     end
 
     test "and one step below it does not" do

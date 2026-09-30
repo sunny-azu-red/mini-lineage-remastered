@@ -6,7 +6,7 @@ defmodule MiniLineageWeb.Controls do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Clock, Format}
+  alias MiniLineage.Game.{Clock, Format, Math}
   alias MiniLineageWeb.Paths
 
   # ------------------------------------------------------------------- panels
@@ -294,29 +294,26 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------ alerts
 
   @doc """
-  A rejected action, inline on the current screen. Dismissed by its corner glyph, never by a
-  click on the banner, which would lose the message too easily.
+  Every alert in the game. None is dismissible: what it says belongs to the screen it stands on.
   """
-  attr :message, :string, required: true
+  attr :kind, :atom, required: true, values: [:info, :success, :warning, :danger]
+  attr :rest, :global
+  slot :inner_block, required: true
 
-  def notice(assigns) do
-    ~H"""
-    <div class="alert alert-danger alert-dismissible">
-      {@message}
-      <button type="button" class="alert-dismiss" aria-label="Dismiss" phx-click="dismiss_notice">
-        ×
-      </button>
-    </div>
-    """
+  def alert(assigns) do
+    ~H|<div class={"alert alert-#{@kind}"} {@rest}>{render_slot(@inner_block)}</div>|
   end
 
   @doc """
-  The result of an action. Not dismissible: it disappears the moment you leave the screen.
+  The result of an action, a refusal included. It disappears the moment you leave the screen, and a
+  throttle's counts down to when it goes on its own.
   """
   attr :flash, :map, required: true
 
   def flash_alert(assigns) do
-    ~H|<div class={"alert alert-#{@flash.type}"}>{raw(@flash.text)}</div>|
+    ~H"""
+    <.alert id="flash" kind={@flash.type} phx-hook="EffectTimers">{raw(@flash.text)}</.alert>
+    """
   end
 
   attr :ambushed, :boolean, default: false
@@ -324,15 +321,15 @@ defmodule MiniLineageWeb.Controls do
 
   def low_health(assigns) do
     ~H"""
-    <div id="low-health-alert" class="alert alert-danger">
-      Your HP is dangerously low!<br />
+    <.alert id="low-health-alert" kind={:danger}>
+      Your HP is dangerously low ‼️<br />
       <%= if @ambushed do %>
         {@ambush_line}
       <% else %>
         You should buy some food from the 🍺 <.link patch={Paths.for_screen("inn")}>Inn</.link>
         to regain your strength.
       <% end %>
-    </div>
+    </.alert>
     """
   end
 
@@ -356,14 +353,41 @@ defmodule MiniLineageWeb.Controls do
   attr :href, :string, required: true
   attr :text, :string, required: true
   attr :class, :string, default: "last back"
+  # False where no LiveView is behind the page, which a patch would need.
+  attr :interactive?, :boolean, default: true
 
   # The anchor sits flush against its text. The mark sits OUTSIDE it, so a click lands on the
   # words, and is muted because it says which way this goes and nothing else.
   defp back(assigns) do
     ~H"""
     <p class={@class}>
-      <span class="muted">&laquo;</span> <.link patch={@href}>{@text}</.link>
+      <span class="muted">&laquo;</span>
+      <.link
+        patch={if @interactive?, do: @href}
+        href={unless @interactive?, do: @href}
+      >{@text}</.link>
     </p>
+    """
+  end
+
+  attr :detail, :string, default: nil
+  attr :interactive?, :boolean, default: true
+
+  @doc """
+  What a fault may show, and the way out of it, on both error pages: the game's own screen and the
+  one Phoenix draws, which has no LiveView behind it. Withholding the trace is the caller's call.
+  """
+  def fault(assigns) do
+    ~H"""
+    <pre :if={@detail} class="code-block">{@detail}</pre>
+    <%!-- "Safer lands" is true of Town and Game Start alike, and `/` is whichever the run is in. A
+          fault's block parts the way back already; without one, the rule does. --%>
+    <.back
+      href={Paths.for_screen("home")}
+      text="Return to safer lands"
+      class={if @detail, do: "last", else: "last back"}
+      interactive?={@interactive?}
+    />
     """
   end
 
@@ -446,6 +470,24 @@ defmodule MiniLineageWeb.Controls do
   defp resolve(value, _picked), do: value
 
   attr :key, :string, required: true
+  attr :value, :integer, required: true
+  attr :format, :atom, default: :number, values: [:number, :adena]
+  attr :rest, :global
+
+  @doc """
+  A figure the player can watch change, which `AnimatedValues` counts from the value it last saw.
+  The value is written once, so what the count heads for and the text it lands on cannot differ.
+  """
+  def figure(assigns) do
+    assigns = assign(assigns, text: figure_text(assigns.format, assigns.value))
+
+    ~H|<span data-key={@key} data-value={@value} data-format={@format == :adena && "adena"} {@rest}>{@text}</span>|
+  end
+
+  defp figure_text(:adena, value), do: Format.adena(value)
+  defp figure_text(:number, value), do: Format.number(value)
+
+  attr :key, :string, required: true
   attr :count, :integer, required: true
   attr :singular, :string, required: true
   attr :plural, :string, required: true
@@ -466,7 +508,63 @@ defmodule MiniLineageWeb.Controls do
       )
 
     ~H"""
-    <span class={@class} phx-no-format><span data-key={@key} data-value={@count}>{Format.number(@count)}</span> {@noun}</span>
+    <span class={@class} phx-no-format><.figure key={@key} value={@count} /> {@noun}</span>
+    """
+  end
+
+  # -------------------------------------------------------------------- bars
+
+  attr :id, :string, required: true
+  attr :kind, :atom, required: true, values: [:hp, :xp]
+  attr :label, :string, required: true
+  attr :key, :string, required: true
+  attr :value, :integer, required: true
+  # No cap is a figure in a full track, which is what XP becomes at the last level.
+  attr :of, :integer, default: nil
+  attr :of_key, :string, default: nil
+  attr :of_id, :string, default: nil
+  # A change here means the bar went round, not back: `AnimatedValues` refills it from empty.
+  attr :wraps, :any, default: nil
+
+  @doc """
+  A figure against its cap, as a bar filled to it. Its width, its figures and what a screen reader
+  is told are all written from `value` and `of`, so none of them can disagree.
+  """
+  def bar(assigns) do
+    %{value: value, of: of, label: label} = assigns
+
+    assigns =
+      assign(assigns,
+        width: if(of, do: Math.percentage(value, of, 1), else: 100),
+        role: if(assigns.kind == :hp, do: "meter", else: "progressbar"),
+        spoken:
+          if(of,
+            do: "#{Format.number(value)} of #{Format.number(of)} #{label}",
+            else: "#{Format.number(value)} #{label}"
+          )
+      )
+
+    # `class` is the hook's once mounted: a patch rewriting it cut the shimmer short mid-sweep.
+    ~H"""
+    <div
+      class="bar-track"
+      role={@role}
+      aria-label={@label}
+      aria-valuemin="0"
+      aria-valuenow={@value}
+      aria-valuemax={@of || @value}
+      aria-valuetext={@spoken}
+    >
+      <div
+        id={@id}
+        class={"bar #{@kind}-bar"}
+        style={"width:#{@width}%"}
+        data-wraps={@wraps}
+        phx-mounted={JS.ignore_attributes(["class"])}
+      >
+      </div>
+      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>/<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
+    </div>
     """
   end
 

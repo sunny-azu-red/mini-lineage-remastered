@@ -27,7 +27,7 @@ defmodule MiniLineageWeb.BackLinksTest do
     player
   end
 
-  defp render(screen, player) do
+  defp render(screen, player, detail \\ nil) do
     viewing? = screen == "character"
 
     render_component(&Screens.screen/1,
@@ -48,7 +48,8 @@ defmodule MiniLineageWeb.BackLinksTest do
           },
       record_view: viewing? && Snapshot.build(subject()),
       record_log: [],
-      from: nil
+      from: nil,
+      detail: detail
     )
   end
 
@@ -90,6 +91,17 @@ defmodule MiniLineageWeb.BackLinksTest do
         refute text =~ ~r/continue your journey|final rest/i,
                "#{screen} offers a visitor #{inspect(text)}"
       end
+    end
+  end
+
+  # The same way out as the page Phoenix draws, since both are the same apology.
+  describe "the error screen" do
+    test "rules off its way back only when no fault stands above it to do so" do
+      alive = states()[:alive]
+
+      assert render("error", alive) =~ ~s(class="last back")
+      refute render("error", alive, "boom") =~ ~s(class="last back")
+      assert render("error", alive, "boom") =~ "code-block"
     end
   end
 

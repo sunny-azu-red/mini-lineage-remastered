@@ -469,30 +469,6 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     color: var(--text-danger);
 }
 
-/* Room for the dismiss "x". */
-.alert-dismissible {
-    padding-right: 30px;
-}
-
-/* ===== Dismiss ("x") button — a small corner glyph, not a full .btn ===== */
-.alert-dismiss {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    background: none;
-    border: none;
-    padding: 4px;
-    font-size: 15px;
-    line-height: 1;
-    color: inherit;
-    opacity: 0.65;
-    cursor: pointer;
-}
-
-.alert-dismiss:hover {
-    opacity: 1;
-}
-
 /* ===== Level Up Shine ===== */
 .alert-warning::before {
     content: '';

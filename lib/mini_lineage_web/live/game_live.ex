@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.{CharacterLog, Board, Characters}
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Player, RateLimit, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Format, Player, RateLimit, Snapshot, Version}
   alias MiniLineage.Game.Statistics.Collector
   alias MiniLineageWeb.{Controls, Paths, Screens}
 
@@ -44,7 +44,6 @@ defmodule MiniLineageWeb.GameLive do
        screen: "start",
        title: nil,
        race_filter: nil,
-       notice: nil,
        game_flash: nil,
        boards: %{},
        following: nil,
@@ -192,7 +191,7 @@ defmodule MiniLineageWeb.GameLive do
   # Reporting the screen is what drives the combat/resting auras, so it must happen on arrival.
   defp enter(socket, screen) do
     # A flash survives exactly one arrival, so an action that flashes and moves you does not clear
-    # its own message. A notice reports a refusal and waits to be dismissed.
+    # its own message.
     socket =
       if socket.assigns[:flash_fresh],
         do: assign(socket, flash_fresh: false),
@@ -318,8 +317,6 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("pick", %{"_target" => [field]} = params, socket),
     do: {:noreply, assign(socket, picked: params[field])}
 
-  def handle_event("dismiss_notice", _params, socket), do: {:noreply, assign(socket, notice: nil)}
-
   # The Konami buffer lives here rather than in the character, so nothing about the sequence is
   # persisted and a second tab cannot half-complete it.
   def handle_event("key", %{"key" => key}, socket) do
@@ -428,6 +425,12 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_info({:record_retired, _id}, socket), do: {:noreply, socket}
 
+  # The warning that set the timer, and only that one: a newer warning has a timer of its own.
+  def handle_info({:flash_expired, ref}, %{assigns: %{game_flash: %{expires: ref}}} = socket),
+    do: {:noreply, assign(socket, game_flash: nil)}
+
+  def handle_info({:flash_expired, _ref}, socket), do: {:noreply, socket}
+
   # A chronicle only grows, so only what is new is read. At the present the oldest goes as the
   # newest lands, never under a page nor over what the reader had; elsewhere it grows, since they
   # may be reading what would go.
@@ -478,7 +481,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # A socket holds one patch, so where an action leaves them is decided here, once: error, death,
   # else `to`. `catch` is for the process exiting. `quiet` is for what the player did not do,
-  # arriving somewhere, which leaves their notice alone.
+  # arriving somewhere, which leaves their flash alone.
   defp apply_action(socket, fun, to \\ nil, opts \\ []) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
     to = if player.dead and not socket.assigns.player.dead, do: "death", else: to
@@ -504,19 +507,21 @@ defmodule MiniLineageWeb.GameLive do
     socket |> assign(error_detail: detail) |> go("error")
   end
 
-  defp absorb(socket, {:error, _code, message}),
-    do: assign(socket, notice: message, game_flash: nil)
+  defp absorb(socket, {:error, _code, message}), do: refuse(socket, message)
 
-  defp absorb(socket, {:ok, nil}), do: assign(socket, notice: nil)
+  defp absorb(socket, {:ok, nil}), do: socket
 
   defp absorb(socket, {:ok, %{text: _} = flash}),
-    do: socket |> assign(notice: nil, game_flash: flash) |> play(flash[:sound])
+    do: socket |> assign(game_flash: flash) |> play(flash[:sound])
 
   defp absorb(socket, {:ok, result}) do
     socket
-    |> assign(notice: nil, game_flash: Map.get(result, :flash))
+    |> assign(game_flash: Map.get(result, :flash))
     |> play(Map.get(result, :sound))
   end
+
+  # A refusal is a flash like any other, so it too belongs to the screen it is raised on.
+  defp refuse(socket, message), do: assign(socket, game_flash: %{text: message, type: :danger})
 
   defp play(socket, nil), do: socket
   defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})
@@ -541,26 +546,42 @@ defmodule MiniLineageWeb.GameLive do
   # flag; these events must say so, since an earlier flash is still in the assigns.
   defp leave(socket, screen), do: socket |> assign(game_flash: nil) |> go(screen)
 
-  # Wording is chosen from the CURRENT ambush state rather than from the limiter, which carries
-  # only one generic message. Flavour, not security.
+  # The warning counts down in the page and is taken down by the server once the window reopens,
+  # since a patch would put back anything the browser removed.
   defp throttle(socket, limiter) do
     case RateLimit.check(socket.assigns.session_id, limiter) do
       :ok ->
         {:ok, socket}
 
       {:error, retry_after_ms} ->
-        seconds = max(1, ceil(retry_after_ms / 1000))
+        ref = make_ref()
+        Process.send_after(self(), {:flash_expired, ref}, retry_after_ms)
+        text = throttled(limiter, socket.assigns.view, countdown(retry_after_ms))
 
-        message =
-          if socket.assigns.view.ambushed and not socket.assigns.view.dead do
-            "You are in the middle of an ambush and moving too fast, try again in #{seconds}s."
-          else
-            "You are moving too fast, please take a breath and try again in #{seconds}s."
-          end
-
-        {:limited, assign(socket, notice: message)}
+        {:limited, assign(socket, game_flash: %{text: text, type: :danger, expires: ref})}
     end
   end
+
+  # The shape `EffectTimers` repaints, as the record's Blessings & Afflictions say a time.
+  defp countdown(ms) do
+    label = ~s(<span data-timer="long">#{Format.remaining(ms)}</span>)
+    ~s(<span data-remaining-ms="#{ms}">#{label}</span>)
+  end
+
+  # What happened, closed by its emoji rather than a stop, then what to do about it: a line each,
+  # so the wait is never stranded. Only the ambush waits out the pause, so only it is told apart.
+  defp throttled(:battle, %{ambushed: true, dead: false}, wait),
+    do:
+      "Your arm cannot swing that fast 💢<br />" <>
+        "The ambush waits, so strike again in&nbsp;#{wait}."
+
+  defp throttled(:battle, _view, wait),
+    do: "You are out of breath 😮‍💨<br />Rest a moment and seek another fight in&nbsp;#{wait}."
+
+  defp throttled(:shop, _view, wait),
+    do:
+      "The shopkeeper cannot keep up with you ⏳<br />" <>
+        "Give them a moment and try again in&nbsp;#{wait}."
 
   # ------------------------------------------------------------------ render
 
@@ -573,7 +594,6 @@ defmodule MiniLineageWeb.GameLive do
       screen={@screen}
       character_id={@character_id}
     >
-      <Controls.notice :if={@notice} message={@notice} />
       <Controls.flash_alert :if={@game_flash} flash={@game_flash} />
       <Controls.low_health
         :if={Screens.low_health_alert?(@view, @screen)}

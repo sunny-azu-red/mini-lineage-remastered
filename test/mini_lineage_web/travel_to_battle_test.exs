@@ -55,6 +55,6 @@ defmodule MiniLineageWeb.TravelToBattleTest do
     render_click(view, "navigate", %{"to" => "battle"})
 
     assert_patch(view, ~p"/battle")
-    assert render(view) =~ "moving too fast"
+    assert has_element?(view, "#flash [data-remaining-ms]")
   end
 end

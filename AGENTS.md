@@ -15,8 +15,8 @@ list wins — several generator defaults do not exist here.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
   else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
   `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing but that list and what
-  `app.js` imports through it. The hooks are `AnimatedValues`, `EffectTimers` (the banner's badges
-  and the record's remaining time), `KonamiRelay`, `Panel` (driving the `Log` class in `log.js`),
+  `app.js` imports through it. The hooks are `AnimatedValues`, `EffectTimers` (the banner's badges,
+  the record's remaining time and a throttle warning's wait), `KonamiRelay`, `Panel` (driving the `Log` class in `log.js`),
   `PanelFocus`, `SoundToggle` (over the synth in `soundfx.js`), `Stamps` and `Table`; `kept.js` is
   storage.
 - The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
@@ -28,10 +28,11 @@ list wins — several generator defaults do not exist here.
   start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
   enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
   have a module. Anything a page reaches for but does not
-  own (`<.panel>`, `<.data_table>`, `<.button>`, the alerts `<.notice>`, `<.flash_alert>` and
-  `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
-  `<.reset_sort>`, `<.counted>`) is in `Controls`; `Layouts` holds the shell's `head`,
-  `site_header` and `footer`, which `ErrorHTML` draws too.
+  own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
+  and `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
+  `<.reset_sort>`, `<.figure>` with `<.counted>` and `<.bar>` built on it, `<.fault>`) is in
+  `Controls`; `Layouts` holds the shell's `head`, `site_header` and `footer`, which `ErrorHTML`
+  draws too.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
   than everything else on that page put together and crowds out what the panel is named for. The aside
@@ -376,12 +377,14 @@ NOT ALLOWED somewhere is not the same as moving them because the somewhere does 
 
 **What a build may say about a fault depends on the build, not on what it knows.** The error page
 shows the WHOLE thing in a debug build — `Exception.format/3` on the kind, reason and stack Phoenix
-hands the view — because the alternative is reading "500 Internal Server Error" on the page and
-then going to find the terminal it actually happened in. A release shows none of it, whatever it
-was handed: a trace names modules, line numbers and arguments, and a player is not the audience for
-any of them. `Version.debug_build?/0` is the gate, and it is deliberately NOT tied to `release?/1`
-— an image built without APP_VERSION could not tell it was a release, and served traces to players.
-A 404 is not a fault and gets no trace either way, or the real ones drown in mistyped URLs.
+hands the view — because the alternative is reading "500 Internal Server Error" on the page and then
+going to find the terminal it actually happened in. A release shows none of it, whatever it was
+handed: a trace names modules, line numbers and arguments, and a player is not the audience for any
+of them. `Version.debug_build?/0` is the gate, and it is deliberately NOT tied to `release?/1` — an
+image built without APP_VERSION could not tell it was a release, and served traces to players. A 404
+is not a fault and gets no trace either way, or the real ones drown in mistyped URLs. Both error
+pages draw the trace and the way out through `<.fault>`: drawn apart, the in-game screen had lost
+the rule over its way back that the Phoenix page kept.
 
 **If a character has a standard named entity, write the entity.** `&amp;` `&copy;` `&ndash;`
 `&bull;`, and `&nbsp;` `&mdash;` `&hellip;` if ever needed. Everything else is written as it is:
@@ -452,12 +455,14 @@ substitute once.
 glows' comment claimed 4.55 and 4.53 on the panel; the panel then moved twice under it and it went
 quietly false. Moving a ground means re-measuring everything any comment asserts about it.
 
-**Every figure counts; only names and dates jump.** A number the player can watch change wears
-`data-key` and `data-value` and is animated by `AnimatedValues`, whose hook sits once over whatever
-contains them. What an item grants is a figure and counts with the rest — only the item's own name
-and the dates beside it jump, having nothing to count through. `data-format="adena"` counts in the
-short form; the frames keep the tenth that the settled value drops, because "2.0k" written "2k" is
-two characters narrower and the line jumps left and right across every round thousand.
+**Every figure counts; only names and dates jump.** A number the player can watch change is a
+`<.figure>`, animated by `AnimatedValues`, whose hook sits once over whatever contains them. The
+component writes `data-value` and the text from one value, and `format={:adena}` both the short form
+and the `data-format` that counts in it, so the two cannot be written apart. What an item grants is
+a figure and counts with the rest — only the item's own name and the dates beside it jump, having
+nothing to count through. Adena counts in the short form; the frames keep the tenth that the settled
+value drops, because "2.0k" written "2k" is two characters narrower and the line jumps left and
+right across every round thousand.
 
 Animate a figure even where it can only move by one today. Measured: a tween of +1 renders the old
 number for 137ms and then the new one — a delay, not a flicker — and forty at once hold a median
@@ -469,6 +474,14 @@ move and being wrong later. The level came off the Halls on that wrong guess and
 A figure and the noun it counts are separate elements, so `Controls.counted/1` exists: at one there
 is no figure to tween, because "a cunning ambush" is a word. That splitting is why a test asserting
 "12 battles" reads the stripped text and not the markup.
+
+**A bar is a figure against its cap.** `Controls.bar/1` draws the track, the fill and the figures
+from `value` and `of`, and tells a screen reader the same through `aria-valuetext` on a `meter` for
+HP and a `progressbar` for XP, so the width, the text and what is heard cannot disagree. Without
+`of` it is the figure alone in a full track, which is what XP becomes at the last level: there is no
+next one to fill toward, so the total is the figure. `wraps` names what going round looks like, the
+level for XP, and `AnimatedValues` refills a bar from empty when it changes instead of sliding it
+backwards.
 
 **A screen that shows somebody's figures is pushed to, not polled.** Three topics carry them and
 they are keyed differently on purpose. `"character:#{session}"` is the browser's own and carries
@@ -492,11 +505,11 @@ rather than being read back. The chronicle is only ever APPENDED to — a run's 
 so a reader keeps the ones it has and asks for the rest by cursor — and only when the push says a
 row was written.
 
-**A browser suite tests the game, not its CSS.** The walkthrough is one character played normally.
-A 600ms sweep across the HP bar was checked there and failed about one run in three, taking the
-whole suite with it. The gain that triggers it is what matters and is checked instead. Known and
-unfixed: a LiveView patch that touches a bar rewrites its class from the template and takes the
-running sweep with it — measured at 2ms of its 600 whenever a patch lands, which is most purchases.
+**A browser suite tests the game, not its CSS.** The walkthrough is one character played normally. A
+600ms sweep across the HP bar was checked there and failed about one run in three, taking the whole
+suite with it. The gain that triggers it is what matters and is checked instead. A patch that
+touches a bar used to rewrite its class from the template and take the running sweep with it; the
+bar now leaves its class to the hook through `JS.ignore_attributes`, and the walkthrough holds it.
 
 **The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
 slugs and fills the race templates from code; caching that in `:dev` means editing a narrative
@@ -603,6 +616,14 @@ looks: the variant decides the look, all of it, and the element nothing. That is
 colours say `a:not(.btn)`: `a:link` outranks one class, and it was painting secondary links gold.
 Every state is drawn in the variant's own colour, the focus ring included, which is `currentColor`
 so a new variant rings in its own without a rule of its own.
+
+**Every alert in the game is one component, and none is dismissed.** `Controls.alert/1` is the only
+thing that writes `alert`: `kind` is `:info`, `:success`, `:warning` or `:danger`, and anything else
+handed to it lands on the `div`. What an action says, a refusal or a throttle included, is its flash,
+dropped on the next arrival unless the action itself moved you there. A dismissible notice sat beside
+it once, and since nothing cleared it on arrival the throttle warning followed players everywhere. A
+throttle's wait counts down through `EffectTimers`, and the server takes the warning down when the
+window reopens, since a patch would put back anything the browser removed.
 
 **Every table in the game is one component, and its sort is the server's.** `Controls.data_table/1`
 draws the container, the header row and the `<table>`; the rows are the caller's `<tbody>`, and

@@ -118,8 +118,6 @@ defmodule MiniLineageWeb.Layouts do
   attr :character_id, :string, default: nil
 
   defp sidebar(assigns) do
-    assigns = assign(assigns, level: Format.number(assigns.view.level))
-
     ~H"""
     <div id="sidebar" class="side" phx-hook="AnimatedValues">
       <Controls.panel title={@view.name} class="status-panel" body_class="rows">
@@ -129,53 +127,43 @@ defmodule MiniLineageWeb.Layouts do
             {if @view.dead, do: "☠️", else: @view.race_emoji}
             <%!-- Flush against the anchor: a newline inside one renders as an underlined space. --%>
             <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
-            <span data-key="level" data-value={@view.level}>{@level}</span></.link>
+            <Controls.figure key="level" value={@view.level} /></.link>
           </span>
         </div>
 
         <div class={"stat-row#{if @view.low_health, do: " danger"}"}>
           <span class="stat-label">HP</span>
-          <div class="bar-track" id="hp-track">
-            <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
-            <span class="bar-text">
-              <span data-key="hp" data-value={@view.health}>{Format.number(@view.health)}</span>/<span
-                id="status-max-hp"
-                data-key="max-hp"
-                data-value={@view.max_health}
-              >{Format.number(@view.max_health)}</span>
-            </span>
-          </div>
+          <Controls.bar
+            id="hp-bar"
+            kind={:hp}
+            label="HP"
+            key="hp"
+            value={@view.health}
+            of={@view.max_health}
+            of_key="max-hp"
+            of_id="status-max-hp"
+          />
         </div>
 
         <div class="stat-row">
           <span class="stat-label">XP</span>
-          <div class="bar-track">
-            <div
-              class="bar xp-bar"
-              id="xp-bar"
-              style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
-              data-level={@view.level}
-            >
-            </div>
-            <span class="bar-text">
-              <span
-                data-key="xp"
-                data-value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
-              >{Format.number(if @view.is_max_level, do: @view.experience, else: @view.xp_current)}</span><span :if={
-                !@view.is_max_level
-              }>/<span data-key="xp-required" data-value={@view.xp_required}>{Format.number(
-                @view.xp_required
-              )}</span></span>
-            </span>
-          </div>
+          <%!-- Past the last level there is no next one to fill toward, so the total is the figure. --%>
+          <Controls.bar
+            id="xp-bar"
+            kind={:xp}
+            label="XP"
+            key="xp"
+            value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
+            of={unless @view.is_max_level, do: @view.xp_required}
+            of_key="xp-required"
+            wraps={@view.level}
+          />
         </div>
 
         <div class="stat-row">
           <span class="stat-label">Adena</span>
           <span class="stat-value adena">🪙
-          <span data-key="adena" data-format="adena" data-value={@view.adena}>{Format.adena(
-            @view.adena
-          )}</span></span>
+          <Controls.figure key="adena" value={@view.adena} format={:adena} /></span>
         </div>
       </Controls.panel>
 
@@ -190,19 +178,19 @@ defmodule MiniLineageWeb.Layouts do
         <div class="stat-row">
           <span class="stat-value" title="Equipped Armor">
             {@view.armor.emoji} <span class="item">{@view.armor.name}</span>
-            <span :if={(@view.armor.regen || 0) > 0} class="regen">+<span
-              data-key="armor-regen"
-              data-value={@view.armor.regen}
-            >{@view.armor.regen}</span></span>
+            <span :if={(@view.armor.regen || 0) > 0} class="regen">+<Controls.figure
+              key="armor-regen"
+              value={@view.armor.regen}
+            /></span>
           </span>
         </div>
         <div class="stat-row">
           <span class="stat-value" title="Equipped Weapon">
             {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span>
-            <span :if={(@view.weapon.crit || 0) > 0} class="crit"><span
-              data-key="weapon-crit"
-              data-value={@view.weapon.crit}
-            >{@view.weapon.crit}</span>%</span>
+            <span :if={(@view.weapon.crit || 0) > 0} class="crit"><Controls.figure
+              key="weapon-crit"
+              value={@view.weapon.crit}
+            />%</span>
           </span>
         </div>
       </Controls.panel>

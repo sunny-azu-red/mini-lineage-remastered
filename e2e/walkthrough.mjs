@@ -391,12 +391,17 @@ try {
         await goHome();
         await travel('inn');
         const wounded = await state();
+        // Stands in for the shimmer the hook sets, which a patch moving the bar used to wipe.
+        await page.evaluate(() => document.querySelector('#hp-bar').classList.add('kept-by-hook'));
         const bought = await buy(0); // Spiced Ale, 7 adena — inside every lineage's opening purse
         const healed = await state();
 
         check('a meal heals the wounded', bought && healed.health > wounded.health,
             `${wounded.health} -> ${healed.health}`);
         // The HP bar's 600ms sweep is not checked: it is CSS, not play; the gain is checked above.
+        check('...and the patch that moved the bar left its class to the hook',
+            await page.evaluate(() => document.querySelector('#hp-bar').classList.contains('kept-by-hook')),
+            await page.getAttribute('#hp-bar', 'class'));
         await leaveShop();
         await travel('battle');
         current = await state();

@@ -4,8 +4,6 @@ defmodule MiniLineageWeb.Screens.Tome do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.Format
-
   attr :view, :map, required: true
   attr :statistics, :map, default: nil
 
@@ -91,7 +89,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           /> that turned the tide of every skirmish.
         </p>
         <p>
-          From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp"><span data-key="tome-xp-gained" data-value={@statistics.total_xp_gained}>{Format.number(@statistics.total_xp_gained)}</span> XP</span>. But the wild is
+          From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp"><.figure key="tome-xp-gained" value={@statistics.total_xp_gained} /> XP</span>. But the wild is
           treacherous, as the hunters became the hunted and
           <.counted
             key="tome-ambushes"
@@ -106,17 +104,14 @@ defmodule MiniLineageWeb.Screens.Tome do
 
         <h2>❤️‍🩹 The Toll of Survival</h2>
         <p>
-          Hardship is measured in blood and resilience. Our champions have shed <span class="hp"><span data-key="tome-hp-lost" data-value={@statistics.total_hp_lost}>{Format.number(@statistics.total_hp_lost)}</span> HP</span>, flesh torn by tooth and
-          claw. Yet, the craft of the blacksmith has proven its worth, as armor deflected <span class="damage"><span data-key="tome-damage-blocked" data-value={@statistics.total_damage_blocked}>{Format.number(@statistics.total_damage_blocked)}</span> Damage</span>.
+          Hardship is measured in blood and resilience. Our champions have shed <span class="hp"><.figure key="tome-hp-lost" value={@statistics.total_hp_lost} /> HP</span>, flesh torn by tooth and
+          claw. Yet, the craft of the blacksmith has proven its worth, as armor deflected <span class="damage"><.figure key="tome-damage-blocked" value={@statistics.total_damage_blocked} /> Damage</span>.
         </p>
         <p>
           To mend their broken bodies, they have sought the warmth of the Inn and the delicious food
-          inside, healing for a combined total of <span class="heal"><span data-key="tome-hp-healed" data-value={@statistics.total_hp_healed}>{Format.number(@statistics.total_hp_healed)}</span> HP</span>. In the stillness of
+          inside, healing for a combined total of <span class="heal"><.figure key="tome-hp-healed" value={@statistics.total_hp_healed} /> HP</span>. In the stillness of
           sanctuary, where fine armor protects the weary, another
-          <span class="regen"><span data-key="tome-hp-regen" data-value={@statistics.total_hp_regen}>{Format.number(
-            @statistics.total_hp_regen
-          )}</span>
-          HP</span>
+          <span class="regen"><.figure key="tome-hp-regen" value={@statistics.total_hp_regen} /> HP</span>
           was restored through the natural mending of the soul.
         </p>
 
@@ -124,20 +119,15 @@ defmodule MiniLineageWeb.Screens.Tome do
         <p>
           Wealth flows like a river through the pockets of the daring. A massive sum of
           <span class="adena">🪙
-          <span
-            data-key="tome-adena-generated"
-            data-format="adena"
-            data-value={@statistics.total_adena_generated}
-          >{Format.adena(@statistics.total_adena_generated)}</span>
-          Adena</span>
+          <.figure
+            key="tome-adena-generated"
+            value={@statistics.total_adena_generated}
+            format={:adena}
+          /> Adena</span>
           has been pulled from the corpses of monsters and the hidden corners of the world. Most of this
           fortune, however, returns to the realm's economy since
           <span class="adena">🪙
-          <span
-            data-key="tome-adena-spent"
-            data-format="adena"
-            data-value={@statistics.total_adena_spent}
-          >{Format.adena(@statistics.total_adena_spent)}</span>
+          <.figure key="tome-adena-spent" value={@statistics.total_adena_spent} format={:adena} />
           Adena</span>
           has been spent on provisions and equipment.
         </p>
