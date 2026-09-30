@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.ProgressionTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Math, Player}
 
   @max Constants.max_level()
 
@@ -108,24 +108,13 @@ defmodule MiniLineage.Game.ProgressionTest do
     end
   end
 
-  describe "the HP bar" do
-    test "is a percentage of the effective maximum, and stays inside it" do
-      view = Snapshot.build(player(health: 50))
-
-      assert view.hp_percent == Math.percentage(50, view.max_health)
-      assert view.hp_percent >= 0 and view.hp_percent <= 100
+  describe "a percentage" do
+    test "stays inside 0 to 100" do
+      assert Math.percentage(-5, 10) == 0
+      assert Math.percentage(15, 10) == 100
     end
 
-    test "reads empty at death and full at the top, for every race" do
-      for race_id <- 0..3 do
-        max = Snapshot.build(player(race_id: race_id)).max_health
-
-        assert Snapshot.build(player(race_id: race_id, health: 0)).hp_percent == 0
-        assert Snapshot.build(player(race_id: race_id, health: max)).hp_percent == 100
-      end
-    end
-
-    test "a total of zero is nought percent rather than a division by zero" do
+    test "of a total of zero is nought rather than a division by zero" do
       assert Math.percentage(5, 0) == 0
     end
   end

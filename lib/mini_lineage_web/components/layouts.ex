@@ -133,38 +133,31 @@ defmodule MiniLineageWeb.Layouts do
 
         <div class={"stat-row#{if @view.low_health, do: " danger"}"}>
           <span class="stat-label">HP</span>
-          <div class="bar-track" id="hp-track">
-            <div class="bar hp-bar" id="hp-bar" style={"width:#{@view.hp_percent}%"}></div>
-            <span class="bar-text">
-              <Controls.figure key="hp" value={@view.health} />/<Controls.figure
-                key="max-hp"
-                value={@view.max_health}
-                id="status-max-hp"
-              />
-            </span>
-          </div>
+          <Controls.bar
+            id="hp-bar"
+            kind={:hp}
+            label="HP"
+            key="hp"
+            value={@view.health}
+            of={@view.max_health}
+            of_key="max-hp"
+            of_id="status-max-hp"
+          />
         </div>
 
         <div class="stat-row">
           <span class="stat-label">XP</span>
-          <div class="bar-track">
-            <div
-              class="bar xp-bar"
-              id="xp-bar"
-              style={"width:#{if @view.is_max_level, do: 100, else: @view.xp_percent}%"}
-              data-level={@view.level}
-            >
-            </div>
-            <span class="bar-text">
-              <Controls.figure
-                key="xp"
-                value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
-              /><span :if={!@view.is_max_level}>/<Controls.figure
-                key="xp-required"
-                value={@view.xp_required}
-              /></span>
-            </span>
-          </div>
+          <%!-- Past the last level there is no next one to fill toward, so the total is the figure. --%>
+          <Controls.bar
+            id="xp-bar"
+            kind={:xp}
+            label="XP"
+            key="xp"
+            value={if @view.is_max_level, do: @view.experience, else: @view.xp_current}
+            of={unless @view.is_max_level, do: @view.xp_required}
+            of_key="xp-required"
+            wraps={@view.level}
+          />
         </div>
 
         <div class="stat-row">

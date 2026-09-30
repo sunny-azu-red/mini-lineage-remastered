@@ -52,21 +52,23 @@ export const AnimatedValues = {
         for (const frame of this.frames.values()) cancelAnimationFrame(frame);
     },
     sync(animate) {
-        // A level-up wraps xpCurrent DOWNWARD into the new level, so the bar would slide
-        // backwards through the gap. Snap it to zero with the transition off for one frame, then
-        // let it fill from there.
-        const bar = this.el.querySelector('#xp-bar');
-        const level = bar?.dataset.level;
-        if (animate && bar && this.level !== undefined && level !== this.level) {
-            const width = bar.style.width;
-            bar.style.transition = 'none';
-            bar.style.width = '0%';
-            requestAnimationFrame(() => {
-                bar.style.transition = '';
-                bar.style.width = width;
-            });
+        // A bar that went round — XP into the next level — would slide backwards through the gap.
+        // Snap it to zero with the transition off for one frame, then let it fill from there.
+        const turns = new Map();
+        for (const bar of this.el.querySelectorAll('.bar[data-wraps]')) {
+            const turn = bar.dataset.wraps;
+            if (animate && this.turns?.has(bar.id) && this.turns.get(bar.id) !== turn) {
+                const width = bar.style.width;
+                bar.style.transition = 'none';
+                bar.style.width = '0%';
+                requestAnimationFrame(() => {
+                    bar.style.transition = '';
+                    bar.style.width = width;
+                });
+            }
+            turns.set(bar.id, turn);
         }
-        this.level = level;
+        this.turns = turns;
 
         const live = new Set();
 

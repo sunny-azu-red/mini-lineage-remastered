@@ -30,8 +30,9 @@ list wins — several generator defaults do not exist here.
   have a module. Anything a page reaches for but does not
   own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
   and `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
-  `<.reset_sort>`, `<.figure>` and `<.counted>` built on it, `<.fault>`) is in `Controls`; `Layouts` holds the shell's `head`,
-  `site_header` and `footer`, which `ErrorHTML` draws too.
+  `<.reset_sort>`, `<.figure>` with `<.counted>` and `<.bar>` built on it, `<.fault>`) is in
+  `Controls`; `Layouts` holds the shell's `head`, `site_header` and `footer`, which `ErrorHTML`
+  draws too.
   `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
   it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
   than everything else on that page put together and crowds out what the panel is named for. The aside
@@ -474,6 +475,14 @@ A figure and the noun it counts are separate elements, so `Controls.counted/1` e
 is no figure to tween, because "a cunning ambush" is a word. That splitting is why a test asserting
 "12 battles" reads the stripped text and not the markup.
 
+**A bar is a figure against its cap.** `Controls.bar/1` draws the track, the fill and the figures
+from `value` and `of`, and tells a screen reader the same through `aria-valuetext` on a `meter` for
+HP and a `progressbar` for XP, so the width, the text and what is heard cannot disagree. Without
+`of` it is the figure alone in a full track, which is what XP becomes at the last level: there is no
+next one to fill toward, so the total is the figure. `wraps` names what going round looks like, the
+level for XP, and `AnimatedValues` refills a bar from empty when it changes instead of sliding it
+backwards.
+
 **A screen that shows somebody's figures is pushed to, not polled.** Three topics carry them and
 they are keyed differently on purpose. `"character:#{session}"` is the browser's own and carries
 what only its owner may act on — its key is a secret, so nobody can watch anybody else, and it is
@@ -496,11 +505,11 @@ rather than being read back. The chronicle is only ever APPENDED to — a run's 
 so a reader keeps the ones it has and asks for the rest by cursor — and only when the push says a
 row was written.
 
-**A browser suite tests the game, not its CSS.** The walkthrough is one character played normally.
-A 600ms sweep across the HP bar was checked there and failed about one run in three, taking the
-whole suite with it. The gain that triggers it is what matters and is checked instead. Known and
-unfixed: a LiveView patch that touches a bar rewrites its class from the template and takes the
-running sweep with it — measured at 2ms of its 600 whenever a patch lands, which is most purchases.
+**A browser suite tests the game, not its CSS.** The walkthrough is one character played normally. A
+600ms sweep across the HP bar was checked there and failed about one run in three, taking the whole
+suite with it. The gain that triggers it is what matters and is checked instead. A patch that
+touches a bar used to rewrite its class from the template and take the running sweep with it; the
+bar now leaves its class to the hook through `JS.ignore_attributes`, and the walkthrough holds it.
 
 **The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
 slugs and fills the race templates from code; caching that in `:dev` means editing a narrative

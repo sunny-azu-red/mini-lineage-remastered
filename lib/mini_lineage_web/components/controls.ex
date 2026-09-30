@@ -6,7 +6,7 @@ defmodule MiniLineageWeb.Controls do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Clock, Format}
+  alias MiniLineage.Game.{Clock, Format, Math}
   alias MiniLineageWeb.Paths
 
   # ------------------------------------------------------------------- panels
@@ -509,6 +509,62 @@ defmodule MiniLineageWeb.Controls do
 
     ~H"""
     <span class={@class} phx-no-format><.figure key={@key} value={@count} /> {@noun}</span>
+    """
+  end
+
+  # -------------------------------------------------------------------- bars
+
+  attr :id, :string, required: true
+  attr :kind, :atom, required: true, values: [:hp, :xp]
+  attr :label, :string, required: true
+  attr :key, :string, required: true
+  attr :value, :integer, required: true
+  # No cap is a figure in a full track, which is what XP becomes at the last level.
+  attr :of, :integer, default: nil
+  attr :of_key, :string, default: nil
+  attr :of_id, :string, default: nil
+  # A change here means the bar went round, not back: `AnimatedValues` refills it from empty.
+  attr :wraps, :any, default: nil
+
+  @doc """
+  A figure against its cap, as a bar filled to it. Its width, its figures and what a screen reader
+  is told are all written from `value` and `of`, so none of them can disagree.
+  """
+  def bar(assigns) do
+    %{value: value, of: of, label: label} = assigns
+
+    assigns =
+      assign(assigns,
+        width: if(of, do: Math.percentage(value, of, 1), else: 100),
+        role: if(assigns.kind == :hp, do: "meter", else: "progressbar"),
+        spoken:
+          if(of,
+            do: "#{Format.number(value)} of #{Format.number(of)} #{label}",
+            else: "#{Format.number(value)} #{label}"
+          )
+      )
+
+    # `class` is the hook's once mounted: a patch rewriting it cut the shimmer short mid-sweep.
+    ~H"""
+    <div
+      class="bar-track"
+      role={@role}
+      aria-label={@label}
+      aria-valuemin="0"
+      aria-valuenow={@value}
+      aria-valuemax={@of || @value}
+      aria-valuetext={@spoken}
+    >
+      <div
+        id={@id}
+        class={"bar #{@kind}-bar"}
+        style={"width:#{@width}%"}
+        data-wraps={@wraps}
+        phx-mounted={JS.ignore_attributes(["class"])}
+      >
+      </div>
+      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>/<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
+    </div>
     """
   end
 
