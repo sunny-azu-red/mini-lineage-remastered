@@ -77,7 +77,10 @@ list wins — several generator defaults do not exist here.
 - **A property states what holds for every input; the fixtures stay the contract with JavaScript.**
   StreamData is `:test` only, so `.formatter.exs` spells out its macros, since `import_deps` fails
   in `:dev`. A counterexample a property finds in a twinned formatter becomes a row in its fixture.
-  Weight a generator toward the boundary: a uniform draw never lands on `age == cap`.
+  Weight a generator toward the boundary: a uniform draw never lands on `age == cap`. Dice are a
+  generated list cycled through `Rng.put_source/1`, which states a rule for EVERY roll rather than
+  asserting one (`fight_properties_test.exs`), and they are integers scaled into `[0, 1)`, never
+  `float/1`: its bounded generation grows with the size, and 3,000 runs took over a minute.
 - **The dev tools are dev only, and none of them may loosen the CSP.** LiveDebugger runs at
   `:4007` with `browser_features?: false`, so it injects no script; its DevTools panel reads the
   config tag `Layouts.head` renders and nothing else. Its assigns view shows `session_id`, which is
@@ -89,6 +92,17 @@ list wins — several generator defaults do not exist here.
   bench/<name>.exs`** against the dev database. Each run is saved under its branch, or `BENCH_TAG`,
   in `tmp/bench/` and compared with the others: measure `main` then the branch, or
   `BENCH_TAG=before` then the change. A number cited in a comment names the script behind it.
+- **Never compile into `_build/dev` while the dev server is up.** A `mix` command in `:dev` and the
+  server's code reloader writing and loading the same beams at once gave "corrupt file header" on
+  `Board` and crashed a character process mid-game. Ask the running app through Tidewave's
+  `project_eval`, give a script its own `MIX_BUILD_PATH`, or run it in `:test`.
+- **A question about the running app goes to the running app.** Through Tidewave: `project_eval`
+  for state (`:sys.get_state` on a character, `Characters.online/0`, timing a call with
+  `:timer.tc`), `execute_sql_query` for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually
+  sent, captured with a `:telemetry` handler on `[:mini_lineage, :repo, :query]`, and `get_logs` for
+  what a request did. That is how the board's pkey walk was found: the plan, not the code, showed it.
+  A rehearsal at scale goes inside `Repo.transaction` with `Repo.rollback`, and `VACUUM FULL`
+  afterwards, because rolled-back rows still bloat the indexes and change the planner's sums.
 - **A new component, hook or shared control is written into this file in the change that adds
   it.** What is described here is what the next change reaches for; one nobody wrote down gets
   built a second time beside it, slightly different. Before writing a control, look here and in
@@ -310,6 +324,15 @@ id)` — id order is time order, so no extra index — coalesced to the run's bi
 entry yet. On a record the road reads the same entry from the board, and the LiveView moves it
 forward as it appends, so the two cannot drift even while being watched.
 
+The lookup bounds `character_id` on both sides rather than with `==`, and that is not a typo. Under
+an equality Postgres drops the column from `ORDER BY` as constant, so `ORDER BY id DESC LIMIT 1` can
+be served by walking the pkey backwards and filtering. Inside a lateral the id is a parameter, the
+planner prices that walk from the AVERAGE run, and on a small skewed log — dev's, or a young
+deployment's — it chose it: 1,676 rows discarded per run, the board 4.0ms where the range takes
+0.74ms (`bench/board.exs`). At 20k runs both plans are the composite index, so the range costs
+nothing there. The choice flipped with index size alone, which is why it is pinned in the query
+and not left to statistics. `board_test.exs` holds each bound against the run beside it.
+
 **The board is one statement.** Every lineage's top 25 as a subquery — Ecto hangs a branch's
 `ORDER BY` and `LIMIT` on the whole union otherwise — combined with `UNION ALL`, dated, then sorted
 again, since SQL promises no order out of a union. Five round trips had cost more than the queries:
@@ -350,7 +373,11 @@ because they are not in the data map, and `Narrative.voiced/2` closes them at re
 run's own battle screen, the reader's own voice in the chronicle. Verb agreement is free — they/them
 takes the same forms as you, which is the whole reason the game picked it — but REFERENTS are not:
 "your blade ended their lives" reads fine and "their blade ended their lives" does not, so a line
-naming both the fighter and the foe has to keep them apart by construction.
+naming both the fighter and the foe has to keep them apart by construction. A fight row also stores
+`fight_prompt` and `next_move`, which DO speak to the player — "Rally your strength" — because they
+are the owner's own battle buttons, kept so a reconnect redraws the same ones. The Chronicle reads
+only the `*_line` keys, and that is what makes them exempt; a prompt that ever reaches a record is
+the bug. `fight_properties_test.exs` holds every stored line to the third person.
 
 **A fatal fight pays nothing, so its narrative may not say it did.** `resolve_battle_outcome/2`
 returns `{kill(player), false}` the moment health reaches zero — before the XP, the Adena,

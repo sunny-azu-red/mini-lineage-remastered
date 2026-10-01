@@ -232,8 +232,10 @@ printed beside it. The separate build path is what lets it run while `mix` is se
 compiling into `_build/dev` at once corrupts the beams the server is loading.
 
 **[StreamData](https://github.com/whatyouhide/stream_data)** is `:test` only, and runs with
-`mix test`. Its properties sit beside the fixed tables: the formatters for any number, and a
-table's sort for any rows and any clicks.
+`mix test`. Its properties sit beside the fixed tables: the formatters for any number, a table's
+sort for any rows, and a fight for any roll of the dice. They generate the rolls and feed them
+through the game's own RNG, so a rule like "a fatal fight pays nothing" is checked for every fight
+rather than for one seed's.
 
 ## Building a release
 
