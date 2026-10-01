@@ -16,9 +16,11 @@ priv/static/*-*.*
 priv/static/*.gz
 
 # Development, tests and CI, which the release never reads.
+bench/
 e2e/
 scratch/
 test/
+.mcp.json
 .github/
 env.sh
 package.json

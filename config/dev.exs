@@ -32,3 +32,7 @@ config :phoenix_live_view,
   debug_attributes: true,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
+
+# No script injected into the page, so the CSP stands as prod has it; the DevTools panel reads the
+# config tag `Layouts.head` renders. No update checks: dev calls nothing outward either.
+config :live_debugger, browser_features?: false, update_checks?: false

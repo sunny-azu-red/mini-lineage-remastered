@@ -57,7 +57,8 @@ synchronization, procedural 8-bit audio synthesis, and an aesthetic dark fantasy
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 5-second tick and for effect expiry
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
 - **Audio Engine**: Web Audio API (procedural synthesizer), driven by events the server pushes over the socket
-- **Testing**: ExUnit, plus four Playwright suites that drive a real headless Chromium
+- **Testing**: ExUnit with StreamData properties, plus four Playwright suites that drive a real headless Chromium
+- **Dev tools**: LiveDebugger, Tidewave (MCP for coding agents) and Benchee, all `:dev` only and none of them in a release
 
 Requires **Elixir 1.20+ on OTP 28+**, and a reachable **PostgreSQL 12+** — the floor is `STORED`
 generated columns, which is what the board ranks on. Development runs 18.6 and CI the current 18; below that,
@@ -171,6 +172,7 @@ mix format
 mix compile --warnings-as-errors
 mix precommit           # compile --warnings-as-errors, deps.unlock, format, test
 mix balance             # the balance simulations — see below
+MIX_BUILD_PATH=_build/bench mix run --no-start bench/board.exs   # the board's timings — see below
 ```
 
 `mix dev` does not migrate: that is a deployment step, and `mix start` does it. Run
@@ -195,6 +197,43 @@ mix balance all             # run every one
 ```
 
 They compile only in `:dev`, so no release carries them.
+
+## Development tools
+
+All `:dev` only. None reaches a release, the test suite or the browser suites, and none changes
+the page's Content Security Policy: dev serves the same one prod does.
+
+**[LiveDebugger](https://github.com/software-mansion/live-debugger)** runs beside the game on
+<http://localhost:4007> while `mix` is up: every LiveView process, its assigns, and a trace of each
+`mount`, `handle_params`, `handle_event` and `handle_info` with how long it took. Its
+[Chrome](https://chromewebstore.google.com/detail/gmdfnfcigbfkmghbjeelmbkbiglbmbpe) or
+[Firefox](https://addons.mozilla.org/en-US/firefox/addon/livedebugger-devtools/) extension opens the
+same thing as a DevTools tab on the game page. Its in-page features are off, so it injects no script:
+there is no debug button over the page and no click-to-inspect, and nothing else is missing. Its
+assigns view shows the session id, which signs in as that character, so keep screenshots of it to
+yourself.
+
+**[Tidewave](https://github.com/tidewave-ai/tidewave_phoenix)** gives a coding agent the running
+app over MCP: Elixir evaluated inside it, SQL against the dev database, its logs, and docs for the
+exact dependency versions locked here. `.mcp.json` points Claude Code at
+`http://localhost:4000/tidewave/mcp`, so start `mix` first, then approve the server once. It is
+plugged in on `/tidewave/*` only, because on any other response it would loosen the CSP.
+
+**[Benchee](https://github.com/bencheeorg/benchee)** scripts live in `bench/` and time the code
+path that ships, through Ecto, against the dev database:
+
+```bash
+MIX_BUILD_PATH=_build/bench mix run --no-start bench/board.exs
+BENCH_TAG=before MIX_BUILD_PATH=_build/bench mix run --no-start bench/board.exs  # then change, and run again
+```
+
+Each run is saved under the branch, or `BENCH_TAG`, in `tmp/bench/`, and every other saved run is
+printed beside it. The separate build path is what lets it run while `mix` is serving: both
+compiling into `_build/dev` at once corrupts the beams the server is loading.
+
+**[StreamData](https://github.com/whatyouhide/stream_data)** is `:test` only, and runs with
+`mix test`. Its properties sit beside the fixed tables: the formatters for any number, and a
+table's sort for any rows and any clicks.
 
 ## Building a release
 

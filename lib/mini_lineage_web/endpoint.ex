@@ -30,6 +30,17 @@ defmodule MiniLineageWeb.Endpoint do
     only_matching: ~w(favicon),
     raise_on_missing_only: code_reloading?
 
+  # Its own paths only: on any response it handles it adds 'unsafe-eval' to the CSP and drops
+  # frame-ancestors, and a page passing through would then allow in dev what prod refuses.
+  if Mix.env() == :dev do
+    plug :tidewave
+
+    defp tidewave(%Plug.Conn{path_info: ["tidewave" | _]} = conn, _opts),
+      do: Tidewave.call(conn, Tidewave.init(toolbar: false))
+
+    defp tidewave(conn, _opts), do: conn
+  end
+
   if code_reloading? do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader

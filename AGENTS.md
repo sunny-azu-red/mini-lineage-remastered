@@ -71,7 +71,24 @@ list wins — several generator defaults do not exist here.
 - **A browser check hands Playwright a function, never a string.** The CSP refuses `eval`, so
   `waitForFunction("…")` throws at once, and behind a `.catch` it reads as a wait that returned.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
-  put it back. A test written after the fix and never seen to fail is decoration.
+  put it back. A test written after the fix and never seen to fail is decoration. Put it back with
+  `git checkout` or `touch` it: a copy restored from a backup is older than the build, and Mix
+  keeps compiling the broken one, so the next mutation fails for the last one's reason.
+- **A property states what holds for every input; the fixtures stay the contract with JavaScript.**
+  StreamData is `:test` only, so `.formatter.exs` spells out its macros, since `import_deps` fails
+  in `:dev`. A counterexample a property finds in a twinned formatter becomes a row in its fixture.
+  Weight a generator toward the boundary: a uniform draw never lands on `age == cap`.
+- **The dev tools are dev only, and none of them may loosen the CSP.** LiveDebugger runs at
+  `:4007` with `browser_features?: false`, so it injects no script; its DevTools panel reads the
+  config tag `Layouts.head` renders and nothing else. Its assigns view shows `session_id`, which is
+  a credential, so never paste it anywhere. Tidewave is plugged in only on `/tidewave/*`, because
+  on any response it touches it adds `'unsafe-eval'` and drops `frame-ancestors`; `.mcp.json`
+  points Claude Code at it. Its `project_eval` is for reading: a write goes through `Characters`,
+  never `Repo`.
+- **`bench/` holds Benchee scripts, run with `MIX_BUILD_PATH=_build/bench mix run --no-start
+  bench/<name>.exs`** against the dev database. Each run is saved under its branch, or `BENCH_TAG`,
+  in `tmp/bench/` and compared with the others: measure `main` then the branch, or
+  `BENCH_TAG=before` then the change. A number cited in a comment names the script behind it.
 - **A new component, hook or shared control is written into this file in the change that adds
   it.** What is described here is what the next change reaches for; one nobody wrote down gets
   built a second time beside it, slightly different. Before writing a control, look here and in
