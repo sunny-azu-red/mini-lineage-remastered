@@ -172,12 +172,13 @@ defmodule MiniLineage.Board do
   defp ranked, do: from(r in Record, where: not is_nil(r.race_id) and r.disqualified == false)
 
   # Last seen is the run's last log entry, read rather than stored so the Halls and the Chronicle
-  # cannot disagree: a `LIMIT 1` walk backwards down `(character_id, id)`.
+  # cannot disagree: a `LIMIT 1` walk backwards down `(character_id, id)`. Both bounds, never `==`,
+  # which drops `character_id` from the order and walks the pkey on a small log (bench/board.exs).
   defp seen(query) do
     last =
       from(l in CharacterLog.Entry,
-        where: l.character_id == parent_as(:row).id,
-        order_by: [desc: l.id],
+        where: l.character_id >= parent_as(:row).id and l.character_id <= parent_as(:row).id,
+        order_by: [desc: l.character_id, desc: l.id],
         limit: 1,
         select: %{at: l.inserted_at}
       )
