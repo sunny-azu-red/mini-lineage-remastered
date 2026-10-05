@@ -33,17 +33,17 @@ body {
 }
 
 /* ===== Links =====
- * Not a .btn: `a:link` outranks one class, and would paint a button-link over its variant. */
-a:not(.btn):link,
-a:not(.btn):visited {
-    color: var(--gold);
-    text-decoration: none;
-    transition: color 0.15s ease;
+ * An element's specificity, so any class beats it. Never :link or :visited: a rule matched through
+ * :visited may set colours and nothing else, and a link already followed would lose its underline. */
+a:where(:not(.btn)) {
+    color: var(--text-primary);
+    text-decoration: underline 1px var(--text-link);
+    text-underline-offset: 2px;
+    transition: color 0.25s ease, text-decoration-color 0.25s ease;
 }
 
-a:not(.btn):hover {
-    color: var(--gold-hover);
-    text-decoration: underline;
+a:not(.btn):is(:hover, :focus-visible) {
+    color: var(--text-link);
 }
 
 /* ===== Keyboard Focus =====

@@ -106,9 +106,8 @@ defmodule MiniLineageWeb.Screens.Record do
         Experience wise, {@voice.them} are at <span class="level">Level <.figure key="rec-level" value={@view.level} /></span>
         with a total of <span class="xp"><.figure key="rec-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="rec-xp-needed" value={@view.xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="rec-next-level" value={@view.level + 1} /></span><% end %>
         and {@voice.their} vitality currently sustains {@voice.object} at
-        <span class="hp"><.figure key="char-hp" value={@view.health} id="char-hp" />
-        / <.figure key="rec-max-hp" value={@view.max_health} id="char-max-hp" />
-        HP</span>
+        <span class="hp"><.figure key="char-hp" value={@view.health} id="char-hp" /> HP</span>
+        of <span class="hp"><.figure key="rec-max-hp" value={@view.max_health} id="char-max-hp" /> Max HP</span>
         while {@voice.their} purse holds <span class="adena">🪙 <.figure key="rec-adena" value={@view.adena} format={:adena} /> Adena</span>
         for the journey ahead.
       </p>

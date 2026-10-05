@@ -444,6 +444,17 @@ cost, because the Halls rank the living and the fallen alike". This is about the
 not the codebase's — every `@moduledoc` and comment here is full of em dashes, deliberately, and
 they are none of a player's business.
 
+**A link is underlined, never gold.** Gold is what a run is worth, and a name in the Halls sat in
+the same colour as the level and the wealth beside it, with nothing saying which could be clicked.
+A link is prose-coloured on a 1px `--text-link` underline 2px below it, and on hover the word turns
+`--text-link` too. `--text-link` is `--text-secondary` today, named apart so links can move without
+the prose. Its rule never says `:link` or `:visited`: a rule matched through `:visited` may set
+colours and nothing else, so every Halls name a player had opened would lose its underline. The
+banner opts out with `text-decoration: none`; the footer's commit keeps the line in `--text-muted`
+and fades it to gold with the word. That fade is base.css's: a link's transition covers its
+underline's colour as well as its word's, so a link that recolours its line needs no timer of its
+own.
+
 **A token is named for its ROLE, never its family: `--<role>-<name>`.** `--text-`, `--bg-`,
 `--border-`, `--wash-`, `--bar-`, `--glow-`, `--shadow-`, `--focus-`. Type `color:` and there is
 one prefix to reach for and one word order to remember, and a family stays honest across roles —
@@ -657,7 +668,8 @@ makes it small, `active` presses one of a set in. With `patch` it is an `<a>`, b
 somewhere — Retreat, a Halls filter, the Hall of Champions — and a reader may want that in a new
 tab; without, a `<button>`, because it does something. Never make a link a button to change how it
 looks: the variant decides the look, all of it, and the element nothing. That is why base.css's link
-colours say `a:not(.btn)`: `a:link` outranks one class, and it was painting secondary links gold.
+rule is `a:where(:not(.btn))`, an element's specificity: `a:link` outranked one class, and it was
+painting secondary links gold.
 Every state is drawn in the variant's own colour, the focus ring included, which is `currentColor`
 so a new variant rings in its own without a rule of its own.
 

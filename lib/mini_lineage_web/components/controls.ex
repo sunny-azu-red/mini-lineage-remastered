@@ -563,7 +563,7 @@ defmodule MiniLineageWeb.Controls do
         phx-mounted={JS.ignore_attributes(["class"])}
       >
       </div>
-      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>/<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
+      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
     </div>
     """
   end
