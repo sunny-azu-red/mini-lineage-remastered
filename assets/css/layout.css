@@ -242,12 +242,15 @@
     opacity: 0.5;
 }
 
+/* Muted like the line it stands in, so only its colours differ from a link; the timer is base.css's. */
 #copyright a.version-link {
     color: inherit;
+    text-decoration-color: var(--text-muted);
 }
 
-#copyright a.version-link:hover {
+#copyright a.version-link:is(:hover, :focus-visible) {
     color: var(--gold);
+    text-decoration-color: var(--gold);
 }
 
 /* ===== Responsive ===== */

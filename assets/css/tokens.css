@@ -70,6 +70,11 @@
     --text-warning: #e7c33d;
     --text-info: #7aa4ff;
 
+    /* ===== Links =====
+     * A link's underline, and its word on hover. Never gold, which is what a run is worth; the prose's
+     * second step today, named apart so links can move without it. */
+    --text-link: var(--text-secondary);
+
     /* ===== Washes =====
      * A ground, not a voice, mixed from its family's token where one fits so the two cannot drift. */
     --wash-success: color-mix(in srgb, var(--border-success) 13%, transparent);
