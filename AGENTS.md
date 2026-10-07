@@ -51,6 +51,19 @@ list wins — several generator defaults do not exist here.
 - **Node is `.nvmrc`'s and nowhere else.** It runs only Playwright. CI reads it through
   `node-version-file`, `env.sh` selects it through nvm, and `mix e2e` refuses any other, so a
   version is changed in that one file and never written into the workflow.
+- **A release is checked with `e2e/release.sh`, which is what CI's publish job runs before it
+  pushes.** It builds the image as CI does (`buildx --load`, `APP_VERSION` the short sha), reads the
+  stamp back out, brings up the real `docker-compose.yml` against an empty Postgres 18 through an
+  override that swaps only the image and adds the database, and waits for compose's healthcheck and
+  the boot migration. Then the socket's origin check both ways and one turn in Chromium. Run it for
+  anything that reaches the image: the Dockerfile, compose, `config/prod.exs` or `runtime.exs`, a
+  migration, the release steps. It hands compose an env file of its own, because compose reads
+  `./.env` for interpolation and that names the real database. If `docker`, `docker buildx` or
+  `docker compose` is missing, install them rather than skipping the check: the rootless Engine
+  needs no root (`curl -fsSL https://get.docker.com/rootless -o rootless.sh`, read it, `sh` it), and
+  buildx and compose are release binaries from their GitHub repos dropped into
+  `~/.docker/cli-plugins/` after checking the published checksums. README's Docker section has the
+  steps.
 - **Database tests cannot be `async: true`.** A character lives in a GenServer started by a
   `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
   mode bridges that, and shared mode means serial. This is our architecture, not the driver — it
@@ -313,7 +326,7 @@ ending — `kill/1` empties the list. What faded with the run goes BEFORE the en
 because the ending is always the chronicle's last line. Several leave in the order they arrived, the
 order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
 rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run
-that leaves with a timed buff keeps its process up until the buff lapses, skipping the regen tick
+that leaves with a timed buff or debuff keeps its process up until it lapses, skipping the regen tick
 while it lingers so an absent player never heals. Auras never appear: `sync_zone_auras/1` flips them
 on nearly every pass.
 
