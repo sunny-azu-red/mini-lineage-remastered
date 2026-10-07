@@ -71,9 +71,10 @@
     --text-info: #7aa4ff;
 
     /* ===== Links =====
-     * A link's underline, and its word on hover. Never gold, which is what a run is worth; the prose's
-     * second step today, named apart so links can move without it. */
-    --text-link: var(--text-secondary);
+     * A link on hover: its own colour darkened, resolved where it is used, so a link in an alert
+     * keeps the alert's voice. Toward black, not transparent, so no ground shifts it; 77% of
+     * --text-primary is --text-secondary. Never gold. */
+    --text-link: color-mix(in srgb, currentColor 77%, black);
 
     /* ===== Washes =====
      * A ground, not a voice, mixed from its family's token where one fits so the two cannot drift. */

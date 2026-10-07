@@ -445,15 +445,19 @@ not the codebase's — every `@moduledoc` and comment here is full of em dashes,
 they are none of a player's business.
 
 **A link is underlined, never gold.** Gold is what a run is worth, and a name in the Halls sat in
-the same colour as the level and the wealth beside it, with nothing saying which could be clicked.
-A link is prose-coloured on a 1px `--text-link` underline 2px below it, and on hover the word turns
-`--text-link` too. `--text-link` is `--text-secondary` today, named apart so links can move without
-the prose. Its rule never says `:link` or `:visited`: a rule matched through `:visited` may set
-colours and nothing else, so every Halls name a player had opened would lose its underline. The
-banner opts out with `text-decoration: none`; the footer's commit keeps the line in `--text-muted`
-and fades it to gold with the word. That fade is base.css's: a link's transition covers its
-underline's colour as well as its word's, so a link that recolours its line needs no timer of its
-own.
+the same colour as the level and the wealth beside it, with nothing saying which could be clicked. A
+link is the colour of the words around it, on a 1px underline of the same colour 2px below it, and
+on hover both darken to `--text-link`. The line is never given a colour of its own: it is
+`currentColor`, so changing the word changes both. `--text-link` is not a hue but a darkening,
+`currentColor` mixed 77% with black and resolved where `var()` is used, so one rule serves a link in
+prose and a link in an alert: the Inn link in the low-HP warning had been painted prose-white in a
+red sentence. Black and not `transparent`: a fade is lighter on a lighter ground, and the sidebar's
+hover missed `--text-secondary` where the panel's hit it. 77% of `--text-primary` is
+`--text-secondary` to one unit of blue. Its rule never says `:link` or `:visited`: a rule matched
+through `:visited` may set colours and nothing else, so every Halls name a player had opened would
+lose its underline. The banner opts out with `text-decoration: none`; the footer's commit turns gold
+on hover, and its line with it. That fade is base.css's, a transition on `color` alone, which
+carries the line because the line is the word's.
 
 **A token is named for its ROLE, never its family: `--<role>-<name>`.** `--text-`, `--bg-`,
 `--border-`, `--wash-`, `--bar-`, `--glow-`, `--shadow-`, `--focus-`. Type `color:` and there is

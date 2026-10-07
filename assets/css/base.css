@@ -35,11 +35,12 @@ body {
 /* ===== Links =====
  * An element's specificity, so any class beats it. Never :link or :visited: a rule matched through
  * :visited may set colours and nothing else, and a link already followed would lose its underline. */
+/* The words' colour, line and all: the line is currentColor, so it follows the word everywhere. */
 a:where(:not(.btn)) {
-    color: var(--text-primary);
-    text-decoration: underline 1px var(--text-link);
+    color: inherit;
+    text-decoration: underline 1px;
     text-underline-offset: 2px;
-    transition: color 0.25s ease, text-decoration-color 0.25s ease;
+    transition: color 0.25s ease;
 }
 
 a:not(.btn):is(:hover, :focus-visible) {
