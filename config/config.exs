@@ -9,6 +9,9 @@ config :mini_lineage, character_ttl_hours: 24 * 30
 # How long a character process outlives its last viewer before it flushes and stops.
 config :mini_lineage, character_idle_grace_ms: 10_000
 
+# Passive regeneration and the effect sweep; the browser suites wait on it.
+config :mini_lineage, tick_interval_ms: 5_000
+
 # Chronicle entries per page; the next page loads as the reader nears the end.
 config :mini_lineage, chronicle_page: 25
 
