@@ -18,10 +18,8 @@ defmodule MiniLineage.Scratch.Shell do
   end
 
   @doc """
-  The OS pid of a release already running, or nil.
-
-  `bin/... pid` exits 0 either way — it prints an RPC failure when nothing is there — so the output
-  is what decides.
+  The OS pid of a release already running, or nil. `bin/... pid` exits 0 either way, printing an
+  RPC failure when nothing is there, so the output is what decides.
   """
   def running_pid(release) do
     case System.cmd(release, ["pid"], stderr_to_stdout: true) do
@@ -35,10 +33,8 @@ defmodule MiniLineage.Scratch.Shell do
   end
 
   @doc """
-  Blocks until an OS process is gone, or the timeout elapses. True if it went.
-
-  `bin/... stop` returns as soon as its RPC is sent, and until the VM actually goes the port and
-  the node name are still taken.
+  Blocks until an OS process is gone, or the timeout elapses; true if it went. `bin/... stop`
+  returns once its RPC is sent, while the port and the node name are still taken.
   """
   def await_exit(pid, timeout_ms \\ 20_000) do
     deadline = System.monotonic_time(:millisecond) + timeout_ms
@@ -58,11 +54,9 @@ defmodule MiniLineage.Scratch.Shell do
   defp alive?(pid), do: match?({_, 0}, System.cmd("kill", ["-0", pid], stderr_to_stdout: true))
 
   @doc """
-  Claims the right to run the browser suites on this machine, or says who already has it.
-
-  Waiting would be worse than refusing: a queued run gets its server stopped the moment the first
-  finishes. Every suite empties the board and assumes only its own entries are on it, so two at
-  once corrupt each other's results. `mkdir` is the lock, being atomic.
+  Claims the browser suites on this machine, or says who has them. Refusing beats waiting: a queued
+  run's server is stopped when the first finishes, and two runs at once corrupt each other's board.
+  `mkdir` is the lock, being atomic.
   """
   def lock!(path) do
     File.mkdir_p!(Path.dirname(path))
@@ -97,14 +91,11 @@ defmodule MiniLineage.Scratch.Shell do
     end
   end
 
-  @doc "Releases the run lock."
   def unlock(path), do: File.rm_rf(path)
 
   @doc """
-  Fails early, and by name, when the browser cannot start.
-
-  Playwright's Chromium needs shared libraries that `env.sh` puts on LD_LIBRARY_PATH, and without
-  them it dies with a linker error buried in eighty lines of Chrome flags.
+  Fails early, and by name, when the browser cannot start: without the libraries `env.sh` puts on
+  LD_LIBRARY_PATH, Chromium dies with a linker error buried in eighty lines of Chrome flags.
   """
   def require_browser! do
     unless System.find_executable("node") do
@@ -165,10 +156,8 @@ defmodule MiniLineage.Scratch.Shell do
   end
 
   @doc """
-  The e2e server, started if it is not already up. Returns `{owned_pid_or_nil, base_url}`.
-
-  A server someone is already running is used as it is and left alone; only one this started is
-  stopped afterwards.
+  The e2e server, started if it is not already up. Returns `{owned_pid_or_nil, base_url}`. A server
+  already running is used as it is and left alone; only one this started is stopped afterwards.
   """
   def ensure_server(port, timeout_ms) do
     url = "http://localhost:#{port}"

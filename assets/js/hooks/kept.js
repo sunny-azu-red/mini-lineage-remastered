@@ -1,7 +1,6 @@
 /**
- * What the reader chose, kept in this browser as `<kind>:<id>` — `panel:chronicle`,
- * `table:halls-table`. Blocked or private storage keeps nothing: a read answers null and a write
- * is dropped, so whatever it was opens where the template says, every time.
+ * What the reader chose, kept as `<kind>:<id>` (`panel:chronicle`, `table:halls-table`). Blocked
+ * or private storage keeps nothing, so whatever it was opens where the template says.
  */
 export function recall(kind, id) {
     try {
@@ -17,7 +16,7 @@ export function keep(kind, id, value) {
         if (value === null) localStorage.removeItem(`${kind}:${id}`);
         else localStorage.setItem(`${kind}:${id}`, value);
     } catch {
-        // Nothing to do: it will simply not be remembered.
+        // Simply not remembered.
     }
 }
 

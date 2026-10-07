@@ -1,10 +1,8 @@
 defmodule MiniLineage.Game.NarrativeTest do
   @moduledoc """
-  Holds the prose the player actually reads.
-
-  `Format.fill_template/2` leaves an unrecognised `{placeholder}` in the string rather than
-  raising, so a typo ships verbatim. These drive EVERY template in EVERY list, for every race, and
-  fail on any brace that survives, which no sampled transcript can promise.
+  The prose the player reads. `Format.fill_template/2` leaves an unrecognised `{placeholder}` in
+  place rather than raising, so a typo ships verbatim; these drive EVERY template in EVERY list, for
+  every race, and fail on any brace that survives.
   """
   use ExUnit.Case, async: true
 

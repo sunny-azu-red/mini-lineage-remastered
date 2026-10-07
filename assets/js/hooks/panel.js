@@ -2,9 +2,8 @@ import { Log } from './log';
 import { keep, recall } from './kept';
 
 /**
- * A panel that does something: folds on a click of its own header, and is a log when it says so,
- * which `Log` does. Both are re-applied after every patch — the server renders the panel's opening
- * state from the template, and the reader's is newer than that.
+ * A panel that folds on its own header and, when it says so, is a `Log`. Both are re-applied after
+ * every patch: the server renders the template's opening state, and the reader's is newer.
  */
 export const Panel = {
     mounted() {
@@ -29,12 +28,12 @@ export const Panel = {
             requestAnimationFrame(() =>
                 this.el.querySelector('.panel-arrow')?.setAttribute('data-ready', '')));
     },
-    // What a mount decides, and what a new subject decides again: the same element can be patched
-    // from one record's log to the next, and nothing about the last one's reading carries over.
+    // Run again for a new subject: the same element can be patched from one record's log to the
+    // next, and nothing about the last one's reading carries over.
     start() {
         this.subject = this.el.dataset.subject;
-        // What the reader last did with THIS panel beats what the template opens it on, where the
-        // panel keeps it. Keyed by the panel's id, so it is about the panel and not whose it is.
+        // The reader's last fold beats the template's. Keyed by the panel's id, so it is about the
+        // panel and not whose it is.
         const kept = this.toggle && this.remember ? recall('panel', this.el.id) : null;
         this.open = !this.toggle
             || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');

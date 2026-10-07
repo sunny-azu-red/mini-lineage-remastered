@@ -2,13 +2,8 @@
 #
 #     MIX_BUILD_PATH=_build/bench mix run --no-start bench/board.exs
 #
-# Its own build, because the dev server loads from `_build/dev`: a `mix run` compiling there while
-# the server reloads corrupts the beams it is reading, and its character processes crash.
-#
-# Each run is saved under its branch, or under BENCH_TAG when set, and every other saved run is
-# loaded beside it: measure `main` then the branch, or BENCH_TAG=before then the change. Only the
-# Repo and the Registry are started: without the Board process `Board.current/0` computes in the
-# caller, which is the query under test.
+# Each run is saved under its branch or BENCH_TAG and compared with the others. Only the Repo and
+# Registry start: without the Board process, `Board.current/0` computes in the caller.
 alias MiniLineage.{Board, CharacterLog, Repo}
 
 Logger.configure(level: :warning)

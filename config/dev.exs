@@ -15,22 +15,17 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
 # Cached per VM elsewhere; here a code reload must reach the race templates without a restart.
 config :mini_lineage, cache_catalog: false
 
-# Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 
-# Set a higher stacktrace during development. Avoid configuring such
-# in production as building large stacktraces may be expensive.
 config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
 config :phoenix_live_view,
-  # Include debug annotations and locations in rendered markup.
-  # Changing this configuration will require mix clean and a full recompile.
+  # Changing these two needs `mix clean` and a full recompile.
   debug_heex_annotations: true,
   debug_attributes: true,
-  # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
 
 # No script injected into the page, so the CSP stands as prod has it; the DevTools panel reads the

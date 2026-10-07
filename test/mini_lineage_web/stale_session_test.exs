@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.StaleSessionTest do
   @moduledoc """
-  A socket carrying a session the plug has never touched.
-
-  The plug cannot reach a WebSocket, so a tab left open across a deploy — or anything reconnecting
-  with a cookie this build did not issue — mounts without a session id. The mount has to survive
-  that rather than taking the LiveView down with a query built from nil.
+  A socket carrying a session the plug has never touched. The plug cannot reach a WebSocket, so a
+  tab left open across a deploy mounts without a session id, and the mount has to survive that
+  rather than take the LiveView down with a query built from nil.
   """
   use MiniLineageWeb.ConnCase, async: false
 

@@ -6,7 +6,6 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   secret_key_base: "55QIFRf6Cq76U5q1dMFfAHYYYJhBDJNByo7OxWqvnWqrhJTInC5yGdrN7RPpb5LF",
   server: false
 
-# Print only warnings and errors during test
 config :logger, level: :warning
 
 # Ecto's own query logging drowns any test that raises the level to inspect a debug line of ours.
@@ -15,7 +14,6 @@ config :mini_lineage, MiniLineage.Repo, log: false
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
-# Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 

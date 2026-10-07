@@ -36,7 +36,6 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
 config :mini_lineage, MiniLineageWeb.Endpoint,
   force_ssl: [rewrite_on: [:x_forwarded_proto], exclude: [hosts: ["localhost", "127.0.0.1"]]]
 
-# Do not print debug messages in production
 config :logger, level: :info
 
 # Throttling is on only for a real deployment; local development is never throttled.

@@ -1,10 +1,8 @@
 defmodule MiniLineage.Characters.BufferingTest do
   @moduledoc """
-  What reaches the database, and when.
-
-  What the player did is written before they are told it worked, and the passage of time rides
-  along with the next write. These pin both halves, that an action is durable at once and a tick
-  is not, because a bug in either direction is invisible from the game.
+  What reaches the database, and when: an action is durable before the player is told it worked,
+  and a tick rides along with the next write. Both halves are pinned because a bug in either
+  direction is invisible from the game.
   """
   use MiniLineage.DataCase, async: false
 

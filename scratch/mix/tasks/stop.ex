@@ -5,9 +5,8 @@ defmodule Mix.Tasks.Stop do
       mix stop
 
   Ctrl-C does not stop the server `mix start` launches: Erlang spawns port children in their own
-  process group, so the interrupt reaches the task and not the release. The release keeps the port
-  and the node name, which is what makes the next `mix dev` fail with `:eaddrinuse` and the next
-  `mix prod` complain that the node name is in use.
+  process group, so the release keeps the port and the node name, and the next `mix dev` fails with
+  `:eaddrinuse` and the next `mix prod` on the node name.
   """
   use Mix.Task
 

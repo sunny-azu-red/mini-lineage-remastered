@@ -83,7 +83,6 @@ defmodule MiniLineage.Game.Actions do
     player = if died, do: player, else: roll_ambush(player)
     ambushed = player.ambushed
 
-    # Precedence: death > level-up > ambush > crit > silence.
     sound =
       cond do
         died -> "death"

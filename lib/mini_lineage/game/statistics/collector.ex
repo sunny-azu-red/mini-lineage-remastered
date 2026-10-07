@@ -24,7 +24,7 @@ defmodule MiniLineage.Game.Statistics.Collector do
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
-  @doc "Subscribe to the archives. The message is `{:statistics, totals}`, or nil before anyone has played."
+  @doc "The message is `{:statistics, totals}`, or nil before anyone has played."
   def subscribe, do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, @topic)
 
   def unsubscribe, do: Phoenix.PubSub.unsubscribe(MiniLineage.PubSub, @topic)

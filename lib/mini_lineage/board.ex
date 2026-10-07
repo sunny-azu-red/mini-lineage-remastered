@@ -122,16 +122,14 @@ defmodule MiniLineage.Board do
     Map.new(filters, &{&1, mark(Map.get(boards, &1, []), medals, online)})
   end
 
-  # Three in the whole game wear a medal, so a lineage's board shows one only where the full board
-  # does. Presence comes from the registry and costs no query.
+  # Three in the whole game wear a medal: a lineage's board shows one only where the full one does.
   defp mark(rows, medals, online) do
     Enum.map(rows, fn row ->
       %{row | medal: Map.get(medals, row.id), online: MapSet.member?(online, row.id)}
     end)
   end
 
-  # Who is online, re-stamped onto the rows already held. The rankings cannot have moved — nothing
-  # was written — so this is the same board with different dots, and it queries nothing.
+  # Nothing was written, so no ranking moved: only the dots are re-stamped, and nothing is queried.
   defp remark(boards) do
     online = Characters.online()
 

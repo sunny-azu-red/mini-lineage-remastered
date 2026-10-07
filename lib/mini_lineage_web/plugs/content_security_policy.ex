@@ -1,7 +1,6 @@
 defmodule MiniLineageWeb.Plugs.ContentSecurityPolicy do
   @moduledoc """
-  Mirrors the reference implementation's Helmet policy: no inline scripts, websockets allowed for
-  LiveView, and Google Fonts reachable over https.
+  No inline scripts, websockets allowed for LiveView, and Google Fonts reachable over https.
   """
   @behaviour Plug
 

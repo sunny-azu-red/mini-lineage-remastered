@@ -75,8 +75,8 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
 
-  # The player comes back with the result: it is already synced and swept, so a caller asking for it
-  # again in a second call would pay for a whole second pass to be told the same thing.
+  # The player comes back with the result, already synced and swept: a second call for it would pay
+  # for a second pass to be told the same thing.
   def handle_call({:mutate, fun}, _from, state) do
     {result, state} = run(state, fun)
 
@@ -115,7 +115,7 @@ defmodule MiniLineage.Characters.Server do
   end
 
   def handle_info(:expiry, state) do
-    # The sweep itself lives in run/2; this firing exists purely to make it happen on time.
+    # The sweep is run/2's; this only makes it happen on time.
     state = on_timer(%{state | expiry_timer: nil}, &{&1, :ok})
 
     if state.lingering and not awaiting_lapse?(state.player),
