@@ -273,7 +273,6 @@ defmodule MiniLineage.Game.Constants do
   def character, do: @character
   def stat_modifier_labels, do: @stat_modifier_labels
   def low_health_threshold, do: 0.25
-  def tick_interval_ms, do: 5_000
   def highscores_limit, do: 25
 
   def konami_sequence,

@@ -1,11 +1,8 @@
 defmodule MiniLineage.DataCase do
   @moduledoc """
-  For tests that reach the database. Each runs inside the SQL sandbox, so whatever it writes is
-  rolled back after it.
-
-  A test MAY be async when it touches nothing but the repo. Most here cannot: a character lives in
-  a GenServer started by a DynamicSupervisor, so the sandbox cannot trace ownership from the test
-  process to it. Shared mode bridges that, and shared mode means `async: false`.
+  For tests that reach the database. Each runs inside the SQL sandbox and is rolled back. Only
+  a test touching nothing but the repo may be async: a character's GenServer is started by a
+  DynamicSupervisor, so the sandbox needs shared mode to reach it, and shared mode is serial.
   """
 
   use ExUnit.CaseTemplate
@@ -26,9 +23,7 @@ defmodule MiniLineage.DataCase do
     :ok
   end
 
-  @doc """
-  Sets up the sandbox based on the test tags.
-  """
+  @doc "Shared mode unless the test is async."
   def setup_sandbox(tags) do
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(MiniLineage.Repo, shared: not tags[:async])
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)

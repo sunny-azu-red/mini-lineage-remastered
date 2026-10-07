@@ -132,7 +132,8 @@ defmodule MiniLineage.CharactersTest do
   # or never, while a stranger's page had already stopped showing it.
   test "but one with a buff still to lapse stays up to write it, and then stops", %{id: id} do
     start_character(id)
-    lapses_at = System.system_time(:millisecond) + 1_000
+    # Far enough out that the 150ms idle stop finds it still on, however loaded the machine.
+    lapses_at = System.system_time(:millisecond) + 3_000
 
     Characters.mutate(
       id,
@@ -142,7 +143,7 @@ defmodule MiniLineage.CharactersTest do
     {pid, ref} = leave(id)
 
     await_lingering(pid)
-    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 3_000
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 6_000
 
     character = Characters.character_id(id)
 

@@ -1,10 +1,8 @@
 defmodule MiniLineage.Game.EffectsTest do
   @moduledoc """
-  What happens when one effect meets another.
-
-  A meal's buff belongs to a group, and a second meal replaces the first rather than stacking — a
-  player who could hold three food buffs at once would carry three times the health the balance was
-  built around. The Hexed debuff has no group and so is its own case.
+  What happens when one effect meets another. A second meal replaces the first rather than stacking,
+  or a player could carry three times the health the balance was built around. The Hexed debuff has
+  no group and so is its own case.
   """
   use ExUnit.Case, async: true
 

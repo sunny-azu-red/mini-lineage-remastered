@@ -1,10 +1,8 @@
 defmodule MiniLineage.Game.ProgressionTest do
   @moduledoc """
-  The derived numbers a player reads off the sidebar and the Character screen: the level curve, the
-  XP bar, the HP bar, and the stat pipeline that feeds them.
-
-  The golden master catches a change in the arithmetic but not its shape. These state the
-  properties across the whole curve and every gear tier, so a break names itself.
+  The level curve, the XP and HP bars, and the stat pipeline behind them. The golden master catches
+  a change in the arithmetic but not its shape; these state the properties across the whole curve
+  and every gear tier, so a break names itself.
   """
   use ExUnit.Case, async: true
 

@@ -1,9 +1,7 @@
 defmodule MiniLineageWeb.TomeTest do
   @moduledoc """
-  The Tome of Lore, which is the one screen whose figures belong to everybody.
-
-  It is also the screen where a count earns its keep most: the collector flushes on a timer, so
-  with a realm full of players the archives arrive having moved a long way at once.
+  The Tome of Lore, the one screen whose figures belong to everybody. The collector flushes on a
+  timer, so with a realm full of players the archives arrive having moved a long way at once.
   """
   use ExUnit.Case, async: true
 

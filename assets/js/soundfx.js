@@ -106,7 +106,6 @@ export function restoreSoundPreference() {
     return enabled;
 }
 
-/** No-ops when `name` is unknown or sound is muted. */
 export function playSound(name) {
     if (!name || !enabled || !SOUNDS[name])
         return;

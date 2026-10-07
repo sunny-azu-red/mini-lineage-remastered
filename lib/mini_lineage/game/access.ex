@@ -28,9 +28,9 @@ defmodule MiniLineage.Game.Access do
     end
   end
 
-  @doc "Whether the Konami sequence can do anything to this run, which decides whether keys are sent."
+  @doc "Whether the Konami sequence can touch this run, which decides whether keys are sent."
   def konami?(view), do: view.started and not view.dead and not view.cheated
 
-  @doc "Screens that show the sidebar. An allowlist, not derived — \"has a character\" is a different question."
+  @doc "An allowlist, not derived: \"has a character\" is a different question."
   def sidebar?(screen), do: screen in ~w(home battle weapons armors inn suicide death)
 end

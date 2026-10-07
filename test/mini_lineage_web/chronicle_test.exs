@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.ChronicleTest do
   @moduledoc """
-  The Chronicle on a run's own page: every line a fight drew, in the order it drew them.
-
-  Not a browser test, because a crit and an ambush are rolled, so the lines only they draw would
-  be asserted on a coin toss. Here the narrative is handed in, and what is checked is which of its
-  lines reach the page and in what order.
+  The Chronicle on a run's own page: every line a fight drew, in the order it drew them. Not a
+  browser test, because a crit and an ambush are rolled; here the narrative is handed in, and what
+  is checked is which of its lines reach the page and in what order.
   """
   use ExUnit.Case, async: true
 

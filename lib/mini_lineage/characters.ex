@@ -68,7 +68,7 @@ defmodule MiniLineage.Characters do
   @doc "This session's character's PUBLIC id — what the board links to. Safe to render."
   def character_id(session), do: call(session, :character_id)
 
-  @doc "The public ids of characters somebody has open right now. In memory; never touches the database."
+  @doc "Public ids of the characters somebody has open now. In memory, never the database."
   def online do
     MiniLineage.Characters.Registry
     |> Registry.select([{{:_, :_, {:"$1", true}}, [], [:"$1"]}])

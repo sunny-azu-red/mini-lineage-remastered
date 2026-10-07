@@ -51,6 +51,19 @@ list wins — several generator defaults do not exist here.
 - **Node is `.nvmrc`'s and nowhere else.** It runs only Playwright. CI reads it through
   `node-version-file`, `env.sh` selects it through nvm, and `mix e2e` refuses any other, so a
   version is changed in that one file and never written into the workflow.
+- **A release is checked with `e2e/release.sh`, which is what CI's publish job runs before it
+  pushes.** It builds the image as CI does (`buildx --load`, `APP_VERSION` the short sha), reads the
+  stamp back out, brings up the real `docker-compose.yml` against an empty Postgres 18 through an
+  override that swaps only the image and adds the database, and waits for compose's healthcheck and
+  the boot migration. Then the socket's origin check both ways and one turn in Chromium. Run it for
+  anything that reaches the image: the Dockerfile, compose, `config/prod.exs` or `runtime.exs`, a
+  migration, the release steps. It hands compose an env file of its own, because compose reads
+  `./.env` for interpolation and that names the real database. If `docker`, `docker buildx` or
+  `docker compose` is missing, install them rather than skipping the check: the rootless Engine
+  needs no root (`curl -fsSL https://get.docker.com/rootless -o rootless.sh`, read it, `sh` it), and
+  buildx and compose are release binaries from their GitHub repos dropped into
+  `~/.docker/cli-plugins/` after checking the published checksums. README's Docker section has the
+  steps.
 - **Database tests cannot be `async: true`.** A character lives in a GenServer started by a
   `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
   mode bridges that, and shared mode means serial. This is our architecture, not the driver — it
@@ -313,7 +326,7 @@ ending — `kill/1` empties the list. What faded with the run goes BEFORE the en
 because the ending is always the chronicle's last line. Several leave in the order they arrived, the
 order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
 rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run
-that leaves with a timed buff keeps its process up until the buff lapses, skipping the regen tick
+that leaves with a timed buff or debuff keeps its process up until it lapses, skipping the regen tick
 while it lingers so an absent player never heals. Auras never appear: `sync_zone_auras/1` flips them
 on nearly every pass.
 
@@ -445,15 +458,19 @@ not the codebase's — every `@moduledoc` and comment here is full of em dashes,
 they are none of a player's business.
 
 **A link is underlined, never gold.** Gold is what a run is worth, and a name in the Halls sat in
-the same colour as the level and the wealth beside it, with nothing saying which could be clicked.
-A link is prose-coloured on a 1px `--text-link` underline 2px below it, and on hover the word turns
-`--text-link` too. `--text-link` is `--text-secondary` today, named apart so links can move without
-the prose. Its rule never says `:link` or `:visited`: a rule matched through `:visited` may set
-colours and nothing else, so every Halls name a player had opened would lose its underline. The
-banner opts out with `text-decoration: none`; the footer's commit keeps the line in `--text-muted`
-and fades it to gold with the word. That fade is base.css's: a link's transition covers its
-underline's colour as well as its word's, so a link that recolours its line needs no timer of its
-own.
+the same colour as the level and the wealth beside it, with nothing saying which could be clicked. A
+link is the colour of the words around it, on a 1px underline of the same colour 2px below it, and
+on hover both darken to `--text-link`. The line is never given a colour of its own: it is
+`currentColor`, so changing the word changes both. `--text-link` is not a hue but a darkening,
+`currentColor` mixed 77% with black and resolved where `var()` is used, so one rule serves a link in
+prose and a link in an alert: the Inn link in the low-HP warning had been painted prose-white in a
+red sentence. Black and not `transparent`: a fade is lighter on a lighter ground, and the sidebar's
+hover missed `--text-secondary` where the panel's hit it. 77% of `--text-primary` is
+`--text-secondary` to one unit of blue. Its rule never says `:link` or `:visited`: a rule matched
+through `:visited` may set colours and nothing else, so every Halls name a player had opened would
+lose its underline. The banner opts out with `text-decoration: none`; the footer's commit turns gold
+on hover, and its line with it. That fade is base.css's, a transition on `color` alone, which
+carries the line because the line is the word's.
 
 **A token is named for its ROLE, never its family: `--<role>-<name>`.** `--text-`, `--bg-`,
 `--border-`, `--wash-`, `--bar-`, `--glow-`, `--shadow-`, `--focus-`. Type `color:` and there is

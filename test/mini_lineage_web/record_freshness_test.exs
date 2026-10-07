@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.RecordFreshnessTest do
   @moduledoc """
-  A stranger's record opens on what the run's process holds, not on the stored document.
-
-  Where a run stands, the auras that follow from it and its health are buffered, so the row can be
-  a minute behind: a visitor refreshing a run that walked home from a fight was shown it still In
-  Combat until the next tick's push corrected it.
+  A stranger's record opens on what the run's process holds, not on the stored document. Where a
+  run stands, its auras and its health are buffered, so the row can be a minute behind and show a
+  run that walked home still In Combat.
   """
   use MiniLineageWeb.ConnCase, async: false
 

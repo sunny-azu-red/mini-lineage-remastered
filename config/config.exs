@@ -9,6 +9,9 @@ config :mini_lineage, character_ttl_hours: 24 * 30
 # How long a character process outlives its last viewer before it flushes and stops.
 config :mini_lineage, character_idle_grace_ms: 10_000
 
+# Passive regeneration and the effect sweep; the browser suites wait on it.
+config :mini_lineage, tick_interval_ms: 5_000
+
 # Chronicle entries per page; the next page loads as the reader nears the end.
 config :mini_lineage, chronicle_page: 25
 
@@ -37,7 +40,6 @@ config :mini_lineage,
   ecto_repos: [MiniLineage.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-# Configure the endpoint
 config :mini_lineage, MiniLineageWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
@@ -48,7 +50,6 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   pubsub_server: MiniLineage.PubSub,
   live_view: [signing_salt: "+jRa52uF"]
 
-# Configure esbuild (the version is required)
 config :esbuild,
   version: "0.28.2",
   mini_lineage: [
@@ -58,14 +59,11 @@ config :esbuild,
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__)]}
   ]
 
-# Configure Elixir's Logger
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
+# Last, so an environment's settings override everything above.
 import_config "#{config_env()}.exs"

@@ -190,14 +190,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # A missing stamp is silent, so read it back out of the release config before pushing.
-      - name: Check the image is stamped with its commit
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install Playwright and its browser
         run: |
-          docker run --rm --entrypoint sh \
-            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }} \
-            -c 'grep -q "$1" "releases/$(cut -d" " -f2 releases/start_erl.data)/sys.config"' \
-            sh '${{ steps.version.outputs.sha }}' \
-            || { echo "::error::image does not report ${{ steps.version.outputs.sha }}"; exit 1; }
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # What a deployment does with the image, before anybody can pull it: the stamp, compose against
+      # an empty Postgres, the socket's origin check, one turn in a browser. Locally, the same script.
+      - name: Check the release the way a deployment runs it
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}:${{ steps.version.outputs.sha }}
+          APP_VERSION: ${{ steps.version.outputs.sha }}
+        run: e2e/release.sh
 
       - name: Push
         run: |

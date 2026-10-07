@@ -10,12 +10,13 @@ defmodule MiniLineage.Characters.Server do
   alias MiniLineage.Characters.{Store, TickLog}
   require Logger
 
-  alias MiniLineage.Game.{Clock, Constants, Narrative, Narratives, Player}
+  alias MiniLineage.Game.{Clock, Narrative, Narratives, Player}
 
   # Fires just past the deadline so the sweep reliably sees the effect as due.
   @expiry_grace_ms 25
   # How long the process outlives its last viewer before stopping. Its buffer is flushed on the way.
   @idle_grace_ms Application.compile_env!(:mini_lineage, :character_idle_grace_ms)
+  @tick_interval_ms Application.compile_env!(:mini_lineage, :tick_interval_ms)
 
   # The passage of time and where the player is standing; everything else is something they did.
   # Derived from the struct, not declared per call site, because a call site can forget to flush.
@@ -74,8 +75,8 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
 
-  # The player comes back with the result: it is already synced and swept, so a caller asking for it
-  # again in a second call would pay for a whole second pass to be told the same thing.
+  # The player comes back with the result, already synced and swept: a second call for it would pay
+  # for a second pass to be told the same thing.
   def handle_call({:mutate, fun}, _from, state) do
     {result, state} = run(state, fun)
 
@@ -114,7 +115,7 @@ defmodule MiniLineage.Characters.Server do
   end
 
   def handle_info(:expiry, state) do
-    # The sweep itself lives in run/2; this firing exists purely to make it happen on time.
+    # The sweep is run/2's; this only makes it happen on time.
     state = on_timer(%{state | expiry_timer: nil}, &{&1, :ok})
 
     if state.lingering and not awaiting_lapse?(state.player),
@@ -350,7 +351,7 @@ defmodule MiniLineage.Characters.Server do
     end
   end
 
-  defp schedule_tick, do: Process.send_after(self(), :tick, Constants.tick_interval_ms())
+  defp schedule_tick, do: Process.send_after(self(), :tick, @tick_interval_ms)
 
   defp schedule_stop(state),
     do: %{state | stop_timer: Process.send_after(self(), :stop_if_idle, @idle_grace_ms)}
