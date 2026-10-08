@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.BalanceGoldenTest do
   @moduledoc """
   GOLDEN MASTER for game balance: 400 fights per character across four races and five seeds,
-  through the real battle math, shops, level curve, ambushes and narrative draws, re-pinned when
+  through the real battle math, shops, level curve and narrative draws, re-pinned when
   the Interlude player system replaced the race numbers and the level curve. One stream, so it
   also pins the ORDER randomness is consumed in; the clock is frozen because the pinned numbers
   assume no buff ever expires.
@@ -31,7 +31,6 @@ defmodule MiniLineage.Game.BalanceGoldenTest do
       dead: player.dead,
       battles: player.total_battles,
       kills: player.total_enemies_killed,
-      ambushes: player.total_ambushes,
       weapon_id: player.weapon_id,
       armor_id: player.armor_id
     }
@@ -47,13 +46,14 @@ defmodule MiniLineage.Game.BalanceGoldenTest do
       |> buy_best("armor", Constants.armors(), :armor_id)
       |> maybe_eat()
 
-    {player, _} = Player.sync_zone_auras(%{player | current_screen: "battle", ambushed: false})
+    {player, _} = Player.sync_zone_auras(%{player | current_screen: "battle"})
 
     result = Battle.simulate(player)
     {player, level_up?} = Player.resolve_battle_outcome(player, result)
     result = %{result | is_level_up: level_up?}
 
-    player = if player.dead, do: player, else: roll_ambush(player, result)
+    # Included because it consumes randomness, as the fight action does.
+    Narrative.build_battle(player, result)
 
     # Spelled out in the order the old processTick() ran them, so the pinned numbers
     # cannot move. Production splits these across two mechanisms; a balance simulation wants both.
@@ -61,20 +61,6 @@ defmodule MiniLineage.Game.BalanceGoldenTest do
     {player, _} = Player.process_regen_tick(player)
 
     {:cont, player}
-  end
-
-  defp roll_ambush(player, result) do
-    ambushed = Math.ambush_chance?(Player.stats(player).ambush_risk)
-
-    player =
-      if ambushed,
-        do: %{player | ambushed: true, total_ambushes: player.total_ambushes + 1},
-        else: player
-
-    # Included because it consumes randomness — dropping it would shift the stream.
-    Narrative.build_battle(player, result, ambushed)
-
-    player
   end
 
   defp buy_best(player, type, list, slot) do
@@ -114,241 +100,221 @@ defmodule MiniLineage.Game.BalanceGoldenTest do
      %{
        level: 41,
        dead: false,
-       experience: 60791,
-       adena: 268,
-       weapon_id: 1,
-       armor_id: 1,
+       experience: 59394,
+       adena: 122,
        battles: 400,
-       kills: 2665,
-       ambushes: 14
+       kills: 2610,
+       weapon_id: 1,
+       armor_id: 1
      }},
     {"race0-seed7",
      %{
-       level: 42,
-       dead: false,
-       experience: 64133,
-       adena: 605,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2767,
-       ambushes: 13
+       level: 18,
+       dead: true,
+       experience: 2151,
+       adena: 37,
+       battles: 37,
+       kills: 116,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race0-seed42",
      %{
-       level: 37,
+       level: 19,
        dead: true,
-       experience: 40995,
-       adena: 130,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 267,
-       kills: 1783,
-       ambushes: 3
+       experience: 2682,
+       adena: 30,
+       battles: 43,
+       kills: 143,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race0-seed1234",
      %{
-       level: 41,
-       dead: false,
-       experience: 62676,
-       adena: 191,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2735,
-       ambushes: 15
+       level: 17,
+       dead: true,
+       experience: 1790,
+       adena: 30,
+       battles: 32,
+       kills: 96,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race0-seed99999",
      %{
-       level: 41,
-       dead: false,
-       experience: 62400,
-       adena: 129,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2746,
-       ambushes: 20
+       level: 18,
+       dead: true,
+       experience: 2176,
+       adena: 15,
+       battles: 37,
+       kills: 108,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race1-seed1",
      %{
        level: 41,
        dead: false,
-       experience: 60547,
-       adena: 251,
-       weapon_id: 1,
-       armor_id: 1,
+       experience: 59211,
+       adena: 110,
        battles: 400,
-       kills: 2655,
-       ambushes: 47
+       kills: 2610,
+       weapon_id: 1,
+       armor_id: 1
      }},
     {"race1-seed7",
      %{
-       level: 42,
-       dead: false,
-       experience: 63772,
-       adena: 645,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2749,
-       ambushes: 52
+       level: 18,
+       dead: true,
+       experience: 2093,
+       adena: 36,
+       battles: 36,
+       kills: 112,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race1-seed42",
      %{
-       level: 37,
+       level: 19,
        dead: true,
-       experience: 41082,
-       adena: 155,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 267,
-       kills: 1783,
-       ambushes: 28
+       experience: 2682,
+       adena: 30,
+       battles: 43,
+       kills: 143,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race1-seed1234",
      %{
-       level: 41,
-       dead: false,
-       experience: 62218,
-       adena: 265,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2721,
-       ambushes: 43
+       level: 17,
+       dead: true,
+       experience: 1790,
+       adena: 30,
+       battles: 32,
+       kills: 96,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race1-seed99999",
      %{
-       level: 41,
-       dead: false,
-       experience: 62199,
-       adena: 157,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2740,
-       ambushes: 49
+       level: 18,
+       dead: true,
+       experience: 2176,
+       adena: 15,
+       battles: 37,
+       kills: 108,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race2-seed1",
      %{
        level: 41,
        dead: false,
-       experience: 60412,
-       adena: 224,
-       weapon_id: 1,
-       armor_id: 1,
+       experience: 59811,
+       adena: 181,
        battles: 400,
-       kills: 2680,
-       ambushes: 0
+       kills: 2629,
+       weapon_id: 1,
+       armor_id: 1
      }},
     {"race2-seed7",
      %{
-       level: 41,
-       dead: false,
-       experience: 62393,
-       adena: 247,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2730,
-       ambushes: 0
+       level: 18,
+       dead: true,
+       experience: 2151,
+       adena: 37,
+       battles: 37,
+       kills: 116,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race2-seed42",
      %{
-       level: 41,
-       dead: false,
-       experience: 61688,
-       adena: 104,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2673,
-       ambushes: 0
+       level: 18,
+       dead: true,
+       experience: 2126,
+       adena: 24,
+       battles: 33,
+       kills: 110,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race2-seed1234",
      %{
-       level: 42,
-       dead: false,
-       experience: 64842,
-       adena: 628,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2792,
-       ambushes: 0
+       level: 17,
+       dead: true,
+       experience: 1790,
+       adena: 30,
+       battles: 32,
+       kills: 96,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race2-seed99999",
      %{
-       level: 42,
-       dead: false,
-       experience: 65349,
-       adena: 194,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2835,
-       ambushes: 0
+       level: 18,
+       dead: true,
+       experience: 2176,
+       adena: 15,
+       battles: 37,
+       kills: 108,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race3-seed1",
      %{
        level: 41,
        dead: false,
-       experience: 60939,
-       adena: 257,
-       weapon_id: 1,
-       armor_id: 1,
+       experience: 59811,
+       adena: 181,
        battles: 400,
-       kills: 2668,
-       ambushes: 3
+       kills: 2629,
+       weapon_id: 1,
+       armor_id: 1
      }},
     {"race3-seed7",
      %{
-       level: 42,
-       dead: false,
-       experience: 64133,
-       adena: 525,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2767,
-       ambushes: 5
+       level: 18,
+       dead: true,
+       experience: 2093,
+       adena: 36,
+       battles: 36,
+       kills: 112,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race3-seed42",
      %{
-       level: 37,
+       level: 18,
        dead: true,
-       experience: 40995,
-       adena: 170,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 267,
-       kills: 1783,
-       ambushes: 0
+       experience: 2126,
+       adena: 24,
+       battles: 33,
+       kills: 110,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race3-seed1234",
      %{
-       level: 41,
-       dead: false,
-       experience: 62642,
-       adena: 206,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2727,
-       ambushes: 2
+       level: 17,
+       dead: true,
+       experience: 1790,
+       adena: 30,
+       battles: 32,
+       kills: 96,
+       weapon_id: 0,
+       armor_id: 0
      }},
     {"race3-seed99999",
      %{
-       level: 41,
-       dead: false,
-       experience: 62400,
-       adena: 119,
-       weapon_id: 1,
-       armor_id: 1,
-       battles: 400,
-       kills: 2746,
-       ambushes: 5
+       level: 18,
+       dead: true,
+       experience: 2176,
+       adena: 15,
+       battles: 37,
+       kills: 108,
+       weapon_id: 0,
+       armor_id: 0
      }}
   ]
 
