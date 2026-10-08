@@ -17,7 +17,7 @@ defmodule MiniLineage.Game.ProgressionTest do
       name: "Hero",
       race_id: race.id,
       health: Keyword.get(opts, :health, 100),
-      adena: race.start_adena,
+      adena: 0,
       experience: Keyword.get(opts, :experience, 0),
       weapon_id: Keyword.get(opts, :weapon_id, 0),
       armor_id: Keyword.get(opts, :armor_id, 0),
@@ -171,7 +171,6 @@ defmodule MiniLineage.Game.ProgressionTest do
 
       assert after_buff.max_hp == before.max_hp + 20
       assert after_buff.p_def == before.p_def + 2
-      assert after_buff.ambush_risk == before.ambush_risk - 4
       assert Player.stats(%{buffed | effects: []}) == before
     end
 
@@ -188,7 +187,6 @@ defmodule MiniLineage.Game.ProgressionTest do
           %{type: :critical, value: -9_999},
           %{type: :hp_regen, value: -9_999},
           %{type: :max_hp, value: -9_999},
-          %{type: :ambush_risk, value: -9_999},
           %{type: :xp_multiplier, op: :mul, value: 0},
           %{type: :adena_multiplier, op: :mul, value: 0}
         ]
@@ -200,13 +198,12 @@ defmodule MiniLineage.Game.ProgressionTest do
       assert stats.p_def == 0
       assert stats.critical == 0
       assert stats.hp_regen == 0
-      assert stats.ambush_risk == 0
       assert stats.max_hp == 1, "a maximum of zero would make the HP bar undividable"
       assert stats.xp_multiplier == 0
       assert stats.adena_multiplier == 0
     end
 
-    test "what an effect adds still stops at the caps of rules §9 and §10, and ambush risk at a certainty" do
+    test "what an effect adds still stops at the caps of rules §9 and §10" do
       soaring = %{
         id: "test_soar",
         type: :buff,
@@ -214,7 +211,7 @@ defmodule MiniLineage.Game.ProgressionTest do
         label: "Soaring",
         modifiers:
           Enum.map(
-            ~w(critical magic_critical atk_spd cast_spd ambush_risk)a,
+            ~w(critical magic_critical atk_spd cast_spd)a,
             &%{type: &1, value: 9_999}
           )
       }
@@ -225,7 +222,6 @@ defmodule MiniLineage.Game.ProgressionTest do
       assert stats.magic_critical == 20
       assert stats.atk_spd == 1500
       assert stats.cast_spd == 1999
-      assert stats.ambush_risk == 100
     end
   end
 

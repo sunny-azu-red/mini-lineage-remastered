@@ -127,10 +127,8 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
       # They/them, because the game records no gender — and because it takes the same verb forms
       # as "you", so only the pronouns move between the two pages.
-      assert html =~ "They embark with"
       assert html =~ "They are wielding"
       refute html =~ "You are wielding"
-      refute html =~ "You embark"
       # The heading names them; the prose never does.
       assert html =~ "Aurelia of"
     end
@@ -195,7 +193,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
       # The same sections your own page has: ancestry, stats, the journey, then the chronicle.
       assert html =~ "Inventory &amp; Stats"
       assert html =~ "P. Atk."
-      assert html =~ "Ambush Risk"
+      assert html =~ "Magic Critical"
       assert html =~ "The Chronicle"
     end
 

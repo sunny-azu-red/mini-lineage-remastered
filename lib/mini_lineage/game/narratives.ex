@@ -1,19 +1,6 @@
 defmodule MiniLineage.Game.Narratives do
   @moduledoc "Narrative templates. Each list is drawn from by index, so ORDER is load-bearing."
 
-  # Open pronouns, like the chronicle's: your own record speaks to you, and a stranger's record and
-  # the Chronicles of Ancestry speak about them. `Narrative.voiced/2` closes them at render.
-  @race_traits %{
-    0 =>
-      ~s({they} embark with a starting inheritance of <span class="adena">🪙 {adena} Adena</span>, and {their} vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
-    1 =>
-      ~s({they} embark with a starting tribute of <span class="adena">🪙 {adena} Adena</span>, though {their} unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
-    2 =>
-      ~s({they} embark with a vast ancestral treasury of <span class="adena">🪙 {adena} Adena</span>, while {their} ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
-    3 =>
-      ~s({they} embark with a starting wealth of <span class="adena">🪙 {adena} Adena</span>, while {their} predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
-  }
-
   # What each effect does, in the page's own voice: `{them}` is the subject mid-sentence, `{object}`
   # the object, `{their}` the possessive, `{self}` the reflexive. Keyed by the ACTIVE id, which is
   # what a view carries.
@@ -28,8 +15,6 @@ defmodule MiniLineage.Game.Narratives do
       ~s(Rest is doing its quiet work: {healing} come back with every turn of the cycle, and will go on doing so until {them} stand whole again.),
     "newbie_blessing" =>
       ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_hp} Max HP</span> and <span class="defense">{p_def} P. Def.</span>, and turns the road's eye aside for <span class="ambush">{ambush_risk}% Ambush Risk</span>.),
-    "hexed" =>
-      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{critical}% Critical</span>.),
     "konami_cheat" =>
       ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{critical}% Critical</span> and <span class="hp">{max_hp} Max HP</span>. None of it fades, nor does what it cost, because the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
     "satisfied" =>
@@ -90,18 +75,6 @@ defmodule MiniLineage.Game.Narratives do
   # than drawn, and kept here with the rest of the prose all the same.
   @death_cheated "👾 The gods saw {their} heresy and cast {their} memory into oblivion."
 
-  @ambush_low_health [
-    "Your warm blood stains the ancient, cold earth of Aden...",
-    "Death's cold, heavy shadow looms darkly over your soul...",
-    "One more crushing blow will surely be your absolute last...",
-    "Your vision fades into darkness as you stumble forward...",
-    "Your strength fails you now and the bitter end is very near...",
-    "Each shallow breath is a desperate struggle for survival...",
-    "The golden flame of your life flickers low in the wind...",
-    "Fate's golden thread is frayed, thin, and ready to snap...",
-    "The eternal aether calls out to your weary, fading soul..."
-  ]
-
   @kill [
     ~s(Wielding {their} {weaponEmoji} <span class="item">{weaponName}</span> with fury, {them} cut down <span class="kills">{enemyGroup}</span>.),
     ~s({whose} {weaponEmoji} <span class="item">{weaponName}</span> cleaves through the battlefield, slaying <span class="kills">{enemyGroup}</span>.),
@@ -133,16 +106,6 @@ defmodule MiniLineage.Game.Narratives do
     ~s(The clash has awakened new strength within {object}. Wounds close and fatigue fades, topping {object} up to <span class="hp">{hp} HP</span> and gaining <span class="adena">🪙 {adenaGained} Adena</span>.)
   ]
 
-  @ambush [
-    "💢 Out of the blue, {ambushEnemyGroup} {isSingleAmbush ? 'surrounds' : 'surround'} {object}, and {them} can't escape.",
-    "💢 {they} forget to check {their} back, and {them} get stormed by {ambushEnemyGroup}.",
-    "💢 {they} find {self} in a delicate position: the {enemyEmoji} {enemyName} leader has come with reinforcements.",
-    "💢 As {them} were walking along, {ambushEnemyGroup} jumped out of the bushes.",
-    "💢 {they} reached a dead-end and, while turning around, {them} found {self} cornered by {ambushEnemyGroup}.",
-    "💢 The ground trembles! Suddenly, {ambushEnemyGroup} {isSingleAmbush ? 'stands' : 'stand'} before {object}!",
-    "💢 An arrow whistles past {their} ear... ambush! {ambushEnemyGroupCap} {isSingleAmbush ? 'emerges' : 'emerge'} from the shadows!"
-  ]
-
   @critical [
     ~s(💥 <span class="crit">CRITICAL HIT!</span> 💥),
     ~s(🌪️ <span class="crit">DEVASTATING BLOW!</span> 🌪️),
@@ -152,7 +115,7 @@ defmodule MiniLineage.Game.Narratives do
 
   # What a run did, one sentence apiece, and the same sentence its owner's alert says. Single
   # templates rather than pools: a deed is rare next to a fight, and the item carries the interest.
-  @began ~s({they} chose the {raceEmoji} {className}, and {welcome} {they} set out as {build} {definition} of {age} seasons, bearing a <span class="adena">🪙 {adena} Adena</span> tribute.)
+  @began ~s({they} chose the {raceEmoji} {className}, and {welcome} {they} set out as {build} {definition} of {age} seasons.)
   @bought_gear ~s({they} bought and equipped the {emoji} <span class="item">{name}</span> for <span class="adena">🪙 {cost} Adena</span>.)
   @ate ~s({they} bought and ate the {emoji} <span class="item">{name}</span> for <span class="adena">🪙 {cost} Adena</span>, and {their} strength returned to <span class="hp">{hp} HP</span>.)
   @levelled ~s({they} reached <span class="level">Level {level}</span>.)
@@ -176,7 +139,6 @@ defmodule MiniLineage.Game.Narratives do
     "Consult the ancient map",
     "Drink from the stone fountain",
     "Sharpen your blade",
-    "Prepare for an ambush",
     "Challenge the wandering guard",
     "Scout the enemy encampment",
     "Rally your strength",
@@ -186,8 +148,6 @@ defmodule MiniLineage.Game.Narratives do
     "Rest by the dying embers",
     "Scribe a note for those to follow"
   ]
-
-  def race_traits(race_id), do: Map.fetch!(@race_traits, race_id)
 
   @doc "What an active effect does, or nil for one nothing has been written about yet."
   def effect_blurb(id), do: Map.get(@effect_blurbs, id)
@@ -211,12 +171,10 @@ defmodule MiniLineage.Game.Narratives do
   def effect_lapsed, do: @effect_lapsed
   def effect_ended, do: @effect_ended
 
-  def ambush_low_health, do: @ambush_low_health
   def kill, do: @kill
   def deflection, do: @deflection
   def outcome, do: @outcome
   def level_up, do: @level_up
-  def ambush, do: @ambush
   def critical, do: @critical
   def moves, do: @moves
 end

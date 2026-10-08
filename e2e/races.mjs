@@ -56,7 +56,7 @@ try {
         check(`the ${race.className} is welcomed by name`,
             new RegExp(`You chose the.*${race.className}`).test(await text('#main .alert')),
             await text('#main .alert'));
-        check(`...and starts on the ${race.label}'s own purse`, born.adena === race.adena,
+        check(`...and starts on the suites' purse`, born.adena === race.adena,
             `${born.adena}, expected ${race.adena}`);
         check(`...at the ${race.label}'s full health`,
             born.health === race.health && born.health === born.maxHealth,
@@ -81,8 +81,6 @@ try {
             `${await stat('char-stat-crit')}, expected ${race.crit}`);
         check('...regeneration', await stat('char-stat-regen') === race.regen,
             `${await stat('char-stat-regen')}, expected ${race.regen}`);
-        check('...and ambush risk', await stat('char-stat-ambush') === race.ambush,
-            `${await stat('char-stat-ambush')}%, expected ${race.ambush}%`);
 
         await page.click('#main .back a');
         await onScreen('home');
@@ -100,8 +98,8 @@ try {
             await goHome();
         }
 
-        // What a lineage can afford at birth is its purse, not a roll: only the Orc's 250 falls
-        // short of an Elven Needle, and it must be told so rather than shown an error page.
+        // The suites' purse affords an Elven Needle at birth; a shortfall would be told, not shown
+        // as an error page.
         await travel('weapons');
         const NEEDLE = { id: 1, cost: 300 };
         const affordable = race.adena >= NEEDLE.cost;

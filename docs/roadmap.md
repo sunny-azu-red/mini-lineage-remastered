@@ -4,6 +4,9 @@ What gets built on top of the base rules (`docs/rules.md`), one system at a time
 raised so far, not promises. When a system is picked up, its rules are written into `rules.md`
 first, and the code follows.
 
+**Old mechanics.** The Inn, the Weapon and Armor Shops and the Battleground are what the game was
+before the base layer. They stay for their page design, and each is replaced by its system below.
+
 ## Classes
 
 - **Fighter and Mystic** are already the two paths of the base layer.
@@ -38,10 +41,13 @@ first, and the code follows.
 - Lethal blows that cut a monster's HP down at once.
 - EXP shared by the damage dealt, smaller against much weaker monsters, with a bonus for an
   overkill.
-- Aggressive monsters that attack first, in place of today's ambush.
+- Aggressive monsters that attack first.
 
 ## The world
 
+- Towns, and a Gatekeeper to travel between them.
+- Farming zones, questing zones and dungeons.
+- Shops in each town, selling what that town sells.
 - Day and night: night runs from 22:00 to 06:00 server time and makes it harder to hit.
 - Home villages for each race, and hunting grounds around them.
 - Monsters with their own stats, levels, EXP and Adena.

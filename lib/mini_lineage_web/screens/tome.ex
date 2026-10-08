@@ -81,17 +81,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           /> that turned the tide of every skirmish.
         </p>
         <p>
-          From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp"><.figure key="tome-xp-gained" value={@statistics.total_xp_gained} /> XP</span>. But the wild is
-          treacherous, as the hunters became the hunted and
-          <.counted
-            key="tome-ambushes"
-            count={@statistics.total_ambushes}
-            singular="Ambush"
-            plural="Ambushes"
-            class="ambush"
-          />
-          {verb(@statistics.total_ambushes, "has", "have")} occurred, nearly claiming those who walked
-          unprepared.
+          From these conflicts, the survivors extracted vast wisdom, gaining a total of <span class="xp"><.figure key="tome-xp-gained" value={@statistics.total_xp_gained} /> XP</span>.
         </p>
 
         <h2>❤️‍🩹 The Toll of Survival</h2>

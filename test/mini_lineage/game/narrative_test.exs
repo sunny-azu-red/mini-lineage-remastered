@@ -20,13 +20,11 @@ defmodule MiniLineage.Game.NarrativeTest do
   defp draws(count), do: Enum.map(0..(count - 1), &(&1 / count))
 
   defp started(race_id, opts \\ []) do
-    race = Constants.race(race_id)
-
     %Player{
       name: "Hero",
       race_id: race_id,
       health: 100,
-      adena: Keyword.get(opts, :adena, race.start_adena),
+      adena: Keyword.get(opts, :adena, 0),
       experience: 0,
       weapon_id: Keyword.get(opts, :weapon_id, 0),
       armor_id: Keyword.get(opts, :armor_id, 0)
@@ -61,14 +59,13 @@ defmodule MiniLineage.Game.NarrativeTest do
       for race_id <- @races,
           critical? <- [true, false],
           level_up? <- [true, false],
-          ambushed? <- [true, false],
           value <- draws(@sweeps) do
         player = started(race_id, weapon_id: 3, armor_id: 3)
 
         narrative =
           with_draw(value, fn ->
             result = fixed_result(critical: critical?, level_up: level_up?)
-            Narrative.build_battle(player, result, ambushed?)
+            Narrative.build_battle(player, result)
           end)
 
         # A stored line keeps its PRONOUNS open until a reader is known, so everything else must
@@ -100,7 +97,7 @@ defmodule MiniLineage.Game.NarrativeTest do
 
             narrative =
               with_draw(value, fn ->
-                Narrative.build_battle(player, fixed_result(), false)
+                Narrative.build_battle(player, fixed_result())
               end)
 
             Enum.reduce(Map.keys(lists), acc, fn key, acc ->
@@ -119,28 +116,16 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       crit =
         with_draw(0.0, fn ->
-          Narrative.build_battle(player, fixed_result(critical: true), false)
+          Narrative.build_battle(player, fixed_result(critical: true))
         end)
 
       plain =
         with_draw(0.0, fn ->
-          Narrative.build_battle(player, fixed_result(critical: false), false)
+          Narrative.build_battle(player, fixed_result(critical: false))
         end)
 
       assert is_binary(crit.crit_line)
       assert plain.crit_line == nil
-    end
-
-    test "an ambush names the foe and asks to be faced; no ambush says nothing at all" do
-      player = started(0)
-
-      ambushed = with_draw(0.0, fn -> Narrative.build_battle(player, fixed_result(), true) end)
-      calm = with_draw(0.0, fn -> Narrative.build_battle(player, fixed_result(), false) end)
-
-      assert is_binary(ambushed.ambush_line)
-      assert ambushed.fight_prompt in ["Face your Foe!", "Fight them!"]
-      assert calm.ambush_line == nil
-      assert calm.fight_prompt == nil
     end
 
     test "the narrative names the gear the character is actually carrying" do
@@ -149,44 +134,11 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       lines =
         for value <- draws(@sweeps) do
-          with_draw(value, fn -> Narrative.build_battle(player, fixed_result(), false) end).kill_line
+          with_draw(value, fn -> Narrative.build_battle(player, fixed_result()) end).kill_line
         end
 
       assert Enum.any?(lines, &String.contains?(&1, weapon.name)),
              "no kill line named the equipped weapon"
-    end
-  end
-
-  describe "race traits" do
-    # Their pronouns stay open until a reader is known, like a stored line's; nothing else may.
-    test "render for every race with nothing left unfilled, whoever reads them" do
-      for race_id <- @races, mine <- [true, false] do
-        traits =
-          race_id |> Constants.race() |> Narrative.build_race_traits() |> Narrative.voiced(mine)
-
-        assert unrendered(traits) == [], "race #{race_id}: #{inspect(unrendered(traits))}"
-        refute traits == ""
-      end
-    end
-
-    test "speak to the run itself, and about it to anybody else" do
-      for race_id <- @races do
-        traits = Narrative.build_race_traits(Constants.race(race_id))
-
-        assert Narrative.voiced(traits, true) =~ ~r/^You embark/
-        refute Narrative.voiced(traits, true) =~ ~r/\b(They|Their|their|them)\b/
-        assert Narrative.voiced(traits, false) =~ ~r/^They embark/
-      end
-    end
-
-    test "quote the race's own numbers, not another's" do
-      for race_id <- @races do
-        race = Constants.race(race_id)
-        traits = Narrative.build_race_traits(race)
-
-        assert String.contains?(traits, "#{race.ambush_chance}% Ambush Risk"),
-               "race #{race_id} traits never mention its #{race.ambush_chance}% ambush risk"
-      end
     end
   end
 

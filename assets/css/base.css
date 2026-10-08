@@ -161,8 +161,7 @@ p.last {
     color: var(--gold);
 }
 
-/* Read but not acted on: a risk, a day, a clock, a pace. */
-.ambush,
+/* Read but not acted on: a day, a clock, a pace. */
 .date,
 .speed,
 .timer {
@@ -207,7 +206,7 @@ p.last {
 :is(p, li) :is(.hp, .attack, .deaths, .debuff,
     .heal, .regen, .buff,
     .adena, .level, .attribute, .aura,
-    .ambush, .date, .speed, .timer,
+    .date, .speed, .timer,
     .defense, .evasion, .damage, .mp,
     .battles, .kills, .players, .purchases,
     .crit, .accuracy, .xp, .magic, .heretics, .item) {

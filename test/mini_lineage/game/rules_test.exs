@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.RulesTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Formulas, Math, Rng, Rules}
+  alias MiniLineage.Game.{Constants, Formulas, Math, Player, Rng, Rules}
 
   @rules File.read!("docs/rules.md")
 
@@ -90,6 +90,15 @@ defmodule MiniLineage.Game.RulesTest do
   end
 
   describe "the worked examples" do
+    test "§1 a new character starts at level 1 with no Adena" do
+      for race <- Constants.races(), path <- [:fighter, :mystic] do
+        {player, _} = Player.initialize(%Player{}, race, path, "Newborn")
+
+        assert Math.level_for_xp(player.experience) == 1
+        assert player.adena == 0
+      end
+    end
+
     setup do
       %{hf: Rules.set(0, :fighter), hm: Rules.set(0, :mystic)}
     end

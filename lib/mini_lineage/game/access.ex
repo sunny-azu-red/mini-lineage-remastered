@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.Access do
   alias MiniLineage.Game.Player
 
   # The pin gates what may be DONE, not read: these carry no `phx-click`, so no state is kept off
-  # them. An ambushed reader escapes nothing by looking.
+  # them.
   @readable ~w(character highscores statistics races error)
 
   # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them,
@@ -15,14 +15,12 @@ defmodule MiniLineage.Game.Access do
 
   @doc """
   Where the player is actually allowed to be. What can be READ is answered first and for everyone;
-  after that, death wins outright — before the ambush, because killing a player does not clear
-  `ambushed` — then an active ambush, then living-vs-absent character.
+  after that, death wins outright, then living-vs-absent character.
   """
   def pin_screen(screen, player) do
     cond do
       screen in @readable -> screen
       player.dead -> "death"
-      player.ambushed -> "battle"
       Player.started?(player) -> if screen in @started_blocked, do: "home", else: screen
       true -> "start"
     end

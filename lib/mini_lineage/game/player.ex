@@ -17,6 +17,7 @@ defmodule MiniLineage.Game.Player do
   }
 
   @zone_aura_ids ~w(resting combat)
+  @starting_adena Application.compile_env!(:mini_lineage, :starting_adena)
 
   defstruct name: nil,
             race_id: nil,
@@ -29,12 +30,9 @@ defmodule MiniLineage.Game.Player do
             armor_id: nil,
             dyes: [],
             dead: false,
-            ambushed: false,
             cheated: false,
             death_reason: nil,
             total_battles: 0,
-            total_ambushes: 0,
-            consecutive_ambushes: 0,
             total_enemies_killed: 0,
             effects: [],
             # What the run did this pass, for the process to write and then clear. Declared by the
@@ -48,7 +46,6 @@ defmodule MiniLineage.Game.Player do
 
   defp equipment(player) do
     %{
-      race: Constants.race(player.race_id || 0),
       weapon: Constants.weapon(player.weapon_id || 0),
       armor: Constants.armor(player.armor_id || 0)
     }
@@ -69,13 +66,12 @@ defmodule MiniLineage.Game.Player do
         health: 1,
         mp: 0,
         dyes: [],
-        adena: race.start_adena,
+        # Rules §1: none, but for the browser suites' build.
+        adena: @starting_adena,
         experience: 0,
         weapon_id: 0,
         armor_id: 0,
         total_battles: 0,
-        total_ambushes: 0,
-        consecutive_ambushes: 0,
         total_enemies_killed: 0,
         effects: [],
         # A new character remembers no fight. Left alone it would keep whatever the process was
@@ -87,7 +83,6 @@ defmodule MiniLineage.Game.Player do
     player = restore_fully(player)
 
     Statistics.increment_for(player, :total_players)
-    Statistics.increment_for(player, :total_adena, player.adena)
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
     %{min_age: min_age, max_age: max_age, age_thresholds: thresholds, builds: builds} =
@@ -111,8 +106,7 @@ defmodule MiniLineage.Game.Player do
       welcome: welcome,
       build: build,
       definition: definition,
-      age: age,
-      adena: player.adena
+      age: age
     }
 
     began = Narrative.build_began(race, traits)
@@ -228,7 +222,7 @@ defmodule MiniLineage.Game.Player do
   @attributes ~w(str con dex int wit men)a
 
   defp stats_from(player, effects) do
-    %{race: race, weapon: weapon, armor: armor} = equipment(player)
+    %{weapon: weapon, armor: armor} = equipment(player)
     class_id = class_id(player)
     level = Math.level_for_xp(player.experience || 0)
     path = Classes.path(class_id)
@@ -254,7 +248,6 @@ defmodule MiniLineage.Game.Player do
       max_mp: Formulas.max_mp(Classes.mp(class_id, level), a.men),
       hp_regen: Formulas.hp_regen(level, a.con),
       mp_regen: Formulas.mp_regen(level, a.men),
-      ambush_risk: race.ambush_chance,
       xp_multiplier: 1.0,
       adena_multiplier: 1.0
     }
@@ -293,8 +286,7 @@ defmodule MiniLineage.Game.Player do
       atk_spd: stats.atk_spd |> max(1) |> min(caps.atk_spd),
       cast_spd: stats.cast_spd |> max(1) |> min(caps.cast_spd),
       max_hp: max(trunc(stats.max_hp), 1),
-      max_mp: max(trunc(stats.max_mp), 1),
-      ambush_risk: stats.ambush_risk |> max(0) |> min(100)
+      max_mp: max(trunc(stats.max_mp), 1)
     })
   end
 
@@ -315,10 +307,7 @@ defmodule MiniLineage.Game.Player do
 
   # -------------------------------------------------------------- zone auras
 
-  # Actively held in combat: standing in a combat zone, or ambushed anywhere.
-  defp held_in_combat?(player) do
-    player.ambushed == true or player.current_screen in Constants.zone().combat_zones
-  end
+  defp held_in_combat?(player), do: player.current_screen in Constants.zone().combat_zones
 
   # The disengage countdown lives on the combat aura itself, as its expiry: there is no second copy
   # of it on the player to keep in step.

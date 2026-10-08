@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.ChronicleTest do
   @moduledoc """
   The Chronicle on a run's own page: every line a fight drew, in the order it drew them. Not a
-  browser test, because a crit and an ambush are rolled; here the narrative is handed in, and what
+  browser test, because a crit is rolled; here the narrative is handed in, and what
   is checked is which of its lines reach the page and in what order.
   """
   use ExUnit.Case, async: true
@@ -17,21 +17,17 @@ defmodule MiniLineageWeb.ChronicleTest do
     kill_line: "KILL.",
     deflection_line: "DEFLECT.",
     outcome_line: "OUTCOME.",
-    ambush_line: "AMBUSH.",
-    fight_prompt: "PROMPT",
     next_move: "MOVE"
   }
 
   # A line that did not happen is nil, never missing: `CharacterLog.to_battle/1` names every key it
-  # reads back, so the component may reach for all of them. `ambushed` is derived from the ambush
-  # line, so a fixture that sets them apart would be describing a row the game cannot produce.
+  # reads back, so the component may reach for all of them.
   defp fight(absent \\ []) do
     %{
       id: System.unique_integer([:positive]),
       number: 1,
       narrative: Map.merge(@lines, Map.new(absent, &{&1, nil})),
       kind: "fight",
-      ambushed: :ambush_line not in absent,
       at: ~U[2026-09-24 14:32:00Z]
     }
   end
@@ -72,12 +68,9 @@ defmodule MiniLineageWeb.ChronicleTest do
         kill_line: "{they} cut down the {object} before {them}.",
         deflection_line: "{whose} armour held, and {them} learned from it.",
         outcome_line: "{they} walk away, {self} again.",
-        ambush_line: "Something waits for {object}, and {them} cannot pass.",
-        fight_prompt: "PROMPT",
         next_move: "MOVE"
       },
       kind: "fight",
-      ambushed: true,
       at: ~U[2026-09-24 14:32:00Z]
     }
 
@@ -141,17 +134,17 @@ defmodule MiniLineageWeb.ChronicleTest do
     # A value named inside a sentence, like Adena or a level: a classed span that takes its weight
     # from the vocabulary, never a `<strong>`.
     test "names an effect the way it names any other value" do
-      hexed = MiniLineage.Game.Constants.effect(:ambush_debuff)
+      mark = MiniLineage.Game.Constants.effect(:konami_cheat)
 
       line =
         MiniLineage.Game.Narrative.build_effect_change(
           MiniLineage.Game.Narratives.effect_gained(),
-          hexed
+          mark
         )
 
       [entry] = entries([deed("debuff", line)])
 
-      assert entry =~ ~s(<span class="debuff">Hexed</span>)
+      assert entry =~ ~s(<span class="debuff">Cheater's Mark</span>)
       refute entry =~ "<strong"
     end
 
@@ -164,7 +157,7 @@ defmodule MiniLineageWeb.ChronicleTest do
           deed("purchase", "{they} took up the 🗡️ Sword."),
           deed("level_up", "{they} reached Level 4."),
           deed("buff", "🐣 Newbie Blessing settles over {object}."),
-          fight([:ambush_line])
+          fight()
         ])
 
       assert own_tag(start) =~ ~s(class="start")
@@ -247,13 +240,12 @@ defmodule MiniLineageWeb.ChronicleTest do
 
       # One assertion, because the spaces are half the claim: two lines rendered flush against each
       # other read as "KILL.DEFLECT." to somebody trying to follow what happened.
-      assert text =~ "CRIT! KILL. DEFLECT. OUTCOME. AMBUSH."
+      assert text =~ "CRIT! KILL. DEFLECT. OUTCOME."
     end
 
-    test "but never the two that are buttons rather than history" do
+    test "but never the one that is a button rather than history" do
       text = text_for([fight()])
 
-      refute text =~ "PROMPT"
       refute text =~ "MOVE"
     end
 
@@ -264,17 +256,10 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert text =~ "KILL. DEFLECT. OUTCOME."
     end
 
-    test "and the ambush that never came" do
-      text = text_for([fight([:ambush_line])])
-
-      refute text =~ "AMBUSH."
-      assert text =~ "KILL. DEFLECT. OUTCOME."
-    end
-
     test "is one of however many the run has, in the order it is handed them" do
-      text = text_for([fight([:crit_line, :ambush_line]), fight([:crit_line])])
+      text = text_for([fight([:crit_line]), fight()])
 
-      assert text =~ "KILL. DEFLECT. OUTCOME. KILL. DEFLECT. OUTCOME. AMBUSH."
+      assert text =~ "KILL. DEFLECT. OUTCOME. CRIT! KILL. DEFLECT. OUTCOME."
     end
 
     # Short, being a log's head: an age while the run is recent, and past the cap a date that keeps
@@ -305,18 +290,6 @@ defmodule MiniLineageWeb.ChronicleTest do
     # A fatal fight is logged as an ending, so a fight row is always one the run walked away from.
     test "and is never drawn as an ending" do
       refute html_for([fight()]) =~ ~s(class="deaths")
-    end
-
-    # The class is the claim, not the colour: what red means lives in the stylesheet, and a test
-    # reading that back would only assert that CSS is spelled the way it is spelled.
-    test "wears the ambush it ended in, so a run of them is visible without reading a word" do
-      [quiet, caught] = entries([fight([:ambush_line]), fight()])
-
-      assert caught =~ "AMBUSH."
-      assert caught =~ ~s(class="ambushed")
-      # And the fight nothing was waiting after is left alone, or the mark says nothing.
-      refute quiet =~ "AMBUSH."
-      refute quiet =~ "ambushed"
     end
   end
 

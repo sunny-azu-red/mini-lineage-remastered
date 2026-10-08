@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping."
-  alias MiniLineage.Game.{Classes, Clock, Constants, Format, Formulas, Math, Narrative, Player}
+  alias MiniLineage.Game.{Classes, Clock, Constants, Format, Formulas, Math, Player}
 
   def item_view(item) do
     modifiers = Map.get(item, :modifiers) || effect_modifiers(item)
@@ -58,14 +58,11 @@ defmodule MiniLineage.Game.Snapshot do
     stats: nil,
     effects: [],
     dead: false,
-    ambushed: false,
     cheated: false,
     death_reason: nil,
-    ambush_low_health: nil,
     disqualified: false,
     counters: %{
       total_battles: 0,
-      total_ambushes: 0,
       total_enemies_killed: 0
     },
     last_battle: nil
@@ -110,14 +107,11 @@ defmodule MiniLineage.Game.Snapshot do
       stats: stats,
       effects: Enum.map(Player.active_effects(player), &effect_view/1),
       dead: player.dead,
-      ambushed: player.ambushed,
       cheated: player.cheated,
       death_reason: player.death_reason,
-      ambush_low_health: Narrative.ambush_low_health(player),
       disqualified: player.cheated,
       counters: %{
         total_battles: player.total_battles,
-        total_ambushes: player.total_ambushes,
         total_enemies_killed: player.total_enemies_killed
       },
       last_battle: player.last_battle_narrative
@@ -189,7 +183,6 @@ defmodule MiniLineage.Game.Snapshot do
         Enum.map(Constants.races(), fn race ->
           Map.merge(race, %{
             slug: Format.slugify(race.label),
-            traits: Narrative.build_race_traits(race),
             classes: Enum.map([:fighter, :mystic], &class_view(Classes.starting(race.id, &1)))
           })
         end),

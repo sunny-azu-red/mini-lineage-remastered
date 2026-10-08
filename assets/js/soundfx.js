@@ -53,12 +53,6 @@ const SOUNDS = {
         { offset: 0.20, freq: 440.00, type: 'triangle', gain: 0.14, decay: 0.14, tail: 0.02 },
         { offset: 0.30, freq: 587.33, type: 'square', gain: 0.14, decay: 0.45, tail: 0.02 },
     ],
-
-    // 💢 Urgent, dissonant retro alarm pulses.
-    ambush: arpeggio([220, 220, 220], 0.11, {
-        type: 'sawtooth', gain: 0.18, decay: 0.09, tail: 0.01,
-        sweeps: [{ to: 140, at: 0.08, linear: true }],
-    }),
 };
 
 function playNote(ctx, start, note) {

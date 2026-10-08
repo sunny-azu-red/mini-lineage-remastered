@@ -49,9 +49,8 @@ defmodule MiniLineage.Game.ClassesAndDyesTest do
       end
     end
 
-    test "is refused to the dead and the ambushed" do
+    test "is refused to the dead" do
       assert {_, {:error, :dead, _}} = Actions.transfer(human(20, %{dead: true}), "1")
-      assert {_, {:error, :ambushed, _}} = Actions.transfer(human(20, %{ambushed: true}), "1")
     end
 
     test "grows HP on the new table from the next level, as Interlude does" do

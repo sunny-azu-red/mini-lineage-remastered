@@ -63,15 +63,13 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   end
 
   describe "the voice" do
-    # The lineage's lore belongs to the Chronicles of Ancestry; the record says what it gave this
-    # run, to whoever is reading it, and nothing about how the journey has been defined.
-    test "tells what the lineage gave the run, to its reader, and no lore" do
+    # The lineage's lore belongs to the Chronicles of Ancestry; the record tells the run.
+    test "tells the run to its reader, and no lore" do
       race = Constants.race(1)
 
-      assert text_for(living(), true) =~ "You embark with a starting tribute"
-      assert text_for(living(), false) =~ "They embark with a starting tribute"
+      assert text_for(living(), true) =~ "You are wielding"
+      assert text_for(living(), false) =~ "They are wielding"
       refute text_for(living()) =~ String.slice(race.backstory, 0, 40)
-      refute text_for(living()) =~ "defined by conflict"
     end
 
     # Even to a player of that very lineage: the page describes a people, not the run reading it.
@@ -83,8 +81,8 @@ defmodule MiniLineageWeb.FallenCharacterTest do
           catalog: Snapshot.catalog()
         )
 
-      assert length(Regex.scan(~r/They embark/, html)) == length(Snapshot.catalog().races)
-      refute html =~ "You embark"
+      for race <- Snapshot.catalog().races, do: assert(html =~ race.backstory)
+      refute html =~ ~r/\b(You|Your)\b/
       refute html =~ ~r/\{[a-z]+\}/
     end
 
@@ -150,7 +148,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       html = html_for(fallen())
 
       for id <-
-            ~w(char-stat-str char-stat-p-atk char-stat-p-def char-stat-crit char-stat-regen char-stat-ambush),
+            ~w(char-stat-str char-stat-p-atk char-stat-p-def char-stat-crit char-stat-regen),
           do: assert(html =~ id, id)
 
       text = text_for(fallen())
@@ -178,22 +176,11 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     # HEEx renders a line break as a space, so a span the formatter moved onto its own line puts
     # one in front of whatever punctuation follows: "Physical Defense ." Invisible in the markup.
     test "never leaves a space in front of its punctuation" do
-      for player <- [
-            living(),
-            fallen(),
-            %{living() | total_ambushes: 3},
-            %{fallen() | total_ambushes: 3}
-          ] do
+      for player <- [living(), fallen()] do
         text = text_for(player)
 
         assert Regex.scan(~r/\S+ [,.]/, text) == [], text
       end
-    end
-
-    test "counts ambushes only when there were any" do
-      refute html_for(fallen()) =~ "overcoming"
-      assert html_for(%{fallen() | total_ambushes: 3}) =~ "overcoming"
-      assert text_for(%{fallen() | total_ambushes: 3}) =~ "3 cunning ambushes"
     end
 
     test "and leaves the ending to the one entry that is an ending" do

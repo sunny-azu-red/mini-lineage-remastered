@@ -5,16 +5,19 @@
 export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 export const PURSE = '#sidebar [data-key="adena"]';
 
+/** What config/e2e.exs starts every character with; the game's own rule is none. */
+export const START_ADENA = 1000;
+
 /**
  * The four lineages as the UI must present them, each born as the class named, with the newbie
  * blessing already applied — what a player sees on a fresh character. Two are played as Mystics so
  * both archetypes are born in a browser. The balance behind them is balance_golden_test.exs's job.
  */
 export const RACES = [
-    { id: 0, label: 'Human',    emoji: '🧙', archetype: 'fighter', className: 'Human Fighter', health: 146, mp: 38, adena: 300, crit: 4,  regen: 7, ambush: 4,  plural: 'Humans' },
-    { id: 1, label: 'Orc',      emoji: '🧟', archetype: 'mystic',  className: 'Orc Mystic',    health: 124, mp: 60, adena: 250, crit: 4,  regen: 5, ambush: 12, plural: 'Orcs' },
-    { id: 2, label: 'Elf',      emoji: '🧝', archetype: 'fighter', className: 'Elven Fighter', health: 133, mp: 39, adena: 450, crit: 5,  regen: 5, ambush: 0,  plural: 'Elves' },
-    { id: 3, label: 'Dark Elf', emoji: '🧛', archetype: 'mystic',  className: 'Dark Mystic',   health: 115, mp: 58, adena: 350, crit: 4,  regen: 4, ambush: 1,  plural: 'Dark Elves' },
+    { id: 0, label: 'Human',    emoji: '🧙', archetype: 'fighter', className: 'Human Fighter', health: 146, mp: 38, adena: START_ADENA, crit: 4,  regen: 7, plural: 'Humans' },
+    { id: 1, label: 'Orc',      emoji: '🧟', archetype: 'mystic',  className: 'Orc Mystic',    health: 124, mp: 60, adena: START_ADENA, crit: 4,  regen: 5, plural: 'Orcs' },
+    { id: 2, label: 'Elf',      emoji: '🧝', archetype: 'fighter', className: 'Elven Fighter', health: 133, mp: 39, adena: START_ADENA, crit: 5,  regen: 5, plural: 'Elves' },
+    { id: 3, label: 'Dark Elf', emoji: '🧛', archetype: 'mystic',  className: 'Dark Mystic',   health: 115, mp: 58, adena: START_ADENA, crit: 4,  regen: 4, plural: 'Dark Elves' },
 ];
 
 /** Collects results so a run reports every failure rather than dying on the first. */
@@ -57,7 +60,6 @@ export function controls(page) {
             screen: raw.screen,
             started: raw.started === 'true',
             dead: raw.dead === 'true',
-            ambushed: raw.ambushed === 'true',
             level: figures.level ?? null,
             health: figures.hp ?? null,
             maxHealth: figures['max-hp'] ?? null,
@@ -142,7 +144,6 @@ export function controls(page) {
     const fight = async () => {
         await page.waitForSelector('.phx-connected', { timeout: 8000 });
         const before = await page.getAttribute('#screen', 'data-battles');
-        // Matched on the event, not the label: an ambush relabels this button to its own prompt.
         await page.click('#main button[phx-click="fight"]', { timeout: 8000 });
         await page.waitForFunction((prev) => {
             const el = document.querySelector('#screen');

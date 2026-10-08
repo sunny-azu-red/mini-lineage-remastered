@@ -105,8 +105,8 @@ defmodule MiniLineage.Game.FormatTest do
   end
 
   describe "a modifier" do
-    # Every one of these is read as a change to a stat, so the sign is half the meaning: "-4% Ambush
-    # Risk" is a blessing and "+4%" is a curse, and without the mark neither says which.
+    # Every one of these is read as a change to a stat, so the sign is half the meaning: "+2%
+    # Critical" is a blessing and "-2%" is a curse, and without the mark neither says which.
     test "carries its own sign, so a gift and a cost cannot be confused" do
       assert Format.modifier(20) == "+20"
       assert Format.modifier(-4) == "-4"

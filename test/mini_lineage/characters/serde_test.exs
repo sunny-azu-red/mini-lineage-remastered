@@ -22,12 +22,9 @@ defmodule MiniLineage.Characters.SerdeTest do
       armor_id: 4,
       dyes: [1, 4],
       dead: true,
-      ambushed: true,
       cheated: true,
       death_reason: "slain by a wandering Orc",
       total_battles: 41,
-      total_ambushes: 7,
-      consecutive_ambushes: 2,
       total_enemies_killed: 118,
       current_screen: "battle",
       effects: [
@@ -56,8 +53,6 @@ defmodule MiniLineage.Characters.SerdeTest do
           kill_line: "You cut them down.",
           deflection_line: "Your armor held.",
           outcome_line: "You walk away richer.",
-          ambush_line: nil,
-          fight_prompt: nil,
           next_move: "Search the hollow log"
         },
         outcome: %{
@@ -69,7 +64,6 @@ defmodule MiniLineage.Characters.SerdeTest do
           is_critical: true,
           is_level_up: false
         },
-        ambushed: false,
         died: false,
         sound: "crit"
       }
@@ -210,8 +204,6 @@ defmodule MiniLineage.Characters.SerdeTest do
       loaded = Serde.from_map(%{"version" => 1})
 
       assert loaded.total_battles == 0
-      assert loaded.total_ambushes == 0
-      assert loaded.consecutive_ambushes == 0
       assert loaded.total_enemies_killed == 0
       assert loaded.effects == []
       assert loaded.dead == false

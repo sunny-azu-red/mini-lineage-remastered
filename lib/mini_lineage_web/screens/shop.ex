@@ -1,7 +1,8 @@
 defmodule MiniLineageWeb.Screens.Shop do
   @moduledoc """
   The Inn, the Weapon Shop and the Armor Shop: one table and one picker, three sets of words for
-  what is on offer and what the column beside the price means.
+  what is on offer and what the column beside the price means. An old mechanic, kept for its page
+  design until items are rebuilt (`docs/roadmap.md`).
   """
   use MiniLineageWeb, :html
 

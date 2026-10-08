@@ -3,8 +3,9 @@ defmodule MiniLineage.Game.Battle do
   Every roll is bound to its own variable, in the order the golden master pins — crit, enemy count,
   hp lost, xp, adena — because Elixir makes no promise about operand evaluation order.
 
-  A bridge until the fight is rebuilt on `Formulas`: danger and reward still scale off the gear's
-  tier, and only the critical rate comes from the player's real stats. A fight costs the share of
+  The Battleground's fight, an old mechanic kept for its page design until fighting is rebuilt on
+  `Formulas` (`docs/roadmap.md`): danger and reward still scale off the gear's tier, and only the
+  critical chance comes from the player's real stats. A fight costs the share of
   the HP bar it always did, so a bar that grows with the level does not make the road harmless.
   """
   alias MiniLineage.Game.{Constants, Math, Player}

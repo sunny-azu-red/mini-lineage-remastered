@@ -78,7 +78,7 @@ defmodule MiniLineage.DataCase do
   @doc """
   Pins the dice inside a character's own process, where its fights are rolled: a test-process
   source never reaches them, and the sweep clamps `health: 5_000` back to max. At 0.5 nothing
-  crits and nothing ambushes, for as long as the process lives.
+  crits, for as long as the process lives.
   """
   def pin_dice(session, value \\ 0.5) do
     MiniLineage.Characters.mutate(session, fn player ->

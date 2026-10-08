@@ -137,11 +137,17 @@ builds on the rules rather than quietly changing them.
 the attribute and level bonuses, what effects multiply (`op: :mul`), what they add, then the caps —
 so a cap holds whatever an effect adds. `Classes` and `Dyes` are later systems already built on top.
 
-**The fight is a bridge until it is rebuilt on `Formulas`.** `Battle.simulate/1` still scales danger
-and reward off the gear's tier, and only its critical rate is the player's own. Its HP losses and
-the Inn's heals were tuned against a 100 HP bar, so both are shares of the bar: unscaled, a bar that
-grows with the level made the road harmless and the Halls stopped filling. The base outcomes of
-rules §13 are tested and called by nothing yet.
+A new character carries `:starting_adena`, which is 0 as rules §1 says, but 1,000 in `config/e2e.exs`:
+the browser suites shop dozens of times for chronicle rows with no dice in them, and a purse spares
+them fighting for it first. `rules_test.exs` holds the rule itself.
+
+**The shops and the Battleground are old mechanics, kept for their page design.** The Inn, the
+Weapon and Armor Shops, their items and prices, and the Battleground's fight are what the game was
+before the base layer, and none of it is a rule: each will be replaced by its system in
+`docs/roadmap.md`. Build nothing new on them. Until then `Battle.simulate/1` scales danger and reward
+off the gear's tier, with only its critical chance the player's own, and its HP losses and the Inn's
+heals are shares of the bar, because a bar that grows with the level would otherwise make the road
+harmless. The base outcomes of rules §13 are tested and called by nothing yet.
 
 **Never assert on a roll of the dice.** Not in the browser suites, not in ExUnit. Pin the source
 (`Rng.put_source/1`, or `Test.Lcg` for the golden master's stream), or make the character tanky
@@ -284,8 +290,8 @@ its colour cannot say which of the things wearing it you meant — `.hp` was car
 Physical Attack, deaths, and cheaters struck from the record, and no one of them could be retuned.
 
 So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal .regen .buff` give
-it back; `.adena .level .attribute .aura` are what it is worth; `.ambush .date .speed .timer`
-are read but not acted on; `.defense .evasion .damage` turn things aside, and `.mp` is
+it back; `.adena .level .attribute .aura` are what it is worth; `.date .speed .timer` are read
+but not acted on; `.defense .evasion .damage` turn things aside, and `.mp` is
 grouped with them for its blue; `.battles .kills .players .purchases` are things counted; `.crit
 .accuracy` are where a blow lands and how hard; `.xp .magic .heretics` are what the arcane touches,
 earned, cast or struck out for; `.item` is what a run wears, wields or eats, quieter than the sentence around it because a
@@ -377,8 +383,8 @@ battle screen from it. The table holds deeds as well as fights, so without the f
 last act was a purchase reconnects to a battle report of seven nil lines — which renders blank
 rather than failing. No partial index for it; see the dropped-column rule below.
 
-**A chronicle row carries a class only where the stylesheet paints it.** `ambushed`, `start`,
-`level-up`, `class-change` and `purchase` are washed in the colour of the alert that would announce
+**A chronicle row carries a class only where the stylesheet paints it.** `start`, `level-up`,
+`class-change` and `purchase` are washed in the colour of the alert that would announce
 them (a dye is a `purchase`), each
 stating its own colour over one shared shape, so none is a default another overrides. Every other
 row has no `class` at all, spread in rather than listed: an unstyled `deed` class sat on every
@@ -428,8 +434,8 @@ away from, so the chronicle's fights and `total_battles` agree.
 
 **A log row is its kind, its lines and its moment, and nothing else.** A fight's numbers were
 columns once, kept because they were "what you would aggregate", and nothing ever did: the totals
-live in `statistics` as running counters. Whether a fight was ambushed is whether it has an
-`ambush_line`. A column goes back when something sorts or filters on it, and not before.
+live in `statistics` as running counters. A column goes back when something sorts or filters on it,
+and not before.
 
 So an entry's `#` is counted, never stored: its place in the run is how many of the run's rows
 come up to it, one uncorrelated `count()` in the page's own statement, and `since/3` numbers on
@@ -440,10 +446,8 @@ the row id is the whole table's and never reaches the page.
 action between them — `character`, `highscores`, `statistics`, `races`, `error`: a sort button
 reorders the view and the Chronicle pages itself, and neither touches the run — so the first clause lets every state reach
 every one of them and the rest of the cond only ever decides about screens that can be acted on.
-It had been three overlapping allowlists, which is how a living run could not read the Tome, a dead
-one could not be told that something had crashed, and an ambushed one could not look at its own
-record. Reading is not escaping: walking off does not clear `ambushed`, so the next screen they
-could act on puts them back in the fight with the same ambush waiting on it.
+It had been three overlapping allowlists, which is how a living run could not read the Tome and a
+dead one could not be told that something had crashed.
 
 **The game has no catch-all route, and that is deliberate.** A glob answering every unrecognised
 path resolves it to Town and rewrites the address, which is a soft 404: the reader is told nothing,
@@ -566,7 +570,7 @@ enough for two levels needs no markup change. The alternative is deciding per fi
 move and being wrong later. The level came off the Halls on that wrong guess and went back on.
 
 A figure and the noun it counts are separate elements, so `Controls.counted/1` exists: at one there
-is no figure to tween, because "a cunning ambush" is a word. That splitting is why a test asserting
+is no figure to tween, because "a Human" is a word. That splitting is why a test asserting
 "12 battles" reads the stripped text and not the markup.
 
 **A bar is a figure against its cap.** `Controls.bar/1` draws the track, the fill and the figures

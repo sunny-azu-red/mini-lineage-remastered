@@ -279,8 +279,6 @@ defmodule MiniLineageWeb.Screens do
     <%= for race <- @catalog.races do %>
       <h2>{race.emoji} {race.label}</h2>
       <p>{raw(race.backstory)}</p>
-      <%!-- Read by a visitor, who is not the lineage being described. --%>
-      <p>{raw(Narrative.voiced(race.traits, false))}</p>
       <.data_table id={"#{race.slug}-classes"}>
         <:col class="name">Class</:col>
         <:col :for={attr <- attributes()} class="num">{String.upcase(to_string(attr))}</:col>
@@ -305,31 +303,15 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <.battle_narrative :if={@view.last_battle} narrative={@view.last_battle.narrative} />
 
-    <%= if @view.ambushed do %>
-      <%!-- The glyph belongs to the line, not to this alert: the Chronicle tells the same line
-            later and would otherwise tell it bare. --%>
-      <.alert kind={:danger}>
-        {raw(
-          (@view.last_battle && Narrative.voiced(@view.last_battle.narrative.ambush_line, true)) ||
-            "💢 You are being ambushed!"
-        )}
-      </.alert>
-      <div class="action-links">
-        <.button variant={:danger} phx-click="fight">
-          ⚔️ {(@view.last_battle && @view.last_battle.narrative.fight_prompt) || "Fight!"}
-        </.button>
-      </div>
-    <% else %>
-      <p :if={!@view.last_battle}>
-        The road out of town is quiet for now. Will you seek out a fight?
-      </p>
-      <div class="action-links">
-        <.button phx-click="fight">
-          {if @view.last_battle, do: "⚡ #{@view.last_battle.narrative.next_move}", else: "⚔️ Fight!"}
-        </.button>
-        <.button variant={:secondary} patch={Paths.for_screen("home")}>Retreat</.button>
-      </div>
-    <% end %>
+    <p :if={!@view.last_battle}>
+      The road out of town is quiet for now. Will you seek out a fight?
+    </p>
+    <div class="action-links">
+      <.button phx-click="fight">
+        {if @view.last_battle, do: "⚡ #{@view.last_battle.narrative.next_move}", else: "⚔️ Fight!"}
+      </.button>
+      <.button variant={:secondary} patch={Paths.for_screen("home")}>Retreat</.button>
+    </div>
     """
   end
 

@@ -59,27 +59,4 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
     # Comes back off the database, and coming back is a read.
     assert counters(id) == before
   end
-
-  describe "an ambush" do
-    test "survives walking away and reading the character back", %{id: id} do
-      # Forced rather than rolled: the point is what a read does to it, not how it arrived.
-      Characters.mutate(id, &{%{&1 | ambushed: true}, :ok})
-
-      for _ <- 1..20, do: Characters.snapshot(id)
-
-      assert Characters.snapshot(id).ambushed, "a read resolved the ambush"
-      assert stored(id).ambushed, "the ambush was not there on reload"
-    end
-
-    test "and is only ever answered by fighting", %{id: id} do
-      Characters.mutate(id, &{%{&1 | ambushed: true}, :ok})
-      before = Characters.snapshot(id).total_battles
-
-      Characters.mutate(id, &Actions.fight/1)
-
-      # Answering it costs a fight, which is the whole point — the roll may hand out another
-      # ambush, so what is asserted is that one was fought, not that none remains.
-      assert Characters.snapshot(id).total_battles == before + 1
-    end
-  end
 end

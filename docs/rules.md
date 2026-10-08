@@ -10,7 +10,8 @@ quietly.
 ## 1. A character
 
 A character is one of four races (Human, Elf, Dark Elf, Orc) on one of two paths (Fighter or
-Mystic): eight starting sets. A character has a level from 1 to 80.
+Mystic): eight starting sets. A character has a level from 1 to 80, and starts at level 1 with no
+Adena.
 
 ## 2. The six attributes
 

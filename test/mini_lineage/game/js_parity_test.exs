@@ -126,8 +126,7 @@ defmodule MiniLineage.Game.JsParityTest do
   end
 
   test "roll_chance short-circuits at both ends without drawing" do
-    # Load-bearing for the draw order: an Elf's ambush risk is exactly 0 under the Newbie
-    # Blessing, and must consume no randomness at all.
+    # Load-bearing for the draw order: a chance of exactly 0 or 100 consumes no randomness.
     MiniLineage.Game.Rng.put_source(fn -> raise "drew randomness when it should not have" end)
 
     refute Math.roll_chance(0)

@@ -56,9 +56,7 @@ defmodule MiniLineage.CharacterLogTest do
       assert row.character_id == stored_id(session)
       # Every line by name, a line that did not happen as nil, so a log never re-rolls the prose.
       assert row.narrative |> Map.keys() |> Enum.sort() ==
-               Enum.sort(
-                 ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)
-               )
+               Enum.sort(~w(crit_line kill_line deflection_line outcome_line next_move))
 
       assert is_binary(row.narrative["outcome_line"])
     end
@@ -215,9 +213,12 @@ defmodule MiniLineage.CharacterLogTest do
          %{session: session} do
       start_character(session)
 
+      # The game has no debuff of its own today, so the test brings one.
+      curse = %{id: "test_curse", type: :debuff, emoji: "🧪", label: "Cursed", modifiers: []}
+
       Characters.mutate(
         session,
-        &{Player.apply_effect(&1, Constants.effect(:ambush_debuff)), :ok}
+        &{Player.apply_effect(&1, Map.put(curse, :duration_ms, 60_000)), :ok}
       )
 
       kinds = stored_id(session) |> recent() |> Enum.map(& &1.kind)

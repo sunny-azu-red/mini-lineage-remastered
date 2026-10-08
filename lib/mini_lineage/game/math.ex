@@ -1,7 +1,7 @@
 defmodule MiniLineage.Game.Math do
   @moduledoc """
   JS number semantics are reproduced deliberately: `js_round/1` rounds halves toward +infinity, and
-  `roll_chance/1` short-circuits at both ends WITHOUT drawing — an ambush risk of exactly 0 consumes
+  `roll_chance/1` short-circuits at both ends WITHOUT drawing — a chance of exactly 0 or 100 consumes
   no randomness, which the golden master's draw order depends on.
   """
   alias MiniLineage.Game.{Constants, Rng, Rules}
@@ -16,10 +16,6 @@ defmodule MiniLineage.Game.Math do
 
   # Distinct names (not aliases) so each roll reads as its own decision at the call site.
   def crit_chance?(chance), do: roll_chance(chance)
-  def ambush_chance?(chance), do: roll_chance(chance)
-
-  def ambush_enemy_count(enemies_killed, divisor),
-    do: max(1, Kernel.floor(enemies_killed / divisor))
 
   # hp
   def low_health_threshold(max_hp), do: Kernel.floor(max_hp * Constants.low_health_threshold())

@@ -14,7 +14,6 @@ defmodule MiniLineage.Game.AccessTest do
 
   defp unstarted, do: %Player{}
   defp dead, do: %{alive() | dead: true}
-  defp ambushed, do: %{alive() | ambushed: true}
 
   # Nothing on these can be acted on — not one `phx-click` between them — so there is nothing for
   # any state to be kept away from. The pin is about what may be DONE, not what may be read.
@@ -23,7 +22,7 @@ defmodule MiniLineage.Game.AccessTest do
   describe "every state" do
     for screen <- @readable do
       test "may read #{screen}, whoever they are" do
-        for player <- [unstarted(), alive(), ambushed(), dead()] do
+        for player <- [unstarted(), alive(), dead()] do
           assert Access.pin_screen(unquote(screen), player) == unquote(screen)
         end
       end
@@ -88,29 +87,6 @@ defmodule MiniLineage.Game.AccessTest do
         expected = if screen == "death", do: "death", else: "death"
         assert Access.pin_screen(screen, dead()) == expected, screen
       end
-    end
-  end
-
-  describe "an ambushed character" do
-    for target <- ~w(home inn weapons armors class_master symbol_maker start) do
-      test "is pinned to the battleground when trying to reach #{target}" do
-        assert Access.pin_screen(unquote(target), ambushed()) == "battle"
-      end
-    end
-
-    # Reading is not escaping. Walking off does not clear `ambushed`, so the moment they ask for a
-    # screen they could act on they are back in the fight, with the same ambush waiting on it.
-    test "but may still read, because none of that is a way out" do
-      for screen <- @readable do
-        assert Access.pin_screen(screen, ambushed()) == screen, screen
-      end
-
-      assert Access.pin_screen("home", ambushed()) == "battle"
-    end
-
-    # Death wins outright, because killing a player does not clear `ambushed`.
-    test "who is also dead goes to the death screen, not the battleground" do
-      assert Access.pin_screen("home", %{ambushed() | dead: true}) == "death"
     end
   end
 

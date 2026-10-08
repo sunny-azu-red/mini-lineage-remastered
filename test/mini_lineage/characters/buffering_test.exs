@@ -87,10 +87,10 @@ defmodule MiniLineage.Characters.BufferingTest do
       assert stored(id).health == persisted, "a regen tick reached the database"
     end
 
-    test "moving between screens, which cannot release an ambush pin", %{id: id} do
+    test "moving between screens", %{id: id} do
       start_character(id)
-      # `pin_screen/2` reads `dead` and `ambushed`, never `current_screen`, so a stale screen on
-      # disk cannot let a pinned player walk away from the battleground.
+      # `pin_screen/2` reads `dead`, never `current_screen`, so a stale screen on disk decides
+      # nothing.
       Characters.mutate(id, &{%{&1 | current_screen: "inn"}, :ok})
 
       assert Characters.snapshot(id).current_screen == "inn"

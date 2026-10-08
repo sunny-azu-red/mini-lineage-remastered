@@ -92,12 +92,11 @@ defmodule MiniLineageWeb.ThrottleAlertTest do
     refute has_element?(view, "#flash")
   end
 
-  test "an ambush, the road and the shop each say it their own way",
+  test "the road and the shop each say it their own way",
        %{conn: conn, session: session} do
     flood(session, :battle, 60)
     flood(session, :shop, 30)
 
-    # The shop first: an ambushed run is pinned to the Battleground.
     {:ok, shop, _} = live(conn, ~p"/shop/weapons")
     render_submit(shop, "purchase", %{"item_id" => "1", "type" => "weapon"})
     store = shop |> warning() |> LazyHTML.text()
@@ -106,12 +105,7 @@ defmodule MiniLineageWeb.ThrottleAlertTest do
     render_click(view, "fight")
     road = view |> warning() |> LazyHTML.text()
 
-    Characters.mutate(session, &{%{&1 | ambushed: true}, {:ok, nil}})
-    render_click(view, "fight")
-    ambush = view |> warning() |> LazyHTML.text()
-
     assert road =~ "seek another fight"
-    assert ambush =~ "The ambush waits"
     assert store =~ "shopkeeper"
   end
 end

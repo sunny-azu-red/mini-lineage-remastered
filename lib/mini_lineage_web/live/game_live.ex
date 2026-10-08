@@ -590,12 +590,7 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   # What happened, closed by its emoji rather than a stop, then what to do about it: a line each,
-  # so the wait is never stranded. Only the ambush waits out the pause, so only it is told apart.
-  defp throttled(:battle, %{ambushed: true, dead: false}, wait),
-    do:
-      "Your arm cannot swing that fast 💢<br />" <>
-        "The ambush waits, so strike again in&nbsp;#{wait}."
-
+  # so the wait is never stranded.
   defp throttled(:battle, _view, wait),
     do: "You are out of breath 😮‍💨<br />Rest a moment and seek another fight in&nbsp;#{wait}."
 
@@ -616,11 +611,7 @@ defmodule MiniLineageWeb.GameLive do
       character_id={@character_id}
     >
       <Controls.flash_alert :if={@game_flash} flash={@game_flash} />
-      <Controls.low_health
-        :if={Screens.low_health_alert?(@view, @screen)}
-        ambushed={@view.ambushed}
-        ambush_line={@view.ambush_low_health}
-      />
+      <Controls.low_health :if={Screens.low_health_alert?(@view, @screen)} />
 
       <:aside :if={Screens.aside?(@screen, @record)}>
         <Screens.aside

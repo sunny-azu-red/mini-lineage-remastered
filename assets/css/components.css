@@ -335,7 +335,7 @@ ol.chronicle li:last-child::after {
 
 /* The shape of every marked row; the colour is each row's own, so none overrides a default. */
 .stat-row.danger,
-ol.chronicle li:is(.ambushed, .start, .level-up, .class-change, .purchase) {
+ol.chronicle li:is(.start, .level-up, .class-change, .purchase) {
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
@@ -560,15 +560,6 @@ ol.chronicle {
 }
 
 /* Each washed like the alert that would announce it. */
-ol.chronicle li.ambushed {
-    background-color: var(--wash-danger);
-}
-
-/* What waits, in the alert's own voice. */
-ol.chronicle li.ambushed .threat {
-    color: var(--text-danger);
-}
-
 ol.chronicle li.start {
     background-color: var(--wash-info);
 }

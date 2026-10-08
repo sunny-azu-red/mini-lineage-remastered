@@ -20,7 +20,6 @@ defmodule MiniLineage.Game.Actions do
     not_started: "You haven't started your journey yet, so create a character first.",
     already_started: "You already have a character. Restart if you want to begin again.",
     dead: "You are dead. There is nothing left to do but restart.",
-    ambushed: "Not while you are being ambushed. Face the fight first.",
     not_dead: "You're still alive, and this action is only for the fallen.",
     invalid: "That is not something you can do."
   }
@@ -36,7 +35,6 @@ defmodule MiniLineage.Game.Actions do
 
   defp started, do: [{:not_started, &(not Player.started?(&1))}]
   defp alive, do: started() ++ [{:dead, & &1.dead}]
-  defp at_ease, do: alive() ++ [{:ambushed, & &1.ambushed}]
 
   # ------------------------------------------------------------------- start
 
@@ -81,37 +79,29 @@ defmodule MiniLineage.Game.Actions do
 
   # ------------------------------------------------------------------ battle
 
-  @doc """
-  Succeeds identically whether or not `ambushed` was already true — an ambush is resolved by
-  fighting again, with no penalty for having navigated away. Simulation runs ONLY from here,
-  never on mount, reconnect or page load.
-  """
+  @doc "Simulation runs ONLY from here, never on mount, reconnect or page load."
   def fight(player), do: guard(player, alive(), &do_fight/1)
 
   defp do_fight(player) do
     # Stamped directly rather than relying on a separate screen report, which could land out of
     # order and miscompute the zone.
-    {player, _} = Player.sync_zone_auras(%{player | ambushed: false, current_screen: "battle"})
+    {player, _} = Player.sync_zone_auras(%{player | current_screen: "battle"})
 
     outcome = Battle.simulate(player)
     {player, level_up?} = Player.resolve_battle_outcome(player, outcome)
     outcome = %{outcome | is_level_up: level_up?}
 
     died = player.dead
-    # Cleared above, so only a fight the run walked away from can raise it again.
-    player = if died, do: player, else: roll_ambush(player)
-    ambushed = player.ambushed
 
     sound =
       cond do
         died -> "death"
         level_up? -> "level"
-        ambushed -> "ambush"
         outcome.is_critical -> "crit"
         true -> nil
       end
 
-    narrative = Narrative.build_battle(player, outcome, ambushed)
+    narrative = Narrative.build_battle(player, outcome)
 
     # Stamped here, not at the insert: a row can sit in the process buffer, and the Chronicle says
     # when the fight happened rather than when it was written.
@@ -150,25 +140,6 @@ defmodule MiniLineage.Game.Actions do
       end
 
     {player, {:ok, %{flash: flash, sound: sound}}}
-  end
-
-  defp roll_ambush(player) do
-    if Math.ambush_chance?(Player.stats(player).ambush_risk) do
-      player = %{
-        player
-        | ambushed: true,
-          total_ambushes: player.total_ambushes + 1,
-          consecutive_ambushes: player.consecutive_ambushes + 1
-      }
-
-      Statistics.increment_for(player, :total_ambushes)
-
-      if player.consecutive_ambushes >= 2,
-        do: Player.apply_effect(player, Constants.effect(:ambush_debuff)),
-        else: player
-    else
-      %{player | consecutive_ambushes: 0}
-    end
   end
 
   # -------------------------------------------------------------------- shop
@@ -212,7 +183,7 @@ defmodule MiniLineage.Game.Actions do
 
   @doc "Takes up one of the classes the run's own class leads to, once its level allows."
   def transfer(player, class_id) do
-    guard(player, at_ease(), fn player ->
+    guard(player, alive(), fn player ->
       with {:ok, class} <- next_class(player, class_id),
            :ok <- reached(player, class.level) do
         {player, line} = Player.transfer(player, class)
@@ -243,7 +214,7 @@ defmodule MiniLineage.Game.Actions do
 
   @doc "Draws a dye into a free slot, paying for the dyes it takes and the Symbol Maker's fee."
   def draw_dye(player, dye_id) do
-    guard(player, at_ease(), fn player ->
+    guard(player, alive(), fn player ->
       class = Classes.get(Player.class_id(player))
       slots = Dyes.slots(class)
 
@@ -258,7 +229,7 @@ defmodule MiniLineage.Game.Actions do
 
   @doc "Washes away the dye in a slot, for the Symbol Maker's fee. Nothing comes back."
   def remove_dye(player, slot) do
-    guard(player, at_ease(), fn player ->
+    guard(player, alive(), fn player ->
       case Integer.parse(to_string(slot)) do
         {index, ""} when index >= 0 and index < length(player.dyes) ->
           player |> Player.remove_dye(index) |> dye_result("buy")

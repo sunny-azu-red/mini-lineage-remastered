@@ -77,7 +77,6 @@ defmodule MiniLineageWeb.Layouts do
               data-screen={@screen}
               data-started={to_string(@view.started)}
               data-dead={to_string(@view.dead)}
-              data-ambushed={to_string(@view.ambushed)}
               data-battles={@view.counters.total_battles}
             >
               <:header>

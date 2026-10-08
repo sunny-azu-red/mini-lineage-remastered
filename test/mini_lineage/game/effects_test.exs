@@ -1,8 +1,8 @@
 defmodule MiniLineage.Game.EffectsTest do
   @moduledoc """
   What happens when one effect meets another. A second meal replaces the first rather than stacking,
-  or a player could carry three times the health the balance was built around. The Hexed debuff has
-  no group and so is its own case.
+  or a player could carry three times the health the balance was built around. The Cheater's Mark
+  has no group and so is its own case.
   """
   use ExUnit.Case, async: true
 
@@ -51,11 +51,11 @@ defmodule MiniLineage.Game.EffectsTest do
 
   describe "an effect with no group" do
     test "sits alongside a food buff rather than replacing it" do
-      hexed = Constants.effects().ambush_debuff
-      player = hero() |> fed(4) |> Player.apply_effect(hexed)
+      mark = Constants.effects().konami_cheat
+      player = hero() |> fed(4) |> Player.apply_effect(mark)
 
       assert length(food_buffs(player)) == 1
-      assert Enum.any?(player.effects, &(&1.id == hexed.id))
+      assert Enum.any?(player.effects, &(&1.id == mark.id))
     end
   end
 
@@ -63,11 +63,11 @@ defmodule MiniLineage.Game.EffectsTest do
   # must not move the effect either, or one re-eaten meal would reorder the departures.
   describe "the order effects are held in" do
     test "is the order they arrived, and a refresh keeps its place" do
-      hexed = Constants.effect(:ambush_debuff)
-      player = hero() |> fed(2) |> Player.apply_effect(hexed) |> fed(2)
+      mark = Constants.effect(:konami_cheat)
+      player = hero() |> fed(2) |> Player.apply_effect(mark) |> fed(2)
 
       assert Enum.map(player.effects, & &1.id) |> Enum.reject(&(&1 in ~w(resting combat))) ==
-               ["newbie_blessing", "satisfied", "hexed"]
+               ["newbie_blessing", "satisfied", "konami_cheat"]
     end
   end
 
@@ -119,10 +119,8 @@ defmodule MiniLineage.Game.EffectsTest do
 
       assert flash.text == Narrative.alert(began.line)
 
-      assert began.line =~
-               ~r/\{they\} set out as a \w+ (youth|adult|elder) of \d+ seasons, bearing a /
-
-      assert began.line =~ "🪙 450 Adena</span> tribute."
+      assert began.line =~ ~r/\{they\} set out as a \w+ (youth|adult|elder) of \d+ seasons\.$/
+      refute began.line =~ "Adena", "a new character has no Adena to set out with"
       refute flash.text =~ ~r/\{[a-z]+\}/
     end
   end

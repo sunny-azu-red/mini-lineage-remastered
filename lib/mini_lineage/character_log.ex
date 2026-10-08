@@ -11,7 +11,7 @@ defmodule MiniLineage.CharacterLog do
 
   # Named rather than derived from the row: the narrative comes back out of the database, and every
   # atom it turns into is one this module names itself.
-  @narrative_keys ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
+  @narrative_keys ~w(crit_line kill_line deflection_line outcome_line next_move)a
 
   # Whitelisted here and not in the database, so a new kind is a line of Elixir, not a migration.
   @kinds ~w(fight start purchase level_up class_change dye cheat ending buff debuff)
@@ -117,17 +117,9 @@ defmodule MiniLineage.CharacterLog do
   end
 
   # A fight keeps the shape the battle screen knows; everything else is one line, told apart by
-  # `kind`. Only an ambush draws an ambush line.
-  defp to_entry(%Entry{kind: "fight"} = e, number) do
-    battle = to_battle(e)
-
-    Map.merge(battle, %{
-      id: e.id,
-      number: number,
-      kind: "fight",
-      ambushed: battle.narrative.ambush_line != nil
-    })
-  end
+  # `kind`.
+  defp to_entry(%Entry{kind: "fight"} = e, number),
+    do: Map.merge(to_battle(e), %{id: e.id, number: number, kind: "fight"})
 
   defp to_entry(%Entry{} = e, number),
     do: %{id: e.id, number: number, kind: e.kind, at: e.inserted_at, line: e.narrative["line"]}

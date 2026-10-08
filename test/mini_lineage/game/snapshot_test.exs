@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.SnapshotTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Classes, Constants, Format, Formulas, Math, Narrative, Player, Snapshot}
+  alias MiniLineage.Game.{Classes, Constants, Format, Formulas, Math, Player, Snapshot}
 
   defp born(race_id, archetype) do
     class = Classes.starting(race_id, archetype)
@@ -46,7 +46,6 @@ defmodule MiniLineage.Game.SnapshotTest do
                  Enum.map(Constants.races(), fn race ->
                    Map.merge(race, %{
                      slug: Format.slugify(race.label),
-                     traits: Narrative.build_race_traits(race),
                      classes: Enum.map([:fighter, :mystic], &born(race.id, &1))
                    })
                  end),
@@ -109,9 +108,7 @@ defmodule MiniLineage.Game.SnapshotTest do
     end
   end
 
-  test "an ambushed character says so, and a dead one carries nothing but the ghost" do
-    assert Snapshot.build(character(0, %{ambushed: true})).ambushed
-
+  test "a dead character carries nothing but the ghost" do
     # `kill/1` empties the effect list; the ghost is derived from being dead rather than carried,
     # and holds no modifiers, so nothing a run had survives it and nothing new is folded in.
     effects = Snapshot.build(Player.kill(character())).effects
@@ -131,7 +128,7 @@ defmodule MiniLineage.Game.SnapshotTest do
     view = Snapshot.build(character())
     blessing = Enum.find(view.effects, &(&1.id == "newbie_blessing"))
 
-    assert blessing.tooltip == "Newbie Blessing (+20 Max HP, +2 P. Def., -4% Ambush)"
+    assert blessing.tooltip == "Newbie Blessing (+20 Max HP, +2 P. Def.)"
   end
 
   test "an effect's remaining time is a duration, never a deadline" do

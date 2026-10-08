@@ -16,6 +16,9 @@ config :mini_lineage, tick_interval_ms: 3_000
 # Chronicle entries per page; the next page loads as the reader nears the end.
 config :mini_lineage, chronicle_page: 25
 
+# What a new character carries: none, as docs/rules.md §1 says.
+config :mini_lineage, starting_adena: 0
+
 # How long a `<.stamp>` says an age ("4m ago") before it names the date instead.
 config :mini_lineage, stamp_relative_days: 7
 

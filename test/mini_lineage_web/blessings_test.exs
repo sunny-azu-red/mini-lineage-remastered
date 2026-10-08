@@ -84,8 +84,6 @@ defmodule MiniLineageWeb.BlessingsTest do
       assert section =~ "Newbie Blessing"
       assert section =~ "+20 Max HP"
       assert section =~ "+2 P. Def."
-      # A modifier that takes something away says so, rather than reading as a gift.
-      assert section =~ "-4% Ambush Risk"
     end
 
     test "with the figures coloured the way the rest of the page colours them" do
@@ -93,7 +91,6 @@ defmodule MiniLineageWeb.BlessingsTest do
 
       assert section =~ ~s(<span class="hp">+20 Max HP</span>)
       assert section =~ ~s(<span class="defense">+2 P. Def.</span>)
-      assert section =~ ~s(<span class="ambush">-4% Ambush Risk</span>)
     end
 
     # A multiplier is not a delta: "4x XP" is right where "+4x XP" would be nonsense.
@@ -124,11 +121,11 @@ defmodule MiniLineageWeb.BlessingsTest do
 
   describe "an effect that lapses" do
     test "says how long is left, for the hook to keep repainting" do
-      section = blessings(bearer([:ambush_debuff]))
+      section = blessings(bearer([:newbie_buff]))
 
       assert section =~ ~s(data-timer="long")
       assert section =~ ~s(data-remaining-ms=)
-      assert text(section) =~ "It lifts in 1m"
+      assert text(section) =~ "It holds for another 5m"
     end
 
     test "while one that never does says nothing about a clock" do

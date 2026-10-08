@@ -121,13 +121,6 @@ defmodule MiniLineage.Game.ZoneAuraTest do
     assert aura(player) == nil
   end
 
-  test "an ambush holds you in combat wherever you claim to be", %{player: player} do
-    {player, _} = move(%{player | ambushed: true}, "inn")
-
-    assert aura(player).id == "combat"
-    assert aura(player).expires_at == nil, "an ambush is not a disengage"
-  end
-
   test "the dead get no aura", %{player: player} do
     {player, _} = move(player, "battle")
     {player, _} = move(%{player | dead: true}, "battle")

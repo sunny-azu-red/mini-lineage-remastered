@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, PURSE, reporter, traceAudio, controls, readWhole } from './helpers.mjs';
+import { BASE, PURSE, START_ADENA, reporter, traceAudio, controls, readWhole } from './helpers.mjs';
 
 const TICK_MS = 6000; // the regen tick is 3s; allow a margin
 
@@ -164,7 +164,7 @@ try {
 
     check('creating a character lands on Town', born.screen === 'home');
     check('...at full health', born.health === born.maxHealth, `${born.health}/${born.maxHealth}`);
-    check('...with the Orc purse', born.adena === 250, String(born.adena));
+    check('...with the suites\' purse', born.adena === START_ADENA, String(born.adena));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
 
     // ---- a flash belongs to its action, and to nothing after it -------------------------------
@@ -313,7 +313,7 @@ try {
     await travel('weapons');
     check('...and so does the Weapon Shop',
         await page.evaluate(() => document.activeElement?.getAttribute('name')) === 'item_id');
-    await page.selectOption('#main select[name="item_id"]', '1'); // Elven Needle, 300 — unaffordable
+    await page.selectOption('#main select[name="item_id"]', '2'); // Stormbringer, 5000 — unaffordable
     await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
     await page.waitForSelector('#main .alert-danger', { timeout: 8000 });
     check('an unaffordable weapon is refused, not an error page',
@@ -366,7 +366,7 @@ try {
 
     // Arriving by mouse focuses without :focus-visible, so the ring must come from plain :focus.
     // Named by colour, since the base drop shadow alone differs from idle; the ring is the text's
-    // own colour, so an ambush on arrival rings red.
+    // own colour.
     const ringed = (tell) => {
         const el = document.activeElement;
         if (!el?.matches('#main .btn')) return tell && `focus is on ${el?.tagName ?? 'nothing'}, not a button`;
@@ -388,9 +388,8 @@ try {
 
     // ---- a fight wounds, and a meal heals --------------------------------------------------------
     // Driven, not waited for: nothing mends on the battleground, so it stays hurt until it leaves and
-    // the heal is caused rather than hoped for. Also fights out any ambush, which pins it here.
-    while (fightsFought < 8 && !current.dead
-        && (current.health === current.maxHealth || current.ambushed)) {
+    // the heal is caused rather than hoped for.
+    while (fightsFought < 8 && !current.dead && current.health === current.maxHealth) {
         await fight();
         fightsFought++;
         current = await state();
@@ -399,18 +398,18 @@ try {
     check('fighting wounds the character', current.health < current.maxHealth,
         `${current.health}/${current.maxHealth} after arrival and ${fightsFought} further fight(s)`);
     check('...and narrates the encounter', await page.locator('#main p').count() > 0);
-    // Only a long run of ambushes can end the Orc or hold it here before the Inn. That is the game
-    // working, not failing, so the meal is then skipped and the run says so.
-    if (current.dead || current.ambushed)
-        console.log(`   (no meal this run: dead=${current.dead} ambushed=${current.ambushed} after ${fightsFought} fight(s))`);
+    // A long run of bad rolls can end the Orc before the Inn. That is the game working, not
+    // failing, so the meal is then skipped and the run says so.
+    if (current.dead)
+        console.log(`   (no meal this run: dead after ${fightsFought} fight(s))`);
 
-    if (!current.dead && !current.ambushed) {
+    if (!current.dead) {
         await goHome();
         await travel('inn');
         const wounded = await state();
         // Stands in for the shimmer the hook sets, which a patch moving the bar used to wipe.
         await page.evaluate(() => document.querySelector('#hp-bar').classList.add('kept-by-hook'));
-        const bought = await buy(0); // Spiced Ale, 7 adena — inside every lineage's opening purse
+        const bought = await buy(0); // Spiced Ale, 7 adena
         const healed = await state();
 
         check('a meal heals the wounded', bought && healed.health > wounded.health,
@@ -432,7 +431,7 @@ try {
         fightsFought++;
         current = await state();
         // The battlefield is played by hammering one button, so it has to still be under the
-        // keyboard afterwards — including across an ambush, which swaps it for a different button.
+        // keyboard afterwards.
         if (!current.dead && !focusLeftTheFight)
             focusLeftTheFight = await page.evaluate(
                 () => document.activeElement?.getAttribute('phx-click') !== 'fight');

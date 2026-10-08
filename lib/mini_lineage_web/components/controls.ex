@@ -310,19 +310,12 @@ defmodule MiniLineageWeb.Controls do
     """
   end
 
-  attr :ambushed, :boolean, default: false
-  attr :ambush_line, :string, default: nil
-
   def low_health(assigns) do
     ~H"""
     <.alert id="low-health-alert" kind={:danger}>
-      Your HP is dangerously low ‼️<br />
-      <%= if @ambushed do %>
-        {@ambush_line}
-      <% else %>
-        You should buy some food from the 🍺 <.link patch={Paths.for_screen("inn")}>Inn</.link>
-        to regain your strength.
-      <% end %>
+      Your HP is dangerously low ‼️<br /> You should buy some food from the 🍺
+      <.link patch={Paths.for_screen("inn")}>Inn</.link>
+      to regain your strength.
     </.alert>
     """
   end
@@ -485,7 +478,7 @@ defmodule MiniLineageWeb.Controls do
 
   @doc false
   # A figure and the noun it counts, apart, so only the figure tweens. At one there is no figure
-  # at all: "a cunning ambush" is a word.
+  # at all: "a Human" is a word.
   def counted(%{count: 1} = assigns) do
     ~H|<span class={@class}>{Format.pluralize(@singular, @plural, 1, @emoji)}</span>|
   end

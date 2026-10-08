@@ -8,10 +8,8 @@ defmodule MiniLineage.Game.Constants do
       plural: "Humans",
       emoji: "🧙",
       enemy_race_id: 1,
-      start_adena: 300,
-      ambush_chance: 8,
       backstory:
-        "The most adaptable of all lineages. A Human Fighter is strong and hardy without leaning too far either way, and a Human Mystic pairs a sharp mind with a steady spirit. They start with a modest inheritance and keep a vigilant eye on the road."
+        "The most adaptable of all lineages. A Human Fighter is strong and hardy without leaning too far either way, and a Human Mystic pairs a sharp mind with a steady spirit."
     },
     %{
       id: 1,
@@ -19,10 +17,8 @@ defmodule MiniLineage.Game.Constants do
       plural: "Orcs",
       emoji: "🧟",
       enemy_race_id: 0,
-      start_adena: 250,
-      ambush_chance: 16,
       backstory:
-        "Towering warriors of immense physical resilience. No Fighter is born with a hardier constitution than an Orc's, nor any Mystic with a stronger spirit, so their wounds close faster than anyone's. Their hands are the clumsiest of the four, and their massive presence makes them easy targets for ambushes."
+        "Towering warriors of immense physical resilience. No Fighter is born with a hardier constitution than an Orc's, nor any Mystic with a stronger spirit, so their wounds close faster than anyone's. Their hands are the clumsiest of the four."
     },
     %{
       id: 2,
@@ -30,10 +26,8 @@ defmodule MiniLineage.Game.Constants do
       plural: "Elves",
       emoji: "🧝",
       enemy_race_id: 3,
-      start_adena: 450,
-      ambush_chance: 4,
       backstory:
-        "Swift, wealthy, and favored by nature. An Elven Fighter is the most dexterous of all, striking true and often, and an Elven Mystic thinks faster on their feet than any other. Their frames are the most fragile of the races, but they are hard to surprise and start with significant gold."
+        "Swift and favored by nature. An Elven Fighter is the most dexterous of all, striking true and often, and an Elven Mystic thinks faster on their feet than any other. Their frames are lighter than a Human's or an Orc's."
     },
     %{
       id: 3,
@@ -41,10 +35,8 @@ defmodule MiniLineage.Game.Constants do
       plural: "Dark Elves",
       emoji: "🧛",
       enemy_race_id: 2,
-      start_adena: 350,
-      ambush_chance: 5,
       backstory:
-        "Lethal stalkers of the night. A Dark Fighter hits harder than any other, and a Dark Mystic's intellect has no equal, which makes their magic the most dangerous in the realm. Both pay for it with the frailest constitutions of all, and they keep their wits about them on the road."
+        "Lethal stalkers of the night. A Dark Fighter hits harder than any other, and a Dark Mystic's intellect has no equal, which makes their magic the most dangerous in the realm. Both pay for it with the frailest constitutions of all."
     }
   ]
 
@@ -70,17 +62,8 @@ defmodule MiniLineage.Game.Constants do
       duration_ms: 300_000,
       modifiers: [
         %{type: :max_hp, value: 20},
-        %{type: :p_def, value: 2},
-        %{type: :ambush_risk, value: -4}
+        %{type: :p_def, value: 2}
       ]
-    },
-    ambush_debuff: %{
-      id: "hexed",
-      type: :debuff,
-      emoji: "👁️",
-      label: "Hexed",
-      duration_ms: 60_000,
-      modifiers: [%{type: :ambush_risk, value: 4}, %{type: :critical, value: -2}]
     },
     konami_cheat: %{
       id: "konami_cheat",
@@ -236,7 +219,6 @@ defmodule MiniLineage.Game.Constants do
     hp_regen: %{label: "HP Regen"},
     mp_regen: %{label: "MP Regen"},
     critical: %{label: "Critical", percentage?: true},
-    ambush_risk: %{label: "Ambush", percentage?: true},
     p_atk: %{label: "P. Atk."},
     p_def: %{label: "P. Def."},
     xp_multiplier: %{label: "XP", multiplier?: true},

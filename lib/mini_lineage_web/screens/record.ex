@@ -45,9 +45,6 @@ defmodule MiniLineageWeb.Screens.Record do
     <%!-- One hook counts every [data-value] beneath it; only names and dates jump. --%>
     <div id="record-figures" phx-hook="AnimatedValues">
       <h2>{@race.emoji} {@view.name} of {@race.label} Ancestry</h2>
-      <%!-- What the lineage gave this run, told to its reader; the lore is the Chronicles of
-            Ancestry's to tell. --%>
-      <p>{raw(voiced(@race.traits, @mine))}</p>
 
       <.blessings :if={@effects != []} effects={@effects} voice={@voice} />
 
@@ -62,7 +59,7 @@ defmodule MiniLineageWeb.Screens.Record do
         {@voice.they} {if @dead, do: "struck", else: "strike"} with <span class="attack"><.figure key="rec-p-atk" value={trunc(@stats.p_atk)} id="char-stat-p-atk" /> P. Atk.</span> and <span class="magic"><.figure key="rec-m-atk" value={trunc(@stats.m_atk)} id="char-stat-m-atk" /> M. Atk.</span>, {if @dead, do: "turned", else: "turn"} blows aside with <span class="defense"><.figure key="rec-p-def" value={trunc(@stats.p_def)} id="char-stat-p-def" /> P. Def.</span> and <span class="defense"><.figure key="rec-m-def" value={trunc(@stats.m_def)} id="char-stat-m-def" /> M. Def.</span>, and {if @dead, do: "found", else: "find"} the mark with <span class="accuracy"><.figure key="rec-accuracy" value={@stats.accuracy} id="char-stat-accuracy" /> Accuracy</span> while slipping blows with <span class="evasion"><.figure key="rec-evasion" value={@stats.evasion} id="char-stat-evasion" /> Evasion</span>.
       </p>
       <p phx-no-format>
-        {@voice.whose} blows {if @dead, do: "ran", else: "run"} at <span class="crit"><.figure key="rec-crit" value={round(@stats.critical)} id="char-stat-crit" />% Critical</span> and {@voice.their} spells at <span class="crit"><.figure key="rec-m-crit" value={round(@stats.magic_critical)} id="char-stat-m-crit" />% Magic Critical</span>, swinging at <span class="speed"><.figure key="rec-atk-spd" value={@stats.atk_spd} id="char-stat-atk-spd" /> Atk. Spd.</span> and casting at <span class="speed"><.figure key="rec-cast-spd" value={@stats.cast_spd} id="char-stat-cast-spd" /> Casting Spd.</span> At rest {@voice.them} {if @dead, do: "mended", else: "mend"} <span class="regen"><.figure key="rec-regen" value={Math.js_round(@stats.hp_regen)} id="char-stat-regen" /> HP</span> and <span class="mp"><.figure key="rec-mp-regen" value={Math.js_round(@stats.mp_regen)} id="char-stat-mp-regen" /> MP</span> every three seconds, while navigating the roads with a <span class="ambush"><.figure key="rec-ambush" value={@stats.ambush_risk} id="char-stat-ambush" />% Ambush Risk</span>.
+        {@voice.whose} blows {if @dead, do: "ran", else: "run"} at <span class="crit"><.figure key="rec-crit" value={round(@stats.critical)} id="char-stat-crit" />% Critical</span> and {@voice.their} spells at <span class="crit"><.figure key="rec-m-crit" value={round(@stats.magic_critical)} id="char-stat-m-crit" />% Magic Critical</span>, swinging at <span class="speed"><.figure key="rec-atk-spd" value={@stats.atk_spd} id="char-stat-atk-spd" /> Atk. Spd.</span> and casting at <span class="speed"><.figure key="rec-cast-spd" value={@stats.cast_spd} id="char-stat-cast-spd" /> Casting Spd.</span> At rest {@voice.them} {if @dead, do: "mended", else: "mend"} <span class="regen"><.figure key="rec-regen" value={Math.js_round(@stats.hp_regen)} id="char-stat-regen" /> HP</span> and <span class="mp"><.figure key="rec-mp-regen" value={Math.js_round(@stats.mp_regen)} id="char-stat-mp-regen" /> MP</span> every three seconds.
       </p>
 
       <h2>{if @dead, do: "☠️ #{@voice.whose} Journey Has Ended", else: "🧭 The Journey So Far"}</h2>
@@ -83,18 +80,7 @@ defmodule MiniLineageWeb.Screens.Record do
           singular={@opponent.label}
           plural={@opponent.plural}
           emoji={@opponent.emoji}
-        />
-        <%= if @view.counters.total_ambushes > 0 do %>
-          and overcoming
-          <Controls.counted
-            key="rec-ambushes"
-            count={@view.counters.total_ambushes}
-            singular="cunning ambush"
-            plural="cunning ambushes"
-            class="ambush"
-          />
-        <% end %>
-        along the way.
+        /> along the way.
       </p>
 
       <%= if @dead do %>
@@ -178,7 +164,6 @@ defmodule MiniLineageWeb.Screens.Record do
   defp deed_colour(_deed), do: []
 
   # A class only on a row the stylesheet paints, each washed like the alert that would announce it.
-  defp painted(%{kind: "fight", ambushed: true}), do: [class: "ambushed"]
   defp painted(%{kind: "start"}), do: [class: "start"]
   defp painted(%{kind: "level_up"}), do: [class: "level-up"]
   defp painted(%{kind: "class_change"}), do: [class: "class-change"]
@@ -246,15 +231,12 @@ defmodule MiniLineageWeb.Screens.Record do
               <span>&num;{entry.number}</span>
             </div>
             <%= if entry.kind == "fight" do %>
-              <%!-- Every line the fight drew, in order, bar the two that were button labels. A
-                    line added to `Narrative.build_battle/3` belongs here too. --%>
+              <%!-- Every line the fight drew, in order, bar the one that was a button label. A
+                    line added to `Narrative.build_battle/2` belongs here too. --%>
               <span :if={entry.narrative.crit_line}>{raw(voiced(entry.narrative.crit_line, @mine))} </span>{raw(
                 voiced(entry.narrative.kill_line, @mine)
               )} {raw(voiced(entry.narrative.deflection_line, @mine))}
               {raw(voiced(entry.narrative.outcome_line, @mine))}
-              <span :if={entry.narrative.ambush_line} class="threat">{raw(
-                voiced(entry.narrative.ambush_line, @mine)
-              )}</span>
             <% else %>
               <span {deed_colour(entry.kind)}>{raw(voiced(entry.line, @mine))}</span>
             <% end %>

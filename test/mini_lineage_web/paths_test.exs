@@ -49,8 +49,7 @@ defmodule MiniLineageWeb.PathsTest do
     end
 
     test "while a place you can stand in keeps its own" do
-      # An ambush pins you to the Battleground, which is somewhere you are rather than something
-      # that happened to you, so it keeps a URL.
+      # The Battleground is somewhere you are rather than something that happened to you.
       assert Paths.for_screen("battle") == "/battle"
       # A record is addressed by whose it is, so it has no screen-level path at all.
       assert Paths.for_character("abc123") == "/character/abc123"
