@@ -30,6 +30,7 @@ defmodule MiniLineage.Game.Player do
             dyes: [],
             dead: false,
             ambushed: false,
+            # Read, never set: runs that took their own lives before Commit Suicide was removed.
             coward: false,
             cheated: false,
             death_reason: nil,
@@ -132,20 +133,12 @@ defmodule MiniLineage.Game.Player do
     resolve_death_reason(player)
   end
 
-  def commit_suicide(player) do
-    # Must be set BEFORE kill/1, whose resolve_death_reason picks the branch on it.
-    kill(%{player | coward: true})
-  end
-
   @doc "Fixed once, at time of death, so it is never re-randomized on re-render."
   def resolve_death_reason(%{death_reason: reason} = player) when reason not in [nil, ""],
     do: player
 
   def resolve_death_reason(%{cheated: true} = player),
     do: %{player | death_reason: Narratives.death_cheated()}
-
-  def resolve_death_reason(%{coward: true} = player),
-    do: %{player | death_reason: Narratives.death_coward()}
 
   def resolve_death_reason(player),
     do: %{player | death_reason: Math.random_element(Narratives.death())}

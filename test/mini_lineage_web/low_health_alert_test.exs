@@ -55,10 +55,6 @@ defmodule MiniLineageWeb.LowHealthAlertTest do
     refute Screens.low_health_alert?(view(), "inn")
   end
 
-  test "stays quiet on Suicide, where it would read as encouragement" do
-    refute Screens.low_health_alert?(view(), "suicide")
-  end
-
   test "stays quiet where there is no HP on screen at all" do
     for screen <- ~w(character highscores statistics races start error) do
       refute Screens.low_health_alert?(view(), screen), screen

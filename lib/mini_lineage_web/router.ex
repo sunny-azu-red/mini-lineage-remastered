@@ -22,7 +22,6 @@ defmodule MiniLineageWeb.Router do
     live "/inn", GameLive, :inn
     live "/class-master", GameLive, :class_master
     live "/symbol-maker", GameLive, :symbol_maker
-    live "/suicide", GameLive, :suicide
 
     # Every record is public, being on the board, so there is nothing here to gate.
     live "/character/:id", GameLive, :character

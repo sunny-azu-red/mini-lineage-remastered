@@ -8,7 +8,6 @@ defmodule MiniLineageWeb.Paths do
     {"inn", "/inn"},
     {"class_master", "/class-master"},
     {"symbol_maker", "/symbol-maker"},
-    {"suicide", "/suicide"},
     {"highscores", "/highscores"},
     {"statistics", "/statistics"},
     {"races", "/races"},

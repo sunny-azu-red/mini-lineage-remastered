@@ -409,7 +409,7 @@ defmodule MiniLineageWeb.Controls do
 
   @doc """
   One `<select>` driving a companion button's label and variant — the shared form behind Town, the
-  shops and Suicide. Submitting with the placeholder selected is a legitimate "go home", so the
+  shops, the Class Master and the Symbol Maker. Submitting with the placeholder selected is a legitimate "go home", so the
   button is never disabled; until the PLAYER picks, it reads `default_label`.
   """
   # LiveView restores a form's pick after a reconnect only when the form has an id.
@@ -420,9 +420,9 @@ defmodule MiniLineageWeb.Controls do
   attr :placeholder, :string, default: nil
   attr :picked, :string, default: nil
   attr :default_label, :string, required: true
-  attr :active_label, :any, required: true
+  attr :active_label, :string, required: true
   attr :default_variant, :atom, default: :secondary
-  attr :active_variant, :any, default: :primary
+  attr :active_variant, :atom, default: :primary
   slot :hidden
 
   def select_action_form(assigns) do
@@ -431,10 +431,8 @@ defmodule MiniLineageWeb.Controls do
 
     assigns =
       assign(assigns,
-        label:
-          if(chosen?, do: resolve(assigns.active_label, picked), else: assigns.default_label),
-        variant:
-          if(chosen?, do: resolve(assigns.active_variant, picked), else: assigns.default_variant)
+        label: if(chosen?, do: assigns.active_label, else: assigns.default_label),
+        variant: if(chosen?, do: assigns.active_variant, else: assigns.default_variant)
       )
 
     ~H"""
@@ -459,9 +457,6 @@ defmodule MiniLineageWeb.Controls do
     </form>
     """
   end
-
-  defp resolve(fun, value) when is_function(fun, 1), do: fun.(value)
-  defp resolve(value, _picked), do: value
 
   attr :key, :string, required: true
   attr :value, :integer, required: true

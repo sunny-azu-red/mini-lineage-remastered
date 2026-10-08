@@ -297,18 +297,6 @@ defmodule MiniLineage.Game.Actions do
 
   # ------------------------------------------------------------------ player
 
-  def suicide(player) do
-    guard(player, alive(), fn player ->
-      player = Player.commit_suicide(player)
-
-      # A run that ends in a fight has the fight row to say so; this one needs an ending of its own.
-      player = Player.log(player, Player.event("ending", player.death_reason))
-      Statistics.increment(:total_players_suicided)
-
-      {%{player | current_screen: "death"}, {:ok, nil}}
-    end)
-  end
-
   # No `alive` guard: a dead player is pinned to 'death' anyway, and dead players get no aura, so
   # recording their screen is harmless.
   def set_screen(player, screen) do

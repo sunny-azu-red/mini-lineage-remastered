@@ -25,7 +25,7 @@ list wins — several generator defaults do not exist here.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
 - **One LiveView, one dispatcher, a module per page.** `GameLive` holds no game state and routes
   everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the small ones —
-  start, town, battle, class master, suicide, death, races, error — live in `Screens` itself, and
+  start, town, battle, class master, death, races, error — live in `Screens` itself, and
   the five big enough to need one — `Screens.Shop`, `Screens.SymbolMaker`, `Screens.Record`,
   `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
   own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
@@ -252,10 +252,10 @@ at weight 600 and 0.1em in capitals, each in its own colour and place, or the fo
 inside the HP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A field
 label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender room
 capitals never use, and the one property that centres by letters, `text-box-trim`, is missing from
-Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade +150", has to fit at
-13px with room for the Verdana fallback and a wider emoji font; widen it before shrinking a value.
-The class is the exception that proves it: "Elemental Summoner" overflows a value's column, so it
-sits under the name with no label and takes both columns, and the level has a row of its own.
+Firefox. The sidebar is 245px because its widest row, "🧝 Elemental Summoner level 80", has to fit
+on one line at 13px in the Verdana fallback, and the page widens by the same 35px so the main panel
+keeps its width; widen it before shrinking a value. That row is the class and level under the name,
+with no label, across both columns: a value's column could never hold it.
 The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
 sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
 
@@ -428,7 +428,7 @@ Adena and the HP the outcome line leaves them standing on, and not the foes the 
 — the game never counted those either, and it was the fighter who fell. Every line is still DRAWN,
 because the pools draw in order and skipping one would shift every later roll in that fight, and
 then none of them is kept, in the log or in memory: the chronicle logs the death reason as the
-`ending` it is, the same kind of row a suicide writes, and no screen a dead run can reach shows a
+`ending` it is, and no screen a dead run can reach shows a
 fight, so `Server.init/1` does not rebuild one for it. A fight row is always one the run walked
 away from, so the chronicle's fights and `total_battles` agree.
 
@@ -620,11 +620,15 @@ nothing else: every action that could change it is guarded on `started?`, so not
 and nothing persists it. That is why the retirement only ever clears sessions and deletes nothing,
 and why `characters` has no row without a race. `visitor_test.exs` holds it.
 
+**There is no Commit Suicide.** It was removed with the Interlude player system, which has no
+such thing. A run that took that way out before keeps `coward` in its document, so it stays off the
+Halls and keeps its ending, and the Tome still counts its Weak Souls; nothing sets the flag now.
+
 **A deed is gated; the census is not.** `Statistics.increment_for/3` drops everything a
 disqualified run *does* — its battles, its plunder, its blood — because the Halls will not list a
 coward or a cheat and an aggregate cannot give back what it was already told. Being born is counted
 at `initialize`, before anybody can be disqualified, and dying through the ungated `increment/2`,
-so the census holds every future coward and heretic and lets every one of them go. Gate the
+so the census holds every future heretic and lets every one of them go. Gate the
 exit, and souls arrive and are never accounted for leaving — which printed "0 Champions have
 fallen... while a Heretic was struck down", and the Tome tells the Weak Souls and the Heretics as a
 few *of* the fallen.

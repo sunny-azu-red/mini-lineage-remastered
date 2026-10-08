@@ -40,7 +40,8 @@ defmodule MiniLineage.Game.AccessTest do
       assert Access.pin_screen("death", alive()) == "home"
     end
 
-    for allowed <- ~w(home inn weapons armors battle suicide character highscores) do
+    for allowed <-
+          ~w(home inn weapons armors class_master symbol_maker battle character highscores) do
       test "can still reach #{allowed}" do
         assert Access.pin_screen(unquote(allowed), alive()) == unquote(allowed)
       end
@@ -48,7 +49,7 @@ defmodule MiniLineage.Game.AccessTest do
   end
 
   describe "a visitor with no character" do
-    for blocked <- ~w(battle inn weapons armors suicide death home) do
+    for blocked <- ~w(battle inn weapons armors class_master symbol_maker death home) do
       test "cannot reach #{blocked}" do
         assert Access.pin_screen(unquote(blocked), unstarted()) == "start"
       end
@@ -83,7 +84,7 @@ defmodule MiniLineage.Game.AccessTest do
 
     test "and those exceptions do not widen: everything they could ACT on is still their ending" do
       # The guard against a screen carrying an action being let through by accident.
-      for screen <- ~w(home inn weapons armors battle suicide start death) do
+      for screen <- ~w(home inn weapons armors class_master symbol_maker battle start death) do
         expected = if screen == "death", do: "death", else: "death"
         assert Access.pin_screen(screen, dead()) == expected, screen
       end
@@ -91,7 +92,7 @@ defmodule MiniLineage.Game.AccessTest do
   end
 
   describe "an ambushed character" do
-    for target <- ~w(home inn weapons armors suicide start) do
+    for target <- ~w(home inn weapons armors class_master symbol_maker start) do
       test "is pinned to the battleground when trying to reach #{target}" do
         assert Access.pin_screen(unquote(target), ambushed()) == "battle"
       end
@@ -114,7 +115,7 @@ defmodule MiniLineage.Game.AccessTest do
   end
 
   test "the sidebar allowlist is not merely \"has a character\"" do
-    for screen <- ~w(home battle weapons armors inn suicide death),
+    for screen <- ~w(home battle weapons armors inn class_master symbol_maker death),
         do: assert(Access.sidebar?(screen))
 
     for screen <- ~w(character highscores statistics races start error),

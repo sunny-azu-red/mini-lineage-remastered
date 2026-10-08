@@ -168,7 +168,9 @@ defmodule MiniLineage.CharacterLogTest do
 
       Characters.mutate(session, fn p ->
         Clock.put_now(ended_at)
-        result = Actions.suicide(p)
+        # The ending a fatal fight writes, without a fight's dice to decide whether it is fatal.
+        p = Player.kill(p)
+        result = {Player.log(p, Player.event("ending", p.death_reason)), {:ok, nil}}
         Clock.put_now(ended_at + 60_000)
         result
       end)

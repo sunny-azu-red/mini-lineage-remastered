@@ -182,14 +182,10 @@ try {
         await page.evaluate(() => document.activeElement?.tagName));
 
     // ---- the action button answers to the selection ---------------------------------------------
-    let btn = await buttonSettles('🧭 Travel');
+    const btn = await buttonSettles('🧭 Travel');
     check('Town offers to Travel before anything is picked', btn.label === '🧭 Travel', JSON.stringify(btn));
-    await page.selectOption('#main select[name="to"]', 'suicide');
-    btn = await buttonSettles('⚰️ Perish');
-    check('...and turns into Perish when Suicide is chosen', btn.label === '⚰️ Perish', JSON.stringify(btn));
-    await page.selectOption('#main select[name="to"]', 'inn');
-    btn = await buttonSettles('🧭 Travel');
-    check('...and back to Travel for anywhere else', btn.label === '🧭 Travel', JSON.stringify(btn));
+    check('...and no longer offers a way to take your own life',
+        await page.locator('#main select[name="to"] option[value="suicide"]').count() === 0);
 
     // ---- the effect timer counts down locally --------------------------------------------------
     const timerText = () => page.textContent('#effects [data-effect-id="newbie_blessing"] .effect-timer');
@@ -684,20 +680,12 @@ try {
     await onScreen('home');
     check('a record opened from the panel returns to the game', (await state()).screen === 'home');
 
-    await travel('suicide');
-    let endBtn = await buttonSettles('Return');
-    check('Suicide offers to Return before a choice is made', endBtn.label === 'Return', JSON.stringify(endBtn));
-    await page.selectOption('#main select[name="confirm"]', 'no');
-    endBtn = await buttonSettles('Phew 😅');
-    check('...a change of heart is not styled as danger',
-        endBtn.label === 'Phew 😅' && endBtn.cls === 'btn btn-secondary', JSON.stringify(endBtn));
-    await page.selectOption('#main select[name="confirm"]', 'yes');
-    endBtn = await buttonSettles('Do it 🥀');
-    check('...but going through with it is the last warning, in the red death wears',
-        endBtn.label === 'Do it 🥀' && endBtn.cls === 'btn btn-danger', JSON.stringify(endBtn));
-    await page.click('#main form[phx-submit="suicide"] button[type="submit"]');
+    // Fights on without shopping, as the first run did; the cap is a runaway guard.
+    await travel('battle');
+    for (let i = 0; i < 200 && (await state()).screen === 'battle'; i++)
+        await fight();
     await onScreen('death');
-    check('a cheater who quits is dead', (await state()).dead === true);
+    check('a cheater who falls is dead', (await state()).dead === true);
     check('...and the death screen is headed "Game Over"',
         (await page.textContent('#main .header-name'))?.trim() === 'Game Over',
         await page.textContent('#main .header-name'));

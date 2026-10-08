@@ -20,7 +20,6 @@ defmodule MiniLineageWeb.Screens do
     "armors" => "Armor Shop",
     "class_master" => "Class Master",
     "symbol_maker" => "Symbol Maker",
-    "suicide" => "Commit Suicide",
     "battle" => "Battleground",
     "death" => "Game Over",
     "character" => "Character",
@@ -51,7 +50,7 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under a screen that needs one; draw nothing until
   # `pin_screen/2` moves us on the next params pass.
-  @requires_character ~w(home battle weapons armors inn class_master symbol_maker suicide death)
+  @requires_character ~w(home battle weapons armors inn class_master symbol_maker death)
 
   def screen(%{view: %{started: false}, screen: screen} = assigns)
       when screen in @requires_character,
@@ -67,7 +66,6 @@ defmodule MiniLineageWeb.Screens do
 
   def screen(%{screen: "class_master"} = assigns), do: class_master(assigns)
   def screen(%{screen: "symbol_maker"} = assigns), do: SymbolMaker.screen(assigns)
-  def screen(%{screen: "suicide"} = assigns), do: suicide(assigns)
   def screen(%{screen: "death"} = assigns), do: death(assigns)
   def screen(%{screen: "character"} = assigns), do: Record.screen(assigns)
   def screen(%{screen: "highscores"} = assigns), do: Halls.screen(assigns)
@@ -182,11 +180,10 @@ defmodule MiniLineageWeb.Screens do
         %{value: "weapons", label: "🗡️ Weapon Shop"},
         %{value: "class_master", label: "📜 Class Master"},
         %{value: "symbol_maker", label: "🖋️ Symbol Maker"},
-        %{value: "battle", label: "💀 Battleground"},
-        %{value: "suicide", label: "🥀 Commit Suicide"}
+        %{value: "battle", label: "💀 Battleground"}
       ]}
       default_label="🧭 Travel"
-      active_label={fn value -> if value == "suicide", do: "⚰️ Perish", else: "🧭 Travel" end}
+      active_label="🧭 Travel"
       default_variant={:primary}
     />
     """
@@ -194,8 +191,8 @@ defmodule MiniLineageWeb.Screens do
 
   defp attributes, do: ~w(str con dex int wit men)a
 
-  # What each calling would make of the run at the last level, from the attributes it has now:
-  # the HP and MP tables are the only thing a transfer changes.
+  # A calling's table matches the run's own through the transfer, so what it changes is what each
+  # level adds from there: shown for the run's next level, with the attributes it has now.
   defp class_master(assigns) do
     class = Classes.get(assigns.view.class_id)
     callings = Classes.children(class.id)
@@ -207,10 +204,16 @@ defmodule MiniLineageWeb.Screens do
         opens_at: callings |> Enum.map(& &1.level) |> Enum.min(fn -> nil end),
         callings:
           Enum.map(callings, fn calling ->
+            level = min(max(assigns.view.level, calling.level), 79)
+
+            gain = fn table, bonus ->
+              bonus.(table.(calling.id, level + 1)) - bonus.(table.(calling.id, level))
+            end
+
             %{
               class: calling,
-              max_hp: Formulas.max_hp(Classes.hp(calling.id, 80), stats.con),
-              max_mp: Formulas.max_mp(Classes.mp(calling.id, 80), stats.men)
+              hp_gain: gain.(&Classes.hp/2, &Formulas.max_hp(&1, stats.con)),
+              mp_gain: gain.(&Classes.mp/2, &Formulas.max_mp(&1, stats.men))
             }
           end)
       )
@@ -228,21 +231,21 @@ defmodule MiniLineageWeb.Screens do
       <% true -> %>
         <p :if={@view.level < @opens_at}>
           Your next calling opens at <span class="level">Level {@opens_at}</span>, so come back then.
-          This is what each would make of you by the last level.
+          This is what each would add to you with every level after it.
         </p>
         <p :if={@view.level >= @opens_at}>
-          Choose your calling. It cannot be undone, and it decides how much you grow from here.
+          Choose your calling. It cannot be undone, and it decides how much each level adds from here.
         </p>
 
         <.data_table id="class-table">
           <:col class="name">Calling</:col>
-          <:col class="num" title="Maximum HP at level 80">HP at 80</:col>
-          <:col class="num" title="Maximum MP at level 80">MP at 80</:col>
+          <:col class="num" title="Max HP each level adds">HP per Level</:col>
+          <:col class="num" title="Max MP each level adds">MP per Level</:col>
           <tbody>
             <tr :for={calling <- @callings} id={"calling-#{calling.class.id}"}>
               <td class="name">{calling.class.name}</td>
-              <td class="num hp">{calling.max_hp}</td>
-              <td class="num mp">{calling.max_mp}</td>
+              <td class="num hp">+{calling.hp_gain}</td>
+              <td class="num mp">+{calling.mp_gain}</td>
             </tr>
           </tbody>
         </.data_table>
@@ -345,28 +348,6 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Going through with it is danger, not primary: red is the last warning before the red death.
-  # Its emoji trails the label, the one place the game does that.
-  defp suicide(assigns) do
-    ~H"""
-    <p>Do you wish to depart this world?</p>
-    <%!-- The two choices carry their own variants, which is why the variant may be a function. --%>
-    <.select_action_form
-      id="suicide-form"
-      event="suicide"
-      name="confirm"
-      picked={@picked}
-      options={[
-        %{value: "no", label: "No, I changed my mind"},
-        %{value: "yes", label: "Yes, stab yourself in the heart"}
-      ]}
-      default_label="Return"
-      active_label={fn value -> if value == "yes", do: "Do it 🥀", else: "Phew 😅" end}
-      active_variant={fn value -> if value == "yes", do: :danger, else: :secondary end}
-    />
-    """
-  end
-
   defp death(assigns) do
     assigns =
       assign(assigns, race: Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id)))
@@ -413,11 +394,11 @@ defmodule MiniLineageWeb.Screens do
   # ---------------------------------------------------------------- the alert
 
   @doc """
-  Whether to warn about low health: wherever HP is on screen, but not on Suicide, nor in the Inn,
-  where it would tell you to go where you are standing.
+  Whether to warn about low health: wherever HP is on screen, but not in the Inn, where it would
+  tell you to go where you are standing.
   """
   def low_health_alert?(view, screen) do
     view.started and not view.dead and view.low_health and Access.sidebar?(screen) and
-      screen not in ~w(suicide inn)
+      screen != "inn"
   end
 end

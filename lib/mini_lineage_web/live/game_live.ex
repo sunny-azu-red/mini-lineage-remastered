@@ -312,11 +312,6 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  def handle_event("suicide", %{"confirm" => "yes"}, socket),
-    do: {:noreply, apply_action(socket, &Actions.suicide/1, "death")}
-
-  def handle_event("suicide", _params, socket), do: {:noreply, leave(socket, "home")}
-
   def handle_event("restart", _params, socket) do
     session = socket.assigns.session_id
 

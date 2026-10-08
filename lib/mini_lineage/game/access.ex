@@ -33,5 +33,5 @@ defmodule MiniLineage.Game.Access do
 
   @doc "An allowlist, not derived: \"has a character\" is a different question."
   def sidebar?(screen),
-    do: screen in ~w(home battle weapons armors inn class_master symbol_maker suicide death)
+    do: screen in ~w(home battle weapons armors inn class_master symbol_maker death)
 end

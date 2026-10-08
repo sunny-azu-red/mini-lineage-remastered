@@ -56,21 +56,6 @@ defmodule MiniLineage.Game.ActionGuardsTest do
     end
   end
 
-  describe "suicide" do
-    test "is refused to the already dead, who have nothing left to take" do
-      dead = Player.kill(hero())
-
-      assert {_player, {:error, _, _}} = Actions.suicide(dead)
-    end
-
-    test "and marks the living as a coward, which bars the board" do
-      {player, {:ok, _}} = Actions.suicide(hero())
-
-      assert player.dead and player.coward
-      assert player.current_screen == "death"
-    end
-  end
-
   describe "changing screen" do
     test "is refused to a visitor with no character to move" do
       assert {_player, {:error, _, _}} = Actions.set_screen(%Player{}, "inn")

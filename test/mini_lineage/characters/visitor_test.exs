@@ -60,7 +60,6 @@ defmodule MiniLineage.Characters.VisitorTest do
     results =
       for fun <- [
             &Actions.fight/1,
-            &Actions.suicide/1,
             &Actions.cheat/1,
             &Actions.purchase(&1, "food", "0"),
             &Actions.set_screen(&1, "home"),

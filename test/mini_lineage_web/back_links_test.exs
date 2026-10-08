@@ -10,8 +10,8 @@ defmodule MiniLineageWeb.BackLinksTest do
   alias MiniLineage.Game.{Access, Constants, Player, Snapshot}
   alias MiniLineageWeb.Screens
 
-  @screens ~w(error races statistics highscores character battle home inn weapons armors suicide
-              death start)
+  @screens ~w(error races statistics highscores character battle home inn weapons armors
+              class_master symbol_maker death start)
 
   defp states do
     {alive, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
@@ -105,11 +105,11 @@ defmodule MiniLineageWeb.BackLinksTest do
     end
   end
 
-  describe "the shops and Suicide" do
+  describe "the shops, the Class Master and the Symbol Maker" do
     test "carry no back link at all — their select is the way out" do
       alive = states()[:alive]
 
-      for screen <- ~w(inn weapons armors suicide) do
+      for screen <- ~w(inn weapons armors class_master symbol_maker) do
         refute render(screen, alive) =~ "last back",
                "#{screen} grew a back link; its form is meant to be the only way out"
       end

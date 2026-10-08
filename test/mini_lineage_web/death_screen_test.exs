@@ -1,13 +1,22 @@
 defmodule MiniLineageWeb.DeathScreenTest do
   @moduledoc """
-  How a run's ending is shown. There is one ending, however it was reached: a suicide and a heresy
-  are not warnings but the last line of the run, as the fallen Character screen closes on it too.
+  How a run's ending is shown. There is one ending, however it was reached: a heresy, or a suicide
+  from before that way out was removed, is not a warning but the last line of the run, as the
+  fallen Character screen closes on it too.
   """
   use ExUnit.Case, async: true
 
   import Phoenix.LiveViewTest
 
   alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Narrative}
+
+  # A run that took its own life while the game still allowed it, as its stored document loads.
+  defp coward(player),
+    do: %{
+      Player.kill(%{player | coward: true})
+      | death_reason: "🤡 {they} took the cowardly way out."
+    }
+
   alias MiniLineageWeb.Screens
 
   defp hero do
@@ -32,7 +41,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
 
     [
       {"fell in battle", fell},
-      {"took their own life", Player.commit_suicide(hero())},
+      {"took their own life", coward(hero())},
       {"was struck down for cheating", Player.kill(cheater)}
     ]
   end
@@ -55,14 +64,6 @@ defmodule MiniLineageWeb.DeathScreenTest do
       assert length(Enum.uniq(reasons)) == 3
       assert Enum.all?(reasons, &(&1 != nil and &1 != ""))
     end
-
-    test "with a cheater's heresy outranking a coward's exit, having done both" do
-      {cheater, _} = Actions.cheat(hero())
-      both = Player.commit_suicide(cheater)
-
-      assert both.coward and both.cheated
-      assert both.death_reason =~ "heresy"
-    end
   end
 
   describe "what a player may do from here" do
@@ -79,7 +80,7 @@ defmodule MiniLineageWeb.DeathScreenTest do
     test "is not offered to a run the Hall will not list" do
       {cheater, _} = Actions.cheat(hero())
 
-      for barred <- [Player.commit_suicide(hero()), Player.kill(cheater)] do
+      for barred <- [coward(hero()), Player.kill(cheater)] do
         html = html_for(barred)
 
         refute html =~ "The Hall of", "a barred run is pointed at a board it is not on"
@@ -110,11 +111,11 @@ defmodule MiniLineageWeb.DeathScreenTest do
 
       # Heresy outranks cowardice, the order resolve_death_reason/1 uses.
       assert html_for(Player.kill(cheater)) =~ "scraped your name from the stone"
-      assert html_for(Player.commit_suicide(hero())) =~ "No chronicler lifts a quill"
+      assert html_for(coward(hero())) =~ "No chronicler lifts a quill"
       assert html_for(Player.kill(hero())) =~ "cut your deeds into the hallowed pillars"
 
       # A cheat who also despairs is judged for the heresy.
-      assert html_for(Player.commit_suicide(cheater)) =~ "scraped your name from the stone"
+      assert html_for(coward(cheater)) =~ "scraped your name from the stone"
     end
 
     test "but anyone may start again" do

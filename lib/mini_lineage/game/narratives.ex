@@ -89,7 +89,6 @@ defmodule MiniLineage.Game.Narratives do
   # The two endings nobody is dealt: they are reached by doing something, so they are named rather
   # than drawn, and kept here with the rest of the prose all the same.
   @death_cheated "👾 The gods saw {their} heresy and cast {their} memory into oblivion."
-  @death_coward "🤡 {they} took the cowardly way out."
 
   @ambush_low_health [
     "Your warm blood stains the ancient, cold earth of Aden...",
@@ -196,7 +195,6 @@ defmodule MiniLineage.Game.Narratives do
   def welcome, do: @welcome
   def death, do: @death
   def death_cheated, do: @death_cheated
-  def death_coward, do: @death_coward
 
   @doc "The pronoun set a template is filled from: the reader's own record, or somebody else's."
   def voice(mine?), do: Map.fetch!(@voices, mine?)

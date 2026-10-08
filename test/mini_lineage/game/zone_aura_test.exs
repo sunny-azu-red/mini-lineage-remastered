@@ -26,7 +26,7 @@ defmodule MiniLineage.Game.ZoneAuraTest do
   end
 
   test "standing in a combat zone flags you indefinitely, with no countdown", %{player: player} do
-    for zone <- ~w(battle suicide death) do
+    for zone <- ~w(battle death) do
       {moved, _} = move(player, zone)
 
       assert aura(moved).id == "combat"

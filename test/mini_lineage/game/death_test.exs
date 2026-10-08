@@ -21,15 +21,8 @@ defmodule MiniLineage.Game.DeathTest do
     assert player.death_reason in Narratives.death()
   end
 
-  test "a coward gets the coward's line, not a random one" do
-    player = Player.commit_suicide(living())
-
-    assert player.coward
-    assert player.death_reason == Narratives.death_coward()
-  end
-
-  test "a cheater's line outranks the coward's" do
-    player = Player.commit_suicide(%{living() | cheated: true})
+  test "a cheater gets the heresy's line, not a random one" do
+    player = Player.kill(%{living() | cheated: true})
 
     assert player.death_reason =~ "heresy"
   end

@@ -224,7 +224,7 @@ defmodule MiniLineage.Game.NarrativeTest do
     # Written once with its pronouns left open, so what has to hold is that it closes — for the
     # fallen player reading their own record, and for the stranger reading it in the Halls.
     test "every one is real prose for either reader, with no placeholder and no blank" do
-      for template <- [Narratives.death_cheated(), Narratives.death_coward() | Narratives.death()],
+      for template <- [Narratives.death_cheated() | Narratives.death()],
           mine? <- [true, false] do
         line = Narrative.death_reason(template, mine?)
 
@@ -236,7 +236,7 @@ defmodule MiniLineage.Game.NarrativeTest do
     end
 
     test "and reads differently depending on who is reading it" do
-      for template <- [Narratives.death_cheated(), Narratives.death_coward() | Narratives.death()] do
+      for template <- [Narratives.death_cheated() | Narratives.death()] do
         refute Narrative.death_reason(template, true) == Narrative.death_reason(template, false),
                "#{template} says the same thing to a stranger as to the run it ended"
       end
