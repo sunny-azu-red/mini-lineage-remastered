@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.StatusPanelTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
 
   defp sidebar_for(player) do
     render_component(&MiniLineageWeb.Layouts.app/1,
@@ -25,13 +25,13 @@ defmodule MiniLineageWeb.StatusPanelTest do
   defp text(html), do: html |> String.replace(~r/<[^>]+>/, "") |> String.replace(~r/\s+/, " ")
 
   setup do
-    {player, _} = Player.initialize(%Player{}, Constants.race(3), "Sunny")
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
 
-    %{html: sidebar_for(%{player | experience: 4200})}
+    %{html: sidebar_for(%{player | experience: Math.xp_for_level(5)})}
   end
 
   test "reads as one line, whatever the markup underneath it", %{html: html} do
-    assert text(html) =~ "Dark Elf level 5"
+    assert text(html) =~ "Sunny 🧛 Dark Fighter Level 5"
   end
 
   test "and leaves no space in front of any punctuation", %{html: html} do
@@ -41,17 +41,18 @@ defmodule MiniLineageWeb.StatusPanelTest do
   test "every figure it shows is one the hook can count", %{html: html} do
     keys = Regex.scan(~r/data-key="([^"]+)"/, html) |> Enum.map(&List.last/1)
 
-    assert Enum.sort(keys) == ~w(adena hp level max-hp xp xp-required)
+    assert Enum.sort(keys) == ~w(adena hp level max-hp max-mp mp xp xp-required)
   end
 
   test "the level is its own element, so it counts rather than jumps", %{html: html} do
-    assert html =~ ~r|level\s+<span[^>]*data-key="level"[^>]*>5</span></a>|
+    assert html =~
+             ~r|<span class="stat-value level"><span[^>]*data-key="level"[^>]*>5</span></span>|
   end
 
   test "and so is what the gear grants, which only appears once there is gear that grants" do
     crit? = &((Snapshot.item_view(&1)[:crit] || 0) > 0)
     regen? = &((Snapshot.item_view(&1)[:regen] || 0) > 0)
-    {player, _} = Player.initialize(%Player{}, Constants.race(3), "Sunny")
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
 
     html =
       sidebar_for(%{

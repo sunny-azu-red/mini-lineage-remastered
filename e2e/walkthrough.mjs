@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { BASE, PURSE, reporter, traceAudio, controls, readWhole } from './helpers.mjs';
 
-const TICK_MS = 6000; // the regen tick is 5s; allow a margin
+const TICK_MS = 6000; // the regen tick is 3s; allow a margin
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
@@ -144,7 +144,7 @@ try {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#main select[name="race_id"]', { timeout: 8000 });
     await page.fill('#main input[name="name"]', 'BrowserBot');
-    await page.selectOption('#main select[name="race_id"]', '1'); // Orc: 150 HP, survives a while
+    await page.selectOption('#main select[name="race_id"]', '1'); // Orc Fighter: CON 47, survives a while
 
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a choice made before the socket connects survives the first live render',
@@ -337,6 +337,27 @@ try {
         await page.inputValue('#main select[name="item_id"]') === selectBefore,
         `was ${selectBefore}, now ${await page.inputValue('#main select[name="item_id"]')}`);
 
+    // ---- the Class Master and the Symbol Maker, before either has anything to give ------------------
+    // A fresh run is level 1 whatever the dice did, so what these say to it is not a roll.
+    await goHome();
+    await travel('class_master');
+    check('the Class Master is reachable from Town', (await state()).screen === 'class_master');
+    check('...names the run\'s own class', (await page.textContent('#main')).includes('Orc Fighter'));
+    check('...and offers both Orc callings, closed until level 20',
+        await page.locator('#class-table tbody tr').count() === 2
+        && await page.locator('#transfer-form option[disabled]').count() === 2
+        && (await page.textContent('#main')).includes('Level 20'));
+    await page.selectOption('#transfer-form select', '');
+    await page.click('#transfer-form button[type="submit"]');
+    await onScreen('home');
+
+    await travel('symbol_maker');
+    check('the Symbol Maker is reachable from Town', (await state()).screen === 'symbol_maker');
+    check('...and has no slot for a run that has not transferred',
+        (await page.textContent('#main')).includes('first class transfer')
+        && await page.locator('#dye-table').count() === 0);
+    await goHome();
+
     // ---- the battleground ---------------------------------------------------------------------
     // From the Town form, not a typed URL: travelling is its own code path.
     await goHome();
@@ -370,8 +391,8 @@ try {
         `screen=${current.screen} started=${current.started} dead=${current.dead}`);
 
     // ---- a fight wounds, and a meal heals --------------------------------------------------------
-    // Driven, not waited for: an Orc regenerates nothing, so it stays hurt until it eats and the
-    // heal is caused rather than hoped for. Also fights out any ambush, which pins it here.
+    // Driven, not waited for: nothing mends on the battleground, so it stays hurt until it leaves and
+    // the heal is caused rather than hoped for. Also fights out any ambush, which pins it here.
     while (fightsFought < 8 && !current.dead
         && (current.health === current.maxHealth || current.ambushed)) {
         await fight();
@@ -425,7 +446,7 @@ try {
     // so a count changes for reasons that are not a bug.
     const animated = await page.locator('#sidebar [data-value]')
         .evaluateAll(els => els.map(e => e.dataset.key).sort());
-    const alwaysThere = ['adena', 'hp', 'level', 'max-hp', 'xp', 'xp-required'];
+    const alwaysThere = ['adena', 'hp', 'level', 'max-hp', 'max-mp', 'mp', 'xp', 'xp-required'];
     check('the counters carry their live values for the animation',
         alwaysThere.every(key => animated.includes(key)), animated.join(' '));
     check('the road ends at the grave', current.dead === true,

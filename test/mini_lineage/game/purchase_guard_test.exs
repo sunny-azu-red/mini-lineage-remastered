@@ -7,7 +7,7 @@ defmodule MiniLineage.Game.PurchaseGuardTest do
   alias MiniLineage.Game.{Actions, Constants, Player}
 
   defp rich do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Buyer")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Buyer")
     %{player | adena: 5_000_000, weapon_id: 3, armor_id: 3}
   end
 

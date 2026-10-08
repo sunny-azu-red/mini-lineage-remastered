@@ -22,7 +22,7 @@ defmodule MiniLineage.Characters.BufferingTest do
 
   defp start_character(id) do
     Characters.mutate(id, fn player ->
-      {player, _flash} = Player.initialize(player, Constants.race(0), "Hero")
+      {player, _flash} = Player.initialize(player, Constants.race(0), :fighter, "Hero")
       {%{player | current_screen: "home"}, :ok}
     end)
 

@@ -33,7 +33,8 @@ defmodule MiniLineageWeb.Screens.Shop do
       },
       stat_class: "heal",
       stat_header: "HP Heal",
-      stat_title: "Health Point Heal",
+      stat_title: "Share of Max HP restored",
+      stat_suffix: "%",
       action_label: "🪙 Order",
       intro_a: "You have arrived at the Inn.",
       intro_b: "The young lady greets you and sets you at a table."
@@ -47,16 +48,16 @@ defmodule MiniLineageWeb.Screens.Shop do
       owned_id: assigns.view.weapon.id,
       modifier: %{
         key: :crit,
-        # The percent is bound to its word: on a phone the label may break, but never to strand "%".
-        header: "C. Hit&nbsp;%",
-        title: "Critical Hit Chance",
+        header: "Critical",
+        title: "Critical Rate",
         class: "crit",
-        prefix: "",
-        suffix: "%"
+        prefix: "+",
+        suffix: ""
       },
       stat_class: "hp",
       stat_header: "P. Attack",
       stat_title: "Physical Attack",
+      stat_suffix: "",
       action_label: "🪙 Purchase",
       intro_a: "You have arrived at the Weapon Shop.",
       intro_b: "The nice man greets you and lets you look through his swords."
@@ -79,6 +80,7 @@ defmodule MiniLineageWeb.Screens.Shop do
       stat_class: "defense",
       stat_header: "P. Defense",
       stat_title: "Physical Defense",
+      stat_suffix: "",
       action_label: "🪙 Purchase",
       intro_a: "You have arrived at the Armor Shop.",
       intro_b: "The old man greets you and lets you look through his armors."
@@ -106,7 +108,7 @@ defmodule MiniLineageWeb.Screens.Shop do
             </span>
             <span :if={(Map.get(item, @modifier.key) || 0) <= 0} class="muted">-</span>
           </td>
-          <td class={["num", @stat_class]}>{Format.number(item.stat)}</td>
+          <td class={["num", @stat_class]}>{Format.number(item.stat)}{@stat_suffix}</td>
           <td class="adena">🪙 {Format.adena(item.cost)}</td>
         </tr>
       </tbody>

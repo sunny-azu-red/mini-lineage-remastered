@@ -19,7 +19,7 @@ defmodule MiniLineageWeb.RecordFreshnessTest do
     on_exit(fn -> Characters.forget(session) end)
 
     Characters.mutate(session, fn player ->
-      {player, _flash} = Player.initialize(player, Constants.race(0), "Wanderer")
+      {player, _flash} = Player.initialize(player, Constants.race(0), :fighter, "Wanderer")
       {%{player | current_screen: "home"}, :ok}
     end)
 

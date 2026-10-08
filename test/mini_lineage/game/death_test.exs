@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.DeathTest do
   alias MiniLineage.Game.{Actions, Constants, Narratives, Player, Rng, Snapshot}
 
   defp living do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Doomed")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Doomed")
     player
   end
 
@@ -83,7 +83,7 @@ defmodule MiniLineage.Game.DeathTest do
     # `initialize/3` overwrites a %Player{} that may have been rehydrated from storage, so every
     # field carried over from the previous run has to be named here or it survives the reroll.
     fought = %{living() | last_battle_narrative: %{narrative: %{}, outcome: %{}}}
-    {fresh, _} = Player.initialize(fought, Constants.race(1), "Second")
+    {fresh, _} = Player.initialize(fought, Constants.race(1), :fighter, "Second")
 
     assert fresh.last_battle_narrative == nil
     assert fresh.total_battles == 0

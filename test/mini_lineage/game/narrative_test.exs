@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.NarrativeTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Format, Narrative, Narratives, Player, Rng}
+  alias MiniLineage.Game.{Classes, Constants, Format, Narrative, Narratives, Player, Rng}
 
   @races 0..3
 
@@ -27,7 +27,7 @@ defmodule MiniLineage.Game.NarrativeTest do
     %Player{
       name: "Hero",
       race_id: race_id,
-      health: race.start_health,
+      health: 100,
       adena: Keyword.get(opts, :adena, race.start_adena),
       experience: 0,
       weapon_id: Keyword.get(opts, :weapon_id, 0),
@@ -186,22 +186,22 @@ defmodule MiniLineage.Game.NarrativeTest do
         race = Constants.race(race_id)
         traits = Narrative.build_race_traits(race)
 
-        assert String.contains?(traits, to_string(race.start_health)),
-               "race #{race_id} traits never mention its #{race.start_health} starting health"
+        assert String.contains?(traits, "#{race.ambush_chance}% Ambush Risk"),
+               "race #{race_id} traits never mention its #{race.ambush_chance}% ambush risk"
       end
     end
   end
 
   describe "the opening flash" do
-    test "names the race and renders every welcome line cleanly" do
+    test "names the class and renders every welcome line cleanly" do
       for race_id <- @races, value <- draws(@sweeps) do
         race = Constants.race(race_id)
 
         {_player, flash} =
-          with_draw(value, fn -> Player.initialize(%Player{}, race, "Hero") end)
+          with_draw(value, fn -> Player.initialize(%Player{}, race, :fighter, "Hero") end)
 
         assert unrendered(flash.text) == [], "race #{race_id}: #{inspect(unrendered(flash.text))}"
-        assert String.contains?(flash.text, race.label)
+        assert String.contains?(flash.text, Classes.starting(race_id, :fighter).name)
       end
     end
   end
@@ -305,6 +305,7 @@ defmodule MiniLineage.Game.NarrativeTest do
         line =
           race
           |> Narrative.build_began(%{
+            class_name: "Orc Fighter",
             welcome: welcome,
             build: "a hardy",
             definition: "youth",

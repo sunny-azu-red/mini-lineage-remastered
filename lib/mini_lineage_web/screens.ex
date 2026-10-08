@@ -8,9 +8,9 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Access, Narrative}
+  alias MiniLineage.Game.{Access, Classes, Formulas, Narrative}
   alias MiniLineageWeb.Paths
-  alias MiniLineageWeb.Screens.{Halls, Record, Shop, Tome}
+  alias MiniLineageWeb.Screens.{Halls, Record, Shop, SymbolMaker, Tome}
 
   @titles %{
     "start" => "Game Start",
@@ -18,6 +18,8 @@ defmodule MiniLineageWeb.Screens do
     "inn" => "Inn",
     "weapons" => "Weapon Shop",
     "armors" => "Armor Shop",
+    "class_master" => "Class Master",
+    "symbol_maker" => "Symbol Maker",
     "suicide" => "Commit Suicide",
     "battle" => "Battleground",
     "death" => "Game Over",
@@ -49,7 +51,7 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under a screen that needs one; draw nothing until
   # `pin_screen/2` moves us on the next params pass.
-  @requires_character ~w(home battle weapons armors inn suicide death)
+  @requires_character ~w(home battle weapons armors inn class_master symbol_maker suicide death)
 
   def screen(%{view: %{started: false}, screen: screen} = assigns)
       when screen in @requires_character,
@@ -63,6 +65,8 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: shop} = assigns) when shop in ~w(inn weapons armors),
     do: Shop.screen(assigns)
 
+  def screen(%{screen: "class_master"} = assigns), do: class_master(assigns)
+  def screen(%{screen: "symbol_maker"} = assigns), do: SymbolMaker.screen(assigns)
   def screen(%{screen: "suicide"} = assigns), do: suicide(assigns)
   def screen(%{screen: "death"} = assigns), do: death(assigns)
   def screen(%{screen: "character"} = assigns), do: Record.screen(assigns)
@@ -149,6 +153,10 @@ defmodule MiniLineageWeb.Screens do
         <select name="race_id" class="form-select">
           <option :for={race <- @catalog.races} value={race.id}>{race.emoji} {race.label}</option>
         </select>
+        <select name="archetype" class="form-select">
+          <option value="fighter">⚔️ Fighter</option>
+          <option value="mystic">🔮 Mystic</option>
+        </select>
         <.button type="submit">🚩 Start</.button>
       </div>
     </form>
@@ -172,6 +180,8 @@ defmodule MiniLineageWeb.Screens do
         %{value: "inn", label: "🍺 Inn"},
         %{value: "armors", label: "🛡️ Armor Shop"},
         %{value: "weapons", label: "🗡️ Weapon Shop"},
+        %{value: "class_master", label: "📜 Class Master"},
+        %{value: "symbol_maker", label: "🖋️ Symbol Maker"},
         %{value: "battle", label: "💀 Battleground"},
         %{value: "suicide", label: "🥀 Commit Suicide"}
       ]}
@@ -179,6 +189,83 @@ defmodule MiniLineageWeb.Screens do
       active_label={fn value -> if value == "suicide", do: "⚰️ Perish", else: "🧭 Travel" end}
       default_variant={:primary}
     />
+    """
+  end
+
+  defp attributes, do: ~w(str con dex int wit men)a
+
+  # What each calling would make of the run at the last level, from the attributes it has now:
+  # the HP and MP tables are the only thing a transfer changes.
+  defp class_master(assigns) do
+    class = Classes.get(assigns.view.class_id)
+    callings = Classes.children(class.id)
+    stats = assigns.view.stats
+
+    assigns =
+      assign(assigns,
+        class: class,
+        opens_at: callings |> Enum.map(& &1.level) |> Enum.min(fn -> nil end),
+        callings:
+          Enum.map(callings, fn calling ->
+            %{
+              class: calling,
+              max_hp: Formulas.max_hp(Classes.hp(calling.id, 80), stats.con),
+              max_mp: Formulas.max_mp(Classes.mp(calling.id, 80), stats.men)
+            }
+          end)
+      )
+
+    ~H"""
+    <p>
+      The Class Master looks you over, a <span class="level">{@class.name}</span>
+      at <span class="level">Level {@view.level}</span>.
+    </p>
+
+    <%= cond do %>
+      <% @callings == [] -> %>
+        <p>There is no calling past yours that the Class Master can teach.</p>
+        <.back_link started={@view.started} dead={@view.dead} />
+      <% true -> %>
+        <p :if={@view.level < @opens_at}>
+          Your next calling opens at <span class="level">Level {@opens_at}</span>, so come back then.
+          This is what each would make of you by the last level.
+        </p>
+        <p :if={@view.level >= @opens_at}>
+          Choose your calling. It cannot be undone, and it decides how much you grow from here.
+        </p>
+
+        <.data_table id="class-table">
+          <:col class="name">Calling</:col>
+          <:col class="num" title="Maximum HP at level 80">HP at 80</:col>
+          <:col class="num" title="Maximum MP at level 80">MP at 80</:col>
+          <tbody>
+            <tr :for={calling <- @callings} id={"calling-#{calling.class.id}"}>
+              <td class="name">{calling.class.name}</td>
+              <td class="num hp">{calling.max_hp}</td>
+              <td class="num mp">{calling.max_mp}</td>
+            </tr>
+          </tbody>
+        </.data_table>
+
+        <.select_action_form
+          id="transfer-form"
+          event="transfer"
+          name="class_id"
+          picked={@picked}
+          placeholder="🚪 Home Town"
+          options={
+            Enum.map(@callings, fn calling ->
+              %{
+                value: to_string(calling.class.id),
+                label: "Become #{calling.class.name}",
+                disabled?: @view.level < calling.class.level
+              }
+            end)
+          }
+          default_label="Return"
+          active_label="📜 Transfer"
+        />
+    <% end %>
     """
   end
 
@@ -191,6 +278,20 @@ defmodule MiniLineageWeb.Screens do
       <p>{raw(race.backstory)}</p>
       <%!-- Read by a visitor, who is not the lineage being described. --%>
       <p>{raw(Narrative.voiced(race.traits, false))}</p>
+      <.data_table id={"#{race.slug}-classes"}>
+        <:col class="name">Class</:col>
+        <:col :for={attr <- attributes()} class="num">{String.upcase(to_string(attr))}</:col>
+        <:col class="num" title="Maximum HP at level 1">HP</:col>
+        <:col class="num" title="Maximum MP at level 1">MP</:col>
+        <tbody>
+          <tr :for={class <- race.classes} id={"class-#{class.id}"}>
+            <td class="name">{class.name}</td>
+            <td :for={attr <- attributes()} class="num">{class.attributes[attr]}</td>
+            <td class="num hp">{class.max_hp}</td>
+            <td class="num mp">{class.max_mp}</td>
+          </tr>
+        </tbody>
+      </.data_table>
     <% end %>
 
     <.back_link started={@view.started} dead={@view.dead} />

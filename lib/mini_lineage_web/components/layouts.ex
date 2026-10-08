@@ -121,14 +121,18 @@ defmodule MiniLineageWeb.Layouts do
     ~H"""
     <div id="sidebar" class="side" phx-hook="AnimatedValues">
       <Controls.panel title={@view.name} class="status-panel" body_class="rows">
-        <div class="stat-row">
-          <span class="stat-label">Race</span>
+        <%!-- Under the name and across both columns: "Elemental Summoner" overflows a value's. --%>
+        <div class="stat-row calling">
           <span class="stat-value">
             {if @view.dead, do: "☠️", else: @view.race_emoji}
             <%!-- Flush against the anchor: a newline inside one renders as an underlined space. --%>
-            <.link patch={Paths.for_character(@character_id, "game")}>{@view.race_label} level
-            <Controls.figure key="level" value={@view.level} /></.link>
+            <.link patch={Paths.for_character(@character_id, "game")}>{@view.class_name}</.link>
           </span>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-label">Level</span>
+          <span class="stat-value level"><Controls.figure key="level" value={@view.level} /></span>
         </div>
 
         <div class={"stat-row#{if @view.low_health, do: " danger"}"}>
@@ -142,6 +146,20 @@ defmodule MiniLineageWeb.Layouts do
             of={@view.max_health}
             of_key="max-hp"
             of_id="status-max-hp"
+          />
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-label">MP</span>
+          <Controls.bar
+            id="mp-bar"
+            kind={:mp}
+            label="MP"
+            key="mp"
+            value={@view.mp}
+            of={@view.max_mp}
+            of_key="max-mp"
+            of_id="status-max-mp"
           />
         </div>
 
@@ -187,10 +205,10 @@ defmodule MiniLineageWeb.Layouts do
         <div class="stat-row">
           <span class="stat-value" title="Equipped Weapon">
             {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span>
-            <span :if={(@view.weapon.crit || 0) > 0} class="crit"><Controls.figure
+            <span :if={(@view.weapon.crit || 0) > 0} class="crit">+<Controls.figure
               key="weapon-crit"
               value={@view.weapon.crit}
-            />%</span>
+            /></span>
           </span>
         </div>
       </Controls.panel>

@@ -10,13 +10,10 @@ defmodule MiniLineage.Game.Constants do
       plural: "Humans",
       emoji: "🧙",
       enemy_race_id: 1,
-      start_health: 100,
       start_adena: 300,
       ambush_chance: 8,
-      regen: 1,
-      crit: 4,
       backstory:
-        "The most adaptable of all lineages. Humans possess a balanced constitution and steady precision, making them versatile survivors in a world that offers no quarter. They start with a modest inheritance and maintain a vigilant awareness of their surroundings."
+        "The most adaptable of all lineages. A Human Fighter is strong and hardy without leaning too far either way, and a Human Mystic pairs a sharp mind with a steady spirit. They start with a modest inheritance and keep a vigilant eye on the road."
     },
     %{
       id: 1,
@@ -24,13 +21,10 @@ defmodule MiniLineage.Game.Constants do
       plural: "Orcs",
       emoji: "🧟",
       enemy_race_id: 0,
-      start_health: 150,
       start_adena: 250,
       ambush_chance: 16,
-      regen: 0,
-      crit: 0,
       backstory:
-        "Towering warriors of immense physical resilience. Orcs possess the highest vitality at birth, but their massive presence makes them easy targets for ambushes. They lack natural regeneration and precision, relying instead on pure, unadulterated strength to crush their foes."
+        "Towering warriors of immense physical resilience. No Fighter is born with a hardier constitution than an Orc's, nor any Mystic with a stronger spirit, so their wounds close faster than anyone's. Their hands are the clumsiest of the four, and their massive presence makes them easy targets for ambushes."
     },
     %{
       id: 2,
@@ -38,13 +32,10 @@ defmodule MiniLineage.Game.Constants do
       plural: "Elves",
       emoji: "🧝",
       enemy_race_id: 3,
-      start_health: 75,
       start_adena: 450,
       ambush_chance: 4,
-      regen: 3,
-      crit: 8,
       backstory:
-        "Swift, wealthy, and favored by nature. Elves start their journey with significant gold and possess extraordinary natural healing and precision. They are incredibly difficult to surprise, though their physical frames are the most fragile of all the races."
+        "Swift, wealthy, and favored by nature. An Elven Fighter is the most dexterous of all, striking true and often, and an Elven Mystic thinks faster on their feet than any other. Their frames are the most fragile of the races, but they are hard to surprise and start with significant gold."
     },
     %{
       id: 3,
@@ -52,13 +43,10 @@ defmodule MiniLineage.Game.Constants do
       plural: "Dark Elves",
       emoji: "🧛",
       enemy_race_id: 2,
-      start_health: 85,
       start_adena: 350,
       ambush_chance: 5,
-      regen: 2,
-      crit: 11,
       backstory:
-        "Lethal stalkers of the night. Dark Elves strike a deadly balance between physical power and supernatural resilience. They possess high precision and regeneration, with sturdier constitutions than their lighter cousins and a sharper edge in combat."
+        "Lethal stalkers of the night. A Dark Fighter hits harder than any other, and a Dark Mystic's intellect has no equal, which makes their magic the most dangerous in the realm. Both pay for it with the frailest constitutions of all, and they keep their wits about them on the road."
     }
   ]
 
@@ -83,8 +71,8 @@ defmodule MiniLineage.Game.Constants do
       label: "Newbie Blessing",
       duration_ms: 300_000,
       modifiers: [
-        %{type: :max_health, value: 20},
-        %{type: :defense, value: 2},
+        %{type: :max_hp, value: 20},
+        %{type: :p_def, value: 2},
         %{type: :ambush_risk, value: -4}
       ]
     },
@@ -94,7 +82,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "👁️",
       label: "Hexed",
       duration_ms: 60_000,
-      modifiers: [%{type: :ambush_risk, value: 4}, %{type: :crit, value: -2}]
+      modifiers: [%{type: :ambush_risk, value: 4}, %{type: :crit_rate, value: -20}]
     },
     konami_cheat: %{
       id: "konami_cheat",
@@ -102,10 +90,10 @@ defmodule MiniLineage.Game.Constants do
       emoji: "👾",
       label: "Cheater's Mark",
       modifiers: [
-        %{type: :xp_multiplier, value: 4},
-        %{type: :adena_multiplier, value: 4},
-        %{type: :crit, value: 15},
-        %{type: :max_health, value: 150}
+        %{type: :xp_multiplier, op: :mul, value: 4},
+        %{type: :adena_multiplier, op: :mul, value: 4},
+        %{type: :crit_rate, value: 150},
+        %{type: :max_hp, value: 150}
       ]
     },
     smoked_sausage: %{
@@ -115,7 +103,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "🥓",
       label: "Satisfied",
       duration_ms: 90_000,
-      modifiers: [%{type: :max_health, value: 10}]
+      modifiers: [%{type: :max_hp, value: 10}]
     },
     hearty_mash: %{
       id: "well_fed",
@@ -124,7 +112,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "🍖",
       label: "Well Fed",
       duration_ms: 150_000,
-      modifiers: [%{type: :max_health, value: 30}]
+      modifiers: [%{type: :max_hp, value: 30}]
     },
     roasted_pheasant: %{
       id: "gourmet_feast",
@@ -133,7 +121,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "👑",
       label: "Gourmet Feast",
       duration_ms: 300_000,
-      modifiers: [%{type: :max_health, value: 60}]
+      modifiers: [%{type: :max_hp, value: 60}]
     }
   }
 
@@ -148,7 +136,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "🛡️",
       stat: 41,
       cost: 30_000,
-      modifiers: [%{type: :regen, value: 1}]
+      modifiers: [%{type: :hp_regen, value: 1}]
     },
     %{
       id: 4,
@@ -156,7 +144,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "⛓️",
       stat: 64,
       cost: 200_000,
-      modifiers: [%{type: :regen, value: 2}]
+      modifiers: [%{type: :hp_regen, value: 2}]
     },
     %{
       id: 5,
@@ -164,7 +152,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "💎",
       stat: 88,
       cost: 650_000,
-      modifiers: [%{type: :regen, value: 3}]
+      modifiers: [%{type: :hp_regen, value: 3}]
     }
   ]
 
@@ -178,7 +166,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "⚔️",
       stat: 45,
       cost: 18_000,
-      modifiers: [%{type: :crit, value: 3}]
+      modifiers: [%{type: :crit_rate, value: 30}]
     },
     %{
       id: 4,
@@ -186,7 +174,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "☄️",
       stat: 62,
       cost: 250_000,
-      modifiers: [%{type: :crit, value: 7}]
+      modifiers: [%{type: :crit_rate, value: 70}]
     },
     %{
       id: 5,
@@ -194,7 +182,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "💀",
       stat: 90,
       cost: 900_000,
-      modifiers: [%{type: :crit, value: 15}]
+      modifiers: [%{type: :crit_rate, value: 150}]
     }
   ]
 
@@ -220,12 +208,14 @@ defmodule MiniLineage.Game.Constants do
     damage_blocked: %{exponent: 0.95, scaling: 0.8},
     xp_gained: %{exponent: 1.5, scaling: 0.8, kill_min: 10, kill_max: 18},
     adena_gained: %{exponent: 2.65, scaling: 0.05, kill_min: 2, kill_max: 4},
-    hp_lost: %{base_min: 10, base_max: 25, floor: 1}
+    # The bar the losses were tuned against, before HP came from a class and a level.
+    hp_lost: %{base_min: 10, base_max: 25, floor: 1, reference_max_hp: 100}
   }
 
   @zone %{
     combat_zones: ~w(battle suicide death),
-    resting_zones: ~w(home inn weapons armors character highscores statistics races),
+    resting_zones:
+      ~w(home inn weapons armors class_master symbol_maker character highscores statistics races),
     combat_linger_ms: 5_000
   }
 
@@ -243,17 +233,21 @@ defmodule MiniLineage.Game.Constants do
   }
 
   @stat_modifier_labels %{
-    max_health: %{label: "Max HP"},
-    regen: %{label: "HP Regen"},
-    crit: %{label: "Crit", percentage?: true},
+    max_hp: %{label: "Max HP"},
+    max_mp: %{label: "Max MP"},
+    hp_regen: %{label: "HP Regen"},
+    mp_regen: %{label: "MP Regen"},
+    crit_rate: %{label: "Critical"},
     ambush_risk: %{label: "Ambush", percentage?: true},
-    attack: %{label: "Attack"},
-    defense: %{label: "Defense"},
+    p_atk: %{label: "P. Atk."},
+    p_def: %{label: "P. Def."},
     xp_multiplier: %{label: "XP", multiplier?: true},
     adena_multiplier: %{label: "Adena", multiplier?: true}
   }
 
   def max_level, do: @max_level
+  # Interlude's EXP is divided by this; at 363 levels 2 and 3 would merge.
+  def exp_divisor, do: 300
   def races, do: @races
   def race(id), do: Enum.at(@races, id) || hd(@races)
   def effects, do: @effects
@@ -273,7 +267,8 @@ defmodule MiniLineage.Game.Constants do
   def character, do: @character
   def stat_modifier_labels, do: @stat_modifier_labels
   def low_health_threshold, do: 0.25
-  def tick_interval_ms, do: 5_000
+  # Interlude's HP_REGENERATE_PERIOD: a regen rate is what one of these restores.
+  def tick_interval_ms, do: 3_000
   def highscores_limit, do: 25
 
   def konami_sequence,

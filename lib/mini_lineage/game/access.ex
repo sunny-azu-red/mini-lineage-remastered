@@ -32,5 +32,6 @@ defmodule MiniLineage.Game.Access do
   def konami?(view), do: view.started and not view.dead and not view.cheated
 
   @doc "Screens that show the sidebar. An allowlist, not derived — \"has a character\" is a different question."
-  def sidebar?(screen), do: screen in ~w(home battle weapons armors inn suicide death)
+  def sidebar?(screen),
+    do: screen in ~w(home battle weapons armors inn class_master symbol_maker suicide death)
 end

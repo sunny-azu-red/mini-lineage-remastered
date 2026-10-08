@@ -4,12 +4,23 @@ defmodule MiniLineage.Game.Actions do
   `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
   client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Battle, Clock, Constants, Math, Narrative, Player, Statistics}
+  alias MiniLineage.Game.{
+    Battle,
+    Classes,
+    Clock,
+    Constants,
+    Dyes,
+    Math,
+    Narrative,
+    Player,
+    Statistics
+  }
 
   @errors %{
     not_started: "You haven't started your journey yet, so create a character first.",
     already_started: "You already have a character. Restart if you want to begin again.",
     dead: "You are dead. There is nothing left to do but restart.",
+    ambushed: "Not while you are being ambushed. Face the fight first.",
     not_dead: "You're still alive, and this action is only for the fallen.",
     invalid: "That is not something you can do."
   }
@@ -25,20 +36,21 @@ defmodule MiniLineage.Game.Actions do
 
   defp started, do: [{:not_started, &(not Player.started?(&1))}]
   defp alive, do: started() ++ [{:dead, & &1.dead}]
+  defp at_ease, do: alive() ++ [{:ambushed, & &1.ambushed}]
 
   # ------------------------------------------------------------------- start
 
-  def start(player, race_id, name) do
+  def start(player, race_id, archetype, name) do
     guard(player, [{:already_started, &Player.started?/1}], fn player ->
-      case validate_start(race_id, name) do
+      case validate_start(race_id, archetype, name) do
         :invalid -> {player, {:error, :invalid, @errors.invalid}}
-        {:ok, race_id, name} -> begin(player, race_id, name)
+        {:ok, race_id, archetype, name} -> begin(player, race_id, archetype, name)
       end
     end)
   end
 
-  defp begin(player, race_id, name) do
-    {player, flash} = Player.initialize(player, Constants.race(race_id), name)
+  defp begin(player, race_id, archetype, name) do
+    {player, flash} = Player.initialize(player, Constants.race(race_id), archetype, name)
 
     # Stamped here so a fresh character never renders auraless.
     {player, _} = Player.sync_zone_auras(%{player | current_screen: "home"})
@@ -46,19 +58,26 @@ defmodule MiniLineage.Game.Actions do
     {player, {:ok, flash}}
   end
 
-  defp validate_start(race_id, name) do
+  defp validate_start(race_id, archetype, name) do
     config = Constants.character()
     trimmed = String.trim(to_string(name))
     length = String.length(trimmed)
 
     with {race_id, ""} <- Integer.parse(to_string(race_id)),
          true <- Enum.any?(Constants.races(), &(&1.id == race_id)),
+         {:ok, archetype} <- archetype(archetype),
          true <- length >= config.name_min_length and length <= config.name_max_length do
-      {:ok, race_id, trimmed}
+      {:ok, race_id, archetype, trimmed}
     else
       _ -> :invalid
     end
   end
+
+  # Named here rather than converted: the form's value is untrusted, and `String.to_atom/1` on it
+  # would mint atoms.
+  defp archetype("fighter"), do: {:ok, :fighter}
+  defp archetype("mystic"), do: {:ok, :mystic}
+  defp archetype(_other), do: :invalid
 
   # ------------------------------------------------------------------ battle
 
@@ -190,6 +209,93 @@ defmodule MiniLineage.Game.Actions do
     {player, {:ok, %{text: result.text, type: type_atom, sound: sound}}}
   end
 
+  # ------------------------------------------------------------------ classes
+
+  @doc "Takes up one of the classes the run's own class leads to, once its level allows."
+  def transfer(player, class_id) do
+    guard(player, at_ease(), fn player ->
+      with {:ok, class} <- next_class(player, class_id),
+           :ok <- reached(player, class.level) do
+        {player, line} = Player.transfer(player, class)
+        {player, {:ok, %{text: Narrative.alert(line), type: :warning, sound: "level"}}}
+      else
+        {:error, code, message} -> {player, {:error, code, message}}
+      end
+    end)
+  end
+
+  defp next_class(player, class_id) do
+    with {id, ""} <- Integer.parse(to_string(class_id)),
+         {:ok, class} <- Classes.fetch(id),
+         true <- class.parent_id == Player.class_id(player) do
+      {:ok, class}
+    else
+      _ -> {:error, :invalid, "That is not a calling your class leads to."}
+    end
+  end
+
+  defp reached(player, level) do
+    if Math.level_for_xp(player.experience) >= level,
+      do: :ok,
+      else: {:error, :too_low, "You must reach level #{level} before you can take it up."}
+  end
+
+  # -------------------------------------------------------------------- dyes
+
+  @doc "Draws a dye into a free slot, paying for the dyes it takes and the Symbol Maker's fee."
+  def draw_dye(player, dye_id) do
+    guard(player, at_ease(), fn player ->
+      class = Classes.get(Player.class_id(player))
+      slots = Dyes.slots(class)
+
+      with :ok <- slot_free(player, slots),
+           {:ok, dye} <- dye_for(class, dye_id) do
+        player |> Player.draw_dye(dye) |> dye_result("dye")
+      else
+        {:error, code, message} -> {player, {:error, code, message}}
+      end
+    end)
+  end
+
+  @doc "Washes away the dye in a slot, for the Symbol Maker's fee. Nothing comes back."
+  def remove_dye(player, slot) do
+    guard(player, at_ease(), fn player ->
+      case Integer.parse(to_string(slot)) do
+        {index, ""} when index >= 0 and index < length(player.dyes) ->
+          player |> Player.remove_dye(index) |> dye_result("buy")
+
+        _ ->
+          {player, {:error, :invalid, "There is no symbol there to wash away."}}
+      end
+    end)
+  end
+
+  defp dye_for(class, dye_id) do
+    with {id, ""} <- Integer.parse(to_string(dye_id)),
+         {:ok, dye} <- Dyes.fetch(id),
+         true <- class.id in dye.classes do
+      {:ok, dye}
+    else
+      _ -> {:error, :invalid, "The Symbol Maker has no such dye for your class."}
+    end
+  end
+
+  defp slot_free(_player, 0),
+    do: {:error, :no_slots, "Symbols can be drawn only after your first class transfer."}
+
+  defp slot_free(player, slots) do
+    if length(player.dyes) < slots,
+      do: :ok,
+      else: {:error, :slots_full, "All #{slots} of your symbol slots are taken."}
+  end
+
+  # A refusal for want of Adena is still an answer from the Symbol Maker, as it is in a shop.
+  defp dye_result({player, %{success: true, text: text}}, sound),
+    do: {player, {:ok, %{text: text, type: :success, sound: sound}}}
+
+  defp dye_result({player, %{success: false, text: text}}, _sound),
+    do: {player, {:ok, %{text: text, type: :danger, sound: nil}}}
+
   # ------------------------------------------------------------------ player
 
   def suicide(player) do
@@ -226,7 +332,7 @@ defmodule MiniLineage.Game.Actions do
     else
       player = %{player | cheated: true}
       player = Player.apply_effect(player, Constants.effect(:konami_cheat))
-      player = %{player | health: Player.stats(player).max_health}
+      player = Player.restore_fully(player)
       player = Player.log(player, Player.event("cheat", Narrative.build_heresy()))
       Statistics.increment(:total_players_cheated)
 

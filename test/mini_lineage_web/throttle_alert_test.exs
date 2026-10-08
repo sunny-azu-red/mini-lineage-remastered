@@ -19,7 +19,7 @@ defmodule MiniLineageWeb.ThrottleAlertTest do
     on_exit(fn -> Application.put_env(:mini_lineage, :rate_limit, false) end)
 
     session = Characters.new_session_id()
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hasty")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hasty")
     :ok = Store.save(Store.new_id(), session, %{player | health: 5_000})
     on_exit(fn -> Characters.forget(session) end)
 

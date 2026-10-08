@@ -71,7 +71,7 @@ defmodule MiniLineageWeb.StampTest do
 
   describe "the road" do
     defp living do
-      {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+      {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
       player
     end
 

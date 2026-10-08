@@ -15,7 +15,7 @@ defmodule MiniLineage.Characters.TickLogTest do
     hold(id)
 
     Characters.mutate(id, fn player ->
-      {player, _} = Player.initialize(player, Constants.race(2), "Logged")
+      {player, _} = Player.initialize(player, Constants.race(2), :fighter, "Logged")
       {player, :ok}
     end)
 
@@ -46,7 +46,7 @@ defmodule MiniLineage.Characters.TickLogTest do
 
     log = tick(id)
     assert log =~ "Resting"
-    assert log =~ "40 -> 43/95"
+    assert log =~ "40 -> 43/133"
     assert log =~ "(+3 HPR)"
   end
 
@@ -88,20 +88,21 @@ defmodule MiniLineage.Characters.TickLogTest do
     refute tick(id) =~ "[TICK"
   end
 
-  test "a race with no regeneration is idle rather than mid-heal", %{id: _id} do
+  test "the hardiest class mends the most, at its own rate", %{id: _id} do
     orc = Characters.new_session_id()
     on_exit(fn -> Characters.forget(orc) end)
     hold(orc)
 
     Characters.mutate(orc, fn player ->
-      {player, _} = Player.initialize(player, Constants.race(1), "Grok")
+      {player, _} = Player.initialize(player, Constants.race(1), :fighter, "Grok")
       {player, _} = Player.sync_zone_auras(%{player | current_screen: "home", health: 40})
       {player, :ok}
     end)
 
+    # CON 47 is the highest any Fighter is born with: 4.8 a tick against the Elf's 3.5.
     log = tick(orc)
     assert log =~ "Resting"
-    assert log =~ "(0 HPR)"
+    assert log =~ "(+5 HPR)"
   end
 
   test "a visitor who has not created a character is not described at all" do

@@ -152,24 +152,28 @@ p.last {
     color: var(--text-heal);
 }
 
-/* What a run is worth: its purse, its level, and the ambient state it stands in. */
+/* What a run is worth: its purse, its level, what it was born with, and the state it stands in. */
 .adena,
 .level,
+.attribute,
 .aura {
     color: var(--gold);
 }
 
-/* Read but not acted on: a risk, a day, a clock, a way out nobody boasts of. */
+/* Read but not acted on: a risk, a day, a clock, a pace, a way out nobody boasts of. */
 .ambush,
 .cowards,
 .date,
+.speed,
 .timer {
     color: var(--text-muted);
 }
 
-/* What it turns aside. */
+/* What it turns aside, and the mana a spell is cast with. */
 .defense,
-.damage {
+.evasion,
+.damage,
+.mp {
     color: var(--text-defense);
 }
 
@@ -181,12 +185,15 @@ p.last {
     color: var(--text-tally);
 }
 
-.crit {
+/* Where a blow lands, and how hard. */
+.crit,
+.accuracy {
     color: var(--text-critical);
 }
 
-/* What the arcane touches: experience earned, and a name the gods struck out for reaching past it. */
+/* What the arcane touches: experience earned, a spell's force, and a name the gods struck out. */
 .xp,
+.magic,
 .heretics {
     color: var(--text-xp);
 }
@@ -199,10 +206,10 @@ p.last {
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. */
 :is(p, li) :is(.hp, .attack, .deaths, .debuff,
     .heal, .regen, .buff,
-    .adena, .level, .aura,
-    .ambush, .cowards, .date, .timer,
-    .defense, .damage,
+    .adena, .level, .attribute, .aura,
+    .ambush, .cowards, .date, .speed, .timer,
+    .defense, .evasion, .damage, .mp,
     .battles, .kills, .players, .purchases,
-    .crit, .xp, .heretics, .item) {
+    .crit, .accuracy, .xp, .magic, .heretics, .item) {
     font-weight: var(--weight-value);
 }

@@ -79,7 +79,20 @@ defmodule MiniLineage.Game.Narrative do
         {to_string(mod.type), Format.modifier(mod.value, Map.get(config, :multiplier?, false))}
       end)
 
+    values = Map.put(values, "healing", healing(effect.modifiers))
+
     Format.fill_template(Narratives.effect_blurb(effect.id), Map.merge(values, pronouns(voice)))
+  end
+
+  # The 🌿 aura carries whichever of HP and MP is still short, so its sentence names only those.
+  defp healing(modifiers) do
+    parts =
+      for %{type: type, value: value} <- modifiers, type in [:hp_regen, :mp_regen] do
+        {class, unit} = if type == :hp_regen, do: {"regen", "HP"}, else: {"mp", "MP"}
+        ~s(<span class="#{class}">#{Format.number(value)} #{unit}</span>)
+      end
+
+    Enum.join(parts, " and ")
   end
 
   @doc """
@@ -100,6 +113,7 @@ defmodule MiniLineage.Game.Narrative do
     Format.fill_template(Narratives.began(), %{
       "raceEmoji" => race.emoji,
       "raceLabel" => race.label,
+      "className" => traits.class_name,
       "welcome" => traits.welcome,
       "build" => traits.build,
       "definition" => traits.definition,
@@ -117,6 +131,18 @@ defmodule MiniLineage.Game.Narrative do
   def build_levelled(level), do: Format.fill_template(Narratives.levelled(), %{"level" => level})
 
   def build_heresy, do: Narratives.heresy()
+
+  def build_transfer(class) do
+    article = if String.first(class.name) in ~w(A E I O U), do: "an", else: "a"
+
+    Format.fill_template(Narratives.transferred(), %{
+      "article" => article,
+      "className" => class.name
+    })
+  end
+
+  def build_dye(template, dye, cost),
+    do: Format.fill_template(template, %{"name" => dye.name, "cost" => Format.adena(cost)})
 
   @doc "An effect arriving or going. The blurb says what it does; this says that it happened."
   def build_effect_change(template, effect) do
@@ -146,10 +172,7 @@ defmodule MiniLineage.Game.Narrative do
 
   def build_race_traits(race) do
     Format.fill_template(Narratives.race_traits(race.id), %{
-      "hp" => Format.number(race.start_health),
       "adena" => Format.adena(race.start_adena),
-      "crit" => Format.number(race.crit),
-      "regen" => Format.number(race.regen),
       "ambush" => Format.number(race.ambush_chance)
     })
   end

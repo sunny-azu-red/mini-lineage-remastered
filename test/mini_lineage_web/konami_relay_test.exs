@@ -22,7 +22,7 @@ defmodule MiniLineageWeb.KonamiRelayTest do
   defp relays?(html), do: html =~ ~s(phx-hook="KonamiRelay")
 
   defp living do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Hero")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Hero")
     player
   end
 

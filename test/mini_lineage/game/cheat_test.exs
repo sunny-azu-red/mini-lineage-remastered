@@ -7,7 +7,7 @@ defmodule MiniLineage.Game.CheatTest do
   alias MiniLineage.Game.{Actions, Constants, Player, Snapshot, Statistics}
 
   defp living do
-    {player, _flash} = Player.initialize(%Player{}, Constants.race(0), "Cheater")
+    {player, _flash} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Cheater")
     %{player | health: 10}
   end
 
@@ -16,7 +16,8 @@ defmodule MiniLineage.Game.CheatTest do
 
     assert player.cheated
     assert Enum.any?(player.effects, &(&1.id == "konami_cheat"))
-    assert player.health == Player.stats(player).max_health
+    assert player.health == Player.stats(player).max_hp
+    assert player.mp == Player.stats(player).max_mp
     assert player.health > 10
   end
 

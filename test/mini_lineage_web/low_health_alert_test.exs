@@ -6,7 +6,7 @@ defmodule MiniLineageWeb.LowHealthAlertTest do
   alias MiniLineageWeb.Screens
 
   defp view(overrides \\ %{}) do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Wounded")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Wounded")
     Snapshot.build(Map.merge(%{player | health: 5}, overrides))
   end
 
@@ -14,7 +14,7 @@ defmodule MiniLineageWeb.LowHealthAlertTest do
     alias MiniLineage.Game.{Narrative, Narratives}
 
     defp player(overrides) do
-      {p, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+      {p, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
       Map.merge(p, overrides)
     end
 

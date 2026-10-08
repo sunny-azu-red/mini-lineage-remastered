@@ -515,7 +515,7 @@ defmodule MiniLineageWeb.Controls do
   # -------------------------------------------------------------------- bars
 
   attr :id, :string, required: true
-  attr :kind, :atom, required: true, values: [:hp, :xp]
+  attr :kind, :atom, required: true, values: [:hp, :mp, :xp]
   attr :label, :string, required: true
   attr :key, :string, required: true
   attr :value, :integer, required: true
@@ -536,7 +536,7 @@ defmodule MiniLineageWeb.Controls do
     assigns =
       assign(assigns,
         width: if(of, do: Math.percentage(value, of, 1), else: 100),
-        role: if(assigns.kind == :hp, do: "meter", else: "progressbar"),
+        role: if(assigns.kind == :xp, do: "progressbar", else: "meter"),
         spoken:
           if(of,
             do: "#{Format.number(value)} of #{Format.number(of)} #{label}",

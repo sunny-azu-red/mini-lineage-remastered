@@ -3,17 +3,31 @@ defmodule MiniLineage.Game.Player do
   The stat pipeline, effects, zone auras, purchases and the two tick jobs. Every function takes a
   player and returns a new one.
   """
-  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Narratives, Statistics}
+  alias MiniLineage.Game.{
+    Classes,
+    Clock,
+    Constants,
+    Dyes,
+    Format,
+    Formulas,
+    Math,
+    Narrative,
+    Narratives,
+    Statistics
+  }
 
   @zone_aura_ids ~w(resting combat)
 
   defstruct name: nil,
             race_id: nil,
+            class_id: nil,
             health: nil,
+            mp: nil,
             adena: nil,
             experience: nil,
             weapon_id: nil,
             armor_id: nil,
+            dyes: [],
             dead: false,
             ambushed: false,
             coward: false,
@@ -45,12 +59,17 @@ defmodule MiniLineage.Game.Player do
 
   # ---------------------------------------------------------------- lifecycle
 
-  def initialize(player, race, name) do
+  def initialize(player, race, archetype, name) do
+    class = Classes.starting(race.id, archetype)
+
     player = %{
       player
       | race_id: race.id,
+        class_id: class.id,
         name: name,
-        health: race.start_health,
+        health: 1,
+        mp: 0,
+        dyes: [],
         adena: race.start_adena,
         experience: 0,
         weapon_id: 0,
@@ -66,7 +85,7 @@ defmodule MiniLineage.Game.Player do
     }
 
     player = apply_effect(player, Constants.effect(:newbie_buff))
-    player = %{player | health: stats(player).max_health}
+    player = restore_fully(player)
 
     Statistics.increment_for(player, :total_players)
     Statistics.increment_for(player, :total_adena, player.adena)
@@ -89,6 +108,7 @@ defmodule MiniLineage.Game.Player do
       Format.fill_template(Math.random_element(Narratives.welcome()), %{"raceLabel" => race.label})
 
     traits = %{
+      class_name: class.name,
       welcome: welcome,
       build: build,
       definition: definition,
@@ -193,15 +213,20 @@ defmodule MiniLineage.Game.Player do
   defp regen_aura(player, effects) do
     stats = stats_from(player, effects)
 
-    if player.health < stats.max_health and stats.regen > 0 do
-      config = Constants.effect(:regen_aura)
-      [to_active(%{config | modifiers: [%{type: :regen, value: stats.regen}]}, nil)]
-    else
-      []
-    end
+    healing =
+      [{:hp_regen, player.health, stats.max_hp}, {:mp_regen, player.mp || 0, stats.max_mp}]
+      |> Enum.filter(fn {key, now, max} -> now < max and Math.js_round(stats[key]) > 0 end)
+      |> Enum.map(fn {key, _now, _max} -> %{type: key, value: Math.js_round(stats[key])} end)
+
+    if healing == [],
+      do: [],
+      else: [to_active(%{Constants.effect(:regen_aura) | modifiers: healing}, nil)]
   end
 
-  @doc "Layered pipeline: race base -> equipment stats -> equipment/effect modifiers -> clamps."
+  @doc """
+  Interlude's order: the class's attributes and dyes, the naked or equipped bases, the attribute and
+  level multipliers, then what effects multiply, then what they add, then the caps.
+  """
   def stats(player) do
     # 'regenerating' is derived FROM regen, so folding it back in would double-count.
     effects = Enum.reject(active_effects(player), &(&1.id == "regenerating"))
@@ -209,41 +234,90 @@ defmodule MiniLineage.Game.Player do
     stats_from(player, effects)
   end
 
+  @attributes ~w(str con dex int wit men)a
+
   defp stats_from(player, effects) do
     %{race: race, weapon: weapon, armor: armor} = equipment(player)
+    class_id = class_id(player)
+    level = Math.level_for_xp(player.experience || 0)
+    bases = Classes.bases(class_id)
 
-    base = %{
-      attack: weapon.stat,
-      defense: armor.stat,
-      crit: race.crit,
-      max_health: race.start_health,
-      regen: race.regen,
+    modifiers =
+      modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
+
+    a = attributes(player, class_id)
+
+    # Resting is the game's sitting down: it is the only posture anything regenerates in.
+    derived = %{
+      p_atk: Formulas.p_atk(weapon.stat, a.str, level),
+      m_atk: Formulas.m_atk(bases.m_atk, a.int, level),
+      p_def: Formulas.p_def(bases.p_def + armor.stat, level),
+      m_def: Formulas.m_def(bases.m_def, a.men, level),
+      accuracy: Formulas.accuracy(a.dex, level),
+      evasion: Formulas.evasion(a.dex, level),
+      crit_rate: Formulas.crit_rate(bases.crit, a.dex),
+      m_crit_rate: Formulas.m_crit_rate(bases.m_crit, a.wit),
+      p_atk_spd: Formulas.p_atk_spd(bases.p_atk_spd, a.dex),
+      m_atk_spd: Formulas.m_atk_spd(bases.m_atk_spd, a.wit),
+      max_hp: Formulas.max_hp(Classes.hp(class_id, level), a.con),
+      max_mp: Formulas.max_mp(Classes.mp(class_id, level), a.men),
+      hp_regen: Formulas.hp_regen(Classes.hp_regen(level), a.con, level, :sitting),
+      mp_regen: Formulas.mp_regen(Classes.mp_regen(level), a.men, level, :sitting),
       ambush_risk: race.ambush_chance,
       xp_multiplier: 1.0,
       adena_multiplier: 1.0
     }
 
-    modifiers =
-      modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
+    {muls, adds} = Enum.split_with(modifiers, &(Map.get(&1, :op) == :mul))
 
     stats =
-      Enum.reduce(modifiers, base, fn mod, acc ->
-        if mod.type in [:xp_multiplier, :adena_multiplier],
-          do: Map.update!(acc, mod.type, &(&1 * mod.value)),
-          else: Map.update!(acc, mod.type, &(&1 + mod.value))
-      end)
+      Enum.reduce(adds, Enum.reduce(muls, derived, &apply_modifier/2), &apply_modifier/2)
 
-    %{
-      stats
-      | attack: max(stats.attack, 0),
-        defense: max(stats.defense, 0),
-        crit: stats.crit |> max(0) |> min(100),
-        regen: max(stats.regen, 0),
-        max_health: max(stats.max_health, 1),
-        ambush_risk: stats.ambush_risk |> max(0) |> min(100),
-        xp_multiplier: max(stats.xp_multiplier, 0),
-        adena_multiplier: max(stats.adena_multiplier, 0)
-    }
+    stats
+    |> Map.merge(a)
+    |> clamp()
+  end
+
+  defp apply_modifier(%{op: :mul} = mod, acc), do: Map.update!(acc, mod.type, &(&1 * mod.value))
+  defp apply_modifier(mod, acc), do: Map.update!(acc, mod.type, &(&1 + mod.value))
+
+  defp clamp(stats) do
+    caps = Formulas.caps()
+
+    floors =
+      Map.new(
+        ~w(p_atk m_atk p_def m_def hp_regen mp_regen xp_multiplier adena_multiplier)a,
+        fn key ->
+          {key, max(stats[key], 0)}
+        end
+      )
+
+    Map.merge(stats, floors)
+    |> Map.merge(%{
+      crit_rate: stats.crit_rate |> max(0) |> min(caps.crit_rate),
+      m_crit_rate: stats.m_crit_rate |> max(0) |> min(caps.m_crit_rate),
+      evasion: min(stats.evasion, caps.evasion),
+      p_atk_spd: stats.p_atk_spd |> max(1) |> min(caps.p_atk_spd),
+      m_atk_spd: stats.m_atk_spd |> max(1) |> min(caps.m_atk_spd),
+      max_hp: max(trunc(stats.max_hp), 1),
+      max_mp: max(trunc(stats.max_mp), 1),
+      ambush_risk: stats.ambush_risk |> max(0) |> min(100)
+    })
+  end
+
+  @doc "The class a run is, or its race's Fighter for one stored before classes existed."
+  def class_id(%{class_id: id}) when is_integer(id), do: id
+  def class_id(player), do: Classes.starting(player.race_id || 0, :fighter).id
+
+  @doc "The class's six attributes, then every dye's, each dye bonus capped at +5 as Interlude caps it."
+  def attributes(player, class_id \\ nil) do
+    base = Classes.attributes(class_id || class_id(player))
+    dyes = Enum.map(player.dyes || [], &Dyes.get/1)
+
+    Map.new(@attributes, fn attr ->
+      gained = Enum.reduce(dyes, 0, fn dye, total -> total + min(dye[attr], 5 - total) end)
+      {attr, base[attr] + gained}
+    end)
   end
 
   # -------------------------------------------------------------- zone auras
@@ -311,15 +385,29 @@ defmodule MiniLineage.Game.Player do
 
   @doc "Heals up to max HP. Returns `{player, restored}`."
   def restore_health(player, amount) do
-    healed = min(stats(player).max_health, player.health + amount)
+    healed = min(stats(player).max_hp, player.health + amount)
 
     {%{player | health: healed}, healed - player.health}
+  end
+
+  @doc "Restores MP up to its maximum. Returns `{player, restored}`."
+  def restore_mp(player, amount) do
+    current = player.mp || 0
+    restored = min(stats(player).max_mp, current + amount)
+
+    {%{player | mp: restored}, restored - current}
+  end
+
+  @doc "Both bars to the top, as a new character and a level reached have them."
+  def restore_fully(player) do
+    stats = stats(player)
+    %{player | health: stats.max_hp, mp: stats.max_mp}
   end
 
   # --------------------------------------------------------------- tick jobs
 
   @doc """
-  Drops expired effects and clamps health if a max-health buff went away. Driven only by each
+  Drops expired effects and clamps HP and MP if a maximum went away with one. Driven only by each
   effect's own exact-expiry timer. Returns `{player, changed?}`.
   """
   def process_effect_expiry(%{dead: true} = player), do: {player, false}
@@ -335,15 +423,19 @@ defmodule MiniLineage.Game.Player do
     changed? = length(remaining) != length(player.effects)
     player = if changed?, do: %{player | effects: remaining}, else: player
 
-    max_health = stats(player).max_health
+    clamped = clamp_bars(player)
 
-    if player.health > max_health,
-      do: {%{player | health: max_health}, true},
-      else: {player, changed?}
+    {clamped, changed? or clamped != player}
+  end
+
+  # A maximum that fell takes the bar down with it; one that rose leaves it where it was.
+  defp clamp_bars(player) do
+    stats = stats(player)
+    %{player | health: min(player.health, stats.max_hp), mp: min(player.mp || 0, stats.max_mp)}
   end
 
   @doc """
-  Natural HP regeneration, earned by resting. Periodic cadence only. Returns `{player, healed?}`.
+  Natural HP and MP regeneration, earned by resting, one 3 s tick of it. Returns `{player, healed?}`.
   Driven by the 🌿 aura rather than a second copy of its conditions, so the two cannot come apart.
   """
   def process_regen_tick(%{dead: true} = player), do: {player, false}
@@ -353,9 +445,17 @@ defmodule MiniLineage.Game.Player do
       nil ->
         {player, false}
 
-      %{modifiers: [%{type: :regen, value: rate}]} ->
-        {player, healed} = restore_health(player, rate)
-        Statistics.increment_for(player, :total_hp_regen, healed)
+      %{modifiers: rates} ->
+        player =
+          Enum.reduce(rates, player, fn
+            %{type: :hp_regen, value: rate}, player ->
+              {player, healed} = restore_health(player, rate)
+              Statistics.increment_for(player, :total_hp_regen, healed)
+              player
+
+            %{type: :mp_regen, value: rate}, player ->
+              player |> restore_mp(rate) |> elem(0)
+          end)
 
         {player, true}
     end
@@ -419,7 +519,8 @@ defmodule MiniLineage.Game.Player do
     effect = effect_of(item)
     player = if effect, do: apply_effect(player, effect), else: player
 
-    {player, healed} = restore_health(player, item.stat)
+    # A share of the bar, as the battle bridge's losses are: both were tuned against 100 HP.
+    {player, healed} = restore_health(player, round(item.stat * stats(player).max_hp / 100))
     Statistics.increment_for(player, :total_food_bought)
     Statistics.increment_for(player, :total_hp_healed, healed)
 
@@ -444,6 +545,62 @@ defmodule MiniLineage.Game.Player do
     player = log(player, event("purchase", bought))
 
     {player, %{success: true, text: Narrative.alert(bought)}}
+  end
+
+  # --------------------------------------------------------- classes and dyes
+
+  @doc "Becomes `class`, whose HP and MP tables take over from the next level. Returns `{player, line}`."
+  def transfer(player, class) do
+    line = Narrative.build_transfer(class)
+    player = %{player | class_id: class.id} |> clamp_bars() |> log(event("class_change", line))
+
+    {player, line}
+  end
+
+  @doc "Pays for a dye and draws it into the next free slot. `{player, result}`, a refusal included."
+  def draw_dye(player, dye) do
+    cost = Dyes.cost(dye)
+
+    case deduct_cost(player, cost) do
+      {player, false} ->
+        {player,
+         refusal(
+           ~s(You do not have enough <span class="adena">🪙 Adena</span> to have the <span class="item">#{dye.name}</span> drawn!)
+         )}
+
+      {player, true} ->
+        Statistics.increment_for(player, :total_adena_spent, cost)
+        line = Narrative.build_dye(Narratives.dye_drawn(), dye, cost)
+
+        player =
+          %{player | dyes: player.dyes ++ [dye.id]} |> clamp_bars() |> log(event("dye", line))
+
+        {player, %{success: true, text: Narrative.alert(line)}}
+    end
+  end
+
+  @doc "Pays the Symbol Maker to wash away the dye in slot `index`. `{player, result}`."
+  def remove_dye(player, index) do
+    dye = Dyes.get(Enum.at(player.dyes, index))
+
+    case deduct_cost(player, dye.cancel_fee) do
+      {player, false} ->
+        {player,
+         refusal(
+           ~s(You do not have enough <span class="adena">🪙 Adena</span> to have the <span class="item">#{dye.name}</span> washed away!)
+         )}
+
+      {player, true} ->
+        Statistics.increment_for(player, :total_adena_spent, dye.cancel_fee)
+        line = Narrative.build_dye(Narratives.dye_removed(), dye, dye.cancel_fee)
+
+        player =
+          %{player | dyes: List.delete_at(player.dyes, index)}
+          |> clamp_bars()
+          |> log(event("dye", line))
+
+        {player, %{success: true, text: Narrative.alert(line)}}
+    end
   end
 
   # ------------------------------------------------------------------- log
@@ -486,7 +643,9 @@ defmodule MiniLineage.Game.Player do
       Statistics.increment_for(player, :total_damage_blocked, result.damage_blocked)
 
       if Math.level_up?(old_xp, player.experience) do
-        {player, healed} = restore_health(player, stats(player).max_health)
+        before = player.health
+        player = restore_fully(player)
+        healed = player.health - before
         Statistics.increment_for(player, :total_levels_gained)
         Statistics.increment_for(player, :total_hp_healed, healed)
 

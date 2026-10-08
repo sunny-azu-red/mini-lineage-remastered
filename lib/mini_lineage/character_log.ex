@@ -14,7 +14,7 @@ defmodule MiniLineage.CharacterLog do
   @narrative_keys ~w(crit_line kill_line deflection_line outcome_line ambush_line fight_prompt next_move)a
 
   # Whitelisted here and not in the database, so a new kind is a line of Elixir, not a migration.
-  @kinds ~w(fight start purchase level_up cheat ending buff debuff)
+  @kinds ~w(fight start purchase level_up class_change dye cheat ending buff debuff)
 
   defmodule Entry do
     @moduledoc false

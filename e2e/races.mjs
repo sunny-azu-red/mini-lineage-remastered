@@ -31,9 +31,12 @@ try {
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     const chronicles = await text('#main');
-    for (const race of RACES)
+    for (const race of RACES) {
         check(`Chronicles of Ancestry describes the ${race.label}`,
             chronicles.includes(race.label) && chronicles.includes(race.emoji));
+        check(`...and the class ${a(race.label)} ${race.archetype} is born as`,
+            chronicles.includes(race.className), race.className);
+    }
 
     // ---- then each one is actually played -----------------------------------------------------
     for (const race of RACES) {
@@ -45,18 +48,22 @@ try {
         await onScreen('start');
         await page.fill('#main input[name="name"]', name);
         await page.selectOption('#main select[name="race_id"]', String(race.id));
+        await page.selectOption('#main select[name="archetype"]', race.archetype);
         await page.click('#main button[type="submit"]');
         await onScreen('home');
 
         const born = await state();
-        check(`the ${race.label} is welcomed by name`,
-            new RegExp(`You chose the.*${race.label}`).test(await text('#main .alert')),
+        check(`the ${race.className} is welcomed by name`,
+            new RegExp(`You chose the.*${race.className}`).test(await text('#main .alert')),
             await text('#main .alert'));
         check(`...and starts on the ${race.label}'s own purse`, born.adena === race.adena,
             `${born.adena}, expected ${race.adena}`);
         check(`...at the ${race.label}'s full health`,
             born.health === race.health && born.health === born.maxHealth,
             `${born.health}/${born.maxHealth}, expected ${race.health}`);
+        check(`...and full mana, ${a(race.className)}'s own`,
+            born.mp === race.mp && born.mp === born.maxMp,
+            `${born.mp}/${born.maxMp}, expected ${race.mp}`);
         check('...at level 1', born.level === 1, String(born.level));
         check('...and the newbie blessing is in hand',
             await page.locator('#effects [data-effect-id="newbie_blessing"]').count() === 1);
@@ -70,8 +77,8 @@ try {
             await text('#main h2'));
         check('...and tells the lineage\'s own story',
             (await text('#main p')).length > 80, `${(await text('#main p')).length} chars`);
-        check(`...with the ${race.label}'s critical chance`, await stat('char-stat-crit') === race.crit,
-            `${await stat('char-stat-crit')}%, expected ${race.crit}%`);
+        check(`...with the ${race.className}'s Critical`, await stat('char-stat-crit') === race.crit,
+            `${await stat('char-stat-crit')}, expected ${race.crit}`);
         check('...regeneration', await stat('char-stat-regen') === race.regen,
             `${await stat('char-stat-regen')}, expected ${race.regen}`);
         check('...and ambush risk', await stat('char-stat-ambush') === race.ambush,

@@ -16,7 +16,7 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
   # blessing or beginning of its own to throw the count.
   defp run_with(count) do
     id = Store.new_id()
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Longlived")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Longlived")
     :ok = Store.save(id, Characters.new_session_id(), player)
     Repo.query!("DELETE FROM character_log WHERE character_id = $1", [id])
 
@@ -109,7 +109,7 @@ defmodule MiniLineageWeb.ChroniclePagesTest do
       CharacterLog.params(CharacterLog.event(id, "purchase", "Deed #{n}.", at))
     ])
 
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Longlived")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Longlived")
     send(view.pid, {:record_updated, player, id, true})
     render(view)
   end

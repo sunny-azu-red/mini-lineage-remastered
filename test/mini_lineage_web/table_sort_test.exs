@@ -23,7 +23,9 @@ defmodule MiniLineageWeb.TableSortTest do
   # No log entries, so a run was last seen when it was born, and `seen` says when that was.
   defp run(name, opts) do
     id = Store.new_id()
-    {player, _} = Player.initialize(%Player{}, Constants.race(opts[:race_id] || 0), name)
+
+    {player, _} =
+      Player.initialize(%Player{}, Constants.race(opts[:race_id] || 0), :fighter, name)
 
     :ok =
       Store.save(id, Characters.new_session_id(), %{
@@ -120,10 +122,10 @@ defmodule MiniLineageWeb.TableSortTest do
     end
 
     test "keep rows equal on the column in the order they are ranked", %{conn: conn} do
-      run("Third", xp: 100)
-      run("First", xp: 500)
-      run("Second", xp: 400)
-      assert Math.level_for_xp(100) == Math.level_for_xp(500)
+      run("Third", xp: 110)
+      run("First", xp: 150)
+      run("Second", xp: 130)
+      assert Math.level_for_xp(110) == Math.level_for_xp(150)
       {:ok, view, _html} = live(conn, ~p"/highscores")
 
       click(view, "level")
@@ -204,7 +206,7 @@ defmodule MiniLineageWeb.TableSortTest do
   end
 
   test "the shops label their columns and offer nothing to click" do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Buyer")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Buyer")
 
     doc =
       render_component(&MiniLineageWeb.Screens.screen/1,

@@ -22,7 +22,7 @@ defmodule MiniLineage.CharacterLogTest do
 
   defp start_character(session, race_id \\ 1) do
     Characters.mutate(session, fn player ->
-      {player, _flash} = Player.initialize(player, Constants.race(race_id), "Hero")
+      {player, _flash} = Player.initialize(player, Constants.race(race_id), :fighter, "Hero")
       {%{player | current_screen: "battle"}, :ok}
     end)
 

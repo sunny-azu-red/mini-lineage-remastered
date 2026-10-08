@@ -32,7 +32,7 @@ defmodule MiniLineageWeb.FigureTest do
   end
 
   test "every figure on a record says what it counts to" do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Counted")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Counted")
     player = %{player | adena: 12_345, experience: 4_321}
 
     html =

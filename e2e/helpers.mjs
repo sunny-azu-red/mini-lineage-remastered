@@ -6,14 +6,15 @@ export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 export const PURSE = '#sidebar [data-key="adena"]';
 
 /**
- * The four lineages as the UI must present them, with the newbie blessing already applied — what a
- * player sees on a fresh character. The balance behind them is balance_golden_test.exs's job.
+ * The four lineages as the UI must present them, each born as the class named, with the newbie
+ * blessing already applied — what a player sees on a fresh character. Two are played as Mystics so
+ * both archetypes are born in a browser. The balance behind them is balance_golden_test.exs's job.
  */
 export const RACES = [
-    { id: 0, label: 'Human',     emoji: '🧙', health: 120, adena: 300, crit: 4,  regen: 1, ambush: 4,  plural: 'Humans' },
-    { id: 1, label: 'Orc',       emoji: '🧟', health: 170, adena: 250, crit: 0,  regen: 0, ambush: 12, plural: 'Orcs' },
-    { id: 2, label: 'Elf',       emoji: '🧝', health: 95,  adena: 450, crit: 8,  regen: 3, ambush: 0,  plural: 'Elves' },
-    { id: 3, label: 'Dark Elf',  emoji: '🧛', health: 105, adena: 350, crit: 11, regen: 2, ambush: 1,  plural: 'Dark Elves' },
+    { id: 0, label: 'Human',    emoji: '🧙', archetype: 'fighter', className: 'Human Fighter', health: 146, mp: 38, adena: 300, crit: 44, regen: 4, ambush: 4,  plural: 'Humans' },
+    { id: 1, label: 'Orc',      emoji: '🧟', archetype: 'mystic',  className: 'Orc Mystic',    health: 124, mp: 60, adena: 250, crit: 42, regen: 3, ambush: 12, plural: 'Orcs' },
+    { id: 2, label: 'Elf',      emoji: '🧝', archetype: 'fighter', className: 'Elven Fighter', health: 133, mp: 39, adena: 450, crit: 46, regen: 3, ambush: 0,  plural: 'Elves' },
+    { id: 3, label: 'Dark Elf', emoji: '🧛', archetype: 'mystic',  className: 'Dark Mystic',   health: 115, mp: 58, adena: 350, crit: 41, regen: 2, ambush: 1,  plural: 'Dark Elves' },
 ];
 
 /** Collects results so a run reports every failure rather than dying on the first. */
@@ -60,6 +61,8 @@ export function controls(page) {
             level: figures.level ?? null,
             health: figures.hp ?? null,
             maxHealth: figures['max-hp'] ?? null,
+            mp: figures.mp ?? null,
+            maxMp: figures['max-mp'] ?? null,
             adena: figures.adena ?? null,
         };
     };

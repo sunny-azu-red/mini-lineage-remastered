@@ -25,7 +25,7 @@ defmodule MiniLineage.BoardTest do
     id = Store.new_id()
 
     {player, _} =
-      Player.initialize(%Player{}, Constants.race(opts[:race_id] || 0), name)
+      Player.initialize(%Player{}, Constants.race(opts[:race_id] || 0), :fighter, name)
 
     player = %{
       player
@@ -170,7 +170,7 @@ defmodule MiniLineage.BoardTest do
       on_exit(fn -> Characters.forget(session) end)
 
       Characters.mutate(session, fn p ->
-        {p, _} = Player.initialize(p, Constants.race(2), "Second")
+        {p, _} = Player.initialize(p, Constants.race(2), :fighter, "Second")
         {%{p | experience: 100}, :ok}
       end)
 
@@ -259,7 +259,7 @@ defmodule MiniLineage.BoardTest do
     on_exit(fn -> Characters.forget(session) end)
 
     Characters.mutate(session, fn p ->
-      {p, _} = Player.initialize(p, Constants.race(0), name)
+      {p, _} = Player.initialize(p, Constants.race(0), :fighter, name)
       {%{p | current_screen: "battle"}, :ok}
     end)
 
@@ -317,7 +317,7 @@ defmodule MiniLineage.BoardTest do
       session = Characters.new_session_id()
 
       Characters.mutate(session, fn p ->
-        {p, _} = Player.initialize(p, Constants.race(1), "Held")
+        {p, _} = Player.initialize(p, Constants.race(1), :fighter, "Held")
         {p, :ok}
       end)
 
@@ -335,7 +335,7 @@ defmodule MiniLineage.BoardTest do
       session = Characters.new_session_id()
 
       Characters.mutate(session, fn p ->
-        {p, _} = Player.initialize(p, Constants.race(1), "Held")
+        {p, _} = Player.initialize(p, Constants.race(1), :fighter, "Held")
         {p, :ok}
       end)
 
@@ -460,7 +460,7 @@ defmodule MiniLineage.BoardTest do
       session = Characters.new_session_id()
 
       Characters.mutate(session, fn p ->
-        {p, _} = Player.initialize(p, Constants.race(1), "Holder")
+        {p, _} = Player.initialize(p, Constants.race(1), :fighter, "Holder")
         {p, :ok}
       end)
 
@@ -499,7 +499,7 @@ defmodule MiniLineage.BoardTest do
       Board.subscribe()
 
       Characters.mutate(session, fn p ->
-        {p, _} = Player.initialize(p, Constants.race(1), "Resting")
+        {p, _} = Player.initialize(p, Constants.race(1), :fighter, "Resting")
         {p, :ok}
       end)
 

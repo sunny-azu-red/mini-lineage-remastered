@@ -18,7 +18,7 @@ defmodule MiniLineageWeb.AlertVariantsTest do
   end
 
   defp rich(screen) do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Buyer")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Buyer")
     %{player | adena: 100_000, current_screen: screen}
   end
 
@@ -27,7 +27,7 @@ defmodule MiniLineageWeb.AlertVariantsTest do
     %{
       success: flash_type(fn -> Actions.purchase(rich("weapons"), "weapon", 1) end),
       danger: flash_type(fn -> Actions.purchase(%{rich("weapons") | adena: 0}, "weapon", 5) end),
-      info: elem(Player.initialize(%Player{}, Constants.race(1), "Newborn"), 1).type,
+      info: elem(Player.initialize(%Player{}, Constants.race(1), :fighter, "Newborn"), 1).type,
       warning: levelled()
     }
   end

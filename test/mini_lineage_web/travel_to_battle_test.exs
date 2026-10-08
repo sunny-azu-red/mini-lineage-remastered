@@ -18,7 +18,7 @@ defmodule MiniLineageWeb.TravelToBattleTest do
     # A fight costs at least ten before armour and an Orc has no regeneration, so 1 HP is fatal
     # whatever the dice say.
     session = Characters.new_session_id()
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Doomed")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Doomed")
     :ok = Store.save(Store.new_id(), session, %{player | health: 1})
     # Mounting starts the character's process; left up, it flushes into whichever test runs next.
     on_exit(fn -> Characters.forget(session) end)

@@ -5,13 +5,13 @@ defmodule MiniLineage.Game.Narratives do
   # the Chronicles of Ancestry speak about them. `Narrative.voiced/2` closes them at render.
   @race_traits %{
     0 =>
-      ~s({they} embark with a versatile <span class="hp">{hp} HP</span> and a starting inheritance of <span class="adena">🪙 {adena} Adena</span>, striking with a steady <span class="crit">{crit}% Critical Chance</span>. {whose} adaptable biology allows for <span class="regen">+{regen} Regeneration</span> during moments of rest, while {their} vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s({they} embark with a starting inheritance of <span class="adena">🪙 {adena} Adena</span>, and {their} vigilant focus maintains a balanced <span class="ambush">{ambush}% Ambush Risk</span>.),
     1 =>
-      ~s({they} embark with a fortified <span class="hp">{hp} HP</span> and a starting tribute of <span class="adena">🪙 {adena} Adena</span>, though {their} raw, unweighted strikes offer a <span class="crit">{crit}% Critical Chance</span>. {whose} iron-like biology denies {object} natural mending, requiring constant sustenance to fuel {their} recovery, while {their} unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s({they} embark with a starting tribute of <span class="adena">🪙 {adena} Adena</span>, though {their} unmistakable presence yields a <span class="ambush">{ambush}% Ambush Risk</span>.),
     2 =>
-      ~s({they} embark with a slight <span class="hp">{hp} HP</span> but a vast ancestral treasury of <span class="adena">🪙 {adena} Adena</span>, striking with a graceful <span class="crit">{crit}% Critical Chance</span>. {whose} spiritual biology allows for a potent <span class="regen">+{regen} Regeneration</span> during moments of rest, while {their} ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
+      ~s({they} embark with a vast ancestral treasury of <span class="adena">🪙 {adena} Adena</span>, while {their} ethereal nature limits the threat of the shadows to a mere <span class="ambush">{ambush}% Ambush Risk</span>.),
     3 =>
-      ~s({they} embark with a tempered <span class="hp">{hp} HP</span> and a starting wealth of <span class="adena">🪙 {adena} Adena</span>, striking with a lethal <span class="crit">{crit}% Critical Chance</span>. {whose} shadow-touched biology allows for a swift <span class="regen">+{regen} Regeneration</span> during moments of rest, while {their} predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
+      ~s({they} embark with a starting wealth of <span class="adena">🪙 {adena} Adena</span>, while {their} predatory focus keeps the danger of the road at a low <span class="ambush">{ambush}% Ambush Risk</span>.)
   }
 
   # What each effect does, in the page's own voice: `{them}` is the subject mid-sentence, `{object}`
@@ -25,19 +25,19 @@ defmodule MiniLineage.Game.Narratives do
     "combat" =>
       ~s(Steel is out and the air will not settle. Nothing mends while it is drawn, and until the fray lets go the roads out of it stay shut.),
     "regenerating" =>
-      ~s(Rest is doing its quiet work: <span class="regen">{regen} HP</span> knits back with every turn of the cycle, and will go on doing so until {them} stand whole again.),
+      ~s(Rest is doing its quiet work: {healing} come back with every turn of the cycle, and will go on doing so until {them} stand whole again.),
     "newbie_blessing" =>
-      ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_health} Max HP</span> and <span class="defense">{defense} Physical Defense</span>, and turns the road's eye aside for <span class="ambush">{ambush_risk}% Ambush Risk</span>.),
+      ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_hp} Max HP</span> and <span class="defense">{p_def} P. Def.</span>, and turns the road's eye aside for <span class="ambush">{ambush_risk}% Ambush Risk</span>.),
     "hexed" =>
-      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit}% Critical Hit Chance</span>.),
+      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit_rate} Critical</span>.),
     "konami_cheat" =>
-      ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{crit}% Critical Hit Chance</span> and <span class="hp">{max_health} Max HP</span>. None of it fades, nor does what it cost, because the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
+      ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{crit_rate} Critical</span> and <span class="hp">{max_hp} Max HP</span>. None of it fades, nor does what it cost, because the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
     "satisfied" =>
-      ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_health} Max HP</span> for as long as it lasts.),
+      ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_hp} Max HP</span> for as long as it lasts.),
     "well_fed" =>
-      ~s(Properly fed for once, and it shows in the way {them} carry {self}: <span class="hp">{max_health} Max HP</span> while the meal holds.),
+      ~s(Properly fed for once, and it shows in the way {them} carry {self}: <span class="hp">{max_hp} Max HP</span> while the meal holds.),
     "gourmet_feast" =>
-      ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_health} Max HP</span> stand between {object} and the dark.)
+      ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_hp} Max HP</span> stand between {object} and the dark.)
   }
 
   # Open pronouns like every other stored line: this one greets the player as a flash and is kept
@@ -156,10 +156,13 @@ defmodule MiniLineage.Game.Narratives do
 
   # What a run did, one sentence apiece, and the same sentence its owner's alert says. Single
   # templates rather than pools: a deed is rare next to a fight, and the item carries the interest.
-  @began ~s({they} chose the {raceEmoji} {raceLabel}, and {welcome} {they} set out as {build} {definition} of {age} seasons, bearing a <span class="adena">🪙 {adena} Adena</span> tribute.)
+  @began ~s({they} chose the {raceEmoji} {className}, and {welcome} {they} set out as {build} {definition} of {age} seasons, bearing a <span class="adena">🪙 {adena} Adena</span> tribute.)
   @bought_gear ~s({they} bought and equipped the {emoji} <span class="item">{name}</span> for <span class="adena">🪙 {cost} Adena</span>.)
   @ate ~s({they} bought and ate the {emoji} <span class="item">{name}</span> for <span class="adena">🪙 {cost} Adena</span>, and {their} strength returned to <span class="hp">{hp} HP</span>.)
   @levelled ~s({they} reached <span class="level">Level {level}</span>.)
+  @transferred ~s({they} took up the calling of {article} <span class="level">{className}</span>.)
+  @dye_drawn ~s({they} had the <span class="item">{name}</span> drawn for <span class="adena">🪙 {cost} Adena</span>.)
+  @dye_removed ~s({they} had the <span class="item">{name}</span> washed away for <span class="adena">🪙 {cost} Adena</span>.)
   @heresy ~s(👾 The gods saw {their} heresy, and the Halls closed the book on {object}.)
   @effect_gained ~s({emoji} <span class="{type}">{label}</span> settles over {object}.)
   @effect_lapsed ~s({emoji} <span class="{type}">{label}</span> leaves {object}.)
@@ -205,6 +208,9 @@ defmodule MiniLineage.Game.Narratives do
   def bought_gear, do: @bought_gear
   def ate, do: @ate
   def levelled, do: @levelled
+  def transferred, do: @transferred
+  def dye_drawn, do: @dye_drawn
+  def dye_removed, do: @dye_removed
   def heresy, do: @heresy
   def effect_gained, do: @effect_gained
   def effect_lapsed, do: @effect_lapsed

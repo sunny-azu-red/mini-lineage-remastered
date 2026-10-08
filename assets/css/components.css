@@ -298,6 +298,11 @@
     gap: 10px;
 }
 
+/* The run's class, under its name: a value with no label, so it takes the label's column too. */
+.status-panel .stat-row.calling .stat-value {
+    grid-column: 1 / -1;
+}
+
 .stat-row::after,
 ol.chronicle li::after {
     content: '';
@@ -335,7 +340,7 @@ ol.chronicle li:last-child::after {
 
 /* The shape of every marked row; the colour is each row's own, so none overrides a default. */
 .stat-row.danger,
-ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
+ol.chronicle li:is(.ambushed, .start, .level-up, .class-change, .purchase) {
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
@@ -381,6 +386,13 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
     overflow: hidden;
 }
 
+.mp-bar {
+    background: linear-gradient(90deg, var(--bar-mp) 0%, var(--glow-mp) 100%);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--glow-mp) 40%, transparent);
+    position: relative;
+    overflow: hidden;
+}
+
 .xp-bar {
     background: linear-gradient(90deg, var(--bar-xp) 0%, var(--glow-xp) 100%);
     box-shadow: 0 0 8px color-mix(in srgb, var(--glow-xp) 40%, transparent);
@@ -389,6 +401,7 @@ ol.chronicle li:is(.ambushed, .start, .level-up, .purchase) {
 }
 
 .hp-bar.shimmer-active::after,
+.mp-bar.shimmer-active::after,
 .xp-bar.shimmer-active::after {
     content: '';
     position: absolute;
@@ -565,7 +578,7 @@ ol.chronicle li.start {
     background-color: var(--wash-info);
 }
 
-ol.chronicle li.level-up {
+ol.chronicle li:is(.level-up, .class-change) {
     background-color: var(--wash-gold);
 }
 

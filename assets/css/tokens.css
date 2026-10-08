@@ -55,10 +55,13 @@
     --text-heal: #00a152;
 
     /* ===== The bars =====
-     * Built alike: one lightness for the bases, one for the glows, one chroma for all four. The
-     * glows sit under AA's 4.5, which binds a word and not a filled bar. */
+     * Built alike: one lightness for the bases, one for the glows, one chroma for all six. The
+     * glows sit under AA's 4.5, which binds a word and not a filled bar. MP's hue is the bluest
+     * that chroma reaches in sRGB at the bases' lightness. */
     --bar-hp: #be271f;
     --glow-hp: #e44c3b;
+    --bar-mp: #3c58d0;
+    --glow-mp: #6575f3;
     --bar-xp: #a031a7;
     --glow-xp: #c254c8;
 

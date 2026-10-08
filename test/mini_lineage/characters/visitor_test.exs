@@ -64,7 +64,7 @@ defmodule MiniLineage.Characters.VisitorTest do
             &Actions.cheat/1,
             &Actions.purchase(&1, "food", "0"),
             &Actions.set_screen(&1, "home"),
-            &Actions.start(&1, "nonsense", "")
+            &Actions.start(&1, "nonsense", "fighter", "")
           ] do
         {result, _player} = Characters.mutate(session, fun)
         result
@@ -90,7 +90,7 @@ defmodule MiniLineage.Characters.VisitorTest do
     session = visitor()
     assert stored(session) == nil
 
-    Characters.mutate(session, &Actions.start(&1, "2", "Arrived"))
+    Characters.mutate(session, &Actions.start(&1, "2", "fighter", "Arrived"))
 
     assert rows() == ctx.before + 1
     assert raceless() == ctx.raceless_before
@@ -99,7 +99,7 @@ defmodule MiniLineage.Characters.VisitorTest do
 
   test "starting over writes no row for the empty character that replaces the run", ctx do
     session = visitor()
-    Characters.mutate(session, &Actions.start(&1, "0", "First"))
+    Characters.mutate(session, &Actions.start(&1, "0", "fighter", "First"))
     Characters.mutate(session, &{Player.kill(&1), :ok})
 
     Characters.archive(session)

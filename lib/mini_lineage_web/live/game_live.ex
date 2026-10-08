@@ -264,8 +264,9 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, leave(socket, screen)}
   end
 
-  def handle_event("start", %{"name" => name, "race_id" => race_id}, socket) do
-    {:noreply, apply_action(socket, &Actions.start(&1, race_id, name), "home")}
+  def handle_event("start", %{"name" => name, "race_id" => race_id} = params, socket) do
+    archetype = params["archetype"]
+    {:noreply, apply_action(socket, &Actions.start(&1, race_id, archetype, name), "home")}
   end
 
   def handle_event("fight", _params, socket), do: {:noreply, fight(socket, nil)}
@@ -283,6 +284,32 @@ defmodule MiniLineageWeb.GameLive do
 
       {:limited, socket} ->
         {:noreply, socket}
+    end
+  end
+
+  def handle_event("transfer", %{"class_id" => ""}, socket), do: {:noreply, leave(socket, "home")}
+
+  def handle_event("transfer", %{"class_id" => class_id}, socket) do
+    socket = apply_action(socket, &Actions.transfer(&1, class_id))
+    {:noreply, assign(socket, picked: nil)}
+  end
+
+  def handle_event("draw_dye", %{"dye_id" => ""}, socket), do: {:noreply, leave(socket, "home")}
+
+  def handle_event("draw_dye", %{"dye_id" => dye_id}, socket) do
+    case throttle(socket, :shop) do
+      {:ok, socket} ->
+        {:noreply, assign(apply_action(socket, &Actions.draw_dye(&1, dye_id)), picked: nil)}
+
+      {:limited, socket} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("remove_dye", %{"slot" => slot}, socket) do
+    case throttle(socket, :shop) do
+      {:ok, socket} -> {:noreply, apply_action(socket, &Actions.remove_dye(&1, slot))}
+      {:limited, socket} -> {:noreply, socket}
     end
   end
 

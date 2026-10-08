@@ -4,7 +4,7 @@ defmodule MiniLineage.Game.Math do
   `roll_chance/1` short-circuits at both ends WITHOUT drawing — an ambush risk of exactly 0 consumes
   no randomness, which the golden master's draw order depends on.
   """
-  alias MiniLineage.Game.{Constants, Rng}
+  alias MiniLineage.Game.{Classes, Constants, Rng}
 
   def random_int(min, max), do: Kernel.floor(Rng.random() * (max - min + 1)) + min
 
@@ -26,8 +26,9 @@ defmodule MiniLineage.Game.Math do
   def low_health?(health, max_hp), do: health > 0 and health <= low_health_threshold(max_hp)
 
   # xp and levels
+  @doc "Interlude's table divided down; `exp_divisor` is as large as it gets with no two levels merging."
   def xp_for_level(level) when level <= 1, do: 0
-  def xp_for_level(level), do: js_round(130 * :math.pow(level, 2) + 130 * level)
+  def xp_for_level(level), do: ceil(Classes.experience(level) / Constants.exp_divisor())
 
   def level_for_xp(xp), do: climb(1, xp)
 

@@ -8,34 +8,48 @@ defmodule MiniLineage.Game.ActionGuardsTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Constants, Player}
+  alias MiniLineage.Game.{Actions, Classes, Constants, Player}
 
   defp hero do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
     %{player | current_screen: "home"}
   end
 
   describe "starting a character" do
     test "is refused when one is already playing, so a second start cannot wipe the first" do
-      {player, {:error, _, _}} = Actions.start(hero(), 0, "Usurper")
+      {player, {:error, _, _}} = Actions.start(hero(), 0, "fighter", "Usurper")
 
       assert player.name == "Hero"
       assert player.race_id == 1
     end
 
     test "refuses a race that does not exist rather than falling back to one" do
-      assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, 99, "Hero")
-      assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, -1, "Hero")
+      assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, 99, "fighter", "Hero")
+      assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, -1, "fighter", "Hero")
+    end
+
+    test "refuses an archetype that is not Fighter or Mystic, and never mints it as an atom" do
+      for archetype <- ["warrior", "", nil, "FIGHTER"] do
+        assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, 0, archetype, "Hero")
+      end
+    end
+
+    test "starts a Mystic as its race's Mystic class" do
+      {player, {:ok, _flash}} = Actions.start(%Player{}, 3, "mystic", "Hero")
+
+      assert Classes.get(player.class_id).name == "Dark Mystic"
+      assert player.mp == Player.stats(player).max_mp
     end
 
     test "and refuses a name that is not one" do
       for name <- ["", "   "] do
-        assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, 0, name), name
+        assert {_player, {:error, :invalid, _}} = Actions.start(%Player{}, 0, "fighter", name),
+               name
       end
     end
 
     test "but a good one starts in Town, already carrying its zone aura" do
-      {player, {:ok, _flash}} = Actions.start(%Player{}, 0, "Hero")
+      {player, {:ok, _flash}} = Actions.start(%Player{}, 0, "fighter", "Hero")
 
       assert player.current_screen == "home"
 

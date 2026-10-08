@@ -14,7 +14,7 @@ defmodule MiniLineage.Characters.TickLog do
       difference = player.health - health_before
 
       "[TICK:#{String.slice(id, 0, 7)}] #{zone(player)} | " <>
-        "HP: #{moved(difference, health_before)}#{player.health}/#{stats.max_health} " <>
+        "HP: #{moved(difference, health_before)}#{player.health}/#{stats.max_hp} " <>
         "(#{status(player, stats, difference, expired, changed?)})"
     end)
   end
@@ -42,9 +42,9 @@ defmodule MiniLineage.Characters.TickLog do
       difference > 0 -> "+#{difference} HPR"
       difference < 0 -> "#{difference} HP | #{lapsed}"
       changed? -> lapsed
-      player.health >= stats.max_health -> "Full"
+      player.health >= stats.max_hp and player.mp >= stats.max_mp -> "Full"
       not has?(player, "resting") -> "Paused"
-      stats.regen == 0 -> "0 HPR"
+      stats.hp_regen == 0 -> "0 HPR"
       true -> "Idle"
     end
   end

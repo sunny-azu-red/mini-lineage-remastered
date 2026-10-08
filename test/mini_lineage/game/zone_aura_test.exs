@@ -13,7 +13,7 @@ defmodule MiniLineage.Game.ZoneAuraTest do
 
   setup do
     Clock.put_now(@now)
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Wanderer")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Wanderer")
 
     {:ok, player: player}
   end

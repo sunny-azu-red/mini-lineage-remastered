@@ -48,16 +48,6 @@ defmodule MiniLineage.Game.JsParityTest do
     {150, 29215},
     {999, 4_444_455}
   ]
-  @xp_for_level [
-    {1, 0},
-    {2, 780},
-    {3, 1560},
-    {10, 14300},
-    {25, 84500},
-    {50, 331_500},
-    {79, 821_600},
-    {80, 842_400}
-  ]
 
   @numbers [
     {0, "0"},
@@ -117,10 +107,6 @@ defmodule MiniLineage.Game.JsParityTest do
               @battle.adena_gained.scaling
             ) == expected
           )
-  end
-
-  test "xp_for_level matches Math.round(130L^2 + 130L)" do
-    for {level, expected} <- @xp_for_level, do: assert(Math.xp_for_level(level) == expected)
   end
 
   test "js_round sends halves toward +infinity, unlike Elixir's round/1" do

@@ -21,7 +21,7 @@ defmodule MiniLineageWeb.PathsTest do
     paths = routed() |> Enum.map(&elem(&1, 1)) |> MapSet.new()
 
     for screen <-
-          ~w(battle weapons armors inn suicide death character highscores statistics races) do
+          ~w(battle weapons armors inn class_master symbol_maker suicide death character highscores statistics races) do
       assert MapSet.member?(paths, Paths.for_screen(screen)),
              "#{screen} links to #{Paths.for_screen(screen)}, which the router does not serve"
     end
@@ -30,7 +30,7 @@ defmodule MiniLineageWeb.PathsTest do
   test "and every route the router answers is one the game can link to" do
     # `:root` is the one the game never builds a link for: "/" is reached by name.
     linkable =
-      ~w(battle weapons armors inn suicide death character highscores statistics races error start home)
+      ~w(battle weapons armors inn class_master symbol_maker suicide death character highscores statistics races error start home)
       |> MapSet.new(&Paths.for_screen/1)
 
     for {action, path} <- routed(), action != :root do

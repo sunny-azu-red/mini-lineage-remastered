@@ -9,7 +9,7 @@ defmodule MiniLineage.Game.AmbushChainTest do
   alias MiniLineage.Game.{Actions, Constants, Player, Rng}
 
   defp orc do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Grok")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Grok")
     # Tanky enough to survive every fight below.
     %{player | health: 5_000}
   end
@@ -43,7 +43,7 @@ defmodule MiniLineage.Game.AmbushChainTest do
     {hexed, _} = Actions.fight(clean)
 
     assert Player.stats(hexed).ambush_risk == Player.stats(clean).ambush_risk + 4
-    assert Player.stats(hexed).crit == max(0, Player.stats(clean).crit - 2)
+    assert Player.stats(hexed).crit_rate == max(0, Player.stats(clean).crit_rate - 20)
   end
 
   test "a fight without an ambush breaks the streak" do

@@ -16,7 +16,7 @@ defmodule MiniLineage.Game.EffectsTest do
   end
 
   defp hero do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
     %{player | adena: 100_000, health: 1}
   end
 
@@ -35,7 +35,7 @@ defmodule MiniLineage.Game.EffectsTest do
       one = hero() |> fed(3)
       two = hero() |> fed(3) |> fed(4)
 
-      assert Player.stats(two).max_health < Player.stats(one).max_health * 2
+      assert Player.stats(two).max_hp < Player.stats(one).max_hp * 2
     end
 
     test "even when the same dish is eaten twice" do
@@ -116,7 +116,7 @@ defmodule MiniLineage.Game.EffectsTest do
     end
 
     test "and about the run's beginning, which says who it was" do
-      {born, flash} = Player.initialize(%Player{}, Constants.race(2), "Hero")
+      {born, flash} = Player.initialize(%Player{}, Constants.race(2), :fighter, "Hero")
       [began] = Enum.filter(born.pending_events, &(&1.kind == "start"))
 
       assert flash.text == Narrative.alert(began.line)

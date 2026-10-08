@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping."
-  alias MiniLineage.Game.{Clock, Constants, Format, Math, Narrative, Player}
+  alias MiniLineage.Game.{Classes, Clock, Constants, Format, Formulas, Math, Narrative, Player}
 
   def item_view(item) do
     modifiers = Map.get(item, :modifiers) || effect_modifiers(item)
@@ -11,9 +11,9 @@ defmodule MiniLineage.Game.Snapshot do
       emoji: item.emoji,
       stat: item.stat,
       cost: item.cost,
-      crit: modifier_value(modifiers, :crit),
-      regen: modifier_value(modifiers, :regen),
-      max_health: modifier_value(modifiers, :max_health)
+      crit: modifier_value(modifiers, :crit_rate),
+      regen: modifier_value(modifiers, :hp_regen),
+      max_health: modifier_value(modifiers, :max_hp)
     }
   end
 
@@ -38,8 +38,13 @@ defmodule MiniLineage.Game.Snapshot do
     race_id: nil,
     race_label: nil,
     race_emoji: nil,
+    class_id: nil,
+    class_name: nil,
     health: nil,
     max_health: nil,
+    mp: nil,
+    max_mp: nil,
+    dyes: [],
     low_health: false,
     experience: nil,
     level: nil,
@@ -75,6 +80,7 @@ defmodule MiniLineage.Game.Snapshot do
 
   defp started(player) do
     race = Constants.race(player.race_id)
+    class = Classes.get(Player.class_id(player))
     stats = Player.stats(player)
     level = Math.level_for_xp(player.experience)
     xp = Math.xp_progress(player.experience)
@@ -85,9 +91,14 @@ defmodule MiniLineage.Game.Snapshot do
       race_id: player.race_id,
       race_label: race.label,
       race_emoji: race.emoji,
+      class_id: class.id,
+      class_name: class.name,
       health: player.health,
-      max_health: stats.max_health,
-      low_health: Math.low_health?(player.health, stats.max_health),
+      max_health: stats.max_hp,
+      mp: player.mp || 0,
+      max_mp: stats.max_mp,
+      dyes: player.dyes,
+      low_health: Math.low_health?(player.health, stats.max_hp),
       experience: player.experience,
       level: level,
       is_max_level: Math.max_level?(level),
@@ -147,6 +158,16 @@ defmodule MiniLineage.Game.Snapshot do
     end
   end
 
+  # What a starting class is born with: its attributes, and the HP and MP they make of level 1.
+  defp class_view(class) do
+    a = class.attributes
+
+    Map.merge(Map.take(class, [:id, :name, :archetype, :attributes]), %{
+      max_hp: Formulas.max_hp(Classes.hp(class.id, 1), a.con),
+      max_mp: Formulas.max_mp(Classes.mp(class.id, 1), a.men)
+    })
+  end
+
   @catalog_key {__MODULE__, :catalog}
 
   @doc """
@@ -170,7 +191,8 @@ defmodule MiniLineage.Game.Snapshot do
         Enum.map(Constants.races(), fn race ->
           Map.merge(race, %{
             slug: Format.slugify(race.label),
-            traits: Narrative.build_race_traits(race)
+            traits: Narrative.build_race_traits(race),
+            classes: Enum.map([:fighter, :mystic], &class_view(Classes.starting(race.id, &1)))
           })
         end),
       weapons: Enum.map(Constants.weapons(), &item_view/1),

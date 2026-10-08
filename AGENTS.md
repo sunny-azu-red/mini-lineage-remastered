@@ -25,9 +25,9 @@ list wins — several generator defaults do not exist here.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
 - **One LiveView, one dispatcher, a module per page.** `GameLive` holds no game state and routes
   everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the small ones —
-  start, town, battle, suicide, death, races, error — live in `Screens` itself, and the four big
-  enough to need one — `Screens.Shop`, `Screens.Record`, `Screens.Halls`, `Screens.Tome` — each
-  have a module. Anything a page reaches for but does not
+  start, town, battle, class master, suicide, death, races, error — live in `Screens` itself, and
+  the five big enough to need one — `Screens.Shop`, `Screens.SymbolMaker`, `Screens.Record`,
+  `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
   own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
   and `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
   `<.reset_sort>`, `<.figure>` with `<.counted>` and `<.bar>` built on it, `<.fault>`) is in
@@ -80,6 +80,28 @@ list wins — several generator defaults do not exist here.
 ### Rules that are not negotiable
 
 Each of these is here because it was got wrong once.
+
+**Every Lineage II number is L2J Mobius CT_0 Interlude's, formulas included.** The attributes and
+HP/MP tables come from its datapack, so every formula and constant comes from its Java too: a number
+balanced against a formula it was never balanced against is invented, whatever its source. Each one
+is in `docs/lineage2-canon.md` with the file it was read from. The formulas doc in `docs/` explains
+the mechanics, and where it disagrees with the code — hit chance, the physical constant, regen bonuses,
+magic criticals — the code wins and the canon file says so. Add no L2 name or number that is not
+there.
+
+**A class is six attributes and two tables; the level multiplies everything else.** `Classes` holds
+the 53 classes of the four races as Interlude defines them, each storing only its own segment of the
+HP and MP tables, which `class_tables_test.exs` holds to every row of the datapack. `Formulas` is
+every stat and combat formula, pure, with the rolls apart so a test can pin them. `Player.stats/1`
+runs Interlude's order — attributes and dyes, bases, attribute and level multipliers, what effects
+multiply (`op: :mul`), what they add, then the caps — so a cap holds whatever an effect adds.
+`Dyes` reads `priv/data/dyes.json`; a run stores dyes by id, as it stores effects.
+
+**The fight is a bridge until it is rebuilt on `Formulas`.** `Battle.simulate/1` still scales danger
+and reward off the gear's tier, and only its critical rate is the player's own. Its HP losses and
+the Inn's heals were tuned against a 100 HP bar, so both are shares of the bar: unscaled, a bar that
+grows with the level made the road harmless and the Halls stopped filling. The combat formulas are
+tested and called by nothing yet.
 
 **Never assert on a roll of the dice.** Not in the browser suites, not in ExUnit. Pin the source
 (`Rng.put_source/1`, or `Test.Lcg` for the golden master's stream), or make the character tanky
@@ -145,8 +167,10 @@ boundary, and there is a test asserting
 what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
 
 **What the player can see is what heals them.** The 🌿 aura and the regeneration tick are one
-condition, not two copies of it: `process_regen_tick/1` heals by whatever rate the aura carries, so
-an icon with no healing behind it — or healing with no icon — cannot happen. `regen_aura/2` takes
+condition, not two copies of it: `process_regen_tick/1` heals HP and MP by whatever rates the aura
+carries, one for each bar still short, so an icon with no healing behind it — or healing with no
+icon — cannot happen. The tick is Interlude's 3s regeneration period, so a rate is what one tick
+restores. `regen_aura/2` takes
 its effect list as an argument rather than reading it back, because `active_effects/1` is what
 calls it.
 
@@ -184,8 +208,10 @@ at weight 600 and 0.1em in capitals, each in its own colour and place, or the fo
 inside the HP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A field
 label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender room
 capitals never use, and the one property that centres by letters, `text-box-trim`, is missing from
-Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade 15%", has to fit at
+Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade +150", has to fit at
 13px with room for the Verdana fallback and a wider emoji font; widen it before shrinking a value.
+The class is the exception that proves it: "Elemental Summoner" overflows a value's column, so it
+sits under the name with no label and takes both columns, and the level has a row of its own.
 The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
 sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
 
@@ -203,8 +229,8 @@ and 600 are loaded; asking for 700 gets a fake.
 leave over is shared among every column in proportion to its content, so the gaps between figures
 grow only where there is room. A fixed gap of 24px took it from the name instead, and the armour
 shop's longest name wrapped on desktop, where that table has about a pixel to spare. A figure never
-wraps; a name may; on a phone a column's label may take two lines, never stranding a unit, which is
-why "C. Hit&nbsp;%" binds its percent — an entity, rendered with `raw/1`, since the label is
+wraps; a name may; on a phone a column's label may take two lines, never stranding a unit, so a
+label carrying one binds it with `&nbsp;`, an entity rendered with `raw/1`, since the label is
 interpolated and would otherwise print it literally. A `min-width` had held the shops at 420px,
 which on a phone put the cost behind a sideways scroll. The columns stack below 640px, before the
 sidebar can squeeze a table narrower than a phone would give it. The Halls may still scroll on a
@@ -220,10 +246,11 @@ its colour cannot say which of the things wearing it you meant — `.hp` was car
 Physical Attack, deaths, and cheaters struck from the record, and no one of them could be retuned.
 
 So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal .regen .buff` give
-it back; `.adena .level .aura` are what it is worth; `.ambush .cowards .date .timer` are read but
-not acted on; `.defense .damage` turn things aside; `.battles .kills .players .purchases` are things
-counted; `.crit` stands alone; `.xp .heretics` are what the arcane touches, earned or struck out
-for; `.item` is what a run wears, wields or eats, quieter than the sentence around it because a
+it back; `.adena .level .attribute .aura` are what it is worth; `.ambush .cowards .date .speed
+.timer` are read but not acted on; `.defense .evasion .damage` turn things aside, and `.mp` is
+grouped with them for its blue; `.battles .kills .players .purchases` are things counted; `.crit
+.accuracy` are where a blow lands and how hard; `.xp .magic .heretics` are what the arcane touches,
+earned, cast or struck out for; `.item` is what a run wears, wields or eats, quieter than the sentence around it because a
 blade's NAME is not the news, the number beside it is. `.item` is on every item written as text —
 prose, the shop tables, the Inventory panel — so one rule recolours them all; the shop's `<select>`
 is the deliberate exception, an `<option>` holding no markup and a form control looking like one. A
@@ -304,7 +331,8 @@ last act was a purchase reconnects to a battle report of seven nil lines — whi
 rather than failing. No partial index for it; see the dropped-column rule below.
 
 **A chronicle row carries a class only where the stylesheet paints it.** `ambushed`, `start`,
-`level-up` and `purchase` are washed in the colour of the alert that would announce them, each
+`level-up`, `class-change` and `purchase` are washed in the colour of the alert that would announce
+them (a dye is a `purchase`), each
 stating its own colour over one shared shape, so none is a default another overrides. Every other
 row has no `class` at all, spread in rather than listed: an unstyled `deed` class sat on every
 deed for a while, and a class list printed `class=""` on every quiet fight. The head names the kind
@@ -477,7 +505,7 @@ is no figure to tween, because "a cunning ambush" is a word. That splitting is w
 
 **A bar is a figure against its cap.** `Controls.bar/1` draws the track, the fill and the figures
 from `value` and `of`, and tells a screen reader the same through `aria-valuetext` on a `meter` for
-HP and a `progressbar` for XP, so the width, the text and what is heard cannot disagree. Without
+HP and MP and a `progressbar` for XP, so the width, the text and what is heard cannot disagree. Without
 `of` it is the figure alone in a full track, which is what XP becomes at the last level: there is no
 next one to fill toward, so the total is the figure. `wraps` names what going round looks like, the
 level for XP, and `AnimatedValues` refills a bar from empty when it changes instead of sliding it

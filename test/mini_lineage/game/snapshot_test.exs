@@ -5,10 +5,23 @@ defmodule MiniLineage.Game.SnapshotTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Snapshot}
+  alias MiniLineage.Game.{Classes, Constants, Format, Formulas, Math, Narrative, Player, Snapshot}
+
+  defp born(race_id, archetype) do
+    class = Classes.starting(race_id, archetype)
+
+    %{
+      id: class.id,
+      name: class.name,
+      archetype: archetype,
+      attributes: class.attributes,
+      max_hp: Formulas.max_hp(Classes.hp(class.id, 1), class.attributes.con),
+      max_mp: Formulas.max_mp(Classes.mp(class.id, 1), class.attributes.men)
+    }
+  end
 
   defp character(race_id \\ 0, overrides \\ %{}) do
-    {player, _} = Player.initialize(%Player{}, Constants.race(race_id), "Subject")
+    {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Subject")
     Map.merge(player, overrides)
   end
 
@@ -33,13 +46,23 @@ defmodule MiniLineage.Game.SnapshotTest do
                  Enum.map(Constants.races(), fn race ->
                    Map.merge(race, %{
                      slug: Format.slugify(race.label),
-                     traits: Narrative.build_race_traits(race)
+                     traits: Narrative.build_race_traits(race),
+                     classes: Enum.map([:fighter, :mystic], &born(race.id, &1))
                    })
                  end),
                weapons: Enum.map(Constants.weapons(), &Snapshot.item_view/1),
                armors: Enum.map(Constants.armors(), &Snapshot.item_view/1),
                foods: Enum.map(Constants.foods(), &Snapshot.item_view/1)
              }
+    end
+
+    test "names each race's two starting classes, with what they are born with" do
+      [human | _] = Snapshot.catalog().races
+
+      assert [
+               %{name: "Human Fighter", max_hp: 126, max_mp: 38},
+               %{name: "Human Mystic", max_hp: 98, max_mp: 59}
+             ] = human.classes
     end
 
     test "and the same map every time it is asked" do
@@ -69,12 +92,12 @@ defmodule MiniLineage.Game.SnapshotTest do
 
   describe "low health" do
     test "is a quarter of the effective maximum, not of the race's base" do
-      # A Human's base is 100, but the Newbie Blessing lifts the maximum to 120.
+      # A Human Fighter's base is 126, but the Newbie Blessing lifts the maximum to 146.
       full = Snapshot.build(character())
       threshold = Math.low_health_threshold(full.max_health)
 
-      assert full.max_health == 120
-      assert threshold == 30
+      assert full.max_health == 146
+      assert threshold == 36
 
       refute Snapshot.build(character(0, %{health: threshold + 1})).low_health
       assert Snapshot.build(character(0, %{health: threshold})).low_health
@@ -109,7 +132,7 @@ defmodule MiniLineage.Game.SnapshotTest do
     view = Snapshot.build(character())
     blessing = Enum.find(view.effects, &(&1.id == "newbie_blessing"))
 
-    assert blessing.tooltip == "Newbie Blessing (+20 Max HP, +2 Defense, -4% Ambush)"
+    assert blessing.tooltip == "Newbie Blessing (+20 Max HP, +2 P. Def., -4% Ambush)"
   end
 
   test "an effect's remaining time is a duration, never a deadline" do

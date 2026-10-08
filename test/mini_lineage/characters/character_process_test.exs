@@ -18,7 +18,7 @@ defmodule MiniLineage.CharactersTest do
 
   defp start_character(id, race_id \\ 0) do
     Characters.mutate(id, fn player ->
-      {player, _flash} = Player.initialize(player, Constants.race(race_id), "Hero")
+      {player, _flash} = Player.initialize(player, Constants.race(race_id), :fighter, "Hero")
       {%{player | current_screen: "home"}, :ok}
     end)
   end

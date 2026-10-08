@@ -16,7 +16,7 @@ defmodule MiniLineage.Characters.NonMutatingReadsTest do
     on_exit(fn -> Characters.forget(id) end)
 
     Characters.mutate(id, fn player ->
-      {player, _} = Player.initialize(player, Constants.race(1), "Hero")
+      {player, _} = Player.initialize(player, Constants.race(1), :fighter, "Hero")
       {%{player | current_screen: "battle"}, :ok}
     end)
 

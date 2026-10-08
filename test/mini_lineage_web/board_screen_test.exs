@@ -21,7 +21,9 @@ defmodule MiniLineageWeb.BoardScreenTest do
   defp run(name, opts) do
     session = Characters.new_session_id()
     id = Store.new_id()
-    {player, _} = Player.initialize(%Player{}, Constants.race(opts[:race_id] || 0), name)
+
+    {player, _} =
+      Player.initialize(%Player{}, Constants.race(opts[:race_id] || 0), :fighter, name)
 
     :ok =
       Store.save(id, session, %{
@@ -192,7 +194,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
       # The same sections your own page has: ancestry, stats, the journey, then the chronicle.
       assert html =~ "Inventory &amp; Stats"
-      assert html =~ "Physical Attack"
+      assert html =~ "P. Atk."
       assert html =~ "Ambush Risk"
       assert html =~ "The Chronicle"
     end

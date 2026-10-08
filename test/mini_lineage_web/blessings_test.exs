@@ -23,7 +23,7 @@ defmodule MiniLineageWeb.BlessingsTest do
   # Carrying exactly what it is handed: a new character is given the Newbie Blessing on the way in,
   # and a fixture that kept it would answer every claim below with the same paragraph.
   defp bearer(effects) do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Wretch")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Wretch")
     player = %{player | current_screen: "home", health: 10, effects: []}
 
     Enum.reduce(effects, player, &Player.apply_effect(&2, Constants.effect(&1)))
@@ -85,7 +85,7 @@ defmodule MiniLineageWeb.BlessingsTest do
 
       assert section =~ "Newbie Blessing"
       assert section =~ "+20 Max HP"
-      assert section =~ "+2 Physical Defense"
+      assert section =~ "+2 P. Def."
       # A modifier that takes something away says so, rather than reading as a gift.
       assert section =~ "-4% Ambush Risk"
     end
@@ -94,7 +94,7 @@ defmodule MiniLineageWeb.BlessingsTest do
       section = blessings(bearer([:newbie_buff]))
 
       assert section =~ ~s(<span class="hp">+20 Max HP</span>)
-      assert section =~ ~s(<span class="defense">+2 Physical Defense</span>)
+      assert section =~ ~s(<span class="defense">+2 P. Def.</span>)
       assert section =~ ~s(<span class="ambush">-4% Ambush Risk</span>)
     end
 

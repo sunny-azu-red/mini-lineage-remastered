@@ -12,7 +12,7 @@ defmodule MiniLineageWeb.ItemNamesTest do
   alias MiniLineageWeb.Screens
 
   defp hero do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
     player
   end
 

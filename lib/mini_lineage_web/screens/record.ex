@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens.Record do
 
   alias MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Format, Narrative, Narratives}
+  alias MiniLineage.Game.{Format, Math, Narrative, Narratives}
 
   attr :view, :map, required: true
   attr :catalog, :map, required: true
@@ -35,7 +35,9 @@ defmodule MiniLineageWeb.Screens.Record do
         # Nothing walks with a run walked away from; decided here because only the row knows.
         effects: if(held?(assigns.entry), do: assigns.view.effects, else: []),
         # Only the tense moves between a run still going and one that is over.
-        fought: if(assigns.view.dead, do: "fought", else: "have fought")
+        fought: if(assigns.view.dead, do: "fought", else: "have fought"),
+        stats: assigns.view.stats,
+        class_name: assigns.view.class_name
       )
 
     # The closing paragraph forks outright: its sentences change shape, not just their tense.
@@ -51,17 +53,16 @@ defmodule MiniLineageWeb.Screens.Record do
 
       <h2>🎒 Inventory &amp; Stats</h2>
       <p phx-no-format>
-        {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span> granting
-        <span class="attack"><.figure key="rec-attack" value={@view.stats.attack} id="char-stat-attack" /> Physical Attack</span><%= if (@view.weapon.crit || 0) > 0 do %> and <span class="crit">+<.figure key="rec-weapon-crit" value={@view.weapon.crit} />% Critical Hit Chance</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <span class="item">{@view.armor.name}</span> providing
-        <span class="defense"><.figure key="rec-defense" value={@view.stats.defense} id="char-stat-defense" /> Physical Defense</span><%= if (@view.armor.regen || 0) > 0 do %> and <span class="regen">+<.figure key="rec-armor-regen" value={@view.armor.regen} /> HP Regeneration</span><% end %>.
+        {@voice.they} {if @dead, do: "were wielding", else: "are wielding"} the {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span><%= if (@view.weapon.crit || 0) > 0 do %> granting <span class="crit">+<.figure key="rec-weapon-crit" value={@view.weapon.crit} /> Critical</span><% end %>, and {if @dead, do: "wore", else: "wearing"} the {@view.armor.emoji} <span class="item">{@view.armor.name}</span><%= if (@view.armor.regen || 0) > 0 do %> granting <span class="regen">+<.figure key="rec-armor-regen" value={@view.armor.regen} /> HP Regeneration</span><% end %>.
       </p>
-      <p>
-        Combined with {@voice.their} ancestry, {@voice.them} {if @dead, do: "struck", else: "strike"} with a total of
-        <span class="crit"><.figure key="rec-crit" value={@view.stats.crit} id="char-stat-crit" />% Critical Hit Chance</span>
-        and {if @dead, do: "mended", else: "mend"} wounds at
-        <span class="regen">+<.figure key="rec-regen" value={@view.stats.regen} id="char-stat-regen" />
-        HP Regeneration</span>
-        per rest cycle, while navigating the roads with a <span class="ambush"><.figure key="rec-ambush" value={@view.stats.ambush_risk} id="char-stat-ambush" />% Ambush Risk</span>.
+      <p phx-no-format>
+        {@voice.they} {if @dead, do: "were", else: "are"} {article(@class_name)} {@class_name} of <.attribute name="STR" key="str" value={@stats.str} />, <.attribute name="CON" key="con" value={@stats.con} />, <.attribute name="DEX" key="dex" value={@stats.dex} />, <.attribute name="INT" key="int" value={@stats.int} />, <.attribute name="WIT" key="wit" value={@stats.wit} /> and <.attribute name="MEN" key="men" value={@stats.men} />.
+      </p>
+      <p phx-no-format>
+        {@voice.they} {if @dead, do: "struck", else: "strike"} with <span class="attack"><.figure key="rec-p-atk" value={trunc(@stats.p_atk)} id="char-stat-p-atk" /> P. Atk.</span> and <span class="magic"><.figure key="rec-m-atk" value={trunc(@stats.m_atk)} id="char-stat-m-atk" /> M. Atk.</span>, {if @dead, do: "turned", else: "turn"} blows aside with <span class="defense"><.figure key="rec-p-def" value={trunc(@stats.p_def)} id="char-stat-p-def" /> P. Def.</span> and <span class="defense"><.figure key="rec-m-def" value={trunc(@stats.m_def)} id="char-stat-m-def" /> M. Def.</span>, and {if @dead, do: "found", else: "find"} the mark with <span class="accuracy"><.figure key="rec-accuracy" value={@stats.accuracy} id="char-stat-accuracy" /> Accuracy</span> while slipping blows with <span class="evasion"><.figure key="rec-evasion" value={@stats.evasion} id="char-stat-evasion" /> Evasion</span>.
+      </p>
+      <p phx-no-format>
+        {@voice.whose} blows {if @dead, do: "ran", else: "run"} at <span class="crit"><.figure key="rec-crit" value={@stats.crit_rate} id="char-stat-crit" /> Critical</span> and {@voice.their} spells at <span class="crit"><.figure key="rec-m-crit" value={@stats.m_crit_rate} id="char-stat-m-crit" /> Magic Critical</span>, swinging at <span class="speed"><.figure key="rec-atk-spd" value={@stats.p_atk_spd} id="char-stat-atk-spd" /> Atk. Spd.</span> and casting at <span class="speed"><.figure key="rec-cast-spd" value={@stats.m_atk_spd} id="char-stat-cast-spd" /> Casting Spd.</span> At rest {@voice.them} {if @dead, do: "mended", else: "mend"} <span class="regen"><.figure key="rec-regen" value={Math.js_round(@stats.hp_regen)} id="char-stat-regen" /> HP</span> and <span class="mp"><.figure key="rec-mp-regen" value={Math.js_round(@stats.mp_regen)} id="char-stat-mp-regen" /> MP</span> every three seconds, while navigating the roads with a <span class="ambush"><.figure key="rec-ambush" value={@stats.ambush_risk} id="char-stat-ambush" />% Ambush Risk</span>.
       </p>
 
       <h2>{if @dead, do: "☠️ #{@voice.whose} Journey Has Ended", else: "🧭 The Journey So Far"}</h2>
@@ -108,12 +109,27 @@ defmodule MiniLineageWeb.Screens.Record do
         and {@voice.their} vitality currently sustains {@voice.object} at
         <span class="hp"><.figure key="char-hp" value={@view.health} id="char-hp" />
         / <.figure key="rec-max-hp" value={@view.max_health} id="char-max-hp" />
-        HP</span>
+        HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} id="char-mp" />
+        / <.figure key="rec-max-mp" value={@view.max_mp} id="char-max-mp" />
+        MP</span>
         while {@voice.their} purse holds <span class="adena">🪙 <.figure key="rec-adena" value={@view.adena} format={:adena} /> Adena</span>
         for the journey ahead.
       </p>
       <% end %>
     </div>
+    """
+  end
+
+  # "an Elven Fighter", "a Dark Mystic".
+  defp article(name), do: if(String.first(name) in ~w(A E I O U), do: "an", else: "a")
+
+  attr :name, :string, required: true
+  attr :key, :string, required: true
+  attr :value, :integer, required: true
+
+  defp attribute(assigns) do
+    ~H"""
+    <span class="attribute" phx-no-format>{@name} <.figure key={"rec-#{@key}"} value={@value} id={"char-stat-#{@key}"} /></span>
     """
   end
 
@@ -166,7 +182,8 @@ defmodule MiniLineageWeb.Screens.Record do
   defp painted(%{kind: "fight", ambushed: true}), do: [class: "ambushed"]
   defp painted(%{kind: "start"}), do: [class: "start"]
   defp painted(%{kind: "level_up"}), do: [class: "level-up"]
-  defp painted(%{kind: "purchase"}), do: [class: "purchase"]
+  defp painted(%{kind: "class_change"}), do: [class: "class-change"]
+  defp painted(%{kind: kind}) when kind in ~w(purchase dye), do: [class: "purchase"]
   defp painted(_entry), do: []
 
   # Every ending is an Ending, however it came: the pair of the Beginning.
@@ -175,6 +192,8 @@ defmodule MiniLineageWeb.Screens.Record do
   defp kind_label(%{kind: "start"}), do: "Beginning"
   defp kind_label(%{kind: "purchase"}), do: "Purchase"
   defp kind_label(%{kind: "level_up"}), do: "Level Up"
+  defp kind_label(%{kind: "class_change"}), do: "Class Transfer"
+  defp kind_label(%{kind: "dye"}), do: "Symbol"
   defp kind_label(%{kind: "cheat"}), do: "Cheat"
   defp kind_label(%{kind: "buff"}), do: "Buff"
   defp kind_label(%{kind: "debuff"}), do: "Debuff"

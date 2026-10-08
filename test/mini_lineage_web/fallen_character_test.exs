@@ -30,7 +30,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
   end
 
   defp living do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
     %{player | experience: 4_200, adena: 900, total_battles: 12, total_enemies_killed: 30}
   end
 
@@ -70,8 +70,8 @@ defmodule MiniLineageWeb.FallenCharacterTest do
     test "tells what the lineage gave the run, to its reader, and no lore" do
       race = Constants.race(1)
 
-      assert text_for(living(), true) =~ "You embark with a fortified"
-      assert text_for(living(), false) =~ "They embark with a fortified"
+      assert text_for(living(), true) =~ "You embark with a starting tribute"
+      assert text_for(living(), false) =~ "They embark with a starting tribute"
       refute text_for(living()) =~ String.slice(race.backstory, 0, 40)
       refute text_for(living()) =~ "defined by conflict"
     end
@@ -116,7 +116,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
       assert html =~ "were wielding"
       assert html =~ "struck with"
-      assert html =~ "mended wounds"
+      assert html =~ "you mended"
       assert html =~ "Your Journey Has Ended"
       assert html =~ "You fell at"
     end
@@ -152,7 +152,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       html = html_for(fallen())
 
       for id <-
-            ~w(char-stat-attack char-stat-defense char-stat-crit char-stat-regen char-stat-ambush),
+            ~w(char-stat-str char-stat-p-atk char-stat-p-def char-stat-crit char-stat-regen char-stat-ambush),
           do: assert(html =~ id, id)
 
       text = text_for(fallen())

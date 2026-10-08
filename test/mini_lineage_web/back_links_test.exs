@@ -14,7 +14,7 @@ defmodule MiniLineageWeb.BackLinksTest do
               death start)
 
   defp states do
-    {alive, _} = Player.initialize(%Player{}, Constants.race(1), "Hero")
+    {alive, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
 
     [unstarted: %Player{}, alive: alive, dead: Player.kill(alive)]
   end
@@ -23,7 +23,7 @@ defmodule MiniLineageWeb.BackLinksTest do
   # their own can open anybody's record. So the subject is its own started run, and a record is
   # never nil: an id nobody has is a 404 long before anything is rendered.
   defp subject do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Somebody")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Somebody")
     player
   end
 

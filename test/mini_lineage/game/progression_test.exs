@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.ProgressionTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Math, Player}
+  alias MiniLineage.Game.{Battle, Classes, Constants, Formulas, Math, Player, Rng}
 
   @max Constants.max_level()
 
@@ -18,7 +18,7 @@ defmodule MiniLineage.Game.ProgressionTest do
     %Player{
       name: "Hero",
       race_id: race.id,
-      health: Keyword.get(opts, :health, race.start_health),
+      health: Keyword.get(opts, :health, 100),
       adena: race.start_adena,
       experience: Keyword.get(opts, :experience, 0),
       weapon_id: Keyword.get(opts, :weapon_id, 0),
@@ -46,6 +46,13 @@ defmodule MiniLineage.Game.ProgressionTest do
                  "one XP short of #{at} should still be level #{level - 1}"
         end
       end
+    end
+
+    test "is Interlude's table divided down, rounded up" do
+      # 68, 48,229 and 4,200,000,000 EXP in Interlude for levels 2, 10 and 80.
+      assert Math.xp_for_level(2) == 1
+      assert Math.xp_for_level(10) == 161
+      assert Math.xp_for_level(80) == 14_000_000
     end
 
     test "level 1 starts at zero, and nothing below it exists" do
@@ -121,8 +128,8 @@ defmodule MiniLineage.Game.ProgressionTest do
 
   describe "the stat pipeline" do
     test "each gear tier is a strict improvement on the one below it" do
-      attacks = Enum.map(0..5, &Player.stats(player(weapon_id: &1)).attack)
-      defenses = Enum.map(0..5, &Player.stats(player(armor_id: &1)).defense)
+      attacks = Enum.map(0..5, &Player.stats(player(weapon_id: &1)).p_atk)
+      defenses = Enum.map(0..5, &Player.stats(player(armor_id: &1)).p_def)
 
       assert attacks == Enum.sort(attacks)
       assert defenses == Enum.sort(defenses)
@@ -130,15 +137,31 @@ defmodule MiniLineage.Game.ProgressionTest do
       assert Enum.uniq(defenses) == defenses
     end
 
-    test "gear adds to the race's own numbers rather than replacing them" do
+    test "gear stands in for the class's bare hands and naked slots, nothing else" do
       for race_id <- 0..3 do
         bare = Player.stats(player(race_id: race_id))
         armed = Player.stats(player(race_id: race_id, weapon_id: 5, armor_id: 5))
+        class = Classes.starting(race_id, :fighter)
 
-        assert armed.attack == Constants.weapon(5).stat
-        assert armed.defense == Constants.armor(5).stat
-        # Innate traits survive the upgrade; only the equipment figures move.
-        assert armed.max_health == bare.max_health
+        assert armed.p_atk == Formulas.p_atk(Constants.weapon(5).stat, class.attributes.str, 1)
+
+        assert armed.p_def ==
+                 Formulas.p_def(Classes.bases(class.id).p_def + Constants.armor(5).stat, 1)
+
+        # What the class was born with survives the upgrade; only the equipment figures move.
+        assert armed.max_hp == bare.max_hp
+
+        assert Map.take(armed, ~w(str con dex int wit men)a) ==
+                 Map.take(bare, ~w(str con dex int wit men)a)
+      end
+    end
+
+    test "every level raises what the class derives from it" do
+      low = Player.stats(player())
+      high = Player.stats(player(experience: Math.xp_for_level(40)))
+
+      for key <- ~w(p_atk m_atk p_def m_def accuracy evasion max_hp max_mp hp_regen mp_regen)a do
+        assert high[key] > low[key], "#{key} did not grow from level 1 to 40"
       end
     end
 
@@ -147,8 +170,8 @@ defmodule MiniLineage.Game.ProgressionTest do
       buffed = Player.apply_effect(player(), Constants.effect(:newbie_buff))
       after_buff = Player.stats(buffed)
 
-      assert after_buff.max_health == before.max_health + 20
-      assert after_buff.defense == before.defense + 2
+      assert after_buff.max_hp == before.max_hp + 20
+      assert after_buff.p_def == before.p_def + 2
       assert after_buff.ambush_risk == before.ambush_risk - 4
       assert Player.stats(%{buffed | effects: []}) == before
     end
@@ -161,42 +184,63 @@ defmodule MiniLineage.Game.ProgressionTest do
         emoji: "🧪",
         label: "Crushed",
         modifiers: [
-          %{type: :attack, value: -9_999},
-          %{type: :defense, value: -9_999},
-          %{type: :crit, value: -9_999},
-          %{type: :regen, value: -9_999},
-          %{type: :max_health, value: -9_999},
+          %{type: :p_atk, value: -9_999},
+          %{type: :p_def, value: -9_999},
+          %{type: :crit_rate, value: -9_999},
+          %{type: :hp_regen, value: -9_999},
+          %{type: :max_hp, value: -9_999},
           %{type: :ambush_risk, value: -9_999},
-          %{type: :xp_multiplier, value: 0},
-          %{type: :adena_multiplier, value: 0}
+          %{type: :xp_multiplier, op: :mul, value: 0},
+          %{type: :adena_multiplier, op: :mul, value: 0}
         ]
       }
 
       stats = Player.stats(Player.apply_effect(player(weapon_id: 5, armor_id: 5), crushing))
 
-      assert stats.attack == 0
-      assert stats.defense == 0
-      assert stats.crit == 0
-      assert stats.regen == 0
+      assert stats.p_atk == 0
+      assert stats.p_def == 0
+      assert stats.crit_rate == 0
+      assert stats.hp_regen == 0
       assert stats.ambush_risk == 0
-      assert stats.max_health == 1, "a maximum of zero would make the HP bar undividable"
+      assert stats.max_hp == 1, "a maximum of zero would make the HP bar undividable"
       assert stats.xp_multiplier == 0
       assert stats.adena_multiplier == 0
     end
 
-    test "crit and ambush risk cannot be pushed above a whole certainty" do
+    test "what an effect adds still stops at Interlude's caps, and ambush risk at a certainty" do
       soaring = %{
         id: "test_soar",
         type: :buff,
         emoji: "🧪",
         label: "Soaring",
-        modifiers: [%{type: :crit, value: 9_999}, %{type: :ambush_risk, value: 9_999}]
+        modifiers:
+          Enum.map(
+            ~w(crit_rate m_crit_rate evasion p_atk_spd m_atk_spd ambush_risk)a,
+            &%{type: &1, value: 9_999}
+          )
       }
 
       stats = Player.stats(Player.apply_effect(player(), soaring))
 
-      assert stats.crit == 100
+      assert stats.crit_rate == 500
+      assert stats.m_crit_rate == 200
+      assert stats.evasion == 250
+      assert stats.p_atk_spd == 1500
+      assert stats.m_atk_spd == 1999
       assert stats.ambush_risk == 100
+    end
+  end
+
+  describe "the battle bridge" do
+    # Until the fight is rebuilt on `Formulas`, a bar that grows with the level must not make the
+    # road harmless: the same dice cost the same share of it at any level.
+    test "costs the same share of the HP bar at level 40 as at level 1" do
+      share = fn player ->
+        Rng.put_source(fn -> 0.5 end)
+        Battle.simulate(player).hp_lost / Player.stats(player).max_hp
+      end
+
+      assert_in_delta share.(player()), share.(player(experience: Math.xp_for_level(40))), 0.01
     end
   end
 end

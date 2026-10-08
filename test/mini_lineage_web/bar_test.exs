@@ -58,7 +58,7 @@ defmodule MiniLineageWeb.BarTest do
   end
 
   test "the sidebar's XP bar loses its cap at the last level" do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), "Capped")
+    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Capped")
     view = Snapshot.build(%{player | experience: Math.xp_for_level(80)})
 
     html =

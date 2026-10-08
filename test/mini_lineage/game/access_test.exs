@@ -8,7 +8,7 @@ defmodule MiniLineage.Game.AccessTest do
   alias MiniLineage.Game.{Access, Constants, Player}
 
   defp alive do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), "Alive")
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Alive")
     player
   end
 
