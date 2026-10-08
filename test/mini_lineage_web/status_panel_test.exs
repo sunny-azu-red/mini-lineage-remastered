@@ -1,9 +1,7 @@
 defmodule MiniLineageWeb.StatusPanelTest do
   @moduledoc """
-  The sidebar, which every screen carries.
-
-  Its figures animate, which means each is its own element rather than a number inside a sentence
-  — and the race line puts one inside an anchor, where HEEx renders a newline as a space and the
+  The sidebar, which every screen carries. Its figures animate, so each is its own element, and
+  the race line puts one inside an anchor, where HEEx renders a newline as a space and the
   underline runs through whatever it finds.
   """
   use ExUnit.Case, async: true

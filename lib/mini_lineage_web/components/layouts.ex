@@ -20,6 +20,8 @@ defmodule MiniLineageWeb.Layouts do
   def head(assigns) do
     ~H"""
     <meta charset="utf-8" />
+    <%!-- LiveDebugger's config tag in dev, for its DevTools panel; nil, so nothing, elsewhere. --%>
+    {Application.get_env(:live_debugger, :live_debugger_tags)}
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"

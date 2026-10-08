@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.AlertVariantsTest do
   @moduledoc """
-  Every alert the game can raise has a rule to be drawn by, and every rule has an alert.
-
-  `alert/1` builds its class from the type the action returned, so a type nothing styles
-  renders unstyled and a rule nothing raises is dead weight. Neither end can see that alone, so
-  this reads both and compares them.
+  Every alert the game can raise has a rule to be drawn by, and every rule has an alert. A type
+  nothing styles renders unstyled and a rule nothing raises is dead weight; neither end can see
+  that alone, so this reads both and compares them.
   """
   use ExUnit.Case, async: true
 

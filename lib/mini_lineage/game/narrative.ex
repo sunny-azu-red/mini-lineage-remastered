@@ -4,7 +4,7 @@ defmodule MiniLineage.Game.Narrative do
 
   defp pick(templates, data), do: Format.fill_template(Math.random_element(templates), data)
 
-  @doc "Builds the narrative for a resolved fight. `ambushed_after` is the NEW state, rolled by the caller."
+  @doc "A resolved fight's lines. `ambushed_after` is the NEW state, rolled by the caller."
   def build_battle(player, result, ambushed_after) do
     weapon = Constants.weapon(player.weapon_id)
     armor = Constants.armor(player.armor_id)

@@ -242,11 +242,8 @@
     opacity: 0.5;
 }
 
-#copyright a.version-link {
-    color: inherit;
-}
-
-#copyright a.version-link:hover {
+/* Gold on hover, and the line with it; the timer is base.css's. */
+#copyright a.version-link:is(:hover, :focus-visible) {
     color: var(--gold);
 }
 

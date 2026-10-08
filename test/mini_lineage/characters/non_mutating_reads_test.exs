@@ -1,10 +1,7 @@
 defmodule MiniLineage.Characters.NonMutatingReadsTest do
   @moduledoc """
-  Reading a character never plays it.
-
-  Connecting, reconnecting and refreshing go through the same `run/3` as an action, so only the
-  fact that no read asks it to stops a read from fighting. An ambush is still there when you come
-  back, and coming back did not resolve it.
+  Reading a character never plays it. Connecting, reconnecting and refreshing go through the same
+  `run/3` as an action, so only the fact that no read asks it to stops a read from fighting.
   """
   use MiniLineage.DataCase, async: false
 

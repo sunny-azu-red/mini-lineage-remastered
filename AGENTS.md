@@ -51,6 +51,19 @@ list wins — several generator defaults do not exist here.
 - **Node is `.nvmrc`'s and nowhere else.** It runs only Playwright. CI reads it through
   `node-version-file`, `env.sh` selects it through nvm, and `mix e2e` refuses any other, so a
   version is changed in that one file and never written into the workflow.
+- **A release is checked with `e2e/release.sh`, which is what CI's publish job runs before it
+  pushes.** It builds the image as CI does (`buildx --load`, `APP_VERSION` the short sha), reads the
+  stamp back out, brings up the real `docker-compose.yml` against an empty Postgres 18 through an
+  override that swaps only the image and adds the database, and waits for compose's healthcheck and
+  the boot migration. Then the socket's origin check both ways and one turn in Chromium. Run it for
+  anything that reaches the image: the Dockerfile, compose, `config/prod.exs` or `runtime.exs`, a
+  migration, the release steps. It hands compose an env file of its own, because compose reads
+  `./.env` for interpolation and that names the real database. If `docker`, `docker buildx` or
+  `docker compose` is missing, install them rather than skipping the check: the rootless Engine
+  needs no root (`curl -fsSL https://get.docker.com/rootless -o rootless.sh`, read it, `sh` it), and
+  buildx and compose are release binaries from their GitHub repos dropped into
+  `~/.docker/cli-plugins/` after checking the published checksums. README's Docker section has the
+  steps.
 - **Database tests cannot be `async: true`.** A character lives in a GenServer started by a
   `DynamicSupervisor`, so the sandbox cannot trace ownership from the test process to it. Shared
   mode bridges that, and shared mode means serial. This is our architecture, not the driver — it
@@ -71,7 +84,38 @@ list wins — several generator defaults do not exist here.
 - **A browser check hands Playwright a function, never a string.** The CSP refuses `eval`, so
   `waitForFunction("…")` throws at once, and behind a `.catch` it reads as a wait that returned.
 - Show a new test failing before you claim it passes. Break the thing it covers, watch it go red,
-  put it back. A test written after the fix and never seen to fail is decoration.
+  put it back. A test written after the fix and never seen to fail is decoration. Put it back with
+  `git checkout` or `touch` it: a copy restored from a backup is older than the build, and Mix
+  keeps compiling the broken one, so the next mutation fails for the last one's reason.
+- **A property states what holds for every input; the fixtures stay the contract with JavaScript.**
+  StreamData is `:test` only, so `.formatter.exs` spells out its macros, since `import_deps` fails
+  in `:dev`. A counterexample a property finds in a twinned formatter becomes a row in its fixture.
+  Weight a generator toward the boundary: a uniform draw never lands on `age == cap`. Dice are a
+  generated list cycled through `Rng.put_source/1`, which states a rule for EVERY roll rather than
+  asserting one (`fight_properties_test.exs`), and they are integers scaled into `[0, 1)`, never
+  `float/1`: its bounded generation grows with the size, and 3,000 runs took over a minute.
+- **The dev tools are dev only, and none of them may loosen the CSP.** LiveDebugger runs at
+  `:4007` with `browser_features?: false`, so it injects no script; its DevTools panel reads the
+  config tag `Layouts.head` renders and nothing else. Its assigns view shows `session_id`, which is
+  a credential, so never paste it anywhere. Tidewave is plugged in only on `/tidewave/*`, because
+  on any response it touches it adds `'unsafe-eval'` and drops `frame-ancestors`; `.mcp.json`
+  points Claude Code at it. Its `project_eval` is for reading: a write goes through `Characters`,
+  never `Repo`.
+- **`bench/` holds Benchee scripts, run with `MIX_BUILD_PATH=_build/bench mix run --no-start
+  bench/<name>.exs`** against the dev database. Each run is saved under its branch, or `BENCH_TAG`,
+  in `tmp/bench/` and compared with the others: measure `main` then the branch, or
+  `BENCH_TAG=before` then the change. A number cited in a comment names the script behind it.
+- **Never compile into `_build/dev` while the dev server is up.** A `mix` command in `:dev` and the
+  server's code reloader writing and loading the same beams at once gave "corrupt file header" on
+  `Board` and crashed a character process mid-game. Ask the running app through Tidewave's
+  `project_eval`, give a script its own `MIX_BUILD_PATH`, or run it in `:test`.
+- **A question about the running app goes to the running app.** Through Tidewave: `project_eval`
+  for state (`:sys.get_state` on a character, `Characters.online/0`, timing a call with
+  `:timer.tc`), `execute_sql_query` for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually
+  sent, captured with a `:telemetry` handler on `[:mini_lineage, :repo, :query]`, and `get_logs` for
+  what a request did. That is how the board's pkey walk was found: the plan, not the code, showed it.
+  A rehearsal at scale goes inside `Repo.transaction` with `Repo.rollback`, and `VACUUM FULL`
+  afterwards, because rolled-back rows still bloat the indexes and change the planner's sums.
 - **A new component, hook or shared control is written into this file in the change that adds
   it.** What is described here is what the next change reaches for; one nobody wrote down gets
   built a second time beside it, slightly different. Before writing a control, look here and in
@@ -309,7 +353,7 @@ ending — `kill/1` empties the list. What faded with the run goes BEFORE the en
 because the ending is always the chronicle's last line. Several leave in the order they arrived, the
 order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
 rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run
-that leaves with a timed buff keeps its process up until the buff lapses, skipping the regen tick
+that leaves with a timed buff or debuff keeps its process up until it lapses, skipping the regen tick
 while it lingers so an absent player never heals. Auras never appear: `sync_zone_auras/1` flips them
 on nearly every pass.
 
@@ -319,6 +363,15 @@ with the chronicle under it. `Board` reads the date with a lateral `LIMIT 1` dow
 id)` — id order is time order, so no extra index — coalesced to the run's birth for a row with no
 entry yet. On a record the road reads the same entry from the board, and the LiveView moves it
 forward as it appends, so the two cannot drift even while being watched.
+
+The lookup bounds `character_id` on both sides rather than with `==`, and that is not a typo. Under
+an equality Postgres drops the column from `ORDER BY` as constant, so `ORDER BY id DESC LIMIT 1` can
+be served by walking the pkey backwards and filtering. Inside a lateral the id is a parameter, the
+planner prices that walk from the AVERAGE run, and on a small skewed log — dev's, or a young
+deployment's — it chose it: 1,676 rows discarded per run, the board 4.0ms where the range takes
+0.74ms (`bench/board.exs`). At 20k runs both plans are the composite index, so the range costs
+nothing there. The choice flipped with index size alone, which is why it is pinned in the query
+and not left to statistics. `board_test.exs` holds each bound against the run beside it.
 
 **The board is one statement.** Every lineage's top 25 as a subquery — Ecto hangs a branch's
 `ORDER BY` and `LIMIT` on the whole union otherwise — combined with `UNION ALL`, dated, then sorted
@@ -361,7 +414,11 @@ because they are not in the data map, and `Narrative.voiced/2` closes them at re
 run's own battle screen, the reader's own voice in the chronicle. Verb agreement is free — they/them
 takes the same forms as you, which is the whole reason the game picked it — but REFERENTS are not:
 "your blade ended their lives" reads fine and "their blade ended their lives" does not, so a line
-naming both the fighter and the foe has to keep them apart by construction.
+naming both the fighter and the foe has to keep them apart by construction. A fight row also stores
+`fight_prompt` and `next_move`, which DO speak to the player — "Rally your strength" — because they
+are the owner's own battle buttons, kept so a reconnect redraws the same ones. The Chronicle reads
+only the `*_line` keys, and that is what makes them exempt; a prompt that ever reaches a record is
+the bug. `fight_properties_test.exs` holds every stored line to the third person.
 
 **A fatal fight pays nothing, so its narrative may not say it did.** `resolve_battle_outcome/2`
 returns `{kill(player), false}` the moment health reaches zero — before the XP, the Adena,
@@ -427,6 +484,21 @@ a sentence a PLAYER reads becomes `because`, `and` or `nor`: "None of it fades, 
 cost, because the Halls rank the living and the fallen alike". This is about the game's voice and
 not the codebase's — every `@moduledoc` and comment here is full of em dashes, deliberately, and
 they are none of a player's business.
+
+**A link is underlined, never gold.** Gold is what a run is worth, and a name in the Halls sat in
+the same colour as the level and the wealth beside it, with nothing saying which could be clicked. A
+link is the colour of the words around it, on a 1px underline of the same colour 2px below it, and
+on hover both darken to `--text-link`. The line is never given a colour of its own: it is
+`currentColor`, so changing the word changes both. `--text-link` is not a hue but a darkening,
+`currentColor` mixed 77% with black and resolved where `var()` is used, so one rule serves a link in
+prose and a link in an alert: the Inn link in the low-HP warning had been painted prose-white in a
+red sentence. Black and not `transparent`: a fade is lighter on a lighter ground, and the sidebar's
+hover missed `--text-secondary` where the panel's hit it. 77% of `--text-primary` is
+`--text-secondary` to one unit of blue. Its rule never says `:link` or `:visited`: a rule matched
+through `:visited` may set colours and nothing else, so every Halls name a player had opened would
+lose its underline. The banner opts out with `text-decoration: none`; the footer's commit turns gold
+on hover, and its line with it. That fade is base.css's, a transition on `color` alone, which
+carries the line because the line is the word's.
 
 **A token is named for its ROLE, never its family: `--<role>-<name>`.** `--text-`, `--bg-`,
 `--border-`, `--wash-`, `--bar-`, `--glow-`, `--shadow-`, `--focus-`. Type `color:` and there is
@@ -641,7 +713,8 @@ makes it small, `active` presses one of a set in. With `patch` it is an `<a>`, b
 somewhere — Retreat, a Halls filter, the Hall of Champions — and a reader may want that in a new
 tab; without, a `<button>`, because it does something. Never make a link a button to change how it
 looks: the variant decides the look, all of it, and the element nothing. That is why base.css's link
-colours say `a:not(.btn)`: `a:link` outranks one class, and it was painting secondary links gold.
+rule is `a:where(:not(.btn))`, an element's specificity: `a:link` outranked one class, and it was
+painting secondary links gold.
 Every state is drawn in the variant's own colour, the focus ring included, which is `currentColor`
 so a new variant rings in its own without a rule of its own.
 

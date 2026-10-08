@@ -189,6 +189,22 @@ defmodule MiniLineage.BoardTest do
                id |> CharacterLog.page() |> elem(0) |> hd() |> Map.fetch!(:at)
     end
 
+    test "and never by a neighbour's, whichever side of it they sort" do
+      # The lookup is a range on `character_id`, so each bound is what keeps out the run beside it.
+      at = ~U[2026-01-01 12:00:00.000000Z]
+      {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Neighbour")
+
+      for {id, minutes} <- [{"run-a", 30}, {"run-b", 0}, {"run-c", 30}] do
+        rows = [CharacterLog.event(id, "start", "x", DateTime.add(at, minutes, :minute))]
+        :ok = Store.save(id, Characters.new_session_id(), player, rows)
+      end
+
+      :ok = Store.save("run-d", Characters.new_session_id(), player)
+
+      assert Board.entry("run-b").last_seen_at == at
+      assert Board.entry("run-d").last_seen_at == Board.entry("run-d").inserted_at
+    end
+
     test "and a run with nothing logged yet is dated by its birth" do
       %{id: id} = run("Unwritten", xp: 10)
       entry = Board.entry(id)

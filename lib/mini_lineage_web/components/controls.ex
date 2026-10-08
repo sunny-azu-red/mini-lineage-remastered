@@ -12,11 +12,9 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------- panels
 
   @doc """
-  The card every part of the game is drawn on: a header band and a body under it.
-
-  `id` names the PANEL, for its hook; `body_id` and every other attribute land on the BODY, which
-  is what a screen is addressed by. A panel carries a hook only when something about it moves, so
-  the error page, with no LiveView, renders one that asks for no JavaScript.
+  The card every part of the game is drawn on. `id` names the PANEL, for its hook; `body_id` and
+  every other attribute land on the BODY, which a screen is addressed by. A hook only when something
+  moves, so the error page, with no LiveView, renders one that asks for no JavaScript.
   """
   attr :id, :string, default: nil
   attr :body_id, :string, default: nil
@@ -70,8 +68,7 @@ defmodule MiniLineageWeb.Controls do
       data-remember={if !@remember, do: "false"}
       data-subject={@subject}
     >
-      <%!-- The whole band is the control, not the words in it: a header is a wide, obvious thing
-            to aim at, and a title you have to hit exactly is a worse target than no control. --%>
+      <%!-- The whole band is the control: a title you have to hit exactly is worse than none. --%>
       <.dynamic_tag
         tag_name={if @collapsible, do: "button", else: "div"}
         class={classes(["panel-header flex", @collapsible && "panel-toggle"])}
@@ -165,12 +162,9 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------ tables
 
   @doc """
-  Every table in the game: the container, the header row, and a sort wherever a column names one.
-  The rows are the caller's, as a `<tbody>` in the inner block, already in `sort`'s order.
-
-  A `:col` with `sort` is a button sending `sort`; the LiveView cycles it with `next_sort/3` and
-  the screen orders its rows with `sort_rows/3`, so a patch never fights the order. `remember`
-  keeps it under `table:<id>`.
+  Every table in the game. The rows are the caller's `<tbody>`, already in `sort`'s order: a `:col`
+  with `sort` is a button the LiveView cycles with `next_sort/3`, and the screen orders its rows
+  with `sort_rows/3`, so a patch never fights the order. `remember` keeps it under `table:<id>`.
   """
   attr :id, :string, required: true
   # `{key, :asc | :desc}`, or nil for the order the rows arrived in.
@@ -182,7 +176,7 @@ defmodule MiniLineageWeb.Controls do
   slot :col, required: true do
     attr :class, :string
     attr :title, :string
-    # The key this column sorts by. Without one the header is a label and nothing else.
+    # Without one the header is only a label.
     attr :sort, :string
   end
 
@@ -563,7 +557,7 @@ defmodule MiniLineageWeb.Controls do
         phx-mounted={JS.ignore_attributes(["class"])}
       >
       </div>
-      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>/<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
+      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
     </div>
     """
   end

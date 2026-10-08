@@ -92,14 +92,11 @@ if config_env() != :test do
 end
 
 if config_env() == :dev do
-  # Reload browser tabs when matching files change.
   config :mini_lineage, MiniLineageWeb.Endpoint,
     live_reload: [
       web_console_logger: true,
       patterns: [
-        # Static assets, except user uploads
         ~r"priv/static/(?!uploads/).*\.(js|css|png|jpeg|jpg|gif|svg)$"E,
-        # Router, Controllers, LiveViews and LiveComponents
         ~r"lib/mini_lineage_web/router\.ex$"E,
         ~r"lib/mini_lineage_web/(controllers|live|components)/.*\.(ex|heex)$"E
       ]

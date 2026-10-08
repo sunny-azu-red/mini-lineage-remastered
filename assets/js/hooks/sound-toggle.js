@@ -8,7 +8,6 @@ export const SoundToggle = {
             const willEnable = !soundEnabled();
             setSoundEnabled(willEnable);
             this.render();
-            // A chime confirms only when the click is ENABLING sound.
             if (willEnable)
                 playSound('buy');
         });

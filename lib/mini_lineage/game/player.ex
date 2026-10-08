@@ -407,8 +407,9 @@ defmodule MiniLineage.Game.Player do
   # --------------------------------------------------------------- tick jobs
 
   @doc """
-  Drops expired effects and clamps HP and MP if a maximum went away with one. Driven only by each
-  effect's own exact-expiry timer. Returns `{player, changed?}`.
+  Drops expired effects and clamps HP and MP if a maximum went away with one. Every pass of the
+  character's process sweeps; an effect's own timer only makes one happen on time. Returns
+  `{player, changed?}`.
   """
   def process_effect_expiry(%{dead: true} = player), do: {player, false}
 

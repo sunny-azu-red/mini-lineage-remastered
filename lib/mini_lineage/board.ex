@@ -122,16 +122,14 @@ defmodule MiniLineage.Board do
     Map.new(filters, &{&1, mark(Map.get(boards, &1, []), medals, online)})
   end
 
-  # Three in the whole game wear a medal, so a lineage's board shows one only where the full board
-  # does. Presence comes from the registry and costs no query.
+  # Three in the whole game wear a medal: a lineage's board shows one only where the full one does.
   defp mark(rows, medals, online) do
     Enum.map(rows, fn row ->
       %{row | medal: Map.get(medals, row.id), online: MapSet.member?(online, row.id)}
     end)
   end
 
-  # Who is online, re-stamped onto the rows already held. The rankings cannot have moved — nothing
-  # was written — so this is the same board with different dots, and it queries nothing.
+  # Nothing was written, so no ranking moved: only the dots are re-stamped, and nothing is queried.
   defp remark(boards) do
     online = Characters.online()
 
@@ -172,12 +170,13 @@ defmodule MiniLineage.Board do
   defp ranked, do: from(r in Record, where: not is_nil(r.race_id) and r.disqualified == false)
 
   # Last seen is the run's last log entry, read rather than stored so the Halls and the Chronicle
-  # cannot disagree: a `LIMIT 1` walk backwards down `(character_id, id)`.
+  # cannot disagree: a `LIMIT 1` walk backwards down `(character_id, id)`. Both bounds, never `==`,
+  # which drops `character_id` from the order and walks the pkey on a small log (bench/board.exs).
   defp seen(query) do
     last =
       from(l in CharacterLog.Entry,
-        where: l.character_id == parent_as(:row).id,
-        order_by: [desc: l.id],
+        where: l.character_id >= parent_as(:row).id and l.character_id <= parent_as(:row).id,
+        order_by: [desc: l.character_id, desc: l.id],
         limit: 1,
         select: %{at: l.inserted_at}
       )

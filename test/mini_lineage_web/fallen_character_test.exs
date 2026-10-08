@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.FallenCharacterTest do
   @moduledoc """
-  The Character screen after death, which is a retrospective rather than a status page.
-
-  Death keeps everything but health and effects, so the page has a whole run to show. What it must
-  not do is talk as though the run were still going — a corpse has no next level to reach and no
-  journey ahead, and the numbers beside the prose are the same ones the living screen renders.
+  The Character screen after death, a retrospective rather than a status page. Death keeps
+  everything but health and effects, so there is a whole run to show, but nothing may talk as
+  though it were still going: a corpse has no next level to reach and no journey ahead.
   """
   use ExUnit.Case, async: true
 

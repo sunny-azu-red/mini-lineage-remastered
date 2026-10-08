@@ -1,10 +1,7 @@
 defmodule MiniLineageWeb.DeathScreenTest do
   @moduledoc """
-  How a run's ending is shown.
-
-  There is one ending, however it was reached. A suicide and a heresy are not warnings to be
-  dismissed — they are the last line of the run, and they read as one, the same way the fallen
-  Character screen closes on the same sentence.
+  How a run's ending is shown. There is one ending, however it was reached: a suicide and a heresy
+  are not warnings but the last line of the run, as the fallen Character screen closes on it too.
   """
   use ExUnit.Case, async: true
 

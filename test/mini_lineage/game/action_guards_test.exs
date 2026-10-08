@@ -1,10 +1,8 @@
 defmodule MiniLineage.Game.ActionGuardsTest do
   @moduledoc """
-  What each command refuses.
-
-  Client-side routing decides what a player is shown; these guards decide what the server will do,
-  and they are the boundary. The happy paths are walked by a real browser every run — what a
-  browser cannot easily ask for is the malformed and the out-of-turn, which is what is here.
+  What each command refuses. These guards, not what a player is shown, are the boundary. A real
+  browser walks the happy paths every run; what it cannot easily ask for is the malformed and the
+  out-of-turn, which is what is here.
   """
   use ExUnit.Case, async: true
 

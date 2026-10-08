@@ -1,10 +1,8 @@
 defmodule MiniLineageWeb.BlessingsTest do
   @moduledoc """
-  What is riding on a run, spelled out on the one page about it.
-
-  The header wears these as emoji alone, which a phone can neither hover nor read — so what is
-  asserted here is that every effect the game can apply has prose to explain it, that the prose
-  speaks to whoever is reading, and that the figures in it carry their own sign.
+  What is riding on a run, spelled out on its record, since a phone can neither hover nor read the
+  header's emoji. Every effect has prose, the prose speaks to whoever is reading, and its figures
+  carry their own sign.
   """
   use ExUnit.Case, async: true
 

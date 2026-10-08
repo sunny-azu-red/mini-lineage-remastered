@@ -276,8 +276,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("purchase", %{"item_id" => item_id, "type" => type}, socket) do
     case throttle(socket, :shop) do
       {:ok, socket} ->
-        # `picked: nil` puts the select back on "🚪 Home Town" once the shop has answered, a
-        # refusal included.
+        # Back on "🚪 Home Town" once the shop has answered, a refusal included.
         socket = apply_action(socket, &Actions.purchase(&1, type, item_id))
 
         {:noreply, assign(socket, picked: nil)}
@@ -434,7 +433,7 @@ defmodule MiniLineageWeb.GameLive do
         {:record_updated, player, id, wrote?},
         %{assigns: %{watching: id}} = socket
       ) do
-    # Your own record is the view the character topic has just built; only a stranger's is built here.
+    # Your own record is the view the character topic just built; only a stranger's is built here.
     view =
       if id == socket.assigns.character_id, do: socket.assigns.view, else: Snapshot.build(player)
 

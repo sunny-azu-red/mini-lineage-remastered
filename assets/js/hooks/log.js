@@ -2,9 +2,8 @@
 const LINE_MARGIN = 24;
 
 /**
- * A panel that is a log, newest first or oldest first; the rules are AGENTS.md's. The line and the
- * pill are re-applied after every patch, which rewrites both, and the server is told only whether
- * the reader is at the present.
+ * A panel that is a log, in either order; the rules are AGENTS.md's. A patch rewrites the line and
+ * the pill, so both are re-applied. The server is told only whether the reader is at the present.
  */
 export class Log {
     constructor(panel) {

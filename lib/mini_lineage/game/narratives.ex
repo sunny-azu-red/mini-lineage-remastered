@@ -40,8 +40,7 @@ defmodule MiniLineage.Game.Narratives do
       ~s(A table fit for somebody who will not see the week out, and worth every coin of it: <span class="hp">{max_hp} Max HP</span> stand between {object} and the dark.)
   }
 
-  # Open pronouns like every other stored line: this one greets the player as a flash and is kept
-  # in the Chronicle, where a stranger reads it about them rather than to them.
+  # Open pronouns: a flash to the player, and a Chronicle line a stranger reads about them.
   @welcome [
     "{their} destiny awaits in the dark!",
     "the fires of fate burn for {object}...",
@@ -54,8 +53,7 @@ defmodule MiniLineage.Game.Narratives do
     "{their} spirit shines in the dark..."
   ]
 
-  # The pronouns every voiced template is filled from. They/them takes the same verb forms as you,
-  # so a sentence written once reads correctly either way — nothing but these words moves.
+  # They/them takes the same verb forms as you, so only these words move between the two voices.
   @voices %{
     true => %{
       they: "You",
@@ -75,8 +73,7 @@ defmodule MiniLineage.Game.Narratives do
     }
   }
 
-  # A death is read by whoever opens the record — the fallen player, or a stranger in the Halls —
-  # so it is written once with its pronouns left open rather than twice with them spelled out.
+  # Read by the fallen player or a stranger in the Halls, so written once with open pronouns.
   @death [
     "🌑 The darkness takes {object}. {whose} journey ends here.",
     "👻 {whose} strength fails, and the world fades to black.",

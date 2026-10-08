@@ -1,10 +1,8 @@
 defmodule MiniLineage.Characters.SerdeTest do
   @moduledoc """
-  The boundary between a `%Player{}` and the JSON document in `characters.state`.
-
-  Two things can go wrong here quietly. A field added to the struct and forgotten in `to_map/1`
-  stops persisting, and nothing in the game would fail — the character simply loses it on the next
-  load. And the document is untrusted input, so a hostile one must never be able to mint atoms.
+  The boundary between a `%Player{}` and the JSON document in `characters.state`. A field
+  forgotten in `to_map/1` silently stops persisting, and the document is untrusted input, so a
+  hostile one must never be able to mint atoms.
   """
   use ExUnit.Case, async: true
 

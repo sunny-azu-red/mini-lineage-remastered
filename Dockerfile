@@ -32,8 +32,9 @@ RUN mix assets.deploy && mix release
 # --- runtime ---
 FROM alpine:3.24.2 AS runner
 
-# What the ERTS links against, and ca-certificates for a database reached over TLS.
-RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates
+# What the ERTS links against, and ca-certificates for a database reached over TLS. lksctp-tools
+# only quiets the ERTS socket module, which warns on every boot without libsctp.
+RUN apk add --no-cache libstdc++ openssl ncurses-libs libgcc ca-certificates lksctp-tools
 WORKDIR /app
 
 ENV LANG=C.UTF-8

@@ -28,7 +28,7 @@ defmodule MiniLineageWeb.BarTest do
 
     assert b.width == "width:#{Math.percentage(287, 1_305, 1)}%"
     assert b.keys == ["hp", "max-hp"]
-    assert b.text == "287/1,305"
+    assert b.text == "287\u00A0/\u00A01,305"
     assert b.track.("role") == "meter"
     assert b.track.("aria-valuenow") == "287"
     assert b.track.("aria-valuemax") == "1305"
