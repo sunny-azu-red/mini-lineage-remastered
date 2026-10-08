@@ -206,7 +206,7 @@ defmodule MiniLineageWeb.Layouts do
             <span :if={(@view.weapon.crit || 0) > 0} class="crit">+<Controls.figure
               key="weapon-crit"
               value={@view.weapon.crit}
-            /></span>
+            />%</span>
           </span>
         </div>
       </Controls.panel>

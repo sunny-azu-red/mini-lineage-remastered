@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
 
-  alias MiniLineage.Game.{Constants, Format, Math}
+  alias MiniLineage.Game.{Format, Math, Rules}
 
   @day 86_400_000
 
@@ -47,7 +47,7 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
 
   describe "levels" do
     property "a level's own threshold is that level, up to the last one" do
-      check all level <- integer(1..Constants.max_level()) do
+      check all level <- integer(1..Rules.max_level()) do
         assert Math.level_for_xp(Math.xp_for_level(level)) == level
       end
     end

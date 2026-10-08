@@ -20,7 +20,9 @@ defmodule MiniLineage.Scratch.EconomyBalance do
     earned = Runner.earnings_to_max_level(race)
     surplus = earned - gear_cost
 
-    IO.puts("Total Adena Earned at Lvl #{Constants.max_level()}: 🪙 #{num(Math.js_round(earned))}")
+    IO.puts(
+      "Total Adena Earned at Lvl #{MiniLineage.Game.Rules.max_level()}: 🪙 #{num(Math.js_round(earned))}"
+    )
 
     IO.puts("Financial Status: #{if surplus >= 0, do: "✅ AFFORDABLE", else: "❌ NOT AFFORDABLE"}")
 

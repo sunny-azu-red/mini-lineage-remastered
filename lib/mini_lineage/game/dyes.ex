@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Dyes do
   @moduledoc """
-  Interlude's dyes (`hennaList.xml`, L2J Mobius CT_0), limited to the four races' classes. A run
+  The dyes, limited to the four races' classes and kept in `priv/data/dyes.json`. A run
   stores a dye by its id and this catalog says what it does, the way an effect is stored.
   Drawing one takes `wear_count` of the dye and the Symbol Maker's fee; there is no bag, so the
   dyes are bought in the same breath.

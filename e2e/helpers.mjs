@@ -11,10 +11,10 @@ export const PURSE = '#sidebar [data-key="adena"]';
  * both archetypes are born in a browser. The balance behind them is balance_golden_test.exs's job.
  */
 export const RACES = [
-    { id: 0, label: 'Human',    emoji: '🧙', archetype: 'fighter', className: 'Human Fighter', health: 146, mp: 38, adena: 300, crit: 44, regen: 4, ambush: 4,  plural: 'Humans' },
-    { id: 1, label: 'Orc',      emoji: '🧟', archetype: 'mystic',  className: 'Orc Mystic',    health: 124, mp: 60, adena: 250, crit: 42, regen: 3, ambush: 12, plural: 'Orcs' },
-    { id: 2, label: 'Elf',      emoji: '🧝', archetype: 'fighter', className: 'Elven Fighter', health: 133, mp: 39, adena: 450, crit: 46, regen: 3, ambush: 0,  plural: 'Elves' },
-    { id: 3, label: 'Dark Elf', emoji: '🧛', archetype: 'mystic',  className: 'Dark Mystic',   health: 115, mp: 58, adena: 350, crit: 41, regen: 2, ambush: 1,  plural: 'Dark Elves' },
+    { id: 0, label: 'Human',    emoji: '🧙', archetype: 'fighter', className: 'Human Fighter', health: 146, mp: 38, adena: 300, crit: 4,  regen: 7, ambush: 4,  plural: 'Humans' },
+    { id: 1, label: 'Orc',      emoji: '🧟', archetype: 'mystic',  className: 'Orc Mystic',    health: 124, mp: 60, adena: 250, crit: 4,  regen: 5, ambush: 12, plural: 'Orcs' },
+    { id: 2, label: 'Elf',      emoji: '🧝', archetype: 'fighter', className: 'Elven Fighter', health: 133, mp: 39, adena: 450, crit: 5,  regen: 5, ambush: 0,  plural: 'Elves' },
+    { id: 3, label: 'Dark Elf', emoji: '🧛', archetype: 'mystic',  className: 'Dark Mystic',   health: 115, mp: 58, adena: 350, crit: 4,  regen: 4, ambush: 1,  plural: 'Dark Elves' },
 ];
 
 /** Collects results so a run reports every failure rather than dying on the first. */

@@ -11,7 +11,7 @@ defmodule MiniLineage.Game.Snapshot do
       emoji: item.emoji,
       stat: item.stat,
       cost: item.cost,
-      crit: modifier_value(modifiers, :crit_rate),
+      crit: modifier_value(modifiers, :critical),
       regen: modifier_value(modifiers, :hp_regen),
       max_health: modifier_value(modifiers, :max_hp)
     }

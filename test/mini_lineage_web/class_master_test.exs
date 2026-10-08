@@ -24,7 +24,7 @@ defmodule MiniLineageWeb.ClassMasterTest do
     do: html |> LazyHTML.from_fragment() |> LazyHTML.query("#calling-#{id}") |> LazyHTML.text()
 
   test "shows what each calling adds per level, worked from the run's own CON and MEN" do
-    # 33.0 and 29.7 a level from the datapack, × 1.58 for a Human Fighter's CON 43.
+    # The Warrior's 33.0 and the Knight's 29.7 a level, × 1.58 for a Human Fighter's CON 43.
     html = html_at(20)
 
     assert row(html, 1) =~ "Warrior" and row(html, 1) =~ "+52"

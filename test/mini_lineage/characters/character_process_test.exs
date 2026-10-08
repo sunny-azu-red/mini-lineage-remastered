@@ -102,8 +102,8 @@ defmodule MiniLineage.CharactersTest do
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
     send(pid, :tick)
 
-    # Elf regen is 3.
-    assert Characters.snapshot(id).health == 13
+    # An Elven Fighter rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a tick (rules §11).
+    assert Characters.snapshot(id).health == 15
   end
 
   test "the tick does not heal a character standing in a combat zone", %{id: id} do

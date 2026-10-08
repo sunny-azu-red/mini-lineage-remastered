@@ -1,14 +1,14 @@
 defmodule MiniLineage.Game.Classes do
   @moduledoc """
-  Every class of the four races, as L2J Mobius CT_0 Interlude defines it (`docs/lineage2-canon.md`).
-  A transferred class keeps its starting class's attributes and combat base, and its HP/MP table
-  matches its parent's up to the transfer, so each class stores only its own segment: the first
-  level's gain and how much that gain grows per level. `class_tables_test.exs` holds every row to
-  the datapack.
+  The class tree of the four races. A starting class is one of the base layer's eight sets
+  (`docs/rules.md`, held by `Rules`); a transfer keeps its attributes and continues its HP and MP from
+  where the run stands, so it stores only its own segment: the first level's gain and how much that
+  gain grows per level.
   """
+  alias MiniLineage.Game.Rules
 
-  # Starting classes carry `{level 1 value, gain, growth}`; a transfer carries `{gain, growth}` from
-  # the level after its own.
+  # A transfer carries `{gain, growth}` from the level after its own; a starting class's
+  # `{start, gain, growth}` comes from `Rules`.
   @classes [
     %{
       id: 0,
@@ -16,10 +16,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 0,
       archetype: :fighter,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 40, con: 43, dex: 30, int: 21, wit: 11, men: 25},
-      hp: {80.0, 11.83, 0.13},
-      mp: {30.0, 5.46, 0.06}
+      level: 1
     },
     %{
       id: 1,
@@ -117,10 +114,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 0,
       archetype: :mystic,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 22, con: 27, dex: 21, int: 41, wit: 20, men: 39},
-      hp: {101.0, 15.47, 0.17},
-      mp: {40.0, 7.28, 0.08}
+      level: 1
     },
     %{
       id: 11,
@@ -198,10 +192,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 2,
       archetype: :fighter,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 36, con: 36, dex: 35, int: 23, wit: 14, men: 26},
-      hp: {89.0, 12.74, 0.14},
-      mp: {30.0, 5.46, 0.06}
+      level: 1
     },
     %{
       id: 19,
@@ -269,10 +260,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 2,
       archetype: :mystic,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 21, con: 25, dex: 24, int: 37, wit: 23, men: 40},
-      hp: {104.0, 15.47, 0.17},
-      mp: {40.0, 7.28, 0.08}
+      level: 1
     },
     %{
       id: 26,
@@ -330,10 +318,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 3,
       archetype: :fighter,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 41, con: 32, dex: 34, int: 25, wit: 12, men: 26},
-      hp: {94.0, 13.65, 0.15},
-      mp: {30.0, 5.46, 0.06}
+      level: 1
     },
     %{
       id: 32,
@@ -401,10 +386,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 3,
       archetype: :mystic,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 23, con: 24, dex: 23, int: 44, wit: 19, men: 37},
-      hp: {106.0, 15.47, 0.17},
-      mp: {40.0, 7.28, 0.08}
+      level: 1
     },
     %{
       id: 39,
@@ -462,10 +444,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 1,
       archetype: :fighter,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 40, con: 47, dex: 26, int: 18, wit: 12, men: 27},
-      hp: {80.0, 12.74, 0.14},
-      mp: {30.0, 5.46, 0.06}
+      level: 1
     },
     %{
       id: 45,
@@ -513,10 +492,7 @@ defmodule MiniLineage.Game.Classes do
       race_id: 1,
       archetype: :mystic,
       parent_id: nil,
-      level: 1,
-      attributes: %{str: 27, con: 31, dex: 24, int: 31, wit: 15, men: 42},
-      hp: {95.0, 15.47, 0.17},
-      mp: {40.0, 7.28, 0.08}
+      level: 1
     },
     %{
       id: 50,
@@ -550,114 +526,17 @@ defmodule MiniLineage.Game.Classes do
     }
   ]
 
-  # Naked bases by archetype: P.Def and M.Def are the sums of the empty slots an item would replace.
-  # Magic crit starts at 1, not the template's unread 5: `getMCriticalHit` passes 1 into the chain.
-  @bases %{
-    fighter: %{
-      p_atk: 4,
-      m_atk: 6,
-      p_def: 80,
-      m_def: 41,
-      crit: 4,
-      m_crit: 1,
-      p_atk_spd: 300,
-      m_atk_spd: 333
-    },
-    mystic: %{
-      p_atk: 3,
-      m_atk: 6,
-      p_def: 54,
-      m_def: 41,
-      crit: 4,
-      m_crit: 1,
-      p_atk_spd: 300,
-      m_atk_spd: 333
-    }
-  }
+  # A starting class is one of the base layer's eight sets; only the transfers are this module's.
+  @classes Enum.map(@classes, fn
+             %{parent_id: nil} = class ->
+               Map.merge(
+                 class,
+                 Map.take(Rules.set(class.race_id, class.archetype), [:attributes, :hp, :mp])
+               )
 
-  # Total experience to reach each level, 1 to 80, before `Constants` divides it.
-  @experience [
-    0,
-    68,
-    363,
-    1_168,
-    2_884,
-    6_038,
-    11_287,
-    19_423,
-    31_378,
-    48_229,
-    71_201,
-    101_676,
-    141_192,
-    191_452,
-    254_327,
-    331_864,
-    426_284,
-    539_995,
-    675_590,
-    835_854,
-    1_023_775,
-    1_242_536,
-    1_495_531,
-    1_786_365,
-    2_118_860,
-    2_497_059,
-    2_925_229,
-    3_407_873,
-    3_949_727,
-    4_555_766,
-    5_231_213,
-    5_981_539,
-    6_812_472,
-    7_729_999,
-    8_740_372,
-    9_850_111,
-    11_066_012,
-    12_395_149,
-    13_844_879,
-    15_422_851,
-    17_137_002,
-    18_995_573,
-    21_007_103,
-    23_180_442,
-    25_524_751,
-    28_049_509,
-    30_764_519,
-    33_679_907,
-    36_806_133,
-    40_153_995,
-    45_524_865,
-    51_262_204,
-    57_383_682,
-    63_907_585,
-    70_852_742,
-    80_700_339,
-    91_162_131,
-    102_265_326,
-    114_038_008,
-    126_509_030,
-    146_307_211,
-    167_243_291,
-    189_363_788,
-    212_716_741,
-    237_351_413,
-    271_973_532,
-    308_441_375,
-    346_825_235,
-    387_197_529,
-    429_632_402,
-    474_205_751,
-    532_692_055,
-    606_319_094,
-    696_376_867,
-    804_219_972,
-    931_275_828,
-    1_151_275_834,
-    1_511_275_834,
-    2_099_275_834,
-    4_200_000_000
-  ]
+             class ->
+               class
+           end)
 
   @by_id Map.new(@classes, &{&1.id, &1})
   @segment_start %{1 => 2, 20 => 21, 40 => 41}
@@ -685,7 +564,7 @@ defmodule MiniLineage.Game.Classes do
   def root(id), do: hd(lineage(id))
 
   def attributes(id), do: root(id).attributes
-  def bases(id), do: Map.fetch!(@bases, get(id).archetype)
+  def path(id), do: Rules.path(get(id).archetype)
 
   def hp(id, level), do: table(lineage(id), :hp, level)
   def mp(id, level), do: table(lineage(id), :mp, level)
@@ -708,13 +587,4 @@ defmodule MiniLineage.Game.Classes do
 
   defp segment({_first, gain, growth}), do: {gain, growth}
   defp segment(pair), do: pair
-
-  @doc "HP regenerated per 3 s tick before CON and the level modifier; the same for every class."
-  def hp_regen(level) when level <= 10, do: 2.0 + 0.05 * (level - 1)
-  def hp_regen(level), do: 2.5 + 0.1 * (level - 11)
-
-  def mp_regen(level), do: 0.9 + 0.3 * div(level - 1, 10)
-
-  def experience(level), do: Enum.at(@experience, level - 1)
-  def max_level, do: length(@experience)
 end

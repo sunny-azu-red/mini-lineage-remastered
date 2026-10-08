@@ -215,8 +215,8 @@ defmodule MiniLineage.Game.Player do
   end
 
   @doc """
-  Interlude's order: the class's attributes and dyes, the naked or equipped bases, the attribute and
-  level multipliers, then what effects multiply, then what they add, then the caps.
+  The rules' order (`docs/rules.md`): attributes and dyes, what the path starts with plus gear, the
+  attribute and level bonuses, then what effects multiply, then what they add, then the caps.
   """
   def stats(player) do
     # 'regenerating' is derived FROM regen, so folding it back in would double-count.
@@ -231,29 +231,29 @@ defmodule MiniLineage.Game.Player do
     %{race: race, weapon: weapon, armor: armor} = equipment(player)
     class_id = class_id(player)
     level = Math.level_for_xp(player.experience || 0)
-    bases = Classes.bases(class_id)
+    path = Classes.path(class_id)
 
     modifiers =
       modifiers_of(weapon) ++ modifiers_of(armor) ++ Enum.flat_map(effects, & &1.modifiers)
 
     a = attributes(player, class_id)
 
-    # Resting is the game's sitting down: it is the only posture anything regenerates in.
+    # Gear adds to what the path starts with (rules §7).
     derived = %{
-      p_atk: Formulas.p_atk(weapon.stat, a.str, level),
-      m_atk: Formulas.m_atk(bases.m_atk, a.int, level),
-      p_def: Formulas.p_def(bases.p_def + armor.stat, level),
-      m_def: Formulas.m_def(bases.m_def, a.men, level),
+      p_atk: Formulas.p_atk(path.power + weapon.stat, a.str, level),
+      m_atk: Formulas.m_atk(path.magic, a.int, level),
+      p_def: Formulas.p_def(path.body + armor.stat, level),
+      m_def: Formulas.m_def(path.mind, a.men, level),
       accuracy: Formulas.accuracy(a.dex, level),
       evasion: Formulas.evasion(a.dex, level),
-      crit_rate: Formulas.crit_rate(bases.crit, a.dex),
-      m_crit_rate: Formulas.m_crit_rate(bases.m_crit, a.wit),
-      p_atk_spd: Formulas.p_atk_spd(bases.p_atk_spd, a.dex),
-      m_atk_spd: Formulas.m_atk_spd(bases.m_atk_spd, a.wit),
+      critical: Formulas.critical(a.dex),
+      magic_critical: Formulas.magic_critical(a.wit),
+      atk_spd: Formulas.atk_spd(a.dex),
+      cast_spd: Formulas.cast_spd(a.wit),
       max_hp: Formulas.max_hp(Classes.hp(class_id, level), a.con),
       max_mp: Formulas.max_mp(Classes.mp(class_id, level), a.men),
-      hp_regen: Formulas.hp_regen(Classes.hp_regen(level), a.con, level, :sitting),
-      mp_regen: Formulas.mp_regen(Classes.mp_regen(level), a.men, level, :sitting),
+      hp_regen: Formulas.hp_regen(level, a.con),
+      mp_regen: Formulas.mp_regen(level, a.men),
       ambush_risk: race.ambush_chance,
       xp_multiplier: 1.0,
       adena_multiplier: 1.0
@@ -264,9 +264,12 @@ defmodule MiniLineage.Game.Player do
     stats =
       Enum.reduce(adds, Enum.reduce(muls, derived, &apply_modifier/2), &apply_modifier/2)
 
-    stats
-    |> Map.merge(a)
-    |> clamp()
+    stats = stats |> Map.merge(a) |> clamp()
+
+    Map.merge(stats, %{
+      blows_per_round: Formulas.blows_per_round(stats.atk_spd),
+      casts_per_round: Formulas.casts_per_round(stats.cast_spd)
+    })
   end
 
   defp apply_modifier(%{op: :mul} = mod, acc), do: Map.update!(acc, mod.type, &(&1 * mod.value))
@@ -285,11 +288,10 @@ defmodule MiniLineage.Game.Player do
 
     Map.merge(stats, floors)
     |> Map.merge(%{
-      crit_rate: stats.crit_rate |> max(0) |> min(caps.crit_rate),
-      m_crit_rate: stats.m_crit_rate |> max(0) |> min(caps.m_crit_rate),
-      evasion: min(stats.evasion, caps.evasion),
-      p_atk_spd: stats.p_atk_spd |> max(1) |> min(caps.p_atk_spd),
-      m_atk_spd: stats.m_atk_spd |> max(1) |> min(caps.m_atk_spd),
+      critical: stats.critical |> max(0) |> min(caps.critical),
+      magic_critical: stats.magic_critical |> max(0) |> min(caps.magic_critical),
+      atk_spd: stats.atk_spd |> max(1) |> min(caps.atk_spd),
+      cast_spd: stats.cast_spd |> max(1) |> min(caps.cast_spd),
       max_hp: max(trunc(stats.max_hp), 1),
       max_mp: max(trunc(stats.max_mp), 1),
       ambush_risk: stats.ambush_risk |> max(0) |> min(100)
@@ -300,7 +302,7 @@ defmodule MiniLineage.Game.Player do
   def class_id(%{class_id: id}) when is_integer(id), do: id
   def class_id(player), do: Classes.starting(player.race_id || 0, :fighter).id
 
-  @doc "The class's six attributes, then every dye's, each dye bonus capped at +5 as Interlude caps it."
+  @doc "The class's six attributes, then every dye's, the dyes adding at most +5 to any one."
   def attributes(player, class_id \\ nil) do
     base = Classes.attributes(class_id || class_id(player))
     dyes = Enum.map(player.dyes || [], &Dyes.get/1)

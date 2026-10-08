@@ -3,10 +3,10 @@ defmodule MiniLineage.Game.ClassTablesTest do
 
   alias MiniLineage.Game.Classes
 
-  # Every row of every class's `lvlUpgainData`, as the L2J datapack lists it.
+  # Every class's HP and MP at every level, as `Classes` was built to give them.
   @fixture "test/fixtures/class_tables.json" |> File.read!() |> Jason.decode!()
 
-  test "every class reproduces its datapack HP and MP table at every level" do
+  test "every class gives its HP and MP table at every level" do
     for class <- Classes.all(), level <- 1..80 do
       row = @fixture[to_string(class.id)]
 
@@ -22,14 +22,7 @@ defmodule MiniLineage.Game.ClassTablesTest do
     end
   end
 
-  test "the regen tables are the datapack's" do
-    for level <- 1..80 do
-      assert_in_delta Classes.hp_regen(level), Enum.at(@fixture["hp_regen"], level - 1), 1.0e-9
-      assert_in_delta Classes.mp_regen(level), Enum.at(@fixture["mp_regen"], level - 1), 1.0e-9
-    end
-  end
-
-  test "the class tree names each class by the datapack and the race it belongs to" do
+  test "the class tree names each class and the race it belongs to" do
     for class <- Classes.all() do
       assert class.name == @fixture[to_string(class.id)]["name"]
       assert Classes.root(class.id).race_id == class.race_id

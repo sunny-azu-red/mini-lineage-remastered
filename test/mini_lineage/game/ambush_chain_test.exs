@@ -43,7 +43,7 @@ defmodule MiniLineage.Game.AmbushChainTest do
     {hexed, _} = Actions.fight(clean)
 
     assert Player.stats(hexed).ambush_risk == Player.stats(clean).ambush_risk + 4
-    assert Player.stats(hexed).crit_rate == max(0, Player.stats(clean).crit_rate - 20)
+    assert Player.stats(hexed).critical == max(0, Player.stats(clean).critical - 2)
   end
 
   test "a fight without an ambush breaks the streak" do

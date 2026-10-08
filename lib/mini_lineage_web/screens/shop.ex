@@ -49,10 +49,10 @@ defmodule MiniLineageWeb.Screens.Shop do
       modifier: %{
         key: :crit,
         header: "Critical",
-        title: "Critical Rate",
+        title: "Critical Chance",
         class: "crit",
         prefix: "+",
-        suffix: ""
+        suffix: "%"
       },
       stat_class: "hp",
       stat_header: "P. Attack",

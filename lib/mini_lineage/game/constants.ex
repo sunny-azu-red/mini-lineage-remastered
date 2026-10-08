@@ -1,8 +1,6 @@
 defmodule MiniLineage.Game.Constants do
   @moduledoc "Every tuning knob. Rebalance here, never in the game modules."
 
-  @max_level 80
-
   @races [
     %{
       id: 0,
@@ -82,7 +80,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "👁️",
       label: "Hexed",
       duration_ms: 60_000,
-      modifiers: [%{type: :ambush_risk, value: 4}, %{type: :crit_rate, value: -20}]
+      modifiers: [%{type: :ambush_risk, value: 4}, %{type: :critical, value: -2}]
     },
     konami_cheat: %{
       id: "konami_cheat",
@@ -92,7 +90,7 @@ defmodule MiniLineage.Game.Constants do
       modifiers: [
         %{type: :xp_multiplier, op: :mul, value: 4},
         %{type: :adena_multiplier, op: :mul, value: 4},
-        %{type: :crit_rate, value: 150},
+        %{type: :critical, value: 15},
         %{type: :max_hp, value: 150}
       ]
     },
@@ -166,7 +164,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "⚔️",
       stat: 45,
       cost: 18_000,
-      modifiers: [%{type: :crit_rate, value: 30}]
+      modifiers: [%{type: :critical, value: 3}]
     },
     %{
       id: 4,
@@ -174,7 +172,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "☄️",
       stat: 62,
       cost: 250_000,
-      modifiers: [%{type: :crit_rate, value: 70}]
+      modifiers: [%{type: :critical, value: 7}]
     },
     %{
       id: 5,
@@ -182,7 +180,7 @@ defmodule MiniLineage.Game.Constants do
       emoji: "💀",
       stat: 90,
       cost: 900_000,
-      modifiers: [%{type: :crit_rate, value: 150}]
+      modifiers: [%{type: :critical, value: 15}]
     }
   ]
 
@@ -237,7 +235,7 @@ defmodule MiniLineage.Game.Constants do
     max_mp: %{label: "Max MP"},
     hp_regen: %{label: "HP Regen"},
     mp_regen: %{label: "MP Regen"},
-    crit_rate: %{label: "Critical"},
+    critical: %{label: "Critical", percentage?: true},
     ambush_risk: %{label: "Ambush", percentage?: true},
     p_atk: %{label: "P. Atk."},
     p_def: %{label: "P. Def."},
@@ -245,9 +243,6 @@ defmodule MiniLineage.Game.Constants do
     adena_multiplier: %{label: "Adena", multiplier?: true}
   }
 
-  def max_level, do: @max_level
-  # Interlude's EXP is divided by this; at 363 levels 2 and 3 would merge.
-  def exp_divisor, do: 300
   def races, do: @races
   def race(id), do: Enum.at(@races, id) || hd(@races)
   def effects, do: @effects

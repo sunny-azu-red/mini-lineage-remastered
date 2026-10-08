@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.RegenAuraTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Classes, Constants, Formulas, Math, Player}
+  alias MiniLineage.Game.{Constants, Formulas, Math, Player}
 
   defp rested(race_id, overrides \\ %{}) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Mender")
@@ -17,14 +17,14 @@ defmodule MiniLineage.Game.RegenAuraTest do
 
   defp aura(player), do: Enum.find(Player.active_effects(player), &(&1.id == "regenerating"))
 
-  test "a wounded Human Fighter resting shows it, at Interlude's sitting rate" do
-    # 2.0 at level 1, × 0.90 for the level, × 1.57 for CON 43, × 1.5 for sitting: 4.2 a tick.
-    assert %{modifiers: [%{type: :hp_regen, value: 4}]} = aura(rested(0, %{health: 10}))
+  test "a wounded Human Fighter resting shows it, at the rate rules §11 gives" do
+    # 1.55 at level 1, × 0.90 for the level, × 1.58 for CON 43, × 3: 6.6 a tick.
+    assert %{modifiers: [%{type: :hp_regen, value: 7}]} = aura(rested(0, %{health: 10}))
   end
 
   test "mana short of full mends alongside health, each at its own rate" do
-    # MP: 0.9 × 0.90 × 1.28 for MEN 25 is under the floor of 1, then × 1.5 for sitting.
-    assert %{modifiers: [%{type: :hp_regen, value: 4}, %{type: :mp_regen, value: 2}]} =
+    # MP: 0.90 at level 1, × 0.90 for the level, × 1.28 for MEN 25, × 3: 3.1 a tick.
+    assert %{modifiers: [%{type: :hp_regen, value: 7}, %{type: :mp_regen, value: 3}]} =
              aura(rested(0, %{health: 10, mp: 0}))
   end
 
@@ -54,8 +54,7 @@ defmodule MiniLineage.Game.RegenAuraTest do
 
   test "it is never folded back into the stats it was derived from" do
     # Counting the derived aura as a modifier would double the rate on every read.
-    assert Player.stats(rested(2, %{health: 10})).hp_regen ==
-             Formulas.hp_regen(Classes.hp_regen(1), 36, 1, :sitting)
+    assert Player.stats(rested(2, %{health: 10})).hp_regen == Formulas.hp_regen(1, 36)
   end
 
   describe "the tick that heals" do

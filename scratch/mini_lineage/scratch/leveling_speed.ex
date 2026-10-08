@@ -15,7 +15,7 @@ defmodule MiniLineage.Scratch.LevelingSpeed do
     player = %Player{name: "Hero", race_id: race.id, health: race.start_health, experience: 0}
     total = climb(player, 1, 0)
 
-    IO.puts("\nTotal battles to reach Level #{Constants.max_level()}: #{num(total)}")
+    IO.puts("\nTotal battles to reach Level #{MiniLineage.Game.Rules.max_level()}: #{num(total)}")
   end
 
   defp climb(player, level, total) do

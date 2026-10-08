@@ -6,9 +6,9 @@ defmodule MiniLineage.Game.ProgressionTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Battle, Classes, Constants, Formulas, Math, Player, Rng}
+  alias MiniLineage.Game.{Battle, Classes, Constants, Formulas, Math, Player, Rng, Rules}
 
-  @max Constants.max_level()
+  @max Rules.max_level()
 
   defp player(opts \\ []) do
     race = Constants.race(Keyword.get(opts, :race_id, 0))
@@ -135,16 +135,17 @@ defmodule MiniLineage.Game.ProgressionTest do
       assert Enum.uniq(defenses) == defenses
     end
 
-    test "gear stands in for the class's bare hands and naked slots, nothing else" do
+    test "gear adds to what the path starts with, and to nothing else" do
       for race_id <- 0..3 do
         bare = Player.stats(player(race_id: race_id))
         armed = Player.stats(player(race_id: race_id, weapon_id: 5, armor_id: 5))
         class = Classes.starting(race_id, :fighter)
 
-        assert armed.p_atk == Formulas.p_atk(Constants.weapon(5).stat, class.attributes.str, 1)
+        power = Classes.path(class.id).power + Constants.weapon(5).stat
+        assert armed.p_atk == Formulas.p_atk(power, class.attributes.str, 1)
 
         assert armed.p_def ==
-                 Formulas.p_def(Classes.bases(class.id).p_def + Constants.armor(5).stat, 1)
+                 Formulas.p_def(Classes.path(class.id).body + Constants.armor(5).stat, 1)
 
         # What the class was born with survives the upgrade; only the equipment figures move.
         assert armed.max_hp == bare.max_hp
@@ -184,7 +185,7 @@ defmodule MiniLineage.Game.ProgressionTest do
         modifiers: [
           %{type: :p_atk, value: -9_999},
           %{type: :p_def, value: -9_999},
-          %{type: :crit_rate, value: -9_999},
+          %{type: :critical, value: -9_999},
           %{type: :hp_regen, value: -9_999},
           %{type: :max_hp, value: -9_999},
           %{type: :ambush_risk, value: -9_999},
@@ -197,7 +198,7 @@ defmodule MiniLineage.Game.ProgressionTest do
 
       assert stats.p_atk == 0
       assert stats.p_def == 0
-      assert stats.crit_rate == 0
+      assert stats.critical == 0
       assert stats.hp_regen == 0
       assert stats.ambush_risk == 0
       assert stats.max_hp == 1, "a maximum of zero would make the HP bar undividable"
@@ -205,7 +206,7 @@ defmodule MiniLineage.Game.ProgressionTest do
       assert stats.adena_multiplier == 0
     end
 
-    test "what an effect adds still stops at Interlude's caps, and ambush risk at a certainty" do
+    test "what an effect adds still stops at the caps of rules §9 and §10, and ambush risk at a certainty" do
       soaring = %{
         id: "test_soar",
         type: :buff,
@@ -213,18 +214,17 @@ defmodule MiniLineage.Game.ProgressionTest do
         label: "Soaring",
         modifiers:
           Enum.map(
-            ~w(crit_rate m_crit_rate evasion p_atk_spd m_atk_spd ambush_risk)a,
+            ~w(critical magic_critical atk_spd cast_spd ambush_risk)a,
             &%{type: &1, value: 9_999}
           )
       }
 
       stats = Player.stats(Player.apply_effect(player(), soaring))
 
-      assert stats.crit_rate == 500
-      assert stats.m_crit_rate == 200
-      assert stats.evasion == 250
-      assert stats.p_atk_spd == 1500
-      assert stats.m_atk_spd == 1999
+      assert stats.critical == 50
+      assert stats.magic_critical == 20
+      assert stats.atk_spd == 1500
+      assert stats.cast_spd == 1999
       assert stats.ambush_risk == 100
     end
   end

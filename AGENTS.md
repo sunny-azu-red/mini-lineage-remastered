@@ -125,27 +125,23 @@ list wins — several generator defaults do not exist here.
 
 Each of these is here because it was got wrong once.
 
-**Every Lineage II number is L2J Mobius CT_0 Interlude's, formulas included.** The attributes and
-HP/MP tables come from its datapack, so every formula and constant comes from its Java too: a number
-balanced against a formula it was never balanced against is invented, whatever its source. Each one
-is in `docs/lineage2-canon.md` with the file it was read from. The formulas doc in `docs/` explains
-the mechanics, and where it disagrees with the code — hit chance, the physical constant, regen bonuses,
-magic criticals — the code wins and the canon file says so. Add no L2 name or number that is not
-there.
+**The base layer is `docs/rules.md`, and nothing else.** It is ours, written in our own words: the
+eight starting sets, the six attributes, every stat and formula, resting, levels and the base
+outcomes. No outside document, emulator or datapack is consulted for it. The code matches it rule for
+rule — `Rules` holds its tables, `Formulas` its formulas in its order — and `rules_test.exs` reads the
+tables back out of the document and works every example again, so a change to one is a change to
+both. A new system (classes, items, fighting, the world) starts as an entry in `docs/roadmap.md` and
+builds on the rules rather than quietly changing them.
 
-**A class is six attributes and two tables; the level multiplies everything else.** `Classes` holds
-the 53 classes of the four races as Interlude defines them, each storing only its own segment of the
-HP and MP tables, which `class_tables_test.exs` holds to every row of the datapack. `Formulas` is
-every stat and combat formula, pure, with the rolls apart so a test can pin them. `Player.stats/1`
-runs Interlude's order — attributes and dyes, bases, attribute and level multipliers, what effects
-multiply (`op: :mul`), what they add, then the caps — so a cap holds whatever an effect adds.
-`Dyes` reads `priv/data/dyes.json`; a run stores dyes by id, as it stores effects.
+`Player.stats/1` runs the rules in order — attributes and dyes, what a path starts with plus gear,
+the attribute and level bonuses, what effects multiply (`op: :mul`), what they add, then the caps —
+so a cap holds whatever an effect adds. `Classes` and `Dyes` are later systems already built on top.
 
 **The fight is a bridge until it is rebuilt on `Formulas`.** `Battle.simulate/1` still scales danger
 and reward off the gear's tier, and only its critical rate is the player's own. Its HP losses and
 the Inn's heals were tuned against a 100 HP bar, so both are shares of the bar: unscaled, a bar that
-grows with the level made the road harmless and the Halls stopped filling. The combat formulas are
-tested and called by nothing yet.
+grows with the level made the road harmless and the Halls stopped filling. The base outcomes of
+rules §13 are tested and called by nothing yet.
 
 **Never assert on a roll of the dice.** Not in the browser suites, not in ExUnit. Pin the source
 (`Rng.put_source/1`, or `Test.Lcg` for the golden master's stream), or make the character tanky
@@ -213,8 +209,7 @@ what it still refuses. If a guard is in the way, the thing you are building is p
 **What the player can see is what heals them.** The 🌿 aura and the regeneration tick are one
 condition, not two copies of it: `process_regen_tick/1` heals HP and MP by whatever rates the aura
 carries, one for each bar still short, so an icon with no healing behind it — or healing with no
-icon — cannot happen. The tick is Interlude's 3s regeneration period, so a rate is what one tick
-restores. `regen_aura/2` takes
+icon — cannot happen. The tick is the 3 seconds of rules §11, so a rate is what one tick restores. `regen_aura/2` takes
 its effect list as an argument rather than reading it back, because `active_effects/1` is what
 calls it.
 

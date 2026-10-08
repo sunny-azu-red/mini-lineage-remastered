@@ -15,7 +15,7 @@ defmodule MiniLineage.Game.Battle do
     attack = Constants.weapon(player.weapon_id || 0).stat
     defense = Constants.armor(player.armor_id || 0).stat + effect_p_def(player)
 
-    is_critical = Math.crit_chance?(stats.crit_rate / 10)
+    is_critical = Math.crit_chance?(stats.critical)
 
     # Enemies killed scales with attack power; a crit multiplies the whole group.
     range = Math.enemy_count_range(attack, cfg.enemy_count.min_mult, cfg.enemy_count.max_mult)

@@ -8,7 +8,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
 
   import Phoenix.LiveViewTest
 
-  alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
+  alias MiniLineage.Game.{Constants, Math, Player, Rules, Snapshot}
   alias MiniLineageWeb.{Screens, Screens.Record}
 
   # The component, not the screen: these are about the prose, and `record/1` is what carries it
@@ -214,7 +214,7 @@ defmodule MiniLineageWeb.FallenCharacterTest do
       assert text_for(%{fallen() | adena: 0}) =~ ~r/, and died with an empty purse\.\s*$/
       refute text_for(%{fallen() | adena: 0}) =~ "unspent"
 
-      at_the_top = %{fallen() | experience: Math.xp_for_level(Constants.max_level())}
+      at_the_top = %{fallen() | experience: Math.xp_for_level(Rules.max_level())}
 
       assert text_for(at_the_top) =~
                ~r/at the zenith of martial prowess, and left 🪙 [\d.,k]+ Adena unspent\.\s*$/

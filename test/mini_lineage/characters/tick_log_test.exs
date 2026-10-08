@@ -46,8 +46,8 @@ defmodule MiniLineage.Characters.TickLogTest do
 
     log = tick(id)
     assert log =~ "Resting"
-    assert log =~ "40 -> 43/133"
-    assert log =~ "(+3 HPR)"
+    assert log =~ "40 -> 45/133"
+    assert log =~ "(+5 HPR)"
   end
 
   test "standing in a combat zone is paused, not resting", %{id: id} do
@@ -99,10 +99,10 @@ defmodule MiniLineage.Characters.TickLogTest do
       {player, :ok}
     end)
 
-    # CON 47 is the highest any Fighter is born with: 4.8 a tick against the Elf's 3.5.
+    # CON 47 is the highest any Fighter is born with: 7.4 a tick against the Elf's 5.4.
     log = tick(orc)
     assert log =~ "Resting"
-    assert log =~ "(+5 HPR)"
+    assert log =~ "(+7 HPR)"
   end
 
   test "a visitor who has not created a character is not described at all" do

@@ -29,9 +29,9 @@ defmodule MiniLineage.Game.Narratives do
     "newbie_blessing" =>
       ~s(The realm is gentle with the newly born, though it does not stay gentle long. It lends {object} <span class="hp">{max_hp} Max HP</span> and <span class="defense">{p_def} P. Def.</span>, and turns the road's eye aside for <span class="ambush">{ambush_risk}% Ambush Risk</span>.),
     "hexed" =>
-      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{crit_rate} Critical</span>.),
+      ~s(Something took {their} measure in the ambush and has not looked away since. The roads find {object} the easier for it at <span class="ambush">{ambush_risk}% Ambush Risk</span>, and {their} own aim is the poorer at <span class="crit">{critical}% Critical</span>.),
     "konami_cheat" =>
-      ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{crit_rate} Critical</span> and <span class="hp">{max_hp} Max HP</span>. None of it fades, nor does what it cost, because the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
+      ~s(The gods were watching, and they paid to the letter: <span class="xp">{xp_multiplier}x XP</span>, <span class="adena">{adena_multiplier}x Adena</span>, <span class="crit">{critical}% Critical</span> and <span class="hp">{max_hp} Max HP</span>. None of it fades, nor does what it cost, because the Halls rank the living and the fallen alike, and they will not rank {object}, however far {them} go.),
     "satisfied" =>
       ~s(A hot meal sits well, and a body that is fed is a body that holds together: <span class="hp">{max_hp} Max HP</span> for as long as it lasts.),
     "well_fed" =>

@@ -8,7 +8,7 @@ defmodule MiniLineage.Scratch.FullProgression do
 
   def run do
     IO.puts("\n#{rule(54)}")
-    IO.puts("    FULL LIFECYCLE SIMULATION: LEVEL 1 -> #{Constants.max_level()}")
+    IO.puts("    FULL LIFECYCLE SIMULATION: LEVEL 1 -> #{MiniLineage.Game.Rules.max_level()}")
     IO.puts(rule(54))
 
     for race <- Constants.races(), do: race |> lifecycle() |> print()
