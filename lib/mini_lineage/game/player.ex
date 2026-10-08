@@ -30,8 +30,6 @@ defmodule MiniLineage.Game.Player do
             dyes: [],
             dead: false,
             ambushed: false,
-            # Read, never set: runs that took their own lives before Commit Suicide was removed.
-            coward: false,
             cheated: false,
             death_reason: nil,
             total_battles: 0,
@@ -298,7 +296,7 @@ defmodule MiniLineage.Game.Player do
     })
   end
 
-  @doc "The class a run is, or its race's Fighter for one stored before classes existed."
+  @doc "The class a run is, or its race's Fighter for a run that names none."
   def class_id(%{class_id: id}) when is_integer(id), do: id
   def class_id(player), do: Classes.starting(player.race_id || 0, :fighter).id
 

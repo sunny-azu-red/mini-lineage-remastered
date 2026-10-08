@@ -32,7 +32,6 @@ defmodule MiniLineage.BoardTest do
       | experience: opts[:xp] || 0,
         adena: opts[:adena] || 0,
         dead: opts[:dead] || false,
-        coward: opts[:coward] || false,
         cheated: opts[:cheated] || false
     }
 
@@ -122,20 +121,19 @@ defmodule MiniLineage.BoardTest do
       assert names() == []
     end
 
-    test "a coward is barred, and so is a cheat" do
+    test "a cheat is barred" do
       run("Honest", xp: 100, dead: true)
-      run("Coward", xp: 9_000, dead: true, coward: true)
       run("Cheat", xp: 9_000, dead: true, cheated: true)
 
       assert names() == ["Honest"]
     end
 
     test "but a barred run still has its own page — it is not erased" do
-      %{id: id} = run("Coward", xp: 9_000, dead: true, coward: true)
+      %{id: id} = run("Cheat", xp: 9_000, dead: true, cheated: true)
 
       entry = Board.entry(id)
 
-      assert entry.name == "Coward"
+      assert entry.name == "Cheat"
       assert entry.disqualified
       assert names() == [], "a barred run is still absent from the board"
     end

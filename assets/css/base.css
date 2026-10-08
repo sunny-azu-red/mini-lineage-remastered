@@ -161,9 +161,8 @@ p.last {
     color: var(--gold);
 }
 
-/* Read but not acted on: a risk, a day, a clock, a pace, a way out nobody boasts of. */
+/* Read but not acted on: a risk, a day, a clock, a pace. */
 .ambush,
-.cowards,
 .date,
 .speed,
 .timer {
@@ -208,7 +207,7 @@ p.last {
 :is(p, li) :is(.hp, .attack, .deaths, .debuff,
     .heal, .regen, .buff,
     .adena, .level, .attribute, .aura,
-    .ambush, .cowards, .date, .speed, .timer,
+    .ambush, .date, .speed, .timer,
     .defense, .evasion, .damage, .mp,
     .battles, .kills, .players, .purchases,
     .crit, .accuracy, .xp, .magic, .heretics, .item) {

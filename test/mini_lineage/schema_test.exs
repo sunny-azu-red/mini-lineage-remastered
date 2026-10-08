@@ -60,4 +60,16 @@ defmodule MiniLineage.SchemaTest do
         false
     end
   end
+
+  test "a run is barred from the board for cheating and nothing else" do
+    [[expression]] =
+      Repo.query!(
+        "SELECT pg_get_expr(d.adbin, d.adrelid) FROM pg_attrdef d " <>
+          "JOIN pg_attribute a ON a.attrelid = d.adrelid AND a.attnum = d.adnum " <>
+          "WHERE d.adrelid = 'characters'::regclass AND a.attname = 'disqualified'"
+      ).rows
+
+    assert expression =~ "cheated"
+    refute expression =~ "coward", "Commit Suicide is gone, and so is the flag it set"
+  end
 end

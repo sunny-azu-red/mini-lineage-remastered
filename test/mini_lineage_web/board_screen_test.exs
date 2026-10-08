@@ -31,7 +31,7 @@ defmodule MiniLineageWeb.BoardScreenTest do
         | experience: opts[:xp] || 0,
           adena: opts[:adena] || 0,
           dead: opts[:dead] || false,
-          coward: opts[:coward] || false
+          cheated: opts[:cheated] || false
       })
 
     %{id: id, session: session}
@@ -57,12 +57,12 @@ defmodule MiniLineageWeb.BoardScreenTest do
 
     test "leaves a disqualified run off it", %{conn: conn} do
       run("Honest", xp: 10)
-      run("Coward", xp: 9_000, dead: true, coward: true)
+      run("Cheat", xp: 9_000, dead: true, cheated: true)
 
       {:ok, _live, html} = live(conn, ~p"/highscores")
 
       assert html =~ "Honest"
-      refute html =~ "Coward"
+      refute html =~ "Cheat"
     end
 
     test "hands the first three a medal, and nobody else", %{conn: conn} do
@@ -264,11 +264,11 @@ defmodule MiniLineageWeb.BoardScreenTest do
     end
 
     test "still renders a disqualified one — the record stands, unannotated", %{conn: conn} do
-      %{id: id} = run("Coward", xp: 50, dead: true, coward: true)
+      %{id: id} = run("Cheat", xp: 50, dead: true, cheated: true)
 
       {:ok, _live, html} = live(conn, ~p"/character/#{id}")
 
-      assert html =~ "Coward"
+      assert html =~ "Cheat"
       # The ending says what became of the run. A record is the run itself, and says neither.
       refute html =~ "Barred from the Hall"
       refute html =~ "hallowed pillars"

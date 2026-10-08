@@ -171,7 +171,7 @@ defmodule MiniLineageWeb.Screens.Record do
   # happened.
   defp voiced(line, mine?), do: Narrative.voiced(line, mine?)
 
-  # Every ending is red, a suicide's too; a heresy is not an ending, and wears the Halls' cheat
+  # Every ending is red; a heresy is not an ending, and wears the Halls' cheat
   # colour. Spread rather than `class={...}`, which would print an empty class on every other line.
   defp deed_colour("ending"), do: [class: "deaths"]
   defp deed_colour("cheat"), do: [class: "heretics"]

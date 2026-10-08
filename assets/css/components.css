@@ -298,11 +298,6 @@
     gap: 10px;
 }
 
-/* The run's class, under its name: a value with no label, so it takes the label's column too. */
-.status-panel .stat-row.calling .stat-value {
-    grid-column: 1 / -1;
-}
-
 .stat-row::after,
 ol.chronicle li::after {
     content: '';

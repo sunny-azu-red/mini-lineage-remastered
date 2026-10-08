@@ -9,11 +9,7 @@ defmodule MiniLineage.Characters.Serde do
 
   # The shape of the document, not of the character. A reshape bumps this and `from_map/1` branches
   # on it; a document claiming a LATER one was written by a newer build, and must not be guessed at.
-  @version 2
-
-  # What version 1 drew a race's HP bar against, before classes: the only way to keep a stored run
-  # at the same fraction of a bar that is now measured in Interlude's units.
-  @legacy_max_hp %{0 => 100, 1 => 150, 2 => 75, 3 => 85}
+  @version 1
 
   def to_map(%Player{} = p) do
     %{
@@ -30,7 +26,6 @@ defmodule MiniLineage.Characters.Serde do
       "dyes" => p.dyes,
       "dead" => p.dead,
       "ambushed" => p.ambushed,
-      "coward" => p.coward,
       "cheated" => p.cheated,
       "death_reason" => p.death_reason,
       "total_battles" => p.total_battles,
@@ -48,7 +43,7 @@ defmodule MiniLineage.Characters.Serde do
       raise "character document is version #{version}; this build understands #{@version}"
     end
 
-    player = %Player{
+    %Player{
       name: m["name"],
       race_id: m["race_id"],
       class_id: class_id(m["class_id"], m["race_id"]),
@@ -61,7 +56,6 @@ defmodule MiniLineage.Characters.Serde do
       dyes: Enum.filter(m["dyes"] || [], &match?({:ok, _}, Dyes.fetch(&1))),
       dead: m["dead"] == true,
       ambushed: m["ambushed"] == true,
-      coward: m["coward"] == true,
       cheated: m["cheated"] == true,
       death_reason: m["death_reason"],
       total_battles: m["total_battles"] || 0,
@@ -71,33 +65,18 @@ defmodule MiniLineage.Characters.Serde do
       effects: Enum.flat_map(m["effects"] || [], &effect_from_map/1),
       current_screen: m["current_screen"]
     }
-
-    if version < 2, do: from_v1(player), else: player
   end
 
   def from_map(%{}),
     do: raise("character document carries no version; every one this build writes does")
 
-  # A class the tree no longer has, or none at all, is its race's Fighter: what every run was.
+  # A class the tree does not have is its race's Fighter, rather than a guess at another.
   defp class_id(id, race_id) do
     case is_integer(id) && Classes.fetch(id) do
       {:ok, _class} -> id
       _ -> if race_id, do: Classes.starting(race_id, :fighter).id
     end
   end
-
-  # Version 1 measured HP in the old race numbers; keep the run at the same fraction of its bar.
-  defp from_v1(%Player{health: health, race_id: race_id} = player)
-       when is_integer(health) and is_integer(race_id) do
-    stats = Player.stats(player)
-    added = player.effects |> Enum.flat_map(& &1.modifiers) |> Enum.filter(&(&1.type == :max_hp))
-    old_max = Map.get(@legacy_max_hp, race_id, 100) + Enum.sum(Enum.map(added, & &1.value))
-    health = if health <= 0, do: health, else: max(1, round(health / old_max * stats.max_hp))
-
-    %{player | health: min(health, stats.max_hp), mp: stats.max_mp}
-  end
-
-  defp from_v1(player), do: player
 
   # Which effect, and until when: everything else is the catalog's, so a retuned effect reaches the
   # runs already carrying it.

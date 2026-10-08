@@ -252,10 +252,9 @@ at weight 600 and 0.1em in capitals, each in its own colour and place, or the fo
 inside the HP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A field
 label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender room
 capitals never use, and the one property that centres by letters, `text-box-trim`, is missing from
-Firefox. The sidebar is 245px because its widest row, "🧝 Elemental Summoner level 80", has to fit
-on one line at 13px in the Verdana fallback, and the page widens by the same 35px so the main panel
-keeps its width; widen it before shrinking a value. That row is the class and level under the name,
-with no label, across both columns: a value's column could never hold it.
+Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade +150", has to fit at
+13px with room for the Verdana fallback and a wider emoji font; widen it before shrinking a value,
+and never without asking.
 The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
 sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
 
@@ -290,8 +289,8 @@ its colour cannot say which of the things wearing it you meant — `.hp` was car
 Physical Attack, deaths, and cheaters struck from the record, and no one of them could be retuned.
 
 So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal .regen .buff` give
-it back; `.adena .level .attribute .aura` are what it is worth; `.ambush .cowards .date .speed
-.timer` are read but not acted on; `.defense .evasion .damage` turn things aside, and `.mp` is
+it back; `.adena .level .attribute .aura` are what it is worth; `.ambush .date .speed .timer`
+are read but not acted on; `.defense .evasion .damage` turn things aside, and `.mp` is
 grouped with them for its blue; `.battles .kills .players .purchases` are things counted; `.crit
 .accuracy` are where a blow lands and how hard; `.xp .magic .heretics` are what the arcane touches,
 earned, cast or struck out for; `.item` is what a run wears, wields or eats, quieter than the sentence around it because a
@@ -620,18 +619,14 @@ nothing else: every action that could change it is guarded on `started?`, so not
 and nothing persists it. That is why the retirement only ever clears sessions and deletes nothing,
 and why `characters` has no row without a race. `visitor_test.exs` holds it.
 
-**There is no Commit Suicide.** It was removed with the Interlude player system, which has no
-such thing. A run that took that way out before keeps `coward` in its document, so it stays off the
-Halls and keeps its ending, and the Tome still counts its Weak Souls; nothing sets the flag now.
-
 **A deed is gated; the census is not.** `Statistics.increment_for/3` drops everything a
 disqualified run *does* — its battles, its plunder, its blood — because the Halls will not list a
-coward or a cheat and an aggregate cannot give back what it was already told. Being born is counted
+cheat and an aggregate cannot give back what it was already told. Being born is counted
 at `initialize`, before anybody can be disqualified, and dying through the ungated `increment/2`,
 so the census holds every future heretic and lets every one of them go. Gate the
 exit, and souls arrive and are never accounted for leaving — which printed "0 Champions have
-fallen... while a Heretic was struck down", and the Tome tells the Weak Souls and the Heretics as a
-few *of* the fallen.
+fallen... while a Heretic was struck down", and the Tome tells the Heretics as a few *of* the
+fallen.
 
 **The registry can name a process that has just stopped.** `Characters.call/3` looks a character up
 in the registry directly, which is what keeps every read and write off the `DynamicSupervisor` —

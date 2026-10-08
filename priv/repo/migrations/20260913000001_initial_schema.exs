@@ -22,9 +22,7 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
       add :adena, :bigint, generated: "ALWAYS AS ((state->>'adena')::bigint) STORED"
       add :dead, :boolean, generated: "ALWAYS AS ((state->>'dead')::boolean) STORED"
 
-      add :disqualified, :boolean,
-        generated:
-          "ALWAYS AS (((state->>'coward')::boolean) OR ((state->>'cheated')::boolean)) STORED"
+      add :disqualified, :boolean, generated: "ALWAYS AS ((state->>'cheated')::boolean) STORED"
 
       timestamps(type: :timestamptz)
     end

@@ -352,8 +352,8 @@ defmodule MiniLineageWeb.Screens do
     assigns =
       assign(assigns, race: Enum.find(assigns.catalog.races, &(&1.id == assigns.view.race_id)))
 
-    # One ending, however it was reached. A suicide and a heresy are not warnings to be dismissed —
-    # they are the last line of the run, and read as one.
+    # One ending, however it was reached. A heresy is not a warning to be dismissed: it is the last
+    # line of the run, and reads as one.
     ~H"""
     <%!-- On a SPAN inside the paragraph, not on the paragraph: the weight rule reaches a value
           sitting inside a sentence, so `p.deaths` takes the colour without it. --%>
@@ -374,17 +374,11 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # What the chroniclers did with the run, which is not the same as how it ended. Heresy outranks
-  # cowardice, the same order `resolve_death_reason/1` uses.
+  # What the chroniclers did with the run, which is not the same as how it ended.
   defp epitaph(%{cheated: true}),
     do:
       "The scribes have scraped your name from the stone before the ink was dry. Nothing of this " <>
         "run will be kept, and the Hall will not remember you were ever here."
-
-  defp epitaph(%{coward: true}),
-    do:
-      "No chronicler lifts a quill for a life laid down by its own hand. The pillars stay bare " <>
-        "where your name should have stood."
 
   defp epitaph(_recorded),
     do:

@@ -59,10 +59,8 @@ defmodule MiniLineage.Game.DeathTest do
 
   # A run is in the Halls from the moment it picks a race, so being barred is a property of the
   # run rather than of an action.
-  test "cowards and cheaters are barred from the Halls, alive or dead" do
-    dead = Player.kill(living())
-
-    for barred <- [%{dead | coward: true}, %{dead | cheated: true}] do
+  test "cheaters are barred from the Halls, alive or dead" do
+    for barred <- [%{living() | cheated: true}, %{Player.kill(living()) | cheated: true}] do
       assert Snapshot.build(barred).disqualified
     end
   end

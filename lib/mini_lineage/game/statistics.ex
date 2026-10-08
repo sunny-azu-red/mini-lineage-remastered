@@ -6,17 +6,16 @@ defmodule MiniLineage.Game.Statistics do
   @fields ~w(total_adena total_adena_generated total_adena_spent total_ambushes total_armors_bought
              total_battles total_critical_hits total_damage_blocked total_deaths total_enemies_killed
              total_food_bought total_hp_healed total_hp_lost total_hp_regen total_levels_gained
-             total_players total_players_cheated total_players_suicided total_weapons_bought
+             total_players total_players_cheated total_weapons_bought
              total_xp_gained)a
 
   def fields, do: @fields
 
   @doc """
-  Counts a DEED unless the run is disqualified: the Tome tells no coward's or cheat's battles. The
+  Counts a DEED unless the run is disqualified: the Tome tells no cheat's battles. The
   census (births and deaths) is not a deed and goes through `increment/2`, ungated.
   """
   def increment_for(player, field, amount \\ 1)
-  def increment_for(%{coward: true}, _field, _amount), do: :ok
   def increment_for(%{cheated: true}, _field, _amount), do: :ok
   def increment_for(_player, field, amount), do: increment(field, amount)
 

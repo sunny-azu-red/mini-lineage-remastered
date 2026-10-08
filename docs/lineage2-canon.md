@@ -152,3 +152,37 @@ All in `J/mechanics/stats/Formulas.java`.
 | HP regen below level 11 | 1.5 + level/20 | the table: 2.0 + 0.05 a level |
 | EXP level penalty | 0.83^(gap − 5) | none within 10 levels, nothing beyond |
 | Saving attribute | `2 − √bonus` multiplier | the attribute subtracted from the chance |
+
+## Cross-check against aCis
+
+[aCis](https://gitlab.com/Tryskell/acis_public) (commit `55ff8a4`) is an Interlude-only emulator
+built for retail accuracy, independent of L2J Mobius. L2JFrozen breaks ties, though it shares
+Mobius's L2J ancestry.
+
+**Confirmed exactly by aCis:**
+- the eight starting classes' attributes, and the combat bases
+- every HP and MP table checked, including where transfers split at 21 and 41
+- the attribute bonus formulas and the level modifier
+- the derived P.Atk, M.Atk, P.Def, M.Def, Max HP and Max MP
+- Critical
+- the MP regen table and the posture multipliers
+- magic damage, the random spread and the overhit cap
+- the EXP table and the level 80 cap
+- the dyes, slots and the +5 cap
+
+**Where aCis differs from the game:**
+
+| | Game (Mobius) | aCis | L2JFrozen |
+|---|---|---|---|
+| HP regen table | 2.0 +0.05/level to 10, then 2.5 +0.1/level | 2.0 for 1–10, 2.5, 3.5, then +1 every 10 levels to 8.5 | a third model |
+| Physical constant | 76 | 77 | 70 |
+| Side position | ×1.1 | ×1.05 (on a critical: behind ×1.1, side ×1.025) | — |
+| Hit chance | (80 + 2Δ)×10, ×position, 200–980 | (90 + 2Δ)×10, position added to Δ, 300–980 | as the game |
+| Magic critical damage | ×3 | ×4 | ×3 |
+| Magic critical rate | trunc(WIT)×10, cap 200 | 8 × WIT, no cap | cap 300 |
+| Magic success | fail 1.3^gap | fail 1.166^gap | 1.3^gap |
+| EXP level gap | none at a gap of 11 or more | ×(5/6)^(gap−5) once the player is more than 5 above | as aCis |
+| Accuracy/Evasion past 69, Evasion cap 250 | yes | none | different extras, no cap |
+| Speed caps 1500/1999 | yes | none | config defaults |
+| Naked P.Def | underwear and cloak deducted | not deducted | — |
+| Attack delay | 470000/P.Atk.Spd ms | 500000/P.Atk.Spd ms | — |

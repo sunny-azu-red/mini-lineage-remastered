@@ -123,12 +123,12 @@ defmodule MiniLineageWeb.Layouts do
     ~H"""
     <div id="sidebar" class="side" phx-hook="AnimatedValues">
       <Controls.panel title={@view.name} class="status-panel" body_class="rows">
-        <%!-- Under the name and across both columns: "Elemental Summoner level 80" overflows a
-              value's. Flush against the anchor: a newline inside one renders as an underlined space. --%>
-        <div class="stat-row calling">
+        <div class="stat-row">
+          <span class="stat-label">Race</span>
           <span class="stat-value">
             {if @view.dead, do: "☠️", else: @view.race_emoji}
-            <.link patch={Paths.for_character(@character_id, "game")}>{@view.class_name} level
+            <%!-- Flush against the anchor: a newline inside one renders as an underlined space. --%>
+            <.link patch={Paths.for_character(@character_id, "game")}>{@view.class_name}
             <Controls.figure key="level" value={@view.level} /></.link>
           </span>
         </div>

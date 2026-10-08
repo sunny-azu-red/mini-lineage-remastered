@@ -41,15 +41,7 @@ defmodule MiniLineageWeb.Screens.Tome do
           {verb(@statistics.total_deaths, "has", "have")} fallen in battle... lost, but not forgotten.
         </p>
         <p>
-          A few, overwhelmed by the weight of their journey, chose the coward's end, with
-          <.counted
-            key="tome-players-suicided"
-            count={@statistics.total_players_suicided}
-            singular="Weak Soul"
-            plural="Weak Souls"
-            class="cowards"
-          />
-          taking {verb(@statistics.total_players_suicided, "its own life", "their own lives")}, while
+          Among them,
           <.counted
             key="tome-players-cheated"
             count={@statistics.total_players_cheated}

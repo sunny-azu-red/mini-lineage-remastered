@@ -29,7 +29,7 @@ defmodule MiniLineageWeb.StatusPanelTest do
   end
 
   test "reads as one line, whatever the markup underneath it", %{html: html} do
-    assert text(html) =~ "Sunny 🧛 Dark Fighter level 5"
+    assert text(html) =~ "Race 🧛 Dark Fighter 5"
   end
 
   test "and leaves no space in front of any punctuation", %{html: html} do
@@ -43,7 +43,7 @@ defmodule MiniLineageWeb.StatusPanelTest do
   end
 
   test "the level is its own element, so it counts rather than jumps", %{html: html} do
-    assert html =~ ~r|level\s+<span[^>]*data-key="level"[^>]*>5</span></a>|
+    assert html =~ ~r|Dark Fighter\s+<span[^>]*data-key="level"[^>]*>5</span></a>|
   end
 
   test "and so is what the gear grants, which only appears once there is gear that grants" do

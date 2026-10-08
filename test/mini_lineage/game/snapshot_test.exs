@@ -124,7 +124,6 @@ defmodule MiniLineage.Game.SnapshotTest do
 
     refute Snapshot.build(dead).disqualified
     refute Snapshot.build(character()).disqualified, "the living are ranked like anyone else"
-    assert Snapshot.build(%{dead | coward: true}).disqualified
     assert Snapshot.build(%{dead | cheated: true}).disqualified
   end
 

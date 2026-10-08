@@ -165,8 +165,7 @@ defmodule MiniLineage.Board do
   defp by_rank(query),
     do: order_by(query, [r], desc: r.total_xp, desc: r.adena, asc: r.inserted_at, desc: r.id)
 
-  # A run is ranked once it has chosen a race. A coward's and a cheat's never is — their own page
-  # still renders, which is why this is a board rule rather than a deletion.
+  # A run is ranked once it has chosen a race. A cheat's never is — their own page still renders, which is why this is a board rule rather than a deletion.
   defp ranked, do: from(r in Record, where: not is_nil(r.race_id) and r.disqualified == false)
 
   # Last seen is the run's last log entry, read rather than stored so the Halls and the Chronicle

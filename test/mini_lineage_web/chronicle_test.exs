@@ -123,13 +123,11 @@ defmodule MiniLineageWeb.ChronicleTest do
       assert text_for([bought], mine: false) =~ "They took up the 🗡️ Sword."
     end
 
-    # A run that ends in a fight has the fight row to say so; one that ends by its own hand had
-    # nothing at all, and the Chronicle simply stopped.
     test "and an ending wears the colour every ending in the game wears" do
-      [entry] = entries([deed("ending", "🤡 {they} took the cowardly way out.")])
+      [entry] = entries([deed("ending", "💀 Fate has claimed {their} soul.")])
 
       assert entry =~ ~s(<span class="deaths">)
-      assert entry =~ "took the cowardly way out"
+      assert entry =~ "Fate has claimed"
     end
 
     # The gods noticing is not the same as dying, and the game colours them differently.
@@ -227,7 +225,7 @@ defmodule MiniLineageWeb.ChronicleTest do
         deed("purchase", "{they} took up the 🗡️ Sword."),
         deed("level_up", "{they} reached Level 4."),
         deed("cheat", "👾 The gods saw {their} heresy, and closed the book on {object}."),
-        deed("ending", "🤡 {they} took the cowardly way out.")
+        deed("ending", "💀 Fate has claimed {their} soul.")
       ]
 
       for mine <- [true, false] do

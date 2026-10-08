@@ -23,7 +23,6 @@ defmodule MiniLineage.Characters.SerdeTest do
       dyes: [1, 4],
       dead: true,
       ambushed: true,
-      coward: true,
       cheated: true,
       death_reason: "slain by a wandering Orc",
       total_battles: 41,
@@ -130,7 +129,7 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the shape the document was written in" do
     test "is recorded, so a later reshape has something to branch on" do
-      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 2
+      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 1
     end
 
     test "and a document without one is refused, not assumed to be this shape" do
@@ -146,39 +145,7 @@ defmodule MiniLineage.Characters.SerdeTest do
       # otherwise default every unrecognised field and write the loss straight back.
       newer = %Player{name: "Hero"} |> Serde.to_map() |> Map.put("version", 99)
 
-      assert_raise RuntimeError, ~r/version 99.*understands 2/, fn -> Serde.from_map(newer) end
-    end
-  end
-
-  describe "a document from before classes" do
-    defp v1(fields) do
-      Map.merge(
-        %{"version" => 1, "name" => "Old", "adena" => 0, "experience" => 0, "effects" => []},
-        fields
-      )
-    end
-
-    test "loads as its race's Fighter, at the same fraction of its HP bar, with full MP" do
-      # Half of the Orc's old 150 is half of whatever an Orc Fighter's bar is now.
-      loaded = Serde.from_map(v1(%{"race_id" => 1, "health" => 75}))
-      stats = Player.stats(loaded)
-
-      assert loaded.class_id == 44
-      assert loaded.health == round(stats.max_hp / 2)
-      assert loaded.mp == stats.max_mp
-      assert loaded.dyes == []
-    end
-
-    test "counts what its effects added to the old bar, so a buffed run is not overfilled" do
-      # 120 was full for a Human wearing the newbie's +20.
-      newbie = [%{"id" => "newbie_blessing", "expires_at" => nil}]
-      loaded = Serde.from_map(v1(%{"race_id" => 0, "health" => 120, "effects" => newbie}))
-
-      assert loaded.health == Player.stats(loaded).max_hp
-    end
-
-    test "keeps the dead at nothing" do
-      assert Serde.from_map(v1(%{"race_id" => 3, "health" => 0, "dead" => true})).health == 0
+      assert_raise RuntimeError, ~r/version 99.*understands 1/, fn -> Serde.from_map(newer) end
     end
   end
 
@@ -186,7 +153,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "is read as the race's Fighter, and a dye that names nothing is dropped" do
       loaded =
         Serde.from_map(%{
-          "version" => 2,
+          "version" => 1,
           "race_id" => 3,
           "class_id" => 999,
           "dyes" => [1, 9_999, "STR+5"]
@@ -253,11 +220,10 @@ defmodule MiniLineage.Characters.SerdeTest do
 
     test "a truthy-looking string is not a truthy flag" do
       loaded =
-        Serde.from_map(%{"version" => 1, "dead" => "yes", "cheated" => 1, "coward" => "true"})
+        Serde.from_map(%{"version" => 1, "dead" => "yes", "cheated" => 1})
 
       refute loaded.dead
       refute loaded.cheated
-      refute loaded.coward
     end
   end
 end

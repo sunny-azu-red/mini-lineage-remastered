@@ -81,25 +81,6 @@ defmodule MiniLineage.Game.CheatTest do
       assert counted() == []
     end
 
-    test "nor a run that took its own life before that way out was removed" do
-      player = Player.kill(%{living() | coward: true})
-      _ = counted()
-
-      Statistics.increment_for(player, :total_battles)
-
-      assert counted() == []
-    end
-
-    test "but the census counts everyone, or souls arrive and never leave" do
-      _ = counted()
-
-      # Taking your own life is still falling, and the Tome tells the Weak Souls as a few OF the
-      # fallen — a subset that outnumbers its whole is not a story anybody can read.
-      Player.kill(%{living() | coward: true})
-
-      assert {:total_deaths, 1} in counted()
-    end
-
     test "and a heretic who dies is still one of the fallen" do
       {player, _} = Actions.cheat(living())
       _ = counted()

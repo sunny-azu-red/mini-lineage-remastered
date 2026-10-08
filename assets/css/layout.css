@@ -164,14 +164,9 @@
     min-width: 0;
 }
 
-/* Fits "🧝 Elemental Summoner level 80" at 13px in Verdana, the longest class at the last level. */
+/* Fits "💀 The Forgotten Blade 15%" at 13px, with room for Verdana and a wider emoji font. */
 #sidebar {
-    --side-width: 245px;
-}
-
-/* The page widens by what the sidebar takes, so the main panel keeps the width it had at 210px. */
-#wrapper:has(#sidebar) {
-    max-width: 735px;
+    --side-width: 210px;
 }
 
 /* The page widens by what the aside takes, so the main panel keeps the width it has alone. */
