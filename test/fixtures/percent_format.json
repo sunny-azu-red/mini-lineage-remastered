@@ -1,0 +1,15 @@
+{
+  "_comment": "Values both percent formatters (the XP bar) must agree on, in hundredths of a percent. Read by test/mini_lineage/game/format_test.exs for the Elixir side and by e2e/walkthrough.mjs for the JavaScript one.",
+  "cases": [
+    [0, "0.00%"],
+    [1, "0.01%"],
+    [9, "0.09%"],
+    [10, "0.10%"],
+    [99, "0.99%"],
+    [100, "1.00%"],
+    [105, "1.05%"],
+    [5413, "54.13%"],
+    [9999, "99.99%"],
+    [10000, "100.00%"]
+  ]
+}

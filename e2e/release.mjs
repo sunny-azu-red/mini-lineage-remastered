@@ -38,7 +38,7 @@ try {
     const cookie = (await page.context().cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is secure and httpOnly', cookie?.secure && cookie?.httpOnly);
     check('...and the character stands in its village',
-        (await page.textContent('#main .header-name'))?.trim() === 'Orc Village');
+        (await page.textContent('#main .header-name'))?.trim() === '🏕️ Orc Village');
     check('...at its own address', new URL(page.url()).pathname === '/orc-village', page.url());
     check('a release listens for no typed keys', await page.locator('#dev-keys').count() === 0);
     await page.evaluate(() => document.activeElement?.blur());
@@ -56,7 +56,7 @@ try {
     check('...nor does typing the hour change it',
         await page.locator('#effects [data-effect-id="night"]').count() === night);
     check('...nor does Ctrl+C twice end the character',
-        (await page.textContent('#main .header-name'))?.trim() === 'Orc Village');
+        (await page.textContent('#main .header-name'))?.trim() === '🏕️ Orc Village');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {
     check(`release check threw: ${err.message}`, false);

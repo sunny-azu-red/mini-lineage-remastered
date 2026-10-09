@@ -2,7 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortFigure} from "./hooks"
+import {hooks as gameHooks, shortFigure, percentFigure} from "./hooks"
 import {playSound, installUnlock} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
@@ -69,5 +69,6 @@ if (process.env.NODE_ENV === "development") {
 }
 
 
-// Exposed for the browser suite, which holds it and its Elixir twin to one table.
+// Exposed for the browser suite, which holds each and its Elixir twin to one table.
 window.__shortFigure = shortFigure;
+window.__percentFigure = percentFigure;

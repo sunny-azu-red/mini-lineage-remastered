@@ -58,6 +58,14 @@ try {
     );
     check('the browser shortens a figure exactly as the server does', mismatched.length === 0,
         mismatched.join(' | '));
+    const percents = JSON.parse(readFileSync('test/fixtures/percent_format.json', 'utf8')).cases;
+    const offPercent = await page.evaluate(
+        (rows) => rows
+            .filter(([value, expected]) => window.__percentFigure(value) !== expected)
+            .map(([value, expected]) => `${value}: ${window.__percentFigure(value)} != ${expected}`),
+        percents,
+    );
+    check('...and writes a percentage exactly as the server does', offPercent.length === 0, offPercent.join(' | '));
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
@@ -131,29 +139,36 @@ try {
         fanfare.join(',') === 'triangle,triangle,triangle,square', fanfare.join(','));
     check('creating a character lands in its own village', born.screen === 'town');
     check('...at the village\'s own address', new URL(page.url()).pathname === '/orc-village', page.url());
-    check('...headed with its name', (await text('#main .header-name')) === 'Orc Village',
+    check('...headed with its name', (await text('#main .header-name')) === '🏕️ Orc Village',
         await text('#main .header-name'));
     check('...and the document title names it', await page.title() === 'Mini Lineage - Orc Village',
         await page.title());
+    check('...and no second heading saying it again', await page.locator('#screen h2').count() === 0);
     check('...and the City of Aden is nowhere on the page', !(await text('body')).includes('City of Aden'));
     check('...with the welcome that sent it out from there',
         /You chose the 🧟 Orc Mystic, .* set out from 🏕️ Orc Village/.test(await text('#main .alert')),
         await text('#main .alert'));
-    // A flash heads the panel without being its content, so the heading under it sits as the first.
+    // A flash heads the panel without being its content, so what opens the screen sits as the first.
     const gap = await page.evaluate(() =>
-        document.querySelector('#main h2').getBoundingClientRect().top
+        document.querySelector('#flash + *').getBoundingClientRect().top
         - document.querySelector('#flash').getBoundingClientRect().bottom);
-    check('...and its heading sits under the flash as if it came first, 12px below it', gap === 12, `${gap}px`);
+    check('...and its description sits under the flash as if it came first, 12px below it', gap === 12, `${gap}px`);
     check('...and nothing destructive takes the keyboard on arrival',
         await page.evaluate(() => document.activeElement?.value) === 'gatekeeper',
         await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 60)));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
+    check('...headed with the race and class, the level beside the name under it',
+        (await text('#sidebar .header-name')) === '🧟 Orc Mystic'
+        && (await text('#sidebar .level-badge')) === '1' && (await text('#character-name')) === 'BrowserBot',
+        `${await text('#sidebar .header-name')} / ${await text('#sidebar .level-badge')} ${await text('#character-name')}`);
     check('...at level 1, with full bars', born.level === 1 && born.health === born.maxHealth
         && born.mp === born.maxMp, JSON.stringify(born));
     check('...no experience yet, and 68 to the next level, as rules §12 has it',
         born.xp === 0 && born.xpRequired === 68, `${born.xp}/${born.xpRequired}`);
-    check('...and its Stats beside them', await page.locator('#stats [data-key="p-atk"]').count() === 1
-        && /^\d+\.\d%$/.test(await text('#stat-critical')), await text('#stat-critical'));
+    const labels = await page.locator('#sidebar .bar-label').allTextContents();
+    check('...each bar naming itself inside it, and XP as a share of the level',
+        labels.join(',') === 'HP,MP,XP' && (await text('#xp-bar ~ .bar-text')) === '0.00%',
+        `${labels} / ${await text('#xp-bar ~ .bar-text')}`);
     check('...and an empty purse', born.adena === 0, String(born.adena));
     check('...resting, as a character with nothing to fight always is',
         await page.locator('#effects [data-effect-id="resting"]').count() === 1);
@@ -184,8 +199,33 @@ try {
         (await text('#main .back')).includes('Continue your journey'));
     await page.click('#main .back a');
     await onScreen('town');
-    check('...and leads home', (await text('#main .header-name')) === 'Orc Village');
+    check('...and leads home', (await text('#main .header-name')) === '🏕️ Orc Village');
     check('...at its address, not at the root', new URL(page.url()).pathname === '/orc-village', page.url());
+
+    // ---- the name in the sidebar opens the character's own page ------------------------------
+    await page.click('#character-name a');
+    await onScreen('character');
+    check('the sidebar\'s name leads to the character page, at /character',
+        new URL(page.url()).pathname === '/character', page.url());
+    check('...headed Character, across the whole page with no sidebar beside it',
+        (await text('#main .header-name')) === '📜 Character' && await page.locator('#sidebar').count() === 0,
+        await text('#main .header-name'));
+    check('...naming its ancestry', (await text('#screen h2')) === '🧟 BrowserBot of Orc Ancestry',
+        await text('#screen h2'));
+    check('...then its class and what it was born with, then its race\'s perk',
+        await page.evaluate(() => [...document.querySelectorAll('#character-figures > h2:first-child ~ p')]
+            .slice(0, 2).map(p => p.id).join(',')) === 'character-class,character-perk'
+        && (await text('#character-class')).startsWith('You are an Orc Mystic of STR '),
+        await text('#character-class'));
+    check('...what is on it, and what each does',
+        (await text('#effect-resting')).startsWith('💤 Resting • With nothing yet to fight'),
+        await text('#effect-resting'));
+    check('...and its figures, as the server wrote them',
+        await page.getAttribute('#character-figures [data-key="char-level"]', 'data-value') === '1'
+        && await page.getAttribute('#character-figures [data-key="char-xp-needed"]', 'data-value') === '68');
+    await page.click('#main .back a');
+    await onScreen('town');
+    check('...and its way back is the town', new URL(page.url()).pathname === '/orc-village', page.url());
 
     // ---- a second tab follows along -------------------------------------------------------------
     const tab = await context.newPage();
@@ -194,18 +234,6 @@ try {
     check('a second tab sees the same character',
         await tab.getAttribute('#sidebar [data-key="hp"]', 'data-value') === String(born.health));
     await tab.close();
-
-    // ---- Stats folds at any width, opens folded, and stays as the reader left it -------------
-    const stats = page.locator('#stats .panel-body');
-    const statsHidden = () => stats.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
-    check('beside the main panel Stats opens folded', await statsHidden());
-    await page.click('#stats .panel-toggle');
-    check('...until its header opens it', await stats.isVisible());
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
-    check('...and a refresh keeps it open, the panel being the reader\'s own', await stats.isVisible());
-    await page.click('#stats .panel-toggle');
-    check('...until it is folded again', await statsHidden());
 
     // ---- the Inventory folds on a phone, and stays as the reader left it -----------------------
     const inventory = page.locator('#inventory .panel-body');
@@ -232,8 +260,8 @@ try {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a returning browser comes back to its village, not to game start',
-        (await state()).screen === 'town' && (await text('#sidebar .header-name')) === 'BrowserBot',
-        await text('#sidebar .header-name'));
+        (await state()).screen === 'town' && (await text('#character-name')) === 'BrowserBot',
+        await text('#character-name'));
 
     // ---- the Gatekeeper, rules §14 ------------------------------------------------------------
     const teleport = async (to) => {
@@ -250,6 +278,8 @@ try {
     await onScreen('gatekeeper');
     check('the town\'s way out leads to its Gatekeeper, at an address of its own',
         new URL(page.url()).pathname === '/orc-village/gatekeeper', page.url());
+    check('...headed with the Gatekeeper and its own emoji',
+        (await text('#main .header-name')) === '🌀 Gatekeeper', await text('#main .header-name'));
     check('...who lists the one route out of an Orc\'s village, and its fee',
         (await text('#routes-table tbody')) === '🏰 Town of Gludio 🪙 6,000', await text('#routes-table tbody'));
     check('...under a button that says it goes back until something is picked',
@@ -271,7 +301,7 @@ try {
     await page.waitForURL(`${BASE}/gludio`, { timeout: 5000 });
     await adena(4000);
     check('the Gatekeeper sends it to Gludio for 6,000, leaving 4,000', (await state()).adena === 4000);
-    check('...where it stands in Gludio', (await text('#main .header-name')) === 'Town of Gludio',
+    check('...where it stands in Gludio', (await text('#main .header-name')) === '🏰 Town of Gludio',
         await text('#main .header-name'));
 
     await page.selectOption('#travel-form select', 'gatekeeper');
@@ -324,7 +354,7 @@ try {
     check('Ctrl+C twice goes back to game start, with no character', (await state()).started === false);
     await create('AgainBot', 3, 'fighter');
     check('...and the same browser starts another at once',
-        (await text('#main .header-name')) === 'Dark Elven Village', await text('#main .header-name'));
+        (await text('#main .header-name')) === '🌑 Dark Elven Village', await text('#main .header-name'));
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

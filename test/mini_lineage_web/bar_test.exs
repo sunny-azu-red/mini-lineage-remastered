@@ -69,6 +69,33 @@ defmodule MiniLineageWeb.BarTest do
     assert b.track.("aria-valuetext") == "1,151,275,834 of 2,099,275,834 XP"
   end
 
+  # The XP bar reads as a share of the level, to the hundredth, and never full until it is.
+  test "writes one figure as a percentage of the cap when asked, and still speaks in full" do
+    b =
+      bar(
+        kind: :xp,
+        label: "XP",
+        key: "xp",
+        value: 2_999,
+        of: 3_000,
+        of_key: "xp-required",
+        format: :percent
+      )
+
+    assert b.text == "99.96%"
+    assert b.keys == ["xp-percent"]
+    assert b.formats == ["percent"]
+    assert b.track.("aria-valuetext") == "2,999 of 3,000 XP"
+  end
+
+  test "names itself inside the track, hidden from a screen reader the track already told" do
+    html = render_component(&Controls.bar/1, id: "b", label: "HP", key: "hp", kind: :hp, value: 1)
+    label = html |> LazyHTML.from_fragment() |> LazyHTML.query(".bar-track > .bar-label")
+
+    assert LazyHTML.text(label) == "HP"
+    assert LazyHTML.attribute(label, "aria-hidden") == ["true"]
+  end
+
   test "leaves its class to the hook once mounted, so a patch cannot cut a shimmer short" do
     html = render_component(&Controls.bar/1, id: "b", label: "HP", key: "hp", kind: :hp, value: 1)
 
@@ -88,7 +115,7 @@ defmodule MiniLineageWeb.BarTest do
         inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]
       )
 
-    xp = html |> LazyHTML.from_fragment() |> LazyHTML.query("#xp-bar + .bar-text")
+    xp = html |> LazyHTML.from_fragment() |> LazyHTML.query("#xp-bar ~ .bar-text")
 
     assert LazyHTML.text(xp) == Format.short(view.experience)
     assert html =~ ~s(style="width:100%")

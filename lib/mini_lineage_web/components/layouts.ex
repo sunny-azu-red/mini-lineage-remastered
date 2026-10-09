@@ -5,22 +5,7 @@ defmodule MiniLineageWeb.Layouts do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Access, Math, Version}
-
-  # Rules §5 to §10 as L2's status window pairs them: the physical side, then the magical one.
-  @combat [
-    {"P. Atk.", :p_atk},
-    {"M. Atk.", :m_atk},
-    {"P. Def.", :p_def},
-    {"M. Def.", :m_def},
-    {"Accuracy", :accuracy},
-    {"Evasion", :evasion},
-    {"Critical", :critical},
-    {"M. Critical", :magic_critical},
-    {"Atk. Spd.", :atk_spd},
-    {"Cast. Spd.", :cast_spd}
-  ]
-  @attributes ~w(str con dex int wit men)a
+  alias MiniLineage.Game.{Access, Version}
 
   embed_templates "layouts/*"
 
@@ -53,6 +38,7 @@ defmodule MiniLineageWeb.Layouts do
   end
 
   attr :title, :string, default: "Loading"
+  attr :icon, :string, default: nil
   attr :view, :map, required: true
   attr :screen, :string, required: true
   # Debug builds only, for a character: what a release never draws sends it no keys.
@@ -76,6 +62,7 @@ defmodule MiniLineageWeb.Layouts do
                   element would qualify every screen's first heading even under an alert. --%>
             <Controls.panel
               title={@title}
+              icon={@icon}
               heading
               body_id="screen"
               phx-hook="PanelFocus"
@@ -117,17 +104,21 @@ defmodule MiniLineageWeb.Layouts do
   defp sidebar(assigns) do
     ~H"""
     <div id="sidebar" class="side" phx-hook="AnimatedValues">
-      <Controls.panel title={@view.name} class="status-panel" body_class="rows">
+      <Controls.panel
+        title={@view.class_name}
+        icon={@view.race_emoji}
+        class="status-panel"
+        body_class="rows"
+      >
         <div class="stat-row">
-          <span class="stat-label">Race</span>
-          <span class="stat-value">
-            {@view.race_emoji} {@view.class_name}
-            <Controls.figure key="level" value={@view.level} />
+          <Controls.figure key="level" value={@view.level} class="level-badge level" />
+          <span id="character-name" class="stat-value">
+            <.link patch={~p"/character"}>{@view.name}</.link>
           </span>
         </div>
 
+        <%!-- Told apart by colour, as the bars always were; a screen reader hears each one's label. --%>
         <div class="stat-row">
-          <span class="stat-label">HP</span>
           <Controls.bar
             id="hp-bar"
             kind={:hp}
@@ -140,7 +131,6 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div class="stat-row">
-          <span class="stat-label">MP</span>
           <Controls.bar
             id="mp-bar"
             kind={:mp}
@@ -153,7 +143,6 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div class="stat-row">
-          <span class="stat-label">XP</span>
           <%!-- Past the last level there is no next one to fill toward, so the total is the figure. --%>
           <Controls.bar
             id="xp-bar"
@@ -164,31 +153,16 @@ defmodule MiniLineageWeb.Layouts do
             of={unless @view.is_max_level, do: @view.xp_required}
             of_key="xp-required"
             wraps={@view.level}
-            format={:short}
+            format={if @view.is_max_level, do: :short, else: :percent}
           />
         </div>
-      </Controls.panel>
-
-      <%!-- Folds at every width and starts folded, unless the reader has opened it. --%>
-      <Controls.panel id="stats" title="Stats" class="folds" collapsible collapsed>
-        <dl class="stat-grid">
-          <div :for={{label, stat} <- combat()}>
-            <dt class="stat-label">{label}</dt>
-            <dd class="stat-value"><.stat stat={stat} value={@view.stats[stat]} /></dd>
-          </div>
-        </dl>
-        <dl class="stat-grid attributes">
-          <div :for={attr <- attributes()}>
-            <dt class="stat-label">{String.upcase(to_string(attr))}</dt>
-            <dd class="stat-value"><.stat stat={attr} value={@view.stats[attr]} /></dd>
-          </div>
-        </dl>
       </Controls.panel>
 
       <%!-- Folds on a phone, open until the reader says otherwise: theirs on every screen, so kept. --%>
       <Controls.panel
         id="inventory"
         title="Inventory"
+        icon="🎒"
         body_class="rows"
         collapsible
       >
@@ -200,21 +174,6 @@ defmodule MiniLineageWeb.Layouts do
       </Controls.panel>
     </div>
     """
-  end
-
-  defp combat, do: @combat
-  defp attributes, do: @attributes
-
-  attr :stat, :atom, required: true
-  attr :value, :any, required: true
-
-  # A chance is a percentage to a tenth, and moves only with DEX or WIT, so it is not counted.
-  defp stat(%{stat: stat} = assigns) when stat in [:critical, :magic_critical] do
-    ~H|<span id={"stat-#{String.replace(to_string(@stat), "_", "-")}"}>{Float.round(@value / 1, 1)}%</span>|
-  end
-
-  defp stat(assigns) do
-    ~H|<Controls.figure key={String.replace(to_string(@stat), "_", "-")} value={Math.js_round(@value)} />|
   end
 
   @doc """

@@ -56,6 +56,10 @@ export const traceAudio = (context) => context.addInitScript(() => {
 /** The controls a player has, bound to one page. */
 export function controls(page) {
     /** The character's live state, read off the one element that mirrors it. */
+    const xpTrack = async (attr) => {
+        const track = page.locator('#sidebar .bar-track:has(#xp-bar)');
+        return await track.count() ? Number(await track.getAttribute(attr)) : null;
+    };
     const state = async () => {
         const raw = await page.locator('#screen').evaluate(node => ({ ...node.dataset }));
         // The figures are the sidebar's own `data-value`, which is what the server wrote rather
@@ -71,8 +75,9 @@ export function controls(page) {
             maxHealth: figures['max-hp'] ?? null,
             mp: figures.mp ?? null,
             maxMp: figures['max-mp'] ?? null,
-            xp: figures.xp ?? null,
-            xpRequired: figures['xp-required'] ?? null,
+            // The XP bar writes a percentage; what it is a share of is on its track.
+            xp: await xpTrack('aria-valuenow'),
+            xpRequired: await xpTrack('aria-valuemax'),
             adena: figures.adena ?? null,
         };
     };

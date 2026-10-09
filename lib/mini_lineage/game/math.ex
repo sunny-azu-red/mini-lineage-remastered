@@ -37,6 +37,12 @@ defmodule MiniLineage.Game.Math do
     js_round(percent * factor) / factor
   end
 
+  @doc "A share of the total in whole hundredths of a percent, floored: never full until it is."
+  def hundredths(_value, total) when total <= 0, do: 0
+
+  def hundredths(value, total),
+    do: value |> max(0) |> Kernel.*(10_000) |> div(total) |> min(10_000)
+
   @doc "`Math.round`: halves go toward +infinity, unlike Elixir's round/1 which goes away from zero."
   def js_round(x), do: Kernel.floor(x + 0.5)
 end

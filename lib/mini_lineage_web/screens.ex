@@ -1,19 +1,21 @@
 defmodule MiniLineageWeb.Screens do
   @moduledoc """
   Which screen is drawn, and the screens themselves: character creation, the town a character
-  stands in and its Gatekeeper, the Chronicles of Ancestry and the error page. `raw/1` renders flashes and lore, which the server
+  stands in and its Gatekeeper, the character's own page, the Chronicles of Ancestry and the error
+  page. `raw/1` renders flashes and lore, which the server
   composes from its own tables and never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.Format
+  alias MiniLineage.Game.{Format, Math}
   alias MiniLineageWeb.Paths
 
   @titles %{
     "start" => "Game Start",
     "gatekeeper" => "Gatekeeper",
+    "character" => "Character",
     "races" => "Chronicles of Ancestry",
     "error" => "Error"
   }
@@ -21,6 +23,12 @@ defmodule MiniLineageWeb.Screens do
   @doc "What the panel is headed: the town a run stands in, the screen's name elsewhere."
   def title("town", %{started: true, town: town}), do: town.name
   def title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
+
+  @doc "A place's emoji, drawn in the band beside its name; a screen that is not a place has none."
+  def icon("town", %{started: true, town: town}), do: town.emoji
+  def icon("gatekeeper", _view), do: "🌀"
+  def icon("character", _view), do: "📜"
+  def icon(_screen, _view), do: nil
 
   def page_title(screen, view), do: "Mini Lineage - #{title(screen, view)}"
 
@@ -35,12 +43,13 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper),
+      when screen in ~w(town gatekeeper character),
       do: ~H||
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "town"} = assigns), do: town(assigns)
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
+  def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
   def screen(assigns), do: error(assigns)
 
@@ -95,10 +104,10 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Somewhere to stand, and the way out of it: the systems that fill a town come later.
+  # Somewhere to stand, and the way out of it: the systems that fill a town come later. The band
+  # names it, so the body opens on the description rather than the name a second time.
   defp town(assigns) do
     ~H"""
-    <h2>{@view.town.emoji} {@view.town.name}</h2>
     <p>{@view.town.description}</p>
     <%!-- No placeholder: there is no "nowhere" to go, so the first destination is preselected. --%>
     <.select_action
@@ -148,6 +157,64 @@ defmodule MiniLineageWeb.Screens do
       default_label="Return"
       active_label="🌀 Teleport"
     />
+    """
+  end
+
+  # Only ever the reader's own, so it speaks to them. A chance moves only with DEX or WIT, so it is
+  # not counted. Each clause stays on one line: a newline at a tag renders as a space.
+  defp character(assigns) do
+    assigns =
+      assign(assigns,
+        stats: assigns.view.stats,
+        article: article(assigns.view.class_name),
+        xp_needed: assigns.view.xp_required - assigns.view.xp_current
+      )
+
+    ~H"""
+    <%!-- One hook counts every figure beneath it; the sidebar's are its own. --%>
+    <div id="character-figures" phx-hook="AnimatedValues">
+      <h2>{@view.race_emoji} {@view.name} of {@view.ancestry} Ancestry</h2>
+      <p id="character-class" phx-no-format>
+        You are {@article} {@view.class_name} of <.attribute name="STR" key="str" value={@stats.str} />, <.attribute name="CON" key="con" value={@stats.con} />, <.attribute name="DEX" key="dex" value={@stats.dex} />, <.attribute name="INT" key="int" value={@stats.int} />, <.attribute name="WIT" key="wit" value={@stats.wit} /> and <.attribute name="MEN" key="men" value={@stats.men} />.
+      </p>
+      <p id="character-perk">{@view.perk}</p>
+
+      <h2>✨ Blessings &amp; Afflictions</h2>
+      <p :for={effect <- @view.effects} id={"effect-#{effect.id}"}>
+        <span class={effect.type}>{effect.emoji} {effect.label}</span>
+        <span class="muted">&bull;</span> {effect_text(effect)}
+      </p>
+
+      <h2>📊 Stats</h2>
+      <p phx-no-format>
+        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> and <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span>, turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> and <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>, and find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span> while slipping blows with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
+      </p>
+      <p phx-no-format>
+        Your blows run at <span id="character-critical" class="crit">{Float.round(@stats.critical / 1, 1)}% Critical</span> and your spells at <span id="character-magic-critical" class="crit">{Float.round(@stats.magic_critical / 1, 1)}% M. Critical</span>, swinging at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and casting at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> At rest you mend <span class="regen"><.figure key="char-hp-regen" value={Math.js_round(@stats.hp_regen)} /> HP</span> and <span class="regen"><.figure key="char-mp-regen" value={Math.js_round(@stats.mp_regen)} /> MP</span> every three seconds.
+      </p>
+      <p id="character-vitality" phx-no-format>
+        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span> while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
+      </p>
+    </div>
+
+    <.back_link started={@view.started} />
+    """
+  end
+
+  # What it is, then what it changes as one sentence: "... ×1.5 HP regen and ×1.5 MP regen."
+  defp effect_text(%{changes: []} = effect), do: effect.about
+  defp effect_text(effect), do: "#{effect.about} #{Enum.join(effect.changes, " and ")}."
+
+  # "an Elven Fighter", "a Dark Mystic".
+  defp article(name), do: if(String.first(name) in ~w(A E I O U), do: "an", else: "a")
+
+  attr :name, :string, required: true
+  attr :key, :string, required: true
+  attr :value, :integer, required: true
+
+  defp attribute(assigns) do
+    ~H"""
+    <span class="attribute" phx-no-format>{@name} <.figure key={"char-#{@key}"} value={@value} /></span>
     """
   end
 

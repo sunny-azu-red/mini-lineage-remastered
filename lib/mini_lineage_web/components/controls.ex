@@ -19,6 +19,8 @@ defmodule MiniLineageWeb.Controls do
   attr :id, :string, default: nil
   attr :body_id, :string, default: nil
   attr :title, :string, required: true
+  # An emoji set before the title as one line of text.
+  attr :icon, :string, default: nil
 
   # The screen the panel names takes the page's one h1; every other panel titles itself with a span.
   attr :heading, :boolean, default: false
@@ -47,8 +49,8 @@ defmodule MiniLineageWeb.Controls do
         class={classes(["panel-header flex", @collapsible && "panel-toggle"])}
         {folds(@collapsible, @collapsed)}
       >
-        <h1 :if={@heading} class="header-name">{@title}</h1>
-        <span :if={!@heading} class="header-name">{@title}</span>
+        <h1 :if={@heading} class="header-name">{label(@icon, @title)}</h1>
+        <span :if={!@heading} class="header-name">{label(@icon, @title)}</span>
         {render_slot(@header)}
         <span :if={@collapsible} class="panel-arrow" aria-hidden="true"></span>
       </.dynamic_tag>
@@ -59,6 +61,9 @@ defmodule MiniLineageWeb.Controls do
     </div>
     """
   end
+
+  defp label(nil, title), do: title
+  defp label(icon, title), do: "#{icon} #{title}"
 
   # HEEx renders `class` whatever its value, so it is built first.
   defp classes(parts), do: parts |> Enum.reject(&(&1 in [nil, false, ""])) |> Enum.join(" ")
@@ -250,7 +255,7 @@ defmodule MiniLineageWeb.Controls do
 
   attr :key, :string, required: true
   attr :value, :integer, required: true
-  attr :format, :atom, default: :number, values: [:number, :short]
+  attr :format, :atom, default: :number, values: [:number, :short, :percent]
   attr :rest, :global
 
   @doc """
@@ -260,10 +265,11 @@ defmodule MiniLineageWeb.Controls do
   def figure(assigns) do
     assigns = assign(assigns, text: figure_text(assigns.format, assigns.value))
 
-    ~H|<span data-key={@key} data-value={@value} data-format={@format == :short && "short"} {@rest}>{@text}</span>|
+    ~H|<span data-key={@key} data-value={@value} data-format={@format != :number && @format} {@rest}>{@text}</span>|
   end
 
   defp figure_text(:short, value), do: Format.short(value)
+  defp figure_text(:percent, value), do: Format.percent(value)
   defp figure_text(:number, value), do: Format.number(value)
 
   # -------------------------------------------------------------------- bars
@@ -278,8 +284,9 @@ defmodule MiniLineageWeb.Controls do
   attr :of_key, :string, default: nil
   # A change here means the bar went round, not back: `AnimatedValues` refills it from empty.
   attr :wraps, :any, default: nil
-  # How both figures are written; a screen reader is always told them in full.
-  attr :format, :atom, default: :number, values: [:number, :short]
+  # How both figures are written; a screen reader is always told them in full. `:percent` writes
+  # one figure instead, the share of `of` in hundredths, keyed `<key>-percent`.
+  attr :format, :atom, default: :number, values: [:number, :short, :percent]
 
   @doc """
   A figure against its cap, as a bar filled to it. Its width, its figures and what a screen reader
@@ -291,6 +298,7 @@ defmodule MiniLineageWeb.Controls do
     assigns =
       assign(assigns,
         width: if(of, do: Math.percentage(value, of, 1), else: 100),
+        percent?: assigns.format == :percent and of != nil,
         role: if(assigns.kind == :xp, do: "progressbar", else: "meter"),
         spoken:
           if(of,
@@ -318,7 +326,13 @@ defmodule MiniLineageWeb.Controls do
         phx-mounted={JS.ignore_attributes(["class"])}
       >
       </div>
-      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} format={@format} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} format={@format} /></span></span>
+      <span class="bar-label" aria-hidden="true">{@label}</span>
+      <span :if={@percent?} class="bar-text"><.figure
+        key={"#{@key}-percent"}
+        value={Math.hundredths(@value, @of)}
+        format={:percent}
+      /></span>
+      <span :if={!@percent?} class="bar-text" phx-no-format><.figure key={@key} value={@value} format={@format} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} format={@format} /></span></span>
     </div>
     """
   end

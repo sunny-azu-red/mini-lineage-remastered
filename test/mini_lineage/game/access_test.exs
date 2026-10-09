@@ -28,6 +28,13 @@ defmodule MiniLineage.Game.AccessTest do
     end
   end
 
+  test "a character may read its own page, from wherever it stands" do
+    assert Access.pin_screen({"character", nil}, started()) == {"character", nil}
+
+    assert Access.pin_screen({"character", nil}, %{started() | location: "gludio"}) ==
+             {"character", nil}
+  end
+
   test "and anywhere else puts it back in the town it stands in" do
     for place <- [
           {"start", nil},
@@ -53,6 +60,7 @@ defmodule MiniLineage.Game.AccessTest do
           {"start", nil},
           {"town", "talking-island"},
           {"gatekeeper", "gludio"},
+          {"character", nil},
           {"nowhere", nil}
         ] do
       assert Access.pin_screen(place, %Player{}) == {"start", nil}, inspect(place)
@@ -61,6 +69,6 @@ defmodule MiniLineage.Game.AccessTest do
 
   test "only a town and its Gatekeeper show the sidebar" do
     for screen <- ~w(town gatekeeper), do: assert(Access.sidebar?(screen))
-    for screen <- ~w(start races error), do: refute(Access.sidebar?(screen))
+    for screen <- ~w(start character races error), do: refute(Access.sidebar?(screen))
   end
 end

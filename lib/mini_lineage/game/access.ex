@@ -15,8 +15,9 @@ defmodule MiniLineage.Game.Access do
   @in_town ~w(town gatekeeper)
 
   @doc """
-  Where the player is allowed to be: what can be read, for everyone; the town it stands in once a
-  character exists, which is past character creation; and character creation until then.
+  Where the player is allowed to be: what can be read, for everyone; the town it stands in, and its
+  own character page, once a character exists, which is past character creation; and character
+  creation until then.
   """
   def pin_screen({screen, _town}, _player) when screen in @readable, do: {screen, nil}
 
@@ -24,6 +25,7 @@ defmodule MiniLineage.Game.Access do
     cond do
       not Player.started?(player) -> {"start", nil}
       screen in @in_town and town == player.location -> {screen, town}
+      screen == "character" -> {"character", nil}
       true -> {"town", player.location}
     end
   end

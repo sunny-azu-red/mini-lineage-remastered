@@ -10,6 +10,8 @@ defmodule MiniLineage.Game.Snapshot do
     started: false,
     name: nil,
     race_emoji: nil,
+    ancestry: nil,
+    perk: nil,
     class_name: nil,
     town: nil,
     routes: [],
@@ -41,6 +43,8 @@ defmodule MiniLineage.Game.Snapshot do
       started: true,
       name: player.name,
       race_emoji: race.emoji,
+      ancestry: race.label,
+      perk: race.perk,
       class_name: Rules.set(player.race_id, player.path).name,
       town:
         Map.put(
@@ -77,7 +81,16 @@ defmodule MiniLineage.Game.Snapshot do
 
     tooltip = if parts == [], do: aura.label, else: "#{aura.label} (#{Enum.join(parts, ", ")})"
 
-    %{id: aura.id, type: aura.type, emoji: aura.emoji, label: aura.label, tooltip: tooltip}
+    %{
+      id: aura.id,
+      type: aura.type,
+      emoji: aura.emoji,
+      label: aura.label,
+      tooltip: tooltip,
+      about: aura.about,
+      # A rate is drawn as a figure beside the stats; a modifier is a rule, and never moves.
+      changes: Enum.map(Map.get(aura, :modifiers, []), &modifier_text/1)
+    }
   end
 
   defp rate_text({:hp_regen, value}), do: "+#{value} HP"

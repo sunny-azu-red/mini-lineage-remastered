@@ -63,16 +63,41 @@ defmodule MiniLineage.Game.Constants do
   # regenerates while a bar is short, at the rates `Player` fills in. Night and the perks are what
   # the time and the place put on it (rules §15 and §16), carrying the modifiers `Rules` gives them.
   @auras %{
-    resting: %{id: "resting", type: :aura, emoji: "💤", label: "Resting"},
-    night: %{id: "night", type: :aura, emoji: "🌙", label: "Night"},
-    shadow_sense: %{id: "shadow_sense", type: :aura, emoji: "👁️", label: "Shadow Sense"},
+    resting: %{
+      id: "resting",
+      type: :aura,
+      emoji: "💤",
+      label: "Resting",
+      about: "With nothing yet to fight, the body rests and mends every three seconds."
+    },
+    night: %{
+      id: "night",
+      type: :aura,
+      emoji: "🌙",
+      label: "Night",
+      about: "The sun is down, and every blow strains to find its mark."
+    },
+    shadow_sense: %{
+      id: "shadow_sense",
+      type: :aura,
+      emoji: "👁️",
+      label: "Shadow Sense",
+      about: "Dark Elven eyes see through the night as if it were day."
+    },
     mother_tree: %{
       id: "mother_tree",
       type: :aura,
       emoji: "🌳",
-      label: "Blessing of the Mother Tree"
+      label: "Blessing of the Mother Tree",
+      about: "Resting beneath the Mother Tree mends half again as fast."
     },
-    regenerating: %{id: "regenerating", type: :aura, emoji: "🌿", label: "Regenerating"}
+    regenerating: %{
+      id: "regenerating",
+      type: :aura,
+      emoji: "🌿",
+      label: "Regenerating",
+      about: "Health or mana is short of full, and rest is filling it back up."
+    }
   }
 
   @character %{

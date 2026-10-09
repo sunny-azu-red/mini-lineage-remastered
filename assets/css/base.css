@@ -125,22 +125,51 @@ p.last {
 /* ===== Values =====
  * A class per thing the game names, never per colour, so one can move without the others. */
 
-/* What a run has lost. */
-.hp {
+/* What a run has lost, and what takes it. */
+.hp,
+.attack {
     color: var(--text-hp);
 }
 
-/* What it is worth. */
-.adena {
+/* What gives it back. */
+.regen {
+    color: var(--text-heal);
+}
+
+/* What a run is worth: its purse, its level, what it was born with, and the state it stands in. */
+.adena,
+.level,
+.attribute,
+.aura {
     color: var(--gold);
 }
 
-/* The mana a spell is cast with, in the blue of what turns a blow aside. */
+/* Read but not acted on: a pace. */
+.speed {
+    color: var(--text-muted);
+}
+
+/* What it turns aside, and the mana a spell is cast with. */
+.defense,
+.evasion,
 .mp {
     color: var(--text-defense);
 }
 
+/* Where a blow lands, and how hard. */
+.crit,
+.accuracy {
+    color: var(--text-critical);
+}
+
+/* What the arcane touches: experience earned and a spell's force. */
+.xp,
+.magic {
+    color: var(--text-xp);
+}
+
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. */
-:is(p, li) :is(.hp, .adena, .mp) {
+:is(p, li) :is(.hp, .attack, .regen, .adena, .level, .attribute, .aura, .speed,
+    .defense, .evasion, .mp, .crit, .accuracy, .xp, .magic) {
     font-weight: var(--weight-value);
 }

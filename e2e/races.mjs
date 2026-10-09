@@ -63,7 +63,7 @@ try {
             console.log(`\n--- ${race.emoji} ${born.name} ---`);
             const { context, page } = await freshStart(browser);
             watch(page);
-            const { state, create, text } = controls(page);
+            const { state, create, text, onScreen } = controls(page);
 
             await create(`${born.name.replace(/\s/g, '')}Bot`, race.id, path);
             const now = await state();
@@ -72,7 +72,7 @@ try {
                 (await text('#main .alert')).includes(`You chose the ${race.emoji} ${born.name}`)
                 && (await text('#main .alert')).includes(race.town),
                 await text('#main .alert'));
-            check(`...and stands in it`, (await text('#main .header-name')) === race.town,
+            check(`...and stands in it`, (await text('#main .header-name')) === `${race.townEmoji} ${race.town}`,
                 await text('#main .header-name'));
             check(`...at its address`, new URL(page.url()).pathname === `/${race.townSlug}`, page.url());
             check('...at level 1', now.level === 1, String(now.level));
@@ -82,12 +82,14 @@ try {
             check('...and full mana', now.mp === born.mp && now.maxMp === born.mp,
                 `${now.mp}/${now.maxMp}, expected ${born.mp}`);
             check('...and no Adena', now.adena === 0, String(now.adena));
-            check('...and the sidebar names the class',
-                (await text('#sidebar .stat-row')).includes(`${race.emoji} ${born.name} 1`),
-                await text('#sidebar .stat-row'));
+            check('...and the sidebar is headed with the class',
+                (await text('#sidebar .header-name')) === `${race.emoji} ${born.name}`,
+                await text('#sidebar .header-name'));
 
+            await page.click('#character-name a');
+            await onScreen('character');
             const shown = await page.evaluate((keys) => keys.map(key =>
-                Number(document.querySelector(`#stats [data-key="${key}"]`)?.dataset.value)), ATTRIBUTES);
+                Number(document.querySelector(`#character-figures [data-key="char-${key}"]`)?.dataset.value)), ATTRIBUTES);
             check('...and its Stats are the attributes rules §3 starts it with',
                 JSON.stringify(shown) === JSON.stringify(attributes[born.name]),
                 `${shown} against ${attributes[born.name]}`);

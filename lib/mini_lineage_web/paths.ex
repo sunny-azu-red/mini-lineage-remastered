@@ -3,7 +3,7 @@ defmodule MiniLineageWeb.Paths do
 
   alias MiniLineage.Game.Rules
 
-  @routes [{"races", "/races"}, {"error", "/error"}]
+  @routes [{"races", "/races"}, {"error", "/error"}, {"character", "/character"}]
 
   @doc "The slug of every town the router answers, each with its Gatekeeper beside it."
   def towns, do: for(town <- Rules.towns(), town.open?, do: town.slug)

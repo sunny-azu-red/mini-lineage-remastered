@@ -26,6 +26,12 @@ function shorten(value, trimTenth) {
 /** A big figure, a purse or a level's EXP. Twinned with `Format.short`, held to a table by both suites. */
 export const shortFigure = (value) => shorten(value, true);
 
+/** Hundredths of a percent, the XP bar's. Twinned with `Format.percent`, held to a table by both suites. */
+export const percentFigure = (value) => {
+    const n = Math.max(0, Math.floor(value));
+    return `${Math.floor(n / 100)}.${String(n % 100).padStart(2, '0')}%`;
+};
+
 /**
  * Mid-count, keeping the tenth the settled figure drops: "2.0k" becoming "2k" and back throws the
  * line left and right. The count always lands on the server's own rendering.
@@ -100,7 +106,7 @@ export const AnimatedValues = {
     },
     count(key, el, from, to) {
         cancelAnimationFrame(this.frames.get(key));
-        const format = el.dataset.format === 'short' ? countingShort : groupDigits;
+        const format = { short: countingShort, percent: percentFigure }[el.dataset.format] ?? groupDigits;
         const settled = el.textContent;
         const started = performance.now();
 

@@ -6,7 +6,8 @@ The generic Phoenix guidance below is worth reading, but where it disagrees with
 list wins — several generator defaults do not exist here.
 
 - **The live game is the base layer and nothing more.** Character creation, the towns of rules
-  §14 with their Gatekeepers and the status sidebar, the Chronicles of Ancestry and the error page. Everything the
+  §14 with their Gatekeepers and the status sidebar, the character's own page at `/character`, the
+  Chronicles of Ancestry and the error page. Everything the
   game was before that is in `legacy/`, which is read and never run; see the rule below.
 - **There is no `core_components.ex`.** It was deleted as dead code, so there is no `<.icon>`, no
   `<.input>`, and no `<.flash_group>`. Every control is hand-written HEEx in
@@ -30,13 +31,14 @@ list wins — several generator defaults do not exist here.
   character goes through its process, never straight to the database.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
 - **One LiveView, one dispatcher.** `GameLive` holds no game state and routes everything through
-  `Access.pin_screen/2`. `Screens.screen/1` picks the page — start, town, gatekeeper, races, error —
+  `Access.pin_screen/2`. `Screens.screen/1` picks the page — start, town, gatekeeper, character, races, error —
   and all of them live in `Screens` until one is big enough to need a module of its own. Anything a
   page reaches for but does not own (`<.panel>`, `<.data_table>`, `<.button>`, `<.select_action>`,
   the choice and the button that acts on it, which is how a player moves, `<.alert>` and
   `<.flash_alert>` built on it, `<.back_link>`, `<.figure>` and `<.bar>`, `<.fault>`) is in
   `Controls`; `Layouts` holds the shell's `head`, `site_header`, sidebar and `footer`, which
-  `ErrorHTML` draws too. The sidebar — the vitals, Stats and the Inventory — is one `.side` column
+  `ErrorHTML` draws too. The sidebar — the vitals under the level and the name, which links to `/character`, then
+  the Inventory — is one `.side` column, drawn in town and nowhere else
   beside the main one, at its own fixed width, and one breakpoint stacks it.
 - **Some tools exist only in a debug build — dev and the e2e server, never a release.** Each is
   gated on `Version.debug_build?/0` twice, where it is drawn and where it acts, and each has a test
@@ -173,9 +175,10 @@ from inside `Characters.mutate/2`, as dice are. Every time the game keeps is UTC
 decides which hours are night and nothing else. A browser suite never reads the night.
 
 **A formatter with a client-side twin is held to a table.** `Format.short` and `shortFigure` in
-`hooks/animated-values.js` are duplicated on purpose: the count-up animation formats its own frames,
-and without a client-side copy the number would change format mid-count. Both read
-`test/fixtures/short_format.json`, from `format_test.exs` on the Elixir side and `walkthrough.mjs`
+`hooks/animated-values.js` are duplicated on purpose, as are `Format.percent` and `percentFigure`:
+the count-up animation formats its own frames, and without a client-side copy the number would
+change format mid-count. Each pair reads its own table, `test/fixtures/short_format.json` and
+`percent_format.json`, from `format_test.exs` on the Elixir side and `walkthrough.mjs`
 on the JavaScript one. Change either implementation, change the table, and both tests will tell
 you. Anything else the two languages both format wants the same treatment before it gets a second
 copy.
@@ -265,12 +268,13 @@ it is symmetric by definition, and the correction is not.
 sidebar value — because the same thing set a step smaller in one place reads as a different kind of
 thing. 12px is a control, 11px a label — a column's, a field's — set by one rule in `base.css` at
 weight 600 and 0.1em in capitals, each in its own colour and place, or the footer. The figures
-inside the HP, MP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A
+and labels inside the HP, MP and XP bars are the one exception, at 10px: an 18px bar has no room
+for more. A
 field label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender
 room capitals never use, and the one property that centres by letters, `text-box-trim`, is missing
 from Firefox. The sidebar is 210px; widen it before shrinking a value, and never without asking.
 The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
-sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
+sidebar's panel titles stay spans so a page has one h1. Nothing skips a level, and no h2 says the h1 again.
 
 **Weight answers "which of these matters?", so a table never needs it.** Tabular figures are on
 `body`, not on a list of classes: the game is arithmetic, and a column of numbers wants to line up
@@ -321,8 +325,8 @@ line naming two people has to keep them apart by construction. The game records 
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races` and `error` carry
 no action, so the first clause lets every state reach them and the rest only ever decides about
-screens that can be acted on: a character is in the town it stands in or at that town's Gatekeeper,
-and a visitor is at game start. It had
+screens that can be acted on: a character is in the town it stands in, at that town's Gatekeeper or
+on its own page, and a visitor is at game start. It had
 been three overlapping allowlists once, which is how a run was kept from reading pages it had every
 right to.
 
@@ -430,8 +434,8 @@ quietly false. Moving a ground means re-measuring everything any comment asserts
 `<.figure>`, animated by `AnimatedValues`, whose hook sits once over whatever contains them. The
 component writes `data-value` and the text from one value, and `format={:short}` both the short form
 and the `data-format` that counts in it, so the two cannot be written apart. Only names and
-dates jump, having nothing to count through. Adena and the XP bar count in the short form, since a
-level's EXP runs to 4.2 billion and the bar is 210px; the frames keep the tenth that the settled
+dates jump, having nothing to count through. Adena counts in the short form, and the XP bar does at the
+last level, since a level's EXP runs to 4.2 billion and the bar is 210px; the frames keep the tenth that the settled
 value drops, because "2.0k" written "2k" is two characters narrower and the line jumps left and
 right across every round thousand.
 
@@ -448,7 +452,9 @@ HP and MP and a `progressbar` for XP, so the width, the text and what is heard c
 `of` it is the figure alone in a full track, which is what XP becomes at the last level: there is no
 next one to fill toward, so the total is the figure. `wraps` names what going round looks like, the
 level for XP, and `AnimatedValues` refills a bar from empty when it changes instead of sliding it
-backwards.
+backwards. Its `label` is drawn inside it on the left, as L2 draws it. `format={:percent}` writes
+one figure, the share of `of` in floored hundredths keyed `<key>-percent`, which is how the XP bar
+reads; the track still carries `value` and `of` for whoever needs the raw numbers.
 
 **A screen that shows somebody's figures is pushed to, not polled.** `"character:#{session}"` is
 the browser's own topic and carries what only its owner may act on — its key is a secret, so
@@ -489,7 +495,7 @@ what the animation is showing.
 
 **Every panel in the game is one component.** `Controls.panel/1` draws the card — the header band,
 the title, the body — and the differences are options: `heading` for the screen's own h1, and only
-that one, `collapsible` and `collapsed` for a header that folds. `id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it
+that one, `icon` for an emoji set before the title as one line of it, `collapsible` and `collapsed` for a header that folds. `id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it
 land on the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the
 data attributes a browser test reads. A panel takes a hook only when something about it moves, so
 the error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
@@ -511,8 +517,8 @@ Opening by hand brings the panel into view. Only by hand — a panel restored op
 patched while open, was never asked to move the page. Nor may it animate into a restored state: the
 chevron's transition is gated on a `data-ready` the hook sets two frames in, or every refresh spins
 it through a state the reader never left. Beside the main panel a side panel does not fold, unless
-it is marked `.folds`: the Inventory folds only on a phone and opens unfolded, while Stats folds at
-every width and opens folded. The phone's rules repeat the desktop's `:not(.folds)` selectors, so
+it is marked `.folds`: the Inventory folds only on a phone and opens unfolded, and no side panel
+folds at every width today. The phone's rules repeat the desktop's `:not(.folds)` selectors, so
 they win by order; written plainly, the desktop's extra class outranked them and nothing folded.
 
 **Every button in the game is one component, and the element is what it does.** `Controls.button/1`

@@ -150,15 +150,26 @@
     border-bottom: 1px solid transparent;
 }
 
-/* 46px is ADENA, the widest label: a fixed track does not grow, and a wider label hits its value. */
 .status-panel .stat-row {
-    display: grid;
-    grid-template-columns: 46px 1fr;
-    /* A bar's height, so a row of text is no shorter than a row holding a bar. */
-    grid-template-rows: minmax(18px, auto);
     padding-block: 10px;
+}
+
+/* Edge to edge, with nothing beside it. */
+.status-panel .bar-track {
+    flex: 1;
+}
+
+/* The level in a tile of its own beside the name, a bar's height and inset like one. */
+.level-badge {
+    flex-shrink: 0;
+    padding: 4px 6px;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    line-height: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    font-size: 11px;
 }
 
 .stat-row::after {
@@ -191,35 +202,20 @@
     line-height: 1;
 }
 
-/* ===== Stats Panel ===== */
-/* Each stat is its label over its value, so the longest label has a column's width to itself. */
-.stat-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 12px;
-    margin: 0;
-}
-
-.stat-grid.attributes {
-    grid-template-columns: repeat(3, 1fr);
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border-soft);
-}
-
-.stat-grid .stat-label {
-    text-align: left;
-    margin-bottom: 4px;
-}
-
-.stat-grid dd {
-    margin: 0;
+/* A name runs to 20 characters, wider than the column. The line-height leaves the underline room
+   inside the clip, which at 1 cut it off. */
+#character-name {
+    line-height: 18px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ===== HP / XP Bars ===== */
 .bar-track {
     position: relative;
-    height: 18px;
+    height: 19px;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 4px;
     overflow: hidden;
@@ -278,18 +274,26 @@
 }
 
 /* The one figure off the 13/12/11 scale: an 18px bar has no room for more than 10px. */
+.bar-label,
 .bar-text {
     line-height: 1;
     position: absolute;
-    left: 0;
-    right: 0;
     top: 50%;
     transform: translateY(-50%);
-    text-align: center;
     font-size: 10px;
-    font-weight: 500;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
+}
+
+/* What the bar is, inside it on the left, as L2 draws it; a screen reader has the track's label. */
+.bar-label {
+    left: 6px;
+    font-weight: 600;
+}
+
+.bar-text {
+    right: 6px;
+    font-weight: 500;
 }
 
 /* ===== Alerts ===== */

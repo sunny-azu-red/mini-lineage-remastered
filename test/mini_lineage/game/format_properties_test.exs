@@ -16,6 +16,24 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
     end
   end
 
+  describe "the percent form" do
+    property "reads back as the hundredths it was given" do
+      check all value <- one_of([integer(0..99), integer(0..10_000)]) do
+        [whole, hundredths] =
+          value |> Format.percent() |> String.trim_trailing("%") |> String.split(".")
+
+        assert String.to_integer(whole) * 100 + String.to_integer(hundredths) == value
+      end
+    end
+
+    property "a share is never full until the value reaches the total" do
+      check all total <- integer(1..4_200_000_000), value <- integer(0..total) do
+        assert Math.hundredths(value, total) == 10_000 or value < total
+        assert Math.hundredths(value, total) < 10_000 or value == total
+      end
+    end
+  end
+
   describe "levels" do
     property "a level's own threshold is that level, up to the last one" do
       check all level <- integer(1..Rules.max_level()) do

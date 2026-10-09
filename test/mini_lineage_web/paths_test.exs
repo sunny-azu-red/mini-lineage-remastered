@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.PathsTest do
   alias MiniLineageWeb.{Paths, Router}
 
   defp places do
-    [{"start", nil}, {"races", nil}, {"error", nil}] ++
+    [{"start", nil}, {"races", nil}, {"error", nil}, {"character", nil}] ++
       for slug <- Paths.towns(), screen <- ~w(town gatekeeper), do: {screen, slug}
   end
 

@@ -18,6 +18,8 @@ defmodule MiniLineageWeb.Router do
     live "/", GameLive, :root
     live "/races", GameLive, :races
     live "/error", GameLive, :error
+    # The browser's own character, so no id: a page anybody could open would want a public one.
+    live "/character", GameLive, :character
 
     # Rules §14: each town at its own address, written out one by one so that none of them is a
     # pattern that would answer a slug the game does not have.
