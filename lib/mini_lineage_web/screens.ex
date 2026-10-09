@@ -140,7 +140,7 @@ defmodule MiniLineageWeb.Screens do
         Enum.map(@view.routes, fn route ->
           %{
             value: route.slug,
-            label: "Teleport to #{route.emoji} #{route.name}",
+            label: "Pick #{route.emoji} #{route.name}",
             disabled?: !route.open?
           }
         end)

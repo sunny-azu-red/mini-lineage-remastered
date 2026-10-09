@@ -51,7 +51,10 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
     assert view |> element("#route-gludio") |> render() =~ "3,700"
-    assert has_element?(view, ~s(#teleport-form option[value="gludio"]))
+    # The button says what happens, so a choice only names the place, as the old shops' did.
+    assert view |> element(~s(#teleport-form option[value="gludio"])) |> render() =~
+             ~r/>\s*Pick 🏰 Town of Gludio\s*</
+
     refute has_element?(view, ~s(#teleport-form option[value="dark-elven-village"]))
   end
 
