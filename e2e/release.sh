@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 for need in "docker" "docker buildx version" "docker compose version"; do
-  $need >/dev/null 2>&1 || { echo "missing: $need (see AGENTS.md, Docker)" >&2; exit 1; }
+  $need >/dev/null 2>&1 || { echo "missing: $need (see README.md, Docker)" >&2; exit 1; }
 done
 
 APP_VERSION=${APP_VERSION:-$(git rev-parse --short=7 HEAD)}
