@@ -70,12 +70,13 @@ defmodule MiniLineage.CharactersTest do
   test "the regeneration tick heals a resting, wounded character", %{id: id} do
     start_character(id, 2)
     hold(id)
-    Characters.mutate(id, &{%{&1 | health: 10}, :ok})
+    Characters.mutate(id, &{%{&1 | health: 10, location: "gludio"}, :ok})
 
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
     send(pid, :tick)
 
-    # An Elven Fighter rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a tick (rules §11).
+    # An Elven Fighter away from the Mother Tree rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a
+    # tick (rules §11).
     assert Characters.snapshot(id).health == 15
   end
 

@@ -1,7 +1,10 @@
 /* Mini-Lineage — Forms */
 
+/* Wraps rather than squeezing: a select is as wide as its longest choice, and a Gatekeeper's run
+ * past a phone's width with the button still to come. */
 .form-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin-top: 4px;

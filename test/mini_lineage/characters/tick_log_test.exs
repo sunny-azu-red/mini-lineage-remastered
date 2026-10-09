@@ -31,9 +31,10 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "a wounded character regenerates and says by how much", %{id: id} do
-    start(id, 2, %{health: 40})
+    start(id, 2, %{health: 40, location: "gludio"})
 
-    # An Elven Fighter rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a tick (rules §11).
+    # An Elven Fighter away from the Mother Tree rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a
+    # tick (rules §11).
     assert tick(id) =~ "HP: 40 -> 45/113 | MP: 39/39 (+5 HP)"
   end
 
@@ -45,7 +46,7 @@ defmodule MiniLineage.Characters.TickLogTest do
   end
 
   test "mana mends alongside it, and says so too", %{id: id} do
-    start(id, 2, %{health: 40, mp: 10})
+    start(id, 2, %{health: 40, mp: 10, location: "gludio"})
 
     assert tick(id) =~ "HP: 40 -> 45/113 | MP: 10 -> 13/39 (+5 HP, +3 MP)"
   end

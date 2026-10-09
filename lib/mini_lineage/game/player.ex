@@ -5,6 +5,7 @@ defmodule MiniLineage.Game.Player do
   """
   alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Narrative, Narratives, Rules}
 
+  @elf 2
   @dark_elf 3
 
   defstruct name: nil,
@@ -130,7 +131,8 @@ defmodule MiniLineage.Game.Player do
 
     [
       night? && :night,
-      night? && player.race_id == @dark_elf && :shadow_sense
+      night? && player.race_id == @dark_elf && :shadow_sense,
+      player.race_id == @elf && player.location == "elven-village" && :mother_tree
     ]
     |> Enum.filter(& &1)
     |> Enum.map(&Map.put(Constants.aura(&1), :modifiers, Rules.modifiers(&1)))

@@ -11,9 +11,10 @@ defmodule MiniLineage.Game.NightTest do
   @day ~U[2026-07-01 09:00:00Z]
   @night ~U[2026-07-01 20:00:00Z]
 
+  # In Gludio, where no race is at home and the Mother Tree blesses nobody.
   defp born(race_id) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Watcher")
-    player
+    %{player | location: "gludio"}
   end
 
   defp at(time, fun) do

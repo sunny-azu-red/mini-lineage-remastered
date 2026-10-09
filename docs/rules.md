@@ -221,12 +221,17 @@ Each race answers the world in its own way, and a perk holds only for its own ra
 | Perk | Race | When it holds | Effect |
 |---|---|---|---|
 | Shadow Sense | Dark Elf | at night | Accuracy +3 |
+| Blessing of the Mother Tree | Elf | in Elven Village | HP and MP per tick ×1.5 |
 
 - **Shadow Sense** is night vision. A Dark Elf takes night's −3 like everyone else and gains +3
   back, so at night it keeps its daytime Accuracy while everyone else loses 3.
+- **The Mother Tree** blesses an Elf that stands beneath it and nobody else: an Elf away from
+  Elven Village rests at §11's rate, and so does any other race inside it. The ×1.5 is applied
+  before §11 rounds.
 - **Orcs** shrug off sleep, root and poison, which have no numbers until there is anything that
   sleeps, roots or poisons.
 - **Humans** have no perk. Their strength is having the most class choices.
 
 Example: a level 1 Dark Fighter (DEX 34) has Accuracy 36 by day and 36 − 3 + 3 = **36** at night,
-while a level 1 Human Fighter's 34 drops to **31**.
+while a level 1 Human Fighter's 34 drops to **31**. A level 1 Elven Fighter rests 5.36 HP and 3.16
+MP a tick anywhere else, so 5 and 3, and in Elven Village 8.04 and 4.74, so **8 HP** and **5 MP**.

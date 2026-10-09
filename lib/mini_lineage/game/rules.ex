@@ -108,7 +108,8 @@ defmodule MiniLineage.Game.Rules do
   # Rules §15 and §16: what each condition the world puts on a character does to its stats.
   @modifiers %{
     night: [accuracy: {:add, -3}],
-    shadow_sense: [accuracy: {:add, 3}]
+    shadow_sense: [accuracy: {:add, 3}],
+    mother_tree: [hp_regen: {:mul, 1.5}, mp_regen: {:mul, 1.5}]
   }
 
   # Rules §7: what a path starts with before anything is added to it.

@@ -66,6 +66,12 @@ defmodule MiniLineage.Game.Constants do
     resting: %{id: "resting", type: :aura, emoji: "💤", label: "Resting"},
     night: %{id: "night", type: :aura, emoji: "🌙", label: "Night"},
     shadow_sense: %{id: "shadow_sense", type: :aura, emoji: "👁️", label: "Shadow Sense"},
+    mother_tree: %{
+      id: "mother_tree",
+      type: :aura,
+      emoji: "🌳",
+      label: "Blessing of the Mother Tree"
+    },
     regenerating: %{id: "regenerating", type: :aura, emoji: "🌿", label: "Regenerating"}
   }
 

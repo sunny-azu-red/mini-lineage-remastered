@@ -111,6 +111,17 @@ defmodule MiniLineageWeb.GatekeeperTest do
     assert %{location: "dion", adena: 2_200} = stored(session)
   end
 
+  test "what a trip said stays for its arrival, and not for a walk to the Gatekeeper after it" do
+    {_view, _session, conn} = elf(build_conn(), 10_000)
+    {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
+
+    teleport(view, "gludio")
+    assert has_element?(view, "#flash")
+
+    view |> form("#travel-form", %{"place" => "gatekeeper"}) |> render_submit()
+    refute has_element?(view, "#flash")
+  end
+
   test "lists the towns not open yet, and will not send anybody to them" do
     {_view, session, conn} = elf(build_conn(), 100_000)
     Characters.mutate(session, &{%{&1 | location: "dion"}, :ok})

@@ -123,7 +123,7 @@ defmodule MiniLineageWeb.Screens do
   # Rules §14: every route out of this town and its fee, then the choice of one.
   defp gatekeeper(assigns) do
     ~H"""
-    <p>The Gatekeeper of {@view.town.name} can send you on for a fee.</p>
+    <p>The Gatekeeper can send you on from {@view.town.emoji} {@view.town.name}, for a fee.</p>
     <.data_table id="routes-table">
       <:col class="name">Destination</:col>
       <:col>Adena</:col>

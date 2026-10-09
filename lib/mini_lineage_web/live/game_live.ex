@@ -112,7 +112,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # Somewhere inside the town, which is where you stand already: a patch, never a write.
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
-    do: {:noreply, go(socket, {"gatekeeper", socket.assigns.town})}
+    do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
   # TEMPORARY, for trying every race and path from one browser: deletes the character outright.
   # A release neither offers it nor answers it.
@@ -132,7 +132,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # The Gatekeeper's empty choice is the way back into town.
   def handle_event("travel", %{"to" => ""}, socket),
-    do: {:noreply, go(socket, {"town", socket.assigns.town})}
+    do: {:noreply, walk(socket, {"town", socket.assigns.town})}
 
   def handle_event("travel", %{"to" => to}, socket),
     do: {:noreply, apply_action(socket, &Actions.travel(&1, to), &here/1)}
@@ -220,8 +220,12 @@ defmodule MiniLineageWeb.GameLive do
     socket |> assign(error_detail: detail) |> go({"error", nil})
   end
 
+  # Where an action leads, which keeps what it said for the arrival.
   defp go(socket, place),
     do: socket |> assign(flash_fresh: true) |> push_patch(to: Paths.for_screen(place))
+
+  # A step nothing was said about, so the arrival drops the last action's flash like any other.
+  defp walk(socket, place), do: push_patch(socket, to: Paths.for_screen(place))
 
   # ------------------------------------------------------------------ render
 

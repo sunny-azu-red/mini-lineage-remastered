@@ -30,9 +30,8 @@ character: each lands with the first system that needs it, almost certainly figh
   first version is in `legacy/`, at the Class Master.
 - A third transfer at level 76.
 - **Skills,** which give MP a use.
-- **Race perks:**
-  - Elves rest faster in their home village
-  - Orcs shrug off sleep, root and poison
+- **The Orcs' perk:** they shrug off sleep, root and poison, which rules §16 names and debuffs
+  will give numbers to.
 - **Dyes** that trade one attribute for another, at most +5 to each. A first version is in
   `legacy/`, at the Symbol Maker.
 

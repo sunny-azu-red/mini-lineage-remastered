@@ -21,7 +21,14 @@ defmodule MiniLineage.Game.RulesTest do
     |> Enum.map(fn row -> row |> String.split("|", trim: true) |> Enum.map(&String.trim/1) end)
   end
 
-  defp stat_key("Accuracy"), do: :accuracy
+  defp effect("Accuracy +" <> n), do: [accuracy: {:add, String.to_integer(n)}]
+
+  defp effect("HP and MP per tick ×" <> n),
+    do: [hp_regen: {:mul, number(n)}, mp_regen: {:mul, number(n)}]
+
+  # A §16 row's "when it holds", as a moment and a place where it does.
+  defp circumstance("at night"), do: {~U[2026-07-01 20:00:00Z], "gludio"}
+  defp circumstance("in Elven Village"), do: {~U[2026-07-01 09:00:00Z], "elven-village"}
 
   defp number(cell), do: cell |> String.replace(",", "") |> Float.parse() |> elem(0)
 
@@ -113,14 +120,26 @@ defmodule MiniLineage.Game.RulesTest do
       assert Enum.sort(written) == Enum.sort(held)
     end
 
-    test "§16 every race perk with numbers, held to its race and its moment" do
-      for [perk, race, when_, effect] <- table("Perk") do
-        key = perk |> String.downcase() |> String.replace(" ", "_") |> String.to_existing_atom()
-        [stat, amount] = String.split(effect, " ")
+    test "§16 every race perk with numbers: what it does, and that only its race has it" do
+      for [perk, race, holds, effect] <- table("Perk") do
+        key = Enum.find([:shadow_sense, :mother_tree], &(Constants.aura(&1).label == perk))
+        assert key, perk
+        assert Rules.modifiers(key) == effect(effect), perk
 
-        assert Constants.aura(key).label == perk
-        assert Rules.modifiers(key) == [{stat_key(stat), {:add, trunc(number(amount))}}], perk
-        assert {@races[race], when_} == {3, "at night"}, perk
+        {at, location} = circumstance(holds)
+        Clock.put_now(at)
+
+        for race_id <- 0..3 do
+          {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Kin")
+
+          has? =
+            Enum.any?(
+              Player.conditions(%{player | location: location}),
+              &(&1.id == to_string(key))
+            )
+
+          assert has? == (race_id == @races[race]), "#{perk} on race #{race_id}"
+        end
       end
     end
 
@@ -233,6 +252,20 @@ defmodule MiniLineage.Game.RulesTest do
       assert accuracy.(3, ~U[2026-07-01 09:00:00Z]) == 36
       assert accuracy.(3, ~U[2026-07-01 20:00:00Z]) == 36
       assert Rules.modifiers(:night) == [accuracy: {:add, -3}]
+    end
+
+    test "§16 a level 1 Elven Fighter rests 5 HP and 3 MP, and 8 and 5 beneath the Mother Tree" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      {elf, _} = Player.initialize(%Player{}, Constants.race(2), :fighter, "Sapling")
+
+      rates = fn location ->
+        Player.auras(%{elf | location: location, health: 1, mp: 0}) |> List.last()
+      end
+
+      assert_in_delta Player.stats(%{elf | location: "gludio"}).hp_regen, 5.36, 0.005
+      assert_in_delta Player.stats(%{elf | location: "gludio"}).mp_regen, 3.16, 0.005
+      assert rates.("gludio").rates == [hp_regen: 5, mp_regen: 3]
+      assert rates.("elven-village").rates == [hp_regen: 8, mp_regen: 5]
     end
 
     test "§13 hit chance, inside 28% and 98%" do
