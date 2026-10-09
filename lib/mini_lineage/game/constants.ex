@@ -72,21 +72,21 @@ defmodule MiniLineage.Game.Constants do
     },
     night: %{
       id: "night",
-      type: :aura,
+      type: :debuff,
       emoji: "🌙",
       label: "Night",
       about: "The sun is down, and every blow strains to find its mark."
     },
     shadow_sense: %{
       id: "shadow_sense",
-      type: :aura,
+      type: :buff,
       emoji: "👁️",
       label: "Shadow Sense",
       about: "Dark Elven eyes see through the night as if it were day."
     },
     mother_tree: %{
       id: "mother_tree",
-      type: :aura,
+      type: :buff,
       emoji: "🌳",
       label: "Blessing of the Mother Tree",
       about: "Resting beneath the Mother Tree mends half again as fast."

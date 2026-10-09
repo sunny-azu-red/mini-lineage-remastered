@@ -113,6 +113,14 @@
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
 }
 
+.effect-icon.effect-buff {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-heal) 30%, transparent));
+}
+
+.effect-icon.effect-debuff {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-hp) 30%, transparent));
+}
+
 @keyframes effect-fade-in {
     from {
         opacity: 0;

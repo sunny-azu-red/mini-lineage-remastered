@@ -25,7 +25,7 @@ topbar.config({
     0.17: token("--text-critical"),
     0.33: token("--gold"),
     0.5: token("--text-heal"),
-    0.67: token("--text-tally"),
+    0.67: token("--text-attribute"),
     0.83: token("--text-defense"),
     1: token("--text-xp"),
   },

@@ -63,7 +63,7 @@ was got wrong once.
 - **A token is named for its role: `--<role>-<name>`.** `--text-`, `--bg-`, `--border-`, `--wash-`,
   `--bar-`, `--glow-`, `--shadow-`, `--focus-`. HP is `--text-hp` in a sentence and `--bar-hp` in a
   meter. Gold is the one exception: the accent is text, border, ground and glow at once. Value
-  colours are named for the thing (`--text-hp`, `--text-heal`, `--text-tally`), alert voices for
+  colours are named for the thing (`--text-hp`, `--text-heal`, `--text-attribute`), alert voices for
   their kind (`--text-danger`, `--text-info`).
 - **A new colour is measured, not eyeballed**: 4.5:1 on `--bg-panel`, inside the palette's own
   lightness and chroma, and clear of every other by eye in Lab. Maximising distance alone returns
@@ -71,8 +71,18 @@ was got wrong once.
 - **Judge colour in CIELCh, never HSL.** HSL saturation is a coordinate, not a quantity: 27% at 8%
   lightness looks neutral and at 40% looks blue.
 - **Peers share a lightness, not a chroma.** `--text-hp`, `--text-critical`, `--text-heal`,
-  `--text-tally`, `--text-defense` and `--text-xp` are all `L* 58`, 4.9:1 on the panel. Each runs to
-  its own chroma ceiling, capped at 72; a shared chroma would drag them all down to teal's ~39.
+  `--text-attribute`, `--text-defense` and `--text-xp` are all `L* 58`, 4.9:1 on the panel. Each runs
+  to its own chroma ceiling, capped at 72; a shared chroma would drag them all down to teal's ~39.
+- **Seven colours, each worn two to four times.** A blue, a cyan or an indigo beside azure was tried
+  and read as one blue; a new value takes an existing colour before it takes a new hue.
+- **Stats that come as a pair share a colour, and the name tells them apart**: a P. stat and its M.
+  twin, and Accuracy and Evasion, which meet in one roll. Every colour in the Combat Stats sentence
+  is a pair.
+- **A word and its bar are one hue.** MP is `--text-defense` in a sentence, and its bar is built on
+  that hue at sRGB's ceiling rather than the other bars' chroma.
+- **An effect's name wears its kind** (`.buff` green, `.debuff` red, and an `.aura`, a state that is
+  neither, the sentence's own colour), and so does the glow on its header icon. What it changes wears
+  the stat it changes.
 - **A panel is held off the page by 7.6 `L*`.** With the chroma gone, that lightness gap is the whole
   separation. Protect it in any restyle.
 - **A nested surface lifts off its ground, never sinks into it.** `--panel-lift`, `--table-lift` and

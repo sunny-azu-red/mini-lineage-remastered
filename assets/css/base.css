@@ -105,51 +105,53 @@ p {
 /* ===== Values =====
  * A class per thing the game names, never per colour, so one can move without the others. */
 
-/* What a run has lost, and what takes it. */
+/* What a run has lost, and what takes it from them: either attack, and a debuff. */
 .hp,
-.attack {
+.attack,
+.magic,
+.debuff {
     color: var(--text-hp);
 }
 
-/* What gives it back. */
-.regen {
-    color: var(--text-heal);
+/* How hard a blow or a spell lands. */
+.crit {
+    color: var(--text-critical);
 }
 
-/* What a run is worth: its purse, its level, what it was born with, and the state it stands in. */
+/* What it is worth: its purse and its level. */
 .adena,
-.level,
-.attribute,
-.aura {
+.level {
     color: var(--gold);
 }
 
-/* Read but not acted on: a pace. */
-.speed {
-    color: var(--text-muted);
+/* What gives it back. */
+.regen,
+.buff {
+    color: var(--text-heal);
 }
 
-/* What it turns aside, and the mana a spell is cast with. */
+/* What it was born with, and how often it swings and casts (rules §10). */
+.attribute,
+.speed {
+    color: var(--text-attribute);
+}
+
+/* What it turns aside, either defence, and the mana it casts with. */
 .defense,
-.evasion,
 .mp {
     color: var(--text-defense);
 }
 
-/* Where a blow lands, and how hard. */
-.crit,
-.accuracy {
-    color: var(--text-critical);
-}
-
-/* What the arcane touches: experience earned and a spell's force. */
+/* Experience earned, and the two sides of the hit roll (rules §13). */
 .xp,
-.magic {
+.accuracy,
+.evasion {
     color: var(--text-xp);
 }
 
-/* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. */
-:is(p, li) :is(.hp, .attack, .regen, .adena, .level, .attribute, .aura, .speed,
-    .defense, .evasion, .mp, .crit, .accuracy, .xp, .magic) {
+/* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does.
+ * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
+:is(p, li) :is(.hp, .attack, .magic, .debuff, .crit, .adena, .level, .regen, .buff, .attribute,
+    .speed, .defense, .mp, .xp, .accuracy, .evasion, .aura) {
     font-weight: var(--weight-value);
 }

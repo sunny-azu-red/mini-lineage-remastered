@@ -88,8 +88,10 @@ defmodule MiniLineage.Game.Snapshot do
       label: aura.label,
       tooltip: tooltip,
       about: aura.about,
-      # A rate is drawn as a figure beside the stats; a modifier is a rule, and never moves.
-      changes: Enum.map(Map.get(aura, :modifiers, []), &modifier_text/1)
+      # A rate is drawn as a figure beside the stats; a modifier is a rule, and never moves. The
+      # stat rides along so the page can colour the change as it colours the stat.
+      changes:
+        Enum.map(Map.get(aura, :modifiers, []), &%{stat: elem(&1, 0), text: modifier_text(&1)})
     }
   end
 

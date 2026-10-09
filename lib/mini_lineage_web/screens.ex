@@ -213,9 +213,8 @@ defmodule MiniLineageWeb.Screens do
     <%!-- One row each, as the sidebar's; the sentence is one <p>, or the row would lay its pieces
           out as columns. --%>
     <div :for={effect <- @view.effects} id={"effect-#{effect.id}"} class="stat-row">
-      <p>
-        <span class={effect.type}>{effect.emoji} {effect.label}</span>
-        <span class="muted">&bull;</span> {effect_text(effect)}
+      <p phx-no-format>
+        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="muted">&bull;</span> {effect.about}<%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %>{if effect.changes != [], do: "."}
       </p>
     </div>
     """
@@ -236,9 +235,9 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # What it is, then what it changes as one sentence: "... ×1.5 HP regen and ×1.5 MP regen."
-  defp effect_text(%{changes: []} = effect), do: effect.about
-  defp effect_text(effect), do: "#{effect.about} #{Enum.join(effect.changes, " and ")}."
+  # What an effect changes wears the colour of the stat it changes.
+  defp stat_class(:accuracy), do: "accuracy"
+  defp stat_class(stat) when stat in [:hp_regen, :mp_regen], do: "regen"
 
   # "an Elven Fighter", "a Dark Mystic".
   defp article(name), do: if(String.first(name) in ~w(A E I O U), do: "an", else: "a")
@@ -286,7 +285,7 @@ defmodule MiniLineageWeb.Screens do
       <tbody>
         <tr :for={class <- @race.classes} id={"class-#{@race.slug}-#{class.path}"}>
           <td class="name">{paths()[class.path]}</td>
-          <td :for={{attr, _} <- attributes()} class="num">{class.attributes[attr]}</td>
+          <td :for={{attr, _} <- attributes()} class="num attribute">{class.attributes[attr]}</td>
           <td class="num hp">{class.max_hp}</td>
           <td class="num mp">{class.max_mp}</td>
         </tr>

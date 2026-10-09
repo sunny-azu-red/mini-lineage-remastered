@@ -33,6 +33,21 @@ defmodule MiniLineageWeb.NightPageTest do
     assert has_element?(view, ~s(#screen [data-key="char-accuracy"][data-value="36"]))
   end
 
+  test "the night is a debuff and Shadow Sense a buff, each change in Accuracy's colour", %{
+    conn: conn
+  } do
+    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    view = dark_elf(conn)
+
+    assert has_element?(view, ~s(#effects .effect-debuff[data-effect-id="night"]))
+    assert has_element?(view, ~s(#effects .effect-buff[data-effect-id="shadow_sense"]))
+    render_patch(view, ~p"/character")
+    assert has_element?(view, "#effect-night .debuff", "Night")
+    assert has_element?(view, "#effect-night .accuracy", "-3 Accuracy")
+    assert has_element?(view, "#effect-shadow_sense .buff", "Shadow Sense")
+    assert has_element?(view, "#effect-shadow_sense .accuracy", "+3 Accuracy")
+  end
+
   test "and dawn takes both away without anything being pushed", %{conn: conn} do
     Clock.put_now(~U[2026-07-01 20:00:00Z])
     view = dark_elf(conn)
