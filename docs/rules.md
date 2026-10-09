@@ -13,6 +13,15 @@ A character is one of four races (Human, Elf, Dark Elf, Orc) on one of two paths
 Mystic): eight starting sets. A character has a level from 1 to 80, and starts at level 1 with no
 Adena.
 
+Each race starts in its own village, and that is where a new character first stands.
+
+| Race | Starting town |
+|---|---|
+| Human | Talking Island Village |
+| Elf | Elven Village |
+| Dark Elf | Dark Elven Village |
+| Orc | Orc Village |
+
 ## 2. The six attributes
 
 | Attribute | What it feeds |

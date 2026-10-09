@@ -1,53 +1,13 @@
 defmodule MiniLineage.Game.JsParityTest do
   @moduledoc """
-  Pins the arithmetic and formatting the port cannot verify by inspection: `:math.pow` against
-  JavaScript's `Math.pow`, `Math.round`'s halves-toward-+infinity, and `toLocaleString('en-US')`,
+  Pins the arithmetic and formatting the port cannot verify by inspection: `Math.round`'s
+  halves-toward-+infinity, and `toLocaleString('en-US')`,
   which Elixir has no ICU equivalent for. Every expectation below was produced by running the
   reference expressions in Node, not written by hand.
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Format, Math}
-
-  # The shipped tuning, so a rebalance is checked against what it ships rather than a stale copy.
-  @battle Constants.battle()
-
-  @damage_blocked [
-    {0, 1},
-    {1, 1},
-    {2, 1},
-    {10, 7},
-    {22, 15},
-    {41, 27},
-    {64, 41},
-    {88, 56},
-    {150, 93},
-    {999, 565}
-  ]
-  @base_xp [
-    {0, 0},
-    {1, 0},
-    {7, 14},
-    {16, 51},
-    {28, 118},
-    {45, 241},
-    {62, 390},
-    {90, 683},
-    {150, 1469},
-    {999, 25260}
-  ]
-  @base_adena [
-    {0, 0},
-    {1, 0},
-    {7, 8},
-    {16, 77},
-    {28, 341},
-    {45, 1202},
-    {62, 2810},
-    {90, 7545},
-    {150, 29215},
-    {999, 4_444_455}
-  ]
+  alias MiniLineage.Game.{Format, Math}
 
   @numbers [
     {0, "0"},
@@ -75,39 +35,6 @@ defmodule MiniLineage.Game.JsParityTest do
     {1_234_567_890, "1.2kkk"},
     {-1500, "-1.5k"}
   ]
-
-  test "damage_blocked matches Math.pow(d, 0.95) * 0.8, floored" do
-    for {defense, expected} <- @damage_blocked,
-        do:
-          assert(
-            Math.damage_blocked(
-              defense,
-              @battle.damage_blocked.exponent,
-              @battle.damage_blocked.scaling
-            ) == expected
-          )
-  end
-
-  test "base_xp_gained matches Math.pow(a, 1.5) * 0.8, floored" do
-    for {attack, expected} <- @base_xp,
-        do:
-          assert(
-            Math.base_xp_gained(attack, @battle.xp_gained.exponent, @battle.xp_gained.scaling) ==
-              expected
-          )
-  end
-
-  test "base_adena_gained matches Math.pow(a, 2.65) * 0.05, floored" do
-    for {attack, expected} <- @base_adena,
-        do:
-          assert(
-            Math.base_adena_gained(
-              attack,
-              @battle.adena_gained.exponent,
-              @battle.adena_gained.scaling
-            ) == expected
-          )
-  end
 
   test "js_round sends halves toward +infinity, unlike Elixir's round/1" do
     assert Math.js_round(0.5) == 1

@@ -14,9 +14,3 @@ config :mini_lineage, cache_catalog: true
 
 # Tells this unreleased build apart from the dev server in the footer.
 config :mini_lineage, build_label: "testing"
-
-# A page the suites can outgrow with a dozen dice-free purchases; the paging is the same at 50.
-config :mini_lineage, chronicle_page: 10
-
-# The suites shop dozens of times for rows without dice; a purse spares them fighting for it first.
-config :mini_lineage, starting_adena: 1_000

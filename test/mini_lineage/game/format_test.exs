@@ -56,89 +56,10 @@ defmodule MiniLineage.Game.FormatTest do
         assert Format.adena(value) == expected, "#{value} formatted as #{Format.adena(value)}"
       end
     end
-
-    test "and so is a countdown" do
-      # The server renders the first frame and `timerLabel` in hooks/effect-timers.js repaints it,
-      # so a divergence shows as the number changing shape the instant the hook takes over.
-      %{"cases" => cases} =
-        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
-
-      for [ms, expected] <- cases do
-        assert Format.countdown(ms) == expected, "#{ms}ms labelled #{Format.countdown(ms)}"
-      end
-    end
-
-    test "and so is the same time said in a sentence" do
-      # The badge has a few pixels and says "1m"; a paragraph has room to say "1m 30s". Twinned
-      # with `remainingLabel` in hooks/effect-timers.js off the same table, for the same reason.
-      %{"spoken" => cases} =
-        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
-
-      for [ms, expected] <- cases do
-        assert Format.remaining(ms) == expected, "#{ms}ms spoken as #{Format.remaining(ms)}"
-      end
-    end
-  end
-
-  describe "a stamp" do
-    # The server renders a stamp's first frame and `stampLabel` in hooks/stamps.js repaints it as it
-    # ages, so a divergence shows as the label changing shape the instant the hook takes over.
-    defp stamps, do: "test/fixtures/stamp_format.json" |> File.read!() |> Jason.decode!()
-
-    defp ms(iso), do: iso |> DateTime.from_iso8601() |> elem(1) |> DateTime.to_unix(:millisecond)
-
-    test "is labelled from the same table the browser is held to" do
-      %{"now" => now, "cap_ms" => cap, "cases" => cases} = stamps()
-
-      for [at, form, flags, expected] <- cases do
-        opts = Enum.map(flags, &{String.to_existing_atom(&1), true})
-        label = Format.stamp(ms(at), ms(now), cap, String.to_existing_atom(form), opts)
-        assert label == expected, "#{at} #{form} #{inspect(flags)} labelled #{label}"
-      end
-    end
-
-    test "and titled with the whole instant, from the same table" do
-      for [at, expected] <- stamps()["titles"] do
-        assert Format.stamp_title(ms(at)) == expected
-      end
-    end
-  end
-
-  describe "a modifier" do
-    # Every one of these is read as a change to a stat, so the sign is half the meaning: "+2%
-    # Critical" is a blessing and "-2%" is a curse, and without the mark neither says which.
-    test "carries its own sign, so a gift and a cost cannot be confused" do
-      assert Format.modifier(20) == "+20"
-      assert Format.modifier(-4) == "-4"
-      assert Format.modifier(0) == "0"
-    end
-
-    test "unless it multiplies, where a sign would be nonsense" do
-      assert Format.modifier(4, true) == "4"
-    end
-  end
-
-  describe "pluralize" do
-    test "writes a single thing as prose rather than as a figure" do
-      # "a battle" reads where "1 battle" counts, and these strings sit inside sentences.
-      assert Format.pluralize("battle", "battles", 1) == "a battle"
-      assert Format.pluralize("ambush", "ambushes", 1) == "an ambush"
-      assert Format.pluralize("battle", "battles", 2) == "2 battles"
-      assert Format.pluralize("battle", "battles", 0) == "0 battles"
-    end
-
-    test "and puts the emoji with the noun, not with the count" do
-      assert Format.pluralize("Orc", "Orcs", 1, "🧟") == "an 🧟 Orc"
-      assert Format.pluralize("Orc", "Orcs", 3, "🧟") == "3 🧟 Orcs"
-    end
-
-    test "and groups the digits of a large count" do
-      assert Format.pluralize("battle", "battles", 4200) =~ "4,200"
-    end
   end
 
   describe "slugify" do
-    test "makes a race label safe for the board's own URL" do
+    test "makes a race label safe for an id" do
       assert Format.slugify("Dark Elf") == "dark-elf"
       assert Format.slugify("Orc") == "orc"
     end

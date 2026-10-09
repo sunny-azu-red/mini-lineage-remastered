@@ -21,11 +21,10 @@ defmodule MiniLineage.Characters.BufferingTest do
   defp start_character(id) do
     Characters.mutate(id, fn player ->
       {player, _flash} = Player.initialize(player, Constants.race(0), :fighter, "Hero")
-      {%{player | current_screen: "home"}, :ok}
+      {player, :ok}
     end)
 
-    # Unheld, the idle stop leaves it lingering for the blessing's lapse, and a lingering run
-    # does not regenerate: every tick below would depend on beating a 150ms timer.
+    # Unheld, the idle stop ends it after a short grace, and every tick below would race it.
     hold(id)
   end
 
@@ -34,8 +33,7 @@ defmodule MiniLineage.Characters.BufferingTest do
     pid
   end
 
-  # A tick, delivered directly rather than waited for: the cadence is five seconds and this suite
-  # is not testing the timer.
+  # A tick, delivered directly rather than waited for: this suite is not testing the timer.
   defp tick(id), do: send(pid_for(id), :tick)
 
   # The buffer lives in the process, so a call after the tick is what proves it was handled.
@@ -85,16 +83,6 @@ defmodule MiniLineage.Characters.BufferingTest do
 
       assert Characters.snapshot(id).health > wounded, "the tick did not regenerate"
       assert stored(id).health == persisted, "a regen tick reached the database"
-    end
-
-    test "moving between screens", %{id: id} do
-      start_character(id)
-      # `pin_screen/2` reads `dead`, never `current_screen`, so a stale screen on disk decides
-      # nothing.
-      Characters.mutate(id, &{%{&1 | current_screen: "inn"}, :ok})
-
-      assert Characters.snapshot(id).current_screen == "inn"
-      assert stored(id).current_screen == "home"
     end
   end
 

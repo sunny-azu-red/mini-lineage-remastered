@@ -4,9 +4,7 @@ defmodule Mix.Tasks.E2e do
   @moduledoc """
       mix e2e                # every suite
       mix e2e walkthrough    # one character, played normally
-      mix e2e races          # every lineage
-      mix e2e live-board     # two players at once, watching the board move
-      mix e2e log            # a log in both orders it reads, the Chronicle's and a chat's
+      mix e2e races          # every starting set
 
   One command, one terminal. It migrates and empties the isolated database, starts its server on the
   port `.env.test` names, drives Chromium through the suites, and stops the server it started. A
@@ -20,9 +18,7 @@ defmodule Mix.Tasks.E2e do
 
   @suites %{
     "walkthrough" => "e2e/walkthrough.mjs",
-    "races" => "e2e/races.mjs",
-    "live-board" => "e2e/live-board.mjs",
-    "log" => "e2e/log.mjs"
+    "races" => "e2e/races.mjs"
   }
   @boot_timeout_ms 90_000
 
@@ -30,7 +26,7 @@ defmodule Mix.Tasks.E2e do
   def run(args) do
     suites =
       case args do
-        [] -> ["walkthrough", "races", "live-board", "log"]
+        [] -> ["walkthrough", "races"]
         given -> Enum.map(given, &validate!/1)
       end
 
@@ -39,16 +35,13 @@ defmodule Mix.Tasks.E2e do
     lock = Shell.lock!("_build/e2e.lock")
 
     try do
-      # Before the server too: `Board` caches what it reads at boot, so a server started over the
-      # last run's table serves those rows until somebody writes. Migrated first, as CI's is new.
+      # Migrated first, as CI's database is new.
       Shell.step("migrating", "mix", ["ecto.migrate", "--quiet"], "e2e")
-      Shell.step("resetting the board", Path.expand("e2e/reset.sh"), [])
       {owned, url} = Shell.ensure_server(port, @boot_timeout_ms)
 
       try do
         Enum.each(suites, fn suite ->
-          # Emptied per suite too: each one assumes a board only it put entries on.
-          Shell.step("resetting the board", Path.expand("e2e/reset.sh"), [])
+          Shell.step("resetting the database", Path.expand("e2e/reset.sh"), [])
           Shell.step("#{suite} (#{url})", "node", [@suites[suite]], nil, [{"E2E_BASE_URL", url}])
         end)
       after

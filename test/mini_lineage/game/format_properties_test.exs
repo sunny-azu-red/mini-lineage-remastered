@@ -8,39 +8,10 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
 
   alias MiniLineage.Game.{Format, Math, Rules}
 
-  @day 86_400_000
-
   describe "adena" do
     property "drops everything past the tenth, as integer arithmetic would" do
       check all value <- adena(), max_runs: 500 do
         assert Format.adena(value) == truncated(value)
-      end
-    end
-  end
-
-  describe "countdown and remaining" do
-    property "the badge is the sentence cut short, so the two never disagree" do
-      check all ms <- integer(-5_000..(3 * 3_600_000)) do
-        badge = Format.countdown(ms)
-        sentence = Format.remaining(ms)
-
-        if String.ends_with?(badge, "m"),
-          do: assert(String.starts_with?(sentence, badge)),
-          else: assert(sentence == badge <> "s")
-      end
-    end
-  end
-
-  describe "stamp" do
-    property "says an age inside the cap and names a date from the cap on" do
-      check all now <- integer((@day * 365)..(@day * 365 * 60)),
-                cap <- integer(3_600_000..(30 * @day)),
-                age <- one_of([constant(cap), constant(cap - 1), integer(0..(2 * cap))]),
-                form <- member_of([:short, :long]) do
-        label = Format.stamp(now - age, now, cap, form)
-        aged? = label == "just now" or String.ends_with?(label, " ago")
-
-        assert aged? == age < cap, "#{inspect(label)} at age #{age} against a cap of #{cap}"
       end
     end
   end

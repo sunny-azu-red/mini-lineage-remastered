@@ -6,69 +6,27 @@ defmodule MiniLineageWeb.PathsTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.Format
   alias MiniLineageWeb.{Paths, Router}
 
-  # Every live action the router answers to, and the path it answers on.
+  @screens ~w(start home races error)
+
   defp routed do
     Router
     |> Phoenix.Router.routes()
     |> Enum.filter(&(&1.plug == Phoenix.LiveView.Plug))
-    |> Enum.map(&{&1.plug_opts, &1.path})
+    |> Enum.map(& &1.path)
+    |> MapSet.new()
   end
 
-  test "every screen the game links to is a route the router answers" do
-    paths = routed() |> Enum.map(&elem(&1, 1)) |> MapSet.new()
-
-    for screen <-
-          ~w(battle weapons armors inn class_master symbol_maker death character highscores statistics races) do
-      assert MapSet.member?(paths, Paths.for_screen(screen)),
-             "#{screen} links to #{Paths.for_screen(screen)}, which the router does not serve"
-    end
+  test "every screen links to a route the router answers, and every route is linked to" do
+    assert MapSet.new(@screens, &Paths.for_screen/1) == routed()
   end
 
-  test "and every route the router answers is one the game can link to" do
-    # `:root` is the one the game never builds a link for: "/" is reached by name.
-    linkable =
-      ~w(battle weapons armors inn class_master symbol_maker death character highscores statistics races error start home)
-      |> MapSet.new(&Paths.for_screen/1)
-
-    for {action, path} <- routed(), action != :root do
-      assert MapSet.member?(linkable, path) or String.contains?(path, ":"),
-             "#{path} (#{action}) is served but nothing links to it"
-    end
-  end
-
-  test "Commit Suicide is gone, address and all" do
-    refute Enum.any?(routed(), &(elem(&1, 1) == "/suicide"))
-  end
-
-  describe "the three screens that share a URL" do
-    test "start, home and death are all the root — one run's three states" do
-      for screen <- ~w(start home death), do: assert(Paths.for_screen(screen) == "/", screen)
-    end
-
-    test "while a place you can stand in keeps its own" do
-      # The Battleground is somewhere you are rather than something that happened to you.
-      assert Paths.for_screen("battle") == "/battle"
-      # A record is addressed by whose it is, so it has no screen-level path at all.
-      assert Paths.for_character("abc123") == "/character/abc123"
-    end
-  end
-
-  describe "the board's per-race URL" do
-    test "takes the slug the game makes from a race label" do
-      assert Paths.for_screen("highscores", Format.slugify("Dark Elf")) == "/highscores/dark-elf"
-    end
-
-    test "and falls back to the whole board without one" do
-      assert Paths.for_screen("highscores") == "/highscores"
-      assert Paths.for_screen("highscores", nil) == "/highscores"
-    end
+  test "start and home are both the root, one browser's two states" do
+    for screen <- ~w(start home), do: assert(Paths.for_screen(screen) == "/", screen)
   end
 
   test "a screen with no URL of its own resolves to the root rather than crashing" do
-    # The error screen is reachable, but nothing deep-links back into it.
     assert Paths.for_screen("nonsense") == "/"
   end
 end

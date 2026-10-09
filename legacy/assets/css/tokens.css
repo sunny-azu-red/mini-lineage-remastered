@@ -1,0 +1,102 @@
+/*
+ * Mini-Lineage — Design Tokens. Every colour in the game is one of these.
+ * Named --<role>-<name>, never by family; gold alone is a hue, being text, border, ground and glow.
+ */
+
+:root {
+    /* ===== Surfaces =====
+     * The panel stands 7.6 L* above the page, and that gap is the whole of the separation. */
+    --bg-deep: #0f0e11;
+    --bg-surface: #29262d;
+    --bg-panel: #201e25;
+
+    /* ===== Lifts =====
+     * A nested surface is raised off its ground, never sunk into it; alpha, so one lift suits any. */
+    --panel-lift: rgba(255, 255, 255, 0.035);
+    --table-lift: rgba(255, 255, 255, 0.06);
+    --row-lift: rgba(255, 255, 255, 0.028);
+
+    /* ===== Borders =====
+     * Every surface edge is --border-soft. --border-control draws the primary button, the select
+     * and the input; --border-arcane the secondary. */
+    --border-control: #645b6f;
+    --border-arcane: #46414d;
+    --border-arcane-bright: #655e6e;
+    --border-soft: rgba(255, 255, 255, 0.07);
+
+    /* Opaque, unlike --border-soft: the banner's gradient moves under its border, and a translucent
+     * edge vanished down its light side. This is what --border-soft renders as over the dark end. */
+    --border-banner: #353239;
+
+    /* An alert's edge carries a meaning, not a depth, so it is matched to its voice. */
+    --border-danger: #d74031;
+    --border-success: #00a152;
+    --border-info: #0076e1;
+
+    /* ===== Gold, the one accent ===== */
+    --gold: #c9a84c;
+    --gold-hover: #e8c46a;
+    --gold-dim: #7a6230;
+    /* The banner title's metal, lit at the top and shadowed at the foot. */
+    --gold-light: #e8d5a0;
+    --gold-deep: #8a6a28;
+
+    /* ===== Text =====
+     * Prose steps differ only in lightness. The six values after them are peers at L* 58 (4.9 on
+     * the panel); each runs to its own chroma ceiling, never a shared one. */
+    --text-primary: #d4d0c8;
+    --text-secondary: #a3a099;
+    --text-muted: #6b6861;
+    --text-hp: #f25647;
+    --text-xp: #ce5fd3;
+    --text-defense: #288aff;
+    --text-tally: #009d8c;
+    --text-critical: #d7700f;
+    --text-heal: #00a152;
+
+    /* ===== The bars =====
+     * Built alike: one lightness for the bases, one for the glows, one chroma for all six. The
+     * glows sit under AA's 4.5, which binds a word and not a filled bar. MP's hue is the bluest
+     * that chroma reaches in sRGB at the bases' lightness. */
+    --bar-hp: #be271f;
+    --glow-hp: #e44c3b;
+    --bar-mp: #3c58d0;
+    --glow-mp: #6575f3;
+    --bar-xp: #a031a7;
+    --glow-xp: #c254c8;
+
+    /* ===== The alert voices =====
+     * Danger, success and info share a lightness and read at 6.7 on the panel; warning is gold, and
+     * lighter, at 9.6. */
+    --text-danger: #ff8164;
+    --text-success: #0fbe6e;
+    --text-warning: #e7c33d;
+    --text-info: #7aa4ff;
+
+    /* ===== Links =====
+     * A link on hover: its own colour darkened, resolved where it is used, so a link in an alert
+     * keeps the alert's voice. Toward black, not transparent, so no ground shifts it; 77% of
+     * --text-primary is --text-secondary. Never gold. */
+    --text-link: color-mix(in srgb, currentColor 77%, black);
+
+    /* ===== Washes =====
+     * A ground, not a voice, mixed from its family's token where one fits so the two cannot drift. */
+    --wash-success: color-mix(in srgb, var(--border-success) 13%, transparent);
+    --wash-gold: color-mix(in srgb, var(--gold) 14%, transparent);
+    --wash-danger: rgba(146, 43, 33, 0.2);
+    --wash-info: rgba(46, 70, 116, 0.3);
+    --focus-ring-color: rgba(201, 168, 76, 0.45);
+
+    /* ===== Shape ===== */
+    --radius: 6px;
+    --radius-lg: 10px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --focus-ring: 0 0 0 2px var(--focus-ring-color);
+
+    /* ===== Type ===== */
+    --font-heading: 'Cinzel', Georgia, serif;
+    --font-body: 'Inter', Verdana, Arial, sans-serif;
+    --font-pixel: 'Silkscreen', monospace;
+    /* The heaviest Inter loaded: 700 would be synthesised, and blooms light-on-dark at 13px. */
+    --weight-value: 600;
+}

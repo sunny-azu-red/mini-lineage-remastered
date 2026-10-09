@@ -1,0 +1,80 @@
+import "phoenix_html"
+import {Socket} from "phoenix"
+import {LiveSocket} from "phoenix_live_view"
+import topbar from "../vendor/topbar"
+import {hooks as gameHooks, recallAll, shortAdena, timerLabel, remainingLabel, stampLabel, stampTitle} from "./hooks"
+import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
+
+const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+// Phoenix remembers a fallback for the tab, so one slow connect or a restart kept it long-polling,
+// whose closed tabs the server only notices by missing polls. Every load tries the WebSocket first.
+try { sessionStorage.removeItem("phx:fallback:LongPoll") } catch (_) { }
+const liveSocket = new LiveSocket("/live", Socket, {
+  longPollFallbackMs: 2500,
+  // A table's sort goes to the server, which orders its rows; a panel's fold never needs to. A
+  // function, so a rejoin after a deploy reads what was kept since the page loaded.
+  params: () => ({_csrf_token: csrfToken, tables: recallAll("table")}),
+  hooks: gameHooks,
+})
+
+// The stops are the value colours in hue order, READ from their tokens so a repaint cannot leave
+// them stale. This script is deferred, so the stylesheet has already applied.
+const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
+topbar.config({
+  barColors: {
+    0: token("--text-hp"),
+    0.17: token("--text-critical"),
+    0.33: token("--gold"),
+    0.5: token("--text-heal"),
+    0.67: token("--text-tally"),
+    0.83: token("--text-defense"),
+    1: token("--text-xp"),
+  },
+  shadowColor: "rgba(0, 0, 0, .3)",
+})
+window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
+window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+
+// Sounds fire from server pushes, never from DOM markers, so nothing races a reload.
+restoreSoundPreference()
+installUnlock()
+window.addEventListener("phx:play-sound", event => playSound(event.detail.name))
+
+liveSocket.connect()
+
+// For the console: liveSocket.enableDebug(), .enableLatencySim(1000), .disableLatencySim()
+window.liveSocket = liveSocket
+
+// Server logs in the browser console, and click-with-c/d to open a HEEx component in $PLUG_EDITOR.
+// esbuild substitutes NODE_ENV itself, so a release build drops this branch entirely.
+if (process.env.NODE_ENV === "development") {
+  window.addEventListener("phx:live_reload:attached", ({detail: reloader}) => {
+    reloader.enableServerLogs()
+
+    let keyDown
+    window.addEventListener("keydown", e => keyDown = e.key)
+    window.addEventListener("keyup", _e => keyDown = null)
+    window.addEventListener("click", e => {
+      if(keyDown === "c"){
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        reloader.openEditorAtCaller(e.target)
+      } else if(keyDown === "d"){
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        reloader.openEditorAtDef(e.target)
+      }
+    }, true)
+
+    window.liveReloader = reloader
+  })
+}
+
+
+// Exposed for the browser suite, which holds each of these and its Elixir twin to one table.
+window.__shortAdena = shortAdena;
+window.__timerLabel = timerLabel;
+window.__remainingLabel = remainingLabel;
+window.__stampLabel = stampLabel;
+window.__stampTitle = stampTitle;

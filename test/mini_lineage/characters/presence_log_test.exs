@@ -1,8 +1,8 @@
 defmodule MiniLineage.Characters.PresenceLogTest do
   @moduledoc """
-  The debug line a character's presence writes as viewers come and go, in the tick log's shape.
-  When the Halls are slow to show somebody offline, it says when the server heard the tab go, and
-  how: a clean close, or a socket found dead only by its heartbeat.
+  The debug line a character's presence writes as viewers come and go, in the tick log's shape. It
+  says when the server heard the tab go, and how: a clean close, or a socket found dead only by its
+  heartbeat.
   """
   use MiniLineage.DataCase, async: false
 

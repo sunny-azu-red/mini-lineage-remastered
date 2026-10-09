@@ -1,16 +1,18 @@
-import { Log } from './log';
 import { keep, recall } from './kept';
 
 /**
- * A panel that folds on its own header and, when it says so, is a `Log`. Both are re-applied after
- * every patch: the server renders the template's opening state, and the reader's is newer.
+ * A panel that folds on its own header, re-applied after every patch: the server renders the
+ * template's opening state, and the reader's is newer.
  */
 export const Panel = {
     mounted() {
         this.toggle = this.el.querySelector(':scope > .panel-toggle');
         this.remember = this.el.dataset.remember !== 'false';
-        this.start();
-        this.log = this.el.dataset.log ? new Log(this) : null;
+        // The reader's last fold beats the template's.
+        const kept = this.toggle && this.remember ? recall('panel', this.el.id) : null;
+        this.open = !this.toggle
+            || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
+        this.show(this.open);
 
         this.toggle?.addEventListener('click', () => {
             if (!this.folds()) return;
@@ -28,38 +30,15 @@ export const Panel = {
             requestAnimationFrame(() =>
                 this.el.querySelector('.panel-arrow')?.setAttribute('data-ready', '')));
     },
-    // Run again for a new subject: the same element can be patched from one record's log to the
-    // next, and nothing about the last one's reading carries over.
-    start() {
-        this.subject = this.el.dataset.subject;
-        // The reader's last fold beats the template's. Keyed by the panel's id, so it is about the
-        // panel and not whose it is.
-        const kept = this.toggle && this.remember ? recall('panel', this.el.id) : null;
-        this.open = !this.toggle
-            || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
-        this.show(this.open);
-    },
-    beforeUpdate() {
-        this.log?.beforeUpdate();
-    },
     updated() {
-        if (this.el.dataset.subject !== this.subject) {
-            this.start();
-            return this.log?.start();
-        }
         this.show(this.open);
-        this.log?.updated();
     },
     destroyed() {
         window.removeEventListener('resize', this.onResize);
-        this.log?.destroy();
     },
     // Whether this panel folds where it stands; a layout with room for it says 0.
     folds() {
         return !!this.toggle && getComputedStyle(this.el).getPropertyValue('--folds').trim() !== '0';
-    },
-    shown() {
-        return this.open || !this.folds();
     },
     // What a reader just opened should be on screen without them going to look for it. Only on a
     // click: a panel restored open, or one patched while open, was never asked to move the page.
@@ -79,6 +58,5 @@ export const Panel = {
             if (folds) this.toggle.setAttribute('aria-expanded', String(open));
             else this.toggle.removeAttribute('aria-expanded');
         }
-        this.log?.showed();
     },
 };

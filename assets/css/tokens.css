@@ -17,10 +17,9 @@
     --row-lift: rgba(255, 255, 255, 0.028);
 
     /* ===== Borders =====
-     * Every surface edge is --border-soft. --border-control draws the primary button, the select
-     * and the input; --border-arcane the secondary. */
+     * Every surface edge is --border-soft. --border-control draws the button, the select and the
+     * input; --border-arcane-bright the scrollbar's thumb. */
     --border-control: #645b6f;
-    --border-arcane: #46414d;
     --border-arcane-bright: #655e6e;
     --border-soft: rgba(255, 255, 255, 0.07);
 
@@ -30,7 +29,6 @@
 
     /* An alert's edge carries a meaning, not a depth, so it is matched to its voice. */
     --border-danger: #d74031;
-    --border-success: #00a152;
     --border-info: #0076e1;
 
     /* ===== Gold, the one accent ===== */
@@ -66,11 +64,8 @@
     --glow-xp: #c254c8;
 
     /* ===== The alert voices =====
-     * Danger, success and info share a lightness and read at 6.7 on the panel; warning is gold, and
-     * lighter, at 9.6. */
+     * Danger and info share a lightness and read at 6.7 on the panel. */
     --text-danger: #ff8164;
-    --text-success: #0fbe6e;
-    --text-warning: #e7c33d;
     --text-info: #7aa4ff;
 
     /* ===== Links =====
@@ -80,9 +75,7 @@
     --text-link: color-mix(in srgb, currentColor 77%, black);
 
     /* ===== Washes =====
-     * A ground, not a voice, mixed from its family's token where one fits so the two cannot drift. */
-    --wash-success: color-mix(in srgb, var(--border-success) 13%, transparent);
-    --wash-gold: color-mix(in srgb, var(--gold) 14%, transparent);
+     * A ground, not a voice. */
     --wash-danger: rgba(146, 43, 33, 0.2);
     --wash-info: rgba(46, 70, 116, 0.3);
     --focus-ring-color: rgba(201, 168, 76, 0.45);
@@ -96,7 +89,6 @@
     /* ===== Type ===== */
     --font-heading: 'Cinzel', Georgia, serif;
     --font-body: 'Inter', Verdana, Arial, sans-serif;
-    --font-pixel: 'Silkscreen', monospace;
     /* The heaviest Inter loaded: 700 would be synthesised, and blooms light-on-dark at 13px. */
     --weight-value: 600;
 }

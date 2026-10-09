@@ -16,7 +16,7 @@ priv/static/*-*.*
 priv/static/*.gz
 
 # Development, tests and CI, which the release never reads.
-bench/
+legacy/
 e2e/
 scratch/
 test/

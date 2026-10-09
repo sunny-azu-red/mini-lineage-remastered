@@ -1,0 +1,181 @@
+/**
+ * Shared machinery for the browser suites. They drive the same game through the same controls,
+ * and a helper that drifts between them is a bug no run would report.
+ */
+export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
+export const PURSE = '#sidebar [data-key="adena"]';
+
+/** What config/e2e.exs starts every character with; the game's own rule is none. */
+export const START_ADENA = 1000;
+
+/**
+ * The four lineages as the UI must present them, each born as the class named, with the newbie
+ * blessing already applied — what a player sees on a fresh character. Two are played as Mystics so
+ * both archetypes are born in a browser. The balance behind them is balance_golden_test.exs's job.
+ */
+export const RACES = [
+    { id: 0, label: 'Human',    emoji: '🧙', archetype: 'fighter', className: 'Human Fighter', health: 146, mp: 38, adena: START_ADENA, crit: 4,  regen: 7, plural: 'Humans' },
+    { id: 1, label: 'Orc',      emoji: '🧟', archetype: 'mystic',  className: 'Orc Mystic',    health: 124, mp: 60, adena: START_ADENA, crit: 4,  regen: 5, plural: 'Orcs' },
+    { id: 2, label: 'Elf',      emoji: '🧝', archetype: 'fighter', className: 'Elven Fighter', health: 133, mp: 39, adena: START_ADENA, crit: 5,  regen: 5, plural: 'Elves' },
+    { id: 3, label: 'Dark Elf', emoji: '🧛', archetype: 'mystic',  className: 'Dark Mystic',   health: 115, mp: 58, adena: START_ADENA, crit: 4,  regen: 4, plural: 'Dark Elves' },
+];
+
+/** Collects results so a run reports every failure rather than dying on the first. */
+export function reporter() {
+    const failures = [];
+    const check = (label, ok, detail = '') => {
+        console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`);
+        if (!ok)
+            failures.push(label);
+    };
+    return { check, failures };
+}
+
+/** Records every note the page plays: Web Audio produces no output to assert on. */
+export const traceAudio = (context) => context.addInitScript(() => {
+    window.__notes = [];
+    const create = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function () {
+        const osc = create.call(this);
+        const start = osc.start.bind(osc);
+        osc.start = (when) => {
+            window.__notes.push(osc.type);
+            return start(when);
+        };
+        return osc;
+    };
+});
+
+/** The controls a player has, bound to one page. */
+export function controls(page) {
+    /** The character's live state, read off the one element that mirrors it. */
+    const state = async () => {
+        const raw = await page.locator('#screen').evaluate(node => ({ ...node.dataset }));
+        // The figures are the sidebar's own `data-value`, which is what the server wrote rather
+        // than a frame of the count-up; null on a screen that draws no sidebar.
+        const figures = await page.evaluate(() => Object.fromEntries(
+            [...document.querySelectorAll('#sidebar [data-key][data-value]')]
+                .map(el => [el.dataset.key, Number(el.dataset.value)])));
+        return {
+            screen: raw.screen,
+            started: raw.started === 'true',
+            dead: raw.dead === 'true',
+            level: figures.level ?? null,
+            health: figures.hp ?? null,
+            maxHealth: figures['max-hp'] ?? null,
+            mp: figures.mp ?? null,
+            maxMp: figures['max-mp'] ?? null,
+            adena: figures.adena ?? null,
+        };
+    };
+
+    const onScreen = (name) => page.waitForSelector(`#screen[data-screen="${name}"]`, { timeout: 8000 });
+
+    const goHome = async () => {
+        await page.click('#header-link');
+        await onScreen('home');
+    };
+
+    /**
+     * Label and variant are server-rendered, so selecting is a round trip. Waits, then reads ONCE:
+     * two reads let a check fail on a stale button while its message quoted the settled one.
+     */
+    const buttonSettles = async (expected) => {
+        await page.waitForFunction(
+            label => document.querySelector('#main form button')?.textContent.trim() === label,
+            expected, { timeout: 5000 }).catch(() => {});
+
+        return {
+            label: (await page.textContent('#main form button'))?.trim(),
+            cls: await page.getAttribute('#main form button', 'class'),
+        };
+    };
+
+    /**
+     * Buys one item and waits for the purse to actually move. Waiting for `#main .alert` returns
+     * immediately — the previous purchase's alert is still up — so the next read is stale.
+     * Returns false when the purchase was refused.
+     */
+    const buy = async (itemId) => {
+        const before = await page.getAttribute(PURSE, 'data-value');
+        await page.selectOption('#main select[name="item_id"]', String(itemId), { timeout: 5000 });
+        await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+
+        return page.waitForFunction(
+            (prev) => {
+                const purse = document.querySelector('#sidebar [data-key="adena"]');
+                return !!purse && purse.dataset.value !== prev;
+            },
+            before, { timeout: 5000 }).then(() => true).catch(() => false);
+    };
+
+    /** Leaves a shop through its own "🚪 Home Town" option rather than by navigating away. */
+    const leaveShop = async () => {
+        await page.selectOption('#main select[name="item_id"]', '', { timeout: 5000 });
+        await page.click('#main form[phx-submit="purchase"] button[type="submit"]');
+        await onScreen('home');
+    };
+
+    /**
+     * Travels via the Town form, which is how a player actually moves. Waits for the socket first:
+     * an unconnected LiveView submits natively. Travelling to the Battleground fights on arrival,
+     * which can kill outright, so death also ends the wait.
+     */
+    const travel = async (to) => {
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        await onScreen('home');
+        await page.selectOption('#main select[name="to"]', to, { timeout: 5000 });
+        await page.click('#main form button');
+
+        try {
+            await page.waitForFunction((dest) => {
+                const screen = document.querySelector('#screen')?.dataset.screen;
+                return screen === dest || screen === 'death';
+            }, to, { timeout: 8000 });
+        } catch {
+            throw new Error(`travel to "${to}" never arrived — still on "${(await state()).screen}"`);
+        }
+    };
+
+    /**
+     * Clicks Fight and waits for the result to land. A fatal fight patches to the death screen
+     * without counting a battle, so either signal ends the wait.
+     */
+    const fight = async () => {
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        const before = await page.getAttribute('#screen', 'data-battles');
+        await page.click('#main button[phx-click="fight"]', { timeout: 8000 });
+        await page.waitForFunction((prev) => {
+            const el = document.querySelector('#screen');
+            return !!el && (el.dataset.screen === 'death' || el.dataset.battles !== prev);
+        }, before, { timeout: 8000 });
+    };
+
+    const boardRows = () => page.locator('#main table.data-table tbody tr').count();
+    const activeFilter = async () =>
+        (await page.textContent('#main .action-links a.active'))?.replace(/\s+/g, ' ').trim();
+
+    return { state, onScreen, goHome, buttonSettles, buy, leaveShop, travel, fight, boardRows, activeFilter };
+}
+
+/**
+ * Scrolls an open Chronicle down, a page at a time, until it has no older page left to ask for —
+ * the whole run, where a check needs all of it. False if a page it asked for never arrived.
+ */
+export async function readWhole(page) {
+    const entries = () => page.locator('#chronicle-log li').count();
+    await page.locator('#chronicle').scrollIntoViewIfNeeded();
+    const box = await page.locator('#chronicle .panel-body').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+    while (await page.locator('#chronicle-log[data-older-than]').count()) {
+        const had = await entries();
+        await page.mouse.wheel(0, 100000);
+        const grew = await page.waitForFunction(
+            (had) => document.querySelectorAll('#chronicle-log li').length > had,
+            had, { timeout: 5000 }).then(() => true).catch(() => false);
+        if (!grew) return false;
+    }
+
+    return true;
+}

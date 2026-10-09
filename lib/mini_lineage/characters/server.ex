@@ -1,26 +1,21 @@
 defmodule MiniLineage.Characters.Server do
   @moduledoc """
   One process per character. The mailbox serialises, so concurrent actions cannot interleave. It
-  owns both timers too: the 5s regeneration cadence, and one expiry timer re-armed at the earliest
-  upcoming effect deadline.
+  owns the regeneration tick, and stops a little after its last viewer goes.
   """
   use GenServer, restart: :transient
 
-  alias MiniLineage.{CharacterLog, Board, Characters}
   alias MiniLineage.Characters.{Store, TickLog}
+  alias MiniLineage.Game.{Clock, Player}
   require Logger
 
-  alias MiniLineage.Game.{Clock, Narrative, Narratives, Player}
-
-  # Fires just past the deadline so the sweep reliably sees the effect as due.
-  @expiry_grace_ms 25
   # How long the process outlives its last viewer before stopping. Its buffer is flushed on the way.
   @idle_grace_ms Application.compile_env!(:mini_lineage, :character_idle_grace_ms)
   @tick_interval_ms Application.compile_env!(:mini_lineage, :tick_interval_ms)
 
-  # The passage of time and where the player is standing; everything else is something they did.
-  # Derived from the struct, not declared per call site, because a call site can forget to flush.
-  @buffered ~w(health current_screen effects)a
+  # The passage of time; everything else is something the player did, and is written before they
+  # are told it worked. Derived from the struct, not declared per call site, which could forget.
+  @buffered ~w(health mp)a
 
   # A connected but idle player triggers neither an action nor a stop, so nothing would write.
   @backstop_ms 60_000
@@ -35,17 +30,8 @@ defmodule MiniLineage.Characters.Server do
     # ordinary shutdown would discard whatever is buffered.
     Process.flag(:trap_exit, true)
 
-    # Minted here rather than at the first save, so two tabs on one session agree on the id. The
-    # battle screen is refilled from the log, once, and never for the dead.
-    {id, player} =
-      case Store.load_by_session(session) do
-        nil ->
-          {Store.new_id(), %Player{}}
-
-        {id, player} ->
-          {id,
-           %{player | last_battle_narrative: unless(player.dead, do: CharacterLog.last_for(id))}}
-      end
+    # Minted here rather than at the first save, so two tabs on one session agree on the id.
+    {id, player} = Store.load_by_session(session) || {Store.new_id(), %Player{}}
 
     schedule_tick()
 
@@ -53,21 +39,14 @@ defmodule MiniLineage.Characters.Server do
       id: id,
       session: session,
       player: player,
-      expiry_timer: nil,
       viewers: %{},
-      watched: false,
       stop_timer: nil,
-      lingering: false,
-      dirty_since: nil,
-      # Whether the next write moves the board: an action or a log row, never a buffered field.
-      # Cleared only once a write lands, so a failed one still refreshes when the backstop retries.
-      board_stale: false,
-      pending_rows: []
+      dirty_since: nil
     }
 
-    # Armed from the start rather than only when a viewer leaves: a process opened by a plain read
-    # — a dead render, a crawler — never attaches one, and would otherwise never stop.
-    {:ok, state |> publish() |> arm_expiry() |> schedule_stop()}
+    # Armed from the start: a process opened by a plain read never attaches a viewer, and would
+    # otherwise never stop.
+    {:ok, state |> publish() |> schedule_stop()}
   end
 
   # -------------------------------------------------------------------- calls
@@ -75,24 +54,17 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
 
-  # The player comes back with the result, already synced and swept: a second call for it would pay
-  # for a second pass to be told the same thing.
   def handle_call({:mutate, fun}, _from, state) do
     {result, state} = run(state, fun)
 
     {:reply, {result, state.player}, state}
   end
 
-  def handle_call(:snapshot, _from, state) do
-    # A read still goes through the load-time sweep, so a stale buff is never shown as live.
-    {_result, state} = run(state, &{&1, :ok})
-
-    {:reply, state.player, state}
-  end
+  def handle_call(:snapshot, _from, state), do: {:reply, state.player, state}
 
   def handle_call({:attach, pid}, _from, state) do
     ref = Process.monitor(pid)
-    state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid), lingering: false})
+    state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid)})
 
     {:reply, :ok, publish(state, "joined")}
   end
@@ -102,25 +74,17 @@ defmodule MiniLineage.Characters.Server do
   @impl true
   def handle_info(:tick, state) do
     schedule_tick()
-
     state = backstop(state)
 
-    # Nobody heals while they are away: a process kept up only for a buff to lapse must not start
-    # regenerating a player who closed the tab minutes ago. Nor the dead, whose tick does nothing.
-    {:noreply,
-     if(state.lingering or state.player.dead,
-       do: state,
-       else: on_timer(state, &Player.process_regen_tick/1)
-     )}
-  end
+    if Player.started?(state.player) do
+      health_before = state.player.health
+      {healed?, state} = run(state, &Player.regenerate/1)
+      TickLog.write(state.id, state.player, health_before, healed?)
 
-  def handle_info(:expiry, state) do
-    # The sweep is run/2's; this only makes it happen on time.
-    state = on_timer(%{state | expiry_timer: nil}, &{&1, :ok})
-
-    if state.lingering and not awaiting_lapse?(state.player),
-      do: {:stop, :normal, state},
-      else: {:noreply, state}
+      {:noreply, state}
+    else
+      {:noreply, state}
+    end
   end
 
   # The reason says how the tab went: a clean close, or a socket found dead only by its heartbeat.
@@ -131,224 +95,62 @@ defmodule MiniLineage.Characters.Server do
     {:noreply, if(map_size(viewers) == 0, do: schedule_stop(state), else: state)}
   end
 
-  # A buff still to lapse keeps it up until it does, so the lapse is written when it happens and
-  # pushed to whoever is reading, rather than whenever the player next comes back.
-  def handle_info(:stop_if_idle, %{viewers: viewers} = state) when map_size(viewers) == 0 do
-    if awaiting_lapse?(state.player),
-      do: {:noreply, %{state | stop_timer: nil, lingering: true}},
-      else: {:stop, :normal, state}
-  end
+  def handle_info(:stop_if_idle, %{viewers: viewers} = state) when map_size(viewers) == 0,
+    do: {:stop, :normal, state}
 
   def handle_info(:stop_if_idle, state), do: {:noreply, %{state | stop_timer: nil}}
 
   @impl true
-  def terminate(_reason, state), do: flush_pending(state)
+  def terminate(_reason, %{dirty_since: nil}), do: :ok
+  def terminate(_reason, state), do: persist(state)
 
   # ------------------------------------------------------------------- core
 
-  # A visitor gives neither timer anything to do, but both keep running: the character may yet be
-  # created in here.
-  defp on_timer(state, fun) do
-    if Player.started?(state.player) do
-      {_result, state} = run(state, fun, log: true)
-      state
-    else
-      state
-    end
-  end
-
-  defp backstop(%{dirty_since: nil} = state), do: state
-
-  defp backstop(state) do
-    if Clock.now_ms() - state.dirty_since >= @backstop_ms, do: retry(state), else: state
-  end
-
-  # Rows only wait here when a write failed. Once they land, a watcher has to hear about them.
-  defp retry(state) do
-    written = persist(state)
-
-    if state.pending_rows != [] and written.pending_rows == [],
-      do: broadcast(written.session, written.player, written.id, true)
-
-    written
-  end
-
-  defp flush_pending(%{dirty_since: nil} = state), do: state
-  defp flush_pending(state), do: persist(state)
-
-  # sync/sweep -> mutate -> sync -> persist -> broadcast, serialised by the process itself. Whether
-  # anything changed is decided by comparing the struct, never by a handler remembering to say so.
-  defp run(state, fun, opts \\ []) do
+  # mutate -> persist or buffer -> broadcast. Whether anything changed is decided by comparing the
+  # struct, never by a handler remembering to say so.
+  defp run(state, fun) do
     before = state.player
+    {player, result} = fun.(before)
 
-    player = sync(before)
-    # Captured before the sweep's clamp, so a lapsed max-health buff still shows its HP drop.
-    health_before = player.health
-    expired = expiring(player)
-    player = sweep(player)
-
-    {player, result} = fun.(player)
-    player = sync(player)
-
-    changed? = before != player
-    if opts[:log], do: TickLog.write(state.id, player, health_before, expired, changed?)
-
-    if changed? do
-      acted? = flush?(before, player)
-
-      # In the order they happened: a lapse was already overdue when this pass began, and a buff
-      # the action brought settles after it.
-      state =
-        %{state | player: player}
-        |> log_lapsed(expired)
-        |> log_actions(before, player, expired)
-        |> log_gained(before, player)
-
-      # A row in the log is written now, whoever caused it: the log is what dates a run in the
-      # Halls and on its own page, and somebody may be watching it.
-      pending? = state.pending_rows != []
-      state = if acted? or pending?, do: persist(%{state | board_stale: true}), else: mark(state)
-      wrote? = pending? and state.pending_rows == []
-
-      # Always broadcast, whether or not it was worth a write, but AFTER the write: a watched record
-      # answers the push by reading its chronicle back.
-      broadcast(state.session, state.player, state.id, wrote?)
-
-      {result, arm_expiry(state)}
+    if player == before do
+      {result, state}
     else
+      state = %{state | player: player}
+      state = if acted?(before, player), do: persist(state), else: mark(state)
+
+      # After the write, so whoever reads the push finds what it announces.
+      broadcast(state.session, state.player, state.id)
+
       {result, state}
     end
   end
 
-  # Anything outside @buffered is the player's own doing, and is written before they see the result.
-  defp flush?(before, now) do
+  # Anything outside @buffered is the player's own doing.
+  defp acted?(before, now) do
     before
     |> Map.from_struct()
     |> Enum.any?(fn {field, was} -> field not in @buffered and Map.get(now, field) != was end)
   end
 
-  # Drained AFTER `flush?/2` has been asked: clear the list first and before and now are identical,
-  # so a purchase would never be written before the player is told it worked.
-  defp drain_events(state, player) do
-    rows = Enum.map(player.pending_events, &row_for(state.id, &1))
+  defp backstop(%{dirty_since: nil} = state), do: state
 
-    %{state | player: %{player | pending_events: []}, pending_rows: state.pending_rows ++ rows}
-  end
-
-  defp row_for(id, %{kind: "fight", battle: battle}), do: CharacterLog.row(id, battle)
-  defp row_for(id, %{kind: kind, line: line, at: at}), do: CharacterLog.event(id, kind, line, at)
-
-  # What the action did, and anything it took away that no timer did — a death empties the list, a
-  # meal replaces a meal. A death's losses go BEFORE the ending and are dated with it, because the
-  # ending is always the chronicle's last line; a replaced meal leaves after the meal that did it.
-  defp log_actions(state, before, now, expired) do
-    lapsed = Enum.map(expired, & &1.id)
-    held = Enum.map(now.effects, & &1.id)
-    taken = deeds(Enum.reject(before.effects, &(&1.id in held or &1.id in lapsed)))
-
-    if now.dead and not before.dead do
-      at = ending_at(now.pending_events)
-
-      state
-      |> log_taken(taken, Narratives.effect_ended(), at)
-      |> drain_events(now)
-    else
-      state
-      |> drain_events(now)
-      |> log_taken(taken, Narratives.effect_lapsed(), Clock.now())
-    end
-  end
-
-  defp log_taken(state, taken, template, at),
-    do: %{
-      state
-      | pending_rows:
-          state.pending_rows ++ Enum.map(taken, &effect_row(state.id, template, &1, at))
-    }
-
-  # The instant the run ended, so what faded with it is dated the same and the log stays in order.
-  defp ending_at(events) do
-    case List.last(events) do
-      %{at: at} -> at
-      nil -> Clock.now()
-    end
-  end
-
-  # Dated when the effect lapsed, not when this process noticed: a run that closed its tab, or a
-  # process a deploy stopped, notices late, and the log would otherwise say the wrong time.
-  defp log_lapsed(state, expired) do
-    rows =
-      Enum.map(deeds(expired), fn effect ->
-        lapsed_at = Clock.to_datetime(effect.expires_at)
-        effect_row(state.id, Narratives.effect_lapsed(), effect, lapsed_at)
-      end)
-
-    %{state | pending_rows: state.pending_rows ++ rows}
-  end
-
-  # Auras are not deeds: `sync_zone_auras/1` flips them on nearly every pass, and logging them would
-  # drown everything else in 💤 and ⚔️.
-  defp log_gained(state, before, now) do
-    held = Enum.map(before.effects, & &1.id)
-
-    rows =
-      now.effects
-      |> Enum.reject(&(&1.id in held))
-      |> deeds()
-      |> Enum.map(&effect_row(state.id, Narratives.effect_gained(), &1, Clock.now()))
-
-    %{state | pending_rows: state.pending_rows ++ rows}
-  end
-
-  defp awaiting_lapse?(player), do: Enum.any?(deeds(player.effects), &(&1.expires_at != nil))
-
-  # The Cheater's Mark is left out: the heresy has a line of its own that says it better, and it
-  # never lapses, so this would only ever repeat that one.
-  defp deeds(effects),
-    do: Enum.filter(effects, &(&1.type in [:buff, :debuff] and &1.id != "konami_cheat"))
-
-  # Stored as what the page calls it, so the chronicle can say which without reading its own HTML.
-  defp effect_row(id, template, effect, at),
-    do:
-      CharacterLog.event(id, kind_of(effect), Narrative.build_effect_change(template, effect), at)
-
-  defp kind_of(%{type: type}) when type in [:buff, :debuff], do: Atom.to_string(type)
+  defp backstop(state),
+    do: if(Clock.now_ms() - state.dirty_since >= @backstop_ms, do: persist(state), else: state)
 
   defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
   defp mark(state), do: state
 
-  # Never raises. Once there is a buffer, letting a database error kill the process would take the
-  # buffer with it — so a failure keeps the state dirty and the next flush carries it.
+  # Never raises: a database error would take the buffer with the process, so a failure keeps the
+  # state dirty and the next flush carries it.
   defp persist(state) do
-    Store.save(state.id, state.session, state.player, state.pending_rows)
-    if state.board_stale, do: Board.character_changed()
+    Store.save(state.id, state.session, state.player)
 
-    %{state | dirty_since: nil, pending_rows: [], board_stale: false}
+    %{state | dirty_since: nil}
   rescue
     error ->
       Logger.error("💾 character #{state.id} failed to persist, still buffered: #{inspect(error)}")
 
       mark(state)
-  end
-
-  defp sweep(player) do
-    {player, _changed} = Player.process_effect_expiry(player)
-    player
-  end
-
-  defp expiring(player) do
-    now = Clock.now_ms()
-
-    Enum.filter(player.effects, &(&1.expires_at != nil and &1.expires_at <= now))
-  end
-
-  defp sync(player) do
-    if Player.started?(player) do
-      {player, _changed} = Player.sync_zone_auras(player)
-      player
-    else
-      player
-    end
   end
 
   defp schedule_tick, do: Process.send_after(self(), :tick, @tick_interval_ms)
@@ -364,27 +166,7 @@ defmodule MiniLineage.Characters.Server do
     %{state | stop_timer: nil}
   end
 
-  # Always cleared and re-armed whole, so there is never a question of which timer still applies.
-  defp arm_expiry(state) do
-    if state.expiry_timer, do: Process.cancel_timer(state.expiry_timer)
-
-    deadlines = for e <- state.player.effects, e.expires_at, do: e.expires_at
-
-    timer =
-      case deadlines do
-        [] ->
-          nil
-
-        _ ->
-          delay = max(0, Enum.min(deadlines) - Clock.now_ms() + @expiry_grace_ms)
-          Process.send_after(self(), :expiry, delay)
-      end
-
-    %{state | expiry_timer: timer}
-  end
-
-  # Which character this process is, and whether anyone is watching it. Kept in the registry entry
-  # so presence is one in-memory read rather than a message to every character.
+  # Which character this process is, and whether anyone is watching it, kept in the registry entry.
   defp publish(state, why \\ nil) do
     watched? = map_size(state.viewers) > 0
 
@@ -392,11 +174,9 @@ defmodule MiniLineage.Characters.Server do
       {state.id, watched?}
     end)
 
-    # The board shows who is online, so only a run it lists going on or off is news to it.
-    if watched? != state.watched and Player.started?(state.player), do: Board.presence_changed()
     if why, do: presence_log(state.id, watched?, map_size(state.viewers), why)
 
-    %{state | watched: watched?}
+    state
   end
 
   # `[PRESENCE:<id>] Online | 2 viewers (joined)`, in the tick log's shape and at its level.
@@ -408,20 +188,12 @@ defmodule MiniLineage.Characters.Server do
   end
 
   @doc false
-  # Two topics for one change. The session's is the browser's own and carries what only its owner
-  # may act on; the record's is keyed by the PUBLIC id, because a record is a public page and
-  # anybody reading one should watch it move.
-  def broadcast(session, player, character_id, wrote? \\ false) do
+  # The session's topic is the browser's own: its key is a secret, so nobody watches anybody else.
+  def broadcast(session, player, character_id) do
     Phoenix.PubSub.broadcast(
       MiniLineage.PubSub,
       "character:#{session}",
       {:character_updated, player, character_id}
-    )
-
-    Phoenix.PubSub.broadcast(
-      MiniLineage.PubSub,
-      Characters.record_topic(character_id),
-      {:record_updated, player, character_id, wrote?}
     )
   end
 end

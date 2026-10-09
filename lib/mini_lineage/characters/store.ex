@@ -5,7 +5,6 @@ defmodule MiniLineage.Characters.Store do
   """
   import Ecto.Query
 
-  alias MiniLineage.CharacterLog
   alias MiniLineage.Characters.{Record, Serde}
   alias MiniLineage.Game.Player
   alias MiniLineage.Repo
@@ -13,7 +12,7 @@ defmodule MiniLineage.Characters.Store do
   # No fallback: config.exs sets it for every environment, and a default here could only disagree.
   @ttl_hours Application.compile_env!(:mini_lineage, :character_ttl_hours)
 
-  @doc "A fresh public character id. Opaque, and it appears in every board link."
+  @doc "A fresh public character id. Opaque."
   def new_id, do: token()
 
   @doc "A fresh session id. Opaque, and it is what the session cookie carries."
@@ -34,21 +33,8 @@ defmodule MiniLineage.Characters.Store do
     end
   end
 
-  def save(id, session_id, player, rows \\ [])
-
-  # No log row to be consistent with, so no transaction: BEGIN and COMMIT are two more round trips.
-  def save(id, session_id, %Player{} = player, []) do
+  def save(id, session_id, %Player{} = player) do
     upsert(id, session_id, player)
-
-    :ok
-  end
-
-  # One transaction: a log row written without its character describes totals the run does not have.
-  def save(id, session_id, %Player{} = player, rows) do
-    Repo.transaction(fn ->
-      upsert(id, session_id, player)
-      Repo.insert_all(CharacterLog.Entry, Enum.map(rows, &CharacterLog.params/1))
-    end)
 
     :ok
   end
@@ -66,24 +52,11 @@ defmodule MiniLineage.Characters.Store do
     )
   end
 
-  @doc """
-  Ends a run: the row keeps its id, its stats and its fights, and gives up its session.
-  """
-  def archive(session_id) do
-    {count, _} =
-      Repo.update_all(
-        from(r in Record, where: r.session_id == ^session_id),
-        set: [session_id: nil]
-      )
-
-    count
-  end
-
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
   @doc """
   Takes the session off runs untouched for #{@ttl_hours}h, the cookie's own sliding window, which
-  makes them MISSING rather than dead. Nothing is deleted. Returns how many were retired.
+  leaves the row behind and no browser able to reach it. Nothing is deleted. Returns how many were retired.
   """
   def retire_idle do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)

@@ -1,9 +1,5 @@
 defmodule MiniLineage.Characters.TickLogTest do
-  @moduledoc """
-  The one line the tick writes per firing. Its zone reads the RESTING aura rather than the absence
-  of combat — a screen in neither zone list is its own case, not a "Resting" logged next to a tick
-  that regenerated nothing.
-  """
+  @moduledoc "The one line the tick writes per firing, at :debug."
   use MiniLineage.DataCase, async: false
 
   alias MiniLineage.Characters
@@ -14,12 +10,14 @@ defmodule MiniLineage.Characters.TickLogTest do
     on_exit(fn -> Characters.forget(id) end)
     hold(id)
 
-    Characters.mutate(id, fn player ->
-      {player, _} = Player.initialize(player, Constants.race(2), :fighter, "Logged")
-      {player, :ok}
-    end)
-
     {:ok, id: id}
+  end
+
+  defp start(id, race_id, overrides \\ %{}) do
+    Characters.mutate(id, fn player ->
+      {player, _} = Player.initialize(player, Constants.race(race_id), :fighter, "Logged")
+      {Map.merge(player, overrides), :ok}
+    end)
   end
 
   defp tick(id) do
@@ -32,86 +30,28 @@ defmodule MiniLineage.Characters.TickLogTest do
     end)
   end
 
-  defp move(id, screen, overrides \\ %{}) do
-    Characters.mutate(id, fn player ->
-      {player, _} =
-        Player.sync_zone_auras(Map.merge(%{player | current_screen: screen}, overrides))
+  test "a wounded character regenerates and says by how much", %{id: id} do
+    start(id, 2, %{health: 40})
 
-      {player, :ok}
-    end)
+    # An Elven Fighter rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a tick (rules §11).
+    assert tick(id) =~ "HP: 40 -> 45/113 (+5 HPR)"
   end
 
-  test "a resting, wounded character regenerates and says by how much", %{id: id} do
-    move(id, "home", %{health: 40})
+  test "the hardiest Fighter mends the most, at its own rate", %{id: id} do
+    # CON 47 is the highest any Fighter is born with: 7.4 a tick against the Elf's 5.4.
+    start(id, 1, %{health: 40})
 
-    log = tick(id)
-    assert log =~ "Resting"
-    assert log =~ "40 -> 45/133"
-    assert log =~ "(+5 HPR)"
-  end
-
-  test "standing in a combat zone is paused, not resting", %{id: id} do
-    move(id, "battle", %{health: 40})
-
-    log = tick(id)
-    assert log =~ "In Combat"
-    assert log =~ "(Paused)"
-  end
-
-  test "a screen in neither zone list is its own case", %{id: id} do
-    # Only the error page is in neither list, and nothing records it; the fallback holds anyway.
-    move(id, "battle", %{health: 40})
-    move(id, "error")
-
-    Characters.mutate(
-      id,
-      &{%{&1 | effects: Enum.reject(&1.effects, fn e -> e.id == "combat" end)}, :ok}
-    )
-
-    move(id, "error")
-
-    log = tick(id)
-    assert log =~ "No Zone", "not 'Resting' — regeneration is off here"
-    assert log =~ "(Paused)"
+    assert tick(id) =~ "(+7 HPR)"
   end
 
   test "a character at full health says so", %{id: id} do
-    move(id, "home")
+    start(id, 2)
 
     assert tick(id) =~ "(Full)"
   end
 
-  # Nothing can happen to them in five seconds: no regeneration, no effect left to lapse.
-  test "the dead do not tick at all", %{id: id} do
-    Characters.mutate(id, &{Player.kill(&1), :ok})
-
-    refute tick(id) =~ "[TICK"
-  end
-
-  test "the hardiest class mends the most, at its own rate", %{id: _id} do
-    orc = Characters.new_session_id()
-    on_exit(fn -> Characters.forget(orc) end)
-    hold(orc)
-
-    Characters.mutate(orc, fn player ->
-      {player, _} = Player.initialize(player, Constants.race(1), :fighter, "Grok")
-      {player, _} = Player.sync_zone_auras(%{player | current_screen: "home", health: 40})
-      {player, :ok}
-    end)
-
-    # CON 47 is the highest any Fighter is born with: 7.4 a tick against the Elf's 5.4.
-    log = tick(orc)
-    assert log =~ "Resting"
-    assert log =~ "(+7 HPR)"
-  end
-
-  test "a visitor who has not created a character is not described at all" do
-    visitor = Characters.new_session_id()
-    on_exit(fn -> Characters.forget(visitor) end)
-    hold(visitor)
-
-    # No health, no zone, nothing expiring: the tick has nothing true to say about a visitor, and
-    # every field the line reads is still nil.
-    refute tick(visitor) =~ "[TICK:"
+  test "a visitor who has not created a character is not described at all", %{id: id} do
+    # No health and nothing to mend: every field the line reads is still nil.
+    refute tick(id) =~ "[TICK:"
   end
 end

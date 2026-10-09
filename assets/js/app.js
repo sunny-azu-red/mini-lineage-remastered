@@ -2,8 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, recallAll, shortAdena, timerLabel, remainingLabel, stampLabel, stampTitle} from "./hooks"
-import {playSound, installUnlock, restoreSoundPreference} from "./soundfx"
+import {hooks as gameHooks, shortAdena} from "./hooks"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 // Phoenix remembers a fallback for the tab, so one slow connect or a restart kept it long-polling,
@@ -11,9 +10,7 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 try { sessionStorage.removeItem("phx:fallback:LongPoll") } catch (_) { }
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  // A table's sort goes to the server, which orders its rows; a panel's fold never needs to. A
-  // function, so a rejoin after a deploy reads what was kept since the page loaded.
-  params: () => ({_csrf_token: csrfToken, tables: recallAll("table")}),
+  params: {_csrf_token: csrfToken},
   hooks: gameHooks,
 })
 
@@ -35,11 +32,6 @@ topbar.config({
 })
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
-
-// Sounds fire from server pushes, never from DOM markers, so nothing races a reload.
-restoreSoundPreference()
-installUnlock()
-window.addEventListener("phx:play-sound", event => playSound(event.detail.name))
 
 liveSocket.connect()
 
@@ -72,9 +64,5 @@ if (process.env.NODE_ENV === "development") {
 }
 
 
-// Exposed for the browser suite, which holds each of these and its Elixir twin to one table.
+// Exposed for the browser suite, which holds it and its Elixir twin to one table.
 window.__shortAdena = shortAdena;
-window.__timerLabel = timerLabel;
-window.__remainingLabel = remainingLabel;
-window.__stampLabel = stampLabel;
-window.__stampTitle = stampTitle;

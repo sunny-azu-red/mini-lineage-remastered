@@ -14,7 +14,10 @@ defmodule MiniLineage.Characters.VisitorTest do
   alias MiniLineage.Game.{Actions, Player}
 
   defp rows, do: Repo.aggregate(Record, :count)
-  defp raceless, do: Repo.aggregate(from(r in Record, where: is_nil(r.race_id)), :count)
+
+  defp raceless,
+    do:
+      Repo.aggregate(from(r in Record, where: is_nil(fragment("?->'race_id'", r.state))), :count)
 
   defp visitor do
     session = Characters.new_session_id()
@@ -44,33 +47,19 @@ defmodule MiniLineage.Characters.VisitorTest do
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, session)
 
     send(pid, :tick)
-    send(pid, :expiry)
-    # One round trip, so both messages are certainly handled before the assertion.
+    # One round trip, so the tick is certainly handled before the assertion.
     Characters.snapshot(session)
 
     assert rows() == before
     assert stored(session) == nil
   end
 
-  test "every action a visitor can attempt is refused, and none of them persist", %{
-    before: before
-  } do
+  test "a start that is refused persists nothing", %{before: before} do
     session = visitor()
 
-    results =
-      for fun <- [
-            &Actions.fight/1,
-            &Actions.cheat/1,
-            &Actions.purchase(&1, "food", "0"),
-            &Actions.set_screen(&1, "home"),
-            &Actions.start(&1, "nonsense", "fighter", "")
-          ] do
-        {result, _player} = Characters.mutate(session, fun)
-        result
-      end
+    assert {{:error, :invalid, _}, _player} =
+             Characters.mutate(session, &Actions.start(&1, "nonsense", "fighter", ""))
 
-    # The cheat is silent by design, so it answers {:ok, nil} rather than refusing out loud.
-    assert Enum.all?(results, &(&1 == {:ok, nil} or match?({:error, _, _}, &1)))
     assert rows() == before
     assert stored(session) == nil
   end
@@ -94,21 +83,5 @@ defmodule MiniLineage.Characters.VisitorTest do
     assert rows() == ctx.before + 1
     assert raceless() == ctx.raceless_before
     assert %Player{race_id: 2} = stored(session)
-  end
-
-  test "starting over writes no row for the empty character that replaces the run", ctx do
-    session = visitor()
-    Characters.mutate(session, &Actions.start(&1, "0", "fighter", "First"))
-    Characters.mutate(session, &{Player.kill(&1), :ok})
-
-    Characters.archive(session)
-    hold(session)
-    # The fresh character exists only in memory until it chooses a lineage of its own.
-    Characters.snapshot(session)
-    Characters.forget_process(session)
-
-    assert rows() == ctx.before + 1, "the archived run, and nothing for the empty one after it"
-    assert raceless() == ctx.raceless_before
-    assert stored(session) == nil, "the archived run gave up this session"
   end
 end

@@ -8,12 +8,12 @@ defmodule MiniLineageWeb.SessionCookieTest do
   alias MiniLineage.Characters
 
   test "a returning browser has its session re-issued", %{conn: conn} do
-    first = get(conn, ~p"/highscores")
+    first = get(conn, ~p"/races")
     session = get_session(first, :session_id)
     on_exit(fn -> Characters.forget(session) end)
 
     # `recycle/1` carries the cookie over, as a browser coming back would.
-    again = first |> recycle() |> get(~p"/highscores")
+    again = first |> recycle() |> get(~p"/races")
 
     assert get_session(again, :session_id) == session
 

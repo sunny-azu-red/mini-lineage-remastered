@@ -76,10 +76,6 @@ if level = System.get_env("LOG_LEVEL") do
   config :logger, level: String.to_existing_atom(level)
 end
 
-if throttle = System.get_env("RATE_LIMIT") do
-  config :mini_lineage, rate_limit: throttle in ~w(true 1)
-end
-
 # A release does not serve unless told to: PHX_SERVER=true bin/mini_lineage start.
 if System.get_env("PHX_SERVER") do
   config :mini_lineage, MiniLineageWeb.Endpoint, server: true

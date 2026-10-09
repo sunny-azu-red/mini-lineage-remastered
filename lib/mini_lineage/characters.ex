@@ -6,40 +6,9 @@ defmodule MiniLineage.Characters do
   A process is addressed by the SESSION — the secret in the cookie — because that is what a
   browser has. The character's public id lives inside the process and never comes back out here.
   """
-  alias MiniLineage.Board
   alias MiniLineage.Characters.{Server, Store}
 
   defdelegate new_session_id(), to: Store
-
-  @doc """
-  Ends the run this browser was playing and hands it a fresh character. The old row keeps its id
-  and its place on the board, and gives up only its session — which the browser keeps, because it
-  names the browser rather than the run.
-  """
-  def archive(session) do
-    # Read before it is given up: after the archive, this session names the NEXT character, and a
-    # broadcast about the run just retired would go out on the new run's topic.
-    retired = character_id(session)
-
-    # Stopped first, so `terminate/2` writes the final state while the row is still its own.
-    stop_process(session)
-    Store.archive(session)
-
-    # Starts the next character, and tells any other tab that this one is no longer the old run.
-    player = snapshot(session)
-    Server.broadcast(session, player, character_id(session))
-
-    # And whoever is reading the retired run: its process is gone, so nothing else will tell them.
-    Phoenix.PubSub.broadcast(
-      MiniLineage.PubSub,
-      record_topic(retired),
-      {:record_retired, retired}
-    )
-
-    Board.character_changed()
-
-    player
-  end
 
   @doc """
   Applies `fun` inside the character's process. `fun` takes a player and returns `{player, result}`;
@@ -49,48 +18,13 @@ defmodule MiniLineage.Characters do
 
   def snapshot(id), do: call(id, :snapshot)
 
-  @doc """
-  The character with this PUBLIC id as its process holds it, or nil when none is running. Never
-  starts one: a process that has stopped wrote what it was buffering on the way out.
-  """
-  def running(character_id) do
-    case Registry.select(MiniLineage.Characters.Registry, [
-           {{:_, :"$1", {character_id, :_}}, [], [:"$1"]}
-         ]) do
-      [pid] -> GenServer.call(pid, :snapshot)
-      [] -> nil
-    end
-  catch
-    # Stopped between the lookup and the call, which leaves the row current.
-    :exit, {reason, _} when reason in [:noproc, :normal, :shutdown] -> nil
-  end
-
-  @doc "This session's character's PUBLIC id — what the board links to. Safe to render."
+  @doc "This session's character's PUBLIC id. Safe to render."
   def character_id(session), do: call(session, :character_id)
-
-  @doc "Public ids of the characters somebody has open now. In memory, never the database."
-  def online do
-    MiniLineage.Characters.Registry
-    |> Registry.select([{{:_, :_, {:"$1", true}}, [], [:"$1"]}])
-    |> MapSet.new()
-  end
 
   @doc "Registers a viewer. The process stops shortly after its last viewer goes away."
   def attach(id, pid \\ self()), do: call(id, {:attach, pid})
 
   def subscribe(id), do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, "character:#{id}")
-
-  @doc """
-  The topic a record is watched on. Keyed by the PUBLIC id, unlike `subscribe/1`, whose topic is
-  the session — a secret, and so no way for one reader to watch another's run.
-  """
-  def record_topic(character_id), do: "record:#{character_id}"
-
-  def watch_record(character_id),
-    do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, record_topic(character_id))
-
-  def unwatch_record(character_id),
-    do: Phoenix.PubSub.unsubscribe(MiniLineage.PubSub, record_topic(character_id))
 
   @doc "Stops a character's process without touching its stored row."
   def forget_process(id), do: stop_process(id)

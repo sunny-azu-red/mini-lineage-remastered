@@ -51,7 +51,7 @@ defmodule MiniLineage.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
 
-  # The balance simulations and dev Mix tasks; a release must not carry them.
+  # The dev Mix tasks; a release must not carry them.
   defp elixirc_paths(:dev), do: ["lib", "scratch"]
   defp elixirc_paths(_), do: ["lib"]
 
@@ -70,7 +70,6 @@ defmodule MiniLineage.MixProject do
       {:bandit, "~> 1.5"},
       {:live_debugger, "~> 1.0", only: :dev},
       {:tidewave, "~> 0.9.1", only: :dev},
-      {:benchee, "~> 1.5", only: :dev},
       {:stream_data, "~> 1.4", only: :test}
     ]
   end

@@ -1,0 +1,21 @@
+{
+  "_comment": "Values both adena formatters must agree on. Read by test/mini_lineage/game/format_test.exs for the Elixir side and by e2e/walkthrough.mjs for the JavaScript one, so a divergence fails a test rather than wobbling for 600ms mid-animation.",
+  "cases": [
+    [0, "0"],
+    [7, "7"],
+    [999, "999"],
+    [1000, "1k"],
+    [1099, "1k"],
+    [1500, "1.5k"],
+    [1999, "1.9k"],
+    [10000, "10k"],
+    [999999, "999.9k"],
+    [1000000, "1kk"],
+    [2800000, "2.8kk"],
+    [999999999, "999.9kk"],
+    [1000000000, "1kkk"],
+    [250000000000, "250kkk"],
+    [-50, "-50"],
+    [-1500, "-1.5k"]
+  ]
+}

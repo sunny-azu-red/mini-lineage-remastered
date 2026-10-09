@@ -1,32 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
-  @moduledoc "The single Player -> view-model mapping."
-  alias MiniLineage.Game.{Classes, Clock, Constants, Format, Formulas, Math, Player}
-
-  def item_view(item) do
-    modifiers = Map.get(item, :modifiers) || effect_modifiers(item)
-
-    %{
-      id: item.id,
-      name: item.name,
-      emoji: item.emoji,
-      stat: item.stat,
-      cost: item.cost,
-      crit: modifier_value(modifiers, :critical),
-      regen: modifier_value(modifiers, :hp_regen),
-      max_health: modifier_value(modifiers, :max_hp)
-    }
-  end
-
-  defp effect_modifiers(item) do
-    case Map.get(item, :effect) do
-      nil -> []
-      key -> Constants.effect(key).modifiers
-    end
-  end
-
-  defp modifier_value(modifiers, type) do
-    Enum.find_value(modifiers, fn m -> if m.type == type, do: m.value end)
-  end
+  @moduledoc "The single Player -> view-model mapping, and the static catalog the pages draw from."
+  alias MiniLineage.Game.{Constants, Format, Formulas, Math, Player, Rules}
 
   @doc """
   Always the SAME shape, whether or not a character exists: a screen still rendering when its
@@ -38,48 +12,31 @@ defmodule MiniLineage.Game.Snapshot do
     race_id: nil,
     race_label: nil,
     race_emoji: nil,
-    class_id: nil,
     class_name: nil,
+    town: nil,
     health: nil,
     max_health: nil,
     mp: nil,
     max_mp: nil,
-    dyes: [],
-    low_health: false,
-    experience: nil,
     level: nil,
     is_max_level: false,
+    experience: nil,
     xp_current: 0,
     xp_required: 0,
-    xp_needed: 0,
     adena: nil,
-    weapon: nil,
-    armor: nil,
     stats: nil,
-    effects: [],
-    dead: false,
-    cheated: false,
-    death_reason: nil,
-    disqualified: false,
-    counters: %{
-      total_battles: 0,
-      total_enemies_killed: 0
-    },
-    last_battle: nil
+    effects: []
   }
 
   def build(player) do
-    if Player.started?(player),
-      do: started(player),
-      else: @empty
+    if Player.started?(player), do: started(player), else: @empty
   end
 
   defp started(player) do
     race = Constants.race(player.race_id)
-    class = Classes.get(Player.class_id(player))
     stats = Player.stats(player)
-    level = Math.level_for_xp(player.experience)
-    xp = Math.xp_progress(player.experience)
+    level = Player.level(player)
+    current = Math.xp_for_level(level)
 
     %{
       started: true,
@@ -87,84 +44,45 @@ defmodule MiniLineage.Game.Snapshot do
       race_id: player.race_id,
       race_label: race.label,
       race_emoji: race.emoji,
-      class_id: class.id,
-      class_name: class.name,
+      class_name: Rules.set(player.race_id, player.path).name,
+      town: Map.put(Rules.town(player.race_id), :description, race.hometown),
       health: player.health,
       max_health: stats.max_hp,
-      mp: player.mp || 0,
+      mp: player.mp,
       max_mp: stats.max_mp,
-      dyes: player.dyes,
-      low_health: Math.low_health?(player.health, stats.max_hp),
-      experience: player.experience,
       level: level,
       is_max_level: Math.max_level?(level),
-      xp_current: xp.current,
-      xp_required: xp.required,
-      xp_needed: Math.xp_needed_to_level_up(player.experience),
+      experience: player.experience,
+      xp_current: player.experience - current,
+      xp_required:
+        if(Math.max_level?(level), do: 0, else: Math.xp_for_level(level + 1) - current),
       adena: player.adena,
-      weapon: item_view(Constants.weapon(player.weapon_id)),
-      armor: item_view(Constants.armor(player.armor_id)),
       stats: stats,
-      effects: Enum.map(Player.active_effects(player), &effect_view/1),
-      dead: player.dead,
-      cheated: player.cheated,
-      death_reason: player.death_reason,
-      disqualified: player.cheated,
-      counters: %{
-        total_battles: player.total_battles,
-        total_enemies_killed: player.total_enemies_killed
-      },
-      last_battle: player.last_battle_narrative
+      effects: Enum.map(Player.auras(player), &aura_view/1)
     }
   end
 
-  defp effect_view(effect) do
-    %{
-      id: effect.id,
-      type: effect.type,
-      emoji: effect.emoji,
-      label: effect.label,
-      tooltip: tooltip(effect),
-      # Carried rather than only folded into the tooltip: the record explains an effect in prose,
-      # and the derived regen aura's rate is only ever known here.
-      modifiers: effect.modifiers,
-      # A duration, not a deadline: the two machines' clocks never need reconciling.
-      remaining_ms: effect.expires_at && max(0, effect.expires_at - Clock.now_ms())
-    }
+  # 🌿 says what it is restoring, and how much a tick.
+  defp aura_view(aura) do
+    rates = Map.get(aura, :rates, [])
+
+    tooltip =
+      case rates do
+        [] -> aura.label
+        _ -> "#{aura.label} (#{Enum.map_join(rates, ", ", &rate_text/1)})"
+      end
+
+    %{id: aura.id, type: aura.type, emoji: aura.emoji, label: aura.label, tooltip: tooltip}
   end
 
-  defp tooltip(%{modifiers: []} = effect), do: effect.label
-
-  defp tooltip(effect),
-    do: "#{effect.label} (#{Enum.map_join(effect.modifiers, ", ", &modifier_text/1)})"
-
-  defp modifier_text(mod) do
-    config = Map.get(Constants.stat_modifier_labels(), mod.type, %{label: to_string(mod.type)})
-
-    if Map.get(config, :multiplier?) do
-      "#{mod.value}x #{config.label}"
-    else
-      sign = if mod.value > 0, do: "+", else: ""
-      unit = if Map.get(config, :percentage?), do: "%", else: ""
-      "#{sign}#{mod.value}#{unit} #{config.label}"
-    end
-  end
-
-  # What a starting class is born with: its attributes, and the HP and MP they make of level 1.
-  defp class_view(class) do
-    a = class.attributes
-
-    Map.merge(Map.take(class, [:id, :name, :archetype, :attributes]), %{
-      max_hp: Formulas.max_hp(Classes.hp(class.id, 1), a.con),
-      max_mp: Formulas.max_mp(Classes.mp(class.id, 1), a.men)
-    })
-  end
+  defp rate_text({:hp_regen, value}), do: "+#{value} HP"
+  defp rate_text({:mp_regen, value}), do: "+#{value} MP"
 
   @catalog_key {__MODULE__, :catalog}
 
   @doc """
-  The static catalog, built once per VM: slugifying and filling the race templates costs more than
-  a whole view. Not cached in development, where an edited template must show without a restart.
+  The static catalog, built once per VM. Not cached in development, where an edited template must
+  show without a restart.
   """
   def catalog do
     if Application.fetch_env!(:mini_lineage, :cache_catalog) do
@@ -183,12 +101,23 @@ defmodule MiniLineage.Game.Snapshot do
         Enum.map(Constants.races(), fn race ->
           Map.merge(race, %{
             slug: Format.slugify(race.label),
-            classes: Enum.map([:fighter, :mystic], &class_view(Classes.starting(race.id, &1)))
+            town: Rules.town(race.id),
+            classes: Enum.map([:fighter, :mystic], &born(Rules.set(race.id, &1)))
           })
-        end),
-      weapons: Enum.map(Constants.weapons(), &item_view/1),
-      armors: Enum.map(Constants.armors(), &item_view/1),
-      foods: Enum.map(Constants.foods(), &item_view/1)
+        end)
+    }
+  end
+
+  # What a starting set is born with: its attributes, and the HP and MP they make of level 1.
+  defp born(set) do
+    a = set.attributes
+
+    %{
+      name: set.name,
+      path: set.path,
+      attributes: a,
+      max_hp: Formulas.max_hp(Formulas.grown(set.hp, 1), a.con),
+      max_mp: Formulas.max_mp(Formulas.grown(set.mp, 1), a.men)
     }
   end
 end

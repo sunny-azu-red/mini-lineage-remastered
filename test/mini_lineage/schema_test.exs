@@ -8,11 +8,6 @@ defmodule MiniLineage.SchemaTest do
 
   # {table, columns that must be indexed together, in order}
   @required [
-    # The last fight of a run, and all of them in order.
-    {"character_log", ["character_id", "id"]},
-    # The board, and the board filtered to one lineage.
-    {"characters", ["total_xp", "adena"]},
-    {"characters", ["race_id", "total_xp", "adena"]},
     # A browser finding the character it is playing, on every mount; and the hourly retirement,
     # which asks about exactly the runs this holds.
     {"characters", ["session_id"]}
@@ -59,17 +54,5 @@ defmodule MiniLineage.SchemaTest do
       _ ->
         false
     end
-  end
-
-  test "a run is barred from the board for cheating and nothing else" do
-    [[expression]] =
-      Repo.query!(
-        "SELECT pg_get_expr(d.adbin, d.adrelid) FROM pg_attrdef d " <>
-          "JOIN pg_attribute a ON a.attrelid = d.adrelid AND a.attnum = d.adnum " <>
-          "WHERE d.adrelid = 'characters'::regclass AND a.attname = 'disqualified'"
-      ).rows
-
-    assert expression =~ "cheated"
-    refute expression =~ "coward", "Commit Suicide is gone, and so is the flag it set"
   end
 end

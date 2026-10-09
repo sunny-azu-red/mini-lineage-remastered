@@ -21,7 +21,6 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-}
       # Optional; the defaults are prod.exs's own.
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      - RATE_LIMIT=${RATE_LIMIT:-true}
     # Catches a process that is up but not answering. localhost is exempt from force_ssl.
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-4000}/health"]

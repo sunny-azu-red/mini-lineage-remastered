@@ -5,6 +5,9 @@ This is Mini-Lineage Remastered: a text-based RPG in Elixir, Phoenix LiveView an
 The generic Phoenix guidance below is worth reading, but where it disagrees with this list, this
 list wins — several generator defaults do not exist here.
 
+- **The live game is the base layer and nothing more.** Character creation, the race's starting
+  village with the status sidebar, the Chronicles of Ancestry and the error page. Everything the
+  game was before that is in `legacy/`, which is read and never run; see the rule below.
 - **There is no `core_components.ex`.** It was deleted as dead code, so there is no `<.icon>`, no
   `<.input>`, and no `<.flash_group>`. Every control is hand-written HEEx in
   `lib/mini_lineage_web/components/`. Ignore any advice below that reaches for those.
@@ -15,32 +18,24 @@ list wins — several generator defaults do not exist here.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
   else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
   `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing but that list and what
-  `app.js` imports through it. The hooks are `AnimatedValues`, `EffectTimers` (the banner's badges,
-  the record's remaining time and a throttle warning's wait), `KonamiRelay`, `Panel` (driving the `Log` class in `log.js`),
-  `PanelFocus`, `SoundToggle` (over the synth in `soundfx.js`), `Stamps` and `Table`; `kept.js` is
-  storage.
-- The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document.
+  `app.js` imports through it. The hooks are `AnimatedValues`, `Panel` and `PanelFocus`; `kept.js`
+  is storage.
+- The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document in
+  `characters`, the only table.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
   character goes through its process, never straight to the database.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
-- **One LiveView, one dispatcher, a module per page.** `GameLive` holds no game state and routes
-  everything through `Access.pin_screen/2`. `Screens.screen/1` picks the page: the small ones —
-  start, town, battle, class master, death, races, error — live in `Screens` itself, and
-  the five big enough to need one — `Screens.Shop`, `Screens.SymbolMaker`, `Screens.Record`,
-  `Screens.Halls`, `Screens.Tome` — each have a module. Anything a page reaches for but does not
-  own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and the two built on it, `<.flash_alert>`
-  and `<.low_health>`, `<.select_action_form>`, `<.back_link>`, `<.halls_link>`, `<.stamp>`,
-  `<.reset_sort>`, `<.figure>` with `<.counted>` and `<.bar>` built on it, `<.fault>`) is in
-  `Controls`; `Layouts` holds the shell's `head`, `site_header` and `footer`, which `ErrorHTML`
-  draws too.
-  `Screens.aside/1` is the same dispatch for what a screen puts BESIDE its panel rather than inside
-  it, through `<Layouts.app>`'s `:aside` slot — only the record's Chronicle so far, which is longer
-  than everything else on that page put together and crowds out what the panel is named for. The aside
-  and the sidebar are one `.side` column, left of the main one or right of it, each at its own fixed
-  width, so one breakpoint stacks either and every rule about a side column is written once. A page
-  with an aside widens by what it takes, and its footer stays under the main panel, as on Town. The
-  aside grows with what it holds up to the main panel's height and no further: a grid row the
-  footer is not in, with the aside sized as if empty so the panel alone decides it.
+- **One LiveView, one dispatcher.** `GameLive` holds no game state and routes everything through
+  `Access.pin_screen/2`. `Screens.screen/1` picks the page — start, town, races, error — and all of
+  them live in `Screens` until one is big enough to need a module of its own. Anything a page
+  reaches for but does not own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and
+  `<.flash_alert>` built on it, `<.back_link>`, `<.figure>` and `<.bar>`, `<.fault>`) is in
+  `Controls`; `Layouts` holds the shell's `head`, `site_header`, sidebar and `footer`, which
+  `ErrorHTML` draws too. The sidebar is one `.side` column beside the main one, at its own fixed
+  width, and one breakpoint stacks it.
+- **The town's 🚪 Quit button is temporary.** It deletes the character so one browser can try every
+  race and path, and exists only in a debug build: `GameLive` neither draws nor answers it in a
+  release, and `quit_test.exs` holds that. It goes when there is a real way to start over.
 
 ### Working here
 
@@ -55,7 +50,7 @@ list wins — several generator defaults do not exist here.
   pushes.** It builds the image as CI does (`buildx --load`, `APP_VERSION` the short sha), reads the
   stamp back out, brings up the real `docker-compose.yml` against an empty Postgres 18 through an
   override that swaps only the image and adds the database, and waits for compose's healthcheck and
-  the boot migration. Then the socket's origin check both ways and one turn in Chromium. Run it for
+  the boot migration. Then the socket's origin check both ways and one character in Chromium. Run it for
   anything that reaches the image: the Dockerfile, compose, `config/prod.exs` or `runtime.exs`, a
   migration, the release steps. It hands compose an env file of its own, because compose reads
   `./.env` for interpolation and that names the real database. If `docker`, `docker buildx` or
@@ -70,10 +65,9 @@ list wins — several generator defaults do not exist here.
   was just as true on MySQL.
 - **Nor can a test that changes global state** — Application env, an OS variable. Another async
   module reads it mid-flip; `error_html_test` turns the debug build off and deletes APP_VERSION.
-- **Nor can a test that claims a registered name.** `cheat_test.exs` stands in for the statistics
-  collector by registering itself under its name; the name is global, so every async module that
-  creates a character posts its own increments into that mailbox and the drain reads them as the
-  run under test's. It failed about one seed in eight.
+- **Nor can a test that claims a registered name.** The name is global, so every async module
+  that creates a character would post into the test's mailbox. A test that stood in for a
+  collector this way once failed about one seed in eight.
 - Migrations commit their DDL implicitly, which ends the sandbox transaction. That is why
   `release_test` checks configuration rather than running one.
 - `mix precommit` before you call anything done, and `mix e2e` for anything the browser renders —
@@ -90,10 +84,10 @@ list wins — several generator defaults do not exist here.
 - **A property states what holds for every input; the fixtures stay the contract with JavaScript.**
   StreamData is `:test` only, so `.formatter.exs` spells out its macros, since `import_deps` fails
   in `:dev`. A counterexample a property finds in a twinned formatter becomes a row in its fixture.
-  Weight a generator toward the boundary: a uniform draw never lands on `age == cap`. Dice are a
-  generated list cycled through `Rng.put_source/1`, which states a rule for EVERY roll rather than
-  asserting one (`fight_properties_test.exs`), and they are integers scaled into `[0, 1)`, never
-  `float/1`: its bounded generation grows with the size, and 3,000 runs took over a minute.
+  Weight a generator toward the boundary: a uniform draw rarely lands on one. Dice are a generated
+  list cycled through `Rng.put_source/1`, which states a rule for EVERY roll rather than asserting
+  one, and they are integers scaled into `[0, 1)`, never `float/1`: its bounded generation grows
+  with the size, and 3,000 runs took over a minute.
 - **The dev tools are dev only, and none of them may loosen the CSP.** LiveDebugger runs at
   `:4007` with `browser_features?: false`, so it injects no script; its DevTools panel reads the
   config tag `Layouts.head` renders and nothing else. Its assigns view shows `session_id`, which is
@@ -101,19 +95,15 @@ list wins — several generator defaults do not exist here.
   on any response it touches it adds `'unsafe-eval'` and drops `frame-ancestors`; `.mcp.json`
   points Claude Code at it. Its `project_eval` is for reading: a write goes through `Characters`,
   never `Repo`.
-- **`bench/` holds Benchee scripts, run with `MIX_BUILD_PATH=_build/bench mix run --no-start
-  bench/<name>.exs`** against the dev database. Each run is saved under its branch, or `BENCH_TAG`,
-  in `tmp/bench/` and compared with the others: measure `main` then the branch, or
-  `BENCH_TAG=before` then the change. A number cited in a comment names the script behind it.
 - **Never compile into `_build/dev` while the dev server is up.** A `mix` command in `:dev` and the
-  server's code reloader writing and loading the same beams at once gave "corrupt file header" on
-  `Board` and crashed a character process mid-game. Ask the running app through Tidewave's
+  server's code reloader writing and loading the same beams at once gave "corrupt file header" and
+  crashed a character process mid-game. Ask the running app through Tidewave's
   `project_eval`, give a script its own `MIX_BUILD_PATH`, or run it in `:test`.
 - **A question about the running app goes to the running app.** Through Tidewave: `project_eval`
-  for state (`:sys.get_state` on a character, `Characters.online/0`, timing a call with
-  `:timer.tc`), `execute_sql_query` for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually
-  sent, captured with a `:telemetry` handler on `[:mini_lineage, :repo, :query]`, and `get_logs` for
-  what a request did. That is how the board's pkey walk was found: the plan, not the code, showed it.
+  for state (`:sys.get_state` on a character, timing a call with `:timer.tc`), `execute_sql_query`
+  for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually sent, captured with a `:telemetry`
+  handler on `[:mini_lineage, :repo, :query]`, and `get_logs` for what a request did. The plan, not
+  the code, is what finds a slow query.
   A rehearsal at scale goes inside `Repo.transaction` with `Repo.rollback`, and `VACUUM FULL`
   afterwards, because rolled-back rows still bloat the indexes and change the planner's sums.
 - **A new component, hook or shared control is written into this file in the change that adds
@@ -126,98 +116,81 @@ list wins — several generator defaults do not exist here.
 Each of these is here because it was got wrong once.
 
 **The base layer is `docs/rules.md`, and nothing else.** It is ours, written in our own words: the
-eight starting sets, the six attributes, every stat and formula, resting, levels and the base
-outcomes. No outside document, emulator or datapack is consulted for it. The code matches it rule for
-rule — `Rules` holds its tables, `Formulas` its formulas in its order — and `rules_test.exs` reads the
-tables back out of the document and works every example again, so a change to one is a change to
-both. A new system (classes, items, fighting, the world) starts as an entry in `docs/roadmap.md` and
-builds on the rules rather than quietly changing them.
+eight starting sets and the village each race starts in, the six attributes, every stat and
+formula, resting, levels and the base outcomes. No outside document, emulator or datapack is
+consulted for it. The code matches it rule for rule — `Rules` holds its tables, `Formulas` its
+formulas in its order — and `rules_test.exs` reads the tables back out of the document and works
+every example again, so a change to one is a change to both. A new system (classes, items,
+fighting, the world) starts as an entry in `docs/roadmap.md` and builds on the rules rather than
+quietly changing them.
 
-`Player.stats/1` runs the rules in order — attributes and dyes, what a path starts with plus gear,
-the attribute and level bonuses, what effects multiply (`op: :mul`), what they add, then the caps —
-so a cap holds whatever an effect adds. `Classes` and `Dyes` are later systems already built on top.
+`Player.stats/1` runs the rules in order from the set a run started as and its level. A new
+character has no Adena and no items, in every environment.
 
-A new character carries `:starting_adena`, which is 0 as rules §1 says, but 1,000 in `config/e2e.exs`:
-the browser suites shop dozens of times for chronicle rows with no dice in them, and a purse spares
-them fighting for it first. `rules_test.exs` holds the rule itself.
-
-**The shops and the Battleground are old mechanics, kept for their page design.** The Inn, the
-Weapon and Armor Shops, their items and prices, and the Battleground's fight are what the game was
-before the base layer, and none of it is a rule: each will be replaced by its system in
-`docs/roadmap.md`. Build nothing new on them. Until then `Battle.simulate/1` scales danger and reward
-off the gear's tier, with only its critical chance the player's own, and its HP losses and the Inn's
-heals are shares of the bar, because a bar that grows with the level would otherwise make the road
-harmless. The base outcomes of rules §13 are tested and called by nothing yet.
+**`legacy/` is read, never run.** It is the game as of `da4e37c`: the shops, the Battleground,
+the record and its Chronicle, the Halls, the Tome, class transfers, dyes, timed buffs, sounds and
+the cheat. Nothing there is compiled, formatted, tested or served, and nothing outside it may
+import, alias or route to it. A system rebuilt from it is rebuilt on the base layer, in the live
+tree, with its rules and tests written fresh; its old code and old `AGENTS.md` are a reference for
+how it once looked and what was learned, not something to copy back whole. Update nothing in it.
 
 **Never assert on a roll of the dice.** Not in the browser suites, not in ExUnit. Pin the source
-(`Rng.put_source/1`, or `Test.Lcg` for the golden master's stream), or make the character tanky
-enough that no roll changes the answer — `health: 5_000` is the idiom. A fatal fight counts no
-battle, which is all it takes to make a counter assertion pass for months and fail in CI once.
-Both hold only where `Actions` is called in the test process. A fight through a character's
-GenServer rolls that process's dice, and the sweep before it clamps 5,000 back to max health:
-there, `DataCase.pin_dice/2` installs the source inside the process.
-What the dice decide belongs in `balance_golden_test.exs`, which seeds them.
+with `Rng.put_source/1`, or arrange the state so that no roll changes the answer. A pinned source
+holds only in the process that pinned it: a character's GenServer rolls its own dice, and
+`DataCase.pin_dice/2` installs the source inside it. An assertion that holds for most rolls passes
+for months and fails in CI once.
 
-A randomly drawn *string* is the same trap wearing a disguise. Death reasons and narrative lines
-are drawn from pools, and some carry an apostrophe that HEEx escapes — so matching one against
-rendered HTML passes or fails on the roll. Where a test renders a drawn line, fix it first
-(`%{Player.kill(p) | death_reason: "..."}`); that it came from the pool at all is a separate test's
-job, against the struct rather than the page.
+A randomly drawn *string* is the same trap wearing a disguise. The welcome is drawn from a pool,
+and one of its lines names "the world of Aden" — so a browser check that the City of Aden is gone
+failed on the roll until it asked for the whole phrase. Where a test reads a drawn line, fix the
+draw first or match only what every draw shares; that it came from the pool at all is a separate
+test's job, against the struct rather than the page.
 
-**A formatter with a client-side twin is held to a table.** Four are duplicated on purpose.
-`Format.adena` and `shortAdena` in `hooks/animated-values.js`: the count-up animation formats its own frames, and
-without a client-side copy the number would change format mid-count. `Format.countdown` and
-`timerLabel` in `hooks/effect-timers.js`: the server renders an effect's first frame and the hook repaints it every second.
-`Format.remaining` and `remainingLabel` are the same pair said in a sentence, for the record's
-Blessings & Afflictions — a badge has room for "1m" and a paragraph has room for "1m 30s".
-`Format.stamp` and `stampLabel` in `hooks/stamps.js`, with `stamp_title` and `stampTitle`: the
-server draws a stamp's first frame and the hook ages it. Each pair reads one fixture —
-`test/fixtures/adena_format.json`, `test/fixtures/effect_timer.json`, `test/fixtures/stamp_format.json`
-— from `format_test.exs` on the Elixir side and `walkthrough.mjs` on the JavaScript one. Change
-either implementation, change its table, and both tests will tell you. Anything else the two
-languages both format wants the same treatment before it gets a second copy.
+**A formatter with a client-side twin is held to a table.** `Format.adena` and `shortAdena` in
+`hooks/animated-values.js` are duplicated on purpose: the count-up animation formats its own frames,
+and without a client-side copy the number would change format mid-count. Both read
+`test/fixtures/adena_format.json`, from `format_test.exs` on the Elixir side and `walkthrough.mjs`
+on the JavaScript one. Change either implementation, change the table, and both tests will tell
+you. Anything else the two languages both format wants the same treatment before it gets a second
+copy.
 
 **Mutable working state is a document; anything sorted on is a column.** `characters` is owned by
-a process and only ever read whole, so it is one `jsonb` blob — but the fields the board ranks on
-are GENERATED columns over that document, never written by application code, so they cannot drift
-from it. Under PG18 write `STORED` explicitly or you get a VIRTUAL column that cannot be indexed.
-Anything that grows with play — a battle history, an inventory, a mail box — gets its own table.
-Put it in the document and every save rewrites all of it, buffering or not. An effect is stored as
-its id and its expiry and nothing else: the catalog is what it does, so a retuned effect reaches the
-runs already carrying it, and an id the catalog no longer has is dropped on load.
+a process and only ever read whole, so it is one `jsonb` blob. When something comes to rank or
+filter on a field of it, that field becomes a GENERATED column over the document, never written by
+application code, so it cannot drift from it; under PG18 write `STORED` explicitly or you get a
+VIRTUAL column that cannot be indexed. Anything that grows with play — a battle history, an
+inventory, a mail box — gets its own table. Put it in the document and every save rewrites all of
+it, buffering or not.
 
-**A character has two ids and they must never be confused.** `id` is public and goes in board
-links; `session_id` is the cookie and is a credential. A public id that is also a session lets
-anyone play as a champion by pasting their link into a cookie. The board selects into plain maps
-rather than `%Record{}` for exactly this reason — a struct carries a `session_id` key.
+**A character has two ids and they must never be confused.** `id` is public and is the only one a
+page may ever show or link; `session_id` is the cookie and is a credential. A public id that is also
+a session lets anyone play as somebody else by pasting their link into a cookie. Anything that lists
+characters selects into plain maps rather than `%Record{}` for exactly this reason — a struct
+carries a `session_id` key.
 
-The session names the BROWSER, not the run, so it outlives both. Starting over archives the old
-row and gives the same session a new character; nothing needs a new cookie, and therefore nothing
-needs to leave the socket.
+The session names the BROWSER, not the run, so it outlives the run's process and every tab.
 
 **Writes follow the player, not the clock.** What the player did is written before they are told it
-worked: creation, a fight, a purchase, death, the cheat. So is any row for the log, whoever caused
-it — a buff lapsing included — because the log dates the run and somebody may be watching it. The
-rest of the passage of time — passive regeneration, which screen they wandered to — is buffered and
-rides along with the next write, or with `terminate/2`. The decision is derived from the struct and
-the pending rows in `Characters.Server`, never declared at a call site, because a call site can
-forget.
+worked, and today that is creating the character. The passage of time — resting — is buffered and
+rides along with the next write, the 60-second backstop, or `terminate/2`. The decision is derived
+from the struct in `Characters.Server` (anything outside `@buffered` changed), never declared at a
+call site, because a call site can forget.
 
-**The URL is where you are.** Start, Town and Game Over are one run's three states and share `/`;
-`Access.pin_screen/2` decides which. Somewhere you can stand — the Battleground, a shop, the
-Character screen — gets a URL of its own. A state that happens to you does not.
+**The URL is where you are.** Start and the starting town are one browser's two states and share
+`/`; `Access.pin_screen/2` decides which. Somewhere you can stand that is not your own village — a
+shop, a hunting ground, a record — gets a URL of its own when it is built. A state that happens to
+you does not.
 
 **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, the check in
-`e2e/reset.sh` that refuses the database `.env` names, the purchase preconditions: each one is the
-boundary, and there is a test asserting
-what it still refuses. If a guard is in the way, the thing you are building is probably wrong.
+`e2e/reset.sh` that refuses the database `.env` names, `Actions.start/4`'s preconditions: each one
+is the boundary, and there is a test asserting what it still refuses. If a guard is in the way, the
+thing you are building is probably wrong.
 
 **What the player can see is what heals them.** The 🌿 aura and the regeneration tick are one
-condition, not two copies of it: `process_regen_tick/1` heals HP and MP by whatever rates the aura
-carries, one for each bar still short, so an icon with no healing behind it — or healing with no
-icon — cannot happen. The tick is the 3 seconds of rules §11, so a rate is what one tick restores. `regen_aura/2` takes
-its effect list as an argument rather than reading it back, because `active_effects/1` is what
-calls it.
+condition, not two copies of it: `Player.regenerate/1` heals HP and MP by whatever rates
+`Player.auras/1` puts on the aura, one for each bar still short, so an icon with no healing behind
+it — or healing with no icon — cannot happen. The tick is the 3 seconds of rules §11, so a rate is
+what one tick restores.
 
 **The cookie is only legible to the secret that signed it.** dev and prod read the same `.env`,
 so `config/runtime.exs` hands both the same `SECRET_KEY_BASE` — otherwise switching between them
@@ -225,8 +198,8 @@ mints a new session and the character looks lost while sitting in the table unto
 back to the secret committed in `config/dev.exs`, so a clone with no `.env` still boots.
 
 **An anchor wraps its text and nothing else.** A newline inside one renders as a space, and the
-underline covers it — which is how the Halls link came to underline the gap before the medal and
-the footer the gap after the sha. Where the attributes force the tag open across lines, keep the
+underline covers it — which is how a link once came to underline the gap before a medal and the
+footer the gap after the sha. Where the attributes force the tag open across lines, keep the
 content flush against `>` and `</`; where the label is long, name it above the `~H` rather than
 letting the formatter break it inside the tag. Buttons are exempt, being padded boxes.
 
@@ -246,16 +219,12 @@ it is symmetric by definition, and the correction is not.
 
 **Size is hierarchy, never container.** 13px is anything you read — prose, an alert, a table cell, a
 sidebar value — because the same thing set a step smaller in one place reads as a different kind of
-thing: an alert set a step under the paragraph above it did, and so did an item at 13px in a shop
-and 12px in the Inventory panel, which left the sidebar out of step with the page. 12px is a
-control, 11px a label — a column's, a field's, a chronicle entry's — set by one rule in `base.css`
-at weight 600 and 0.1em in capitals, each in its own colour and place, or the footer. The figures
-inside the HP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A field
-label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender room
-capitals never use, and the one property that centres by letters, `text-box-trim`, is missing from
-Firefox. The sidebar is 210px because its widest row, "💀 The Forgotten Blade +150", has to fit at
-13px with room for the Verdana fallback and a wider emoji font; widen it before shrinking a value,
-and never without asking.
+thing. 12px is a control, 11px a label — a column's, a field's — set by one rule in `base.css` at
+weight 600 and 0.1em in capitals, each in its own colour and place, or the footer. The figures
+inside the HP, MP and XP bars are the one exception, at 10px: an 18px bar has no room for more. A
+field label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender
+room capitals never use, and the one property that centres by letters, `text-box-trim`, is missing
+from Firefox. The sidebar is 210px; widen it before shrinking a value, and never without asking.
 The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
 sidebar's panel titles stay spans so a page has one h1. Nothing skips a level.
 
@@ -277,177 +246,40 @@ wraps; a name may; on a phone a column's label may take two lines, never strandi
 label carrying one binds it with `&nbsp;`, an entity rendered with `raw/1`, since the label is
 interpolated and would otherwise print it literally. A `min-width` had held the shops at 420px,
 which on a phone put the cost behind a sideways scroll. The columns stack below 640px, before the
-sidebar can squeeze a table narrower than a phone would give it. The Halls may still scroll on a
-phone: name, level and experience are on the left, and only the date waits off-screen. Check a table
+sidebar can squeeze a table narrower than a phone would give it. A wide table may still scroll on a
+phone, provided what matters most is on the left. Check a table
 change by counting the lines in every cell at every width, not by whether it scrolls: a row's cells
 share one height, so a wrapped name makes the whole row look taller.
 
-**A class per thing the game names, never per colour it is drawn in.** `.adena` and `.level` and
-`.aura` all resolve to `--gold` today and are grouped for it in `base.css`, but they are written
-apart, because the moment one of them should move the others must not come with it. That is the
-whole point: the group is an observation about today, the name is the thing. A class named after
-its colour cannot say which of the things wearing it you meant — `.hp` was carrying health, Max HP,
-Physical Attack, deaths, and cheaters struck from the record, and no one of them could be retuned.
+**A class per thing the game names, never per colour it is drawn in.** `.hp`, `.mp` and `.adena` are
+written apart even where two of them resolve to one token today, because the moment one should
+move the others must not come with it: the group is an observation about today, the name is the
+thing. A class named after its colour cannot say which of the things wearing it you meant — `.hp`
+once carried health, Max HP, Physical Attack and deaths, and no one of them could be retuned.
 
-So: `.hp .attack .deaths .debuff` are what a run loses and what takes it; `.heal .regen .buff` give
-it back; `.adena .level .attribute .aura` are what it is worth; `.date .speed .timer` are read
-but not acted on; `.defense .evasion .damage` turn things aside, and `.mp` is
-grouped with them for its blue; `.battles .kills .players .purchases` are things counted; `.crit
-.accuracy` are where a blow lands and how hard; `.xp .magic .heretics` are what the arcane touches,
-earned, cast or struck out for; `.item` is what a run wears, wields or eats, quieter than the sentence around it because a
-blade's NAME is not the news, the number beside it is. `.item` is on every item written as text —
-prose, the shop tables, the Inventory panel — so one rule recolours them all; the shop's `<select>`
-is the deliberate exception, an `<option>` holding no markup and a form control looking like one. A
-value's class goes where the thing is named in a sentence, figure or no figure — "not enough 🪙
-Adena" is gold like "🪙 60 Adena" — and never on a label naming a field or a column, which stays a
-label as HP and XP do.
+These are the game's vocabulary and they are filed under **Values** in `base.css`. What is not a
+value lives above them under **Utilities**: `.muted` is what is not a value standing where one would
+be — the `&laquo;` of a back link — and takes no weight. `.build-development` and `.build-testing`
+are there too: which build serves the page is something the PAGE knows, not something a player
+reads. A value's class goes where the thing is named in a sentence, figure or no figure, and never
+on a label naming a field or a column, which stays a label. A value is a classed `<span>`, never a
+`<strong>`. Every text colour is a token; adding a class means putting it in a group, never
+inventing a hex. `legacy/AGENTS.md` has the whole vocabulary the old game used, to reach for when a
+system brings one of its things back.
 
-These are the game's vocabulary and they are filed under **Values**. What is not a value lives above
-them under **Utilities**, which is a deliberate separation and not a heading: `.muted` is what is not a
-value standing where one would be — the `-` in a shop column for an item that grants no modifier,
-the `&laquo;` of a back link, the `&bull;` between an effect's name and what it does — and takes no
-weight, since weight is for a figure competing inside a sentence and that is its opposite.
-`.build-development` and `.build-testing` are there too: which build serves the page is something
-the PAGE knows, not something a player reads. A name that belongs in neither basket belongs in
-neither file.
+**A line keeps its pronouns open until somebody reads it.** Who a line is told TO is not known
+until a page opens, so every narrative pool carries `{they} {them} {object} {their} {whose}
+{self}` and nothing second-person, `Format.fill_template` leaves them alone at build time because
+they are not in the data map, and `Narrative.voiced/2` closes them at render: `true` for the run's
+own alert (`Narrative.alert/1`), `false` for anybody else. Verb agreement is free — they/them takes
+the same forms as you, which is the whole reason the game picked it — but REFERENTS are not, so a
+line naming two people has to keep them apart by construction. The game records no gender.
 
-An effect's name wears its own kind (`.buff`, `.debuff`, `.aura`) and takes its colour from the
-vocabulary like any other value. A value is a classed `<span>`, never a `<strong>`: it takes its
-weight from the vocabulary's own rule, and `strong` stays for emphasis on a name that is not a
-value. The BADGE over its emoji does not: `--text-success` and `--text-danger` are lighter,
-and the pixel font needs them at that size. Every text colour is a token; adding a class means
-putting it in a group, never inventing a hex.
-
-**A record is live, and one thing about it lives outside the snapshot.** Everything a watched
-record needs rides in the push or arrives with the chronicle it appends to — but whether a run is
-still HELD is a column, not state, and a run that has been restarted away
-from has no process left to push anything at all. So `archive/1` broadcasts `{:record_retired, id}`
-on the topic of the run it is retiring, read BEFORE the archive because afterwards that session
-names the next character, and the LiveView answers it by reading the entry again. Once in a run's
-life, which is the only reason a query there is acceptable.
-
-**Nothing walks with a run that has been walked away from.** `Player.active_effects/1` derives 👻
-Ghost from being dead, but a player cannot know whether anybody still holds it — only the board row
-does, in `active`. So `Screens.Record.record/1` strips a retired run's effects, and draws *Blessings
-& Afflictions* on one condition: that the list is not empty. The heading belongs to the list, never
-to the page, so the rule holds for a living run with nothing riding on it too. Decide it in the
-component, which has both the view and the row: in the LiveView a component test goes around it and
-every `handle_info` that reassigns the record has to remember to apply it again.
-
-**A run declares what it did; the process decides whether to write it.** `Characters.Server` used
-to notice a fight by diffing `last_battle_narrative`, which cannot name a blade somebody bought and
-cannot see a fight whose map repeats the last one exactly. Actions append to `player.pending_events`
-instead, and `run/3` drains them — **after** `flush?/2` has been asked, or before and now are
-identical and the deed is never written before the player is told it worked. The rule the old
-comment was protecting still holds: the WRITE decision is derived from the struct, and only the
-NARRATION is declared.
-
-**An effect is logged by the process that notices it, dated when it actually happened.** No action
-declares a lapse, so `Server.log_lapsed/2` and `log_gained/3` decide both, and a pass writes in the
-order things happened: lapses first — they were overdue before the pass began — then the action's
-own events, then what the action brought on. A lapse is dated at the effect's `expires_at`, never
-when it was noticed, because a closed tab or a deploy notices late.
-
-An effect leaves three ways and every one is told: its timer, a meal replacing a meal, or the run
-ending — `kill/1` empties the list. What faded with the run goes BEFORE the ending, dated with it,
-because the ending is always the chronicle's last line. Several leave in the order they arrived, the
-order the chronicle introduced them, which is why `apply_effect/2` refreshes an effect in place
-rather than moving it to the end: a refresh logs nothing, and must not reorder the departures. A run
-that leaves with a timed buff or debuff keeps its process up until it lapses, skipping the regen tick
-while it lingers so an absent player never heals. Auras never appear: `sync_zone_auras/1` flips them
-on nearly every pass.
-
-**When a run was last seen is its last log entry, never a stamp stored beside it.** A stored
-`last_action_at` and the log were two copies of one fact, and the road on a record came to disagree
-with the chronicle under it. `Board` reads the date with a lateral `LIMIT 1` down `(character_id,
-id)` — id order is time order, so no extra index — coalesced to the run's birth for a row with no
-entry yet. On a record the road reads the same entry from the board, and the LiveView moves it
-forward as it appends, so the two cannot drift even while being watched.
-
-The lookup bounds `character_id` on both sides rather than with `==`, and that is not a typo. Under
-an equality Postgres drops the column from `ORDER BY` as constant, so `ORDER BY id DESC LIMIT 1` can
-be served by walking the pkey backwards and filtering. Inside a lateral the id is a parameter, the
-planner prices that walk from the AVERAGE run, and on a small skewed log — dev's, or a young
-deployment's — it chose it: 1,676 rows discarded per run, the board 4.0ms where the range takes
-0.74ms (`bench/board.exs`). At 20k runs both plans are the composite index, so the range costs
-nothing there. The choice flipped with index size alone, which is why it is pinned in the query
-and not left to statistics. `board_test.exs` holds each bound against the run beside it.
-
-**The board is one statement.** Every lineage's top 25 as a subquery — Ecto hangs a branch's
-`ORDER BY` and `LIMIT` on the whole union otherwise — combined with `UNION ALL`, dated, then sorted
-again, since SQL promises no order out of a union. Five round trips had cost more than the queries:
-measured on 20k runs and a million-entry log, 3.6ms became 2.3ms with the date lookups included.
-
-**`CharacterLog.last_for/1` filters on kind, and that is not tidying.** `Server.init/1` rebuilds the
-battle screen from it. The table holds deeds as well as fights, so without the filter a player whose
-last act was a purchase reconnects to a battle report of seven nil lines — which renders blank
-rather than failing. No partial index for it; see the dropped-column rule below.
-
-**A chronicle row carries a class only where the stylesheet paints it.** `start`, `level-up`,
-`class-change` and `purchase` are washed in the colour of the alert that would announce
-them (a dye is a `purchase`), each
-stating its own colour over one shared shape, so none is a default another overrides. Every other
-row has no `class` at all, spread in rather than listed: an unstyled `deed` class sat on every
-deed for a while, and a class list printed `class=""` on every quiet fight. The head names the kind
-from the stored row — which is why an effect is stored as the `buff` or `debuff` it is, never
-read back out of its own HTML.
-
-**A deed is one sentence, told twice.** The chronicle stores it with its pronouns open; the alert
-its owner sees is the same sentence through `Narrative.alert/1`, voiced to them, colours and all. An
-alert is a `div`, not a `p` or an `li`, so its values take the colour and not the weight — by
-choice. The exception is what the alert is ABOUT: an `.item`, `.buff` or `.debuff` keeps the alert's
-own colour and takes the weight — the debuff before any item grants one, and a refusal names its
-item with the same markup so it is styled alike. The welcome and the shop had built their alerts
-separately, and the two drifted until the alert said "You have bought" while the chronicle said
-"They ate". A food alert's buff line is that buff's own chronicle row, in the same words.
-
-**A watched record is told what happened, never left to infer it.** The `:record_updated` push
-carries whether a row was written. Guessing from the tallies missed every deed that is not a fight,
-because a purchase moves neither the battle count nor the last fight.
-
-**A stored line keeps its pronouns open; everything else is filled when it happens.** A fight's
-numbers and gear are facts about a moment, so they are filled then — but who the line is being told
-TO is not known until somebody opens a page, and the same row is read by the run itself and by
-strangers in the Halls. So every pool the chronicle stores carries `{they} {them} {object} {their}
-{whose} {self}` and nothing second-person, `Format.fill_template` leaves them alone at build time
-because they are not in the data map, and `Narrative.voiced/2` closes them at render: `true` on a
-run's own battle screen, the reader's own voice in the chronicle. Verb agreement is free — they/them
-takes the same forms as you, which is the whole reason the game picked it — but REFERENTS are not:
-"your blade ended their lives" reads fine and "their blade ended their lives" does not, so a line
-naming both the fighter and the foe has to keep them apart by construction. A fight row also stores
-`fight_prompt` and `next_move`, which DO speak to the player — "Rally your strength" — because they
-are the owner's own battle buttons, kept so a reconnect redraws the same ones. The Chronicle reads
-only the `*_line` keys, and that is what makes them exempt; a prompt that ever reaches a record is
-the bug. `fight_properties_test.exs` holds every stored line to the third person.
-
-**A fatal fight pays nothing, so its narrative may not say it did.** `resolve_battle_outcome/2`
-returns `{kill(player), false}` the moment health reaches zero — before the XP, the Adena,
-`total_battles`, `total_enemies_killed` and every `Statistics.increment_for`. Nothing it did
-counted, so no line describing it may claim otherwise: not the XP the deflection line names, not the
-Adena and the HP the outcome line leaves them standing on, and not the foes the kill line cuts down
-— the game never counted those either, and it was the fighter who fell. Every line is still DRAWN,
-because the pools draw in order and skipping one would shift every later roll in that fight, and
-then none of them is kept, in the log or in memory: the chronicle logs the death reason as the
-`ending` it is, and no screen a dead run can reach shows a
-fight, so `Server.init/1` does not rebuild one for it. A fight row is always one the run walked
-away from, so the chronicle's fights and `total_battles` agree.
-
-**A log row is its kind, its lines and its moment, and nothing else.** A fight's numbers were
-columns once, kept because they were "what you would aggregate", and nothing ever did: the totals
-live in `statistics` as running counters. A column goes back when something sorts or filters on it,
-and not before.
-
-So an entry's `#` is counted, never stored: its place in the run is how many of the run's rows
-come up to it, one uncorrelated `count()` in the page's own statement, and `since/3` numbers on
-from the entry the reader holds. It holds only because nothing deletes a single row of a run's log;
-the row id is the whole table's and never reaches the page.
-
-**`Access.pin_screen/2` gates what may be DONE, never what may be read.** Five screens carry no
-action between them — `character`, `highscores`, `statistics`, `races`, `error`: a sort button
-reorders the view and the Chronicle pages itself, and neither touches the run — so the first clause lets every state reach
-every one of them and the rest of the cond only ever decides about screens that can be acted on.
-It had been three overlapping allowlists, which is how a living run could not read the Tome and a
-dead one could not be told that something had crashed.
+**`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races` and `error` carry
+no action, so the first clause lets every state reach them and the rest only ever decides about
+screens that can be acted on: a character is in its town, and a visitor is at game start. It had
+been three overlapping allowlists once, which is how a run was kept from reading pages it had every
+right to.
 
 **The game has no catch-all route, and that is deliberate.** A glob answering every unrecognised
 path resolves it to Town and rewrites the address, which is a soft 404: the reader is told nothing,
@@ -483,18 +315,17 @@ cost, because the Halls rank the living and the fallen alike". This is about the
 not the codebase's — every `@moduledoc` and comment here is full of em dashes, deliberately, and
 they are none of a player's business.
 
-**A link is underlined, never gold.** Gold is what a run is worth, and a name in the Halls sat in
-the same colour as the level and the wealth beside it, with nothing saying which could be clicked. A
+**A link is underlined, never gold.** Gold is what a run is worth, and a name once sat in the same
+colour as the level and the wealth beside it, with nothing saying which could be clicked. A
 link is the colour of the words around it, on a 1px underline of the same colour 2px below it, and
 on hover both darken to `--text-link`. The line is never given a colour of its own: it is
 `currentColor`, so changing the word changes both. `--text-link` is not a hue but a darkening,
 `currentColor` mixed 77% with black and resolved where `var()` is used, so one rule serves a link in
-prose and a link in an alert: the Inn link in the low-HP warning had been painted prose-white in a
-red sentence. Black and not `transparent`: a fade is lighter on a lighter ground, and the sidebar's
+prose and a link in an alert, which had once been painted prose-white in a red sentence. Black and not `transparent`: a fade is lighter on a lighter ground, and the sidebar's
 hover missed `--text-secondary` where the panel's hit it. 77% of `--text-primary` is
 `--text-secondary` to one unit of blue. Its rule never says `:link` or `:visited`: a rule matched
-through `:visited` may set colours and nothing else, so every Halls name a player had opened would
-lose its underline. The banner opts out with `text-decoration: none`; the footer's commit turns gold
+through `:visited` may set colours and nothing else, so every link a player had opened would lose
+its underline. The banner opts out with `text-decoration: none`; the footer's commit turns gold
 on hover, and its line with it. That fade is base.css's, a transition on `color` alone, which
 carries the line because the line is the word's.
 
@@ -556,9 +387,8 @@ quietly false. Moving a ground means re-measuring everything any comment asserts
 **Every figure counts; only names and dates jump.** A number the player can watch change is a
 `<.figure>`, animated by `AnimatedValues`, whose hook sits once over whatever contains them. The
 component writes `data-value` and the text from one value, and `format={:adena}` both the short form
-and the `data-format` that counts in it, so the two cannot be written apart. What an item grants is
-a figure and counts with the rest — only the item's own name and the dates beside it jump, having
-nothing to count through. Adena counts in the short form; the frames keep the tenth that the settled
+and the `data-format` that counts in it, so the two cannot be written apart. Only names and
+dates jump, having nothing to count through. Adena counts in the short form; the frames keep the tenth that the settled
 value drops, because "2.0k" written "2k" is two characters narrower and the line jumps left and
 right across every round thousand.
 
@@ -567,11 +397,7 @@ number for 137ms and then the new one — a delay, not a flicker — and forty a
 frame of 16.7ms, which is 60fps with nothing lost. A count reads its distance from the delta, never
 from a guess about how far a value can jump, so a turn that one day gives two fights or experience
 enough for two levels needs no markup change. The alternative is deciding per figure how far it can
-move and being wrong later. The level came off the Halls on that wrong guess and went back on.
-
-A figure and the noun it counts are separate elements, so `Controls.counted/1` exists: at one there
-is no figure to tween, because "a Human" is a word. That splitting is why a test asserting
-"12 battles" reads the stripped text and not the markup.
+move and being wrong later. The level once came off a board on that wrong guess and went back on.
 
 **A bar is a figure against its cap.** `Controls.bar/1` draws the track, the fill and the figures
 from `value` and `of`, and tells a screen reader the same through `aria-valuetext` on a `meter` for
@@ -581,51 +407,30 @@ next one to fill toward, so the total is the figure. `wraps` names what going ro
 level for XP, and `AnimatedValues` refills a bar from empty when it changes instead of sliding it
 backwards.
 
-**A screen that shows somebody's figures is pushed to, not polled.** Three topics carry them and
-they are keyed differently on purpose. `"character:#{session}"` is the browser's own and carries
-what only its owner may act on — its key is a secret, so nobody can watch anybody else, and it is
-the session because a run started over mints a new character id and the owner learns the new id
-FROM that push. `"record:#{character_id}"` is public, because a record is a public page.
-`"statistics"` carries the archives, and carries them when a counter MOVES rather than when it is
-written — the collector keeps its own running totals so it can say so without a query, gathered on
-the same 500ms window the board uses. Batching the write is about a round trip being expensive;
-a broadcast is microseconds, and tying one to the other made the Tome a minute stale. The board's
-topic and this one are followed only on the screen that draws them, and the board pushes only a
-board that moved: every other tab would be sent each push only to drop it.
+**A screen that shows somebody's figures is pushed to, not polled.** `"character:#{session}"` is
+the browser's own topic and carries what only its owner may act on — its key is a secret, so
+nobody can watch anybody else. A second tab on the same browser follows along through it. A topic
+another reader may follow (a public record, a board) is keyed by the PUBLIC id, and followed only on
+the screen that draws it.
 
-A push must not announce what cannot yet be read. `Server.run/3` broadcasts AFTER it persists, and
-the collector after its counters are in, because a reader answering a push by reading the database
-finds nothing otherwise — which is exactly how the chronicle came back empty. It costs about 1.2ms
-before a push lands and is worth it.
+A push must not announce what cannot yet be read. `Server.run/3` broadcasts AFTER it persists,
+because a reader answering a push by reading the database finds nothing otherwise. It costs about
+1.2ms before a push lands and is worth it.
 
-Anything a record needs live rides in the snapshot or in the entries appended to its chronicle,
-rather than being read back. The chronicle is only ever APPENDED to — a run's entries never change,
-so a reader keeps the ones it has and asks for the rest by cursor — and only when the push says a
-row was written.
-
-**A browser suite tests the game, not its CSS.** The walkthrough is one character played normally. A
-600ms sweep across the HP bar was checked there and failed about one run in three, taking the whole
-suite with it. The gain that triggers it is what matters and is checked instead. A patch that
-touches a bar used to rewrite its class from the template and take the running sweep with it; the
-bar now leaves its class to the hook through `JS.ignore_attributes`, and the walkthrough holds it.
+**A browser suite tests the game, not its CSS.** A 600ms sweep across the HP bar was once checked in
+the walkthrough and failed about one run in three, taking the whole suite with it. What triggers a
+sweep is what matters and is checked instead. A bar leaves its class to the hook through
+`JS.ignore_attributes`, so a patch cannot take a running sweep with it.
 
 **The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
 slugs and fills the race templates from code; caching that in `:dev` means editing a narrative
 changes nothing until the server restarts. `:e2e` and `:prod` cache, which is what ships.
 
 **A visitor is never written.** A browser that has not chosen a lineage lives in its process and
-nothing else: every action that could change it is guarded on `started?`, so nothing marks it dirty
-and nothing persists it. That is why the retirement only ever clears sessions and deletes nothing,
-and why `characters` has no row without a race. `visitor_test.exs` holds it.
-
-**A deed is gated; the census is not.** `Statistics.increment_for/3` drops everything a
-disqualified run *does* — its battles, its plunder, its blood — because the Halls will not list a
-cheat and an aggregate cannot give back what it was already told. Being born is counted
-at `initialize`, before anybody can be disqualified, and dying through the ungated `increment/2`,
-so the census holds every future heretic and lets every one of them go. Gate the
-exit, and souls arrive and are never accounted for leaving — which printed "0 Champions have
-fallen... while a Heretic was struck down", and the Tome tells the Heretics as a few *of* the
-fallen.
+nothing else: the tick skips a run that has not started and nothing else can change one, so
+nothing marks it dirty and nothing persists it. That is why the retirement only ever clears
+sessions and deletes nothing, and why `characters` has no row without a race. `visitor_test.exs`
+holds it.
 
 **The registry can name a process that has just stopped.** `Characters.call/3` looks a character up
 in the registry directly, which is what keeps every read and write off the `DynamicSupervisor` —
@@ -634,124 +439,63 @@ queue behind them. The price is that a lookup reads ETS and can see an entry who
 sitting in the registry's mailbox, so the RETRY goes through the supervisor: registering a name is
 handled by the registry itself, behind that DOWN, and by then the stale entry has gone.
 
-**A figure on a page is animated, so a browser suite reads `data-value` and never the text.** The
-Halls' XP cell counts up to its new number over 600ms, so `textContent` mid-tween is a frame: a
-wait for "has this figure moved" returned on the first one — 3, where the value was 62 — and every
+**A figure on a page is animated, so a browser suite reads `data-value` and never the text.** A
+figure counts up to its new number over 600ms, so `textContent` mid-tween is a frame: a wait for
+"has this figure moved" once returned on the first one — 3, where the value was 62 — and every
 check downstream compared the wrong moment. The attribute is what the server wrote; the text is
-what the animation is showing. For the same reason a check against the BOARD waits rather than
-reads once: refreshes are coalesced, so a run disqualified a moment ago can still be on the copy
-that page was served.
+what the animation is showing.
 
 **Every panel in the game is one component.** `Controls.panel/1` draws the card — the header band,
 the title, the body — and the differences are options: `heading` for the screen's own h1, and only
-that one, `collapsible` and `collapsed` for a header that folds, `max_height` or `scrolls` for a
-body that scrolls under a cap of its own or the stylesheet's, `log` for a list read newest first.
-`id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it land
-on the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the data
-attributes a browser test reads. A panel takes a hook only when something about it moves, so the
-error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
-
-The cap belongs to the body and never to what it holds: the scrollbar then sits against the panel's
-edge rather than inside the body's padding.
+that one, `collapsible` and `collapsed` for a header that folds, `remember` for whether the fold is
+kept. `id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it
+land on the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the
+data attributes a browser test reads. A panel takes a hook only when something about it moves, so
+the error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
 
 **A collapse is the reader's, not the template's.** `aria-expanded` is rendered once for the
-opening state and belongs to the `Panel` hook after that, re-applied on every `updated/0` — the
-same reason the HP bar's sweep has to be watched. It is the WHOLE state: the stylesheet hides a
-folded body off it, never a `hidden` attribute, so a layout with room for a panel can keep it open
-before any script runs, and says so to the hook with `--folds: 0`, where the header is disabled.
-What the reader last did is kept under `panel:<id>` in `localStorage` and beats the template on the
-next mount, unless `remember={false}`; `subject` starts the hook over when a patch swaps whose
-content it holds, since the element survives the patch.
+opening state and belongs to the `Panel` hook after that, re-applied on every `updated/0`. It is the
+WHOLE state: the stylesheet hides a folded body off it, never a `hidden` attribute, so a layout with
+room for a panel can keep it open before any script runs, and says so to the hook with
+`--folds: 0`, where the header is disabled. What the reader last did is kept under `panel:<id>` in
+`localStorage` and beats the template on the next mount, unless `remember={false}`.
 
 The whole header band is the control, and it is a BUTTON. It goes nowhere, and a link would say it
 did: Space activates a button and scrolls a link, which is the same reason `PanelFocus` refuses to
 focus one. The chevron turns off `aria-expanded`. The gold line belongs to the BODY as a
 `border-top`, never to the header as a `border-bottom`: a shut panel then draws no line closing off
-what is not there, and leaves no pixel of one in the band.
+what is not there.
 
 Opening by hand brings the panel into view. Only by hand — a panel restored open from storage, or
 patched while open, was never asked to move the page. Nor may it animate into a restored state: the
 chevron's transition is gated on a `data-ready` the hook sets two frames in, or every refresh spins
-it through a state the reader never left.
-
-**A log has a present edge, and what a reader missed is drawn on the past side of it.**
-`Controls.panel`'s `log` names the order it reads, `:newest_first` for the Chronicle and
-`:oldest_first` for a chat, and everything a log does is one `Log` class in `hooks/log.js`, written
-against the present edge and the past one, so a chat is one attribute and not a second copy. A
-reader at the present sees each arrival, for free newest first and scrolled down to it oldest first.
-One away from it, scrolled off or in a hidden tab, keeps the line they were on across every patch,
-restored from that entry's DOM id, and what lands meanwhile is drawn: a line under the entry on the
-batch's past side counting it, "3 unread", and a pill over the present edge counting what has not
-yet been half in view, which ticks down as it comes in. Its first click puts the line 24px inside
-the past edge, where the reader left off, and its next goes to the present. Reaching the present is
-caught up, but the line stays until it has been reached and read past, so a reader who gets to the
-top by hand can still scroll down to where they were. It is all the reader's and never the page's:
-nothing about it is kept, only whether they are at the present is sent, and the line is an attribute
-the hook re-applies after every patch, since a patch rewrites it and would remove any element the
-hook inserted. `e2e/log.mjs` holds both orders to this by mounting the real hook on a log of its
-own, because the game has no chat yet. The Chronicle opens on its newest 25 and puts the page before
-the last it holds on the end, by keyset, when the reader nears it, or at once when a page does not
-fill the box, since a box that cannot scroll cannot ask. Ten in `:e2e`, so a suite outgrows it
-without a minute of shopping. What it holds is bounded from the present: a reader there lets the
-oldest go as the newest lands, in the same patch, so the list holds one height and the scrollbar
-never jumps, as it did when a batch went at once. It never holds under a page, nor over what the
-reader had, so one who comes back from deep in the past is not cut back either. The hook says
-whether the reader is at the present with the panel's `at_present` event, only as that changes and
-never per arrival, and the server assumes it on mount; a trim that races the reader leaving drops an
-entry a page away from them. A reader anywhere else holds everything, since they may be reading what
-would go, so a tab left away from the present still grows, and that is the case left open. Beside
-the record it grows with what it holds up to the record's height and never folds; stacked on a phone
-it folds, and starts folded on every visit and every record. The Inventory folds there too but opens
-unfolded and remembers, being the reader's own on every screen rather than a different run's each
-visit.
+it through a state the reader never left. The Inventory folds on a phone and opens unfolded.
 
 **Every button in the game is one component, and the element is what it does.** `Controls.button/1`
-is the only thing that writes `btn`: `variant` is `:primary`, `:secondary` or `:danger`, `size={:sm}`
-makes it small, `active` presses one of a set in. With `patch` it is an `<a>`, because it goes
-somewhere — Retreat, a Halls filter, the Hall of Champions — and a reader may want that in a new
-tab; without, a `<button>`, because it does something. Never make a link a button to change how it
-looks: the variant decides the look, all of it, and the element nothing. That is why base.css's link
-rule is `a:where(:not(.btn))`, an element's specificity: `a:link` outranked one class, and it was
-painting secondary links gold.
-Every state is drawn in the variant's own colour, the focus ring included, which is `currentColor`
-so a new variant rings in its own without a rule of its own.
+is the only thing that writes `btn`. With `patch` it is an `<a>`, because it goes somewhere and a
+reader may want that in a new tab; without, a `<button>`, because it does something. Never make a
+link a button to change how it looks. That is why base.css's link colours say `a:not(.btn)`:
+`a:link` outranks one class. The focus ring is `currentColor`, so a look added later rings in its own
+colour without a rule of its own. A variant (secondary, danger, small) comes back as an option on it,
+with its CSS from `legacy/`, when a screen first needs one.
 
 **Every alert in the game is one component, and none is dismissed.** `Controls.alert/1` is the only
-thing that writes `alert`: `kind` is `:info`, `:success`, `:warning` or `:danger`, and anything else
-handed to it lands on the `div`. What an action says, a refusal or a throttle included, is its flash,
-dropped on the next arrival unless the action itself moved you there. A dismissible notice sat beside
-it once, and since nothing cleared it on arrival the throttle warning followed players everywhere. A
-throttle's wait counts down through `EffectTimers`, and the server takes the warning down when the
-window reopens, since a patch would put back anything the browser removed.
+thing that writes `alert`: `kind` is `:info` or `:danger`, the two the game raises, and anything
+else handed to it lands on the `div`. `alert_variants_test.exs` holds the kinds the game raises and
+the ones the stylesheet draws to each other. What an action says, a refusal included, is its flash,
+dropped on the next arrival unless the action itself moved you there; a dismissible notice that
+nothing cleared on arrival once followed players everywhere.
 
-**Every table in the game is one component, and its sort is the server's.** `Controls.data_table/1`
-draws the container, the header row and the `<table>`; the rows are the caller's `<tbody>`, and
-anything else handed to it lands on the `<table>`, where a screen's own hook goes. A `:col` with
-`sort` is a header button; `next_sort/3` cycles it through its first direction, the other one, and
-none, and the screen orders its rows with `sort_rows/3`. No sort is the screen's own order, which
-no one column is, so on arrival no header is lit. The sort is stable, so rows equal on the column
-keep their rank and do not trade places on every push. It is the server's though it reads nothing:
-the Halls are patched whenever the board moves, and a sort done in the DOM would be undone by every
-patch and redone after it, moving every row twice.
-
-`remember` keeps it under `table:<id>`. The `Table` hook writes a change and never what a mount
-finds, so a second tab opening on an older sort cannot overwrite a newer one. `app.js` hands every
-kept sort over as the socket connects, so the first connected render already has it, and
-`Screens.sorts/1` checks what comes back, since storage is the reader's to edit. `<.reset_sort>`
-shows only while a sort is on, and the screen places it. A sort control changes how the table is
-viewed, not what the run does, so `PanelFocus` neither focuses one nor lets a click on one move
-focus. The shops use the component unsorted: five items whose figures rise with their price have
-one order worth reading.
+**Every table in the game is one component.** `Controls.data_table/1` draws the container, the
+header row and the `<table>`; the rows are the caller's `<tbody>`, and anything else handed to it
+lands on the `<table>`. A sort, when one is needed, is the server's and never the DOM's: a patch
+would undo a DOM sort and redo it after, moving every row twice. `legacy/` has the sortable version.
 
 **What the reader chooses is kept as `<kind>:<id>`, through `hooks/kept.js` and nowhere else.**
-`panel:chronicle` is a fold, `table:halls-table` a sort, and `recall`, `keep` and `recallAll` are
-the only code that touches `localStorage` for them, so a new thing that remembers takes a kind and
-writes no storage code of its own. The sound switch's `soundEnabled` predates the scheme and is
-the one exception. What differs is who needs it. A fold is the browser's alone: the
-server renders the template's state and the hook corrects it on mount. A sort decides the order the
-server draws, so every kept one goes to the server as the socket connects, which is why `hooks.js`
-re-exports `recallAll` for `app.js`. Give a kind to the server only when the server must know it to
-render.
+`panel:inventory` is a fold, and `recall` and `keep` are the only code that touches `localStorage`
+for one, so a new thing that remembers takes a kind and writes no storage code of its own. A fold
+is the browser's alone: the server renders the template's state and the hook corrects it on mount.
+Give a kind to the server only when the server must know it to render.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.
@@ -760,40 +504,9 @@ it, which contributes no attribute at all when it is empty.
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
 
-**A run ends three ways: fallen, going, or missing.** Dead is not the only way to be over — the
-30-day retirement takes a character's session without killing it, so it can never be played again.
-`Board` says `active` for "has a session", never the session itself, and the board treats a
-missing run as finished rather than as one still going.
-
-**One record, one route, two voices.** `/character/:id` is every character's page, yours included —
-a record is public because it is on the board, so there is nothing to gate. `Screens.Record` draws
-it; pass `mine: false` to speak about somebody rather than to them. They/them is the third person
-because the game records no gender, and because it takes the same verb forms as "you", so nothing
-but the pronouns moves — which is why the prose forks only where the sentences change shape, not
-wherever a verb does.
-
-Every record reads from the run's process while one is up, never the stored document: where it
-stands, its auras and its health are buffered, so the row is behind by however long it has been
-resting — a visitor refreshing a run that walked home from a fight was shown it still In Combat.
-Yours is your own view; anybody else's is `Characters.running/1`, found by the PUBLIC id through
-the registry's value and never started by it, since a stopped process flushed on the way out. Only
-with none up is the document read.
-
-**Every time a player sees goes through `<.stamp>`, and it says an age until it names a date.**
-"4m ago" inside `:stamp_relative_days` (7), the date past it, the whole instant in its `title`.
-`form` is how terse it is: "4m ago" and "12 Sep" (`:short`, a log's head) or "4 minutes ago" and
-"12 September" (`:long`, the default); the rest shape only a date: `on` for "on 12 September",
-`time` for its clock, `at_time` for "at 9:05 am" rather than ", 9:05 am". An age takes none of them, so the stamp carries every preposition and
-prose writes none: "The road opened beneath your feet <.stamp on time at_time />" reads either way.
-The clock is twelve-hour and the game's own, never the browser's locale, or the twins would part.
-A log keeps the time, since a day of play crowds one date; the board names a day. The server draws the first
-frame, right in UTC and right without JS; one `Stamps` hook, spread onto the container by
-`stamps/0`, ages and localises every stamp beneath it on one page-wide 15s clock that stops once
-nothing is still an age. It ticks in the browser, never from LiveView: a server tick is a render
-and a diff per reader per minute, change tracking would have to be defeated to make one, and only
-the browser knows the reader's zone anyway. It ages from the server's clock, `data-now`, read once
-on mount, so a wrong clock in the browser cannot make its first repaint disagree with the server's
-frame. Durations (`data-remaining-ms`) are not stamps — they are the same length everywhere.
+**A run that nobody comes back to goes missing, never deleted.** The 30-day retirement takes a
+character's session without touching its row, so it can never be played again but is still there.
+Anything that lists characters says `active` for "has a session", never the session itself.
 
 **Do not over-explain.** One to three lines, why not what, never a paragraph. A hard limit, not a
 preference — it is the rule broken most often.
@@ -804,20 +517,18 @@ how the bug was found. Needing more than three lines means the knowledge belongs
 instead. CSS and HEEx need it least — a rule wanting a paragraph usually wants a better selector.
 Moduledocs may run to a short paragraph; nothing else may.
 
-**Dropping a column drops every index that mentions it — including in a WHERE.** `character_log` lost
-its only useful index that way, silently, and went back to scanning the whole table for every new
-character. `schema_test.exs` names the indexes the game cannot go without; add to it when you add
-one. A query-plan assertion cannot do this job — Postgres rightly prefers a sequential scan over
+**Dropping a column drops every index that mentions it — including in a WHERE.** A log table once
+lost its only useful index that way, silently, and went back to scanning the whole table for every
+new character. `schema_test.exs` names the indexes the game cannot go without; add to it when you
+add one. A query-plan assertion cannot do this job — Postgres rightly prefers a sequential scan over
 the few rows a test inserts.
 
 **A round trip costs ~0.8ms; the query usually costs less.** Measured against the real server, not
 guessed. So prefer one statement over a clever plan: splitting an OR-chain into two index-only
-COUNTs made a rank lookup *slower* until it was folded back into one `UNION ALL`. `EXPLAIN ANALYZE`
-reports server time and says nothing about the wire — time the wall clock before believing it.
-And time the code path that ships, not hand-written SQL: `Repo.query!` parses and plans on every
-call where Ecto caches the prepared statement, which put the old board at 5.2ms when it was 3.6ms.
-`Store.save` skips its transaction when there is no log row to be consistent with, for the same
-reason: `BEGIN` and `COMMIT` are two more trips.
+COUNTs once made a rank lookup *slower* until it was folded back into one `UNION ALL`. `EXPLAIN
+ANALYZE` reports server time and says nothing about the wire — time the wall clock before believing
+it. And time the code path that ships, not hand-written SQL: `Repo.query!` parses and plans on every
+call where Ecto caches the prepared statement.
 
 **An empty environment variable is not an absent one.** `System.get_env("DB_PORT", "5432")` returns
 `""`, not the default, and parsing it crashes at boot. Compose passes a missing key through as
@@ -847,6 +558,7 @@ game and lives in `Constants`.
 <!-- usage-rules-start -->
 
 <!-- phoenix:elixir-start -->
+
 ## Elixir guidelines
 
 - Elixir lists **do not support index based access via the access syntax**

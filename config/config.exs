@@ -9,21 +9,8 @@ config :mini_lineage, character_ttl_hours: 24 * 30
 # How long a character process outlives its last viewer before it flushes and stops.
 config :mini_lineage, character_idle_grace_ms: 10_000
 
-# Passive regeneration and the effect sweep; the browser suites wait on it. Interlude's
-# HP_REGENERATE_PERIOD, so a regen rate is what one tick restores.
+# Rules §11's three seconds: a regen rate is what one tick restores. The browser suites wait on it.
 config :mini_lineage, tick_interval_ms: 3_000
-
-# Chronicle entries per page; the next page loads as the reader nears the end.
-config :mini_lineage, chronicle_page: 25
-
-# What a new character carries: none, as docs/rules.md §1 says.
-config :mini_lineage, starting_adena: 0
-
-# How long a `<.stamp>` says an age ("4m ago") before it names the date instead.
-config :mini_lineage, stamp_relative_days: 7
-
-# Throttling. On in prod.exs; RATE_LIMIT overrides it at boot.
-config :mini_lineage, rate_limit: false
 
 # Whether the error page may show a stack trace. Off in prod.exs, never derived from the version.
 config :mini_lineage, debug_build: true
@@ -36,9 +23,6 @@ config :mini_lineage, cache_catalog: true
 
 # The footer's name for an unreleased build.
 config :mini_lineage, build_label: "development"
-
-# Timer-driven processes, which test.exs turns off because they would fight the SQL sandbox.
-config :mini_lineage, start_statistics_collector: true, start_board: true
 
 config :mini_lineage,
   ecto_repos: [MiniLineage.Repo],

@@ -140,14 +140,8 @@ jobs:
       - name: Drive one character through a real browser
         run: mix e2e walkthrough
 
-      - name: Play every lineage
+      - name: Start every lineage
         run: mix e2e races
-
-      - name: Watch the board move for somebody else
-        run: mix e2e live-board
-
-      - name: Read a log in both orders it reads
-        run: mix e2e log
 
   # Only from main, behind both green jobs: what is published is what was tested.
   publish:

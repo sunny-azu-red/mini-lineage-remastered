@@ -1,13 +1,11 @@
 defmodule MiniLineageWeb.Layouts do
   @moduledoc """
-  The page shell. Element ids and class names are load-bearing: the carried-over stylesheet keys
-  off `#app`/`#wrapper`/`#header`/`#content`/`#main`/`.panel`. `#sidebar` and `#aside` are one kind
-  of thing, a `.side` column, left of the main one and right of it.
+  The page shell. Element ids and class names are load-bearing: the stylesheet keys off
+  `#app`/`#wrapper`/`#header`/`#content`/`#main`/`.panel`, and `#sidebar` is a `.side` column.
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Access, Format, Version}
-  alias MiniLineageWeb.Paths
+  alias MiniLineage.Game.{Access, Version}
 
   embed_templates "layouts/*"
 
@@ -30,7 +28,7 @@ defmodule MiniLineageWeb.Layouts do
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&family=Silkscreen:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
@@ -42,29 +40,18 @@ defmodule MiniLineageWeb.Layouts do
   attr :title, :string, default: "Loading"
   attr :view, :map, required: true
   attr :screen, :string, required: true
-  attr :character_id, :string, default: nil
   slot :inner_block, required: true
-
-  # What the screen puts beside its panel rather than in it, in a column the page widens to hold.
-  slot :aside
 
   def app(assigns) do
     ~H"""
     <div id="app">
-      <%!-- Every keypress is a round trip, so the relay exists only while the sequence can do
-            something; its own element, so arming mounts the hook rather than patching one. --%>
-      <div :if={Access.konami?(@view)} id="konami-relay" phx-hook="KonamiRelay" hidden></div>
       <div id="wrapper">
         <div id="header">
           <Layouts.site_header />
         </div>
 
         <div id="content">
-          <.sidebar
-            :if={@view.started && Access.sidebar?(@screen)}
-            view={@view}
-            character_id={@character_id}
-          />
+          <.sidebar :if={@view.started && Access.sidebar?(@screen)} view={@view} />
 
           <div id="main">
             <%!-- No wrapper of its own: `h2:first-child` drops the top margin, and an extra
@@ -76,11 +63,9 @@ defmodule MiniLineageWeb.Layouts do
               phx-hook="PanelFocus"
               data-screen={@screen}
               data-started={to_string(@view.started)}
-              data-dead={to_string(@view.dead)}
-              data-battles={@view.counters.total_battles}
             >
               <:header>
-                <div class="header-effects" id="effects" phx-hook="EffectTimers">
+                <div class="header-effects" id="effects">
                   <.effect_icon :for={effect <- @view.effects} effect={effect} />
                 </div>
               </:header>
@@ -89,8 +74,6 @@ defmodule MiniLineageWeb.Layouts do
 
             <Layouts.footer />
           </div>
-
-          <div :if={@aside != []} id="aside" class="side">{render_slot(@aside)}</div>
         </div>
       </div>
     </div>
@@ -104,19 +87,14 @@ defmodule MiniLineageWeb.Layouts do
     <span
       class={"effect-icon effect-fade-in effect-#{@effect.type}"}
       data-effect-id={@effect.id}
-      data-remaining-ms={@effect.remaining_ms}
       title={@effect.tooltip}
     >
       <span class="effect-emoji">{@effect.emoji}</span>
-      <span :if={@effect.remaining_ms} class="effect-timer" data-timer>{Format.countdown(
-        @effect.remaining_ms
-      )}</span>
     </span>
     """
   end
 
   attr :view, :map, required: true
-  attr :character_id, :string, default: nil
 
   defp sidebar(assigns) do
     ~H"""
@@ -125,14 +103,12 @@ defmodule MiniLineageWeb.Layouts do
         <div class="stat-row">
           <span class="stat-label">Race</span>
           <span class="stat-value">
-            {if @view.dead, do: "☠️", else: @view.race_emoji}
-            <%!-- Flush against the anchor: a newline inside one renders as an underlined space. --%>
-            <.link patch={Paths.for_character(@character_id, "game")}>{@view.class_name}
-            <Controls.figure key="level" value={@view.level} /></.link>
+            {@view.race_emoji} {@view.class_name}
+            <Controls.figure key="level" value={@view.level} />
           </span>
         </div>
 
-        <div class={"stat-row#{if @view.low_health, do: " danger"}"}>
+        <div class="stat-row">
           <span class="stat-label">HP</span>
           <Controls.bar
             id="hp-bar"
@@ -174,12 +150,6 @@ defmodule MiniLineageWeb.Layouts do
             wraps={@view.level}
           />
         </div>
-
-        <div class="stat-row">
-          <span class="stat-label">Adena</span>
-          <span class="stat-value adena">🪙
-          <Controls.figure key="adena" value={@view.adena} format={:adena} /></span>
-        </div>
       </Controls.panel>
 
       <%!-- Folds on a phone, open until the reader says otherwise: theirs on every screen, so kept. --%>
@@ -191,22 +161,9 @@ defmodule MiniLineageWeb.Layouts do
         collapsible
       >
         <div class="stat-row">
-          <span class="stat-value" title="Equipped Armor">
-            {@view.armor.emoji} <span class="item">{@view.armor.name}</span>
-            <span :if={(@view.armor.regen || 0) > 0} class="regen">+<Controls.figure
-              key="armor-regen"
-              value={@view.armor.regen}
-            /></span>
-          </span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-value" title="Equipped Weapon">
-            {@view.weapon.emoji} <span class="item">{@view.weapon.name}</span>
-            <span :if={(@view.weapon.crit || 0) > 0} class="crit">+<Controls.figure
-              key="weapon-crit"
-              value={@view.weapon.crit}
-            />%</span>
-          </span>
+          <span class="stat-label">Adena</span>
+          <span class="stat-value adena">🪙
+          <Controls.figure key="adena" value={@view.adena} format={:adena} /></span>
         </div>
       </Controls.panel>
     </div>
@@ -214,8 +171,8 @@ defmodule MiniLineageWeb.Layouts do
   end
 
   @doc """
-  The banner. `interactive?` is false on the error page, which has no LiveView — so there the
-  banner is an ordinary link and the sound toggle, which nothing would drive, is left out.
+  The banner. `interactive?` is false on the error page, which has no LiveView, so there the
+  banner is an ordinary link.
   """
   attr :interactive?, :boolean, default: true
 
@@ -239,16 +196,6 @@ defmodule MiniLineageWeb.Layouts do
         <span class="header-title">Mini Lineage</span>
         <span class="header-subtitle">Remastered</span>
       </.link>
-      <%!-- Outside the anchor, so clicking it never also navigates. --%>
-      <button
-        :if={@interactive?}
-        id="sound-toggle"
-        type="button"
-        phx-hook="SoundToggle"
-        class="sound-toggle-btn"
-      >
-        🔊
-      </button>
     </div>
     """
   end

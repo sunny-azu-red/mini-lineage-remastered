@@ -73,6 +73,14 @@ defmodule MiniLineage.Game.Rules do
     }
   ]
 
+  # Rules §1: where each race starts, and stays until there is somewhere else to go.
+  @towns %{
+    0 => %{name: "Talking Island Village", emoji: "🏝️"},
+    1 => %{name: "Orc Village", emoji: "🏕️"},
+    2 => %{name: "Elven Village", emoji: "🌳"},
+    3 => %{name: "Dark Elven Village", emoji: "🌑"}
+  }
+
   # Rules §7: what a path starts with before anything is added to it.
   @paths %{
     fighter: %{power: 4, magic: 6, body: 80, mind: 41},
@@ -174,6 +182,7 @@ defmodule MiniLineage.Game.Rules do
   ]
 
   def sets, do: @sets
+  def town(race_id), do: Map.fetch!(@towns, race_id)
   def set(race_id, path), do: Enum.find(@sets, &(&1.race_id == race_id and &1.path == path))
   def path(path), do: Map.fetch!(@paths, path)
   def paths, do: @paths

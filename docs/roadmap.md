@@ -4,14 +4,17 @@ What gets built on top of the base rules (`docs/rules.md`), one system at a time
 raised so far, not promises. When a system is picked up, its rules are written into `rules.md`
 first, and the code follows.
 
-**Old mechanics.** The Inn, the Weapon and Armor Shops and the Battleground are what the game was
-before the base layer. They stay for their page design, and each is replaced by its system below.
+**Old mechanics.** What the game was before the base layer is kept in `legacy/`, to read and never
+to run: the Inn, the Weapon and Armor Shops, the Battleground, the Character page and its
+Chronicle, the Hall of Champions, the Tome, the Class Master, the Symbol Maker, sounds, timed buffs
+and the Konami cheat. Each is rebuilt here as its system below, on the base layer, and nothing
+from `legacy/` comes back as it was.
 
 ## Classes
 
 - **Fighter and Mystic** are already the two paths of the base layer.
 - **Class transfers** at levels 20 and 40, where each next class grows HP and MP differently. A
-  first version is already in the game, at the Class Master.
+  first version is in `legacy/`, at the Class Master.
 - A third transfer at level 76.
 - **Skills,** which give MP a use.
 - **Race perks:**
@@ -19,8 +22,8 @@ before the base layer. They stay for their page design, and each is replaced by 
   - Elves rest faster in their home village
   - Orcs shrug off sleep, root and poison
   - Humans have none; their strength is having the most class choices
-- **Dyes** that trade one attribute for another, at most +5 to each. A first version is already in
-  the game, at the Symbol Maker.
+- **Dyes** that trade one attribute for another, at most +5 to each. A first version is in
+  `legacy/`, at the Symbol Maker.
 
 ## Items
 
@@ -49,6 +52,7 @@ before the base layer. They stay for their page design, and each is replaced by 
 - Farming zones, questing zones and dungeons.
 - Shops in each town, selling what that town sells.
 - Day and night: night runs from 22:00 to 06:00 server time and makes it harder to hit.
-- Home villages for each race, and hunting grounds around them.
+- Hunting grounds around each race's starting village (rules §1), which is where a character
+  stands today with nothing yet to do.
 - Monsters with their own stats, levels, EXP and Adena.
 - Raid bosses.

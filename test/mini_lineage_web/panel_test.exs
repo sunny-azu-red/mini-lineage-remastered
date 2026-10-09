@@ -39,59 +39,16 @@ defmodule MiniLineageWeb.PanelTest do
     assert LazyHTML.attribute(tag(html, ".panel-body"), "hidden") == []
   end
 
-  test "keeps the reader's fold unless told not to, and names its subject for the hook" do
+  test "keeps the reader's fold unless told not to" do
     assigns = %{}
 
     html =
       rendered_to_string(~H"""
-      <Controls.panel id="p" title="P" collapsible remember={false} subject="abc">body</Controls.panel>
+      <Controls.panel id="p" title="P" collapsible remember={false}>body</Controls.panel>
       """)
 
     assert LazyHTML.attribute(tag(html, "#p"), "data-remember") == ["false"]
-    assert LazyHTML.attribute(tag(html, "#p"), "data-subject") == ["abc"]
     refute folding(false) =~ "data-remember"
-  end
-
-  # The hook reads which edge is the present off `data-log`, and words the pill from its data: the
-  # count is the reader's, so only the nouns and the direction come from the server.
-  test "a log names the order it reads in, and gives the pill its words" do
-    assigns = %{}
-
-    html =
-      rendered_to_string(~H"""
-      <Controls.panel
-        id="l"
-        title="L"
-        log={:newest_first}
-        at_present="log_at_present"
-        unread={{"new entry", "new entries"}}
-      >
-        body
-      </Controls.panel>
-      """)
-
-    assert html =~ ~s(phx-hook="Panel")
-    assert LazyHTML.attribute(tag(html, "#l"), "data-log") == ["newest-first"]
-    assert LazyHTML.attribute(tag(html, "#l"), "data-at-present") == ["log_at_present"]
-    pill = tag(html, "#l > button.panel-unread")
-    assert LazyHTML.attribute(pill, "hidden") == [""]
-    assert LazyHTML.attribute(pill, "data-one") == ["new entry"]
-    assert LazyHTML.attribute(pill, "data-many") == ["new entries"]
-    assert LazyHTML.attribute(pill, "data-rest") == ["more above"]
-  end
-
-  test "and a chat, read oldest first, has what it missed below" do
-    assigns = %{}
-
-    html =
-      rendered_to_string(~H"""
-      <Controls.panel id="c" title="C" log={:oldest_first} unread={{"new message", "new messages"}}>
-        body
-      </Controls.panel>
-      """)
-
-    assert LazyHTML.attribute(tag(html, "#c"), "data-log") == ["oldest-first"]
-    assert LazyHTML.attribute(tag(html, "#c > .panel-unread"), "data-rest") == ["more below"]
   end
 
   test "while a plain panel has no control and no hook at all" do

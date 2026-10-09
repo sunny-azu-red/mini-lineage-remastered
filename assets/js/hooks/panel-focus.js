@@ -1,10 +1,6 @@
-// A table's sort is how the reader views it, not something the run does: it neither takes the first
-// focus nor sends it anywhere, so focus stays on the header a keyboard is cycling.
-const VIEW_CONTROLS = '.sort, .reset-sort';
-
 /**
  * Focuses the panel's first control on arrival, so the game plays from the keyboard. Never takes
- * focus the player moved themselves, and never on the death screen, where Space would retire them.
+ * focus the player moved themselves.
  */
 export const PanelFocus = {
     mounted() {
@@ -13,8 +9,7 @@ export const PanelFocus = {
         // action may take focus back. Cleared by the next focus pass, so it never outlives it.
         this.acted = false;
         this.el.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (button && !button.matches(VIEW_CONTROLS))
+            if (e.target.closest('button'))
                 this.acted = true;
         });
         requestAnimationFrame(() => this.focusFirst(true));
@@ -28,19 +23,8 @@ export const PanelFocus = {
         requestAnimationFrame(() => this.focusFirst(arrived));
     },
     focusFirst(arrived) {
-        // You arrive here by dying, plausibly with a Space already travelling, and Play Again
-        // would retire the run before it is read. Declining to focus is not enough: LiveView
-        // morphs the Fight button into it and keeps focus there, so the panel must let go.
-        if (this.el.dataset.screen === 'death') {
-            if (this.el.contains(document.activeElement))
-                document.activeElement.blur();
-
-            return;
-        }
-
-        // Arriving pulls focus in, and so does your own press: LiveView restores focus to that
-        // button, which on a shop left it on Order rather than the picker. Any other update is a
-        // push you did not ask for, and wherever you left focus, nowhere included, stays yours.
+        // Arriving pulls focus in, and so does your own press, which LiveView would restore to that
+        // button. Any other update is a push you did not ask for, and focus stays where you left it.
         const acted = this.acted;
         this.acted = false;
         if (!arrived && !acted)
@@ -49,7 +33,7 @@ export const PanelFocus = {
         // Links are out because Space scrolls them rather than activating them; hidden inputs
         // because they match `input` without being focusable.
         const control = this.el.querySelector(
-            `input:not([type="hidden"]), select, button:not(${VIEW_CONTROLS})`,
+            'input:not([type="hidden"]), select, button',
         );
         if (control && !control.matches(':disabled'))
             control.focus({ preventScroll: true });

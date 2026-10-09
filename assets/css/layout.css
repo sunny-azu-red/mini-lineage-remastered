@@ -104,37 +104,6 @@
     line-height: 1;
 }
 
-.sound-toggle-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-family: var(--font-body);
-    font-size: 13px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-    z-index: 5;
-}
-
-.sound-toggle-btn:hover {
-    opacity: 1;
-}
-
-.sound-toggle-btn.silenced {
-    opacity: 0.35;
-}
-
-.sound-toggle-btn.silenced:hover {
-    opacity: 0.8;
-}
-
 /* The link is inside the box, so the box highlights when the link is hovered. */
 #site-header:has(#header-link:hover) {
     border-bottom-color: var(--gold);
@@ -147,7 +116,7 @@
 }
 
 /* ===== Columns =====
-   The sidebar and the aside are one `.side` column at fixed widths; one breakpoint stacks either. */
+   The sidebar is a `.side` column at a fixed width; one breakpoint stacks it. */
 #content {
     display: flex;
     gap: 12px;
@@ -169,49 +138,9 @@
     --side-width: 210px;
 }
 
-/* The page widens by what the aside takes, so the main panel keeps the width it has alone. */
-#aside {
-    --side-width: 310px;
-}
-
-#wrapper:has(#aside) {
-    max-width: 1000px;
-}
-
 /* Whichever panel follows another is spaced off it, wherever they stand. */
 .panel+.panel {
     margin-top: 12px;
-}
-
-/* A grid, so the aside spans the record's row and not the footer's; `contain: size` sizes it as if
-   empty, so the record alone decides that row's height. */
-@media (width > 640px) {
-    #content:has(#aside) {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: stretch;
-        /* The footer keeps its own margin, as it has beside the sidebar. */
-        row-gap: 0;
-    }
-
-    #content:has(#aside) #main {
-        display: contents;
-    }
-
-    #content:has(#aside) #main>* {
-        grid-column: 1;
-    }
-
-    #aside {
-        grid-area: 1 / 2;
-        width: var(--side-width);
-        contain: size;
-    }
-
-    #aside>.panel {
-        max-height: 100%;
-        grid-template-rows: auto minmax(0, 1fr);
-    }
 }
 
 /* Beside the main panel a side one does not fold, and `--folds` tells the hook so. Child
@@ -248,7 +177,7 @@
 }
 
 /* ===== Responsive ===== */
-/* Stacked before a side column can squeeze the main one narrower than a phone. Both flatten into
+/* Stacked before the side column can squeeze the main one narrower than a phone. Both flatten into
    #content, so the vitals go above the main panel and every other side panel below it. */
 @media (max-width: 640px) {
     #content {
@@ -283,11 +212,7 @@
         margin-top: 0;
     }
 
-    /* A cap, and a fold that starts shut, so the main panel is what the page ends on. */
-    .side .panel-body.scrolls {
-        max-height: 260px;
-    }
-
+    /* A side panel folds here, so the main panel is not pushed off the screen. */
     .side>.panel {
         --folds: 1;
     }

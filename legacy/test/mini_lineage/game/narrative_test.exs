@@ -1,0 +1,272 @@
+defmodule MiniLineage.Game.NarrativeTest do
+  @moduledoc """
+  The prose the player reads. `Format.fill_template/2` leaves an unrecognised `{placeholder}` in
+  place rather than raising, so a typo ships verbatim; these drive EVERY template in EVERY list, for
+  every race, and fail on any brace that survives.
+  """
+  use ExUnit.Case, async: true
+
+  alias MiniLineage.Game.{Classes, Constants, Format, Narrative, Narratives, Player, Rng}
+
+  @races 0..3
+
+  # `random_element/1` indexes with `floor(random() * length)`, so pinning the source to a constant
+  # pins the index. Sweeping the constant walks every list end to end.
+  defp with_draw(value, fun) do
+    Rng.put_source(fn -> value end)
+    fun.()
+  end
+
+  defp draws(count), do: Enum.map(0..(count - 1), &(&1 / count))
+
+  defp started(race_id, opts \\ []) do
+    %Player{
+      name: "Hero",
+      race_id: race_id,
+      health: 100,
+      adena: Keyword.get(opts, :adena, 0),
+      experience: 0,
+      weapon_id: Keyword.get(opts, :weapon_id, 0),
+      armor_id: Keyword.get(opts, :armor_id, 0)
+    }
+  end
+
+  defp unrendered(text) when is_binary(text) do
+    Regex.scan(~r/\{[^}]*\}/, text) |> List.flatten()
+  end
+
+  defp unrendered(nil), do: []
+
+  # Fixed so only the template choice varies: a simulated fight rolls different numbers each sweep,
+  # and the same template would then render to different strings.
+  defp fixed_result(opts \\ []) do
+    %{
+      enemies_killed: 3,
+      hp_lost: 12,
+      damage_blocked: 4,
+      xp_gained: 57,
+      adena_gained: 18,
+      is_critical: Keyword.get(opts, :critical, false),
+      is_level_up: Keyword.get(opts, :level_up, false)
+    }
+  end
+
+  describe "battle narrative" do
+    # 24 sweeps: more than the longest template list, so every index of every list is drawn.
+    @sweeps 24
+
+    test "every template renders with no placeholder left behind, for every race and outcome" do
+      for race_id <- @races,
+          critical? <- [true, false],
+          level_up? <- [true, false],
+          value <- draws(@sweeps) do
+        player = started(race_id, weapon_id: 3, armor_id: 3)
+
+        narrative =
+          with_draw(value, fn ->
+            result = fixed_result(critical: critical?, level_up: level_up?)
+            Narrative.build_battle(player, result)
+          end)
+
+        # A stored line keeps its PRONOUNS open until a reader is known, so everything else must
+        # close, and then the pronouns too, for both readers.
+        for {key, line} <- narrative, is_binary(line), mine? <- [true, false] do
+          spoken = Narrative.voiced(line, mine?)
+
+          assert unrendered(spoken) == [],
+                 "#{key} left #{inspect(unrendered(spoken))} for race #{race_id}: #{spoken}"
+
+          refute spoken =~ ~r/\byou\b/i and not mine?,
+                 "#{key} says \"you\" to somebody reading about a stranger: #{spoken}"
+        end
+      end
+    end
+
+    test "each list is drawn end to end, so the sweep above really does reach every template" do
+      lists = %{
+        kill_line: Narratives.kill(),
+        deflection_line: Narratives.deflection(),
+        outcome_line: Narratives.outcome(),
+        next_move: Narratives.moves()
+      }
+
+      seen =
+        for value <- draws(@sweeps), reduce: %{} do
+          acc ->
+            player = started(0, weapon_id: 3, armor_id: 3)
+
+            narrative =
+              with_draw(value, fn ->
+                Narrative.build_battle(player, fixed_result())
+              end)
+
+            Enum.reduce(Map.keys(lists), acc, fn key, acc ->
+              Map.update(acc, key, MapSet.new([narrative[key]]), &MapSet.put(&1, narrative[key]))
+            end)
+        end
+
+      for {key, templates} <- lists do
+        assert MapSet.size(seen[key]) == length(templates),
+               "#{key}: saw #{MapSet.size(seen[key])} distinct lines for #{length(templates)} templates"
+      end
+    end
+
+    test "a critical hit adds a line, and an ordinary hit does not" do
+      player = started(0)
+
+      crit =
+        with_draw(0.0, fn ->
+          Narrative.build_battle(player, fixed_result(critical: true))
+        end)
+
+      plain =
+        with_draw(0.0, fn ->
+          Narrative.build_battle(player, fixed_result(critical: false))
+        end)
+
+      assert is_binary(crit.crit_line)
+      assert plain.crit_line == nil
+    end
+
+    test "the narrative names the gear the character is actually carrying" do
+      player = started(0, weapon_id: 4, armor_id: 4)
+      weapon = Constants.weapon(4)
+
+      lines =
+        for value <- draws(@sweeps) do
+          with_draw(value, fn -> Narrative.build_battle(player, fixed_result()) end).kill_line
+        end
+
+      assert Enum.any?(lines, &String.contains?(&1, weapon.name)),
+             "no kill line named the equipped weapon"
+    end
+  end
+
+  describe "the opening flash" do
+    test "names the class and renders every welcome line cleanly" do
+      for race_id <- @races, value <- draws(@sweeps) do
+        race = Constants.race(race_id)
+
+        {_player, flash} =
+          with_draw(value, fn -> Player.initialize(%Player{}, race, :fighter, "Hero") end)
+
+        assert unrendered(flash.text) == [], "race #{race_id}: #{inspect(unrendered(flash.text))}"
+        assert String.contains?(flash.text, Classes.starting(race_id, :fighter).name)
+      end
+    end
+  end
+
+  describe "the fight that killed them" do
+    # `resolve_battle_outcome/2` returns the moment health reaches zero, BEFORE the XP, the Adena
+    # and every counter are credited. Its lines are drawn anyway and thrown away by the action.
+    test "pays nothing, not a reward and not a kill" do
+      fighter = started(0, weapon_id: 3, armor_id: 3)
+      {killed, _} = Player.resolve_battle_outcome(%{fighter | health: 1}, fixed_result())
+
+      assert killed.dead
+      assert killed.experience == fighter.experience, "a fatal fight granted XP"
+      assert killed.adena == fighter.adena, "a fatal fight granted Adena"
+
+      assert killed.total_enemies_killed == fighter.total_enemies_killed,
+             "a fatal fight counted kills"
+    end
+  end
+
+  describe "death lines" do
+    # Written once with its pronouns left open, so what has to hold is that it closes — for the
+    # fallen player reading their own record, and for the stranger reading it in the Halls.
+    test "every one is real prose for either reader, with no placeholder and no blank" do
+      for template <- [Narratives.death_cheated() | Narratives.death()],
+          mine? <- [true, false] do
+        line = Narrative.death_reason(template, mine?)
+
+        assert unrendered(line) == [],
+               "#{template} left #{inspect(unrendered(line))} for #{mine?}"
+
+        refute String.trim(line) == ""
+      end
+    end
+
+    test "and reads differently depending on who is reading it" do
+      for template <- [Narratives.death_cheated() | Narratives.death()] do
+        refute Narrative.death_reason(template, true) == Narrative.death_reason(template, false),
+               "#{template} says the same thing to a stranger as to the run it ended"
+      end
+    end
+
+    test "a death reason is drawn from that list" do
+      for value <- draws(@sweeps) do
+        player = with_draw(value, fn -> Player.kill(started(0)) end)
+        assert player.death_reason in Narratives.death()
+      end
+    end
+  end
+
+  describe "purchase messages" do
+    test "a completed purchase names the item and takes exactly its price" do
+      for {type, items} <- [
+            {"weapon", Constants.weapons()},
+            {"armor", Constants.armors()},
+            {"food", Constants.foods()}
+          ],
+          {item, id} <- Enum.with_index(items),
+          # The starting weapon and armor are equipped, never sold.
+          not (type in ["weapon", "armor"] and id == 0) do
+        player = started(0, adena: 2_000_000)
+        {after_buy, result} = Player.purchase(player, type, id)
+
+        assert result.success, "#{type} #{id} (#{item.name}) was refused: #{result.text}"
+        assert String.contains?(result.text, item.name), "message never named #{item.name}"
+        assert unrendered(result.text) == []
+        assert after_buy.adena == player.adena - item.cost
+      end
+    end
+
+    test "an unaffordable item is refused by name, and costs nothing" do
+      player = started(0, adena: 0)
+      {unchanged, result} = Player.purchase(player, "weapon", 5)
+      weapon = Constants.weapon(5)
+
+      refute result.success
+      assert String.contains?(result.text, weapon.name)
+      assert String.contains?(result.text, ~s(not have enough <span class="adena">🪙 Adena</span>))
+      assert unchanged.adena == 0
+    end
+
+    test "buying what you already wear is refused by name, and costs nothing" do
+      player = started(0, adena: 2_000_000, weapon_id: 2)
+      {unchanged, result} = Player.purchase(player, "weapon", 2)
+
+      refute result.success
+      assert String.contains?(result.text, Constants.weapon(2).name)
+      assert unchanged.adena == player.adena
+    end
+  end
+
+  # The welcome is a fragment joined mid-sentence ("They chose the Orc, and ..."), so a pronoun in
+  # its sentence-initial form would read "and Their spirit shines".
+  describe "the welcome a run begins with" do
+    test "is joined mid-sentence, so none of them starts a new one" do
+      race = Constants.race(1)
+
+      for template <- Narratives.welcome(), mine <- [true, false] do
+        welcome = Format.fill_template(template, %{"raceLabel" => race.label})
+
+        line =
+          race
+          |> Narrative.build_began(%{
+            class_name: "Orc Fighter",
+            welcome: welcome,
+            build: "a hardy",
+            definition: "youth",
+            age: 19,
+            adena: 450
+          })
+          |> Narrative.voiced(mine)
+
+        refute line =~ ~r/, and (Their|Your|They|You)\b/,
+               "a welcome capitalises mid-sentence: #{line}"
+      end
+    end
+  end
+end

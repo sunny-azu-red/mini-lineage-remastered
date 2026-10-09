@@ -1,4 +1,4 @@
-/* Mini-Lineage — Components: panels, logs, the status sidebar, bars, alerts, the chronicle. */
+/* Mini-Lineage — Components: panels, the status sidebar, bars, alerts. */
 
 /* ===== Panel Card ===== */
 /* The margin is for `scrollIntoView`, so a panel lands a gap above the fold, not flush with it. */
@@ -29,106 +29,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-/* The cap is the body's, never its content's, so the scrollbar sits against the panel's edge. */
-.panel-body.scrolls {
-    overflow-y: auto;
-}
-
-/* The `Log` hook keeps the reader's place itself; the browser's anchoring would pick its own line. */
-.panel[data-log]>.panel-body {
-    overflow-anchor: none;
-}
-
-/* The pill and its band share the body's grid cell, so both sit under the header at any height. */
-.panel[data-log] {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-}
-
-.panel[data-log]>.panel-header {
-    grid-area: 1 / 1;
-}
-
-.panel[data-log]>.panel-body,
-.panel[data-log]>.panel-unread,
-.panel[data-log]:has(> .panel-unread:not([hidden]))::after {
-    grid-area: 2 / 1;
-}
-
-/* The pill sits over the log's present edge: the top of one read newest first, the bottom of a chat. */
-.panel[data-log] {
-    --present: start;
-    --toward-past: to bottom;
-}
-
-.panel[data-log="oldest-first"] {
-    --present: end;
-    --toward-past: to top;
-}
-
-.panel>.panel-unread {
-    align-self: var(--present);
-    justify-self: center;
-    margin-block: 12px;
-    z-index: 2;
-}
-
-/* The log darkens behind the pill so it reads as over the log, not as one more line of it. The
-   1px keeps it clear of the body's gold line. */
-.panel[data-log]:has(> .panel-unread:not([hidden]))::after {
-    content: '';
-    align-self: var(--present);
-    height: 60px;
-    margin-top: 1px;
-    /* Over the rows, which are positioned and would otherwise paint their text through it. */
-    z-index: 1;
-    background: linear-gradient(var(--toward-past),
-            var(--bg-deep) 0%,
-            color-mix(in srgb, var(--bg-deep) 70%, transparent) 30%,
-            transparent 100%);
-    pointer-events: none;
-}
-
-/* Where a reader's absence began, in place of that entry's own rule, with the batch's count at its
-   end. The count is the later pseudo so it paints over the line; both stay under the pill's band. */
-.panel[data-log] [data-unread] {
-    position: relative;
-}
-
-.panel[data-log] [data-unread]::before {
-    content: '';
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: -1px;
-    border-bottom: 1px solid var(--text-info);
-    z-index: 1;
-}
-
-/* Over the entry's own rule, which a row may draw in this same pseudo. */
-.panel[data-log] [data-unread]::after {
-    content: attr(data-unread) " unread";
-    position: absolute;
-    left: auto;
-    right: 12px;
-    bottom: -9px;
-    display: flex;
-    align-items: center;
-    height: 17px;
-    /* Optical, as a field label's is: capitals centred by their box sit high. */
-    padding: 1px 6px 0;
-    border: 0;
-    border-radius: 3px;
-    background: var(--text-info);
-    color: var(--bg-deep);
-    z-index: 1;
-}
-
-/* `.btn` is a flex box, which outranks the attribute's own `display: none`. */
-.panel>.panel-unread[hidden] {
-    display: none;
 }
 
 /* The fold is `aria-expanded` alone, so a layout can keep a panel open before any script runs. */
@@ -207,49 +107,12 @@
     justify-content: center;
 }
 
-.effect-timer {
-    position: absolute;
-    top: -9px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 8px;
-    font-family: var(--font-pixel);
-    font-weight: 400;
-    /* Not inherited: the header band it sits in is gold. */
-    color: var(--text-primary);
-    pointer-events: none;
-    white-space: nowrap;
-    text-shadow:
-        0 0 3px rgba(0, 0, 0, 0.85),
-        0 0 5px rgba(0, 0, 0, 0.85),
-        -1px -1px 0 rgba(0, 0, 0, 0.85),
-        1px -1px 0 rgba(0, 0, 0, 0.85),
-        -1px 1px 0 rgba(0, 0, 0, 0.85),
-        1px 1px 0 rgba(0, 0, 0, 0.85);
-}
-
-.effect-buff .effect-timer {
-    color: var(--text-success);
-}
-
-.effect-debuff .effect-timer {
-    color: var(--text-danger);
-}
-
 .effect-fade-in {
     animation: effect-fade-in 0.4s ease-out forwards;
 }
 
 .effect-icon.effect-aura {
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
-}
-
-.effect-icon.effect-buff {
-    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-success) 20%, transparent));
-}
-
-.effect-icon.effect-debuff {
-    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--text-danger) 30%, transparent));
 }
 
 @keyframes effect-fade-in {
@@ -270,14 +133,13 @@
     border-top: 1px solid var(--gold-dim);
 }
 
-/* Rows hold the padding, so a marked row can colour itself wall to wall. */
+/* The rows hold the padding, so each one's rule can be inset on its own. */
 .panel-body.rows {
     padding: 0;
 }
 
 /* ===== Status Panel ===== */
-/* The rule is ::after, being inset where the row is not. The transparent border reserves its strip,
-   so a marked row's ground, clipped to the padding box, never tints the gaps in the dashes. */
+/* The rule is ::after, being inset where the row is not; the transparent border reserves its strip. */
 .stat-row {
     display: flex;
     align-items: center;
@@ -298,8 +160,7 @@
     gap: 10px;
 }
 
-.stat-row::after,
-ol.chronicle li::after {
+.stat-row::after {
     content: '';
     position: absolute;
     left: 12px;
@@ -308,44 +169,13 @@ ol.chronicle li::after {
     border-bottom: 1px dashed var(--border-soft);
 }
 
-/* No rule under the last row, so no strip, and a marked one's ground runs to its foot. */
-.stat-row:last-child,
-ol.chronicle li:last-child {
+/* No rule under the last row, so no strip. */
+.stat-row:last-child {
     border-bottom: 0;
 }
 
-.stat-row:last-child::after,
-ol.chronicle li:last-child::after {
+.stat-row:last-child::after {
     content: none;
-}
-
-/* Only the colour moves. The fade is a background IMAGE, and a `background` shorthand here would
-   throw it away on the first frame. */
-@keyframes danger-pulse {
-
-    0%,
-    100% {
-        background-color: color-mix(in srgb, var(--wash-danger) 75%, transparent);
-    }
-
-    50% {
-        background-color: color-mix(in srgb, var(--bar-hp) 25%, transparent);
-    }
-}
-
-/* The shape of every marked row; the colour is each row's own, so none overrides a default. */
-.stat-row.danger,
-ol.chronicle li:is(.start, .level-up, .class-change, .purchase) {
-    background-image: linear-gradient(90deg,
-            var(--bg-panel) 0,
-            transparent 33%,
-            transparent 67%,
-            var(--bg-panel) 100%);
-    background-clip: padding-box;
-}
-
-.stat-row.danger {
-    animation: danger-pulse .5s ease-in-out infinite;
 }
 
 /* The 1px is optical: capitals centred by their box sit high. */
@@ -442,15 +272,6 @@ ol.chronicle li:is(.start, .level-up, .class-change, .purchase) {
     padding: 9px 12px;
     margin-bottom: 12px;
     border-left: 3px solid;
-    position: relative;
-    overflow: hidden;
-    transform: translateZ(0);
-}
-
-/* What an alert is ABOUT keeps the alert's voice and takes the weight; two classes, so it wins. */
-.alert :is(.item, .buff, .debuff) {
-    color: inherit;
-    font-weight: var(--weight-value);
 }
 
 .alert-info {
@@ -459,49 +280,10 @@ ol.chronicle li:is(.start, .level-up, .class-change, .purchase) {
     color: var(--text-info);
 }
 
-.alert-success {
-    background: var(--wash-success);
-    border-color: var(--border-success);
-    color: var(--text-success);
-}
-
-.alert-warning {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 25%, transparent) 0%, color-mix(in srgb, var(--gold-dim) 35%, transparent) 100%);
-    border-color: var(--gold);
-    color: var(--text-warning);
-}
-
 .alert-danger {
     background: var(--wash-danger);
     border-color: var(--border-danger);
     color: var(--text-danger);
-}
-
-/* ===== Level Up Shine ===== */
-.alert-warning::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 150%;
-    height: 100%;
-    background: linear-gradient(45deg,
-            transparent 45%,
-            rgba(255, 255, 255, 0.15) 50%,
-            transparent 55%);
-    animation: alert-shine 3s infinite linear;
-    pointer-events: none;
-    will-change: transform;
-}
-
-@keyframes alert-shine {
-    from {
-        transform: translateX(-100%);
-    }
-
-    to {
-        transform: translateX(100%);
-    }
 }
 
 /* ===== Code Block ===== */
@@ -519,70 +301,31 @@ ol.chronicle li:is(.start, .level-up, .class-change, .purchase) {
     white-space: pre-wrap;
 }
 
-/* ===== Chronicle ===== */
-/* Ordered but never numbered. The cap and the scroll are the panel's, not this list's. */
-ol.chronicle {
-    list-style: none;
-}
-
 /* Chrome, so the controls' violet and never the accent at rest. The standard property serves Firefox
    and Chromium; the pseudo-elements are for Safari. */
 .table-container,
-.panel-body.scrolls,
 .code-block {
     scrollbar-color: var(--border-arcane-bright) transparent;
 }
 
 .table-container::-webkit-scrollbar,
-.panel-body.scrolls::-webkit-scrollbar,
 .code-block::-webkit-scrollbar {
     width: 12px;
     height: 12px;
 }
 
 .table-container::-webkit-scrollbar-track,
-.panel-body.scrolls::-webkit-scrollbar-track,
 .code-block::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .table-container::-webkit-scrollbar-thumb,
-.panel-body.scrolls::-webkit-scrollbar-thumb,
 .code-block::-webkit-scrollbar-thumb {
     background: var(--border-arcane-bright);
     border-radius: var(--radius);
 }
 
 .table-container::-webkit-scrollbar-thumb:hover,
-.panel-body.scrolls::-webkit-scrollbar-thumb:hover,
 .code-block::-webkit-scrollbar-thumb:hover {
     background: var(--gold-dim);
-}
-
-/* Each washed like the alert that would announce it. */
-ol.chronicle li.start {
-    background-color: var(--wash-info);
-}
-
-ol.chronicle li:is(.level-up, .class-change) {
-    background-color: var(--wash-gold);
-}
-
-ol.chronicle li.purchase {
-    background-color: var(--wash-success);
-}
-
-/* When and what on the left, the entry's number on the right, in the date's colour. */
-ol.chronicle .entry-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    color: var(--text-muted);
-}
-
-/* Rows, as the sidebar's stats are: a rule between them and none around the outside. */
-ol.chronicle li {
-    padding: 12px;
-    position: relative;
-    border-bottom: 1px solid transparent;
 }

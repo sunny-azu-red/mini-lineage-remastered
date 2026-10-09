@@ -114,116 +114,13 @@
 }
 
 /* ===== Active / Press ===== */
-.btn:active,
-.btn.active {
+.btn:active {
     background: linear-gradient(180deg, #232027 0%, #2c2832 100%);
     border-color: var(--gold-dim);
     box-shadow:
         0 0 0 2px color-mix(in srgb, var(--gold) 20%, transparent),
         inset 0 2px 4px rgba(0, 0, 0, 0.4);
     transition: none;
-}
-
-/* ===== Danger Variant =====
- * The primary's lightness ramp six L* lower, at 1.6x its chroma, since red goes brown where violet
- * stays slate. LCh hue 0, a step toward the violet, so it reads as dread and not as an error. */
-.btn-danger {
-    background: linear-gradient(180deg, #581d33 0%, #3c1121 100%);
-    border: 1px solid var(--border-danger);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    /* The alert's own voice, which clears AA on this darker ground at 5.23. */
-    color: var(--text-danger);
-}
-
-.btn-danger::after {
-    background: linear-gradient(90deg,
-            transparent,
-            color-mix(in srgb, var(--glow-hp) 50%, transparent),
-            transparent);
-}
-
-.btn-danger:hover {
-    background: linear-gradient(180deg, #64233b 0%, #461728 100%);
-    border-color: var(--glow-hp);
-    box-shadow:
-        0 0 0 2px color-mix(in srgb, var(--glow-hp) 15%, transparent),
-        0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-.btn-danger:active {
-    background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
-    border-color: var(--border-danger);
-    box-shadow:
-        0 0 0 2px color-mix(in srgb, var(--bar-hp) 20%, transparent),
-        inset 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-/* ===== Secondary Variant ===== */
-.btn-secondary {
-    background: linear-gradient(180deg, #27242a 0%, #1b191e 100%);
-    border: 1px solid var(--border-arcane);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    color: var(--text-secondary);
-}
-
-.btn-secondary::after {
-    background: linear-gradient(90deg,
-            transparent,
-            color-mix(in srgb, var(--border-arcane-bright) 35%, transparent),
-            transparent);
-}
-
-.btn-secondary:hover {
-    background:
-        linear-gradient(180deg,
-            rgba(255, 255, 255, 0.06) 0%,
-            transparent 50%,
-            rgba(0, 0, 0, 0.12) 100%),
-        linear-gradient(180deg,
-            #322f37 0%,
-            #27242a 50%,
-            #2d2b31 100%);
-
-    border-color: var(--border-arcane-bright);
-    box-shadow:
-        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 15%, transparent),
-        0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.btn-secondary:active,
-.btn-secondary.active {
-    background: linear-gradient(180deg, #141315 0%, #1b191e 100%);
-    border-color: var(--border-arcane-bright);
-    box-shadow:
-        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 20%, transparent),
-        inset 0 2px 3px rgba(0, 0, 0, 0.35);
-}
-
-/* ===== Action link container ===== */
-.action-links {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 12px;
-}
-
-.action-links.top {
-    margin-top: 0;
-    margin-bottom: 12px;
-}
-
-/* Across from the filters, since it undoes none of them. Not on a phone, where they wrap and it
-   would sit alone at the end of a line. */
-@media (width > 640px) {
-    .reset-sort {
-        margin-left: auto;
-    }
-}
-
-/* ===== Sizing Variants ===== */
-.btn-sm {
-    padding: 0 10px;
-    height: 26px;
 }
 
 /* ===== Disabled State ===== */

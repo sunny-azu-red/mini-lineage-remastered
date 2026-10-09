@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.BackLinksTest do
   @moduledoc """
   Every way back, across every state that can reach it. A back link can be wrong without looking
-  broken: the destination can be right while its words promise a journey that is over.
+  broken: the destination can be right while its words promise a journey that has not begun.
   """
   use ExUnit.Case, async: true
 
@@ -10,45 +10,19 @@ defmodule MiniLineageWeb.BackLinksTest do
   alias MiniLineage.Game.{Access, Constants, Player, Snapshot}
   alias MiniLineageWeb.Screens
 
-  @screens ~w(error races statistics highscores character battle home inn weapons armors
-              class_master symbol_maker death start)
+  @screens ~w(start home races error)
 
   defp states do
-    {alive, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
+    {started, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
 
-    [unstarted: %Player{}, alive: alive, dead: Player.kill(alive)]
-  end
-
-  # The run a Character screen draws is not the player reading it — a visitor with no character of
-  # their own can open anybody's record. So the subject is its own started run, and a record is
-  # never nil: an id nobody has is a 404 long before anything is rendered.
-  defp subject do
-    {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Somebody")
-    player
+    [unstarted: %Player{}, started: started]
   end
 
   defp render(screen, player, detail \\ nil) do
-    viewing? = screen == "character"
-
     render_component(&Screens.screen/1,
       view: Snapshot.build(player),
       screen: screen,
       catalog: Snapshot.catalog(),
-      boards: %{},
-      statistics: nil,
-      record:
-        viewing? &&
-          %{
-            id: "somebody",
-            name: "Somebody",
-            inserted_at: DateTime.utc_now(),
-            last_seen_at: DateTime.utc_now(),
-            active: true,
-            dead: false
-          },
-      record_view: viewing? && Snapshot.build(subject()),
-      record_log: [],
-      from: nil,
       detail: detail
     )
   end
@@ -59,60 +33,32 @@ defmodule MiniLineageWeb.BackLinksTest do
     |> Enum.map(fn [_, href, text] -> {href, String.replace(text, ~r/\s+/, " ")} end)
   end
 
-  describe "a player who has died" do
-    test "is never invited to carry on, on any screen they can reach" do
-      for screen <- @screens,
-          dead = states()[:dead],
-          Access.pin_screen(screen, dead) == screen,
-          {_href, text} <- links(render(screen, dead)) do
-        refute text =~ ~r/continue|journey ahead|game start/i,
-               "#{screen} offers the dead #{inspect(text)}"
-      end
-    end
+  test "a visitor is never told to continue a journey they have not begun" do
+    visitor = states()[:unstarted]
 
-    test "and where a screen names their way out, it is their ending" do
-      dead = states()[:dead]
-
-      for screen <- ~w(highscores),
-          {href, text} <- links(render(screen, dead)),
-          text =~ ~r/return|back/i do
-        assert href == "/", "#{screen}: #{inspect(text)} -> #{href}"
-        assert text =~ "final rest", "#{screen} says #{inspect(text)} to someone who has died"
-      end
+    for screen <- @screens,
+        Access.pin_screen(screen, visitor) == screen,
+        {_href, text} <- links(render(screen, visitor)) do
+      refute text =~ ~r/continue your journey/i, "#{screen} offers a visitor #{inspect(text)}"
     end
   end
 
-  describe "a visitor with no character" do
-    test "is never told to continue a journey they have not begun" do
-      for screen <- @screens,
-          visitor = states()[:unstarted],
-          Access.pin_screen(screen, visitor) == screen,
-          {_href, text} <- links(render(screen, visitor)) do
-        refute text =~ ~r/continue your journey|final rest/i,
-               "#{screen} offers a visitor #{inspect(text)}"
-      end
+  test "and a character is never sent back to a start it is past" do
+    started = states()[:started]
+
+    for screen <- @screens,
+        Access.pin_screen(screen, started) == screen,
+        {_href, text} <- links(render(screen, started)) do
+      refute text =~ ~r/game start/i, "#{screen} offers a character #{inspect(text)}"
     end
   end
 
   # The same way out as the page Phoenix draws, since both are the same apology.
-  describe "the error screen" do
-    test "rules off its way back only when no fault stands above it to do so" do
-      alive = states()[:alive]
+  test "the error screen rules off its way back only when no fault stands above it to do so" do
+    started = states()[:started]
 
-      assert render("error", alive) =~ ~s(class="last back")
-      refute render("error", alive, "boom") =~ ~s(class="last back")
-      assert render("error", alive, "boom") =~ "code-block"
-    end
-  end
-
-  describe "the shops, the Class Master and the Symbol Maker" do
-    test "carry no back link at all — their select is the way out" do
-      alive = states()[:alive]
-
-      for screen <- ~w(inn weapons armors class_master symbol_maker) do
-        refute render(screen, alive) =~ "last back",
-               "#{screen} grew a back link; its form is meant to be the only way out"
-      end
-    end
+    assert render("error", started) =~ ~s(class="last back")
+    refute render("error", started, "boom") =~ ~s(class="last back")
+    assert render("error", started, "boom") =~ "code-block"
   end
 end

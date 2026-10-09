@@ -26,6 +26,3 @@ config :mini_lineage, character_idle_grace_ms: 150
 
 # Only the ticks a test sends: one landing on its own under CI load moves an exact health figure.
 config :mini_lineage, tick_interval_ms: :timer.hours(1)
-
-config :mini_lineage, start_statistics_collector: false
-config :mini_lineage, start_board: false

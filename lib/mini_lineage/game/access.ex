@@ -5,31 +5,21 @@ defmodule MiniLineage.Game.Access do
   """
   alias MiniLineage.Game.Player
 
-  # The pin gates what may be DONE, not read: these carry no `phx-click`, so no state is kept off
-  # them.
-  @readable ~w(character highscores statistics races error)
-
-  # Screens a living character may never be on — 'death' offers "Play Again?", which wipes them,
-  # and 'start' is character creation, which they are past.
-  @started_blocked ~w(start death)
+  # Carry no action, so every state may read them.
+  @readable ~w(races error)
 
   @doc """
-  Where the player is actually allowed to be. What can be READ is answered first and for everyone;
-  after that, death wins outright, then living-vs-absent character.
+  Where the player is allowed to be: what can be read, for everyone; their town once a character
+  exists, which is past character creation; and character creation until then.
   """
   def pin_screen(screen, player) do
     cond do
       screen in @readable -> screen
-      player.dead -> "death"
-      Player.started?(player) -> if screen in @started_blocked, do: "home", else: screen
+      Player.started?(player) -> "home"
       true -> "start"
     end
   end
 
-  @doc "Whether the Konami sequence can touch this run, which decides whether keys are sent."
-  def konami?(view), do: view.started and not view.dead and not view.cheated
-
-  @doc "An allowlist, not derived: \"has a character\" is a different question."
-  def sidebar?(screen),
-    do: screen in ~w(home battle weapons armors inn class_master symbol_maker death)
+  @doc "Screens that show the sidebar."
+  def sidebar?(screen), do: screen == "home"
 end

@@ -8,7 +8,7 @@ defmodule MiniLineageWeb.FigureTest do
   import Phoenix.LiveViewTest
 
   alias MiniLineage.Game.{Constants, Format, Player, Snapshot}
-  alias MiniLineageWeb.{Controls, Screens}
+  alias MiniLineageWeb.{Controls, Layouts}
 
   defp figures(html) do
     html
@@ -31,32 +31,20 @@ defmodule MiniLineageWeb.FigureTest do
              figures(render_component(&Controls.figure/1, key: "k", value: 2_000, format: :adena))
   end
 
-  test "every figure on a record says what it counts to" do
+  test "every figure in the sidebar says what it counts to" do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Counted")
     player = %{player | adena: 12_345, experience: 4_321}
 
     html =
-      render_component(&Screens.screen/1,
+      render_component(&Layouts.app/1,
+        title: "Orc Village",
         view: Snapshot.build(player),
-        screen: "character",
-        catalog: Snapshot.catalog(),
-        boards: %{},
-        statistics: nil,
-        record: %{
-          id: "counted",
-          name: "Counted",
-          inserted_at: DateTime.utc_now(),
-          last_seen_at: DateTime.utc_now(),
-          active: true,
-          dead: false
-        },
-        record_view: Snapshot.build(player),
-        record_log: [],
-        from: nil
+        screen: "home",
+        inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]
       )
 
     found = figures(html)
-    assert length(found) > 10
+    assert length(found) == 8
 
     for {format, [value], text} <- found do
       assert text == said(format, value), "#{inspect(format)} #{value} reads #{inspect(text)}"

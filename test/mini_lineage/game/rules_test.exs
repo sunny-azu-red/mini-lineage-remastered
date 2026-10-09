@@ -27,6 +27,13 @@ defmodule MiniLineage.Game.RulesTest do
   @races %{"Human" => 0, "Orc" => 1, "Elf" => 2, "Dark Elf" => 3}
 
   describe "the tables" do
+    test "§1 every race starts in its own village" do
+      rows = table("Race")
+      assert length(rows) == 4
+
+      for [race, town] <- rows, do: assert(Rules.town(@races[race]).name == town, race)
+    end
+
     test "§3 starting attributes are the eight sets the code starts from" do
       rows = table("Set")
       assert length(rows) == 8

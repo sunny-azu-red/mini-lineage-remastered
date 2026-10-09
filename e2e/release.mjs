@@ -1,5 +1,5 @@
 /**
- * One turn against a production image, driven by e2e/release.sh: what only a release has — digested
+ * One character against a production image, driven by e2e/release.sh: what only a release has — digested
  * assets, its CSP, the secure cookie, the stamped footer — and that its socket connects at all.
  */
 import { chromium } from 'playwright';
@@ -11,7 +11,7 @@ const page = await browser.newPage();
 const consoleErrors = [];
 page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
-const { state, onScreen, travel } = controls(page);
+const { onScreen } = controls(page);
 
 try {
     const response = await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
@@ -29,14 +29,13 @@ try {
 
     await page.fill('#main input[name="name"]', 'ReleaseBot');
     await page.selectOption('#main select[name="race_id"]', '1');
+    await page.selectOption('#main select[name="path"]', 'fighter');
     await page.click('#main button[type="submit"]');
     await onScreen('home');
     const cookie = (await page.context().cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is secure and httpOnly', cookie?.secure && cookie?.httpOnly);
-
-    // Arriving fights, and the dice may end the run: either screen is the server answering.
-    await travel('battle');
-    check('a fight resolves', ['battle', 'death'].includes((await state()).screen));
+    check('...and the character stands in its village',
+        (await page.textContent('#main .header-name'))?.trim() === 'Orc Village');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {
     check(`release check threw: ${err.message}`, false);

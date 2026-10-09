@@ -1,11 +1,11 @@
 defmodule MiniLineage.CharactersTest do
   @moduledoc """
   The state layer against the real database: a character outlives its process, concurrent actions
-  cannot interleave, and each effect expires on its own timer rather than on the next read.
+  cannot interleave, and the tick heals the wounded while nobody is reading.
   """
   use MiniLineage.DataCase, async: false
 
-  alias MiniLineage.{Board, CharacterLog, Characters}
+  alias MiniLineage.Characters
   alias MiniLineage.Characters.{Record, Store, Sweeper}
   alias MiniLineage.Game.{Constants, Player}
 
@@ -19,11 +19,11 @@ defmodule MiniLineage.CharactersTest do
   defp start_character(id, race_id \\ 0) do
     Characters.mutate(id, fn player ->
       {player, _flash} = Player.initialize(player, Constants.race(race_id), :fighter, "Hero")
-      {%{player | current_screen: "home"}, :ok}
+      {player, :ok}
     end)
   end
 
-  test "a character survives its process dying — today's characters live 24h", %{id: id} do
+  test "a character survives its process dying", %{id: id} do
     start_character(id)
     hold(id)
     Characters.mutate(id, &{%{&1 | adena: 4242, experience: 900}, :ok})
@@ -39,8 +39,6 @@ defmodule MiniLineage.CharactersTest do
     assert reloaded.name == "Hero"
     assert reloaded.adena == 4242
     assert reloaded.experience == 900
-    assert Enum.any?(reloaded.effects, &(&1.id == "newbie_blessing"))
-    assert Enum.any?(reloaded.effects, &(&1.id == "resting"))
   end
 
   test "concurrent actions on one character cannot interleave into a lost update", %{id: id} do
@@ -69,31 +67,6 @@ defmodule MiniLineage.CharactersTest do
     assert stored(id) == written
   end
 
-  test "an effect expires on its own timer, pushing the change without anyone reading", %{id: id} do
-    start_character(id)
-    hold(id)
-    Characters.subscribe(id)
-
-    deadline = System.system_time(:millisecond) + 60
-
-    Characters.mutate(id, fn player ->
-      effects =
-        Enum.map(player.effects, fn e ->
-          if e.id == "newbie_blessing", do: %{e | expires_at: deadline}, else: e
-        end)
-
-      {%{player | effects: effects}, :ok}
-    end)
-
-    # The mutation's own broadcast still carries the blessing...
-    assert_receive {:character_updated, mutated, _id}, 1_000
-    assert Enum.any?(mutated.effects, &(&1.id == "newbie_blessing"))
-
-    # ...and the timer's does not. Nothing read the character in between.
-    assert_receive {:character_updated, expired, _id}, 2_000
-    refute Enum.any?(expired.effects, &(&1.id == "newbie_blessing"))
-  end
-
   test "the regeneration tick heals a resting, wounded character", %{id: id} do
     start_character(id, 2)
     hold(id)
@@ -106,63 +79,14 @@ defmodule MiniLineage.CharactersTest do
     assert Characters.snapshot(id).health == 15
   end
 
-  test "the tick does not heal a character standing in a combat zone", %{id: id} do
-    start_character(id, 2)
-    hold(id)
-    Characters.mutate(id, &{%{&1 | health: 10, current_screen: "battle"}, :ok})
-
-    [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
-    send(pid, :tick)
-
-    assert Characters.snapshot(id).health == 10
-  end
-
   test "a character with no viewers stops on its own once the grace period elapses", %{id: id} do
     start_character(id)
-    Characters.mutate(id, &{%{&1 | effects: []}, :ok})
 
     {pid, ref} = leave(id)
 
     # State is already persisted, so stopping loses nothing.
     assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 2_000
     assert Characters.snapshot(id).name == "Hero"
-  end
-
-  # Otherwise a buff lapsing after the tab closed would be logged whenever the player came back,
-  # or never, while a stranger's page had already stopped showing it.
-  test "but one with a buff still to lapse stays up to write it, and then stops", %{id: id} do
-    start_character(id)
-    # Far enough out that the 150ms idle stop finds it still on, however loaded the machine.
-    lapses_at = System.system_time(:millisecond) + 3_000
-
-    Characters.mutate(
-      id,
-      &{%{&1 | effects: Enum.map(&1.effects, fn e -> lapsing(e, lapses_at) end)}, :ok}
-    )
-
-    {pid, ref} = leave(id)
-
-    await_lingering(pid)
-    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 6_000
-
-    character = Characters.character_id(id)
-
-    assert Enum.any?(
-             character |> CharacterLog.page() |> elem(0),
-             &(&1.kind == "buff" and &1.line =~ "leaves")
-           )
-  end
-
-  # Kept up for a lapse, it is still a player who has gone: nobody heals while they are away.
-  test "and does not heal the player while it waits", %{id: id} do
-    start_character(id)
-    Characters.mutate(id, &{%{&1 | health: 10}, :ok})
-
-    {pid, _ref} = leave(id)
-    await_lingering(pid)
-
-    send(pid, :tick)
-    assert :sys.get_state(pid).player.health == 10
   end
 
   # Attach a viewer and let it go, which is what arms the stop.
@@ -176,18 +100,6 @@ defmodule MiniLineage.CharactersTest do
 
     {pid, ref}
   end
-
-  # The idle stop has fired and kept the run up, read off the state rather than timed.
-  defp await_lingering(pid, attempts \\ 100) do
-    cond do
-      :sys.get_state(pid).lingering -> :ok
-      attempts == 0 -> flunk("the idle stop never left the run lingering")
-      true -> Process.sleep(20) && await_lingering(pid, attempts - 1)
-    end
-  end
-
-  defp lapsing(%{id: "newbie_blessing"} = effect, at), do: %{effect | expires_at: at}
-  defp lapsing(effect, _at), do: effect
 
   test "an unstarted character is never persisted, and never invents a health value", %{id: id} do
     # Elixir orders nil above every number, so a max-health clamp on nil health would write a row
@@ -223,8 +135,7 @@ defmodule MiniLineage.CharactersTest do
   end
 
   describe "the idle retirement" do
-    # A run nobody has come back to has still been played, so it keeps its place in the Halls and
-    # gives up only the session that tied it to a browser.
+    # A run nobody has come back to gives up only the session that tied it to a browser.
     defp backdate(session) do
       stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
 
@@ -251,9 +162,8 @@ defmodule MiniLineage.CharactersTest do
 
       # The session is gone, so nothing can pick this run up again...
       assert stored(id) == nil
-      # ...but the run itself is still here, and still in the Halls.
-      assert Repo.get(Record, character_id)
-      assert Board.entry(character_id).name == "Hero"
+      # ...but the run itself is still here.
+      assert Repo.get(Record, character_id).state["name"] == "Hero"
     end
 
     test "the scheduled sweeper does the same work, through its own process", %{id: id} do

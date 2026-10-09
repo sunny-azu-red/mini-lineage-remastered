@@ -4,8 +4,6 @@
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    /* A header's, whether the cell holds the label or a sort button holds it for the cell. */
-    --th-padding: 6px 10px 4px 10px;
 }
 
 .table-container {
@@ -19,7 +17,7 @@
 .data-table th {
     background: var(--table-lift);
     /* A cell's horizontal padding, so a label sits over its column's edge. */
-    padding: var(--th-padding);
+    padding: 6px 10px 4px 10px;
     text-align: left;
     border-bottom: 1px solid var(--border-soft);
 }
@@ -38,138 +36,15 @@ th.num {
     text-align: right;
 }
 
-/* Everything but the name is a figure or a date, and neither reads wrapped. */
+/* Everything but the name is a figure, and a figure does not read wrapped. */
 .data-table th:not(.name),
 .data-table td:not(.name) {
     white-space: nowrap;
 }
 
-/* On a phone a column's LABEL may take two lines, so the cost is not behind a sideways scroll. */
+/* On a phone a column's LABEL may take two lines, so no figure is behind a sideways scroll. */
 @media (max-width: 520px) {
     .data-table th:not(.name) {
         white-space: normal;
-    }
-
-    /* Every column is at its narrowest here, so the arrow keeps its room only where it is drawn. */
-    .data-table th:not([aria-sort]) .sort-arrow {
-        display: none;
-    }
-}
-
-/* --- a sortable column ---------------------------------------------------------------------- */
-
-/* The whole cell is the target, so the button takes the header's padding and inherits its type. */
-.data-table th:has(> .sort) {
-    padding: 0;
-}
-
-.data-table .sort {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
-    padding: var(--th-padding);
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    text-align: inherit;
-    cursor: pointer;
-}
-
-/* A right-aligned label keeps its edge, and the arrow goes on the side it leaves free. */
-.data-table th.num .sort {
-    flex-direction: row-reverse;
-}
-
-.data-table .sort:hover {
-    color: var(--gold-hover);
-}
-
-.data-table th[aria-sort] {
-    color: var(--gold);
-}
-
-/* The panel's chevron at a label's size; the translate centres it. Hidden rather than absent, so a
-   column does not widen as it takes the sort. */
-.sort-arrow {
-    flex-shrink: 0;
-    width: 6px;
-    height: 6px;
-    border-right: 1.5px solid currentColor;
-    border-bottom: 1.5px solid currentColor;
-    transform: rotate(45deg) translate(-1.125px, -1.125px);
-    visibility: hidden;
-}
-
-.data-table th[aria-sort] .sort-arrow {
-    visibility: visible;
-}
-
-.data-table th[aria-sort="ascending"] .sort-arrow {
-    transform: rotate(-135deg) translate(-1.125px, -1.125px);
-}
-
-/* --- the Halls of Champions ------------------------------------------------------------------ */
-
-/* `:not(.mine)` rather than declaration order, so yours stays gold however the rules move. */
-.data-table tbody tr.character-row.alive:not(.mine) {
-    background-color: var(--wash-success);
-    box-shadow: inset 2px 0 0 var(--text-heal);
-}
-
-.data-table tbody tr.character-row.mine {
-    background-color: var(--wash-gold);
-    box-shadow: inset 2px 0 0 var(--gold);
-}
-
-/* --- the shops ------------------------------------------------------------------------------- */
-
-/* What you already wear or wield, marked as the Halls mark your own run: this row is you. */
-.data-table tbody tr.owned {
-    background-color: var(--wash-gold);
-    box-shadow: inset 2px 0 0 var(--gold);
-}
-
-/* The wash marks the row; an item's quiet grey would leave the name the one thing in it not lit. */
-.data-table tbody tr.owned .item {
-    color: var(--text-primary);
-}
-
-/* --- the Halls of Champions ------------------------------------------------------------------ */
-
-/* Somebody has this character open. Always in the DOM so it can fade; only `.lit` changes. */
-.character-row .online {
-    color: var(--text-heal);
-    opacity: 0;
-    transition: opacity 400ms ease;
-}
-
-.character-row .online.lit {
-    opacity: 1;
-}
-
-/* A background, not an overlay: a <tr>'s ::after paints over the cells whatever its z-index. So
-   the row colours above set `background-color`, never the `background` shorthand, which would
-   blank this out. */
-.data-table tbody tr.character-row.stirred {
-    background-image: linear-gradient(105deg,
-            transparent 40%,
-            rgba(255, 255, 255, 0.12) 50%,
-            transparent 60%);
-    /* The image is wider than the row, so a tiled one would sweep twice. */
-    background-repeat: no-repeat;
-    background-size: 250% 100%;
-    background-position: -5% 0;
-    animation: row-sweep 420ms linear forwards;
-}
-
-/* The image is larger than the box, so the percentages run backwards: -5% is just off the RIGHT.
-   Narrow on purpose, or the band spends the animation outside the row and reads as a flicker. */
-@keyframes row-sweep {
-    to {
-        background-position: 105% 0;
     }
 }

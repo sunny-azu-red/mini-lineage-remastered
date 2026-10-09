@@ -2,9 +2,9 @@ defmodule MiniLineage.Game.Math do
   @moduledoc """
   JS number semantics are reproduced deliberately: `js_round/1` rounds halves toward +infinity, and
   `roll_chance/1` short-circuits at both ends WITHOUT drawing — a chance of exactly 0 or 100 consumes
-  no randomness, which the golden master's draw order depends on.
+  no randomness, so a seeded stream keeps its draw order.
   """
-  alias MiniLineage.Game.{Constants, Rng, Rules}
+  alias MiniLineage.Game.{Rng, Rules}
 
   def random_int(min, max), do: Kernel.floor(Rng.random() * (max - min + 1)) + min
 
@@ -14,14 +14,6 @@ defmodule MiniLineage.Game.Math do
   def roll_chance(chance) when chance >= 100, do: true
   def roll_chance(chance), do: Rng.random() * 100 <= chance
 
-  # Distinct names (not aliases) so each roll reads as its own decision at the call site.
-  def crit_chance?(chance), do: roll_chance(chance)
-
-  # hp
-  def low_health_threshold(max_hp), do: Kernel.floor(max_hp * Constants.low_health_threshold())
-  def low_health?(health, max_hp), do: health > 0 and health <= low_health_threshold(max_hp)
-
-  # xp and levels
   # Rules §12.
   def xp_for_level(level) when level <= 1, do: 0
   def xp_for_level(level), do: Rules.experience(level)
@@ -66,25 +58,6 @@ defmodule MiniLineage.Game.Math do
   end
 
   def level_up?(old_xp, new_xp), do: level_for_xp(new_xp) > level_for_xp(old_xp)
-
-  # battle scaling
-  def enemy_count_range(attack, min_mult, max_mult),
-    do: %{
-      min: max(1, Kernel.floor(attack * min_mult)),
-      max: max(2, Kernel.floor(attack * max_mult))
-    }
-
-  def danger_level(attack, multiplier), do: Kernel.floor(attack * multiplier)
-
-  @doc "Sub-linear so stacking armor never reaches invincibility."
-  def damage_blocked(defense, exponent, multiplier),
-    do: max(1, Kernel.floor(:math.pow(defense, exponent) * multiplier))
-
-  def base_xp_gained(attack, exponent, multiplier),
-    do: Kernel.floor(:math.pow(attack, exponent) * multiplier)
-
-  def base_adena_gained(attack, exponent, multiplier),
-    do: Kernel.floor(:math.pow(attack, exponent) * multiplier)
 
   @doc "`Math.round`: halves go toward +infinity, unlike Elixir's round/1 which goes away from zero."
   def js_round(x), do: Kernel.floor(x + 0.5)

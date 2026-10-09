@@ -35,14 +35,8 @@ const countingAdena = (value) => shortenAdena(value, false);
 export const AnimatedValues = {
     mounted() {
         this.previous = new Map();
-        this.stamps = new Map();
-        // One handle per value, not one for the hook: a board animates up to seventy-five at once,
-        // and a single handle would leave every chain but the last running into a detached node.
+        // One handle per value, not one for the hook, or every chain but the last would run on.
         this.frames = new Map();
-        // Delegated, so a table of rows costs one listener rather than one per row.
-        this.el.addEventListener('animationend', (event) => {
-            if (event.animationName === 'row-sweep') event.target.classList.remove('stirred');
-        });
         this.sync(false);
     },
     updated() {
@@ -88,38 +82,10 @@ export const AnimatedValues = {
             this.count(key, el, from, target);
         }
 
-        this.forget(this.previous, live);
-        this.stir(animate);
-    },
-    // A board holds whoever is winning, so what a run was worth is remembered only while it is on
-    // one. The sidebar's three keys never leave and this costs them nothing.
-    forget(memory, live) {
-        for (const key of memory.keys())
+        // A figure that left the page is forgotten, so coming back counts from nothing stale.
+        for (const key of this.previous.keys())
             if (!live.has(key))
-                memory.delete(key);
-    },
-    // A row sweeps when its stamp moves: the Halls stamp a row with its last chronicle entry, so any
-    // deed sweeps it and somebody merely opening a tab never does.
-    stir(animate) {
-        const live = new Set();
-
-        for (const row of this.el.querySelectorAll('[data-stamp]')) {
-            const key = row.dataset.key;
-            const stamp = row.dataset.stamp;
-            const before = this.stamps.get(key);
-            live.add(key);
-            this.stamps.set(key, stamp);
-
-            if (!animate || before === undefined || before === stamp)
-                continue;
-
-            row.classList.remove('stirred');
-            // Force a reflow so a second write restarts the sweep instead of being ignored.
-            void row.offsetWidth;
-            row.classList.add('stirred');
-        }
-
-        this.forget(this.stamps, live);
+                this.previous.delete(key);
     },
     shimmer(el) {
         const bar = el.closest('.bar-track')?.querySelector('.bar');
