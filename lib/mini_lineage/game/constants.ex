@@ -60,9 +60,12 @@ defmodule MiniLineage.Game.Constants do
   }
 
   # Derived, never stored: a started character always rests (rules §11, there being no combat), and
-  # regenerates while a bar is short, at the rates `Player` fills in.
+  # regenerates while a bar is short, at the rates `Player` fills in. Night and the perks are what
+  # the time and the place put on it (rules §15 and §16), carrying the modifiers `Rules` gives them.
   @auras %{
     resting: %{id: "resting", type: :aura, emoji: "💤", label: "Resting"},
+    night: %{id: "night", type: :aura, emoji: "🌙", label: "Night"},
+    shadow_sense: %{id: "shadow_sense", type: :aura, emoji: "👁️", label: "Shadow Sense"},
     regenerating: %{id: "regenerating", type: :aura, emoji: "🌿", label: "Regenerating"}
   }
 

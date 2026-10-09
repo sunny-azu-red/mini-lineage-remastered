@@ -28,15 +28,26 @@ try {
         (await page.textContent('#copyright')).includes(process.env.APP_VERSION ?? '?'));
     check('...and no build label', await page.locator('#copyright [class^="build-"]').count() === 0);
 
+    check('a release writes no name in for the player',
+        await page.inputValue('#main input[name="name"]') === '');
     await page.fill('#main input[name="name"]', 'ReleaseBot');
     await page.selectOption('#main select[name="race_id"]', '1');
     await page.selectOption('#main select[name="path"]', 'fighter');
     await page.click('#main button[type="submit"]');
-    await onScreen('home');
+    await onScreen('town');
     const cookie = (await page.context().cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is secure and httpOnly', cookie?.secure && cookie?.httpOnly);
     check('...and the character stands in its village',
         (await page.textContent('#main .header-name'))?.trim() === 'Orc Village');
+    check('...at its own address', new URL(page.url()).pathname === '/orc-village', page.url());
+    check('a release offers no Quit', await page.locator('#travel-form option[value="quit"]').count() === 0);
+    check('...and listens for no typed Adena', await page.locator('#dev-keys').count() === 0);
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('adena');
+    // Answered or not, a reply would have landed well inside this: there is nothing to wait for.
+    await page.waitForTimeout(500);
+    check('...so typing it leaves the purse empty',
+        await page.getAttribute('#sidebar [data-key="adena"]', 'data-value') === '0');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {
     check(`release check threw: ${err.message}`, false);

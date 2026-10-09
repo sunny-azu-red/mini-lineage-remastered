@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.Characters
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Math, Player, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Snapshot, Version}
   alias MiniLineageWeb.{Controls, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
@@ -23,6 +23,7 @@ defmodule MiniLineageWeb.GameLive do
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)
+      await_dusk_or_dawn()
     end
 
     player = Characters.snapshot(id)
@@ -164,7 +165,25 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(target == place, do: socket, else: go(socket, target))}
   end
 
+  # Rules §15: nightfall changes nothing the character's process stores, so nothing is pushed for it.
+  # The page wakes itself at the exact moment instead, and redraws what the hour changes.
+  def handle_info(:dusk_or_dawn, socket) do
+    await_dusk_or_dawn()
+    {:noreply, assign(socket, view: Snapshot.build(socket.assigns.player))}
+  end
+
   # ------------------------------------------------------------------ plumbing
+
+  # A beat past the boundary, so the redraw reads the new hour and not the last of the old one.
+  defp await_dusk_or_dawn do
+    now = Clock.now()
+
+    Process.send_after(
+      self(),
+      :dusk_or_dawn,
+      DateTime.diff(Clock.next_boundary(now), now, :millisecond) + 50
+    )
+  end
 
   # A refusal stays on the screen it was raised on; a success goes on to where the action leads, a
   # place worked out from the player it left, or nowhere for nil. `catch` is for the process exiting.

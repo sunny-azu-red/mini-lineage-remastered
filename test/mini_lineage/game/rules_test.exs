@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.RulesTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Formulas, Math, Player, Rng, Rules}
+  alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Player, Rng, Rules}
 
   @rules File.read!("docs/rules.md")
 
@@ -20,6 +20,8 @@ defmodule MiniLineage.Game.RulesTest do
     |> Enum.take_while(&String.starts_with?(&1, "|"))
     |> Enum.map(fn row -> row |> String.split("|", trim: true) |> Enum.map(&String.trim/1) end)
   end
+
+  defp stat_key("Accuracy"), do: :accuracy
 
   defp number(cell), do: cell |> String.replace(",", "") |> Float.parse() |> elem(0)
 
@@ -109,6 +111,17 @@ defmodule MiniLineage.Game.RulesTest do
             do: {town.slug, route.to, route.fee}
 
       assert Enum.sort(written) == Enum.sort(held)
+    end
+
+    test "§16 every race perk with numbers, held to its race and its moment" do
+      for [perk, race, when_, effect] <- table("Perk") do
+        key = perk |> String.downcase() |> String.replace(" ", "_") |> String.to_existing_atom()
+        [stat, amount] = String.split(effect, " ")
+
+        assert Constants.aura(key).label == perk
+        assert Rules.modifiers(key) == [{stat_key(stat), {:add, trunc(number(amount))}}], perk
+        assert {@races[race], when_} == {3, "at night"}, perk
+      end
     end
 
     test "§12 the EXP for every level, 1 to 80" do
@@ -206,6 +219,20 @@ defmodule MiniLineage.Game.RulesTest do
       assert fee.("elven-village", "gludio") + fee.("gludio", "dion") == 7_800
       assert 10_000 - fee.("orc-village", "gludio") == 4_000
       assert 4_000 < fee.("gludio", "dion")
+    end
+
+    test "§15 a Human Fighter's Accuracy at night, and §16 a Dark Fighter's" do
+      accuracy = fn race_id, at ->
+        Clock.put_now(at)
+        {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Sentry")
+        Player.stats(player).accuracy
+      end
+
+      assert accuracy.(0, ~U[2026-07-01 09:00:00Z]) == 34
+      assert accuracy.(0, ~U[2026-07-01 20:00:00Z]) == 31
+      assert accuracy.(3, ~U[2026-07-01 09:00:00Z]) == 36
+      assert accuracy.(3, ~U[2026-07-01 20:00:00Z]) == 36
+      assert Rules.modifiers(:night) == [accuracy: {:add, -3}]
     end
 
     test "§13 hit chance, inside 28% and 98%" do

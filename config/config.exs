@@ -18,6 +18,11 @@ config :mini_lineage, debug_build: true
 # A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.
 config :mini_lineage, secure_cookie: false
 
+# Rules §15: every time the game keeps is UTC, and this zone only decides which hours are night.
+config :mini_lineage, time_zone: "Europe/Bucharest"
+
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
+
 # The footer's name for an unreleased build.
 config :mini_lineage, build_label: "development"
 

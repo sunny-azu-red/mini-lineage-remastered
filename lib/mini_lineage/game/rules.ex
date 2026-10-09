@@ -1,8 +1,8 @@
 defmodule MiniLineage.Game.Rules do
   @moduledoc """
   The base layer's tables, exactly as `docs/rules.md` writes them: the eight starting sets, what
-  each path starts with, the attribute bonus curves, the EXP each level needs, and the towns and
-  the routes between them. `rules_test.exs`
+  each path starts with, the attribute bonus curves, the EXP each level needs, the towns and the
+  routes between them, and what night and the race perks do. `rules_test.exs`
   reads the tables back out of the document, so the two cannot disagree.
   """
 
@@ -104,6 +104,12 @@ defmodule MiniLineage.Game.Rules do
     {"dion", "giran", 8_100},
     {"dion", "giran-harbor", 6_500}
   ]
+
+  # Rules §15 and §16: what each condition the world puts on a character does to its stats.
+  @modifiers %{
+    night: [accuracy: {:add, -3}],
+    shadow_sense: [accuracy: {:add, 3}]
+  }
 
   # Rules §7: what a path starts with before anything is added to it.
   @paths %{
@@ -220,6 +226,8 @@ defmodule MiniLineage.Game.Rules do
   end
 
   def route(from, to), do: Enum.find(routes_from(from), &(&1.to == to))
+
+  def modifiers(condition), do: Map.fetch!(@modifiers, condition)
 
   def set(race_id, path), do: Enum.find(@sets, &(&1.race_id == race_id and &1.path == path))
   def path(path), do: Map.fetch!(@paths, path)

@@ -3,7 +3,9 @@ defmodule MiniLineage.Game.Player do
   A character as the base layer (`docs/rules.md`) makes one, and what time does to it. Every
   function takes a player and returns a new one; nothing here touches a process or the database.
   """
-  alias MiniLineage.Game.{Constants, Formulas, Math, Narrative, Narratives, Rules}
+  alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Narrative, Narratives, Rules}
+
+  @dark_elf 3
 
   defstruct name: nil,
             race_id: nil,
@@ -66,8 +68,23 @@ defmodule MiniLineage.Game.Player do
 
   def level(player), do: Math.level_for_xp(player.experience || 0)
 
-  @doc "Every stat of rules §3 to §11, worked from the set the run started as and its level."
-  def stats(player) do
+  @doc """
+  Every stat of rules §3 to §11, worked from the set the run started as and its level, then changed
+  by whatever `conditions/1` puts on it.
+  """
+  def stats(player), do: stats(player, conditions(player))
+
+  # Under conditions read once, so one call cannot straddle dusk.
+  defp stats(player, conditions) do
+    Enum.reduce(conditions, base_stats(player), fn aura, stats ->
+      Enum.reduce(aura.modifiers, stats, &modify/2)
+    end)
+  end
+
+  defp modify({stat, {:add, value}}, stats), do: Map.update!(stats, stat, &(&1 + value))
+  defp modify({stat, {:mul, value}}, stats), do: Map.update!(stats, stat, &(&1 * value))
+
+  defp base_stats(player) do
     set = Rules.set(player.race_id, player.path)
     path = Rules.path(player.path)
     a = set.attributes
@@ -101,14 +118,34 @@ defmodule MiniLineage.Game.Player do
     %{player | health: stats.max_hp, mp: stats.max_mp}
   end
 
+  # -------------------------------------------------------------- conditions
+
+  @doc """
+  Rules §15 and §16: what the time and the place put on a character, as auras carrying their
+  modifiers. A perk names its race in its own clause, so neither the hour nor the town alone can
+  grant it.
+  """
+  def conditions(player) do
+    night? = Clock.night?()
+
+    [
+      night? && :night,
+      night? && player.race_id == @dark_elf && :shadow_sense
+    ]
+    |> Enum.filter(& &1)
+    |> Enum.map(&Map.put(Constants.aura(&1), :modifiers, Rules.modifiers(&1)))
+  end
+
   # ----------------------------------------------------------------- resting
 
   @doc """
-  💤 always, there being no combat yet, and 🌿 while a bar is short, carrying what one tick restores
-  to each. The tick reads its rates from here, so the icon and the healing cannot disagree.
+  💤 always, there being no combat yet, then whatever `conditions/1` puts on the character, and 🌿
+  while a bar is short, carrying what one tick restores to each. The tick reads its rates from
+  here, so the icon and the healing cannot disagree.
   """
   def auras(player) do
-    stats = stats(player)
+    conditions = conditions(player)
+    stats = stats(player, conditions)
 
     healing =
       [{:hp_regen, player.health, stats.max_hp}, {:mp_regen, player.mp, stats.max_mp}]
@@ -118,7 +155,7 @@ defmodule MiniLineage.Game.Player do
     regenerating =
       if healing == [], do: [], else: [Map.put(Constants.aura(:regenerating), :rates, healing)]
 
-    [Constants.aura(:resting) | regenerating]
+    [Constants.aura(:resting) | conditions] ++ regenerating
   end
 
   @doc "One 3-second tick of rules §11. Returns `{player, healed?}`."

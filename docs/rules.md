@@ -205,3 +205,28 @@ Gatekeeper and cannot be travelled to. A character who cannot pay the fee does n
 
 Example: an Elf goes from Elven Village to Dion through Gludio, for 3,700 + 4,100 = **7,800**
 Adena. An Orc with 10,000 reaches Gludio with **4,000** left, which is not enough for Dion.
+
+## 15. Day and night
+
+Night runs from **22:00 to 06:00** in the game's time zone, Europe/Bucharest. The game keeps every
+time in UTC, and the zone only decides which hours those are, summer time included. At night every
+character's **Accuracy is −3**, which is 6% less to hit by §13.
+
+Example: a level 1 Human Fighter's Accuracy is 34 by day and **31** at night.
+
+## 16. Race perks
+
+Each race answers the world in its own way, and a perk holds only for its own race.
+
+| Perk | Race | When it holds | Effect |
+|---|---|---|---|
+| Shadow Sense | Dark Elf | at night | Accuracy +3 |
+
+- **Shadow Sense** is night vision. A Dark Elf takes night's −3 like everyone else and gains +3
+  back, so at night it keeps its daytime Accuracy while everyone else loses 3.
+- **Orcs** shrug off sleep, root and poison, which have no numbers until there is anything that
+  sleeps, roots or poisons.
+- **Humans** have no perk. Their strength is having the most class choices.
+
+Example: a level 1 Dark Fighter (DEX 34) has Accuracy 36 by day and 36 − 3 + 3 = **36** at night,
+while a level 1 Human Fighter's 34 drops to **31**.

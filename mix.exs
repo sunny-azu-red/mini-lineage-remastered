@@ -68,6 +68,8 @@ defmodule MiniLineage.MixProject do
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
+      # Rules §15's night is local hours in a zone with DST. Not `tzdata`, which brings hackney.
+      {:tz, "~> 0.28.4"},
       {:live_debugger, "~> 1.0", only: :dev},
       {:tidewave, "~> 0.9.1", only: :dev},
       {:stream_data, "~> 1.4", only: :test}

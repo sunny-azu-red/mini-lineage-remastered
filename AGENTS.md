@@ -11,7 +11,8 @@ list wins — several generator defaults do not exist here.
 - **There is no `core_components.ex`.** It was deleted as dead code, so there is no `<.icon>`, no
   `<.input>`, and no `<.flash_group>`. Every control is hand-written HEEx in
   `lib/mini_lineage_web/components/`. Ignore any advice below that reaches for those.
-- **There is no HTTP client** — no `Req`, no `:httpoison`. The game calls nothing outward.
+- **There is no HTTP client** — no `Req`, no `:httpoison`. The game calls nothing outward. The
+  zone database is `tz`, never `tzdata`, which brings hackney; `tz`'s updater stays unused.
 - **There is no authentication**, so no `current_scope`, no `live_session` scoping, no user table.
   A browser is tied to a character by a signed session cookie and nothing else.
 - **There are no LiveView streams.** One character's state is one assign.
@@ -158,6 +159,12 @@ failed on the roll until it asked for the whole phrase. Where a test reads a dra
 draw first or match only what every draw shares; that it came from the pool at all is a separate
 test's job, against the struct rather than the page.
 
+**Nor on the hour.** Night (rules §15) is the wall clock read in a zone, so a test that does not
+pin it passes by day and fails by night. `Clock.put_now/1` pins a UTC instant for the calling
+process and, through `$callers`, for a LiveView it starts; a character's own process is pinned
+from inside `Characters.mutate/2`, as dice are. Every time the game keeps is UTC, and `:time_zone`
+decides which hours are night and nothing else. A browser suite never reads the night.
+
 **A formatter with a client-side twin is held to a table.** `Format.short` and `shortFigure` in
 `hooks/animated-values.js` are duplicated on purpose: the count-up animation formats its own frames,
 and without a client-side copy the number would change format mid-count. Both read
@@ -205,6 +212,11 @@ condition, not two copies of it: `Player.regenerate/1` heals HP and MP by whatev
 `Player.auras/1` puts on the aura, one for each bar still short, so an icon with no healing behind
 it — or healing with no icon — cannot happen. The tick is the 3 seconds of rules §11, so a rate is
 what one tick restores.
+
+Night and the race perks (rules §15 and §16) hold to the same rule. Each is an aura
+`Player.conditions/1` derives from the hour, the race and the town, carrying the modifiers `Rules`
+gives it, and `Player.stats/1` applies exactly those, so a perk can no more act unseen than 🌿 can.
+A perk names its race in its own clause: neither the hour nor the town alone grants it.
 
 **The cookie is only legible to the secret that signed it.** dev and prod read the same `.env`,
 so `config/runtime.exs` hands both the same `SECRET_KEY_BASE` — otherwise switching between them
@@ -425,6 +437,9 @@ the browser's own topic and carries what only its owner may act on — its key i
 nobody can watch anybody else. A second tab on the same browser follows along through it. A topic
 another reader may follow (a public record, a board) is keyed by the PUBLIC id, and followed only on
 the screen that draws it.
+
+Nightfall stores nothing, so nothing is pushed for it: `GameLive` wakes itself once at
+`Clock.next_boundary/1` and redraws. One timer at the exact moment is not a poll.
 
 A push must not announce what cannot yet be read. `Server.run/3` broadcasts AFTER it persists,
 because a reader answering a push by reading the database finds nothing otherwise. It costs about

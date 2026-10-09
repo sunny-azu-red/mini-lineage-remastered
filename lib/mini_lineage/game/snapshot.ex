@@ -69,21 +69,25 @@ defmodule MiniLineage.Game.Snapshot do
   defp routes(from),
     do: Enum.map(Rules.routes_from(from), &Map.put(Rules.town(&1.to), :fee, &1.fee))
 
-  # 🌿 says what it is restoring, and how much a tick.
+  # 🌿 says what it is restoring, and how much a tick; night and a perk what they change.
   defp aura_view(aura) do
-    rates = Map.get(aura, :rates, [])
+    parts =
+      Enum.map(Map.get(aura, :rates, []), &rate_text/1) ++
+        Enum.map(Map.get(aura, :modifiers, []), &modifier_text/1)
 
-    tooltip =
-      case rates do
-        [] -> aura.label
-        _ -> "#{aura.label} (#{Enum.map_join(rates, ", ", &rate_text/1)})"
-      end
+    tooltip = if parts == [], do: aura.label, else: "#{aura.label} (#{Enum.join(parts, ", ")})"
 
     %{id: aura.id, type: aura.type, emoji: aura.emoji, label: aura.label, tooltip: tooltip}
   end
 
   defp rate_text({:hp_regen, value}), do: "+#{value} HP"
   defp rate_text({:mp_regen, value}), do: "+#{value} MP"
+
+  @stat_names %{accuracy: "Accuracy", hp_regen: "HP regen", mp_regen: "MP regen"}
+
+  defp modifier_text({stat, {:add, value}}) when value >= 0, do: "+#{value} #{@stat_names[stat]}"
+  defp modifier_text({stat, {:add, value}}), do: "#{value} #{@stat_names[stat]}"
+  defp modifier_text({stat, {:mul, value}}), do: "×#{value} #{@stat_names[stat]}"
 
   @doc "Every race as the Chronicles of Ancestry draws it: its town and its two level-1 sets."
   def catalog do

@@ -31,10 +31,8 @@ character: each lands with the first system that needs it, almost certainly figh
 - A third transfer at level 76.
 - **Skills,** which give MP a use.
 - **Race perks:**
-  - Dark Elves see better at night
   - Elves rest faster in their home village
   - Orcs shrug off sleep, root and poison
-  - Humans have none; their strength is having the most class choices
 - **Dyes** that trade one attribute for another, at most +5 to each. A first version is in
   `legacy/`, at the Symbol Maker.
 
@@ -64,7 +62,6 @@ character: each lands with the first system that needs it, almost certainly figh
 - More of the mainland past Dion: Giran and Giran Harbor are listed by rules §14, and not open yet.
 - Farming zones, questing zones and dungeons.
 - Shops in each town, selling what that town sells.
-- Day and night: night runs from 22:00 to 06:00 server time and makes it harder to hit.
 - Hunting grounds around each race's starting village (rules §1), which is where a character
   stands today with nothing yet to do.
 - Monsters with their own stats, levels, EXP and Adena. Their EXP is on the scale of rules §12,
