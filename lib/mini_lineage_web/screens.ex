@@ -199,10 +199,10 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <div id="character-lineage" phx-hook="AnimatedValues">
       <p id="character-class" phx-no-format>
-        You are {@article} {@view.class_name} of <.attribute name="STR" key="str" value={@stats.str} />, <.attribute name="CON" key="con" value={@stats.con} />, <.attribute name="DEX" key="dex" value={@stats.dex} />, <.attribute name="INT" key="int" value={@stats.int} />, <.attribute name="WIT" key="wit" value={@stats.wit} /> and <.attribute name="MEN" key="men" value={@stats.men} />. {@view.perk}
+        You are {@article} {@view.class_name} of <.attribute name="Strength" key="str" value={@stats.str} />, <.attribute name="Constitution" key="con" value={@stats.con} />, <.attribute name="Dexterity" key="dex" value={@stats.dex} />, <.attribute name="Intelligence" key="int" value={@stats.int} />, <.attribute name="Wit" key="wit" value={@stats.wit} /> and <.attribute name="Mental Strength" key="men" value={@stats.men} />. {@view.perk}
       </p>
       <p id="character-vitality" phx-no-format>
-        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span> while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
+        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span>, mending <span class="regen"><.figure key="char-hp-regen" value={Math.js_round(@stats.hp_regen)} /> HP</span> and <span class="regen"><.figure key="char-mp-regen" value={Math.js_round(@stats.mp_regen)} /> MP</span> every three seconds at rest, while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
       </p>
     </div>
     """
@@ -220,16 +220,24 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  # Blows, then spells; Accuracy and Evasion decide only whether a blow lands (rules §13).
   defp character(%{panel: %{section: :stats}} = assigns) do
-    assigns = assign(assigns, stats: assigns.view.stats)
+    stats = assigns.view.stats
+
+    assigns =
+      assign(assigns,
+        stats: stats,
+        critical: Float.round(stats.critical / 1, 1),
+        magic_critical: Float.round(stats.magic_critical / 1, 1)
+      )
 
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
-        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> and <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span>, turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> and <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>, and find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span> while slipping blows with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
+        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit">{@critical}% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
       </p>
       <p phx-no-format>
-        Your blows run at <span id="character-critical" class="crit">{Float.round(@stats.critical / 1, 1)}% Critical</span> and your spells at <span id="character-magic-critical" class="crit">{Float.round(@stats.magic_critical / 1, 1)}% M. Critical</span>, swinging at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and casting at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> At rest you mend <span class="regen"><.figure key="char-hp-regen" value={Math.js_round(@stats.hp_regen)} /> HP</span> and <span class="regen"><.figure key="char-mp-regen" value={Math.js_round(@stats.mp_regen)} /> MP</span> every three seconds.
+        You cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit">{@magic_critical}% M. Critical</span>, and turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>
       </p>
     </div>
     """
@@ -239,8 +247,13 @@ defmodule MiniLineageWeb.Screens do
   defp stat_class(:accuracy), do: "accuracy"
   defp stat_class(stat) when stat in [:hp_regen, :mp_regen], do: "regen"
 
-  # "an Elven Fighter", "a Dark Mystic".
-  defp article(name), do: if(String.first(name) in ~w(A E I O U), do: "an", else: "a")
+  # "an Elven Fighter", "a Dark Mystic", "a 4.6% Critical", "an 8.4% Critical", "an 11.0% Critical".
+  defp article(word) when is_float(word), do: article(Float.to_string(word))
+
+  defp article(word) do
+    whole = word |> String.split(".") |> hd()
+    if String.first(word) in ~w(A E I O U 8) or whole in ~w(11 18), do: "an", else: "a"
+  end
 
   attr :name, :string, required: true
   attr :key, :string, required: true
@@ -248,7 +261,7 @@ defmodule MiniLineageWeb.Screens do
 
   defp attribute(assigns) do
     ~H"""
-    <span class="attribute" phx-no-format>{@name} <.figure key={"char-#{@key}"} value={@value} /></span>
+    <span class="attribute" phx-no-format><.figure key={"char-#{@key}"} value={@value} /> {@name}</span>
     """
   end
 

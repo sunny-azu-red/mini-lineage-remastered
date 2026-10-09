@@ -7,7 +7,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
   alias MiniLineage.Game.{Clock, Constants, Math, Player, Snapshot}
   alias MiniLineageWeb.Screens
 
-  @figures ~w(str con dex int wit men p_atk m_atk p_def m_def accuracy evasion atk_spd cast_spd)a
+  @figures ~w(str con dex int wit men p_atk m_atk p_def m_def accuracy evasion atk_spd cast_spd hp_regen mp_regen)a
 
   # Rules §3 to §10, worked for the run's own set and level: every number the base layer gives it.
   test "shows every stat the rules give the run, at its level" do
@@ -27,6 +27,32 @@ defmodule MiniLineageWeb.CharacterPageTest do
 
     assert read.("#character-magic-critical") ==
              "#{Float.round(stats.magic_critical, 1)}% M. Critical"
+  end
+
+  # Rules §13: Accuracy and Evasion decide whether a blow lands, so they read with blows, never
+  # spells. Resting happens out of a fight, so it reads with the bars it fills.
+  test "combat stats read blows, then spells, and resting sits with HP and MP" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
+    doc = page(player)
+
+    keys = fn selector ->
+      doc |> LazyHTML.query(selector) |> LazyHTML.attribute("data-key")
+    end
+
+    assert keys.("#character-stats p:nth-of-type(1) [data-key]") ==
+             ~w(char-p-atk char-atk-spd char-accuracy char-p-def char-evasion)
+
+    assert keys.("#character-stats p:nth-of-type(2) [data-key]") ==
+             ~w(char-m-atk char-cast-spd char-m-def)
+
+    assert LazyHTML.query(doc, "#character-stats p:nth-of-type(1) #character-critical")
+           |> Enum.count() == 1
+
+    assert LazyHTML.query(doc, "#character-stats p:nth-of-type(2) #character-magic-critical")
+           |> Enum.count() == 1
+
+    assert keys.("#character-vitality .regen [data-key]") == ~w(char-hp-regen char-mp-regen)
+    assert keys.("#character-stats .regen") == []
   end
 
   # Rules §16, by day: a buff reads as one, and what it changes wears the stat it changes.

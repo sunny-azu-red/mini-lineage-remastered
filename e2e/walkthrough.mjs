@@ -224,9 +224,14 @@ try {
             .querySelectorAll('.panel-body p').length === 2
             && [...document.querySelectorAll('#character-lineage > p')].map(p => p.id).join(',')
             === 'character-class,character-vitality')
-        && (await text('#character-class')).startsWith('You are an Orc Mystic of STR ')
+        && (await text('#character-class')).startsWith('You are an Orc Mystic of ')
         && (await text('#character-class')).includes('. Orcs shrug off sleep, root and poison'),
         await text('#character-class'));
+    const attributes = await page.$$eval('#character-class .attribute',
+        spans => spans.map(s => `${s.firstElementChild.dataset.key} ${s.lastChild.textContent.trim()}`).join(','));
+    check('...each attribute its figure, then its name in full',
+        attributes === 'char-str Strength,char-con Constitution,char-dex Dexterity,'
+        + 'char-int Intelligence,char-wit Wit,char-men Mental Strength', attributes);
     const margins = await marginsLeftAtEnds(page);
     check('...and nothing that ends one, its rows\' sentences included, keeps a margin under it',
         margins.length === 0, margins.join(' | '));
