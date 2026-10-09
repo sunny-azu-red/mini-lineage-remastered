@@ -17,7 +17,8 @@ defmodule MiniLineage.Characters.SerdeTest do
       health: 63,
       mp: 41,
       adena: 4_210,
-      experience: 12_345
+      experience: 12_345,
+      location: "gludio"
     }
   end
 
@@ -45,7 +46,7 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the shape the document was written in" do
     test "is recorded, so a later reshape has something to branch on" do
-      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 1
+      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 2
     end
 
     test "and a document without one is refused, not assumed to be this shape" do
@@ -57,7 +58,26 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "and one from a newer build is refused rather than quietly misread" do
       newer = %Player{name: "Hero"} |> Serde.to_map() |> Map.put("version", 99)
 
-      assert_raise RuntimeError, ~r/version 99.*understands 1/, fn -> Serde.from_map(newer) end
+      assert_raise RuntimeError, ~r/version 99.*understands 2/, fn -> Serde.from_map(newer) end
+    end
+  end
+
+  describe "where the character stands" do
+    test "a version 1 document, from before anyone could leave, is in its race's village" do
+      v1 = populated() |> Serde.to_map() |> Map.put("version", 1) |> Map.delete("location")
+
+      assert Serde.from_map(v1).location == "elven-village"
+    end
+
+    test "and a town this build does not have, or cannot be stood in, puts it back there too" do
+      for slug <- ["atlantis", "giran", 7] do
+        doc = populated() |> Serde.to_map() |> Map.put("location", slug)
+        assert Serde.from_map(doc).location == "elven-village", inspect(slug)
+      end
+    end
+
+    test "while a visitor stands nowhere" do
+      assert %Player{} |> Serde.to_map() |> Serde.from_map() |> Map.fetch!(:location) == nil
     end
   end
 

@@ -7,7 +7,7 @@ defmodule MiniLineage.Game.Narrative do
 
   @doc "Who a run set out as, and from where. `welcome` still carries its own open pronouns."
   def build_began(race, traits) do
-    town = Rules.town(race.id)
+    town = Rules.town(Rules.hometown(race.id))
 
     Format.fill_template(Narratives.began(), %{
       "raceEmoji" => race.emoji,
@@ -18,6 +18,15 @@ defmodule MiniLineage.Game.Narrative do
       "build" => traits.build,
       "definition" => traits.definition,
       "age" => traits.age
+    })
+  end
+
+  @doc "Through a Gatekeeper, and what it cost."
+  def build_arrived(town, fee) do
+    Format.fill_template(Narratives.arrived(), %{
+      "townEmoji" => town.emoji,
+      "town" => town.name,
+      "fee" => Format.number(fee)
     })
   end
 

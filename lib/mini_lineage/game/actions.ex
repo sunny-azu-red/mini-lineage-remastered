@@ -4,12 +4,17 @@ defmodule MiniLineage.Game.Actions do
   `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
   client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Constants, Player}
+  alias MiniLineage.Game.{Constants, Format, Narrative, Player, Rules, Version}
 
   @errors %{
     already_started: "You already have a character.",
-    invalid: "That is not something you can do."
+    invalid: "That is not something you can do.",
+    closed: "The Gatekeeper cannot send you there yet.",
+    poor: "You cannot pay the Gatekeeper's fee."
   }
+
+  # Not a rule of the game: what a debug build puts in a purse so the Gatekeeper can be tried.
+  @dev_adena 10_000
 
   @doc "Creates the character: a race, a path and a name, all checked here."
   def start(player, race_id, path, name) do
@@ -42,6 +47,35 @@ defmodule MiniLineage.Game.Actions do
       {:ok, race, path, trimmed}
     else
       _ -> :invalid
+    end
+  end
+
+  @doc "Rules §14: the Gatekeeper sends a character along a route out of its town, for the fee."
+  def travel(player, to) do
+    route = Player.started?(player) && Rules.route(player.location, to)
+
+    cond do
+      !route -> {player, {:error, :invalid, @errors.invalid}}
+      !Rules.town(to).open? -> {player, {:error, :closed, @errors.closed}}
+      player.adena < route.fee -> {player, {:error, :poor, @errors.poor}}
+      true -> arrive(player, Rules.town(to), route.fee)
+    end
+  end
+
+  defp arrive(player, town, fee) do
+    player = %{player | location: town.slug, adena: player.adena - fee}
+    {player, {:ok, %{text: Narrative.alert(Narrative.build_arrived(town, fee)), type: :info}}}
+  end
+
+  @doc "Debug builds only: Adena to try the Gatekeeper with, every time it is asked for."
+  def dev_adena(player) do
+    if Version.debug_build?() and Player.started?(player) do
+      text =
+        ~s(A debug build drops <span class="adena">#{Format.number(@dev_adena)} Adena</span> into your purse.)
+
+      {%{player | adena: player.adena + @dev_adena}, {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :invalid, @errors.invalid}}
     end
   end
 

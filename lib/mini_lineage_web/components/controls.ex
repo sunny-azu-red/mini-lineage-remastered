@@ -1,8 +1,8 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
-  What every screen reaches for and no screen owns: the panel, the button, the table, the alerts,
-  the way back, the figure and the bar. `raw/1` renders flashes, which the server composes from the
-  template tables — never from anything a player typed.
+  What every screen reaches for and no screen owns: the panel, the button and the choice it acts
+  on, the table, the alerts, the way back, the figure and the bar. `raw/1` renders flashes, which
+  the server composes from the template tables — never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
@@ -75,17 +75,68 @@ defmodule MiniLineageWeb.Controls do
   link, and comes back as a `patch` option when a screen first needs one.
   """
   attr :type, :string, default: "button"
+  attr :variant, :atom, default: :primary, values: [:primary, :secondary]
   attr :class, :string, default: nil
   attr :rest, :global
   slot :inner_block, required: true
 
   def button(assigns) do
-    assigns = assign(assigns, classes: classes(["btn", assigns.class]))
+    variant = if assigns.variant == :secondary, do: "btn-secondary"
+    assigns = assign(assigns, classes: classes(["btn", variant, assigns.class]))
 
     ~H"""
     <button type={@type} class={@classes} {@rest}>{render_slot(@inner_block)}</button>
     """
   end
+
+  @doc """
+  A choice and the button that acts on it, which is how a player moves: the town's destinations, a
+  Gatekeeper's routes. Until the PLAYER picks, the button reads `default_label` in the quieter look;
+  a `placeholder` is the empty choice, which the event reads as going back.
+  """
+  # LiveView restores a form's pick after a reconnect only when the form has an id.
+  attr :id, :string, required: true
+  attr :event, :string, required: true
+  attr :name, :string, required: true
+  attr :options, :list, required: true
+  attr :placeholder, :string, default: nil
+  attr :picked, :string, default: nil
+  attr :default_label, :string, required: true
+  attr :active_label, :string, required: true
+  attr :default_variant, :atom, default: :secondary
+
+  def select_action(assigns) do
+    chosen? = chosen?(assigns.picked)
+
+    assigns =
+      assign(assigns,
+        label: if(chosen?, do: assigns.active_label, else: assigns.default_label),
+        variant: if(chosen?, do: :primary, else: assigns.default_variant)
+      )
+
+    ~H"""
+    <form id={@id} phx-submit={@event} phx-change="pick">
+      <div class="form-row">
+        <%!-- `selected` explicitly: relabelling the button re-renders the options, and would
+              otherwise drop the player's choice. --%>
+        <select name={@name} class="form-select">
+          <option :if={@placeholder} value="" selected={!chosen?(@picked)}>{@placeholder}</option>
+          <option
+            :for={option <- @options}
+            value={option.value}
+            disabled={option[:disabled?]}
+            selected={@picked == option.value}
+          >
+            {option.label}
+          </option>
+        </select>
+        <.button type="submit" variant={@variant}>{@label}</.button>
+      </div>
+    </form>
+    """
+  end
+
+  defp chosen?(picked), do: picked not in [nil, ""]
 
   # ------------------------------------------------------------------ tables
 
@@ -148,7 +199,7 @@ defmodule MiniLineageWeb.Controls do
   def back_link(assigns) do
     ~H"""
     <.back
-      href={Paths.for_screen(if(@started, do: "home", else: "start"))}
+      href={Paths.for_screen(if(@started, do: "town", else: "start"))}
       text={if @started, do: "Continue your journey", else: "Go back to game start"}
     />
     """
@@ -187,7 +238,7 @@ defmodule MiniLineageWeb.Controls do
     <%!-- `/` is whichever the run is in, the town or game start. A fault's block parts the way back
           already; without one, the rule does. --%>
     <.back
-      href={Paths.for_screen("home")}
+      href={Paths.for_screen("town")}
       text="Return to safer lands"
       class={if @detail, do: "last", else: "last back"}
       interactive?={@interactive?}

@@ -37,10 +37,12 @@ try {
             check(`Chronicles of Ancestry describes the ${race.label}`,
                 chronicles.includes(`${race.emoji} ${race.label}`));
             const slug = race.label.toLowerCase().replace(' ', '-');
-            const town = await text(`#town-${slug}`);
-            check(`...and names the village they start in`, town.endsWith(`${race.town}.`), town);
+            const lineage = await text(`#lineage-${slug}`);
+            check(`...and their perk, or that they have none`, lineage.startsWith(race.perk), lineage);
+            check(`...and the village they start in, in the same paragraph`,
+                lineage.endsWith(`They start in ${race.townEmoji} ${race.town}.`), lineage);
             check('...below the table of what each class is born with',
-                await page.$eval(`#town-${slug}`, el => el.previousElementSibling.matches('.table-container')));
+                await page.$eval(`#lineage-${slug}`, el => el.previousElementSibling.matches('.table-container')));
             const titles = await page.$$eval(`#${slug}-classes th`, ths => ths.map(th => th.title));
             check('...whose columns are named in full on hover',
                 titles.join('|') === '|Strength|Constitution|Dexterity|Intelligence|Wit|Mental Strength|Health Points|Mana Points',
@@ -72,6 +74,7 @@ try {
                 await text('#main .alert'));
             check(`...and stands in it`, (await text('#main .header-name')) === race.town,
                 await text('#main .header-name'));
+            check(`...at its address`, new URL(page.url()).pathname === `/${race.townSlug}`, page.url());
             check('...at level 1', now.level === 1, String(now.level));
             check(`...with the ${born.name}'s full health`,
                 now.health === born.health && now.maxHealth === born.health,

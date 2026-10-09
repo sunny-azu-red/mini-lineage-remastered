@@ -5,20 +5,24 @@
 export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
 
 /**
- * The eight starting sets as a browser must find them at level 1, with each race's village. The
- * numbers come from docs/rules.md, which rules_test.exs holds the code to.
+ * The eight starting sets as a browser must find them at level 1, with each race's village and the
+ * opening of its perk. The numbers come from docs/rules.md, which rules_test.exs holds the code to.
  */
 export const RACES = [
-    { id: 0, label: 'Human',    emoji: '🧙', town: 'Talking Island Village', classes: {
+    { id: 0, label: 'Human',    emoji: '🧙', town: 'Talking Island Village', townEmoji: '🏝️', townSlug: 'talking-island',
+      perk: 'Humans have no racial perk', classes: {
         fighter: { name: 'Human Fighter', health: 126, mp: 38 },
         mystic:  { name: 'Human Mystic',  health: 98,  mp: 59 } } },
-    { id: 1, label: 'Orc',      emoji: '🧟', town: 'Orc Village', classes: {
+    { id: 1, label: 'Orc',      emoji: '🧟', town: 'Orc Village', townEmoji: '🏕️', townSlug: 'orc-village',
+      perk: 'Orcs shrug off sleep, root and poison', classes: {
         fighter: { name: 'Orc Fighter',   health: 141, mp: 39 },
         mystic:  { name: 'Orc Mystic',    health: 104, mp: 60 } } },
-    { id: 2, label: 'Elf',      emoji: '🧝', town: 'Elven Village', classes: {
+    { id: 2, label: 'Elf',      emoji: '🧝', town: 'Elven Village', townEmoji: '🌳', townSlug: 'elven-village',
+      perk: 'Elves rest half again as fast', classes: {
         fighter: { name: 'Elven Fighter', health: 113, mp: 39 },
         mystic:  { name: 'Elven Mystic',  health: 96,  mp: 59 } } },
-    { id: 3, label: 'Dark Elf', emoji: '🧛', town: 'Dark Elven Village', classes: {
+    { id: 3, label: 'Dark Elf', emoji: '🧛', town: 'Dark Elven Village', townEmoji: '🌑', townSlug: 'dark-elven-village',
+      perk: 'Dark Elves see better at night', classes: {
         fighter: { name: 'Dark Fighter',  health: 107, mp: 39 },
         mystic:  { name: 'Dark Mystic',   health: 95,  mp: 58 } } },
 ];
@@ -81,12 +85,17 @@ export function controls(page) {
         await page.selectOption('#main select[name="race_id"]', String(raceId));
         await page.selectOption('#main select[name="path"]', path);
         await page.click('#main button[type="submit"]');
-        await onScreen('home');
+        await onScreen('town');
     };
 
     const text = async (sel) => (await page.textContent(sel))?.replace(/\s+/g, ' ').trim() ?? '';
 
-    return { state, onScreen, create, text };
+    /** The purse as the server last wrote it, once it reads `value`. */
+    const adena = (value) => page.waitForFunction(
+        (want) => document.querySelector('#sidebar [data-key="adena"]')?.dataset.value === String(want),
+        value, { timeout: 5000 });
+
+    return { state, onScreen, create, text, adena };
 }
 
 /**

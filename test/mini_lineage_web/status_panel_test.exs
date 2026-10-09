@@ -15,7 +15,7 @@ defmodule MiniLineageWeb.StatusPanelTest do
     render_component(&MiniLineageWeb.Layouts.app/1,
       title: "Dark Elven Village",
       view: Snapshot.build(player),
-      screen: "home",
+      screen: "town",
       inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]
     )
   end

@@ -11,13 +11,17 @@ defmodule MiniLineage.Game.Player do
             health: nil,
             mp: nil,
             adena: nil,
-            experience: nil
+            experience: nil,
+            location: nil
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
   # ---------------------------------------------------------------- creation
 
-  @doc "Rules §1: a race, a path, level 1, full bars and no Adena. Returns `{player, flash}`."
+  @doc """
+  Rules §1: a race, a path, level 1, full bars and no Adena, standing in the race's village. Returns
+  `{player, flash}`.
+  """
   def initialize(player, race, path, name) do
     player =
       restore_fully(%{
@@ -26,7 +30,8 @@ defmodule MiniLineage.Game.Player do
           race_id: race.id,
           path: path,
           experience: 0,
-          adena: 0
+          adena: 0,
+          location: Rules.hometown(race.id)
       })
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.

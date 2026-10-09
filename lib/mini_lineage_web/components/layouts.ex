@@ -55,11 +55,14 @@ defmodule MiniLineageWeb.Layouts do
   attr :title, :string, default: "Loading"
   attr :view, :map, required: true
   attr :screen, :string, required: true
+  # Debug builds only, for a character: what a release never draws sends it no keys.
+  attr :dev_keys, :boolean, default: false
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
     <div id="app">
+      <div :if={@dev_keys} id="dev-keys" phx-hook="DevKeys" hidden></div>
       <div id="wrapper">
         <div id="header">
           <Layouts.site_header />

@@ -31,7 +31,8 @@ defmodule MiniLineage.Game.RulesTest do
       rows = table("Race")
       assert length(rows) == 4
 
-      for [race, town] <- rows, do: assert(Rules.town(@races[race]).name == town, race)
+      for [race, town] <- rows,
+          do: assert(Rules.town(Rules.hometown(@races[race])).name == town, race)
     end
 
     test "§3 starting attributes are the eight sets the code starts from" do
@@ -82,6 +83,32 @@ defmodule MiniLineage.Game.RulesTest do
                  },
                path
       end
+    end
+
+    test "§14 every town, its address and whether it is open yet" do
+      rows = table("Town")
+      assert length(rows) == length(Rules.towns())
+
+      for {[name, slug, open], town} <- Enum.zip(rows, Rules.towns()) do
+        assert {town.name, town.slug, town.open?} == {name, slug, open == "yes"}, name
+      end
+    end
+
+    test "§14 the routes, each both ways at one fee, and no others" do
+      slug = fn name -> Enum.find(Rules.towns(), &(&1.name == name)).slug end
+      rows = table("Between")
+
+      written =
+        for [a, b, fee] <- rows,
+            {from, to} <- [{a, b}, {b, a}],
+            do: {slug.(from), slug.(to), trunc(number(fee))}
+
+      held =
+        for town <- Rules.towns(),
+            route <- Rules.routes_from(town.slug),
+            do: {town.slug, route.to, route.fee}
+
+      assert Enum.sort(written) == Enum.sort(held)
     end
 
     test "§12 the EXP for every level, 1 to 80" do
@@ -165,6 +192,20 @@ defmodule MiniLineage.Game.RulesTest do
       ticks = fn level, max -> ceil(max / Math.js_round(Formulas.hp_regen(level, con))) end
       assert ticks.(1, 126) == 18
       assert ticks.(40, 1007) == 31
+    end
+
+    test "§14 the villages never link to each other, only to Gludio" do
+      for race_id <- 0..3, route <- Rules.routes_from(Rules.hometown(race_id)) do
+        assert route.to == "gludio"
+      end
+    end
+
+    test "§14 an Elf reaches Dion for 7,800, and an Orc with 10,000 cannot" do
+      fee = fn from, to -> Rules.route(from, to).fee end
+
+      assert fee.("elven-village", "gludio") + fee.("gludio", "dion") == 7_800
+      assert 10_000 - fee.("orc-village", "gludio") == 4_000
+      assert 4_000 < fee.("gludio", "dion")
     end
 
     test "§13 hit chance, inside 28% and 98%" do

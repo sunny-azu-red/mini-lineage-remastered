@@ -23,7 +23,7 @@ page.on('requestfailed', r => {
         failedRequests.push(`${r.method()} ${r.url()} :: ${r.failure()?.errorText}`);
 });
 
-const { state, onScreen, create, text } = controls(page);
+const { state, onScreen, create, text, adena } = controls(page);
 
 try {
     // Never `networkidle`: the LiveView websocket stays open, so it never settles.
@@ -123,13 +123,14 @@ try {
         await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 60)));
 
     await page.click('#main button[type="submit"]');
-    await onScreen('home');
+    await onScreen('town');
 
     const born = await state();
     const fanfare = await page.evaluate(() => window.__notes.splice(0));
     check('creating a character plays the new-game fanfare, three triangles and a square',
         fanfare.join(',') === 'triangle,triangle,triangle,square', fanfare.join(','));
-    check('creating a character lands in its own village', born.screen === 'home');
+    check('creating a character lands in its own village', born.screen === 'town');
+    check('...at the village\'s own address', new URL(page.url()).pathname === '/orc-village', page.url());
     check('...headed with its name', (await text('#main .header-name')) === 'Orc Village',
         await text('#main .header-name'));
     check('...and the document title names it', await page.title() === 'Mini Lineage - Orc Village',
@@ -144,7 +145,7 @@ try {
         - document.querySelector('#flash').getBoundingClientRect().bottom);
     check('...and its heading sits under the flash as if it came first, 12px below it', gap === 12, `${gap}px`);
     check('...and nothing destructive takes the keyboard on arrival',
-        await page.evaluate(() => document.activeElement?.id) !== 'quit',
+        await page.evaluate(() => document.activeElement?.value) === 'gatekeeper',
         await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 60)));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
     check('...at level 1, with full bars', born.level === 1 && born.health === born.maxHealth
@@ -182,8 +183,9 @@ try {
     check('...whose way back continues the journey',
         (await text('#main .back')).includes('Continue your journey'));
     await page.click('#main .back a');
-    await onScreen('home');
+    await onScreen('town');
     check('...and leads home', (await text('#main .header-name')) === 'Orc Village');
+    check('...at its address, not at the root', new URL(page.url()).pathname === '/orc-village', page.url());
 
     // ---- a second tab follows along -------------------------------------------------------------
     const tab = await context.newPage();
@@ -230,11 +232,76 @@ try {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a returning browser comes back to its village, not to game start',
-        (await state()).screen === 'home' && (await text('#sidebar .header-name')) === 'BrowserBot',
+        (await state()).screen === 'town' && (await text('#sidebar .header-name')) === 'BrowserBot',
         await text('#sidebar .header-name'));
 
+    // ---- the Gatekeeper, rules §14 ------------------------------------------------------------
+    const teleport = async (to) => {
+        await page.selectOption('#teleport-form select', to);
+        await page.click('#teleport-form button');
+    };
+    // Typed with nothing focused, as a player would: a focused <select> takes letters as a search.
+    const typeAdena = async () => {
+        await page.evaluate(() => document.activeElement?.blur());
+        await page.keyboard.type('adena');
+    };
+    await page.selectOption('#travel-form select', 'gatekeeper');
+    await page.click('#travel-form button');
+    await onScreen('gatekeeper');
+    check('the town\'s way out leads to its Gatekeeper, at an address of its own',
+        new URL(page.url()).pathname === '/orc-village/gatekeeper', page.url());
+    check('...who lists the one route out of an Orc\'s village, and its fee',
+        (await text('#routes-table tbody')) === '🏰 Town of Gludio 🪙 6,000', await text('#routes-table tbody'));
+    check('...under a button that says it goes back until something is picked',
+        (await text('#teleport-form button')) === 'Return', await text('#teleport-form button'));
+    await page.selectOption('#teleport-form select', 'gludio');
+    await page.waitForFunction(() => document.querySelector('#teleport-form button').textContent.includes('Teleport'));
+    check('...and says it teleports once it is', (await text('#teleport-form button')) === '🌀 Teleport',
+        await text('#teleport-form button'));
+    await page.click('#teleport-form button');
+    await page.waitForSelector('#flash.alert-danger', { timeout: 5000 });
+    check('an empty purse cannot pay the Gatekeeper', (await text('#flash')).includes('cannot pay'),
+        await text('#flash'));
+    check('...and goes nowhere', new URL(page.url()).pathname === '/orc-village/gatekeeper', page.url());
+
+    await typeAdena();
+    await adena(10000);
+    check('typing adena in a debug build puts 10,000 in the purse', (await state()).adena === 10000);
+    await teleport('gludio');
+    await page.waitForURL(`${BASE}/gludio`, { timeout: 5000 });
+    await adena(4000);
+    check('the Gatekeeper sends it to Gludio for 6,000, leaving 4,000', (await state()).adena === 4000);
+    check('...where it stands in Gludio', (await text('#main .header-name')) === 'Town of Gludio',
+        await text('#main .header-name'));
+
+    await page.selectOption('#travel-form select', 'gatekeeper');
+    await page.click('#travel-form button');
+    await onScreen('gatekeeper');
+    await teleport('dion');
+    await page.waitForSelector('#flash.alert-danger', { timeout: 5000 });
+    check('4,000 is not the 4,100 Dion costs', new URL(page.url()).pathname === '/gludio/gatekeeper'
+        && (await state()).adena === 4000, page.url());
+    await typeAdena();
+    await adena(14000);
+    check('...and typing it again fills the purse again', (await state()).adena === 14000);
+    await teleport('dion');
+    await page.waitForURL(`${BASE}/dion`, { timeout: 5000 });
+    await adena(9900);
+    check('so it goes on to Dion, with 9,900 left', (await state()).adena === 9900);
+
+    await page.selectOption('#travel-form select', 'gatekeeper');
+    await page.click('#travel-form button');
+    await onScreen('gatekeeper');
+    const closed = await page.$$eval('#teleport-form option[disabled]', os => os.map(o => o.value));
+    check('Dion\'s Gatekeeper lists Giran and its harbour, not open yet',
+        closed.join(',') === 'giran,giran-harbor', closed.join(','));
+    await teleport('');
+    await onScreen('town');
+    check('...and its empty choice is the way back into town', new URL(page.url()).pathname === '/dion', page.url());
+
     // ---- the temporary Quit, for trying every set from one browser --------------------------
-    await page.click('#quit');
+    await page.selectOption('#travel-form select', 'quit');
+    await page.click('#travel-form button');
     await onScreen('start');
     check('Quit goes back to game start, with no character', (await state()).started === false);
     await create('AgainBot', 3, 'fighter');

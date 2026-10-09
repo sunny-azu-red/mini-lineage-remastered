@@ -1,7 +1,8 @@
 defmodule MiniLineageWeb.QuitTest do
   @moduledoc """
-  The temporary Quit button, for trying every race and path from one browser: it deletes the
-  character and sends the browser back to game start. Debug builds only; a release never draws it.
+  The temporary Quit, the town dropdown's last choice, for trying every race and path from one
+  browser: it deletes the character and sends the browser back to game start. Debug builds only; a
+  release never offers it.
   """
   use MiniLineageWeb.ConnCase, async: false
 
@@ -26,7 +27,7 @@ defmodule MiniLineageWeb.QuitTest do
     {view, session} = started(conn)
     assert stored(session).name == "Quitter"
 
-    view |> element("#quit") |> render_click()
+    view |> form("#travel-form", %{"place" => "quit"}) |> render_submit()
 
     assert_patch(view, "/")
     assert render(view) =~ "A New Bloodline Rises"
@@ -36,7 +37,7 @@ defmodule MiniLineageWeb.QuitTest do
 
   test "and the same browser can start another at once", %{conn: conn} do
     {view, session} = started(conn)
-    view |> element("#quit") |> render_click()
+    view |> form("#travel-form", %{"place" => "quit"}) |> render_submit()
 
     view
     |> element("form[phx-submit=start]")
@@ -46,15 +47,16 @@ defmodule MiniLineageWeb.QuitTest do
     assert render(view) =~ "Orc Village"
   end
 
-  test "is never drawn, nor answered, in a release" do
+  test "is never offered, nor answered, in a release" do
     previous = Application.fetch_env!(:mini_lineage, :debug_build)
     Application.put_env(:mini_lineage, :debug_build, false)
     on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, previous) end)
 
     {view, session} = started(build_conn())
 
-    refute has_element?(view, "#quit")
-    render_hook(view, "quit", %{})
+    assert has_element?(view, ~s(#travel-form option[value="gatekeeper"]))
+    refute has_element?(view, ~s(#travel-form option[value="quit"]))
+    render_hook(view, "navigate", %{"place" => "quit"})
     assert stored(session).name == "Quitter"
   end
 end

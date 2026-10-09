@@ -1,7 +1,8 @@
 defmodule MiniLineage.Game.Rules do
   @moduledoc """
   The base layer's tables, exactly as `docs/rules.md` writes them: the eight starting sets, what
-  each path starts with, the attribute bonus curves and the EXP each level needs. `rules_test.exs`
+  each path starts with, the attribute bonus curves, the EXP each level needs, and the towns and
+  the routes between them. `rules_test.exs`
   reads the tables back out of the document, so the two cannot disagree.
   """
 
@@ -73,13 +74,36 @@ defmodule MiniLineage.Game.Rules do
     }
   ]
 
-  # Rules §1: where each race starts, and stays until there is somewhere else to go.
-  @towns %{
-    0 => %{name: "Talking Island Village", emoji: "🏝️"},
-    1 => %{name: "Orc Village", emoji: "🏕️"},
-    2 => %{name: "Elven Village", emoji: "🌳"},
-    3 => %{name: "Dark Elven Village", emoji: "🌑"}
+  # Rules §14: every town, by the slug its address is made of. One not yet open is only listed.
+  @towns [
+    %{slug: "talking-island", name: "Talking Island Village", emoji: "🏝️", open?: true},
+    %{slug: "elven-village", name: "Elven Village", emoji: "🌳", open?: true},
+    %{slug: "dark-elven-village", name: "Dark Elven Village", emoji: "🌑", open?: true},
+    %{slug: "orc-village", name: "Orc Village", emoji: "🏕️", open?: true},
+    %{slug: "gludio", name: "Town of Gludio", emoji: "🏰", open?: true},
+    %{slug: "dion", name: "Town of Dion", emoji: "🌾", open?: true},
+    %{slug: "giran", name: "Town of Giran", emoji: "🐉", open?: false},
+    %{slug: "giran-harbor", name: "Giran Harbor", emoji: "⚓", open?: false}
+  ]
+
+  # Rules §1: the village each race starts in.
+  @hometowns %{
+    0 => "talking-island",
+    1 => "orc-village",
+    2 => "elven-village",
+    3 => "dark-elven-village"
   }
+
+  # Rules §14: each route runs both ways at one fee, listed in the order a Gatekeeper reads them.
+  @routes [
+    {"gludio", "dion", 4_100},
+    {"talking-island", "gludio", 2_900},
+    {"elven-village", "gludio", 3_700},
+    {"dark-elven-village", "gludio", 3_700},
+    {"orc-village", "gludio", 6_000},
+    {"dion", "giran", 8_100},
+    {"dion", "giran-harbor", 6_500}
+  ]
 
   # Rules §7: what a path starts with before anything is added to it.
   @paths %{
@@ -182,7 +206,21 @@ defmodule MiniLineage.Game.Rules do
   ]
 
   def sets, do: @sets
-  def town(race_id), do: Map.fetch!(@towns, race_id)
+  def towns, do: @towns
+
+  def town(slug),
+    do: Enum.find(@towns, &(&1.slug == slug)) || raise(ArgumentError, "no town #{inspect(slug)}")
+
+  def town?(slug), do: Enum.any?(@towns, &(&1.slug == slug))
+  def hometown(race_id), do: Map.fetch!(@hometowns, race_id)
+
+  @doc "Every route out of a town, as `%{to, fee}`, in the order its Gatekeeper lists them."
+  def routes_from(slug) do
+    for {a, b, fee} <- @routes, slug in [a, b], do: %{to: if(a == slug, do: b, else: a), fee: fee}
+  end
+
+  def route(from, to), do: Enum.find(routes_from(from), &(&1.to == to))
+
   def set(race_id, path), do: Enum.find(@sets, &(&1.race_id == race_id and &1.path == path))
   def path(path), do: Map.fetch!(@paths, path)
   def bonus_curve(attr), do: Map.fetch!(@bonus, attr)

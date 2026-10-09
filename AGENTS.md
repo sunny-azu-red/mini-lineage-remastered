@@ -5,8 +5,8 @@ This is Mini-Lineage Remastered: a text-based RPG in Elixir, Phoenix LiveView an
 The generic Phoenix guidance below is worth reading, but where it disagrees with this list, this
 list wins — several generator defaults do not exist here.
 
-- **The live game is the base layer and nothing more.** Character creation, the race's starting
-  village with the status sidebar, the Chronicles of Ancestry and the error page. Everything the
+- **The live game is the base layer and nothing more.** Character creation, the towns of rules
+  §14 with their Gatekeepers and the status sidebar, the Chronicles of Ancestry and the error page. Everything the
   game was before that is in `legacy/`, which is read and never run; see the rule below.
 - **There is no `core_components.ex`.** It was deleted as dead code, so there is no `<.icon>`, no
   `<.input>`, and no `<.flash_group>`. Every control is hand-written HEEx in
@@ -18,8 +18,8 @@ list wins — several generator defaults do not exist here.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
   else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
   `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing but that list and what
-  `app.js` imports through it. The hooks are `AnimatedValues`, `Panel`, `PanelFocus` and
-  `SoundToggle` (over the synth in `soundfx.js`); `kept.js` is storage.
+  `app.js` imports through it. The hooks are `AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus`
+  and `SoundToggle` (over the synth in `soundfx.js`); `kept.js` is storage.
 - **Two sounds, and only two.** The new-game fanfare is the flash's `sound`, which `GameLive` pushes
   as `play-sound` for `app.js` to play, so nothing in the DOM can replay it on a reload. The
   toggle's chime is the browser's own. A sound is a list of notes in `soundfx.js`, no assets.
@@ -29,16 +29,24 @@ list wins — several generator defaults do not exist here.
   character goes through its process, never straight to the database.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
 - **One LiveView, one dispatcher.** `GameLive` holds no game state and routes everything through
-  `Access.pin_screen/2`. `Screens.screen/1` picks the page — start, town, races, error — and all of
-  them live in `Screens` until one is big enough to need a module of its own. Anything a page
-  reaches for but does not own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and
+  `Access.pin_screen/2`. `Screens.screen/1` picks the page — start, town, gatekeeper, races, error —
+  and all of them live in `Screens` until one is big enough to need a module of its own. Anything a
+  page reaches for but does not own (`<.panel>`, `<.data_table>`, `<.button>`, `<.select_action>`,
+  the choice and the button that acts on it, which is how a player moves, `<.alert>` and
   `<.flash_alert>` built on it, `<.back_link>`, `<.figure>` and `<.bar>`, `<.fault>`) is in
   `Controls`; `Layouts` holds the shell's `head`, `site_header`, sidebar and `footer`, which
   `ErrorHTML` draws too. The sidebar — the vitals, Stats and the Inventory — is one `.side` column
   beside the main one, at its own fixed width, and one breakpoint stacks it.
-- **The town's 🚪 Quit button is temporary.** It deletes the character so one browser can try every
-  race and path, and exists only in a debug build: `GameLive` neither draws nor answers it in a
-  release, and `quit_test.exs` holds that. It goes when there is a real way to start over.
+- **Three tools exist only in a debug build — dev and the e2e server, never a release.** Each is
+  gated on `Version.debug_build?/0`, and each has a test that flips it off and finds nothing:
+  - **🚪 Quit (dev)**, the town dropdown's last choice, deletes the character so one browser can try
+    every race and path. `GameLive` neither offers nor answers it in a release (`quit_test.exs`).
+    It goes when there is a real way to start over.
+  - **Typing `adena`** outside a text field adds 10,000 to the purse, every time, so the Gatekeeper
+    can be tried before anything earns Adena. `DevKeys` relays letters, `GameLive` keeps them, and
+    `Actions.dev_adena/1` refuses on its own in a release (`dev_adena_test.exs`).
+  - **A drawn name** is already written in on game start, from `GameLive`'s `@dev_names`
+    (`dev_name_test.exs`).
 
 ### Working here
 
@@ -180,10 +188,12 @@ rides along with the next write, the 60-second backstop, or `terminate/2`. The d
 from the struct in `Characters.Server` (anything outside `@buffered` changed), never declared at a
 call site, because a call site can forget.
 
-**The URL is where you are.** Start and the starting town are one browser's two states and share
-`/`; `Access.pin_screen/2` decides which. Somewhere you can stand that is not your own village — a
-shop, a hunting ground, a record — gets a URL of its own when it is built. A state that happens to
-you does not.
+**The URL is where you are.** A character stands in one town (rules §14), stored as `location`,
+and each open town and its Gatekeeper have literal routes generated from the town table, so none is
+a pattern. `/` is game start for a visitor and, for a character, a patch to the town it stands in:
+`GameLive` compares the pinned place's address with the one asked for, never the screen alone. A
+place is `{screen, town}`. Somewhere else you can stand — a shop, a hunting ground, a record — gets
+a URL of its own when it is built. A state that happens to you does not.
 
 **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, the check in
 `e2e/reset.sh` that refuses the database `.env` names, `Actions.start/4`'s preconditions: each one
@@ -281,7 +291,8 @@ line naming two people has to keep them apart by construction. The game records 
 
 **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races` and `error` carry
 no action, so the first clause lets every state reach them and the rest only ever decides about
-screens that can be acted on: a character is in its town, and a visitor is at game start. It had
+screens that can be acted on: a character is in the town it stands in or at that town's Gatekeeper,
+and a visitor is at game start. It had
 been three overlapping allowlists once, which is how a run was kept from reading pages it had every
 right to.
 
@@ -477,11 +488,13 @@ One that goes somewhere is an `<a>`, so a reader can open it in a new tab: it co
 `patch` option when a screen first needs one, and never as a link restyled into a button or the
 reverse. That is why base.css's link rule is `a:where(:not(.btn))`, an element's specificity:
 `a:link` outranked one class, and painted a button-link in link colours. The focus ring is
-`currentColor`, so a look added later rings in its own colour without a rule of its own. A variant
-(secondary, danger, small) comes back the same way, with its CSS from `legacy/`.
+`currentColor`, so a look added later rings in its own colour without a rule of its own.
+`variant={:secondary}` is back for `<.select_action>`, whose button wears it until something is
+picked; danger and small come back the same way, with their CSS from `legacy/`.
 
 `PanelFocus` gives the panel's first control the keyboard on arrival, so a control that destroys
-something is marked `data-no-autofocus`, or one stray Enter acts on it. The Quit button is.
+something is marked `data-no-autofocus`, or one stray Enter acts on it. Quit is never first: it is
+the town dropdown's last option, which the select's own first choice keeps from being picked.
 
 **Every alert in the game is one component, and none is dismissed.** `Controls.alert/1` is the only
 thing that writes `alert`: `kind` is `:info` or `:danger`, the two the game raises, and anything

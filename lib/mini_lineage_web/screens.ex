@@ -1,23 +1,25 @@
 defmodule MiniLineageWeb.Screens do
   @moduledoc """
-  Which screen is drawn, and the screens themselves: character creation, the starting town, the
-  Chronicles of Ancestry and the error page. `raw/1` renders flashes and lore, which the server
+  Which screen is drawn, and the screens themselves: character creation, the town a character
+  stands in and its Gatekeeper, the Chronicles of Ancestry and the error page. `raw/1` renders flashes and lore, which the server
   composes from its own tables and never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
   import MiniLineageWeb.Controls
 
+  alias MiniLineage.Game.Format
   alias MiniLineageWeb.Paths
 
   @titles %{
     "start" => "Game Start",
+    "gatekeeper" => "Gatekeeper",
     "races" => "Chronicles of Ancestry",
     "error" => "Error"
   }
 
-  @doc "What the panel is headed: a run's own village at home, the screen's name elsewhere."
-  def title("home", %{started: true, town: town}), do: town.name
+  @doc "What the panel is headed: the town a run stands in, the screen's name elsewhere."
+  def title("town", %{started: true, town: town}), do: town.name
   def title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
 
   def page_title(screen, view), do: "Mini Lineage - #{title(screen, view)}"
@@ -26,11 +28,19 @@ defmodule MiniLineageWeb.Screens do
   attr :view, :map, required: true
   attr :catalog, :map, required: true
   attr :detail, :string, default: nil
+  attr :picked, :string, default: nil
+  attr :debug, :boolean, default: false
+  # Debug builds only: the name game start is already filled in with.
+  attr :dev_name, :string, default: nil
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
-  def screen(%{view: %{started: false}, screen: "home"} = assigns), do: ~H||
+  def screen(%{view: %{started: false}, screen: screen} = assigns)
+      when screen in ~w(town gatekeeper),
+      do: ~H||
+
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
-  def screen(%{screen: "home"} = assigns), do: town(assigns)
+  def screen(%{screen: "town"} = assigns), do: town(assigns)
+  def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
   def screen(assigns), do: error(assigns)
 
@@ -68,6 +78,7 @@ defmodule MiniLineageWeb.Screens do
           class="form-input"
           maxlength={MiniLineage.Game.Constants.character().name_max_length}
           placeholder="Enter your name, Heir"
+          value={@dev_name}
           autocomplete="off"
           required
         />
@@ -84,12 +95,65 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Somewhere to stand and nothing yet to do: the systems that fill a town come later.
+  # Somewhere to stand, and the way out of it: the systems that fill a town come later.
   defp town(assigns) do
     ~H"""
     <h2>{@view.town.emoji} {@view.town.name}</h2>
     <p>{@view.town.description}</p>
-    <p>You rest here among your own people. The roads out of the village are not open yet.</p>
+    <%!-- No placeholder: there is no "nowhere" to go, so the first destination is preselected. --%>
+    <.select_action
+      id="travel-form"
+      event="navigate"
+      name="place"
+      picked={@picked}
+      options={town_options(@debug)}
+      default_label="🧭 Travel"
+      active_label="🧭 Travel"
+      default_variant={:primary}
+    />
+    """
+  end
+
+  # TEMPORARY, Quit: see the "navigate" event. A release neither offers nor answers it.
+  defp town_options(debug) do
+    [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
+      if(debug, do: [%{value: "quit", label: "🚪 Quit (dev)"}], else: [])
+  end
+
+  # Rules §14: every route out of this town and its fee, then the choice of one.
+  defp gatekeeper(assigns) do
+    ~H"""
+    <p>The Gatekeeper of {@view.town.name} can send you on for a fee.</p>
+    <.data_table id="routes-table">
+      <:col class="name">Destination</:col>
+      <:col>Adena</:col>
+      <tbody>
+        <tr :for={route <- @view.routes} id={"route-#{route.slug}"}>
+          <td class="name">
+            {route.emoji} {route.name}<span :if={!route.open?} class="muted"> (not open yet)</span>
+          </td>
+          <td class="adena">🪙 {Format.number(route.fee)}</td>
+        </tr>
+      </tbody>
+    </.data_table>
+    <.select_action
+      id="teleport-form"
+      event="travel"
+      name="to"
+      picked={@picked}
+      placeholder={"🚪 #{@view.town.name}"}
+      options={
+        Enum.map(@view.routes, fn route ->
+          %{
+            value: route.slug,
+            label: "Teleport to #{route.emoji} #{route.name}",
+            disabled?: !route.open?
+          }
+        end)
+      }
+      default_label="Return"
+      active_label="🌀 Teleport"
+    />
     """
   end
 
@@ -126,8 +190,8 @@ defmodule MiniLineageWeb.Screens do
           </tr>
         </tbody>
       </.data_table>
-      <p id={"town-#{race.slug}"}>
-        They start in {race.town.emoji} {race.town.name}.
+      <p id={"lineage-#{race.slug}"}>
+        {race.perk} They start in {race.town.emoji} {race.town.name}.
       </p>
     <% end %>
 

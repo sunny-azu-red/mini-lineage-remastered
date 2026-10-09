@@ -10,7 +10,13 @@ defmodule MiniLineageWeb.BackLinksTest do
   alias MiniLineage.Game.{Access, Constants, Player, Snapshot}
   alias MiniLineageWeb.Screens
 
-  @screens ~w(start home races error)
+  @places [
+    {"start", nil},
+    {"town", "orc-village"},
+    {"gatekeeper", "orc-village"},
+    {"races", nil},
+    {"error", nil}
+  ]
 
   defp states do
     {started, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Hero")
@@ -36,8 +42,8 @@ defmodule MiniLineageWeb.BackLinksTest do
   test "a visitor is never told to continue a journey they have not begun" do
     visitor = states()[:unstarted]
 
-    for screen <- @screens,
-        Access.pin_screen(screen, visitor) == screen,
+    for {screen, _town} = place <- @places,
+        Access.pin_screen(place, visitor) == place,
         {_href, text} <- links(render(screen, visitor)) do
       refute text =~ ~r/continue your journey/i, "#{screen} offers a visitor #{inspect(text)}"
     end
@@ -46,8 +52,8 @@ defmodule MiniLineageWeb.BackLinksTest do
   test "and a character is never sent back to a start it is past" do
     started = states()[:started]
 
-    for screen <- @screens,
-        Access.pin_screen(screen, started) == screen,
+    for {screen, _town} = place <- @places,
+        Access.pin_screen(place, started) == place,
         {_href, text} <- links(render(screen, started)) do
       refute text =~ ~r/game start/i, "#{screen} offers a character #{inspect(text)}"
     end

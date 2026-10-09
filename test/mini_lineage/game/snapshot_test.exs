@@ -23,8 +23,8 @@ defmodule MiniLineage.Game.SnapshotTest do
     for race <- Constants.races() do
       town = Snapshot.build(character(race.id)).town
 
-      assert town.name == Rules.town(race.id).name
-      assert town.description == race.hometown
+      assert town.name == Rules.town(Rules.hometown(race.id)).name
+      assert town.description == Constants.town_description(Rules.hometown(race.id))
     end
   end
 

@@ -13,7 +13,7 @@ A character is one of four races (Human, Elf, Dark Elf, Orc) on one of two paths
 Mystic): eight starting sets. A character has a level from 1 to 80, and starts at level 1 with no
 Adena.
 
-Each race starts in its own village, and that is where a new character first stands.
+Each race starts in its own village, and that is where a new character first stands (§14).
 
 | Race | Starting town |
 |---|---|
@@ -172,3 +172,36 @@ How the stats meet each other. The fight builds on these.
 Example: Accuracy 40 against Evasion 34 hits **100% → 98%**. P.Atk 100 against P.Def 70 deals
 **100** before the ±10%, and **200** on a critical. A spell of power 10 with M.Atk 100 against M.Def 91
 deals **100**, and **400** on a magic critical.
+
+## 14. The world
+
+A character stands in one town at a time, which starts as its race's village (§1). The towns:
+
+| Town | Slug | Open |
+|---|---|---|
+| Talking Island Village | talking-island | yes |
+| Elven Village | elven-village | yes |
+| Dark Elven Village | dark-elven-village | yes |
+| Orc Village | orc-village | yes |
+| Town of Gludio | gludio | yes |
+| Town of Dion | dion | yes |
+| Town of Giran | giran | not yet |
+| Giran Harbor | giran-harbor | not yet |
+
+Every town has a Gatekeeper, who sends a character along a route for Adena. A route runs both ways
+at one fee, and these are the only routes: the four villages never link to each other, only to
+Gludio, and the mainland goes on from there. A town that is not open yet is listed by its
+Gatekeeper and cannot be travelled to. A character who cannot pay the fee does not go.
+
+| Between | And | Fee |
+|---|---|---|
+| Town of Gludio | Town of Dion | 4,100 |
+| Talking Island Village | Town of Gludio | 2,900 |
+| Elven Village | Town of Gludio | 3,700 |
+| Dark Elven Village | Town of Gludio | 3,700 |
+| Orc Village | Town of Gludio | 6,000 |
+| Town of Dion | Town of Giran | 8,100 |
+| Town of Dion | Giran Harbor | 6,500 |
+
+Example: an Elf goes from Elven Village to Dion through Gludio, for 3,700 + 4,100 = **7,800**
+Adena. An Orc with 10,000 reaches Gludio with **4,000** left, which is not enough for Dion.

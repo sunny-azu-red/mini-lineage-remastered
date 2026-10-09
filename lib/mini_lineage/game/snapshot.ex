@@ -12,6 +12,7 @@ defmodule MiniLineage.Game.Snapshot do
     race_emoji: nil,
     class_name: nil,
     town: nil,
+    routes: [],
     health: nil,
     max_health: nil,
     mp: nil,
@@ -41,7 +42,13 @@ defmodule MiniLineage.Game.Snapshot do
       name: player.name,
       race_emoji: race.emoji,
       class_name: Rules.set(player.race_id, player.path).name,
-      town: Map.put(Rules.town(player.race_id), :description, race.hometown),
+      town:
+        Map.put(
+          Rules.town(player.location),
+          :description,
+          Constants.town_description(player.location)
+        ),
+      routes: routes(player.location),
       health: player.health,
       max_health: stats.max_hp,
       mp: player.mp,
@@ -57,6 +64,10 @@ defmodule MiniLineage.Game.Snapshot do
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }
   end
+
+  # What the Gatekeeper offers: each town a route reaches, with the fee for it.
+  defp routes(from),
+    do: Enum.map(Rules.routes_from(from), &Map.put(Rules.town(&1.to), :fee, &1.fee))
 
   # 🌿 says what it is restoring, and how much a tick.
   defp aura_view(aura) do
@@ -81,7 +92,7 @@ defmodule MiniLineage.Game.Snapshot do
         Enum.map(Constants.races(), fn race ->
           Map.merge(race, %{
             slug: Format.slugify(race.label),
-            town: Rules.town(race.id),
+            town: Rules.town(Rules.hometown(race.id)),
             classes: Enum.map([:fighter, :mystic], &born(Rules.set(race.id, &1)))
           })
         end)

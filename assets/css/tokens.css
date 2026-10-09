@@ -17,9 +17,11 @@
     --row-lift: rgba(255, 255, 255, 0.028);
 
     /* ===== Borders =====
-     * Every surface edge is --border-soft. --border-control draws the button, the select and the
-     * input; --border-arcane-bright the scrollbar's thumb. */
+     * Every surface edge is --border-soft. --border-control draws the primary button, the select
+     * and the input; --border-arcane the secondary, and --border-arcane-bright its hover and the
+     * scrollbar's thumb. */
     --border-control: #645b6f;
+    --border-arcane: #46414d;
     --border-arcane-bright: #655e6e;
     --border-soft: rgba(255, 255, 255, 0.07);
 

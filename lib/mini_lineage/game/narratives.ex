@@ -32,7 +32,10 @@ defmodule MiniLineage.Game.Narratives do
 
   @began ~s({they} chose the {raceEmoji} {className}, and {welcome} {they} set out from {townEmoji} {town} as {build} {definition} of {age} seasons.)
 
+  @arrived ~s({they} pay the Gatekeeper <span class="adena">{fee} Adena</span> and step out into {townEmoji} {town}.)
+
   def welcome, do: @welcome
+  def arrived, do: @arrived
   def began, do: @began
 
   @doc "The pronoun set a template is filled from: the reader's own, or somebody else's."

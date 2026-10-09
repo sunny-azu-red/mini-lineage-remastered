@@ -6,9 +6,13 @@ defmodule MiniLineageWeb.PathsTest do
   """
   use ExUnit.Case, async: true
 
+  alias MiniLineage.Game.Rules
   alias MiniLineageWeb.{Paths, Router}
 
-  @screens ~w(start home races error)
+  defp places do
+    [{"start", nil}, {"races", nil}, {"error", nil}] ++
+      for slug <- Paths.towns(), screen <- ~w(town gatekeeper), do: {screen, slug}
+  end
 
   defp routed do
     Router
@@ -18,12 +22,20 @@ defmodule MiniLineageWeb.PathsTest do
     |> MapSet.new()
   end
 
-  test "every screen links to a route the router answers, and every route is linked to" do
-    assert MapSet.new(@screens, &Paths.for_screen/1) == routed()
+  test "every place links to a route the router answers, and every route is linked to" do
+    assert MapSet.new(places(), &Paths.for_screen/1) == routed()
   end
 
-  test "start and home are both the root, one browser's two states" do
-    for screen <- ~w(start home), do: assert(Paths.for_screen(screen) == "/", screen)
+  test "every open town is routed, and no town that is not open yet" do
+    for town <- Rules.towns() do
+      assert MapSet.member?(routed(), "/#{town.slug}") == town.open?, town.slug
+    end
+  end
+
+  test "an address names the town it stands in" do
+    for {screen, slug} = place <- places(), screen in ~w(town gatekeeper) do
+      assert Paths.town_of("http://localhost#{Paths.for_screen(place)}") == slug
+    end
   end
 
   test "a screen with no URL of its own resolves to the root rather than crashing" do

@@ -61,7 +61,7 @@ character: each lands with the first system that needs it, almost certainly figh
 
 ## The world
 
-- Towns, and a Gatekeeper to travel between them.
+- More of the mainland past Dion: Giran and Giran Harbor are listed by rules §14, and not open yet.
 - Farming zones, questing zones and dungeons.
 - Shops in each town, selling what that town sells.
 - Day and night: night runs from 22:00 to 06:00 server time and makes it harder to hit.

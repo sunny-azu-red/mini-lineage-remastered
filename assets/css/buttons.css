@@ -128,3 +128,44 @@
     opacity: 0.45;
     pointer-events: none;
 }
+
+/* ===== Secondary =====
+ * The quieter look a choice's button wears until something is chosen. */
+.btn-secondary {
+    background: linear-gradient(180deg, #27242a 0%, #1b191e 100%);
+    border: 1px solid var(--border-arcane);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color: var(--text-secondary);
+}
+
+.btn-secondary::after {
+    background: linear-gradient(90deg,
+            transparent,
+            color-mix(in srgb, var(--border-arcane-bright) 35%, transparent),
+            transparent);
+}
+
+.btn-secondary:hover {
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.06) 0%,
+            transparent 50%,
+            rgba(0, 0, 0, 0.12) 100%),
+        linear-gradient(180deg,
+            #322f37 0%,
+            #27242a 50%,
+            #2d2b31 100%);
+
+    border-color: var(--border-arcane-bright);
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 15%, transparent),
+        0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-secondary:active {
+    background: linear-gradient(180deg, #141315 0%, #1b191e 100%);
+    border-color: var(--border-arcane-bright);
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 20%, transparent),
+        inset 0 2px 3px rgba(0, 0, 0, 0.35);
+}

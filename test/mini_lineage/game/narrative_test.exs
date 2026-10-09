@@ -33,7 +33,7 @@ defmodule MiniLineage.Game.NarrativeTest do
 
         assert unrendered(flash.text) == [], "race #{race_id}: #{inspect(unrendered(flash.text))}"
         assert flash.text =~ Rules.set(race_id, path).name
-        assert flash.text =~ Rules.town(race_id).name
+        assert flash.text =~ Rules.town(Rules.hometown(race_id)).name
       end
     end
   end
