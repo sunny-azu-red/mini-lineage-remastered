@@ -1,7 +1,7 @@
 defmodule MiniLineage.Characters.Store do
   @moduledoc """
   Persistence for characters, and the only place that knows the state is stored as JSON. `id` is
-  public and permanent; `session_id` is the cookie's secret, and a run that has ended gives it up.
+  public and permanent; `session_id` is the cookie's secret, and a run nobody comes back to gives it up.
   """
   import Ecto.Query
 
@@ -22,7 +22,7 @@ defmodule MiniLineage.Characters.Store do
 
   @doc """
   The character this browser is playing, as `{id, player}`, or nil before it has saved anything.
-  Only ever finds a run still in progress — archiving clears the session it looks for.
+  Never finds a retired run: retiring clears the session it looks for.
   """
   def load_by_session(nil), do: nil
 

@@ -35,7 +35,6 @@ defmodule MiniLineage.Characters.VisitorTest do
     session = visitor()
 
     Characters.snapshot(session)
-    Characters.character_id(session)
     Characters.snapshot(session)
 
     assert rows() == before

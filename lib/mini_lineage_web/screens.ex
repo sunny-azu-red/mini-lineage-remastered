@@ -66,7 +66,7 @@ defmodule MiniLineageWeb.Screens do
           type="text"
           name="name"
           class="form-input"
-          maxlength="20"
+          maxlength={MiniLineage.Game.Constants.character().name_max_length}
           placeholder="Enter your name, Heir"
           autocomplete="off"
           required

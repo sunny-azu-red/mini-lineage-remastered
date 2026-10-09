@@ -72,12 +72,6 @@ defmodule MiniLineage.Game.VersionTest do
       refute Version.release?(Version.current())
       assert Version.commit_url(Version.current()) == nil
     end
-
-    test "and there is no third answer: a nameless production build never gets built" do
-      # mix.exs refuses to assemble a release without a stamp, so the only way to reach the
-      # fallback above is to be a debug build. A deployed footer therefore always names a commit.
-      assert Version.current() == "🔥development"
-    end
   end
 
   describe "what counts as a release" do

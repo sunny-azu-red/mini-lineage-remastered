@@ -74,8 +74,8 @@ jobs:
       - name: Test
         run: mix test --warnings-as-errors
 
-      # The balance simulations compile only in :dev, so :test alone would let them rot.
-      - name: Compile the dev-only balance simulations
+      # The Mix tasks in scratch/ compile only in :dev, so :test alone would let them rot.
+      - name: Compile the dev-only Mix tasks
         env:
           MIX_ENV: dev
         run: mix compile --warnings-as-errors

@@ -39,18 +39,6 @@ defmodule MiniLineageWeb.PanelTest do
     assert LazyHTML.attribute(tag(html, ".panel-body"), "hidden") == []
   end
 
-  test "keeps the reader's fold unless told not to" do
-    assigns = %{}
-
-    html =
-      rendered_to_string(~H"""
-      <Controls.panel id="p" title="P" collapsible remember={false}>body</Controls.panel>
-      """)
-
-    assert LazyHTML.attribute(tag(html, "#p"), "data-remember") == ["false"]
-    refute folding(false) =~ "data-remember"
-  end
-
   test "while a plain panel has no control and no hook at all" do
     assigns = %{}
     html = rendered_to_string(~H|<Controls.panel title="Plain">body</Controls.panel>|)

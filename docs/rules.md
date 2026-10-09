@@ -138,10 +138,11 @@ Out of combat, a character gets HP and MP back every 3 seconds. In combat, nothi
 - **HP per tick = base × level bonus × CON bonus × 3**, where base is 1.5 + level ÷ 20 below level 11,
   and 1.4 + level ÷ 10 from level 11.
 - **MP per tick = (0.87 + 0.03 × level) × level bonus × MEN bonus × 3**
+- Each is rounded to the nearest whole point, a half rounding up, since HP and MP are whole.
 
-Example: a level 1 Human Fighter rests 1.55 × 0.90 × 1.58 × 3 = **6.6 HP** a tick, so its 126 HP
-fill in about a minute. At level 40 it rests 33 HP a tick and fills 1,007 HP in about a minute and a
-half.
+Example: a level 1 Human Fighter rests 1.55 × 0.90 × 1.58 × 3 = 6.6, so **7 HP** a tick, and its
+126 HP fill in 18 ticks, under a minute. At level 40 it rests **33 HP** a tick and fills 1,007 HP in
+31 ticks, about a minute and a half.
 
 ## 12. Levels
 

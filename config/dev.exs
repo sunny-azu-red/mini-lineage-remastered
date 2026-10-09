@@ -12,9 +12,6 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:mini_lineage, ~w(--sourcemap=inline --watch)]}
   ]
 
-# Cached per VM elsewhere; here a code reload must reach the race templates without a restart.
-config :mini_lineage, cache_catalog: false
-
 config :logger, :default_formatter, format: "[$level] $message\n"
 
 config :phoenix, :stacktrace_depth, 20

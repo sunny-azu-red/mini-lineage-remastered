@@ -86,6 +86,24 @@ defmodule MiniLineage.Characters.BufferingTest do
     end
   end
 
+  describe "what a connected player who only rests" do
+    # Nothing they do writes, and their process never stops, so the buffer would wait for ever.
+    test "has written once the buffer is a minute old, by the next tick", %{id: id} do
+      start_character(id)
+      Characters.mutate(id, &{%{&1 | health: 10}, :ok})
+      assert stored(id).health != 10, "the wound was written at once, so this proves nothing"
+
+      pid = pid_for(id)
+      a_minute_ago = System.monotonic_time(:millisecond) - 61_000
+      :sys.replace_state(pid, &%{&1 | dirty_since: a_minute_ago})
+      tick(id)
+      settle(id)
+
+      # Written before this tick healed it, which is why it is 10 and not what it is now.
+      assert stored(id).health == 10
+    end
+  end
+
   describe "what survives losing the process" do
     test "a clean stop flushes, so the idle sweep and a deploy lose nothing", %{id: id} do
       start_character(id)

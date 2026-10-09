@@ -55,18 +55,17 @@ defmodule MiniLineage.Game.Constants do
   @character %{
     min_age: 9,
     max_age: 69,
-    age_thresholds: %{
-      youth: 23,
-      adult: 54,
-      labels: %{youth: "youth", adult: "adult", elder: "elder"}
-    },
+    age_thresholds: %{youth: 23, adult: 54},
     name_min_length: 1,
     name_max_length: 20,
     builds: ["a hardy", "a wiry", "a sturdy", "a fit", "a rugged", "a robust", "a solid"]
   }
 
   def races, do: @races
-  def race(id), do: Enum.at(@races, id) || hd(@races)
+
+  def race(id),
+    do: Enum.find(@races, &(&1.id == id)) || raise(ArgumentError, "no race #{inspect(id)}")
+
   def aura(key), do: Map.fetch!(@auras, key)
   def character, do: @character
 end

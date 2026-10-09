@@ -21,7 +21,6 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
-  def voiced(nil, _mine?), do: nil
   def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
 
   @doc "A line as its owner's alert."

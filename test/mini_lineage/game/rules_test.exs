@@ -153,14 +153,18 @@ defmodule MiniLineage.Game.RulesTest do
       assert Formulas.cast_spd(99) == 1999
     end
 
-    test "§11 resting: a minute to full at level 1, a minute and a half at 40", %{hf: hf} do
+    test "§11 resting: 18 ticks to full at level 1, 31 at 40, in whole points", %{hf: hf} do
       con = hf.attributes.con
       assert_in_delta Formulas.hp_regen(1, con), 6.6, 0.05
       assert_in_delta Formulas.hp_regen(40, con), 33.0, 0.05
 
-      ticks = fn level, max -> ceil(max / Formulas.hp_regen(level, con)) end
-      assert (ticks.(1, 126) * 3) in 55..65
-      assert (ticks.(40, 1007) * 3) in 85..100
+      # What a tick actually restores is the rounded rate, which `Player.auras/1` carries.
+      {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Rester")
+      assert [hp_regen: 7] = Enum.find(Player.auras(%{player | health: 1}), & &1[:rates]).rates
+
+      ticks = fn level, max -> ceil(max / Math.js_round(Formulas.hp_regen(level, con))) end
+      assert ticks.(1, 126) == 18
+      assert ticks.(40, 1007) == 31
     end
 
     test "§13 hit chance, inside 28% and 98%" do

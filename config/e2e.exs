@@ -9,8 +9,5 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
   code_reloader: false,
   live_reload: [patterns: []]
 
-# The suites drive what ships, and what ships caches.
-config :mini_lineage, cache_catalog: true
-
 # Tells this unreleased build apart from the dev server in the footer.
 config :mini_lineage, build_label: "testing"

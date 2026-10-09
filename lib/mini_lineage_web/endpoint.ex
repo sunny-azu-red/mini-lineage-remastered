@@ -1,8 +1,8 @@
 defmodule MiniLineageWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :mini_lineage
 
-  # An opaque character id and nothing else, signed. `max_age` is the same window the character row
-  # itself lives for, so closing the browser cannot lose a character the database still holds.
+  # The session id and nothing else, signed. `max_age` is the window an untouched character keeps its
+  # session for, so closing the browser cannot lose a character that could still be played.
   @session_options [
     store: :cookie,
     key: "_mini_lineage_key",

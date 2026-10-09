@@ -2,7 +2,7 @@ defmodule MiniLineage.Game.Math do
   @moduledoc """
   JS number semantics are reproduced deliberately: `js_round/1` rounds halves toward +infinity, and
   `roll_chance/1` short-circuits at both ends WITHOUT drawing — a chance of exactly 0 or 100 consumes
-  no randomness, so a seeded stream keeps its draw order.
+  no randomness, so a pinned source keeps its draw order.
   """
   alias MiniLineage.Game.{Rng, Rules}
 
@@ -28,7 +28,6 @@ defmodule MiniLineage.Game.Math do
 
   def max_level?(level), do: level >= Rules.max_level()
 
-  def percentage(value, total, precision \\ 0)
   def percentage(_value, total, _precision) when total <= 0, do: 0
 
   def percentage(value, total, precision) do

@@ -3,7 +3,7 @@ defmodule MiniLineage.Game.Player do
   A character as the base layer (`docs/rules.md`) makes one, and what time does to it. Every
   function takes a player and returns a new one; nothing here touches a process or the database.
   """
-  alias MiniLineage.Game.{Constants, Format, Formulas, Math, Narrative, Narratives, Rules}
+  alias MiniLineage.Game.{Constants, Formulas, Math, Narrative, Narratives, Rules}
 
   defstruct name: nil,
             race_id: nil,
@@ -38,13 +38,12 @@ defmodule MiniLineage.Game.Player do
 
     definition =
       cond do
-        age <= thresholds.youth -> thresholds.labels.youth
-        age <= thresholds.adult -> thresholds.labels.adult
-        true -> thresholds.labels.elder
+        age <= thresholds.youth -> "youth"
+        age <= thresholds.adult -> "adult"
+        true -> "elder"
       end
 
-    welcome =
-      Format.fill_template(Math.random_element(Narratives.welcome()), %{"raceLabel" => race.label})
+    welcome = Math.random_element(Narratives.welcome())
 
     began =
       Narrative.build_began(race, %{

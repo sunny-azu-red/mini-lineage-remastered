@@ -107,10 +107,10 @@ defmodule MiniLineageWeb.GameLive do
 
   @impl true
   # The echo of this tab's own action, which `apply_action/3` has already folded in.
-  def handle_info({:character_updated, player, _id}, %{assigns: %{player: player}} = socket),
+  def handle_info({:character_updated, player}, %{assigns: %{player: player}} = socket),
     do: {:noreply, socket}
 
-  def handle_info({:character_updated, player, _id}, socket) do
+  def handle_info({:character_updated, player}, socket) do
     socket = assign(socket, player: player, view: Snapshot.build(player))
     target = Access.pin_screen(socket.assigns.screen, player)
 
@@ -162,7 +162,7 @@ defmodule MiniLineageWeb.GameLive do
 
       <Screens.screen screen={@screen} view={@view} catalog={@catalog} detail={@error_detail} />
       <%!-- TEMPORARY: see the "quit" event. --%>
-      <Controls.button :if={@debug and @screen == "home"} id="quit" phx-click="quit">
+      <Controls.button :if={@debug and @screen == "home"} id="quit" phx-click="quit" data-no-autofocus>
         🚪 Quit
       </Controls.button>
     </Layouts.app>

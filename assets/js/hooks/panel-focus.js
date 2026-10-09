@@ -31,9 +31,9 @@ export const PanelFocus = {
             return;
 
         // Links are out because Space scrolls them rather than activating them; hidden inputs
-        // because they match `input` without being focusable.
+        // because they match `input` without being focusable; and anything that destroys, by its mark.
         const control = this.el.querySelector(
-            'input:not([type="hidden"]), select, button',
+            'input:not([type="hidden"]), select, button:not([data-no-autofocus])',
         );
         if (control && !control.matches(':disabled'))
             control.focus({ preventScroll: true });

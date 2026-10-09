@@ -1,9 +1,8 @@
 defmodule MiniLineage.Game.JsParityTest do
   @moduledoc """
-  Pins the arithmetic and formatting the port cannot verify by inspection: `Math.round`'s
-  halves-toward-+infinity, and `toLocaleString('en-US')`,
-  which Elixir has no ICU equivalent for. Every expectation below was produced by running the
-  reference expressions in Node, not written by hand.
+  JavaScript semantics the game reproduces, which Elixir does not share: `Math.round`'s
+  halves-toward-+infinity, and `toLocaleString('en-US')`, which Elixir has no ICU equivalent for.
+  Every expectation below was produced by running the reference expressions in Node.
   """
   use ExUnit.Case, async: true
 
@@ -21,21 +20,6 @@ defmodule MiniLineage.Game.JsParityTest do
     {-4567, "-4,567"}
   ]
 
-  @shorts [
-    {0, "0"},
-    {7, "7"},
-    {999, "999"},
-    {1000, "1k"},
-    {1050, "1k"},
-    {1500, "1.5k"},
-    {9999, "9.9k"},
-    {999_999, "999.9k"},
-    {1_000_000, "1kk"},
-    {2_500_000, "2.5kk"},
-    {1_234_567_890, "1.2kkk"},
-    {-1500, "-1.5k"}
-  ]
-
   test "js_round sends halves toward +infinity, unlike Elixir's round/1" do
     assert Math.js_round(0.5) == 1
     assert Math.js_round(1.5) == 2
@@ -46,10 +30,6 @@ defmodule MiniLineage.Game.JsParityTest do
 
   test "number/1 matches toLocaleString('en-US')" do
     for {n, expected} <- @numbers, do: assert(Format.number(n) == expected)
-  end
-
-  test "short/1 matches shortFigure" do
-    for {n, expected} <- @shorts, do: assert(Format.short(n) == expected)
   end
 
   test "roll_chance short-circuits at both ends without drawing" do

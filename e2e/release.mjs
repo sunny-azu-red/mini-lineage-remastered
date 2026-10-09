@@ -16,7 +16,8 @@ const { onScreen } = controls(page);
 try {
     const response = await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 10000 });
-    check('the socket connects', true);
+    const refused = consoleErrors.filter(e => /Content Security Policy/i.test(e));
+    check('the socket connects, and the CSP refuses nothing', refused.length === 0, refused.join(' | '));
 
     const csp = response.headers()['content-security-policy'] ?? '';
     check('the CSP refuses eval', csp.includes("script-src") && !csp.includes('unsafe-eval'), csp);

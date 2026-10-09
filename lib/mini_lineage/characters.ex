@@ -4,7 +4,7 @@ defmodule MiniLineage.Characters do
   state survives a disconnect and no two actions can interleave.
 
   A process is addressed by the SESSION — the secret in the cookie — because that is what a
-  browser has. The character's public id lives inside the process and never comes back out here.
+  browser has. The character's public id lives inside the process.
   """
   alias MiniLineage.Characters.{Server, Store}
 
@@ -17,9 +17,6 @@ defmodule MiniLineage.Characters do
   def mutate(id, fun), do: call(id, {:mutate, fun})
 
   def snapshot(id), do: call(id, :snapshot)
-
-  @doc "This session's character's PUBLIC id. Safe to render."
-  def character_id(session), do: call(session, :character_id)
 
   @doc "Registers a viewer. The process stops shortly after its last viewer goes away."
   def attach(id, pid \\ self()), do: call(id, {:attach, pid})

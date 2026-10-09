@@ -1,5 +1,5 @@
 {
-  "_comment": "Values both adena formatters must agree on. Read by test/mini_lineage/game/format_test.exs for the Elixir side and by e2e/walkthrough.mjs for the JavaScript one, so a divergence fails a test rather than wobbling for 600ms mid-animation.",
+  "_comment": "Values both short-form formatters (Adena, XP) must agree on. Read by test/mini_lineage/game/format_test.exs for the Elixir side and by e2e/walkthrough.mjs for the JavaScript one, so a divergence fails a test rather than wobbling for 600ms mid-animation.",
   "cases": [
     [0, "0"],
     [7, "7"],

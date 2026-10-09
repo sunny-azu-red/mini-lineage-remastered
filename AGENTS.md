@@ -210,7 +210,7 @@ letting the formatter break it inside the tag. Buttons are exempt, being padded 
 **Declare a property only where the element would not otherwise have it.** Either it does not
 inherit — form controls and buttons take no font or colour from `body`, which is measurable and was
 — or it differs from what it does. Restating the inherited value gives `body` a second place to be
-changed and no second effect, so `.data-table td` and `th`, `h2`, `h3` and `.stat-value` say nothing
+changed and no second effect, so `.data-table td` and `th`, `h2` and `.stat-value` say nothing
 about colour while `.stat-label` does. If a container is ever made secondary, the children that must
 stay primary will need to say so then; adding it in anticipation is how the two drift apart.
 
@@ -424,10 +424,6 @@ the walkthrough and failed about one run in three, taking the whole suite with i
 sweep is what matters and is checked instead. A bar leaves its class to the hook through
 `JS.ignore_attributes`, so a patch cannot take a running sweep with it.
 
-**The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
-each race's slug, town and level-1 sets from code; caching that in `:dev` means editing a race or a
-rule changes nothing until the server restarts. `:e2e` and `:prod` cache, which is what ships.
-
 **A visitor is never written.** A browser that has not chosen a lineage lives in its process and
 nothing else: the tick skips a run that has not started and nothing else can change one, so
 nothing marks it dirty and nothing persists it. That is why the retirement only ever clears
@@ -449,8 +445,7 @@ what the animation is showing.
 
 **Every panel in the game is one component.** `Controls.panel/1` draws the card — the header band,
 the title, the body — and the differences are options: `heading` for the screen's own h1, and only
-that one, `collapsible` and `collapsed` for a header that folds, `remember` for whether the fold is
-kept. `id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it
+that one, `collapsible` and `collapsed` for a header that folds. `id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it
 land on the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the
 data attributes a browser test reads. A panel takes a hook only when something about it moves, so
 the error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
@@ -460,7 +455,7 @@ opening state and belongs to the `Panel` hook after that, re-applied on every `u
 WHOLE state: the stylesheet hides a folded body off it, never a `hidden` attribute, so a layout with
 room for a panel can keep it open before any script runs, and says so to the hook with
 `--folds: 0`, where the header is disabled. What the reader last did is kept under `panel:<id>` in
-`localStorage` and beats the template on the next mount, unless `remember={false}`.
+`localStorage` and beats the template on the next mount.
 
 The whole header band is the control, and it is a BUTTON. It goes nowhere, and a link would say it
 did: Space activates a button and scrolls a link, which is the same reason `PanelFocus` refuses to
@@ -477,12 +472,16 @@ every width and opens folded. The phone's rules repeat the desktop's `:not(.fold
 they win by order; written plainly, the desktop's extra class outranked them and nothing folded.
 
 **Every button in the game is one component, and the element is what it does.** `Controls.button/1`
-is the only thing that writes `btn`. With `patch` it is an `<a>`, because it goes somewhere and a
-reader may want that in a new tab; without, a `<button>`, because it does something. Never make a
-link a button to change how it looks. That is why base.css's link rule is `a:where(:not(.btn))`, an
-element's specificity: `a:link` outranked one class, and painted a button-link in link colours. The focus ring is `currentColor`, so a look added later rings in its own
-colour without a rule of its own. A variant (secondary, danger, small) comes back as an option on it,
-with its CSS from `legacy/`, when a screen first needs one.
+is the only thing that writes `btn`, and today it is always a `<button>`, because it does something.
+One that goes somewhere is an `<a>`, so a reader can open it in a new tab: it comes back as a
+`patch` option when a screen first needs one, and never as a link restyled into a button or the
+reverse. That is why base.css's link rule is `a:where(:not(.btn))`, an element's specificity:
+`a:link` outranked one class, and painted a button-link in link colours. The focus ring is
+`currentColor`, so a look added later rings in its own colour without a rule of its own. A variant
+(secondary, danger, small) comes back the same way, with its CSS from `legacy/`.
+
+`PanelFocus` gives the panel's first control the keyboard on arrival, so a control that destroys
+something is marked `data-no-autofocus`, or one stray Enter acts on it. The Quit button is.
 
 **Every alert in the game is one component, and none is dismissed.** `Controls.alert/1` is the only
 thing that writes `alert`: `kind` is `:info` or `:danger`, the two the game raises, and anything
@@ -498,7 +497,8 @@ would undo a DOM sort and redo it after, moving every row twice. `legacy/` has t
 
 **What the reader chooses is kept as `<kind>:<id>`, through `hooks/kept.js` and nowhere else.**
 `panel:inventory` is a fold and `sound:effects` the sound switch, kept only while it is off, and
-`recall` and `keep` are the only code that touches `localStorage` for either, so a new thing that remembers takes a kind and writes no storage code of its own. A fold
+`recall` and `keep` are the only code that touches `localStorage` for either, so a new thing that
+remembers takes a kind and writes no storage code of its own. A fold
 is the browser's alone: the server renders the template's state and the hook corrects it on mount.
 Give a kind to the server only when the server must know it to render.
 

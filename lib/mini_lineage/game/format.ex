@@ -20,8 +20,6 @@ defmodule MiniLineage.Game.Format do
     sign <> grouped
   end
 
-  def number(n) when is_float(n), do: number(trunc(n))
-
   @doc "999 -> \"999\", 1500 -> \"1.5k\", 2_000_000 -> \"2kk\"."
   def short(value) do
     abs = Kernel.abs(value)
@@ -52,23 +50,11 @@ defmodule MiniLineage.Game.Format do
     |> String.replace(~r/--+/, "-")
   end
 
-  @ternary ~r/\{(\w+)\s*\?\s*['"]([^'"]*)['"]\s*:\s*['"]([^'"]*)['"]\}/
   @placeholder ~r/\{(\w+)\}/
 
-  @doc ~S"""
-  Fills `{key}` and `{key ? 'yes' : 'no'}`. An unknown key is left verbatim, so open pronouns
-  survive until render.
-  """
-  def fill_template(nil, _data), do: ""
-  def fill_template("", _data), do: ""
-
+  @doc "Fills `{key}`. An unknown key is left verbatim, so open pronouns survive until render."
   def fill_template(template, data) do
-    template
-    |> String.replace(@ternary, fn match ->
-      [_, key, truthy, falsy] = Regex.run(@ternary, match)
-      if truthy?(Map.get(data, key)), do: truthy, else: falsy
-    end)
-    |> String.replace(@placeholder, fn match ->
+    String.replace(template, @placeholder, fn match ->
       [_, key] = Regex.run(@placeholder, match)
 
       case Map.get(data, key) do
@@ -77,10 +63,4 @@ defmodule MiniLineage.Game.Format do
       end
     end)
   end
-
-  defp truthy?(nil), do: false
-  defp truthy?(false), do: false
-  defp truthy?(0), do: false
-  defp truthy?(""), do: false
-  defp truthy?(_), do: true
 end

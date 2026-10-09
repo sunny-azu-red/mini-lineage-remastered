@@ -35,7 +35,9 @@ try {
     const font = await page.locator('.header-title').evaluate(el => getComputedStyle(el).fontFamily);
     check('the stylesheet is applied', bg !== 'rgba(0, 0, 0, 0)', `body background ${bg}`);
     check('...including the display font', /Cinzel/i.test(font), font);
-    check('LiveView connects through the CSP', true);
+    // The connect itself is the wait above; what can still go wrong is the CSP refusing something.
+    const refused = consoleErrors.filter(e => /Content Security Policy/i.test(e));
+    check('LiveView connects through the CSP, which refuses nothing', refused.length === 0, refused.join(' | '));
 
     // This server is the e2e one: a footer reading "development" means the run is driving the dev
     // server on 4000, against real data.
@@ -141,6 +143,9 @@ try {
         document.querySelector('#main h2').getBoundingClientRect().top
         - document.querySelector('#flash').getBoundingClientRect().bottom);
     check('...and its heading sits under the flash as if it came first, 12px below it', gap === 12, `${gap}px`);
+    check('...and nothing destructive takes the keyboard on arrival',
+        await page.evaluate(() => document.activeElement?.id) !== 'quit',
+        await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 60)));
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
     check('...at level 1, with full bars', born.level === 1 && born.health === born.maxHealth
         && born.mp === born.maxMp, JSON.stringify(born));

@@ -18,9 +18,6 @@ config :mini_lineage, debug_build: true
 # A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.
 config :mini_lineage, secure_cookie: false
 
-# Caches the catalog per VM. dev turns it off, so an edited race or rule shows without a restart.
-config :mini_lineage, cache_catalog: true
-
 # The footer's name for an unreleased build.
 config :mini_lineage, build_label: "development"
 

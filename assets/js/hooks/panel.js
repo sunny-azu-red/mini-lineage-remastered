@@ -7,9 +7,8 @@ import { keep, recall } from './kept';
 export const Panel = {
     mounted() {
         this.toggle = this.el.querySelector(':scope > .panel-toggle');
-        this.remember = this.el.dataset.remember !== 'false';
         // The reader's last fold beats the template's.
-        const kept = this.toggle && this.remember ? recall('panel', this.el.id) : null;
+        const kept = this.toggle ? recall('panel', this.el.id) : null;
         this.open = !this.toggle
             || (kept === null ? this.toggle.getAttribute('aria-expanded') === 'true' : kept === '1');
         this.show(this.open);
@@ -17,7 +16,7 @@ export const Panel = {
         this.toggle?.addEventListener('click', () => {
             if (!this.folds()) return;
             this.show(!this.open);
-            if (this.remember) keep('panel', this.el.id, this.open ? '1' : '0');
+            keep('panel', this.el.id, this.open ? '1' : '0');
             if (this.open) this.reveal();
         });
         // Where the panel may fold is the stylesheet's to say, and it can change with the width.

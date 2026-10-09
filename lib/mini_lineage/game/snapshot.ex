@@ -9,8 +9,6 @@ defmodule MiniLineage.Game.Snapshot do
   @empty %{
     started: false,
     name: nil,
-    race_id: nil,
-    race_label: nil,
     race_emoji: nil,
     class_name: nil,
     town: nil,
@@ -41,8 +39,6 @@ defmodule MiniLineage.Game.Snapshot do
     %{
       started: true,
       name: player.name,
-      race_id: player.race_id,
-      race_label: race.label,
       race_emoji: race.emoji,
       class_name: Rules.set(player.race_id, player.path).name,
       town: Map.put(Rules.town(player.race_id), :description, race.hometown),
@@ -78,24 +74,8 @@ defmodule MiniLineage.Game.Snapshot do
   defp rate_text({:hp_regen, value}), do: "+#{value} HP"
   defp rate_text({:mp_regen, value}), do: "+#{value} MP"
 
-  @catalog_key {__MODULE__, :catalog}
-
-  @doc """
-  The static catalog, built once per VM. Not cached in development, where an edited template must
-  show without a restart.
-  """
+  @doc "Every race as the Chronicles of Ancestry draws it: its town and its two level-1 sets."
   def catalog do
-    if Application.fetch_env!(:mini_lineage, :cache_catalog) do
-      case :persistent_term.get(@catalog_key, nil) do
-        nil -> tap(build_catalog(), &:persistent_term.put(@catalog_key, &1))
-        catalog -> catalog
-      end
-    else
-      build_catalog()
-    end
-  end
-
-  defp build_catalog do
     %{
       races:
         Enum.map(Constants.races(), fn race ->

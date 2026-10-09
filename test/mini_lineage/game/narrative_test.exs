@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.NarrativeTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Format, Narrative, Narratives, Player, Rng, Rules}
+  alias MiniLineage.Game.{Constants, Narrative, Narratives, Player, Rng, Rules}
 
   @races 0..3
   # More than the welcome pool, so every index of it is drawn.
@@ -44,9 +44,7 @@ defmodule MiniLineage.Game.NarrativeTest do
     test "is joined mid-sentence, so none of them starts a new one" do
       race = Constants.race(1)
 
-      for template <- Narratives.welcome(), mine <- [true, false] do
-        welcome = Format.fill_template(template, %{"raceLabel" => race.label})
-
+      for welcome <- Narratives.welcome(), mine <- [true, false] do
         line =
           race
           |> Narrative.build_began(%{

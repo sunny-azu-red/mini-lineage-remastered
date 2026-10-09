@@ -34,14 +34,20 @@ defmodule MiniLineage.Characters.TickLogTest do
     start(id, 2, %{health: 40})
 
     # An Elven Fighter rests 1.55 × 0.90 × 1.28 for CON 36 × 3 = 5.4 a tick (rules §11).
-    assert tick(id) =~ "HP: 40 -> 45/113 (+5 HPR)"
+    assert tick(id) =~ "HP: 40 -> 45/113 | MP: 39/39 (+5 HP)"
   end
 
   test "the hardiest Fighter mends the most, at its own rate", %{id: id} do
     # CON 47 is the highest any Fighter is born with: 7.4 a tick against the Elf's 5.4.
     start(id, 1, %{health: 40})
 
-    assert tick(id) =~ "(+7 HPR)"
+    assert tick(id) =~ "(+7 HP)"
+  end
+
+  test "mana mends alongside it, and says so too", %{id: id} do
+    start(id, 2, %{health: 40, mp: 10})
+
+    assert tick(id) =~ "HP: 40 -> 45/113 | MP: 10 -> 13/39 (+5 HP, +3 MP)"
   end
 
   test "a character at full health says so", %{id: id} do

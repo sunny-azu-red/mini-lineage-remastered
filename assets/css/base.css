@@ -92,18 +92,6 @@ h2:first-child,
     margin-top: 0;
 }
 
-/* Unused today but kept: the browser's own h3 lands near h2 and reads as a peer. */
-h3 {
-    font-family: var(--font-heading);
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    line-height: 1.6;
-    text-transform: uppercase;
-    margin-top: 20px;
-    margin-bottom: 8px;
-}
-
 p {
     margin-bottom: 12px;
 }

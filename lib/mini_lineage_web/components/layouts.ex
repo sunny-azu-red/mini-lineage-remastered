@@ -133,7 +133,6 @@ defmodule MiniLineageWeb.Layouts do
             value={@view.health}
             of={@view.max_health}
             of_key="max-hp"
-            of_id="status-max-hp"
           />
         </div>
 
@@ -147,7 +146,6 @@ defmodule MiniLineageWeb.Layouts do
             value={@view.mp}
             of={@view.max_mp}
             of_key="max-mp"
-            of_id="status-max-mp"
           />
         </div>
 
@@ -188,7 +186,6 @@ defmodule MiniLineageWeb.Layouts do
       <Controls.panel
         id="inventory"
         title="Inventory"
-        class="inventory-panel"
         body_class="rows"
         collapsible
       >

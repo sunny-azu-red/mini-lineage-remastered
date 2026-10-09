@@ -185,7 +185,6 @@ defmodule MiniLineage.Game.Rules do
   def town(race_id), do: Map.fetch!(@towns, race_id)
   def set(race_id, path), do: Enum.find(@sets, &(&1.race_id == race_id and &1.path == path))
   def path(path), do: Map.fetch!(@paths, path)
-  def paths, do: @paths
   def bonus_curve(attr), do: Map.fetch!(@bonus, attr)
   def experience(level), do: Enum.at(@experience, level - 1)
   def max_level, do: length(@experience)

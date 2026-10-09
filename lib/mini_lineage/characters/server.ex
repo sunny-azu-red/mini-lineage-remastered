@@ -46,14 +46,12 @@ defmodule MiniLineage.Characters.Server do
 
     # Armed from the start: a process opened by a plain read never attaches a viewer, and would
     # otherwise never stop.
-    {:ok, state |> publish() |> schedule_stop()}
+    {:ok, schedule_stop(state)}
   end
 
   # -------------------------------------------------------------------- calls
 
   @impl true
-  def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
-
   def handle_call({:mutate, fun}, _from, state) do
     {result, state} = run(state, fun)
 
@@ -66,7 +64,7 @@ defmodule MiniLineage.Characters.Server do
     ref = Process.monitor(pid)
     state = cancel_stop(%{state | viewers: Map.put(state.viewers, ref, pid)})
 
-    {:reply, :ok, publish(state, "joined")}
+    {:reply, :ok, presence(state, "joined")}
   end
 
   # ------------------------------------------------------------------- infos
@@ -77,9 +75,9 @@ defmodule MiniLineage.Characters.Server do
     state = backstop(state)
 
     if Player.started?(state.player) do
-      health_before = state.player.health
+      before = state.player
       {healed?, state} = run(state, &Player.regenerate/1)
-      TickLog.write(state.id, state.player, health_before, healed?)
+      TickLog.write(state.id, state.player, before, healed?)
 
       {:noreply, state}
     else
@@ -90,7 +88,7 @@ defmodule MiniLineage.Characters.Server do
   # The reason says how the tab went: a clean close, or a socket found dead only by its heartbeat.
   def handle_info({:DOWN, ref, :process, _pid, reason}, state) do
     viewers = Map.delete(state.viewers, ref)
-    state = publish(%{state | viewers: viewers}, "left: #{inspect(reason)}")
+    state = presence(%{state | viewers: viewers}, "left: #{inspect(reason)}")
 
     {:noreply, if(map_size(viewers) == 0, do: schedule_stop(state), else: state)}
   end
@@ -119,7 +117,7 @@ defmodule MiniLineage.Characters.Server do
       state = if acted?(before, player), do: persist(state), else: mark(state)
 
       # After the write, so whoever reads the push finds what it announces.
-      broadcast(state.session, state.player, state.id)
+      broadcast(state.session, state.player)
 
       {result, state}
     end
@@ -169,34 +167,25 @@ defmodule MiniLineage.Characters.Server do
     %{state | stop_timer: nil}
   end
 
-  # Which character this process is, and whether anyone is watching it, kept in the registry entry.
-  defp publish(state, why \\ nil) do
-    watched? = map_size(state.viewers) > 0
+  # `[PRESENCE:<id>] Online | 2 viewers (joined)`, in the tick log's shape and at its level.
+  defp presence(state, why) do
+    viewers = map_size(state.viewers)
 
-    Registry.update_value(MiniLineage.Characters.Registry, state.session, fn _ ->
-      {state.id, watched?}
+    Logger.debug(fn ->
+      "[PRESENCE:#{String.slice(state.id, 0, 7)}] #{if viewers > 0, do: "Online", else: "Offline"} | " <>
+        "#{viewers} viewer#{if viewers == 1, do: "", else: "s"} (#{why})"
     end)
-
-    if why, do: presence_log(state.id, watched?, map_size(state.viewers), why)
 
     state
   end
 
-  # `[PRESENCE:<id>] Online | 2 viewers (joined)`, in the tick log's shape and at its level.
-  defp presence_log(id, watched?, viewers, why) do
-    Logger.debug(fn ->
-      "[PRESENCE:#{String.slice(id, 0, 7)}] #{if watched?, do: "Online", else: "Offline"} | " <>
-        "#{viewers} viewer#{if viewers == 1, do: "", else: "s"} (#{why})"
-    end)
-  end
-
   @doc false
   # The session's topic is the browser's own: its key is a secret, so nobody watches anybody else.
-  def broadcast(session, player, character_id) do
+  def broadcast(session, player) do
     Phoenix.PubSub.broadcast(
       MiniLineage.PubSub,
       "character:#{session}",
-      {:character_updated, player, character_id}
+      {:character_updated, player}
     )
   end
 end

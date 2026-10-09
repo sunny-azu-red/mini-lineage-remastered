@@ -30,8 +30,6 @@ defmodule MiniLineageWeb.Controls do
   attr :collapsible, :boolean, default: false
   # Where a collapsible panel starts, until the reader's kept fold says otherwise.
   attr :collapsed, :boolean, default: false
-  # Whether the reader's last fold is kept for the next mount. False starts every visit afresh.
-  attr :remember, :boolean, default: true
   attr :rest, :global
   slot :header
   slot :inner_block, required: true
@@ -42,7 +40,6 @@ defmodule MiniLineageWeb.Controls do
       id={@id}
       class={classes(["panel", @class])}
       phx-hook={if @collapsible, do: "Panel"}
-      data-remember={if !@remember, do: "false"}
     >
       <%!-- The whole band is the control: a title you have to hit exactly is worse than none. --%>
       <.dynamic_tag
@@ -74,22 +71,19 @@ defmodule MiniLineageWeb.Controls do
   # ----------------------------------------------------------------- buttons
 
   @doc """
-  Every `.btn` in the game. With `patch` it is a link, because it goes somewhere and a reader may
-  want it in a new tab; without, a `<button>`, because it does something. How it looks never
-  decides the element.
+  Every `.btn` in the game: a `<button>`, because it does something. One that goes somewhere is a
+  link, and comes back as a `patch` option when a screen first needs one.
   """
-  attr :patch, :string, default: nil
   attr :type, :string, default: "button"
   attr :class, :string, default: nil
-  attr :rest, :global, include: ~w(disabled form name value)
+  attr :rest, :global
   slot :inner_block, required: true
 
   def button(assigns) do
     assigns = assign(assigns, classes: classes(["btn", assigns.class]))
 
     ~H"""
-    <.link :if={@patch} patch={@patch} class={@classes} {@rest}>{render_slot(@inner_block)}</.link>
-    <button :if={!@patch} type={@type} class={@classes} {@rest}>{render_slot(@inner_block)}</button>
+    <button type={@type} class={@classes} {@rest}>{render_slot(@inner_block)}</button>
     """
   end
 
@@ -150,14 +144,12 @@ defmodule MiniLineageWeb.Controls do
   # --------------------------------------------------------------- the way back
 
   attr :started, :boolean, required: true
-  attr :class, :string, default: "last back"
 
   def back_link(assigns) do
     ~H"""
     <.back
       href={Paths.for_screen(if(@started, do: "home", else: "start"))}
       text={if @started, do: "Continue your journey", else: "Go back to game start"}
-      class={@class}
     />
     """
   end
@@ -233,7 +225,6 @@ defmodule MiniLineageWeb.Controls do
   # No cap is a figure in a full track, which is what XP becomes at the last level.
   attr :of, :integer, default: nil
   attr :of_key, :string, default: nil
-  attr :of_id, :string, default: nil
   # A change here means the bar went round, not back: `AnimatedValues` refills it from empty.
   attr :wraps, :any, default: nil
   # How both figures are written; a screen reader is always told them in full.
@@ -276,7 +267,7 @@ defmodule MiniLineageWeb.Controls do
         phx-mounted={JS.ignore_attributes(["class"])}
       >
       </div>
-      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} format={@format} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} id={@of_id} format={@format} /></span></span>
+      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} format={@format} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} format={@format} /></span></span>
     </div>
     """
   end
