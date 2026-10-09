@@ -3,7 +3,7 @@ defmodule MiniLineage.Game.Rng do
   The game's one source of randomness. Per-process, so a character's stream is its own and a test
   can install a deterministic source without touching global state.
 
-  Draw ORDER is load-bearing across the whole fight path — see the golden master.
+  Draw ORDER is load-bearing: a pinned source replays only if every draw comes in the same order.
   """
   @key :mini_lineage_rng
 

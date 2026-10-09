@@ -3,6 +3,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import {hooks as gameHooks, shortFigure} from "./hooks"
+import {playSound, installUnlock} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 // Phoenix remembers a fallback for the tab, so one slow connect or a restart kept it long-polling,
@@ -32,6 +33,10 @@ topbar.config({
 })
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+
+// Sounds fire from server pushes, never from DOM markers, so nothing races a reload.
+installUnlock()
+window.addEventListener("phx:play-sound", event => playSound(event.detail.name))
 
 liveSocket.connect()
 

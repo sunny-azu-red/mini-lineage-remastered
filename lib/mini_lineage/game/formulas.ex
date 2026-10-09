@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.Formulas do
   """
   alias MiniLineage.Game.{Math, Rules}
 
-  # The caps of §9 and §10, held again after anything an effect adds.
+  # The caps of §9 and §10.
   @caps %{critical: 50, magic_critical: 20, atk_spd: 1500, cast_spd: 1999}
   def caps, do: @caps
 

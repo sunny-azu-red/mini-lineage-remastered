@@ -104,6 +104,33 @@
     line-height: 1;
 }
 
+/* Faded until hovered, and fainter muted: it is the page's furniture, not the game's. */
+.sound-toggle-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    z-index: 5;
+}
+
+.sound-toggle-btn:hover {
+    opacity: 1;
+}
+
+.sound-toggle-btn.silenced {
+    opacity: 0.35;
+}
+
+.sound-toggle-btn.silenced:hover {
+    opacity: 0.8;
+}
+
 /* The link is inside the box, so the box highlights when the link is hovered. */
 #site-header:has(#header-link:hover) {
     border-bottom-color: var(--gold);

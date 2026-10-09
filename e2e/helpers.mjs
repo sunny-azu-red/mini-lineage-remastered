@@ -34,6 +34,21 @@ export function reporter() {
     return { check, failures };
 }
 
+/** Records every note the page plays: Web Audio produces no output to assert on. */
+export const traceAudio = (context) => context.addInitScript(() => {
+    window.__notes = [];
+    const create = AudioContext.prototype.createOscillator;
+    AudioContext.prototype.createOscillator = function () {
+        const osc = create.call(this);
+        const start = osc.start.bind(osc);
+        osc.start = (when) => {
+            window.__notes.push(osc.type);
+            return start(when);
+        };
+        return osc;
+    };
+});
+
 /** The controls a player has, bound to one page. */
 export function controls(page) {
     /** The character's live state, read off the one element that mirrors it. */

@@ -6,9 +6,22 @@ first, and the code follows.
 
 **Old mechanics.** What the game was before the base layer is kept in `legacy/`, to read and never
 to run: the Inn, the Weapon and Armor Shops, the Battleground, the Character page and its
-Chronicle, the Hall of Champions, the Tome, the Class Master, the Symbol Maker, sounds, timed buffs
-and the Konami cheat. Each is rebuilt here as its system below, on the base layer, and nothing
-from `legacy/` comes back as it was.
+Chronicle, the Hall of Champions, the Tome, the Class Master, the Symbol Maker, timed buffs, the
+Konami cheat, and every sound but the new-game fanfare and the sound switch's chime. Each is
+rebuilt here as its system below, on the base layer, and nothing from `legacy/` comes back as it
+was.
+
+## Before the first system
+
+What the base layer already says but nothing exercises yet, because nothing can happen to a
+character: each lands with the first system that needs it, almost certainly fighting.
+
+- **Gaining EXP and levelling** (rules §12): reaching a level refills HP and MP, and the player is
+  told. Nothing grants EXP yet.
+- **Being in combat** (rules §11): resting stops. Today a character always rests.
+- **The base outcomes** (rules §13): hit chance and damage are written and tested, and called by
+  nothing.
+- **What 0 HP means:** death, and what it costs, is not a rule yet.
 
 ## Classes
 

@@ -4,11 +4,12 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, controls } from './helpers.mjs';
+import { BASE, reporter, traceAudio, controls } from './helpers.mjs';
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
 const context = await browser.newContext();
+await traceAudio(context);
 const page = await context.newPage();
 
 const consoleErrors = [];
@@ -123,6 +124,9 @@ try {
     await onScreen('home');
 
     const born = await state();
+    const fanfare = await page.evaluate(() => window.__notes.splice(0));
+    check('creating a character plays the new-game fanfare, three triangles and a square',
+        fanfare.join(',') === 'triangle,triangle,triangle,square', fanfare.join(','));
     check('creating a character lands in its own village', born.screen === 'home');
     check('...headed with its name', (await text('#main .header-name')) === 'Orc Village',
         await text('#main .header-name'));
@@ -153,6 +157,18 @@ try {
     await page.waitForSelector('#main .alert', { state: 'detached', timeout: 5000 }).catch(() => {});
     check('a flash does not survive coming back to the same screen',
         await page.locator('#main .alert').count() === 0);
+
+    // ---- muting is the browser's, and the toggle says so in its own chime --------------------
+    await page.click('#sound-toggle');
+    check('muting flips the toggle', await page.textContent('#sound-toggle') === '🔇');
+    check('...and plays nothing', (await page.evaluate(() => window.__notes.splice(0))).length === 0);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and a refresh keeps it muted', await page.textContent('#sound-toggle') === '🔇');
+    await page.click('#sound-toggle');
+    check('unmuting flips it back', await page.textContent('#sound-toggle') === '🔊');
+    const chime = await page.evaluate(() => window.__notes.splice(0));
+    check('...with a chime of its own, two sines', chime.join(',') === 'sine,sine', chime.join(','));
 
     // ---- a character may read, and is brought home ---------------------------------------------
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });

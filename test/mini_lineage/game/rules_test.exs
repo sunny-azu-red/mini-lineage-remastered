@@ -140,7 +140,7 @@ defmodule MiniLineage.Game.RulesTest do
     test "§9 Critical and Magic Critical, and their caps", %{hf: hf, hm: hm} do
       assert_in_delta Formulas.critical(hf.attributes.dex), 4.4, 1.0e-9
       assert_in_delta Formulas.magic_critical(hm.attributes.wit), 0.8, 1.0e-9
-      # DEX alone never reaches the 50% cap; what an effect adds is held to it in `Player`.
+      # DEX alone never reaches the 50% cap; it is there for what later systems add.
       assert Formulas.caps().critical == 50
       assert Formulas.magic_critical(99) == 20
     end

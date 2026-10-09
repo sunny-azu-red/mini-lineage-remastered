@@ -127,7 +127,7 @@ defmodule MiniLineageWeb.GameLive do
 
     case result do
       {:error, _code, message} -> assign(socket, game_flash: %{text: message, type: :danger})
-      {:ok, flash} -> socket |> assign(game_flash: flash) |> go(to)
+      {:ok, flash} -> socket |> assign(game_flash: flash) |> play(flash[:sound]) |> go(to)
     end
   rescue
     error ->
@@ -138,6 +138,9 @@ defmodule MiniLineageWeb.GameLive do
       Logger.error("character process exited: #{inspect(reason)}")
       fail(socket, "the character process exited: #{inspect(reason)}")
   end
+
+  defp play(socket, nil), do: socket
+  defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})
 
   # Withheld outside a debug build: a player is never handed a stack.
   defp fail(socket, detail) do

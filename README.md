@@ -14,10 +14,11 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 - **Our Own Rules**: `docs/rules.md` is the whole player system, written by us with a worked example for every rule, and `rules_test.exs` holds the code to it. What comes next is in `docs/roadmap.md`.
 - **Four Lineages, Two Paths**: **Humans**, **Orcs**, **Elves** and **Dark Elves**, each a **Fighter** or a **Mystic**: eight starting sets of six attributes (STR, CON, DEX, INT, WIT, MEN). Every character starts at level 1 with no Adena.
 - **Each Race Starts at Home**: A Human wakes in 🏝️ Talking Island Village, an Orc in 🏕️ Orc Village, an Elf in 🌳 Elven Village and a Dark Elf in 🌑 Dark Elven Village. There is nothing to do there yet, and you rest among your own people.
-- **Stats That Grow With You**: Max HP and MP rise a little more with every level, and P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical and speed are all worked from the attributes and the level, up to **level 80**.
+- **Stats That Grow With You**: Max HP and MP rise a little more with every level, and P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical and speed are all worked from the attributes and the level, up to **level 80**, on L2's own EXP table: 68 EXP for level 2, 4.2 billion for 80.
 - **The Status Sidebar**: Beside the town stand your race, class and level, your HP, MP and XP bars, a **Stats** panel with every number the rules give you (P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical, M. Critical, both speeds and the six attributes), folded until you open it and remembered after, and an Inventory that holds your Adena and nothing else yet.
 - **Chronicles of Ancestry**: `/races` tells every lineage before you choose one: its backstory, the village it starts in, and both of its starting classes with their attributes and their HP and MP at level 1.
 - **Figures Count, They Don't Jump**: Every number you can watch change counts up to it. A purse counts in its own short form, so `1.5k` climbs to `1.6k` rather than through six digits. Only names and dates jump, having nothing to count through.
+- **Two Sounds, Made On The Spot**: A heroic fanfare when a character is made and a chime when sound is switched back on, both 8-bit notes played by a Web Audio synth with no audio files. The 🔊 in the banner mutes them, and the browser remembers it.
 - **Playable Without a Mouse**: The panel's first control takes focus on arrival, so the game plays from the keyboard, and a control you moved to yourself is left alone.
 
 ### ⚡ Real-Time Engine
@@ -43,7 +44,7 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 - **Web**: Phoenix 1.8 with LiveView 1.2 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 3-second tick
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
-- **Client**: three LiveView hooks (`AnimatedValues`, `Panel`, `PanelFocus`) and no framework
+- **Client**: four LiveView hooks (`AnimatedValues`, `Panel`, `PanelFocus`, `SoundToggle`), a Web Audio synth, and no framework
 - **Testing**: ExUnit with StreamData properties, plus two Playwright suites that drive a real headless Chromium
 - **Dev tools**: LiveDebugger and Tidewave (MCP for coding agents), both `:dev` only and neither in a release
 
@@ -191,8 +192,8 @@ exact dependency versions locked here. `.mcp.json` points Claude Code at
 plugged in on `/tidewave/*` only, because on any other response it would loosen the CSP.
 
 **[StreamData](https://github.com/whatyouhide/stream_data)** is `:test` only, and runs with
-`mix test`. Its properties sit beside the fixed tables: the Adena formatter for any number, and the
-level table for any amount of experience.
+`mix test`. Its properties sit beside the fixed tables: the short form Adena and XP are written in,
+for any number, and the level table for any amount of experience.
 
 ## Building a release
 
@@ -379,9 +380,10 @@ under `e2e/release.sh`:
 
 - **`e2e/walkthrough.mjs`** — one character, made and stood in its village, end to end: the
   stylesheet and the CSP, the session cookie, a 404 and the error page, the Chronicles of Ancestry,
-  creation from the keyboard, the sidebar and its Stats, the folds Stats and the Inventory remember, a second tab, and Quit.
-  It asserts that no request failed and no console error was logged, and that the browser formats
-  Adena exactly as the server does.
+  creation from the keyboard, the new-game fanfare and the sound switch, the sidebar and its Stats,
+  the folds Stats and the Inventory remember, a second tab, and Quit. It asserts that no request
+  failed and no console error was logged, and that the browser shortens a figure exactly as the
+  server does.
 - **`e2e/races.mjs`** — every starting set born in a browser, which the walkthrough cannot do: it
   commits to one. Each lands in its own race's village with the numbers `docs/rules.md` gives it.
 

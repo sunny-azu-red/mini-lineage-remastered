@@ -34,17 +34,17 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
       render_to_string(MiniLineageWeb.ErrorHTML, "500", "html",
         kind: :error,
         reason: %UndefinedFunctionError{
-          module: MiniLineage.CharacterLog,
+          module: MiniLineage.Characters,
           function: :nope,
           arity: 2
         },
         stack: [
-          {MiniLineageWeb.GameLive, :page_chronicle, 3, [file: ~c"game_live.ex", line: 170]}
+          {MiniLineageWeb.GameLive, :apply_action, 3, [file: ~c"game_live.ex", line: 170]}
         ]
       )
 
     assert html =~ "UndefinedFunctionError"
-    assert html =~ "page_chronicle/3"
+    assert html =~ "apply_action/3"
     assert html =~ "game_live.ex:170"
   end
 

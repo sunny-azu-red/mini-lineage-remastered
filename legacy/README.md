@@ -15,7 +15,7 @@ What is in it, and where a system that replaces one of them should start reading
 | The Tome of statistics | `lib/mini_lineage/game/statistics*`, `lib/mini_lineage_web/screens/tome.ex` |
 | Class transfers, dyes | `lib/mini_lineage/game/classes.ex`, `dyes.ex`, `priv/data/dyes.json` |
 | Timed buffs, food, the Newbie Blessing | `lib/mini_lineage/game/player.ex` (`effects`), `assets/js/hooks/effect-timers.js` |
-| Sounds, the Konami cheat, stamps, sortable tables | `assets/js/` |
+| Sounds, the Konami cheat, stamps, sortable tables | `assets/js/` (the new-game fanfare and the toggle's chime are live again) |
 | The rules that governed all of it | `AGENTS.md` |
 
 Its `AGENTS.md` describes the code here, not the live game; the live rules are the root

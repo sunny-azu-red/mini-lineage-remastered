@@ -55,7 +55,7 @@ defmodule MiniLineage.Game.Player do
         age: age
       })
 
-    {player, %{text: Narrative.alert(began), type: :info}}
+    {player, %{text: Narrative.alert(began), type: :info, sound: "start"}}
   end
 
   # ------------------------------------------------------------------- stats

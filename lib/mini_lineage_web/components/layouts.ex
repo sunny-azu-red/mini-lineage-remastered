@@ -219,7 +219,7 @@ defmodule MiniLineageWeb.Layouts do
 
   @doc """
   The banner. `interactive?` is false on the error page, which has no LiveView, so there the
-  banner is an ordinary link.
+  banner is an ordinary link and the sound toggle, which nothing would drive, is left out.
   """
   attr :interactive?, :boolean, default: true
 
@@ -243,6 +243,18 @@ defmodule MiniLineageWeb.Layouts do
         <span class="header-title">Mini Lineage</span>
         <span class="header-subtitle">Remastered</span>
       </.link>
+      <%!-- Outside the anchor, so clicking it never also navigates. Ignored by patches: the hook
+            draws the reader's state over the template's. --%>
+      <button
+        :if={@interactive?}
+        id="sound-toggle"
+        type="button"
+        phx-hook="SoundToggle"
+        phx-update="ignore"
+        class="sound-toggle-btn"
+      >
+        🔊
+      </button>
     </div>
     """
   end

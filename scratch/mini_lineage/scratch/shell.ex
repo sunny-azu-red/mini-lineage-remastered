@@ -55,7 +55,7 @@ defmodule MiniLineage.Scratch.Shell do
 
   @doc """
   Claims the browser suites on this machine, or says who has them. Refusing beats waiting: a queued
-  run's server is stopped when the first finishes, and two runs at once corrupt each other's board.
+  run's server is stopped when the first finishes, and two runs at once corrupt each other's rows.
   `mkdir` is the lock, being atomic.
   """
   def lock!(path) do
@@ -80,7 +80,7 @@ defmodule MiniLineage.Scratch.Shell do
           Mix.raise("""
           another browser run is in progress (pid #{holder}).
 
-          They share one database, and each empties the board before it starts, so running two at
+          They share one database, and each empties it before it starts, so running two at
           once makes both report nonsense. Wait for that one, or stop it.
           """)
         else

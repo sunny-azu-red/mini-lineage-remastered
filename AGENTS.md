@@ -18,8 +18,11 @@ list wins — several generator defaults do not exist here.
 - **There are no colocated hooks.** `app.js` imports its hooks from `assets/js/hooks.js` and nothing
   else, so a `ColocatedHook` would compile and never run. A hook goes in a file of its own under
   `assets/js/hooks/` and is listed in `hooks.js`, which holds nothing but that list and what
-  `app.js` imports through it. The hooks are `AnimatedValues`, `Panel` and `PanelFocus`; `kept.js`
-  is storage.
+  `app.js` imports through it. The hooks are `AnimatedValues`, `Panel`, `PanelFocus` and
+  `SoundToggle` (over the synth in `soundfx.js`); `kept.js` is storage.
+- **Two sounds, and only two.** The new-game fanfare is the flash's `sound`, which `GameLive` pushes
+  as `play-sound` for `app.js` to play, so nothing in the DOM can replay it on a reload. The
+  toggle's chime is the browser's own. A sound is a list of notes in `soundfx.js`, no assets.
 - The database is **PostgreSQL via Postgrex**. Character state is a single `jsonb` document in
   `characters`, the only table.
 - One `GenServer` per character under a `DynamicSupervisor` + `Registry`. Anything that mutates a
@@ -117,8 +120,9 @@ Each of these is here because it was got wrong once.
 
 **The base layer is `docs/rules.md`, and nothing else.** It is ours, written in our own words: the
 eight starting sets and the village each race starts in, the six attributes, every stat and
-formula, resting, levels and the base outcomes. No outside document, emulator or datapack is
-consulted for it. The code matches it rule for rule — `Rules` holds its tables, `Formulas` its
+formula, resting, levels and the base outcomes. A number may be taken from L2 when a rule is
+written, whole and never rescaled beside numbers that were not, but once written the document is
+the only authority and nothing outside it is consulted. The code matches it rule for rule — `Rules` holds its tables, `Formulas` its
 formulas in its order — and `rules_test.exs` reads the tables back out of the document and works
 every example again, so a change to one is a change to both. A new system (classes, items,
 fighting, the world) starts as an entry in `docs/roadmap.md` and builds on the rules rather than
@@ -128,16 +132,16 @@ quietly changing them.
 character has no Adena and no items, in every environment.
 
 **`legacy/` is read, never run.** It is the game as of `da4e37c`: the shops, the Battleground,
-the record and its Chronicle, the Halls, the Tome, class transfers, dyes, timed buffs, sounds and
-the cheat. Nothing there is compiled, formatted, tested or served, and nothing outside it may
+the record and its Chronicle, the Halls, the Tome, class transfers, dyes, timed buffs, every
+sound but the two above, and the cheat. Nothing there is compiled, formatted, tested or served, and nothing outside it may
 import, alias or route to it. A system rebuilt from it is rebuilt on the base layer, in the live
 tree, with its rules and tests written fresh; its old code and old `AGENTS.md` are a reference for
 how it once looked and what was learned, not something to copy back whole. Update nothing in it.
 
 **Never assert on a roll of the dice.** Not in the browser suites, not in ExUnit. Pin the source
 with `Rng.put_source/1`, or arrange the state so that no roll changes the answer. A pinned source
-holds only in the process that pinned it: a character's GenServer rolls its own dice, and
-`DataCase.pin_dice/2` installs the source inside it. An assertion that holds for most rolls passes
+holds only in the process that pinned it: a character's GenServer rolls its own dice, so pin them
+inside it, from a function handed to `Characters.mutate/2`. An assertion that holds for most rolls passes
 for months and fails in CI once.
 
 A randomly drawn *string* is the same trap wearing a disguise. The welcome is drawn from a pool,
@@ -286,8 +290,7 @@ path resolves it to Town and rewrites the address, which is a soft 404: the read
 the address they typed is discarded, and a static path that reaches the router — a mistyped
 stylesheet — is answered with HTML the browser then fails to parse as CSS, so the real fault is
 invisible. Phoenix raises for what it does not route and `ErrorHTML` draws it in the game's own
-shell. This is already what `/character/<unknown>` does, at its own URL, with its own words.
-`Access.pin_screen/2` redirects are a different thing and stay: moving somebody because they are
+shell. `Access.pin_screen/2` redirects are a different thing and stay: moving somebody because they are
 NOT ALLOWED somewhere is not the same as moving them because the somewhere does not exist.
 
 **What a build may say about a fault depends on the build, not on what it knows.** The error page
@@ -310,8 +313,7 @@ rules, and both of which had already produced a footer with `&copy;` three lines
 `•`. A named entity exists or it does not, and that decides it.
 
 **The game's own prose joins its clauses; it does not hold them apart with a dash.** An em dash in
-a sentence a PLAYER reads becomes `because`, `and` or `nor`: "None of it fades, nor does what it
-cost, because the Halls rank the living and the fallen alike". This is about the game's voice and
+a sentence a PLAYER reads becomes `because`, `and` or `nor`. This is about the game's voice and
 not the codebase's — every `@moduledoc` and comment here is full of em dashes, deliberately, and
 they are none of a player's business.
 
@@ -339,8 +341,7 @@ a hue rather than a role: the accent is deliberately text, border, ground and gl
 prefixing it would mean four tokens holding one colour.
 
 The two sets of text colour are named apart: a value for the thing it marks (`--text-hp`,
-`--text-heal`, `--text-tally`), an alert voice for its kind (`--text-danger`, `--text-success`,
-`--text-warning`, `--text-info`). Green had been both, so the voice got `-bright` bolted on.
+`--text-heal`, `--text-tally`), an alert voice for its kind (`--text-danger`, `--text-info`). Green had been both, so the voice got `-bright` bolted on.
 
 Adding one means checking it, not eyeballing it: 4.5:1 on `--bg-panel`, inside the palette's own
 saturation and lightness, and clear of every other by eye in Lab. Maximising distance alone returns
@@ -424,8 +425,8 @@ sweep is what matters and is checked instead. A bar leaves its class to the hook
 `JS.ignore_attributes`, so a patch cannot take a running sweep with it.
 
 **The catalog is cached per VM, so development does not cache it.** `Snapshot.catalog/0` builds
-slugs and fills the race templates from code; caching that in `:dev` means editing a narrative
-changes nothing until the server restarts. `:e2e` and `:prod` cache, which is what ships.
+each race's slug, town and level-1 sets from code; caching that in `:dev` means editing a race or a
+rule changes nothing until the server restarts. `:e2e` and `:prod` cache, which is what ships.
 
 **A visitor is never written.** A browser that has not chosen a lineage lives in its process and
 nothing else: the tick skips a run that has not started and nothing else can change one, so
@@ -478,8 +479,8 @@ they win by order; written plainly, the desktop's extra class outranked them and
 **Every button in the game is one component, and the element is what it does.** `Controls.button/1`
 is the only thing that writes `btn`. With `patch` it is an `<a>`, because it goes somewhere and a
 reader may want that in a new tab; without, a `<button>`, because it does something. Never make a
-link a button to change how it looks. That is why base.css's link colours say `a:not(.btn)`:
-`a:link` outranks one class. The focus ring is `currentColor`, so a look added later rings in its own
+link a button to change how it looks. That is why base.css's link rule is `a:where(:not(.btn))`, an
+element's specificity: `a:link` outranked one class, and painted a button-link in link colours. The focus ring is `currentColor`, so a look added later rings in its own
 colour without a rule of its own. A variant (secondary, danger, small) comes back as an option on it,
 with its CSS from `legacy/`, when a screen first needs one.
 
@@ -496,14 +497,14 @@ lands on the `<table>`. A sort, when one is needed, is the server's and never th
 would undo a DOM sort and redo it after, moving every row twice. `legacy/` has the sortable version.
 
 **What the reader chooses is kept as `<kind>:<id>`, through `hooks/kept.js` and nowhere else.**
-`panel:inventory` is a fold, and `recall` and `keep` are the only code that touches `localStorage`
-for one, so a new thing that remembers takes a kind and writes no storage code of its own. A fold
+`panel:inventory` is a fold and `sound:effects` the sound switch, kept only while it is off, and
+`recall` and `keep` are the only code that touches `localStorage` for either, so a new thing that remembers takes a kind and writes no storage code of its own. A fold
 is the browser's alone: the server renders the template's state and the hook corrects it on mount.
 Give a kind to the server only when the server must know it to render.
 
 **`class` and `style` render whatever they are given.** Every other attribute disappears when its
 value is nil; those two come out as `class="panel "` and `style=""`, on every panel in the game.
-Build them before the tag — `classes/1` and `cap/1` in `Controls` — or spread a keyword list into
+Build them before the tag — `classes/1` in `Controls` — or spread a keyword list into
 it, which contributes no attribute at all when it is empty.
 
 **Test fixtures live in `test/`, never in `priv/`.** `priv/` ships inside the release.
