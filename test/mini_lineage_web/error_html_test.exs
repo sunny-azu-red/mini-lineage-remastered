@@ -11,7 +11,9 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
     assert html =~ "That road leads nowhere"
     assert html =~ ~s(id="app")
     assert html =~ "/assets/css/app.css"
-    assert html =~ "Return to safer lands"
+    # No way back of its own: the banner is the way home.
+    banner = html |> LazyHTML.from_document() |> LazyHTML.query("a#header-link")
+    assert LazyHTML.attribute(banner, "href") == ["/"]
   end
 
   test "a 500 does not blame the player for it" do
@@ -62,15 +64,6 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
     refute html =~ "stacktrace"
   end
 
-  # The rule above the way back is what parts it from the page. Where a fault is shown there is a
-  # block sitting there already doing that, and a second line under it reads as a stutter.
-  test "and the way back is parted from whatever stands above it, once" do
-    shown = render_to_string(MiniLineageWeb.ErrorHTML, "500", "html", [])
-
-    assert shown =~ ~s(class="last")
-    refute shown =~ ~s(class="last back")
-  end
-
   describe "a production build" do
     setup do
       Application.put_env(:mini_lineage, :debug_build, false)
@@ -98,12 +91,6 @@ defmodule MiniLineageWeb.ErrorHTMLTest do
       refute html =~ "UndefinedFunctionError"
       refute html =~ "secret.ex"
       refute html =~ "code-block"
-    end
-
-    # With nothing above it, the way back needs the rule to part it from the message.
-    test "and the way back draws its own line, there being nothing above it to do so" do
-      assert render_to_string(MiniLineageWeb.ErrorHTML, "500", "html", []) =~
-               ~s(class="last back")
     end
 
     test "and still none when nobody stamped a version" do

@@ -51,7 +51,6 @@ defmodule MiniLineageWeb.GameLive do
        picked: nil,
        dev_name: nil,
        keys: [],
-       title: nil,
        icon: nil,
        game_flash: nil,
        flash_fresh: false,
@@ -105,8 +104,7 @@ defmodule MiniLineageWeb.GameLive do
       page_title: Screens.page_title(screen, socket.assigns.view),
       # Assigned, not computed in the template: an expression over `assigns` is re-sent on every
       # render.
-      title: Screens.title(screen, socket.assigns.view),
-      icon: Screens.icon(screen, socket.assigns.view),
+      panels: Screens.panels(screen, socket.assigns.view, socket.assigns.catalog),
       # A fault belongs to the error screen it brought you to, not to the next visit to it.
       error_detail: if(screen == "error", do: socket.assigns.error_detail)
     )
@@ -268,16 +266,17 @@ defmodule MiniLineageWeb.GameLive do
   def render(assigns) do
     ~H"""
     <Layouts.app
-      title={@title}
-      icon={@icon}
+      :let={panel}
+      panels={@panels}
       view={@view}
       screen={@screen}
       dev_keys={@debug and @view.started}
     >
-      <Controls.flash_alert :if={@game_flash} flash={@game_flash} />
+      <Controls.flash_alert :if={@game_flash && panel == hd(@panels)} flash={@game_flash} />
 
       <Screens.screen
         screen={@screen}
+        panel={panel}
         view={@view}
         catalog={@catalog}
         detail={@error_detail}

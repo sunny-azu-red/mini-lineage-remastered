@@ -16,6 +16,13 @@ body {
     height: 100%;
 }
 
+/* A heading looks like its class says, never like the browser's idea of one. */
+h1,
+h2 {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
 body {
     background-color: var(--bg-deep);
     background-image:
@@ -70,40 +77,13 @@ strong {
     text-transform: uppercase;
 }
 
-/* 1.6, as `.panel-header`, so the two kinds of heading on a screen sit alike. */
-h2 {
-    font-family: var(--font-heading);
-    line-height: 1.6;
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    /* Dashed, as every divider inside a panel is. */
-    border-bottom: 1px dashed var(--border-soft);
-    padding-bottom: 6px;
-    margin-top: 24px;
-    margin-bottom: 12px;
-}
-
-/* A flash heads the panel without being its content, so the heading under it is still the first. */
-h2:first-child,
-#flash:first-child+h2 {
-    margin-top: 0;
-}
-
 p {
     margin-bottom: 12px;
 }
 
-p.last {
+/* Whatever ends anything in a panel leaves the body's padding to close it, at any depth. */
+.panel-body :last-child {
     margin-bottom: 0;
-}
-
-.back {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border-soft);
 }
 
 /* ===== Utilities =====

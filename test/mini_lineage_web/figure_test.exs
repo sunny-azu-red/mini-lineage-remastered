@@ -43,7 +43,7 @@ defmodule MiniLineageWeb.FigureTest do
 
     html =
       render_component(&Layouts.app/1,
-        title: "Orc Village",
+        panels: [%{title: "Orc Village", icon: nil}],
         view: Snapshot.build(player),
         screen: "town",
         inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]

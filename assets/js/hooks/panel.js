@@ -6,7 +6,7 @@ import { keep, recall } from './kept';
  */
 export const Panel = {
     mounted() {
-        this.toggle = this.el.querySelector(':scope > .panel-toggle');
+        this.toggle = this.el.querySelector(':scope > .panel-heading > .panel-toggle');
         // The reader's last fold beats the template's.
         const kept = this.toggle ? recall('panel', this.el.id) : null;
         this.open = !this.toggle

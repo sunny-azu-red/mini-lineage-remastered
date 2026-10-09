@@ -107,6 +107,11 @@ export function controls(page) {
  * A fresh browser on the start page, which is what a new player is: the session names the browser,
  * so a second character needs a second context.
  */
+/** Whatever ends anything in a panel and still keeps a bottom margin: a tag and its margin each. */
+export const marginsLeftAtEnds = (page) => page.$$eval('.panel-body :last-child', els => els
+    .filter(el => getComputedStyle(el).marginBottom !== '0px')
+    .map(el => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''} ${getComputedStyle(el).marginBottom}`));
+
 export async function freshStart(browser) {
     const context = await browser.newContext();
     const page = await context.newPage();

@@ -32,10 +32,13 @@ list wins — several generator defaults do not exist here.
 - `<Layouts.app>` does exist and every LiveView template starts with it.
 - **One LiveView, one dispatcher.** `GameLive` holds no game state and routes everything through
   `Access.pin_screen/2`. `Screens.screen/1` picks the page — start, town, gatekeeper, character, races, error —
-  and all of them live in `Screens` until one is big enough to need a module of its own. Anything a
+  and all of them live in `Screens` until one is big enough to need a module of its own.
+  `Screens.panels/3` lists the panels a screen is drawn on, which `Layouts.app` draws in turn inside
+  `#screen`: one for every screen but the Chronicles, which give each lineage its own, and the
+  character page, which gives each section its own. Anything a
   page reaches for but does not own (`<.panel>`, `<.data_table>`, `<.button>`, `<.select_action>`,
   the choice and the button that acts on it, which is how a player moves, `<.alert>` and
-  `<.flash_alert>` built on it, `<.back_link>`, `<.figure>` and `<.bar>`, `<.fault>`) is in
+  `<.flash_alert>` built on it, `<.figure>` and `<.bar>`, `<.fault>`) is in
   `Controls`; `Layouts` holds the shell's `head`, `site_header`, sidebar and `footer`, which
   `ErrorHTML` draws too. The sidebar — the vitals under the level and the name, which links to `/character`, then
   the Inventory — is one `.side` column, drawn in town and nowhere else
@@ -253,7 +256,7 @@ letting the formatter break it inside the tag. Buttons are exempt, being padded 
 **Declare a property only where the element would not otherwise have it.** Either it does not
 inherit — form controls and buttons take no font or colour from `body`, which is measurable and was
 — or it differs from what it does. Restating the inherited value gives `body` a second place to be
-changed and no second effect, so `.data-table td` and `th`, `h2` and `.stat-value` say nothing
+changed and no second effect, so `.data-table td` and `th`, `.header-name` and `.stat-value` say nothing
 about colour while `.stat-label` does. If a container is ever made secondary, the children that must
 stay primary will need to say so then; adding it in anticipation is how the two drift apart.
 
@@ -273,8 +276,9 @@ for more. A
 field label's 1px `margin-top` is optical, not a bug: centring works on boxes, a box keeps descender
 room capitals never use, and the one property that centres by letters, `text-box-trim`, is missing
 from Firefox. The sidebar is 210px; widen it before shrinking a value, and never without asking.
-The headings run h1 for the screen the panel names, h2 for a section inside it, h3 below that; the
-sidebar's panel titles stay spans so a page has one h1. Nothing skips a level, and no h2 says the h1 again.
+The banner's "Mini Lineage" is the one h1 on every page, the error page's too; every panel's title
+is an h2, the sidebar's included, and a section inside a panel would be an h3. Nothing skips a
+level. A heading takes no size or weight from the browser, only from its class.
 
 **Weight answers "which of these matters?", so a table never needs it.** Tabular figures are on
 `body`, not on a list of classes: the game is arithmetic, and a column of numbers wants to line up
@@ -307,8 +311,8 @@ once carried health, Max HP, Physical Attack and deaths, and no one of them coul
 
 These are the game's vocabulary and they are filed under **Values** in `base.css`. What is not a
 value lives above them under **Utilities**: `.muted` is what is not a value standing where one would
-be — the `&laquo;` of a back link — and takes no weight. `.build-development` and `.build-testing`
-are there too: which build serves the page is something the PAGE knows, not something a player
+be — the `&bull;` between an effect and what it does — and takes no weight. `.build-development` and
+`.build-testing` are there too: which build serves the page is something the PAGE knows, not something a player
 reads. A value's class goes where the thing is named in a sentence, figure or no figure, and never
 on a label naming a field or a column, which stays a label. A value is a classed `<span>`, never a
 `<strong>`. Every text colour is a token; adding a class means putting it in a group, never
@@ -346,8 +350,11 @@ handed: a trace names modules, line numbers and arguments, and a player is not t
 of them. `Version.debug_build?/0` is the gate, and it is deliberately NOT tied to `release?/1` — an
 image built without APP_VERSION could not tell it was a release, and served traces to players. A 404
 is not a fault and gets no trace either way, or the real ones drown in mistyped URLs. Both error
-pages draw the trace and the way out through `<.fault>`: drawn apart, the in-game screen had lost
-the rule over its way back that the Phoenix page kept.
+pages draw the trace through `<.fault>`, so the two cannot be drawn apart.
+
+**A page has no way back of its own; the banner is the way home.** It links `/`, which takes a
+visitor to game start and a character to the town it stands in, on every page and on the error
+page too. A back link at the foot of a panel only said that a second time.
 
 **If a character has a standard named entity, write the entity.** `&amp;` `&copy;` `&ndash;`
 `&bull;`, and `&nbsp;` `&mdash;` `&hellip;` if ever needed. Everything else is written as it is:
@@ -494,10 +501,9 @@ check downstream compared the wrong moment. The attribute is what the server wro
 what the animation is showing.
 
 **Every panel in the game is one component.** `Controls.panel/1` draws the card — the header band,
-the title, the body — and the differences are options: `heading` for the screen's own h1, and only
-that one, `icon` for an emoji set before the title as one line of it, `collapsible` and `collapsed` for a header that folds. `id` names the PANEL, which is what its hook needs; `body_id` and everything else handed to it
-land on the BODY, which is what a screen is addressed by — `#screen`, its `PanelFocus` hook and the
-data attributes a browser test reads. A panel takes a hook only when something about it moves, so
+the title, always an h2, the body — and the differences are options: `icon` for an emoji set before the title as one line of it, `collapsible` and `collapsed` for a header that folds. `id` names the PANEL, which is what its hook needs; everything else handed to it
+lands on the BODY. A screen is addressed by `#screen`, the wrapper around its panels, which carries
+its `PanelFocus` hook and the data attributes a browser test reads. A panel takes a hook only when something about it moves, so
 the error page, which has no LiveView behind it, renders one that cannot ask for JavaScript.
 
 **A collapse is the reader's, not the template's.** `aria-expanded` is rendered once for the
@@ -507,7 +513,11 @@ room for a panel can keep it open before any script runs, and says so to the hoo
 `--folds: 0`, where the header is disabled. What the reader last did is kept under `panel:<id>` in
 `localStorage` and beats the template on the next mount.
 
-The whole header band is the control, and it is a BUTTON. It goes nowhere, and a link would say it
+Nothing ends a panel on a margin: `.panel-body :last-child` drops the bottom one of whatever is
+last, at any depth, so no element is ever marked as the last by hand.
+
+The whole header band is the control, and it is a BUTTON, inside the title's h2 because a button's
+contents are never read as a heading. It goes nowhere, and a link would say it
 did: Space activates a button and scrolls a link, which is the same reason `PanelFocus` refuses to
 focus one. The chevron turns off `aria-expanded`. The gold line belongs to the BODY as a
 `border-top`, never to the header as a `border-bottom`: a shut panel then draws no line closing off

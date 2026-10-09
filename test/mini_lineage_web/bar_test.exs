@@ -109,7 +109,7 @@ defmodule MiniLineageWeb.BarTest do
 
     html =
       render_component(&MiniLineageWeb.Layouts.app/1,
-        title: "Orc Village",
+        panels: [%{title: "Orc Village", icon: nil}],
         view: view,
         screen: "town",
         inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]

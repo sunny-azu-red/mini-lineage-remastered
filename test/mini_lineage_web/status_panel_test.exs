@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.StatusPanelTest do
 
   defp sidebar_for(player) do
     render_component(&MiniLineageWeb.Layouts.app/1,
-      title: "Dark Elven Village",
+      panels: [%{title: "Dark Elven Village", icon: nil}],
       view: Snapshot.build(player),
       screen: "town",
       inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]

@@ -1,29 +1,25 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
   What every screen reaches for and no screen owns: the panel, the button and the choice it acts
-  on, the table, the alerts, the way back, the figure and the bar. `raw/1` renders flashes, which
+  on, the table, the alerts, the fault, the figure and the bar. `raw/1` renders flashes, which
   the server composes from the template tables — never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
   alias MiniLineage.Game.{Format, Math}
-  alias MiniLineageWeb.Paths
 
   # ------------------------------------------------------------------- panels
 
   @doc """
-  The card every part of the game is drawn on. `id` names the PANEL, for its hook; `body_id` and
-  every other attribute land on the BODY, which a screen is addressed by. A hook only when something
-  moves, so the error page, with no LiveView, renders one that asks for no JavaScript.
+  The card every part of the game is drawn on. `id` names the PANEL, for its hook; every other
+  attribute lands on the BODY. A hook only when something moves, so the error page, with no
+  LiveView, renders one that asks for no JavaScript.
   """
   attr :id, :string, default: nil
-  attr :body_id, :string, default: nil
   attr :title, :string, required: true
   # An emoji set before the title as one line of text.
   attr :icon, :string, default: nil
 
-  # The screen the panel names takes the page's one h1; every other panel titles itself with a span.
-  attr :heading, :boolean, default: false
   attr :class, :any, default: nil
   attr :body_class, :any, default: nil
 
@@ -43,19 +39,25 @@ defmodule MiniLineageWeb.Controls do
       class={classes(["panel", @class])}
       phx-hook={if @collapsible, do: "Panel"}
     >
-      <%!-- The whole band is the control: a title you have to hit exactly is worse than none. --%>
-      <.dynamic_tag
-        tag_name={if @collapsible, do: "button", else: "div"}
-        class={classes(["panel-header flex", @collapsible && "panel-toggle"])}
-        {folds(@collapsible, @collapsed)}
-      >
-        <h1 :if={@heading} class="header-name">{label(@icon, @title)}</h1>
-        <span :if={!@heading} class="header-name">{label(@icon, @title)}</span>
+      <%!-- The whole band is the control: a title you have to hit exactly is worse than none. A
+            button's contents are never read as a heading, so the h2 wraps it. --%>
+      <h2 :if={@collapsible} class="panel-heading">
+        <button
+          type="button"
+          class="panel-header flex panel-toggle"
+          aria-expanded={to_string(!@collapsed)}
+        >
+          <span class="header-name">{label(@icon, @title)}</span>
+          {render_slot(@header)}
+          <span class="panel-arrow" aria-hidden="true"></span>
+        </button>
+      </h2>
+      <div :if={!@collapsible} class="panel-header flex">
+        <h2 class="header-name">{label(@icon, @title)}</h2>
         {render_slot(@header)}
-        <span :if={@collapsible} class="panel-arrow" aria-hidden="true"></span>
-      </.dynamic_tag>
+      </div>
 
-      <div id={@body_id} class={classes(["panel-body", @body_class])} {@rest}>
+      <div class={classes(["panel-body", @body_class])} {@rest}>
         {render_slot(@inner_block)}
       </div>
     </div>
@@ -67,11 +69,6 @@ defmodule MiniLineageWeb.Controls do
 
   # HEEx renders `class` whatever its value, so it is built first.
   defp classes(parts), do: parts |> Enum.reject(&(&1 in [nil, false, ""])) |> Enum.join(" ")
-
-  # A BUTTON rather than a link: this goes nowhere, and Space activates a button but scrolls a link.
-  # `aria-expanded` IS the state the arrow turns off, so the mark and the screen reader agree.
-  defp folds(false, _collapsed), do: []
-  defp folds(true, collapsed), do: [type: "button", "aria-expanded": to_string(!collapsed)]
 
   # ----------------------------------------------------------------- buttons
 
@@ -197,57 +194,17 @@ defmodule MiniLineageWeb.Controls do
     """
   end
 
-  # --------------------------------------------------------------- the way back
-
-  attr :started, :boolean, required: true
-
-  def back_link(assigns) do
-    ~H"""
-    <.back
-      href={Paths.for_screen(if(@started, do: "town", else: "start"))}
-      text={if @started, do: "Continue your journey", else: "Go back to game start"}
-    />
-    """
-  end
-
-  attr :href, :string, required: true
-  attr :text, :string, required: true
-  attr :class, :string, default: "last back"
-  # False where no LiveView is behind the page, which a patch would need.
-  attr :interactive?, :boolean, default: true
-
-  # The anchor sits flush against its text. The mark sits OUTSIDE it, so a click lands on the
-  # words, and is muted because it says which way this goes and nothing else.
-  defp back(assigns) do
-    ~H"""
-    <p class={@class}>
-      <span class="muted">&laquo;</span>
-      <.link
-        patch={if @interactive?, do: @href}
-        href={unless @interactive?, do: @href}
-      >{@text}</.link>
-    </p>
-    """
-  end
+  # ------------------------------------------------------------------ faults
 
   attr :detail, :string, default: nil
-  attr :interactive?, :boolean, default: true
 
   @doc """
-  What a fault may show, and the way out of it, on both error pages: the game's own screen and the
-  one Phoenix draws, which has no LiveView behind it. Withholding the trace is the caller's call.
+  What a fault may show, on both error pages: the game's own screen and the one Phoenix draws.
+  Withholding the trace is the caller's call.
   """
   def fault(assigns) do
     ~H"""
     <pre :if={@detail} class="code-block">{@detail}</pre>
-    <%!-- `/` is whichever the run is in, the town or game start. A fault's block parts the way back
-          already; without one, the rule does. --%>
-    <.back
-      href={Paths.for_screen("town")}
-      text="Return to safer lands"
-      class={if @detail, do: "last", else: "last back"}
-      interactive?={@interactive?}
-    />
     """
   end
 

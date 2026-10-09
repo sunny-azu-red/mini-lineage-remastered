@@ -32,7 +32,7 @@
 }
 
 /* The fold is `aria-expanded` alone, so a layout can keep a panel open before any script runs. */
-.panel-toggle[aria-expanded="false"]+.panel-body {
+.panel-heading:has(>.panel-toggle[aria-expanded="false"])+.panel-body {
     display: none;
 }
 
@@ -80,10 +80,7 @@
     line-height: 1;
 }
 
-/* An <h1> in the main panel, a <span> in the sidebar's: both take the header's size, not an h1's. */
 .header-name {
-    font-size: inherit;
-    font-weight: inherit;
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -319,7 +316,7 @@
 /* ===== Code Block ===== */
 .code-block {
     background: var(--bg-surface);
-    /* Capped so the way back past a stack trace stays on screen. */
+    /* Capped, so a long trace scrolls inside its block rather than down the page. */
     max-height: 340px;
     overflow: auto;
     border-radius: var(--radius);

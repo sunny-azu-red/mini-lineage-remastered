@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, RACES, reporter, controls, freshStart } from './helpers.mjs';
+import { BASE, RACES, reporter, controls, freshStart, marginsLeftAtEnds } from './helpers.mjs';
 
 // Rules §3, read from the document itself: the starting attributes of each set, by its name.
 const ATTRIBUTES = ['str', 'con', 'dex', 'int', 'wit', 'men'];
@@ -32,6 +32,14 @@ try {
         await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
         await page.waitForSelector('.phx-connected', { timeout: 8000 });
         const chronicles = await text('#main');
+        const headings = await page.$$eval('#screen > .panel h2.header-name',
+            hs => hs.map(h => h.textContent.trim()));
+        check('Chronicles of Ancestry gives each lineage a panel of its own, headed with its name',
+            headings.join('|') === RACES.map(race => `${race.emoji} ${race.label}`).join('|'), headings.join('|'));
+        check('...under the game\'s name, the page\'s one h1',
+            await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
+        const margins = await marginsLeftAtEnds(page);
+        check('...and nothing that ends a panel keeps a margin under it', margins.length === 0, margins.join(' | '));
 
         for (const race of RACES) {
             check(`Chronicles of Ancestry describes the ${race.label}`,
@@ -41,8 +49,9 @@ try {
             check(`...and their perk, or that they have none`, lineage.startsWith(race.perk), lineage);
             check(`...and the village they start in, in the same paragraph`,
                 lineage.endsWith(`They start in ${race.townEmoji} ${race.town}.`), lineage);
-            check('...below the table of what each class is born with',
-                await page.$eval(`#lineage-${slug}`, el => el.previousElementSibling.matches('.table-container')));
+            check('...between the backstory and the table of what each class is born with',
+                await page.$eval(`#lineage-${slug}`, el => el.previousElementSibling.matches('p')
+                    && el.nextElementSibling.matches('.table-container')));
             const titles = await page.$$eval(`#${slug}-classes th`, ths => ths.map(th => th.title));
             check('...whose columns are named in full on hover',
                 titles.join('|') === '|Strength|Constitution|Dexterity|Intelligence|Wit|Mental Strength|Health Points|Mana Points',
@@ -50,8 +59,10 @@ try {
 
             for (const [path, born] of Object.entries(race.classes)) {
                 const row = await text(`#class-${slug}-${path}`);
-                check(`...and the ${born.name} with the HP and MP it is born with`,
-                    row.startsWith(born.name) && row.endsWith(`${born.health} ${born.mp}`), row);
+                // The panel names the race, so the row names the path alone, as game start does.
+                const named = { fighter: '⚔️ Fighter', mystic: '🔮 Mystic' }[path];
+                check(`...and the ${born.name}, as the ${named}, with the HP and MP it is born with`,
+                    row.startsWith(`${named} `) && row.endsWith(`${born.health} ${born.mp}`), row);
             }
         }
         await context.close();
@@ -89,7 +100,7 @@ try {
             await page.click('#character-name a');
             await onScreen('character');
             const shown = await page.evaluate((keys) => keys.map(key =>
-                Number(document.querySelector(`#character-figures [data-key="char-${key}"]`)?.dataset.value)), ATTRIBUTES);
+                Number(document.querySelector(`#screen [data-key="char-${key}"]`)?.dataset.value)), ATTRIBUTES);
             check('...and its Stats are the attributes rules §3 starts it with',
                 JSON.stringify(shown) === JSON.stringify(attributes[born.name]),
                 `${shown} against ${attributes[born.name]}`);

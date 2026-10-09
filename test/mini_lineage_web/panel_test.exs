@@ -30,6 +30,14 @@ defmodule MiniLineageWeb.PanelTest do
     assert LazyHTML.attribute(tag(html, ".panel-body"), "hidden") == []
   end
 
+  # A button's contents are never read as a heading, so the title's h2 holds the button instead.
+  test "and its title is an h2 wrapping that button, never one inside it" do
+    html = folding(false)
+
+    assert tag(html, ".panel > h2.panel-heading > button.panel-header > .header-name")
+    refute tag(html, "button h2")
+  end
+
   # The stylesheet hides a folded body off `aria-expanded`, so a layout with room for the panel can
   # keep it open before any script runs. A `hidden` here would shut it everywhere until one did.
   test "and one that opens collapsed says so on its header alone" do
@@ -45,5 +53,6 @@ defmodule MiniLineageWeb.PanelTest do
 
     refute html =~ "phx-hook"
     refute html =~ "<button"
+    assert LazyHTML.text(tag(html, ".panel-header > h2.header-name")) == "Plain"
   end
 end

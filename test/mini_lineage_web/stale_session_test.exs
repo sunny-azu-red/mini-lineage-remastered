@@ -29,7 +29,7 @@ defmodule MiniLineageWeb.StaleSessionTest do
       conn = init_test_session(conn, %{"unknown" => "key"})
 
       assert {:ok, _live, html} = live(conn, ~p"/")
-      assert html =~ "Game Start"
+      assert html =~ "A New Bloodline Rises"
     end
 
     test "and the request it is bounced to issues a real one", %{conn: conn} do
@@ -44,7 +44,7 @@ defmodule MiniLineageWeb.StaleSessionTest do
       # Same connection, now carrying what the plug issued: the LiveView mounts for real.
       {:ok, _live, html} = live(conn, ~p"/")
 
-      assert html =~ "Game Start"
+      assert html =~ "A New Bloodline Rises"
     end
   end
 

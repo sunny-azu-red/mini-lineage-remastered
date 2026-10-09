@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, traceAudio, controls } from './helpers.mjs';
+import { BASE, reporter, traceAudio, controls, marginsLeftAtEnds } from './helpers.mjs';
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
@@ -35,6 +35,8 @@ try {
     const font = await page.locator('.header-title').evaluate(el => getComputedStyle(el).fontFamily);
     check('the stylesheet is applied', bg !== 'rgba(0, 0, 0, 0)', `body background ${bg}`);
     check('...including the display font', /Cinzel/i.test(font), font);
+    check('the game\'s name is the page\'s one h1',
+        await page.locator('h1').count() === 1 && (await text('#header h1')) === 'Mini Lineage', await text('h1'));
     // The connect itself is the wait above; what can still go wrong is the CSP refusing something.
     const refused = consoleErrors.filter(e => /Content Security Policy/i.test(e));
     check('LiveView connects through the CSP, which refuses nothing', refused.length === 0, refused.join(' | '));
@@ -95,19 +97,21 @@ try {
     await page.goto(`${BASE}/error`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('the error screen is routable and styled', (await state()).screen === 'error');
-    check('...and offers a way out',
-        await page.locator('#main a:has-text("Return to safer lands")').count() === 1);
+    check('...with no way back of its own, the banner being the way home',
+        await page.locator('#main a').count() === 0 && await page.getAttribute('#header-link', 'href') === '/');
 
     // ---- a visitor reads the lineages, and is sent back to choose one -------------------------
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('game start is headed with its call to begin',
+        (await text('#main h2.header-name')) === '🐣 A New Bloodline Rises', await text('#main h2.header-name'));
+    check('...and no second heading saying it again', await page.locator('#screen h2').count() === 1);
     await page.click('#main a:has-text("Chronicles of Ancestry")');
     await onScreen('races');
     check('Chronicles of Ancestry is public', (await state()).screen === 'races');
-    check('...and its way back is to game start', (await text('#main .back')).includes('game start'),
-        await text('#main .back'));
-    await page.click('#main .back a');
+    await page.click('#header-link');
     await onScreen('start');
+    check('...and the banner takes a visitor back to game start', (await state()).screen === 'start');
 
     // ---- create a character -------------------------------------------------------------------
     // Deliberately BEFORE the socket connects: the dead render is interactive, and the first live
@@ -143,7 +147,11 @@ try {
         await text('#main .header-name'));
     check('...and the document title names it', await page.title() === 'Mini Lineage - Orc Village',
         await page.title());
-    check('...and no second heading saying it again', await page.locator('#screen h2').count() === 0);
+    check('...and no second heading saying it again', await page.locator('#screen h2').count() === 1);
+    const untitled = await page.$$eval('.panel', panels =>
+        panels.filter(panel => !panel.querySelector(':scope > h2, :scope > .panel-header > h2')).length);
+    check('...and every panel on it, the sidebar\'s too, is titled with an h2, under the one h1',
+        untitled === 0 && await page.locator('h1').count() === 1, `${untitled} untitled`);
     check('...and the City of Aden is nowhere on the page', !(await text('body')).includes('City of Aden'));
     check('...with the welcome that sent it out from there',
         /You chose the 🧟 Orc Mystic, .* set out from 🏕️ Orc Village/.test(await text('#main .alert')),
@@ -195,11 +203,9 @@ try {
     await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a character may read the Chronicles of Ancestry', (await state()).screen === 'races');
-    check('...whose way back continues the journey',
-        (await text('#main .back')).includes('Continue your journey'));
-    await page.click('#main .back a');
+    await page.click('#header-link');
     await onScreen('town');
-    check('...and leads home', (await text('#main .header-name')) === '🏕️ Orc Village');
+    check('...and the banner leads home', (await text('#main .header-name')) === '🏕️ Orc Village');
     check('...at its address, not at the root', new URL(page.url()).pathname === '/orc-village', page.url());
 
     // ---- the name in the sidebar opens the character's own page ------------------------------
@@ -207,25 +213,34 @@ try {
     await onScreen('character');
     check('the sidebar\'s name leads to the character page, at /character',
         new URL(page.url()).pathname === '/character', page.url());
-    check('...headed Character, across the whole page with no sidebar beside it',
-        (await text('#main .header-name')) === '📜 Character' && await page.locator('#sidebar').count() === 0,
-        await text('#main .header-name'));
-    check('...naming its ancestry', (await text('#screen h2')) === '🧟 BrowserBot of Orc Ancestry',
-        await text('#screen h2'));
+    const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
+    check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Blessings & Afflictions|📊 Stats'
+        && await page.locator('#sidebar').count() === 0, sections.join('|'));
+    check('...under the game\'s name, the page\'s one h1',
+        await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
     check('...then its class and what it was born with, then its race\'s perk',
-        await page.evaluate(() => [...document.querySelectorAll('#character-figures > h2:first-child ~ p')]
-            .slice(0, 2).map(p => p.id).join(',')) === 'character-class,character-perk'
+        await page.evaluate(() => [...document.querySelectorAll('#screen > .panel')][0]
+            .querySelectorAll('.panel-body p').length === 2
+            && [...document.querySelectorAll('#character-lineage > p')].map(p => p.id).join(',')
+            === 'character-class,character-perk')
         && (await text('#character-class')).startsWith('You are an Orc Mystic of STR '),
         await text('#character-class'));
+    const margins = await marginsLeftAtEnds(page);
+    check('...and nothing that ends one, its rows\' sentences included, keeps a margin under it',
+        margins.length === 0, margins.join(' | '));
     check('...what is on it, and what each does',
         (await text('#effect-resting')).startsWith('💤 Resting • With nothing yet to fight'),
         await text('#effect-resting'));
+    check('...one row each, as the sidebar draws its own',
+        await page.locator('.panel-body.rows > .stat-row[id^="effect-"]').count()
+        === await page.locator('[id^="effect-"]').count());
     check('...and its figures, as the server wrote them',
-        await page.getAttribute('#character-figures [data-key="char-level"]', 'data-value') === '1'
-        && await page.getAttribute('#character-figures [data-key="char-xp-needed"]', 'data-value') === '68');
-    await page.click('#main .back a');
+        await page.getAttribute('#screen [data-key="char-level"]', 'data-value') === '1'
+        && await page.getAttribute('#screen [data-key="char-xp-needed"]', 'data-value') === '68');
+    await page.click('#header-link');
     await onScreen('town');
-    check('...and its way back is the town', new URL(page.url()).pathname === '/orc-village', page.url());
+    check('...and the banner leads back to the town', new URL(page.url()).pathname === '/orc-village', page.url());
 
     // ---- a second tab follows along -------------------------------------------------------------
     const tab = await context.newPage();

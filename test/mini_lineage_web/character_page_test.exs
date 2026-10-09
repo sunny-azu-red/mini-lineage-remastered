@@ -5,6 +5,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
   import Phoenix.LiveViewTest
 
   alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
+  alias MiniLineageWeb.Screens
 
   @figures ~w(str con dex int wit men p_atk m_atk p_def m_def accuracy evasion atk_spd cast_spd)a
 
@@ -14,12 +15,18 @@ defmodule MiniLineageWeb.CharacterPageTest do
     player = %{player | experience: Math.xp_for_level(5)}
     stats = Player.stats(player)
 
+    view = Snapshot.build(player)
+    catalog = Snapshot.catalog()
+
     html =
-      render_component(&MiniLineageWeb.Screens.screen/1,
-        screen: "character",
-        view: Snapshot.build(player),
-        catalog: Snapshot.catalog()
-      )
+      for panel <- Screens.panels("character", view, catalog), into: "" do
+        render_component(&Screens.screen/1,
+          screen: "character",
+          panel: panel,
+          view: view,
+          catalog: catalog
+        )
+      end
 
     doc = LazyHTML.from_fragment(html)
     read = &(doc |> LazyHTML.query(&1) |> LazyHTML.text())

@@ -13,7 +13,7 @@ defmodule MiniLineageWeb.Screens do
   alias MiniLineageWeb.Paths
 
   @titles %{
-    "start" => "Game Start",
+    "start" => "A New Bloodline Rises",
     "gatekeeper" => "Gatekeeper",
     "character" => "Character",
     "races" => "Chronicles of Ancestry",
@@ -26,13 +26,40 @@ defmodule MiniLineageWeb.Screens do
 
   @doc "A place's emoji, drawn in the band beside its name; a screen that is not a place has none."
   def icon("town", %{started: true, town: town}), do: town.emoji
+  def icon("start", _view), do: "🐣"
   def icon("gatekeeper", _view), do: "🌀"
-  def icon("character", _view), do: "📜"
   def icon(_screen, _view), do: nil
 
   def page_title(screen, view), do: "Mini Lineage - #{title(screen, view)}"
 
+  @doc """
+  The panels a screen is drawn on, top to bottom. The Chronicles give each lineage one of its own
+  and the character page each section.
+  """
+  def panels("races", _view, catalog),
+    do:
+      for(
+        race <- catalog.races,
+        do: %{title: race.label, icon: race.emoji, race: race}
+      )
+
+  def panels("character", view, _catalog),
+    do: [
+      %{
+        title: "#{view.name} of #{view.ancestry} Ancestry",
+        icon: view.race_emoji,
+        section: :lineage
+      },
+      %{title: "Blessings & Afflictions", icon: "✨", section: :effects, body_class: "rows"},
+      %{title: "Stats", icon: "📊", section: :stats}
+    ]
+
+  def panels(screen, view, _catalog),
+    do: [%{title: title(screen, view), icon: icon(screen, view)}]
+
   attr :screen, :string, required: true
+  # Which of `panels/3` is being drawn.
+  attr :panel, :map, required: true
   attr :view, :map, required: true
   attr :catalog, :map, required: true
   attr :detail, :string, default: nil
@@ -69,7 +96,6 @@ defmodule MiniLineageWeb.Screens do
 
   defp start_screen(assigns) do
     ~H"""
-    <h2>🐣 A New Bloodline Rises</h2>
     <p>
       The <.link patch={Paths.for_screen("races")}>Chronicles of Ancestry</.link>
       tell of the lineages that walk this realm. Under what name shall the first chapter of your
@@ -95,8 +121,7 @@ defmodule MiniLineageWeb.Screens do
           <option :for={race <- @catalog.races} value={race.id}>{race.emoji} {race.label}</option>
         </select>
         <select name="path" class="form-select">
-          <option value="fighter">⚔️ Fighter</option>
-          <option value="mystic">🔮 Mystic</option>
+          <option :for={{path, label} <- paths()} value={path}>{label}</option>
         </select>
         <.button type="submit">🚩 Start</.button>
       </div>
@@ -161,31 +186,44 @@ defmodule MiniLineageWeb.Screens do
   end
 
   # Only ever the reader's own, so it speaks to them. A chance moves only with DEX or WIT, so it is
-  # not counted. Each clause stays on one line: a newline at a tag renders as a space.
-  defp character(assigns) do
+  # not counted. Each clause stays on one line: a newline at a tag renders as a space. A panel with
+  # figures has a hook of its own to count them; the sidebar's are its own.
+  defp character(%{panel: %{section: :lineage}} = assigns) do
     assigns =
-      assign(assigns,
-        stats: assigns.view.stats,
-        article: article(assigns.view.class_name),
-        xp_needed: assigns.view.xp_required - assigns.view.xp_current
-      )
+      assign(assigns, stats: assigns.view.stats, article: article(assigns.view.class_name))
 
     ~H"""
-    <%!-- One hook counts every figure beneath it; the sidebar's are its own. --%>
-    <div id="character-figures" phx-hook="AnimatedValues">
-      <h2>{@view.race_emoji} {@view.name} of {@view.ancestry} Ancestry</h2>
+    <div id="character-lineage" phx-hook="AnimatedValues">
       <p id="character-class" phx-no-format>
         You are {@article} {@view.class_name} of <.attribute name="STR" key="str" value={@stats.str} />, <.attribute name="CON" key="con" value={@stats.con} />, <.attribute name="DEX" key="dex" value={@stats.dex} />, <.attribute name="INT" key="int" value={@stats.int} />, <.attribute name="WIT" key="wit" value={@stats.wit} /> and <.attribute name="MEN" key="men" value={@stats.men} />.
       </p>
       <p id="character-perk">{@view.perk}</p>
+    </div>
+    """
+  end
 
-      <h2>✨ Blessings &amp; Afflictions</h2>
-      <p :for={effect <- @view.effects} id={"effect-#{effect.id}"}>
+  defp character(%{panel: %{section: :effects}} = assigns) do
+    ~H"""
+    <%!-- One row each, as the sidebar's; the sentence is one <p>, or the row would lay its pieces
+          out as columns. --%>
+    <div :for={effect <- @view.effects} id={"effect-#{effect.id}"} class="stat-row">
+      <p>
         <span class={effect.type}>{effect.emoji} {effect.label}</span>
         <span class="muted">&bull;</span> {effect_text(effect)}
       </p>
+    </div>
+    """
+  end
 
-      <h2>📊 Stats</h2>
+  defp character(%{panel: %{section: :stats}} = assigns) do
+    assigns =
+      assign(assigns,
+        stats: assigns.view.stats,
+        xp_needed: assigns.view.xp_required - assigns.view.xp_current
+      )
+
+    ~H"""
+    <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
         You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> and <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span>, turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> and <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>, and find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span> while slipping blows with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
       </p>
@@ -196,8 +234,6 @@ defmodule MiniLineageWeb.Screens do
         You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span> while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
       </p>
     </div>
-
-    <.back_link started={@view.started} />
     """
   end
 
@@ -218,6 +254,9 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  # The two paths, as game start offers them and the Chronicles name them.
+  defp paths, do: [fighter: "⚔️ Fighter", mystic: "🔮 Mystic"]
+
   defp attributes,
     do: [
       str: "Strength",
@@ -228,35 +267,32 @@ defmodule MiniLineageWeb.Screens do
       men: "Mental Strength"
     ]
 
-  defp races(assigns) do
-    ~H"""
-    <%!-- No wrapper element: the stylesheet spaces these by sibling order, and a <div> per race
-          would break the run. --%>
-    <%= for race <- @catalog.races do %>
-      <h2>{race.emoji} {race.label}</h2>
-      <p>{raw(race.backstory)}</p>
-      <.data_table id={"#{race.slug}-classes"}>
-        <:col class="name">Class</:col>
-        <:col :for={{attr, name} <- attributes()} class="num" title={name}>
-          {String.upcase(to_string(attr))}
-        </:col>
-        <:col class="num" title="Health Points">HP</:col>
-        <:col class="num" title="Mana Points">MP</:col>
-        <tbody>
-          <tr :for={class <- race.classes} id={"class-#{race.slug}-#{class.path}"}>
-            <td class="name">{class.name}</td>
-            <td :for={{attr, _} <- attributes()} class="num">{class.attributes[attr]}</td>
-            <td class="num hp">{class.max_hp}</td>
-            <td class="num mp">{class.max_mp}</td>
-          </tr>
-        </tbody>
-      </.data_table>
-      <p id={"lineage-#{race.slug}"}>
-        {race.perk} They start in {race.town.emoji} {race.town.name}.
-      </p>
-    <% end %>
+  # One lineage, in a panel of its own.
+  defp races(%{panel: %{race: race}} = assigns) do
+    assigns = assign(assigns, race: race)
 
-    <.back_link started={@view.started} />
+    ~H"""
+    <p>{raw(@race.backstory)}</p>
+    <p id={"lineage-#{@race.slug}"}>
+      {@race.perk} They start in {@race.town.emoji} {@race.town.name}.
+    </p>
+    <%!-- The panel names the race, so a row names only the path. --%>
+    <.data_table id={"#{@race.slug}-classes"}>
+      <:col class="name">Class</:col>
+      <:col :for={{attr, name} <- attributes()} class="num" title={name}>
+        {String.upcase(to_string(attr))}
+      </:col>
+      <:col class="num" title="Health Points">HP</:col>
+      <:col class="num" title="Mana Points">MP</:col>
+      <tbody>
+        <tr :for={class <- @race.classes} id={"class-#{@race.slug}-#{class.path}"}>
+          <td class="name">{paths()[class.path]}</td>
+          <td :for={{attr, _} <- attributes()} class="num">{class.attributes[attr]}</td>
+          <td class="num hp">{class.max_hp}</td>
+          <td class="num mp">{class.max_mp}</td>
+        </tr>
+      </tbody>
+    </.data_table>
     """
   end
 end

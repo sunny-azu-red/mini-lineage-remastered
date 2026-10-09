@@ -30,7 +30,7 @@ defmodule MiniLineageWeb.NightPageTest do
     assert has_element?(view, ~s(#effects [data-effect-id="night"]))
     assert has_element?(view, ~s(#effects [data-effect-id="shadow_sense"]))
     render_patch(view, ~p"/character")
-    assert has_element?(view, ~s(#character-figures [data-key="char-accuracy"][data-value="36"]))
+    assert has_element?(view, ~s(#screen [data-key="char-accuracy"][data-value="36"]))
   end
 
   test "and dawn takes both away without anything being pushed", %{conn: conn} do

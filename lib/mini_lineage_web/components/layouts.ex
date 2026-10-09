@@ -37,8 +37,8 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  attr :title, :string, default: "Loading"
-  attr :icon, :string, default: nil
+  # `Screens.panels/3`: each is handed to the inner block, which draws its body.
+  attr :panels, :list, required: true
   attr :view, :map, required: true
   attr :screen, :string, required: true
   # Debug builds only, for a character: what a release never draws sends it no keys.
@@ -58,24 +58,26 @@ defmodule MiniLineageWeb.Layouts do
           <.sidebar :if={@view.started && Access.sidebar?(@screen)} view={@view} />
 
           <div id="main">
-            <%!-- No wrapper of its own: `h2:first-child` drops the top margin, and an extra
-                  element would qualify every screen's first heading even under an alert. --%>
-            <Controls.panel
-              title={@title}
-              icon={@icon}
-              heading
-              body_id="screen"
+            <div
+              id="screen"
               phx-hook="PanelFocus"
               data-screen={@screen}
               data-started={to_string(@view.started)}
             >
-              <:header>
-                <div class="header-effects" id="effects">
-                  <.effect_icon :for={effect <- @view.effects} effect={effect} />
-                </div>
-              </:header>
-              {render_slot(@inner_block)}
-            </Controls.panel>
+              <Controls.panel
+                :for={{panel, index} <- Enum.with_index(@panels)}
+                title={panel.title}
+                icon={panel.icon}
+                body_class={panel[:body_class]}
+              >
+                <:header :if={index == 0}>
+                  <div class="header-effects" id="effects">
+                    <.effect_icon :for={effect <- @view.effects} effect={effect} />
+                  </div>
+                </:header>
+                {render_slot(@inner_block, panel)}
+              </Controls.panel>
+            </div>
 
             <Layouts.footer />
           </div>
@@ -199,7 +201,7 @@ defmodule MiniLineageWeb.Layouts do
             />
           </g>
         </svg>
-        <span class="header-title">Mini Lineage</span>
+        <h1 class="header-title">Mini Lineage</h1>
         <span class="header-subtitle">Remastered</span>
       </.link>
       <%!-- Outside the anchor, so clicking it never also navigates. Ignored by patches: the hook

@@ -176,11 +176,11 @@
     --folds: 0;
 }
 
-.side>.panel:not(.folds)>.panel-toggle {
+.side>.panel:not(.folds)>.panel-heading>.panel-toggle {
     pointer-events: none;
 }
 
-.side>.panel:not(.folds)>.panel-toggle+.panel-body {
+.side>.panel:not(.folds)>.panel-heading+.panel-body {
     display: block;
 }
 
@@ -213,11 +213,12 @@
     }
 
     #main,
+    #screen,
     .side {
         display: contents;
     }
 
-    #main>.panel {
+    #screen>.panel {
         order: 2;
     }
 
@@ -245,11 +246,11 @@
         --folds: 1;
     }
 
-    .side>.panel:not(.folds)>.panel-toggle {
+    .side>.panel:not(.folds)>.panel-heading>.panel-toggle {
         pointer-events: auto;
     }
 
-    .side>.panel:not(.folds)>.panel-toggle[aria-expanded="false"]+.panel-body {
+    .side>.panel:not(.folds)>.panel-heading:has(>.panel-toggle[aria-expanded="false"])+.panel-body {
         display: none;
     }
 

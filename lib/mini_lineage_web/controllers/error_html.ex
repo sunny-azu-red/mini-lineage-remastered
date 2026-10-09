@@ -66,9 +66,9 @@ defmodule MiniLineageWeb.ErrorHTML do
 
             <div id="content">
               <div id="main">
-                <Controls.panel title="Error" heading>
+                <Controls.panel title="Error">
                   <p>{@message}</p>
-                  <Controls.fault detail={@detail} interactive?={false} />
+                  <Controls.fault detail={@detail} />
                 </Controls.panel>
 
                 <Layouts.footer />
