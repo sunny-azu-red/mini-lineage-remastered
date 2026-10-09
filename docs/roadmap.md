@@ -54,5 +54,6 @@ from `legacy/` comes back as it was.
 - Day and night: night runs from 22:00 to 06:00 server time and makes it harder to hit.
 - Hunting grounds around each race's starting village (rules §1), which is where a character
   stands today with nothing yet to do.
-- Monsters with their own stats, levels, EXP and Adena.
+- Monsters with their own stats, levels, EXP and Adena. Their EXP is on the scale of rules §12,
+  where level 2 is 68 EXP and level 80 is 4.2 billion, or the first kill levels a character.
 - Raid bosses.

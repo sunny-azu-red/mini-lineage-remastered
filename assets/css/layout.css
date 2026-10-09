@@ -133,7 +133,7 @@
     min-width: 0;
 }
 
-/* Fits "💀 The Forgotten Blade 15%" at 13px, with room for Verdana and a wider emoji font. */
+/* Fixed, and widened only on the user's say-so: a value is shortened before the column grows. */
 #sidebar {
     --side-width: 210px;
 }
@@ -143,21 +143,21 @@
     margin-top: 12px;
 }
 
-/* Beside the main panel a side one does not fold, and `--folds` tells the hook so. Child
-   combinators, to outrank the fold itself. */
-.side>.panel {
+/* Beside the main panel a side one does not fold, unless it says `.folds`, and `--folds` tells the
+   hook so. Child combinators, to outrank the fold itself. */
+.side>.panel:not(.folds) {
     --folds: 0;
 }
 
-.side>.panel>.panel-toggle {
+.side>.panel:not(.folds)>.panel-toggle {
     pointer-events: none;
 }
 
-.side>.panel>.panel-toggle+.panel-body {
+.side>.panel:not(.folds)>.panel-toggle+.panel-body {
     display: block;
 }
 
-.side .panel-arrow {
+.side>.panel:not(.folds) .panel-arrow {
     display: none;
 }
 
@@ -212,20 +212,21 @@
         margin-top: 0;
     }
 
-    /* A side panel folds here, so the main panel is not pushed off the screen. */
-    .side>.panel {
+    /* A side panel folds here, so the main panel is not pushed off the screen. The same selectors
+       as the rules they undo, so these win by coming later; `.folds` folds without them. */
+    .side>.panel:not(.folds) {
         --folds: 1;
     }
 
-    .side>.panel>.panel-toggle {
+    .side>.panel:not(.folds)>.panel-toggle {
         pointer-events: auto;
     }
 
-    .side>.panel>.panel-toggle[aria-expanded="false"]+.panel-body {
+    .side>.panel:not(.folds)>.panel-toggle[aria-expanded="false"]+.panel-body {
         display: none;
     }
 
-    .side .panel-arrow {
+    .side>.panel:not(.folds) .panel-arrow {
         display: block;
     }
 }

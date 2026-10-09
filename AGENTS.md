@@ -31,8 +31,8 @@ list wins — several generator defaults do not exist here.
   reaches for but does not own (`<.panel>`, `<.data_table>`, `<.button>`, `<.alert>` and
   `<.flash_alert>` built on it, `<.back_link>`, `<.figure>` and `<.bar>`, `<.fault>`) is in
   `Controls`; `Layouts` holds the shell's `head`, `site_header`, sidebar and `footer`, which
-  `ErrorHTML` draws too. The sidebar is one `.side` column beside the main one, at its own fixed
-  width, and one breakpoint stacks it.
+  `ErrorHTML` draws too. The sidebar — the vitals, Stats and the Inventory — is one `.side` column
+  beside the main one, at its own fixed width, and one breakpoint stacks it.
 - **The town's 🚪 Quit button is temporary.** It deletes the character so one browser can try every
   race and path, and exists only in a debug build: `GameLive` neither draws nor answers it in a
   release, and `quit_test.exs` holds that. It goes when there is a real way to start over.
@@ -146,10 +146,10 @@ failed on the roll until it asked for the whole phrase. Where a test reads a dra
 draw first or match only what every draw shares; that it came from the pool at all is a separate
 test's job, against the struct rather than the page.
 
-**A formatter with a client-side twin is held to a table.** `Format.adena` and `shortAdena` in
+**A formatter with a client-side twin is held to a table.** `Format.short` and `shortFigure` in
 `hooks/animated-values.js` are duplicated on purpose: the count-up animation formats its own frames,
 and without a client-side copy the number would change format mid-count. Both read
-`test/fixtures/adena_format.json`, from `format_test.exs` on the Elixir side and `walkthrough.mjs`
+`test/fixtures/short_format.json`, from `format_test.exs` on the Elixir side and `walkthrough.mjs`
 on the JavaScript one. Change either implementation, change the table, and both tests will tell
 you. Anything else the two languages both format wants the same treatment before it gets a second
 copy.
@@ -386,9 +386,10 @@ quietly false. Moving a ground means re-measuring everything any comment asserts
 
 **Every figure counts; only names and dates jump.** A number the player can watch change is a
 `<.figure>`, animated by `AnimatedValues`, whose hook sits once over whatever contains them. The
-component writes `data-value` and the text from one value, and `format={:adena}` both the short form
+component writes `data-value` and the text from one value, and `format={:short}` both the short form
 and the `data-format` that counts in it, so the two cannot be written apart. Only names and
-dates jump, having nothing to count through. Adena counts in the short form; the frames keep the tenth that the settled
+dates jump, having nothing to count through. Adena and the XP bar count in the short form, since a
+level's EXP runs to 4.2 billion and the bar is 210px; the frames keep the tenth that the settled
 value drops, because "2.0k" written "2k" is two characters narrower and the line jumps left and
 right across every round thousand.
 
@@ -469,7 +470,10 @@ what is not there.
 Opening by hand brings the panel into view. Only by hand — a panel restored open from storage, or
 patched while open, was never asked to move the page. Nor may it animate into a restored state: the
 chevron's transition is gated on a `data-ready` the hook sets two frames in, or every refresh spins
-it through a state the reader never left. The Inventory folds on a phone and opens unfolded.
+it through a state the reader never left. Beside the main panel a side panel does not fold, unless
+it is marked `.folds`: the Inventory folds only on a phone and opens unfolded, while Stats folds at
+every width and opens folded. The phone's rules repeat the desktop's `:not(.folds)` selectors, so
+they win by order; written plainly, the desktop's extra class outranked them and nothing folded.
 
 **Every button in the game is one component, and the element is what it does.** `Controls.button/1`
 is the only thing that writes `btn`. With `patch` it is an `<a>`, because it goes somewhere and a

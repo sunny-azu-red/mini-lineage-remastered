@@ -8,10 +8,10 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
 
   alias MiniLineage.Game.{Format, Math, Rules}
 
-  describe "adena" do
+  describe "the short form" do
     property "drops everything past the tenth, as integer arithmetic would" do
-      check all value <- adena(), max_runs: 500 do
-        assert Format.adena(value) == truncated(value)
+      check all value <- big(), max_runs: 500 do
+        assert Format.short(value) == truncated(value)
       end
     end
   end
@@ -31,7 +31,7 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
   end
 
   # Weighted across every unit, since a uniform draw over the whole range is almost always "kkk".
-  defp adena do
+  defp big do
     gen all magnitude <-
               one_of([
                 integer(0..999),

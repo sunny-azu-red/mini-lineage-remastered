@@ -2,7 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortAdena} from "./hooks"
+import {hooks as gameHooks, shortFigure} from "./hooks"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 // Phoenix remembers a fallback for the tab, so one slow connect or a restart kept it long-polling,
@@ -65,4 +65,4 @@ if (process.env.NODE_ENV === "development") {
 
 
 // Exposed for the browser suite, which holds it and its Elixir twin to one table.
-window.__shortAdena = shortAdena;
+window.__shortFigure = shortFigure;

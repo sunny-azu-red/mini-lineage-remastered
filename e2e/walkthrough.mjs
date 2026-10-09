@@ -43,17 +43,17 @@ try {
     check('...and flags it as a debug build, in the colour that build wears',
         await page.locator('#copyright .build-testing').count() === 1);
 
-    // ---- the two adena formatters agree -------------------------------------------------------
+    // ---- the two short-form formatters agree ------------------------------------------------
     // The count-up formats its own frames in hooks/animated-values.js, so both sides of
-    // Format.adena read one table; Elixir reads it in format_test.exs.
-    const { cases } = JSON.parse(readFileSync('test/fixtures/adena_format.json', 'utf8'));
+    // Format.short read one table; Elixir reads it in format_test.exs.
+    const { cases } = JSON.parse(readFileSync('test/fixtures/short_format.json', 'utf8'));
     const mismatched = await page.evaluate(
         (rows) => rows
-            .filter(([value, expected]) => window.__shortAdena(value) !== expected)
-            .map(([value, expected]) => `${value}: ${window.__shortAdena(value)} != ${expected}`),
+            .filter(([value, expected]) => window.__shortFigure(value) !== expected)
+            .map(([value, expected]) => `${value}: ${window.__shortFigure(value)} != ${expected}`),
         cases,
     );
-    check('the browser formats adena exactly as the server does', mismatched.length === 0,
+    check('the browser shortens a figure exactly as the server does', mismatched.length === 0,
         mismatched.join(' | '));
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
@@ -135,8 +135,10 @@ try {
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
     check('...at level 1, with full bars', born.level === 1 && born.health === born.maxHealth
         && born.mp === born.maxMp, JSON.stringify(born));
-    check('...no experience yet, and the next level ahead', born.xp === 0 && born.xpRequired > 0,
-        `${born.xp}/${born.xpRequired}`);
+    check('...no experience yet, and 68 to the next level, as rules §12 has it',
+        born.xp === 0 && born.xpRequired === 68, `${born.xp}/${born.xpRequired}`);
+    check('...and its Stats beside them', await page.locator('#stats [data-key="p-atk"]').count() === 1
+        && /^\d+\.\d%$/.test(await text('#stat-critical')), await text('#stat-critical'));
     check('...and an empty purse', born.adena === 0, String(born.adena));
     check('...resting, as a character with nothing to fight always is',
         await page.locator('#effects [data-effect-id="resting"]').count() === 1);
@@ -164,6 +166,18 @@ try {
     check('a second tab sees the same character',
         await tab.getAttribute('#sidebar [data-key="hp"]', 'data-value') === String(born.health));
     await tab.close();
+
+    // ---- Stats folds at any width, opens folded, and stays as the reader left it -------------
+    const stats = page.locator('#stats .panel-body');
+    const statsHidden = () => stats.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
+    check('beside the main panel Stats opens folded', await statsHidden());
+    await page.click('#stats .panel-toggle');
+    check('...until its header opens it', await stats.isVisible());
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and a refresh keeps it open, the panel being the reader\'s own', await stats.isVisible());
+    await page.click('#stats .panel-toggle');
+    check('...until it is folded again', await statsHidden());
 
     // ---- the Inventory folds on a phone, and stays as the reader left it -----------------------
     const inventory = page.locator('#inventory .panel-body');

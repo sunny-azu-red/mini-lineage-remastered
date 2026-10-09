@@ -20,15 +20,15 @@ defmodule MiniLineageWeb.FigureTest do
     end)
   end
 
-  defp said(["adena"], value), do: Format.adena(String.to_integer(value))
+  defp said(["short"], value), do: Format.short(String.to_integer(value))
   defp said([], value), do: Format.number(String.to_integer(value))
 
   test "a figure is written from its one value, in the format it counts in" do
     assert [{[], ["12345"], "12,345"}] =
              figures(render_component(&Controls.figure/1, key: "k", value: 12_345))
 
-    assert [{["adena"], ["2000"], "2k"}] =
-             figures(render_component(&Controls.figure/1, key: "k", value: 2_000, format: :adena))
+    assert [{["short"], ["2000"], "2k"}] =
+             figures(render_component(&Controls.figure/1, key: "k", value: 2_000, format: :short))
   end
 
   test "every figure in the sidebar says what it counts to" do
@@ -44,7 +44,7 @@ defmodule MiniLineageWeb.FigureTest do
       )
 
     found = figures(html)
-    assert length(found) == 8
+    assert length(found) == 22
 
     for {format, [value], text} <- found do
       assert text == said(format, value), "#{inspect(format)} #{value} reads #{inspect(text)}"

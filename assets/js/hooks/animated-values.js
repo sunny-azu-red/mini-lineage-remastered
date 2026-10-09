@@ -6,7 +6,7 @@ const EASE_MS = 600;
 
 const groupDigits = (n) => Math.round(n).toLocaleString('en-US');
 
-function shortenAdena(value, trimTenth) {
+function shorten(value, trimTenth) {
     const abs = Math.abs(value);
     const sign = value < 0 ? '-' : '';
     if (abs <= 999)
@@ -23,14 +23,14 @@ function shortenAdena(value, trimTenth) {
     return short(1e9, 'kkk');
 }
 
-/** How a purse is written. Twinned with `Format.adena`, and held to a table by both suites. */
-export const shortAdena = (value) => shortenAdena(value, true);
+/** A big figure, a purse or a level's EXP. Twinned with `Format.short`, held to a table by both suites. */
+export const shortFigure = (value) => shorten(value, true);
 
 /**
  * Mid-count, keeping the tenth the settled figure drops: "2.0k" becoming "2k" and back throws the
  * line left and right. The count always lands on the server's own rendering.
  */
-const countingAdena = (value) => shortenAdena(value, false);
+const countingShort = (value) => shorten(value, false);
 
 export const AnimatedValues = {
     mounted() {
@@ -100,7 +100,7 @@ export const AnimatedValues = {
     },
     count(key, el, from, to) {
         cancelAnimationFrame(this.frames.get(key));
-        const format = el.dataset.format === 'adena' ? countingAdena : groupDigits;
+        const format = el.dataset.format === 'short' ? countingShort : groupDigits;
         const settled = el.textContent;
         const started = performance.now();
 

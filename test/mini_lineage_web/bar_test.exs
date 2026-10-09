@@ -19,6 +19,7 @@ defmodule MiniLineageWeb.BarTest do
       width: one.(".bar", "style"),
       track: fn attr -> one.(".bar-track", attr) end,
       keys: doc |> LazyHTML.query("[data-value]") |> LazyHTML.attribute("data-key"),
+      formats: doc |> LazyHTML.query("[data-value]") |> LazyHTML.attribute("data-format"),
       text: doc |> LazyHTML.query(".bar-text") |> LazyHTML.text()
     }
   end
@@ -50,6 +51,24 @@ defmodule MiniLineageWeb.BarTest do
     assert b.track.("aria-valuetext") == "1,234,567 XP"
   end
 
+  # A level's EXP runs to 4.2 billion, which written out does not fit the sidebar's bar.
+  test "counts in the short form when asked, and still speaks in full" do
+    b =
+      bar(
+        kind: :xp,
+        label: "XP",
+        key: "xp",
+        value: 1_151_275_834,
+        of: 2_099_275_834,
+        of_key: "xp-required",
+        format: :short
+      )
+
+    assert b.text == "1.1kkk\u00A0/\u00A02kkk"
+    assert b.formats == ["short", "short"]
+    assert b.track.("aria-valuetext") == "1,151,275,834 of 2,099,275,834 XP"
+  end
+
   test "leaves its class to the hook once mounted, so a patch cannot cut a shimmer short" do
     html = render_component(&Controls.bar/1, id: "b", label: "HP", key: "hp", kind: :hp, value: 1)
 
@@ -63,16 +82,15 @@ defmodule MiniLineageWeb.BarTest do
 
     html =
       render_component(&MiniLineageWeb.Layouts.app/1,
-        title: "Home Town",
+        title: "Orc Village",
         view: view,
         screen: "home",
-        character_id: "abc",
         inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]
       )
 
     xp = html |> LazyHTML.from_fragment() |> LazyHTML.query("#xp-bar + .bar-text")
 
-    assert LazyHTML.text(xp) == Format.number(view.experience)
+    assert LazyHTML.text(xp) == Format.short(view.experience)
     assert html =~ ~s(style="width:100%")
   end
 end

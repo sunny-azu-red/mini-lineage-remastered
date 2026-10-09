@@ -207,7 +207,7 @@ defmodule MiniLineageWeb.Controls do
 
   attr :key, :string, required: true
   attr :value, :integer, required: true
-  attr :format, :atom, default: :number, values: [:number, :adena]
+  attr :format, :atom, default: :number, values: [:number, :short]
   attr :rest, :global
 
   @doc """
@@ -217,10 +217,10 @@ defmodule MiniLineageWeb.Controls do
   def figure(assigns) do
     assigns = assign(assigns, text: figure_text(assigns.format, assigns.value))
 
-    ~H|<span data-key={@key} data-value={@value} data-format={@format == :adena && "adena"} {@rest}>{@text}</span>|
+    ~H|<span data-key={@key} data-value={@value} data-format={@format == :short && "short"} {@rest}>{@text}</span>|
   end
 
-  defp figure_text(:adena, value), do: Format.adena(value)
+  defp figure_text(:short, value), do: Format.short(value)
   defp figure_text(:number, value), do: Format.number(value)
 
   # -------------------------------------------------------------------- bars
@@ -236,6 +236,8 @@ defmodule MiniLineageWeb.Controls do
   attr :of_id, :string, default: nil
   # A change here means the bar went round, not back: `AnimatedValues` refills it from empty.
   attr :wraps, :any, default: nil
+  # How both figures are written; a screen reader is always told them in full.
+  attr :format, :atom, default: :number, values: [:number, :short]
 
   @doc """
   A figure against its cap, as a bar filled to it. Its width, its figures and what a screen reader
@@ -274,7 +276,7 @@ defmodule MiniLineageWeb.Controls do
         phx-mounted={JS.ignore_attributes(["class"])}
       >
       </div>
-      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} id={@of_id} /></span></span>
+      <span class="bar-text" phx-no-format><.figure key={@key} value={@value} format={@format} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} id={@of_id} format={@format} /></span></span>
     </div>
     """
   end

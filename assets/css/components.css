@@ -190,6 +190,31 @@
     line-height: 1;
 }
 
+/* ===== Stats Panel ===== */
+/* Each stat is its label over its value, so the longest label has a column's width to itself. */
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 12px;
+    margin: 0;
+}
+
+.stat-grid.attributes {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-soft);
+}
+
+.stat-grid .stat-label {
+    text-align: left;
+    margin-bottom: 4px;
+}
+
+.stat-grid dd {
+    margin: 0;
+}
+
 /* ===== HP / XP Bars ===== */
 .bar-track {
     position: relative;

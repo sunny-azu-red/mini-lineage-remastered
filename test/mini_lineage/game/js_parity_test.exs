@@ -21,7 +21,7 @@ defmodule MiniLineage.Game.JsParityTest do
     {-4567, "-4,567"}
   ]
 
-  @adenas [
+  @shorts [
     {0, "0"},
     {7, "7"},
     {999, "999"},
@@ -48,8 +48,8 @@ defmodule MiniLineage.Game.JsParityTest do
     for {n, expected} <- @numbers, do: assert(Format.number(n) == expected)
   end
 
-  test "adena/1 matches formatAdena" do
-    for {n, expected} <- @adenas, do: assert(Format.adena(n) == expected)
+  test "short/1 matches shortFigure" do
+    for {n, expected} <- @shorts, do: assert(Format.short(n) == expected)
   end
 
   test "roll_chance short-circuits at both ends without drawing" do

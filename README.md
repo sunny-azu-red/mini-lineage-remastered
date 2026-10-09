@@ -15,7 +15,7 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 - **Four Lineages, Two Paths**: **Humans**, **Orcs**, **Elves** and **Dark Elves**, each a **Fighter** or a **Mystic**: eight starting sets of six attributes (STR, CON, DEX, INT, WIT, MEN). Every character starts at level 1 with no Adena.
 - **Each Race Starts at Home**: A Human wakes in 🏝️ Talking Island Village, an Orc in 🏕️ Orc Village, an Elf in 🌳 Elven Village and a Dark Elf in 🌑 Dark Elven Village. There is nothing to do there yet, and you rest among your own people.
 - **Stats That Grow With You**: Max HP and MP rise a little more with every level, and P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical and speed are all worked from the attributes and the level, up to **level 80**.
-- **The Status Sidebar**: Beside the town stand your race, class and level, your HP, MP and XP bars, and an Inventory that holds your Adena and nothing else yet.
+- **The Status Sidebar**: Beside the town stand your race, class and level, your HP, MP and XP bars, a **Stats** panel with every number the rules give you (P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical, M. Critical, both speeds and the six attributes), folded until you open it and remembered after, and an Inventory that holds your Adena and nothing else yet.
 - **Chronicles of Ancestry**: `/races` tells every lineage before you choose one: its backstory, the village it starts in, and both of its starting classes with their attributes and their HP and MP at level 1.
 - **Figures Count, They Don't Jump**: Every number you can watch change counts up to it. A purse counts in its own short form, so `1.5k` climbs to `1.6k` rather than through six digits. Only names and dates jump, having nothing to count through.
 - **Playable Without a Mouse**: The panel's first control takes focus on arrival, so the game plays from the keyboard, and a control you moved to yourself is left alone.
@@ -379,7 +379,7 @@ under `e2e/release.sh`:
 
 - **`e2e/walkthrough.mjs`** — one character, made and stood in its village, end to end: the
   stylesheet and the CSP, the session cookie, a 404 and the error page, the Chronicles of Ancestry,
-  creation from the keyboard, the sidebar, a second tab, the Inventory's fold on a phone, and Quit.
+  creation from the keyboard, the sidebar and its Stats, the folds Stats and the Inventory remember, a second tab, and Quit.
   It asserts that no request failed and no console error was logged, and that the browser formats
   Adena exactly as the server does.
 - **`e2e/races.mjs`** — every starting set born in a browser, which the walkthrough cannot do: it

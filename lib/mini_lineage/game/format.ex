@@ -23,7 +23,7 @@ defmodule MiniLineage.Game.Format do
   def number(n) when is_float(n), do: number(trunc(n))
 
   @doc "999 -> \"999\", 1500 -> \"1.5k\", 2_000_000 -> \"2kk\"."
-  def adena(value) do
+  def short(value) do
     abs = Kernel.abs(value)
     sign = if value < 0, do: "-", else: ""
 

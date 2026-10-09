@@ -2,8 +2,18 @@
  * Every starting set born in a browser, which the walkthrough cannot: it commits to one. Each lands
  * in its own race's village with the numbers docs/rules.md gives it.
  */
+import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { BASE, RACES, reporter, controls, freshStart } from './helpers.mjs';
+
+// Rules §3, read from the document itself: the starting attributes of each set, by its name.
+const ATTRIBUTES = ['str', 'con', 'dex', 'int', 'wit', 'men'];
+const rules = readFileSync('docs/rules.md', 'utf8');
+const lines = rules.split('| Set | Race | Path |')[1].split('\n').slice(2);
+const attributes = Object.fromEntries(
+    lines.slice(0, lines.findIndex(row => !row.startsWith('|')))
+        .map(row => row.split('|').slice(1, -1).map(cell => cell.trim()))
+        .map(([name, , , ...values]) => [name, values.map(Number)]));
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
@@ -72,6 +82,12 @@ try {
             check('...and the sidebar names the class',
                 (await text('#sidebar .stat-row')).includes(`${race.emoji} ${born.name} 1`),
                 await text('#sidebar .stat-row'));
+
+            const shown = await page.evaluate((keys) => keys.map(key =>
+                Number(document.querySelector(`#stats [data-key="${key}"]`)?.dataset.value)), ATTRIBUTES);
+            check('...and its Stats are the attributes rules §3 starts it with',
+                JSON.stringify(shown) === JSON.stringify(attributes[born.name]),
+                `${shown} against ${attributes[born.name]}`);
 
             await context.close();
         }
