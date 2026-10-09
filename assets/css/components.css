@@ -59,7 +59,7 @@
     margin-right: 3px;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
-    transform: rotate(45deg) translate(-1.75px, -1.75px);
+    transform: rotate(-135deg) translate(-1.75px, -1.75px);
 }
 
 /* Set by the hook once painted, or a restored fold spins the chevron on every refresh. */
@@ -67,8 +67,9 @@
     transition: transform 160ms ease;
 }
 
+/* Open points up, to fold; folded points down, to open. */
 .panel-header[aria-expanded="false"] .panel-arrow {
-    transform: rotate(-135deg) translate(-1.75px, -1.75px);
+    transform: rotate(45deg) translate(-1.75px, -1.75px);
 }
 
 .header-effects {

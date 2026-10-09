@@ -86,7 +86,9 @@ h2 {
     margin-bottom: 12px;
 }
 
-h2:first-child {
+/* A flash heads the panel without being its content, so the heading under it is still the first. */
+h2:first-child,
+#flash:first-child+h2 {
     margin-top: 0;
 }
 

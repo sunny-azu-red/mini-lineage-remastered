@@ -132,6 +132,11 @@ try {
     check('...with the welcome that sent it out from there',
         /You chose the 🧟 Orc Mystic, .* set out from 🏕️ Orc Village/.test(await text('#main .alert')),
         await text('#main .alert'));
+    // A flash heads the panel without being its content, so the heading under it sits as the first.
+    const gap = await page.evaluate(() =>
+        document.querySelector('#main h2').getBoundingClientRect().top
+        - document.querySelector('#flash').getBoundingClientRect().bottom);
+    check('...and its heading sits under the flash as if it came first, 12px below it', gap === 12, `${gap}px`);
     check('the sidebar appears alongside it', await page.locator('#sidebar').count() === 1);
     check('...at level 1, with full bars', born.level === 1 && born.health === born.maxHealth
         && born.mp === born.maxMp, JSON.stringify(born));
