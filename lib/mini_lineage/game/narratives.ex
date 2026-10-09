@@ -20,17 +20,13 @@ defmodule MiniLineage.Game.Narratives do
       they: "You",
       them: "you",
       object: "you",
-      their: "your",
-      whose: "Your",
-      self: "yourself"
+      their: "your"
     },
     false => %{
       they: "They",
       them: "they",
       object: "them",
-      their: "their",
-      whose: "Their",
-      self: "themselves"
+      their: "their"
     }
   }
 

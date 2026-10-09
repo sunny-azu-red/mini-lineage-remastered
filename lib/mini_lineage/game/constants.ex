@@ -13,7 +13,7 @@ defmodule MiniLineage.Game.Constants do
       plural: "Humans",
       emoji: "🧙",
       backstory:
-        "The most adaptable of all lineages. A Human Fighter is strong and hardy without leaning too far either way, and a Human Mystic pairs a sharp mind with a steady spirit."
+        "Humans in Lineage II are similar to Humans in the modern world. Humans currently have the greatest dominion in the world and the largest population."
     },
     %{
       id: 1,
@@ -23,7 +23,7 @@ defmodule MiniLineage.Game.Constants do
       plural: "Orcs",
       emoji: "🧟",
       backstory:
-        "Towering warriors of immense physical resilience. No Fighter is born with a hardier constitution than an Orc's, nor any Mystic with a stronger spirit, so their wounds close faster than anyone's. Their hands are the clumsiest of the four."
+        "The Orc race is the race of fire. Among all races, Orcs possess the greatest physical abilities. After the destruction of the giants, they were able to expel the Elven powers and attain the most powerful position on the continent. However, they were defeated by the Elf-Human alliance some time later, and are currently living in an arctic area of the northern region of the continent."
     },
     %{
       id: 2,
@@ -32,7 +32,7 @@ defmodule MiniLineage.Game.Constants do
       plural: "Elves",
       emoji: "🧝",
       backstory:
-        "Swift and favored by nature. An Elven Fighter is the most dexterous of all, striking true and often, and an Elven Mystic thinks faster on their feet than any other. Their frames are lighter than a Human's or an Orc's."
+        "The race of Elves worships the goddess of water and loves nature and aquatic life. The Elves have slim and nimble bodies, long ears and beautiful features. During the era of giants, among all creatures they held the highest position. However, when the giants were destroyed, the power and influence of the Elves was also diminished. Now they only inhabit part of the forest on the main continent."
     },
     %{
       id: 3,
@@ -41,7 +41,7 @@ defmodule MiniLineage.Game.Constants do
       plural: "Dark Elves",
       emoji: "🧛",
       backstory:
-        "Lethal stalkers of the night. A Dark Fighter hits harder than any other, and a Dark Mystic's intellect has no equal, which makes their magic the most dangerous in the realm. Both pay for it with the frailest constitutions of all."
+        "Dark Elves were once part of the Elven tribes, but were banished after they learned black magic in order to obtain the power to fight Humans. They lost the battle, but continued to study the dark arts. Dark Elves have similar features to their Elven brethren, but are taller, have blue-gray skin, and silver hair. They follow Shilen, the goddess of Death."
     }
   ]
 

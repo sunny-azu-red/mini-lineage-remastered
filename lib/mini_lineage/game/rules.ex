@@ -187,7 +187,6 @@ defmodule MiniLineage.Game.Rules do
   def path(path), do: Map.fetch!(@paths, path)
   def paths, do: @paths
   def bonus_curve(attr), do: Map.fetch!(@bonus, attr)
-  def bonus_curves, do: @bonus
   def experience(level), do: Enum.at(@experience, level - 1)
   def max_level, do: length(@experience)
 end

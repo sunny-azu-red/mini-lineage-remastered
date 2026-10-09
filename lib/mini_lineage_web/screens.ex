@@ -93,7 +93,15 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  defp attributes, do: ~w(str con dex int wit men)a
+  defp attributes,
+    do: [
+      str: "Strength",
+      con: "Constitution",
+      dex: "Dexterity",
+      int: "Intelligence",
+      wit: "Wit",
+      men: "Mental Strength"
+    ]
 
   defp races(assigns) do
     ~H"""
@@ -102,23 +110,25 @@ defmodule MiniLineageWeb.Screens do
     <%= for race <- @catalog.races do %>
       <h2>{race.emoji} {race.label}</h2>
       <p>{raw(race.backstory)}</p>
-      <p id={"town-#{race.slug}"}>
-        {race.label} characters start in {race.town.emoji} {race.town.name}.
-      </p>
       <.data_table id={"#{race.slug}-classes"}>
         <:col class="name">Class</:col>
-        <:col :for={attr <- attributes()} class="num">{String.upcase(to_string(attr))}</:col>
-        <:col class="num" title="Maximum HP at level 1">HP</:col>
-        <:col class="num" title="Maximum MP at level 1">MP</:col>
+        <:col :for={{attr, name} <- attributes()} class="num" title={name}>
+          {String.upcase(to_string(attr))}
+        </:col>
+        <:col class="num" title="Health Points">HP</:col>
+        <:col class="num" title="Mana Points">MP</:col>
         <tbody>
           <tr :for={class <- race.classes} id={"class-#{race.slug}-#{class.path}"}>
             <td class="name">{class.name}</td>
-            <td :for={attr <- attributes()} class="num">{class.attributes[attr]}</td>
+            <td :for={{attr, _} <- attributes()} class="num">{class.attributes[attr]}</td>
             <td class="num hp">{class.max_hp}</td>
             <td class="num mp">{class.max_mp}</td>
           </tr>
         </tbody>
       </.data_table>
+      <p id={"town-#{race.slug}"}>
+        They start in {race.town.emoji} {race.town.name}.
+      </p>
     <% end %>
 
     <.back_link started={@view.started} />

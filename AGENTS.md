@@ -268,8 +268,8 @@ inventing a hex. `legacy/AGENTS.md` has the whole vocabulary the old game used, 
 system brings one of its things back.
 
 **A line keeps its pronouns open until somebody reads it.** Who a line is told TO is not known
-until a page opens, so every narrative pool carries `{they} {them} {object} {their} {whose}
-{self}` and nothing second-person, `Format.fill_template` leaves them alone at build time because
+until a page opens, so every narrative pool carries `{they} {them} {object} {their}` and
+nothing second-person, `Format.fill_template` leaves them alone at build time because
 they are not in the data map, and `Narrative.voiced/2` closes them at render: `true` for the run's
 own alert (`Narrative.alert/1`), `false` for anybody else. Verb agreement is free — they/them takes
 the same forms as you, which is the whole reason the game picked it — but REFERENTS are not, so a

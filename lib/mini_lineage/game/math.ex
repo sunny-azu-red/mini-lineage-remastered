@@ -38,27 +38,6 @@ defmodule MiniLineage.Game.Math do
     js_round(percent * factor) / factor
   end
 
-  def xp_progress(xp) do
-    level = level_for_xp(xp)
-
-    if max_level?(level) do
-      %{current: 0, required: 0, percent: 100}
-    else
-      current = xp - xp_for_level(level)
-      required = xp_for_level(level + 1) - xp_for_level(level)
-
-      %{current: current, required: required, percent: percentage(current, required, 1)}
-    end
-  end
-
-  def xp_needed_to_level_up(xp) do
-    level = level_for_xp(xp)
-
-    if max_level?(level), do: 0, else: xp_for_level(level + 1) - xp
-  end
-
-  def level_up?(old_xp, new_xp), do: level_for_xp(new_xp) > level_for_xp(old_xp)
-
   @doc "`Math.round`: halves go toward +infinity, unlike Elixir's round/1 which goes away from zero."
   def js_round(x), do: Kernel.floor(x + 0.5)
 end

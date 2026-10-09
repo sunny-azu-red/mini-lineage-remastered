@@ -29,6 +29,12 @@ try {
             const slug = race.label.toLowerCase().replace(' ', '-');
             const town = await text(`#town-${slug}`);
             check(`...and names the village they start in`, town.endsWith(`${race.town}.`), town);
+            check('...below the table of what each class is born with',
+                await page.$eval(`#town-${slug}`, el => el.previousElementSibling.matches('.table-container')));
+            const titles = await page.$$eval(`#${slug}-classes th`, ths => ths.map(th => th.title));
+            check('...whose columns are named in full on hover',
+                titles.join('|') === '|Strength|Constitution|Dexterity|Intelligence|Wit|Mental Strength|Health Points|Mana Points',
+                titles.join('|'));
 
             for (const [path, born] of Object.entries(race.classes)) {
                 const row = await text(`#class-${slug}-${path}`);

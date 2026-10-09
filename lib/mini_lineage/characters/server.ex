@@ -6,7 +6,7 @@ defmodule MiniLineage.Characters.Server do
   use GenServer, restart: :transient
 
   alias MiniLineage.Characters.{Store, TickLog}
-  alias MiniLineage.Game.{Clock, Player}
+  alias MiniLineage.Game.Player
   require Logger
 
   # How long the process outlives its last viewer before stopping. Its buffer is flushed on the way.
@@ -135,9 +135,12 @@ defmodule MiniLineage.Characters.Server do
   defp backstop(%{dirty_since: nil} = state), do: state
 
   defp backstop(state),
-    do: if(Clock.now_ms() - state.dirty_since >= @backstop_ms, do: persist(state), else: state)
+    do: if(now_ms() - state.dirty_since >= @backstop_ms, do: persist(state), else: state)
 
-  defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: Clock.now_ms()}
+  # Monotonic: only ever compared with itself, so a wall-clock jump cannot fire the backstop.
+  defp now_ms, do: System.monotonic_time(:millisecond)
+
+  defp mark(%{dirty_since: nil} = state), do: %{state | dirty_since: now_ms()}
   defp mark(state), do: state
 
   # Never raises: a database error would take the buffer with the process, so a failure keeps the
