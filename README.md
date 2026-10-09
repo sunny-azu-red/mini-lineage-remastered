@@ -13,9 +13,13 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 ### 🎮 The Base Layer
 - **Our Own Rules**: `docs/rules.md` is the whole player system, written by us with a worked example for every rule, and `rules_test.exs` holds the code to it. What comes next is in `docs/roadmap.md`.
 - **Four Lineages, Two Paths**: **Humans**, **Orcs**, **Elves** and **Dark Elves**, each a **Fighter** or a **Mystic**: eight starting sets of six attributes (STR, CON, DEX, INT, WIT, MEN). Every character starts at level 1 with no Adena.
-- **Each Race Starts at Home**: A Human wakes in 🏝️ Talking Island Village, an Orc in 🏕️ Orc Village, an Elf in 🌳 Elven Village and a Dark Elf in 🌑 Dark Elven Village. There is nothing to do there yet, and you rest among your own people.
+- **Each Race Starts at Home**: A Human wakes in 🏝️ Talking Island Village, an Orc in 🏕️ Orc Village, an Elf in 🌳 Elven Village and a Dark Elf in 🌑 Dark Elven Village, and rests among its own people.
+- **Towns and Gatekeepers**: Every town has a 🌀 Gatekeeper who sends you along a route for Adena (rules §14). The four villages each link only to the 🏰 Town of Gludio, and the mainland goes on to Dion; Giran and Giran Harbor are listed and not open yet.
+- **Day and Night**: From 22:00 to 06:00, Bucharest time, a 🌙 aura costs every character 3 Accuracy (rules §15).
+- **Race Perks**: A Dark Elf's Shadow Sense wins those 3 back at night, and an Elf rests half again as fast in Elven Village, under the Mother Tree (rules §16). Each shows as an aura, and nothing acts unseen.
 - **Stats That Grow With You**: Max HP and MP rise a little more with every level, and P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical and speed are all worked from the attributes and the level, up to **level 80**, on L2's own EXP table: 68 EXP for level 2, 4.2 billion for 80.
-- **The Status Sidebar**: Beside the town stand your race, class and level, your HP, MP and XP bars, a **Stats** panel with every number the rules give you (P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical, M. Critical, both speeds and the six attributes), folded until you open it and remembered after, and an Inventory that holds your Adena and nothing else yet.
+- **The Status Sidebar**: Beside the town, drawn like L2's status window: your race and class, your name beside your level, your HP, MP and XP bars, and an Inventory that holds your Adena and nothing else yet.
+- **The Character Page**: Your name in the sidebar opens `/character`: your ancestry, class, attributes and perk, your level, bars and purse, every buff and debuff on you with what it does, and your combat stats (P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, Critical, M. Critical, both speeds and regeneration).
 - **Chronicles of Ancestry**: `/races` tells every lineage before you choose one: its backstory, the village it starts in, and both of its starting classes with their attributes and their HP and MP at level 1.
 - **Figures Count, They Don't Jump**: Every number you can watch change counts up to it. A purse counts in its own short form, so `1.5k` climbs to `1.6k` rather than through six digits. Only names and dates jump, having nothing to count through.
 - **Two Sounds, Made On The Spot**: A heroic fanfare when a character is made and a chime when sound is switched back on, both 8-bit notes played by a Web Audio synth with no audio files. The 🔊 in the banner mutes them, and the browser remembers it.
@@ -27,8 +31,8 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 - **LiveView Diffs**: One WebSocket carries the whole game. The server diffs the rendered HTML and pushes only what changed, with no page reloads. Multiple tabs on one session stay in sync over `Phoenix.PubSub`.
 
 ### 🛡️ Security & Reliability
-- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player may be, and every navigation funnels through `handle_params/3`, so an in-app link, a typed URL and the Back button obey the same checks. It gates what may be *done*, not what may be read: the Chronicles of Ancestry and the error page are open to everyone, and a player with a character cannot re-enter character creation. The game has three routes, `/`, `/races` and `/error`. An unrecognised URL is a **404** in the game's own shell, address left alone, rather than a redirect to town: that would be a soft 404, and a mistyped stylesheet would come back as HTML the browser then fails to parse.
-- **The URL Is Where You Are**: Game Start and the home town are one run's two states and both live at `/`, told apart by the character rather than by the address.
+- **One Place For Every Access Rule**: `Access.pin_screen/2` decides where a player may be, and every navigation funnels through `handle_params/3`, so an in-app link, a typed URL and the Back button obey the same checks. It gates what may be *done*, not what may be read: the Chronicles of Ancestry and the error page are open to everyone, and a player with a character cannot re-enter character creation. Beside `/`, `/character`, `/races` and `/error`, every town and its Gatekeeper have a literal address built from the town table at compile time. An unrecognised URL is a **404** in the game's own shell, address left alone, rather than a redirect to town: that would be a soft 404, and a mistyped stylesheet would come back as HTML the browser then fails to parse.
+- **The URL Is Where You Are**: A character stands in one town, and its address is that town's, `/orc-village` or `/gludio`. `/` is game start for a visitor and, for a character, the town it stands in.
 - **Guarded Mutations**: Every event that changes state declares its own preconditions, enforced server-side. Client-side routing is convenience; these guards are the boundary.
 - **A Process Per Character, Not A Lock**: Each character is a `GenServer` under a `DynamicSupervisor`, addressed through a `Registry`. The mailbox serialises, so concurrent actions on one session cannot interleave into a lost update.
 - **Versioned Documents**: Each character's state records the shape it was written in, so a later reshape has something to branch on, and a document from a newer build is refused rather than read with every unrecognised field defaulted away.
@@ -36,7 +40,18 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 - **Security Hardening**: A CSP with no inline scripts, `httpOnly`/`sameSite` session cookies (and `Secure`, behind HSTS, in production), and validation on every payload.
 - **Two Identities Per Character**: A character's `id` is public; the `session_id` in the cookie is secret and is what actually plays it. Keeping them apart is what stops a public id being a working login for that character. The session names the browser, not the run.
 - **Nothing Is Reaped, Only Retired**: A character process arms a stop timer at start and cancels it when a viewer attaches, so a crawler leaves nothing running. After 30 days (the window the session cookie uses) an untouched run gives up its session and its row stays. A visitor who never chose a lineage is held in memory and never written at all.
-- **A Temporary Way Out**: Debug builds draw a 🚪 *Quit* button in town that deletes the character, so one browser can try every race and path. A release neither draws it nor answers it.
+- **Debug-Build Shortcuts**: In dev and the e2e server, never in a release, keys typed outside a text field drive a few shortcuts. A release neither listens for them nor answers them, and a test checks each one both ways.
+
+  | Type | What it does |
+  |---|---|
+  | `adena` | 10,000 Adena into the purse, every time |
+  | `night` / `day` | holds the whole server at that hour until the other word or a restart |
+  | `half` | HP and MP to half their maximum, and the XP bar halfway to the next level |
+  | `lvl` | exactly the EXP the next level needs, which refills both bars |
+  | `maxlvl` | exactly the EXP level 80 needs, which refills both bars |
+  | Ctrl+Q | deletes the character, so one browser can try every race and path |
+
+  A start form also comes with a name already written in. Any other key between two letters of a word breaks it. In Firefox on Linux, Ctrl+Q quits the browser before the page sees it.
 
 ## 🛠️ Tech Stack
 
@@ -44,7 +59,7 @@ back one system at a time as [`docs/roadmap.md`](docs/roadmap.md) builds it on t
 - **Web**: Phoenix 1.8 with LiveView 1.2 — server-rendered HTML over one WebSocket, no client-side framework and no client-side router
 - **Concurrency**: One `GenServer` per character under a `DynamicSupervisor` + `Registry`; `Phoenix.PubSub` for multi-tab sync; `Process.send_after/3` for the 3-second tick
 - **Database**: Ecto + Postgrex against PostgreSQL 18, with each character persisted as a single `jsonb` document
-- **Client**: four LiveView hooks (`AnimatedValues`, `Panel`, `PanelFocus`, `SoundToggle`), a Web Audio synth, and no framework
+- **Client**: five LiveView hooks (`AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus`, `SoundToggle`), a Web Audio synth, and no framework
 - **Testing**: ExUnit with StreamData properties, plus two Playwright suites that drive a real headless Chromium
 - **Dev tools**: LiveDebugger and Tidewave (MCP for coding agents), both `:dev` only and neither in a release
 
@@ -380,8 +395,9 @@ under `e2e/release.sh`:
 
 - **`e2e/walkthrough.mjs`** — one character, made and stood in its village, end to end: the
   stylesheet and the CSP, the session cookie, a 404 and the error page, the Chronicles of Ancestry,
-  creation from the keyboard, the new-game fanfare and the sound switch, the sidebar and its Stats,
-  the folds Stats and the Inventory remember, a second tab, and Quit. It asserts that no request
+  creation from the keyboard, the new-game fanfare and the sound switch, the sidebar and the
+  character page, the Inventory's fold on a phone, a second tab, the Gatekeeper's routes and fees,
+  and every debug-build shortcut, Ctrl+Q last. It asserts that no request
   failed and no console error was logged, and that the browser shortens a figure exactly as the
   server does.
 - **`e2e/races.mjs`** — every starting set born in a browser, which the walkthrough cannot do: it

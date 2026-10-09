@@ -355,19 +355,42 @@ try {
     await page.waitForSelector('#effects [data-effect-id="night"]', { state: 'detached', timeout: 5000 });
     check('...and typing day lifts it', await night() === 0);
 
+    // ---- the bars, moved on demand: XP does not regenerate, so it is what is waited on --------
+    const xpNow = (want) => page.waitForFunction((want) => document.querySelector(
+        '#sidebar .bar-track:has(#xp-bar)')?.getAttribute('aria-valuenow') === String(want),
+        want, { timeout: 5000 });
+    await page.keyboard.type('half');
+    await xpNow(34);
+    const halved = await state();
+    check('typing half sets the XP bar halfway to Level 2, and leaves HP and MP short',
+        halved.level === 1 && halved.xpRequired === 68
+        && halved.health < halved.maxHealth && halved.mp < halved.maxMp, JSON.stringify(halved));
+    await page.keyboard.type('lvl');
+    await page.waitForFunction(() =>
+        document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '2', null, { timeout: 5000 });
+    const levelled = await state();
+    check('...and typing lvl reaches Level 2 exactly, both bars refilled as rules §12 says',
+        levelled.xp === 0 && levelled.health === levelled.maxHealth && levelled.mp === levelled.maxMp,
+        JSON.stringify(levelled));
+    await page.keyboard.type('maxlvl');
+    await page.waitForFunction(() =>
+        document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '80', null, { timeout: 5000 });
+    const topped = await state();
+    check('...and typing maxlvl reaches the last level, both bars refilled',
+        topped.health === topped.maxHealth && topped.mp === topped.maxMp, JSON.stringify(topped));
+
     // ---- the temporary Quit, for trying every set from one browser --------------------------
     check('the town\'s dropdown offers no Quit, being the game\'s',
         await page.locator('#travel-form option[value="quit"]').count() === 0);
-    for (const combo of ['Control+c', 'Control+v', 'Control+c'])
+    for (const combo of ['q', 'Control+c', 'Control+c'])
         await page.keyboard.press(combo);
     // Answered or not, a quit would have landed well inside this: there is nothing to wait for.
     await page.waitForTimeout(500);
-    check('Ctrl+C, Ctrl+V, Ctrl+C is not Ctrl+C twice', (await state()).screen === 'town',
+    check('Q alone, or Ctrl+C twice, is not Ctrl+Q', (await state()).screen === 'town',
         (await state()).screen);
-    await page.keyboard.press('Control+c');
-    await page.keyboard.press('Control+c');
+    await page.keyboard.press('Control+q');
     await onScreen('start');
-    check('Ctrl+C twice goes back to game start, with no character', (await state()).started === false);
+    check('Ctrl+Q goes back to game start, with no character', (await state()).started === false);
     await create('AgainBot', 3, 'fighter');
     check('...and the same browser starts another at once',
         (await text('#main .header-name')) === '🌑 Dark Elven Village', await text('#main .header-name'));

@@ -1,6 +1,6 @@
 defmodule MiniLineageWeb.QuitTest do
   @moduledoc """
-  The temporary Quit, Ctrl+C twice, for trying every race and path from one browser: it deletes the
+  The temporary Quit, Ctrl+Q, for trying every race and path from one browser: it deletes the
   character and sends the browser back to game start. Debug builds only; a release never listens.
   The town's dropdown is left to the game.
   """
@@ -25,11 +25,11 @@ defmodule MiniLineageWeb.QuitTest do
 
   defp press(view, keys), do: for(key <- keys, do: render_hook(view, "key", %{"key" => key}))
 
-  test "Ctrl+C twice deletes the character and goes back to game start", %{conn: conn} do
+  test "Ctrl+Q deletes the character and goes back to game start", %{conn: conn} do
     {view, session} = started(conn)
     assert stored(session).name == "Quitter"
 
-    press(view, ~w(ctrl+c ctrl+c))
+    press(view, ~w(ctrl+q))
 
     assert_patch(view, "/")
     assert render(view) =~ "A New Bloodline Rises"
@@ -37,23 +37,16 @@ defmodule MiniLineageWeb.QuitTest do
     refute Characters.snapshot(session).race_id
   end
 
-  test "once, or twice with anything between, does nothing", %{conn: conn} do
+  test "Q without Ctrl, or any other chord, does nothing", %{conn: conn} do
     {view, session} = started(conn)
 
-    press(view, ~w(ctrl+c))
-    assert stored(session).name == "Quitter"
-
-    press(view, ~w(x ctrl+c d ctrl+c))
-    assert stored(session).name == "Quitter"
-
-    # Any other key between breaks it, a chord or not.
-    press(view, ~w(other ctrl+c ctrl+v ctrl+c other ctrl+c))
+    press(view, ~w(q other ctrl+c ctrl+c ctrl+w))
     assert stored(session).name == "Quitter"
   end
 
   test "and the same browser can start another at once", %{conn: conn} do
     {view, session} = started(conn)
-    press(view, ~w(ctrl+c ctrl+c))
+    press(view, ~w(ctrl+q))
 
     view
     |> element("form[phx-submit=start]")
@@ -79,7 +72,7 @@ defmodule MiniLineageWeb.QuitTest do
     {view, session} = started(build_conn())
 
     refute has_element?(view, "#dev-keys")
-    press(view, ~w(ctrl+c ctrl+c))
+    press(view, ~w(ctrl+q))
     assert stored(session).name == "Quitter"
   end
 end

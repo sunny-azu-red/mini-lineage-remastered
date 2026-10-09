@@ -26,8 +26,13 @@ defmodule MiniLineageWeb.GameLive do
     {~w(a d e n a), :adena},
     {~w(n i g h t), :night},
     {~w(d a y), :day},
-    {~w(ctrl+c ctrl+c), :quit}
+    {~w(h a l f), :half},
+    # Before `lvl`, which it ends in: the first match wins.
+    {~w(m a x l v l), :max_level},
+    {~w(l v l), :level},
+    {~w(ctrl+q), :quit}
   ]
+  @dev_longest @dev_sequences |> Enum.map(fn {keys, _} -> length(keys) end) |> Enum.max()
 
   @impl true
   def mount(_params, %{"session_id" => id}, socket) when is_binary(id) do
@@ -145,7 +150,7 @@ defmodule MiniLineageWeb.GameLive do
       when is_binary(key) do
     # Every key counts, so whatever comes between two keys of a sequence breaks it.
     key = if key =~ ~r/\A(ctrl\+)?[a-z]\z/, do: key, else: "other"
-    keys = Enum.take(socket.assigns.keys ++ [key], -5)
+    keys = Enum.take(socket.assigns.keys ++ [key], -@dev_longest)
 
     case Enum.find(@dev_sequences, fn {sequence, _} -> List.ends_with?(keys, sequence) end) do
       nil -> {:noreply, assign(socket, keys: keys)}
@@ -156,6 +161,9 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("key", _params, socket), do: {:noreply, socket}
 
   defp dev(socket, :adena), do: apply_action(socket, &Actions.dev_adena/1, nil)
+  defp dev(socket, :half), do: apply_action(socket, &Actions.dev_half/1, nil)
+  defp dev(socket, :level), do: apply_action(socket, &Actions.dev_level/1, nil)
+  defp dev(socket, :max_level), do: apply_action(socket, &Actions.dev_max_level/1, nil)
 
   # Every page redraws, not only this one: the hour is the world's.
   defp dev(socket, time) when time in [:night, :day] do

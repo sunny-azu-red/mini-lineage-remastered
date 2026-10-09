@@ -119,6 +119,12 @@ defmodule MiniLineage.Game.Player do
     %{player | health: stats.max_hp, mp: stats.max_mp}
   end
 
+  @doc "Rules §12: EXP earned, and a level it reaches refills HP and MP."
+  def gain_experience(player, amount) do
+    gained = %{player | experience: player.experience + amount}
+    if level(gained) > level(player), do: restore_fully(gained), else: gained
+  end
+
   # -------------------------------------------------------------- conditions
 
   @doc """

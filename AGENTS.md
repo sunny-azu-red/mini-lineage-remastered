@@ -50,14 +50,20 @@ list wins — several generator defaults do not exist here.
   letter, a Ctrl chord as `ctrl+<letter>`, anything else as `other`, a lone modifier not at all) so
   that whatever comes between two keys of a sequence breaks it, and `GameLive`'s `@dev_sequences`,
   which is where a new one is added:
-  - **Ctrl+C twice**, nothing between, deletes the character so one browser can try every race
-    and path (`quit_test.exs`). It goes when there is a real way to start over. The town's
+  - **Ctrl+Q** deletes the character so one browser can try every race and path
+    (`quit_test.exs`). It goes when there is a real way to start over. The town's
     dropdown is the game's, so no dev tool goes in it.
   - **`adena`** adds 10,000 to the purse, every time, and `Actions.dev_adena/1` refuses on its own
     in a release (`dev_adena_test.exs`).
   - **`night` and `day`** hold the whole node at that hour through `Clock.force/1` until the other
     word or a restart, and every page redraws off the `"world"` topic (`dev_time_test.exs`). A
     pinned time beats it, so a test that pins is never moved by one that forces.
+  - **`half`** sets HP and MP to half their maximum and the XP bar halfway to the next level, and
+    `Actions.dev_half/1` refuses on its own in a release (`dev_half_test.exs`).
+  - **`lvl`** hands over exactly the EXP the next level needs, through `Player.gain_experience/2`,
+    so both bars refill as rules §12 says. `Actions.dev_level/1` refuses on its own in a release
+    and at the last level (`dev_level_test.exs`). **`maxlvl`** does the same up to the last level,
+    through `Actions.dev_max_level/1`, and is matched before `lvl`, which it ends in.
   - **A drawn name** is already written in on game start, from `GameLive`'s `@dev_names`
     (`dev_name_test.exs`).
 

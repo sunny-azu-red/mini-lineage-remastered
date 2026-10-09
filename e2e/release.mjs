@@ -50,12 +50,14 @@ try {
     // The real hour may be either, so what is checked is that typing changes nothing.
     const night = await page.locator('#effects [data-effect-id="night"]').count();
     await page.keyboard.type(night ? 'day' : 'night');
-    await page.keyboard.press('Control+c');
-    await page.keyboard.press('Control+c');
+    await page.keyboard.type('lvl');
+    await page.keyboard.press('Control+q');
     await page.waitForTimeout(500);
     check('...nor does typing the hour change it',
         await page.locator('#effects [data-effect-id="night"]').count() === night);
-    check('...nor does Ctrl+C twice end the character',
+    check('...nor typing lvl the level',
+        await page.getAttribute('#sidebar [data-key="level"]', 'data-value') === '1');
+    check('...nor does Ctrl+Q end the character',
         (await page.textContent('#main .header-name'))?.trim() === '🏕️ Orc Village');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {

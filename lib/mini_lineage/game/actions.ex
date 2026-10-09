@@ -4,13 +4,14 @@ defmodule MiniLineage.Game.Actions do
   `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
   client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Constants, Format, Narrative, Player, Rules, Version}
+  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Rules, Version}
 
   @errors %{
     already_started: "You already have a character.",
     invalid: "That is not something you can do.",
     closed: "The Gatekeeper cannot send you there yet.",
-    poor: "You cannot pay the Gatekeeper's fee."
+    poor: "You cannot pay the Gatekeeper's fee.",
+    last_level: "There is no level past the last."
   }
 
   # Not a rule of the game: what a debug build puts in a purse so the Gatekeeper can be tried.
@@ -76,6 +77,59 @@ defmodule MiniLineage.Game.Actions do
       {%{player | adena: player.adena + @dev_adena}, {:ok, %{text: text, type: :info}}}
     else
       {player, {:error, :invalid, @errors.invalid}}
+    end
+  end
+
+  @doc "Debug builds only: both bars to half, and the XP bar halfway to the next level."
+  def dev_half(player) do
+    if Version.debug_build?() and Player.started?(player) do
+      stats = Player.stats(player)
+      text = "A debug build halves your HP and MP, and sets your XP halfway to the next level."
+
+      {%{
+         player
+         | health: trunc(stats.max_hp / 2),
+           mp: trunc(stats.max_mp / 2),
+           experience: halfway(player)
+       }, {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :invalid, @errors.invalid}}
+    end
+  end
+
+  @doc "Debug builds only: exactly the EXP the next level needs, which refills both bars."
+  def dev_level(player), do: dev_reach(player, Player.level(player) + 1)
+
+  @doc "Debug builds only: exactly the EXP the last level needs, which refills both bars."
+  def dev_max_level(player), do: dev_reach(player, Rules.max_level())
+
+  defp dev_reach(player, target) do
+    cond do
+      not (Version.debug_build?() and Player.started?(player)) ->
+        {player, {:error, :invalid, @errors.invalid}}
+
+      Math.max_level?(Player.level(player)) ->
+        {player, {:error, :last_level, @errors.last_level}}
+
+      true ->
+        needed = Math.xp_for_level(target) - player.experience
+
+        text =
+          ~s(A debug build hands you <span class="xp">#{Format.number(needed)} XP</span>, enough to reach <span class="level">Level #{target}</span>.)
+
+        {Player.gain_experience(player, needed), {:ok, %{text: text, type: :info}}}
+    end
+  end
+
+  # The last level has no next one to be halfway to.
+  defp halfway(player) do
+    level = Player.level(player)
+
+    if Math.max_level?(level) do
+      player.experience
+    else
+      base = Math.xp_for_level(level)
+      base + div(Math.xp_for_level(level + 1) - base, 2)
     end
   end
 

@@ -1,7 +1,8 @@
 /**
  * Debug builds only: relays every key pressed outside a text field, so the server can spot a
- * sequence (`adena`, `night`, `day`, Ctrl+C twice) and anything between breaks it. A letter goes
- * as itself, a Ctrl chord as `ctrl+<letter>`, the rest as `other`; a modifier alone is not a key.
+ * sequence (`adena`, `night`, `day`, `half`, `lvl`, `maxlvl`, Ctrl+Q) and anything between breaks
+ * it. A letter goes as itself, a Ctrl chord as `ctrl+<letter>`, the rest as `other`; a modifier
+ * alone is not a key.
  * The server keeps the keys and decides, and a release never draws the element this mounts on.
  */
 const MODIFIERS = ['Control', 'Shift', 'Alt', 'Meta', 'CapsLock'];

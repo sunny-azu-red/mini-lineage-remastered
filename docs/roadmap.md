@@ -21,8 +21,9 @@ must change without a deploy. Postgres is for what grows with play. AGENTS.md ha
 What the base layer already says but nothing exercises yet, because nothing can happen to a
 character: each lands with the first system that needs it, almost certainly fighting.
 
-- **Gaining EXP and levelling** (rules §12): reaching a level refills HP and MP, and the player is
-  told. Nothing grants EXP yet.
+- **Gaining EXP and levelling** (rules §12): reaching a level refills HP and MP, which
+  `Player.gain_experience/2` does, and the player is told, which nothing does yet. Only the debug
+  build's `lvl` and `maxlvl` grant EXP today.
 - **Being in combat** (rules §11): resting stops. Today a character always rests.
 - **The base outcomes** (rules §13): hit chance and damage are written and tested, and called by
   nothing.
