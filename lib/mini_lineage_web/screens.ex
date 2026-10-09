@@ -50,8 +50,8 @@ defmodule MiniLineageWeb.Screens do
         icon: view.race_emoji,
         section: :lineage
       },
-      %{title: "Blessings & Afflictions", icon: "✨", section: :effects, body_class: "rows"},
-      %{title: "Stats", icon: "📊", section: :stats}
+      %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
+      %{title: "Combat Stats", icon: "⚖️", section: :stats}
     ]
 
   def panels(screen, view, _catalog),
@@ -190,14 +190,20 @@ defmodule MiniLineageWeb.Screens do
   # figures has a hook of its own to count them; the sidebar's are its own.
   defp character(%{panel: %{section: :lineage}} = assigns) do
     assigns =
-      assign(assigns, stats: assigns.view.stats, article: article(assigns.view.class_name))
+      assign(assigns,
+        stats: assigns.view.stats,
+        article: article(assigns.view.class_name),
+        xp_needed: assigns.view.xp_required - assigns.view.xp_current
+      )
 
     ~H"""
     <div id="character-lineage" phx-hook="AnimatedValues">
       <p id="character-class" phx-no-format>
-        You are {@article} {@view.class_name} of <.attribute name="STR" key="str" value={@stats.str} />, <.attribute name="CON" key="con" value={@stats.con} />, <.attribute name="DEX" key="dex" value={@stats.dex} />, <.attribute name="INT" key="int" value={@stats.int} />, <.attribute name="WIT" key="wit" value={@stats.wit} /> and <.attribute name="MEN" key="men" value={@stats.men} />.
+        You are {@article} {@view.class_name} of <.attribute name="STR" key="str" value={@stats.str} />, <.attribute name="CON" key="con" value={@stats.con} />, <.attribute name="DEX" key="dex" value={@stats.dex} />, <.attribute name="INT" key="int" value={@stats.int} />, <.attribute name="WIT" key="wit" value={@stats.wit} /> and <.attribute name="MEN" key="men" value={@stats.men} />. {@view.perk}
       </p>
-      <p id="character-perk">{@view.perk}</p>
+      <p id="character-vitality" phx-no-format>
+        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span> while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
+      </p>
     </div>
     """
   end
@@ -216,11 +222,7 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp character(%{panel: %{section: :stats}} = assigns) do
-    assigns =
-      assign(assigns,
-        stats: assigns.view.stats,
-        xp_needed: assigns.view.xp_required - assigns.view.xp_current
-      )
+    assigns = assign(assigns, stats: assigns.view.stats)
 
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
@@ -229,9 +231,6 @@ defmodule MiniLineageWeb.Screens do
       </p>
       <p phx-no-format>
         Your blows run at <span id="character-critical" class="crit">{Float.round(@stats.critical / 1, 1)}% Critical</span> and your spells at <span id="character-magic-critical" class="crit">{Float.round(@stats.magic_critical / 1, 1)}% M. Critical</span>, swinging at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and casting at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> At rest you mend <span class="regen"><.figure key="char-hp-regen" value={Math.js_round(@stats.hp_regen)} /> HP</span> and <span class="regen"><.figure key="char-mp-regen" value={Math.js_round(@stats.mp_regen)} /> MP</span> every three seconds.
-      </p>
-      <p id="character-vitality" phx-no-format>
-        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span> while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
       </p>
     </div>
     """

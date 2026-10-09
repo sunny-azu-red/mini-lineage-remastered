@@ -215,16 +215,17 @@ try {
         new URL(page.url()).pathname === '/character', page.url());
     const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
-        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Blessings & Afflictions|📊 Stats'
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
     check('...under the game\'s name, the page\'s one h1',
         await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
-    check('...then its class and what it was born with, then its race\'s perk',
+    check('...then its class, what it was born with and its race\'s perk in one paragraph, then its level, bars and purse',
         await page.evaluate(() => [...document.querySelectorAll('#screen > .panel')][0]
             .querySelectorAll('.panel-body p').length === 2
             && [...document.querySelectorAll('#character-lineage > p')].map(p => p.id).join(',')
-            === 'character-class,character-perk')
-        && (await text('#character-class')).startsWith('You are an Orc Mystic of STR '),
+            === 'character-class,character-vitality')
+        && (await text('#character-class')).startsWith('You are an Orc Mystic of STR ')
+        && (await text('#character-class')).includes('. Orcs shrug off sleep, root and poison'),
         await text('#character-class'));
     const margins = await marginsLeftAtEnds(page);
     check('...and nothing that ends one, its rows\' sentences included, keeps a margin under it',
@@ -236,8 +237,8 @@ try {
         await page.locator('.panel-body.rows > .stat-row[id^="effect-"]').count()
         === await page.locator('[id^="effect-"]').count());
     check('...and its figures, as the server wrote them',
-        await page.getAttribute('#screen [data-key="char-level"]', 'data-value') === '1'
-        && await page.getAttribute('#screen [data-key="char-xp-needed"]', 'data-value') === '68');
+        await page.getAttribute('#character-lineage [data-key="char-level"]', 'data-value') === '1'
+        && await page.getAttribute('#character-lineage [data-key="char-xp-needed"]', 'data-value') === '68');
     await page.click('#header-link');
     await onScreen('town');
     check('...and the banner leads back to the town', new URL(page.url()).pathname === '/orc-village', page.url());

@@ -101,7 +101,7 @@ try {
             await onScreen('character');
             const shown = await page.evaluate((keys) => keys.map(key =>
                 Number(document.querySelector(`#screen [data-key="char-${key}"]`)?.dataset.value)), ATTRIBUTES);
-            check('...and its Stats are the attributes rules §3 starts it with',
+            check('...and its Combat Stats are the attributes rules §3 starts it with',
                 JSON.stringify(shown) === JSON.stringify(attributes[born.name]),
                 `${shown} against ${attributes[born.name]}`);
 
