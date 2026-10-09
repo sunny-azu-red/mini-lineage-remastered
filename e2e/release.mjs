@@ -40,14 +40,23 @@ try {
     check('...and the character stands in its village',
         (await page.textContent('#main .header-name'))?.trim() === 'Orc Village');
     check('...at its own address', new URL(page.url()).pathname === '/orc-village', page.url());
-    check('a release offers no Quit', await page.locator('#travel-form option[value="quit"]').count() === 0);
-    check('...and listens for no typed Adena', await page.locator('#dev-keys').count() === 0);
+    check('a release listens for no typed keys', await page.locator('#dev-keys').count() === 0);
     await page.evaluate(() => document.activeElement?.blur());
     await page.keyboard.type('adena');
     // Answered or not, a reply would have landed well inside this: there is nothing to wait for.
     await page.waitForTimeout(500);
-    check('...so typing it leaves the purse empty',
+    check('...so typing adena leaves the purse empty',
         await page.getAttribute('#sidebar [data-key="adena"]', 'data-value') === '0');
+    // The real hour may be either, so what is checked is that typing changes nothing.
+    const night = await page.locator('#effects [data-effect-id="night"]').count();
+    await page.keyboard.type(night ? 'day' : 'night');
+    await page.keyboard.press('Control+c');
+    await page.keyboard.press('Control+c');
+    await page.waitForTimeout(500);
+    check('...nor does typing the hour change it',
+        await page.locator('#effects [data-effect-id="night"]').count() === night);
+    check('...nor does Ctrl+C twice end the character',
+        (await page.textContent('#main .header-name'))?.trim() === 'Orc Village');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {
     check(`release check threw: ${err.message}`, false);

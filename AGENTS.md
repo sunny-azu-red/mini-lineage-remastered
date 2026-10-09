@@ -38,14 +38,19 @@ list wins — several generator defaults do not exist here.
   `Controls`; `Layouts` holds the shell's `head`, `site_header`, sidebar and `footer`, which
   `ErrorHTML` draws too. The sidebar — the vitals, Stats and the Inventory — is one `.side` column
   beside the main one, at its own fixed width, and one breakpoint stacks it.
-- **Three tools exist only in a debug build — dev and the e2e server, never a release.** Each is
-  gated on `Version.debug_build?/0`, and each has a test that flips it off and finds nothing:
-  - **🚪 Quit (dev)**, the town dropdown's last choice, deletes the character so one browser can try
-    every race and path. `GameLive` neither offers nor answers it in a release (`quit_test.exs`).
-    It goes when there is a real way to start over.
-  - **Typing `adena`** outside a text field adds 10,000 to the purse, every time, so the Gatekeeper
-    can be tried before anything earns Adena. `DevKeys` relays letters, `GameLive` keeps them, and
-    `Actions.dev_adena/1` refuses on its own in a release (`dev_adena_test.exs`).
+- **Some tools exist only in a debug build — dev and the e2e server, never a release.** Each is
+  gated on `Version.debug_build?/0` twice, where it is drawn and where it acts, and each has a test
+  that flips the build off and finds nothing; `release.mjs` checks them against the real image.
+  The keyboard ones go through `DevKeys`, which relays letters and Ctrl+C typed outside a text
+  field, and `GameLive`'s `@dev_sequences`, which is where a new one is added:
+  - **Ctrl+C twice**, nothing between, deletes the character so one browser can try every race
+    and path (`quit_test.exs`). It goes when there is a real way to start over. The town's
+    dropdown is the game's, so no dev tool goes in it.
+  - **`adena`** adds 10,000 to the purse, every time, and `Actions.dev_adena/1` refuses on its own
+    in a release (`dev_adena_test.exs`).
+  - **`night` and `day`** hold the whole node at that hour through `Clock.force/1` until the other
+    word or a restart, and every page redraws off the `"world"` topic (`dev_time_test.exs`). A
+    pinned time beats it, so a test that pins is never moved by one that forces.
   - **A drawn name** is already written in on game start, from `GameLive`'s `@dev_names`
     (`dev_name_test.exs`).
 
@@ -508,8 +513,7 @@ reverse. That is why base.css's link rule is `a:where(:not(.btn))`, an element's
 picked; danger and small come back the same way, with their CSS from `legacy/`.
 
 `PanelFocus` gives the panel's first control the keyboard on arrival, so a control that destroys
-something is marked `data-no-autofocus`, or one stray Enter acts on it. Quit is never first: it is
-the town dropdown's last option, which the select's own first choice keeps from being picked.
+something is marked `data-no-autofocus`, or one stray Enter acts on it.
 
 **Every alert in the game is one component, and none is dismissed.** `Controls.alert/1` is the only
 thing that writes `alert`: `kind` is `:info` or `:danger`, the two the game raises, and anything

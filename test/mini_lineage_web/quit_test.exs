@@ -1,8 +1,8 @@
 defmodule MiniLineageWeb.QuitTest do
   @moduledoc """
-  The temporary Quit, the town dropdown's last choice, for trying every race and path from one
-  browser: it deletes the character and sends the browser back to game start. Debug builds only; a
-  release never offers it.
+  The temporary Quit, Ctrl+C twice, for trying every race and path from one browser: it deletes the
+  character and sends the browser back to game start. Debug builds only; a release never listens.
+  The town's dropdown is left to the game.
   """
   use MiniLineageWeb.ConnCase, async: false
 
@@ -23,11 +23,13 @@ defmodule MiniLineageWeb.QuitTest do
     {view, session}
   end
 
-  test "deletes the character and goes back to game start", %{conn: conn} do
+  defp press(view, keys), do: for(key <- keys, do: render_hook(view, "key", %{"key" => key}))
+
+  test "Ctrl+C twice deletes the character and goes back to game start", %{conn: conn} do
     {view, session} = started(conn)
     assert stored(session).name == "Quitter"
 
-    view |> form("#travel-form", %{"place" => "quit"}) |> render_submit()
+    press(view, ~w(ctrl+c ctrl+c))
 
     assert_patch(view, "/")
     assert render(view) =~ "A New Bloodline Rises"
@@ -35,9 +37,19 @@ defmodule MiniLineageWeb.QuitTest do
     refute Characters.snapshot(session).race_id
   end
 
+  test "once, or twice with anything between, does nothing", %{conn: conn} do
+    {view, session} = started(conn)
+
+    press(view, ~w(ctrl+c))
+    assert stored(session).name == "Quitter"
+
+    press(view, ~w(x ctrl+c d ctrl+c))
+    assert stored(session).name == "Quitter"
+  end
+
   test "and the same browser can start another at once", %{conn: conn} do
     {view, session} = started(conn)
-    view |> form("#travel-form", %{"place" => "quit"}) |> render_submit()
+    press(view, ~w(ctrl+c ctrl+c))
 
     view
     |> element("form[phx-submit=start]")
@@ -47,16 +59,23 @@ defmodule MiniLineageWeb.QuitTest do
     assert render(view) =~ "Orc Village"
   end
 
-  test "is never offered, nor answered, in a release" do
+  test "the town's dropdown offers the game's places and nothing else", %{conn: conn} do
+    {view, _session} = started(conn)
+
+    options = view |> element("#travel-form select") |> render()
+    assert options =~ ~s(value="gatekeeper")
+    refute options =~ "Quit"
+  end
+
+  test "is never answered in a release" do
     previous = Application.fetch_env!(:mini_lineage, :debug_build)
     Application.put_env(:mini_lineage, :debug_build, false)
     on_exit(fn -> Application.put_env(:mini_lineage, :debug_build, previous) end)
 
     {view, session} = started(build_conn())
 
-    assert has_element?(view, ~s(#travel-form option[value="gatekeeper"]))
-    refute has_element?(view, ~s(#travel-form option[value="quit"]))
-    render_hook(view, "navigate", %{"place" => "quit"})
+    refute has_element?(view, "#dev-keys")
+    press(view, ~w(ctrl+c ctrl+c))
     assert stored(session).name == "Quitter"
   end
 end

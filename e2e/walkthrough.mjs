@@ -299,11 +299,23 @@ try {
     await onScreen('town');
     check('...and its empty choice is the way back into town', new URL(page.url()).pathname === '/dion', page.url());
 
+    // ---- the hour, forced: the real one is never read, so this holds at any time of day -------
+    const night = () => page.locator('#effects [data-effect-id="night"]').count();
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('night');
+    await page.waitForSelector('#effects [data-effect-id="night"]', { timeout: 5000 });
+    check('typing night in a debug build brings the night, whatever the hour', await night() === 1);
+    await page.keyboard.type('day');
+    await page.waitForSelector('#effects [data-effect-id="night"]', { state: 'detached', timeout: 5000 });
+    check('...and typing day lifts it', await night() === 0);
+
     // ---- the temporary Quit, for trying every set from one browser --------------------------
-    await page.selectOption('#travel-form select', 'quit');
-    await page.click('#travel-form button');
+    check('the town\'s dropdown offers no Quit, being the game\'s',
+        await page.locator('#travel-form option[value="quit"]').count() === 0);
+    await page.keyboard.press('Control+c');
+    await page.keyboard.press('Control+c');
     await onScreen('start');
-    check('Quit goes back to game start, with no character', (await state()).started === false);
+    check('Ctrl+C twice goes back to game start, with no character', (await state()).started === false);
     await create('AgainBot', 3, 'fighter');
     check('...and the same browser starts another at once',
         (await text('#main .header-name')) === 'Dark Elven Village', await text('#main .header-name'));

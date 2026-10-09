@@ -106,18 +106,12 @@ defmodule MiniLineageWeb.Screens do
       event="navigate"
       name="place"
       picked={@picked}
-      options={town_options(@debug)}
+      options={[%{value: "gatekeeper", label: "🌀 Gatekeeper"}]}
       default_label="🧭 Travel"
       active_label="🧭 Travel"
       default_variant={:primary}
     />
     """
-  end
-
-  # TEMPORARY, Quit: see the "navigate" event. A release neither offers nor answers it.
-  defp town_options(debug) do
-    [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
-      if(debug, do: [%{value: "quit", label: "🚪 Quit (dev)"}], else: [])
   end
 
   # Rules §14: every route out of this town and its fee, then the choice of one.

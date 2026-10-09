@@ -18,11 +18,23 @@ defmodule MiniLineageWeb.GameLive do
   @dev_names ~w(Aerin Baelor Cadmus Darion Elowen Fenris Galen Hadrian Isolde Jorah Kaelith Lucan
                 Morwen Nerys Orin Perrin Quill Rowan Sorcha Talia Ulric Vesper Wren Ysolde)
 
+  # What every page shares, whoever it belongs to: today, a debug build forcing the hour.
+  @world "world"
+
+  # Debug builds only: what is typed outside a text field, and what each sequence does.
+  @dev_sequences [
+    {~w(a d e n a), :adena},
+    {~w(n i g h t), :night},
+    {~w(d a y), :day},
+    {~w(ctrl+c ctrl+c), :quit}
+  ]
+
   @impl true
   def mount(_params, %{"session_id" => id}, socket) when is_binary(id) do
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)
+      Phoenix.PubSub.subscribe(MiniLineage.PubSub, @world)
       await_dusk_or_dawn()
     end
 
@@ -38,7 +50,7 @@ defmodule MiniLineageWeb.GameLive do
        town: nil,
        picked: nil,
        dev_name: nil,
-       keys: "",
+       keys: [],
        title: nil,
        game_flash: nil,
        flash_fresh: false,
@@ -114,20 +126,6 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  # TEMPORARY, for trying every race and path from one browser: deletes the character outright.
-  # A release neither offers it nor answers it.
-  def handle_event("navigate", %{"place" => "quit"}, %{assigns: %{debug: true}} = socket) do
-    id = socket.assigns.session_id
-    Characters.forget(id)
-    Characters.attach(id)
-    player = Characters.snapshot(id)
-
-    {:noreply,
-     socket
-     |> assign(player: player, view: Snapshot.build(player), game_flash: nil)
-     |> go({"start", nil})}
-  end
-
   def handle_event("navigate", _params, socket), do: {:noreply, socket}
 
   # The Gatekeeper's empty choice is the way back into town.
@@ -137,18 +135,48 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("travel", %{"to" => to}, socket),
     do: {:noreply, apply_action(socket, &Actions.travel(&1, to), &here/1)}
 
-  # Debug builds only: typing `adena` anywhere but a text field. The letters are kept here, never
-  # in the character, so nothing about them is persisted.
-  def handle_event("key", %{"key" => <<key>>}, %{assigns: %{debug: true}} = socket)
-      when key in ?a..?z do
-    keys = String.slice(socket.assigns.keys <> <<key>>, -5, 5)
+  # Debug builds only, for a character: a sequence typed anywhere but a text field. The keys are
+  # kept here, never in the character, so nothing about them is persisted.
+  def handle_event(
+        "key",
+        %{"key" => key},
+        %{assigns: %{debug: true, view: %{started: true}}} = socket
+      )
+      when key == "ctrl+c" or (byte_size(key) == 1 and key >= "a" and key <= "z") do
+    keys = Enum.take(socket.assigns.keys ++ [key], -5)
 
-    if keys == "adena",
-      do: {:noreply, socket |> assign(keys: "") |> apply_action(&Actions.dev_adena/1, nil)},
-      else: {:noreply, assign(socket, keys: keys)}
+    case Enum.find(@dev_sequences, fn {sequence, _} -> List.ends_with?(keys, sequence) end) do
+      nil -> {:noreply, assign(socket, keys: keys)}
+      {_, command} -> {:noreply, socket |> assign(keys: []) |> dev(command)}
+    end
   end
 
   def handle_event("key", _params, socket), do: {:noreply, socket}
+
+  defp dev(socket, :adena), do: apply_action(socket, &Actions.dev_adena/1, nil)
+
+  # Every page redraws, not only this one: the hour is the world's.
+  defp dev(socket, time) when time in [:night, :day] do
+    :ok = Clock.force(time)
+    Phoenix.PubSub.broadcast(MiniLineage.PubSub, @world, :world_changed)
+
+    text =
+      "A debug build holds the world at #{time}, whatever the hour, until the server restarts."
+
+    assign(socket, game_flash: %{text: text, type: :info})
+  end
+
+  # TEMPORARY, for trying every race and path from one browser: deletes the character outright.
+  defp dev(socket, :quit) do
+    id = socket.assigns.session_id
+    Characters.forget(id)
+    Characters.attach(id)
+    player = Characters.snapshot(id)
+
+    socket
+    |> assign(player: player, view: Snapshot.build(player), game_flash: nil)
+    |> go({"start", nil})
+  end
 
   # ----------------------------------------------------------------- pushes
 
@@ -167,6 +195,9 @@ defmodule MiniLineageWeb.GameLive do
 
   # Rules §15: nightfall changes nothing the character's process stores, so nothing is pushed for it.
   # The page wakes itself at the exact moment instead, and redraws what the hour changes.
+  def handle_info(:world_changed, socket),
+    do: {:noreply, assign(socket, view: Snapshot.build(socket.assigns.player))}
+
   def handle_info(:dusk_or_dawn, socket) do
     await_dusk_or_dawn()
     {:noreply, assign(socket, view: Snapshot.build(socket.assigns.player))}

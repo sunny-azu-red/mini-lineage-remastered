@@ -1,15 +1,20 @@
 /**
- * Debug builds only: relays each letter typed outside a text field, so typing `adena` can fill a
- * purse. The server keeps the letters and decides; a release never draws the element this mounts on.
+ * Debug builds only: relays each letter typed outside a text field, and Ctrl+C, so the server can
+ * spot a sequence (`adena`, `night`, `day`, Ctrl+C twice). The server keeps the keys and decides; a
+ * release never draws the element this mounts on. Ctrl+C still copies: nothing is prevented.
  */
 export const DevKeys = {
     mounted() {
         this.onKeyDown = (e) => {
             const tag = e.target?.tagName;
-            if (e.repeat || !/^[a-z]$/i.test(e.key ?? '') || tag === 'INPUT' || tag === 'TEXTAREA')
+            const key = (e.key ?? '').toLowerCase();
+            if (e.repeat || tag === 'INPUT' || tag === 'TEXTAREA' || e.altKey || e.metaKey)
                 return;
 
-            this.pushEvent('key', { key: e.key.toLowerCase() });
+            if (e.ctrlKey && key === 'c')
+                this.pushEvent('key', { key: 'ctrl+c' });
+            else if (!e.ctrlKey && /^[a-z]$/.test(key))
+                this.pushEvent('key', { key });
         };
         window.addEventListener('keydown', this.onKeyDown);
     },
