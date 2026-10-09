@@ -142,7 +142,9 @@ defmodule MiniLineageWeb.GameLive do
         %{"key" => key},
         %{assigns: %{debug: true, view: %{started: true}}} = socket
       )
-      when key == "ctrl+c" or (byte_size(key) == 1 and key >= "a" and key <= "z") do
+      when is_binary(key) do
+    # Every key counts, so whatever comes between two keys of a sequence breaks it.
+    key = if key =~ ~r/\A(ctrl\+)?[a-z]\z/, do: key, else: "other"
     keys = Enum.take(socket.assigns.keys ++ [key], -5)
 
     case Enum.find(@dev_sequences, fn {sequence, _} -> List.ends_with?(keys, sequence) end) do

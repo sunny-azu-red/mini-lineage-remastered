@@ -312,6 +312,12 @@ try {
     // ---- the temporary Quit, for trying every set from one browser --------------------------
     check('the town\'s dropdown offers no Quit, being the game\'s',
         await page.locator('#travel-form option[value="quit"]').count() === 0);
+    for (const combo of ['Control+c', 'Control+v', 'Control+c'])
+        await page.keyboard.press(combo);
+    // Answered or not, a quit would have landed well inside this: there is nothing to wait for.
+    await page.waitForTimeout(500);
+    check('Ctrl+C, Ctrl+V, Ctrl+C is not Ctrl+C twice', (await state()).screen === 'town',
+        (await state()).screen);
     await page.keyboard.press('Control+c');
     await page.keyboard.press('Control+c');
     await onScreen('start');

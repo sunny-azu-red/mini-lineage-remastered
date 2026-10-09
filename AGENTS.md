@@ -41,8 +41,10 @@ list wins — several generator defaults do not exist here.
 - **Some tools exist only in a debug build — dev and the e2e server, never a release.** Each is
   gated on `Version.debug_build?/0` twice, where it is drawn and where it acts, and each has a test
   that flips the build off and finds nothing; `release.mjs` checks them against the real image.
-  The keyboard ones go through `DevKeys`, which relays letters and Ctrl+C typed outside a text
-  field, and `GameLive`'s `@dev_sequences`, which is where a new one is added:
+  The keyboard ones go through `DevKeys`, which relays every key pressed outside a text field (a
+  letter, a Ctrl chord as `ctrl+<letter>`, anything else as `other`, a lone modifier not at all) so
+  that whatever comes between two keys of a sequence breaks it, and `GameLive`'s `@dev_sequences`,
+  which is where a new one is added:
   - **Ctrl+C twice**, nothing between, deletes the character so one browser can try every race
     and path (`quit_test.exs`). It goes when there is a real way to start over. The town's
     dropdown is the game's, so no dev tool goes in it.
@@ -185,6 +187,17 @@ application code, so it cannot drift from it; under PG18 write `STORED` explicit
 VIRTUAL column that cannot be indexed. Anything that grows with play — a battle history, an
 inventory, a mail box — gets its own table. Put it in the document and every save rewrites all of
 it, buffering or not.
+
+**A rule's table lives in code; Postgres holds what grows with play.** The towns, the routes and
+their fees, the EXP table, the starting sets and every modifier are rules: `docs/rules.md` is their
+authority and `rules_test.exs` reads each table back out of it, so they are `Rules` attributes,
+changed by a commit and never by a row edit. The router builds each town's address from them at
+compile time, and a lookup costs nothing where a query costs a round trip. Size is not a reason to
+move one — 80 levels and 8 towns are nothing — and a table growing with PLAYERS is the rule above.
+When content grows into the hundreds (monsters, items, skills), each table moves to a data file
+under `priv/` loaded at compile time through `@external_resource`, still in git and still read back
+by a test. Content goes into Postgres only when it must change without a deploy — an operator's
+tool, an event — and that is decided when such a feature exists, never in anticipation of one.
 
 **A character has two ids and they must never be confused.** `id` is public and is the only one a
 page may ever show or link; `session_id` is the cookie and is a credential. A public id that is also

@@ -45,6 +45,10 @@ defmodule MiniLineageWeb.QuitTest do
 
     press(view, ~w(x ctrl+c d ctrl+c))
     assert stored(session).name == "Quitter"
+
+    # Any other key between breaks it, a chord or not.
+    press(view, ~w(other ctrl+c ctrl+v ctrl+c other ctrl+c))
+    assert stored(session).name == "Quitter"
   end
 
   test "and the same browser can start another at once", %{conn: conn} do

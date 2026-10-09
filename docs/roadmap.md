@@ -11,6 +11,11 @@ Konami cheat, and every sound but the new-game fanfare and the sound switch's ch
 rebuilt here as its system below, on the base layer, and nothing from `legacy/` comes back as it
 was.
 
+**Where the content goes.** A system's tables (monsters, items, skills) start in `Rules` beside the
+base layer's, held to this document by `rules_test.exs`. When one grows into the hundreds it moves
+to a data file under `priv/` loaded at compile time, still in git; it goes into Postgres only if it
+must change without a deploy. Postgres is for what grows with play. AGENTS.md has the reasoning.
+
 ## Before the first system
 
 What the base layer already says but nothing exercises yet, because nothing can happen to a
