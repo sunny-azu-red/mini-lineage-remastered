@@ -47,22 +47,22 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 |---|---|
 | [races.md](races.md) | Each race's level-1 template (attributes, HP, MP, speed) and every starting set's gear |
 | [towns.md](towns.md) | Every town's NPCs, every Gatekeeper's destinations and fees, temples and village masters, the Newbie Guide and its buffs |
+| [monsters.md](monsters.md) | Every monster around the four villages and on Ruins of Despair: L2J's full stat block, EXP, SP and Adena, how a monster's Accuracy, Evasion and Critical are worked out, and the spells monsters cast |
 | [hunting-grounds.md](hunting-grounds.md) | Every hunting ground: nearest town, teleport fee, level band, monsters by level |
 | [weapons-and-armour.md](weapons-and-armour.md) | Every weapon and armour piece by grade and type: stats, reference price, which towns sell it |
 | [jewellery-and-consumables.md](jewellery-and-consumables.md) | Jewellery by grade, epic jewels, potions, scrolls, soulshots and spiritshots, enchanting |
+| [skills.md](skills.md) | Each base set's skills from level 1 to 20, the first skills' numbers, how blows, drains, damage over time and misses resolve, the EXP penalty against weaker monsters, and the Monument of Heroes |
 | [bosses-and-buffs.md](bosses-and-buffs.md) | Grand and raid bosses with levels and lairs, buffs, chants and debuffs with the classes that cast them |
 
 ## Not researched yet
 
 Each of these must be added here before the system that needs it is written into the rules.
 
-- **Monster stats:** HP, MP, P.Atk, M.Atk, P.Def, M.Def, Accuracy, Evasion, attack speed, EXP, SP
-  and Adena drop. `hunting-grounds.md` has names and levels only. The fight needs this first.
-- **Skills:** each base set's skills from levels 1 to 20, with power, MP cost, reuse, SP cost and
-  what they do, and the mechanics of blows, drains and damage over time.
+- **Monster stats past Ruins of Despair:** `monsters.md` covers the four villages' grounds and
+  Gludio's first; every later ground needs its monsters added before it opens.
+- **Skills past level 20:** each class's skills after its transfer.
 - **The class tree:** every class by race and path, the levels at which each transfer happens,
   who performs it and what it asks, and each class's HP and MP growth.
-- **EXP and SP against much weaker monsters:** how Lineage II cut the reward.
 - **The inventory:** the paperdoll slots, the item count limit, weight, and armour set bonuses
   beyond the two noted in `weapons-and-armour.md`.
 - **Private stores:** how a player's sell and buy store works (what it can list, how many lines).
