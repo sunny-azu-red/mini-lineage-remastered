@@ -21,7 +21,7 @@ export const RACES = [
       perk: 'Elves rest half again as fast', classes: {
         fighter: { name: 'Elven Fighter', health: 113, mp: 39 },
         mystic:  { name: 'Elven Mystic',  health: 96,  mp: 59 } } },
-    { id: 3, label: 'Dark Elf', emoji: '🧛', town: 'Dark Elven Village', townEmoji: '🌑', townSlug: 'dark-elven-village',
+    { id: 3, label: 'Dark Elf', emoji: '🧛', town: 'Dark Elf Village', townEmoji: '🌑', townSlug: 'dark-elf-village',
       perk: 'Dark Elves see better at night', classes: {
         fighter: { name: 'Dark Fighter',  health: 107, mp: 39 },
         mystic:  { name: 'Dark Mystic',   health: 95,  mp: 58 } } },

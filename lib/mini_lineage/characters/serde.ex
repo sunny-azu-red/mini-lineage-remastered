@@ -45,9 +45,15 @@ defmodule MiniLineage.Characters.Serde do
   def from_map(%{}),
     do: raise("character document carries no version; every one this build writes does")
 
+  # A town renamed keeps whoever stands in it; anything else stored under an old slug would be sent
+  # home without a word.
+  @renamed %{"dark-elven-village" => "dark-elf-village"}
+
   # Version 1 had no location, every character being in its village; and a slug this build does not
   # know is put back there too, rather than handed to a lookup that would raise on it.
   defp location(slug, race_id) do
+    slug = Map.get(@renamed, slug, slug)
+
     cond do
       is_binary(slug) and Rules.town?(slug) and Rules.town(slug).open? -> slug
       race_id != nil -> Rules.hometown(race_id)

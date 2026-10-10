@@ -19,7 +19,7 @@ Each race starts in its own village, and that is where a new character first sta
 |---|---|
 | Human | Talking Island Village |
 | Elf | Elven Village |
-| Dark Elf | Dark Elven Village |
+| Dark Elf | Dark Elf Village |
 | Orc | Orc Village |
 
 ## 2. The six attributes
@@ -181,7 +181,7 @@ A character stands in one town at a time, which starts as its race's village (§
 |---|---|---|
 | Talking Island Village | talking-island | yes |
 | Elven Village | elven-village | yes |
-| Dark Elven Village | dark-elven-village | yes |
+| Dark Elf Village | dark-elf-village | yes |
 | Orc Village | orc-village | yes |
 | Town of Gludio | gludio | yes |
 | Town of Dion | dion | yes |
@@ -198,7 +198,7 @@ Gatekeeper and cannot be travelled to. A character who cannot pay the fee does n
 | Town of Gludio | Town of Dion | 4,100 |
 | Talking Island Village | Town of Gludio | 2,900 |
 | Elven Village | Town of Gludio | 3,700 |
-| Dark Elven Village | Town of Gludio | 3,700 |
+| Dark Elf Village | Town of Gludio | 3,700 |
 | Orc Village | Town of Gludio | 6,000 |
 | Town of Dion | Town of Giran | 8,100 |
 | Town of Dion | Giran Harbor | 6,500 |

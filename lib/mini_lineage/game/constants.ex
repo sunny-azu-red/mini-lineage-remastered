@@ -49,7 +49,7 @@ defmodule MiniLineage.Game.Constants do
     "talking-island" =>
       "A quiet village on Talking Island, off the mainland's coast, where every Human first takes up a blade or a staff.",
     "elven-village" => "Built among the roots of the Mother Tree, deep in the Elven Forest.",
-    "dark-elven-village" =>
+    "dark-elf-village" =>
       "Hidden in the shadowed forests where the Dark Elves keep their own counsel.",
     "orc-village" =>
       "The Orc Village stands on a barren plateau of the north, among the tribes who raised it.",

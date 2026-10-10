@@ -55,7 +55,7 @@ defmodule MiniLineageWeb.GatekeeperTest do
     assert view |> element(~s(#teleport-form option[value="gludio"])) |> render() =~
              ~r/>\s*Pick 🏰 Town of Gludio\s*</
 
-    refute has_element?(view, ~s(#teleport-form option[value="dark-elven-village"]))
+    refute has_element?(view, ~s(#teleport-form option[value="dark-elf-village"]))
   end
 
   test "its button says where it goes only once something is picked" do
@@ -91,7 +91,7 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, session, conn} = elf(build_conn(), 100_000)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    for to <- ["dark-elven-village", "dion", "elven-village", "atlantis"] do
+    for to <- ["dark-elf-village", "dion", "elven-village", "atlantis"] do
       render_hook(view, "travel", %{"to" => to})
       assert Characters.snapshot(session).location == "elven-village", to
     end

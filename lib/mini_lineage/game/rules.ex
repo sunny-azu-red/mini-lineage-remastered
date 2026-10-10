@@ -78,7 +78,7 @@ defmodule MiniLineage.Game.Rules do
   @towns [
     %{slug: "talking-island", name: "Talking Island Village", emoji: "🏝️", open?: true},
     %{slug: "elven-village", name: "Elven Village", emoji: "🌳", open?: true},
-    %{slug: "dark-elven-village", name: "Dark Elven Village", emoji: "🌑", open?: true},
+    %{slug: "dark-elf-village", name: "Dark Elf Village", emoji: "🌑", open?: true},
     %{slug: "orc-village", name: "Orc Village", emoji: "🏕️", open?: true},
     %{slug: "gludio", name: "Town of Gludio", emoji: "🏰", open?: true},
     %{slug: "dion", name: "Town of Dion", emoji: "🌾", open?: true},
@@ -91,7 +91,7 @@ defmodule MiniLineage.Game.Rules do
     0 => "talking-island",
     1 => "orc-village",
     2 => "elven-village",
-    3 => "dark-elven-village"
+    3 => "dark-elf-village"
   }
 
   # Rules §14: each route runs both ways at one fee, listed in the order a Gatekeeper reads them.
@@ -99,7 +99,7 @@ defmodule MiniLineage.Game.Rules do
     {"gludio", "dion", 4_100},
     {"talking-island", "gludio", 2_900},
     {"elven-village", "gludio", 3_700},
-    {"dark-elven-village", "gludio", 3_700},
+    {"dark-elf-village", "gludio", 3_700},
     {"orc-village", "gludio", 6_000},
     {"dion", "giran", 8_100},
     {"dion", "giran-harbor", 6_500}

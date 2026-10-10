@@ -398,7 +398,7 @@ try {
     check('Ctrl+Q goes back to game start, with no character', (await state()).started === false);
     await create('AgainBot', 3, 'fighter');
     check('...and the same browser starts another at once',
-        (await text('#main .header-name')) === '🌑 Dark Elven Village', await text('#main .header-name'));
+        (await text('#main .header-name')) === '🌑 Dark Elf Village', await text('#main .header-name'));
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

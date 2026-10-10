@@ -76,6 +76,11 @@ defmodule MiniLineage.Characters.SerdeTest do
       end
     end
 
+    test "and a town since renamed keeps whoever stands in it" do
+      doc = populated() |> Serde.to_map() |> Map.put("location", "dark-elven-village")
+      assert Serde.from_map(doc).location == "dark-elf-village"
+    end
+
     test "while a visitor stands nowhere" do
       assert %Player{} |> Serde.to_map() |> Serde.from_map() |> Map.fetch!(:location) == nil
     end
