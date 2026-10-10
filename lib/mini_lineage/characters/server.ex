@@ -43,7 +43,9 @@ defmodule MiniLineage.Characters.Server do
       viewers: %{},
       stop_timer: nil,
       dirty_since: nil,
-      watched: false
+      watched: false,
+      # The inventory as last written, so a save writes the items only when they moved.
+      saved_items: player.items
     }
 
     # Armed from the start: a process opened by a plain read never attaches a viewer, and would
@@ -138,7 +140,7 @@ defmodule MiniLineage.Characters.Server do
     Store.retire(state.id, player)
     Board.character_changed()
 
-    state = %{state | id: Store.new_id(), player: %Player{}, dirty_since: nil}
+    state = %{state | id: Store.new_id(), player: %Player{}, dirty_since: nil, saved_items: []}
     broadcast(state.session, state.player)
 
     presence(state, "the run ended")
@@ -165,10 +167,10 @@ defmodule MiniLineage.Characters.Server do
   # Never raises: a database error would take the buffer with the process, so a failure keeps the
   # state dirty and the next flush carries it.
   defp persist(state) do
-    Store.save(state.id, state.session, state.player)
+    Store.save(state.id, state.session, state.player, state.player.items != state.saved_items)
     Board.character_changed()
 
-    %{state | dirty_since: nil}
+    %{state | dirty_since: nil, saved_items: state.player.items}
   rescue
     error ->
       Logger.error("💾 character #{state.id} failed to persist, still buffered: #{inspect(error)}")

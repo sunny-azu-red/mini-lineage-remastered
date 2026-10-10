@@ -5,7 +5,7 @@ defmodule MiniLineage.Characters.Store do
   """
   import Ecto.Query
 
-  alias MiniLineage.Characters.{Record, Serde}
+  alias MiniLineage.Characters.{Item, Record, Serde}
   alias MiniLineage.Game.Player
   alias MiniLineage.Repo
 
@@ -29,14 +29,54 @@ defmodule MiniLineage.Characters.Store do
   def load_by_session(session_id) do
     case Repo.one(from r in Record, where: r.session_id == ^session_id, select: {r.id, r.state}) do
       nil -> nil
-      {id, state} -> {id, Serde.from_map(state)}
+      {id, state} -> {id, %{Serde.from_map(state) | items: items(id)}}
     end
   end
 
-  def save(id, session_id, %Player{} = player) do
-    upsert(id, session_id, player)
+  # In the order they were picked up, which is the order the inventory lists them.
+  defp items(id) do
+    Repo.all(
+      from i in Item,
+        where: i.character_id == ^id,
+        order_by: [asc: i.inserted_at, asc: i.id],
+        select: %{id: i.id, name: i.name, equipped: i.equipped}
+    )
+  end
+
+  @doc """
+  Writes the character, and with `items?` its inventory too, in one transaction, so a purchase can
+  never be written without the Adena it cost.
+  """
+  def save(id, session_id, %Player{} = player, items? \\ false) do
+    Repo.transaction(fn ->
+      upsert(id, session_id, player)
+      if items?, do: sync_items(id, player.items)
+    end)
 
     :ok
+  end
+
+  # Whatever the process no longer holds goes; whatever it holds is written as it stands.
+  defp sync_items(id, items) do
+    ids = Enum.map(items, & &1.id)
+    Repo.delete_all(from i in Item, where: i.character_id == ^id and i.id not in ^ids)
+    now = DateTime.utc_now()
+
+    rows =
+      items
+      |> Enum.with_index()
+      |> Enum.map(fn {item, n} ->
+        # Microseconds apart, so the order they were picked up survives a shared timestamp.
+        %{
+          id: item.id,
+          character_id: id,
+          name: item.name,
+          equipped: item.equipped,
+          inserted_at: DateTime.add(now, n, :microsecond)
+        }
+      end)
+
+    Repo.insert_all(Item, rows, on_conflict: {:replace, [:equipped]}, conflict_target: :id)
   end
 
   # The conflict target is named, so a second unique index added later cannot quietly change which
@@ -68,6 +108,9 @@ defmodule MiniLineage.Characters.Store do
 
     :ok
   end
+
+  @doc "A fresh item id, minted in the process so an item has it before it is written."
+  def new_item_id, do: token()
 
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 

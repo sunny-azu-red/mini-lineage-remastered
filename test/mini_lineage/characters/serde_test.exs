@@ -25,7 +25,9 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the document covers the struct" do
     test "every field is written, and nothing that is not a field" do
-      struct_keys = %Player{} |> Map.from_struct() |> Map.keys() |> MapSet.new()
+      # The inventory is its own table (rules §23), so the document leaves it out.
+      struct_keys =
+        %Player{} |> Map.from_struct() |> Map.keys() |> MapSet.new() |> MapSet.delete(:items)
 
       written =
         %Player{}

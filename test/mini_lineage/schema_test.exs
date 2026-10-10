@@ -13,7 +13,9 @@ defmodule MiniLineage.SchemaTest do
     {"characters", ["session_id"]},
     # The Halls, overall and by lineage, each walked in rank order with no sort after it.
     {"characters", ["total_xp", "adena", "inserted_at", "id"]},
-    {"characters", ["race_id", "total_xp", "adena", "inserted_at", "id"]}
+    {"characters", ["race_id", "total_xp", "adena", "inserted_at", "id"]},
+    # A character's inventory, read whole whenever its process starts.
+    {"items", ["character_id"]}
   ]
 
   for {table, columns} <- @required do
