@@ -48,3 +48,27 @@ th.num {
         white-space: normal;
     }
 }
+
+/* --- the Halls ------------------------------------------------------------------------------- */
+
+/* `:not(.mine)` rather than declaration order, so yours stays gold however the rules move. */
+.data-table tbody tr.character-row.alive:not(.mine) {
+    background-color: var(--wash-success);
+    box-shadow: inset 2px 0 0 var(--text-heal);
+}
+
+.data-table tbody tr.character-row.mine {
+    background-color: var(--wash-gold);
+    box-shadow: inset 2px 0 0 var(--gold);
+}
+
+/* Somebody has this character open. Always in the DOM so it can fade; only `.lit` changes. */
+.character-row .online {
+    color: var(--text-heal);
+    opacity: 0;
+    transition: opacity 400ms ease;
+}
+
+.character-row .online.lit {
+    opacity: 1;
+}

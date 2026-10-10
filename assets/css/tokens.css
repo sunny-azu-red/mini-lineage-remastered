@@ -80,6 +80,9 @@
      * A ground, not a voice. */
     --wash-danger: rgba(146, 43, 33, 0.2);
     --wash-info: rgba(46, 70, 116, 0.3);
+    /* The Halls: a run still going, and your own. */
+    --wash-success: color-mix(in srgb, var(--text-heal) 13%, transparent);
+    --wash-gold: color-mix(in srgb, var(--gold) 14%, transparent);
     --focus-ring-color: rgba(201, 168, 76, 0.45);
 
     /* ===== Shape ===== */

@@ -21,6 +21,13 @@ defmodule MiniLineageWeb.Router do
     # The browser's own character, so no id: a page anybody could open would want a public one.
     live "/character", GameLive, :character
 
+    # The Halls, overall and for each lineage, written out like the towns.
+    live "/highscores", GameLive, :highscores
+
+    for lineage <- MiniLineageWeb.Paths.lineages() do
+      live "/highscores/#{lineage}", GameLive, :highscores
+    end
+
     # Rules §14: each town at its own address, written out one by one so that none of them is a
     # pattern that would answer a slug the game does not have.
     for slug <- MiniLineageWeb.Paths.towns() do

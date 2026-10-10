@@ -21,6 +21,12 @@ defmodule MiniLineage.Game.AccessTest do
     end
   end
 
+  test "anybody may read the Halls, overall or for one lineage, and the filter is kept" do
+    for player <- [%Player{}, started()], lineage <- [nil, "dark-elf"] do
+      assert Access.pin_screen({"highscores", lineage}, player) == {"highscores", lineage}
+    end
+  end
+
   test "a character may stand in its own town, and at that town's Gatekeeper" do
     for screen <- ~w(town gatekeeper) do
       assert Access.pin_screen({screen, "talking-island"}, started()) ==

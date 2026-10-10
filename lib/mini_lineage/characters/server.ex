@@ -5,6 +5,7 @@ defmodule MiniLineage.Characters.Server do
   """
   use GenServer, restart: :transient
 
+  alias MiniLineage.Board
   alias MiniLineage.Characters.{Store, TickLog}
   alias MiniLineage.Game.Player
   require Logger
@@ -41,7 +42,8 @@ defmodule MiniLineage.Characters.Server do
       player: player,
       viewers: %{},
       stop_timer: nil,
-      dirty_since: nil
+      dirty_since: nil,
+      watched: false
     }
 
     # Armed from the start: a process opened by a plain read never attaches a viewer, and would
@@ -59,6 +61,9 @@ defmodule MiniLineage.Characters.Server do
   end
 
   def handle_call(:snapshot, _from, state), do: {:reply, state.player, state}
+
+  # The public id, which the Halls use to mark the reader's own run.
+  def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
 
   def handle_call({:attach, pid}, _from, state) do
     ref = Process.monitor(pid)
@@ -110,17 +115,33 @@ defmodule MiniLineage.Characters.Server do
     before = state.player
     {player, result} = fun.(before)
 
-    if player == before do
-      {result, state}
-    else
-      state = %{state | player: player}
-      state = if acted?(before, player), do: persist(state), else: mark(state)
-
-      # After the write, so whoever reads the push finds what it announces.
-      broadcast(state.session, state.player)
-
-      {result, state}
+    cond do
+      player == before -> {result, state}
+      player.dead -> {result, retire(state, player)}
+      true -> {result, changed(state, before, player)}
     end
+  end
+
+  defp changed(state, before, player) do
+    state = %{state | player: player}
+    state = if acted?(before, player), do: persist(state), else: mark(state)
+
+    # After the write, so whoever reads the push finds what it announces.
+    broadcast(state.session, state.player)
+
+    state
+  end
+
+  # Rules §21. The run is written with its session given up, and this process goes on as the
+  # browser's next, unstarted character under a fresh id, so no stop races the registry.
+  defp retire(state, player) do
+    Store.retire(state.id, player)
+    Board.character_changed()
+
+    state = %{state | id: Store.new_id(), player: %Player{}, dirty_since: nil}
+    broadcast(state.session, state.player)
+
+    presence(state, "the run ended")
   end
 
   # Anything outside @buffered is the player's own doing.
@@ -145,6 +166,7 @@ defmodule MiniLineage.Characters.Server do
   # state dirty and the next flush carries it.
   defp persist(state) do
     Store.save(state.id, state.session, state.player)
+    Board.character_changed()
 
     %{state | dirty_since: nil}
   rescue
@@ -167,9 +189,20 @@ defmodule MiniLineage.Characters.Server do
     %{state | stop_timer: nil}
   end
 
-  # `[PRESENCE:<id>] Online | 2 viewers (joined)`, in the tick log's shape and at its level.
+  # `[PRESENCE:<id>] Online | 2 viewers (joined)`, in the tick log's shape and at its level. Which
+  # run this is, and whether anyone watches it, is kept in the registry entry, so the Halls read
+  # presence in memory rather than messaging every character.
   defp presence(state, why) do
     viewers = map_size(state.viewers)
+    watched? = viewers > 0
+
+    Registry.update_value(MiniLineage.Characters.Registry, state.session, fn _ ->
+      {state.id, watched?}
+    end)
+
+    # Only a run the Halls list going on or off is news to them.
+    if watched? != state.watched and Player.started?(state.player), do: Board.presence_changed()
+    state = %{state | watched: watched?}
 
     Logger.debug(fn ->
       "[PRESENCE:#{String.slice(state.id, 0, 7)}] #{if viewers > 0, do: "Online", else: "Offline"} | " <>

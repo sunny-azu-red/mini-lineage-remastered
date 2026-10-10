@@ -15,7 +15,11 @@ defmodule MiniLineage.Game.Player do
             mp: nil,
             adena: nil,
             experience: nil,
-            location: nil
+            sp: nil,
+            location: nil,
+            # Rules §21: a run that died is over, and keeps what killed it.
+            dead: false,
+            killer: nil
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -33,6 +37,7 @@ defmodule MiniLineage.Game.Player do
           race_id: race.id,
           path: path,
           experience: 0,
+          sp: 0,
           adena: 0,
           location: Rules.hometown(race.id)
       })

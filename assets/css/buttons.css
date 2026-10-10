@@ -113,8 +113,10 @@
     outline: none;
 }
 
-/* ===== Active / Press ===== */
-.btn:active {
+/* ===== Active / Press =====
+ * `.active` is the one of a set already chosen, pressed in: the Halls' current filter. */
+.btn:active,
+.btn.active {
     background: linear-gradient(180deg, #232027 0%, #2c2832 100%);
     border-color: var(--gold-dim);
     box-shadow:
@@ -162,10 +164,31 @@
         0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.btn-secondary:active {
+.btn-secondary:active,
+.btn-secondary.active {
     background: linear-gradient(180deg, #141315 0%, #1b191e 100%);
     border-color: var(--border-arcane-bright);
     box-shadow:
         0 0 0 2px color-mix(in srgb, var(--border-arcane-bright) 20%, transparent),
         inset 0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ===== Sizing ===== */
+.btn-sm {
+    padding: 0 10px;
+    height: 26px;
+}
+
+/* ===== A row of buttons ===== */
+.action-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+/* Above what it acts on, so the gap goes below. */
+.action-links.top {
+    margin-top: 0;
+    margin-bottom: 12px;
 }

@@ -69,8 +69,6 @@ Each of these must be added here before the system that needs it is written into
 - **Crystals and shots:** crystallizing gear, the soulshot and spiritshot recipes by grade, what
   they ask, and which bosses and places drop them.
 - **Drops:** which monster drops which item.
-- **The Monument of Heroes:** whether that is Interlude's name for the heroes' monument, and where
-  it stands.
 
 ## Deliberate departures
 
@@ -88,9 +86,10 @@ where it has any.
   In Lineage II nobody had to pay a village's 9,200 to 23,000 Adena to Gludio, because walking and
   the boat were free.
 - **Giran Harbor is reached from Dion.** In Lineage II it hung off Giran, for 5,200.
-- **Night and the race perks are ours** (rules §15 and §16): night's Accuracy −3, Shadow Sense
-  and the Blessing of the Mother Tree. Shadow Sense shares its name with the Dark Fighter's
-  level-15 skill (id 294).
+- **Night and the race perks are simplified** (rules §15 and §16). Interlude's servers do make
+  night harder to hit in, but by far more than our Accuracy −3. Shadow Sense is the Dark Fighter's
+  real passive (id 294, +3 Accuracy at night), learned at level 15; ours is every Dark Elf's from
+  level 1. The Blessing of the Mother Tree is ours alone.
 - **Each village has one hunting ground,** a ladder from level 1 to the level where Gludio takes
   over. It carries one nostalgic name (Obelisk of Victory, Elven Fortress, School of Dark Arts,
   Cave of Trials) and draws on every monster around that village: its fields and its nearby named

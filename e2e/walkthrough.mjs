@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, traceAudio, controls, marginsLeftAtEnds } from './helpers.mjs';
+import { BASE, reporter, traceAudio, controls, marginsLeftAtEnds, freshStart } from './helpers.mjs';
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
@@ -383,6 +383,33 @@ try {
     const topped = await state();
     check('...and typing maxlvl reaches the last level, both bars refilled',
         topped.health === topped.maxHealth && topped.mp === topped.maxMp, JSON.stringify(topped));
+
+    // ---- the Halls ------------------------------------------------------------------------------
+    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await onScreen('highscores');
+    const mine = page.locator('#halls-rows tr.mine');
+    const rowId = await mine.getAttribute('id');
+    check('the Halls list this run as the reader\'s own, still living',
+        await mine.count() === 1 && await mine.getAttribute('data-fate') === 'living', rowId);
+    check('...and the Halls draw no sidebar', await page.locator('#sidebar').count() === 0);
+
+    // Somebody else watching the Halls sees the run's purse move, pushed rather than reloaded.
+    const watcher = await freshStart(browser);
+    await watcher.page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await watcher.page.waitForSelector('.phx-connected', { timeout: 8000 });
+    const purse = `#${rowId} [data-key="adena-${rowId.slice(4)}"]`;
+    const before = Number(await watcher.page.getAttribute(purse, 'data-value'));
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await onScreen('town');
+    await page.keyboard.type('adena');
+    const pushed = await watcher.page.waitForFunction(
+        ([sel, want]) => document.querySelector(sel)?.dataset.value === String(want),
+        [purse, before + 10000], { timeout: 5000 }).then(() => true, () => false);
+    check('...and another browser on the Halls sees the purse grow without reloading', pushed,
+        String(await watcher.page.getAttribute(purse, 'data-value')));
+    await watcher.context.close();
 
     // ---- the temporary Quit, for trying every set from one browser --------------------------
     check('the town\'s dropdown offers no Quit, being the game\'s',

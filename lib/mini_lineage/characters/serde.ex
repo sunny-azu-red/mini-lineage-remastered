@@ -21,7 +21,10 @@ defmodule MiniLineage.Characters.Serde do
       "mp" => p.mp,
       "adena" => p.adena,
       "experience" => p.experience,
-      "location" => p.location
+      "sp" => p.sp,
+      "location" => p.location,
+      "dead" => p.dead,
+      "killer" => p.killer
     }
   end
 
@@ -38,7 +41,11 @@ defmodule MiniLineage.Characters.Serde do
       mp: m["mp"],
       adena: m["adena"],
       experience: m["experience"],
-      location: location(m["location"], m["race_id"])
+      # Earned from the first hunt on; a run from before it has none yet.
+      sp: m["sp"] || if(m["race_id"], do: 0),
+      location: location(m["location"], m["race_id"]),
+      dead: m["dead"] == true,
+      killer: m["killer"]
     }
   end
 

@@ -1,12 +1,20 @@
 defmodule MiniLineageWeb.Paths do
   @moduledoc "The link-worthy URLs. Access rules live in `Access`, not here."
 
-  alias MiniLineage.Game.Rules
+  alias MiniLineage.Game.{Constants, Format, Rules}
 
-  @routes [{"races", "/races"}, {"error", "/error"}, {"character", "/character"}]
+  @routes [
+    {"races", "/races"},
+    {"error", "/error"},
+    {"character", "/character"},
+    {"highscores", "/highscores"}
+  ]
 
   @doc "The slug of every town the router answers, each with its Gatekeeper beside it."
   def towns, do: for(town <- Rules.towns(), town.open?, do: town.slug)
+
+  @doc "Each lineage's own board in the Halls, by its slug."
+  def lineages, do: Enum.map(Constants.races(), &Format.slugify(&1.label))
 
   @doc """
   A place's address. A town is at its own slug, so the URL is where you stand; '/' is game start
@@ -14,6 +22,7 @@ defmodule MiniLineageWeb.Paths do
   """
   def for_screen({"town", slug}) when is_binary(slug), do: "/#{slug}"
   def for_screen({"gatekeeper", slug}) when is_binary(slug), do: "/#{slug}/gatekeeper"
+  def for_screen({"highscores", lineage}) when is_binary(lineage), do: "/highscores/#{lineage}"
   def for_screen({screen, _town}), do: for_screen(screen)
 
   def for_screen(screen) do
@@ -24,6 +33,11 @@ defmodule MiniLineageWeb.Paths do
   end
 
   @doc "The town a routed address stands in, which the router has already checked is one."
-  def town_of(uri),
-    do: uri |> URI.parse() |> Map.fetch!(:path) |> String.split("/", trim: true) |> hd()
+  def town_of(uri), do: uri |> segments() |> hd()
+
+  @doc "The lineage a Halls address is filtered to, or nil for all of them."
+  def lineage_of(uri), do: uri |> segments() |> Enum.at(1)
+
+  defp segments(uri),
+    do: uri |> URI.parse() |> Map.fetch!(:path) |> String.split("/", trim: true)
 end

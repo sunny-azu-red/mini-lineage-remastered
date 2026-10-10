@@ -11,12 +11,14 @@ defmodule MiniLineageWeb.Screens do
 
   alias MiniLineage.Game.{Format, Math}
   alias MiniLineageWeb.Paths
+  alias MiniLineageWeb.Screens.Halls
 
   @titles %{
     "start" => "A New Bloodline Rises",
     "gatekeeper" => "Gatekeeper",
     "character" => "Character",
     "races" => "Chronicles of Ancestry",
+    "highscores" => "Monument of Heroes",
     "error" => "Error"
   }
 
@@ -28,6 +30,7 @@ defmodule MiniLineageWeb.Screens do
   def icon("town", %{started: true, town: town}), do: town.emoji
   def icon("start", _view), do: "🐣"
   def icon("gatekeeper", _view), do: "🌀"
+  def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
 
   def page_title(screen, view), do: "Mini Lineage - #{title(screen, view)}"
@@ -67,6 +70,10 @@ defmodule MiniLineageWeb.Screens do
   attr :debug, :boolean, default: false
   # Debug builds only: the name game start is already filled in with.
   attr :dev_name, :string, default: nil
+  # The Halls: every board, the lineage filtered to, and the reader's own run.
+  attr :boards, :map, default: %{}
+  attr :lineage, :string, default: nil
+  attr :character_id, :string, default: nil
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
@@ -78,6 +85,7 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
+  def screen(%{screen: "highscores"} = assigns), do: Halls.screen(assigns)
   def screen(assigns), do: error(assigns)
 
   @doc """
@@ -97,7 +105,10 @@ defmodule MiniLineageWeb.Screens do
   defp start_screen(assigns) do
     ~H"""
     <p>
-      The <.link patch={Paths.for_screen("races")}>Chronicles of Ancestry</.link>
+      Will you forge a fresh path, or honour the names carved on the <.link patch={
+        Paths.for_screen("highscores")
+      }>Monument of Heroes</.link>? The
+      <.link patch={Paths.for_screen("races")}>Chronicles of Ancestry</.link>
       tell of the lineages that walk this realm. Under what name shall the first chapter of your
       dynasty be written, from which ancestry do you hail, and will you take up the blade or the
       staff?

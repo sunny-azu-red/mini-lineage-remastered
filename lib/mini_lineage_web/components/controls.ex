@@ -73,21 +73,36 @@ defmodule MiniLineageWeb.Controls do
   # ----------------------------------------------------------------- buttons
 
   @doc """
-  Every `.btn` in the game: a `<button>`, because it does something. One that goes somewhere is a
-  link, and comes back as a `patch` option when a screen first needs one.
+  Every `.btn` in the game. With `patch` it is a link, because it goes somewhere and a reader may
+  want it in a new tab; without, a `<button>`, because it does something. The variant decides how it
+  looks, never the element.
   """
   attr :type, :string, default: "button"
   attr :variant, :atom, default: :primary, values: [:primary, :secondary]
+  attr :size, :atom, default: :normal, values: [:normal, :sm]
+  # The one of a set that is already chosen, pressed in: the Halls' current filter.
+  attr :active, :boolean, default: false
+  attr :patch, :string, default: nil
   attr :class, :string, default: nil
   attr :rest, :global
   slot :inner_block, required: true
 
   def button(assigns) do
-    variant = if assigns.variant == :secondary, do: "btn-secondary"
-    assigns = assign(assigns, classes: classes(["btn", variant, assigns.class]))
+    assigns =
+      assign(assigns,
+        classes:
+          classes([
+            "btn",
+            assigns.variant == :secondary && "btn-secondary",
+            assigns.size == :sm && "btn-sm",
+            assigns.active && "active",
+            assigns.class
+          ])
+      )
 
     ~H"""
-    <button type={@type} class={@classes} {@rest}>{render_slot(@inner_block)}</button>
+    <.link :if={@patch} patch={@patch} class={@classes} {@rest}>{render_slot(@inner_block)}</.link>
+    <button :if={!@patch} type={@type} class={@classes} {@rest}>{render_slot(@inner_block)}</button>
     """
   end
 

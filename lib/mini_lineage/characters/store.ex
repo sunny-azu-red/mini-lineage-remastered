@@ -52,6 +52,23 @@ defmodule MiniLineage.Characters.Store do
     )
   end
 
+  @doc """
+  Rules §21: a run's last state and the end of its session, in one statement, so no crash between
+  two writes can leave a dead run a browser could still load.
+  """
+  def retire(id, %Player{} = player) do
+    now = DateTime.utc_now()
+    state = Serde.to_map(player)
+
+    Repo.insert!(
+      %Record{id: id, session_id: nil, state: state, inserted_at: now, updated_at: now},
+      on_conflict: [set: [state: state, session_id: nil, updated_at: now]],
+      conflict_target: :id
+    )
+
+    :ok
+  end
+
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
   @doc """

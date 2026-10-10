@@ -12,7 +12,8 @@ defmodule MiniLineage.Application do
         {DynamicSupervisor, strategy: :one_for_one, name: MiniLineage.Characters.Supervisor},
         MiniLineage.Characters.Sweeper,
         {Phoenix.PubSub, name: MiniLineage.PubSub}
-      ]
+      ] ++
+        if(Application.fetch_env!(:mini_lineage, :start_board), do: [MiniLineage.Board], else: [])
 
     # Last, so nothing serves a request before the pieces behind it are up.
     Supervisor.start_link(children ++ [MiniLineageWeb.Endpoint],

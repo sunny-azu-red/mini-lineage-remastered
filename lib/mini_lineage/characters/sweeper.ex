@@ -37,8 +37,11 @@ defmodule MiniLineage.Characters.Sweeper do
   defp sweep do
     retired = Store.retire_idle()
 
-    if retired > 0,
-      do: Logger.info("retired #{retired} character(s) idle for over #{Store.ttl_hours()}h")
+    if retired > 0 do
+      Logger.info("retired #{retired} character(s) idle for over #{Store.ttl_hours()}h")
+      # A run without a session is missing, which the Halls show.
+      MiniLineage.Board.character_changed()
+    end
 
     retired
   end

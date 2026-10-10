@@ -18,6 +18,7 @@ defmodule MiniLineage.Characters.SerdeTest do
       mp: 41,
       adena: 4_210,
       experience: 12_345,
+      sp: 321,
       location: "gludio"
     }
   end
@@ -37,7 +38,9 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "a fully populated character survives the round trip, through JSON, unchanged" do
-      for player <- [populated(), %{populated() | path: :fighter}, %Player{}] do
+      fallen = %{populated() | dead: true, killer: "Elder Keltir"}
+
+      for player <- [populated(), %{populated() | path: :fighter}, fallen, %Player{}] do
         assert player |> Serde.to_map() |> Jason.encode!() |> Jason.decode!() |> Serde.from_map() ==
                  player
       end
@@ -84,6 +87,11 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "while a visitor stands nowhere" do
       assert %Player{} |> Serde.to_map() |> Serde.from_map() |> Map.fetch!(:location) == nil
     end
+  end
+
+  test "a run from before the first hunt has earned no SP, and is alive" do
+    doc = populated() |> Serde.to_map() |> Map.drop(["sp", "dead", "killer"])
+    assert %Player{sp: 0, dead: false, killer: nil} = Serde.from_map(doc)
   end
 
   test "a path that is not Fighter or Mystic is read as none, and mints no atom" do

@@ -89,9 +89,9 @@ What the base layer already says but nothing exercises yet; each lands with the 
 
 - **Death is final.** At 0 HP the run ends and the character is gone, but not forgotten: the row
   is kept, never deleted, with who killed it and where.
-- **The highscores,** rebuilt from the legacy Halls: every run ranked by level and then EXP, the
-  living, the fallen and the missing, overall and by lineage, with medals for the top three. Named
-  the Monument of Heroes if the canon confirms the name.
+- **The Monument of Heroes,** the highscores rebuilt from the legacy Halls: every run ranked by
+  level and then EXP, the living, the fallen and the missing, overall and by lineage, with medals
+  for the top three. In Interlude it is the heroes' obelisk that stands in every town.
 - **Later, with the Chronicle:** a run's public record page and its "last sighted".
 
 ## Skills

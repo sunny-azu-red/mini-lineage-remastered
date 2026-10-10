@@ -10,8 +10,9 @@ defmodule MiniLineageWeb.PathsTest do
   alias MiniLineageWeb.{Paths, Router}
 
   defp places do
-    [{"start", nil}, {"races", nil}, {"error", nil}, {"character", nil}] ++
-      for slug <- Paths.towns(), screen <- ~w(town gatekeeper), do: {screen, slug}
+    [{"start", nil}, {"races", nil}, {"error", nil}, {"character", nil}, {"highscores", nil}] ++
+      for(slug <- Paths.towns(), screen <- ~w(town gatekeeper), do: {screen, slug}) ++
+      for lineage <- Paths.lineages(), do: {"highscores", lineage}
   end
 
   defp routed do
@@ -35,6 +36,12 @@ defmodule MiniLineageWeb.PathsTest do
   test "an address names the town it stands in" do
     for {screen, slug} = place <- places(), screen in ~w(town gatekeeper) do
       assert Paths.town_of("http://localhost#{Paths.for_screen(place)}") == slug
+    end
+  end
+
+  test "a Halls address names the lineage it is filtered to, or none" do
+    for {"highscores", lineage} = place <- places() do
+      assert Paths.lineage_of("http://localhost#{Paths.for_screen(place)}") == lineage
     end
   end
 

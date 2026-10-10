@@ -8,8 +8,9 @@ defmodule MiniLineage.Game.Access do
   """
   alias MiniLineage.Game.Player
 
-  # Carry no action, so every state may read them.
-  @readable ~w(races error)
+  # Carry no action, so every state may read them. The second half of the place is the Halls'
+  # lineage filter, which changes what is read and nothing else.
+  @readable ~w(races error highscores)
 
   # Where a character can stand: its town, and that town's Gatekeeper.
   @in_town ~w(town gatekeeper)
@@ -19,6 +20,7 @@ defmodule MiniLineage.Game.Access do
   own character page, once a character exists, which is past character creation; and character
   creation until then.
   """
+  def pin_screen({"highscores", lineage}, _player), do: {"highscores", lineage}
   def pin_screen({screen, _town}, _player) when screen in @readable, do: {screen, nil}
 
   def pin_screen({screen, town}, player) do

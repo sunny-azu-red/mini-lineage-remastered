@@ -12,6 +12,10 @@ config :mini_lineage, character_idle_grace_ms: 10_000
 # Rules §11's three seconds: a regen rate is what one tick restores. The browser suites wait on it.
 config :mini_lineage, tick_interval_ms: 3_000
 
+# Whether the Halls' Board runs. It reads on a timer, which would fight the SQL sandbox, so tests
+# start their own and `Board.current/0` computes in the caller without one.
+config :mini_lineage, start_board: true
+
 # Whether the error page may show a stack trace. Off in prod.exs, never derived from the version.
 config :mini_lineage, debug_build: true
 

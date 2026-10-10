@@ -8,7 +8,7 @@ defmodule MiniLineageWeb.GameLive do
   """
   use MiniLineageWeb, :live_view
 
-  alias MiniLineage.Characters
+  alias MiniLineage.{Board, Characters}
   require Logger
 
   alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Snapshot, Version}
@@ -53,6 +53,9 @@ defmodule MiniLineageWeb.GameLive do
        catalog: Snapshot.catalog(),
        screen: "start",
        town: nil,
+       boards: %{},
+       following_board: false,
+       character_id: nil,
        picked: nil,
        dev_name: nil,
        keys: [],
@@ -89,6 +92,8 @@ defmodule MiniLineageWeb.GameLive do
   defp requested_place(action, uri, _player) when action in [:town, :gatekeeper],
     do: {Atom.to_string(action), Paths.town_of(uri)}
 
+  defp requested_place(:highscores, uri, _player), do: {"highscores", Paths.lineage_of(uri)}
+
   defp requested_place(action, _uri, _player), do: {Atom.to_string(action), nil}
 
   defp enter(socket, {screen, town}) do
@@ -99,7 +104,9 @@ defmodule MiniLineageWeb.GameLive do
         do: assign(socket, flash_fresh: false),
         else: assign(socket, game_flash: nil)
 
-    assign(socket,
+    socket
+    |> follow_board(screen == "highscores")
+    |> assign(
       screen: screen,
       town: town,
       # A choice belongs to the screen it was made on.
@@ -114,6 +121,24 @@ defmodule MiniLineageWeb.GameLive do
       error_detail: if(screen == "error", do: socket.assigns.error_detail)
     )
   end
+
+  # Followed only while the Halls are the screen, and subscribed BEFORE they are read, so a refresh
+  # in between arrives as a push. Already followed, the pushes have kept every filter current.
+  defp follow_board(%{assigns: %{following_board: true}} = socket, true), do: socket
+
+  defp follow_board(socket, true) do
+    Board.subscribe()
+    id = if socket.assigns.view.started, do: Characters.character_id(socket.assigns.session_id)
+
+    assign(socket, following_board: true, boards: Board.current(), character_id: id)
+  end
+
+  defp follow_board(%{assigns: %{following_board: true}} = socket, false) do
+    Board.unsubscribe()
+    assign(socket, following_board: false, boards: %{})
+  end
+
+  defp follow_board(socket, false), do: socket
 
   # ----------------------------------------------------------------- events
 
@@ -203,6 +228,12 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(target == place, do: socket, else: go(socket, target))}
   end
 
+  # A push already queued when the reader left the Halls is dropped.
+  def handle_info({:board, boards}, %{assigns: %{following_board: true}} = socket),
+    do: {:noreply, assign(socket, boards: boards)}
+
+  def handle_info({:board, _boards}, socket), do: {:noreply, socket}
+
   # Rules §15: nightfall changes nothing the character's process stores, so nothing is pushed for it.
   # The page wakes itself at the exact moment instead, and redraws what the hour changes.
   def handle_info(:world_changed, socket),
@@ -291,6 +322,9 @@ defmodule MiniLineageWeb.GameLive do
         picked={@picked}
         debug={@debug}
         dev_name={@dev_name}
+        boards={@boards}
+        lineage={@town}
+        character_id={@character_id}
       />
     </Layouts.app>
     """

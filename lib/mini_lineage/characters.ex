@@ -18,6 +18,16 @@ defmodule MiniLineage.Characters do
 
   def snapshot(id), do: call(id, :snapshot)
 
+  @doc "The public id of the run a session is playing: never the session, which is the secret."
+  def character_id(session), do: call(session, :character_id)
+
+  @doc "The public ids of the runs someone has open right now, read from the registry."
+  def online do
+    MiniLineage.Characters.Registry
+    |> Registry.select([{{:_, :_, {:"$1", true}}, [], [:"$1"]}])
+    |> MapSet.new()
+  end
+
   @doc "Registers a viewer. The process stops shortly after its last viewer goes away."
   def attach(id, pid \\ self()), do: call(id, {:attach, pid})
 

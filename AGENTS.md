@@ -5,8 +5,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 ## What exists
 
 - **The live game is the base layer**: character creation, the towns of rules §14 with their
-  Gatekeepers and the status sidebar, `/character`, the Chronicles of Ancestry at `/races`, and the
-  error page. Everything the game was before that is in `legacy/` (see Rules).
+  Gatekeepers and the status sidebar, `/character`, the Chronicles of Ancestry at `/races`, the
+  Monument of Heroes (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
   `<.flash_group>`; every control is hand-written HEEx in `lib/mini_lineage_web/components/`); an
   HTTP client (no `Req` or `httpoison`; the zone database is `tz`, never `tzdata`, which brings
@@ -22,10 +22,16 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   The sound toggle's chime is the browser's own.
 - **PostgreSQL via Postgrex, one table**: `characters`, each run's state a single `jsonb` document.
 - **One `GenServer` per character** under a `DynamicSupervisor` + `Registry`. Anything that mutates
-  a character goes through its process, never straight to the database.
+  a character goes through its process, never straight to the database. The registry entry's value
+  is `{id, watched?}`, which `Characters.online/0` reads for the Halls' dot.
+- **`Board` is the Halls**: a view of `characters` over generated columns, one `UNION ALL` statement
+  for every board (overall and each lineage, top 25), coalesced into one read per 500ms and pushed on
+  `"board"` only when it moved. `:start_board` is off in test, where `Board.current/0` computes in
+  the caller; its own tests start it.
 - **One LiveView, one dispatcher.** `GameLive` holds no game state and routes everything through
   `Access.pin_screen/2`. `Screens.screen/1` picks the page (start, town, gatekeeper, character,
-  races, error), all in `Screens` until one needs its own module. `Screens.panels/3` lists a
+  races, highscores, error), all in `Screens` until one needs its own module; the Halls have
+  `Screens.Halls`. `Screens.panels/3` lists a
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
   the Chronicles and one per section on the character page. Every template starts with
   `<Layouts.app>`.
@@ -179,6 +185,10 @@ Each of these is here because it was got wrong once.
   row without a race (`visitor_test.exs`).
 - **A run nobody comes back to goes missing, never deleted.** The 30-day retirement clears its session
   and leaves its row.
+- **A run that dies is over, never deleted** (rules §21). `Characters.Server` writes it and clears
+  its session in one statement (`Store.retire/2`), then goes on as the browser's next, unstarted
+  character under a fresh id, so no process stop races the registry. The row stays for the Halls,
+  `dead` with its `killer`.
 - **The registry can name a process that has just stopped.** `Characters.call/3` reads the registry
   directly, which keeps every call off the `DynamicSupervisor`, whose loop runs two queries to start a
   character. A lookup can see an entry whose `DOWN` is still queued, so the RETRY goes through the
@@ -198,10 +208,11 @@ Each of these is here because it was got wrong once.
   compares the pinned place's address with the one asked for, not the screen alone. A place is
   `{screen, town}`. A new place to stand (a shop, a hunting ground) gets its own URL when built; a
   state that happens to you does not.
-- **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races` and `error` carry
-  no action, so its first clause lets every state reach them. The rest decide only screens that can
-  be acted on: a character is in its town, at that town's Gatekeeper or on its own page; a visitor is
-  at game start.
+- **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races`, `highscores`
+  and `error` carry no action, so its first clauses let every state reach them; the Halls keep their
+  lineage filter in the place's second half. The rest decide only screens that can be acted on: a
+  character is in its town, at that town's Gatekeeper or on its own page; a visitor is at game
+  start.
 - **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, `e2e/reset.sh`'s
   refusal of the database `.env` names, `Actions.start/4`'s preconditions: each is the boundary, and a
   test asserts what it still refuses. If one is in the way, what you are building is probably wrong.
@@ -243,11 +254,11 @@ Each of these is here because it was got wrong once.
   `keep` are the only code touching `localStorage`: `panel:<id>` for a fold, `sound:effects` while
   sound is off. A new thing that remembers takes a kind and writes no storage code. Hand a kind to the
   server only when it must know it to render.
-- **Every button is `Controls.button/1`**, the only writer of `btn`. Today it is always a `<button>`,
-  because it does something; one that goes somewhere is an `<a>` (a `patch` option, when a screen
-  first needs it), never a link restyled as a button or the reverse. `variant={:secondary}` serves
-  `<.select_action>` until something is picked; danger and small come back from `legacy/` when
-  needed. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
+- **Every button is `Controls.button/1`**, the only writer of `btn`. Without `patch` it is a
+  `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
+  never a link restyled as a button or the reverse. `variant={:secondary}` serves `<.select_action>`
+  until something is picked and the Halls' filters; `size={:sm}` and `active` (the one of a set
+  already chosen) are the filters'. Danger comes back from `legacy/` when needed. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`.
 - **Every alert is `Controls.alert/1`**, `kind` `:info` or `:danger`, anything else landing on the
   `div` (`alert_variants_test.exs`). None is dismissed: what an action says, a refusal included, is

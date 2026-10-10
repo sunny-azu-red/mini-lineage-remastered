@@ -10,6 +10,13 @@ defmodule MiniLineage.Characters.Record do
     field :session_id, :string
     field :state, :map
 
+    # Generated from `state` for the Halls; Postgres writes them, never the application.
+    field :name, :string, writable: :never
+    field :race_id, :integer, writable: :never
+    field :total_xp, :integer, writable: :never
+    field :adena, :integer, writable: :never
+    field :dead, :boolean, writable: :never
+
     timestamps(type: :utc_datetime_usec)
   end
 end

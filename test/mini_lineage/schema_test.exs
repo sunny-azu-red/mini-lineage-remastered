@@ -10,7 +10,10 @@ defmodule MiniLineage.SchemaTest do
   @required [
     # A browser finding the character it is playing, on every mount; and the hourly retirement,
     # which asks about exactly the runs this holds.
-    {"characters", ["session_id"]}
+    {"characters", ["session_id"]},
+    # The Halls, overall and by lineage, each walked in rank order with no sort after it.
+    {"characters", ["total_xp", "adena", "inserted_at", "id"]},
+    {"characters", ["race_id", "total_xp", "adena", "inserted_at", "id"]}
   ]
 
   for {table, columns} <- @required do
