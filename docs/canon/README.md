@@ -50,6 +50,7 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 | [monsters.md](monsters.md) | Every monster around the four villages and on Ruins of Despair: L2J's full stat block, EXP, SP and Adena, how a monster's Accuracy, Evasion and Critical are worked out, and the spells monsters cast |
 | [hunting-grounds.md](hunting-grounds.md) | Every hunting ground: nearest town, teleport fee, level band, monsters by level |
 | [weapons-and-armour.md](weapons-and-armour.md) | Every weapon and armour piece by grade and type: stats, reference price, which towns sell it |
+| [inventory.md](inventory.md) | Every equipment slot, a naked character's stats and how gear replaces them, the inventory's limits, and everything the four starting villages' traders sell, with prices |
 | [jewellery-and-consumables.md](jewellery-and-consumables.md) | Jewellery by grade, epic jewels, potions, scrolls, soulshots and spiritshots, enchanting |
 | [skills.md](skills.md) | Each base set's skills from level 1 to 20, the first skills' numbers, how blows, drains, damage over time and misses resolve, the EXP penalty against weaker monsters, and the Monument of Heroes |
 | [bosses-and-buffs.md](bosses-and-buffs.md) | Grand and raid bosses with levels and lairs, buffs, chants and debuffs with the classes that cast them |
@@ -63,8 +64,7 @@ Each of these must be added here before the system that needs it is written into
 - **Skills past level 20:** each class's skills after its transfer.
 - **The class tree:** every class by race and path, the levels at which each transfer happens,
   who performs it and what it asks, and each class's HP and MP growth.
-- **The inventory:** the paperdoll slots, the item count limit, weight, and armour set bonuses
-  beyond the two noted in `weapons-and-armour.md`.
+- **Armour set bonuses** beyond the two noted in `weapons-and-armour.md`.
 - **Private stores:** how a player's sell and buy store works (what it can list, how many lines).
 - **Crystals and shots:** crystallizing gear, the soulshot and spiritshot recipes by grade, what
   they ask, and which bosses and places drop them.
