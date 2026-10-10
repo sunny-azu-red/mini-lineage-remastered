@@ -212,6 +212,115 @@ defmodule MiniLineage.Game.Rules do
     4_200_000_000
   ]
 
+  # Rules §17: one ground per starting village, its monsters a ladder by level.
+  @grounds [
+    %{
+      slug: "obelisk-of-victory",
+      name: "Obelisk of Victory",
+      town: "talking-island",
+      monsters:
+        ~w(Young_Keltir Bearded_Keltir Elpy Gremlin Elder_Keltir Wolf Elder_Wolf Giant_Toad Orc
+           Orc_Grunt Goblin_Scout Orc_Archer Werewolf Orc_Fighter Werewolf_Hunter Orc_Lieutenant
+           Werewolf_Chieftain Orc_Fighter_Leader Stone_Golem Crasher Talon_Spider Blade_Spider)
+    },
+    %{
+      slug: "elven-fortress",
+      name: "Elven Fortress",
+      town: "elven-village",
+      monsters:
+        ~w(Young_Red_Keltir Gremlin Red_Keltir Elder_Red_Keltir Gray_Wolf Goblin_Raider Kaboo_Orc
+           Kaboo_Orc_Grunt Green_Dryad Kaboo_Orc_Archer Spore_Fungus Kaboo_Orc_Fighter
+           Baraq_Orc_Fighter Baraq_Orc_Warrior_Leader Dungeon_Skeleton Dungeon_Skeleton_Archer
+           Dread_Soldier Mist_Terror Dark_Terror Shade_Horror Sukar_Wererat Sukar_Wererat_Leader
+           Dre_Vanul_Tracker)
+    },
+    %{
+      slug: "school-of-dark-arts",
+      name: "School of Dark Arts",
+      town: "dark-elf-village",
+      monsters:
+        ~w(Young_Brown_Keltir Gremlin Brown_Keltir Elder_Brown_Keltir Ashen_Wolf Goblin Imp
+           Imp_Elder Balor_Orc_Archer Goblin_Lookout Green_Fungus Balor_Orc_Fighter Goblin_Thief
+           Vaiss_Orc Balor_Orc_Lieutenant Vaiss_Orc_Warrior_Leader Balor_Orc_Fighter_Leader
+           Blood_Fungus Skeleton_Hunter Doom_Soldier Cave_Spider Cave_Fang_Spider Omen_Beast
+           Tainted_Zombie Stink_Zombie Lesser_Succubus Lesser_Succubus_Turen Lesser_Succubus_Tilfo)
+    },
+    %{
+      slug: "cave-of-trials",
+      name: "Cave of Trials",
+      town: "orc-village",
+      monsters: ~w(Young_Prairie_Keltir Gremlin Prairie_Keltir Elder_Prairie_Keltir Kasha_Wolf
+           Goblin_Grave_Robber Rakeclaw_Imp Kasha_Timber_Wolf Rakeclaw_Imp_Hunter Mountain_Fungus
+           Maraku_Werewolf Evil_Eye Evil_Eye_Watcher Darkwing_Bat Grizzly Goblin_Tomb_Raider_Leader
+           Slave_Skeleton Greystone_Golem Grave_Keeper Evil_Eye_Patroller Crypt_Horror Kuruka_Ratman
+           Kuruka_Ratman_Hunter Skeleton_Longbowman Undead_Slave Ghost Ghost_Guardian)
+    }
+  ]
+
+  # Rules §18, a table in the hundreds and so a data file, read here at compile time.
+  @external_resource monsters_path = Path.join(:code.priv_dir(:mini_lineage), "game/monsters.csv")
+  @monsters (
+              [header | rows] =
+                monsters_path |> File.read!() |> String.split("\n", trim: true)
+
+              keys =
+                ~w(name level hp mp p_atk m_atk p_def m_def atk_spd dex exp sp adena_min adena_max
+                   adena_chance spells)a
+
+              ^header = Enum.join(keys, ",")
+
+              for row <- rows, into: %{} do
+                monster = keys |> Enum.zip(String.split(row, ",")) |> Map.new()
+                numbers = Map.drop(monster, [:name, :spells, :adena_chance])
+
+                monster =
+                  numbers
+                  |> Map.new(fn {k, v} -> {k, String.to_integer(v)} end)
+                  |> Map.merge(%{
+                    name: monster.name,
+                    adena_chance: String.to_integer(monster.adena_chance),
+                    spells: String.split(monster.spells, "; ", trim: true)
+                  })
+
+                {monster.name, monster}
+              end
+            )
+
+  # Rules §19: each set's first skill, and the spells monsters cast. Reuse in milliseconds.
+  @skills %{
+    "Power Strike" => %{kind: :physical, power: 25, mp: 10, reuse: 13_000},
+    "Power Shot" => %{kind: :physical, power: 65, mp: 19, reuse: 25_000},
+    "Mortal Blow" => %{kind: :blow, power: 73, mp: 9, reuse: 11_000},
+    "Iron Punch" => %{kind: :physical, power: 29, mp: 11, reuse: 15_000},
+    "Wind Strike" => %{kind: :magic, power: 12, mp: 9, reuse: 6_000},
+    "Ice Bolt" => %{kind: :magic, power: 8, mp: 9, reuse: 8_000, slow: true},
+    "Vampiric Touch" => %{kind: :drain, power: 18, mp: 25, reuse: 12_000, absorb: 0.4},
+    "Chill Flame" => %{kind: :burn, power: 20, mp: 15, reuse: 6_000}
+  }
+
+  @first_skills %{
+    {0, :fighter} => "Power Strike",
+    {2, :fighter} => "Power Shot",
+    {3, :fighter} => "Mortal Blow",
+    {1, :fighter} => "Iron Punch",
+    {0, :mystic} => "Wind Strike",
+    {2, :mystic} => "Ice Bolt",
+    {3, :mystic} => "Vampiric Touch",
+    {1, :mystic} => "Chill Flame"
+  }
+
+  @monster_spells %{
+    "NPC Windstrike - Magic 1" => %{kind: :magic, power: 18, mp: 7, reuse: 3_000},
+    "NPC HP Drain - Magic 1" => %{kind: :drain, power: 18, mp: 9, reuse: 3_000, absorb: 0.2},
+    "NPC HP Drain - Magic 2" => %{kind: :drain, power: 26, mp: 14, reuse: 3_000, absorb: 0.2},
+    "NPC Aura Burn - Magic 1" => %{kind: :magic, power: 5, mp: 3, reuse: 1_000},
+    "NPC Aura Burn - Magic 2" => %{kind: :magic, power: 7, mp: 3, reuse: 1_000},
+    "NPC Windstrike - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000},
+    "NPC Windstrike - Slow 2" => %{kind: :magic, power: 8, mp: 20, reuse: 8_000},
+    "NPC HP Drain - Slow 1" => %{kind: :drain, power: 5, mp: 17, reuse: 8_000, absorb: 0.2},
+    "NPC Prominence - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000}
+  }
+
   def sets, do: @sets
   def towns, do: @towns
 
@@ -235,4 +344,21 @@ defmodule MiniLineage.Game.Rules do
   def bonus_curve(attr), do: Map.fetch!(@bonus, attr)
   def experience(level), do: Enum.at(@experience, level - 1)
   def max_level, do: length(@experience)
+
+  def grounds, do: @grounds
+  def ground(slug), do: Enum.find(@grounds, &(&1.slug == slug))
+  def ground_of(town), do: Enum.find(@grounds, &(&1.town == town))
+
+  @doc "A ground's monsters, in the order §17 lists them, as §18 gives them."
+  def monsters_of(ground), do: Enum.map(ground.monsters, &monster(String.replace(&1, "_", " ")))
+
+  def monster(name), do: Map.fetch!(@monsters, name)
+  def monsters, do: @monsters
+
+  def skill(name), do: @skills |> Map.fetch!(name) |> Map.put(:name, name)
+  def skills, do: @skills
+  def first_skill(race_id, path), do: skill(Map.fetch!(@first_skills, {race_id, path}))
+
+  def monster_spell(name), do: @monster_spells |> Map.fetch!(name) |> Map.put(:name, name)
+  def monster_spells, do: @monster_spells
 end

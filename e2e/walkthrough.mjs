@@ -236,7 +236,7 @@ try {
     check('...and nothing that ends one, its rows\' sentences included, keeps a margin under it',
         margins.length === 0, margins.join(' | '));
     check('...what is on it, and what each does',
-        (await text('#effect-resting')).startsWith('💤 Resting • With nothing yet to fight'),
+        (await text('#effect-resting')).startsWith('💤 Resting • Between fights'),
         await text('#effect-resting'));
     check('...one row each, as the sidebar draws its own',
         await page.locator('.panel-body.rows > .stat-row[id^="effect-"]').count()
@@ -384,6 +384,9 @@ try {
     check('...and typing maxlvl reaches the last level, both bars refilled',
         topped.health === topped.maxHealth && topped.mp === topped.maxMp, JSON.stringify(topped));
 
+    check('Dion has no hunting ground, so its way out offers none',
+        await page.locator('#travel-form option[value="hunt"]').count() === 0);
+
     // ---- the Halls ------------------------------------------------------------------------------
     await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
@@ -426,6 +429,28 @@ try {
     await create('AgainBot', 3, 'fighter');
     check('...and the same browser starts another at once',
         (await text('#main .header-name')) === '🌑 Dark Elf Village', await text('#main .header-name'));
+
+    // ---- the hunt (rules §17, §20) ---------------------------------------------------------------
+    // Raised to the last level first, where no monster on the ladder can kill, so the click's effect is certain even
+    // though the fight is not: the suite asserts on what the click did, never on a roll.
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('maxlvl');
+    await page.waitForFunction(() =>
+        document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '80', null, { timeout: 5000 });
+    await page.selectOption('#travel-form select', 'hunt');
+    await page.click('#travel-form button');
+    await onScreen('hunt');
+    check('the village\'s way out reaches its hunting ground, at its own address',
+        new URL(page.url()).pathname.split('/').length === 3, page.url());
+    check('...headed with the ground\'s name', (await text('#main h2.header-name')).length > 3,
+        await text('#main h2.header-name'));
+    check('...with the sidebar beside it', await page.locator('#sidebar').count() === 1);
+    await page.click('#hunt-button');
+    await page.waitForSelector('#flash', { timeout: 5000 });
+    check('one click fights a monster to the end, and says what fell', /cut down/.test(await text('#flash')),
+        await text('#flash'));
+    check('...and the hunter stays on the ground to go again', (await state()).screen === 'hunt');
+
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

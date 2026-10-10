@@ -4,9 +4,11 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 
 ## What exists
 
-- **The live game is the base layer**: character creation, the towns of rules §14 with their
-  Gatekeepers and the status sidebar, `/character`, the Chronicles of Ancestry at `/races`, the
-  Monument of Heroes (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is in `legacy/` (see Rules).
+- **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
+  with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
+  the one-click fight in `Hunt`, `Actions.hunt/1`, and death), `/character`, the Chronicles of
+  Ancestry at `/races`, the Monument of Heroes (the Halls, in code) at `/highscores`, and the error
+  page. Everything the game was before that is in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
   `<.flash_group>`; every control is hand-written HEEx in `lib/mini_lineage_web/components/`); an
   HTTP client (no `Req` or `httpoison`; the zone database is `tz`, never `tzdata`, which brings
@@ -169,8 +171,9 @@ Each of these is here because it was got wrong once.
   EXP table, starting sets and modifiers are `Rules` attributes, changed by a commit, and the router
   builds each town's address from them at compile time. Size is no reason to move one. Once content
   reaches the hundreds (monsters, items, skills), each table moves to a data file under `priv/`
-  loaded through `@external_resource`, still in git and read back by a test. Content goes into
-  Postgres only when it must change without a deploy, decided when such a feature exists.
+  loaded through `@external_resource`, still in git and read back by a test: the monsters are
+  `priv/game/monsters.csv`, held to rules §18 by `rules_test.exs`. Content goes into Postgres only
+  when it must change without a deploy, decided when such a feature exists.
 - **A character has two ids, never to be confused.** `id` is public and the only one a page shows or
   links. `session_id` is the cookie and a credential: a public id that worked as a session would let
   anyone play anyone. Anything listing characters selects into plain maps, never `%Record{}`, which
@@ -203,16 +206,16 @@ Each of these is here because it was got wrong once.
 ### Web
 
 - **The URL is where you are.** A character stands in one town (rules §14), stored as `location`.
-  Each open town and its Gatekeeper have literal routes generated from the town table, never a
-  pattern. `/` is game start for a visitor and, for a character, a patch to its town: `GameLive`
-  compares the pinned place's address with the one asked for, not the screen alone. A place is
-  `{screen, town}`. A new place to stand (a shop, a hunting ground) gets its own URL when built; a
-  state that happens to you does not.
+  Each open town, its Gatekeeper and its ground (`/<town>/<ground>`) have literal routes generated
+  from the rules tables, never a pattern. `/` is game start for a visitor and, for a character, a
+  patch to its town: `GameLive` compares the pinned place's address with the one asked for, not the
+  screen alone. A place is `{screen, town}`. A new place to stand (a shop, a hunting ground) gets
+  its own URL when built; a state that happens to you does not.
 - **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races`, `highscores`
   and `error` carry no action, so its first clauses let every state reach them; the Halls keep their
   lineage filter in the place's second half. The rest decide only screens that can be acted on: a
-  character is in its town, at that town's Gatekeeper or on its own page; a visitor is at game
-  start.
+  character is in its town, at that town's Gatekeeper, on that town's ground if it has one, or on
+  its own page; a visitor is at game start.
 - **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, `e2e/reset.sh`'s
   refusal of the database `.env` names, `Actions.start/4`'s preconditions: each is the boundary, and a
   test asserts what it still refuses. If one is in the way, what you are building is probably wrong.

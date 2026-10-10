@@ -24,12 +24,14 @@ defmodule MiniLineageWeb.Screens do
 
   @doc "What the panel is headed: the town a run stands in, the screen's name elsewhere."
   def title("town", %{started: true, town: town}), do: town.name
+  def title("hunt", %{started: true, ground: %{} = ground}), do: ground.name
   def title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
 
   @doc "A place's emoji, drawn in the band beside its name; a screen that is not a place has none."
   def icon("town", %{started: true, town: town}), do: town.emoji
   def icon("start", _view), do: "🐣"
   def icon("gatekeeper", _view), do: "🌀"
+  def icon("hunt", _view), do: "⚔️"
   def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
 
@@ -77,12 +79,13 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper character),
+      when screen in ~w(town gatekeeper hunt character),
       do: ~H||
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "town"} = assigns), do: town(assigns)
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
+  def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
   def screen(%{screen: "highscores"} = assigns), do: Halls.screen(assigns)
@@ -151,13 +154,34 @@ defmodule MiniLineageWeb.Screens do
       event="navigate"
       name="place"
       picked={@picked}
-      options={[%{value: "gatekeeper", label: "🌀 Gatekeeper"}]}
+      options={town_places(@view)}
       default_label="🧭 Travel"
       active_label="🧭 Travel"
       default_variant={:primary}
     />
     """
   end
+
+  # The places in a town: its Gatekeeper, and the ground outside it if it has one (rules §17).
+  defp town_places(view) do
+    [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
+      if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
+  end
+
+  # Rules §20: the ground, the skill the character fights with, and the one click that fights.
+  defp hunt(assigns) do
+    ~H"""
+    <p id="hunt-intro" phx-no-format>
+      Monsters roam the {@view.ground.name} outside {@view.town.emoji} {@view.town.name}, the young ones near the village and the strong ones further out. You go out to meet whatever comes nearest your strength, and fight it with your bare hands and your <span class={skill_class(@view.skill)}>{@view.skill.name}</span> until one of you falls.
+    </p>
+    <div class="action-links">
+      <.button id="hunt-button" phx-click="hunt">⚔️ Hunt</.button>
+    </div>
+    """
+  end
+
+  defp skill_class(%{kind: kind}) when kind in [:physical, :blow], do: "attack"
+  defp skill_class(_skill), do: "magic"
 
   # Rules §14: every route out of this town and its fee, then the choice of one.
   defp gatekeeper(assigns) do

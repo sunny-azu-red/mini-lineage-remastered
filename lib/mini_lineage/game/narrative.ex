@@ -30,6 +30,37 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
+  @doc "Rules §20: a kill, with its EXP, SP and whatever Adena it carried."
+  def build_slew(monster, ground, exp, sp, adena) do
+    Format.fill_template(Narratives.slew(), %{
+      "monster" => monster.name,
+      "ground" => ground.name,
+      "exp" => Format.number(exp),
+      "sp" => Format.number(sp),
+      "adena" =>
+        if(adena > 0,
+          do: ~s(, and <span class="adena">#{Format.number(adena)} Adena</span> from its body),
+          else: ""
+        )
+    })
+  end
+
+  def build_levelled(level), do: Format.fill_template(Narratives.levelled(), %{"level" => level})
+
+  def build_fell(monster, ground),
+    do:
+      Format.fill_template(Narratives.fell(), %{
+        "monster" => monster.name,
+        "ground" => ground.name
+      })
+
+  def build_wandered(monster, ground),
+    do:
+      Format.fill_template(Narratives.wandered(), %{
+        "monster" => monster.name,
+        "ground" => ground.name
+      })
+
   def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
 
   @doc "A line as its owner's alert."

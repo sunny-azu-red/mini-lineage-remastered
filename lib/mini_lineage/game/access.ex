@@ -6,14 +6,14 @@ defmodule MiniLineage.Game.Access do
   A place is `{screen, town}`: the town is a rules §14 slug for the screens that stand in one, and
   nil for the rest.
   """
-  alias MiniLineage.Game.Player
+  alias MiniLineage.Game.{Player, Rules}
 
   # Carry no action, so every state may read them. The second half of the place is the Halls'
   # lineage filter, which changes what is read and nothing else.
   @readable ~w(races error highscores)
 
-  # Where a character can stand: its town, and that town's Gatekeeper.
-  @in_town ~w(town gatekeeper)
+  # Where a character can stand: its town, that town's Gatekeeper, and its hunting ground.
+  @in_town ~w(town gatekeeper hunt)
 
   @doc """
   Where the player is allowed to be: what can be read, for everyone; the town it stands in, and its
@@ -25,10 +25,20 @@ defmodule MiniLineage.Game.Access do
 
   def pin_screen({screen, town}, player) do
     cond do
-      not Player.started?(player) -> {"start", nil}
-      screen in @in_town and town == player.location -> {screen, town}
-      screen == "character" -> {"character", nil}
-      true -> {"town", player.location}
+      not Player.started?(player) ->
+        {"start", nil}
+
+      screen == "hunt" and town == player.location and Rules.ground_of(town) != nil ->
+        {screen, town}
+
+      screen in @in_town and screen != "hunt" and town == player.location ->
+        {screen, town}
+
+      screen == "character" ->
+        {"character", nil}
+
+      true ->
+        {"town", player.location}
     end
   end
 

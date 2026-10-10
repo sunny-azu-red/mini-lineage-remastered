@@ -35,6 +35,11 @@ defmodule MiniLineageWeb.Router do
       live "/#{slug}/gatekeeper", GameLive, :gatekeeper
     end
 
+    # Rules §17: a village's ground, outside it and at its own address.
+    for slug <- MiniLineageWeb.Paths.hunting_towns() do
+      live "/#{slug}/#{MiniLineage.Game.Rules.ground_of(slug).slug}", GameLive, :hunt
+    end
+
     # No glob: a catch-all is a soft 404. Phoenix raises for what it does not route and `ErrorHTML`
     # draws it.
   end

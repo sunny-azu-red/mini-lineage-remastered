@@ -13,6 +13,9 @@ defmodule MiniLineageWeb.Paths do
   @doc "The slug of every town the router answers, each with its Gatekeeper beside it."
   def towns, do: for(town <- Rules.towns(), town.open?, do: town.slug)
 
+  @doc "The towns with a hunting ground outside them (rules §17)."
+  def hunting_towns, do: for(town <- towns(), Rules.ground_of(town), do: town)
+
   @doc "Each lineage's own board in the Halls, by its slug."
   def lineages, do: Enum.map(Constants.races(), &Format.slugify(&1.label))
 
@@ -22,6 +25,10 @@ defmodule MiniLineageWeb.Paths do
   """
   def for_screen({"town", slug}) when is_binary(slug), do: "/#{slug}"
   def for_screen({"gatekeeper", slug}) when is_binary(slug), do: "/#{slug}/gatekeeper"
+
+  def for_screen({"hunt", slug}) when is_binary(slug),
+    do: "/#{slug}/#{Rules.ground_of(slug).slug}"
+
   def for_screen({"highscores", lineage}) when is_binary(lineage), do: "/highscores/#{lineage}"
   def for_screen({screen, _town}), do: for_screen(screen)
 

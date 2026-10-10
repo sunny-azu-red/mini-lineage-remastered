@@ -152,7 +152,7 @@ defmodule MiniLineage.Game.Player do
   # ----------------------------------------------------------------- resting
 
   @doc """
-  💤 always, there being no combat yet, then whatever `conditions/1` puts on the character, and 🌿
+  💤 always, a one-click hunt taking no time (rules §20), then whatever `conditions/1` puts on the character, and 🌿
   while a bar is short, carrying what one tick restores to each. The tick reads its rates from
   here, so the icon and the healing cannot disagree.
   """

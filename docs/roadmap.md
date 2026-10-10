@@ -73,17 +73,17 @@ The first thing to build, with the canon's monster stats researched first.
 - **It can kill.** There is no warning; the HP bar is the player's to read.
 - **Then Gludio:** Ruins of Despair, levels 15 to 24.
 
-## Before the first system
+## Built with the first hunt
 
-What the base layer already says but nothing exercises yet; each lands with the first hunt.
+The hunt (rules §17 to §21) put the base layer to work: EXP and levelling (§12) with the level-up
+told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) waits for
+the slower fights, since a one-click hunt takes no time.
 
-- **Gaining EXP and levelling** (rules §12): reaching a level refills HP and MP, which
-  `Player.gain_experience/2` does, and the player is told, which nothing does yet. Only the debug
-  build's `lvl` and `maxlvl` grant EXP today.
-- **The base outcomes** (rules §13): hit chance and damage are written and tested, and called by
-  nothing.
-- **Being in combat** (rules §11): resting stops. The one-click hunt takes no time, so this waits
-  for the slower fights.
+**It ships with the inventory and the village shops.** A seeded run of the first hunt showed that a
+character without gear dies in most fights by level 10, because Lineage II's monsters assume a
+weapon and armour, while the canon's no-grade village gear keeps deaths under 2% to level 14. So
+the hunt goes out with the starting gear, the inventory and each village's shop, and the trainer
+follows before characters reach 15.
 
 ## Death and the Halls
 

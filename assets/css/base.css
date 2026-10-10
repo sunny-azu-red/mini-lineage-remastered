@@ -142,8 +142,9 @@ p {
     color: var(--text-defense);
 }
 
-/* Experience earned, and the two sides of the hit roll (rules §13). */
+/* Experience and skill points earned, and the two sides of the hit roll (rules §13). */
 .xp,
+.sp,
 .accuracy,
 .evasion {
     color: var(--text-xp);
@@ -152,6 +153,6 @@ p {
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does.
  * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
 :is(p, li) :is(.hp, .attack, .magic, .debuff, .crit, .adena, .level, .regen, .buff, .attribute,
-    .speed, .defense, .mp, .xp, .accuracy, .evasion, .aura) {
+    .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura) {
     font-weight: var(--weight-value);
 }

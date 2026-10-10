@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.RulesTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Player, Rng, Rules}
+  alias MiniLineage.Game.{Clock, Constants, Formulas, Hunt, Math, Player, Rng, Rules}
 
   @rules File.read!("docs/rules.md")
 
@@ -143,6 +143,93 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§17 each village's ground, its address, and its monsters in ladder order" do
+      rows = table("Ground")
+      assert length(rows) == length(Rules.grounds())
+
+      for [name, town, slug, monsters] <- rows do
+        ground = Rules.ground(slug)
+        assert ground.name == name
+        assert Rules.town(ground.town).name == town
+        assert Enum.map(Rules.monsters_of(ground), & &1.name) == String.split(monsters, ", ")
+      end
+    end
+
+    test "§17 every ground climbs, and starts where a new character does" do
+      for ground <- Rules.grounds() do
+        levels = Enum.map(Rules.monsters_of(ground), & &1.level)
+        assert levels == Enum.sort(levels), ground.name
+        assert hd(levels) == 1, ground.name
+      end
+    end
+
+    test "§18 every monster, whole, and no other" do
+      rows = table("Monster")
+      assert length(rows) == map_size(Rules.monsters())
+
+      for [name, level, hp, mp, p_atk, m_atk, p_def, m_def, atk_spd, dex, exp, sp, adena, spells] <-
+            rows do
+        m = Rules.monster(name)
+
+        assert Enum.map(
+                 [level, hp, mp, p_atk, m_atk, p_def, m_def, atk_spd, dex, exp, sp],
+                 &trunc(number(&1))
+               ) ==
+                 [
+                   m.level,
+                   m.hp,
+                   m.mp,
+                   m.p_atk,
+                   m.m_atk,
+                   m.p_def,
+                   m.m_def,
+                   m.atk_spd,
+                   m.dex,
+                   m.exp,
+                   m.sp
+                 ],
+               name
+
+        assert adena == "#{m.adena_min}–#{m.adena_max} at #{m.adena_chance}%", name
+        assert spells == Enum.join(m.spells, ", "), name
+      end
+    end
+
+    test "§19 each set's first skill, every race's its own" do
+      rows = table("Skill")
+      assert length(rows) == 8
+
+      for [name, set, kind, power, mp, reuse] <- rows do
+        %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
+        skill = Rules.first_skill(race, path)
+        assert skill.name == name
+        assert Atom.to_string(skill.kind) == kind
+
+        assert [skill.power, skill.mp, skill.reuse] ==
+                 Enum.map([power, mp, reuse], &trunc(number(&1)))
+      end
+
+      for path <- [:fighter, :mystic] do
+        names = for race <- 0..3, do: Rules.first_skill(race, path).name
+        assert Enum.uniq(names) == names
+      end
+    end
+
+    test "§19 the spells monsters cast, and every one a monster carries is among them" do
+      rows = table("Spell")
+      assert length(rows) == map_size(Rules.monster_spells())
+
+      for [name, kind, power, mp, reuse] <- rows do
+        spell = Rules.monster_spell(name)
+        assert Atom.to_string(spell.kind) == kind
+
+        assert [spell.power, spell.mp, spell.reuse] ==
+                 Enum.map([power, mp, reuse], &trunc(number(&1)))
+      end
+
+      for {_, m} <- Rules.monsters(), spell <- m.spells, do: Rules.monster_spell(spell)
+    end
+
     test "§12 the EXP for every level, 1 to 80" do
       written =
         table("Levels")
@@ -266,6 +353,35 @@ defmodule MiniLineage.Game.RulesTest do
       assert_in_delta Player.stats(%{elf | location: "gludio"}).mp_regen, 3.16, 0.005
       assert rates.("gludio").rates == [hp_regen: 5, mp_regen: 3]
       assert rates.("elven-village").rates == [hp_regen: 8, mp_regen: 5]
+    end
+
+    test "§18 a Young Keltir's Accuracy, Evasion and Critical" do
+      keltir = Hunt.foe(Rules.monster("Young Keltir"))
+      assert {keltir.accuracy, keltir.evasion} == {34, 34}
+      assert_in_delta keltir.critical, 4.4, 1.0e-9
+    end
+
+    test "§19 Power Strike against a blow, Mortal Blow's chance, and a skill's reuse" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
+      stats = Player.stats(fighter)
+      assert_in_delta stats.p_atk, 4.32, 1.0e-9
+      assert_in_delta Hunt.skill_damage(stats.p_atk, 25, 39, 1.0), 52.6, 0.05
+      assert_in_delta Formulas.physical_damage(stats.p_atk, 39), 7.8, 0.05
+      assert_in_delta Hunt.blow_chance(34), 45.6, 1.0e-9
+      assert stats.atk_spd == 330
+      assert round(13_000 * 333 / 330) == 13_118
+    end
+
+    test "§20 EXP shrinks by 5/6 a level past the fifth, and not before" do
+      assert Hunt.reward(35, 12, 1) == 11
+      assert Hunt.reward(35, 6, 1) == 35
+    end
+
+    test "§21 a level 9 run with 40,000 EXP stands above every level 8 run and a 39,999 one" do
+      assert Math.level_for_xp(40_000) == 9
+      assert Math.level_for_xp(39_999) == 9
+      assert Math.level_for_xp(Math.xp_for_level(9) - 1) == 8
     end
 
     test "§13 hit chance, inside 28% and 98%" do

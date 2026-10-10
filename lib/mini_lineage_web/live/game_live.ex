@@ -89,7 +89,7 @@ defmodule MiniLineageWeb.GameLive do
   defp requested_place(:root, _uri, player),
     do: if(Player.started?(player), do: {"town", player.location}, else: {"start", nil})
 
-  defp requested_place(action, uri, _player) when action in [:town, :gatekeeper],
+  defp requested_place(action, uri, _player) when action in [:town, :gatekeeper, :hunt],
     do: {Atom.to_string(action), Paths.town_of(uri)}
 
   defp requested_place(:highscores, uri, _player), do: {"highscores", Paths.lineage_of(uri)}
@@ -156,7 +156,14 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
+  def handle_event("navigate", %{"place" => "hunt"}, socket),
+    do: {:noreply, walk(socket, {"hunt", socket.assigns.town})}
+
   def handle_event("navigate", _params, socket), do: {:noreply, socket}
+
+  # Rules §20: one click, one fight, staying on the ground unless it ends the run.
+  def handle_event("hunt", _params, socket),
+    do: {:noreply, apply_action(socket, &Actions.hunt/1, nil)}
 
   # The Gatekeeper's empty choice is the way back into town.
   def handle_event("travel", %{"to" => ""}, socket),
@@ -277,7 +284,14 @@ defmodule MiniLineageWeb.GameLive do
       fail(socket, "the character process exited: #{inspect(reason)}")
   end
 
-  defp arrive(socket, nil), do: socket
+  # Staying put, unless what happened moved the character's place: a death sends it to game start.
+  defp arrive(socket, nil) do
+    place = {socket.assigns.screen, socket.assigns.town}
+    target = Access.pin_screen(place, socket.assigns.player)
+
+    if target == place, do: socket, else: go(socket, target)
+  end
+
   defp arrive(socket, to), do: go(socket, to.(socket.assigns.player))
 
   defp here(player), do: {"town", player.location}

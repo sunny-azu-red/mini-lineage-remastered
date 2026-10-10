@@ -14,7 +14,7 @@ defmodule MiniLineage.Game.RegenAuraTest do
 
   defp aura(player), do: Enum.find(Player.auras(player), &(&1.id == "regenerating"))
 
-  test "a character is always resting, there being nothing yet to fight" do
+  test "a character is always resting, a one-click hunt taking no time" do
     for player <- [rested(0), rested(0, %{health: 10})] do
       assert Enum.any?(Player.auras(player), &(&1.id == "resting"))
     end

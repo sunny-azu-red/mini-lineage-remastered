@@ -4,14 +4,16 @@ defmodule MiniLineage.Game.Actions do
   `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
   client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Rules, Version}
+  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Player, Rules, Version}
 
   @errors %{
     already_started: "You already have a character.",
     invalid: "That is not something you can do.",
     closed: "The Gatekeeper cannot send you there yet.",
     poor: "You cannot pay the Gatekeeper's fee.",
-    last_level: "There is no level past the last."
+    last_level: "There is no level past the last.",
+    no_ground: "There is nothing to hunt here.",
+    spent: "You are too weak to hunt, and must rest first."
   }
 
   # Not a rule of the game: what a debug build puts in a purse so the Gatekeeper can be tried.
@@ -66,6 +68,64 @@ defmodule MiniLineage.Game.Actions do
   defp arrive(player, town, fee) do
     player = %{player | location: town.slug, adena: player.adena - fee}
     {player, {:ok, %{text: Narrative.alert(Narrative.build_arrived(town, fee)), type: :info}}}
+  end
+
+  @doc """
+  Rules §20: one click, one fight, on the ground of the village the character stands in. A kill
+  pays EXP, SP and Adena; a death (§21) marks the run fallen, which its process then retires.
+  """
+  def hunt(player) do
+    ground = Player.started?(player) && Rules.ground_of(player.location)
+
+    cond do
+      !ground -> {player, {:error, :no_ground, @errors.no_ground}}
+      player.health <= 0 -> {player, {:error, :spent, @errors.spent}}
+      true -> fight(player, ground)
+    end
+  end
+
+  defp fight(player, ground) do
+    level = Player.level(player)
+    foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
+    skill = Rules.first_skill(player.race_id, player.path)
+    result = Hunt.fight(Player.stats(player), player, skill, foe)
+    player = %{player | health: result.health, mp: result.mp}
+
+    cond do
+      result.health <= 0 ->
+        fell = Narrative.build_fell(foe, ground)
+        player = %{player | dead: true, killer: foe.name}
+        {player, {:ok, %{text: Narrative.alert(fell), type: :danger}}}
+
+      result.foe > 0 ->
+        {player,
+         {:ok, %{text: Narrative.alert(Narrative.build_wandered(foe, ground)), type: :info}}}
+
+      true ->
+        reward(player, foe, ground, level)
+    end
+  end
+
+  defp reward(player, foe, ground, level) do
+    exp = Hunt.reward(foe.exp, level, foe.level)
+    sp = Hunt.reward(foe.sp, level, foe.level)
+    adena = Hunt.adena(foe)
+
+    gained = %{
+      Player.gain_experience(player, exp)
+      | sp: player.sp + sp,
+        adena: player.adena + adena
+    }
+
+    reached = Player.level(gained)
+
+    text =
+      Narrative.alert(Narrative.build_slew(foe, ground, exp, sp, adena)) <>
+        if reached > level,
+          do: " " <> Narrative.alert(Narrative.build_levelled(reached)),
+          else: ""
+
+    {gained, {:ok, %{text: text, type: :info}}}
   end
 
   @doc "Debug builds only: Adena to try the Gatekeeper with, every time it is asked for."

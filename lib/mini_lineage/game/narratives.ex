@@ -34,7 +34,18 @@ defmodule MiniLineage.Game.Narratives do
 
   @arrived ~s({they} pay the Gatekeeper <span class="adena">{fee} Adena</span> and step out into {townEmoji} {town}.)
 
+  # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
+  @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and <span class="sp">{sp} SP</span>{adena}.)
+  @levelled ~s({they} reach <span class="level">Level {level}</span>, and {their} wounds close.)
+  # Rules §21: the line a run ends on, kept with it.
+  @fell ~s({they} fall to the {monster} at the {ground}, and {their} road ends here.)
+  @wandered ~s({they} cannot bring the {monster} down, and it slinks away into the {ground}.)
+
   def welcome, do: @welcome
+  def slew, do: @slew
+  def levelled, do: @levelled
+  def fell, do: @fell
+  def wandered, do: @wandered
   def arrived, do: @arrived
   def began, do: @began
 

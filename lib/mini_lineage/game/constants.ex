@@ -68,7 +68,7 @@ defmodule MiniLineage.Game.Constants do
       type: :aura,
       emoji: "💤",
       label: "Resting",
-      about: "With nothing yet to fight, the body rests and mends every three seconds."
+      about: "Between fights, the body rests and mends every three seconds."
     },
     night: %{
       id: "night",

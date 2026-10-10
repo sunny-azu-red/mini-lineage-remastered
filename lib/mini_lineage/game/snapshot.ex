@@ -14,6 +14,8 @@ defmodule MiniLineage.Game.Snapshot do
     perk: nil,
     class_name: nil,
     town: nil,
+    ground: nil,
+    skill: nil,
     routes: [],
     health: nil,
     max_health: nil,
@@ -25,6 +27,7 @@ defmodule MiniLineage.Game.Snapshot do
     xp_current: 0,
     xp_required: 0,
     adena: nil,
+    sp: nil,
     stats: nil,
     effects: []
   }
@@ -52,6 +55,9 @@ defmodule MiniLineage.Game.Snapshot do
           :description,
           Constants.town_description(player.location)
         ),
+      # Rules §17: the ground outside the village, if it stands in one.
+      ground: Rules.ground_of(player.location),
+      skill: Rules.first_skill(player.race_id, player.path),
       routes: routes(player.location),
       health: player.health,
       max_health: stats.max_hp,
@@ -64,6 +70,7 @@ defmodule MiniLineage.Game.Snapshot do
       xp_required:
         if(Math.max_level?(level), do: 0, else: Math.xp_for_level(level + 1) - current),
       adena: player.adena,
+      sp: player.sp || 0,
       stats: stats,
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }
