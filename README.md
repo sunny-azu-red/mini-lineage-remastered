@@ -6,7 +6,9 @@ dark fantasy interface that updates in real time.
 For now it is cut back to its base layer: who a character is and the numbers that make them. The
 game as it was before (the Inn and the shops, the Battleground, the Halls, the Tome, a run's record
 and its Chronicle) is kept to be read in [`legacy/`](legacy/README.md). Each of those systems comes
-back one at a time, built on the rules, as [`docs/roadmap.md`](docs/roadmap.md) lays out.
+back one at a time, built on the rules, as [`docs/roadmap.md`](docs/roadmap.md) lays out. Every
+Lineage II name and number in the game comes from the canon in [`docs/canon/`](docs/canon/README.md),
+checked against Interlude's own data.
 
 ## 🎮 The game
 

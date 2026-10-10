@@ -126,13 +126,15 @@ Each of these is here because it was got wrong once.
 
 - **`docs/rules.md` is the base layer and the only authority**, in our own words: the eight starting
   sets and home villages, the six attributes, every stat and formula, resting, levels and the base
-  outcomes. A number may be taken from L2 when a rule is written, whole and never rescaled beside
-  numbers that were not; after that, nothing outside the document is consulted. `Rules` holds its
-  tables and `Formulas` its formulas in its order, and `rules_test.exs` reads the tables back out of
-  the document and works every example again, so a change to one is a change to both. A new system
-  (classes, items, fighting, the world) starts as an entry in `docs/roadmap.md` and builds on the
-  rules rather than quietly changing them. `Player.stats/1` runs the rules in order from the starting
-  set and the level. A new character has no Adena and no items, in every environment.
+  outcomes. A Lineage II name or number comes from `docs/canon/`, the reference and not a plan:
+  taken whole when a rule is written, never rescaled beside numbers that were not, and from then on
+  the rule is the authority. One the canon lacks is researched into it first, never guessed. `Rules`
+  holds its tables and `Formulas` its formulas in its order, and `rules_test.exs` reads the tables
+  back out of the document and works every example again, so a change to one is a change to both. A
+  new system (classes, items, fighting, the world) starts as an entry in `docs/roadmap.md` and
+  builds on the rules rather than quietly changing them. `Player.stats/1` runs the rules in order
+  from the starting set and the level. A new character has no Adena and no items, in every
+  environment.
 - **`legacy/` is read, never run, and never updated.** It is the game as of `da4e37c`: the shops, the
   Battleground, the record and its Chronicle, the Halls, the Tome, class transfers, dyes, timed
   buffs, the other sounds and the cheat. Nothing there is compiled, formatted, tested or served, and

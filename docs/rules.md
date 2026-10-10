@@ -203,6 +203,10 @@ Gatekeeper and cannot be travelled to. A character who cannot pay the fee does n
 | Town of Dion | Town of Giran | 8,100 |
 | Town of Dion | Giran Harbor | 6,500 |
 
+Gludin Village and the boats are left out on purpose: every village goes straight to the Town of
+Gludio. The fees are the game's own, not Lineage II's, and will be tuned once the balance can be
+seen. `docs/canon/README.md` lists both among its departures.
+
 Example: an Elf goes from Elven Village to Dion through Gludio, for 3,700 + 4,100 = **7,800**
 Adena. An Orc with 10,000 reaches Gludio with **4,000** left, which is not enough for Dion.
 
