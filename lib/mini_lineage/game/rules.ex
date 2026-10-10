@@ -321,6 +321,9 @@ defmodule MiniLineage.Game.Rules do
     "NPC Prominence - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000}
   }
 
+  # Rules §22: what the server multiplies a kill's pay by.
+  @rates %{exp: 5, sp: 5, adena: 20}
+
   def sets, do: @sets
   def towns, do: @towns
 
@@ -361,4 +364,5 @@ defmodule MiniLineage.Game.Rules do
 
   def monster_spell(name), do: @monster_spells |> Map.fetch!(name) |> Map.put(:name, name)
   def monster_spells, do: @monster_spells
+  def rate(kind), do: Map.fetch!(@rates, kind)
 end

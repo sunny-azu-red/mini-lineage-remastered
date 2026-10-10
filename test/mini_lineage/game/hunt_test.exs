@@ -93,16 +93,16 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "the reward" do
-    test "is whole up to 5 levels above, and 5/6 a level past it" do
-      assert Hunt.reward(100, 6, 1) == 100
-      assert Hunt.reward(100, 7, 1) == 83
-      assert Hunt.reward(100, 8, 1) == 69
+    test "is whole up to 5 levels above, and 5/6 a level past it, at the server's rates" do
+      assert Hunt.reward(:exp, 100, 6, 1) == 500
+      assert Hunt.reward(:exp, 100, 7, 1) == 416
+      assert Hunt.reward(:sp, 100, 8, 1) == 347
     end
 
     test "Adena only at its chance, and between its least and most" do
       keltir = Rules.monster("Young Keltir")
       Rng.put_source(fn -> 0.0 end)
-      assert Hunt.adena(keltir) == keltir.adena_min
+      assert Hunt.adena(keltir) == keltir.adena_min * 20
       Rng.put_source(fn -> 0.9999 end)
       assert Hunt.adena(keltir) == 0
     end

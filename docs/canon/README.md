@@ -115,6 +115,16 @@ where it has any.
   (High Priest Biotin, Hierarch Asterios, Tetrarch Thifiell, Flame Lord Kakai). In Lineage II any
   town's master would do.
 
+**Pace and gear**
+
+- **The server runs at rates** (rules §22): EXP and SP ×5, Adena ×20. Retail Interlude ran at ×1;
+  private servers ran at rates like these. Adena runs faster than EXP because the hunt has no quests
+  and no drops to sell, which is where most of Lineage II's Adena came from.
+- **The inventory keeps only the combat slots:** weapon, shield, head, chest, legs, gloves, feet,
+  necklace, two earrings and two rings. No underwear, face or hair slots.
+- **The inventory counts items and does not weigh them:** 80 slots, as for every non-Dwarf, with no
+  weight limit and no load penalties.
+
 **Trade**
 
 - **NPC shops sell better gear in more advanced towns, for more money.** In Lineage II no NPC

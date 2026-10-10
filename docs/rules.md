@@ -428,12 +428,14 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
   strongest that is ready instead, which takes the round. Its reuse is not scaled.
 - **Blows** hit and do damage as §13 says. Skills and spells do what §19 says.
 - **It ends** when either reaches 0 HP. After 1,000 rounds the monster wanders off and pays nothing.
-- **The reward** for a kill is the monster's EXP and SP (§12) and its Adena. A character more than 5
-  levels above the monster earns × (5 ÷ 6) for each level past the fifth, rounded down.
+- **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
+  (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
+  fifth, rounded down.
 - **What is left** of HP and MP stays, and rest (§11) goes on refilling it.
 
 Example: a level 12 character who kills a Young Keltir (level 1, 35 EXP) is 11 levels above it, 6 past
-the fifth, and earns 35 × (5 ÷ 6)⁶ = 11.7, so **11** EXP. A level 6 character earns all of it.
+the fifth, and earns 35 × 5 × (5 ÷ 6)⁶ = 58.6, so **58** EXP. A level 6 character earns all of it,
+**175**.
 
 ## 21. Death
 
@@ -443,3 +445,22 @@ on the Monument of Heroes, which ranks every run by EXP and so by level, then EX
 
 Example: a level 9 run with 40,000 EXP that dies stands above every level 8 run, and above a level 9
 run with 39,999 EXP.
+
+## 22. Server rates
+
+Every Lineage II server ran at rates, multiplying what monsters pay. This one runs at:
+
+| Rate | Times |
+|---|---|
+| EXP | 5 |
+| SP | 5 |
+| Adena | 20 |
+
+Adena runs four times faster than EXP because the village shops price their gear for a game where
+most Adena came from quests and from selling what monsters dropped, and the hunt has neither. A
+seeded run of every set up its village's ladder takes about 310 to 390 kills from level 1 to 20, and
+holds about 55,000 Adena at level 11 and 250,000 at level 16, where a Gladius costs 62,215 and a Long
+Sword 156,400.
+
+Example: a Young Keltir carrying 10 Adena pays **200**.
+

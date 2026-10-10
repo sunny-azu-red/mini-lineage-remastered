@@ -374,8 +374,18 @@ defmodule MiniLineage.Game.RulesTest do
     end
 
     test "§20 EXP shrinks by 5/6 a level past the fifth, and not before" do
-      assert Hunt.reward(35, 12, 1) == 11
-      assert Hunt.reward(35, 6, 1) == 35
+      assert Hunt.reward(:exp, 35, 12, 1) == 58
+      assert Hunt.reward(:exp, 35, 6, 1) == 175
+    end
+
+    test "§22 the server's rates, and a Young Keltir's 10 Adena paying 200" do
+      for [kind, times] <- table("Rate") do
+        assert Rules.rate(kind |> String.downcase() |> String.to_existing_atom()) ==
+                 String.to_integer(times)
+      end
+
+      Rng.put_source(fn -> 0.5 end)
+      assert Hunt.adena(%{adena_chance: 100, adena_min: 10, adena_max: 10}) == 200
     end
 
     test "§21 a level 9 run with 40,000 EXP stands above every level 8 run and a 39,999 one" do

@@ -236,16 +236,20 @@ defmodule MiniLineage.Game.Hunt do
   defp mark_critical(s, true), do: %{s | critical: true}
   defp mark_critical(s, false), do: s
 
-  @doc "§20: EXP and SP shrink by 5/6 a level once the character is more than 5 above the monster."
-  def reward(amount, level, monster_level) do
+  @doc """
+  §20 and §22: EXP or SP at the server's rate, shrinking by 5/6 a level once the character is more
+  than 5 above the monster.
+  """
+  def reward(kind, amount, level, monster_level) do
     gap = level - monster_level
-    if gap > 5, do: trunc(amount * :math.pow(5 / 6, gap - 5)), else: amount
+    penalty = if gap > 5, do: :math.pow(5 / 6, gap - 5), else: 1
+    trunc(amount * Rules.rate(kind) * penalty)
   end
 
-  @doc "§18: the Adena a slain monster carries, if it carries any."
+  @doc "§18 and §22: the Adena a slain monster carries, if it carries any, at the server's rate."
   def adena(monster) do
     if Formulas.hit?(monster.adena_chance),
-      do: Math.random_int(monster.adena_min, monster.adena_max),
+      do: Math.random_int(monster.adena_min, monster.adena_max) * Rules.rate(:adena),
       else: 0
   end
 end
