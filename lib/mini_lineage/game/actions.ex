@@ -84,6 +84,20 @@ defmodule MiniLineage.Game.Actions do
     {player, {:ok, %{text: Narrative.alert(Narrative.build_arrived(town, fee)), type: :info}}}
   end
 
+  @doc "Rules §20: back to town from the ground, disengaging on the way."
+  def retreat(player) do
+    if Player.started?(player) and Rules.ground_of(player.location) do
+      town = Rules.town(player.location)
+
+      text =
+        "You withdraw from the #{Rules.ground_of(player.location).name} to #{town.emoji} #{town.name}."
+
+      {Player.disengage(player), {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :no_ground, @errors.no_ground}}
+    end
+  end
+
   @doc """
   Rules §20: one click, one fight, on the ground of the village the character stands in. A kill
   pays EXP, SP and Adena; a death (§21) marks the run fallen, which its process then retires.
@@ -124,6 +138,8 @@ defmodule MiniLineage.Game.Actions do
           reward(player, foe, ground, level)
       end
 
+    # Rules §20: a hunt engages; only leaving the ground starts the disengaging.
+    player = if player.dead, do: player, else: %{player | combat: "engaged"}
     {player, {:ok, Map.put(flash, :log, log)}}
   end
 

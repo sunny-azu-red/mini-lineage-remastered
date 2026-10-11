@@ -453,14 +453,19 @@ try {
     check('...headed with the ground\'s name', (await text('#main h2.header-name')).length > 3,
         await text('#main h2.header-name'));
     check('...with the sidebar beside it', await page.locator('#sidebar').count() === 1);
-    await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });
-    check('one click fights a monster to the end, and says what fell', /cut down/.test(await text('#fight-outcome')),
+    check('going out is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
         await text('#fight-outcome'));
     check('...on the page itself, round by round with both sides\' HP, not in an alert',
         await page.locator('#flash').count() === 0 && /Round 1: .* HP, you at/.test(await text('#fight-log')),
         (await text('#fight-log')).slice(0, 160));
-    check('...and the hunter stays on the ground to go again', (await state()).screen === 'hunt');
+    check('...and the hunter is in combat', await page.locator('#effects [data-effect-id="combat"]').count() === 1);
+    await page.click('#hunt-button');
+    await page.waitForSelector('#fight-outcome', { timeout: 5000 });
+    check('looking for more action fights again, still on the ground', (await state()).screen === 'hunt');
+    await page.click('#retreat-button');
+    await onScreen('town');
+    check('...and retreating goes back to the village', (await state()).screen === 'town');
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
     check('the sidebar names the weapons and armour worn, each a link to the inventory',

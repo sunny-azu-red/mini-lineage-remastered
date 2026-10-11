@@ -107,9 +107,10 @@ for race <- [0, 2, 3, 1], path <- [:fighter, :mystic] do
         p = p |> Ladder.shop() |> Ladder.train()
         stats = Player.stats(p)
 
+        # Resting means walking back to town, where the disengaging's seconds are spent at once.
         {p, rested} =
           if p.health * 100 < stats.max_hp * rest_below or p.mp * 100 < stats.max_mp * rest_below,
-            do: Ladder.rest(p),
+            do: Ladder.rest(%{p | combat: nil}),
             else: {p, 0}
 
         level = Player.level(p)

@@ -159,7 +159,7 @@ Example: a Human Fighter's DEX 30 gives Atk. Spd. **330** bare-handed, so **1.1*
 
 ## 11. Resting
 
-Out of combat, a character gets HP and MP back every 3 seconds. In combat, nothing.
+Out of combat, a character gets HP and MP back every 3 seconds. In combat (§20), nothing.
 
 - **HP per tick = base × level bonus × CON bonus × 3**, where base is 1.5 + level ÷ 20 below level 11,
   and 1.4 + level ÷ 10 from level 11.
@@ -466,7 +466,11 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
   (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
   fifth, rounded down.
-- **What is left** of HP and MP stays, and rest (§11) goes on refilling it.
+- **In combat:** going out to the ground is the first fight, and from then on the character is in
+  combat and does not rest (§11) for as long as it stays there, fight after fight. Leaving the
+  ground, by retreating to town or any other way, it is in combat for 5 seconds more, and then
+  rests.
+- **What is left** of HP and MP stays, until the character is back in town to rest.
 
 Example: a level 12 character who kills a Young Keltir (level 1, 35 EXP) is 11 levels above it, 6 past
 the fifth, and earns 35 × 5 × (5 ÷ 6)⁶ = 58.6, so **58** EXP. A level 6 character earns all of it,

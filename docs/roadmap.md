@@ -76,8 +76,8 @@ The first thing to build, with the canon's monster stats researched first.
 ## Built with the first hunt
 
 The hunt (rules §17 to §21) put the base layer to work: EXP and levelling (§12) with the level-up
-told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) waits for
-the slower fights, since a one-click hunt takes no time.
+told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) holds on the ground, as the legacy Battleground did, and lifts five seconds
+after leaving it.
 
 **It ships with the inventory and the village shops.** A seeded run of the first hunt showed that a
 character without gear dies in most fights by level 10, because Lineage II's monsters assume a

@@ -212,7 +212,10 @@ defmodule MiniLineageWeb.Screens do
       Monsters roam the {@view.ground.name} outside {@view.town.emoji} {@view.town.name}, the young ones near the village and the strong ones further out. You go out to meet whatever comes nearest your strength, and fight it with your bare hands and your <span class={skill_class(@view.skill)}>{@view.skill.name}</span> until one of you falls.
     </p>
     <div class="action-links">
-      <.button id="hunt-button" phx-click="hunt">⚔️ Hunt</.button>
+      <.button id="hunt-button" phx-click="hunt">⚔️ Look for more action</.button>
+      <.button id="retreat-button" variant={:secondary} phx-click="retreat">
+        🚪 Retreat to {@view.town.name}
+      </.button>
     </div>
     <div :if={@fight} id="fight">
       <h3>The last fight</h3>

@@ -6,6 +6,8 @@ defmodule MiniLineage.Game.Player do
   alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Narrative, Narratives, Rules}
 
   @elf 2
+  # Rules §20: how long a character goes on not resting after it leaves the ground.
+  @disengage_ms 5_000
   @dark_elf 3
 
   defstruct name: nil,
@@ -23,7 +25,9 @@ defmodule MiniLineage.Game.Player do
             # Rules §23: what it carries, each `%{id, name, equipped}`. Stored in its own table.
             items: [],
             # Rules §25: each skill it knows, at the level it knows it.
-            skills: %{}
+            skills: %{},
+            # Rules §20: "engaged" while it hunts, then the UTC millisecond its disengaging ends.
+            combat: nil
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -227,6 +231,12 @@ defmodule MiniLineage.Game.Player do
     conditions = conditions(player)
     stats = stats(player, conditions)
 
+    if in_combat?(player),
+      do: [Constants.aura(:combat) | conditions],
+      else: resting_auras(player, conditions, stats)
+  end
+
+  defp resting_auras(player, conditions, stats) do
     healing =
       [{:hp_regen, player.health, stats.max_hp}, {:mp_regen, player.mp, stats.max_mp}]
       |> Enum.filter(fn {_key, now, max} -> now < max end)
@@ -238,7 +248,23 @@ defmodule MiniLineage.Game.Player do
     [Constants.aura(:resting) | conditions] ++ regenerating
   end
 
+  @doc "Rules §20: whether a character is engaged, or still disengaging, and so does not rest."
+  def in_combat?(%{combat: "engaged"}), do: true
+  def in_combat?(%{combat: until}) when is_integer(until), do: until > now_ms()
+  def in_combat?(_player), do: false
+
+  @doc "Rules §20: leaving the ground; resting resumes once the disengaging is over."
+  def disengage(%{combat: "engaged"} = player), do: %{player | combat: now_ms() + @disengage_ms}
+  def disengage(player), do: player
+
+  defp now_ms, do: DateTime.to_unix(Clock.now(), :millisecond)
+
   @doc "One 3-second tick of rules §11. Returns `{player, healed?}`."
+  def regenerate(%{combat: until} = player) when is_integer(until) do
+    # A disengaging that has run out is forgotten, and this tick rests.
+    if in_combat?(player), do: {player, false}, else: regenerate(%{player | combat: nil})
+  end
+
   def regenerate(player) do
     stats = stats(player)
 

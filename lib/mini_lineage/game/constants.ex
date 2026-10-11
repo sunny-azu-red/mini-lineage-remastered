@@ -63,6 +63,14 @@ defmodule MiniLineage.Game.Constants do
   # regenerates while a bar is short, at the rates `Player` fills in. Night and the perks are what
   # the time and the place put on it (rules §15 and §16), carrying the modifiers `Rules` gives them.
   @auras %{
+    combat: %{
+      id: "combat",
+      type: :aura,
+      emoji: "⚔️",
+      label: "In Combat",
+      about:
+        "Out on the hunting ground the body does not rest, and it begins to again only a few seconds after you are back in town."
+    },
     resting: %{
       id: "resting",
       type: :aura,

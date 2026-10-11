@@ -25,7 +25,8 @@ defmodule MiniLineage.Characters.Serde do
       "location" => p.location,
       "dead" => p.dead,
       "killer" => p.killer,
-      "skills" => p.skills
+      "skills" => p.skills,
+      "combat" => p.combat
     }
   end
 
@@ -47,7 +48,8 @@ defmodule MiniLineage.Characters.Serde do
       location: location(m["location"], m["race_id"]),
       dead: m["dead"] == true,
       killer: m["killer"],
-      skills: skills(m["skills"], m["race_id"], path(m["path"]))
+      skills: skills(m["skills"], m["race_id"], path(m["path"])),
+      combat: combat(m["combat"])
     }
   end
 
@@ -85,6 +87,10 @@ defmodule MiniLineage.Characters.Serde do
     do: %{Rules.first_skill(race_id, path).name => 1}
 
   defp skills(_none, _race_id, _path), do: %{}
+
+  defp combat("engaged"), do: "engaged"
+  defp combat(until) when is_integer(until), do: until
+  defp combat(_none), do: nil
 
   defp path("fighter"), do: :fighter
   defp path("mystic"), do: :mystic

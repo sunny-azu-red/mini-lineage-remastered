@@ -106,6 +106,7 @@ defmodule MiniLineageWeb.GameLive do
   defp requested_place(action, _uri, _player), do: {Atom.to_string(action), nil}
 
   defp enter(socket, {screen, town}) do
+    fresh? = socket.assigns.flash_fresh
     # A flash survives exactly one arrival, so an action that flashes and moves you does not clear
     # its own message.
     socket =
@@ -114,14 +115,16 @@ defmodule MiniLineageWeb.GameLive do
         else: assign(socket, game_flash: nil)
 
     socket
+    |> disengage_unless(screen == "hunt")
     |> follow_board(screen == "highscores")
     |> assign(
       screen: screen,
       town: town,
-      # A choice belongs to the screen it was made on, and so does the last fight.
+      # A choice belongs to the screen it was made on, and so does the last fight, unless the fight
+      # is what brought the character there.
       picked: nil,
       picks: %{},
-      fight: nil,
+      fight: if(screen == "hunt" and fresh?, do: socket.assigns.fight),
       dev_name:
         if(screen == "start" and socket.assigns.debug, do: Math.random_element(@dev_names)),
       page_title: Screens.page_title(screen, socket.assigns.view),
@@ -132,6 +135,18 @@ defmodule MiniLineageWeb.GameLive do
       error_detail: if(screen == "error", do: socket.assigns.error_detail)
     )
   end
+
+  # Rules §20: leaving the ground by any road (the banner, a link) disengages as retreating does.
+  defp disengage_unless(socket, true), do: socket
+
+  defp disengage_unless(%{assigns: %{player: %{combat: "engaged"}}} = socket, false) do
+    {_, player} =
+      Characters.mutate(socket.assigns.session_id, &{MiniLineage.Game.Player.disengage(&1), :ok})
+
+    assign(socket, player: player, view: Snapshot.build(player))
+  end
+
+  defp disengage_unless(socket, false), do: socket
 
   # Followed only while the Halls are the screen, and subscribed BEFORE they are read, so a refresh
   # in between arrives as a push. Already followed, the pushes have kept every filter current.
@@ -172,7 +187,12 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  @inner ~w(hunt trader trainer) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
+  @inner ~w(trader trainer) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
+
+  # Rules §20: going out to the ground is the first fight, as the legacy Battleground was.
+  def handle_event("navigate", %{"place" => "hunt"}, socket),
+    do:
+      {:noreply, socket |> apply_action(&Actions.hunt/1, &{"hunt", &1.location}) |> keep_fight()}
 
   def handle_event("navigate", %{"place" => place}, socket) when place in @inner,
     do: {:noreply, walk(socket, {place, socket.assigns.town})}
@@ -229,17 +249,11 @@ defmodule MiniLineageWeb.GameLive do
 
   # Rules §20: one click, one fight, staying on the ground unless it ends the run. A fight the hunter
   # walks away from is written on the ground's page; one that ends the run keeps its alert.
-  def handle_event("hunt", _params, socket) do
-    socket = apply_action(socket, &Actions.hunt/1, nil)
+  def handle_event("hunt", _params, socket),
+    do: {:noreply, socket |> apply_action(&Actions.hunt/1, nil) |> keep_fight()}
 
-    case socket.assigns do
-      %{screen: "hunt", game_flash: %{log: _} = fight, view: %{started: true}} ->
-        {:noreply, assign(socket, fight: fight, game_flash: nil)}
-
-      _ ->
-        {:noreply, socket}
-    end
-  end
+  def handle_event("retreat", _params, socket),
+    do: {:noreply, apply_action(socket, &Actions.retreat/1, &{"town", &1.location})}
 
   # The Gatekeeper's empty choice is the way back into town.
   def handle_event("travel", %{"to" => ""}, socket),
@@ -296,6 +310,12 @@ defmodule MiniLineageWeb.GameLive do
     |> assign(player: player, view: Snapshot.build(player), game_flash: nil)
     |> go({"start", nil})
   end
+
+  # A fight the hunter lives through is written on the ground's page rather than in an alert.
+  defp keep_fight(%{assigns: %{game_flash: %{log: _} = fight, view: %{started: true}}} = socket),
+    do: assign(socket, fight: fight, game_flash: nil)
+
+  defp keep_fight(socket), do: socket
 
   # ----------------------------------------------------------------- pushes
 

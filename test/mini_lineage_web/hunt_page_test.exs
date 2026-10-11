@@ -34,16 +34,41 @@ defmodule MiniLineageWeb.HuntPageTest do
     end)
   end
 
-  test "the village's way out leads to its ground, at its own address, with the sidebar" do
-    {view, _session, _conn} = human(build_conn())
+  test "going out to the ground is the first fight, written on the ground's page, in combat" do
+    {view, session, _conn} = human(build_conn())
+    pin(session, 0.0)
 
     assert has_element?(view, ~s(#travel-form option[value="hunt"]), "Obelisk of Victory")
     view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
 
     assert_patch(view, "/talking-island/obelisk-of-victory")
-    assert has_element?(view, "#screen[data-screen=hunt]")
-    assert has_element?(view, "#hunt-button")
+    assert has_element?(view, "#fight-log li", "You meet")
     assert has_element?(view, "#sidebar")
+    assert has_element?(view, "#effects [data-effect-id=combat]")
+    assert stored(session).combat == "engaged"
+  end
+
+  test "retreating goes back to town, disengaging" do
+    {_view, session, conn} = human(build_conn())
+    pin(session, 0.0)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    view |> element("#hunt-button") |> render_click()
+
+    view |> element("#retreat-button") |> render_click()
+
+    assert_patch(view, "/talking-island")
+    assert is_integer(stored(session).combat)
+  end
+
+  test "and so does leaving the ground any other way" do
+    {_view, session, conn} = human(build_conn())
+    pin(session, 0.0)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    view |> element("#hunt-button") |> render_click()
+
+    view |> element("#header-link") |> render_click()
+
+    assert is_integer(stored(session).combat)
   end
 
   test "a character cannot hunt another village's ground" do
