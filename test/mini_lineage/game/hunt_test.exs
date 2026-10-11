@@ -52,12 +52,12 @@ defmodule MiniLineage.Game.HuntTest do
 
   describe "the rounds" do
     test "with every roll landing, a Human Fighter opens with Power Strike and finishes with blows" do
-      # 0.0 lands every blow as a critical, at the spread's low end: 47, then 14 and 14.
+      # 0.0 lands every blow as a critical, at the spread's low end: 51, then 21.
       Rng.put_source(fn -> 0.0 end)
       result = fight(character(0, :fighter), "Young Keltir")
 
       assert result.foe == 0
-      assert result.rounds == 3
+      assert result.rounds == 2
       assert result.uses == 1
       assert result.critical
       assert result.mp == character(0, :fighter).mp - 10
@@ -81,14 +81,22 @@ defmodule MiniLineage.Game.HuntTest do
       assert result.rounds == Hunt.max_rounds()
     end
 
-    test "with every blow missing, Power Strike still lands, once its reuse has run out" do
-      # 58 a strike at the spread's top; 13,118ms of reuse is the 9th round.
+    test "with every blow missing, Power Strike still lands, and alone fells a Young Keltir" do
+      # 62 at the spread's top, the keltir's whole HP.
       Rng.put_source(fn -> 0.9999 end)
       result = fight(character(0, :fighter), "Young Keltir")
 
       assert result.foe == 0
-      assert result.uses == 2
-      assert result.rounds == 9
+      assert result.uses == 1
+      assert result.rounds == 1
+    end
+
+    test "without its weapon in hand a skill is never used" do
+      Rng.put_source(fn -> 0.0 end)
+      fighter = character(0, :fighter)
+      bare = %{fighter | items: Enum.map(fighter.items, &%{&1 | equipped: false})}
+
+      assert fight(bare, "Young Keltir").uses == 0
     end
   end
 

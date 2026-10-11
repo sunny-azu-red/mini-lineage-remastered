@@ -168,10 +168,21 @@ defmodule MiniLineageWeb.Layouts do
         body_class="rows"
         collapsible
       >
+        <div
+          :for={item <- Enum.filter(@view.items, & &1.equipped)}
+          class="stat-row"
+          id={"worn-#{item.id}"}
+        >
+          <span class="stat-label">{item.slot |> Atom.to_string() |> String.capitalize()}</span>
+          <span class="stat-value">{item.name}</span>
+        </div>
         <div class="stat-row">
           <span class="stat-label">Adena</span>
           <span class="stat-value adena">🪙
           <Controls.figure key="adena" value={@view.adena} format={:short} /></span>
+        </div>
+        <div class="stat-row">
+          <.link id="open-inventory" patch={~p"/inventory"}>Open inventory</.link>
         </div>
       </Controls.panel>
     </div>

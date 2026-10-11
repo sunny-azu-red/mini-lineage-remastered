@@ -4,7 +4,7 @@ defmodule MiniLineage.Game.Actions do
   `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
   client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Player, Rules, Version}
+  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Player, Rules, Shop, Version}
 
   @errors %{
     already_started: "You already have a character.",
@@ -13,6 +13,13 @@ defmodule MiniLineage.Game.Actions do
     poor: "You cannot pay the Gatekeeper's fee.",
     last_level: "There is no level past the last.",
     no_ground: "There is nothing to hunt here.",
+    no_shop: "There is no shop here.",
+    unsold: "The shop does not sell that.",
+    cannot_afford: "You cannot afford that.",
+    full: "You cannot carry any more.",
+    not_carried: "You do not carry that.",
+    worn: "Take it off before you sell it.",
+    worthless: "The shop will not buy that.",
     spent: "You are too weak to hunt, and must rest first."
   }
 
@@ -127,6 +134,95 @@ defmodule MiniLineage.Game.Actions do
 
     {gained, {:ok, %{text: text, type: :info}}}
   end
+
+  @doc "Rules §24: buys an item from the shop of the village the character stands in."
+  def buy(player, name) do
+    item = Player.started?(player) && Rules.item?(name) && Rules.item(name)
+
+    cond do
+      !Player.started?(player) or !Rules.village?(player.location) ->
+        {player, {:error, :no_shop, @errors.no_shop}}
+
+      !item or !Shop.stocks?(player.location, item) ->
+        {player, {:error, :unsold, @errors.unsold}}
+
+      player.adena < Shop.price(item) ->
+        {player, {:error, :cannot_afford, @errors.cannot_afford}}
+
+      length(player.items) >= Rules.capacity() ->
+        {player, {:error, :full, @errors.full}}
+
+      true ->
+        cost = Shop.price(item)
+
+        player = %{
+          player
+          | adena: player.adena - cost,
+            items: player.items ++ [Player.new_item(name)]
+        }
+
+        text =
+          ~s(You buy the #{name} for <span class="adena">#{Format.number(cost)} Adena</span>.)
+
+        {player, {:ok, %{text: text, type: :info}}}
+    end
+  end
+
+  @doc "Rules §24: sells something carried, not worn, back to the village's shop for half its price."
+  def sell(player, id) do
+    entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
+
+    cond do
+      !Player.started?(player) or !Rules.village?(player.location) ->
+        {player, {:error, :no_shop, @errors.no_shop}}
+
+      !entry ->
+        {player, {:error, :not_carried, @errors.not_carried}}
+
+      entry.equipped ->
+        {player, {:error, :worn, @errors.worn}}
+
+      Shop.buyback(Rules.item(entry.name)) == 0 ->
+        {player, {:error, :worthless, @errors.worthless}}
+
+      true ->
+        paid = Shop.buyback(Rules.item(entry.name))
+        player = %{player | adena: player.adena + paid, items: List.delete(player.items, entry)}
+
+        text =
+          ~s(You sell the #{entry.name} for <span class="adena">#{Format.number(paid)} Adena</span>.)
+
+        {player, {:ok, %{text: text, type: :info}}}
+    end
+  end
+
+  @doc "Rules §23: puts on something carried, taking off whatever it displaces."
+  def equip(player, id) do
+    entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
+
+    if entry do
+      player = clamp_bars(%{player | items: Shop.put_on(player.items, id)})
+      {player, {:ok, %{text: "You put on the #{entry.name}.", type: :info}}}
+    else
+      {player, {:error, :not_carried, @errors.not_carried}}
+    end
+  end
+
+  @doc "Rules §23: takes off something worn, which stays carried."
+  def unequip(player, id) do
+    entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
+
+    if entry do
+      items = Enum.map(player.items, &if(&1.id == id, do: %{&1 | equipped: false}, else: &1))
+      player = clamp_bars(%{player | items: items})
+      {player, {:ok, %{text: "You take off the #{entry.name}.", type: :info}}}
+    else
+      {player, {:error, :not_carried, @errors.not_carried}}
+    end
+  end
+
+  # A robe taken off lowers Max MP (§23), and MP never stands above it.
+  defp clamp_bars(player), do: %{player | mp: min(player.mp, Player.stats(player).max_mp)}
 
   @doc "Debug builds only: Adena to try the Gatekeeper with, every time it is asked for."
   def dev_adena(player) do

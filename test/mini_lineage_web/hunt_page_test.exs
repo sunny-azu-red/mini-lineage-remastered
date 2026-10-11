@@ -72,7 +72,8 @@ defmodule MiniLineageWeb.HuntPageTest do
     {_view, session, conn} = human(build_conn())
     id = Characters.character_id(session)
     Characters.mutate(session, &{%{&1 | health: 1}, :ok})
-    pin(session, 0.5)
+    # 0.9 meets an Elder Keltir (90 HP), misses every blow and lets every one of its blows land.
+    pin(session, 0.9)
     {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
 
     view |> element("#hunt-button") |> render_click()

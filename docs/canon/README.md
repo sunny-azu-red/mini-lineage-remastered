@@ -122,6 +122,14 @@ where it has any.
   and no drops to sell, which is where most of Lineage II's Adena came from.
 - **The inventory keeps only the combat slots:** weapon, shield, head, chest, legs, gloves, feet,
   necklace, two earrings and two rings. No underwear, face or hair slots.
+- **Bows need no arrows.** In Lineage II every shot spent one, a miss included; here a bow only
+  draws and reloads (rules §10).
+- **Weapons keep their speed and critical but not their accuracy or damage spread.** Every blow
+  spreads ±10% (rules §13), and a Dagger's −3 Accuracy or a staff's +4 is left out.
+- **The Elven Fighter's kit carries a Short Bow in place of the Dagger,** so its Power Shot works from
+  the first fight.
+- **A shield blocks from any side, and never a spell.** Lineage II blocked only blows from the front,
+  three times as often against arrows, and aCis let a shield turn spells too.
 - **The inventory counts items and does not weigh them:** 80 slots, as for every non-Dwarf, with no
   weight limit and no load penalties.
 

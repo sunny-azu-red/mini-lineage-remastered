@@ -38,14 +38,15 @@ defmodule MiniLineage.Game.Formulas do
   def accuracy(dex, level), do: round(:math.sqrt(dex) * 6 + level)
   def evasion(dex, level), do: accuracy(dex, level)
 
-  # §9
-  def critical(dex), do: min(4 * bonus(:dex, dex), @caps.critical)
+  # §9, a weapon's critical in place of the bare hand's 4.
+  def critical(dex, base \\ 4), do: min(base * bonus(:dex, dex), @caps.critical)
   def magic_critical(wit), do: min(0.8 * bonus(:wit, wit), @caps.magic_critical)
 
-  # §10
-  def atk_spd(dex), do: min(trunc(300 * bonus(:dex, dex)), @caps.atk_spd)
+  # §10, a weapon's speed in place of the bare hand's 300.
+  def atk_spd(dex, speed \\ 300), do: min(trunc(speed * bonus(:dex, dex)), @caps.atk_spd)
   def cast_spd(wit), do: min(trunc(333 * bonus(:wit, wit)), @caps.cast_spd)
   def blows_per_round(atk_spd), do: atk_spd / 300
+  def shots_per_round(atk_spd), do: atk_spd / 610
   def casts_per_round(cast_spd), do: cast_spd / 333
 
   # §11, per 3-second tick out of combat.

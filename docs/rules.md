@@ -74,7 +74,8 @@ Each set starts at a value and gains a little more with every level:
 
 **grown = start + gain × (L − 1) + growth × (L − 1) × (L − 2) ÷ 2**
 
-**Max HP = grown HP × CON bonus**, and **Max MP = grown MP × MEN bonus**, both rounded down.
+**Max HP = grown HP × CON bonus**, and **Max MP = grown MP × MEN bonus**, both rounded down. A
+robe's MP (§23) is added to Max MP after that.
 
 | Set | HP start | HP gain | HP growth | MP start | MP gain | MP growth |
 |---|---|---|---|---|---|---|
@@ -92,21 +93,37 @@ Example: a Human Fighter grows to 327 HP by level 20, × 1.58 for CON 43 = **516
 
 ## 7. Power
 
-Each path starts with a power, a magic, a body and a mind. Anything added later, such as gear, adds
-to them.
+Each path starts bare-handed and unarmoured, with a power, a magic, a body and a mind. Gear (§23)
+takes their place piece by piece: a weapon's P.Atk and M.Atk take the place of power and magic, and
+each piece of armour or jewellery takes the place of its slot's share of the body or the mind.
 
 | Path | Power | Magic | Body | Mind |
 |---|---|---|---|---|
 | Fighter | 4 | 6 | 80 | 41 |
 | Mystic | 3 | 6 | 54 | 41 |
 
-- **P.Atk = power × STR bonus × level bonus**
-- **M.Atk = magic × INT bonus² × level bonus²**
-- **P.Def = body × level bonus**
-- **M.Def = mind × MEN bonus × level bonus**
+| Slot | Fighter body | Mystic body | Mind |
+|---|---|---|---|
+| Head | 12 | 12 | 0 |
+| Chest | 31 | 15 | 0 |
+| Legs | 18 | 8 | 0 |
+| Gloves | 8 | 8 | 0 |
+| Feet | 7 | 7 | 0 |
+| Necklace | 0 | 0 | 13 |
+| Earring | 0 | 0 | 9 |
+| Ring | 0 | 0 | 5 |
+
+There are two earrings and two rings, each with its own share. The last 4 of a body is never covered.
+
+- **P.Atk = (the weapon's P.Atk, or power) × STR bonus × level bonus**
+- **M.Atk = (the weapon's M.Atk, or magic) × INT bonus² × level bonus²**
+- **P.Def = body, each worn piece's P.Def in place of its slot's share, × level bonus**
+- **M.Def = mind, each worn piece's M.Def in place of its slot's share, × MEN bonus × level bonus**
 
 Example: a level 1 Human Fighter has P.Atk 4 × 1.20 × 0.90 = **4.32**, P.Def 80 × 0.90 = **72** and
-M.Def 41 × 1.28 × 0.90 = **47.2**. A level 1 Human Mystic has M.Atk 6 × 1.21² × 0.90² = **7.1**.
+M.Def 41 × 1.28 × 0.90 = **47.2**. A level 1 Human Mystic has M.Atk 6 × 1.21² × 0.90² = **7.1**. In
+its starting kit (§23) the Human Fighter has P.Atk 6 × 1.20 × 0.90 = **6.48** from its Squire's
+Sword, and P.Def (80 − 31 − 18 + 33 + 20) × 0.90 = **75.6** from its Squire's Shirt and Pants.
 
 ## 8. Accuracy and Evasion
 
@@ -116,20 +133,25 @@ Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**.
 
 ## 9. Critical
 
-- **Critical % = 4 × DEX bonus**, at most 50%.
+- **Critical % = the weapon's critical (4 bare-handed) × DEX bonus**, at most 50%.
 - **Magic Critical % = 0.8 × WIT bonus**, at most 20%.
 
-Example: a Human Fighter's DEX 30 gives 4 × 1.10 = **4.4%**. A Human Mystic's WIT 20 gives
+Example: a Human Fighter's DEX 30 gives 4 × 1.10 = **4.4%** bare-handed and 8 × 1.10 = **8.8%** with
+a sword. A Human Mystic's WIT 20 gives
 0.8 × 1.00 = **0.8%**.
 
 ## 10. Speed
 
-- **Atk. Spd. = 300 × DEX bonus**, rounded down, at most 1500.
+- **Atk. Spd. = the weapon's speed (300 bare-handed) × DEX bonus**, rounded down, at most 1500.
 - **Casting Spd. = 333 × WIT bonus**, rounded down, at most 1999.
 - In a fight, a character strikes **Atk. Spd. ÷ 300** times a round and casts **Casting Spd. ÷ 333**
-  times a round. A fraction carries over to the next round.
+  times a round. A bow, which draws and then reloads, shoots **Atk. Spd. ÷ 610** times a round
+  (Lineage II's 500,000 + 517,500 ÷ Atk. Spd. milliseconds a shot). A fraction carries over to the
+  next round.
 
-Example: a Human Fighter's DEX 30 gives Atk. Spd. **330**, so **1.1** blows a round.
+Example: a Human Fighter's DEX 30 gives Atk. Spd. **330** bare-handed, so **1.1** blows a round, and
+379 × 1.10 = **416** with a sword. An Elven Fighter's DEX 35 draws a Short Bow at 293 × 1.15 =
+**336**, so **0.55** shots a round.
 
 ## 11. Resting
 
@@ -407,10 +429,10 @@ Monsters cast these:
 
 A monster's drain heals it 20% of what the character lost.
 
-Example: a level 1 Human Fighter (P.Atk 4.32) strikes a Young Keltir (P.Def 39) with Power Strike
-for 70 × (4.32 + 25) ÷ 39 = **52.6** before the ±10%, where a blow does **7.8**. A Dark Fighter's
-DEX 34 lands Mortal Blow 40 × 1.14 = **45.6%** of the time. A Human Fighter's Atk. Spd. 330 rests
-Power Strike 13,000 × 333 ÷ 330 = **13,118** milliseconds.
+Example: a level 1 Human Fighter with its Squire's Sword (P.Atk 6.48) strikes a Young Keltir (P.Def
+39) with Power Strike for 70 × (6.48 + 25) ÷ 39 = **56.5** before the ±10%, where a blow does
+**11.6**. A Dark Fighter's DEX 34 lands Mortal Blow 40 × 1.14 = **45.6%** of the time. The Human
+Fighter's Atk. Spd. 416 rests Power Strike 13,000 × 333 ÷ 416 = **10,406** milliseconds.
 
 ## 20. The hunt
 
@@ -464,3 +486,138 @@ Sword 156,400.
 
 Example: a Young Keltir carrying 10 Adena pays **200**.
 
+## 23. Gear
+
+A character carries up to 80 items and wears at most one in each slot: weapon, shield, head, chest,
+legs, gloves, feet, necklace, two earrings and two rings. A two-handed weapon (a bow, a staff, fists,
+a two-handed sword or blunt, a polearm) takes the shield's hand, so putting one on takes the shield
+off, and the other way round. Nothing is weighed.
+
+Every set starts with its kit, the wearable part worn:
+
+| Kit | Worn | Carried |
+|---|---|---|
+| Human Fighter | Squire's Sword, Squire's Shirt, Squire's Pants | Dagger |
+| Elven Fighter | Short Bow, Squire's Shirt, Squire's Pants | Squire's Sword |
+| Dark Fighter | Dagger, Squire's Shirt, Squire's Pants | Squire's Sword |
+| Orc Fighter | Training Gloves, Squire's Shirt, Squire's Pants | Squire's Sword |
+| Human Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
+| Elven Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
+| Dark Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
+| Orc Mystic | Training Gloves, Apprentice's Tunic, Apprentice's Stockings | |
+
+- **A first skill (§19) needs its weapon:** Power Strike a sword or a blunt, Power Shot a bow, Mortal
+  Blow a dagger, Iron Punch fists. Without it the character only swings. Spells need none.
+- **A shield** catches a monster's blow at its block rate × the DEX bonus, as a percentage. A catch
+  adds the shield's defence to P.Def for that blow, and one catch in twenty is perfect and takes only
+  1. Spells pass a shield by.
+- **A robe's MP** is added to Max MP (§6).
+
+Example: a Human Fighter (DEX 30) behind a Small Shield (defence 56, block 20) catches 20 × 1.10 =
+**22%** of the blows aimed at it. A Human Mystic's starting robes add 19 + 10 = **29** Max MP.
+
+## 24. Village shops
+
+Every starting village sells the items marked village below, and Orc Village those marked
+orc-village too, each at its price plus 15% tax, rounded down. A shop buys back anything it sells
+for half its price, rounded down. A starting kit is worth nothing to a shop and is never bought.
+
+| Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | P.Def | M.Def | Shield | Block | MP | Price | Sold |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Apprentice's Wand | weapon | weapon | 1 | blunt | 5 | 7 | 379 | 4 |  |  |  |  |  | 138 | starting |
+| Club | weapon | weapon | 1 | blunt | 8 | 6 | 379 | 4 |  |  |  |  |  | 768 | village |
+| Apprentice's Rod | weapon | weapon | 1 | blunt | 6 | 8 | 379 | 4 |  |  |  |  |  | 768 | village |
+| Heavy Chisel | weapon | weapon | 1 | blunt | 10 | 8 | 379 | 4 |  |  |  |  |  | 8070 | village |
+| Mace | weapon | weapon | 1 | blunt | 11 | 9 | 379 | 4 |  |  |  |  |  | 12500 | village |
+| Sickle | weapon | weapon | 1 | blunt | 12 | 9 | 379 | 4 |  |  |  |  |  | 18500 | village |
+| Dwarven Mace | weapon | weapon | 1 | blunt | 17 | 12 | 379 | 4 |  |  |  |  |  | 54100 | village |
+| Short Bow | weapon | weapon | 2 | bow | 16 | 6 | 293 | 12 |  |  |  |  |  | 768 | village |
+| Bow | weapon | weapon | 2 | bow | 23 | 9 | 293 | 12 |  |  |  |  |  | 12500 | village |
+| Hunting Bow | weapon | weapon | 2 | bow | 34 | 12 | 293 | 12 |  |  |  |  |  | 54100 | village |
+| Forest Bow | weapon | weapon | 2 | bow | 49 | 17 | 293 | 12 |  |  |  |  |  | 136000 | village |
+| Dagger | weapon | weapon | 1 | dagger | 5 | 5 | 433 | 12 |  |  |  |  |  | 138 | starting |
+| Bone Dagger | weapon | weapon | 1 | dagger | 7 | 6 | 433 | 12 |  |  |  |  |  | 768 | village |
+| Knife | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 |  |  |  |  |  | 12500 | village |
+| Doom Dagger | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 |  |  |  |  |  | 12500 | village |
+| Dirk | weapon | weapon | 1 | dagger | 15 | 12 | 433 | 12 |  |  |  |  |  | 54100 | village |
+| Throwing Knife | weapon | weapon | 1 | dagger | 21 | 17 | 433 | 12 |  |  |  |  |  | 136000 | village |
+| Training Gloves | weapon | weapon | 2 | fists | 7 | 5 | 325 | 4 |  |  |  |  |  | 138 | starting |
+| Spiked Gloves | weapon | weapon | 2 | fists | 10 | 6 | 325 | 4 |  |  |  |  |  | 768 | orc-village |
+| Iron Gloves | weapon | weapon | 2 | fists | 13 | 9 | 325 | 4 |  |  |  |  |  | 12500 | orc-village |
+| Fox Claw Gloves | weapon | weapon | 2 | fists | 21 | 12 | 325 | 4 |  |  |  |  |  | 54100 | orc-village |
+| Cestus | weapon | weapon | 2 | fists | 29 | 17 | 325 | 4 |  |  |  |  |  | 136000 | orc-village |
+| Short Spear | weapon | weapon | 2 | pole | 24 | 17 | 325 | 8 |  |  |  |  |  | 136000 | village |
+| Buffalo's Horn | weapon | weapon | 1 | staff | 6 | 8 | 379 | 8 |  |  |  |  |  | 768 | village |
+| Apprentice's Spellbook | weapon | weapon | 1 | staff | 9 | 12 | 379 | 8 |  |  |  |  |  | 12500 | village |
+| Relic of The Saints | weapon | weapon | 1 | staff | 19 | 22 | 379 | 8 |  |  |  |  |  | 136000 | village |
+| Squire's Sword | weapon | weapon | 1 | sword | 6 | 5 | 379 | 8 |  |  |  |  |  | 138 | starting |
+| Short Sword | weapon | weapon | 1 | sword | 8 | 6 | 379 | 8 |  |  |  |  |  | 768 | village |
+| Broadsword | weapon | weapon | 1 | sword | 11 | 9 | 379 | 8 |  |  |  |  |  | 12500 | village |
+| Gladius | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 |  |  |  |  |  | 54100 | village |
+| Orcish Sword | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 |  |  |  |  |  | 54100 | village |
+| Handmade Sword | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 |  |  |  |  |  | 54100 | village |
+| Long Sword | weapon | weapon | 1 | sword | 24 | 17 | 379 | 8 |  |  |  |  |  | 136000 | village |
+| Willow Staff | weapon | weapon | 2 | two-handed blunt | 11 | 12 | 325 | 4 |  |  |  |  |  | 12500 | village |
+| Cedar Staff | weapon | weapon | 2 | two-handed blunt | 16 | 16 | 325 | 4 |  |  |  |  |  | 54100 | village |
+| Journeyman's Staff | weapon | weapon | 2 | two-handed blunt | 23 | 22 | 325 | 4 |  |  |  |  |  | 136000 | village |
+| Brandish | weapon | weapon | 2 | two-handed sword | 21 | 12 | 325 | 8 |  |  |  |  |  | 54100 | village |
+| Zweihander | weapon | weapon | 2 | two-handed sword | 38 | 21 | 325 | 8 |  |  |  |  |  | 244000 | village |
+| Leather Shield | shield | shield |  |  |  |  |  |  |  |  | 47 | 20 |  | 39 | village |
+| Small Shield | shield | shield |  |  |  |  |  |  |  |  | 56 | 20 |  | 638 | village |
+| Buckler | shield | shield |  |  |  |  |  |  |  |  | 67 | 20 |  | 2780 | village |
+| Round Shield | shield | shield |  |  |  |  |  |  |  |  | 79 | 20 |  | 7110 | village |
+| Cloth Cap | armour | head |  | none |  |  |  |  | 13 |  |  |  |  | 55 | village |
+| Leather Cap | armour | head |  | none |  |  |  |  | 16 |  |  |  |  | 911 | village |
+| Wooden Helmet | armour | head |  | none |  |  |  |  | 19 |  |  |  |  | 3980 | village |
+| Leather Helmet | armour | head |  | none |  |  |  |  | 23 |  |  |  |  | 10200 | village |
+| Squire's Shirt | armour | chest |  | light |  |  |  |  | 33 |  |  |  |  | 26 | starting |
+| Shirt | armour | chest |  | light |  |  |  |  | 36 |  |  |  |  | 147 | village |
+| Leather Shirt | armour | chest |  | light |  |  |  |  | 43 |  |  |  |  | 2430 | village |
+| Wooden Breastplate | armour | chest |  | light |  |  |  |  | 47 |  |  |  |  | 7960 | village |
+| Cotton Shirt | armour | chest |  | light |  |  |  |  | 50 |  |  |  |  | 20300 | village |
+| Bone Breastplate | armour | chest |  | light |  |  |  |  | 50 |  |  |  |  | 20300 | village |
+| Apprentice's Tunic | armour | chest |  | magic |  |  |  |  | 17 |  |  |  | 19 | 26 | starting |
+| Tunic | armour | chest |  | magic |  |  |  |  | 18 |  |  |  | 24 | 147 | village |
+| Cotton Tunic | armour | chest |  | magic |  |  |  |  | 21 |  |  |  | 38 | 2430 | village |
+| Feriotic Tunic | armour | chest |  | magic |  |  |  |  | 21 |  |  |  | 38 | 2430 | village |
+| Leather Tunic | armour | chest |  | magic |  |  |  |  | 25 |  |  |  | 52 | 7960 | village |
+| Tunic of Devotion | armour | chest |  | magic |  |  |  |  | 30 |  |  |  | 67 | 20300 | village |
+| Squire's Pants | armour | legs |  | light |  |  |  |  | 20 |  |  |  |  | 6 | starting |
+| Pants | armour | legs |  | light |  |  |  |  | 22 |  |  |  |  | 92 | village |
+| Leather Pants | armour | legs |  | light |  |  |  |  | 27 |  |  |  |  | 1520 | village |
+| Hard Leather Pants | armour | legs |  | light |  |  |  |  | 29 |  |  |  |  | 4970 | village |
+| Wooden Gaiters | armour | legs |  | light |  |  |  |  | 29 |  |  |  |  | 4970 | village |
+| Cotton Pants | armour | legs |  | light |  |  |  |  | 32 |  |  |  |  | 12700 | village |
+| Bone Gaiters | armour | legs |  | light |  |  |  |  | 32 |  |  |  |  | 12700 | village |
+| Apprentice's Stockings | armour | legs |  | magic |  |  |  |  | 10 |  |  |  | 10 | 6 | starting |
+| Stockings | armour | legs |  | magic |  |  |  |  | 11 |  |  |  | 15 | 92 | village |
+| Cotton Stockings | armour | legs |  | magic |  |  |  |  | 13 |  |  |  | 23 | 1520 | village |
+| Feriotic Stockings | armour | legs |  | magic |  |  |  |  | 13 |  |  |  | 23 | 1520 | village |
+| Leather Stockings | armour | legs |  | magic |  |  |  |  | 16 |  |  |  | 33 | 4970 | village |
+| Stockings of Devotion | armour | legs |  | magic |  |  |  |  | 19 |  |  |  | 42 | 12700 | village |
+| Short Gloves | armour | gloves |  | none |  |  |  |  | 9 |  |  |  |  | 37 | village |
+| Short Leather Gloves | armour | gloves |  | none |  |  |  |  | 11 |  |  |  |  | 607 | village |
+| Gloves | armour | gloves |  | none |  |  |  |  | 13 |  |  |  |  | 2650 | village |
+| Leather Gloves | armour | gloves |  | none |  |  |  |  | 15 |  |  |  |  | 6770 | village |
+| Apprentice's Shoes | armour | feet |  | none |  |  |  |  | 8 |  |  |  |  | 7 | village |
+| Cloth Shoes | armour | feet |  | none |  |  |  |  | 9 |  |  |  |  | 37 | village |
+| Leather Sandals | armour | feet |  | none |  |  |  |  | 9 |  |  |  |  | 37 | village |
+| Crude Leather Shoes | armour | feet |  | none |  |  |  |  | 11 |  |  |  |  | 607 | village |
+| Cotton Shoes | armour | feet |  | none |  |  |  |  | 11 |  |  |  |  | 607 | village |
+| Leather Shoes | armour | feet |  | none |  |  |  |  | 13 |  |  |  |  | 2650 | village |
+| Low Boots | armour | feet |  | none |  |  |  |  | 15 |  |  |  |  | 6770 | village |
+| Necklace of Magic | jewellery | necklace |  |  |  |  |  |  |  | 15 |  |  |  | 66 | village |
+| Necklace of Knowledge | jewellery | necklace |  |  |  |  |  |  |  | 18 |  |  |  | 1080 | village |
+| Necklace of Anguish | jewellery | necklace |  |  |  |  |  |  |  | 21 |  |  |  | 4680 | village |
+| Necklace of Wisdom | jewellery | necklace |  |  |  |  |  |  |  | 25 |  |  |  | 11900 | village |
+| Apprentice's Earring | jewellery | earring |  |  |  |  |  |  |  | 11 |  |  |  | 49 | village |
+| Mystic's Earring | jewellery | earring |  |  |  |  |  |  |  | 13 |  |  |  | 811 | village |
+| Earring of Strength | jewellery | earring |  |  |  |  |  |  |  | 16 |  |  |  | 3510 | village |
+| Earring of Wisdom | jewellery | earring |  |  |  |  |  |  |  | 16 |  |  |  | 3510 | village |
+| Cat's Eye Earring | jewellery | earring |  |  |  |  |  |  |  | 19 |  |  |  | 8890 | village |
+| Magic Ring | jewellery | ring |  |  |  |  |  |  |  | 7 |  |  |  | 33 | village |
+| Ring of Knowledge | jewellery | ring |  |  |  |  |  |  |  | 9 |  |  |  | 540 | village |
+| Ring of Anguish | jewellery | ring |  |  |  |  |  |  |  | 11 |  |  |  | 2340 | village |
+| Ring of Wisdom | jewellery | ring |  |  |  |  |  |  |  | 12 |  |  |  | 5920 | village |
+
+Example: a Broadsword (12,500) costs 12,500 × 1.15 = **14,375** and sells back for **6,250**.

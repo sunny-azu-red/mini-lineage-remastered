@@ -41,7 +41,8 @@ defmodule MiniLineage.Game.Player do
           experience: 0,
           sp: 0,
           adena: 0,
-          location: Rules.hometown(race.id)
+          location: Rules.hometown(race.id),
+          items: kit(race.id, path)
       })
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
@@ -97,27 +98,59 @@ defmodule MiniLineage.Game.Player do
     path = Rules.path(player.path)
     a = set.attributes
     level = level(player)
-    atk_spd = Formulas.atk_spd(a.dex)
+    worn = worn(player)
+    weapon = Enum.find(worn, &(&1.kind == :weapon))
+    shield = Enum.find(worn, &(&1.kind == :shield))
+    atk_spd = Formulas.atk_spd(a.dex, (weapon && weapon.atk_spd) || 300)
     cast_spd = Formulas.cast_spd(a.wit)
+    bow? = weapon != nil and weapon.type == "bow"
 
     Map.merge(a, %{
       max_hp: Formulas.max_hp(Formulas.grown(set.hp, level), a.con),
-      max_mp: Formulas.max_mp(Formulas.grown(set.mp, level), a.men),
-      p_atk: Formulas.p_atk(path.power, a.str, level),
-      m_atk: Formulas.m_atk(path.magic, a.int, level),
-      p_def: Formulas.p_def(path.body, level),
-      m_def: Formulas.m_def(path.mind, a.men, level),
+      max_mp:
+        Formulas.max_mp(Formulas.grown(set.mp, level), a.men) + Enum.sum_by(worn, &(&1.mp || 0)),
+      p_atk: Formulas.p_atk((weapon && weapon.p_atk) || path.power, a.str, level),
+      m_atk: Formulas.m_atk((weapon && weapon.m_atk) || path.magic, a.int, level),
+      p_def: Formulas.p_def(covered(path.body, worn, player.path, :p_def), level),
+      m_def: Formulas.m_def(covered(path.mind, worn, :mind, :m_def), a.men, level),
       accuracy: Formulas.accuracy(a.dex, level),
       evasion: Formulas.evasion(a.dex, level),
-      critical: Formulas.critical(a.dex),
+      critical: Formulas.critical(a.dex, (weapon && weapon.critical) || 4),
       magic_critical: Formulas.magic_critical(a.wit),
       atk_spd: atk_spd,
       cast_spd: cast_spd,
-      blows_per_round: Formulas.blows_per_round(atk_spd),
+      blows_per_round:
+        if(bow?, do: Formulas.shots_per_round(atk_spd), else: Formulas.blows_per_round(atk_spd)),
       casts_per_round: Formulas.casts_per_round(cast_spd),
       hp_regen: Formulas.hp_regen(level, a.con),
-      mp_regen: Formulas.mp_regen(level, a.men)
+      mp_regen: Formulas.mp_regen(level, a.men),
+      weapon: weapon,
+      shield: shield
     })
+  end
+
+  # Rules §23: the set's kit, its wearable part worn.
+  defp kit(race_id, path) do
+    {worn, carried} = Rules.kit(race_id, path)
+    Enum.map(worn, &new_item(&1, true)) ++ Enum.map(carried, &new_item(&1, false))
+  end
+
+  @doc "An item picked up: a fresh id, the item's name, and whether it is on."
+  def new_item(name, equipped \\ false),
+    do: %{id: MiniLineage.Characters.Store.new_item_id(), name: name, equipped: equipped}
+
+  @doc "Rules §23: the items a character has on, as `Rules` gives them."
+  def worn(player),
+    do: for(%{equipped: true, name: name} <- player.items || [], do: Rules.item(name))
+
+  # Rules §7: what is left of the body or mind once each worn piece takes its slot's share.
+  defp covered(total, worn, share_key, stat) do
+    Enum.reduce(worn, total, fn item, acc ->
+      case Map.get(item, stat) do
+        nil -> acc
+        value -> acc - Rules.share(item.slot)[share_key] + value
+      end
+    end)
   end
 
   @doc "Both bars to the top, as a new character has them."

@@ -7,11 +7,15 @@ defmodule MiniLineageWeb.Paths do
     {"races", "/races"},
     {"error", "/error"},
     {"character", "/character"},
-    {"highscores", "/highscores"}
+    {"highscores", "/highscores"},
+    {"inventory", "/inventory"}
   ]
 
   @doc "The slug of every town the router answers, each with its Gatekeeper beside it."
   def towns, do: for(town <- Rules.towns(), town.open?, do: town.slug)
+
+  @doc "The starting villages, each with its shop (rules §24)."
+  def villages, do: for(town <- towns(), Rules.village?(town), do: town)
 
   @doc "The towns with a hunting ground outside them (rules §17)."
   def hunting_towns, do: for(town <- towns(), Rules.ground_of(town), do: town)
@@ -25,6 +29,8 @@ defmodule MiniLineageWeb.Paths do
   """
   def for_screen({"town", slug}) when is_binary(slug), do: "/#{slug}"
   def for_screen({"gatekeeper", slug}) when is_binary(slug), do: "/#{slug}/gatekeeper"
+
+  def for_screen({"trader", slug}) when is_binary(slug), do: "/#{slug}/trader"
 
   def for_screen({"hunt", slug}) when is_binary(slug),
     do: "/#{slug}/#{Rules.ground_of(slug).slug}"

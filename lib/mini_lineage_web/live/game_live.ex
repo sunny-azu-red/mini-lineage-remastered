@@ -89,8 +89,9 @@ defmodule MiniLineageWeb.GameLive do
   defp requested_place(:root, _uri, player),
     do: if(Player.started?(player), do: {"town", player.location}, else: {"start", nil})
 
-  defp requested_place(action, uri, _player) when action in [:town, :gatekeeper, :hunt],
-    do: {Atom.to_string(action), Paths.town_of(uri)}
+  defp requested_place(action, uri, _player)
+       when action in [:town, :gatekeeper, :hunt, :trader],
+       do: {Atom.to_string(action), Paths.town_of(uri)}
 
   defp requested_place(:highscores, uri, _player), do: {"highscores", Paths.lineage_of(uri)}
 
@@ -156,10 +157,23 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  def handle_event("navigate", %{"place" => "hunt"}, socket),
-    do: {:noreply, walk(socket, {"hunt", socket.assigns.town})}
+  def handle_event("navigate", %{"place" => place}, socket) when place in ~w(hunt trader),
+    do: {:noreply, walk(socket, {place, socket.assigns.town})}
 
   def handle_event("navigate", _params, socket), do: {:noreply, socket}
+
+  # Rules §23 and §24: what a character carries, bought, sold, put on and taken off where it stands.
+  def handle_event("buy", %{"item" => name}, socket),
+    do: {:noreply, apply_action(socket, &Actions.buy(&1, name), nil)}
+
+  def handle_event("sell", %{"id" => id}, socket),
+    do: {:noreply, apply_action(socket, &Actions.sell(&1, id), nil)}
+
+  def handle_event("equip", %{"id" => id}, socket),
+    do: {:noreply, apply_action(socket, &Actions.equip(&1, id), nil)}
+
+  def handle_event("unequip", %{"id" => id}, socket),
+    do: {:noreply, apply_action(socket, &Actions.unequip(&1, id), nil)}
 
   # Rules §20: one click, one fight, staying on the ground unless it ends the run.
   def handle_event("hunt", _params, socket),

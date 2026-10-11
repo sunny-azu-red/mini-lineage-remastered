@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.RulesTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Clock, Constants, Formulas, Hunt, Math, Player, Rng, Rules}
+  alias MiniLineage.Game.{Clock, Constants, Formulas, Hunt, Math, Player, Rng, Rules, Shop}
 
   @rules File.read!("docs/rules.md")
 
@@ -230,6 +230,112 @@ defmodule MiniLineage.Game.RulesTest do
       for {_, m} <- Rules.monsters(), spell <- m.spells, do: Rules.monster_spell(spell)
     end
 
+    test "§7 each slot's share of the body and the mind, adding up to what each path starts with" do
+      rows = table("Slot")
+
+      for [slot, fighter, mystic, mind] <- rows do
+        share = Rules.share(slot |> String.downcase() |> String.to_existing_atom())
+
+        assert [share.fighter, share.mystic, share.mind] ==
+                 Enum.map([fighter, mystic, mind], &trunc(number(&1)))
+      end
+
+      # Two earrings and two rings, and 4 of a body never covered.
+      total = fn key ->
+        Enum.sum(
+          for {slot, share} <- Rules.shares(),
+              do: share[key] * if(slot in [:earring, :ring], do: 2, else: 1)
+        )
+      end
+
+      assert total.(:fighter) + 4 == Rules.path(:fighter).body
+      assert total.(:mystic) + 4 == Rules.path(:mystic).body
+      assert total.(:mind) == Rules.path(:fighter).mind
+    end
+
+    test "§23 every set's kit, the wearable part worn, every piece an item" do
+      rows = table("Kit")
+      assert length(rows) == 8
+
+      for [set, worn, carried] <- rows do
+        %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
+        names = fn cell -> String.split(cell, ", ", trim: true) end
+        assert Rules.kit(race, path) == {names.(worn), names.(carried)}, set
+        for name <- names.(worn) ++ names.(carried), do: assert(Rules.item?(name), name)
+      end
+    end
+
+    test "§24 every item, whole, and no other" do
+      rows = table("Item")
+      assert length(rows) == map_size(Rules.items())
+
+      cell = fn
+        "" -> nil
+        v -> trunc(number(v))
+      end
+
+      for [
+            name,
+            kind,
+            slot,
+            hands,
+            type,
+            p_atk,
+            m_atk,
+            atk_spd,
+            critical,
+            p_def,
+            m_def,
+            shield,
+            block,
+            mp,
+            price,
+            sold
+          ] <- rows do
+        item = Rules.item(name)
+
+        assert [
+                 Atom.to_string(item.kind),
+                 Atom.to_string(item.slot),
+                 item.type || "",
+                 Atom.to_string(item.sold)
+               ] ==
+                 [kind, slot, type, sold],
+               name
+
+        assert [
+                 item.hands,
+                 item.p_atk,
+                 item.m_atk,
+                 item.atk_spd,
+                 item.critical,
+                 item.p_def,
+                 item.m_def,
+                 item.shield_def,
+                 item.shield_rate,
+                 item.mp,
+                 item.price
+               ] ==
+                 Enum.map(
+                   [
+                     hands,
+                     p_atk,
+                     m_atk,
+                     atk_spd,
+                     critical,
+                     p_def,
+                     m_def,
+                     shield,
+                     block,
+                     mp,
+                     price
+                   ],
+                   cell
+                 ),
+               name
+      end
+    end
+
     test "§12 the EXP for every level, 1 to 80" do
       written =
         table("Levels")
@@ -365,12 +471,12 @@ defmodule MiniLineage.Game.RulesTest do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
       stats = Player.stats(fighter)
-      assert_in_delta stats.p_atk, 4.32, 1.0e-9
-      assert_in_delta Hunt.skill_damage(stats.p_atk, 25, 39, 1.0), 52.6, 0.05
-      assert_in_delta Formulas.physical_damage(stats.p_atk, 39), 7.8, 0.05
+      assert_in_delta stats.p_atk, 6.48, 1.0e-9
+      assert_in_delta Hunt.skill_damage(stats.p_atk, 25, 39, 1.0), 56.5, 0.05
+      assert_in_delta Formulas.physical_damage(stats.p_atk, 39), 11.6, 0.05
       assert_in_delta Hunt.blow_chance(34), 45.6, 1.0e-9
-      assert stats.atk_spd == 330
-      assert round(13_000 * 333 / 330) == 13_118
+      assert stats.atk_spd == 416
+      assert round(13_000 * 333 / 416) == 10_406
     end
 
     test "§20 EXP shrinks by 5/6 a level past the fifth, and not before" do
@@ -392,6 +498,40 @@ defmodule MiniLineage.Game.RulesTest do
       assert Math.level_for_xp(40_000) == 9
       assert Math.level_for_xp(39_999) == 9
       assert Math.level_for_xp(Math.xp_for_level(9) - 1) == 8
+    end
+
+    test "§7 a Human Fighter in its starting kit" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
+      stats = Player.stats(fighter)
+
+      assert_in_delta stats.p_atk, 6.48, 1.0e-9
+      assert_in_delta stats.p_def, 75.6, 1.0e-9
+    end
+
+    test "§9 and §10 a sword's critical and speed, and an Elven Fighter's Short Bow" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
+      {elf, _} = Player.initialize(%Player{}, Constants.race(2), :fighter, "Archer")
+
+      assert_in_delta Player.stats(fighter).critical, 8.8, 1.0e-9
+      assert Player.stats(fighter).atk_spd == 416
+      assert Player.stats(elf).atk_spd == 336
+      assert_in_delta Player.stats(elf).blows_per_round, 0.55, 0.005
+    end
+
+    test "§23 a Small Shield catches 22% at DEX 30, and a Mystic's robes add 29 MP" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      assert_in_delta Hunt.block_chance(20, 30), 22.0, 1.0e-9
+
+      {mystic, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Novice")
+      bare = %{mystic | items: []}
+      assert Player.stats(mystic).max_mp - Player.stats(bare).max_mp == 29
+    end
+
+    test "§24 a Broadsword costs 14,375 and sells back for 6,250" do
+      assert Shop.price(Rules.item("Broadsword")) == 14_375
+      assert Shop.buyback(Rules.item("Broadsword")) == 6_250
     end
 
     test "§13 hit chance, inside 28% and 98%" do

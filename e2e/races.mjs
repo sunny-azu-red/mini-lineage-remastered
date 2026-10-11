@@ -90,8 +90,10 @@ try {
             check(`...with the ${born.name}'s full health`,
                 now.health === born.health && now.maxHealth === born.health,
                 `${now.health}/${now.maxHealth}, expected ${born.health}`);
-            check('...and full mana', now.mp === born.mp && now.maxMp === born.mp,
-                `${now.mp}/${now.maxMp}, expected ${born.mp}`);
+            // Rules §23: a Mystic's starting robes add 19 + 10 MP to what the set is born with.
+            const mana = born.mp + (path === 'mystic' ? 29 : 0);
+            check('...and full mana, its starting robes included', now.mp === mana && now.maxMp === mana,
+                `${now.mp}/${now.maxMp}, expected ${mana}`);
             check('...and no Adena', now.adena === 0, String(now.adena));
             check('...and the sidebar is headed with the class',
                 (await text('#sidebar .header-name')) === `${race.emoji} ${born.name}`,

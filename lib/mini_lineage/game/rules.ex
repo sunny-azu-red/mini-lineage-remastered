@@ -118,6 +118,18 @@ defmodule MiniLineage.Game.Rules do
     mystic: %{power: 3, magic: 6, body: 54, mind: 41}
   }
 
+  # Rules §7: each slot's share of the body (fighter, mystic) and of the mind.
+  @shares %{
+    head: %{fighter: 12, mystic: 12, mind: 0},
+    chest: %{fighter: 31, mystic: 15, mind: 0},
+    legs: %{fighter: 18, mystic: 8, mind: 0},
+    gloves: %{fighter: 8, mystic: 8, mind: 0},
+    feet: %{fighter: 7, mystic: 7, mind: 0},
+    necklace: %{fighter: 0, mystic: 0, mind: 13},
+    earring: %{fighter: 0, mystic: 0, mind: 9},
+    ring: %{fighter: 0, mystic: 0, mind: 5}
+  }
+
   # Rules §4: each attribute's {growth, pivot}.
   @bonus %{
     str: {1.036, 34.845},
@@ -321,6 +333,66 @@ defmodule MiniLineage.Game.Rules do
     "NPC Prominence - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000}
   }
 
+  # The only kinds, slots and shops an item may name; listed so the data file mints no atom.
+  @item_words ~w(weapon shield armour jewellery head chest legs gloves feet necklace earring ring
+                 village orc-village starting)a
+
+  # Rules §23 and §24: every item, a table in the hundreds and so a data file.
+  @external_resource items_path = Path.join(:code.priv_dir(:mini_lineage), "game/items.csv")
+  @items (
+           [header | rows] = items_path |> File.read!() |> String.split("\n", trim: true)
+
+           keys =
+             ~w(name kind slot hands type p_atk m_atk atk_spd critical p_def m_def shield_def
+                shield_rate mp price sold)a
+
+           ^header = Enum.join(keys, ",")
+           words = ~w(name kind slot type sold)a
+
+           # A blank cell is a stat the item does not have, read as nil.
+           for row <- rows, into: %{} do
+             item =
+               keys
+               |> Enum.zip(String.split(row, ","))
+               |> Map.new(fn
+                 {k, ""} -> {k, nil}
+                 {k, v} -> {k, if(k in words, do: v, else: String.to_integer(v))}
+               end)
+
+             item = %{
+               item
+               | kind: String.to_existing_atom(item.kind),
+                 slot: String.to_existing_atom(item.slot),
+                 sold: String.to_existing_atom(item.sold)
+             }
+
+             {item.name, item}
+           end
+         )
+
+  # Rules §23: each set's kit, {worn, carried}.
+  @kits %{
+    {0, :fighter} => {["Squire's Sword", "Squire's Shirt", "Squire's Pants"], ["Dagger"]},
+    {2, :fighter} => {["Short Bow", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
+    {3, :fighter} => {["Dagger", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
+    {1, :fighter} =>
+      {["Training Gloves", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
+    {0, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},
+    {2, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},
+    {3, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},
+    {1, :mystic} => {["Training Gloves", "Apprentice's Tunic", "Apprentice's Stockings"], []}
+  }
+
+  # Rules §23: the weapon each first skill needs; a spell needs none.
+  @skill_weapons %{
+    "Power Strike" => ["sword", "blunt"],
+    "Power Shot" => ["bow"],
+    "Mortal Blow" => ["dagger"],
+    "Iron Punch" => ["fists"]
+  }
+
+  @capacity 80
+
   # Rules §22: what the server multiplies a kill's pay by.
   @rates %{exp: 5, sp: 5, adena: 20}
 
@@ -332,6 +404,9 @@ defmodule MiniLineage.Game.Rules do
 
   def town?(slug), do: Enum.any?(@towns, &(&1.slug == slug))
   def hometown(race_id), do: Map.fetch!(@hometowns, race_id)
+
+  @doc "Whether a town is one of the four starting villages, which have the shops of §24."
+  def village?(slug), do: slug in Map.values(@hometowns)
 
   @doc "Every route out of a town, as `%{to, fee}`, in the order its Gatekeeper lists them."
   def routes_from(slug) do
@@ -365,4 +440,42 @@ defmodule MiniLineage.Game.Rules do
   def monster_spell(name), do: @monster_spells |> Map.fetch!(name) |> Map.put(:name, name)
   def monster_spells, do: @monster_spells
   def rate(kind), do: Map.fetch!(@rates, kind)
+
+  def item_words, do: @item_words
+  def share(slot), do: Map.fetch!(@shares, slot)
+  def shares, do: @shares
+
+  def item(name), do: Map.fetch!(@items, name)
+  def item?(name), do: Map.has_key?(@items, name)
+  def items, do: @items
+  def kit(race_id, path), do: Map.fetch!(@kits, {race_id, path})
+  def capacity, do: @capacity
+
+  @doc "Rules §23: whether a first skill can be used with what is in hand (nil, bare-handed)."
+  def skill_weapon?(skill, weapon) do
+    case Map.fetch(@skill_weapons, skill) do
+      :error -> true
+      {:ok, types} -> weapon != nil and weapon.type in types
+    end
+  end
+
+  @doc "Rules §24: what a village's traders sell, in the order the table lists them."
+  def stock(town) do
+    sold = if town == "orc-village", do: [:village, :"orc-village"], else: [:village]
+
+    @items
+    |> Map.values()
+    |> Enum.filter(&(&1.sold in sold))
+    |> Enum.sort_by(&{kind_order(&1.kind), slot_order(&1.slot), &1.type || "", &1.price, &1.name})
+  end
+
+  defp kind_order(kind),
+    do: Enum.find_index([:weapon, :shield, :armour, :jewellery], &(&1 == kind))
+
+  defp slot_order(slot),
+    do:
+      Enum.find_index(
+        ~w(weapon shield head chest legs gloves feet necklace earring ring)a,
+        &(&1 == slot)
+      )
 end

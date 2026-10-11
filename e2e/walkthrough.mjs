@@ -451,6 +451,40 @@ try {
         await text('#flash'));
     check('...and the hunter stays on the ground to go again', (await state()).screen === 'hunt');
 
+    // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
+    check('the sidebar shows the kit the character wears, and a way to the rest of it',
+        /Dagger/.test(await text('#inventory')) && await page.locator('#open-inventory').count() === 1,
+        await text('#inventory'));
+    await page.click('#header-link');
+    await onScreen('town');
+    const savings = (await state()).adena;
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('adena');
+    await adena(savings + 10000);
+    const wallet = savings + 10000;
+    await page.selectOption('#travel-form select', 'trader');
+    await page.click('#travel-form button');
+    await onScreen('trader');
+    await page.click('#stock-bone-dagger button');
+    await page.waitForSelector('#flash', { timeout: 5000 });
+    check('the village trader sells a Bone Dagger, tax included', /Bone Dagger/.test(await text('#flash')),
+        await text('#flash'));
+    await adena(wallet - 883);
+    check('...and the purse pays 883 for it', (await state()).adena === wallet - 883, String((await state()).adena));
+    await page.click('#open-inventory');
+    await onScreen('inventory');
+    const bought = page.locator('#carried tr', { hasText: 'Bone Dagger' });
+    await bought.locator('button').click();
+    await page.waitForSelector('#worn tr:has-text("Bone Dagger")', { timeout: 5000 });
+    check('the inventory puts the Bone Dagger on', /Bone Dagger/.test(await text('#worn')),
+        await text('#worn'));
+    check('...and the Dagger it replaced is carried, not lost',
+        await page.locator('#carried td.name', { hasText: /^Dagger$/ }).count() === 1);
+    await page.click('#header-link');
+    await onScreen('town');
+    check('...and back in town the sidebar shows it worn', /Bone Dagger/.test(await text('#inventory')),
+        await text('#inventory'));
+
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

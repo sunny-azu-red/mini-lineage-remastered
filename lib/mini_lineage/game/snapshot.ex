@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping, and the static catalog the pages draw from."
-  alias MiniLineage.Game.{Constants, Format, Formulas, Math, Player, Rules}
+  alias MiniLineage.Game.{Constants, Format, Formulas, Math, Player, Rules, Shop}
 
   @doc """
   Always the SAME shape, whether or not a character exists: a screen still rendering when its
@@ -28,6 +28,8 @@ defmodule MiniLineage.Game.Snapshot do
     xp_required: 0,
     adena: nil,
     sp: nil,
+    items: [],
+    stock: [],
     stats: nil,
     effects: []
   }
@@ -71,9 +73,75 @@ defmodule MiniLineage.Game.Snapshot do
         if(Math.max_level?(level), do: 0, else: Math.xp_for_level(level + 1) - current),
       adena: player.adena,
       sp: player.sp || 0,
+      # Rules §23: what it carries, worn first in slot order, then the rest as picked up.
+      items: items(player),
+      # Rules §24: the village's shop, where there is one.
+      stock: if(Rules.village?(player.location), do: stock(player.location), else: []),
       stats: stats,
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }
+  end
+
+  @slots ~w(weapon shield head chest legs gloves feet necklace earring ring)a
+
+  defp items(player) do
+    player.items
+    |> Enum.map(fn entry ->
+      item = Rules.item(entry.name)
+
+      %{
+        id: entry.id,
+        name: entry.name,
+        equipped: entry.equipped,
+        slot: item.slot,
+        about: about(item),
+        buyback: Shop.buyback(item)
+      }
+    end)
+    |> Enum.with_index()
+    |> Enum.sort_by(fn {i, n} ->
+      {!i.equipped, if(i.equipped, do: slot_index(i.slot), else: n)}
+    end)
+    |> Enum.map(&elem(&1, 0))
+  end
+
+  defp stock(town),
+    do:
+      Enum.map(
+        Rules.stock(town),
+        &%{name: &1.name, slot: &1.slot, about: about(&1), price: Shop.price(&1)}
+      )
+
+  defp slot_index(slot), do: Enum.find_index(@slots, &(&1 == slot))
+
+  @doc "An item's numbers in a line: what it is, then what it gives."
+  def about(item) do
+    stats =
+      [
+        p_atk: "P.Atk",
+        m_atk: "M.Atk",
+        atk_spd: "Atk. Spd.",
+        critical: "Critical",
+        p_def: "P.Def",
+        m_def: "M.Def",
+        shield_def: "Shield",
+        shield_rate: "Block",
+        mp: "MP"
+      ]
+      |> Enum.filter(fn {key, _} -> item[key] end)
+      |> Enum.map(fn
+        {:shield_rate, label} -> "#{label} #{item.shield_rate}%"
+        {:mp, label} -> "#{label} +#{item.mp}"
+        {key, label} -> "#{label} #{item[key]}"
+      end)
+
+    kind =
+      cond do
+        item.kind == :weapon -> "#{if item.hands == 2, do: "two-handed ", else: ""}#{item.type}"
+        true -> Atom.to_string(item.slot)
+      end
+
+    Enum.join([kind | stats], ", ")
   end
 
   # What the Gatekeeper offers: each town a route reaches, with the fee for it.

@@ -20,6 +20,8 @@ defmodule MiniLineageWeb.Router do
     live "/error", GameLive, :error
     # The browser's own character, so no id: a page anybody could open would want a public one.
     live "/character", GameLive, :character
+    # The browser's own character's inventory, like its character page.
+    live "/inventory", GameLive, :inventory
 
     # The Halls, overall and for each lineage, written out like the towns.
     live "/highscores", GameLive, :highscores
@@ -33,6 +35,11 @@ defmodule MiniLineageWeb.Router do
     for slug <- MiniLineageWeb.Paths.towns() do
       live "/#{slug}", GameLive, :town
       live "/#{slug}/gatekeeper", GameLive, :gatekeeper
+    end
+
+    # Rules §24: each village's shop.
+    for slug <- MiniLineageWeb.Paths.villages() do
+      live "/#{slug}/trader", GameLive, :trader
     end
 
     # Rules §17: a village's ground, outside it and at its own address.

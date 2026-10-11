@@ -124,15 +124,13 @@ Needs the class tree in the canon first.
 
 ## The inventory
 
-Needs the paperdoll and inventory limits in the canon first.
+Built with the first hunt (rules §23 and §24).
 
 - **The sidebar panel shows what is worn and the Adena,** with an "Open inventory" link.
-- **The inventory page** holds everything a character carries, equipped or not, kept until it is
-  used, sold or dropped. Items are equipped and taken off from here. How many of the real slots a
-  mini game keeps is decided when the rule is written.
-- **Every set starts with its canon gear,** equipped (canon `races.md`).
-- **A player shop is opened from the inventory page,** by choosing what to sell and for how much.
-- **It is its own table,** since it grows with play.
+- **The inventory page** holds everything carried, worn or not, and puts it on or takes it off.
+- **Every set starts with its canon kit,** worn.
+- **Each village's trader** sells the canon village lists with 15% tax and buys back for half.
+- **Next:** a player shop opened from the inventory page, by choosing what to sell and for how much.
 
 ## Items
 

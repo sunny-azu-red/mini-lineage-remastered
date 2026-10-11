@@ -6,9 +6,10 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
-  the one-click fight in `Hunt`, `Actions.hunt/1`, and death), `/character`, the Chronicles of
-  Ancestry at `/races`, the Monument of Heroes (the Halls, in code) at `/highscores`, and the error
-  page. Everything the game was before that is in `legacy/` (see Rules).
+  the one-click fight in `Hunt`, `Actions.hunt/1`, and death), each village's trader and the
+  inventory (rules §23 and §24: `Shop`, the items table, `/inventory`), `/character`, the Chronicles
+  of Ancestry at `/races`, the Monument of Heroes (the Halls, in code) at `/highscores`, and the
+  error page. Everything the game was before that is in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
   `<.flash_group>`; every control is hand-written HEEx in `lib/mini_lineage_web/components/`); an
   HTTP client (no `Req` or `httpoison`; the zone database is `tz`, never `tzdata`, which brings
@@ -141,8 +142,8 @@ Each of these is here because it was got wrong once.
   back out of the document and works every example again, so a change to one is a change to both. A
   new system (classes, items, fighting, the world) starts as an entry in `docs/roadmap.md` and
   builds on the rules rather than quietly changing them. `Player.stats/1` runs the rules in order
-  from the starting set and the level. A new character has no Adena and no items, in every
-  environment.
+  from the starting set and the level. A new character has no Adena and wears its set's kit (rules
+  §23), in every environment.
 - **`legacy/` is read, never run, and never updated.** It is the game as of `da4e37c`: the shops, the
   Battleground, the record and its Chronicle, the Halls, the Tome, class transfers, dyes, timed
   buffs, the other sounds and the cheat. Nothing there is compiled, formatted, tested or served, and
@@ -166,14 +167,18 @@ Each of these is here because it was got wrong once.
 - **Mutable working state is a document; anything sorted on is a column.** A field that comes to be
   ranked or filtered becomes a GENERATED column over the document, never written by application
   code; under PG18 write `STORED`, or it is VIRTUAL and cannot be indexed. Anything that grows with
-  play (a history, an inventory, a mailbox) gets its own table, or every save rewrites it.
+  play (a history, an inventory, a mailbox) gets its own table, or every save rewrites it. The
+  inventory is `items`, written by `Store.save/4` in the character's transaction only when the list
+  moved (`Server` compares it with what it last wrote), and `e2e/reset.sh` truncates it with
+  `characters`.
 - **A rule's table lives in code; Postgres holds what grows with play.** Towns, routes and fees, the
   EXP table, starting sets and modifiers are `Rules` attributes, changed by a commit, and the router
   builds each town's address from them at compile time. Size is no reason to move one. Once content
   reaches the hundreds (monsters, items, skills), each table moves to a data file under `priv/`
   loaded through `@external_resource`, still in git and read back by a test: the monsters are
-  `priv/game/monsters.csv`, held to rules §18 by `rules_test.exs`. Content goes into Postgres only
-  when it must change without a deploy, decided when such a feature exists.
+  `priv/game/monsters.csv` and the items `priv/game/items.csv`, held to rules §18 and §24 by
+  `rules_test.exs`. Content goes into Postgres only when it must change without a deploy, decided
+  when such a feature exists.
 - **A character has two ids, never to be confused.** `id` is public and the only one a page shows or
   links. `session_id` is the cookie and a credential: a public id that worked as a session would let
   anyone play anyone. Anything listing characters selects into plain maps, never `%Record{}`, which
@@ -206,16 +211,17 @@ Each of these is here because it was got wrong once.
 ### Web
 
 - **The URL is where you are.** A character stands in one town (rules §14), stored as `location`.
-  Each open town, its Gatekeeper and its ground (`/<town>/<ground>`) have literal routes generated
-  from the rules tables, never a pattern. `/` is game start for a visitor and, for a character, a
-  patch to its town: `GameLive` compares the pinned place's address with the one asked for, not the
-  screen alone. A place is `{screen, town}`. A new place to stand (a shop, a hunting ground) gets
-  its own URL when built; a state that happens to you does not.
+  Each open town, its Gatekeeper, its ground (`/<town>/<ground>`) and a village's trader
+  (`/<town>/trader`) have literal routes generated from the rules tables, never a pattern. `/` is
+  game start for a visitor and, for a character, a patch to its town: `GameLive` compares the pinned
+  place's address with the one asked for, not the screen alone. A place is `{screen, town}`. A new
+  place to stand (a shop, a hunting ground) gets its own URL when built; a state that happens to you
+  does not.
 - **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races`, `highscores`
   and `error` carry no action, so its first clauses let every state reach them; the Halls keep their
   lineage filter in the place's second half. The rest decide only screens that can be acted on: a
-  character is in its town, at that town's Gatekeeper, on that town's ground if it has one, or on
-  its own page; a visitor is at game start.
+  character is in its town, at that town's Gatekeeper, on that town's ground or at its trader if it
+  has them, or on its own character or inventory page; a visitor is at game start.
 - **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, `e2e/reset.sh`'s
   refusal of the database `.env` names, `Actions.start/4`'s preconditions: each is the boundary, and a
   test asserts what it still refuses. If one is in the way, what you are building is probably wrong.

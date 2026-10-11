@@ -19,6 +19,8 @@ defmodule MiniLineageWeb.Screens do
     "character" => "Character",
     "races" => "Chronicles of Ancestry",
     "highscores" => "Monument of Heroes",
+    "inventory" => "Inventory",
+    "trader" => "Trader",
     "error" => "Error"
   }
 
@@ -32,6 +34,8 @@ defmodule MiniLineageWeb.Screens do
   def icon("start", _view), do: "🐣"
   def icon("gatekeeper", _view), do: "🌀"
   def icon("hunt", _view), do: "⚔️"
+  def icon("inventory", _view), do: "🎒"
+  def icon("trader", _view), do: "🛒"
   def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
 
@@ -79,13 +83,15 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper hunt character),
+      when screen in ~w(town gatekeeper hunt trader character inventory),
       do: ~H||
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "town"} = assigns), do: town(assigns)
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
+  def screen(%{screen: "trader"} = assigns), do: trader(assigns)
+  def screen(%{screen: "inventory"} = assigns), do: inventory(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
   def screen(%{screen: "highscores"} = assigns), do: Halls.screen(assigns)
@@ -165,6 +171,7 @@ defmodule MiniLineageWeb.Screens do
   # The places in a town: its Gatekeeper, and the ground outside it if it has one (rules §17).
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
+      if(view.stock != [], do: [%{value: "trader", label: "🛒 Trader"}], else: []) ++
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
 
@@ -179,6 +186,118 @@ defmodule MiniLineageWeb.Screens do
     </div>
     """
   end
+
+  @kinds [weapon: "Weapons", shield: "Shields", armour: "Armour", jewellery: "Jewellery"]
+
+  # Rules §24: what the village sells, by kind, and what it would pay for what is carried.
+  defp trader(assigns) do
+    stock = Enum.group_by(assigns.view.stock, &kind_of(&1.slot))
+    sellable = Enum.filter(assigns.view.items, &(!&1.equipped and &1.buyback > 0))
+    assigns = assign(assigns, stock: stock, sellable: sellable, kinds: @kinds)
+
+    ~H"""
+    <p>
+      The traders of {@view.town.emoji} {@view.town.name} sell what every village sells, at the price
+      the lord's tax puts on it, and buy back what they sell for half of what they ask.
+    </p>
+    <%= for {kind, label} <- @kinds, @stock[kind] do %>
+      <h3>{label}</h3>
+      <.data_table id={"stock-#{kind}"}>
+        <:col class="name">Item</:col>
+        <:col class="name">What it is</:col>
+        <:col>Adena</:col>
+        <:col></:col>
+        <tbody>
+          <tr :for={item <- @stock[kind]} id={"stock-#{slug(item.name)}"}>
+            <td class="name">{item.name}</td>
+            <td class="name muted">{item.about}</td>
+            <td class="adena">🪙 {Format.number(item.price)}</td>
+            <td>
+              <.button size={:sm} phx-click="buy" phx-value-item={item.name}>Buy</.button>
+            </td>
+          </tr>
+        </tbody>
+      </.data_table>
+    <% end %>
+    <h3>Sell</h3>
+    <p :if={@sellable == []} id="nothing-to-sell">
+      You carry nothing the traders would buy: they take nothing worn, and nothing from a starting kit.
+    </p>
+    <.data_table :if={@sellable != []} id="sellable">
+      <:col class="name">Item</:col>
+      <:col>Pays</:col>
+      <:col></:col>
+      <tbody>
+        <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
+          <td class="name">{item.name}</td>
+          <td class="adena">🪙 {Format.number(item.buyback)}</td>
+          <td>
+            <.button size={:sm} variant={:secondary} phx-click="sell" phx-value-id={item.id}>
+              Sell
+            </.button>
+          </td>
+        </tr>
+      </tbody>
+    </.data_table>
+    """
+  end
+
+  # Rules §23: what is worn, by slot, and what is only carried.
+  defp inventory(assigns) do
+    {worn, carried} = Enum.split_with(assigns.view.items, & &1.equipped)
+
+    assigns =
+      assign(assigns, worn: worn, carried: carried, capacity: MiniLineage.Game.Rules.capacity())
+
+    ~H"""
+    <p id="inventory-count">
+      You carry {length(@view.items)} of the {@capacity} things you can.
+    </p>
+    <h3>Worn</h3>
+    <.data_table id="worn">
+      <:col>Slot</:col>
+      <:col class="name">Item</:col>
+      <:col class="name">What it is</:col>
+      <:col></:col>
+      <tbody>
+        <tr :for={item <- @worn} id={"item-#{item.id}"} data-worn="true">
+          <td>{slot_label(item.slot)}</td>
+          <td class="name">{item.name}</td>
+          <td class="name muted">{item.about}</td>
+          <td>
+            <.button size={:sm} variant={:secondary} phx-click="unequip" phx-value-id={item.id}>
+              Take off
+            </.button>
+          </td>
+        </tr>
+      </tbody>
+    </.data_table>
+    <h3>Carried</h3>
+    <p :if={@carried == []} id="nothing-carried">You carry nothing you are not wearing.</p>
+    <.data_table :if={@carried != []} id="carried">
+      <:col class="name">Item</:col>
+      <:col class="name">What it is</:col>
+      <:col></:col>
+      <tbody>
+        <tr :for={item <- @carried} id={"item-#{item.id}"} data-worn="false">
+          <td class="name">{item.name}</td>
+          <td class="name muted">{item.about}</td>
+          <td>
+            <.button size={:sm} phx-click="equip" phx-value-id={item.id}>Put on</.button>
+          </td>
+        </tr>
+      </tbody>
+    </.data_table>
+    """
+  end
+
+  defp kind_of(slot) when slot in [:weapon, :shield], do: slot
+  defp kind_of(slot) when slot in [:necklace, :earring, :ring], do: :jewellery
+  defp kind_of(_slot), do: :armour
+
+  defp slot_label(slot), do: slot |> Atom.to_string() |> String.capitalize()
+
+  defp slug(name), do: MiniLineage.Game.Format.slugify(name)
 
   defp skill_class(%{kind: kind}) when kind in [:physical, :blow], do: "attack"
   defp skill_class(_skill), do: "magic"

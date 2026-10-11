@@ -45,6 +45,9 @@ defmodule MiniLineage.Game.Hunt do
   makes it). Returns what is left of both sides and how it went.
   """
   def fight(stats, %{health: health, mp: mp}, skill, foe) do
+    # §23: a skill without its weapon in hand is not used at all.
+    skill = if Rules.skill_weapon?(skill.name, stats[:weapon]), do: skill, else: nil
+
     state = %{
       health: health,
       mp: mp,
@@ -94,6 +97,8 @@ defmodule MiniLineage.Game.Hunt do
     %{s | foe: s.foe - hit, burn: %{burn | rounds: burn.rounds - 1, carry: total - trunc(total)}}
   end
 
+  defp character_turn(s, stats, nil, foe), do: swing(s, stats, nil, foe)
+
   defp character_turn(s, stats, %{kind: kind} = skill, foe)
        when kind in [:magic, :drain, :burn] do
     if ready?(s, skill), do: cast(s, stats, skill, foe), else: swing(s, stats, nil, foe)
@@ -128,7 +133,7 @@ defmodule MiniLineage.Game.Hunt do
 
   # Blows carry their fraction from round to round, as §10 says.
   defp swing(s, stats, skill, foe) do
-    {count, carry} = blows(s.blows, stats.atk_spd, 1)
+    {count, carry} = carry_over(s.blows, stats.blows_per_round)
     s = %{s | blows: carry}
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
@@ -139,8 +144,8 @@ defmodule MiniLineage.Game.Hunt do
     end)
   end
 
-  defp blows(carry, atk_spd, pace) do
-    total = carry + Formulas.blows_per_round(atk_spd) * pace
+  defp carry_over(carry, per_round) do
+    total = carry + per_round
     {trunc(total), total - trunc(total)}
   end
 
@@ -204,7 +209,7 @@ defmodule MiniLineage.Game.Hunt do
 
   defp monster_swing(s, stats, foe) do
     pace = if s.slowed > 0, do: @slowed, else: 1
-    {count, carry} = blows(s.foe_blows, foe.atk_spd, pace)
+    {count, carry} = carry_over(s.foe_blows, Formulas.blows_per_round(foe.atk_spd) * pace)
     s = %{s | foe_blows: carry}
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
@@ -219,13 +224,32 @@ defmodule MiniLineage.Game.Hunt do
       spread = Formulas.damage_spread()
 
       damage =
-        Formulas.physical_damage(foe.p_atk, stats.p_def, critical: critical?, spread: spread)
+        case block(stats) do
+          :perfect ->
+            1
 
-      %{s | health: max(s.health - round(damage), 0)}
+          p_def ->
+            round(Formulas.physical_damage(foe.p_atk, p_def, critical: critical?, spread: spread))
+        end
+
+      %{s | health: max(s.health - damage, 0)}
     else
       s
     end
   end
+
+  @doc "§23: a shield catches at its rate × the DEX bonus; one catch in twenty is perfect."
+  def block_chance(rate, dex), do: rate * Formulas.bonus(:dex, dex)
+
+  defp block(%{shield: %{} = shield} = stats) do
+    cond do
+      not Formulas.hit?(block_chance(shield.shield_rate, stats.dex)) -> stats.p_def
+      Formulas.hit?(5) -> :perfect
+      true -> stats.p_def + shield.shield_def
+    end
+  end
+
+  defp block(stats), do: stats.p_def
 
   # §19: a skill's reuse, scaled by the speed that times it, runs down a round at a time.
   defp spend(s, skill, speed),

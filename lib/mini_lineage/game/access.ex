@@ -13,7 +13,7 @@ defmodule MiniLineage.Game.Access do
   @readable ~w(races error highscores)
 
   # Where a character can stand: its town, that town's Gatekeeper, and its hunting ground.
-  @in_town ~w(town gatekeeper hunt)
+  @in_town ~w(town gatekeeper hunt trader)
 
   @doc """
   Where the player is allowed to be: what can be read, for everyone; the town it stands in, and its
@@ -31,11 +31,14 @@ defmodule MiniLineage.Game.Access do
       screen == "hunt" and town == player.location and Rules.ground_of(town) != nil ->
         {screen, town}
 
-      screen in @in_town and screen != "hunt" and town == player.location ->
+      screen == "trader" and town == player.location and Rules.village?(town) ->
         {screen, town}
 
-      screen == "character" ->
-        {"character", nil}
+      screen in ~w(town gatekeeper) and town == player.location ->
+        {screen, town}
+
+      screen in ~w(character inventory) ->
+        {screen, nil}
 
       true ->
         {"town", player.location}
