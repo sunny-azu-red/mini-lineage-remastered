@@ -44,6 +44,7 @@ defmodule MiniLineage.Game.Narratives do
   # Rules §20's fight log: who is met, then each round's events joined into one line.
   @met ~s({they} meet {article} {monster}, level <span class="level">{level}</span>, on the {ground}.)
   @unarmed ~s({they} cannot use {skill} without {weapon} in hand.)
+  @unarmed_all ~s({they} cannot use {skills} with what is in {their} hands.)
   # Each follows "Round N:", so its subject is {them}, the lowercase one.
   @log %{
     blow: ~s({them} hit for {amount}),
@@ -67,11 +68,19 @@ defmodule MiniLineage.Game.Narratives do
     casting: "{them} keep casting",
     standing:
       ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
-    foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>)
+    foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>),
+    heal: ~s({them} cast {skill} and mend <span class="buff">{amount}</span> HP),
+    aura: ~s({them} raise {their} <span class="buff">{skill}</span>),
+    toggle:
+      ~s({them} let out a <span class="buff">{skill}</span>, and {their} blows grow heavier),
+    curse: ~s({them} lay {skill} on the {monster}),
+    curse_failed: "{their} {skill} slides off the {monster}",
+    poison: ~s(the poison eats <span class="magic">{amount}</span>)
   }
 
   def met, do: @met
   def unarmed, do: @unarmed
+  def unarmed_all, do: @unarmed_all
   def log(kind), do: Map.fetch!(@log, kind)
 
   def welcome, do: @welcome

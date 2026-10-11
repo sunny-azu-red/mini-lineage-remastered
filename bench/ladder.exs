@@ -32,7 +32,7 @@ defmodule Ladder do
   def shop(player) do
     stock = Rules.stock(player.location)
     types = wants(player.path, Rules.first_skill(player.race_id, player.path).name)
-    worn = Player.worn(player)
+    equipped = Player.equipped(player)
 
     worth = fn item ->
       cond do
@@ -45,7 +45,7 @@ defmodule Ladder do
     end
 
     current = fn slot ->
-      worn |> Enum.filter(&(&1.slot == slot)) |> Enum.map(worth) |> Enum.min(fn -> 0 end)
+      equipped |> Enum.filter(&(&1.slot == slot)) |> Enum.map(worth) |> Enum.min(fn -> 0 end)
     end
 
     slots = ~w(weapon chest legs necklace)a

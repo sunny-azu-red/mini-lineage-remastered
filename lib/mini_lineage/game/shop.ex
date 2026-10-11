@@ -37,11 +37,11 @@ defmodule MiniLineage.Game.Shop do
     end)
   end
 
-  defp displaced_by(worn, item) do
-    same = for {entry, other} <- worn, other.slot == item.slot, do: entry.id
+  defp displaced_by(equipped, item) do
+    same = for {entry, other} <- equipped, other.slot == item.slot, do: entry.id
 
     hands =
-      for {entry, other} <- worn,
+      for {entry, other} <- equipped,
           (item.slot == :shield and other.slot == :weapon and other.hands == 2) or
             (item.slot == :weapon and item.hands == 2 and other.slot == :shield),
           do: entry.id

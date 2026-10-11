@@ -15,6 +15,11 @@ defmodule MiniLineage.Game.Hunt do
   @slowed 0.7
   # §19: a monster's drain heals it this share of what the character lost.
   @monster_absorb 0.2
+  # §20: a heal is cast below half HP, and a curse only on a monster above half its HP.
+  @heal_below 0.5
+  @curse_above 0.5
+
+  @spells [:magic, :drain, :burn]
 
   def round_ms, do: @round_ms
   def max_rounds, do: @max_rounds
@@ -48,27 +53,44 @@ defmodule MiniLineage.Game.Hunt do
   end
 
   @doc """
-  §20: the fight, from the character's stats and bars, its first skill and the monster (as `foe/1`
-  makes it). Returns what is left of both sides and how it went.
+  §20: the fight, from the character's stats and bars, the skills it knows (each at its level) and
+  the monster (as `foe/1` makes it). Returns what is left of both sides, how it went, and the auras
+  it raised, which outlast it.
   """
-  def fight(stats, %{health: health, mp: mp}, skill, foe) do
-    # §23: a skill without its weapon in hand is not used at all.
-    usable? = Rules.skill_weapon?(skill.name, stats[:weapon])
+  def fight(stats, %{health: health, mp: mp}, skills, foe) do
+    # §23: a weapon skill without its weapon in hand is not used at all, and said so when it
+    # leaves the character none.
+    {usable, unarmed} = Enum.split_with(skills, &Rules.skill_weapon?(&1.name, stats[:weapon]))
+    armed? = Enum.any?(usable, &Rules.weapon_skill?(&1.name))
+
+    unarmed_log =
+      if unarmed != [] and not armed?,
+        do: [{0, {:no_weapon, unarmed |> Enum.map(& &1.name) |> Enum.sort()}}],
+        else: []
 
     state = %{
+      stats: stats,
       health: health,
       mp: mp,
       foe: foe.hp,
       foe_mp: foe.mp,
-      cooldown: 0.0,
+      cooldowns: %{},
       foe_cooldowns: Map.new(foe.spells, &{&1.name, 0.0}),
       burn: nil,
+      poison: nil,
       slowed: 0,
+      shackled: 0,
+      shackle: 1.0,
+      # Auras already up when the fight began, and those raised in it.
+      auras: MapSet.new(stats[:auras] || []),
+      raised: [],
+      toggle: nil,
+      toggle_carry: 0.0,
       # §20: what is left of a spell's cast, during which its caster does nothing else.
       busy: 0.0,
       foe_busy: 0.0,
       # What happened, newest first, each `{round, event}`: the fight log.
-      log: if(usable?, do: [], else: [{0, {:no_weapon, skill.name}}]),
+      log: unarmed_log,
       blows: 0.0,
       foe_blows: 0.0,
       rounds: 0,
@@ -77,71 +99,139 @@ defmodule MiniLineage.Game.Hunt do
     }
 
     state
-    |> rounds(stats, if(usable?, do: skill), foe)
+    |> rounds(usable, foe)
     |> Map.update!(:log, &Enum.reverse/1)
-    |> Map.take(~w(health mp foe rounds uses critical log)a)
+    |> Map.take(~w(health mp foe rounds uses critical log raised)a)
   end
 
-  defp rounds(%{health: h} = s, _stats, _skill, _foe) when h <= 0, do: s
-  defp rounds(%{foe: f} = s, _stats, _skill, _foe) when f <= 0, do: s
-  defp rounds(%{rounds: @max_rounds} = s, _stats, _skill, _foe), do: s
+  defp rounds(%{health: h} = s, _skills, _foe) when h <= 0, do: s
+  defp rounds(%{foe: f} = s, _skills, _foe) when f <= 0, do: s
+  defp rounds(%{rounds: @max_rounds} = s, _skills, _foe), do: s
 
-  defp rounds(s, stats, skill, foe) do
-    s = %{s | rounds: s.rounds + 1} |> burn()
-    s = if s.busy > 0, do: note(s, :casting), else: character_turn(s, stats, skill, foe)
-    s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, stats, foe), else: s
+  defp rounds(s, skills, foe) do
+    s = %{s | rounds: s.rounds + 1} |> burn() |> poison() |> drain_toggle()
+    s = if s.busy > 0, do: note(s, :casting), else: character_turn(s, skills, foe)
+    s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, foe), else: s
     # Where both stand when the round is over, so the log's numbers read against something.
     s = note(s, {:standing, s.health, s.foe})
 
     s = %{
       s
-      | cooldown: max(s.cooldown - @round_ms, 0.0),
+      | cooldowns: Map.new(s.cooldowns, fn {k, v} -> {k, max(v - @round_ms, 0.0)} end),
         busy: max(s.busy - @round_ms, 0.0),
         foe_busy: max(s.foe_busy - @round_ms, 0.0),
         foe_cooldowns: Map.new(s.foe_cooldowns, fn {k, v} -> {k, max(v - @round_ms, 0.0)} end),
-        slowed: max(s.slowed - 1, 0)
+        slowed: max(s.slowed - 1, 0),
+        shackled: max(s.shackled - 1, 0)
     }
 
-    rounds(s, stats, skill, foe)
+    rounds(s, skills, foe)
   end
 
-  # §19: a burn never takes the last HP.
-  defp burn(%{burn: nil} = s), do: s
-  defp burn(%{burn: %{rounds: 0}} = s), do: %{s | burn: nil}
+  # §19: damage over time never takes the last HP.
+  defp burn(s), do: over_time(s, :burn)
+  defp poison(s), do: over_time(s, :poison)
 
-  defp burn(%{burn: burn} = s) do
-    total = burn.carry + burn.per_round
-    hit = total |> trunc() |> min(s.foe - 1) |> max(0)
+  defp over_time(s, key) do
+    case Map.fetch!(s, key) do
+      nil ->
+        s
 
-    s = %{
-      s
-      | foe: s.foe - hit,
-        burn: %{burn | rounds: burn.rounds - 1, carry: total - trunc(total)}
-    }
+      %{rounds: 0} ->
+        Map.put(s, key, nil)
 
-    if hit > 0, do: note(s, {:burn, hit}), else: s
+      dot ->
+        total = dot.carry + dot.per_round
+        hit = total |> trunc() |> min(s.foe - 1) |> max(0)
+        dot = %{dot | rounds: dot.rounds - 1, carry: total - trunc(total)}
+        s = %{Map.put(s, key, dot) | foe: s.foe - hit}
+        if hit > 0, do: note(s, {key, hit}), else: s
+    end
   end
 
-  defp character_turn(s, stats, nil, foe), do: swing(s, stats, nil, foe)
+  # §19: a toggle costs its MP as time goes by, and goes out when the MP does.
+  defp drain_toggle(%{toggle: nil} = s), do: s
 
-  defp character_turn(s, stats, %{kind: kind} = skill, foe)
-       when kind in [:magic, :drain, :burn] do
-    # §19: a burn is not cast again on a target still burning; the caster swings instead.
-    burning? = kind == :burn and s.burn != nil
+  defp drain_toggle(%{toggle: toggle} = s) do
+    total = s.toggle_carry + toggle.drain * @round_ms / toggle.every
+    cost = trunc(total)
 
-    if ready?(s, skill) and not burning?,
-      do: cast(s, stats, skill, foe),
-      else: swing(s, stats, nil, foe)
+    if s.mp >= cost,
+      do: %{s | mp: s.mp - cost, toggle_carry: total - cost},
+      else: %{s | toggle: nil, stats: Map.update!(s.stats, :p_atk, &(&1 - toggle.power))}
   end
 
-  defp character_turn(s, stats, skill, foe), do: swing(s, stats, skill, foe)
+  # §20: what a character does when it is free to: heal when hurt, raise its auras, light its
+  # toggle, cast its strongest spell, curse the monster while its spells rest, and otherwise swing.
+  defp character_turn(s, skills, foe) do
+    hurt? = s.health < s.stats.max_hp * @heal_below
+    # A curse is not worth its cast on a monster already half dead.
+    fresh? = s.foe > foe.hp * @curse_above
 
-  defp ready?(s, skill), do: s.cooldown <= 0 and s.mp >= skill.mp
+    choice =
+      Enum.find(skills, &(&1.kind == :heal and hurt? and ready?(s, &1))) ||
+        Enum.find(
+          skills,
+          &(&1.kind == :aura and not MapSet.member?(s.auras, &1.name) and ready?(s, &1))
+        ) ||
+        Enum.find(skills, &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp)) ||
+        skills
+        |> Enum.filter(
+          &(&1.kind in @spells and ready?(s, &1) and not (&1.kind == :burn and s.burn != nil))
+        )
+        |> Enum.max_by(& &1.power, fn -> nil end) ||
+        if(fresh?,
+          do:
+            Enum.find(skills, &(&1.kind == :poison and s.poison == nil and ready?(s, &1))) ||
+              Enum.find(skills, &(&1.kind == :shackle and s.shackled == 0 and ready?(s, &1)))
+        )
 
-  defp cast(s, stats, skill, foe) do
+    case choice do
+      nil -> swing(s, Enum.filter(skills, &(&1.kind in [:physical, :blow])), foe)
+      %{kind: :toggle} = toggle -> light(s, toggle)
+      skill -> cast(s, skill, foe)
+    end
+  end
+
+  defp ready?(s, skill), do: Map.get(s.cooldowns, skill.name, 0.0) <= 0 and s.mp >= skill.mp
+
+  defp light(s, toggle) do
+    s = %{s | mp: s.mp - toggle.mp, toggle: toggle, toggle_carry: 0.0, uses: s.uses + 1}
+    s = %{s | stats: Map.update!(s.stats, :p_atk, &(&1 + toggle.power))}
+    note(s, {:toggle, toggle.name})
+  end
+
+  defp cast(s, skill, foe) do
+    stats = s.stats
     s = %{spend(s, skill, stats.cast_spd) | busy: skill.cast * 333 / stats.cast_spd}
 
     case skill.kind do
+      :heal ->
+        healed = min(skill.power, stats.max_hp - s.health)
+        note(%{s | health: s.health + healed}, {:heal, skill.name, healed})
+
+      :aura ->
+        s = %{s | auras: MapSet.put(s.auras, skill.name), raised: [skill.name | s.raised]}
+        s = %{s | stats: Map.update!(s.stats, skill.stat, &(&1 * skill.times))}
+        note(s, {:aura, skill.name})
+
+      :poison ->
+        if Formulas.hit?(skill.land) do
+          per_round = skill.power * @round_ms / skill.every
+          dot = %{per_round: per_round, rounds: rounds_of(skill.lasts), carry: 0.0}
+          note(%{s | poison: dot}, {:curse, skill.name, true})
+        else
+          note(s, {:curse, skill.name, false})
+        end
+
+      :shackle ->
+        if Formulas.hit?(skill.land) do
+          s = %{s | shackled: rounds_of(skill.lasts), shackle: skill.times}
+          note(s, {:curse, skill.name, true})
+        else
+          note(s, {:curse, skill.name, false})
+        end
+
       :burn ->
         per_round = skill.power * @round_ms / 1000
         s = %{s | burn: %{per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}}
@@ -163,16 +253,20 @@ defmodule MiniLineage.Game.Hunt do
 
   defp rounds_of(ms), do: round(ms / @round_ms)
 
-  # Blows carry their fraction from round to round, as §10 says.
-  defp swing(s, stats, skill, foe) do
-    {count, carry} = carry_over(s.blows, stats.blows_per_round)
+  # Blows carry their fraction from round to round, as §10 says; the first weapon skill that is
+  # ready takes the place of a blow.
+  defp swing(s, strikes, foe) do
+    {count, carry} = carry_over(s.blows, s.stats.blows_per_round)
     s = %{s | blows: carry}
     # A round with no blow in it is spent getting ready: drawing a bow, or winding up.
     s = if count == 0, do: note(s, :readying), else: s
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
       s =
-        if skill && ready?(s, skill), do: strike(s, stats, skill, foe), else: blow(s, stats, foe)
+        case Enum.find(strikes, &ready?(s, &1)) do
+          nil -> blow(s, foe)
+          skill -> strike(s, skill, foe)
+        end
 
       if s.foe > 0, do: {:cont, s}, else: {:halt, s}
     end)
@@ -184,7 +278,8 @@ defmodule MiniLineage.Game.Hunt do
   end
 
   # §19: a physical skill never misses and never crits; a blow lands on its own chance or not at all.
-  defp strike(s, stats, skill, foe) do
+  defp strike(s, skill, foe) do
+    stats = s.stats
     s = spend(s, skill, stats.atk_spd)
 
     if skill.kind == :blow and not Formulas.hit?(blow_chance(stats.dex)) do
@@ -204,7 +299,9 @@ defmodule MiniLineage.Game.Hunt do
   @doc "§19: a blow lands 40% × the DEX bonus of the time, at most 80%."
   def blow_chance(dex), do: min(40 * Formulas.bonus(:dex, dex), 80)
 
-  defp blow(s, stats, foe) do
+  defp blow(s, foe) do
+    stats = s.stats
+
     if Formulas.hit?(Formulas.hit_chance(stats.accuracy, foe.evasion)) do
       critical? = Formulas.hit?(stats.critical)
       spread = Formulas.damage_spread(stats.spread)
@@ -220,18 +317,18 @@ defmodule MiniLineage.Game.Hunt do
     end
   end
 
-  # §20: a monster casts the strongest spell that is ready, which takes the round, or swings.
-  defp monster_turn(s, stats, foe) do
+  # §20: a monster casts the strongest spell that is ready, which takes its cast time, or swings.
+  defp monster_turn(s, foe) do
     ready =
       foe.spells
       |> Enum.filter(&(s.foe_cooldowns[&1.name] <= 0 and s.foe_mp >= &1.mp))
       |> Enum.max_by(& &1.power, fn -> nil end)
 
-    if ready, do: monster_cast(s, stats, foe, ready), else: monster_swing(s, stats, foe)
+    if ready, do: monster_cast(s, foe, ready), else: monster_swing(s, foe)
   end
 
-  defp monster_cast(s, stats, foe, spell) do
-    damage = round(Formulas.magic_damage(foe.m_atk, stats.m_def, spell.power))
+  defp monster_cast(s, foe, spell) do
+    damage = round(Formulas.magic_damage(foe.m_atk, s.stats.m_def, spell.power))
     lost = min(max(damage, 1), s.health)
 
     healed =
@@ -249,8 +346,10 @@ defmodule MiniLineage.Game.Hunt do
     }
   end
 
-  defp monster_swing(s, stats, foe) do
-    pace = if s.slowed > 0, do: @slowed, else: 1
+  defp monster_swing(s, foe) do
+    pace =
+      if(s.slowed > 0, do: @slowed, else: 1) * if(s.shackled > 0, do: s.shackle, else: 1)
+
     # §10: a bow draws and reloads, a monster's as a character's.
     per_round =
       if foe.bow?,
@@ -261,12 +360,14 @@ defmodule MiniLineage.Game.Hunt do
     s = %{s | foe_blows: carry}
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
-      s = monster_blow(s, stats, foe)
+      s = monster_blow(s, foe)
       if s.health > 0, do: {:cont, s}, else: {:halt, s}
     end)
   end
 
-  defp monster_blow(s, stats, foe) do
+  defp monster_blow(s, foe) do
+    stats = s.stats
+
     if Formulas.hit?(Formulas.hit_chance(foe.accuracy, stats.evasion)) do
       critical? = Formulas.hit?(foe.critical)
       spread = Formulas.damage_spread()
@@ -308,8 +409,14 @@ defmodule MiniLineage.Game.Hunt do
   defp block(stats), do: stats.p_def
 
   # §19: a skill's reuse, scaled by the speed that times it, runs down a round at a time.
-  defp spend(s, skill, speed),
-    do: %{s | mp: s.mp - skill.mp, cooldown: skill.reuse * 333 / speed, uses: s.uses + 1}
+  defp spend(s, skill, speed) do
+    %{
+      s
+      | mp: s.mp - skill.mp,
+        cooldowns: Map.put(s.cooldowns, skill.name, (skill[:reuse] || 0) * 333 / speed),
+        uses: s.uses + 1
+    }
+  end
 
   defp wound(s, damage), do: %{s | foe: s.foe - min(max(damage, 1), s.foe)}
 

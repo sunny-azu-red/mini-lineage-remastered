@@ -77,7 +77,7 @@ defmodule MiniLineageWeb.Screens do
       %{title: "Skills", icon: "📖", section: :skills, body_class: "rows"}
     ]
 
-  # Rules §23: what is worn and carried, and beside it the stats it makes, which count as gear moves.
+  # Rules §23: what is equipped and carried, and beside it the stats it makes, which count as gear moves.
   def panels("inventory", _view, _catalog),
     do: [
       %{title: "Inventory", icon: "🎒", section: :inventory},
@@ -205,11 +205,11 @@ defmodule MiniLineageWeb.Screens do
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
 
-  # Rules §20: the ground, the skill the character fights with, and the one click that fights.
+  # Rules §20: the ground, how the character fights, and the one click that fights again.
   defp hunt(assigns) do
     ~H"""
     <p id="hunt-intro" phx-no-format>
-      Monsters roam the {@view.ground.name} outside {@view.town.emoji} {@view.town.name}, the young ones near the village and the strong ones further out. You go out to meet whatever comes nearest your strength, and fight it with your bare hands and your <span class={skill_class(@view.skill)}>{@view.skill.name}</span> until one of you falls.
+      Monsters roam the {@view.ground.name} outside {@view.town.emoji} {@view.town.name}, the young ones near the village and the strong ones further out. You go out to meet whatever comes nearest your strength, and fight it with what is in your hands and every skill you know until one of you falls.
     </p>
     <div class="action-links">
       <.button id="hunt-button" phx-click="hunt">⚔️ Look for more action</.button>
@@ -281,7 +281,7 @@ defmodule MiniLineageWeb.Screens do
 
     ~H"""
     <p :if={@sellable == []} id="nothing-to-sell">
-      You carry nothing the traders would buy: they take nothing worn, and nothing from a starting kit.
+      You carry nothing the traders would buy: they take nothing equipped, and nothing from a starting kit.
     </p>
     <.data_table :if={@sellable != []} id="sellable">
       <:col class="name">Item</:col>
@@ -405,17 +405,17 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §23: everything carried in one list, what is worn highlighted, then two choices: what to
+  # Rules §23: everything carried in one list, what is equipped highlighted, then two choices: what to
   # put on or take off, and, apart and in red, what to destroy.
   defp inventory(assigns) do
     picked = assigns.picks["id"]
-    worn? = Enum.any?(assigns.view.items, &(&1.id == picked and &1.equipped))
+    equipped? = Enum.any?(assigns.view.items, &(&1.id == picked and &1.equipped))
 
     assigns =
       assign(assigns,
         capacity: MiniLineage.Game.Rules.capacity(),
         carried: Enum.reject(assigns.view.items, & &1.equipped),
-        wear_label: if(worn?, do: "Take off", else: "Put on")
+        wear_label: if(equipped?, do: "Take off", else: "Put on")
       )
 
     ~H"""
@@ -428,7 +428,7 @@ defmodule MiniLineageWeb.Screens do
         <tr
           :for={item <- @view.items}
           id={"item-#{item.id}"}
-          data-worn={to_string(item.equipped)}
+          data-equipped={to_string(item.equipped)}
           {if item.equipped, do: [class: "owned"], else: []}
         >
           <td class="name">{item_emoji(item)} {item.name}</td>
@@ -446,7 +446,7 @@ defmodule MiniLineageWeb.Screens do
       options={
         Enum.map(
           @view.items,
-          &%{value: &1.id, label: "#{item_emoji(&1)} #{&1.name}#{if &1.equipped, do: " (worn)"}"}
+          &%{value: &1.id, label: "#{item_emoji(&1)} #{&1.name}#{if &1.equipped, do: " (equipped)"}"}
         )
       }
       default_label="Return"
@@ -486,9 +486,6 @@ defmodule MiniLineageWeb.Screens do
   defp item_emoji(%{slot: :necklace}), do: "📿"
 
   defp slug(name), do: MiniLineage.Game.Format.slugify(name)
-
-  defp skill_class(%{kind: kind}) when kind in [:physical, :blow], do: "attack"
-  defp skill_class(_skill), do: "magic"
 
   # Rules §14: every route out of this town and its fee, then the choice of one.
   defp gatekeeper(assigns) do
@@ -585,7 +582,7 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §25: what the character knows, its first skill's numbers at the level it knows it.
+  # Rules §19 and §25: what the character knows, each skill's numbers at the level it knows it.
   defp character(%{panel: %{section: :skills}} = assigns) do
     ~H"""
     <div :for={{name, level} <- @view.skills} id={"skill-#{slug(name)}"} class="stat-row">
@@ -596,14 +593,29 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  defp skill_line(name, level) do
-    if Map.has_key?(MiniLineage.Game.Rules.skills(), name) do
-      skill = MiniLineage.Game.Rules.skill(name, level)
-      ", power #{skill.power} for #{skill.mp} MP."
-    else
-      "."
-    end
-  end
+  defp skill_line(name, level), do: skill_effect(MiniLineage.Game.Rules.skill(name, level))
+
+  defp skill_effect(%{kind: :heal} = s), do: ", mends #{s.power} HP for #{s.mp} MP."
+
+  defp skill_effect(%{kind: :aura} = s),
+    do: ", #{stat_name(s.stat)} ×#{s.times} for #{div(s.lasts, 60_000)} minutes, for #{s.mp} MP."
+
+  defp skill_effect(%{kind: :poison} = s),
+    do:
+      ", #{s.power} HP every #{div(s.every, 1000)} seconds for #{div(s.lasts, 1000)} seconds, for #{s.mp} MP."
+
+  defp skill_effect(%{kind: :shackle} = s),
+    do: ", the foe swings ×#{s.times} for #{div(s.lasts, 1000)} seconds, for #{s.mp} MP."
+
+  defp skill_effect(%{kind: :toggle} = s),
+    do:
+      ", P.Atk +#{s.power} for #{s.mp} MP, then #{s.drain} MP every #{div(s.every, 1000)} seconds."
+
+  defp skill_effect(%{kind: :rest} = s), do: ", +#{s.power} HP a tick of rest for #{s.mp} MP."
+  defp skill_effect(s), do: ", power #{s.power} for #{s.mp} MP."
+
+  defp stat_name(:p_def), do: "P.Def"
+  defp stat_name(:p_atk), do: "P.Atk"
 
   # What an effect changes wears the colour of the stat it changes.
   defp stat_class(:accuracy), do: "accuracy"

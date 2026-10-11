@@ -18,9 +18,9 @@ defmodule MiniLineage.Game.Actions do
     cannot_afford: "You cannot afford that.",
     full: "You cannot carry any more.",
     not_carried: "You do not carry that.",
-    worn: "Take it off before you sell it.",
+    equipped: "Take it off before you sell it.",
     worthless: "The shop will not buy that.",
-    worn_destroy: "Take it off before you destroy it.",
+    equipped_destroy: "Take it off before you destroy it.",
     no_trainer: "Only the trainers of your own village teach you.",
     no_lesson: "The trainer does not teach that.",
     too_soon: "You are not yet ready to learn that.",
@@ -115,8 +115,9 @@ defmodule MiniLineage.Game.Actions do
   defp fight(player, ground) do
     level = Player.level(player)
     foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
-    result = Hunt.fight(Player.stats(player), player, Player.first_skill(player), foe)
-    player = %{player | health: result.health, mp: result.mp}
+    stats = Map.put(Player.stats(player), :auras, Player.buffs_up(player))
+    result = Hunt.fight(stats, player, Player.known_skills(player), foe)
+    player = Player.put_buffs(%{player | health: result.health, mp: result.mp}, result.raised)
     stats = Player.stats(player)
     weapon = %{max_hp: stats.max_hp, bow?: stats.weapon != nil and stats.weapon.type == "bow"}
 
@@ -198,7 +199,7 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
-  @doc "Rules §24: sells something carried, not worn, back to the village's shop for half its price."
+  @doc "Rules §24: sells something carried, not equipped, back to the village's shop for half its price."
   def sell(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -210,7 +211,7 @@ defmodule MiniLineage.Game.Actions do
         {player, {:error, :not_carried, @errors.not_carried}}
 
       entry.equipped ->
-        {player, {:error, :worn, @errors.worn}}
+        {player, {:error, :equipped, @errors.equipped}}
 
       Shop.buyback(Rules.item(entry.name)) == 0 ->
         {player, {:error, :worthless, @errors.worthless}}
@@ -232,24 +233,38 @@ defmodule MiniLineage.Game.Actions do
 
     if entry do
       player = clamp_bars(%{player | items: Shop.put_on(player.items, id)})
-      skill = Rules.first_skill(player.race_id, player.path).name
       item = Rules.item(entry.name)
 
-      # Rules §23: a weapon the first skill cannot be used with is worn, and said so.
-      if item.kind == :weapon and not Rules.skill_weapon?(skill, item) do
-        text =
-          "You put on the #{entry.name}, but your #{skill} needs #{Narrative.weapon_for(skill)}, so you will fight without it."
+      # Rules §23: a weapon none of the character's weapon skills can be used with is equipped,
+      # and said so.
+      case item.kind == :weapon && unsuited(player, item) do
+        [skill] ->
+          text =
+            "You put on the #{entry.name}, but your #{skill} needs #{Narrative.weapon_for(skill)}, so you will fight without it."
 
-        {player, {:ok, %{text: text, type: :danger}}}
-      else
-        {player, {:ok, %{text: "You put on the #{entry.name}.", type: :info}}}
+          {player, {:ok, %{text: text, type: :danger}}}
+
+        [_, _ | _] = skills ->
+          text =
+            "You put on the #{entry.name}, but none of your #{Format.list(skills, "or")} can be used with it, so you will fight without them."
+
+          {player, {:ok, %{text: text, type: :danger}}}
+
+        _fits ->
+          {player, {:ok, %{text: "You put on the #{entry.name}.", type: :info}}}
       end
     else
       {player, {:error, :not_carried, @errors.not_carried}}
     end
   end
 
-  @doc "Rules §23: takes off something worn, which stays carried."
+  # The weapon skills it knows, if not one of them can be used with this weapon.
+  defp unsuited(player, item) do
+    names = for {name, _} <- player.skills, Rules.weapon_skill?(name), do: name
+    if Enum.any?(names, &Rules.skill_weapon?(&1, item)), do: [], else: Enum.sort(names)
+  end
+
+  @doc "Rules §23: takes off something equipped, which stays carried."
   def unequip(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -300,7 +315,7 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
-  @doc "Rules §23: destroys something carried and not worn, for good."
+  @doc "Rules §23: destroys something carried and not equipped, for good."
   def destroy(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -309,7 +324,7 @@ defmodule MiniLineage.Game.Actions do
         {player, {:error, :not_carried, @errors.not_carried}}
 
       entry.equipped ->
-        {player, {:error, :worn_destroy, @errors.worn_destroy}}
+        {player, {:error, :equipped_destroy, @errors.equipped_destroy}}
 
       true ->
         {%{player | items: List.delete(player.items, entry)},

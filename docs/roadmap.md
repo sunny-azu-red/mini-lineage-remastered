@@ -76,8 +76,8 @@ The first thing to build, with the canon's monster stats researched first.
 ## Built with the first hunt
 
 The hunt (rules §17 to §21) put the base layer to work: EXP and levelling (§12) with the level-up
-told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) holds on the ground, as the legacy Battleground did, and lifts five seconds
-after leaving it.
+told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) holds
+on the ground, as the legacy Battleground did, and lifts five seconds after leaving it.
 
 **It ships with the inventory and the village shops.** A seeded run of the first hunt showed that a
 character without gear dies in most fights by level 10, because Lineage II's monsters assume a
@@ -101,8 +101,11 @@ follows before characters reach 15.
   Ice Bolt, Vampiric Touch and Chill Flame for the Human, Elven, Dark and Orc Mystics.
 - **SP comes from monsters,** like EXP.
 - **A short list per set** until the first class change, learned with SP from the trainers of the
-  character's own village (rules §25, built): the first skill's later levels and the masteries of
-  its canon tree. The character page's Skills panel is the spellbook: what it knows.
+  character's own village (rules §25, built): the first skill's later levels and two more skills
+  from its canon tree, each race's different (rules §19). They are actives, a heal, an aura, a
+  drain, a curse or a toggle, in place of Lineage II's passive masteries, which only moved numbers.
+  The two auras are the first timed buffs, as the Temple's will be. The character page's Skills
+  panel is the spellbook: what it knows.
 - **The class change opens the specialised skills** of the new class, learned the same way.
 - **Skills matter most in the slower fights,** where a boss is fought in rounds with a choice each
   round.
@@ -128,9 +131,9 @@ Built with the first hunt (rules §23 and §24).
 
 - **Three pieces of armour** (chest, legs, necklace) beside the weapon and shield, each standing for
   its whole part of the body.
-- **The sidebar panel shows what is worn and the Adena,** with an "Open inventory" link.
-- **The inventory page** holds everything carried, worn or not, and puts it on or takes it off.
-- **Every set starts with its canon kit,** worn.
+- **The sidebar panel shows what is equipped and the Adena,** with an "Open inventory" link.
+- **The inventory page** holds everything carried, equipped or not, and puts it on or takes it off.
+- **Every set starts with its canon kit,** equipped.
 - **Each village's trader** sells the canon village lists with 15% tax and buys back for half.
 - **Next:** a player shop opened from the inventory page, by choosing what to sell and for how much.
 

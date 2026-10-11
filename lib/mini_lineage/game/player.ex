@@ -27,7 +27,9 @@ defmodule MiniLineage.Game.Player do
             # Rules §25: each skill it knows, at the level it knows it.
             skills: %{},
             # Rules §20: "engaged" while it hunts, then the UTC millisecond its disengaging ends.
-            combat: nil
+            combat: nil,
+            # Rules §19: each aura it raised, to the UTC millisecond it fades.
+            buffs: %{}
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -49,7 +51,7 @@ defmodule MiniLineage.Game.Player do
           adena: 0,
           location: Rules.hometown(race.id),
           items: kit(race.id, path),
-          skills: %{Rules.first_skill(race.id, path).name => 1}
+          skills: first_skills(race.id, path)
       })
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
@@ -80,6 +82,17 @@ defmodule MiniLineage.Game.Player do
     {player, %{text: Narrative.alert(began), type: :info, sound: "start"}}
   end
 
+  @doc "Rules §25: its first skill, and every line its trainer teaches at level 1 for nothing."
+  def first_skills(race_id, path) do
+    free =
+      for lesson <- Rules.lessons(Rules.set(race_id, path).name),
+          lesson.learn_at == 1 and lesson.sp == 0,
+          into: %{},
+          do: {lesson.skill, lesson.level}
+
+    Map.put(free, Rules.first_skill(race_id, path).name, 1)
+  end
+
   # ------------------------------------------------------------------- stats
 
   def level(player), do: Math.level_for_xp(player.experience || 0)
@@ -90,37 +103,12 @@ defmodule MiniLineage.Game.Player do
   """
   def stats(player), do: stats(player, conditions(player))
 
-  # Under conditions read once, so one call cannot straddle dusk. The masteries (§25) come before
-  # the conditions, as a character's own before what the hour or the place puts on it.
+  # Under conditions read once, so one call cannot straddle dusk.
   defp stats(player, conditions) do
-    stats = player |> base_stats() |> masteries(player)
-
-    Enum.reduce(conditions, stats, fn aura, stats ->
+    Enum.reduce(conditions, base_stats(player), fn aura, stats ->
       Enum.reduce(aura.modifiers, stats, &modify/2)
     end)
   end
-
-  # Rules §25: each mastery known, multipliers before additions, each only in the armour it needs.
-  defp masteries(stats, player) do
-    chest = Enum.find(worn(player), &(&1.slot == :chest))
-    armour = chest && chest.type
-
-    effects =
-      for {name, level} <- player.skills || %{},
-          Rules.mastery?(name),
-          effect <- Rules.mastery(name, player.path, level),
-          wears?(effect, armour),
-          do: effect
-
-    {muls, adds} = Enum.split_with(effects, fn {_, change} -> elem(change, 0) == :mul end)
-
-    Enum.reduce(muls ++ adds, stats, fn {stat, change}, acc ->
-      modify({stat, {elem(change, 0), elem(change, 1)}}, acc)
-    end)
-  end
-
-  defp wears?({_stat, {_op, _value, needs}}, armour), do: armour == needs
-  defp wears?(_effect, _armour), do: true
 
   defp modify({stat, {:add, value}}, stats), do: Map.update!(stats, stat, &(&1 + value))
   defp modify({stat, {:mul, value}}, stats), do: Map.update!(stats, stat, &(&1 * value))
@@ -130,9 +118,9 @@ defmodule MiniLineage.Game.Player do
     path = Rules.path(player.path)
     a = set.attributes
     level = level(player)
-    worn = worn(player)
-    weapon = Enum.find(worn, &(&1.kind == :weapon))
-    shield = Enum.find(worn, &(&1.kind == :shield))
+    equipped = equipped(player)
+    weapon = Enum.find(equipped, &(&1.kind == :weapon))
+    shield = Enum.find(equipped, &(&1.kind == :shield))
     atk_spd = Formulas.atk_spd(a.dex, (weapon && weapon.atk_spd) || 300)
     cast_spd = Formulas.cast_spd(a.wit)
     bow? = weapon != nil and weapon.type == "bow"
@@ -140,11 +128,12 @@ defmodule MiniLineage.Game.Player do
     Map.merge(a, %{
       max_hp: Formulas.max_hp(Formulas.grown(set.hp, level), a.con),
       max_mp:
-        Formulas.max_mp(Formulas.grown(set.mp, level), a.men) + Enum.sum_by(worn, &(&1.mp || 0)),
+        Formulas.max_mp(Formulas.grown(set.mp, level), a.men) +
+          Enum.sum_by(equipped, &(&1.mp || 0)),
       p_atk: Formulas.p_atk((weapon && weapon.p_atk) || path.power, a.str, level),
       m_atk: Formulas.m_atk((weapon && weapon.m_atk) || path.magic, a.int, level),
-      p_def: Formulas.p_def(covered(path.body, worn, player.path, [:chest, :legs]), level),
-      m_def: Formulas.m_def(covered(path.mind, worn, :mind, [:necklace]), a.men, level),
+      p_def: Formulas.p_def(covered(path.body, equipped, player.path, [:chest, :legs]), level),
+      m_def: Formulas.m_def(covered(path.mind, equipped, :mind, [:necklace]), a.men, level),
       accuracy: Formulas.accuracy(a.dex, level) + ((weapon && weapon.accuracy) || 0),
       evasion: Formulas.evasion(a.dex, level),
       critical: Formulas.critical(a.dex, (weapon && weapon.critical) || 4),
@@ -162,15 +151,19 @@ defmodule MiniLineage.Game.Player do
     })
   end
 
-  # Rules §23: the set's kit, its wearable part worn.
+  # Rules §23: the set's kit, its wearable part equipped.
   defp kit(race_id, path) do
-    {worn, carried} = Rules.kit(race_id, path)
-    Enum.map(worn, &new_item(&1, true)) ++ Enum.map(carried, &new_item(&1, false))
+    {equipped, carried} = Rules.kit(race_id, path)
+    Enum.map(equipped, &new_item(&1, true)) ++ Enum.map(carried, &new_item(&1, false))
   end
 
   @doc "An item picked up: a fresh id, the item's name, and whether it is on."
   def new_item(name, equipped \\ false),
     do: %{id: MiniLineage.Characters.Store.new_item_id(), name: name, equipped: equipped}
+
+  @doc "Rules §19: every skill it knows, each at the level it knows it."
+  def known_skills(player),
+    do: for({name, level} <- player.skills || %{}, do: Rules.skill(name, level))
 
   @doc "Rules §25: the set's first skill, at the level the character knows it."
   def first_skill(player) do
@@ -179,12 +172,12 @@ defmodule MiniLineage.Game.Player do
   end
 
   @doc "Rules §23: the items a character has on, as `Rules` gives them."
-  def worn(player),
+  def equipped(player),
     do: for(%{equipped: true, name: name} <- player.items || [], do: Rules.item(name))
 
-  # Rules §7: the body or mind with each worn piece in place of the part it stands for.
-  defp covered(total, worn, key, slots) do
-    for item <- worn, item.slot in slots, reduce: total do
+  # Rules §7: the body or mind with each equipped piece in place of the part it stands for.
+  defp covered(total, equipped, key, slots) do
+    for item <- equipped, item.slot in slots, reduce: total do
       acc -> acc - Rules.part(item.slot)[key] + Rules.counts_for(item)
     end
   end
@@ -218,6 +211,28 @@ defmodule MiniLineage.Game.Player do
     ]
     |> Enum.filter(& &1)
     |> Enum.map(&Map.put(Constants.aura(&1), :modifiers, Rules.modifiers(&1)))
+    |> Kernel.++(raised(player))
+  end
+
+  # Rules §19: an aura the character raised, until it fades.
+  defp raised(player) do
+    for name <- buffs_up(player) do
+      skill = Rules.skill(name)
+      Map.put(Constants.skill_aura(name), :modifiers, [{skill.stat, {:mul, skill.times}}])
+    end
+  end
+
+  @doc "Rules §19: the auras it raised that have not faded yet."
+  def buffs_up(player) do
+    now = now_ms()
+    for {name, fades} <- player.buffs || %{}, fades > now, do: name
+  end
+
+  @doc "Rules §19: auras just raised, each fading `lasts` from now; any that already faded go."
+  def put_buffs(player, names) do
+    now = now_ms()
+    kept = Map.filter(player.buffs || %{}, fn {_, fades} -> fades > now end)
+    %{player | buffs: Map.merge(kept, Map.new(names, &{&1, now + Rules.skill(&1).lasts}))}
   end
 
   # ----------------------------------------------------------------- resting
@@ -245,7 +260,27 @@ defmodule MiniLineage.Game.Player do
     regenerating =
       if healing == [], do: [], else: [Map.put(Constants.aura(:regenerating), :rates, healing)]
 
-    [Constants.aura(:resting) | conditions] ++ regenerating
+    [Constants.aura(:resting) | conditions] ++ regenerating ++ relaxing(player, stats)
+  end
+
+  # Rules §11: Relax mends more HP for MP, while HP is short and the MP lasts.
+  defp relaxing(player, stats) do
+    case player.skills["Relax"] do
+      nil ->
+        []
+
+      level ->
+        relax = Rules.skill("Relax", level)
+
+        if player.health < stats.max_hp and player.mp >= relax.mp,
+          do: [
+            Map.put(Constants.skill_aura("Relax"), :rates,
+              hp_regen: relax.power,
+              mp_regen: -relax.mp
+            )
+          ],
+          else: []
+    end
   end
 
   @doc "Rules §20: whether a character is engaged, or still disengaging, and so does not rest."
@@ -267,19 +302,22 @@ defmodule MiniLineage.Game.Player do
 
   def regenerate(player) do
     stats = stats(player)
+    # An aura that has faded goes, and the page is told.
+    faded? = length(buffs_up(player)) < map_size(player.buffs || %{})
+    player = if faded?, do: put_buffs(player, []), else: player
 
-    case Enum.find(auras(player), &(&1.id == "regenerating")) do
-      nil ->
-        {player, false}
+    case auras(player) |> Enum.flat_map(&Map.get(&1, :rates, [])) do
+      [] ->
+        {player, faded?}
 
-      %{rates: rates} ->
-        hp = Keyword.get(rates, :hp_regen, 0)
-        mp = Keyword.get(rates, :mp_regen, 0)
+      rates ->
+        hp = rates |> Keyword.get_values(:hp_regen) |> Enum.sum()
+        mp = rates |> Keyword.get_values(:mp_regen) |> Enum.sum()
 
         {%{
            player
            | health: min(player.health + hp, stats.max_hp),
-             mp: min(player.mp + mp, stats.max_mp)
+             mp: player.mp |> Kernel.+(mp) |> min(stats.max_mp) |> max(0)
          }, true}
     end
   end

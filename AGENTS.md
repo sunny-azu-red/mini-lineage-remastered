@@ -161,11 +161,11 @@ Each of these is here because it was got wrong once.
   layer with its rules and tests written fresh; its code and `legacy/AGENTS.md` are reference, not
   something to copy back.
 - **What the player can see is what heals them.** `Player.regenerate/1` heals HP and MP by the rates
-  `Player.auras/1` puts on the 🌿 aura, one per bar still short, each 3-second tick (rules §11), so
-  there is no icon without healing and no healing without an icon. Night and the race perks (§15,
-  §16) are auras the same way: `Player.conditions/1` derives them from the hour, race and town with
-  the modifiers `Rules` gives, and `Player.stats/1` applies exactly those. A perk names its race in
-  its own clause.
+  `Player.auras/1` puts on its auras (the 🌿 one per bar still short, 🧘 Relax), each 3-second tick
+  (rules §11), so there is no icon without healing and no healing without an icon. Night, the race
+  perks (§15, §16) and the auras a character raised (§19, kept in `buffs` to the millisecond they
+  fade) are auras the same way: `Player.conditions/1` derives them with the modifiers `Rules` gives,
+  and `Player.stats/1` applies exactly those. A perk names its race in its own clause.
 - **A line keeps its pronouns open until somebody reads it.** Narrative pools carry `{they} {them}
   {object} {their}` and nothing second-person. `Format.fill_template` leaves them alone (they aren't
   in the data map) and `Narrative.voiced/2` closes them at render: `true` for the run's own alert

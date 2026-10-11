@@ -168,12 +168,12 @@ defmodule MiniLineageWeb.Layouts do
         body_class="rows"
         collapsible
       >
-        <%!-- What is worn, in two rows; each names a link to the inventory, as the name above does to
+        <%!-- What is equipped, in two rows; each names a link to the inventory, as the name above does to
               the character page. --%>
-        <div :for={{id, label, slots, none} <- worn_rows()} class="stat-row stacked" id={id}>
+        <div :for={{id, label, slots, none} <- equipped_rows()} class="stat-row stacked" id={id}>
           <span class="stat-label">{label}</span>
-          <span :if={worn(@view.items, slots) == []} class="stat-value muted">{none}</span>
-          <span :for={name <- worn(@view.items, slots)} class="stat-value">
+          <span :if={equipped(@view.items, slots) == []} class="stat-value muted">{none}</span>
+          <span :for={name <- equipped(@view.items, slots)} class="stat-value">
             <.link patch={~p"/inventory"}>{name}</.link>
           </span>
         </div>
@@ -187,14 +187,14 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  # What is worn, in two lists headed above them, each name a link to the inventory.
-  defp worn_rows,
+  # What is equipped, in two lists headed above them, each name a link to the inventory.
+  defp equipped_rows,
     do: [
-      {"worn-weapons", "Weapons", [:weapon, :shield], "Bare hands"},
-      {"worn-armour", "Armour", [:chest, :legs, :necklace], "None"}
+      {"equipped-weapons", "Weapons", [:weapon, :shield], "Bare hands"},
+      {"equipped-armour", "Armour", [:chest, :legs, :necklace], "None"}
     ]
 
-  defp worn(items, slots),
+  defp equipped(items, slots),
     do: for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name)
 
   @doc """

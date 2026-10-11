@@ -296,7 +296,7 @@ defmodule MiniLineage.Game.Rules do
               end
             )
 
-  # Rules §19: each set's first skill, and the spells monsters cast. Reuse in milliseconds.
+  # Rules §19: every skill a set learns before its class change, at level 1. Times in milliseconds.
   @skills %{
     "Power Strike" => %{kind: :physical, power: 25, mp: 10, reuse: 13_000},
     "Power Shot" => %{kind: :physical, power: 65, mp: 19, reuse: 25_000},
@@ -312,10 +312,67 @@ defmodule MiniLineage.Game.Rules do
       cast: 4_000,
       absorb: 0.4
     },
-    "Chill Flame" => %{kind: :burn, power: 20, mp: 15, reuse: 6_000, cast: 4_000}
+    "Chill Flame" => %{kind: :burn, power: 20, mp: 15, reuse: 6_000, cast: 4_000},
+    "Drain Health" => %{
+      kind: :drain,
+      power: 20,
+      mp: 12,
+      reuse: 15_000,
+      cast: 3_000,
+      absorb: 0.2
+    },
+    "Life Drain" => %{kind: :drain, power: 15, mp: 27, reuse: 6_000, cast: 4_000, absorb: 0.8},
+    "Self Heal" => %{kind: :heal, power: 42, mp: 9, reuse: 10_000, cast: 5_000},
+    "Heal" => %{kind: :heal, power: 49, mp: 10, reuse: 10_000, cast: 5_000},
+    "Elemental Heal" => %{kind: :heal, power: 71, mp: 40, reuse: 10_000, cast: 5_000},
+    "Defense Aura" => %{
+      kind: :aura,
+      power: 0,
+      mp: 5,
+      reuse: 6_000,
+      cast: 4_000,
+      stat: :p_def,
+      times: 1.08,
+      lasts: 1_200_000
+    },
+    "Attack Aura" => %{
+      kind: :aura,
+      power: 0,
+      mp: 7,
+      reuse: 6_000,
+      cast: 4_000,
+      stat: :p_atk,
+      times: 1.08,
+      lasts: 1_200_000
+    },
+    "Curse: Poison" => %{
+      kind: :poison,
+      power: 24,
+      mp: 10,
+      reuse: 12_000,
+      cast: 4_000,
+      land: 70,
+      every: 3_000,
+      lasts: 30_000
+    },
+    "Wind Shackle" => %{
+      kind: :shackle,
+      power: 0,
+      mp: 3,
+      reuse: 8_000,
+      cast: 1_500,
+      land: 80,
+      times: 0.83,
+      lasts: 15_000
+    },
+    # A toggle's MP is to light it; it then drains `drain` MP every `every` until the MP runs out.
+    "Soul Cry" => %{kind: :toggle, power: 4.5, mp: 2, drain: 3, every: 3_000},
+    # Rules §11: power HP more on each tick of rest, for MP each tick.
+    "Relax" => %{kind: :rest, power: 5, mp: 3}
   }
 
-  # Rules §25: each first skill's {power, MP} by level, level 1 first; a burn's power is per second.
+  # Rules §25: each skill's {power, MP} by level, level 1 first; a burn's power is per second, and a
+  # toggle's level says what it drains as well.
   @skill_levels %{
     "Power Strike" => [
       {25, 10},
@@ -364,32 +421,18 @@ defmodule MiniLineage.Game.Rules do
     "Wind Strike" => [{12, 9}, {13, 9}, {15, 10}, {18, 14}, {21, 15}],
     "Ice Bolt" => [{8, 9}, {9, 10}, {11, 14}, {13, 15}],
     "Vampiric Touch" => [{18, 25}, {21, 28}],
-    "Chill Flame" => [{20, 15}, {30, 23}]
-  }
-
-  # Rules §25: what each level of a mastery does, multipliers before additions as Lineage II applies
-  # them. A condition names the armour the effect needs.
-  @masteries %{
-    "Weapon Mastery" => %{
-      fighter: for(add <- [2, 3, 4], do: [p_atk: {:mul, 1.085}, p_atk: {:add, add}]),
-      mystic:
-        for(
-          {p, m} <- [{1.5, 1.9}, {2.8, 3.5}],
-          do: [p_atk: {:mul, 1.45}, m_atk: {:mul, 1.17}, p_atk: {:add, p}, m_atk: {:add, m}]
-        )
-    },
-    "Armor Mastery" => %{
-      fighter:
-        for(
-          {d, e} <- [{9, 0}, {11, 0}, {12, 0}, {13, 3}, {14, 3}],
-          do: [p_def: {:add, d}, evasion: {:add, e, "light"}]
-        ),
-      mystic: for(d <- [6.7, 8.0, 9.2], do: [p_def: {:add, d}])
-    },
-    "Anti Magic" => %{mystic: for(d <- [10, 12, 14, 16], do: [m_def: {:add, d}])},
-    "Robe Mastery" => %{
-      mystic: for(d <- [11.6, 13.4, 16.1, 18.4], do: [p_def: {:add, d, "magic"}])
-    }
+    "Chill Flame" => [{20, 15}, {30, 23}],
+    "Drain Health" => [{20, 12}, {22, 13}],
+    "Life Drain" => [{15, 27}, {21, 40}],
+    "Self Heal" => [{42, 9}],
+    "Heal" => [{49, 10}, {58, 13}, {67, 14}, {83, 17}, {95, 19}, {107, 22}],
+    "Elemental Heal" => [{71, 40}, {75, 43}, {80, 45}],
+    "Defense Aura" => [{0, 5}],
+    "Attack Aura" => [{0, 7}],
+    "Curse: Poison" => [{24, 10}],
+    "Wind Shackle" => [{0, 3}],
+    "Soul Cry" => [%{power: 4.5, mp: 2, drain: 3}, %{power: 14, mp: 3, drain: 6}],
+    "Relax" => [{5, 3}]
   }
 
   @first_skills %{
@@ -452,7 +495,7 @@ defmodule MiniLineage.Game.Rules do
            end
          )
 
-  # Rules §23: each set's kit, {worn, carried}.
+  # Rules §23: each set's kit, {equipped, carried}.
   @kits %{
     {0, :fighter} => {["Squire's Sword", "Squire's Shirt", "Squire's Pants"], ["Dagger"]},
     {2, :fighter} => {["Short Bow", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
@@ -465,7 +508,7 @@ defmodule MiniLineage.Game.Rules do
     {1, :mystic} => {["Training Gloves", "Apprentice's Tunic", "Apprentice's Stockings"], []}
   }
 
-  # Rules §23: the weapon each first skill needs; a spell needs none.
+  # Rules §23: the weapon each weapon skill needs; a spell needs none.
   @skill_weapons %{
     "Power Strike" => ["sword", "blunt"],
     "Power Shot" => ["bow"],
@@ -547,7 +590,7 @@ defmodule MiniLineage.Game.Rules do
   def parts, do: @parts
 
   @doc """
-  Rules §7: what a worn piece counts for, its canon defence × its part's share ÷ its slot's own,
+  Rules §7: what an equipped piece counts for, its canon defence × its part's share ÷ its slot's own,
   by its own kind of armour.
   """
   def counts_for(item) do
@@ -568,7 +611,9 @@ defmodule MiniLineage.Game.Rules do
   def kit(race_id, path), do: Map.fetch!(@kits, {race_id, path})
   def capacity, do: @capacity
 
-  @doc "Rules §23: whether a first skill can be used with what is in hand (nil, bare-handed)."
+  def weapon_skill?(skill), do: Map.has_key?(@skill_weapons, skill)
+
+  @doc "Rules §23: whether a skill can be used with what is in hand (nil, bare-handed)."
   def skill_weapon?(skill, weapon) do
     case Map.fetch(@skill_weapons, skill) do
       :error -> true
@@ -602,17 +647,13 @@ defmodule MiniLineage.Game.Rules do
   def skill_known?(name),
     do: Map.has_key?(@skills, name) or Enum.any?(@trainer, &(&1.skill == name))
 
-  @doc "Rules §25: a first skill at the level a character knows it."
+  @doc "Rules §25: a skill at the level a character knows it."
   def skill(name, level) do
-    {power, mp} = @skill_levels |> Map.fetch!(name) |> Enum.at(level - 1)
-    %{skill(name) | power: power, mp: mp}
+    case @skill_levels |> Map.fetch!(name) |> Enum.at(level - 1) do
+      {power, mp} -> %{skill(name) | power: power, mp: mp}
+      %{} = changes -> Map.merge(skill(name), changes)
+    end
   end
 
   def skill_levels(name), do: Map.fetch!(@skill_levels, name)
-
-  @doc "Rules §25: what a mastery does at a level, for a path."
-  def mastery(name, path, level),
-    do: @masteries |> Map.fetch!(name) |> Map.fetch!(path) |> Enum.at(level - 1)
-
-  def mastery?(name), do: Map.has_key?(@masteries, name)
 end

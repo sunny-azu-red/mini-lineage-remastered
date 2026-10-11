@@ -19,9 +19,36 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   defp fight(player, monster) do
-    skill = Rules.first_skill(player.race_id, player.path)
-    Hunt.fight(Player.stats(player), player, skill, Hunt.foe(Rules.monster(monster)))
+    foe = Hunt.foe(Rules.monster(monster))
+    Hunt.fight(Player.stats(player), player, Player.known_skills(player), foe)
   end
+
+  # Every line its trainer has taught by its level, each at the highest it has reached.
+  defp trained(race_id, path, level) do
+    player = character(race_id, path, level)
+
+    skills =
+      for lesson <- Rules.lessons(Rules.set(race_id, path).name),
+          lesson.learn_at <= level,
+          reduce: player.skills,
+          do: (known -> Map.update(known, lesson.skill, lesson.level, &max(&1, lesson.level)))
+
+    Player.restore_fully(%{player | skills: skills})
+  end
+
+  defp foe(monster), do: Hunt.foe(Rules.monster(monster))
+
+  # Something that never falls and never swings, so a skill can be watched for as long as it lasts.
+  defp dummy(monster), do: %{Hunt.foe(Rules.monster(monster)) | hp: 1_000_000_000, atk_spd: 0}
+
+  defp events(result, kind),
+    do:
+      for(
+        {round, event} <- result.log,
+        is_tuple(event),
+        elem(event, 0) == kind,
+        do: {round, event}
+      )
 
   # Dice as a cycled list of integers scaled into [0, 1), as AGENTS.md has them generated.
   defp dice(ints) do
@@ -87,7 +114,7 @@ defmodule MiniLineage.Game.HuntTest do
       mystic = character(1, :mystic)
       skill = Rules.first_skill(1, :mystic)
       foe = %{Hunt.foe(Rules.monster("Elder Prairie Keltir")) | hp: 1_000_000_000}
-      result = Hunt.fight(Player.stats(mystic), mystic, skill, foe)
+      result = Hunt.fight(Player.stats(mystic), mystic, [skill], foe)
 
       # The first burn runs nine rounds; a second may only start once it has gone out.
       casts = for {round, {:cast, "Chill Flame", _, _}} <- result.log, do: round
@@ -129,7 +156,7 @@ defmodule MiniLineage.Game.HuntTest do
       # A skill it can never pay for, so it only ever swings, and misses.
       skill = %{Rules.first_skill(0, :fighter) | mp: 1}
       foe = %{Hunt.foe(Rules.monster("Orc Archer")) | hp: 1_000_000_000}
-      result = Hunt.fight(stats, bars, skill, foe)
+      result = Hunt.fight(stats, bars, [skill], foe)
 
       shots = Enum.count(result.log, &match?({_, {:foe_blow, _, _, _}}, &1))
       assert shots == trunc(Hunt.max_rounds() * 249 / 610)
@@ -140,13 +167,100 @@ defmodule MiniLineage.Game.HuntTest do
       {stats, bars} = target()
       skill = %{Rules.first_skill(0, :fighter) | mp: 1}
       foe = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000}
-      result = Hunt.fight(stats, bars, skill, foe)
+      result = Hunt.fight(stats, bars, [skill], foe)
 
       # Windstrike - Magic: 4 seconds a cast, so the next comes three rounds after the last.
       casts =
         for {round, {:foe_cast, "NPC Windstrike - Magic 1", _}} <- result.log, do: round
 
       assert Enum.take(casts, 5) == [1, 4, 7, 10, 13]
+    end
+  end
+
+  describe "what a character knows" do
+    test "a heal is cast below half HP, and not above it" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = character(0, :mystic)
+      skills = Player.known_skills(mystic)
+      stats = Player.stats(mystic)
+
+      hurt = Hunt.fight(stats, %{mystic | health: 10}, skills, dummy("Young Keltir"))
+      assert hd(events(hurt, :heal)) == {1, {:heal, "Self Heal", 42}}
+
+      whole = Hunt.fight(stats, mystic, skills, dummy("Young Keltir"))
+      assert events(whole, :heal) == []
+    end
+
+    test "an aura is raised once, and not at all while it is still up" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :fighter, 5)
+      stats = Player.stats(elf)
+      result = Hunt.fight(stats, elf, Player.known_skills(elf), dummy("Young Keltir"))
+
+      assert events(result, :aura) == [{1, {:aura, "Defense Aura"}}]
+      assert result.raised == ["Defense Aura"]
+
+      up = Map.put(stats, :auras, ["Defense Aura"])
+      again = Hunt.fight(up, elf, Player.known_skills(elf), dummy("Young Keltir"))
+      assert events(again, :aura) == [] and again.raised == []
+    end
+
+    test "a toggle is lit once, and drains MP until it goes out" do
+      Rng.put_source(fn -> 0.0 end)
+      orc = character(1, :mystic)
+      soul_cry = Rules.skill("Soul Cry", 1)
+      result = Hunt.fight(Player.stats(orc), orc, [soul_cry], dummy("Young Keltir"))
+
+      assert events(result, :toggle) == [{1, {:toggle, "Soul Cry"}}]
+      assert result.mp < soul_cry.mp
+    end
+
+    test "a poison lands at its chance, and is laid again only once it wears off" do
+      {stats, bars} = target()
+      bars = %{bars | mp: 1_000_000}
+      poison = Rules.skill("Curse: Poison", 1)
+
+      Rng.put_source(fn -> 0.0 end)
+      result = Hunt.fight(stats, bars, [poison], dummy("Young Keltir"))
+      [{first, _}, {second, _} | _] = events(result, :curse)
+      assert second - first >= round(poison.lasts / Hunt.round_ms())
+
+      Rng.put_source(fn -> 0.9999 end)
+      missed = Hunt.fight(stats, bars, [poison], dummy("Young Keltir"))
+      assert {1, {:curse, "Curse: Poison", false}} in missed.log
+    end
+
+    test "a poison never takes the last HP, nor is it laid on a monster at half its HP" do
+      Rng.put_source(fn -> 0.0 end)
+      {stats, bars} = target()
+      # It never swings, so only the poison wounds.
+      stats = %{stats | blows_per_round: 0}
+      bars = %{bars | mp: 1_000_000}
+      result = Hunt.fight(stats, bars, [Rules.skill("Curse: Poison", 1)], foe("Young Keltir"))
+
+      assert result.foe == 1
+      assert [_once] = events(result, :curse)
+    end
+
+    test "a shackled monster swings less" do
+      Rng.put_source(fn -> 0.0 end)
+      {stats, bars} = target()
+      bars = %{bars | mp: 1_000_000}
+      foe = %{Hunt.foe(Rules.monster("Young Keltir")) | hp: 1_000_000_000}
+      swings = &length(events(&1, :foe_blow))
+
+      shackled = Hunt.fight(stats, bars, [Rules.skill("Wind Shackle", 1)], foe)
+      assert swings.(shackled) < swings.(Hunt.fight(stats, bars, [], foe))
+    end
+
+    test "weapon skills without their weapons are named, only when not one of them can be used" do
+      Rng.put_source(fn -> 0.0 end)
+      human = trained(0, :fighter, 5)
+      bare = %{human | items: []}
+      result = fight(bare, "Young Keltir")
+
+      assert {0, {:no_weapon, ["Mortal Blow", "Power Shot", "Power Strike"]}} in result.log
+      refute Enum.any?(fight(human, "Young Keltir").log, &match?({0, {:no_weapon, _}}, &1))
     end
   end
 
@@ -177,7 +291,7 @@ defmodule MiniLineage.Game.HuntTest do
       dice(rolls)
       player = character(race, path, level)
       monster = Hunt.draw(Rules.monsters_of(ground), level)
-      result = fight(player, monster.name)
+      result = fight(trained(race, path, level), monster.name)
 
       assert result.health == 0 or result.foe == 0 or result.rounds == Hunt.max_rounds()
       assert result.health >= 0 and result.foe >= 0 and result.mp >= 0

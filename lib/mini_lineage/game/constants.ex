@@ -108,6 +108,31 @@ defmodule MiniLineage.Game.Constants do
     }
   }
 
+  # Rules §19 and §11: what a character's own skills put on it, keyed by the skill.
+  @skill_auras %{
+    "Defense Aura" => %{
+      id: "defense_aura",
+      type: :buff,
+      emoji: "🛡️",
+      label: "Defense Aura",
+      about: "An aura raised in the field turns blows aside, and holds for twenty minutes."
+    },
+    "Attack Aura" => %{
+      id: "attack_aura",
+      type: :buff,
+      emoji: "💪",
+      label: "Attack Aura",
+      about: "An aura raised in the field drives every blow harder, and holds for twenty minutes."
+    },
+    "Relax" => %{
+      id: "relax",
+      type: :buff,
+      emoji: "🧘",
+      label: "Relax",
+      about: "Sitting still and breathing slow mends wounds faster, at a cost in mana."
+    }
+  }
+
   @character %{
     min_age: 9,
     max_age: 69,
@@ -124,5 +149,6 @@ defmodule MiniLineage.Game.Constants do
 
   def town_description(slug), do: Map.fetch!(@towns, slug)
   def aura(key), do: Map.fetch!(@auras, key)
+  def skill_aura(skill), do: Map.fetch!(@skill_auras, skill)
   def character, do: @character
 end

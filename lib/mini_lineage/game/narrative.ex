@@ -76,11 +76,14 @@ defmodule MiniLineage.Game.Narrative do
       |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
       |> Enum.sort()
       |> Enum.map(fn
-        {0, [{:no_weapon, skill}]} ->
+        {0, [{:no_weapon, [skill]}]} ->
           Format.fill_template(Narratives.unarmed(), %{
             "skill" => skill,
             "weapon" => weapon_for(skill)
           })
+
+        {0, [{:no_weapon, skills}]} ->
+          Format.fill_template(Narratives.unarmed_all(), %{"skills" => join_and(skills)})
 
         {round, events} ->
           {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
@@ -130,6 +133,20 @@ defmodule MiniLineage.Game.Narrative do
       })
 
   defp event({:burn, amount}, _foe), do: fill(:burn, %{"amount" => amount})
+  defp event({:poison, amount}, _foe), do: fill(:poison, %{"amount" => amount})
+
+  defp event({:heal, skill, amount}, _foe),
+    do: fill(:heal, %{"skill" => skill, "amount" => amount})
+
+  defp event({:aura, skill}, _foe), do: fill(:aura, %{"skill" => skill})
+  defp event({:toggle, skill}, _foe), do: fill(:toggle, %{"skill" => skill})
+
+  defp event({:curse, skill, landed?}, foe),
+    do:
+      fill(if(landed?, do: :curse, else: :curse_failed), %{
+        "skill" => skill,
+        "monster" => foe.name
+      })
 
   defp event({:foe_blow, amount, critical?, caught}, foe) do
     kind =

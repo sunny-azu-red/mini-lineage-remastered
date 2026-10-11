@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.GearPageTest do
   @moduledoc """
   Rules §23 and §24 in the browser's own terms: a village's trader, buying and selling written at
-  once, the inventory page where gear goes on and comes off, and the sidebar showing what is worn.
+  once, the inventory page where gear goes on and comes off, and the sidebar showing what is equipped.
   """
   use MiniLineageWeb.ConnCase, async: false
 
@@ -30,11 +30,11 @@ defmodule MiniLineageWeb.GearPageTest do
   test "a new character wears its kit, the sidebar naming its weapons and its armour as the way in" do
     {view, _session, _conn} = human(build_conn(), 0)
 
-    assert has_element?(view, ~s(#worn-weapons a[href="/inventory"]), "Squire's Sword")
+    assert has_element?(view, ~s(#equipped-weapons a[href="/inventory"]), "Squire's Sword")
 
-    assert has_element?(view, ~s(#worn-armour a[href="/inventory"]), "Squire's Shirt")
+    assert has_element?(view, ~s(#equipped-armour a[href="/inventory"]), "Squire's Shirt")
 
-    view |> element("#worn-armour a", "Squire's Pants") |> render_click()
+    view |> element("#equipped-armour a", "Squire's Pants") |> render_click()
     assert_patch(view, "/inventory")
   end
 
@@ -85,14 +85,14 @@ defmodule MiniLineageWeb.GearPageTest do
     assert stored(session).adena == 100
   end
 
-  test "the inventory lists everything, worn highlighted, and puts on, takes off and destroys apart" do
+  test "the inventory lists everything, equipped highlighted, and puts on, takes off and destroys apart" do
     {_view, session, conn} = human(build_conn(), 0)
     {:ok, view, _html} = live(conn, ~p"/inventory")
     dagger = carried(session, "Dagger")
     sword = carried(session, "Squire's Sword")
 
-    assert has_element?(view, ~s(#item-#{sword.id}.owned[data-worn="true"]))
-    assert has_element?(view, ~s(#item-#{dagger.id}[data-worn="false"]))
+    assert has_element?(view, ~s(#item-#{sword.id}.owned[data-equipped="true"]))
+    assert has_element?(view, ~s(#item-#{dagger.id}[data-equipped="false"]))
 
     wear = fn id -> view |> form("#wear-form", %{"id" => id}) |> render_submit() end
 
@@ -112,7 +112,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#flash", "destroy the Dagger")
   end
 
-  test "the button says what the picked item needs, and nothing worn is offered for destroying" do
+  test "the button says what the picked item needs, and nothing equipped is offered for destroying" do
     {_view, session, conn} = human(build_conn(), 0)
     {:ok, view, _html} = live(conn, ~p"/inventory")
     sword = carried(session, "Squire's Sword")

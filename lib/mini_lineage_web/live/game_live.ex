@@ -224,8 +224,8 @@ defmodule MiniLineageWeb.GameLive do
     do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
 
   def handle_event("wear", %{"id" => id}, socket) do
-    worn? = Enum.any?(socket.assigns.player.items, &(&1.id == id and &1.equipped))
-    action = if worn?, do: &Actions.unequip(&1, id), else: &Actions.equip(&1, id)
+    equipped? = Enum.any?(socket.assigns.player.items, &(&1.id == id and &1.equipped))
+    action = if equipped?, do: &Actions.unequip(&1, id), else: &Actions.equip(&1, id)
     {:noreply, apply_action(socket, action, nil)}
   end
 

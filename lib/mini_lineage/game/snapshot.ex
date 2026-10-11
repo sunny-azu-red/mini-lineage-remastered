@@ -15,7 +15,6 @@ defmodule MiniLineage.Game.Snapshot do
     class_name: nil,
     town: nil,
     ground: nil,
-    skill: nil,
     routes: [],
     health: nil,
     max_health: nil,
@@ -61,7 +60,6 @@ defmodule MiniLineage.Game.Snapshot do
         ),
       # Rules §17: the ground outside the village, if it stands in one.
       ground: Rules.ground_of(player.location),
-      skill: Rules.first_skill(player.race_id, player.path),
       routes: routes(player.location),
       health: player.health,
       max_health: stats.max_hp,
@@ -75,7 +73,7 @@ defmodule MiniLineage.Game.Snapshot do
         if(Math.max_level?(level), do: 0, else: Math.xp_for_level(level + 1) - current),
       adena: player.adena,
       sp: player.sp || 0,
-      # Rules §23: what it carries, worn first in slot order, then the rest as picked up.
+      # Rules §23: what it carries, equipped first in slot order, then the rest as picked up.
       items: items(player),
       # Rules §24: the village's shop, where there is one.
       stock: if(Rules.village?(player.location), do: stock(player.location), else: []),
@@ -193,10 +191,19 @@ defmodule MiniLineage.Game.Snapshot do
     }
   end
 
-  defp rate_text({:hp_regen, value}), do: "+#{value} HP"
-  defp rate_text({:mp_regen, value}), do: "+#{value} MP"
+  defp rate_text({:hp_regen, value}), do: "#{signed(value)} HP"
+  defp rate_text({:mp_regen, value}), do: "#{signed(value)} MP"
 
-  @stat_names %{accuracy: "Accuracy", hp_regen: "HP regen", mp_regen: "MP regen"}
+  defp signed(value) when value >= 0, do: "+#{value}"
+  defp signed(value), do: "#{value}"
+
+  @stat_names %{
+    accuracy: "Accuracy",
+    hp_regen: "HP regen",
+    mp_regen: "MP regen",
+    p_atk: "P.Atk",
+    p_def: "P.Def"
+  }
 
   defp modifier_text({stat, {:add, value}}) when value >= 0, do: "+#{value} #{@stat_names[stat]}"
   defp modifier_text({stat, {:add, value}}), do: "#{value} #{@stat_names[stat]}"

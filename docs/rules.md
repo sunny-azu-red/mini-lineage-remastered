@@ -118,7 +118,7 @@ The last 4 of a body is never covered.
 
 - **P.Atk = (the weapon's P.Atk, or power) × STR bonus × level bonus**
 - **M.Atk = (the weapon's M.Atk, or magic) × INT bonus² × level bonus²**
-- **P.Def = body, each worn piece's count in place of its part, × level bonus**
+- **P.Def = body, each equipped piece's count in place of its part, × level bonus**
 - **M.Def = mind, the necklace's count in place of its part, × MEN bonus × level bonus**
 
 Example: a level 1 Human Fighter has P.Atk 4 × 1.20 × 0.90 = **4.32**, P.Def 80 × 0.90 = **72** and
@@ -165,6 +165,8 @@ Out of combat, a character gets HP and MP back every 3 seconds. In combat (§20)
   and 1.4 + level ÷ 10 from level 11.
 - **MP per tick = (0.87 + 0.03 × level) × level bonus × MEN bonus × 3**
 - Each is rounded to the nearest whole point, a half rounding up, since HP and MP are whole.
+- **Relax** (§19), for a character that knows it: its power in HP more each tick, for its MP, while
+  HP is short and the MP lasts.
 
 Example: a level 1 Human Fighter rests 1.55 × 0.90 × 1.58 × 3 = 6.6, so **7 HP** a tick, and its
 126 HP fill in 18 ticks, under a minute. At level 40 it rests **33 HP** a tick and fills 1,007 HP in
@@ -394,33 +396,70 @@ Example: a Young Keltir (DEX 30, level 1) has Accuracy and Evasion √30 × 6 + 
 
 ## 19. Skills
 
-Every set starts with one skill from its own tree, and each race's is different. Each costs MP and
-then rests for its reuse.
+Every set starts with one skill from its own tree, and each race's is different. Its trainer (§25)
+teaches it two more before the class change, again each set its own. Each costs MP and then rests
+for its reuse.
 
-| Skill | Set | Kind | Power | MP | Reuse | Cast |
-|---|---|---|---|---|---|---|
-| Power Strike | Human Fighter | physical | 25 | 10 | 13,000 | |
-| Power Shot | Elven Fighter | physical | 65 | 19 | 25,000 | |
-| Mortal Blow | Dark Fighter | blow | 73 | 9 | 11,000 | |
-| Iron Punch | Orc Fighter | physical | 29 | 11 | 15,000 | |
-| Wind Strike | Human Mystic | magic | 12 | 9 | 6,000 | 4,000 |
-| Ice Bolt | Elven Mystic | magic | 8 | 9 | 8,000 | 3,300 |
-| Vampiric Touch | Dark Mystic | drain | 18 | 25 | 12,000 | 4,000 |
-| Chill Flame | Orc Mystic | burn | 20 | 15 | 6,000 | 4,000 |
+| Set | First skill | Then |
+|---|---|---|
+| Human Fighter | Power Strike | Mortal Blow, Power Shot |
+| Elven Fighter | Power Shot | Defense Aura, Elemental Heal |
+| Dark Fighter | Mortal Blow | Attack Aura, Drain Health |
+| Orc Fighter | Iron Punch | Power Strike, Relax |
+| Human Mystic | Wind Strike | Self Heal, Ice Bolt |
+| Elven Mystic | Ice Bolt | Wind Strike, Heal |
+| Dark Mystic | Vampiric Touch | Curse: Poison, Wind Shackle |
+| Orc Mystic | Chill Flame | Soul Cry, Life Drain |
+
+Each at level 1 (§25 has the later levels):
+
+| Skill | Kind | Power | MP | Reuse | Cast |
+|---|---|---|---|---|---|
+| Power Strike | physical | 25 | 10 | 13,000 | |
+| Power Shot | physical | 65 | 19 | 25,000 | |
+| Mortal Blow | blow | 73 | 9 | 11,000 | |
+| Iron Punch | physical | 29 | 11 | 15,000 | |
+| Wind Strike | magic | 12 | 9 | 6,000 | 4,000 |
+| Ice Bolt | magic | 8 | 9 | 8,000 | 3,300 |
+| Vampiric Touch | drain | 18 | 25 | 12,000 | 4,000 |
+| Chill Flame | burn | 20 | 15 | 6,000 | 4,000 |
+| Drain Health | drain | 20 | 12 | 15,000 | 3,000 |
+| Life Drain | drain | 15 | 27 | 6,000 | 4,000 |
+| Self Heal | heal | 42 | 9 | 10,000 | 5,000 |
+| Heal | heal | 49 | 10 | 10,000 | 5,000 |
+| Elemental Heal | heal | 71 | 40 | 10,000 | 5,000 |
+| Defense Aura | aura | | 5 | 6,000 | 4,000 |
+| Attack Aura | aura | | 7 | 6,000 | 4,000 |
+| Curse: Poison | poison | 24 | 10 | 12,000 | 4,000 |
+| Wind Shackle | shackle | | 3 | 8,000 | 1,500 |
+| Soul Cry | toggle | 4.5 | 2 | | |
+| Relax | rest | 5 | 3 | | |
 
 Reuse and cast are in milliseconds. The reuse is × 333 ÷ Atk. Spd. for a physical skill or a blow
 and × 333 ÷ Casting Spd. for the rest, and a cast is × 333 ÷ Casting Spd. A physical skill takes
-the place of a blow and has no cast of its own.
+the place of a blow and has no cast of its own. Power Strike, Power Shot, Mortal Blow and Iron
+Punch need their weapons (§23); the rest need none.
 
 - **Physical:** 70 × (P.Atk + power) ÷ P.Def, then the weapon's spread (§13). It never misses and
   never lands a critical.
 - **Blow:** the same damage, landing 40% × the DEX bonus of the time, at most 80%, and otherwise
   doing nothing.
 - **Magic:** §13's magic damage, which can be a magic critical. A spell never misses.
-- **Drain:** magic damage, healing the caster 40% of what the target lost.
+- **Drain:** magic damage, healing the caster a share of what the target lost: 40% for Vampiric
+  Touch, 20% for Drain Health and 80% for Life Drain.
 - **Burn:** power HP a second for 15 seconds, which never takes the last HP. It is not cast again on
   a target that still burns.
 - **Ice Bolt** also slows its target for 120 seconds, and a slowed monster swings 30% less.
+- **Heal:** power HP back, never past the most.
+- **Aura:** Defense Aura multiplies P.Def and Attack Aura P.Atk by 1.08, for 20 minutes, in the
+  fight and out of it.
+- **Poison:** lands 70% of the time, and then takes power HP every 3 seconds for 30 seconds, never
+  the last HP. It is not cast again on a target already poisoned.
+- **Shackle:** lands 80% of the time, and then the target swings × 0.83 for 15 seconds.
+- **Toggle:** its MP lights it for the fight, adding its power to P.Atk, and it then drains MP every
+  3 seconds (Soul Cry 3 at level 1 and 6 at level 2), going out when the MP runs short.
+- **Rest:** Relax mends power HP more on every tick of rest (§11), for its MP. Lineage II drains 2
+  MP every 2 seconds, which is 3 a tick.
 
 Monsters cast these:
 
@@ -453,10 +492,16 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round.
-- **The character** swings its blows (§10). A Fighter's skill takes the first blow of a round once its
-  reuse has run out and its MP is paid. A Mystic whose spell is ready casts it instead, and does
-  nothing else for the spell's cast time (§19), × 333 ÷ Casting Spd.; it swings when no spell is
-  ready.
+- **The character** uses the first of these it knows that is ready and paid for (§19):
+  1. a heal, below half its HP;
+  2. an aura it has not raised;
+  3. a toggle not lit;
+  4. the strongest spell (magic, drain or burn);
+  5. while the monster has more than half its HP, a poison it does not carry, then a shackle.
+
+  A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
+  else. With none of these ready, it swings its blows (§10), and a physical skill or a blow that is
+  ready takes the place of one.
 - **The monster** swings its blows the same way, at its own Atk. Spd., and a monster with a bow
   draws and reloads as a character's bow does (§10). A monster with spells casts the strongest that
   is ready instead, and does nothing else for its cast time. Its reuse and cast time are not
@@ -510,9 +555,9 @@ chest, legs and necklace. A two-handed weapon (a bow, a staff, fists,
 a two-handed sword or blunt, a polearm) takes the shield's hand, so putting one on takes the shield
 off, and the other way round. Nothing is weighed.
 
-Every set starts with its kit, the wearable part worn:
+Every set starts with its kit, the wearable part equipped:
 
-| Kit | Worn | Carried |
+| Kit | Equipped | Carried |
 |---|---|---|
 | Human Fighter | Squire's Sword, Squire's Shirt, Squire's Pants | Dagger |
 | Elven Fighter | Short Bow, Squire's Shirt, Squire's Pants | Squire's Sword |
@@ -619,8 +664,8 @@ Example: a Broadsword costs **12,500** and sells back for **6,250**.
 
 Each starting village's trainers teach its own race and nobody else, for the SP a character earns
 on the hunt (§20). A line is learned once the character has reached its level, knows the level
-before it, and pays its SP. Each set's list is short: its first skill's later levels and the
-masteries its tree holds before the class change.
+before it, and pays its SP. Each set's list is short: its first skill's later levels and the two
+skills §19 gives it. A line taught at level 1 for nothing is known from the start.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
@@ -632,14 +677,24 @@ masteries its tree holds before the class change.
 | Human Fighter | Power Strike | 7 | 15 | 1,300 |
 | Human Fighter | Power Strike | 8 | 15 | 1,300 |
 | Human Fighter | Power Strike | 9 | 15 | 1,300 |
-| Human Fighter | Weapon Mastery | 1 | 5 | 160 |
-| Human Fighter | Weapon Mastery | 2 | 10 | 1,100 |
-| Human Fighter | Weapon Mastery | 3 | 15 | 4,000 |
-| Human Fighter | Armor Mastery | 1 | 5 | 160 |
-| Human Fighter | Armor Mastery | 2 | 10 | 550 |
-| Human Fighter | Armor Mastery | 3 | 10 | 550 |
-| Human Fighter | Armor Mastery | 4 | 15 | 2,000 |
-| Human Fighter | Armor Mastery | 5 | 15 | 2,000 |
+| Human Fighter | Mortal Blow | 1 | 5 | 50 |
+| Human Fighter | Mortal Blow | 2 | 5 | 50 |
+| Human Fighter | Mortal Blow | 3 | 5 | 50 |
+| Human Fighter | Mortal Blow | 4 | 10 | 370 |
+| Human Fighter | Mortal Blow | 5 | 10 | 370 |
+| Human Fighter | Mortal Blow | 6 | 10 | 370 |
+| Human Fighter | Mortal Blow | 7 | 15 | 1,300 |
+| Human Fighter | Mortal Blow | 8 | 15 | 1,300 |
+| Human Fighter | Mortal Blow | 9 | 15 | 1,300 |
+| Human Fighter | Power Shot | 1 | 5 | 50 |
+| Human Fighter | Power Shot | 2 | 5 | 50 |
+| Human Fighter | Power Shot | 3 | 5 | 50 |
+| Human Fighter | Power Shot | 4 | 10 | 370 |
+| Human Fighter | Power Shot | 5 | 10 | 370 |
+| Human Fighter | Power Shot | 6 | 10 | 370 |
+| Human Fighter | Power Shot | 7 | 15 | 1,300 |
+| Human Fighter | Power Shot | 8 | 15 | 1,300 |
+| Human Fighter | Power Shot | 9 | 15 | 1,300 |
 | Elven Fighter | Power Shot | 2 | 5 | 50 |
 | Elven Fighter | Power Shot | 3 | 5 | 50 |
 | Elven Fighter | Power Shot | 4 | 10 | 310 |
@@ -648,14 +703,10 @@ masteries its tree holds before the class change.
 | Elven Fighter | Power Shot | 7 | 15 | 1,100 |
 | Elven Fighter | Power Shot | 8 | 15 | 1,100 |
 | Elven Fighter | Power Shot | 9 | 15 | 1,100 |
-| Elven Fighter | Weapon Mastery | 1 | 5 | 160 |
-| Elven Fighter | Weapon Mastery | 2 | 10 | 910 |
-| Elven Fighter | Weapon Mastery | 3 | 15 | 3,300 |
-| Elven Fighter | Armor Mastery | 1 | 5 | 160 |
-| Elven Fighter | Armor Mastery | 2 | 10 | 460 |
-| Elven Fighter | Armor Mastery | 3 | 10 | 460 |
-| Elven Fighter | Armor Mastery | 4 | 15 | 1,700 |
-| Elven Fighter | Armor Mastery | 5 | 15 | 1,700 |
+| Elven Fighter | Defense Aura | 1 | 5 | 160 |
+| Elven Fighter | Elemental Heal | 1 | 15 | 1,100 |
+| Elven Fighter | Elemental Heal | 2 | 15 | 1,100 |
+| Elven Fighter | Elemental Heal | 3 | 15 | 1,100 |
 | Dark Fighter | Mortal Blow | 2 | 5 | 50 |
 | Dark Fighter | Mortal Blow | 3 | 5 | 50 |
 | Dark Fighter | Mortal Blow | 4 | 10 | 310 |
@@ -664,14 +715,9 @@ masteries its tree holds before the class change.
 | Dark Fighter | Mortal Blow | 7 | 15 | 950 |
 | Dark Fighter | Mortal Blow | 8 | 15 | 950 |
 | Dark Fighter | Mortal Blow | 9 | 15 | 950 |
-| Dark Fighter | Weapon Mastery | 1 | 5 | 160 |
-| Dark Fighter | Weapon Mastery | 2 | 10 | 910 |
-| Dark Fighter | Weapon Mastery | 3 | 15 | 2,900 |
-| Dark Fighter | Armor Mastery | 1 | 5 | 160 |
-| Dark Fighter | Armor Mastery | 2 | 10 | 460 |
-| Dark Fighter | Armor Mastery | 3 | 10 | 460 |
-| Dark Fighter | Armor Mastery | 4 | 15 | 1,400 |
-| Dark Fighter | Armor Mastery | 5 | 15 | 1,400 |
+| Dark Fighter | Attack Aura | 1 | 10 | 910 |
+| Dark Fighter | Drain Health | 1 | 15 | 1,400 |
+| Dark Fighter | Drain Health | 2 | 15 | 1,400 |
 | Orc Fighter | Iron Punch | 2 | 5 | 60 |
 | Orc Fighter | Iron Punch | 3 | 5 | 60 |
 | Orc Fighter | Iron Punch | 4 | 10 | 460 |
@@ -680,62 +726,49 @@ masteries its tree holds before the class change.
 | Orc Fighter | Iron Punch | 7 | 15 | 1,300 |
 | Orc Fighter | Iron Punch | 8 | 15 | 1,300 |
 | Orc Fighter | Iron Punch | 9 | 15 | 1,300 |
-| Orc Fighter | Weapon Mastery | 1 | 5 | 190 |
-| Orc Fighter | Weapon Mastery | 2 | 10 | 1,300 |
-| Orc Fighter | Weapon Mastery | 3 | 15 | 4,000 |
-| Orc Fighter | Armor Mastery | 1 | 5 | 190 |
-| Orc Fighter | Armor Mastery | 2 | 10 | 690 |
-| Orc Fighter | Armor Mastery | 3 | 10 | 690 |
-| Orc Fighter | Armor Mastery | 4 | 15 | 2,000 |
-| Orc Fighter | Armor Mastery | 5 | 15 | 2,000 |
+| Orc Fighter | Power Strike | 1 | 5 | 60 |
+| Orc Fighter | Power Strike | 2 | 5 | 60 |
+| Orc Fighter | Power Strike | 3 | 5 | 60 |
+| Orc Fighter | Power Strike | 4 | 10 | 460 |
+| Orc Fighter | Power Strike | 5 | 10 | 460 |
+| Orc Fighter | Power Strike | 6 | 10 | 460 |
+| Orc Fighter | Power Strike | 7 | 15 | 1,300 |
+| Orc Fighter | Power Strike | 8 | 15 | 1,300 |
+| Orc Fighter | Power Strike | 9 | 15 | 1,300 |
+| Orc Fighter | Relax | 1 | 5 | 190 |
 | Human Mystic | Wind Strike | 2 | 7 | 240 |
 | Human Mystic | Wind Strike | 3 | 7 | 240 |
 | Human Mystic | Wind Strike | 4 | 14 | 1,100 |
 | Human Mystic | Wind Strike | 5 | 14 | 1,100 |
+| Human Mystic | Self Heal | 1 | 1 | 0 |
+| Human Mystic | Ice Bolt | 1 | 7 | 240 |
+| Human Mystic | Ice Bolt | 2 | 7 | 240 |
+| Human Mystic | Ice Bolt | 3 | 14 | 1,100 |
+| Human Mystic | Ice Bolt | 4 | 14 | 1,100 |
 | Elven Mystic | Ice Bolt | 2 | 7 | 260 |
 | Elven Mystic | Ice Bolt | 3 | 14 | 1,100 |
 | Elven Mystic | Ice Bolt | 4 | 14 | 1,100 |
+| Elven Mystic | Wind Strike | 1 | 1 | 0 |
+| Elven Mystic | Wind Strike | 2 | 7 | 260 |
+| Elven Mystic | Wind Strike | 3 | 7 | 260 |
+| Elven Mystic | Wind Strike | 4 | 14 | 1,100 |
+| Elven Mystic | Wind Strike | 5 | 14 | 1,100 |
+| Elven Mystic | Heal | 1 | 7 | 170 |
+| Elven Mystic | Heal | 2 | 7 | 170 |
+| Elven Mystic | Heal | 3 | 7 | 170 |
+| Elven Mystic | Heal | 4 | 14 | 700 |
+| Elven Mystic | Heal | 5 | 14 | 700 |
+| Elven Mystic | Heal | 6 | 14 | 700 |
 | Dark Mystic | Vampiric Touch | 2 | 14 | 1,100 |
+| Dark Mystic | Curse: Poison | 1 | 7 | 470 |
+| Dark Mystic | Wind Shackle | 1 | 14 | 2,100 |
 | Orc Mystic | Chill Flame | 2 | 14 | 1,800 |
-| Human Mystic | Weapon Mastery | 1 | 7 | 470 |
-| Human Mystic | Weapon Mastery | 2 | 14 | 2,100 |
-| Human Mystic | Anti Magic | 1 | 7 | 240 |
-| Human Mystic | Anti Magic | 2 | 7 | 240 |
-| Human Mystic | Anti Magic | 3 | 14 | 1,100 |
-| Human Mystic | Anti Magic | 4 | 14 | 1,100 |
-| Human Mystic | Armor Mastery | 1 | 7 | 470 |
-| Human Mystic | Armor Mastery | 2 | 14 | 1,100 |
-| Human Mystic | Armor Mastery | 3 | 14 | 1,100 |
-| Elven Mystic | Weapon Mastery | 1 | 7 | 520 |
-| Elven Mystic | Weapon Mastery | 2 | 14 | 2,100 |
-| Elven Mystic | Anti Magic | 1 | 7 | 260 |
-| Elven Mystic | Anti Magic | 2 | 7 | 260 |
-| Elven Mystic | Anti Magic | 3 | 14 | 1,100 |
-| Elven Mystic | Anti Magic | 4 | 14 | 1,100 |
-| Elven Mystic | Armor Mastery | 1 | 7 | 520 |
-| Elven Mystic | Armor Mastery | 2 | 14 | 1,100 |
-| Elven Mystic | Armor Mastery | 3 | 14 | 1,100 |
-| Dark Mystic | Weapon Mastery | 1 | 7 | 470 |
-| Dark Mystic | Weapon Mastery | 2 | 14 | 2,100 |
-| Dark Mystic | Anti Magic | 1 | 7 | 240 |
-| Dark Mystic | Anti Magic | 2 | 7 | 240 |
-| Dark Mystic | Anti Magic | 3 | 14 | 1,100 |
-| Dark Mystic | Anti Magic | 4 | 14 | 1,100 |
-| Dark Mystic | Armor Mastery | 1 | 7 | 470 |
-| Dark Mystic | Armor Mastery | 2 | 14 | 1,100 |
-| Dark Mystic | Armor Mastery | 3 | 14 | 1,100 |
-| Orc Mystic | Weapon Mastery | 1 | 7 | 520 |
-| Orc Mystic | Weapon Mastery | 2 | 14 | 1,800 |
-| Orc Mystic | Anti Magic | 1 | 7 | 260 |
-| Orc Mystic | Anti Magic | 2 | 7 | 260 |
-| Orc Mystic | Anti Magic | 3 | 14 | 880 |
-| Orc Mystic | Anti Magic | 4 | 14 | 880 |
-| Orc Mystic | Robe Mastery | 1 | 7 | 260 |
-| Orc Mystic | Robe Mastery | 2 | 7 | 260 |
-| Orc Mystic | Robe Mastery | 3 | 14 | 880 |
-| Orc Mystic | Robe Mastery | 4 | 14 | 880 |
+| Orc Mystic | Soul Cry | 1 | 1 | 0 |
+| Orc Mystic | Soul Cry | 2 | 14 | 1,800 |
+| Orc Mystic | Life Drain | 1 | 7 | 520 |
+| Orc Mystic | Life Drain | 2 | 14 | 1,800 |
 
-A first skill's power and MP at each level (a burn's power is per second):
+Each skill's power and MP at each level (a burn's power is per second):
 
 | Skill level | Power | MP |
 |---|---|---|
@@ -788,18 +821,28 @@ A first skill's power and MP at each level (a burn's power is per second):
 | Vampiric Touch 2 | 21 | 28 |
 | Chill Flame 1 | 20 | 15 |
 | Chill Flame 2 | 30 | 23 |
+| Drain Health 1 | 20 | 12 |
+| Drain Health 2 | 22 | 13 |
+| Life Drain 1 | 15 | 27 |
+| Life Drain 2 | 21 | 40 |
+| Self Heal 1 | 42 | 9 |
+| Heal 1 | 49 | 10 |
+| Heal 2 | 58 | 13 |
+| Heal 3 | 67 | 14 |
+| Heal 4 | 83 | 17 |
+| Heal 5 | 95 | 19 |
+| Heal 6 | 107 | 22 |
+| Elemental Heal 1 | 71 | 40 |
+| Elemental Heal 2 | 75 | 43 |
+| Elemental Heal 3 | 80 | 45 |
+| Defense Aura 1 | | 5 |
+| Attack Aura 1 | | 7 |
+| Curse: Poison 1 | 24 | 10 |
+| Wind Shackle 1 | | 3 |
+| Soul Cry 1 | 4.5 | 2 |
+| Soul Cry 2 | 14 | 3 |
+| Relax 1 | 5 | 3 |
 
-What a mastery does, by level, with every multiplier applied before every addition:
-
-| Mastery | Path | By level |
-|---|---|---|
-| Weapon Mastery | Fighter | P.Atk ×1.085, then +2, +3, +4 |
-| Weapon Mastery | Mystic | P.Atk ×1.45 and M.Atk ×1.17, then P.Atk +1.5, +2.8 and M.Atk +1.9, +3.5 |
-| Armor Mastery | Fighter | P.Def +9, +11, +12, +13, +14, and Evasion +3 at 4 and 5 in light armour |
-| Armor Mastery | Mystic | P.Def +6.7, +8.0, +9.2 |
-| Anti Magic | Mystic | M.Def +10, +12, +14, +16 |
-| Robe Mastery | Mystic | P.Def +11.6, +13.4, +16.1, +18.4 in a robe |
-
-Example: a level 5 Human Fighter with 260 SP learns Power Strike 2 and 3 for 50 each and Weapon
-Mastery 1 for 160, with 260 − 50 − 50 − 160 = **0** left. Its Squire's Sword's P.Atk, 6 × 1.20 ×
-0.94 = 6.77, becomes 6.77 × 1.085 + 2 = **9.34**, and its Power Strike strikes at power **30**.
+Example: a level 5 Human Fighter with 150 SP learns Power Strike 2 and 3 and Mortal Blow 1 for 50
+each, with 150 − 50 − 50 − 50 = **0** left, and its Power Strike strikes at power **30**. A Human
+Mystic starts knowing Wind Strike and Self Heal, whose level 1 its trainer teaches for nothing.

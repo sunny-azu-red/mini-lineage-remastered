@@ -159,11 +159,16 @@
     padding-block: 10px;
 }
 
-/* A heading with its list under it: what the Inventory panel says is worn. */
+/* A heading with its list under it: what the Inventory panel says is equipped. At line-height 1
+   each name's underline, 2px below it, touched the next name. */
 .stat-row.stacked {
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
+    gap: 4px;
+}
+
+.stat-row.stacked .stat-value {
+    line-height: 18px;
 }
 
 /* Edge to edge, with nothing beside it. */

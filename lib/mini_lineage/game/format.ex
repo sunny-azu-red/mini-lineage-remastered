@@ -50,6 +50,12 @@ defmodule MiniLineage.Game.Format do
   def tenths(tenths) when is_integer(tenths) and tenths >= 0,
     do: "#{div(tenths, 10)}.#{rem(tenths, 10)}"
 
+  @doc "Names joined as a sentence says them: \"a\", \"a or b\", \"a, b or c\"."
+  def list([only], _word), do: only
+
+  def list(names, word),
+    do: "#{Enum.join(Enum.drop(names, -1), ", ")} #{word} #{List.last(names)}"
+
   def slugify(text) do
     text
     |> String.downcase()

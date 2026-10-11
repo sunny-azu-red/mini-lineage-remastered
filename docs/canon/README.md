@@ -110,7 +110,22 @@ where it has any.
   Chill Flame (Orc Mystic). In Lineage II only Wind Strike and Soul Cry came at level 1, the
   Fighters' skills came at 5, and each needed the right weapon.
 - **A short skill list per set,** different for each race, until the class change opens the
-  specialised skills. Lineage II's trees are far larger.
+  specialised skills: the first skill and two more from the set's canon tree, at their canon levels
+  and SP (rules §19, §25). Lineage II's trees are far larger.
+- **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
+  Mastery are left out, and each set learns two actives in their place.
+- **Self Heal, Wind Strike (Elven Mystic) and Soul Cry come free at level 1,** as Lineage II taught
+  them for 0 SP; the others are bought at their canon levels.
+- **The character chooses its own skills in a fight** (rules §20): a heal below half HP, then its
+  auras, its toggle, its strongest spell, and a curse only on a monster above half its HP. In
+  Lineage II the player chose.
+- **A heal mends its power,** as L2J has it; aCis adds √M.Atk. **Curse: Poison lands 70% of the
+  time,** aCis's power; L2J's 10 rolls against the target's CON and M.Def, which has no place
+  here. **Wind Shackle lands 80% of the time,** its power with no MEN save.
+- **Relax works on the tick of rest,** 5 HP more for 3 MP, while HP is short. In Lineage II it sat
+  the character down, drained 2 MP every 2 seconds and ended when it stood or HP was full.
+- **Soul Cry lasts one fight** and is lit anew in the next, where Lineage II kept it on until
+  switched off. **An aura holds its canon 20 minutes,** out of the fight too.
 - **No spellbooks.** A line is learned with level and SP alone; in Lineage II some needed a book
   from the village trader.
 - **Skills are learned only at the trainers of the character's own village,** with SP. In

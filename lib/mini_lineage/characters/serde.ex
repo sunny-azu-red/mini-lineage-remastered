@@ -26,7 +26,8 @@ defmodule MiniLineage.Characters.Serde do
       "dead" => p.dead,
       "killer" => p.killer,
       "skills" => p.skills,
-      "combat" => p.combat
+      "combat" => p.combat,
+      "buffs" => p.buffs
     }
   end
 
@@ -49,7 +50,8 @@ defmodule MiniLineage.Characters.Serde do
       dead: m["dead"] == true,
       killer: m["killer"],
       skills: skills(m["skills"], m["race_id"], path(m["path"])),
-      combat: combat(m["combat"])
+      combat: combat(m["combat"]),
+      buffs: buffs(m["buffs"])
     }
   end
 
@@ -87,6 +89,19 @@ defmodule MiniLineage.Characters.Serde do
     do: %{Rules.first_skill(race_id, path).name => 1}
 
   defp skills(_none, _race_id, _path), do: %{}
+
+  # Only auras `Rules` knows, each to a whole millisecond; a run from before them raised none.
+  defp buffs(%{} = raised),
+    do:
+      for(
+        {name, fades} <- raised,
+        Map.has_key?(Rules.skills(), name) and Rules.skill(name).kind == :aura,
+        is_integer(fades),
+        into: %{},
+        do: {name, fades}
+      )
+
+  defp buffs(_none), do: %{}
 
   defp combat("engaged"), do: "engaged"
   defp combat(until) when is_integer(until), do: until

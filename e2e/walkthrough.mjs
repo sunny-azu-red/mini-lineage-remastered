@@ -225,6 +225,10 @@ try {
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
         sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|📖 Skills'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
+    check('...its Skills panel naming what it knows, Soul Cry free from the start and told as a toggle',
+        await page.locator('#skill-chill-flame').count() === 1
+        && /P\.Atk \+4\.5 for 2 MP, then 3 MP every 3 seconds/.test(await text('#skill-soul-cry')),
+        await text('#skill-soul-cry'));
     check('...under the game\'s name, the page\'s one h1',
         await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
     check('...then its class, what it was born with and its race\'s perk in one paragraph, then its level, bars and purse',
@@ -468,8 +472,8 @@ try {
     check('...and retreating goes back to the village', (await state()).screen === 'town');
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
-    check('the sidebar names the weapons and armour worn, each a link to the inventory',
-        /Dagger/.test(await text('#worn-weapons')) && await page.locator('#worn-armour a').count() === 2,
+    check('the sidebar names the weapons and armour equipped, each a link to the inventory',
+        /Dagger/.test(await text('#equipped-weapons')) && await page.locator('#equipped-armour a').count() === 2,
         await text('#inventory'));
     await page.click('#header-link');
     await onScreen('town');
@@ -494,15 +498,17 @@ try {
         await text('#flash'));
     await adena(wallet - 768);
     check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
-    await page.click('#worn-weapons a');
+    await page.click('#equipped-weapons a');
     await onScreen('inventory');
-    check('the inventory lists everything carried, what is worn highlighted',
+    check('the inventory lists everything carried, what is equipped highlighted',
         await page.locator('#items tr.owned').count() === 3, String(await page.locator('#items tr.owned').count()));
     const boneDagger = await page.$eval('#wear-form select', (el) =>
         [...el.options].find(o => o.textContent.includes('Bone Dagger'))?.value);
     await page.selectOption('#wear-form select', boneDagger);
-    check('...and picking something carried offers to put it on', /Put on/.test(await text('#wear-form button')),
-        await text('#wear-form button'));
+    // The label is the server's answer to the pick, a round trip after it.
+    const putOn = await page.locator('#wear-form button', { hasText: 'Put on' })
+        .waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check('...and picking something carried offers to put it on', putOn, await text('#wear-form button'));
     await page.click('#wear-form button');
     await page.waitForSelector('#items tr.owned:has-text("Bone Dagger")', { timeout: 5000 });
     check('...which it does, highlighting the Bone Dagger', true);
@@ -510,8 +516,8 @@ try {
         await page.locator('#items tr:not(.owned) td.name', { hasText: /Dagger$/ }).count() === 1);
     await page.click('#header-link');
     await onScreen('town');
-    check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#worn-weapons')),
-        await text('#worn-weapons'));
+    check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#equipped-weapons')),
+        await text('#equipped-weapons'));
 
     // ---- the trainer (rules §25) ----------------------------------------------------------------
     await page.selectOption('#travel-form select', 'trainer');

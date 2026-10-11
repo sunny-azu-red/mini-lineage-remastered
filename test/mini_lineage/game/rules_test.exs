@@ -32,6 +32,15 @@ defmodule MiniLineage.Game.RulesTest do
 
   defp number(cell), do: cell |> String.replace(",", "") |> Float.parse() |> elem(0)
 
+  # A blank power is none; a whole number reads as an integer, as `Rules` writes it.
+  defp cell(""), do: 0
+
+  defp cell(text),
+    do: if(String.contains?(text, "."), do: number(text), else: trunc(number(text)))
+
+  defp optional(""), do: nil
+  defp optional(text), do: cell(text)
+
   @paths %{"Fighter" => :fighter, "Mystic" => :mystic}
   @races %{"Human" => 0, "Orc" => 1, "Elf" => 2, "Dark Elf" => 3}
 
@@ -212,25 +221,35 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§19 each set's first skill, every race's its own" do
-      rows = table("Skill")
+    test "§19 each set's first skill, every race's its own, and the two its trainer adds" do
+      rows = table("Set | First skill")
       assert length(rows) == 8
 
-      for [name, set, kind, power, mp, reuse, cast] <- rows do
+      for [set, first, then] <- rows do
         %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
-        skill = Rules.first_skill(race, path)
-        assert skill.name == name
-        assert Atom.to_string(skill.kind) == kind
+        assert Rules.first_skill(race, path).name == first, set
 
-        assert [skill.power, skill.mp, skill.reuse] ==
-                 Enum.map([power, mp, reuse], &trunc(number(&1)))
-
-        assert skill[:cast] == if(cast == "", do: nil, else: trunc(number(cast))), name
+        taught = for(lesson <- Rules.lessons(set), lesson.skill != first, do: lesson.skill)
+        assert Enum.uniq(taught) == String.split(then, ", "), set
       end
 
       for path <- [:fighter, :mystic] do
         names = for race <- 0..3, do: Rules.first_skill(race, path).name
         assert Enum.uniq(names) == names
+      end
+    end
+
+    test "§19 every skill at level 1" do
+      rows = table("Skill")
+      assert length(rows) == map_size(Rules.skills())
+
+      for [name, kind, power, mp, reuse, cast] <- rows do
+        skill = Rules.skill(name)
+        assert Atom.to_string(skill.kind) == kind, name
+        assert [skill.power, skill.mp] == Enum.map([power, mp], &cell/1), name
+        assert skill[:reuse] == optional(reuse), name
+        assert skill[:cast] == optional(cast), name
+        assert Rules.skill(name, 1) == skill, name
       end
     end
 
@@ -269,15 +288,15 @@ defmodule MiniLineage.Game.RulesTest do
       assert total.(:mind) == Rules.path(:fighter).mind
     end
 
-    test "§23 every set's kit, the wearable part worn, every piece an item" do
+    test "§23 every set's kit, the wearable part equipped, every piece an item" do
       rows = table("Kit")
       assert length(rows) == 8
 
-      for [set, worn, carried] <- rows do
+      for [set, equipped, carried] <- rows do
         %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
         names = fn cell -> String.split(cell, ", ", trim: true) end
-        assert Rules.kit(race, path) == {names.(worn), names.(carried)}, set
-        for name <- names.(worn) ++ names.(carried), do: assert(Rules.item?(name), name)
+        assert Rules.kit(race, path) == {names.(equipped), names.(carried)}, set
+        for name <- names.(equipped) ++ names.(carried), do: assert(Rules.item?(name), name)
       end
     end
 
@@ -376,13 +395,11 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§25 every first skill's power and MP at each level" do
+    test "§25 every skill's power and MP at each level" do
       for [name_level, power, mp] <- table("Skill level") do
         [_, name, level] = Regex.run(~r/^(.+) (\d+)$/, name_level)
         skill = Rules.skill(name, String.to_integer(level))
-
-        assert {skill.power, skill.mp} == {String.to_integer(power), String.to_integer(mp)},
-               name_level
+        assert {skill.power, skill.mp} == {cell(power), cell(mp)}, name_level
       end
 
       for {name, _} <- Rules.skills() do
@@ -592,14 +609,14 @@ defmodule MiniLineage.Game.RulesTest do
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
     end
 
-    test "§25 a level 5 Human Fighter learns three lines with 260 SP, and strikes harder" do
+    test "§25 a level 5 Human Fighter learns three lines with 150 SP, and strikes harder" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Pupil")
-      fighter = %{fighter | experience: Math.xp_for_level(5), sp: 260}
+      fighter = %{fighter | experience: Math.xp_for_level(5), sp: 150}
 
       fighter =
         Enum.reduce(
-          [{"Power Strike", 2}, {"Power Strike", 3}, {"Weapon Mastery", 1}],
+          [{"Power Strike", 2}, {"Power Strike", 3}, {"Mortal Blow", 1}],
           fighter,
           fn {skill, level}, p ->
             {p, {:ok, _}} = MiniLineage.Game.Actions.learn(p, skill, level)
@@ -608,8 +625,10 @@ defmodule MiniLineage.Game.RulesTest do
         )
 
       assert fighter.sp == 0
-      assert_in_delta Player.stats(fighter).p_atk, 9.34, 0.005
       assert Rules.skill("Power Strike", fighter.skills["Power Strike"]).power == 30
+
+      {mystic, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Pupil")
+      assert mystic.skills == %{"Wind Strike" => 1, "Self Heal" => 1}
     end
 
     test "§8 a Club's +4 Accuracy, and §13 a weapon's spread and bare hands'" do

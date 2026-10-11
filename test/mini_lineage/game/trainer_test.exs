@@ -17,8 +17,11 @@ defmodule MiniLineage.Game.TrainerTest do
     %{player | experience: Math.xp_for_level(level), sp: sp}
   end
 
-  test "a new character knows its first skill at level 1, and nothing else" do
+  test "a new character knows its first skill at level 1, and what its trainer teaches free" do
     assert human(1, 0).skills == %{"Power Strike" => 1}
+
+    {orc, _} = Player.initialize(%Player{}, Constants.race(1), :mystic, "Pupil")
+    assert orc.skills == %{"Chill Flame" => 1, "Soul Cry" => 1}
   end
 
   test "a line is learned for its SP, once its level is reached" do
@@ -41,24 +44,14 @@ defmodule MiniLineage.Game.TrainerTest do
     assert {_, {:error, :no_trainer, _}} = Actions.learn(elsewhere, "Power Strike", 2)
   end
 
-  test "a mastery starts from nothing" do
-    {player, {:ok, _}} = Actions.learn(human(5, 1_000), "Weapon Mastery", 1)
-    assert player.skills["Weapon Mastery"] == 1
+  test "a new skill starts from nothing" do
+    {player, {:ok, _}} = Actions.learn(human(5, 1_000), "Mortal Blow", 1)
+    assert player.skills["Mortal Blow"] == 1
   end
 
   test "the hunt fights with the level of the first skill the character knows" do
     {player, _} = Actions.learn(human(5, 100), "Power Strike", 2)
     assert Player.first_skill(player).power == 27
     assert Player.first_skill(human(1, 0)).power == 25
-  end
-
-  test "Armor Mastery's Evasion holds only in light armour" do
-    trained = %{human(15, 0) | skills: %{"Power Strike" => 1, "Armor Mastery" => 4}}
-    plain = %{trained | skills: %{"Power Strike" => 1}}
-    assert Player.stats(trained).evasion == Player.stats(plain).evasion + 3
-
-    stripped = %{trained | items: Enum.map(trained.items, &%{&1 | equipped: false})}
-    bare = %{stripped | skills: %{"Power Strike" => 1}}
-    assert Player.stats(stripped).evasion == Player.stats(bare).evasion
   end
 end

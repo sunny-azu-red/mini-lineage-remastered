@@ -18,10 +18,10 @@ defmodule MiniLineage.Game.ShopTest do
   end
 
   defp carried(player, name), do: Enum.find(player.items, &(&1.name == name))
-  defp worn(player), do: player |> Player.worn() |> Enum.map(& &1.name) |> Enum.sort()
+  defp equipped(player), do: player |> Player.equipped() |> Enum.map(& &1.name) |> Enum.sort()
 
   describe "buying" do
-    test "costs its price, and the item is carried, not worn" do
+    test "costs its price, and the item is carried, not equipped" do
       {player, {:ok, _}} = Actions.buy(character(), "Broadsword")
 
       assert player.adena == 100_000 - 12_500
@@ -61,15 +61,18 @@ defmodule MiniLineage.Game.ShopTest do
       refute carried(player, "Broadsword")
     end
 
-    test "is refused for something worn, or a starting kit" do
+    test "is refused for something equipped, or a starting kit" do
       player = character()
-      assert {_, {:error, :worn, _}} = Actions.sell(player, carried(player, "Squire's Sword").id)
+
+      assert {_, {:error, :equipped, _}} =
+               Actions.sell(player, carried(player, "Squire's Sword").id)
+
       assert {_, {:error, :worthless, _}} = Actions.sell(player, carried(player, "Dagger").id)
     end
   end
 
   describe "putting on" do
-    test "a weapon the first skill cannot use is worn, with a warning" do
+    test "a weapon the first skill cannot use is equipped, with a warning" do
       player = character()
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Dagger").id)
 
@@ -84,7 +87,7 @@ defmodule MiniLineage.Game.ShopTest do
       player = character()
       {player, {:ok, _}} = Actions.equip(player, carried(player, "Dagger").id)
 
-      assert worn(player) == ["Dagger", "Squire's Pants", "Squire's Shirt"]
+      assert equipped(player) == ["Dagger", "Squire's Pants", "Squire's Shirt"]
       assert carried(player, "Squire's Sword")
     end
 
@@ -92,14 +95,14 @@ defmodule MiniLineage.Game.ShopTest do
       {player, _} = Actions.buy(character(), "Small Shield")
       {player, _} = Actions.buy(player, "Short Bow")
       {player, _} = Actions.equip(player, carried(player, "Small Shield").id)
-      assert "Small Shield" in worn(player)
+      assert "Small Shield" in equipped(player)
 
       {player, _} = Actions.equip(player, carried(player, "Short Bow").id)
-      assert "Short Bow" in worn(player)
-      refute "Small Shield" in worn(player)
+      assert "Short Bow" in equipped(player)
+      refute "Small Shield" in equipped(player)
 
       {player, _} = Actions.equip(player, carried(player, "Small Shield").id)
-      refute "Short Bow" in worn(player)
+      refute "Short Bow" in equipped(player)
     end
 
     test "a second necklace takes the first one's place" do
@@ -110,16 +113,16 @@ defmodule MiniLineage.Game.ShopTest do
           p
         end)
 
-      assert for(item <- Player.worn(player), item.slot == :necklace, do: item.name) ==
+      assert for(item <- Player.equipped(player), item.slot == :necklace, do: item.name) ==
                ["Necklace of Knowledge"]
     end
 
-    test "destroying takes something carried away for good, and nothing worn" do
+    test "destroying takes something carried away for good, and nothing equipped" do
       player = character()
       {player, {:ok, _}} = Actions.destroy(player, carried(player, "Dagger").id)
       refute carried(player, "Dagger")
 
-      assert {_, {:error, :worn_destroy, _}} =
+      assert {_, {:error, :equipped_destroy, _}} =
                Actions.destroy(player, carried(player, "Squire's Sword").id)
     end
 

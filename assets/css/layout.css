@@ -259,7 +259,7 @@
     }
 }
 
-/* The inventory: worn slots beside what is carried, stacked on a phone. */
+/* The inventory: equipped slots beside what is carried, stacked on a phone. */
 .inventory-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
