@@ -139,8 +139,8 @@ defmodule MiniLineage.Game.Player do
         Formulas.max_mp(Formulas.grown(set.mp, level), a.men) + Enum.sum_by(worn, &(&1.mp || 0)),
       p_atk: Formulas.p_atk((weapon && weapon.p_atk) || path.power, a.str, level),
       m_atk: Formulas.m_atk((weapon && weapon.m_atk) || path.magic, a.int, level),
-      p_def: Formulas.p_def(covered(path.body, worn, player.path, :p_def), level),
-      m_def: Formulas.m_def(covered(path.mind, worn, :mind, :m_def), a.men, level),
+      p_def: Formulas.p_def(covered(path.body, worn, player.path, [:chest, :legs]), level),
+      m_def: Formulas.m_def(covered(path.mind, worn, :mind, [:necklace]), a.men, level),
       accuracy: Formulas.accuracy(a.dex, level),
       evasion: Formulas.evasion(a.dex, level),
       critical: Formulas.critical(a.dex, (weapon && weapon.critical) || 4),
@@ -177,14 +177,11 @@ defmodule MiniLineage.Game.Player do
   def worn(player),
     do: for(%{equipped: true, name: name} <- player.items || [], do: Rules.item(name))
 
-  # Rules §7: what is left of the body or mind once each worn piece takes its slot's share.
-  defp covered(total, worn, share_key, stat) do
-    Enum.reduce(worn, total, fn item, acc ->
-      case Map.get(item, stat) do
-        nil -> acc
-        value -> acc - Rules.share(item.slot)[share_key] + value
-      end
-    end)
+  # Rules §7: the body or mind with each worn piece in place of the part it stands for.
+  defp covered(total, worn, key, slots) do
+    for item <- worn, item.slot in slots, reduce: total do
+      acc -> acc - Rules.part(item.slot)[key] + Rules.counts_for(item)
+    end
   end
 
   @doc "Both bars to the top, as a new character has them."

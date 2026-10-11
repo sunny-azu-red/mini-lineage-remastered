@@ -22,8 +22,8 @@ defmodule MiniLineage.Game.Shop do
   def stocks?(town, item), do: Enum.any?(Rules.stock(town), &(&1.name == item.name))
 
   @doc """
-  §23: the items with `id` put on, and whatever it displaces taken off: the slot's last occupant, the
-  older of two earrings or rings, and the shield for a two-handed weapon or the reverse.
+  §23: the items with `id` put on, and whatever it displaces taken off: the slot's last occupant, and
+  the shield for a two-handed weapon or the reverse.
   """
   def put_on(items, id) do
     item = Rules.item(Enum.find(items, &(&1.id == id)).name)
@@ -45,9 +45,6 @@ defmodule MiniLineage.Game.Shop do
 
   defp displaced_by(worn, item) do
     same = for {entry, other} <- worn, other.slot == item.slot, do: entry.id
-    # Two earrings and two rings: a third pushes out the one put on first.
-    same =
-      if item.slot in [:earring, :ring], do: Enum.take(same, max(length(same) - 1, 0)), else: same
 
     hands =
       for {entry, other} <- worn,

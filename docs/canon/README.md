@@ -124,8 +124,11 @@ where it has any.
 - **The server runs at rates** (rules §22): EXP and SP ×5, Adena ×20. Retail Interlude ran at ×1;
   private servers ran at rates like these. Adena runs faster than EXP because the hunt has no quests
   and no drops to sell, which is where most of Lineage II's Adena came from.
-- **The inventory keeps only the combat slots:** weapon, shield, head, chest, legs, gloves, feet,
-  necklace, two earrings and two rings. No underwear, face or hair slots.
+- **Armour is three pieces: chest, legs and necklace,** beside the weapon and the shield. Each
+  stands for its whole part (the chest for head, chest and gloves; the legs for legs and feet; the
+  necklace for all five pieces of jewellery), counting its canon defence × its part's share ÷ its
+  slot's (rules §7), so a three-piece set is as strong as the matching full set. Helmets, gloves,
+  boots, earrings and rings are not sold.
 - **Bows need no arrows.** In Lineage II every shot spent one, a miss included; here a bow only
   draws and reloads (rules §10).
 - **Weapons keep their speed and critical but not their accuracy or damage spread.** Every blow

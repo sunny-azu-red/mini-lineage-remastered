@@ -249,24 +249,21 @@ defmodule MiniLineage.Game.RulesTest do
       for {_, m} <- Rules.monsters(), spell <- m.spells, do: Rules.monster_spell(spell)
     end
 
-    test "§7 each slot's share of the body and the mind, adding up to what each path starts with" do
-      rows = table("Slot")
-
-      for [slot, fighter, mystic, mind] <- rows do
-        share = Rules.share(slot |> String.downcase() |> String.to_existing_atom())
-
-        assert [share.fighter, share.mystic, share.mind] ==
-                 Enum.map([fighter, mystic, mind], &trunc(number(&1)))
+    test "§7 what each of the three pieces stands for, adding up to what each path starts with" do
+      cell = fn
+        "" -> nil
+        v -> trunc(number(v))
       end
 
-      # Two earrings and two rings, and 4 of a body never covered.
-      total = fn key ->
-        Enum.sum(
-          for {slot, share} <- Rules.shares(),
-              do: share[key] * if(slot in [:earring, :ring], do: 2, else: 1)
-        )
+      for [part, fighter, mystic, mind, light, robe, jewel] <- table("Part") do
+        p = Rules.part(part |> String.downcase() |> String.to_existing_atom())
+
+        assert [p.fighter, p.mystic, p.mind, p[:light], p[:magic], p[:jewel]] ==
+                 Enum.map([fighter, mystic, mind, light, robe, jewel], cell),
+               part
       end
 
+      total = fn key -> Enum.sum(for {_, part} <- Rules.parts(), do: part[key]) end
       assert total.(:fighter) + 4 == Rules.path(:fighter).body
       assert total.(:mystic) + 4 == Rules.path(:mystic).body
       assert total.(:mind) == Rules.path(:fighter).mind
@@ -560,7 +557,8 @@ defmodule MiniLineage.Game.RulesTest do
       stats = Player.stats(fighter)
 
       assert_in_delta stats.p_atk, 6.48, 1.0e-9
-      assert_in_delta stats.p_def, 75.6, 1.0e-9
+      assert_in_delta stats.p_def, 77.5, 0.05
+      assert_in_delta Rules.counts_for(Rules.item("Necklace of Wisdom")), 78.8, 0.05
     end
 
     test "§9 and §10 a sword's critical and speed, and an Elven Fighter's Short Bow" do

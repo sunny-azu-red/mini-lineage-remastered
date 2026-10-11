@@ -118,16 +118,13 @@ defmodule MiniLineage.Game.Rules do
     mystic: %{power: 3, magic: 6, body: 54, mind: 41}
   }
 
-  # Rules §7: each slot's share of the body (fighter, mystic) and of the mind.
-  @shares %{
-    head: %{fighter: 12, mystic: 12, mind: 0},
-    chest: %{fighter: 31, mystic: 15, mind: 0},
-    legs: %{fighter: 18, mystic: 8, mind: 0},
-    gloves: %{fighter: 8, mystic: 8, mind: 0},
-    feet: %{fighter: 7, mystic: 7, mind: 0},
-    necklace: %{fighter: 0, mystic: 0, mind: 13},
-    earring: %{fighter: 0, mystic: 0, mind: 9},
-    ring: %{fighter: 0, mystic: 0, mind: 5}
+  # Rules §7: what each of the three pieces stands for, as its part's share of the body (fighter,
+  # mystic) or of the mind, and the slot's own share in Lineage II, light armour by the fighter's
+  # and a robe by the mystic's.
+  @parts %{
+    chest: %{fighter: 51, mystic: 35, mind: 0, light: 31, magic: 15},
+    legs: %{fighter: 25, mystic: 15, mind: 0, light: 18, magic: 8},
+    necklace: %{fighter: 0, mystic: 0, mind: 41, jewel: 13}
   }
 
   # Rules §4: each attribute's {growth, pivot}.
@@ -419,8 +416,8 @@ defmodule MiniLineage.Game.Rules do
   }
 
   # The only kinds, slots and shops an item may name; listed so the data file mints no atom.
-  @item_words ~w(weapon shield armour jewellery head chest legs gloves feet necklace earring ring
-                 village orc-village starting)a
+  @item_words ~w(weapon shield armour jewellery chest legs necklace village orc-village starting light
+                 magic)a
 
   # Rules §23 and §24: every item, a table in the hundreds and so a data file.
   @external_resource items_path = Path.join(:code.priv_dir(:mini_lineage), "game/items.csv")
@@ -546,8 +543,24 @@ defmodule MiniLineage.Game.Rules do
   def rate(kind), do: Map.fetch!(@rates, kind)
 
   def item_words, do: @item_words
-  def share(slot), do: Map.fetch!(@shares, slot)
-  def shares, do: @shares
+  def part(slot), do: Map.fetch!(@parts, slot)
+  def parts, do: @parts
+
+  @doc """
+  Rules §7: what a worn piece counts for, its canon defence × its part's share ÷ its slot's own,
+  by its own kind of armour.
+  """
+  def counts_for(item) do
+    part = part(item.slot)
+
+    case item.slot do
+      :necklace -> item.m_def * part.mind / part.jewel
+      _ -> item.p_def * part[path_of(item.type)] / part[String.to_existing_atom(item.type)]
+    end
+  end
+
+  defp path_of("magic"), do: :mystic
+  defp path_of(_light), do: :fighter
 
   def item(name), do: Map.fetch!(@items, name)
   def item?(name), do: Map.has_key?(@items, name)
@@ -579,7 +592,7 @@ defmodule MiniLineage.Game.Rules do
   defp slot_order(slot),
     do:
       Enum.find_index(
-        ~w(weapon shield head chest legs gloves feet necklace earring ring)a,
+        ~w(weapon shield chest legs necklace)a,
         &(&1 == slot)
       )
 

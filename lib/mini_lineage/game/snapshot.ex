@@ -91,7 +91,7 @@ defmodule MiniLineage.Game.Snapshot do
     }
   end
 
-  @slots ~w(weapon shield head chest legs gloves feet necklace earring ring)a
+  @slots ~w(weapon shield chest legs necklace)a
 
   defp items(player) do
     player.items

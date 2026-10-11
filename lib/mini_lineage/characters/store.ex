@@ -6,7 +6,7 @@ defmodule MiniLineage.Characters.Store do
   import Ecto.Query
 
   alias MiniLineage.Characters.{Item, Record, Serde}
-  alias MiniLineage.Game.Player
+  alias MiniLineage.Game.{Player, Rules}
   alias MiniLineage.Repo
 
   # No fallback: config.exs sets it for every environment, and a default here could only disagree.
@@ -41,6 +41,8 @@ defmodule MiniLineage.Characters.Store do
         order_by: [asc: i.inserted_at, asc: i.id],
         select: %{id: i.id, name: i.name, equipped: i.equipped}
     )
+    # An item the game no longer has is left behind, not handed to a lookup that would raise on it.
+    |> Enum.filter(&Rules.item?(&1.name))
   end
 
   @doc """

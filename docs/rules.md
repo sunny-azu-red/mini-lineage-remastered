@@ -95,35 +95,38 @@ Example: a Human Fighter grows to 327 HP by level 20, × 1.58 for CON 43 = **516
 
 Each path starts bare-handed and unarmoured, with a power, a magic, a body and a mind. Gear (§23)
 takes their place piece by piece: a weapon's P.Atk and M.Atk take the place of power and magic, and
-each piece of armour or jewellery takes the place of its slot's share of the body or the mind.
+each of the three pieces of armour takes the place of its part of the body or the mind.
 
 | Path | Power | Magic | Body | Mind |
 |---|---|---|---|---|
 | Fighter | 4 | 6 | 80 | 41 |
 | Mystic | 3 | 6 | 54 | 41 |
 
-| Slot | Fighter body | Mystic body | Mind |
-|---|---|---|---|
-| Head | 12 | 12 | 0 |
-| Chest | 31 | 15 | 0 |
-| Legs | 18 | 8 | 0 |
-| Gloves | 8 | 8 | 0 |
-| Feet | 7 | 7 | 0 |
-| Necklace | 0 | 0 | 13 |
-| Earring | 0 | 0 | 9 |
-| Ring | 0 | 0 | 5 |
+A mini character wears three pieces, and each stands for a whole part of what Lineage II dressed
+piece by piece: the chest for head, chest and gloves, the legs for legs and feet, and the necklace
+for the necklace, both earrings and both rings. A piece counts for its canon defence × its part's
+share ÷ its own slot's share, light armour by a Fighter's shares and a robe by a Mystic's, so a
+whole three-piece set is as strong as the matching full set.
 
-There are two earrings and two rings, each with its own share. The last 4 of a body is never covered.
+| Part | Fighter body | Mystic body | Mind | Light slot | Robe slot | Jewel slot |
+|---|---|---|---|---|---|---|
+| Chest | 51 | 35 | 0 | 31 | 15 | |
+| Legs | 25 | 15 | 0 | 18 | 8 | |
+| Necklace | 0 | 0 | 41 | | | 13 |
+
+The last 4 of a body is never covered.
 
 - **P.Atk = (the weapon's P.Atk, or power) × STR bonus × level bonus**
 - **M.Atk = (the weapon's M.Atk, or magic) × INT bonus² × level bonus²**
-- **P.Def = body, each worn piece's P.Def in place of its slot's share, × level bonus**
-- **M.Def = mind, each worn piece's M.Def in place of its slot's share, × MEN bonus × level bonus**
+- **P.Def = body, each worn piece's count in place of its part, × level bonus**
+- **M.Def = mind, the necklace's count in place of its part, × MEN bonus × level bonus**
 
 Example: a level 1 Human Fighter has P.Atk 4 × 1.20 × 0.90 = **4.32**, P.Def 80 × 0.90 = **72** and
 M.Def 41 × 1.28 × 0.90 = **47.2**. A level 1 Human Mystic has M.Atk 6 × 1.21² × 0.90² = **7.1**. In
 its starting kit (§23) the Human Fighter has P.Atk 6 × 1.20 × 0.90 = **6.48** from its Squire's
-Sword, and P.Def (80 − 31 − 18 + 33 + 20) × 0.90 = **75.6** from its Squire's Shirt and Pants.
+Sword. Its Squire's Shirt (33) counts for 33 × 51 ÷ 31 = 54.3 and its Squire's Pants (20) for
+20 × 25 ÷ 18 = 27.8, so its P.Def is (80 − 51 − 25 + 54.3 + 27.8) × 0.90 = **77.5**. A Necklace of
+Wisdom (25) counts for 25 × 41 ÷ 13 = **78.8** of mind, nearly double the bare 41.
 
 ## 8. Accuracy and Evasion
 
@@ -494,8 +497,8 @@ Example: a Young Keltir carrying 10 Adena pays **200**.
 
 ## 23. Gear
 
-A character carries up to 80 items and wears at most one in each slot: weapon, shield, head, chest,
-legs, gloves, feet, necklace, two earrings and two rings. A two-handed weapon (a bow, a staff, fists,
+A character carries up to 80 items and wears at most one in each of five slots: weapon, shield,
+chest, legs and necklace. A two-handed weapon (a bow, a staff, fists,
 a two-handed sword or blunt, a polearm) takes the shield's hand, so putting one on takes the shield
 off, and the other way round. Nothing is weighed.
 
@@ -572,10 +575,6 @@ for half its price, rounded down. A starting kit is worth nothing to a shop and 
 | Small Shield | shield | shield |  |  |  |  |  |  |  |  | 56 | 20 |  | 638 | village |
 | Buckler | shield | shield |  |  |  |  |  |  |  |  | 67 | 20 |  | 2780 | village |
 | Round Shield | shield | shield |  |  |  |  |  |  |  |  | 79 | 20 |  | 7110 | village |
-| Cloth Cap | armour | head |  | none |  |  |  |  | 13 |  |  |  |  | 55 | village |
-| Leather Cap | armour | head |  | none |  |  |  |  | 16 |  |  |  |  | 911 | village |
-| Wooden Helmet | armour | head |  | none |  |  |  |  | 19 |  |  |  |  | 3980 | village |
-| Leather Helmet | armour | head |  | none |  |  |  |  | 23 |  |  |  |  | 10200 | village |
 | Squire's Shirt | armour | chest |  | light |  |  |  |  | 33 |  |  |  |  | 26 | starting |
 | Shirt | armour | chest |  | light |  |  |  |  | 36 |  |  |  |  | 147 | village |
 | Leather Shirt | armour | chest |  | light |  |  |  |  | 43 |  |  |  |  | 2430 | village |
@@ -601,30 +600,10 @@ for half its price, rounded down. A starting kit is worth nothing to a shop and 
 | Feriotic Stockings | armour | legs |  | magic |  |  |  |  | 13 |  |  |  | 23 | 1520 | village |
 | Leather Stockings | armour | legs |  | magic |  |  |  |  | 16 |  |  |  | 33 | 4970 | village |
 | Stockings of Devotion | armour | legs |  | magic |  |  |  |  | 19 |  |  |  | 42 | 12700 | village |
-| Short Gloves | armour | gloves |  | none |  |  |  |  | 9 |  |  |  |  | 37 | village |
-| Short Leather Gloves | armour | gloves |  | none |  |  |  |  | 11 |  |  |  |  | 607 | village |
-| Gloves | armour | gloves |  | none |  |  |  |  | 13 |  |  |  |  | 2650 | village |
-| Leather Gloves | armour | gloves |  | none |  |  |  |  | 15 |  |  |  |  | 6770 | village |
-| Apprentice's Shoes | armour | feet |  | none |  |  |  |  | 8 |  |  |  |  | 7 | village |
-| Cloth Shoes | armour | feet |  | none |  |  |  |  | 9 |  |  |  |  | 37 | village |
-| Leather Sandals | armour | feet |  | none |  |  |  |  | 9 |  |  |  |  | 37 | village |
-| Crude Leather Shoes | armour | feet |  | none |  |  |  |  | 11 |  |  |  |  | 607 | village |
-| Cotton Shoes | armour | feet |  | none |  |  |  |  | 11 |  |  |  |  | 607 | village |
-| Leather Shoes | armour | feet |  | none |  |  |  |  | 13 |  |  |  |  | 2650 | village |
-| Low Boots | armour | feet |  | none |  |  |  |  | 15 |  |  |  |  | 6770 | village |
 | Necklace of Magic | jewellery | necklace |  |  |  |  |  |  |  | 15 |  |  |  | 66 | village |
 | Necklace of Knowledge | jewellery | necklace |  |  |  |  |  |  |  | 18 |  |  |  | 1080 | village |
 | Necklace of Anguish | jewellery | necklace |  |  |  |  |  |  |  | 21 |  |  |  | 4680 | village |
 | Necklace of Wisdom | jewellery | necklace |  |  |  |  |  |  |  | 25 |  |  |  | 11900 | village |
-| Apprentice's Earring | jewellery | earring |  |  |  |  |  |  |  | 11 |  |  |  | 49 | village |
-| Mystic's Earring | jewellery | earring |  |  |  |  |  |  |  | 13 |  |  |  | 811 | village |
-| Earring of Strength | jewellery | earring |  |  |  |  |  |  |  | 16 |  |  |  | 3510 | village |
-| Earring of Wisdom | jewellery | earring |  |  |  |  |  |  |  | 16 |  |  |  | 3510 | village |
-| Cat's Eye Earring | jewellery | earring |  |  |  |  |  |  |  | 19 |  |  |  | 8890 | village |
-| Magic Ring | jewellery | ring |  |  |  |  |  |  |  | 7 |  |  |  | 33 | village |
-| Ring of Knowledge | jewellery | ring |  |  |  |  |  |  |  | 9 |  |  |  | 540 | village |
-| Ring of Anguish | jewellery | ring |  |  |  |  |  |  |  | 11 |  |  |  | 2340 | village |
-| Ring of Wisdom | jewellery | ring |  |  |  |  |  |  |  | 12 |  |  |  | 5920 | village |
 
 Example: a Broadsword (12,500) costs 12,500 × 1.15 = **14,375** and sells back for **6,250**.
 

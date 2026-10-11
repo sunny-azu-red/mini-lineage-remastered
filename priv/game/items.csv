@@ -41,10 +41,6 @@ Leather Shield,shield,shield,,,,,,,,,47,20,,39,village
 Small Shield,shield,shield,,,,,,,,,56,20,,638,village
 Buckler,shield,shield,,,,,,,,,67,20,,2780,village
 Round Shield,shield,shield,,,,,,,,,79,20,,7110,village
-Cloth Cap,armour,head,,none,,,,,13,,,,,55,village
-Leather Cap,armour,head,,none,,,,,16,,,,,911,village
-Wooden Helmet,armour,head,,none,,,,,19,,,,,3980,village
-Leather Helmet,armour,head,,none,,,,,23,,,,,10200,village
 Squire's Shirt,armour,chest,,light,,,,,33,,,,,26,starting
 Shirt,armour,chest,,light,,,,,36,,,,,147,village
 Leather Shirt,armour,chest,,light,,,,,43,,,,,2430,village
@@ -70,27 +66,7 @@ Cotton Stockings,armour,legs,,magic,,,,,13,,,,23,1520,village
 Feriotic Stockings,armour,legs,,magic,,,,,13,,,,23,1520,village
 Leather Stockings,armour,legs,,magic,,,,,16,,,,33,4970,village
 Stockings of Devotion,armour,legs,,magic,,,,,19,,,,42,12700,village
-Short Gloves,armour,gloves,,none,,,,,9,,,,,37,village
-Short Leather Gloves,armour,gloves,,none,,,,,11,,,,,607,village
-Gloves,armour,gloves,,none,,,,,13,,,,,2650,village
-Leather Gloves,armour,gloves,,none,,,,,15,,,,,6770,village
-Apprentice's Shoes,armour,feet,,none,,,,,8,,,,,7,village
-Cloth Shoes,armour,feet,,none,,,,,9,,,,,37,village
-Leather Sandals,armour,feet,,none,,,,,9,,,,,37,village
-Crude Leather Shoes,armour,feet,,none,,,,,11,,,,,607,village
-Cotton Shoes,armour,feet,,none,,,,,11,,,,,607,village
-Leather Shoes,armour,feet,,none,,,,,13,,,,,2650,village
-Low Boots,armour,feet,,none,,,,,15,,,,,6770,village
 Necklace of Magic,jewellery,necklace,,,,,,,,15,,,,66,village
 Necklace of Knowledge,jewellery,necklace,,,,,,,,18,,,,1080,village
 Necklace of Anguish,jewellery,necklace,,,,,,,,21,,,,4680,village
 Necklace of Wisdom,jewellery,necklace,,,,,,,,25,,,,11900,village
-Apprentice's Earring,jewellery,earring,,,,,,,,11,,,,49,village
-Mystic's Earring,jewellery,earring,,,,,,,,13,,,,811,village
-Earring of Strength,jewellery,earring,,,,,,,,16,,,,3510,village
-Earring of Wisdom,jewellery,earring,,,,,,,,16,,,,3510,village
-Cat's Eye Earring,jewellery,earring,,,,,,,,19,,,,8890,village
-Magic Ring,jewellery,ring,,,,,,,,7,,,,33,village
-Ring of Knowledge,jewellery,ring,,,,,,,,9,,,,540,village
-Ring of Anguish,jewellery,ring,,,,,,,,11,,,,2340,village
-Ring of Wisdom,jewellery,ring,,,,,,,,12,,,,5920,village

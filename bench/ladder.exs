@@ -48,7 +48,7 @@ defmodule Ladder do
       worn |> Enum.filter(&(&1.slot == slot)) |> Enum.map(worth) |> Enum.min(fn -> 0 end)
     end
 
-    slots = ~w(weapon chest legs necklace earring ring head gloves feet)a
+    slots = ~w(weapon chest legs necklace)a
 
     Enum.reduce(slots, player, fn slot, p ->
       best =

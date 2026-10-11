@@ -91,17 +91,16 @@ defmodule MiniLineage.Game.ShopTest do
       refute "Short Bow" in worn(player)
     end
 
-    test "two rings fit, and a third pushes out the one put on first" do
+    test "a second necklace takes the first one's place" do
       player =
-        Enum.reduce(["Magic Ring", "Ring of Knowledge", "Ring of Anguish"], character(), fn name,
-                                                                                            p ->
+        Enum.reduce(["Necklace of Magic", "Necklace of Knowledge"], character(), fn name, p ->
           {p, _} = Actions.buy(p, name)
           {p, _} = Actions.equip(p, carried(p, name).id)
           p
         end)
 
-      rings = for item <- Player.worn(player), item.slot == :ring, do: item.name
-      assert Enum.sort(rings) == ["Ring of Anguish", "Ring of Knowledge"]
+      assert for(item <- Player.worn(player), item.slot == :necklace, do: item.name) ==
+               ["Necklace of Knowledge"]
     end
 
     test "taking off a robe lowers Max MP, and MP with it" do

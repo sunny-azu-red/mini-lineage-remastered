@@ -126,6 +126,8 @@ Needs the class tree in the canon first.
 
 Built with the first hunt (rules §23 and §24).
 
+- **Three pieces of armour** (chest, legs, necklace) beside the weapon and shield, each standing for
+  its whole part of the body.
 - **The sidebar panel shows what is worn and the Adena,** with an "Open inventory" link.
 - **The inventory page** holds everything carried, worn or not, and puts it on or takes it off.
 - **Every set starts with its canon kit,** worn.
