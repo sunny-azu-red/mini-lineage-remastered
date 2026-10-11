@@ -131,8 +131,8 @@ where it has any.
   boots, earrings and rings are not sold.
 - **Bows need no arrows.** In Lineage II every shot spent one, a miss included; here a bow only
   draws and reloads (rules §10).
-- **Weapons keep their speed and critical but not their accuracy or damage spread.** Every blow
-  spreads ±10% (rules §13), and a Dagger's −3 Accuracy or a staff's +4 is left out.
+- **A weapon's spread covers every physical hit it makes,** skills and blows included, as aCis does;
+  L2J spread normal attacks by 0 to +10% whatever the weapon. A monster's blows spread ±10%.
 - **The Elven Fighter's kit carries a Short Bow in place of the Dagger,** so its Power Shot works from
   the first fight.
 - **A shield blocks from any side, and never a spell.** Lineage II blocked only blows from the front,

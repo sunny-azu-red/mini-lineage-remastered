@@ -187,7 +187,8 @@ defmodule MiniLineage.Game.Hunt do
       note(s, {:skill, skill.name, 0})
     else
       before = s.foe
-      s = wound(s, round(skill_damage(stats.p_atk, skill.power, foe.p_def)))
+      spread = Formulas.damage_spread(stats.spread)
+      s = wound(s, round(skill_damage(stats.p_atk, skill.power, foe.p_def, spread)))
       note(s, {:skill, skill.name, before - s.foe})
     end
   end
@@ -202,7 +203,7 @@ defmodule MiniLineage.Game.Hunt do
   defp blow(s, stats, foe) do
     if Formulas.hit?(Formulas.hit_chance(stats.accuracy, foe.evasion)) do
       critical? = Formulas.hit?(stats.critical)
-      spread = Formulas.damage_spread()
+      spread = Formulas.damage_spread(stats.spread)
 
       damage =
         Formulas.physical_damage(stats.p_atk, foe.p_def, critical: critical?, spread: spread)

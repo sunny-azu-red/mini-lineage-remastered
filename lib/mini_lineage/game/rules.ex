@@ -425,8 +425,8 @@ defmodule MiniLineage.Game.Rules do
            [header | rows] = items_path |> File.read!() |> String.split("\n", trim: true)
 
            keys =
-             ~w(name kind slot hands type p_atk m_atk atk_spd critical p_def m_def shield_def
-                shield_rate mp price sold)a
+             ~w(name kind slot hands type p_atk m_atk atk_spd critical accuracy spread p_def m_def
+                shield_def shield_rate mp price sold)a
 
            ^header = Enum.join(keys, ",")
            words = ~w(name kind slot type sold)a

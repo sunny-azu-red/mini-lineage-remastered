@@ -30,7 +30,9 @@ defmodule MiniLineageWeb.NightPageTest do
     assert has_element?(view, ~s(#effects [data-effect-id="night"]))
     assert has_element?(view, ~s(#effects [data-effect-id="shadow_sense"]))
     render_patch(view, ~p"/character")
-    assert has_element?(view, ~s(#screen [data-key="char-accuracy"][data-value="36"]))
+
+    # 36 from DEX 34 and level 1, less the starting Dagger's 3 (rules §8), and nothing lost at night.
+    assert has_element?(view, ~s(#screen [data-key="char-accuracy"][data-value="33"]))
   end
 
   test "the night is a debuff and Shadow Sense a buff, each change in Accuracy's colour", %{

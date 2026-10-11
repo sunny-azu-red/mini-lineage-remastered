@@ -141,7 +141,7 @@ defmodule MiniLineage.Game.Player do
       m_atk: Formulas.m_atk((weapon && weapon.m_atk) || path.magic, a.int, level),
       p_def: Formulas.p_def(covered(path.body, worn, player.path, [:chest, :legs]), level),
       m_def: Formulas.m_def(covered(path.mind, worn, :mind, [:necklace]), a.men, level),
-      accuracy: Formulas.accuracy(a.dex, level),
+      accuracy: Formulas.accuracy(a.dex, level) + ((weapon && weapon.accuracy) || 0),
       evasion: Formulas.evasion(a.dex, level),
       critical: Formulas.critical(a.dex, (weapon && weapon.critical) || 4),
       magic_critical: Formulas.magic_critical(a.wit),
@@ -153,7 +153,8 @@ defmodule MiniLineage.Game.Player do
       hp_regen: Formulas.hp_regen(level, a.con),
       mp_regen: Formulas.mp_regen(level, a.men),
       weapon: weapon,
-      shield: shield
+      shield: shield,
+      spread: (weapon && weapon.spread) || Formulas.bare_spread(level)
     })
   end
 

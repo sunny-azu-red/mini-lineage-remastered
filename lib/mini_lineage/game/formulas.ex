@@ -61,7 +61,10 @@ defmodule MiniLineage.Game.Formulas do
   def hit_chance(accuracy, evasion), do: (88 + 2 * (accuracy - evasion)) |> max(28) |> min(98)
   def hit?(chance), do: Math.roll_chance(chance)
 
-  def damage_spread, do: 1 + Math.random_int(-10, 10) / 100
+  def damage_spread(range \\ 10), do: 1 + Math.random_int(-range, range) / 100
+
+  @doc "§13: how far a blow spreads bare-handed, 5 + √level, rounded down."
+  def bare_spread(level), do: trunc(5 + :math.sqrt(level))
 
   def physical_damage(p_atk, p_def, opts \\ []) do
     damage = 70 * p_atk / p_def * critical_times(opts, 2) * Keyword.get(opts, :spread, 1.0)

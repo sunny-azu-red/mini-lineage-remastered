@@ -300,6 +300,8 @@ defmodule MiniLineage.Game.RulesTest do
             m_atk,
             atk_spd,
             critical,
+            accuracy,
+            spread,
             p_def,
             m_def,
             shield,
@@ -325,6 +327,8 @@ defmodule MiniLineage.Game.RulesTest do
                  item.m_atk,
                  item.atk_spd,
                  item.critical,
+                 item.accuracy,
+                 item.spread,
                  item.p_def,
                  item.m_def,
                  item.shield_def,
@@ -339,6 +343,8 @@ defmodule MiniLineage.Game.RulesTest do
                      m_atk,
                      atk_spd,
                      critical,
+                     accuracy,
+                     spread,
                      p_def,
                      m_def,
                      shield,
@@ -493,8 +499,8 @@ defmodule MiniLineage.Game.RulesTest do
 
       assert accuracy.(0, ~U[2026-07-01 09:00:00Z]) == 34
       assert accuracy.(0, ~U[2026-07-01 20:00:00Z]) == 31
-      assert accuracy.(3, ~U[2026-07-01 09:00:00Z]) == 36
-      assert accuracy.(3, ~U[2026-07-01 20:00:00Z]) == 36
+      assert accuracy.(3, ~U[2026-07-01 09:00:00Z]) == 33
+      assert accuracy.(3, ~U[2026-07-01 20:00:00Z]) == 33
       assert Rules.modifiers(:night) == [accuracy: {:add, -3}]
     end
 
@@ -604,6 +610,18 @@ defmodule MiniLineage.Game.RulesTest do
       assert fighter.sp == 0
       assert_in_delta Player.stats(fighter).p_atk, 9.34, 0.005
       assert Rules.skill("Power Strike", fighter.skills["Power Strike"]).power == 30
+    end
+
+    test "§8 a Club's +4 Accuracy, and §13 a weapon's spread and bare hands'" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
+      club = %{fighter | items: [%{id: "c", name: "Club", equipped: true}]}
+
+      assert Player.stats(club).accuracy == 38
+      assert Player.stats(club).spread == 20
+      assert Player.stats(%{fighter | items: []}).spread == 6
+      Rng.put_source(fn -> 0.0 end)
+      assert Formulas.damage_spread(20) == 0.8
     end
 
     test "§13 hit chance, inside 28% and 98%" do
