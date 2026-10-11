@@ -34,7 +34,8 @@ defmodule MiniLineageWeb.TrainerPageTest do
 
     assert_patch(view, "/talking-island/trainer")
     assert has_element?(view, ~s(#lesson-power-strike-2[data-status="ready"]))
-    assert has_element?(view, ~s(#lesson-power-strike-4[data-status="later"]))
+    # Only what it can learn now, nothing it cannot yet.
+    refute has_element?(view, "#lesson-power-strike-4")
     refute has_element?(view, "#lesson-wind-strike-2")
   end
 

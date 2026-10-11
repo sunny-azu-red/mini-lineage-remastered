@@ -78,7 +78,7 @@ defmodule MiniLineageWeb.Controls do
   looks, never the element.
   """
   attr :type, :string, default: "button"
-  attr :variant, :atom, default: :primary, values: [:primary, :secondary]
+  attr :variant, :atom, default: :primary, values: [:primary, :secondary, :danger]
   attr :size, :atom, default: :normal, values: [:normal, :sm]
   # The one of a set that is already chosen, pressed in: the Halls' current filter.
   attr :active, :boolean, default: false
@@ -94,6 +94,7 @@ defmodule MiniLineageWeb.Controls do
           classes([
             "btn",
             assigns.variant == :secondary && "btn-secondary",
+            assigns.variant == :danger && "btn-danger",
             assigns.size == :sm && "btn-sm",
             assigns.active && "active",
             assigns.class
@@ -121,6 +122,9 @@ defmodule MiniLineageWeb.Controls do
   attr :default_label, :string, required: true
   attr :active_label, :string, required: true
   attr :default_variant, :atom, default: :secondary
+  # What the button turns into once something is picked: `:danger` for what cannot be undone.
+  attr :active_variant, :atom, default: :primary
+  attr :rest, :global
 
   def select_action(assigns) do
     chosen? = chosen?(assigns.picked)
@@ -128,7 +132,7 @@ defmodule MiniLineageWeb.Controls do
     assigns =
       assign(assigns,
         label: if(chosen?, do: assigns.active_label, else: assigns.default_label),
-        variant: if(chosen?, do: :primary, else: assigns.default_variant)
+        variant: if(chosen?, do: assigns.active_variant, else: assigns.default_variant)
       )
 
     ~H"""
@@ -147,7 +151,7 @@ defmodule MiniLineageWeb.Controls do
             {option.label}
           </option>
         </select>
-        <.button type="submit" variant={@variant}>{@label}</.button>
+        <.button type="submit" variant={@variant} {@rest}>{@label}</.button>
       </div>
     </form>
     """

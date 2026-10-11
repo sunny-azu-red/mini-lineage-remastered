@@ -62,9 +62,12 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     view |> element("#hunt-button") |> render_click()
 
-    assert has_element?(view, "#flash", "cut down")
+    # Written on the ground's page, not in an alert, with where both stand after each round.
+    refute has_element?(view, "#flash")
+    assert has_element?(view, "#fight-outcome", "cut down")
     assert has_element?(view, "#fight-log li", "You meet")
     assert has_element?(view, "#fight-log li", "Round 1:")
+    assert has_element?(view, "#fight-log li", "HP, you at")
     assert has_element?(view, "#screen[data-screen=hunt]")
     player = stored(session)
     assert player.experience > 0 and player.sp > 0 and player.adena > 0

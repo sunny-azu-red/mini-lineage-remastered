@@ -159,6 +159,13 @@
     padding-block: 10px;
 }
 
+/* A heading with its list under it: what the Inventory panel says is worn. */
+.stat-row.stacked {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
 /* Edge to edge, with nothing beside it. */
 .status-panel .bar-track {
     flex: 1;

@@ -69,6 +69,17 @@ defmodule MiniLineage.Game.ShopTest do
   end
 
   describe "putting on" do
+    test "a weapon the first skill cannot use is worn, with a warning" do
+      player = character()
+      {_, {:ok, flash}} = Actions.equip(player, carried(player, "Dagger").id)
+
+      assert flash.type == :danger
+      assert flash.text =~ "Power Strike needs a sword or a blunt weapon"
+
+      {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Sword").id)
+      assert flash.type == :info
+    end
+
     test "a weapon takes the last one off, which stays carried" do
       player = character()
       {player, {:ok, _}} = Actions.equip(player, carried(player, "Dagger").id)

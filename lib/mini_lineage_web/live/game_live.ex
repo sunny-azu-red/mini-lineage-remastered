@@ -55,9 +55,11 @@ defmodule MiniLineageWeb.GameLive do
        screen: "start",
        town: nil,
        boards: %{},
+       fight: nil,
        following_board: false,
        character_id: nil,
        picked: nil,
+       picks: %{},
        dev_name: nil,
        keys: [],
        icon: nil,
@@ -116,8 +118,10 @@ defmodule MiniLineageWeb.GameLive do
     |> assign(
       screen: screen,
       town: town,
-      # A choice belongs to the screen it was made on.
+      # A choice belongs to the screen it was made on, and so does the last fight.
       picked: nil,
+      picks: %{},
+      fight: nil,
       dev_name:
         if(screen == "start" and socket.assigns.debug, do: Math.random_element(@dev_names)),
       page_title: Screens.page_title(screen, socket.assigns.view),
@@ -157,15 +161,21 @@ defmodule MiniLineageWeb.GameLive do
 
   # A choice relabels its button before it is acted on.
   def handle_event("pick", %{"_target" => [field]} = params, socket),
-    do: {:noreply, assign(socket, picked: params[field])}
+    do:
+      {:noreply,
+       assign(socket,
+         picked: params[field],
+         picks: Map.put(socket.assigns.picks, field, params[field])
+       )}
 
   # Somewhere inside the town, which is where you stand already: a patch, never a write.
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  def handle_event("navigate", %{"place" => place}, socket)
-      when place in ~w(hunt trader trainer trader-weapons trader-armour trader-jewellery trader-sell),
-      do: {:noreply, walk(socket, {place, socket.assigns.town})}
+  @inner ~w(hunt trader trainer) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
+
+  def handle_event("navigate", %{"place" => place}, socket) when place in @inner,
+    do: {:noreply, walk(socket, {place, socket.assigns.town})}
 
   # The empty choice of a menu inside a town goes back to the town.
   def handle_event("navigate", %{"place" => ""}, socket),
@@ -188,17 +198,21 @@ defmodule MiniLineageWeb.GameLive do
     do: {:noreply, apply_action(socket, &Actions.sell(&1, id), nil)}
 
   # The inventory's one choice: what to do, and to which item.
-  def handle_event("inventory", %{"act" => ""}, socket),
+  # The inventory: one item picked and put on or taken off, whichever it needs; its empty choice
+  # goes back to town. Destroying is a form of its own, whose empty choice does nothing.
+  def handle_event("wear", %{"id" => ""}, socket),
     do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
 
-  def handle_event("inventory", %{"act" => act}, socket) do
-    case String.split(act, ":", parts: 2) do
-      ["equip", id] -> {:noreply, apply_action(socket, &Actions.equip(&1, id), nil)}
-      ["unequip", id] -> {:noreply, apply_action(socket, &Actions.unequip(&1, id), nil)}
-      ["destroy", id] -> {:noreply, apply_action(socket, &Actions.destroy(&1, id), nil)}
-      _ -> {:noreply, socket}
-    end
+  def handle_event("wear", %{"id" => id}, socket) do
+    worn? = Enum.any?(socket.assigns.player.items, &(&1.id == id and &1.equipped))
+    action = if worn?, do: &Actions.unequip(&1, id), else: &Actions.equip(&1, id)
+    {:noreply, apply_action(socket, action, nil)}
   end
+
+  def handle_event("destroy", %{"doomed" => ""}, socket), do: {:noreply, socket}
+
+  def handle_event("destroy", %{"doomed" => id}, socket),
+    do: {:noreply, apply_action(socket, &Actions.destroy(&1, id), nil)}
 
   # Rules §25: one line from the village's trainer, chosen as "skill|level"; the empty choice leaves.
   def handle_event("learn", %{"lesson" => ""}, socket),
@@ -213,9 +227,19 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  # Rules §20: one click, one fight, staying on the ground unless it ends the run.
-  def handle_event("hunt", _params, socket),
-    do: {:noreply, apply_action(socket, &Actions.hunt/1, nil)}
+  # Rules §20: one click, one fight, staying on the ground unless it ends the run. A fight the hunter
+  # walks away from is written on the ground's page; one that ends the run keeps its alert.
+  def handle_event("hunt", _params, socket) do
+    socket = apply_action(socket, &Actions.hunt/1, nil)
+
+    case socket.assigns do
+      %{screen: "hunt", game_flash: %{log: _} = fight, view: %{started: true}} ->
+        {:noreply, assign(socket, fight: fight, game_flash: nil)}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
 
   # The Gatekeeper's empty choice is the way back into town.
   def handle_event("travel", %{"to" => ""}, socket),
@@ -392,6 +416,8 @@ defmodule MiniLineageWeb.GameLive do
         boards={@boards}
         lineage={@town}
         character_id={@character_id}
+        fight={@fight}
+        picks={@picks}
       />
     </Layouts.app>
     """

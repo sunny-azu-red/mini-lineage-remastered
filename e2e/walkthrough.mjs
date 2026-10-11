@@ -454,14 +454,17 @@ try {
         await text('#main h2.header-name'));
     check('...with the sidebar beside it', await page.locator('#sidebar').count() === 1);
     await page.click('#hunt-button');
-    await page.waitForSelector('#flash', { timeout: 5000 });
-    check('one click fights a monster to the end, and says what fell', /cut down/.test(await text('#flash')),
-        await text('#flash'));
+    await page.waitForSelector('#fight-outcome', { timeout: 5000 });
+    check('one click fights a monster to the end, and says what fell', /cut down/.test(await text('#fight-outcome')),
+        await text('#fight-outcome'));
+    check('...on the page itself, round by round with both sides\' HP, not in an alert',
+        await page.locator('#flash').count() === 0 && /Round 1: .* HP, you at/.test(await text('#fight-log')),
+        (await text('#fight-log')).slice(0, 160));
     check('...and the hunter stays on the ground to go again', (await state()).screen === 'hunt');
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
     check('the sidebar names the weapons and armour worn, each a link to the inventory',
-        /Dagger/.test(await text('#worn-weapons')) && await page.locator('#worn-armour a').count() === 1,
+        /Dagger/.test(await text('#worn-weapons')) && await page.locator('#worn-armour a').count() === 2,
         await text('#inventory'));
     await page.click('#header-link');
     await onScreen('town');
@@ -473,11 +476,12 @@ try {
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
-    await page.selectOption('#trader-form select', 'trader-weapons');
+    await page.selectOption('#trader-form select', 'trader-daggers');
     await page.click('#trader-form button');
-    await onScreen('trader-weapons');
-    check('the trader\'s weapons are a page of their own',
-        new URL(page.url()).pathname === '/dark-elf-village/trader/weapons', page.url());
+    await onScreen('trader-daggers');
+    check('the trader\'s daggers are a page of their own, listing only daggers',
+        new URL(page.url()).pathname === '/dark-elf-village/trader/daggers'
+        && await page.locator('#stock-broadsword').count() === 0, page.url());
     await page.selectOption('#buy-form select', 'Bone Dagger');
     await page.click('#buy-form button');
     await page.waitForSelector('#flash', { timeout: 5000 });
@@ -487,17 +491,18 @@ try {
     check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
     await page.click('#worn-weapons a');
     await onScreen('inventory');
-    check('the inventory shows every slot, an empty one included',
-        await page.locator('#slot-shield[data-empty="true"]').count() === 1);
-    const putOn = await page.$eval('#inventory-form select', (el) =>
-        [...el.options].find(o => o.textContent.includes('Put on the Bone Dagger'))?.value);
-    await page.selectOption('#inventory-form select', putOn);
-    await page.click('#inventory-form button');
-    await page.waitForSelector('#slot-weapon:has-text("Bone Dagger")', { timeout: 5000 });
-    check('...and puts the Bone Dagger on through the dropdown', /Bone Dagger/.test(await text('#slot-weapon')),
-        await text('#slot-weapon'));
+    check('the inventory lists everything carried, what is worn highlighted',
+        await page.locator('#items tr.owned').count() === 3, String(await page.locator('#items tr.owned').count()));
+    const boneDagger = await page.$eval('#wear-form select', (el) =>
+        [...el.options].find(o => o.textContent.includes('Bone Dagger'))?.value);
+    await page.selectOption('#wear-form select', boneDagger);
+    check('...and picking something carried offers to put it on', /Put on/.test(await text('#wear-form button')),
+        await text('#wear-form button'));
+    await page.click('#wear-form button');
+    await page.waitForSelector('#items tr.owned:has-text("Bone Dagger")', { timeout: 5000 });
+    check('...which it does, highlighting the Bone Dagger', true);
     check('...the Dagger it replaced carried, not lost',
-        await page.locator('#carried td.name', { hasText: /^Dagger/ }).count() === 1);
+        await page.locator('#items tr:not(.owned) td.name', { hasText: /Dagger$/ }).count() === 1);
     await page.click('#header-link');
     await onScreen('town');
     check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#worn-weapons')),

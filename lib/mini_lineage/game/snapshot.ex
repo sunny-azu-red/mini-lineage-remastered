@@ -103,6 +103,7 @@ defmodule MiniLineage.Game.Snapshot do
         name: entry.name,
         equipped: entry.equipped,
         slot: item.slot,
+        type: item.type,
         about: about(item),
         buyback: Shop.buyback(item)
       }
@@ -118,7 +119,7 @@ defmodule MiniLineage.Game.Snapshot do
     do:
       Enum.map(
         Rules.stock(town),
-        &%{name: &1.name, slot: &1.slot, about: about(&1), price: Shop.price(&1)}
+        &%{name: &1.name, slot: &1.slot, type: &1.type, about: about(&1), price: Shop.price(&1)}
       )
 
   defp lessons(player, level) do
@@ -140,32 +141,30 @@ defmodule MiniLineage.Game.Snapshot do
 
   @doc "An item's numbers in a line: what it is, then what it gives."
   def about(item) do
-    stats =
-      [
-        p_atk: "P.Atk",
-        m_atk: "M.Atk",
-        atk_spd: "Atk. Spd.",
-        critical: "Critical",
-        p_def: "P.Def",
-        m_def: "M.Def",
-        shield_def: "Shield",
-        shield_rate: "Block",
-        mp: "MP"
-      ]
-      |> Enum.filter(fn {key, _} -> item[key] end)
-      |> Enum.map(fn
-        {:shield_rate, label} -> "#{label} #{item.shield_rate}%"
-        {:mp, label} -> "#{label} +#{item.mp}"
-        {key, label} -> "#{label} #{item[key]}"
-      end)
+    # Rules §7: a piece of armour shows what it counts for, which is what it gives.
+    counts = if item.slot in [:chest, :legs, :necklace], do: round(Rules.counts_for(item))
 
-    kind =
-      cond do
-        item.kind == :weapon -> "#{if item.hands == 2, do: "two-handed ", else: ""}#{item.type}"
-        true -> Atom.to_string(item.slot)
-      end
-
-    Enum.join([kind | stats], ", ")
+    [
+      p_atk: "P.Atk",
+      m_atk: "M.Atk",
+      atk_spd: "Atk. Spd.",
+      critical: "Critical",
+      accuracy: "Accuracy",
+      p_def: "P.Def",
+      m_def: "M.Def",
+      shield_def: "Shield",
+      shield_rate: "Block",
+      mp: "MP"
+    ]
+    |> Enum.filter(fn {key, _} -> item[key] not in [nil, 0] end)
+    |> Enum.map(fn
+      {:shield_rate, label} -> "#{label} #{item.shield_rate}%"
+      {:mp, label} -> "#{label} +#{item.mp}"
+      {:accuracy, label} -> "#{label} #{if item.accuracy > 0, do: "+"}#{item.accuracy}"
+      {key, label} when key in [:p_def, :m_def] -> "#{label} #{counts || item[key]}"
+      {key, label} -> "#{label} #{item[key]}"
+    end)
+    |> Enum.join(", ")
   end
 
   # What the Gatekeeper offers: each town a route reaches, with the fee for it.

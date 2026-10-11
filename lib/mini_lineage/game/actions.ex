@@ -103,7 +103,11 @@ defmodule MiniLineage.Game.Actions do
     foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
     result = Hunt.fight(Player.stats(player), player, Player.first_skill(player), foe)
     player = %{player | health: result.health, mp: result.mp}
-    log = foe |> Narrative.build_fight_log(ground, result.log) |> Enum.map(&Narrative.alert/1)
+    stats = Player.stats(player)
+    weapon = %{max_hp: stats.max_hp, bow?: stats.weapon != nil and stats.weapon.type == "bow"}
+
+    log =
+      foe |> Narrative.build_fight_log(ground, result.log, weapon) |> Enum.map(&Narrative.alert/1)
 
     {player, {:ok, flash}} =
       cond do
@@ -212,7 +216,18 @@ defmodule MiniLineage.Game.Actions do
 
     if entry do
       player = clamp_bars(%{player | items: Shop.put_on(player.items, id)})
-      {player, {:ok, %{text: "You put on the #{entry.name}.", type: :info}}}
+      skill = Rules.first_skill(player.race_id, player.path).name
+      item = Rules.item(entry.name)
+
+      # Rules §23: a weapon the first skill cannot be used with is worn, and said so.
+      if item.kind == :weapon and not Rules.skill_weapon?(skill, item) do
+        text =
+          "You put on the #{entry.name}, but your #{skill} needs #{Narrative.weapon_for(skill)}, so you will fight without it."
+
+        {player, {:ok, %{text: text, type: :danger}}}
+      else
+        {player, {:ok, %{text: "You put on the #{entry.name}.", type: :info}}}
+      end
     else
       {player, {:error, :not_carried, @errors.not_carried}}
     end

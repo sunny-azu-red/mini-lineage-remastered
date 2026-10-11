@@ -62,7 +62,7 @@ defmodule MiniLineage.Game.Narrative do
       })
 
   @doc "Rules §20: the fight log, each line open-voiced: the meeting, then one line a round."
-  def build_fight_log(foe, ground, log) do
+  def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?}) do
     met =
       Format.fill_template(Narratives.met(), %{
         "article" => article(foe.name),
@@ -83,12 +83,29 @@ defmodule MiniLineage.Game.Narrative do
           })
 
         {round, events} ->
-          parts = events |> merge_blows() |> Enum.map(&event(&1, foe))
-          "Round #{round}: " <> join(parts) <> "."
+          {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
+          parts = events |> merge_blows() |> Enum.map(&event(&1, foe, bow?))
+
+          "Round #{round}: " <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
       end)
 
     [met | rounds]
   end
+
+  defp standing([{:standing, hp, left}], foe, max_hp),
+    do:
+      fill(:standing, %{
+        "monster" => foe.name,
+        "foe" => left,
+        "foe_max" => foe.hp,
+        "hp" => hp,
+        "max" => max_hp
+      })
+
+  defp event(:readying, _foe, true), do: fill(:draw, %{})
+  defp event(:readying, _foe, false), do: fill(:ready, %{})
+  defp event(:casting, _foe, _bow?), do: fill(:casting, %{})
+  defp event(other, foe, _bow?), do: event(other, foe)
 
   defp event({:blow, amount, true}, _foe), do: fill(:critical, %{"amount" => amount})
 
@@ -151,10 +168,13 @@ defmodule MiniLineage.Game.Narrative do
 
   defp article(name), do: if(String.first(name) in ~w(A E I O U), do: "an", else: "a")
 
-  defp weapon_for("Power Strike"), do: "a sword or a blunt weapon"
-  defp weapon_for("Power Shot"), do: "a bow"
-  defp weapon_for("Mortal Blow"), do: "a dagger"
-  defp weapon_for("Iron Punch"), do: "fists"
+  @doc "What a skill needs in hand, as a sentence names it."
+  def weapon_for(skill), do: needs(skill)
+
+  defp needs("Power Strike"), do: "a sword or a blunt weapon"
+  defp needs("Power Shot"), do: "a bow"
+  defp needs("Mortal Blow"), do: "a dagger"
+  defp needs("Iron Punch"), do: "fists"
 
   def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
 

@@ -170,16 +170,11 @@ defmodule MiniLineageWeb.Layouts do
       >
         <%!-- What is worn, in two rows; each names a link to the inventory, as the name above does to
               the character page. --%>
-        <div class="stat-row" id="worn-weapons">
-          <span class="stat-label">Weapons</span>
-          <span class="stat-value">
-            <.link patch={~p"/inventory"}>{worn_names(@view.items, [:weapon, :shield], "Bare hands")}</.link>
-          </span>
-        </div>
-        <div class="stat-row" id="worn-armour">
-          <span class="stat-label">Armour</span>
-          <span class="stat-value">
-            <.link patch={~p"/inventory"}>{worn_names(@view.items, [:chest, :legs, :necklace], "None")}</.link>
+        <div :for={{id, label, slots, none} <- worn_rows()} class="stat-row stacked" id={id}>
+          <span class="stat-label">{label}</span>
+          <span :if={worn(@view.items, slots) == []} class="stat-value muted">{none}</span>
+          <span :for={name <- worn(@view.items, slots)} class="stat-value">
+            <.link patch={~p"/inventory"}>{name}</.link>
           </span>
         </div>
         <div class="stat-row">
@@ -192,12 +187,15 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  defp worn_names(items, slots, none) do
-    case for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name) do
-      [] -> none
-      names -> Enum.join(names, ", ")
-    end
-  end
+  # What is worn, in two lists headed above them, each name a link to the inventory.
+  defp worn_rows,
+    do: [
+      {"worn-weapons", "Weapons", [:weapon, :shield], "Bare hands"},
+      {"worn-armour", "Armour", [:chest, :legs, :necklace], "None"}
+    ]
+
+  defp worn(items, slots),
+    do: for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name)
 
   @doc """
   The banner. `interactive?` is false on the error page, which has no LiveView, so there the

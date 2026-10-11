@@ -13,7 +13,7 @@ defmodule MiniLineage.Game.Access do
   @readable ~w(races error highscores)
 
   # Where a character can stand: its town, that town's Gatekeeper, and its hunting ground.
-  @trader ~w(trader trader-weapons trader-armour trader-jewellery trader-sell)
+  @trader ["trader" | Enum.map(MiniLineageWeb.Paths.trader_pages(), &("trader-" <> &1))]
   @in_town ~w(town gatekeeper hunt trainer) ++ @trader
 
   @doc """

@@ -88,8 +88,10 @@ defmodule MiniLineage.Game.Hunt do
 
   defp rounds(s, stats, skill, foe) do
     s = %{s | rounds: s.rounds + 1} |> burn()
-    s = if s.busy > 0, do: s, else: character_turn(s, stats, skill, foe)
+    s = if s.busy > 0, do: note(s, :casting), else: character_turn(s, stats, skill, foe)
     s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, stats, foe), else: s
+    # Where both stand when the round is over, so the log's numbers read against something.
+    s = note(s, {:standing, s.health, s.foe})
 
     s = %{
       s
@@ -165,6 +167,8 @@ defmodule MiniLineage.Game.Hunt do
   defp swing(s, stats, skill, foe) do
     {count, carry} = carry_over(s.blows, stats.blows_per_round)
     s = %{s | blows: carry}
+    # A round with no blow in it is spent getting ready: drawing a bow, or winding up.
+    s = if count == 0, do: note(s, :readying), else: s
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
       s =

@@ -21,7 +21,14 @@ defmodule MiniLineageWeb.Screens do
     "highscores" => "Monument of Heroes",
     "inventory" => "Inventory",
     "trader" => "Trader",
-    "trader-weapons" => "Trader: Weapons",
+    "trader-swords" => "Trader: Swords",
+    "trader-blunts" => "Trader: Blunt Weapons",
+    "trader-daggers" => "Trader: Daggers",
+    "trader-bows" => "Trader: Bows",
+    "trader-polearms" => "Trader: Polearms",
+    "trader-fists" => "Trader: Fists",
+    "trader-staves" => "Trader: Staves and Books",
+    "trader-shields" => "Trader: Shields",
     "trader-armour" => "Trader: Armour",
     "trader-jewellery" => "Trader: Jewellery",
     "trader-sell" => "Trader: Sell",
@@ -94,11 +101,15 @@ defmodule MiniLineageWeb.Screens do
   attr :boards, :map, default: %{}
   attr :lineage, :string, default: nil
   attr :character_id, :string, default: nil
+  # What each dropdown on the screen has picked, by its field.
+  attr :picks, :map, default: %{}
+  # Rules §20: the last fight on this ground, its log and what it came to.
+  attr :fight, :map, default: nil
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper hunt trader trader-weapons trader-armour trader-jewellery
-                        trader-sell trainer character inventory),
+      when screen in ~w(town gatekeeper hunt trader trainer character inventory) or
+             binary_part(screen, 0, min(byte_size(screen), 7)) == "trader-",
       do: ~H||
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
@@ -203,11 +214,43 @@ defmodule MiniLineageWeb.Screens do
     <div class="action-links">
       <.button id="hunt-button" phx-click="hunt">⚔️ Hunt</.button>
     </div>
+    <div :if={@fight} id="fight">
+      <h3>The last fight</h3>
+      <ol id="fight-log" class="fight-log">
+        <li :for={line <- @fight.log}>{raw(line)}</li>
+      </ol>
+      <p id="fight-outcome">{raw(@fight.text)}</p>
+    </div>
     """
   end
 
-  # Rules §24: the trader's menu, each part of what it sells or buys a page of its own.
+  # Rules §24: what the trader's pages hold, in the order the menu offers them, each with its label.
+  @trader_parts [
+    {"trader-swords", "🗡️ Swords", "swords", {:types, ["sword", "two-handed sword"]}},
+    {"trader-blunts", "🔨 Blunt weapons", "blunt weapons", {:types, ["blunt"]}},
+    {"trader-daggers", "🔪 Daggers", "daggers", {:types, ["dagger"]}},
+    {"trader-bows", "🏹 Bows", "bows", {:types, ["bow"]}},
+    {"trader-polearms", "🔱 Polearms", "polearms", {:types, ["pole"]}},
+    {"trader-fists", "🥊 Fists", "fist weapons", {:types, ["fists"]}},
+    {"trader-staves", "🪄 Staves and books", "staves and books",
+     {:types, ["two-handed blunt", "staff"]}},
+    {"trader-shields", "🛡️ Shields", "shields", {:slots, [:shield]}},
+    {"trader-armour", "👕 Armour", "armour", {:slots, [:chest, :legs]}},
+    {"trader-jewellery", "📿 Jewellery", "necklaces", {:slots, [:necklace]}}
+  ]
+
+  defp in_part?(item, {:types, types}), do: item.slot == :weapon and item.type in types
+  defp in_part?(item, {:slots, slots}), do: item.slot in slots
+
+  # Rules §24: the trader's menu, each part of what it sells, and selling, a page of its own.
   defp trader(assigns) do
+    parts =
+      for {page, label, _, part} <- @trader_parts,
+          Enum.any?(assigns.view.stock, &in_part?(&1, part)),
+          do: %{value: page, label: label}
+
+    assigns = assign(assigns, parts: parts ++ [%{value: "trader-sell", label: "💰 Sell"}])
+
     ~H"""
     <p>
       The traders of {@view.town.emoji} {@view.town.name} sell what every village sells, and buy back
@@ -219,23 +262,12 @@ defmodule MiniLineageWeb.Screens do
       name="place"
       picked={@picked}
       placeholder={"🚪 #{@view.town.name}"}
-      options={[
-        %{value: "trader-weapons", label: "⚔️ Weapons and shields"},
-        %{value: "trader-armour", label: "🛡️ Armour"},
-        %{value: "trader-jewellery", label: "📿 Jewellery"},
-        %{value: "trader-sell", label: "💰 Sell"}
-      ]}
+      options={@parts}
       default_label="Return"
       active_label="Browse"
     />
     """
   end
-
-  @trader_parts %{
-    "trader-weapons" => {[:weapon, :shield], "weapons and shields"},
-    "trader-armour" => {[:chest, :legs], "armour"},
-    "trader-jewellery" => {[:necklace], "jewellery"}
-  }
 
   # Rules §24: one part of the trader's stock, in a table, and the choice of what to buy.
   defp trader_page(%{screen: "trader-sell"} = assigns) do
@@ -250,7 +282,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
     <.data_table :if={@sellable != []} id="sellable">
       <:col class="name">Item</:col>
-      <:col class="name">What it is</:col>
+      <:col class="name">Stats</:col>
       <:col>Pays</:col>
       <tbody>
         <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
@@ -279,16 +311,16 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp trader_page(assigns) do
-    {slots, what} = Map.fetch!(@trader_parts, assigns.screen)
+    {_, _, what, part} = List.keyfind(@trader_parts, assigns.screen, 0)
 
     assigns =
-      assign(assigns, stock: Enum.filter(assigns.view.stock, &(&1.slot in slots)), what: what)
+      assign(assigns, stock: Enum.filter(assigns.view.stock, &in_part?(&1, part)), what: what)
 
     ~H"""
     <p>The traders lay out their {@what}.</p>
     <.data_table id="stock">
       <:col class="name">Item</:col>
-      <:col class="name">What it is</:col>
+      <:col class="name">Stats</:col>
       <:col>Adena</:col>
       <tbody>
         <tr :for={item <- @stock} id={"stock-#{slug(item.name)}"}>
@@ -316,9 +348,12 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §25: what the village's trainer teaches this set, and the choice of what to learn now.
+  # Rules §25: what the character knows, highlighted, and what it can learn now; nothing it cannot.
   defp trainer(assigns) do
-    assigns = assign(assigns, ready: Enum.filter(assigns.view.lessons, &(&1.status == :ready)))
+    lessons = Enum.filter(assigns.view.lessons, &(&1.status in [:known, :ready]))
+
+    assigns =
+      assign(assigns, lessons: lessons, ready: Enum.filter(lessons, &(&1.status == :ready)))
 
     ~H"""
     <p id="trainer-intro" phx-no-format>
@@ -329,21 +364,23 @@ defmodule MiniLineageWeb.Screens do
       <:col class="num">Level</:col>
       <:col class="num">From level</:col>
       <:col>SP</:col>
-      <:col>Known</:col>
       <tbody>
         <tr
-          :for={lesson <- @view.lessons}
+          :for={lesson <- @lessons}
           id={"lesson-#{slug(lesson.skill)}-#{lesson.level}"}
           data-status={lesson.status}
+          {if lesson.status == :known, do: [class: "owned"], else: []}
         >
           <td class="name">{lesson.skill}</td>
           <td class="num">{lesson.level}</td>
           <td class="num">{lesson.learn_at}</td>
           <td class="sp">{Format.number(lesson.sp)}</td>
-          <td>{if lesson.status == :known, do: "Known", else: ""}</td>
         </tr>
       </tbody>
     </.data_table>
+    <p :if={@ready == []} id="nothing-to-learn" class="muted">
+      There is nothing more for you to learn until you grow stronger.
+    </p>
     <.select_action
       id="learn-form"
       event="learn"
@@ -355,7 +392,7 @@ defmodule MiniLineageWeb.Screens do
           @ready,
           &%{
             value: "#{&1.skill}|#{&1.level}",
-            label: "Learn #{&1.skill} #{&1.level} for #{Format.number(&1.sp)} SP"
+            label: "📖 #{&1.skill} #{&1.level} for #{Format.number(&1.sp)} SP"
           }
         )
       }
@@ -365,67 +402,85 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  @slots [weapon: "Weapon", shield: "Shield", chest: "Chest", legs: "Legs", necklace: "Necklace"]
-
-  # Rules §23: every slot, worn or empty, beside everything carried, and one choice of what to do.
+  # Rules §23: everything carried in one list, what is worn highlighted, then two choices: what to
+  # put on or take off, and, apart and in red, what to destroy.
   defp inventory(assigns) do
-    {worn, carried} = Enum.split_with(assigns.view.items, & &1.equipped)
+    picked = assigns.picks["id"]
+    worn? = Enum.any?(assigns.view.items, &(&1.id == picked and &1.equipped))
 
     assigns =
       assign(assigns,
-        worn: Map.new(worn, &{&1.slot, &1}),
-        carried: carried,
-        slots: @slots,
         capacity: MiniLineage.Game.Rules.capacity(),
-        options:
-          Enum.map(carried, &%{value: "equip:#{&1.id}", label: "Put on the #{&1.name}"}) ++
-            Enum.map(worn, &%{value: "unequip:#{&1.id}", label: "Take off the #{&1.name}"}) ++
-            Enum.map(carried, &%{value: "destroy:#{&1.id}", label: "Destroy the #{&1.name}"})
+        carried: Enum.reject(assigns.view.items, & &1.equipped),
+        wear_label: if(worn?, do: "Take off", else: "Put on")
       )
 
     ~H"""
     <p id="inventory-count">You carry {length(@view.items)} of the {@capacity} things you can.</p>
-    <div class="inventory-columns">
-      <.data_table id="worn">
-        <:col>Slot</:col>
-        <:col class="name">Worn</:col>
-        <tbody>
-          <tr :for={{slot, label} <- @slots} id={"slot-#{slot}"} data-empty={to_string(!@worn[slot])}>
-            <td>{label}</td>
-            <td class="name">
-              <%= if item = @worn[slot] do %>
-                {item.name}<br /><span class="muted">{item.about}</span>
-              <% else %>
-                <span class="muted">empty</span>
-              <% end %>
-            </td>
-          </tr>
-        </tbody>
-      </.data_table>
-      <.data_table id="carried">
-        <:col class="name">Carried</:col>
-        <tbody>
-          <tr :if={@carried == []}>
-            <td class="name muted" id="nothing-carried">nothing but what you wear</td>
-          </tr>
-          <tr :for={item <- @carried} id={"item-#{item.id}"}>
-            <td class="name">{item.name}<br /><span class="muted">{item.about}</span></td>
-          </tr>
-        </tbody>
-      </.data_table>
-    </div>
+    <.data_table id="items">
+      <:col class="name">Item</:col>
+      <:col>Slot</:col>
+      <:col class="name">Stats</:col>
+      <tbody>
+        <tr
+          :for={item <- @view.items}
+          id={"item-#{item.id}"}
+          data-worn={to_string(item.equipped)}
+          {if item.equipped, do: [class: "owned"], else: []}
+        >
+          <td class="name">{item_emoji(item)} {item.name}</td>
+          <td>{item.slot |> Atom.to_string() |> String.capitalize()}</td>
+          <td class="name muted">{item.about}</td>
+        </tr>
+      </tbody>
+    </.data_table>
     <.select_action
-      id="inventory-form"
-      event="inventory"
-      name="act"
-      picked={@picked}
+      id="wear-form"
+      event="wear"
+      name="id"
+      picked={@picks["id"]}
       placeholder={"🚪 #{@view.town.name}"}
-      options={@options}
+      options={
+        Enum.map(
+          @view.items,
+          &%{value: &1.id, label: "#{item_emoji(&1)} #{&1.name}#{if &1.equipped, do: " (worn)"}"}
+        )
+      }
       default_label="Return"
-      active_label="Do it"
+      active_label={@wear_label}
+    />
+    <.select_action
+      :if={@carried != []}
+      id="destroy-form"
+      event="destroy"
+      name="doomed"
+      picked={@picks["doomed"]}
+      placeholder="🗑️ Destroy something you carry…"
+      options={Enum.map(@carried, &%{value: &1.id, label: "🗑️ #{&1.name}"})}
+      default_label="Destroy"
+      active_label="🗑️ Destroy"
+      active_variant={:danger}
+      data-no-autofocus
     />
     """
   end
+
+  defp item_emoji(%{slot: :weapon, type: type}) do
+    case type do
+      "bow" -> "🏹"
+      "fists" -> "🥊"
+      "dagger" -> "🔪"
+      "pole" -> "🔱"
+      t when t in ["two-handed blunt", "staff"] -> "🪄"
+      "blunt" -> "🔨"
+      _ -> "🗡️"
+    end
+  end
+
+  defp item_emoji(%{slot: :shield}), do: "🛡️"
+  defp item_emoji(%{slot: :chest}), do: "👕"
+  defp item_emoji(%{slot: :legs}), do: "👖"
+  defp item_emoji(%{slot: :necklace}), do: "📿"
 
   defp slug(name), do: MiniLineage.Game.Format.slugify(name)
 

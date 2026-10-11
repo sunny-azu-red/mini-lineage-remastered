@@ -72,3 +72,9 @@ th.num {
 .character-row .online.lit {
     opacity: 1;
 }
+
+/* What the reader has: a worn item, a known skill. Gold, as their own row in the Monument is. */
+.data-table tbody tr.owned {
+    background-color: var(--wash-gold);
+    box-shadow: inset 2px 0 0 var(--gold);
+}

@@ -192,3 +192,36 @@
     margin-top: 0;
     margin-bottom: 12px;
 }
+
+/* ===== Danger =====
+ * What cannot be undone: destroying an item. The alert's own red, on a darker ground. */
+.btn-danger {
+    background: linear-gradient(180deg, #581d33 0%, #3c1121 100%);
+    border: 1px solid var(--border-danger);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    /* The alert's own voice, which clears AA on this darker ground at 5.23. */
+    color: var(--text-danger);
+}
+
+.btn-danger::after {
+    background: linear-gradient(90deg,
+            transparent,
+            color-mix(in srgb, var(--glow-hp) 50%, transparent),
+            transparent);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(180deg, #64233b 0%, #461728 100%);
+    border-color: var(--glow-hp);
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--glow-hp) 15%, transparent),
+        0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.btn-danger:active {
+    background: linear-gradient(180deg, #260914 0%, #340d1c 100%);
+    border-color: var(--border-danger);
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--bar-hp) 20%, transparent),
+        inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}

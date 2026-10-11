@@ -62,6 +62,11 @@ defmodule MiniLineage.Game.Narratives do
       ~s({their} shield catches the {monster}'s blow, and {them} take <span class="hp">{amount}</span>),
     foe_perfect: "{their} shield turns the {monster}'s blow aside",
     foe_miss: "the {monster} misses",
+    draw: "{them} draw {their} bow",
+    ready: "{them} close in for the next blow",
+    casting: "{them} keep casting",
+    standing:
+      ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
     foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>)
   }
 
