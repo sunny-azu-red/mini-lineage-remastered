@@ -21,6 +21,7 @@ defmodule MiniLineageWeb.Screens do
     "highscores" => "Monument of Heroes",
     "inventory" => "Inventory",
     "trader" => "Trader",
+    "trainer" => "Trainer",
     "error" => "Error"
   }
 
@@ -36,6 +37,7 @@ defmodule MiniLineageWeb.Screens do
   def icon("hunt", _view), do: "⚔️"
   def icon("inventory", _view), do: "🎒"
   def icon("trader", _view), do: "🛒"
+  def icon("trainer", _view), do: "📖"
   def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
 
@@ -60,7 +62,8 @@ defmodule MiniLineageWeb.Screens do
         section: :lineage
       },
       %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
-      %{title: "Combat Stats", icon: "⚖️", section: :stats}
+      %{title: "Combat Stats", icon: "⚖️", section: :stats},
+      %{title: "Skills", icon: "📖", section: :skills, body_class: "rows"}
     ]
 
   def panels(screen, view, _catalog),
@@ -83,7 +86,7 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper hunt trader character inventory),
+      when screen in ~w(town gatekeeper hunt trader trainer character inventory),
       do: ~H||
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
@@ -91,6 +94,7 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "trader"} = assigns), do: trader(assigns)
+  def screen(%{screen: "trainer"} = assigns), do: trainer(assigns)
   def screen(%{screen: "inventory"} = assigns), do: inventory(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
@@ -172,6 +176,7 @@ defmodule MiniLineageWeb.Screens do
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
       if(view.stock != [], do: [%{value: "trader", label: "🛒 Trader"}], else: []) ++
+      if(view.lessons != [], do: [%{value: "trainer", label: "📖 Trainer"}], else: []) ++
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
 
@@ -235,6 +240,46 @@ defmodule MiniLineageWeb.Screens do
             <.button size={:sm} variant={:secondary} phx-click="sell" phx-value-id={item.id}>
               Sell
             </.button>
+          </td>
+        </tr>
+      </tbody>
+    </.data_table>
+    """
+  end
+
+  # Rules §25: what the village's trainer teaches this set, and what the character can learn now.
+  defp trainer(assigns) do
+    ~H"""
+    <p id="trainer-intro" phx-no-format>
+      The trainers of {@view.town.emoji} {@view.town.name} teach their own, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="trainer-sp" value={@view.sp} /> SP</span>.
+    </p>
+    <.data_table id="lessons">
+      <:col class="name">Skill</:col>
+      <:col class="num">Level</:col>
+      <:col class="num">From level</:col>
+      <:col>SP</:col>
+      <:col></:col>
+      <tbody>
+        <tr
+          :for={lesson <- @view.lessons}
+          id={"lesson-#{slug(lesson.skill)}-#{lesson.level}"}
+          data-status={lesson.status}
+        >
+          <td class="name">{lesson.skill}</td>
+          <td class="num">{lesson.level}</td>
+          <td class="num">{lesson.learn_at}</td>
+          <td class="sp">{Format.number(lesson.sp)}</td>
+          <td>
+            <.button
+              :if={lesson.status == :ready}
+              size={:sm}
+              phx-click="learn"
+              phx-value-skill={lesson.skill}
+              phx-value-level={lesson.level}
+            >
+              Learn
+            </.button>
+            <span :if={lesson.status == :known} class="muted">Known</span>
           </td>
         </tr>
       </tbody>
@@ -395,6 +440,29 @@ defmodule MiniLineageWeb.Screens do
       </p>
     </div>
     """
+  end
+
+  # Rules §25: what the character knows, its first skill's numbers at the level it knows it.
+  defp character(%{panel: %{section: :skills}} = assigns) do
+    ~H"""
+    <div :for={{name, level} <- @view.skills} id={"skill-#{slug(name)}"} class="stat-row">
+      <p phx-no-format>
+        <span class="buff">{name}</span> <span class="muted">&bull;</span> level <span class="level">{level}</span>{skill_line(name, level)}
+      </p>
+    </div>
+    <p>
+      SP buys more from your village's trainer, and you hold <span class="sp">{Format.number(@view.sp)} SP</span>.
+    </p>
+    """
+  end
+
+  defp skill_line(name, level) do
+    if Map.has_key?(MiniLineage.Game.Rules.skills(), name) do
+      skill = MiniLineage.Game.Rules.skill(name, level)
+      ", power #{skill.power} for #{skill.mp} MP."
+    else
+      "."
+    end
   end
 
   # What an effect changes wears the colour of the stat it changes.

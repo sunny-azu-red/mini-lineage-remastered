@@ -30,6 +30,8 @@ defmodule MiniLineage.Game.Snapshot do
     sp: nil,
     items: [],
     stock: [],
+    lessons: [],
+    skills: [],
     stats: nil,
     effects: []
   }
@@ -77,6 +79,13 @@ defmodule MiniLineage.Game.Snapshot do
       items: items(player),
       # Rules §24: the village's shop, where there is one.
       stock: if(Rules.village?(player.location), do: stock(player.location), else: []),
+      # Rules §25: the trainer's lessons, in the character's own village only.
+      lessons:
+        if(player.location == Rules.hometown(player.race_id),
+          do: lessons(player, level),
+          else: []
+        ),
+      skills: Enum.sort(player.skills),
       stats: stats,
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }
@@ -111,6 +120,21 @@ defmodule MiniLineage.Game.Snapshot do
         Rules.stock(town),
         &%{name: &1.name, slot: &1.slot, about: about(&1), price: Shop.price(&1)}
       )
+
+  defp lessons(player, level) do
+    for lesson <- Rules.lessons(Rules.set(player.race_id, player.path).name) do
+      known = Map.get(player.skills, lesson.skill, 0)
+
+      status =
+        cond do
+          known >= lesson.level -> :known
+          level >= lesson.learn_at and known == lesson.level - 1 -> :ready
+          true -> :later
+        end
+
+      Map.put(lesson, :status, status)
+    end
+  end
 
   defp slot_index(slot), do: Enum.find_index(@slots, &(&1 == slot))
 

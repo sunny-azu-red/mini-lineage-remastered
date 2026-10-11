@@ -24,6 +24,7 @@ defmodule MiniLineageWeb.GameLive do
   # Debug builds only: what is typed outside a text field, and what each sequence does.
   @dev_sequences [
     {~w(a d e n a), :adena},
+    {~w(s p), :sp},
     {~w(n i g h t), :night},
     {~w(d a y), :day},
     {~w(h a l f), :half},
@@ -90,7 +91,7 @@ defmodule MiniLineageWeb.GameLive do
     do: if(Player.started?(player), do: {"town", player.location}, else: {"start", nil})
 
   defp requested_place(action, uri, _player)
-       when action in [:town, :gatekeeper, :hunt, :trader],
+       when action in [:town, :gatekeeper, :hunt, :trader, :trainer],
        do: {Atom.to_string(action), Paths.town_of(uri)}
 
   defp requested_place(:highscores, uri, _player), do: {"highscores", Paths.lineage_of(uri)}
@@ -157,7 +158,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  def handle_event("navigate", %{"place" => place}, socket) when place in ~w(hunt trader),
+  def handle_event("navigate", %{"place" => place}, socket) when place in ~w(hunt trader trainer),
     do: {:noreply, walk(socket, {place, socket.assigns.town})}
 
   def handle_event("navigate", _params, socket), do: {:noreply, socket}
@@ -174,6 +175,14 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("unequip", %{"id" => id}, socket),
     do: {:noreply, apply_action(socket, &Actions.unequip(&1, id), nil)}
+
+  # Rules §25: one line from the village's trainer.
+  def handle_event("learn", %{"skill" => skill, "level" => level}, socket) do
+    case Integer.parse(level) do
+      {level, ""} -> {:noreply, apply_action(socket, &Actions.learn(&1, skill, level), nil)}
+      _ -> {:noreply, socket}
+    end
+  end
 
   # Rules §20: one click, one fight, staying on the ground unless it ends the run.
   def handle_event("hunt", _params, socket),
@@ -207,6 +216,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("key", _params, socket), do: {:noreply, socket}
 
   defp dev(socket, :adena), do: apply_action(socket, &Actions.dev_adena/1, nil)
+  defp dev(socket, :sp), do: apply_action(socket, &Actions.dev_sp/1, nil)
   defp dev(socket, :half), do: apply_action(socket, &Actions.dev_half/1, nil)
   defp dev(socket, :level), do: apply_action(socket, &Actions.dev_level/1, nil)
   defp dev(socket, :max_level), do: apply_action(socket, &Actions.dev_max_level/1, nil)

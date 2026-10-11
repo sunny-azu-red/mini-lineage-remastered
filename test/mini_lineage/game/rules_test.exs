@@ -336,6 +336,41 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§25 every set's lessons, and no others" do
+      rows = table("Set | Skill")
+
+      assert length(rows) ==
+               Enum.sum(for set <- Rules.sets(), do: length(Rules.lessons(set.name)))
+
+      for [set, skill, level, from, sp] <- rows do
+        assert %{learn_at: learn_at, sp: cost} =
+                 Enum.find(
+                   Rules.lessons(set),
+                   &(&1.skill == skill and &1.level == String.to_integer(level))
+                 ),
+               "#{set} #{skill} #{level}"
+
+        assert {learn_at, cost} == {String.to_integer(from), trunc(number(sp))}
+      end
+    end
+
+    test "§25 every first skill's power and MP at each level" do
+      for [name_level, power, mp] <- table("Skill level") do
+        [_, name, level] = Regex.run(~r/^(.+) (\d+)$/, name_level)
+        skill = Rules.skill(name, String.to_integer(level))
+
+        assert {skill.power, skill.mp} == {String.to_integer(power), String.to_integer(mp)},
+               name_level
+      end
+
+      for {name, _} <- Rules.skills() do
+        assert length(Rules.skill_levels(name)) ==
+                 length(
+                   Enum.filter(table("Skill level"), &String.starts_with?(hd(&1), name <> " "))
+                 )
+      end
+    end
+
     test "§12 the EXP for every level, 1 to 80" do
       written =
         table("Levels")
@@ -532,6 +567,26 @@ defmodule MiniLineage.Game.RulesTest do
     test "§24 a Broadsword costs 14,375 and sells back for 6,250" do
       assert Shop.price(Rules.item("Broadsword")) == 14_375
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
+    end
+
+    test "§25 a level 5 Human Fighter learns three lines with 260 SP, and strikes harder" do
+      Clock.put_now(~U[2026-07-01 09:00:00Z])
+      {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Pupil")
+      fighter = %{fighter | experience: Math.xp_for_level(5), sp: 260}
+
+      fighter =
+        Enum.reduce(
+          [{"Power Strike", 2}, {"Power Strike", 3}, {"Weapon Mastery", 1}],
+          fighter,
+          fn {skill, level}, p ->
+            {p, {:ok, _}} = MiniLineage.Game.Actions.learn(p, skill, level)
+            p
+          end
+        )
+
+      assert fighter.sp == 0
+      assert_in_delta Player.stats(fighter).p_atk, 9.34, 0.005
+      assert Rules.skill("Power Strike", fighter.skills["Power Strike"]).power == 30
     end
 
     test "§13 hit chance, inside 28% and 98%" do

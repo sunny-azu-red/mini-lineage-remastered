@@ -37,7 +37,7 @@ defmodule MiniLineageWeb.StatusPanelTest do
   test "every figure it shows is one the hook can count", %{html: html} do
     keys = Regex.scan(~r/data-key="([^"]+)"/, html) |> Enum.map(&List.last/1)
 
-    assert Enum.sort(keys) == Enum.sort(~w(adena hp level max-hp max-mp mp xp-percent))
+    assert Enum.sort(keys) == Enum.sort(~w(adena hp level max-hp max-mp mp sp xp-percent))
   end
 
   test "a new character's purse holds nothing", %{html: _html} do

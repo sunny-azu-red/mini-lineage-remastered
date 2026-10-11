@@ -310,6 +310,83 @@ defmodule MiniLineage.Game.Rules do
     "Chill Flame" => %{kind: :burn, power: 20, mp: 15, reuse: 6_000}
   }
 
+  # Rules §25: each first skill's {power, MP} by level, level 1 first; a burn's power is per second.
+  @skill_levels %{
+    "Power Strike" => [
+      {25, 10},
+      {27, 10},
+      {30, 11},
+      {39, 13},
+      {42, 13},
+      {46, 14},
+      {60, 17},
+      {65, 18},
+      {70, 19}
+    ],
+    "Mortal Blow" => [
+      {73, 9},
+      {80, 9},
+      {88, 10},
+      {115, 11},
+      {126, 12},
+      {137, 13},
+      {178, 16},
+      {193, 16},
+      {210, 17}
+    ],
+    "Power Shot" => [
+      {65, 19},
+      {71, 20},
+      {78, 21},
+      {102, 25},
+      {112, 26},
+      {122, 27},
+      {158, 34},
+      {172, 36},
+      {187, 37}
+    ],
+    "Iron Punch" => [
+      {29, 11},
+      {31, 12},
+      {34, 13},
+      {45, 15},
+      {49, 15},
+      {54, 16},
+      {69, 20},
+      {76, 21},
+      {82, 22}
+    ],
+    "Wind Strike" => [{12, 9}, {13, 9}, {15, 10}, {18, 14}, {21, 15}],
+    "Ice Bolt" => [{8, 9}, {9, 10}, {11, 14}, {13, 15}],
+    "Vampiric Touch" => [{18, 25}, {21, 28}],
+    "Chill Flame" => [{20, 15}, {30, 23}]
+  }
+
+  # Rules §25: what each level of a mastery does, multipliers before additions as Lineage II applies
+  # them. A condition names the armour the effect needs.
+  @masteries %{
+    "Weapon Mastery" => %{
+      fighter: for(add <- [2, 3, 4], do: [p_atk: {:mul, 1.085}, p_atk: {:add, add}]),
+      mystic:
+        for(
+          {p, m} <- [{1.5, 1.9}, {2.8, 3.5}],
+          do: [p_atk: {:mul, 1.45}, m_atk: {:mul, 1.17}, p_atk: {:add, p}, m_atk: {:add, m}]
+        )
+    },
+    "Armor Mastery" => %{
+      fighter:
+        for(
+          {d, e} <- [{9, 0}, {11, 0}, {12, 0}, {13, 3}, {14, 3}],
+          do: [p_def: {:add, d}, evasion: {:add, e, "light"}]
+        ),
+      mystic: for(d <- [6.7, 8.0, 9.2], do: [p_def: {:add, d}])
+    },
+    "Anti Magic" => %{mystic: for(d <- [10, 12, 14, 16], do: [m_def: {:add, d}])},
+    "Robe Mastery" => %{
+      mystic: for(d <- [11.6, 13.4, 16.1, 18.4], do: [p_def: {:add, d, "magic"}])
+    }
+  }
+
   @first_skills %{
     {0, :fighter} => "Power Strike",
     {2, :fighter} => "Power Shot",
@@ -392,6 +469,25 @@ defmodule MiniLineage.Game.Rules do
   }
 
   @capacity 80
+
+  # Rules §25: what each set's trainer teaches, at what level and for how much SP.
+  @external_resource trainer_path = Path.join(:code.priv_dir(:mini_lineage), "game/trainer.csv")
+  @trainer (
+             [header | rows] = trainer_path |> File.read!() |> String.split("\n", trim: true)
+             ^header = "set,skill,level,learn_at,sp"
+
+             for row <- rows do
+               [set, skill, level, learn_at, sp] = String.split(row, ",")
+
+               %{
+                 set: set,
+                 skill: skill,
+                 level: String.to_integer(level),
+                 learn_at: String.to_integer(learn_at),
+                 sp: String.to_integer(sp)
+               }
+             end
+           )
 
   # Rules §22: what the server multiplies a kill's pay by.
   @rates %{exp: 5, sp: 5, adena: 20}
@@ -478,4 +574,24 @@ defmodule MiniLineage.Game.Rules do
         ~w(weapon shield head chest legs gloves feet necklace earring ring)a,
         &(&1 == slot)
       )
+
+  @doc "Rules §25: every line a set's trainer teaches, in the order the table lists them."
+  def lessons(set_name), do: Enum.filter(@trainer, &(&1.set == set_name))
+
+  def skill_known?(name),
+    do: Map.has_key?(@skills, name) or Enum.any?(@trainer, &(&1.skill == name))
+
+  @doc "Rules §25: a first skill at the level a character knows it."
+  def skill(name, level) do
+    {power, mp} = @skill_levels |> Map.fetch!(name) |> Enum.at(level - 1)
+    %{skill(name) | power: power, mp: mp}
+  end
+
+  def skill_levels(name), do: Map.fetch!(@skill_levels, name)
+
+  @doc "Rules §25: what a mastery does at a level, for a path."
+  def mastery(name, path, level),
+    do: @masteries |> Map.fetch!(name) |> Map.fetch!(path) |> Enum.at(level - 1)
+
+  def mastery?(name), do: Map.has_key?(@masteries, name)
 end

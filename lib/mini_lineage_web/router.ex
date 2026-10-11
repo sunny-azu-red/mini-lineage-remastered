@@ -40,6 +40,7 @@ defmodule MiniLineageWeb.Router do
     # Rules §24: each village's shop.
     for slug <- MiniLineageWeb.Paths.villages() do
       live "/#{slug}/trader", GameLive, :trader
+      live "/#{slug}/trainer", GameLive, :trainer
     end
 
     # Rules §17: a village's ground, outside it and at its own address.

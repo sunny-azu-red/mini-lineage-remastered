@@ -7,9 +7,11 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, `Actions.hunt/1`, and death), each village's trader and the
-  inventory (rules §23 and §24: `Shop`, the items table, `/inventory`), `/character`, the Chronicles
-  of Ancestry at `/races`, the Monument of Heroes (the Halls, in code) at `/highscores`, and the
-  error page. Everything the game was before that is in `legacy/` (see Rules).
+  inventory (rules §23 and §24: `Shop`, the items table, `/inventory`), and the home village's
+  trainer (rules §25: `Actions.learn/3`, `/<village>/trainer`, a character's `skills` and `sp`),
+  `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes (the Halls, in code)
+  at `/highscores`, and the error page. Everything the game was before that is in `legacy/` (see
+  Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
   `<.flash_group>`; every control is hand-written HEEx in `lib/mini_lineage_web/components/`); an
   HTTP client (no `Req` or `httpoison`; the zone database is `tz`, never `tzdata`, which brings
@@ -61,6 +63,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 | Ctrl+Q | deletes the character; goes once there is a real way to start over | `quit_test.exs` |
 | `adena` | +10,000 Adena every time; `Actions.dev_adena/1` refuses in a release | `dev_adena_test.exs` |
 | `night`, `day` | `Clock.force/1` holds the node at that hour until the other word or a restart; pages redraw off `"world"`. A pinned time beats it | `dev_time_test.exs` |
+| `sp` | +10,000 SP every time, to try the trainer; `Actions.dev_sp/1` refuses in a release | `dev_sp_test.exs` |
 | `half` | HP and MP to half, XP halfway to the next level; `Actions.dev_half/1` refuses in a release | `dev_half_test.exs` |
 | `lvl` | the exact EXP the next level needs, through `Player.gain_experience/2` so both bars refill (rules §12); `Actions.dev_level/1` refuses in a release and at the last level | `dev_level_test.exs` |
 | `maxlvl` | the same up to the last level, through `Actions.dev_max_level/1`; matched before `lvl` | `dev_level_test.exs` |

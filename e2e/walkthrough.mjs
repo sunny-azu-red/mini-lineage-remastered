@@ -215,7 +215,7 @@ try {
         new URL(page.url()).pathname === '/character', page.url());
     const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
-        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats'
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|📖 Skills'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
     check('...under the game\'s name, the page\'s one h1',
         await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
@@ -484,6 +484,22 @@ try {
     await onScreen('town');
     check('...and back in town the sidebar shows it worn', /Bone Dagger/.test(await text('#inventory')),
         await text('#inventory'));
+
+    // ---- the trainer (rules §25) ----------------------------------------------------------------
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('sp');
+    await page.waitForFunction(() =>
+        document.querySelector('#sidebar [data-key="sp"]')?.dataset.value === '10000', null, { timeout: 5000 });
+    await page.selectOption('#travel-form select', 'trainer');
+    await page.click('#travel-form button');
+    await onScreen('trainer');
+    check('the home village\'s trainer teaches the set\'s own first skill',
+        await page.locator('#lesson-mortal-blow-2[data-status="ready"]').count() === 1);
+    await page.click('#lesson-mortal-blow-2 button');
+    await page.waitForSelector('#lesson-mortal-blow-2[data-status="known"]', { timeout: 5000 });
+    check('...and a lesson is learned for its SP',
+        await page.getAttribute('#sidebar [data-key="sp"]', 'data-value') === '9950',
+        await page.getAttribute('#sidebar [data-key="sp"]', 'data-value'));
 
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));

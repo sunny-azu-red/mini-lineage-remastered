@@ -31,6 +31,7 @@ defmodule MiniLineageWeb.Paths do
   def for_screen({"gatekeeper", slug}) when is_binary(slug), do: "/#{slug}/gatekeeper"
 
   def for_screen({"trader", slug}) when is_binary(slug), do: "/#{slug}/trader"
+  def for_screen({"trainer", slug}) when is_binary(slug), do: "/#{slug}/trainer"
 
   def for_screen({"hunt", slug}) when is_binary(slug),
     do: "/#{slug}/#{Rules.ground_of(slug).slug}"

@@ -109,6 +109,8 @@ where it has any.
   Fighters' skills came at 5, and each needed the right weapon.
 - **A short skill list per set,** different for each race, until the class change opens the
   specialised skills. Lineage II's trees are far larger.
+- **No spellbooks.** A line is learned with level and SP alone; in Lineage II some needed a book
+  from the village trader.
 - **Skills are learned only at the trainers of the character's own village,** with SP. In
   Lineage II any town's trainers for your race would teach you.
 - **A class is changed only in the character's own starting village,** by that village's master

@@ -20,11 +20,17 @@ defmodule MiniLineage.Game.Actions do
     not_carried: "You do not carry that.",
     worn: "Take it off before you sell it.",
     worthless: "The shop will not buy that.",
+    no_trainer: "Only the trainers of your own village teach you.",
+    no_lesson: "The trainer does not teach that.",
+    too_soon: "You are not yet ready to learn that.",
+    out_of_order: "You must learn the level before it first.",
+    no_sp: "You have not earned the SP for that.",
     spent: "You are too weak to hunt, and must rest first."
   }
 
-  # Not a rule of the game: what a debug build puts in a purse so the Gatekeeper can be tried.
+  # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
   @dev_adena 10_000
+  @dev_sp 10_000
 
   @doc "Creates the character: a race, a path and a name, all checked here."
   def start(player, race_id, path, name) do
@@ -94,8 +100,7 @@ defmodule MiniLineage.Game.Actions do
   defp fight(player, ground) do
     level = Player.level(player)
     foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
-    skill = Rules.first_skill(player.race_id, player.path)
-    result = Hunt.fight(Player.stats(player), player, skill, foe)
+    result = Hunt.fight(Player.stats(player), player, Player.first_skill(player), foe)
     player = %{player | health: result.health, mp: result.mp}
 
     cond do
@@ -221,6 +226,44 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
+  @doc """
+  Rules §25: learns one line from the trainer of the character's own village, once it has reached
+  the line's level, knows the level before it, and has the SP.
+  """
+  def learn(player, skill, level) do
+    set = Player.started?(player) && Rules.set(player.race_id, player.path).name
+    lesson = set && Enum.find(Rules.lessons(set), &(&1.skill == skill and &1.level == level))
+
+    cond do
+      !set or player.location != Rules.hometown(player.race_id) ->
+        {player, {:error, :no_trainer, @errors.no_trainer}}
+
+      !lesson ->
+        {player, {:error, :no_lesson, @errors.no_lesson}}
+
+      Player.level(player) < lesson.learn_at ->
+        {player, {:error, :too_soon, @errors.too_soon}}
+
+      Map.get(player.skills, skill, 0) != level - 1 ->
+        {player, {:error, :out_of_order, @errors.out_of_order}}
+
+      player.sp < lesson.sp ->
+        {player, {:error, :no_sp, @errors.no_sp}}
+
+      true ->
+        player = %{
+          player
+          | sp: player.sp - lesson.sp,
+            skills: Map.put(player.skills, skill, level)
+        }
+
+        text =
+          ~s(You learn #{skill} level #{level} for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
+
+        {clamp_bars(player), {:ok, %{text: text, type: :info}}}
+    end
+  end
+
   # A robe taken off lowers Max MP (§23), and MP never stands above it.
   defp clamp_bars(player), do: %{player | mp: min(player.mp, Player.stats(player).max_mp)}
 
@@ -231,6 +274,18 @@ defmodule MiniLineage.Game.Actions do
         ~s(A debug build drops <span class="adena">#{Format.number(@dev_adena)} Adena</span> into your purse.)
 
       {%{player | adena: player.adena + @dev_adena}, {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :invalid, @errors.invalid}}
+    end
+  end
+
+  @doc "Debug builds only: SP to try the trainer with, every time it is asked for."
+  def dev_sp(player) do
+    if Version.debug_build?() and Player.started?(player) do
+      text =
+        ~s(A debug build hands you <span class="sp">#{Format.number(@dev_sp)} SP</span> to learn with.)
+
+      {%{player | sp: player.sp + @dev_sp}, {:ok, %{text: text, type: :info}}}
     else
       {player, {:error, :invalid, @errors.invalid}}
     end

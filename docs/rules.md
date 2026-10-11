@@ -621,3 +621,192 @@ for half its price, rounded down. A starting kit is worth nothing to a shop and 
 | Ring of Wisdom | jewellery | ring |  |  |  |  |  |  |  | 12 |  |  |  | 5920 | village |
 
 Example: a Broadsword (12,500) costs 12,500 × 1.15 = **14,375** and sells back for **6,250**.
+
+## 25. The trainer
+
+Each starting village's trainers teach its own race and nobody else, for the SP a character earns
+on the hunt (§20). A line is learned once the character has reached its level, knows the level
+before it, and pays its SP. Each set's list is short: its first skill's later levels and the
+masteries its tree holds before the class change.
+
+| Set | Skill | Level | From level | SP |
+|---|---|---|---|---|
+| Human Fighter | Power Strike | 2 | 5 | 50 |
+| Human Fighter | Power Strike | 3 | 5 | 50 |
+| Human Fighter | Power Strike | 4 | 10 | 370 |
+| Human Fighter | Power Strike | 5 | 10 | 370 |
+| Human Fighter | Power Strike | 6 | 10 | 370 |
+| Human Fighter | Power Strike | 7 | 15 | 1,300 |
+| Human Fighter | Power Strike | 8 | 15 | 1,300 |
+| Human Fighter | Power Strike | 9 | 15 | 1,300 |
+| Human Fighter | Weapon Mastery | 1 | 5 | 160 |
+| Human Fighter | Weapon Mastery | 2 | 10 | 1,100 |
+| Human Fighter | Weapon Mastery | 3 | 15 | 4,000 |
+| Human Fighter | Armor Mastery | 1 | 5 | 160 |
+| Human Fighter | Armor Mastery | 2 | 10 | 550 |
+| Human Fighter | Armor Mastery | 3 | 10 | 550 |
+| Human Fighter | Armor Mastery | 4 | 15 | 2,000 |
+| Human Fighter | Armor Mastery | 5 | 15 | 2,000 |
+| Elven Fighter | Power Shot | 2 | 5 | 50 |
+| Elven Fighter | Power Shot | 3 | 5 | 50 |
+| Elven Fighter | Power Shot | 4 | 10 | 310 |
+| Elven Fighter | Power Shot | 5 | 10 | 310 |
+| Elven Fighter | Power Shot | 6 | 10 | 310 |
+| Elven Fighter | Power Shot | 7 | 15 | 1,100 |
+| Elven Fighter | Power Shot | 8 | 15 | 1,100 |
+| Elven Fighter | Power Shot | 9 | 15 | 1,100 |
+| Elven Fighter | Weapon Mastery | 1 | 5 | 160 |
+| Elven Fighter | Weapon Mastery | 2 | 10 | 910 |
+| Elven Fighter | Weapon Mastery | 3 | 15 | 3,300 |
+| Elven Fighter | Armor Mastery | 1 | 5 | 160 |
+| Elven Fighter | Armor Mastery | 2 | 10 | 460 |
+| Elven Fighter | Armor Mastery | 3 | 10 | 460 |
+| Elven Fighter | Armor Mastery | 4 | 15 | 1,700 |
+| Elven Fighter | Armor Mastery | 5 | 15 | 1,700 |
+| Dark Fighter | Mortal Blow | 2 | 5 | 50 |
+| Dark Fighter | Mortal Blow | 3 | 5 | 50 |
+| Dark Fighter | Mortal Blow | 4 | 10 | 310 |
+| Dark Fighter | Mortal Blow | 5 | 10 | 310 |
+| Dark Fighter | Mortal Blow | 6 | 10 | 310 |
+| Dark Fighter | Mortal Blow | 7 | 15 | 950 |
+| Dark Fighter | Mortal Blow | 8 | 15 | 950 |
+| Dark Fighter | Mortal Blow | 9 | 15 | 950 |
+| Dark Fighter | Weapon Mastery | 1 | 5 | 160 |
+| Dark Fighter | Weapon Mastery | 2 | 10 | 910 |
+| Dark Fighter | Weapon Mastery | 3 | 15 | 2,900 |
+| Dark Fighter | Armor Mastery | 1 | 5 | 160 |
+| Dark Fighter | Armor Mastery | 2 | 10 | 460 |
+| Dark Fighter | Armor Mastery | 3 | 10 | 460 |
+| Dark Fighter | Armor Mastery | 4 | 15 | 1,400 |
+| Dark Fighter | Armor Mastery | 5 | 15 | 1,400 |
+| Orc Fighter | Iron Punch | 2 | 5 | 60 |
+| Orc Fighter | Iron Punch | 3 | 5 | 60 |
+| Orc Fighter | Iron Punch | 4 | 10 | 460 |
+| Orc Fighter | Iron Punch | 5 | 10 | 460 |
+| Orc Fighter | Iron Punch | 6 | 10 | 460 |
+| Orc Fighter | Iron Punch | 7 | 15 | 1,300 |
+| Orc Fighter | Iron Punch | 8 | 15 | 1,300 |
+| Orc Fighter | Iron Punch | 9 | 15 | 1,300 |
+| Orc Fighter | Weapon Mastery | 1 | 5 | 190 |
+| Orc Fighter | Weapon Mastery | 2 | 10 | 1,300 |
+| Orc Fighter | Weapon Mastery | 3 | 15 | 4,000 |
+| Orc Fighter | Armor Mastery | 1 | 5 | 190 |
+| Orc Fighter | Armor Mastery | 2 | 10 | 690 |
+| Orc Fighter | Armor Mastery | 3 | 10 | 690 |
+| Orc Fighter | Armor Mastery | 4 | 15 | 2,000 |
+| Orc Fighter | Armor Mastery | 5 | 15 | 2,000 |
+| Human Mystic | Wind Strike | 2 | 7 | 240 |
+| Human Mystic | Wind Strike | 3 | 7 | 240 |
+| Human Mystic | Wind Strike | 4 | 14 | 1,100 |
+| Human Mystic | Wind Strike | 5 | 14 | 1,100 |
+| Elven Mystic | Ice Bolt | 2 | 7 | 260 |
+| Elven Mystic | Ice Bolt | 3 | 14 | 1,100 |
+| Elven Mystic | Ice Bolt | 4 | 14 | 1,100 |
+| Dark Mystic | Vampiric Touch | 2 | 14 | 1,100 |
+| Orc Mystic | Chill Flame | 2 | 14 | 1,800 |
+| Human Mystic | Weapon Mastery | 1 | 7 | 470 |
+| Human Mystic | Weapon Mastery | 2 | 14 | 2,100 |
+| Human Mystic | Anti Magic | 1 | 7 | 240 |
+| Human Mystic | Anti Magic | 2 | 7 | 240 |
+| Human Mystic | Anti Magic | 3 | 14 | 1,100 |
+| Human Mystic | Anti Magic | 4 | 14 | 1,100 |
+| Human Mystic | Armor Mastery | 1 | 7 | 470 |
+| Human Mystic | Armor Mastery | 2 | 14 | 1,100 |
+| Human Mystic | Armor Mastery | 3 | 14 | 1,100 |
+| Elven Mystic | Weapon Mastery | 1 | 7 | 520 |
+| Elven Mystic | Weapon Mastery | 2 | 14 | 2,100 |
+| Elven Mystic | Anti Magic | 1 | 7 | 260 |
+| Elven Mystic | Anti Magic | 2 | 7 | 260 |
+| Elven Mystic | Anti Magic | 3 | 14 | 1,100 |
+| Elven Mystic | Anti Magic | 4 | 14 | 1,100 |
+| Elven Mystic | Armor Mastery | 1 | 7 | 520 |
+| Elven Mystic | Armor Mastery | 2 | 14 | 1,100 |
+| Elven Mystic | Armor Mastery | 3 | 14 | 1,100 |
+| Dark Mystic | Weapon Mastery | 1 | 7 | 470 |
+| Dark Mystic | Weapon Mastery | 2 | 14 | 2,100 |
+| Dark Mystic | Anti Magic | 1 | 7 | 240 |
+| Dark Mystic | Anti Magic | 2 | 7 | 240 |
+| Dark Mystic | Anti Magic | 3 | 14 | 1,100 |
+| Dark Mystic | Anti Magic | 4 | 14 | 1,100 |
+| Dark Mystic | Armor Mastery | 1 | 7 | 470 |
+| Dark Mystic | Armor Mastery | 2 | 14 | 1,100 |
+| Dark Mystic | Armor Mastery | 3 | 14 | 1,100 |
+| Orc Mystic | Weapon Mastery | 1 | 7 | 520 |
+| Orc Mystic | Weapon Mastery | 2 | 14 | 1,800 |
+| Orc Mystic | Anti Magic | 1 | 7 | 260 |
+| Orc Mystic | Anti Magic | 2 | 7 | 260 |
+| Orc Mystic | Anti Magic | 3 | 14 | 880 |
+| Orc Mystic | Anti Magic | 4 | 14 | 880 |
+| Orc Mystic | Robe Mastery | 1 | 7 | 260 |
+| Orc Mystic | Robe Mastery | 2 | 7 | 260 |
+| Orc Mystic | Robe Mastery | 3 | 14 | 880 |
+| Orc Mystic | Robe Mastery | 4 | 14 | 880 |
+
+A first skill's power and MP at each level (a burn's power is per second):
+
+| Skill level | Power | MP |
+|---|---|---|
+| Power Strike 1 | 25 | 10 |
+| Power Strike 2 | 27 | 10 |
+| Power Strike 3 | 30 | 11 |
+| Power Strike 4 | 39 | 13 |
+| Power Strike 5 | 42 | 13 |
+| Power Strike 6 | 46 | 14 |
+| Power Strike 7 | 60 | 17 |
+| Power Strike 8 | 65 | 18 |
+| Power Strike 9 | 70 | 19 |
+| Mortal Blow 1 | 73 | 9 |
+| Mortal Blow 2 | 80 | 9 |
+| Mortal Blow 3 | 88 | 10 |
+| Mortal Blow 4 | 115 | 11 |
+| Mortal Blow 5 | 126 | 12 |
+| Mortal Blow 6 | 137 | 13 |
+| Mortal Blow 7 | 178 | 16 |
+| Mortal Blow 8 | 193 | 16 |
+| Mortal Blow 9 | 210 | 17 |
+| Power Shot 1 | 65 | 19 |
+| Power Shot 2 | 71 | 20 |
+| Power Shot 3 | 78 | 21 |
+| Power Shot 4 | 102 | 25 |
+| Power Shot 5 | 112 | 26 |
+| Power Shot 6 | 122 | 27 |
+| Power Shot 7 | 158 | 34 |
+| Power Shot 8 | 172 | 36 |
+| Power Shot 9 | 187 | 37 |
+| Iron Punch 1 | 29 | 11 |
+| Iron Punch 2 | 31 | 12 |
+| Iron Punch 3 | 34 | 13 |
+| Iron Punch 4 | 45 | 15 |
+| Iron Punch 5 | 49 | 15 |
+| Iron Punch 6 | 54 | 16 |
+| Iron Punch 7 | 69 | 20 |
+| Iron Punch 8 | 76 | 21 |
+| Iron Punch 9 | 82 | 22 |
+| Wind Strike 1 | 12 | 9 |
+| Wind Strike 2 | 13 | 9 |
+| Wind Strike 3 | 15 | 10 |
+| Wind Strike 4 | 18 | 14 |
+| Wind Strike 5 | 21 | 15 |
+| Ice Bolt 1 | 8 | 9 |
+| Ice Bolt 2 | 9 | 10 |
+| Ice Bolt 3 | 11 | 14 |
+| Ice Bolt 4 | 13 | 15 |
+| Vampiric Touch 1 | 18 | 25 |
+| Vampiric Touch 2 | 21 | 28 |
+| Chill Flame 1 | 20 | 15 |
+| Chill Flame 2 | 30 | 23 |
+
+What a mastery does, by level, with every multiplier applied before every addition:
+
+| Mastery | Path | By level |
+|---|---|---|
+| Weapon Mastery | Fighter | P.Atk ×1.085, then +2, +3, +4 |
+| Weapon Mastery | Mystic | P.Atk ×1.45 and M.Atk ×1.17, then P.Atk +1.5, +2.8 and M.Atk +1.9, +3.5 |
+| Armor Mastery | Fighter | P.Def +9, +11, +12, +13, +14, and Evasion +3 at 4 and 5 in light armour |
+| Armor Mastery | Mystic | P.Def +6.7, +8.0, +9.2 |
+| Anti Magic | Mystic | M.Def +10, +12, +14, +16 |
+| Robe Mastery | Mystic | P.Def +11.6, +13.4, +16.1, +18.4 in a robe |
+
+Example: a level 5 Human Fighter with 260 SP learns Power Strike 2 and 3 for 50 each and Weapon
+Mastery 1 for 160, with 260 − 50 − 50 − 160 = **0** left. Its Squire's Sword's P.Atk, 6 × 1.20 ×
+0.94 = 6.77, becomes 6.77 × 1.085 + 2 = **9.34**, and its Power Strike strikes at power **30**.

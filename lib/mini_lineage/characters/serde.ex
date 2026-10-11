@@ -24,7 +24,8 @@ defmodule MiniLineage.Characters.Serde do
       "sp" => p.sp,
       "location" => p.location,
       "dead" => p.dead,
-      "killer" => p.killer
+      "killer" => p.killer,
+      "skills" => p.skills
     }
   end
 
@@ -45,7 +46,8 @@ defmodule MiniLineage.Characters.Serde do
       sp: m["sp"] || if(m["race_id"], do: 0),
       location: location(m["location"], m["race_id"]),
       dead: m["dead"] == true,
-      killer: m["killer"]
+      killer: m["killer"],
+      skills: skills(m["skills"], m["race_id"], path(m["path"]))
     }
   end
 
@@ -67,6 +69,22 @@ defmodule MiniLineage.Characters.Serde do
       true -> nil
     end
   end
+
+  # Only the names `Rules` knows, at whole levels; a run from before the trainer knows its first skill.
+  defp skills(%{} = known, _race_id, _path),
+    do:
+      for(
+        {name, level} <- known,
+        Rules.skill_known?(name),
+        is_integer(level),
+        into: %{},
+        do: {name, level}
+      )
+
+  defp skills(_none, race_id, path) when is_integer(race_id) and path in [:fighter, :mystic],
+    do: %{Rules.first_skill(race_id, path).name => 1}
+
+  defp skills(_none, _race_id, _path), do: %{}
 
   defp path("fighter"), do: :fighter
   defp path("mystic"), do: :mystic

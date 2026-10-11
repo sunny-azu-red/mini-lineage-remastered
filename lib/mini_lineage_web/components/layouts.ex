@@ -145,6 +145,11 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div class="stat-row">
+          <span class="stat-label">SP</span>
+          <span class="stat-value sp"><Controls.figure key="sp" value={@view.sp} format={:short} /></span>
+        </div>
+
+        <div class="stat-row">
           <%!-- Past the last level there is no next one to fill toward, so the total is the figure. --%>
           <Controls.bar
             id="xp-bar"

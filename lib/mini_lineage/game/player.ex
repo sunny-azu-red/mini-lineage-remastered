@@ -21,7 +21,9 @@ defmodule MiniLineage.Game.Player do
             dead: false,
             killer: nil,
             # Rules §23: what it carries, each `%{id, name, equipped}`. Stored in its own table.
-            items: []
+            items: [],
+            # Rules §25: each skill it knows, at the level it knows it.
+            skills: %{}
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -42,7 +44,8 @@ defmodule MiniLineage.Game.Player do
           sp: 0,
           adena: 0,
           location: Rules.hometown(race.id),
-          items: kit(race.id, path)
+          items: kit(race.id, path),
+          skills: %{Rules.first_skill(race.id, path).name => 1}
       })
 
     # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
@@ -83,12 +86,37 @@ defmodule MiniLineage.Game.Player do
   """
   def stats(player), do: stats(player, conditions(player))
 
-  # Under conditions read once, so one call cannot straddle dusk.
+  # Under conditions read once, so one call cannot straddle dusk. The masteries (§25) come before
+  # the conditions, as a character's own before what the hour or the place puts on it.
   defp stats(player, conditions) do
-    Enum.reduce(conditions, base_stats(player), fn aura, stats ->
+    stats = player |> base_stats() |> masteries(player)
+
+    Enum.reduce(conditions, stats, fn aura, stats ->
       Enum.reduce(aura.modifiers, stats, &modify/2)
     end)
   end
+
+  # Rules §25: each mastery known, multipliers before additions, each only in the armour it needs.
+  defp masteries(stats, player) do
+    chest = Enum.find(worn(player), &(&1.slot == :chest))
+    armour = chest && chest.type
+
+    effects =
+      for {name, level} <- player.skills || %{},
+          Rules.mastery?(name),
+          effect <- Rules.mastery(name, player.path, level),
+          wears?(effect, armour),
+          do: effect
+
+    {muls, adds} = Enum.split_with(effects, fn {_, change} -> elem(change, 0) == :mul end)
+
+    Enum.reduce(muls ++ adds, stats, fn {stat, change}, acc ->
+      modify({stat, {elem(change, 0), elem(change, 1)}}, acc)
+    end)
+  end
+
+  defp wears?({_stat, {_op, _value, needs}}, armour), do: armour == needs
+  defp wears?(_effect, _armour), do: true
 
   defp modify({stat, {:add, value}}, stats), do: Map.update!(stats, stat, &(&1 + value))
   defp modify({stat, {:mul, value}}, stats), do: Map.update!(stats, stat, &(&1 * value))
@@ -138,6 +166,12 @@ defmodule MiniLineage.Game.Player do
   @doc "An item picked up: a fresh id, the item's name, and whether it is on."
   def new_item(name, equipped \\ false),
     do: %{id: MiniLineage.Characters.Store.new_item_id(), name: name, equipped: equipped}
+
+  @doc "Rules §25: the set's first skill, at the level the character knows it."
+  def first_skill(player) do
+    name = Rules.first_skill(player.race_id, player.path).name
+    Rules.skill(name, Map.get(player.skills || %{}, name, 1))
+  end
 
   @doc "Rules §23: the items a character has on, as `Rules` gives them."
   def worn(player),

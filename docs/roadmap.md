@@ -100,9 +100,9 @@ follows before characters reach 15.
   Power Shot, Mortal Blow and Iron Punch for the Human, Elven, Dark and Orc Fighters; Wind Strike,
   Ice Bolt, Vampiric Touch and Chill Flame for the Human, Elven, Dark and Orc Mystics.
 - **SP comes from monsters,** like EXP.
-- **A short list per set** until the first class change, different for each race, learned with SP
-  from the trainers of the character's own village. The list is the character's spellbook: what it
-  knows, and what it can learn next.
+- **A short list per set** until the first class change, learned with SP from the trainers of the
+  character's own village (rules §25, built): the first skill's later levels and the masteries of
+  its canon tree. The character page's Skills panel is the spellbook: what it knows.
 - **The class change opens the specialised skills** of the new class, learned the same way.
 - **Skills matter most in the slower fights,** where a boss is fought in rounds with a choice each
   round.
