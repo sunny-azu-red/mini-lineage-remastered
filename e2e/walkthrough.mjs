@@ -460,8 +460,8 @@ try {
     check('...and the hunter stays on the ground to go again', (await state()).screen === 'hunt');
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
-    check('the sidebar names the weapon worn, and offers the rest a link away',
-        /Dagger/.test(await text('#worn-weapon')) && await page.locator('#open-inventory').count() === 1,
+    check('the sidebar names the weapons and armour worn, each a link to the inventory',
+        /Dagger/.test(await text('#worn-weapons')) && await page.locator('#worn-armour a').count() === 1,
         await text('#inventory'));
     await page.click('#header-link');
     await onScreen('town');
@@ -485,7 +485,7 @@ try {
         await text('#flash'));
     await adena(wallet - 768);
     check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
-    await page.click('#open-inventory');
+    await page.click('#worn-weapons a');
     await onScreen('inventory');
     check('the inventory shows every slot, an empty one included',
         await page.locator('#slot-shield[data-empty="true"]').count() === 1);
@@ -500,8 +500,8 @@ try {
         await page.locator('#carried td.name', { hasText: /^Dagger/ }).count() === 1);
     await page.click('#header-link');
     await onScreen('town');
-    check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#worn-weapon')),
-        await text('#worn-weapon'));
+    check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#worn-weapons')),
+        await text('#worn-weapons'));
 
     // ---- the trainer (rules §25) ----------------------------------------------------------------
     await page.selectOption('#travel-form select', 'trainer');

@@ -168,28 +168,34 @@ defmodule MiniLineageWeb.Layouts do
         body_class="rows"
         collapsible
       >
-        <%!-- Only the weapon: the rest is on the inventory page, a link away. --%>
-        <div class="stat-row" id="worn-weapon">
-          <span class="stat-label">Weapon</span>
-          <span class="stat-value">{weapon_name(@view.items)}</span>
+        <%!-- What is worn, in two rows; each names a link to the inventory, as the name above does to
+              the character page. --%>
+        <div class="stat-row" id="worn-weapons">
+          <span class="stat-label">Weapons</span>
+          <span class="stat-value">
+            <.link patch={~p"/inventory"}>{worn_names(@view.items, [:weapon, :shield], "Bare hands")}</.link>
+          </span>
+        </div>
+        <div class="stat-row" id="worn-armour">
+          <span class="stat-label">Armour</span>
+          <span class="stat-value">
+            <.link patch={~p"/inventory"}>{worn_names(@view.items, [:chest, :legs, :necklace], "None")}</.link>
+          </span>
         </div>
         <div class="stat-row">
           <span class="stat-label">Adena</span>
           <span class="stat-value adena">🪙
           <Controls.figure key="adena" value={@view.adena} format={:short} /></span>
         </div>
-        <div class="stat-row">
-          <.link id="open-inventory" patch={~p"/inventory"}>Open inventory</.link>
-        </div>
       </Controls.panel>
     </div>
     """
   end
 
-  defp weapon_name(items) do
-    case Enum.find(items, &(&1.equipped and &1.slot == :weapon)) do
-      nil -> "Bare hands"
-      item -> item.name
+  defp worn_names(items, slots, none) do
+    case for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name) do
+      [] -> none
+      names -> Enum.join(names, ", ")
     end
   end
 

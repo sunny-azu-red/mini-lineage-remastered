@@ -27,12 +27,19 @@ defmodule MiniLineageWeb.GearPageTest do
 
   defp carried(session, name), do: Enum.find(stored(session).items, &(&1.name == name))
 
-  test "a new character wears its kit, the sidebar naming only the weapon, with a way to the rest" do
+  test "a new character wears its kit, the sidebar naming its weapons and its armour as the way in" do
     {view, _session, _conn} = human(build_conn(), 0)
 
-    assert has_element?(view, "#worn-weapon .stat-value", "Squire's Sword")
-    refute has_element?(view, "#inventory .stat-value", "Squire's Shirt")
-    assert has_element?(view, "#open-inventory")
+    assert has_element?(view, ~s(#worn-weapons a[href="/inventory"]), "Squire's Sword")
+
+    assert has_element?(
+             view,
+             ~s(#worn-armour a[href="/inventory"]),
+             "Squire's Shirt, Squire's Pants"
+           )
+
+    view |> element("#worn-armour a") |> render_click()
+    assert_patch(view, "/inventory")
   end
 
   test "the village's way out leads to its trader, and Gludio's does not" do
