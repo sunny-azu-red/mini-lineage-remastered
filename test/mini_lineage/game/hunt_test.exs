@@ -33,12 +33,12 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "who is met" do
-    test "a monster within 2 levels of the character" do
+    test "a monster from 3 levels below the character up to its own, never above" do
       ladder = Rules.monsters_of(Rules.ground("obelisk-of-victory"))
 
       for value <- [0.0, 0.5, 0.9999] do
         Rng.put_source(fn -> value end)
-        assert abs(Hunt.draw(ladder, 6).level - 6) <= 2
+        assert Hunt.draw(ladder, 6).level in 3..6
       end
     end
 
@@ -81,6 +81,20 @@ defmodule MiniLineage.Game.HuntTest do
       assert result.rounds == Hunt.max_rounds()
     end
 
+    test "and it is not cast again while its target still burns" do
+      # Every blow misses at 0.9999 and the keltir cannot die, so only the casting shows.
+      Rng.put_source(fn -> 0.9999 end)
+      mystic = character(1, :mystic)
+      skill = Rules.first_skill(1, :mystic)
+      foe = %{Hunt.foe(Rules.monster("Elder Prairie Keltir")) | hp: 1_000_000_000}
+      result = Hunt.fight(Player.stats(mystic), mystic, skill, foe)
+
+      # The first burn runs nine rounds; a second may only start once it has gone out.
+      casts = for {round, {:cast, "Chill Flame", _, _}} <- result.log, do: round
+      assert hd(casts) == 1
+      assert Enum.all?(tl(casts), &(&1 > 10)), inspect(casts)
+    end
+
     test "with every blow missing, Power Strike still lands, and alone fells a Young Keltir" do
       # 62 at the spread's top, the keltir's whole HP.
       Rng.put_source(fn -> 0.9999 end)
@@ -97,6 +111,42 @@ defmodule MiniLineage.Game.HuntTest do
       bare = %{fighter | items: Enum.map(fighter.items, &%{&1 | equipped: false})}
 
       assert fight(bare, "Young Keltir").uses == 0
+    end
+  end
+
+  describe "time" do
+    # A character nothing can kill, against a monster nothing can kill, so only the monster's pace
+    # shows over the whole thousand rounds.
+    defp target do
+      player = character(0, :fighter)
+      stats = %{Player.stats(player) | accuracy: -1_000, max_hp: 1_000_000}
+      {stats, %{health: 1_000_000, mp: 0}}
+    end
+
+    test "a monster's bow draws and reloads, shooting Atk. Spd. / 610 times a round" do
+      Rng.put_source(fn -> 0.0 end)
+      {stats, bars} = target()
+      # A skill it can never pay for, so it only ever swings, and misses.
+      skill = %{Rules.first_skill(0, :fighter) | mp: 1}
+      foe = %{Hunt.foe(Rules.monster("Orc Archer")) | hp: 1_000_000_000}
+      result = Hunt.fight(stats, bars, skill, foe)
+
+      shots = Enum.count(result.log, &match?({_, {:foe_blow, _, _, _}}, &1))
+      assert shots == trunc(Hunt.max_rounds() * 249 / 610)
+    end
+
+    test "a spell takes its cast time, during which its caster does nothing else" do
+      Rng.put_source(fn -> 0.0 end)
+      {stats, bars} = target()
+      skill = %{Rules.first_skill(0, :fighter) | mp: 1}
+      foe = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000}
+      result = Hunt.fight(stats, bars, skill, foe)
+
+      # Windstrike - Magic: 4 seconds a cast, so the next comes three rounds after the last.
+      casts =
+        for {round, {:foe_cast, "NPC Windstrike - Magic 1", _}} <- result.log, do: round
+
+      assert Enum.take(casts, 5) == [1, 4, 7, 10, 13]
     end
   end
 

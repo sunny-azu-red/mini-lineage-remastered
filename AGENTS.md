@@ -71,6 +71,10 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 
 ## Working here
 
+- **Balance is measured, not guessed.** `bench/ladder.exs` plays every set up its village's ladder
+  through the game's own actions (hunt, rest, buy, train) with seeded dice and reports where runs
+  die and to what: `MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [level] [rest below %]`.
+  Run it before and after anything that moves a fight's numbers.
 - **Done means `mix precommit`**, plus `mix e2e` for anything the browser renders: a screen, a hook,
   a selector, what an element *is*. A change that only moves colour values skips e2e; no suite can
   fail on a hex. ExUnit's coverage understates the web layer because the browser suites aren't

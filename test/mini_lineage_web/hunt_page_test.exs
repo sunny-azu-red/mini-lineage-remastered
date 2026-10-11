@@ -71,9 +71,14 @@ defmodule MiniLineageWeb.HuntPageTest do
   test "a death ends the run, keeps its row, and sends the browser back to game start" do
     {_view, session, conn} = human(build_conn())
     id = Characters.character_id(session)
-    Characters.mutate(session, &{%{&1 | health: 1}, :ok})
-    # 0.9 meets an Elder Keltir (90 HP), misses every blow and lets every one of its blows land.
-    pin(session, 0.9)
+
+    # Stripped and at 1 HP, with every roll landing for both sides: two critical blows cannot fell a
+    # level 1 monster, and its first blow, in the second round, ends the run.
+    Characters.mutate(session, fn p ->
+      {%{p | health: 1, items: Enum.map(p.items, &%{&1 | equipped: false})}, :ok}
+    end)
+
+    pin(session, 0.0)
     {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
 
     view |> element("#hunt-button") |> render_click()

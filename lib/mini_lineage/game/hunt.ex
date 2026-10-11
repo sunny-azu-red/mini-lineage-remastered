@@ -19,13 +19,20 @@ defmodule MiniLineage.Game.Hunt do
   def round_ms, do: @round_ms
   def max_rounds, do: @max_rounds
 
-  @doc "§20: one of the ground's monsters within 2 levels of the character, or one of the nearest."
+  @doc """
+  §20: one of the ground's monsters from 3 levels below the character up to its own level, or one
+  of the nearest if none is.
+  """
   def draw(monsters, level) do
-    gap = fn monster -> abs(monster.level - level) end
-    nearest = monsters |> Enum.map(gap) |> Enum.min()
-    reach = max(nearest, 2)
+    case Enum.filter(monsters, &(&1.level in (level - 3)..level//1)) do
+      [] ->
+        gap = fn monster -> abs(monster.level - level) end
+        nearest = monsters |> Enum.map(gap) |> Enum.min()
+        monsters |> Enum.filter(&(gap.(&1) == nearest)) |> Math.random_element()
 
-    monsters |> Enum.filter(&(gap.(&1) <= reach)) |> Math.random_element()
+      near ->
+        Math.random_element(near)
+    end
   end
 
   @doc "§18: a monster's Accuracy, Evasion and Critical, worked as a character's are."
@@ -46,7 +53,7 @@ defmodule MiniLineage.Game.Hunt do
   """
   def fight(stats, %{health: health, mp: mp}, skill, foe) do
     # §23: a skill without its weapon in hand is not used at all.
-    skill = if Rules.skill_weapon?(skill.name, stats[:weapon]), do: skill, else: nil
+    usable? = Rules.skill_weapon?(skill.name, stats[:weapon])
 
     state = %{
       health: health,
@@ -57,6 +64,11 @@ defmodule MiniLineage.Game.Hunt do
       foe_cooldowns: Map.new(foe.spells, &{&1.name, 0.0}),
       burn: nil,
       slowed: 0,
+      # §20: what is left of a spell's cast, during which its caster does nothing else.
+      busy: 0.0,
+      foe_busy: 0.0,
+      # What happened, newest first, each `{round, event}`: the fight log.
+      log: if(usable?, do: [], else: [{0, {:no_weapon, skill.name}}]),
       blows: 0.0,
       foe_blows: 0.0,
       rounds: 0,
@@ -65,8 +77,9 @@ defmodule MiniLineage.Game.Hunt do
     }
 
     state
-    |> rounds(stats, skill, foe)
-    |> Map.take(~w(health mp foe rounds uses critical)a)
+    |> rounds(stats, if(usable?, do: skill), foe)
+    |> Map.update!(:log, &Enum.reverse/1)
+    |> Map.take(~w(health mp foe rounds uses critical log)a)
   end
 
   defp rounds(%{health: h} = s, _stats, _skill, _foe) when h <= 0, do: s
@@ -74,12 +87,15 @@ defmodule MiniLineage.Game.Hunt do
   defp rounds(%{rounds: @max_rounds} = s, _stats, _skill, _foe), do: s
 
   defp rounds(s, stats, skill, foe) do
-    s = %{s | rounds: s.rounds + 1} |> burn() |> character_turn(stats, skill, foe)
-    s = if s.foe > 0, do: monster_turn(s, stats, foe), else: s
+    s = %{s | rounds: s.rounds + 1} |> burn()
+    s = if s.busy > 0, do: s, else: character_turn(s, stats, skill, foe)
+    s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, stats, foe), else: s
 
     s = %{
       s
       | cooldown: max(s.cooldown - @round_ms, 0.0),
+        busy: max(s.busy - @round_ms, 0.0),
+        foe_busy: max(s.foe_busy - @round_ms, 0.0),
         foe_cooldowns: Map.new(s.foe_cooldowns, fn {k, v} -> {k, max(v - @round_ms, 0.0)} end),
         slowed: max(s.slowed - 1, 0)
     }
@@ -94,14 +110,26 @@ defmodule MiniLineage.Game.Hunt do
   defp burn(%{burn: burn} = s) do
     total = burn.carry + burn.per_round
     hit = total |> trunc() |> min(s.foe - 1) |> max(0)
-    %{s | foe: s.foe - hit, burn: %{burn | rounds: burn.rounds - 1, carry: total - trunc(total)}}
+
+    s = %{
+      s
+      | foe: s.foe - hit,
+        burn: %{burn | rounds: burn.rounds - 1, carry: total - trunc(total)}
+    }
+
+    if hit > 0, do: note(s, {:burn, hit}), else: s
   end
 
   defp character_turn(s, stats, nil, foe), do: swing(s, stats, nil, foe)
 
   defp character_turn(s, stats, %{kind: kind} = skill, foe)
        when kind in [:magic, :drain, :burn] do
-    if ready?(s, skill), do: cast(s, stats, skill, foe), else: swing(s, stats, nil, foe)
+    # §19: a burn is not cast again on a target still burning; the caster swings instead.
+    burning? = kind == :burn and s.burn != nil
+
+    if ready?(s, skill) and not burning?,
+      do: cast(s, stats, skill, foe),
+      else: swing(s, stats, nil, foe)
   end
 
   defp character_turn(s, stats, skill, foe), do: swing(s, stats, skill, foe)
@@ -109,18 +137,20 @@ defmodule MiniLineage.Game.Hunt do
   defp ready?(s, skill), do: s.cooldown <= 0 and s.mp >= skill.mp
 
   defp cast(s, stats, skill, foe) do
-    s = spend(s, skill, stats.cast_spd)
+    s = %{spend(s, skill, stats.cast_spd) | busy: skill.cast * 333 / stats.cast_spd}
 
     case skill.kind do
       :burn ->
         per_round = skill.power * @round_ms / 1000
-        %{s | burn: %{per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}}
+        s = %{s | burn: %{per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}}
+        note(s, {:cast, skill.name, 0, false})
 
       kind ->
         critical? = Formulas.hit?(stats.magic_critical)
         damage = Formulas.magic_damage(stats.m_atk, foe.m_def, skill.power, critical: critical?)
         before = s.foe
         s = s |> wound(round(damage)) |> mark_critical(critical?)
+        s = note(s, {:cast, skill.name, before - s.foe, critical?})
         s = if skill[:slow], do: %{s | slowed: rounds_of(@slow_ms)}, else: s
 
         if kind == :drain,
@@ -154,9 +184,11 @@ defmodule MiniLineage.Game.Hunt do
     s = spend(s, skill, stats.atk_spd)
 
     if skill.kind == :blow and not Formulas.hit?(blow_chance(stats.dex)) do
-      s
+      note(s, {:skill, skill.name, 0})
     else
-      wound(s, round(skill_damage(stats.p_atk, skill.power, foe.p_def)))
+      before = s.foe
+      s = wound(s, round(skill_damage(stats.p_atk, skill.power, foe.p_def)))
+      note(s, {:skill, skill.name, before - s.foe})
     end
   end
 
@@ -175,9 +207,11 @@ defmodule MiniLineage.Game.Hunt do
       damage =
         Formulas.physical_damage(stats.p_atk, foe.p_def, critical: critical?, spread: spread)
 
-      s |> wound(round(damage)) |> mark_critical(critical?)
+      before = s.foe
+      s = s |> wound(round(damage)) |> mark_critical(critical?)
+      note(s, {:blow, before - s.foe, critical?})
     else
-      s
+      note(s, :miss)
     end
   end
 
@@ -198,18 +232,27 @@ defmodule MiniLineage.Game.Hunt do
     healed =
       if spell.kind == :drain, do: trunc(lost * @monster_absorb), else: 0
 
+    s = note(s, {:foe_cast, spell.name, lost})
+
     %{
       s
       | health: s.health - lost,
         foe: min(s.foe + healed, foe.hp),
         foe_mp: s.foe_mp - spell.mp,
+        foe_busy: spell.cast * 1.0,
         foe_cooldowns: Map.put(s.foe_cooldowns, spell.name, spell.reuse * 1.0)
     }
   end
 
   defp monster_swing(s, stats, foe) do
     pace = if s.slowed > 0, do: @slowed, else: 1
-    {count, carry} = carry_over(s.foe_blows, Formulas.blows_per_round(foe.atk_spd) * pace)
+    # §10: a bow draws and reloads, a monster's as a character's.
+    per_round =
+      if foe.bow?,
+        do: Formulas.shots_per_round(foe.atk_spd),
+        else: Formulas.blows_per_round(foe.atk_spd)
+
+    {count, carry} = carry_over(s.foe_blows, per_round * pace)
     s = %{s | foe_blows: carry}
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
@@ -223,18 +266,26 @@ defmodule MiniLineage.Game.Hunt do
       critical? = Formulas.hit?(foe.critical)
       spread = Formulas.damage_spread()
 
-      damage =
+      {damage, caught} =
         case block(stats) do
           :perfect ->
-            1
+            {1, :perfect}
+
+          {:caught, p_def} ->
+            {round(
+               Formulas.physical_damage(foe.p_atk, p_def, critical: critical?, spread: spread)
+             ), :caught}
 
           p_def ->
-            round(Formulas.physical_damage(foe.p_atk, p_def, critical: critical?, spread: spread))
+            {round(
+               Formulas.physical_damage(foe.p_atk, p_def, critical: critical?, spread: spread)
+             ), nil}
         end
 
-      %{s | health: max(s.health - damage, 0)}
+      lost = min(damage, s.health)
+      note(%{s | health: s.health - lost}, {:foe_blow, lost, critical?, caught})
     else
-      s
+      note(s, :foe_miss)
     end
   end
 
@@ -245,7 +296,7 @@ defmodule MiniLineage.Game.Hunt do
     cond do
       not Formulas.hit?(block_chance(shield.shield_rate, stats.dex)) -> stats.p_def
       Formulas.hit?(5) -> :perfect
-      true -> stats.p_def + shield.shield_def
+      true -> {:caught, stats.p_def + shield.shield_def}
     end
   end
 
@@ -256,6 +307,8 @@ defmodule MiniLineage.Game.Hunt do
     do: %{s | mp: s.mp - skill.mp, cooldown: skill.reuse * 333 / speed, uses: s.uses + 1}
 
   defp wound(s, damage), do: %{s | foe: s.foe - min(max(damage, 1), s.foe)}
+
+  defp note(s, event), do: %{s | log: [{s.rounds, event} | s.log]}
 
   defp mark_critical(s, true), do: %{s | critical: true}
   defp mark_critical(s, false), do: s

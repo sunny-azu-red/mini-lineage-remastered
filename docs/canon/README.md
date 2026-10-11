@@ -90,6 +90,8 @@ where it has any.
   night harder to hit in, but by far more than our Accuracy −3. Shadow Sense is the Dark Fighter's
   real passive (id 294, +3 Accuracy at night), learned at level 15; ours is every Dark Elf's from
   level 1. The Blessing of the Mother Tree is ours alone.
+- **A hunt never meets a monster above the character's level** (rules §20). In Lineage II a player
+  chose whom to fight; here the ground chooses, so it chooses nothing stronger.
 - **Each village has one hunting ground,** a ladder from level 1 to the level where Gludio takes
   over. It carries one nostalgic name (Obelisk of Victory, Elven Fortress, School of Dark Arts,
   Cave of Trials) and draws on every monster around that village: its fields and its nearby named

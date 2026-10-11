@@ -277,13 +277,13 @@ defmodule MiniLineage.Game.Rules do
 
               keys =
                 ~w(name level hp mp p_atk m_atk p_def m_def atk_spd dex exp sp adena_min adena_max
-                   adena_chance spells)a
+                   adena_chance attack spells)a
 
               ^header = Enum.join(keys, ",")
 
               for row <- rows, into: %{} do
                 monster = keys |> Enum.zip(String.split(row, ",")) |> Map.new()
-                numbers = Map.drop(monster, [:name, :spells, :adena_chance])
+                numbers = Map.drop(monster, [:name, :spells, :adena_chance, :attack])
 
                 monster =
                   numbers
@@ -291,6 +291,7 @@ defmodule MiniLineage.Game.Rules do
                   |> Map.merge(%{
                     name: monster.name,
                     adena_chance: String.to_integer(monster.adena_chance),
+                    bow?: monster.attack == "bow",
                     spells: String.split(monster.spells, "; ", trim: true)
                   })
 
@@ -304,10 +305,17 @@ defmodule MiniLineage.Game.Rules do
     "Power Shot" => %{kind: :physical, power: 65, mp: 19, reuse: 25_000},
     "Mortal Blow" => %{kind: :blow, power: 73, mp: 9, reuse: 11_000},
     "Iron Punch" => %{kind: :physical, power: 29, mp: 11, reuse: 15_000},
-    "Wind Strike" => %{kind: :magic, power: 12, mp: 9, reuse: 6_000},
-    "Ice Bolt" => %{kind: :magic, power: 8, mp: 9, reuse: 8_000, slow: true},
-    "Vampiric Touch" => %{kind: :drain, power: 18, mp: 25, reuse: 12_000, absorb: 0.4},
-    "Chill Flame" => %{kind: :burn, power: 20, mp: 15, reuse: 6_000}
+    "Wind Strike" => %{kind: :magic, power: 12, mp: 9, reuse: 6_000, cast: 4_000},
+    "Ice Bolt" => %{kind: :magic, power: 8, mp: 9, reuse: 8_000, cast: 3_300, slow: true},
+    "Vampiric Touch" => %{
+      kind: :drain,
+      power: 18,
+      mp: 25,
+      reuse: 12_000,
+      cast: 4_000,
+      absorb: 0.4
+    },
+    "Chill Flame" => %{kind: :burn, power: 20, mp: 15, reuse: 6_000, cast: 4_000}
   }
 
   # Rules §25: each first skill's {power, MP} by level, level 1 first; a burn's power is per second.
@@ -399,15 +407,15 @@ defmodule MiniLineage.Game.Rules do
   }
 
   @monster_spells %{
-    "NPC Windstrike - Magic 1" => %{kind: :magic, power: 18, mp: 7, reuse: 3_000},
-    "NPC HP Drain - Magic 1" => %{kind: :drain, power: 18, mp: 9, reuse: 3_000, absorb: 0.2},
-    "NPC HP Drain - Magic 2" => %{kind: :drain, power: 26, mp: 14, reuse: 3_000, absorb: 0.2},
-    "NPC Aura Burn - Magic 1" => %{kind: :magic, power: 5, mp: 3, reuse: 1_000},
-    "NPC Aura Burn - Magic 2" => %{kind: :magic, power: 7, mp: 3, reuse: 1_000},
-    "NPC Windstrike - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000},
-    "NPC Windstrike - Slow 2" => %{kind: :magic, power: 8, mp: 20, reuse: 8_000},
-    "NPC HP Drain - Slow 1" => %{kind: :drain, power: 5, mp: 17, reuse: 8_000, absorb: 0.2},
-    "NPC Prominence - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000}
+    "NPC Windstrike - Magic 1" => %{kind: :magic, power: 18, mp: 7, reuse: 3_000, cast: 4_000},
+    "NPC HP Drain - Magic 1" => %{kind: :drain, power: 18, mp: 9, reuse: 3_000, cast: 4_000},
+    "NPC HP Drain - Magic 2" => %{kind: :drain, power: 26, mp: 14, reuse: 3_000, cast: 4_000},
+    "NPC Aura Burn - Magic 1" => %{kind: :magic, power: 5, mp: 3, reuse: 1_000, cast: 1_500},
+    "NPC Aura Burn - Magic 2" => %{kind: :magic, power: 7, mp: 3, reuse: 1_000, cast: 1_500},
+    "NPC Windstrike - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000, cast: 2_000},
+    "NPC Windstrike - Slow 2" => %{kind: :magic, power: 8, mp: 20, reuse: 8_000, cast: 2_000},
+    "NPC HP Drain - Slow 1" => %{kind: :drain, power: 5, mp: 17, reuse: 8_000, cast: 2_000},
+    "NPC Prominence - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000, cast: 2_000}
   }
 
   # The only kinds, slots and shops an item may name; listed so the data file mints no atom.

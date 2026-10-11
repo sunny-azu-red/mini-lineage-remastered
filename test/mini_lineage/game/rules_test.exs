@@ -167,7 +167,23 @@ defmodule MiniLineage.Game.RulesTest do
       rows = table("Monster")
       assert length(rows) == map_size(Rules.monsters())
 
-      for [name, level, hp, mp, p_atk, m_atk, p_def, m_def, atk_spd, dex, exp, sp, adena, spells] <-
+      for [
+            name,
+            level,
+            hp,
+            mp,
+            p_atk,
+            m_atk,
+            p_def,
+            m_def,
+            atk_spd,
+            dex,
+            exp,
+            sp,
+            adena,
+            attack,
+            spells
+          ] <-
             rows do
         m = Rules.monster(name)
 
@@ -192,6 +208,7 @@ defmodule MiniLineage.Game.RulesTest do
 
         assert adena == "#{m.adena_min}–#{m.adena_max} at #{m.adena_chance}%", name
         assert spells == Enum.join(m.spells, ", "), name
+        assert attack == if(m.bow?, do: "bow", else: "melee"), name
       end
     end
 
@@ -199,7 +216,7 @@ defmodule MiniLineage.Game.RulesTest do
       rows = table("Skill")
       assert length(rows) == 8
 
-      for [name, set, kind, power, mp, reuse] <- rows do
+      for [name, set, kind, power, mp, reuse, cast] <- rows do
         %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
         skill = Rules.first_skill(race, path)
         assert skill.name == name
@@ -207,6 +224,8 @@ defmodule MiniLineage.Game.RulesTest do
 
         assert [skill.power, skill.mp, skill.reuse] ==
                  Enum.map([power, mp, reuse], &trunc(number(&1)))
+
+        assert skill[:cast] == if(cast == "", do: nil, else: trunc(number(cast))), name
       end
 
       for path <- [:fighter, :mystic] do
@@ -219,12 +238,12 @@ defmodule MiniLineage.Game.RulesTest do
       rows = table("Spell")
       assert length(rows) == map_size(Rules.monster_spells())
 
-      for [name, kind, power, mp, reuse] <- rows do
+      for [name, kind, power, mp, reuse, cast] <- rows do
         spell = Rules.monster_spell(name)
         assert Atom.to_string(spell.kind) == kind
 
-        assert [spell.power, spell.mp, spell.reuse] ==
-                 Enum.map([power, mp, reuse], &trunc(number(&1)))
+        assert [spell.power, spell.mp, spell.reuse, spell.cast] ==
+                 Enum.map([power, mp, reuse, cast], &trunc(number(&1)))
       end
 
       for {_, m} <- Rules.monsters(), spell <- m.spells, do: Rules.monster_spell(spell)
