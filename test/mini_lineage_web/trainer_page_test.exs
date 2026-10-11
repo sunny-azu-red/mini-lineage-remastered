@@ -42,7 +42,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {_view, session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
 
-    view |> element("#lesson-power-strike-2 button") |> render_click()
+    view |> form("#learn-form", %{"lesson" => "Power Strike|2"}) |> render_submit()
 
     assert has_element?(view, "#flash", "Power Strike level 2")
     assert has_element?(view, ~s(#lesson-power-strike-2[data-status="known"]))

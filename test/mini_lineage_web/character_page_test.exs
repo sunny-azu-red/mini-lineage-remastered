@@ -40,10 +40,10 @@ defmodule MiniLineageWeb.CharacterPageTest do
     end
 
     assert keys.("#character-stats p:nth-of-type(1) [data-key]") ==
-             ~w(char-p-atk char-atk-spd char-accuracy char-p-def char-evasion)
+             ~w(char-p-atk char-atk-spd char-critical char-accuracy char-p-def char-evasion)
 
     assert keys.("#character-stats p:nth-of-type(2) [data-key]") ==
-             ~w(char-m-atk char-cast-spd char-m-def)
+             ~w(char-m-atk char-cast-spd char-magic-critical char-m-def)
 
     assert LazyHTML.query(doc, "#character-stats p:nth-of-type(1) #character-critical")
            |> Enum.count() == 1

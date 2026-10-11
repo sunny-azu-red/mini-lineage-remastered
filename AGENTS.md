@@ -6,12 +6,13 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
-  the one-click fight in `Hunt`, `Actions.hunt/1`, and death), each village's trader and the
-  inventory (rules §23 and §24: `Shop`, the items table, `/inventory`), and the home village's
-  trainer (rules §25: `Actions.learn/3`, `/<village>/trainer`, a character's `skills` and `sp`),
-  `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes (the Halls, in code)
-  at `/highscores`, and the error page. Everything the game was before that is in `legacy/` (see
-  Rules).
+  the one-click fight in `Hunt`, `Actions.hunt/1`, and death), each village's trader and its inner
+  pages (`/<village>/trader/<weapons|armour|jewellery|sell>`) and the inventory beside its Combat
+  Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
+  and the home village's trainer (rules §25: `Actions.learn/3`, `/<village>/trainer`, a character's
+  `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
+  (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is
+  in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
   `<.flash_group>`; every control is hand-written HEEx in `lib/mini_lineage_web/components/`); an
   HTTP client (no `Req` or `httpoison`; the zone database is `tz`, never `tzdata`, which brings
@@ -41,7 +42,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   the Chronicles and one per section on the character page. Every template starts with
   `<Layouts.app>`.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
-  `<.select_action>` (a choice and the button acting on it, which is how a player moves), `<.alert>`
+  `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
+  never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`
   and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`. `Layouts` holds the shell: `head`,
   `site_header`, the sidebar and `footer`, which `ErrorHTML` draws too.
 - **The sidebar** (level and name, the name linking to `/character`, the vitals, then the Inventory)
@@ -60,7 +62,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 
 | Key | Does | Test |
 |---|---|---|
-| Ctrl+Q | deletes the character; goes once there is a real way to start over | `quit_test.exs` |
+| Ctrl+Q | deletes the character; kept by choice, death notwithstanding, for trying every set from one browser | `quit_test.exs` |
 | `adena` | +10,000 Adena every time; `Actions.dev_adena/1` refuses in a release | `dev_adena_test.exs` |
 | `night`, `day` | `Clock.force/1` holds the node at that hour until the other word or a restart; pages redraw off `"world"`. A pinned time beats it | `dev_time_test.exs` |
 | `sp` | +10,000 SP every time, to try the trainer; `Actions.dev_sp/1` refuses in a release | `dev_sp_test.exs` |
@@ -124,11 +126,12 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   Dice are a generated list of integers scaled into `[0, 1)` and cycled through `Rng.put_source/1`,
   never `float/1`, which grows with the size. StreamData is `:test` only, so `.formatter.exs` spells
   out its macros (`import_deps` fails in `:dev`).
-- **A formatter with a client-side twin is held to a table.** `Format.short`/`shortFigure` and
-  `Format.percent`/`percentFigure` (in `hooks/animated-values.js`) are deliberate copies, so a count
-  never changes format mid-tween. Each pair reads `test/fixtures/short_format.json` or
-  `percent_format.json`, from `format_test.exs` and `walkthrough.mjs`. Anything else both languages
-  format gets the same before it gets a second copy.
+- **A formatter with a client-side twin is held to a table.** `Format.short`/`shortFigure`,
+  `Format.percent`/`percentFigure` and `Format.tenths`/`tenthsFigure` (in
+  `hooks/animated-values.js`, the last for a Critical %) are deliberate copies, so a count never
+  changes format mid-tween. Each pair reads `test/fixtures/short_format.json`, `percent_format.json`
+  or `tenths_format.json`, from `format_test.exs` and `walkthrough.mjs`. Anything else both
+  languages format gets the same before it gets a second copy.
 - **Browser suites**: hand Playwright a function, never a string (the CSP refuses `eval`, and a
   `waitForFunction("…")` behind a `.catch` reads as a wait that returned). Read a figure's
   `data-value`, never its text, which is one frame of a 600ms count. Test what triggers an animation,

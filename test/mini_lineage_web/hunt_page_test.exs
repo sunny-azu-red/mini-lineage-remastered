@@ -63,6 +63,8 @@ defmodule MiniLineageWeb.HuntPageTest do
     view |> element("#hunt-button") |> render_click()
 
     assert has_element?(view, "#flash", "cut down")
+    assert has_element?(view, "#fight-log li", "You meet")
+    assert has_element?(view, "#fight-log li", "Round 1:")
     assert has_element?(view, "#screen[data-screen=hunt]")
     player = stored(session)
     assert player.experience > 0 and player.sp > 0 and player.adena > 0

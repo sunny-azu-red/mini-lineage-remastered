@@ -40,6 +40,11 @@ defmodule MiniLineageWeb.Router do
     # Rules §24: each village's shop.
     for slug <- MiniLineageWeb.Paths.villages() do
       live "/#{slug}/trader", GameLive, :trader
+
+      for page <- MiniLineageWeb.Paths.trader_pages() do
+        live "/#{slug}/trader/#{page}", GameLive, :trader_page
+      end
+
       live "/#{slug}/trainer", GameLive, :trainer
     end
 

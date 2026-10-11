@@ -32,6 +32,12 @@ export const percentFigure = (value) => {
     return `${Math.floor(n / 100)}.${String(n % 100).padStart(2, '0')}%`;
 };
 
+/** Tenths, a critical rate's. Twinned with `Format.tenths`, held to a table by both suites. */
+export const tenthsFigure = (value) => {
+    const n = Math.max(0, Math.round(value));
+    return `${Math.floor(n / 10)}.${n % 10}`;
+};
+
 /**
  * Mid-count, keeping the tenth the settled figure drops: "2.0k" becoming "2k" and back throws the
  * line left and right. The count always lands on the server's own rendering.
@@ -106,7 +112,8 @@ export const AnimatedValues = {
     },
     count(key, el, from, to) {
         cancelAnimationFrame(this.frames.get(key));
-        const format = { short: countingShort, percent: percentFigure }[el.dataset.format] ?? groupDigits;
+        const format = { short: countingShort, percent: percentFigure, tenths: tenthsFigure }[el.dataset.format]
+            ?? groupDigits;
         const settled = el.textContent;
         const started = performance.now();
 

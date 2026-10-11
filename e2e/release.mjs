@@ -56,8 +56,8 @@ try {
     await page.waitForTimeout(500);
     check('...nor does typing the hour change it',
         await page.locator('#effects [data-effect-id="night"]').count() === night);
-    check('...nor typing sp the SP',
-        await page.getAttribute('#sidebar [data-key="sp"]', 'data-value') === '0');
+    check('...nor typing sp the SP, which no sidebar shows',
+        await page.locator('#sidebar [data-key="sp"]').count() === 0);
     check('...nor typing lvl the level',
         await page.getAttribute('#sidebar [data-key="level"]', 'data-value') === '1');
     check('...nor does Ctrl+Q end the character',

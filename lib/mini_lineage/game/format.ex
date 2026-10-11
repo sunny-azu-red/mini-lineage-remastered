@@ -46,6 +46,10 @@ defmodule MiniLineage.Game.Format do
     "#{div(hundredths, 100)}.#{hundredths |> rem(100) |> Integer.to_string() |> String.pad_leading(2, "0")}%"
   end
 
+  @doc "Tenths, a critical rate's: 88 is \"8.8\". Twinned with `tenthsFigure` in animated-values.js."
+  def tenths(tenths) when is_integer(tenths) and tenths >= 0,
+    do: "#{div(tenths, 10)}.#{rem(tenths, 10)}"
+
   def slugify(text) do
     text
     |> String.downcase()

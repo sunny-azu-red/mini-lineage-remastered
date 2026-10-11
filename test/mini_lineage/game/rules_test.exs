@@ -587,8 +587,8 @@ defmodule MiniLineage.Game.RulesTest do
       assert Player.stats(mystic).max_mp - Player.stats(bare).max_mp == 29
     end
 
-    test "§24 a Broadsword costs 14,375 and sells back for 6,250" do
-      assert Shop.price(Rules.item("Broadsword")) == 14_375
+    test "§24 a Broadsword costs 12,500 and sells back for 6,250" do
+      assert Shop.price(Rules.item("Broadsword")) == 12_500
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
     end
 

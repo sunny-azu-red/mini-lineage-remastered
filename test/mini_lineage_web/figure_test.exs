@@ -50,8 +50,8 @@ defmodule MiniLineageWeb.FigureTest do
       )
 
     found = figures(html)
-    # Level, HP, Max HP, MP, Max MP, SP, XP and Adena.
-    assert length(found) == 8
+    # Level, HP, Max HP, MP, Max MP, XP and Adena.
+    assert length(found) == 7
 
     for {format, [value], text} <- found do
       assert text == said(format, value), "#{inspect(format)} #{value} reads #{inspect(text)}"

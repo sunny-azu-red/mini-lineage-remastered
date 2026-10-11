@@ -205,7 +205,13 @@ defmodule MiniLineageWeb.Controls do
 
   def flash_alert(assigns) do
     ~H"""
-    <.alert id="flash" kind={@flash.type}>{raw(@flash.text)}</.alert>
+    <.alert id="flash" kind={@flash.type}>
+      <%!-- A hunt's fight log (rules §20) comes before what it came to. --%>
+      <ol :if={@flash[:log]} id="fight-log" class="fight-log">
+        <li :for={line <- @flash.log}>{raw(line)}</li>
+      </ol>
+      {raw(@flash.text)}
+    </.alert>
     """
   end
 
@@ -227,7 +233,7 @@ defmodule MiniLineageWeb.Controls do
 
   attr :key, :string, required: true
   attr :value, :integer, required: true
-  attr :format, :atom, default: :number, values: [:number, :short, :percent]
+  attr :format, :atom, default: :number, values: [:number, :short, :percent, :tenths]
   attr :rest, :global
 
   @doc """
@@ -243,6 +249,7 @@ defmodule MiniLineageWeb.Controls do
   defp figure_text(:short, value), do: Format.short(value)
   defp figure_text(:percent, value), do: Format.percent(value)
   defp figure_text(:number, value), do: Format.number(value)
+  defp figure_text(:tenths, value), do: Format.tenths(value)
 
   # -------------------------------------------------------------------- bars
 

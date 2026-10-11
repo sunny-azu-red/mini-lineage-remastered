@@ -96,6 +96,11 @@ defmodule MiniLineageWeb.GameLive do
 
   defp requested_place(:highscores, uri, _player), do: {"highscores", Paths.lineage_of(uri)}
 
+  defp requested_place(:trader_page, uri, _player),
+    do:
+      {"trader-" <> (uri |> URI.parse() |> Map.fetch!(:path) |> Path.basename()),
+       Paths.town_of(uri)}
+
   defp requested_place(action, _uri, _player), do: {Atom.to_string(action), nil}
 
   defp enter(socket, {screen, town}) do
@@ -158,28 +163,52 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  def handle_event("navigate", %{"place" => place}, socket) when place in ~w(hunt trader trainer),
-    do: {:noreply, walk(socket, {place, socket.assigns.town})}
+  def handle_event("navigate", %{"place" => place}, socket)
+      when place in ~w(hunt trader trainer trader-weapons trader-armour trader-jewellery trader-sell),
+      do: {:noreply, walk(socket, {place, socket.assigns.town})}
+
+  # The empty choice of a menu inside a town goes back to the town.
+  def handle_event("navigate", %{"place" => ""}, socket),
+    do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
 
   def handle_event("navigate", _params, socket), do: {:noreply, socket}
 
   # Rules §23 and §24: what a character carries, bought, sold, put on and taken off where it stands.
+  # A trader's page: its empty choice goes back to the trader's menu.
+  def handle_event("buy", %{"item" => ""}, socket),
+    do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
+
   def handle_event("buy", %{"item" => name}, socket),
     do: {:noreply, apply_action(socket, &Actions.buy(&1, name), nil)}
+
+  def handle_event("sell", %{"id" => ""}, socket),
+    do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
 
   def handle_event("sell", %{"id" => id}, socket),
     do: {:noreply, apply_action(socket, &Actions.sell(&1, id), nil)}
 
-  def handle_event("equip", %{"id" => id}, socket),
-    do: {:noreply, apply_action(socket, &Actions.equip(&1, id), nil)}
+  # The inventory's one choice: what to do, and to which item.
+  def handle_event("inventory", %{"act" => ""}, socket),
+    do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
 
-  def handle_event("unequip", %{"id" => id}, socket),
-    do: {:noreply, apply_action(socket, &Actions.unequip(&1, id), nil)}
+  def handle_event("inventory", %{"act" => act}, socket) do
+    case String.split(act, ":", parts: 2) do
+      ["equip", id] -> {:noreply, apply_action(socket, &Actions.equip(&1, id), nil)}
+      ["unequip", id] -> {:noreply, apply_action(socket, &Actions.unequip(&1, id), nil)}
+      ["destroy", id] -> {:noreply, apply_action(socket, &Actions.destroy(&1, id), nil)}
+      _ -> {:noreply, socket}
+    end
+  end
 
-  # Rules §25: one line from the village's trainer.
-  def handle_event("learn", %{"skill" => skill, "level" => level}, socket) do
-    case Integer.parse(level) do
-      {level, ""} -> {:noreply, apply_action(socket, &Actions.learn(&1, skill, level), nil)}
+  # Rules §25: one line from the village's trainer, chosen as "skill|level"; the empty choice leaves.
+  def handle_event("learn", %{"lesson" => ""}, socket),
+    do: {:noreply, walk(socket, {"town", socket.assigns.town})}
+
+  def handle_event("learn", %{"lesson" => lesson}, socket) do
+    with [skill, level] <- String.split(lesson, "|", parts: 2),
+         {level, ""} <- Integer.parse(level) do
+      {:noreply, apply_action(socket, &Actions.learn(&1, skill, level), nil)}
+    else
       _ -> {:noreply, socket}
     end
   end

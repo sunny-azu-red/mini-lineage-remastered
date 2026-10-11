@@ -27,11 +27,11 @@ defmodule MiniLineageWeb.GearPageTest do
 
   defp carried(session, name), do: Enum.find(stored(session).items, &(&1.name == name))
 
-  test "a new character wears its kit, which the sidebar shows, with a way to its inventory" do
+  test "a new character wears its kit, the sidebar naming only the weapon, with a way to the rest" do
     {view, _session, _conn} = human(build_conn(), 0)
 
-    assert has_element?(view, "#inventory .stat-value", "Squire's Sword")
-    assert has_element?(view, "#inventory .stat-value", "Squire's Shirt")
+    assert has_element?(view, "#worn-weapon .stat-value", "Squire's Sword")
+    refute has_element?(view, "#inventory .stat-value", "Squire's Shirt")
     assert has_element?(view, "#open-inventory")
   end
 
@@ -41,7 +41,11 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, ~s(#travel-form option[value="trader"]))
     view |> form("#travel-form", %{"place" => "trader"}) |> render_submit()
     assert_patch(view, "/talking-island/trader")
+
+    view |> form("#trader-form", %{"place" => "trader-weapons"}) |> render_submit()
+    assert_patch(view, "/talking-island/trader/weapons")
     assert has_element?(view, "#stock-broadsword")
+    refute has_element?(view, "#stock-wooden-breastplate")
 
     Characters.mutate(session, &{%{&1 | location: "gludio"}, :ok})
 
@@ -53,42 +57,63 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a purchase is paid and written at once, and the trader buys it back for half" do
     {_view, session, conn} = human(build_conn(), 20_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
 
-    view |> element("#stock-broadsword button") |> render_click()
+    view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
     assert has_element?(view, "#flash", "Broadsword")
-    assert stored(session).adena == 20_000 - 14_375
+    assert stored(session).adena == 20_000 - 12_500
     sword = carried(session, "Broadsword")
 
-    view |> element("#sell-#{sword.id} button") |> render_click()
-    assert stored(session).adena == 20_000 - 14_375 + 6_250
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/sell")
+    view |> form("#sell-form", %{"id" => sword.id}) |> render_submit()
+    assert stored(session).adena == 20_000 - 12_500 + 6_250
     refute carried(session, "Broadsword")
   end
 
   test "a refusal is said, and nothing is paid" do
     {_view, session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
 
-    view |> element("#stock-broadsword button") |> render_click()
+    view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
     assert has_element?(view, "#flash", "cannot afford")
     assert stored(session).adena == 100
   end
 
-  test "the inventory puts gear on and takes it off, written at once and shown in the sidebar" do
+  test "the inventory shows every slot, and puts gear on, takes it off and destroys it at once" do
     {_view, session, conn} = human(build_conn(), 0)
     {:ok, view, _html} = live(conn, ~p"/inventory")
     dagger = carried(session, "Dagger")
 
-    view |> element("#item-#{dagger.id} button") |> render_click()
+    assert has_element?(view, ~s(#slot-shield[data-empty="true"]))
+    assert has_element?(view, ~s(#slot-weapon[data-empty="false"]), "Squire's Sword")
 
+    act = fn act -> view |> form("#inventory-form", %{"act" => act}) |> render_submit() end
+
+    # The Combat Stats beside it follow the swap: a dagger's 433 against a sword's 379.
+    assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="416"]))
+    act.("equip:#{dagger.id}")
+    assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="476"]))
     assert %{equipped: true} = carried(session, "Dagger")
     assert %{equipped: false} = carried(session, "Squire's Sword")
-    assert has_element?(view, ~s(#item-#{dagger.id}[data-worn="true"]))
+    assert has_element?(view, "#slot-weapon", "Dagger")
 
-    view |> element("#item-#{dagger.id} button") |> render_click()
+    act.("unequip:#{dagger.id}")
     assert %{equipped: false} = carried(session, "Dagger")
+
+    act.("destroy:#{dagger.id}")
+    refute carried(session, "Dagger")
+    assert has_element?(view, "#flash", "destroy the Dagger")
+  end
+
+  test "nothing worn is offered for destroying" do
+    {_view, session, conn} = human(build_conn(), 0)
+    {:ok, view, _html} = live(conn, ~p"/inventory")
+    sword = carried(session, "Squire's Sword")
+
+    refute has_element?(view, ~s(#inventory-form option[value="destroy:#{sword.id}"]))
+    assert has_element?(view, ~s(#inventory-form option[value="unequip:#{sword.id}"]))
   end
 
   test "a character cannot reach another village's trader" do

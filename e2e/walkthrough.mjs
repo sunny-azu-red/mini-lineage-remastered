@@ -68,6 +68,14 @@ try {
         percents,
     );
     check('...and writes a percentage exactly as the server does', offPercent.length === 0, offPercent.join(' | '));
+    const tenths = JSON.parse(readFileSync('test/fixtures/tenths_format.json', 'utf8')).cases;
+    const offTenths = await page.evaluate(
+        (rows) => rows
+            .filter(([value, expected]) => window.__tenthsFigure(value) !== expected)
+            .map(([value, expected]) => `${value}: ${window.__tenthsFigure(value)} != ${expected}`),
+        tenths,
+    );
+    check('...and writes tenths exactly as the server does', offTenths.length === 0, offTenths.join(' | '));
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
@@ -452,8 +460,8 @@ try {
     check('...and the hunter stays on the ground to go again', (await state()).screen === 'hunt');
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
-    check('the sidebar shows the kit the character wears, and a way to the rest of it',
-        /Dagger/.test(await text('#inventory')) && await page.locator('#open-inventory').count() === 1,
+    check('the sidebar names the weapon worn, and offers the rest a link away',
+        /Dagger/.test(await text('#worn-weapon')) && await page.locator('#open-inventory').count() === 1,
         await text('#inventory'));
     await page.click('#header-link');
     await onScreen('town');
@@ -465,42 +473,56 @@ try {
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
-    await page.click('#stock-bone-dagger button');
+    await page.selectOption('#trader-form select', 'trader-weapons');
+    await page.click('#trader-form button');
+    await onScreen('trader-weapons');
+    check('the trader\'s weapons are a page of their own',
+        new URL(page.url()).pathname === '/dark-elf-village/trader/weapons', page.url());
+    await page.selectOption('#buy-form select', 'Bone Dagger');
+    await page.click('#buy-form button');
     await page.waitForSelector('#flash', { timeout: 5000 });
-    check('the village trader sells a Bone Dagger, tax included', /Bone Dagger/.test(await text('#flash')),
+    check('...where a Bone Dagger is bought through the dropdown', /Bone Dagger/.test(await text('#flash')),
         await text('#flash'));
-    await adena(wallet - 883);
-    check('...and the purse pays 883 for it', (await state()).adena === wallet - 883, String((await state()).adena));
+    await adena(wallet - 768);
+    check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
     await page.click('#open-inventory');
     await onScreen('inventory');
-    const bought = page.locator('#carried tr', { hasText: 'Bone Dagger' });
-    await bought.locator('button').click();
-    await page.waitForSelector('#worn tr:has-text("Bone Dagger")', { timeout: 5000 });
-    check('the inventory puts the Bone Dagger on', /Bone Dagger/.test(await text('#worn')),
-        await text('#worn'));
-    check('...and the Dagger it replaced is carried, not lost',
-        await page.locator('#carried td.name', { hasText: /^Dagger$/ }).count() === 1);
+    check('the inventory shows every slot, an empty one included',
+        await page.locator('#slot-shield[data-empty="true"]').count() === 1);
+    const putOn = await page.$eval('#inventory-form select', (el) =>
+        [...el.options].find(o => o.textContent.includes('Put on the Bone Dagger'))?.value);
+    await page.selectOption('#inventory-form select', putOn);
+    await page.click('#inventory-form button');
+    await page.waitForSelector('#slot-weapon:has-text("Bone Dagger")', { timeout: 5000 });
+    check('...and puts the Bone Dagger on through the dropdown', /Bone Dagger/.test(await text('#slot-weapon')),
+        await text('#slot-weapon'));
+    check('...the Dagger it replaced carried, not lost',
+        await page.locator('#carried td.name', { hasText: /^Dagger/ }).count() === 1);
     await page.click('#header-link');
     await onScreen('town');
-    check('...and back in town the sidebar shows it worn', /Bone Dagger/.test(await text('#inventory')),
-        await text('#inventory'));
+    check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#worn-weapon')),
+        await text('#worn-weapon'));
 
     // ---- the trainer (rules §25) ----------------------------------------------------------------
-    await page.evaluate(() => document.activeElement?.blur());
-    await page.keyboard.type('sp');
-    await page.waitForFunction(() =>
-        document.querySelector('#sidebar [data-key="sp"]')?.dataset.value === '10000', null, { timeout: 5000 });
     await page.selectOption('#travel-form select', 'trainer');
     await page.click('#travel-form button');
     await onScreen('trainer');
+    check('the sidebar shows no SP, which only the trainer shows',
+        await page.locator('#sidebar [data-key="sp"]').count() === 0);
+    const sp = () => page.getAttribute('[data-key="trainer-sp"]', 'data-value');
+    const spBefore = Number(await sp());
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('sp');
+    await page.waitForFunction((want) =>
+        document.querySelector('[data-key="trainer-sp"]')?.dataset.value === String(want), spBefore + 10000,
+        { timeout: 5000 });
     check('the home village\'s trainer teaches the set\'s own first skill',
         await page.locator('#lesson-mortal-blow-2[data-status="ready"]').count() === 1);
-    await page.click('#lesson-mortal-blow-2 button');
+    await page.selectOption('#learn-form select', 'Mortal Blow|2');
+    await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-2[data-status="known"]', { timeout: 5000 });
-    check('...and a lesson is learned for its SP',
-        await page.getAttribute('#sidebar [data-key="sp"]', 'data-value') === '9950',
-        await page.getAttribute('#sidebar [data-key="sp"]', 'data-value'));
-
+    check('...and a lesson is learned through the dropdown, for its SP',
+        Number(await sp()) === spBefore + 10000 - 50, await sp());
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

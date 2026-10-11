@@ -1,0 +1,45 @@
+{
+  "_comment": "Values both tenths formatters (a critical rate) must agree on, in tenths. Read by test/mini_lineage/game/format_test.exs for the Elixir side and by e2e/walkthrough.mjs for the JavaScript one.",
+  "cases": [
+    [
+      0,
+      "0.0"
+    ],
+    [
+      1,
+      "0.1"
+    ],
+    [
+      8,
+      "0.8"
+    ],
+    [
+      10,
+      "1.0"
+    ],
+    [
+      44,
+      "4.4"
+    ],
+    [
+      88,
+      "8.8"
+    ],
+    [
+      99,
+      "9.9"
+    ],
+    [
+      100,
+      "10.0"
+    ],
+    [
+      132,
+      "13.2"
+    ],
+    [
+      500,
+      "50.0"
+    ]
+  ]
+}

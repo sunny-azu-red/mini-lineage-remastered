@@ -145,11 +145,6 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div class="stat-row">
-          <span class="stat-label">SP</span>
-          <span class="stat-value sp"><Controls.figure key="sp" value={@view.sp} format={:short} /></span>
-        </div>
-
-        <div class="stat-row">
           <%!-- Past the last level there is no next one to fill toward, so the total is the figure. --%>
           <Controls.bar
             id="xp-bar"
@@ -173,13 +168,10 @@ defmodule MiniLineageWeb.Layouts do
         body_class="rows"
         collapsible
       >
-        <div
-          :for={item <- Enum.filter(@view.items, & &1.equipped)}
-          class="stat-row"
-          id={"worn-#{item.id}"}
-        >
-          <span class="stat-label">{item.slot |> Atom.to_string() |> String.capitalize()}</span>
-          <span class="stat-value">{item.name}</span>
+        <%!-- Only the weapon: the rest is on the inventory page, a link away. --%>
+        <div class="stat-row" id="worn-weapon">
+          <span class="stat-label">Weapon</span>
+          <span class="stat-value">{weapon_name(@view.items)}</span>
         </div>
         <div class="stat-row">
           <span class="stat-label">Adena</span>
@@ -192,6 +184,13 @@ defmodule MiniLineageWeb.Layouts do
       </Controls.panel>
     </div>
     """
+  end
+
+  defp weapon_name(items) do
+    case Enum.find(items, &(&1.equipped and &1.slot == :weapon)) do
+      nil -> "Bare hands"
+      item -> item.name
+    end
   end
 
   @doc """

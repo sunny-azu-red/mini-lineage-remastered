@@ -41,6 +41,34 @@ defmodule MiniLineage.Game.Narratives do
   @fell ~s({they} fall to the {monster} at the {ground}, and {their} road ends here.)
   @wandered ~s({they} cannot bring the {monster} down, and it slinks away into the {ground}.)
 
+  # Rules §20's fight log: who is met, then each round's events joined into one line.
+  @met ~s({they} meet {article} {monster}, level <span class="level">{level}</span>, on the {ground}.)
+  @unarmed ~s({they} cannot use {skill} without {weapon} in hand.)
+  # Each follows "Round N:", so its subject is {them}, the lowercase one.
+  @log %{
+    blow: ~s({them} hit for {amount}),
+    critical: ~s({them} land a critical hit for <span class="crit">{amount}</span>),
+    miss: "{them} miss",
+    skill: ~s({their} {skill} deals <span class="attack">{amount}</span>),
+    skill_failed: "{their} {skill} fails to land",
+    cast: ~s({them} cast {skill} for <span class="magic">{amount}</span>),
+    magic_critical: ~s({their} {skill} strikes true for <span class="crit">{amount}</span>),
+    ignite: "{them} set it burning with {skill}",
+    burn: ~s(it burns for <span class="magic">{amount}</span>),
+    foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount}</span>),
+    foe_critical:
+      ~s(the {monster} lands a critical hit on {object} for <span class="hp">{amount}</span>),
+    foe_caught:
+      ~s({their} shield catches the {monster}'s blow, and {them} take <span class="hp">{amount}</span>),
+    foe_perfect: "{their} shield turns the {monster}'s blow aside",
+    foe_miss: "the {monster} misses",
+    foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>)
+  }
+
+  def met, do: @met
+  def unarmed, do: @unarmed
+  def log(kind), do: Map.fetch!(@log, kind)
+
   def welcome, do: @welcome
   def slew, do: @slew
   def levelled, do: @levelled

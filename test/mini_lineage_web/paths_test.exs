@@ -13,6 +13,7 @@ defmodule MiniLineageWeb.PathsTest do
     [{"start", nil}, {"races", nil}, {"error", nil}, {"character", nil}, {"highscores", nil}] ++
       [{"inventory", nil}] ++
       for(slug <- Paths.villages(), screen <- ~w(trader trainer), do: {screen, slug}) ++
+      for(slug <- Paths.villages(), page <- Paths.trader_pages(), do: {"trader-" <> page, slug}) ++
       for(slug <- Paths.towns(), screen <- ~w(town gatekeeper), do: {screen, slug}) ++
       for(slug <- Paths.hunting_towns(), do: {"hunt", slug}) ++
       for lineage <- Paths.lineages(), do: {"highscores", lineage}

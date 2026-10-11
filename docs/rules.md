@@ -532,8 +532,8 @@ Example: a Human Fighter (DEX 30) behind a Small Shield (defence 56, block 20) c
 ## 24. Village shops
 
 Every starting village sells the items marked village below, and Orc Village those marked
-orc-village too, each at its price plus 15% tax, rounded down. A shop buys back anything it sells
-for half its price, rounded down. A starting kit is worth nothing to a shop and is never bought.
+orc-village too, each at its price. A shop buys back anything it sells for half its price, rounded
+down. A starting kit is worth nothing to a shop and is never bought.
 
 | Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | Accuracy | Spread | P.Def | M.Def | Shield | Block | MP | Price | Sold |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -609,7 +609,7 @@ for half its price, rounded down. A starting kit is worth nothing to a shop and 
 | Necklace of Anguish | jewellery | necklace |  |  |  |  |  |  |  |  |  | 21 |  |  |  | 4680 | village |
 | Necklace of Wisdom | jewellery | necklace |  |  |  |  |  |  |  |  |  | 25 |  |  |  | 11900 | village |
 
-Example: a Broadsword (12,500) costs 12,500 × 1.15 = **14,375** and sells back for **6,250**.
+Example: a Broadsword costs **12,500** and sells back for **6,250**.
 
 ## 25. The trainer
 

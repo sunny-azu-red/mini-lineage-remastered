@@ -5,14 +5,8 @@ defmodule MiniLineage.Game.Shop do
   """
   alias MiniLineage.Game.Rules
 
-  # §24: the shop's 15% tax, as a fraction so the price stays whole.
-  @tax {115, 100}
-
-  @doc "§24: an item's price at a village shop, tax included, rounded down."
-  def price(item) do
-    {num, den} = @tax
-    div(item.price * num, den)
-  end
+  @doc "§24: an item's price at a village shop, its canon price."
+  def price(item), do: item.price
 
   @doc "§24: what a shop pays back for an item, half its price, and nothing for a starting kit."
   def buyback(%{sold: :starting}), do: 0

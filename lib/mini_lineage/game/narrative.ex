@@ -61,6 +61,101 @@ defmodule MiniLineage.Game.Narrative do
         "ground" => ground.name
       })
 
+  @doc "Rules §20: the fight log, each line open-voiced: the meeting, then one line a round."
+  def build_fight_log(foe, ground, log) do
+    met =
+      Format.fill_template(Narratives.met(), %{
+        "article" => article(foe.name),
+        "monster" => foe.name,
+        "level" => foe.level,
+        "ground" => ground.name
+      })
+
+    rounds =
+      log
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+      |> Enum.sort()
+      |> Enum.map(fn
+        {0, [{:no_weapon, skill}]} ->
+          Format.fill_template(Narratives.unarmed(), %{
+            "skill" => skill,
+            "weapon" => weapon_for(skill)
+          })
+
+        {round, events} ->
+          parts = events |> merge_blows() |> Enum.map(&event(&1, foe))
+          "Round #{round}: " <> join(parts) <> "."
+      end)
+
+    [met | rounds]
+  end
+
+  defp event({:blow, amount, true}, _foe), do: fill(:critical, %{"amount" => amount})
+
+  defp event({:blows, amounts}, _foe) do
+    amounts = Enum.map(amounts, &~s(<span class="attack">#{&1}</span>))
+    fill(:blow, %{"amount" => join_and(amounts)})
+  end
+
+  defp event(:miss, _foe), do: fill(:miss, %{})
+  defp event({:skill, skill, 0}, _foe), do: fill(:skill_failed, %{"skill" => skill})
+
+  defp event({:skill, skill, amount}, _foe),
+    do: fill(:skill, %{"skill" => skill, "amount" => amount})
+
+  defp event({:cast, skill, 0, _}, _foe), do: fill(:ignite, %{"skill" => skill})
+
+  defp event({:cast, skill, amount, critical?}, _foe),
+    do:
+      fill(if(critical?, do: :magic_critical, else: :cast), %{
+        "skill" => skill,
+        "amount" => amount
+      })
+
+  defp event({:burn, amount}, _foe), do: fill(:burn, %{"amount" => amount})
+
+  defp event({:foe_blow, amount, critical?, caught}, foe) do
+    kind =
+      case caught do
+        :perfect -> :foe_perfect
+        :caught -> :foe_caught
+        nil -> if(critical?, do: :foe_critical, else: :foe_blow)
+      end
+
+    fill(kind, %{"monster" => foe.name, "amount" => amount})
+  end
+
+  defp event(:foe_miss, foe), do: fill(:foe_miss, %{"monster" => foe.name})
+
+  defp event({:foe_cast, spell, amount}, foe),
+    do: fill(:foe_cast, %{"monster" => foe.name, "skill" => spell, "amount" => amount})
+
+  defp fill(kind, data), do: Format.fill_template(Narratives.log(kind), data)
+
+  # A round's ordinary blows read as one: "you hit for 10 and 9".
+  defp merge_blows(events) do
+    events
+    |> Enum.chunk_by(&match?({:blow, _, false}, &1))
+    |> Enum.flat_map(fn
+      [{:blow, _, false} | _] = blows -> [{:blows, Enum.map(blows, &elem(&1, 1))}]
+      other -> other
+    end)
+  end
+
+  defp join_and([only]), do: only
+  defp join_and(parts), do: Enum.join(Enum.drop(parts, -1), ", ") <> " and " <> List.last(parts)
+
+  # "you hit for 9, the Wolf misses, and you hit for 8"
+  defp join([only]), do: only
+  defp join(parts), do: Enum.join(Enum.drop(parts, -1), ", ") <> ", and " <> List.last(parts)
+
+  defp article(name), do: if(String.first(name) in ~w(A E I O U), do: "an", else: "a")
+
+  defp weapon_for("Power Strike"), do: "a sword or a blunt weapon"
+  defp weapon_for("Power Shot"), do: "a bow"
+  defp weapon_for("Mortal Blow"), do: "a dagger"
+  defp weapon_for("Iron Punch"), do: "fists"
+
   def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
 
   @doc "A line as its owner's alert."

@@ -3,6 +3,8 @@ defmodule MiniLineageWeb.Paths do
 
   alias MiniLineage.Game.{Constants, Format, Rules}
 
+  @trader_pages ~w(weapons armour jewellery sell)
+
   @routes [
     {"races", "/races"},
     {"error", "/error"},
@@ -13,6 +15,9 @@ defmodule MiniLineageWeb.Paths do
 
   @doc "The slug of every town the router answers, each with its Gatekeeper beside it."
   def towns, do: for(town <- Rules.towns(), town.open?, do: town.slug)
+
+  @doc "The trader's inner pages, each one part of what a village sells or buys (rules §24)."
+  def trader_pages, do: @trader_pages
 
   @doc "The starting villages, each with its shop (rules §24)."
   def villages, do: for(town <- towns(), Rules.village?(town), do: town)
@@ -31,6 +36,10 @@ defmodule MiniLineageWeb.Paths do
   def for_screen({"gatekeeper", slug}) when is_binary(slug), do: "/#{slug}/gatekeeper"
 
   def for_screen({"trader", slug}) when is_binary(slug), do: "/#{slug}/trader"
+
+  def for_screen({"trader-" <> page, slug}) when is_binary(slug) and page in @trader_pages,
+    do: "/#{slug}/trader/#{page}"
+
   def for_screen({"trainer", slug}) when is_binary(slug), do: "/#{slug}/trainer"
 
   def for_screen({"hunt", slug}) when is_binary(slug),

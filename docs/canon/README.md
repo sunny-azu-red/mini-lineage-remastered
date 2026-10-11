@@ -142,6 +142,8 @@ where it has any.
 
 **Trade**
 
+- **Shops charge an item's canon price, with no castle tax** (Lineage II added the castle lord's
+  tax, 15% in a village), and nothing mentions one.
 - **NPC shops sell better gear in more advanced towns, for more money.** In Lineage II no NPC
   sold anything above D-grade; C-grade and better came from crafting, drops and players.
 - **Buffs are bought in towns,** at the Temple in each, with more of them further on. In Lineage II

@@ -21,10 +21,10 @@ defmodule MiniLineage.Game.ShopTest do
   defp worn(player), do: player |> Player.worn() |> Enum.map(& &1.name) |> Enum.sort()
 
   describe "buying" do
-    test "costs the price with tax, and the item is carried, not worn" do
+    test "costs its price, and the item is carried, not worn" do
       {player, {:ok, _}} = Actions.buy(character(), "Broadsword")
 
-      assert player.adena == 100_000 - 14_375
+      assert player.adena == 100_000 - 12_500
       assert %{equipped: false} = carried(player, "Broadsword")
     end
 
@@ -57,7 +57,7 @@ defmodule MiniLineage.Game.ShopTest do
       sword = carried(player, "Broadsword")
       {player, {:ok, _}} = Actions.sell(player, sword.id)
 
-      assert player.adena == 100_000 - 14_375 + 6_250
+      assert player.adena == 100_000 - 12_500 + 6_250
       refute carried(player, "Broadsword")
     end
 
@@ -103,6 +103,15 @@ defmodule MiniLineage.Game.ShopTest do
                ["Necklace of Knowledge"]
     end
 
+    test "destroying takes something carried away for good, and nothing worn" do
+      player = character()
+      {player, {:ok, _}} = Actions.destroy(player, carried(player, "Dagger").id)
+      refute carried(player, "Dagger")
+
+      assert {_, {:error, :worn_destroy, _}} =
+               Actions.destroy(player, carried(player, "Squire's Sword").id)
+    end
+
     test "taking off a robe lowers Max MP, and MP with it" do
       mystic = Player.restore_fully(character(0, :mystic))
       tunic = carried(mystic, "Apprentice's Tunic")
@@ -121,6 +130,6 @@ defmodule MiniLineage.Game.ShopTest do
 
     orc = Enum.map(Rules.stock("orc-village"), & &1.name)
     assert Enum.sort(orc -- base) == ["Cestus", "Fox Claw Gloves", "Iron Gloves", "Spiked Gloves"]
-    assert Shop.price(Rules.item("Club")) == 883
+    assert Shop.price(Rules.item("Club")) == 768
   end
 end

@@ -20,6 +20,7 @@ defmodule MiniLineage.Game.Actions do
     not_carried: "You do not carry that.",
     worn: "Take it off before you sell it.",
     worthless: "The shop will not buy that.",
+    worn_destroy: "Take it off before you destroy it.",
     no_trainer: "Only the trainers of your own village teach you.",
     no_lesson: "The trainer does not teach that.",
     too_soon: "You are not yet ready to learn that.",
@@ -102,20 +103,24 @@ defmodule MiniLineage.Game.Actions do
     foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
     result = Hunt.fight(Player.stats(player), player, Player.first_skill(player), foe)
     player = %{player | health: result.health, mp: result.mp}
+    log = foe |> Narrative.build_fight_log(ground, result.log) |> Enum.map(&Narrative.alert/1)
 
-    cond do
-      result.health <= 0 ->
-        fell = Narrative.build_fell(foe, ground)
-        player = %{player | dead: true, killer: foe.name}
-        {player, {:ok, %{text: Narrative.alert(fell), type: :danger}}}
+    {player, {:ok, flash}} =
+      cond do
+        result.health <= 0 ->
+          fell = Narrative.build_fell(foe, ground)
+          player = %{player | dead: true, killer: foe.name}
+          {player, {:ok, %{text: Narrative.alert(fell), type: :danger}}}
 
-      result.foe > 0 ->
-        {player,
-         {:ok, %{text: Narrative.alert(Narrative.build_wandered(foe, ground)), type: :info}}}
+        result.foe > 0 ->
+          wandered = Narrative.alert(Narrative.build_wandered(foe, ground))
+          {player, {:ok, %{text: wandered, type: :info}}}
 
-      true ->
-        reward(player, foe, ground, level)
-    end
+        true ->
+          reward(player, foe, ground, level)
+      end
+
+    {player, {:ok, Map.put(flash, :log, log)}}
   end
 
   defp reward(player, foe, ground, level) do
@@ -261,6 +266,23 @@ defmodule MiniLineage.Game.Actions do
           ~s(You learn #{skill} level #{level} for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
 
         {clamp_bars(player), {:ok, %{text: text, type: :info}}}
+    end
+  end
+
+  @doc "Rules §23: destroys something carried and not worn, for good."
+  def destroy(player, id) do
+    entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
+
+    cond do
+      !entry ->
+        {player, {:error, :not_carried, @errors.not_carried}}
+
+      entry.equipped ->
+        {player, {:error, :worn_destroy, @errors.worn_destroy}}
+
+      true ->
+        {%{player | items: List.delete(player.items, entry)},
+         {:ok, %{text: "You destroy the #{entry.name}.", type: :info}}}
     end
   end
 

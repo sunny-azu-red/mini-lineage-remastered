@@ -21,6 +21,10 @@ defmodule MiniLineageWeb.Screens do
     "highscores" => "Monument of Heroes",
     "inventory" => "Inventory",
     "trader" => "Trader",
+    "trader-weapons" => "Trader: Weapons",
+    "trader-armour" => "Trader: Armour",
+    "trader-jewellery" => "Trader: Jewellery",
+    "trader-sell" => "Trader: Sell",
     "trainer" => "Trainer",
     "error" => "Error"
   }
@@ -36,7 +40,7 @@ defmodule MiniLineageWeb.Screens do
   def icon("gatekeeper", _view), do: "🌀"
   def icon("hunt", _view), do: "⚔️"
   def icon("inventory", _view), do: "🎒"
-  def icon("trader", _view), do: "🛒"
+  def icon("trader" <> _, _view), do: "🛒"
   def icon("trainer", _view), do: "📖"
   def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
@@ -66,6 +70,13 @@ defmodule MiniLineageWeb.Screens do
       %{title: "Skills", icon: "📖", section: :skills, body_class: "rows"}
     ]
 
+  # Rules §23: what is worn and carried, and beside it the stats it makes, which count as gear moves.
+  def panels("inventory", _view, _catalog),
+    do: [
+      %{title: "Inventory", icon: "🎒", section: :inventory},
+      %{title: "Combat Stats", icon: "⚖️", section: :stats}
+    ]
+
   def panels(screen, view, _catalog),
     do: [%{title: title(screen, view), icon: icon(screen, view)}]
 
@@ -86,7 +97,8 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper hunt trader trainer character inventory),
+      when screen in ~w(town gatekeeper hunt trader trader-weapons trader-armour trader-jewellery
+                        trader-sell trainer character inventory),
       do: ~H||
 
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
@@ -94,7 +106,9 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "trader"} = assigns), do: trader(assigns)
+  def screen(%{screen: "trader-" <> _} = assigns), do: trader_page(assigns)
   def screen(%{screen: "trainer"} = assigns), do: trainer(assigns)
+  def screen(%{screen: "inventory", panel: %{section: :stats}} = assigns), do: character(assigns)
   def screen(%{screen: "inventory"} = assigns), do: inventory(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
   def screen(%{screen: "races"} = assigns), do: races(assigns)
@@ -192,63 +206,120 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  @kinds [weapon: "Weapons", shield: "Shields", armour: "Armour", jewellery: "Jewellery"]
-
-  # Rules §24: what the village sells, by kind, and what it would pay for what is carried.
+  # Rules §24: the trader's menu, each part of what it sells or buys a page of its own.
   defp trader(assigns) do
-    stock = Enum.group_by(assigns.view.stock, &kind_of(&1.slot))
-    sellable = Enum.filter(assigns.view.items, &(!&1.equipped and &1.buyback > 0))
-    assigns = assign(assigns, stock: stock, sellable: sellable, kinds: @kinds)
-
     ~H"""
     <p>
-      The traders of {@view.town.emoji} {@view.town.name} sell what every village sells, at the price
-      the lord's tax puts on it, and buy back what they sell for half of what they ask.
+      The traders of {@view.town.emoji} {@view.town.name} sell what every village sells, and buy back
+      what they sell for half of what they ask. What would you like to see?
     </p>
-    <%= for {kind, label} <- @kinds, @stock[kind] do %>
-      <h3>{label}</h3>
-      <.data_table id={"stock-#{kind}"}>
-        <:col class="name">Item</:col>
-        <:col class="name">What it is</:col>
-        <:col>Adena</:col>
-        <:col></:col>
-        <tbody>
-          <tr :for={item <- @stock[kind]} id={"stock-#{slug(item.name)}"}>
-            <td class="name">{item.name}</td>
-            <td class="name muted">{item.about}</td>
-            <td class="adena">🪙 {Format.number(item.price)}</td>
-            <td>
-              <.button size={:sm} phx-click="buy" phx-value-item={item.name}>Buy</.button>
-            </td>
-          </tr>
-        </tbody>
-      </.data_table>
-    <% end %>
-    <h3>Sell</h3>
+    <.select_action
+      id="trader-form"
+      event="navigate"
+      name="place"
+      picked={@picked}
+      placeholder={"🚪 #{@view.town.name}"}
+      options={[
+        %{value: "trader-weapons", label: "⚔️ Weapons and shields"},
+        %{value: "trader-armour", label: "🛡️ Armour"},
+        %{value: "trader-jewellery", label: "📿 Jewellery"},
+        %{value: "trader-sell", label: "💰 Sell"}
+      ]}
+      default_label="Return"
+      active_label="Browse"
+    />
+    """
+  end
+
+  @trader_parts %{
+    "trader-weapons" => {[:weapon, :shield], "weapons and shields"},
+    "trader-armour" => {[:chest, :legs], "armour"},
+    "trader-jewellery" => {[:necklace], "jewellery"}
+  }
+
+  # Rules §24: one part of the trader's stock, in a table, and the choice of what to buy.
+  defp trader_page(%{screen: "trader-sell"} = assigns) do
+    assigns =
+      assign(assigns,
+        sellable: Enum.filter(assigns.view.items, &(!&1.equipped and &1.buyback > 0))
+      )
+
+    ~H"""
     <p :if={@sellable == []} id="nothing-to-sell">
       You carry nothing the traders would buy: they take nothing worn, and nothing from a starting kit.
     </p>
     <.data_table :if={@sellable != []} id="sellable">
       <:col class="name">Item</:col>
+      <:col class="name">What it is</:col>
       <:col>Pays</:col>
-      <:col></:col>
       <tbody>
         <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
           <td class="name">{item.name}</td>
+          <td class="name muted">{item.about}</td>
           <td class="adena">🪙 {Format.number(item.buyback)}</td>
-          <td>
-            <.button size={:sm} variant={:secondary} phx-click="sell" phx-value-id={item.id}>
-              Sell
-            </.button>
-          </td>
         </tr>
       </tbody>
     </.data_table>
+    <.select_action
+      id="sell-form"
+      event="sell"
+      name="id"
+      picked={@picked}
+      placeholder="🛒 Back to the trader"
+      options={
+        Enum.map(
+          @sellable,
+          &%{value: &1.id, label: "Sell the #{&1.name} for #{Format.number(&1.buyback)}"}
+        )
+      }
+      default_label="Return"
+      active_label="💰 Sell"
+    />
     """
   end
 
-  # Rules §25: what the village's trainer teaches this set, and what the character can learn now.
+  defp trader_page(assigns) do
+    {slots, what} = Map.fetch!(@trader_parts, assigns.screen)
+
+    assigns =
+      assign(assigns, stock: Enum.filter(assigns.view.stock, &(&1.slot in slots)), what: what)
+
+    ~H"""
+    <p>The traders lay out their {@what}.</p>
+    <.data_table id="stock">
+      <:col class="name">Item</:col>
+      <:col class="name">What it is</:col>
+      <:col>Adena</:col>
+      <tbody>
+        <tr :for={item <- @stock} id={"stock-#{slug(item.name)}"}>
+          <td class="name">{item.name}</td>
+          <td class="name muted">{item.about}</td>
+          <td class="adena">🪙 {Format.number(item.price)}</td>
+        </tr>
+      </tbody>
+    </.data_table>
+    <.select_action
+      id="buy-form"
+      event="buy"
+      name="item"
+      picked={@picked}
+      placeholder="🛒 Back to the trader"
+      options={
+        Enum.map(
+          @stock,
+          &%{value: &1.name, label: "Buy the #{&1.name} for #{Format.number(&1.price)}"}
+        )
+      }
+      default_label="Return"
+      active_label="🪙 Buy"
+    />
+    """
+  end
+
+  # Rules §25: what the village's trainer teaches this set, and the choice of what to learn now.
   defp trainer(assigns) do
+    assigns = assign(assigns, ready: Enum.filter(assigns.view.lessons, &(&1.status == :ready)))
+
     ~H"""
     <p id="trainer-intro" phx-no-format>
       The trainers of {@view.town.emoji} {@view.town.name} teach their own, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="trainer-sp" value={@view.sp} /> SP</span>.
@@ -258,7 +329,7 @@ defmodule MiniLineageWeb.Screens do
       <:col class="num">Level</:col>
       <:col class="num">From level</:col>
       <:col>SP</:col>
-      <:col></:col>
+      <:col>Known</:col>
       <tbody>
         <tr
           :for={lesson <- @view.lessons}
@@ -269,78 +340,92 @@ defmodule MiniLineageWeb.Screens do
           <td class="num">{lesson.level}</td>
           <td class="num">{lesson.learn_at}</td>
           <td class="sp">{Format.number(lesson.sp)}</td>
-          <td>
-            <.button
-              :if={lesson.status == :ready}
-              size={:sm}
-              phx-click="learn"
-              phx-value-skill={lesson.skill}
-              phx-value-level={lesson.level}
-            >
-              Learn
-            </.button>
-            <span :if={lesson.status == :known} class="muted">Known</span>
-          </td>
+          <td>{if lesson.status == :known, do: "Known", else: ""}</td>
         </tr>
       </tbody>
     </.data_table>
+    <.select_action
+      id="learn-form"
+      event="learn"
+      name="lesson"
+      picked={@picked}
+      placeholder={"🚪 #{@view.town.name}"}
+      options={
+        Enum.map(
+          @ready,
+          &%{
+            value: "#{&1.skill}|#{&1.level}",
+            label: "Learn #{&1.skill} #{&1.level} for #{Format.number(&1.sp)} SP"
+          }
+        )
+      }
+      default_label="Return"
+      active_label="📖 Learn"
+    />
     """
   end
 
-  # Rules §23: what is worn, by slot, and what is only carried.
+  @slots [weapon: "Weapon", shield: "Shield", chest: "Chest", legs: "Legs", necklace: "Necklace"]
+
+  # Rules §23: every slot, worn or empty, beside everything carried, and one choice of what to do.
   defp inventory(assigns) do
     {worn, carried} = Enum.split_with(assigns.view.items, & &1.equipped)
 
     assigns =
-      assign(assigns, worn: worn, carried: carried, capacity: MiniLineage.Game.Rules.capacity())
+      assign(assigns,
+        worn: Map.new(worn, &{&1.slot, &1}),
+        carried: carried,
+        slots: @slots,
+        capacity: MiniLineage.Game.Rules.capacity(),
+        options:
+          Enum.map(carried, &%{value: "equip:#{&1.id}", label: "Put on the #{&1.name}"}) ++
+            Enum.map(worn, &%{value: "unequip:#{&1.id}", label: "Take off the #{&1.name}"}) ++
+            Enum.map(carried, &%{value: "destroy:#{&1.id}", label: "Destroy the #{&1.name}"})
+      )
 
     ~H"""
-    <p id="inventory-count">
-      You carry {length(@view.items)} of the {@capacity} things you can.
-    </p>
-    <h3>Worn</h3>
-    <.data_table id="worn">
-      <:col>Slot</:col>
-      <:col class="name">Item</:col>
-      <:col class="name">What it is</:col>
-      <:col></:col>
-      <tbody>
-        <tr :for={item <- @worn} id={"item-#{item.id}"} data-worn="true">
-          <td>{slot_label(item.slot)}</td>
-          <td class="name">{item.name}</td>
-          <td class="name muted">{item.about}</td>
-          <td>
-            <.button size={:sm} variant={:secondary} phx-click="unequip" phx-value-id={item.id}>
-              Take off
-            </.button>
-          </td>
-        </tr>
-      </tbody>
-    </.data_table>
-    <h3>Carried</h3>
-    <p :if={@carried == []} id="nothing-carried">You carry nothing you are not wearing.</p>
-    <.data_table :if={@carried != []} id="carried">
-      <:col class="name">Item</:col>
-      <:col class="name">What it is</:col>
-      <:col></:col>
-      <tbody>
-        <tr :for={item <- @carried} id={"item-#{item.id}"} data-worn="false">
-          <td class="name">{item.name}</td>
-          <td class="name muted">{item.about}</td>
-          <td>
-            <.button size={:sm} phx-click="equip" phx-value-id={item.id}>Put on</.button>
-          </td>
-        </tr>
-      </tbody>
-    </.data_table>
+    <p id="inventory-count">You carry {length(@view.items)} of the {@capacity} things you can.</p>
+    <div class="inventory-columns">
+      <.data_table id="worn">
+        <:col>Slot</:col>
+        <:col class="name">Worn</:col>
+        <tbody>
+          <tr :for={{slot, label} <- @slots} id={"slot-#{slot}"} data-empty={to_string(!@worn[slot])}>
+            <td>{label}</td>
+            <td class="name">
+              <%= if item = @worn[slot] do %>
+                {item.name}<br /><span class="muted">{item.about}</span>
+              <% else %>
+                <span class="muted">empty</span>
+              <% end %>
+            </td>
+          </tr>
+        </tbody>
+      </.data_table>
+      <.data_table id="carried">
+        <:col class="name">Carried</:col>
+        <tbody>
+          <tr :if={@carried == []}>
+            <td class="name muted" id="nothing-carried">nothing but what you wear</td>
+          </tr>
+          <tr :for={item <- @carried} id={"item-#{item.id}"}>
+            <td class="name">{item.name}<br /><span class="muted">{item.about}</span></td>
+          </tr>
+        </tbody>
+      </.data_table>
+    </div>
+    <.select_action
+      id="inventory-form"
+      event="inventory"
+      name="act"
+      picked={@picked}
+      placeholder={"🚪 #{@view.town.name}"}
+      options={@options}
+      default_label="Return"
+      active_label="Do it"
+    />
     """
   end
-
-  defp kind_of(slot) when slot in [:weapon, :shield], do: slot
-  defp kind_of(slot) when slot in [:necklace, :earring, :ring], do: :jewellery
-  defp kind_of(_slot), do: :armour
-
-  defp slot_label(slot), do: slot |> Atom.to_string() |> String.capitalize()
 
   defp slug(name), do: MiniLineage.Game.Format.slugify(name)
 
@@ -384,9 +469,9 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Only ever the reader's own, so it speaks to them. A chance moves only with DEX or WIT, so it is
-  # not counted. Each clause stays on one line: a newline at a tag renders as a space. A panel with
-  # figures has a hook of its own to count them; the sidebar's are its own.
+  # Only ever the reader's own, so it speaks to them. Each clause stays on one line: a newline at a
+  # tag renders as a space. A panel with figures has a hook of its own to count them; the sidebar's
+  # are its own.
   defp character(%{panel: %{section: :lineage}} = assigns) do
     assigns =
       assign(assigns,
@@ -433,10 +518,10 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
-        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit">{@critical}% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
+        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
       </p>
       <p phx-no-format>
-        You cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit">{@magic_critical}% M. Critical</span>, and turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>
+        You cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% M. Critical</span>, and turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>
       </p>
     </div>
     """
@@ -450,9 +535,6 @@ defmodule MiniLineageWeb.Screens do
         <span class="buff">{name}</span> <span class="muted">&bull;</span> level <span class="level">{level}</span>{skill_line(name, level)}
       </p>
     </div>
-    <p>
-      SP buys more from your village's trainer, and you hold <span class="sp">{Format.number(@view.sp)} SP</span>.
-    </p>
     """
   end
 

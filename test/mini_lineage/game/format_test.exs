@@ -69,6 +69,16 @@ defmodule MiniLineage.Game.FormatTest do
     end
   end
 
+  describe "the tenths the JavaScript must agree on" do
+    test "are written the same way here" do
+      %{"cases" => cases} = "test/fixtures/tenths_format.json" |> File.read!() |> Jason.decode!()
+
+      for [value, expected] <- cases do
+        assert Format.tenths(value) == expected, "#{value} formatted as #{Format.tenths(value)}"
+      end
+    end
+  end
+
   describe "slugify" do
     test "makes a race label safe for an id" do
       assert Format.slugify("Dark Elf") == "dark-elf"

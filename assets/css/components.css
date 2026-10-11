@@ -364,3 +364,15 @@
 .code-block::-webkit-scrollbar-thumb:hover {
     background: var(--gold-dim);
 }
+
+/* ===== The fight log =====
+ * Rules §20: a line a round, above what the fight came to. */
+.fight-log {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+}
+
+.fight-log li + li {
+    margin-top: 2px;
+}
