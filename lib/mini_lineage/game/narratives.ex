@@ -1,18 +1,5 @@
 defmodule MiniLineage.Game.Narratives do
-  @moduledoc "Narrative templates. Each list is drawn from by index, so ORDER is load-bearing."
-
-  # Joined mid-sentence ("You chose the Orc Fighter, and ..."), so none of them starts a new one.
-  @welcome [
-    "{their} destiny awaits in the dark!",
-    "the fires of fate burn for {object}...",
-    "a hero rises from the ashes now!",
-    "the world of Aden calls to {object}...",
-    "blood and iron define {their} soul!",
-    "steel and magic are {their} allies!",
-    "ancient echoes follow {their} feet!",
-    "{them} take a bold step toward {their} destiny!",
-    "{their} spirit shines in the dark..."
-  ]
+  @moduledoc "Narrative templates."
 
   # They/them takes the same verb forms as you, so only the pronouns move between the two voices.
   @voices %{
@@ -30,7 +17,7 @@ defmodule MiniLineage.Game.Narratives do
     }
   }
 
-  @began ~s({they} chose the {raceEmoji} {className}, and {welcome} {they} set out from {townEmoji} {town} as {build} {definition} of {age} seasons.)
+  @began ~s({they} chose the {raceEmoji} {className} and set out from {townEmoji} {town}.)
 
   @arrived ~s({they} pay the Gatekeeper <span class="adena">{fee} Adena</span> and step out into {townEmoji} {town}.)
 
@@ -80,7 +67,6 @@ defmodule MiniLineage.Game.Narratives do
   def met, do: @met
   def log(kind), do: Map.fetch!(@log, kind)
 
-  def welcome, do: @welcome
   def slew, do: @slew
   def levelled, do: @levelled
   def fell, do: @fell

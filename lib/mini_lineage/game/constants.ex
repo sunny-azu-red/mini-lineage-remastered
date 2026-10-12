@@ -134,12 +134,8 @@ defmodule MiniLineage.Game.Constants do
   }
 
   @character %{
-    min_age: 9,
-    max_age: 69,
-    age_thresholds: %{youth: 23, adult: 54},
     name_min_length: 1,
-    name_max_length: 20,
-    builds: ["a hardy", "a wiry", "a sturdy", "a fit", "a rugged", "a robust", "a solid"]
+    name_max_length: 20
   }
 
   def races, do: @races

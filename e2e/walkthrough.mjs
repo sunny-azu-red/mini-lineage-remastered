@@ -161,8 +161,8 @@ try {
     check('...and every panel on it, the sidebar\'s too, is titled with an h2, under the one h1',
         untitled === 0 && await page.locator('h1').count() === 1, `${untitled} untitled`);
     check('...and the City of Aden is nowhere on the page', !(await text('body')).includes('City of Aden'));
-    check('...with the welcome that sent it out from there',
-        /You chose the 🧟 Orc Mystic, .* set out from 🏕️ Orc Village/.test(await text('#main .alert')),
+    check('...with the line that sent it out from there',
+        /You chose the 🧟 Orc Mystic and set out from 🏕️ Orc Village/.test(await text('#main .alert')),
         await text('#main .alert'));
     // A flash heads the panel without being its content, so what opens the screen sits as the first.
     const gap = await page.evaluate(() =>

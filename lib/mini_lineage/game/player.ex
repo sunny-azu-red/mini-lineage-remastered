@@ -3,7 +3,7 @@ defmodule MiniLineage.Game.Player do
   A character as the base layer (`docs/rules.md`) makes one, and what time does to it. Every
   function takes a player and returns a new one; nothing here touches a process or the database.
   """
-  alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Narrative, Narratives, Rules}
+  alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Narrative, Rules}
 
   @elf 2
   # Rules §20: how long a character goes on not resting after it leaves the ground.
@@ -56,30 +56,7 @@ defmodule MiniLineage.Game.Player do
           skills: first_skills(race.id, path)
       })
 
-    # Draw order is load-bearing only in that it must stay stable: build, then age, then welcome.
-    %{min_age: min_age, max_age: max_age, age_thresholds: thresholds, builds: builds} =
-      Constants.character()
-
-    build = Math.random_element(builds)
-    age = Math.random_int(min_age, max_age)
-
-    definition =
-      cond do
-        age <= thresholds.youth -> "youth"
-        age <= thresholds.adult -> "adult"
-        true -> "elder"
-      end
-
-    welcome = Math.random_element(Narratives.welcome())
-
-    began =
-      Narrative.build_began(race, %{
-        class_name: Rules.set(race.id, path).name,
-        welcome: welcome,
-        build: build,
-        definition: definition,
-        age: age
-      })
+    began = Narrative.build_began(race, Rules.set(race.id, path).name)
 
     {player, %{text: Narrative.alert(began), type: :info, sound: "start"}}
   end
