@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.{Board, Characters}
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Rules, Snapshot, Version}
   alias MiniLineageWeb.{Controls, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
@@ -208,8 +208,19 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("buy", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
 
-  def handle_event("buy", %{"item" => name}, socket),
-    do: {:noreply, apply_action(socket, &Actions.buy(&1, name), nil)}
+  # A potion (rules §26) comes as "name|count", bought by the lot.
+  def handle_event("buy", %{"item" => choice}, socket) do
+    case String.split(choice, "|", parts: 2) do
+      [name, count] ->
+        case Integer.parse(count) do
+          {n, ""} -> {:noreply, apply_action(socket, &Actions.buy(&1, name, n), nil)}
+          _ -> {:noreply, socket}
+        end
+
+      [name] ->
+        {:noreply, apply_action(socket, &Actions.buy(&1, name), nil)}
+    end
+  end
 
   def handle_event("sell", %{"id" => ""}, socket),
     do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
@@ -224,9 +235,24 @@ defmodule MiniLineageWeb.GameLive do
     do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
 
   def handle_event("wear", %{"id" => id}, socket) do
-    equipped? = Enum.any?(socket.assigns.player.items, &(&1.id == id and &1.equipped))
-    action = if equipped?, do: &Actions.unequip(&1, id), else: &Actions.equip(&1, id)
+    entry = Enum.find(socket.assigns.player.items, &(&1.id == id))
+
+    action =
+      cond do
+        entry && Rules.stacks?(Rules.item(entry.name)) -> &Actions.drink(&1, id)
+        entry && entry.equipped -> &Actions.unequip(&1, id)
+        true -> &Actions.equip(&1, id)
+      end
+
     {:noreply, apply_action(socket, action, nil)}
+  end
+
+  # Rules §26: the share of HP to drink a potion below in a fight; the empty choice does nothing.
+  def handle_event("potion_at", %{"share" => share}, socket) do
+    case Integer.parse(share) do
+      {n, ""} -> {:noreply, apply_action(socket, &Actions.potion_at(&1, n), nil)}
+      _ -> {:noreply, socket}
+    end
   end
 
   def handle_event("destroy", %{"doomed" => ""}, socket), do: {:noreply, socket}

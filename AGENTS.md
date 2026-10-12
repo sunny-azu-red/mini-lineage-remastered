@@ -7,7 +7,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, `Actions.hunt/1`, and death), each village's trader and its inner
-  pages (`/<village>/trader/<weapons|armour|jewellery|sell>`) and the inventory beside its Combat
+  pages (`/<village>/trader/<category|sell>`) and the inventory beside its Combat
   Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
   and the home village's trainer (rules §25: `Actions.learn/3`, `/<village>/trainer`, a character's
   `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
@@ -180,7 +180,7 @@ Each of these is here because it was got wrong once.
   play (a history, an inventory, a mailbox) gets its own table, or every save rewrites it. The
   inventory is `items`, written by `Store.save/4` in the character's transaction only when the list
   moved (`Server` compares it with what it last wrote), and `e2e/reset.sh` truncates it with
-  `characters`.
+  `characters`. A potion (rules §26) is one row with a `count`; every other item counts 1.
 - **A rule's table lives in code; Postgres holds what grows with play.** Towns, routes and fees, the
   EXP table, starting sets and modifiers are `Rules` attributes, changed by a commit, and the router
   builds each town's address from them at compile time. Size is no reason to move one. Once content

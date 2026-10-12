@@ -135,6 +135,9 @@ defmodule MiniLineage.Game.Narrative do
   defp event({:burn, amount}, _foe), do: fill(:burn, %{"amount" => amount})
   defp event({:poison, amount}, _foe), do: fill(:poison, %{"amount" => amount})
 
+  defp event({:potion, potion, amount}, _foe),
+    do: fill(:potion, %{"potion" => potion, "amount" => amount})
+
   defp event({:heal, skill, amount}, _foe),
     do: fill(:heal, %{"skill" => skill, "amount" => amount})
 

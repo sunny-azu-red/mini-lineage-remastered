@@ -307,6 +307,18 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§26 every potion, and no other" do
+      rows = table("Potion")
+      assert length(rows) == map_size(Rules.potions())
+
+      for [name, heals, price, sold] <- rows do
+        potion = Rules.item(name)
+        assert Rules.stacks?(potion)
+        assert {potion.heals, potion.price} == {String.to_integer(heals), trunc(number(price))}
+        assert Atom.to_string(potion.sold) == sold
+      end
+    end
+
     test "§24 every item, whole, and no other" do
       rows = table("Item")
       assert length(rows) == map_size(Rules.items())
@@ -609,6 +621,12 @@ defmodule MiniLineage.Game.RulesTest do
       {mystic, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Novice")
       bare = %{mystic | items: []}
       assert Player.stats(mystic).max_mp - Player.stats(bare).max_mp == 29
+    end
+
+    test "§26 a Lesser Healing Potion lifts 100 of 280 HP to 212, and ten cost 900" do
+      potion = Rules.item("Lesser Healing Potion")
+      assert min(100 + potion.heals, 280) == 212
+      assert Shop.price(potion) * 10 == 900
     end
 
     test "§19 Self Heal at 20 M.Atk mends 46" do

@@ -74,7 +74,8 @@ defmodule MiniLineage.Game.NarrativeTest do
         {2, {:toggle, "Soul Cry"}},
         {3, {:curse, "Curse: Poison", true}},
         {3, {:poison, 8}},
-        {4, {:curse, "Wind Shackle", false}}
+        {4, {:curse, "Wind Shackle", false}},
+        {4, {:potion, "Lesser Healing Potion", 112}}
       ]
 
       # Every round ends on where both stand, as the engine writes it.
@@ -98,6 +99,7 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "lay Curse: Poison on the Young Keltir"
       assert text =~ "the poison eats"
       assert text =~ "Wind Shackle slides off the Young Keltir"
+      assert text =~ "drink a Lesser Healing Potion and mend"
     end
   end
 end

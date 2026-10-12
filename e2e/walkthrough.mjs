@@ -519,6 +519,34 @@ try {
     check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#equipped-weapons')),
         await text('#equipped-weapons'));
 
+    // ---- potions (rules §26) --------------------------------------------------------------------
+    await page.selectOption('#travel-form select', 'trader');
+    await page.click('#travel-form button');
+    await onScreen('trader');
+    await page.selectOption('#trader-form select', 'trader-potions');
+    await page.click('#trader-form button');
+    await onScreen('trader-potions');
+    await page.selectOption('#buy-form select', 'Lesser Healing Potion|10');
+    await page.click('#buy-form button');
+    await adena(wallet - 768 - 900);
+    check('the trader\'s potions are bought by the lot, ten for 900',
+        (await state()).adena === wallet - 768 - 900, String((await state()).adena));
+    await page.click('#header-link');
+    await onScreen('town');
+    check('...and the sidebar counts them', /Lesser Healing Potion ×10/.test(await text('#carried-potions')),
+        await text('#carried-potions'));
+    await page.click('#carried-potions a');
+    await onScreen('inventory');
+    check('...the way to the inventory, which drinks below half HP to begin with',
+        /below 50%/.test(await text('#potion-share')), await text('#potion-share'));
+    await page.selectOption('#potion-form select', '30');
+    await page.click('#potion-form button');
+    const lowered = await page.locator('#potion-share', { hasText: 'below 30%' })
+        .waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check('...and the player can lower the share', lowered, await text('#potion-share'));
+    await page.click('#header-link');
+    await onScreen('town');
+
     // ---- the trainer (rules §25) ----------------------------------------------------------------
     await page.selectOption('#travel-form select', 'trainer');
     await page.click('#travel-form button');

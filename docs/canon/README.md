@@ -146,6 +146,13 @@ where it has any.
   necklace for all five pieces of jewellery), counting its canon defence × its part's share ÷ its
   slot's (rules §7), so a three-piece set is as strong as the matching full set. Helmets, gloves,
   boots, earrings and rings are not sold.
+- **A potion heals its whole amount at once, with no reuse,** drunk by the character itself below the
+  share of HP its player chose, one a round (rules §26). In Lineage II a Lesser Healing Potion
+  healed 16 HP every 2 seconds for 15 seconds (112 in all) and rested 10 seconds; it is kept at its
+  canon 112 and its base price, 90, with no tax.
+- **The villages sell only the Lesser Healing Potion,** as in Lineage II; better potions and potions
+  for MP wait for the towns further on, where Lineage II sold the Healing Potion (Gludio) and no NPC
+  sold a Mana Potion at all.
 - **Bows need no arrows.** In Lineage II every shot spent one, a miss included; here a bow only
   draws and reloads (rules §10).
 - **A weapon's spread covers every physical hit it makes,** skills and blows included, as aCis does;

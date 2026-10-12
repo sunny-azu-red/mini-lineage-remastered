@@ -1,11 +1,16 @@
 # A seeded run of every set up its village's ladder, played through the game's own actions: hunt,
-# rest, buy the next gear the purse allows, learn what the trainer offers. It reports where runs die.
+# rest, buy the next gear the purse allows and keep potions in stock, learn what the trainer offers.
+# It reports where runs die.
 #
-#   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %]
+#   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
 alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules, Shop}
 
 {runs, top, rest_below} =
   case System.argv() do
+    [r, t, b, k] ->
+      Process.put(:kept, String.to_integer(k))
+      {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
+
     [r, t, b] -> {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
     [r, t] -> {String.to_integer(r), String.to_integer(t), 100}
     _ -> {40, 15, 100}
@@ -72,6 +77,19 @@ defmodule Ladder do
     end)
   end
 
+  # Rules §26: tops the stack up to the potions kept, ten at a time, once the gear is bought.
+  def stock_potions(player) do
+    kept = Process.get(:kept, 20)
+    have = player |> Player.potions() |> Enum.map(& &1.count) |> Enum.sum()
+
+    if have < kept and player.adena >= 900 do
+      {player, {:ok, _}} = Actions.buy(player, "Lesser Healing Potion", 10)
+      stock_potions(player)
+    else
+      player
+    end
+  end
+
   defp armour_ok?(:fighter, item), do: item.type != "magic"
   defp armour_ok?(:mystic, item), do: item.type != "light" or item.slot not in [:chest, :legs]
 
@@ -106,7 +124,7 @@ for race <- [0, 2, 3, 1], path <- [:fighter, :mystic] do
       {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Bench")
 
       Stream.iterate({player, 0, 0, %{}}, fn {p, kills, ticks, reached} ->
-        p = p |> Ladder.shop() |> Ladder.train()
+        p = p |> Ladder.shop() |> Ladder.stock_potions() |> Ladder.train()
         stats = Player.stats(p)
 
         # Resting means walking back to town, where the disengaging's seconds are spent at once.

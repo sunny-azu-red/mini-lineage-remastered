@@ -27,7 +27,8 @@ defmodule MiniLineage.Characters.Serde do
       "killer" => p.killer,
       "skills" => p.skills,
       "combat" => p.combat,
-      "buffs" => p.buffs
+      "buffs" => p.buffs,
+      "potion_at" => p.potion_at
     }
   end
 
@@ -51,7 +52,12 @@ defmodule MiniLineage.Characters.Serde do
       killer: m["killer"],
       skills: skills(m["skills"], m["race_id"], path(m["path"])),
       combat: combat(m["combat"]),
-      buffs: buffs(m["buffs"])
+      buffs: buffs(m["buffs"]),
+      potion_at:
+        if(m["potion_at"] in Player.potion_shares(),
+          do: m["potion_at"],
+          else: %Player{}.potion_at
+        )
     }
   end
 

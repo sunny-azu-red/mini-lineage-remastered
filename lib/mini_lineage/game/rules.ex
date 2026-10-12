@@ -495,6 +495,30 @@ defmodule MiniLineage.Game.Rules do
            end
          )
 
+  # Rules §26: the potions, each healing its whole amount at once. Every gear stat is there and
+  # empty, so nothing reading an item has to ask which it holds.
+  @potions (
+             blank =
+               Map.new(
+                 ~w(hands type p_atk m_atk atk_spd critical accuracy spread p_def m_def shield_def
+                    shield_rate mp)a,
+                 &{&1, nil}
+               )
+
+             for {name, heals, price, sold} <- [{"Lesser Healing Potion", 112, 90, :village}],
+                 into: %{},
+                 do:
+                   {name,
+                    Map.merge(blank, %{
+                      name: name,
+                      kind: :potion,
+                      slot: :potion,
+                      heals: heals,
+                      price: price,
+                      sold: sold
+                    })}
+           )
+
   # Rules §23: each set's kit, {equipped, carried}.
   @kits %{
     {0, :fighter} => {["Squire's Sword", "Squire's Shirt", "Squire's Pants"], ["Dagger"]},
@@ -605,9 +629,14 @@ defmodule MiniLineage.Game.Rules do
   defp path_of("magic"), do: :mystic
   defp path_of(_light), do: :fighter
 
-  def item(name), do: Map.fetch!(@items, name)
-  def item?(name), do: Map.has_key?(@items, name)
+  def item(name), do: Map.get(@items, name) || Map.fetch!(@potions, name)
+  def item?(name), do: Map.has_key?(@items, name) or Map.has_key?(@potions, name)
+  @doc "Rules §24's gear; the potions are §26's."
   def items, do: @items
+  def potions, do: @potions
+
+  @doc "Rules §26: a potion stacks, one place in the inventory however many it holds."
+  def stacks?(item), do: item.kind == :potion
   def kit(race_id, path), do: Map.fetch!(@kits, {race_id, path})
   def capacity, do: @capacity
 
@@ -625,19 +654,18 @@ defmodule MiniLineage.Game.Rules do
   def stock(town) do
     sold = if town == "orc-village", do: [:village, :"orc-village"], else: [:village]
 
-    @items
-    |> Map.values()
+    (Map.values(@items) ++ Map.values(@potions))
     |> Enum.filter(&(&1.sold in sold))
     |> Enum.sort_by(&{kind_order(&1.kind), slot_order(&1.slot), &1.type || "", &1.price, &1.name})
   end
 
   defp kind_order(kind),
-    do: Enum.find_index([:weapon, :shield, :armour, :jewellery], &(&1 == kind))
+    do: Enum.find_index([:weapon, :shield, :armour, :jewellery, :potion], &(&1 == kind))
 
   defp slot_order(slot),
     do:
       Enum.find_index(
-        ~w(weapon shield chest legs necklace)a,
+        ~w(weapon shield chest legs necklace potion)a,
         &(&1 == slot)
       )
 

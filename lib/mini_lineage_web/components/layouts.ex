@@ -177,6 +177,14 @@ defmodule MiniLineageWeb.Layouts do
             <.link patch={~p"/inventory"}>{name}</.link>
           </span>
         </div>
+        <%!-- Rules §26: the potions it would drink, counted, the way in as the gear is. --%>
+        <div class="stat-row stacked" id="carried-potions">
+          <span class="stat-label">Potions</span>
+          <span :if={potions(@view.items) == []} class="stat-value muted">None</span>
+          <span :for={item <- potions(@view.items)} class="stat-value">
+            <.link patch={~p"/inventory"}>{item.name} ×{item.count}</.link>
+          </span>
+        </div>
         <div class="stat-row">
           <span class="stat-label">Adena</span>
           <span class="stat-value adena">🪙
@@ -193,6 +201,8 @@ defmodule MiniLineageWeb.Layouts do
       {"equipped-weapons", "Weapons", [:weapon, :shield], "Bare hands"},
       {"equipped-armour", "Armour", [:chest, :legs, :necklace], "None"}
     ]
+
+  defp potions(items), do: Enum.filter(items, & &1.potion?)
 
   defp equipped(items, slots),
     do: for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name)

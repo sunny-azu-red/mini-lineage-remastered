@@ -10,6 +10,7 @@ defmodule MiniLineage.Characters.Item do
     field :character_id, :string
     field :name, :string
     field :equipped, :boolean, default: false
+    field :count, :integer, default: 1
 
     timestamps(type: :utc_datetime_usec, updated_at: false)
   end

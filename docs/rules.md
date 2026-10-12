@@ -860,3 +860,22 @@ Each skill's power and MP at each level (a burn's power is per second):
 Example: a level 5 Human Fighter with 150 SP learns Power Strike 2 and 3 and Mortal Blow 1 for 50
 each, with 150 − 50 − 50 − 50 = **0** left, and its Power Strike strikes at power **30**. A Human
 Mystic starts knowing Wind Strike and Self Heal, whose level 1 its trainer teaches for nothing.
+
+## 26. Potions
+
+A potion heals its whole amount at once, never past the most, and stacks: a stack takes one place in
+the inventory (§23) however many it holds, and is bought by the lot at its price each, sold whole for
+half. In a fight (§20), at the start of each round, the character drinks the strongest potion it
+carries if its HP is below the share it has chosen, at most one a round and at no cost to what it
+does. The share is the player's: never, or below 30%, 50% or 70% of HP, and 50% to begin with. In
+town a potion is drunk when the player says.
+
+| Potion | Heals | Price | Sold |
+|---|---|---|---|
+| Lesser Healing Potion | 112 | 90 | village |
+
+The starting villages sell the Lesser Healing Potion and nothing stronger. Better potions, and
+potions for MP, are sold only in the towns further on, from the Town of Gludio.
+
+Example: a character at 100 of 280 HP, below half, drinks a Lesser Healing Potion at the start of
+the round and stands at **212**; ten cost **900** Adena.

@@ -131,10 +131,13 @@ Built with the first hunt (rules §23 and §24).
 
 - **Three pieces of armour** (chest, legs, necklace) beside the weapon and shield, each standing for
   its whole part of the body.
-- **The sidebar panel shows what is equipped and the Adena,** with an "Open inventory" link.
-- **The inventory page** holds everything carried, equipped or not, and puts it on or takes it off.
+- **The sidebar panel shows what is equipped, the potions and the Adena,** each name a link to the
+  inventory page.
+- **The inventory page** holds everything carried, equipped or not, puts it on or takes it off,
+  drinks a potion, and sets the share of HP a fight drinks below (rules §26).
 - **Every set starts with its canon kit,** equipped.
-- **Each village's trader** sells the canon village lists with 15% tax and buys back for half.
+- **Each village's trader** sells the canon village lists at their canon prices, with no tax, and
+  buys back for half.
 - **Next:** a player shop opened from the inventory page, by choosing what to sell and for how much.
 
 ## Items
@@ -145,7 +148,8 @@ Built with the first hunt (rules §23 and §24).
 - Shields that can block a blow, adding their defence to it.
 - Grades (D, C, B, A, S) and a penalty for wearing gear above your level.
 - Soulshots and spiritshots for stronger blows and spells, bought only from player shops.
-- Potions that heal over time.
+- Potions that heal at once (rules §26, built): the Lesser Healing Potion in the villages; better
+  potions and potions for MP from the Town of Gludio on, each town's trader its own.
 
 ## Player shops
 

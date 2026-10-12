@@ -54,10 +54,11 @@ defmodule MiniLineage.Game.Hunt do
 
   @doc """
   §20: the fight, from the character's stats and bars, the skills it knows (each at its level) and
-  the monster (as `foe/1` makes it). Returns what is left of both sides, how it went, and the auras
-  it raised, which outlast it.
+  the monster (as `foe/1` makes it). The bars may carry `potions` (§26, each `%{name, heals, count}`,
+  strongest first) and the `potion_at` share to drink below. Returns what is left of both sides, how
+  it went, the auras it raised, which outlast it, and the potions it `drunk`.
   """
-  def fight(stats, %{health: health, mp: mp}, skills, foe) do
+  def fight(stats, %{health: health, mp: mp} = bars, skills, foe) do
     # §23: a weapon skill without its weapon in hand is not used at all, and said so when it
     # leaves the character none.
     {usable, unarmed} = Enum.split_with(skills, &Rules.skill_weapon?(&1.name, stats[:weapon]))
@@ -84,6 +85,9 @@ defmodule MiniLineage.Game.Hunt do
       # Auras already up when the fight began, and those raised in it.
       auras: MapSet.new(stats[:auras] || []),
       raised: [],
+      potions: Map.get(bars, :potions, []),
+      potion_at: Map.get(bars, :potion_at, 0),
+      drunk: %{},
       toggle: nil,
       toggle_carry: 0.0,
       # §20: what is left of a spell's cast, during which its caster does nothing else.
@@ -101,7 +105,7 @@ defmodule MiniLineage.Game.Hunt do
     state
     |> rounds(usable, foe)
     |> Map.update!(:log, &Enum.reverse/1)
-    |> Map.take(~w(health mp foe rounds uses critical log raised)a)
+    |> Map.take(~w(health mp foe rounds uses critical log raised drunk)a)
   end
 
   defp rounds(%{health: h} = s, _skills, _foe) when h <= 0, do: s
@@ -109,7 +113,7 @@ defmodule MiniLineage.Game.Hunt do
   defp rounds(%{rounds: @max_rounds} = s, _skills, _foe), do: s
 
   defp rounds(s, skills, foe) do
-    s = %{s | rounds: s.rounds + 1} |> burn() |> poison() |> drain_toggle()
+    s = %{s | rounds: s.rounds + 1} |> burn() |> poison() |> drain_toggle() |> drink()
     s = if s.busy > 0, do: note(s, :casting), else: character_turn(s, skills, foe)
     s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, foe), else: s
     # Where both stand when the round is over, so the log's numbers read against something.
@@ -126,6 +130,24 @@ defmodule MiniLineage.Game.Hunt do
     }
 
     rounds(s, skills, foe)
+  end
+
+  # §26: below its chosen share of HP, one potion a round, the strongest it still carries.
+  defp drink(s) do
+    potion = Enum.find(s.potions, &(&1.count > 0))
+
+    if potion && s.health * 100 < s.stats.max_hp * s.potion_at do
+      healed = min(potion.heals, s.stats.max_hp - s.health)
+      left = Enum.map(s.potions, &if(&1 == potion, do: %{&1 | count: &1.count - 1}, else: &1))
+      drunk = Map.update(s.drunk, potion.name, 1, &(&1 + 1))
+
+      note(
+        %{s | health: s.health + healed, potions: left, drunk: drunk},
+        {:potion, potion.name, healed}
+      )
+    else
+      s
+    end
   end
 
   # §19: damage over time never takes the last HP.

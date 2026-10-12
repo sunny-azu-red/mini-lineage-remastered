@@ -31,6 +31,7 @@ defmodule MiniLineage.Game.Snapshot do
     stock: [],
     lessons: [],
     skills: [],
+    potion_at: nil,
     stats: nil,
     effects: []
   }
@@ -84,6 +85,7 @@ defmodule MiniLineage.Game.Snapshot do
           else: []
         ),
       skills: Enum.sort(player.skills),
+      potion_at: player.potion_at,
       stats: stats,
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }
@@ -100,6 +102,8 @@ defmodule MiniLineage.Game.Snapshot do
         id: entry.id,
         name: entry.name,
         equipped: entry.equipped,
+        count: Map.get(entry, :count, 1),
+        potion?: Rules.stacks?(item),
         slot: item.slot,
         type: item.type,
         about: about(item),
@@ -138,6 +142,8 @@ defmodule MiniLineage.Game.Snapshot do
   defp slot_index(slot), do: Enum.find_index(@slots, &(&1 == slot))
 
   @doc "An item's numbers in a line: what it is, then what it gives."
+  def about(%{kind: :potion} = item), do: "Heals #{item.heals} HP at once"
+
   def about(item) do
     # Rules §7: a piece of armour shows what it counts for, which is what it gives.
     counts = if item.slot in [:chest, :legs, :necklace], do: round(Rules.counts_for(item))

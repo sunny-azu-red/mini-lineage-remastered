@@ -126,4 +126,48 @@ defmodule MiniLineageWeb.GearPageTest do
     refute has_element?(view, ~s(#destroy-form option[value="#{sword.id}"]))
     assert has_element?(view, ~s(#destroy-form option[value="#{dagger.id}"]))
   end
+
+  test "potions are bought by the lot onto one stack, counted in the sidebar and drunk from the inventory" do
+    {_view, session, conn} = human(build_conn(), 1_000)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/potions")
+
+    assert has_element?(view, "#stock-lesser-healing-potion")
+    assert has_element?(view, ~s(#buy-form option[value="Lesser Healing Potion|10"]))
+    view |> form("#buy-form", %{"item" => "Lesser Healing Potion|10"}) |> render_submit()
+
+    assert stored(session).adena == 100
+    potions = carried(session, "Lesser Healing Potion")
+    assert potions.count == 10
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island")
+
+    assert has_element?(
+             view,
+             ~s(#carried-potions a[href="/inventory"]),
+             "Lesser Healing Potion ×10"
+           )
+
+    Characters.mutate(session, &{%{&1 | health: 10}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/inventory")
+    view |> form("#wear-form", %{"id" => potions.id}) |> render_change(%{"_target" => ["id"]})
+    assert has_element?(view, "#wear-form button", "Drink")
+    view |> form("#wear-form", %{"id" => potions.id}) |> render_submit()
+
+    assert stored(session).health == 10 + 112
+    assert carried(session, "Lesser Healing Potion").count == 9
+  end
+
+  test "the inventory sets the share of HP a fight drinks below" do
+    {_view, session, conn} = human(build_conn(), 0)
+    {:ok, view, _html} = live(conn, ~p"/inventory")
+
+    assert has_element?(view, "#potion-share", "below 50%")
+    assert has_element?(view, ~s(#potion-form option[value="50"][disabled]))
+    view |> form("#potion-form", %{"share" => "30"}) |> render_submit()
+
+    assert stored(session).potion_at == 30
+    assert has_element?(view, "#potion-share", "below 30%")
+    view |> form("#potion-form", %{"share" => "0"}) |> render_submit()
+    assert has_element?(view, "#potion-share", "no potions")
+  end
 end

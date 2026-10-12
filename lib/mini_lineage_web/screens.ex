@@ -31,6 +31,7 @@ defmodule MiniLineageWeb.Screens do
     "trader-shields" => "Trader: Shields",
     "trader-armour" => "Trader: Armour",
     "trader-jewellery" => "Trader: Jewellery",
+    "trader-potions" => "Trader: Potions",
     "trader-sell" => "Trader: Sell",
     "trainer" => "Trainer",
     "error" => "Error"
@@ -239,8 +240,12 @@ defmodule MiniLineageWeb.Screens do
      {:types, ["two-handed blunt", "staff"]}},
     {"trader-shields", "🛡️ Shields", "shields", {:slots, [:shield]}},
     {"trader-armour", "👕 Armour", "armour", {:slots, [:chest, :legs]}},
-    {"trader-jewellery", "📿 Jewellery", "necklaces", {:slots, [:necklace]}}
+    {"trader-jewellery", "📿 Jewellery", "necklaces", {:slots, [:necklace]}},
+    {"trader-potions", "🧪 Potions", "potions", {:slots, [:potion]}}
   ]
+
+  # Rules §26: how many potions one purchase may take.
+  @potion_lots [1, 10, 50, 100]
 
   defp in_part?(item, {:types, types}), do: item.slot == :weapon and item.type in types
   defp in_part?(item, {:slots, slots}), do: item.slot in slots
@@ -339,12 +344,7 @@ defmodule MiniLineageWeb.Screens do
       name="item"
       picked={@picked}
       placeholder="🛒 Back to the trader"
-      options={
-        Enum.map(
-          @stock,
-          &%{value: &1.name, label: "Buy the #{&1.name} for #{Format.number(&1.price)}"}
-        )
-      }
+      options={buy_options(@stock)}
       default_label="Return"
       active_label="🪙 Buy"
     />
@@ -408,14 +408,21 @@ defmodule MiniLineageWeb.Screens do
   # Rules §23: everything carried in one list, what is equipped highlighted, then two choices: what to
   # put on or take off, and, apart and in red, what to destroy.
   defp inventory(assigns) do
-    picked = assigns.picks["id"]
-    equipped? = Enum.any?(assigns.view.items, &(&1.id == picked and &1.equipped))
+    picked = Enum.find(assigns.view.items, &(&1.id == assigns.picks["id"]))
+
+    wear_label =
+      cond do
+        picked && picked.potion? -> "🧪 Drink"
+        picked && picked.equipped -> "Take off"
+        true -> "Put on"
+      end
 
     assigns =
       assign(assigns,
         capacity: MiniLineage.Game.Rules.capacity(),
         carried: Enum.reject(assigns.view.items, & &1.equipped),
-        wear_label: if(equipped?, do: "Take off", else: "Put on")
+        wear_label: wear_label,
+        shares: MiniLineage.Game.Player.potion_shares()
       )
 
     ~H"""
@@ -431,7 +438,7 @@ defmodule MiniLineageWeb.Screens do
           data-equipped={to_string(item.equipped)}
           {if item.equipped, do: [class: "owned"], else: []}
         >
-          <td class="name">{item_emoji(item)} {item.name}</td>
+          <td class="name">{item_emoji(item)} {item_name(item)}</td>
           <td>{item.slot |> Atom.to_string() |> String.capitalize()}</td>
           <td class="name muted">{item.about}</td>
         </tr>
@@ -446,7 +453,10 @@ defmodule MiniLineageWeb.Screens do
       options={
         Enum.map(
           @view.items,
-          &%{value: &1.id, label: "#{item_emoji(&1)} #{&1.name}#{if &1.equipped, do: " (equipped)"}"}
+          &%{
+            value: &1.id,
+            label: "#{item_emoji(&1)} #{item_name(&1)}#{if &1.equipped, do: " (equipped)"}"
+          }
         )
       }
       default_label="Return"
@@ -459,13 +469,53 @@ defmodule MiniLineageWeb.Screens do
       name="doomed"
       picked={@picks["doomed"]}
       placeholder="🗑️ Destroy something you carry…"
-      options={Enum.map(@carried, &%{value: &1.id, label: "🗑️ #{&1.name}"})}
+      options={Enum.map(@carried, &%{value: &1.id, label: "🗑️ #{item_name(&1)}"})}
       default_label="Destroy"
       active_label="🗑️ Destroy"
       active_variant={:danger}
       data-no-autofocus
     />
+    <p id="potion-share" phx-no-format>
+      <%= if @view.potion_at == 0 do %>You drink no potions in a fight.<% else %>In a fight you drink a potion whenever your HP falls below <span class="hp">{@view.potion_at}%</span>.<% end %>
+    </p>
+    <.select_action
+      id="potion-form"
+      event="potion_at"
+      name="share"
+      picked={@picks["share"]}
+      placeholder="🧪 Drink potions in a fight…"
+      options={
+        for share <- @shares,
+            do: %{
+              value: to_string(share),
+              label: if(share == 0, do: "🧪 Never", else: "🧪 Below #{share}% HP"),
+              disabled?: share == @view.potion_at
+            }
+      }
+      default_label="Choose"
+      active_label="🧪 Choose"
+      data-no-autofocus
+    />
     """
+  end
+
+  # Rules §26: a stack names how many it holds.
+  defp item_name(%{potion?: true} = item), do: "#{item.name} ×#{item.count}"
+  defp item_name(item), do: item.name
+
+  # Gear is bought one at a time, a potion (§26) by the lot, onto its stack.
+  defp buy_options(stock) do
+    Enum.flat_map(stock, fn
+      %{slot: :potion} = item ->
+        for n <- @potion_lots,
+            do: %{
+              value: "#{item.name}|#{n}",
+              label: "Buy #{n} × #{item.name} for #{Format.number(item.price * n)}"
+            }
+
+      item ->
+        [%{value: item.name, label: "Buy the #{item.name} for #{Format.number(item.price)}"}]
+    end)
   end
 
   defp item_emoji(%{slot: :weapon, type: type}) do
@@ -484,6 +534,7 @@ defmodule MiniLineageWeb.Screens do
   defp item_emoji(%{slot: :chest}), do: "👕"
   defp item_emoji(%{slot: :legs}), do: "👖"
   defp item_emoji(%{slot: :necklace}), do: "📿"
+  defp item_emoji(%{slot: :potion}), do: "🧪"
 
   defp slug(name), do: MiniLineage.Game.Format.slugify(name)
 

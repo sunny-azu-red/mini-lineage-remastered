@@ -26,7 +26,11 @@ defmodule MiniLineage.Game.Actions do
     too_soon: "You are not yet ready to learn that.",
     out_of_order: "You must learn the level before it first.",
     no_sp: "You have not earned the SP for that.",
-    spent: "You are too weak to hunt, and must rest first."
+    spent: "You are too weak to hunt, and must rest first.",
+    not_wearable: "That is not something you put on.",
+    not_potion: "That is not something you drink.",
+    whole: "You are already in full health.",
+    no_share: "That is not a share you can choose."
   }
 
   # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
@@ -116,8 +120,11 @@ defmodule MiniLineage.Game.Actions do
     level = Player.level(player)
     foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
     stats = Map.put(Player.stats(player), :auras, Player.buffs_up(player))
-    result = Hunt.fight(stats, player, Player.known_skills(player), foe)
+    bars = %{health: player.health, mp: player.mp}
+    bars = Map.merge(bars, %{potions: Player.potions(player), potion_at: player.potion_at})
+    result = Hunt.fight(stats, bars, Player.known_skills(player), foe)
     player = Player.put_buffs(%{player | health: result.health, mp: result.mp}, result.raised)
+    player = Player.drink_down(player, result.drunk)
     stats = Player.stats(player)
     weapon = %{max_hp: stats.max_hp, bow?: stats.weapon != nil and stats.weapon.type == "bow"}
 
@@ -166,36 +173,44 @@ defmodule MiniLineage.Game.Actions do
     {gained, {:ok, %{text: text, type: :info}}}
   end
 
-  @doc "Rules §24: buys an item from the shop of the village the character stands in."
-  def buy(player, name) do
+  @doc """
+  Rules §24: buys an item from the shop of the village the character stands in; a potion (§26)
+  `count` at a time, onto the stack it already carries.
+  """
+  def buy(player, name, count \\ 1) do
     item = Player.started?(player) && Rules.item?(name) && Rules.item(name)
+    stack = item && Rules.stacks?(item) && Enum.find(player.items, &(&1.name == name))
 
     cond do
       !Player.started?(player) or !Rules.village?(player.location) ->
         {player, {:error, :no_shop, @errors.no_shop}}
 
-      !item or !Shop.stocks?(player.location, item) ->
+      !item or !Shop.stocks?(player.location, item) or count < 1 or
+          (count > 1 and !Rules.stacks?(item)) ->
         {player, {:error, :unsold, @errors.unsold}}
 
-      player.adena < Shop.price(item) ->
+      player.adena < Shop.price(item) * count ->
         {player, {:error, :cannot_afford, @errors.cannot_afford}}
 
-      length(player.items) >= Rules.capacity() ->
+      !stack and length(player.items) >= Rules.capacity() ->
         {player, {:error, :full, @errors.full}}
 
       true ->
-        cost = Shop.price(item)
+        cost = Shop.price(item) * count
 
-        player = %{
-          player
-          | adena: player.adena - cost,
-            items: player.items ++ [Player.new_item(name)]
-        }
+        items =
+          if stack,
+            do:
+              Enum.map(
+                player.items,
+                &if(&1 == stack, do: %{&1 | count: &1.count + count}, else: &1)
+              ),
+            else: player.items ++ [Player.new_item(name, false, count)]
 
-        text =
-          ~s(You buy the #{name} for <span class="adena">#{Format.number(cost)} Adena</span>.)
+        what = if Rules.stacks?(item), do: "#{count} × #{name}", else: "the #{name}"
+        text = ~s(You buy #{what} for <span class="adena">#{Format.number(cost)} Adena</span>.)
 
-        {player, {:ok, %{text: text, type: :info}}}
+        {%{player | adena: player.adena - cost, items: items}, {:ok, %{text: text, type: :info}}}
     end
   end
 
@@ -217,11 +232,13 @@ defmodule MiniLineage.Game.Actions do
         {player, {:error, :worthless, @errors.worthless}}
 
       true ->
-        paid = Shop.buyback(Rules.item(entry.name))
+        count = Map.get(entry, :count, 1)
+        paid = Shop.buyback(Rules.item(entry.name)) * count
         player = %{player | adena: player.adena + paid, items: List.delete(player.items, entry)}
+        what = if count > 1, do: "#{count} × #{entry.name}", else: "the #{entry.name}"
 
         text =
-          ~s(You sell the #{entry.name} for <span class="adena">#{Format.number(paid)} Adena</span>.)
+          ~s(You sell #{what} for <span class="adena">#{Format.number(paid)} Adena</span>.)
 
         {player, {:ok, %{text: text, type: :info}}}
     end
@@ -231,6 +248,14 @@ defmodule MiniLineage.Game.Actions do
   def equip(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
+    if entry && Rules.stacks?(Rules.item(entry.name)) do
+      {player, {:error, :not_wearable, @errors.not_wearable}}
+    else
+      wear(player, entry, id)
+    end
+  end
+
+  defp wear(player, entry, id) do
     if entry do
       player = clamp_bars(%{player | items: Shop.put_on(player.items, id)})
       item = Rules.item(entry.name)
@@ -255,6 +280,47 @@ defmodule MiniLineage.Game.Actions do
       end
     else
       {player, {:error, :not_carried, @errors.not_carried}}
+    end
+  end
+
+  @doc "Rules §26: drinks one potion carried, in town or anywhere, healing at once."
+  def drink(player, id) do
+    entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
+    item = entry && Rules.item(entry.name)
+    max_hp = Player.started?(player) && Player.stats(player).max_hp
+
+    cond do
+      !entry ->
+        {player, {:error, :not_carried, @errors.not_carried}}
+
+      !Rules.stacks?(item) ->
+        {player, {:error, :not_potion, @errors.not_potion}}
+
+      player.health >= max_hp ->
+        {player, {:error, :whole, @errors.whole}}
+
+      true ->
+        healed = min(item.heals, max_hp - player.health)
+        player = Player.drink_down(%{player | health: player.health + healed}, %{entry.name => 1})
+
+        text =
+          ~s(You drink a #{entry.name} and mend <span class="buff">#{healed}</span> HP.)
+
+        {player, {:ok, %{text: text, type: :info}}}
+    end
+  end
+
+  @doc "Rules §26: the share of HP below which the character drinks a potion in a fight."
+  def potion_at(player, share) do
+    if Player.started?(player) and share in Player.potion_shares() do
+      text =
+        if share == 0,
+          do: "You will not drink potions in a fight.",
+          else: "You will drink a potion in a fight below #{share}% of your HP."
+
+      {%{player | potion_at: share}, {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :no_share, @errors.no_share}}
     end
   end
 

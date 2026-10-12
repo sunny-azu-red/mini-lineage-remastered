@@ -18,8 +18,8 @@ defmodule MiniLineage.Characters.ItemsStoreTest do
     %{session: session, id: Characters.character_id(session)}
   end
 
-  defp item(name, equipped \\ false),
-    do: %{id: Store.new_item_id(), name: name, equipped: equipped}
+  defp item(name, equipped \\ false, count \\ 1),
+    do: %{id: Store.new_item_id(), name: name, equipped: equipped, count: count}
 
   defp carry(session, items),
     do: Characters.mutate(session, &{%{&1 | items: items}, :ok})
@@ -39,6 +39,15 @@ defmodule MiniLineage.Characters.ItemsStoreTest do
 
     Characters.forget_process(session)
     assert Characters.snapshot(session).items == [sword, shirt]
+  end
+
+  test "a stack keeps its count in its row, and a change to it is written", %{session: session} do
+    potions = item("Lesser Healing Potion", false, 12)
+    carry(session, [potions])
+    carry(session, [%{potions | count: 11}])
+
+    Characters.forget_process(session)
+    assert Characters.snapshot(session).items == [%{potions | count: 11}]
   end
 
   test "an equip changes the row, and an item let go of is gone", %{session: session, id: id} do

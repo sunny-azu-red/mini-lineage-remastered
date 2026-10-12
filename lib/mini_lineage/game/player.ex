@@ -22,14 +22,16 @@ defmodule MiniLineage.Game.Player do
             # Rules §21: a run that died is over, and keeps what killed it.
             dead: false,
             killer: nil,
-            # Rules §23: what it carries, each `%{id, name, equipped}`. Stored in its own table.
+            # Rules §23: what it carries, each `%{id, name, equipped, count}`. Stored in its own table.
             items: [],
             # Rules §25: each skill it knows, at the level it knows it.
             skills: %{},
             # Rules §20: "engaged" while it hunts, then the UTC millisecond its disengaging ends.
             combat: nil,
             # Rules §19: each aura it raised, to the UTC millisecond it fades.
-            buffs: %{}
+            buffs: %{},
+            # Rules §26: the share of its HP below which it drinks a potion in a fight; 0 never.
+            potion_at: 50
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -154,9 +156,43 @@ defmodule MiniLineage.Game.Player do
     Enum.map(equipped, &new_item(&1, true)) ++ Enum.map(carried, &new_item(&1, false))
   end
 
-  @doc "An item picked up: a fresh id, the item's name, and whether it is on."
-  def new_item(name, equipped \\ false),
-    do: %{id: MiniLineage.Characters.Store.new_item_id(), name: name, equipped: equipped}
+  @doc "An item picked up: a fresh id, the item's name, whether it is on, and how many (§26)."
+  def new_item(name, equipped \\ false, count \\ 1),
+    do: %{
+      id: MiniLineage.Characters.Store.new_item_id(),
+      name: name,
+      equipped: equipped,
+      count: count
+    }
+
+  @doc "Rules §26: the potions it carries, as a fight drinks them, strongest first."
+  def potions(player) do
+    for(
+      entry <- player.items || [],
+      item = Rules.item(entry.name),
+      Rules.stacks?(item),
+      do: %{name: entry.name, heals: item.heals, count: Map.get(entry, :count, 1)}
+    )
+    |> Enum.sort_by(& &1.heals, :desc)
+  end
+
+  @doc "Rules §26: the potions a fight drank, taken from their stacks; an empty stack goes."
+  def drink_down(player, drunk) do
+    items =
+      player.items
+      |> Enum.map(fn entry ->
+        case drunk[entry.name] do
+          nil -> entry
+          n -> %{entry | count: Map.get(entry, :count, 1) - n}
+        end
+      end)
+      |> Enum.filter(&(Map.get(&1, :count, 1) > 0))
+
+    %{player | items: items}
+  end
+
+  @doc "Rules §26: the shares a player may choose to drink a potion below."
+  def potion_shares, do: [0, 30, 50, 70]
 
   @doc "Rules §19: every skill it knows, each at the level it knows it."
   def known_skills(player),

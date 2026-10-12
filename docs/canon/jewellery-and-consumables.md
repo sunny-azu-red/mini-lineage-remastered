@@ -164,6 +164,30 @@ Necklaces, earrings and rings by grade, the epic jewels, potions, scrolls, souls
 - **Antidote**: id 1831, base price 75. 'A reagent that neutralizes poison.' Greater Antidote is id 1832, base price 180. Sources: [github:david-buzas/l2j-interlude-datapack](https://raw.githubusercontent.com/david-buzas/l2j-interlude-datapack/main/src/main/resources/sql/etcitem.sql), [github:DEVjEXTREME/L2jaCis-382](https://raw.githubusercontent.com/DEVjEXTREME/L2jaCis-382/main/aCis_datapack/data/xml/items/1800-1899.xml), [l2db.ru](https://l2db.ru/items/other/potion/interlude/).
 - **Bandage**: id 1833, base price 75. Stops bleeding. Emergency Dressing is id 1834, base price 180. Sources: [github:david-buzas/l2j-interlude-datapack](https://raw.githubusercontent.com/david-buzas/l2j-interlude-datapack/main/src/main/resources/sql/etcitem.sql), [github:DEVjEXTREME/L2jaCis-382](https://raw.githubusercontent.com/DEVjEXTREME/L2jaCis-382/main/aCis_datapack/data/xml/items/1800-1899.xml), [l2db.ru](https://l2db.ru/items/other/potion/interlude/).
 
+### What the healing potions do (researched 2026-10-12)
+
+- **Lesser Healing Potion (1060)** triggers skill 2031-1: a heal over time of 16 HP every 2 seconds
+  for 7 ticks, 112 HP over 15 seconds (L2J and aCis; the retail-format PTS data gives `t_hp;8;3`
+  for 15 seconds, so 8 HP a second, 120, is the unresolved alternative). Reuse 10 seconds (aCis on
+  item and skill, PTS on the item); L2J has none but refuses a second heal over time for about 10
+  seconds. No use time, usable in combat, stackable in one slot. Sold by every starting village's
+  grocer (Katerina, Herbiel, Vollodos, Papuma, Mion) at 103 and by Harmony in Gludio at 108.
+- **Healing Potion (1061)** triggers 2032-1, 48 HP every 2 seconds × 7, 336 HP; 10 seconds' reuse.
+  Sold only in Gludio (Harmony, 396), never in a starting village. The second Healing Potion (727)
+  heals only in L2J; aCis and PTS give it no skill.
+- **Greater Healing Potion (1539)**, 100 × 7 = 700 HP, and **Quick Healing Potion (1540)**, an
+  instant 435 HP with a 0.5 second reuse, are sold by no NPC for Adena (Seven Signs priests and
+  castle blacksmiths).
+- **Mana Potion (728)** is sold by no NPC. Its effect disagrees: L2J an instant 400 MP, aCis 18% of
+  most MP with a 2 second reuse, PTS nothing.
+- A stronger heal over time replaces a weaker; the same potion refreshes itself (PTS
+  `abnormal_type=life_force`, aCis stack orders 1, 2, 3).
+
+Sources, pinned: [L2J C6 @ f3d3b32](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/f3d3b329657c0f031dab107e6d4ceb5ddad0bea6)
+(`skills/2000-2099.xml`, `merchant_buylists.sql`), [aCis 409 @ b055e3a](https://github.com/DEVjEXTREME/L2jaCis-409/tree/b055e3a0e441d1edf03cc1230feea1046ef0ebc4)
+(`skills/2000-2099.xml`, `items/1000-1099.xml`, `buylists`), [PTS L2Interlude @ d8255da](https://github.com/dr3dd/L2Interlude/tree/d8255da7f85c4ebae86d66bc27123d59dffb05a8)
+(`Itemdata.txt`, `skilldata.txt`), [l2hub.info](https://l2hub.info/il/), [l2db.ru](https://l2db.ru/items/other/potion/interlude/).
+
 ## Potion (Elixir)
 
 - **Elixir of Life (No Grade)**: id 8622, base price 1,300. Regenerates HP. In-game text: 'Can only be used by characters below level 19 upon themselves. Re-use delay is 5 minutes.' (the 5 min matches L2J's skill reuseDelay of 300000 ms). Graded versions: Elixir of Life (D-Grade) 8623 at 3,450, (C-Grade) 8624 at 7,200, (B-Grade) 8625 at 10,000, (A-Grade) 8626 at 12,500, (S-Grade) 8627 at 15,000. Craftable by recipe. Sources: [github:david-buzas/l2j-interlude-datapack](https://raw.githubusercontent.com/david-buzas/l2j-interlude-datapack/main/src/main/resources/sql/etcitem.sql), [github:DEVjEXTREME/L2jaCis-382](https://raw.githubusercontent.com/DEVjEXTREME/L2jaCis-382/main/aCis_datapack/data/xml/items/8600-8699.xml), [lineage.pmfun.com](https://lineage.pmfun.com/item/8622).

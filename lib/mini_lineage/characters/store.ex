@@ -39,7 +39,7 @@ defmodule MiniLineage.Characters.Store do
       from i in Item,
         where: i.character_id == ^id,
         order_by: [asc: i.inserted_at, asc: i.id],
-        select: %{id: i.id, name: i.name, equipped: i.equipped}
+        select: %{id: i.id, name: i.name, equipped: i.equipped, count: i.count}
     )
     # An item the game no longer has is left behind, not handed to a lookup that would raise on it.
     |> Enum.filter(&Rules.item?(&1.name))
@@ -74,11 +74,15 @@ defmodule MiniLineage.Characters.Store do
           character_id: id,
           name: item.name,
           equipped: item.equipped,
+          count: Map.get(item, :count, 1),
           inserted_at: DateTime.add(now, n, :microsecond)
         }
       end)
 
-    Repo.insert_all(Item, rows, on_conflict: {:replace, [:equipped]}, conflict_target: :id)
+    Repo.insert_all(Item, rows,
+      on_conflict: {:replace, [:equipped, :count]},
+      conflict_target: :id
+    )
   end
 
   # The conflict target is named, so a second unique index added later cannot quietly change which

@@ -75,7 +75,8 @@ defmodule MiniLineage.Game.Narratives do
       ~s({them} let out a <span class="buff">{skill}</span>, and {their} blows grow heavier),
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
-    poison: ~s(the poison eats <span class="magic">{amount}</span>)
+    poison: ~s(the poison eats <span class="magic">{amount}</span>),
+    potion: ~s({them} drink a {potion} and mend <span class="buff">{amount}</span> HP)
   }
 
   def met, do: @met
