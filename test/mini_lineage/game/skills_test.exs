@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.SkillsTest do
   use ExUnit.Case, async: true
 
   alias MiniLineage.Characters.Serde
-  alias MiniLineage.Game.{Actions, Clock, Constants, Math, Player, Rng}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Math, Player, Rng, Rules}
 
   @noon ~U[2026-07-01 12:00:00Z]
 
@@ -81,5 +81,16 @@ defmodule MiniLineage.Game.SkillsTest do
     assert warned.text =~ "none of your Mortal Blow or Power Strike"
 
     assert {_, {:ok, %{type: :info}}} = Actions.equip(human, "d")
+  end
+
+  test "Power Strike takes a sword in either hand, and nothing else" do
+    for name <- ["Squire's Sword", "Zweihander"],
+        do: assert(Rules.skill_weapon?("Power Strike", Rules.item(name)), name)
+
+    for name <- ["Cedar Staff", "Apprentice's Wand", "Dagger", "Short Bow", "Training Gloves"],
+        do: refute(Rules.skill_weapon?("Power Strike", Rules.item(name)), name)
+
+    refute Rules.skill_weapon?("Power Strike", nil)
+    assert Rules.skill_weapon?("Wind Strike", nil)
   end
 end

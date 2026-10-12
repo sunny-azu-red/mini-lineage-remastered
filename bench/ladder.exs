@@ -27,7 +27,7 @@ defmodule Ladder do
   def wants(path, skill) do
     case {path, skill} do
       {:mystic, _} -> nil
-      {_, "Power Strike"} -> ["sword", "blunt"]
+      {_, "Power Strike"} -> ["sword"]
       {_, "Power Shot"} -> ["bow"]
       {_, "Mortal Blow"} -> ["dagger"]
       {_, "Iron Punch"} -> ["fists"]

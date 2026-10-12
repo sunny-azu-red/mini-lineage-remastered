@@ -46,8 +46,12 @@ defmodule MiniLineage.Game.ShopTest do
       away = %{character() | location: "gludio"}
       assert {_, {:error, :no_shop, _}} = Actions.buy(away, "Broadsword")
 
-      full = %{character() | items: for(_ <- 1..Rules.capacity(), do: Player.new_item("Club"))}
-      assert {_, {:error, :full, _}} = Actions.buy(full, "Club")
+      full = %{
+        character()
+        | items: for(_ <- 1..Rules.capacity(), do: Player.new_item("Short Sword"))
+      }
+
+      assert {_, {:error, :full, _}} = Actions.buy(full, "Short Sword")
     end
   end
 
@@ -77,7 +81,7 @@ defmodule MiniLineage.Game.ShopTest do
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Dagger").id)
 
       assert flash.type == :danger
-      assert flash.text =~ "Power Strike needs a sword or a blunt weapon"
+      assert flash.text =~ "Power Strike needs a sword,"
 
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Sword").id)
       assert flash.type == :info
@@ -144,6 +148,6 @@ defmodule MiniLineage.Game.ShopTest do
 
     orc = Enum.map(Rules.stock("orc-village"), & &1.name)
     assert Enum.sort(orc -- base) == ["Cestus", "Fox Claw Gloves", "Iron Gloves", "Spiked Gloves"]
-    assert Shop.price(Rules.item("Club")) == 768
+    assert Shop.price(Rules.item("Short Sword")) == 768
   end
 end

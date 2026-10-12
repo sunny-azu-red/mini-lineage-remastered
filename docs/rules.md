@@ -131,9 +131,10 @@ Wisdom (25) counts for 25 × 41 ÷ 13 = **78.8** of mind, nearly double the bare
 ## 8. Accuracy and Evasion
 
 **Accuracy = Evasion = √DEX × 6 + level**, rounded. A weapon's own accuracy (§24) is added to
-Accuracy: a dagger or a bow −3, fists, a blunt or a staff +4, a sword 0.
+Accuracy: a dagger or a bow −3, fists +4, a sword 0, and a staff +4, or 0 for a book, a horn or a
+relic.
 
-Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**, and with a Club **38**.
+Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**, and with Training Gloves **38**.
 
 ## 9. Critical
 
@@ -553,9 +554,8 @@ Example: a Young Keltir carrying 10 Adena pays **200**.
 ## 23. Gear
 
 A character carries up to 80 items and wears at most one in each of five slots: weapon, shield,
-chest, legs and necklace. A two-handed weapon (a bow, a staff, fists,
-a two-handed sword or blunt, a polearm) takes the shield's hand, so putting one on takes the shield
-off, and the other way round. Nothing is weighed.
+chest, legs and necklace. A two-handed weapon (a bow, fists, a two-handed sword or staff) takes the
+shield's hand, so putting one on takes the shield off, and the other way round. Nothing is weighed.
 
 Every set starts with its kit, the wearable part equipped:
 
@@ -570,8 +570,11 @@ Every set starts with its kit, the wearable part equipped:
 | Dark Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
 | Orc Mystic | Training Gloves, Apprentice's Tunic, Apprentice's Stockings | |
 
-- **A first skill (§19) needs its weapon:** Power Strike a sword or a blunt, Power Shot a bow, Mortal
-  Blow a dagger, Iron Punch fists. Without it the character only swings. Spells need none.
+- **Five kinds of weapon:** a sword, one-handed or two; a dagger; a bow; fists; and a staff, which
+  a mystic's wand, rod, book, horn and relic are too, one-handed.
+- **A first skill (§19) needs its weapon:** Power Strike a sword, in either hand, Power Shot a bow,
+  Mortal Blow a dagger, Iron Punch fists. Without it the skill is never used and costs nothing, and
+  the character only swings. Spells need none.
 - **A shield** catches a monster's blow at its block rate × the DEX bonus, as a percentage. A catch
   adds the shield's defence to P.Def for that blow, and one catch in twenty is perfect and takes only
   1. Spells pass a shield by.
@@ -588,13 +591,8 @@ down. A starting kit is worth nothing to a shop and is never bought.
 
 | Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | Accuracy | Spread | P.Def | M.Def | Shield | Block | MP | Price | Sold |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Apprentice's Wand | weapon | weapon | 1 | blunt | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  | 138 | starting |
-| Club | weapon | weapon | 1 | blunt | 8 | 6 | 379 | 4 | 4 | 20 |  |  |  |  |  | 768 | village |
-| Apprentice's Rod | weapon | weapon | 1 | blunt | 6 | 8 | 379 | 4 | 4 | 20 |  |  |  |  |  | 768 | village |
-| Heavy Chisel | weapon | weapon | 1 | blunt | 10 | 8 | 379 | 4 | 4 | 20 |  |  |  |  |  | 8070 | village |
-| Mace | weapon | weapon | 1 | blunt | 11 | 9 | 379 | 4 | 4 | 20 |  |  |  |  |  | 12500 | village |
-| Sickle | weapon | weapon | 1 | blunt | 12 | 9 | 379 | 4 | 4 | 20 |  |  |  |  |  | 18500 | village |
-| Dwarven Mace | weapon | weapon | 1 | blunt | 17 | 12 | 379 | 4 | 4 | 20 |  |  |  |  |  | 54100 | village |
+| Apprentice's Wand | weapon | weapon | 1 | staff | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  | 138 | starting |
+| Apprentice's Rod | weapon | weapon | 1 | staff | 6 | 8 | 379 | 4 | 4 | 20 |  |  |  |  |  | 768 | village |
 | Short Bow | weapon | weapon | 2 | bow | 16 | 6 | 293 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
 | Bow | weapon | weapon | 2 | bow | 23 | 9 | 293 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
 | Hunting Bow | weapon | weapon | 2 | bow | 34 | 12 | 293 | 12 | -3 | 5 |  |  |  |  |  | 54100 | village |
@@ -610,7 +608,6 @@ down. A starting kit is worth nothing to a shop and is never bought.
 | Iron Gloves | weapon | weapon | 2 | fists | 13 | 9 | 325 | 4 | 4 | 5 |  |  |  |  |  | 12500 | orc-village |
 | Fox Claw Gloves | weapon | weapon | 2 | fists | 21 | 12 | 325 | 4 | 4 | 5 |  |  |  |  |  | 54100 | orc-village |
 | Cestus | weapon | weapon | 2 | fists | 29 | 17 | 325 | 4 | 4 | 5 |  |  |  |  |  | 136000 | orc-village |
-| Short Spear | weapon | weapon | 2 | pole | 24 | 17 | 325 | 8 | -3 | 10 |  |  |  |  |  | 136000 | village |
 | Buffalo's Horn | weapon | weapon | 1 | staff | 6 | 8 | 379 | 8 | 0 | 10 |  |  |  |  |  | 768 | village |
 | Apprentice's Spellbook | weapon | weapon | 1 | staff | 9 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 12500 | village |
 | Relic of The Saints | weapon | weapon | 1 | staff | 19 | 22 | 379 | 8 | 0 | 10 |  |  |  |  |  | 136000 | village |
@@ -621,11 +618,11 @@ down. A starting kit is worth nothing to a shop and is never bought.
 | Orcish Sword | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
 | Handmade Sword | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
 | Long Sword | weapon | weapon | 1 | sword | 24 | 17 | 379 | 8 | 0 | 10 |  |  |  |  |  | 136000 | village |
-| Willow Staff | weapon | weapon | 2 | two-handed blunt | 11 | 12 | 325 | 4 | 4 | 20 |  |  |  |  |  | 12500 | village |
-| Cedar Staff | weapon | weapon | 2 | two-handed blunt | 16 | 16 | 325 | 4 | 4 | 20 |  |  |  |  |  | 54100 | village |
-| Journeyman's Staff | weapon | weapon | 2 | two-handed blunt | 23 | 22 | 325 | 4 | 4 | 20 |  |  |  |  |  | 136000 | village |
-| Brandish | weapon | weapon | 2 | two-handed sword | 21 | 12 | 325 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
-| Zweihander | weapon | weapon | 2 | two-handed sword | 38 | 21 | 325 | 8 | 0 | 10 |  |  |  |  |  | 244000 | village |
+| Willow Staff | weapon | weapon | 2 | staff | 11 | 12 | 325 | 4 | 4 | 20 |  |  |  |  |  | 12500 | village |
+| Cedar Staff | weapon | weapon | 2 | staff | 16 | 16 | 325 | 4 | 4 | 20 |  |  |  |  |  | 54100 | village |
+| Journeyman's Staff | weapon | weapon | 2 | staff | 23 | 22 | 325 | 4 | 4 | 20 |  |  |  |  |  | 136000 | village |
+| Brandish | weapon | weapon | 2 | sword | 21 | 12 | 325 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
+| Zweihander | weapon | weapon | 2 | sword | 38 | 21 | 325 | 8 | 0 | 10 |  |  |  |  |  | 244000 | village |
 | Leather Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 47 | 20 |  | 39 | village |
 | Small Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 56 | 20 |  | 638 | village |
 | Buckler | shield | shield |  |  |  |  |  |  |  |  |  |  | 67 | 20 |  | 2780 | village |

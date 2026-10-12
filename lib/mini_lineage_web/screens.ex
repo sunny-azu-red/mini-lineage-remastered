@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Constants, Format, Math, Rules}
+  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Rules}
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
@@ -22,10 +22,8 @@ defmodule MiniLineageWeb.Screens do
     "inventory" => "Inventory",
     "trader" => "Trader",
     "trader-swords" => "Trader: Swords",
-    "trader-blunts" => "Trader: Blunt Weapons",
     "trader-daggers" => "Trader: Daggers",
     "trader-bows" => "Trader: Bows",
-    "trader-polearms" => "Trader: Polearms",
     "trader-fists" => "Trader: Fists",
     "trader-staves" => "Trader: Staves and Books",
     "trader-shields" => "Trader: Shields",
@@ -240,14 +238,11 @@ defmodule MiniLineageWeb.Screens do
 
   # Rules §24: what the trader's pages hold, in the order the menu offers them, each with its label.
   @trader_parts [
-    {"trader-swords", "🗡️ Swords", "swords", {:types, ["sword", "two-handed sword"]}},
-    {"trader-blunts", "🔨 Blunt weapons", "blunt weapons", {:types, ["blunt"]}},
+    {"trader-swords", "🗡️ Swords", "swords", {:types, ["sword"]}},
     {"trader-daggers", "🔪 Daggers", "daggers", {:types, ["dagger"]}},
     {"trader-bows", "🏹 Bows", "bows", {:types, ["bow"]}},
-    {"trader-polearms", "🔱 Polearms", "polearms", {:types, ["pole"]}},
     {"trader-fists", "🥊 Fists", "fist weapons", {:types, ["fists"]}},
-    {"trader-staves", "🪄 Staves and books", "staves and books",
-     {:types, ["two-handed blunt", "staff"]}},
+    {"trader-staves", "🪄 Staves and books", "staves and books", {:types, ["staff"]}},
     {"trader-shields", "🛡️ Shields", "shields", {:slots, [:shield]}},
     {"trader-armour", "👕 Armour", "armour", {:slots, [:chest, :legs]}},
     {"trader-jewellery", "📿 Jewellery", "necklaces", {:slots, [:necklace]}},
@@ -371,7 +366,9 @@ defmodule MiniLineageWeb.Screens do
       assign(assigns,
         sort: sort,
         lessons: sort_rows(lessons, sort, &lesson_key/2),
-        ready: Enum.filter(lessons, &(&1.status == :ready))
+        ready: Enum.filter(lessons, &(&1.status == :ready)),
+        # Rules §23: a set whose every line is a spell has no use for the column.
+        weapons?: Enum.any?(assigns.view.lessons, &Rules.weapon_skill?(&1.skill))
       )
 
     ~H"""
@@ -380,6 +377,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
     <.data_table id="lessons" sort={@sort}>
       <:col class="name" sort="skill">Skill</:col>
+      <:col :if={@weapons?}>Weapon</:col>
       <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
       <:col title="Skill Points" sort="sp">SP</:col>
       <tbody>
@@ -390,6 +388,7 @@ defmodule MiniLineageWeb.Screens do
           {if lesson.status == :ready, do: [], else: [class: "locked"]}
         >
           <td class="name">{skill_icon(lesson.skill)} {lesson.skill} {lesson.level}</td>
+          <td :if={@weapons?}>{weapon_label(lesson.skill)}</td>
           <td class="num level">{lesson.learn_at}</td>
           <td class="sp">{Format.number(lesson.sp)}</td>
         </tr>
@@ -417,6 +416,14 @@ defmodule MiniLineageWeb.Screens do
       active_label="🎓 Learn"
     />
     """
+  end
+
+  # One hand or two alike; "Any" for a skill that needs no weapon.
+  defp weapon_label(skill) do
+    case Rules.skill_weapons(skill) do
+      [] -> "Any"
+      types -> types |> Format.list("or") |> String.capitalize()
+    end
   end
 
   defp lesson_key(lesson, "skill"), do: {lesson.skill, lesson.level}
@@ -548,9 +555,7 @@ defmodule MiniLineageWeb.Screens do
       "bow" -> "🏹"
       "fists" -> "🥊"
       "dagger" -> "🔪"
-      "pole" -> "🔱"
-      t when t in ["two-handed blunt", "staff"] -> "🪄"
-      "blunt" -> "🔨"
+      "staff" -> "🪄"
       _ -> "🗡️"
     end
   end
@@ -659,12 +664,16 @@ defmodule MiniLineageWeb.Screens do
   end
 
   # Rules §19 and §25: what the character knows, each skill's numbers at the level it knows it, each
-  # figure in the colour of what it is.
+  # figure in the colour of what it is. §23: one the weapon in hand cannot use is muted, and says why.
   defp character(%{panel: %{section: :skills}} = assigns) do
     ~H"""
-    <div :for={{name, level} <- @view.skills} id={"skill-#{slug(name)}"} class="stat-row">
+    <div
+      :for={{name, level} <- @view.skills}
+      id={"skill-#{slug(name)}"}
+      class={["stat-row", !Rules.skill_weapon?(name, @view.stats.weapon) && "locked"]}
+    >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} />
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %>
       </p>
     </div>
     """

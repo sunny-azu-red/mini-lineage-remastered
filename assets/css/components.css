@@ -171,6 +171,12 @@
     line-height: 18px;
 }
 
+/* A learned skill the weapon in hand cannot use, as a lesson not yet learnable is: its figures mute
+   with it. */
+.stat-row.locked :is(p, p *) {
+    color: var(--text-muted);
+}
+
 /* Edge to edge, with nothing beside it. */
 .status-panel .bar-track {
     flex: 1;

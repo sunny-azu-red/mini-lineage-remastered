@@ -257,14 +257,11 @@ defmodule MiniLineage.Game.HuntTest do
       assert swings.(shackled) < swings.(Hunt.fight(stats, bars, [], foe))
     end
 
-    test "weapon skills without their weapons are named, only when not one of them can be used" do
+    test "weapon skills without their weapons are left out of the log, not named in it" do
       Rng.put_source(fn -> 0.0 end)
-      human = trained(0, :fighter, 5)
-      bare = %{human | items: []}
-      result = fight(bare, "Young Keltir")
+      bare = %{trained(0, :fighter, 5) | items: []}
 
-      assert {0, {:no_weapon, ["Mortal Blow", "Power Shot", "Power Strike"]}} in result.log
-      refute Enum.any?(fight(human, "Young Keltir").log, &match?({0, {:no_weapon, _}}, &1))
+      refute Enum.any?(fight(bare, "Young Keltir").log, &match?({0, _}, &1))
     end
   end
 

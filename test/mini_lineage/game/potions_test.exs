@@ -32,12 +32,15 @@ defmodule MiniLineage.Game.PotionsTest do
     assert player.adena == 10_000 - 60 * 90
 
     assert {_, {:error, :cannot_afford, _}} = Actions.buy(human(899), @potion, 10)
-    assert {_, {:error, :unsold, _}} = Actions.buy(player, "Club", 2)
+    assert {_, {:error, :unsold, _}} = Actions.buy(player, "Short Sword", 2)
   end
 
   test "a full inventory still takes more onto a stack it carries" do
     {player, {:ok, _}} = Actions.buy(human(), @potion, 1)
-    filler = for _ <- 1..(Rules.capacity() - length(player.items)), do: Player.new_item("Club")
+
+    filler =
+      for _ <- 1..(Rules.capacity() - length(player.items)), do: Player.new_item("Short Sword")
+
     full = %{player | items: player.items ++ filler}
 
     assert {topped, {:ok, _}} = Actions.buy(full, @potion, 10)

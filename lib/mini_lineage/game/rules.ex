@@ -532,9 +532,9 @@ defmodule MiniLineage.Game.Rules do
     {1, :mystic} => {["Training Gloves", "Apprentice's Tunic", "Apprentice's Stockings"], []}
   }
 
-  # Rules §23: the weapon each weapon skill needs; a spell needs none.
+  # Rules §23: the weapon each weapon skill needs, in either hand; a spell needs none.
   @skill_weapons %{
-    "Power Strike" => ["sword", "blunt"],
+    "Power Strike" => ["sword"],
     "Power Shot" => ["bow"],
     "Mortal Blow" => ["dagger"],
     "Iron Punch" => ["fists"]
@@ -641,6 +641,9 @@ defmodule MiniLineage.Game.Rules do
   def capacity, do: @capacity
 
   def weapon_skill?(skill), do: Map.has_key?(@skill_weapons, skill)
+
+  @doc "Rules §23: the weapon types a skill can be used with, or none for one that needs none."
+  def skill_weapons(skill), do: Map.get(@skill_weapons, skill, [])
 
   @doc "Rules §23: whether a skill can be used with what is in hand (nil, bare-handed)."
   def skill_weapon?(skill, weapon) do

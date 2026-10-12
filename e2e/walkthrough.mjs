@@ -565,8 +565,8 @@ try {
     check('...muting a line until the one before it is learned',
         await page.locator('#lesson-mortal-blow-3.locked[data-status="queued"]').count() === 1);
     check('...with the level it requires and its SP named in full on hover',
-        await page.getAttribute('#lessons th:nth-child(2)', 'title') === 'Level Required' &&
-        await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Skill Points');
+        await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Level Required' &&
+        await page.getAttribute('#lessons th:nth-child(4)', 'title') === 'Skill Points');
     await page.click('#lessons button[phx-value-key="sp"]');
     await page.waitForSelector('#lessons th[aria-sort="ascending"] button[phx-value-key="sp"]', { timeout: 5000 });
     check('...sorting on a header, with the keyboard left on that header rather than the dropdown',
@@ -595,6 +595,36 @@ try {
         await text('#skill-mortal-blow .skill') === 'Mortal Blow 2' &&
         await page.locator('#lesson-mortal-blow-3[data-status="ready"]').count() === 1,
         await text('#skill-mortal-blow'));
+    check('...each line naming the weapon it needs, a spell any',
+        await text('#lesson-mortal-blow-3 td:nth-child(2)') === 'Dagger' &&
+        await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
+
+    // ---- a weapon skill without its weapon (rules §23) ------------------------------------------
+    await page.click('#header-link');
+    await onScreen('town');
+    await page.click('#equipped-weapons a');
+    await onScreen('inventory');
+    const sword = await page.$eval('#wear-form select', (el) =>
+        [...el.options].find(o => o.textContent.includes("Squire's Sword"))?.value);
+    await page.selectOption('#wear-form select', sword);
+    await page.locator('#wear-form button', { hasText: 'Put on' }).waitFor({ timeout: 5000 });
+    await page.click('#wear-form button');
+    await page.waitForSelector('#items tr.owned:has-text("Squire\'s Sword")', { timeout: 5000 });
+    await page.click('#header-link');
+    await onScreen('town');
+    await page.click('#character-name a');
+    await onScreen('character');
+    const muted = (sel) => page.$eval(sel, (el) => {
+        const probe = document.createElement('span');
+        probe.className = 'muted';
+        document.body.append(probe);
+        const want = getComputedStyle(probe).color;
+        probe.remove();
+        return getComputedStyle(el).color === want;
+    });
+    check('with a sword in hand, Mortal Blow is muted down to its figures and says what it needs',
+        await muted('#skill-mortal-blow .skill') && await muted('#skill-mortal-blow .mp') &&
+        /Needs a dagger\.$/.test(await text('#skill-mortal-blow')), await text('#skill-mortal-blow'));
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

@@ -68,7 +68,6 @@ defmodule MiniLineage.Game.NarrativeTest do
       ground = Rules.ground("obelisk-of-victory")
 
       log = [
-        {0, {:no_weapon, ["Mortal Blow", "Power Strike"]}},
         {1, {:heal, "Self Heal", 42}},
         {1, {:aura, "Defense Aura"}},
         {2, {:toggle, "Soul Cry"}},
@@ -92,7 +91,6 @@ defmodule MiniLineage.Game.NarrativeTest do
       end
 
       text = Enum.join(lines, "\n")
-      assert text =~ "cannot use Mortal Blow and Power Strike"
       assert text =~ "cast Self Heal and mend"
       assert text =~ "raise your"
       assert text =~ "Soul Cry"

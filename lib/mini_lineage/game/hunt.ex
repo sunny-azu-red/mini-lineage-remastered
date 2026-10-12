@@ -59,15 +59,9 @@ defmodule MiniLineage.Game.Hunt do
   it went, the auras it raised, which outlast it, and the potions it `drunk`.
   """
   def fight(stats, %{health: health, mp: mp} = bars, skills, foe) do
-    # §23: a weapon skill without its weapon in hand is not used at all, and said so when it
-    # leaves the character none.
-    {usable, unarmed} = Enum.split_with(skills, &Rules.skill_weapon?(&1.name, stats[:weapon]))
-    armed? = Enum.any?(usable, &Rules.weapon_skill?(&1.name))
-
-    unarmed_log =
-      if unarmed != [] and not armed?,
-        do: [{0, {:no_weapon, unarmed |> Enum.map(& &1.name) |> Enum.sort()}}],
-        else: []
+    # §23: a weapon skill without its weapon in hand is not used at all; the Learned Skills panel
+    # says so, not the log.
+    usable = Enum.filter(skills, &Rules.skill_weapon?(&1.name, stats[:weapon]))
 
     state = %{
       stats: stats,
@@ -94,7 +88,7 @@ defmodule MiniLineage.Game.Hunt do
       busy: 0.0,
       foe_busy: 0.0,
       # What happened, newest first, each `{round, event}`: the fight log.
-      log: unarmed_log,
+      log: [],
       blows: 0.0,
       foe_blows: 0.0,
       rounds: 0,

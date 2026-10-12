@@ -159,8 +159,42 @@ defmodule MiniLineageWeb.TrainerPageTest do
 
     view |> form("#learn-form", %{"lesson" => "Power Strike|2"}) |> render_submit()
 
-    assert has_element?(view, "#flash", "You do not have enough SP to learn that skill.")
+    assert has_element?(view, "#flash", "You do not have enough SP to learn this skill.")
     assert %{sp: 49, skills: %{"Power Strike" => 1}} = stored(session)
+  end
+
+  test "each line names the weapon it needs, and a set of spells has no such column" do
+    {_view, session, conn} = human(build_conn(), 100)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+
+    assert has_element?(view, "#lessons th", "Weapon")
+    assert has_element?(view, "#lesson-power-strike-2 td", "Sword")
+    assert has_element?(view, "#lesson-mortal-blow-1 td", "Dagger")
+    assert has_element?(view, "#lesson-power-shot-1 td", "Bow")
+
+    Characters.mutate(session, &{%{&1 | path: :mystic, skills: %{"Wind Strike" => 1}}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+
+    assert has_element?(view, "#lesson-wind-strike-2")
+    refute has_element?(view, "#lessons th", "Weapon")
+  end
+
+  test "a learned skill the weapon in hand cannot use is muted, and says what it needs" do
+    {_view, session, conn} = human(build_conn(), 100)
+    Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Mortal Blow", 1)}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+
+    # The kit's Squire's Sword is in hand, the Dagger carried.
+    assert has_element?(view, "#skill-mortal-blow.locked", "Needs a dagger.")
+    refute has_element?(view, "#skill-power-strike.locked")
+    refute has_element?(view, "#skill-power-strike", "Needs")
+
+    dagger = Enum.find(Characters.snapshot(session).items, &(&1.name == "Dagger"))
+    Characters.mutate(session, &MiniLineage.Game.Actions.equip(&1, dagger.id))
+    {:ok, view, _html} = live(conn, ~p"/character")
+
+    refute has_element?(view, "#skill-mortal-blow.locked")
+    assert has_element?(view, "#skill-power-strike.locked", "Needs a sword.")
   end
 
   test "no trainer away from the home village, even in another village" do

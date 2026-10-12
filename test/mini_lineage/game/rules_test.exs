@@ -660,13 +660,14 @@ defmodule MiniLineage.Game.RulesTest do
       assert mystic.skills == %{"Wind Strike" => 1, "Self Heal" => 1}
     end
 
-    test "§8 a Club's +4 Accuracy, and §13 a weapon's spread and bare hands'" do
+    test "§8 Training Gloves' +4 Accuracy, and §13 a weapon's spread and bare hands'" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
-      club = %{fighter | items: [%{id: "c", name: "Club", equipped: true}]}
+      gloves = %{fighter | items: [%{id: "g", name: "Training Gloves", equipped: true}]}
+      wand = %{fighter | items: [%{id: "w", name: "Apprentice's Wand", equipped: true}]}
 
-      assert Player.stats(club).accuracy == 38
-      assert Player.stats(club).spread == 20
+      assert Player.stats(gloves).accuracy == 38
+      assert Player.stats(wand).spread == 20
       assert Player.stats(%{fighter | items: []}).spread == 6
       Rng.put_source(fn -> 0.0 end)
       assert Formulas.damage_spread(20) == 0.8

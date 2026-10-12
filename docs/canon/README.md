@@ -153,6 +153,12 @@ where it has any.
 - **The villages sell only the Lesser Healing Potion,** as in Lineage II; better potions and potions
   for MP wait for the towns further on, where Lineage II sold the Healing Potion (Gludio) and no NPC
   sold a Mana Potion at all.
+- **Five kinds of weapon: sword, dagger, bow, fists and staff** (rules §23). The no-grade blunts
+  (Club, Mace, Heavy Chisel, Sickle, Dwarven Mace) and the Short Spear are not sold; dual swords
+  and polearms never come. A two-handed sword (BIGSWORD) is a sword, and every mystic weapon is a
+  staff: the two-handed staves (BIGBLUNT), and one-handed the Apprentice's Wand and Rod (BLUNT) and
+  the book, horn and relic (ETC). Each keeps its canon numbers. So Power Strike takes a sword in
+  either hand, where Lineage II also took a blunt, a two-handed blunt and so a staff.
 - **Bows need no arrows.** In Lineage II every shot spent one, a miss included; here a bow only
   draws and reloads (rules §10).
 - **A weapon's spread covers every physical hit it makes,** skills and blows included, as aCis does;

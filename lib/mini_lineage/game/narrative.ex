@@ -76,15 +76,6 @@ defmodule MiniLineage.Game.Narrative do
       |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
       |> Enum.sort()
       |> Enum.map(fn
-        {0, [{:no_weapon, [skill]}]} ->
-          Format.fill_template(Narratives.unarmed(), %{
-            "skill" => skill,
-            "weapon" => weapon_for(skill)
-          })
-
-        {0, [{:no_weapon, skills}]} ->
-          Format.fill_template(Narratives.unarmed_all(), %{"skills" => join_and(skills)})
-
         {round, events} ->
           {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
           parts = events |> merge_blows() |> Enum.map(&event(&1, foe, bow?))
@@ -191,7 +182,7 @@ defmodule MiniLineage.Game.Narrative do
   @doc "What a skill needs in hand, as a sentence names it."
   def weapon_for(skill), do: needs(skill)
 
-  defp needs("Power Strike"), do: "a sword or a blunt weapon"
+  defp needs("Power Strike"), do: "a sword"
   defp needs("Power Shot"), do: "a bow"
   defp needs("Mortal Blow"), do: "a dagger"
   defp needs("Iron Punch"), do: "fists"
