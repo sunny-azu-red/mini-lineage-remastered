@@ -39,8 +39,9 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   races, highscores, error), all in `Screens` until one needs its own module; the Halls have
   `Screens.Halls`. `Screens.panels/3` lists a
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
-  the Chronicles and one per section on the character page. Every template starts with
-  `<Layouts.app>`.
+  the Chronicles, one per section on the character page, and on the trainer's a Learned Skills
+  panel only once something is learned. `GameLive` lists them again whenever the view is rebuilt.
+  Every template starts with `<Layouts.app>`.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`

@@ -1,5 +1,5 @@
 set,skill,level,learn_at,sp
-Human Fighter,Power Strike,1,1,0
+Human Fighter,Power Strike,1,1,10
 Human Fighter,Power Strike,2,5,50
 Human Fighter,Power Strike,3,5,50
 Human Fighter,Power Strike,4,10,370
@@ -26,7 +26,7 @@ Human Fighter,Power Shot,6,10,370
 Human Fighter,Power Shot,7,15,1300
 Human Fighter,Power Shot,8,15,1300
 Human Fighter,Power Shot,9,15,1300
-Elven Fighter,Power Shot,1,1,0
+Elven Fighter,Power Shot,1,1,10
 Elven Fighter,Power Shot,2,5,50
 Elven Fighter,Power Shot,3,5,50
 Elven Fighter,Power Shot,4,10,310
@@ -39,7 +39,7 @@ Elven Fighter,Defense Aura,1,5,160
 Elven Fighter,Elemental Heal,1,15,1100
 Elven Fighter,Elemental Heal,2,15,1100
 Elven Fighter,Elemental Heal,3,15,1100
-Dark Fighter,Mortal Blow,1,1,0
+Dark Fighter,Mortal Blow,1,1,10
 Dark Fighter,Mortal Blow,2,5,50
 Dark Fighter,Mortal Blow,3,5,50
 Dark Fighter,Mortal Blow,4,10,310
@@ -51,7 +51,7 @@ Dark Fighter,Mortal Blow,9,15,950
 Dark Fighter,Attack Aura,1,10,910
 Dark Fighter,Drain Health,1,15,1400
 Dark Fighter,Drain Health,2,15,1400
-Orc Fighter,Iron Punch,1,1,0
+Orc Fighter,Iron Punch,1,1,10
 Orc Fighter,Iron Punch,2,5,60
 Orc Fighter,Iron Punch,3,5,60
 Orc Fighter,Iron Punch,4,10,460
@@ -75,7 +75,7 @@ Human Mystic,Wind Strike,2,7,240
 Human Mystic,Wind Strike,3,7,240
 Human Mystic,Wind Strike,4,14,1100
 Human Mystic,Wind Strike,5,14,1100
-Human Mystic,Self Heal,1,1,0
+Human Mystic,Self Heal,1,1,50
 Human Mystic,Ice Bolt,1,7,240
 Human Mystic,Ice Bolt,2,7,240
 Human Mystic,Ice Bolt,3,14,1100
@@ -84,8 +84,8 @@ Elven Mystic,Ice Bolt,1,1,0
 Elven Mystic,Ice Bolt,2,7,260
 Elven Mystic,Ice Bolt,3,14,1100
 Elven Mystic,Ice Bolt,4,14,1100
-Elven Mystic,Self Heal,1,1,0
-Elven Mystic,Wind Strike,1,1,0
+Elven Mystic,Self Heal,1,1,50
+Elven Mystic,Wind Strike,1,1,50
 Elven Mystic,Wind Strike,2,7,260
 Elven Mystic,Wind Strike,3,7,260
 Elven Mystic,Wind Strike,4,14,1100
@@ -98,12 +98,12 @@ Elven Mystic,Heal,5,14,700
 Elven Mystic,Heal,6,14,700
 Dark Mystic,Vampiric Touch,1,1,0
 Dark Mystic,Vampiric Touch,2,14,1100
-Dark Mystic,Self Heal,1,1,0
+Dark Mystic,Self Heal,1,1,50
 Dark Mystic,Curse: Poison,1,7,470
 Dark Mystic,Wind Shackle,1,14,2100
 Orc Mystic,Chill Flame,1,1,0
 Orc Mystic,Chill Flame,2,14,1800
-Orc Mystic,Soul Cry,1,1,0
+Orc Mystic,Soul Cry,1,1,50
 Orc Mystic,Soul Cry,2,14,1800
 Orc Mystic,Life Drain,1,7,520
 Orc Mystic,Life Drain,2,14,1800

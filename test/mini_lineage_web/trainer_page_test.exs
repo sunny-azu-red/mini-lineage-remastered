@@ -14,8 +14,8 @@ defmodule MiniLineageWeb.TrainerPageTest do
   alias MiniLineageWeb.Screens
   alias MiniLineage.Game.Math
 
-  # A level 5 Human Fighter on Talking Island with `sp` to spend.
-  defp human(conn, sp) do
+  # A new Human Fighter on Talking Island.
+  defp pupil(conn) do
     session = Characters.new_session_id()
     on_exit(fn -> Characters.forget(session) end)
     conn = init_test_session(conn, %{"session_id" => session})
@@ -25,8 +25,35 @@ defmodule MiniLineageWeb.TrainerPageTest do
     |> element("form[phx-submit=start]")
     |> render_submit(%{"name" => "Pupil", "race_id" => "0", "path" => "fighter"})
 
-    Characters.mutate(session, &{%{&1 | sp: sp, experience: Math.xp_for_level(5)}, :ok})
     {view, session, conn}
+  end
+
+  # The same at level 5, with the Power Strike it bought at level 1 and `sp` to spend.
+  defp human(conn, sp) do
+    {view, session, conn} = pupil(conn)
+    level = Math.xp_for_level(5)
+    skills = %{"Power Strike" => 1}
+    Characters.mutate(session, &{%{&1 | sp: sp, experience: level, skills: skills}, :ok})
+    {view, session, conn}
+  end
+
+  test "a new Fighter knows no skill, and its first is a lesson for the SP of a kill" do
+    {_view, session, conn} = pupil(build_conn())
+    {:ok, character, _html} = live(conn, ~p"/character")
+    assert has_element?(character, "#no-skills.stat-row", "You have learned no skill yet")
+
+    # The trainer shows no Learned Skills panel until there is something in it.
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+    refute has_element?(view, "#screen h2", "Learned Skills")
+    assert has_element?(view, ~s(#lesson-power-strike-1[data-status="ready"] td.sp), "10")
+
+    Characters.mutate(session, &{%{&1 | sp: 10}, :ok})
+    view |> form("#learn-form", %{"lesson" => "Power Strike|1"}) |> render_submit()
+
+    assert has_element?(view, "#screen h2", "Learned Skills")
+    refute has_element?(view, "#no-skills")
+    assert has_element?(view, "#skill-power-strike .skill", "Power Strike 1")
+    assert %{sp: 0, skills: %{"Power Strike" => 1}} = stored(session)
   end
 
   test "the home village leads to its trainer, whose lessons are the set's own" do
@@ -177,6 +204,15 @@ defmodule MiniLineageWeb.TrainerPageTest do
 
     assert has_element?(view, "#lesson-wind-strike-2")
     refute has_element?(view, "#lessons th", "Weapon")
+  end
+
+  test "a toggle says what it costs to light and what it drains after" do
+    {_view, session, conn} = pupil(build_conn())
+    Characters.mutate(session, &{%{&1 | skills: %{"Soul Cry" => 1}}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/character")
+
+    assert view |> element("#skill-soul-cry") |> render() =~
+             ~r/P\.Atk \+4\.5.*2 MP.*then.*3 MP.*every 3 seconds/s
   end
 
   test "a learned skill the weapon in hand cannot use is muted, and says what it needs" do

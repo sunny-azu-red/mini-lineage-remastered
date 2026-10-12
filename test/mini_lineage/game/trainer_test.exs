@@ -12,16 +12,33 @@ defmodule MiniLineage.Game.TrainerTest do
     :ok
   end
 
-  defp human(level, sp) do
-    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Pupil")
-    %{player | experience: Math.xp_for_level(level), sp: sp}
+  defp new(race_id, path) do
+    {player, _} = Player.initialize(%Player{}, Constants.race(race_id), path, "Pupil")
+    player
   end
 
-  test "a new character knows its first skill at level 1, and what its trainer teaches free" do
-    assert human(1, 0).skills == %{"Power Strike" => 1}
+  # A Human Fighter that bought its Power Strike at level 1.
+  defp human(level, sp) do
+    player = new(0, :fighter)
+    %{player | experience: Math.xp_for_level(level), sp: sp, skills: %{"Power Strike" => 1}}
+  end
 
-    {orc, _} = Player.initialize(%Player{}, Constants.race(1), :mystic, "Pupil")
-    assert orc.skills == %{"Chill Flame" => 1, "Soul Cry" => 1}
+  test "a new Fighter knows nothing and buys its first skill at level 1 for 10 SP" do
+    fighter = new(0, :fighter)
+    assert fighter.skills == %{}
+
+    assert {_, {:error, :no_sp, _}} = Actions.learn(%{fighter | sp: 9}, "Power Strike", 1)
+    {fighter, {:ok, _}} = Actions.learn(%{fighter | sp: 10}, "Power Strike", 1)
+    assert {fighter.skills, fighter.sp} == {%{"Power Strike" => 1}, 0}
+  end
+
+  test "a new Mystic knows its first spell, and buys what else level 1 offers for 50 SP" do
+    orc = new(1, :mystic)
+    assert orc.skills == %{"Chill Flame" => 1}
+
+    assert {_, {:error, :no_sp, _}} = Actions.learn(%{orc | sp: 49}, "Soul Cry", 1)
+    {orc, {:ok, _}} = Actions.learn(%{orc | sp: 50}, "Soul Cry", 1)
+    assert {orc.skills, orc.sp} == {%{"Chill Flame" => 1, "Soul Cry" => 1}, 0}
   end
 
   test "a line is learned for its SP, once its level is reached" do

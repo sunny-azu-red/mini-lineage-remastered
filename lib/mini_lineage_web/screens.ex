@@ -76,12 +76,14 @@ defmodule MiniLineageWeb.Screens do
       %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}
     ]
 
-  # Rules §25: what the trainers teach, and beside it what the character already knows.
+  # Rules §25: what the trainers teach, and beside it what the character already knows, if anything.
   def panels("trainer", view, _catalog),
-    do: [
-      %{title: title("trainer", view), icon: icon("trainer", view)},
-      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}
-    ]
+    do:
+      [%{title: title("trainer", view), icon: icon("trainer", view)}] ++
+        if(view.skills == [],
+          do: [],
+          else: [%{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}]
+        )
 
   # Rules §23: what is equipped and carried, and beside it the stats it makes, which count as gear moves.
   def panels("inventory", _view, _catalog),
@@ -667,6 +669,11 @@ defmodule MiniLineageWeb.Screens do
   # figure in the colour of what it is. §23: one the weapon in hand cannot use is muted, and says why.
   defp character(%{panel: %{section: :skills}} = assigns) do
     ~H"""
+    <div :if={@view.skills == []} id="no-skills" class="stat-row">
+      <p class="muted">
+        You have learned no skill yet, visit the trainers of your home village.
+      </p>
+    </div>
     <div
       :for={{name, level} <- @view.skills}
       id={"skill-#{slug(name)}"}

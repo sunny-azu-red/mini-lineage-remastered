@@ -84,7 +84,7 @@ defmodule MiniLineage.Game.Player do
     {player, %{text: Narrative.alert(began), type: :info, sound: "start"}}
   end
 
-  @doc "Rules §25: every line its trainer teaches at level 1 for nothing, its first skill among them."
+  @doc "Rules §25: what its trainer teaches at level 1 for nothing, a Mystic's first spell."
   def first_skills(race_id, path) do
     for lesson <- Rules.lessons(Rules.set(race_id, path).name),
         lesson.learn_at == 1 and lesson.sp == 0,

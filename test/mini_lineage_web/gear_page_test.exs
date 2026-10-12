@@ -87,6 +87,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "the inventory lists everything, equipped highlighted, and puts on, takes off and destroys apart" do
     {_view, session, conn} = human(build_conn(), 0)
+    Characters.mutate(session, &{%{&1 | skills: %{"Power Strike" => 1}}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")
     dagger = carried(session, "Dagger")
     sword = carried(session, "Squire's Sword")

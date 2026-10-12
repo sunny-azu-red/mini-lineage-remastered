@@ -157,7 +157,7 @@ defmodule MiniLineageWeb.GameLive do
     {_, player} =
       Characters.mutate(socket.assigns.session_id, &{MiniLineage.Game.Player.disengage(&1), :ok})
 
-    assign(socket, player: player, view: Snapshot.build(player))
+    put_view(socket, player)
   end
 
   defp disengage_unless(socket, false), do: socket
@@ -358,7 +358,8 @@ defmodule MiniLineageWeb.GameLive do
     player = Characters.snapshot(id)
 
     socket
-    |> assign(player: player, view: Snapshot.build(player), game_flash: nil)
+    |> put_view(player)
+    |> assign(game_flash: nil)
     |> go({"start", nil})
   end
 
@@ -376,7 +377,7 @@ defmodule MiniLineageWeb.GameLive do
     do: {:noreply, socket}
 
   def handle_info({:character_updated, player}, socket) do
-    socket = assign(socket, player: player, view: Snapshot.build(player))
+    socket = put_view(socket, player)
     place = {socket.assigns.screen, socket.assigns.town}
     target = Access.pin_screen(place, player)
 
@@ -392,14 +393,21 @@ defmodule MiniLineageWeb.GameLive do
   # Rules §15: nightfall changes nothing the character's process stores, so nothing is pushed for it.
   # The page wakes itself at the exact moment instead, and redraws what the hour changes.
   def handle_info(:world_changed, socket),
-    do: {:noreply, assign(socket, view: Snapshot.build(socket.assigns.player))}
+    do: {:noreply, put_view(socket, socket.assigns.player)}
 
   def handle_info(:dusk_or_dawn, socket) do
     await_dusk_or_dawn()
-    {:noreply, assign(socket, view: Snapshot.build(socket.assigns.player))}
+    {:noreply, put_view(socket, socket.assigns.player)}
   end
 
   # ------------------------------------------------------------------ plumbing
+
+  # The panels follow the view, as what a page holds can change under it (a first skill learned).
+  defp put_view(socket, player) do
+    view = Snapshot.build(player)
+    panels = Screens.panels(socket.assigns.screen, view, socket.assigns.catalog)
+    assign(socket, player: player, view: view, panels: panels)
+  end
 
   # A beat past the boundary, so the redraw reads the new hour and not the last of the old one.
   defp await_dusk_or_dawn do
@@ -416,7 +424,7 @@ defmodule MiniLineageWeb.GameLive do
   # place worked out from the player it left, or nowhere for nil. `catch` is for the process exiting.
   defp apply_action(socket, fun, to) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
-    socket = assign(socket, player: player, view: Snapshot.build(player))
+    socket = put_view(socket, player)
 
     case result do
       {:error, _code, message} -> assign(socket, game_flash: %{text: message, type: :danger})

@@ -225,10 +225,9 @@ try {
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
         sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|🎓 Learned Skills'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
-    check('...its Learned Skills panel naming what it knows, Soul Cry free from the start and told as a toggle',
-        await page.locator('#skill-chill-flame').count() === 1
-        && /P\.Atk \+4\.5 for 2 MP, then 3 MP every 3 seconds/.test(await text('#skill-soul-cry')),
-        await text('#skill-soul-cry'));
+    const known = await page.$$eval('#screen [id^="skill-"]', (els) => els.map(el => el.id).join(','));
+    check('...its Learned Skills panel naming what it knows, the one spell a Mystic starts with',
+        known === 'skill-chill-flame' && await page.locator('#no-skills').count() === 0, known);
     check('...under the game\'s name, the page\'s one h1',
         await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
     check('...then its class, what it was born with and its race\'s perk in one paragraph, then its level, bars and purse',
@@ -560,10 +559,14 @@ try {
     await page.waitForFunction((want) =>
         document.querySelector('[data-key="trainer-sp"]')?.dataset.value === String(want), spBefore + 10000,
         { timeout: 5000 });
-    check('the home village\'s trainer teaches the set\'s own first skill, unmuted',
-        await page.locator('#lesson-mortal-blow-2[data-status="ready"]:not(.locked)').count() === 1);
+    check('the home village\'s trainer teaches the set\'s own first skill, unmuted, for the SP of a kill',
+        await page.locator('#lesson-mortal-blow-1[data-status="ready"]:not(.locked)').count() === 1 &&
+        await text('#lesson-mortal-blow-1 td.sp') === '10', await text('#lesson-mortal-blow-1'));
+    const learnedPanel = () => page.locator('#screen h2.header-name', { hasText: 'Learned Skills' }).count();
+    check('...to a Fighter that starts knowing nothing, so no Learned Skills panel beside it',
+        await learnedPanel() === 0);
     check('...muting a line until the one before it is learned',
-        await page.locator('#lesson-mortal-blow-3.locked[data-status="queued"]').count() === 1);
+        await page.locator('#lesson-mortal-blow-2.locked[data-status="queued"]').count() === 1);
     check('...with the level it requires and its SP named in full on hover',
         await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Level Required' &&
         await page.getAttribute('#lessons th:nth-child(4)', 'title') === 'Skill Points');
@@ -574,8 +577,12 @@ try {
     await page.click('#lessons button[phx-value-key="sp"]');
     await page.click('#lessons button[phx-value-key="sp"]');
     await page.waitForSelector('#lessons th[aria-sort]', { state: 'detached', timeout: 5000 });
-    check('...leaving level 1, known free, to the Learned Skills panel beside it',
-        await page.locator('#lesson-mortal-blow-1').count() === 0 &&
+    await page.selectOption('#learn-form select', 'Mortal Blow|1');
+    await page.locator('#learn-form button', { hasText: 'Learn' }).waitFor({ timeout: 5000 });
+    await page.click('#learn-form button');
+    await page.waitForSelector('#lesson-mortal-blow-1', { state: 'detached', timeout: 5000 });
+    check('...the first line learned opening the Learned Skills panel beside it',
+        await learnedPanel() === 1 &&
         await text('#skill-mortal-blow .skill') === 'Mortal Blow 1', await text('#skill-mortal-blow'));
     check('...and offering the next line by name, as the legacy shop did',
         await text('#learn-form option[value="Mortal Blow|2"]') === 'Pick 🎯 Mortal Blow 2');
@@ -585,7 +592,7 @@ try {
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',
-        Number(await sp()) === spBefore + 10000 - 50, await sp());
+        Number(await sp()) === spBefore + 10000 - 10 - 50, await sp());
     check('...the dropdown and its button both going back to the village, the lesson no longer offered',
         await page.inputValue('#learn-form select') === '' && await text('#learn-form button') === 'Return',
         await text('#learn-form button'));
