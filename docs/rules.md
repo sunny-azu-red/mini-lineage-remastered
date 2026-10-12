@@ -412,7 +412,7 @@ Each costs MP and then rests for its reuse.
 | Human Mystic | Wind Strike | Self Heal | Ice Bolt |
 | Elven Mystic | Ice Bolt | Self Heal, Wind Strike | Heal |
 | Dark Mystic | Vampiric Touch | Self Heal | Curse: Poison, Wind Shackle |
-| Orc Mystic | Chill Flame | Soul Cry | Life Drain |
+| Orc Mystic | Chill Flame | Soul Cry, Life Drain | |
 
 Each at level 1 (§25 has the later levels):
 
@@ -450,8 +450,8 @@ Punch need their weapons (§23); the rest need none.
 - **Magic:** §13's magic damage, which can be a magic critical. A spell never misses.
 - **Drain:** magic damage, healing the caster a share of what the target lost: 40% for Vampiric
   Touch, 20% for Drain Health and 80% for Life Drain.
-- **Burn:** power HP a second for 15 seconds, which never takes the last HP. It is not cast again on
-  a target that still burns.
+- **Burn:** power HP a second for 15 seconds, which can take the last HP. It is not cast again on a
+  target that still burns.
 - **Ice Bolt** also slows its target for 120 seconds, and a slowed monster swings 30% less.
 - **Heal:** power + √M.Atk HP back, rounded down and never past the most.
 - **Aura:** Defense Aura multiplies P.Def and Attack Aura P.Atk by 1.08, for 20 minutes, in the
@@ -778,7 +778,7 @@ and the other lines §19 gives at level 1 cost 50.
 | Orc Mystic | Chill Flame | 2 | 14 | 1,800 |
 | Orc Mystic | Soul Cry | 1 | 1 | 50 |
 | Orc Mystic | Soul Cry | 2 | 14 | 1,800 |
-| Orc Mystic | Life Drain | 1 | 7 | 520 |
+| Orc Mystic | Life Drain | 1 | 1 | 50 |
 | Orc Mystic | Life Drain | 2 | 14 | 1,800 |
 
 Each skill's power and MP at each level (a burn's power is per second):

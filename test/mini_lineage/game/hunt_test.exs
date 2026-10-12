@@ -100,13 +100,17 @@ defmodule MiniLineage.Game.HuntTest do
       assert result.mp == mystic.mp - 9 * result.uses
     end
 
-    test "a burn never takes the last HP, so an Orc Mystic needs its fists to finish" do
+    test "a burn takes the last HP, so an Orc Mystic's Chill Flame alone fells a keltir" do
       Rng.put_source(fn -> 0.9999 end)
       result = fight(character(1, :mystic), "Young Prairie Keltir")
 
-      # Every blow misses at 0.9999, so only the burn hurts, and it stops at 1.
-      assert result.foe == 1
-      assert result.rounds == Hunt.max_rounds()
+      # Every blow misses at 0.9999, so only the burn hurts, and it finishes the keltir.
+      assert result.foe == 0
+      assert result.rounds < Hunt.max_rounds()
+
+      # Nobody acts in the round the burn ends.
+      last = for {round, event} <- result.log, round == result.rounds, do: event
+      assert [{:burn, _}, {:standing, _, 0}] = last
     end
 
     test "and it is not cast again while its target still burns" do

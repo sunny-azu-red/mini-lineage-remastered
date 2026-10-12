@@ -112,13 +112,18 @@ where it has any.
   skills came at 5, and each needed the right weapon.
 - **A short skill list per set,** different for each race, until the class change opens the
   specialised skills: the first skill and two more from the set's canon tree, at their canon levels
-  and SP (rules §19, §25). Lineage II's trees are far larger.
+  and SP (rules §19, §25). Lineage II's trees are far larger. The Human Fighter's canon Relax is
+  left out for a line per weapon: Mortal Blow for the Dagger it carries, Power Shot for a bow.
 - **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
   Mastery are left out, and each set learns two actives in their place.
 - **Self Heal (every Mystic but the Orc), Wind Strike (Elven Mystic) and Soul Cry cost 50 SP at
   level 1,** where Lineage II taught them for 0 SP, so nothing but a Mystic's first spell comes
   free; the others are bought at their canon levels. The Dark Mystic's canon Wind Strike is left
   out, its first skill being Vampiric Touch.
+- **The Orc Mystic learns Life Drain at level 1 for 50 SP,** where Lineage II taught it at 7 for
+  520, and **its Chill Flame can take the last HP,** where Lineage II's leaves 1. Its first spell is
+  a burn whose cast outlasts it, so without them it paid for every kill in blows taken, with no heal
+  before level 7, and died early more than any other set.
 - **The character chooses its own skills in a fight** (rules §20): its auras, its toggle, its
   strongest spell, then while its spells rest a heal below half HP, or a curse on a monster above
   half its HP. In Lineage II the player chose.

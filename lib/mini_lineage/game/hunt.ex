@@ -108,7 +108,15 @@ defmodule MiniLineage.Game.Hunt do
 
   defp rounds(s, skills, foe) do
     s = %{s | rounds: s.rounds + 1} |> burn() |> poison() |> drain_toggle() |> drink()
-    s = if s.busy > 0, do: note(s, :casting), else: character_turn(s, skills, foe)
+
+    s =
+      cond do
+        # A burn may have ended the fight before anybody acts.
+        s.foe <= 0 -> s
+        s.busy > 0 -> note(s, :casting)
+        true -> character_turn(s, skills, foe)
+      end
+
     s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, foe), else: s
     # Where both stand when the round is over, so the log's numbers read against something.
     s = note(s, {:standing, s.health, s.foe})
@@ -144,11 +152,11 @@ defmodule MiniLineage.Game.Hunt do
     end
   end
 
-  # §19: damage over time never takes the last HP.
-  defp burn(s), do: over_time(s, :burn)
-  defp poison(s), do: over_time(s, :poison)
+  # §19: a burn may take the last HP, a poison never does.
+  defp burn(s), do: over_time(s, :burn, s.foe)
+  defp poison(s), do: over_time(s, :poison, s.foe - 1)
 
-  defp over_time(s, key) do
+  defp over_time(s, key, most) do
     case Map.fetch!(s, key) do
       nil ->
         s
@@ -158,7 +166,7 @@ defmodule MiniLineage.Game.Hunt do
 
       dot ->
         total = dot.carry + dot.per_round
-        hit = total |> trunc() |> min(s.foe - 1) |> max(0)
+        hit = total |> trunc() |> min(most) |> max(0)
         dot = %{dot | rounds: dot.rounds - 1, carry: total - trunc(total)}
         s = %{Map.put(s, key, dot) | foe: s.foe - hit}
         if hit > 0, do: note(s, {key, hit}), else: s
