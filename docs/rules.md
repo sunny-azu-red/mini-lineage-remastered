@@ -396,20 +396,20 @@ Example: a Young Keltir (DEX 30, level 1) has Accuracy and Evasion √30 × 6 + 
 
 ## 19. Skills
 
-Every set starts with one skill from its own tree, and each race's is different. Its trainer (§25)
-teaches it two more before the class change, again each set its own. Each costs MP and then rests
-for its reuse.
+Every set starts with one skill from its own tree, and each race's is different. A Mystic also
+starts with what Lineage II gave it free at level 1, and its trainer (§25) teaches the rest before
+the class change, each set its own. Each costs MP and then rests for its reuse.
 
-| Set | First skill | Then |
-|---|---|---|
-| Human Fighter | Power Strike | Mortal Blow, Power Shot |
-| Elven Fighter | Power Shot | Defense Aura, Elemental Heal |
-| Dark Fighter | Mortal Blow | Attack Aura, Drain Health |
-| Orc Fighter | Iron Punch | Power Strike, Relax |
-| Human Mystic | Wind Strike | Self Heal, Ice Bolt |
-| Elven Mystic | Ice Bolt | Wind Strike, Heal |
-| Dark Mystic | Vampiric Touch | Curse: Poison, Wind Shackle |
-| Orc Mystic | Chill Flame | Soul Cry, Life Drain |
+| Set | First skill | Also at level 1 | Then |
+|---|---|---|---|
+| Human Fighter | Power Strike | | Mortal Blow, Power Shot |
+| Elven Fighter | Power Shot | | Defense Aura, Elemental Heal |
+| Dark Fighter | Mortal Blow | | Attack Aura, Drain Health |
+| Orc Fighter | Iron Punch | | Power Strike, Relax |
+| Human Mystic | Wind Strike | Self Heal | Ice Bolt |
+| Elven Mystic | Ice Bolt | Self Heal, Wind Strike | Heal |
+| Dark Mystic | Vampiric Touch | Self Heal | Curse: Poison, Wind Shackle |
+| Orc Mystic | Chill Flame | Soul Cry | Life Drain |
 
 Each at level 1 (§25 has the later levels):
 
@@ -450,7 +450,7 @@ Punch need their weapons (§23); the rest need none.
 - **Burn:** power HP a second for 15 seconds, which never takes the last HP. It is not cast again on
   a target that still burns.
 - **Ice Bolt** also slows its target for 120 seconds, and a slowed monster swings 30% less.
-- **Heal:** power HP back, never past the most.
+- **Heal:** power + √M.Atk HP back, rounded down and never past the most.
 - **Aura:** Defense Aura multiplies P.Def and Attack Aura P.Atk by 1.08, for 20 minutes, in the
   fight and out of it.
 - **Poison:** lands 70% of the time, and then takes power HP every 3 seconds for 30 seconds, never
@@ -480,7 +480,8 @@ A monster's drain heals it 20% of what the character lost.
 Example: a level 1 Human Fighter with its Squire's Sword (P.Atk 6.48) strikes a Young Keltir (P.Def
 39) with Power Strike for 70 × (6.48 + 25) ÷ 39 = **56.5** before the ±10%, where a blow does
 **11.6**. A Dark Fighter's DEX 34 lands Mortal Blow 40 × 1.14 = **45.6%** of the time. The Human
-Fighter's Atk. Spd. 416 rests Power Strike 13,000 × 333 ÷ 416 = **10,406** milliseconds.
+Fighter's Atk. Spd. 416 rests Power Strike 13,000 × 333 ÷ 416 = **10,406** milliseconds. A Mystic
+with 20 M.Atk mends 42 + √20 = 46.47, so **46** HP, with Self Heal.
 
 ## 20. The hunt
 
@@ -493,10 +494,11 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round.
 - **The character** uses the first of these it knows that is ready and paid for (§19):
-  1. a heal, below half its HP;
-  2. an aura it has not raised;
-  3. a toggle not lit;
-  4. the strongest spell (magic, drain or burn);
+  1. an aura it has not raised;
+  2. a toggle not lit;
+  3. the strongest spell (magic, drain or burn);
+  4. a heal, below half its HP, so a heal fills the time its spells rest and never stops it
+     attacking;
   5. while the monster has more than half its HP, a poison it does not carry, then a shackle.
 
   A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
@@ -666,7 +668,8 @@ Each starting village's trainers teach its own race and nobody else, for the SP 
 on the hunt (§20). A line is learned once the character has reached its level, knows the level
 before it, and pays its SP. Each set's list is short: its first skill and the two skills §19 gives
 it, each at every level. A line taught at level 1 for nothing is known from the start: every set's
-first skill, and Self Heal, Wind Strike and Soul Cry for the Human, Elven and Orc Mystics.
+first skill, Self Heal for every Mystic but the Orc, Wind Strike for the Elven Mystic and Soul Cry
+for the Orc Mystic, as §19 lists them.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
@@ -755,6 +758,7 @@ first skill, and Self Heal, Wind Strike and Soul Cry for the Human, Elven and Or
 | Elven Mystic | Ice Bolt | 2 | 7 | 260 |
 | Elven Mystic | Ice Bolt | 3 | 14 | 1,100 |
 | Elven Mystic | Ice Bolt | 4 | 14 | 1,100 |
+| Elven Mystic | Self Heal | 1 | 1 | 0 |
 | Elven Mystic | Wind Strike | 1 | 1 | 0 |
 | Elven Mystic | Wind Strike | 2 | 7 | 260 |
 | Elven Mystic | Wind Strike | 3 | 7 | 260 |
@@ -768,6 +772,7 @@ first skill, and Self Heal, Wind Strike and Soul Cry for the Human, Elven and Or
 | Elven Mystic | Heal | 6 | 14 | 700 |
 | Dark Mystic | Vampiric Touch | 1 | 1 | 0 |
 | Dark Mystic | Vampiric Touch | 2 | 14 | 1,100 |
+| Dark Mystic | Self Heal | 1 | 1 | 0 |
 | Dark Mystic | Curse: Poison | 1 | 7 | 470 |
 | Dark Mystic | Wind Shackle | 1 | 14 | 2,100 |
 | Orc Mystic | Chill Flame | 1 | 1 | 0 |

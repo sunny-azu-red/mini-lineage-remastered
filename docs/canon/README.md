@@ -114,13 +114,15 @@ where it has any.
   and SP (rules §19, §25). Lineage II's trees are far larger.
 - **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
   Mastery are left out, and each set learns two actives in their place.
-- **Self Heal, Wind Strike (Elven Mystic) and Soul Cry come free at level 1,** as Lineage II taught
-  them for 0 SP; the others are bought at their canon levels.
-- **The character chooses its own skills in a fight** (rules §20): a heal below half HP, then its
-  auras, its toggle, its strongest spell, and a curse only on a monster above half its HP. In
-  Lineage II the player chose.
-- **A heal mends its power,** as L2J has it; aCis adds √M.Atk. **Curse: Poison lands 70% of the
-  time,** aCis's power; L2J's 10 rolls against the target's CON and M.Def, which has no place
+- **Self Heal (every Mystic but the Orc), Wind Strike (Elven Mystic) and Soul Cry come free at level
+  1,** as Lineage II taught them for 0 SP; the others are bought at their canon levels. The Dark
+  Mystic's canon Wind Strike is left out, its first skill being Vampiric Touch.
+- **The character chooses its own skills in a fight** (rules §20): its auras, its toggle, its
+  strongest spell, then while its spells rest a heal below half HP, or a curse on a monster above
+  half its HP. In Lineage II the player chose.
+- **A heal mends its power + √M.Atk,** as aCis has it and every retail-derived source shows; L2J
+  heals its power alone. No source from Interlude's own time settles it. **Curse: Poison lands 70%
+  of the time,** aCis's power; L2J's 10 rolls against the target's CON and M.Def, which has no place
   here. **Wind Shackle lands 80% of the time,** its power with no MEN save.
 - **Relax works on the tick of rest,** 5 HP more for 3 MP, while HP is short. In Lineage II it sat
   the character down, drained 2 MP every 2 seconds and ended when it stood or HP was full.

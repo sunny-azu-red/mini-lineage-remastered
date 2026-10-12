@@ -178,14 +178,18 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "what a character knows" do
-    test "a heal is cast below half HP, and not above it" do
+    test "a heal is cast below half HP while the spells rest, and not above it" do
       Rng.put_source(fn -> 0.0 end)
       mystic = character(0, :mystic)
       skills = Player.known_skills(mystic)
       stats = Player.stats(mystic)
 
       hurt = Hunt.fight(stats, %{mystic | health: 10}, skills, dummy("Young Keltir"))
-      assert hd(events(hurt, :heal)) == {1, {:heal, "Self Heal", 42}}
+      [{first, _}, {second, _} | _] = events(hurt, :cast)
+      [{healed, heal} | _] = events(hurt, :heal)
+
+      assert first == 1 and healed in first..second
+      assert heal == {:heal, "Self Heal", Hunt.heal_amount(42, stats.m_atk)}
 
       whole = Hunt.fight(stats, mystic, skills, dummy("Young Keltir"))
       assert events(whole, :heal) == []

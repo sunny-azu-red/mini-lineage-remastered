@@ -595,7 +595,8 @@ defmodule MiniLineageWeb.Screens do
 
   defp skill_line(name, level), do: skill_effect(MiniLineage.Game.Rules.skill(name, level))
 
-  defp skill_effect(%{kind: :heal} = s), do: ", mends #{s.power} HP for #{s.mp} MP."
+  defp skill_effect(%{kind: :heal} = s),
+    do: ", mends #{s.power} HP and √M.Atk more for #{s.mp} MP."
 
   defp skill_effect(%{kind: :aura} = s),
     do: ", #{stat_name(s.stat)} ×#{s.times} for #{div(s.lasts, 60_000)} minutes, for #{s.mp} MP."

@@ -84,6 +84,7 @@ Elven Mystic,Ice Bolt,1,1,0
 Elven Mystic,Ice Bolt,2,7,260
 Elven Mystic,Ice Bolt,3,14,1100
 Elven Mystic,Ice Bolt,4,14,1100
+Elven Mystic,Self Heal,1,1,0
 Elven Mystic,Wind Strike,1,1,0
 Elven Mystic,Wind Strike,2,7,260
 Elven Mystic,Wind Strike,3,7,260
@@ -97,6 +98,7 @@ Elven Mystic,Heal,5,14,700
 Elven Mystic,Heal,6,14,700
 Dark Mystic,Vampiric Touch,1,1,0
 Dark Mystic,Vampiric Touch,2,14,1100
+Dark Mystic,Self Heal,1,1,0
 Dark Mystic,Curse: Poison,1,7,470
 Dark Mystic,Wind Shackle,1,14,2100
 Orc Mystic,Chill Flame,1,1,0

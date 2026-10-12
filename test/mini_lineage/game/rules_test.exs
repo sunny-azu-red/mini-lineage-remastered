@@ -221,17 +221,23 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§19 each set's first skill, every race's its own, and the two its trainer adds" do
+    test "§19 each set's first skill, every race's its own, what else is free, and the rest" do
       rows = table("Set | First skill")
       assert length(rows) == 8
+      names = fn cell -> cell |> String.split(", ", trim: true) |> Enum.sort() end
 
-      for [set, first, then] <- rows do
+      for [set, first, free, then] <- rows do
         %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
         assert Rules.first_skill(race, path).name == first, set
-        assert %{learn_at: 1, sp: 0} = Enum.find(Rules.lessons(set), &(&1.skill == first)), set
 
-        taught = for(lesson <- Rules.lessons(set), lesson.skill != first, do: lesson.skill)
-        assert Enum.uniq(taught) == String.split(then, ", "), set
+        {free_lines, paid} =
+          set |> Rules.lessons() |> Enum.split_with(&(&1.learn_at == 1 and &1.sp == 0))
+
+        free_names = Enum.map(free_lines, & &1.skill)
+        assert Enum.sort(free_names) == names.(first <> ", " <> free), set
+
+        rest = for lesson <- paid, lesson.skill not in free_names, uniq: true, do: lesson.skill
+        assert Enum.sort(rest) == names.(then), set
       end
 
       for path <- [:fighter, :mystic] do
@@ -603,6 +609,10 @@ defmodule MiniLineage.Game.RulesTest do
       {mystic, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Novice")
       bare = %{mystic | items: []}
       assert Player.stats(mystic).max_mp - Player.stats(bare).max_mp == 29
+    end
+
+    test "§19 Self Heal at 20 M.Atk mends 46" do
+      assert MiniLineage.Game.Hunt.heal_amount(42, 20) == 46
     end
 
     test "§24 a Broadsword costs 12,500 and sells back for 6,250" do

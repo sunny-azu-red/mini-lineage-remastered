@@ -161,25 +161,25 @@ defmodule MiniLineage.Game.Hunt do
       else: %{s | toggle: nil, stats: Map.update!(s.stats, :p_atk, &(&1 - toggle.power))}
   end
 
-  # §20: what a character does when it is free to: heal when hurt, raise its auras, light its
-  # toggle, cast its strongest spell, curse the monster while its spells rest, and otherwise swing.
+  # §20: what a character does when it is free to: raise its auras, light its toggle, cast its
+  # strongest spell, and while its spells rest heal when hurt or curse; otherwise it swings.
   defp character_turn(s, skills, foe) do
     hurt? = s.health < s.stats.max_hp * @heal_below
     # A curse is not worth its cast on a monster already half dead.
     fresh? = s.foe > foe.hp * @curse_above
 
     choice =
-      Enum.find(skills, &(&1.kind == :heal and hurt? and ready?(s, &1))) ||
-        Enum.find(
-          skills,
-          &(&1.kind == :aura and not MapSet.member?(s.auras, &1.name) and ready?(s, &1))
-        ) ||
+      Enum.find(
+        skills,
+        &(&1.kind == :aura and not MapSet.member?(s.auras, &1.name) and ready?(s, &1))
+      ) ||
         Enum.find(skills, &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp)) ||
         skills
         |> Enum.filter(
           &(&1.kind in @spells and ready?(s, &1) and not (&1.kind == :burn and s.burn != nil))
         )
         |> Enum.max_by(& &1.power, fn -> nil end) ||
+        Enum.find(skills, &(&1.kind == :heal and hurt? and ready?(s, &1))) ||
         if(fresh?,
           do:
             Enum.find(skills, &(&1.kind == :poison and s.poison == nil and ready?(s, &1))) ||
@@ -207,7 +207,7 @@ defmodule MiniLineage.Game.Hunt do
 
     case skill.kind do
       :heal ->
-        healed = min(skill.power, stats.max_hp - s.health)
+        healed = min(heal_amount(skill.power, stats.m_atk), stats.max_hp - s.health)
         note(%{s | health: s.health + healed}, {:heal, skill.name, healed})
 
       :aura ->
@@ -295,6 +295,9 @@ defmodule MiniLineage.Game.Hunt do
   @doc "§19: a physical skill's damage, before what it hits takes it."
   def skill_damage(p_atk, power, p_def, spread \\ Formulas.damage_spread()),
     do: max(70 * (p_atk + power) / p_def * spread, 1.0)
+
+  @doc "§19: what a heal mends, its power and √M.Atk, rounded down."
+  def heal_amount(power, m_atk), do: trunc(power + :math.sqrt(m_atk))
 
   @doc "§19: a blow lands 40% × the DEX bonus of the time, at most 80%."
   def blow_chance(dex), do: min(40 * Formulas.bonus(:dex, dex), 80)
