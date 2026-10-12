@@ -228,6 +228,7 @@ defmodule MiniLineage.Game.RulesTest do
       for [set, first, then] <- rows do
         %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
         assert Rules.first_skill(race, path).name == first, set
+        assert %{learn_at: 1, sp: 0} = Enum.find(Rules.lessons(set), &(&1.skill == first)), set
 
         taught = for(lesson <- Rules.lessons(set), lesson.skill != first, do: lesson.skill)
         assert Enum.uniq(taught) == String.split(then, ", "), set

@@ -2,7 +2,7 @@
 # rest, buy the next gear the purse allows, learn what the trainer offers. It reports where runs die.
 #
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %]
-alias MiniLineage.Game.{Actions, Clock, Constants, Player, Rng, Rules, Shop}
+alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules, Shop}
 
 {runs, top, rest_below} =
   case System.argv() do
@@ -12,7 +12,8 @@ alias MiniLineage.Game.{Actions, Clock, Constants, Player, Rng, Rules, Shop}
   end
 
 Application.ensure_all_started(:tz)
-Clock.put_now(~U[2026-07-01 09:00:00Z])
+# The clock moves with the run, a tick of rest and a round of a fight at a time, so auras fade.
+start = ~U[2026-07-01 09:00:00Z]
 :rand.seed(:exsss, {7, 7, 7})
 Rng.put_source(fn -> :rand.uniform() end)
 
@@ -101,6 +102,7 @@ for race <- [0, 2, 3, 1], path <- [:fighter, :mystic] do
 
   results =
     for _ <- 1..runs do
+      Clock.put_now(start)
       {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Bench")
 
       Stream.iterate({player, 0, 0, %{}}, fn {p, kills, ticks, reached} ->
@@ -113,8 +115,11 @@ for race <- [0, 2, 3, 1], path <- [:fighter, :mystic] do
             do: Ladder.rest(%{p | combat: nil}),
             else: {p, 0}
 
+        Clock.put_now(DateTime.add(Clock.now(), rested * 3))
         level = Player.level(p)
-        {p, _} = Actions.hunt(p)
+        {p, {:ok, flash}} = Actions.hunt(p)
+        rounds = length(Map.get(flash, :log, [nil])) - 1
+        Clock.put_now(DateTime.add(Clock.now(), round(rounds * Hunt.round_ms()), :millisecond))
         reached = Map.put_new(reached, Player.level(p), kills + 1)
         {p, kills + 1, ticks + rested, Map.put(reached, :died_at, if(p.dead, do: level))}
       end)

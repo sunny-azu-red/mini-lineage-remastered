@@ -82,15 +82,12 @@ defmodule MiniLineage.Game.Player do
     {player, %{text: Narrative.alert(began), type: :info, sound: "start"}}
   end
 
-  @doc "Rules §25: its first skill, and every line its trainer teaches at level 1 for nothing."
+  @doc "Rules §25: every line its trainer teaches at level 1 for nothing, its first skill among them."
   def first_skills(race_id, path) do
-    free =
-      for lesson <- Rules.lessons(Rules.set(race_id, path).name),
-          lesson.learn_at == 1 and lesson.sp == 0,
-          into: %{},
-          do: {lesson.skill, lesson.level}
-
-    Map.put(free, Rules.first_skill(race_id, path).name, 1)
+    for lesson <- Rules.lessons(Rules.set(race_id, path).name),
+        lesson.learn_at == 1 and lesson.sp == 0,
+        into: %{},
+        do: {lesson.skill, lesson.level}
   end
 
   # ------------------------------------------------------------------- stats

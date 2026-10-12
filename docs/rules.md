@@ -664,11 +664,13 @@ Example: a Broadsword costs **12,500** and sells back for **6,250**.
 
 Each starting village's trainers teach its own race and nobody else, for the SP a character earns
 on the hunt (§20). A line is learned once the character has reached its level, knows the level
-before it, and pays its SP. Each set's list is short: its first skill's later levels and the two
-skills §19 gives it. A line taught at level 1 for nothing is known from the start.
+before it, and pays its SP. Each set's list is short: its first skill and the two skills §19 gives
+it, each at every level. A line taught at level 1 for nothing is known from the start: every set's
+first skill, and Self Heal, Wind Strike and Soul Cry for the Human, Elven and Orc Mystics.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
+| Human Fighter | Power Strike | 1 | 1 | 0 |
 | Human Fighter | Power Strike | 2 | 5 | 50 |
 | Human Fighter | Power Strike | 3 | 5 | 50 |
 | Human Fighter | Power Strike | 4 | 10 | 370 |
@@ -695,6 +697,7 @@ skills §19 gives it. A line taught at level 1 for nothing is known from the sta
 | Human Fighter | Power Shot | 7 | 15 | 1,300 |
 | Human Fighter | Power Shot | 8 | 15 | 1,300 |
 | Human Fighter | Power Shot | 9 | 15 | 1,300 |
+| Elven Fighter | Power Shot | 1 | 1 | 0 |
 | Elven Fighter | Power Shot | 2 | 5 | 50 |
 | Elven Fighter | Power Shot | 3 | 5 | 50 |
 | Elven Fighter | Power Shot | 4 | 10 | 310 |
@@ -707,6 +710,7 @@ skills §19 gives it. A line taught at level 1 for nothing is known from the sta
 | Elven Fighter | Elemental Heal | 1 | 15 | 1,100 |
 | Elven Fighter | Elemental Heal | 2 | 15 | 1,100 |
 | Elven Fighter | Elemental Heal | 3 | 15 | 1,100 |
+| Dark Fighter | Mortal Blow | 1 | 1 | 0 |
 | Dark Fighter | Mortal Blow | 2 | 5 | 50 |
 | Dark Fighter | Mortal Blow | 3 | 5 | 50 |
 | Dark Fighter | Mortal Blow | 4 | 10 | 310 |
@@ -718,6 +722,7 @@ skills §19 gives it. A line taught at level 1 for nothing is known from the sta
 | Dark Fighter | Attack Aura | 1 | 10 | 910 |
 | Dark Fighter | Drain Health | 1 | 15 | 1,400 |
 | Dark Fighter | Drain Health | 2 | 15 | 1,400 |
+| Orc Fighter | Iron Punch | 1 | 1 | 0 |
 | Orc Fighter | Iron Punch | 2 | 5 | 60 |
 | Orc Fighter | Iron Punch | 3 | 5 | 60 |
 | Orc Fighter | Iron Punch | 4 | 10 | 460 |
@@ -736,6 +741,7 @@ skills §19 gives it. A line taught at level 1 for nothing is known from the sta
 | Orc Fighter | Power Strike | 8 | 15 | 1,300 |
 | Orc Fighter | Power Strike | 9 | 15 | 1,300 |
 | Orc Fighter | Relax | 1 | 5 | 190 |
+| Human Mystic | Wind Strike | 1 | 1 | 0 |
 | Human Mystic | Wind Strike | 2 | 7 | 240 |
 | Human Mystic | Wind Strike | 3 | 7 | 240 |
 | Human Mystic | Wind Strike | 4 | 14 | 1,100 |
@@ -745,6 +751,7 @@ skills §19 gives it. A line taught at level 1 for nothing is known from the sta
 | Human Mystic | Ice Bolt | 2 | 7 | 240 |
 | Human Mystic | Ice Bolt | 3 | 14 | 1,100 |
 | Human Mystic | Ice Bolt | 4 | 14 | 1,100 |
+| Elven Mystic | Ice Bolt | 1 | 1 | 0 |
 | Elven Mystic | Ice Bolt | 2 | 7 | 260 |
 | Elven Mystic | Ice Bolt | 3 | 14 | 1,100 |
 | Elven Mystic | Ice Bolt | 4 | 14 | 1,100 |
@@ -759,9 +766,11 @@ skills §19 gives it. A line taught at level 1 for nothing is known from the sta
 | Elven Mystic | Heal | 4 | 14 | 700 |
 | Elven Mystic | Heal | 5 | 14 | 700 |
 | Elven Mystic | Heal | 6 | 14 | 700 |
+| Dark Mystic | Vampiric Touch | 1 | 1 | 0 |
 | Dark Mystic | Vampiric Touch | 2 | 14 | 1,100 |
 | Dark Mystic | Curse: Poison | 1 | 7 | 470 |
 | Dark Mystic | Wind Shackle | 1 | 14 | 2,100 |
+| Orc Mystic | Chill Flame | 1 | 1 | 0 |
 | Orc Mystic | Chill Flame | 2 | 14 | 1,800 |
 | Orc Mystic | Soul Cry | 1 | 1 | 0 |
 | Orc Mystic | Soul Cry | 2 | 14 | 1,800 |

@@ -534,6 +534,8 @@ try {
         { timeout: 5000 });
     check('the home village\'s trainer teaches the set\'s own first skill',
         await page.locator('#lesson-mortal-blow-2[data-status="ready"]').count() === 1);
+    check('...listing its level 1 as known, for 0 SP, as every free line is',
+        await page.locator('#lesson-mortal-blow-1.owned[data-status="known"]').count() === 1);
     await page.selectOption('#learn-form select', 'Mortal Blow|2');
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-2[data-status="known"]', { timeout: 5000 });
