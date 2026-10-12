@@ -127,10 +127,13 @@ defmodule MiniLineageWeb.Controls do
   attr :rest, :global
 
   def select_action(assigns) do
-    chosen? = chosen?(assigns.picked)
+    # A pick the options no longer hold (a lesson just learned) falls back to the placeholder in the
+    # browser, so the button must too, or it reads as acting while it goes back.
+    chosen? = Enum.any?(assigns.options, &(&1.value == assigns.picked))
 
     assigns =
       assign(assigns,
+        chosen?: chosen?,
         label: if(chosen?, do: assigns.active_label, else: assigns.default_label),
         variant: if(chosen?, do: assigns.active_variant, else: assigns.default_variant)
       )
@@ -141,7 +144,7 @@ defmodule MiniLineageWeb.Controls do
         <%!-- `selected` explicitly: relabelling the button re-renders the options, and would
               otherwise drop the player's choice. --%>
         <select name={@name} class="form-select">
-          <option :if={@placeholder} value="" selected={!chosen?(@picked)}>{@placeholder}</option>
+          <option :if={@placeholder} value="" selected={!@chosen?}>{@placeholder}</option>
           <option
             :for={option <- @options}
             value={option.value}
@@ -156,8 +159,6 @@ defmodule MiniLineageWeb.Controls do
     </form>
     """
   end
-
-  defp chosen?(picked), do: picked not in [nil, ""]
 
   # ------------------------------------------------------------------ tables
 

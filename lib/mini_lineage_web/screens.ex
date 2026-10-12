@@ -75,14 +75,14 @@ defmodule MiniLineageWeb.Screens do
       },
       %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
       %{title: "Combat Stats", icon: "⚖️", section: :stats},
-      %{title: "Learned Skills", icon: "📖", section: :skills, body_class: "rows"}
+      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}
     ]
 
   # Rules §25: what the trainers teach, and beside it what the character already knows.
   def panels("trainer", view, _catalog),
     do: [
       %{title: title("trainer", view), icon: icon("trainer", view)},
-      %{title: "Learned Skills", icon: "📖", section: :skills, body_class: "rows"}
+      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}
     ]
 
   # Rules §23: what is equipped and carried, and beside it the stats it makes, which count as gear moves.
@@ -375,7 +375,7 @@ defmodule MiniLineageWeb.Screens do
       )
 
     ~H"""
-    <p id="trainer-intro" phx-no-format>
+    <p id="trainer-intro" phx-hook="AnimatedValues" phx-no-format>
       The trainers of {@view.town.emoji} {@view.town.name} teach their own, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="trainer-sp" value={@view.sp} /> SP</span>.
     </p>
     <.data_table id="lessons" sort={@sort}>

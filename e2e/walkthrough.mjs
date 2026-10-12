@@ -223,7 +223,7 @@ try {
         new URL(page.url()).pathname === '/character', page.url());
     const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
-        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|📖 Learned Skills'
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|🎓 Learned Skills'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
     check('...its Learned Skills panel naming what it knows, Soul Cry free from the start and told as a toggle',
         await page.locator('#skill-chill-flame').count() === 1
@@ -586,6 +586,11 @@ try {
     await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',
         Number(await sp()) === spBefore + 10000 - 50, await sp());
+    check('...the dropdown and its button both going back to the village, the lesson no longer offered',
+        await page.inputValue('#learn-form select') === '' && await text('#learn-form button') === 'Return',
+        await text('#learn-form button'));
+    check('...and the SP counts down rather than jumping',
+        await page.locator('#trainer-intro[phx-hook="AnimatedValues"] [data-key="trainer-sp"]').count() === 1);
     check('...moving into the Learned Skills panel and offering the next line',
         await text('#skill-mortal-blow .skill') === 'Mortal Blow 2' &&
         await page.locator('#lesson-mortal-blow-3[data-status="ready"]').count() === 1,

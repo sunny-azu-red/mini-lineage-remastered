@@ -128,6 +128,41 @@ defmodule MiniLineageWeb.TrainerPageTest do
     assert %{sp: 50, skills: %{"Power Strike" => 2}} = stored(session)
   end
 
+  test "the SP counts down as it is spent, under the panel's own icon for what is learned" do
+    {_view, _session, conn} = human(build_conn(), 100)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+
+    assert has_element?(
+             view,
+             ~s(#trainer-intro[phx-hook="AnimatedValues"] [data-key="trainer-sp"])
+           )
+
+    assert has_element?(view, "#screen h2", "🎓 Learned Skills")
+  end
+
+  test "a lesson learned leaves the button going back, as the dropdown falls back to it" do
+    {_view, _session, conn} = human(build_conn(), 100)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+    lesson = %{"lesson" => "Power Strike|2"}
+
+    view |> form("#learn-form", lesson) |> render_change(%{"_target" => ["lesson"]})
+    assert has_element?(view, "#learn-form button", "🎓 Learn")
+
+    view |> form("#learn-form", lesson) |> render_submit()
+    assert has_element?(view, "#learn-form button", "Return")
+    assert has_element?(view, ~s(#learn-form option[value=""][selected]))
+  end
+
+  test "a lesson beyond the purse is refused in plain words" do
+    {_view, session, conn} = human(build_conn(), 49)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+
+    view |> form("#learn-form", %{"lesson" => "Power Strike|2"}) |> render_submit()
+
+    assert has_element?(view, "#flash", "You do not have enough SP to learn that skill.")
+    assert %{sp: 49, skills: %{"Power Strike" => 1}} = stored(session)
+  end
+
   test "no trainer away from the home village, even in another village" do
     {_view, session, conn} = human(build_conn(), 0)
 

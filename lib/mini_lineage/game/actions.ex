@@ -25,7 +25,7 @@ defmodule MiniLineage.Game.Actions do
     no_lesson: "The trainer does not teach that.",
     too_soon: "You are not yet ready to learn that.",
     out_of_order: "You must learn the level before it first.",
-    no_sp: "You have not earned the SP for that.",
+    no_sp: "You do not have enough SP to learn that skill.",
     spent: "You are too weak to hunt, and must rest first.",
     not_wearable: "That is not something you put on.",
     not_potion: "That is not something you drink.",
