@@ -27,14 +27,14 @@ defmodule MiniLineageWeb.GearPageTest do
 
   defp carried(session, name), do: Enum.find(stored(session).items, &(&1.name == name))
 
-  test "a new character wears its kit, the sidebar naming its weapons and its armour as the way in" do
+  test "a new character wears its kit, the sidebar naming it beside the way in" do
     {view, _session, _conn} = human(build_conn(), 0)
 
-    assert has_element?(view, ~s(#equipped-weapons a[href="/inventory"]), "Squire's Sword")
+    assert has_element?(view, "#equipped-weapons .stat-value", "Squire's Sword")
+    assert has_element?(view, "#equipped-armour .stat-value", "Squire's Shirt")
+    refute has_element?(view, "#equipped-weapons a, #equipped-armour a")
 
-    assert has_element?(view, ~s(#equipped-armour a[href="/inventory"]), "Squire's Shirt")
-
-    view |> element("#equipped-armour a", "Squire's Pants") |> render_click()
+    view |> element(~s(#purse a[href="/inventory"])) |> render_click()
     assert_patch(view, "/inventory")
   end
 
@@ -142,11 +142,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
     {:ok, view, _html} = live(conn, ~p"/talking-island")
 
-    assert has_element?(
-             view,
-             ~s(#carried-potions a[href="/inventory"]),
-             "Lesser Healing Potion ×10"
-           )
+    refute has_element?(view, "#inventory", "Lesser Healing Potion")
 
     Characters.mutate(session, &{%{&1 | health: 10}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")

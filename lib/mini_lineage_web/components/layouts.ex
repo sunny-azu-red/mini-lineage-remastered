@@ -168,41 +168,28 @@ defmodule MiniLineageWeb.Layouts do
         body_class="rows"
         collapsible
       >
-        <%!-- What is equipped, in two rows; each names a link to the inventory, as the name above does to
-              the character page. --%>
-        <div :for={{id, label, slots, none} <- equipped_rows()} class="stat-row stacked" id={id}>
-          <span class="stat-label">{label}</span>
+        <%!-- Each list says what it is by what is in it, so neither needs a label. --%>
+        <div :for={{id, slots, none} <- equipped_rows()} class="stat-row stacked" id={id}>
           <span :if={equipped(@view.items, slots) == []} class="stat-value muted">{none}</span>
-          <span :for={name <- equipped(@view.items, slots)} class="stat-value">
-            <.link patch={~p"/inventory"}>{name}</.link>
-          </span>
+          <span :for={name <- equipped(@view.items, slots)} class="stat-value">{name}</span>
         </div>
-        <%!-- Rules §26: the potions it would drink, counted, the way in as the gear is. --%>
-        <div class="stat-row stacked" id="carried-potions">
-          <span class="stat-label">Potions</span>
-          <span :if={potions(@view.items) == []} class="stat-value muted">None</span>
-          <span :for={item <- potions(@view.items)} class="stat-value">
-            <.link patch={~p"/inventory"}>{item.name} ×{item.count}</.link>
-          </span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Adena</span>
+        <div class="stat-row" id="purse">
           <span class="stat-value adena">🪙
           <Controls.figure key="adena" value={@view.adena} format={:short} /></span>
+          <%!-- The bag stays outside the anchor, so the underline is under the word alone. --%>
+          <span class="stat-value row-end">🎒 <.link patch={~p"/inventory"}>Open</.link></span>
         </div>
       </Controls.panel>
     </div>
     """
   end
 
-  # What is equipped, in two lists headed above them, each name a link to the inventory.
+  # What is equipped, in two lists, each with what it says when empty.
   defp equipped_rows,
     do: [
-      {"equipped-weapons", "Weapons", [:weapon, :shield], "Bare hands"},
-      {"equipped-armour", "Armour", [:chest, :legs, :necklace], "None"}
+      {"equipped-weapons", [:weapon, :shield], "Bare hands"},
+      {"equipped-armour", [:chest, :legs, :necklace], "Birthday suit"}
     ]
-
-  defp potions(items), do: Enum.filter(items, & &1.potion?)
 
   defp equipped(items, slots),
     do: for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name)

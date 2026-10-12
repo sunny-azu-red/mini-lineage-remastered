@@ -471,8 +471,11 @@ try {
     check('...and retreating goes back to the village', (await state()).screen === 'town');
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
-    check('the sidebar names the weapons and armour equipped, each a link to the inventory',
-        /Dagger/.test(await text('#equipped-weapons')) && await page.locator('#equipped-armour a').count() === 2,
+    check('the sidebar names the weapons and armour equipped, unlabelled, and one link opens the inventory, underlining only its word',
+        /Dagger/.test(await text('#equipped-weapons'))
+        && await page.locator('#equipped-armour .stat-value').count() === 2
+        && await page.locator('#inventory .stat-label').count() === 0
+        && await page.locator('#inventory a').count() === 1 && await text('#purse a') === 'Open',
         await text('#inventory'));
     await page.click('#header-link');
     await onScreen('town');
@@ -497,7 +500,7 @@ try {
         await text('#flash'));
     await adena(wallet - 768);
     check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
-    await page.click('#equipped-weapons a');
+    await page.click('#purse a');
     await onScreen('inventory');
     check('the inventory lists everything carried, what is equipped highlighted',
         await page.locator('#items tr.owned').count() === 3, String(await page.locator('#items tr.owned').count()));
@@ -532,11 +535,11 @@ try {
         (await state()).adena === wallet - 768 - 900, String((await state()).adena));
     await page.click('#header-link');
     await onScreen('town');
-    check('...and the sidebar counts them', /Lesser Healing Potion ×10/.test(await text('#carried-potions')),
-        await text('#carried-potions'));
-    await page.click('#carried-potions a');
+    check('...which the sidebar leaves to the inventory', !/Potion/.test(await text('#inventory')),
+        await text('#inventory'));
+    await page.click('#purse a');
     await onScreen('inventory');
-    check('...the way to the inventory, which drinks below half HP to begin with',
+    check('...and the inventory drinks them below half HP to begin with',
         /below 50%/.test(await text('#potion-share')), await text('#potion-share'));
     await page.selectOption('#potion-form select', '30');
     await page.click('#potion-form button');
@@ -609,7 +612,7 @@ try {
     // ---- a weapon skill without its weapon (rules §23) ------------------------------------------
     await page.click('#header-link');
     await onScreen('town');
-    await page.click('#equipped-weapons a');
+    await page.click('#purse a');
     await onScreen('inventory');
     const sword = await page.$eval('#wear-form select', (el) =>
         [...el.options].find(o => o.textContent.includes("Squire's Sword"))?.value);

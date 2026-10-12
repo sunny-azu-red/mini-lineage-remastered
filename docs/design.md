@@ -28,6 +28,10 @@ was got wrong once.
   can't do this (it is symmetric) and a margin on one child misaligns the rest.
 - **The gold line is the panel BODY's `border-top`**, never the header's `border-bottom`, so a shut
   panel draws no line. The chevron turns off `aria-expanded`.
+- **A list is spaced by its gap, never by line-height.** A `.stat-row.stacked` keeps every line at
+  line-height 1, as every other row does; leading added to some lines spaces the panel unevenly. A
+  link's underline would need that room, so a list holds none: a panel's way somewhere is one
+  link of its own, on its own row.
 - **Nothing ends a panel on a margin.** `.panel-body :last-child` drops it at any depth; nothing is
   marked last by hand.
 - **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.

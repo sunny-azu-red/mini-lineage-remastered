@@ -159,16 +159,17 @@
     padding-block: 10px;
 }
 
-/* A heading with its list under it: what the Inventory panel says is equipped. At line-height 1
-   each name's underline, 2px below it, touched the next name. */
+/* A list, one name to a line: what the Inventory panel says is equipped. Every line keeps
+   line-height 1, so the gap alone spaces it; no name is a link to need more. */
 .stat-row.stacked {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 6px;
 }
 
-.stat-row.stacked .stat-value {
-    line-height: 18px;
+/* Whatever closes a row stands at its right edge. */
+.stat-row>.row-end {
+    margin-left: auto;
 }
 
 /* A learned skill the weapon in hand cannot use, as a lesson not yet learnable is: its figures mute

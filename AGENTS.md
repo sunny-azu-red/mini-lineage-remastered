@@ -47,8 +47,9 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`
   and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`. `Layouts` holds the shell: `head`,
   `site_header`, the sidebar and `footer`, which `ErrorHTML` draws too.
-- **The sidebar** (level and name, the name linking to `/character`, the vitals, then the Inventory)
-  is one fixed-width `.side` column, drawn in town only. One breakpoint stacks it.
+- **The sidebar** (level and name, the name linking to `/character`, the vitals, then the Inventory,
+  its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town only. One
+  breakpoint stacks it.
 - **A new component, hook or shared control is written into this file in the change that adds it.**
   Before writing one, look here and in `Controls`, and extend what exists with an option instead.
 
