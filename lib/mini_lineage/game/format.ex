@@ -41,10 +41,8 @@ defmodule MiniLineage.Game.Format do
       unit
   end
 
-  @doc "Hundredths of a percent, as the XP bar reads them: 5413 -> \"54.13%\"."
-  def percent(hundredths) when is_integer(hundredths) and hundredths >= 0 do
-    "#{div(hundredths, 100)}.#{hundredths |> rem(100) |> Integer.to_string() |> String.pad_leading(2, "0")}%"
-  end
+  @doc "Whole percent, as the XP bar reads them: 54 -> \"54%\"."
+  def percent(whole) when is_integer(whole) and whole >= 0, do: "#{whole}%"
 
   @doc "Tenths, a critical rate's: 88 is \"8.8\". Twinned with `tenthsFigure` in animated-values.js."
   def tenths(tenths) when is_integer(tenths) and tenths >= 0,

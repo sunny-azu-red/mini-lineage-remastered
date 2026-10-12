@@ -183,7 +183,7 @@ try {
         born.xp === 0 && born.xpRequired === 68, `${born.xp}/${born.xpRequired}`);
     const labels = await page.locator('#sidebar .bar-label').allTextContents();
     check('...each bar naming itself inside it, and XP as a share of the level',
-        labels.join(',') === 'HP,MP,XP' && (await text('#xp-bar ~ .bar-text')) === '0.00%',
+        labels.join(',') === 'HP,MP,XP' && (await text('#xp-bar ~ .bar-text')) === '0%',
         `${labels} / ${await text('#xp-bar ~ .bar-text')}`);
     check('...and an empty purse', born.adena === 0, String(born.adena));
     check('...resting, as a character with nothing to fight always is',

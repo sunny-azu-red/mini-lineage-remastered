@@ -297,7 +297,7 @@ Each of these is here because it was got wrong once.
   speech agree. Without `of` it is the figure alone in a full track, as XP is at the last level.
   `wraps` names what going round is (the level, for XP), and `AnimatedValues` refills from empty
   rather than sliding back. `label` is drawn inside on the left. `format={:percent}` writes one figure,
-  the floored hundredths of `of`, keyed `<key>-percent`. A bar leaves its class to the hook through
+  the floored whole percent of `of`, keyed `<key>-percent`. A bar leaves its class to the hook through
   `JS.ignore_attributes`, so a patch can't cut off a running sweep.
 - **`class` and `style` render even when nil**, as `class="panel "` and `style=""`. Build them before
   the tag (`classes/1` in `Controls`) or spread a keyword list.

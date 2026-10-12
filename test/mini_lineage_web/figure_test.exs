@@ -31,10 +31,8 @@ defmodule MiniLineageWeb.FigureTest do
     assert [{["short"], ["2000"], "2k"}] =
              figures(render_component(&Controls.figure/1, key: "k", value: 2_000, format: :short))
 
-    assert [{["percent"], ["5413"], "54.13%"}] =
-             figures(
-               render_component(&Controls.figure/1, key: "k", value: 5_413, format: :percent)
-             )
+    assert [{["percent"], ["54"], "54%"}] =
+             figures(render_component(&Controls.figure/1, key: "k", value: 54, format: :percent))
   end
 
   test "every figure in the sidebar says what it counts to" do

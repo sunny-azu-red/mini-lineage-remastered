@@ -69,7 +69,7 @@ defmodule MiniLineageWeb.BarTest do
     assert b.track.("aria-valuetext") == "1,151,275,834 of 2,099,275,834 XP"
   end
 
-  # The XP bar reads as a share of the level, to the hundredth, and never full until it is.
+  # The XP bar reads as a share of the level in whole percent, and never full until it is.
   test "writes one figure as a percentage of the cap when asked, and still speaks in full" do
     b =
       bar(
@@ -82,7 +82,7 @@ defmodule MiniLineageWeb.BarTest do
         format: :percent
       )
 
-    assert b.text == "99.96%"
+    assert b.text == "99%"
     assert b.keys == ["xp-percent"]
     assert b.formats == ["percent"]
     assert b.track.("aria-valuetext") == "2,999 of 3,000 XP"

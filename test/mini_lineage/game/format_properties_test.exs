@@ -17,19 +17,17 @@ defmodule MiniLineage.Game.FormatPropertiesTest do
   end
 
   describe "the percent form" do
-    property "reads back as the hundredths it was given" do
-      check all value <- one_of([integer(0..99), integer(0..10_000)]) do
-        [whole, hundredths] =
-          value |> Format.percent() |> String.trim_trailing("%") |> String.split(".")
-
-        assert String.to_integer(whole) * 100 + String.to_integer(hundredths) == value
+    property "reads back as the whole percent it was given" do
+      check all value <- one_of([integer(0..9), integer(0..100)]) do
+        assert value |> Format.percent() |> String.trim_trailing("%") |> String.to_integer() ==
+                 value
       end
     end
 
     property "a share is never full until the value reaches the total" do
       check all total <- integer(1..4_200_000_000), value <- integer(0..total) do
-        assert Math.hundredths(value, total) == 10_000 or value < total
-        assert Math.hundredths(value, total) < 10_000 or value == total
+        assert Math.floor_percent(value, total) == 100 or value < total
+        assert Math.floor_percent(value, total) < 100 or value == total
       end
     end
   end

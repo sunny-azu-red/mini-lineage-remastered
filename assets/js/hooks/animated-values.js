@@ -26,11 +26,8 @@ function shorten(value, trimTenth) {
 /** A big figure, a purse or a level's EXP. Twinned with `Format.short`, held to a table by both suites. */
 export const shortFigure = (value) => shorten(value, true);
 
-/** Hundredths of a percent, the XP bar's. Twinned with `Format.percent`, held to a table by both suites. */
-export const percentFigure = (value) => {
-    const n = Math.max(0, Math.floor(value));
-    return `${Math.floor(n / 100)}.${String(n % 100).padStart(2, '0')}%`;
-};
+/** Whole percent, the XP bar's. Twinned with `Format.percent`, held to a table by both suites. */
+export const percentFigure = (value) => `${Math.max(0, Math.floor(value))}%`;
 
 /** Tenths, a critical rate's. Twinned with `Format.tenths`, held to a table by both suites. */
 export const tenthsFigure = (value) => {

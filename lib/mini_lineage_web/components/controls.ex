@@ -268,7 +268,7 @@ defmodule MiniLineageWeb.Controls do
   # A change here means the bar went round, not back: `AnimatedValues` refills it from empty.
   attr :wraps, :any, default: nil
   # How both figures are written; a screen reader is always told them in full. `:percent` writes
-  # one figure instead, the share of `of` in hundredths, keyed `<key>-percent`.
+  # one figure instead, the share of `of` in whole percent, keyed `<key>-percent`.
   attr :format, :atom, default: :number, values: [:number, :short, :percent]
 
   @doc """
@@ -312,7 +312,7 @@ defmodule MiniLineageWeb.Controls do
       <span class="bar-label" aria-hidden="true">{@label}</span>
       <span :if={@percent?} class="bar-text"><.figure
         key={"#{@key}-percent"}
-        value={Math.hundredths(@value, @of)}
+        value={Math.floor_percent(@value, @of)}
         format={:percent}
       /></span>
       <span :if={!@percent?} class="bar-text" phx-no-format><.figure key={@key} value={@value} format={@format} /><span :if={@of}>&nbsp;/&nbsp;<.figure key={@of_key} value={@of} format={@format} /></span></span>
