@@ -4,12 +4,13 @@
  */
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, traceAudio, controls, marginsLeftAtEnds, freshStart } from './helpers.mjs';
+import { BASE, reporter, traceAudio, traceRefocus, controls, marginsLeftAtEnds, freshStart } from './helpers.mjs';
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
 const context = await browser.newContext();
 await traceAudio(context);
+await traceRefocus(context);
 const page = await context.newPage();
 
 const consoleErrors = [];
@@ -484,6 +485,28 @@ try {
     await page.keyboard.type('adena');
     await adena(savings + 10000);
     const wallet = savings + 10000;
+    // A regen tick is a push the player did not ask for, so it leaves an open list open: hurt, so
+    // one comes, with the list held open across it.
+    const leftOpenThroughTick = async (form, whose) => {
+        await page.evaluate(() => document.activeElement?.blur());
+        await page.keyboard.type('half');
+        await page.waitForFunction(() => {
+            const figure = (key) => Number(document.querySelector(`#sidebar [data-key="${key}"]`)?.dataset.value);
+            return figure('hp') < figure('max-hp');
+        }, null, { timeout: 5000 });
+        await page.click(`#${form} select`);
+        await page.evaluate(() => { window.__shut = []; });
+        await page.evaluate(() => new Promise((resolve, reject) => {
+            new MutationObserver((_, observer) => { observer.disconnect(); resolve(); })
+                .observe(document.getElementById('sidebar'), { subtree: true, attributeFilter: ['data-value'] });
+            setTimeout(() => reject(new Error('no regen tick within 8s')), 8000);
+        }));
+        const shut = await page.evaluate(() => window.__shut);
+        check(`${whose} open dropdown is left alone by a regen tick, which would otherwise shut it`,
+            shut.length === 0, shut.join('; '));
+        await page.keyboard.press('Escape');
+    };
+    await leftOpenThroughTick('travel-form', 'the town\'s');
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
@@ -493,13 +516,18 @@ try {
     check('the trader\'s daggers are a page of their own, listing only daggers',
         new URL(page.url()).pathname === '/dark-elf-village/trader/daggers'
         && await page.locator('#stock-broadsword').count() === 0, page.url());
+    await leftOpenThroughTick('buy-form', 'a trader\'s');
     await page.selectOption('#buy-form select', 'Bone Dagger');
     await page.click('#buy-form button');
-    await page.waitForSelector('#flash', { timeout: 5000 });
+    // The debug build's own flash is already up.
+    await page.locator('#flash', { hasText: 'Bone Dagger' }).waitFor({ timeout: 5000 }).catch(() => {});
     check('...where a Bone Dagger is bought through the dropdown', /Bone Dagger/.test(await text('#flash')),
         await text('#flash'));
     await adena(wallet - 768);
     check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
+    check('...and the dropdown goes back to its placeholder, so a second click buys nothing more',
+        await page.inputValue('#buy-form select') === '' && await text('#buy-form button') === 'Return',
+        `${await page.inputValue('#buy-form select')} / ${await text('#buy-form button')}`);
     await page.click('#purse a');
     await onScreen('inventory');
     check('the inventory lists everything carried, what is equipped highlighted',

@@ -110,7 +110,9 @@ defmodule MiniLineageWeb.Controls do
   @doc """
   A choice and the button that acts on it, which is how a player moves: the town's destinations, a
   Gatekeeper's routes. Until the PLAYER picks, the button reads `default_label` in the quieter look;
-  a `placeholder` is the empty choice, which the event reads as going back.
+  a `placeholder` is the empty choice, which the event reads as going back. Every action clears the
+  pick, so the choice goes back to its start; nothing else touches it, an open list included
+  (`SelectAction`).
   """
   # LiveView restores a form's pick after a reconnect only when the form has an id.
   attr :id, :string, required: true
@@ -131,9 +133,18 @@ defmodule MiniLineageWeb.Controls do
     # browser, so the button must too, or it reads as acting while it goes back.
     chosen? = Enum.any?(assigns.options, &(&1.value == assigns.picked))
 
+    # Exactly one option says it is shown, the one the browser shows: a list where none does reads to
+    # LiveView as changed on every patch, and it blurs the select, shutting an open list.
+    shown =
+      cond do
+        chosen? -> assigns.picked
+        assigns.placeholder -> ""
+        true -> assigns.options |> List.first(%{}) |> Map.get(:value)
+      end
+
     assigns =
       assign(assigns,
-        chosen?: chosen?,
+        shown: shown,
         label: if(chosen?, do: assigns.active_label, else: assigns.default_label),
         variant: if(chosen?, do: assigns.active_variant, else: assigns.default_variant)
       )
@@ -143,13 +154,13 @@ defmodule MiniLineageWeb.Controls do
       <div class="form-row">
         <%!-- `selected` explicitly: relabelling the button re-renders the options, and would
               otherwise drop the player's choice. --%>
-        <select name={@name} class="form-select">
-          <option :if={@placeholder} value="" selected={!@chosen?}>{@placeholder}</option>
+        <select id={"#{@id}-choice"} name={@name} class="form-select" phx-hook="SelectAction">
+          <option :if={@placeholder} value="" selected={@shown == ""}>{@placeholder}</option>
           <option
             :for={option <- @options}
             value={option.value}
             disabled={option[:disabled?]}
-            selected={@picked == option.value}
+            selected={@shown == option.value}
           >
             {option.label}
           </option>

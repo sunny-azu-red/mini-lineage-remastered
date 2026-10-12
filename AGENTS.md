@@ -21,8 +21,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   colocated hooks.
 - **Hooks**: `app.js` imports them from `assets/js/hooks.js`, which holds nothing but that list. Each
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
-  `AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus`, `SoundToggle` (over the synth in
-  `soundfx.js`) and `Table`; `kept.js` is storage.
+  `AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle` (over the synth
+  in `soundfx.js`) and `Table`; `kept.js` is storage.
 - **Two sounds, and only two**, each a list of notes in `soundfx.js` with no assets. The new-game
   fanfare is the flash's `sound`, pushed by `GameLive` as `play-sound` so no reload can replay it.
   The sound toggle's chime is the browser's own.
@@ -281,6 +281,16 @@ Each of these is here because it was got wrong once.
   until something is picked and the Halls' filters; `size={:sm}` and `active` (the one of a set
   already chosen) are the filters'. Danger comes back from `legacy/` when needed. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`.
+- **Every dropdown is `Controls.select_action/1`**, and they all behave alike: the player's choice
+  is touched by the player's own pick and the action it leads to, and by nothing else. Every action
+  through `apply_action/3`, refused or not, clears `picked` and `picks`, so the list goes back to its
+  start and the button to its default (a pick left standing bought the same pants twice). A push the
+  player did not ask for (a regen tick, an aura fading, another tab) leaves an open list open, which
+  takes two things. Exactly one option renders `selected`, the one the browser shows (the pick, else
+  the placeholder, else the first option): with none, LiveView reads the list as changed on every
+  patch and blurs it. And the `SelectAction` hook skips the `focus()` LiveView calls on the focused
+  element after every patch, which on Windows shuts an open list. `traceRefocus` in `e2e/helpers.mjs`
+  lets `walkthrough.mjs` check both.
 - **Every alert is `Controls.alert/1`**, `kind` `:info` or `:danger`, anything else landing on the
   `div` (`alert_variants_test.exs`). None is dismissed: what an action says, a refusal included, is
   its flash, dropped on the next arrival unless the action itself moved you there.

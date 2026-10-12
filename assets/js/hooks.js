@@ -4,6 +4,7 @@ import { AnimatedValues, shortFigure, percentFigure, tenthsFigure } from './hook
 import { DevKeys } from './hooks/dev-keys';
 import { Panel } from './hooks/panel';
 import { PanelFocus } from './hooks/panel-focus';
+import { SelectAction } from './hooks/select-action';
 import { SoundToggle } from './hooks/sound-toggle';
 import { Table } from './hooks/table';
 
@@ -11,4 +12,4 @@ import { Table } from './hooks/table';
 // own tables.
 export { shortFigure, percentFigure, tenthsFigure };
 
-export const hooks = { PanelFocus, AnimatedValues, DevKeys, Panel, SoundToggle, Table };
+export const hooks = { PanelFocus, AnimatedValues, DevKeys, Panel, SelectAction, SoundToggle, Table };

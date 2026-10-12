@@ -75,6 +75,19 @@ defmodule MiniLineageWeb.GearPageTest do
     refute carried(session, "Broadsword")
   end
 
+  test "a purchase puts the dropdown back to its start, so a second click buys nothing" do
+    {_view, _session, conn} = human(build_conn(), 20_000)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/swords")
+    pick = %{"item" => "Broadsword"}
+
+    view |> form("#buy-form", pick) |> render_change(%{"_target" => ["item"]})
+    assert has_element?(view, "#buy-form button", "Buy")
+    view |> form("#buy-form", pick) |> render_submit()
+
+    assert has_element?(view, "#buy-form option[value=''][selected]")
+    assert has_element?(view, "#buy-form button", "Return")
+  end
+
   test "a refusal is said, and nothing is paid" do
     {_view, session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/trader/swords")

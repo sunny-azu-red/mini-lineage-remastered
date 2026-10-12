@@ -422,9 +422,11 @@ defmodule MiniLineageWeb.GameLive do
 
   # A refusal stays on the screen it was raised on; a success goes on to where the action leads, a
   # place worked out from the player it left, or nowhere for nil. `catch` is for the process exiting.
+  # Every action, refused or not, puts the dropdowns back to their start: a pick left standing is a
+  # second purchase one click away.
   defp apply_action(socket, fun, to) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
-    socket = put_view(socket, player)
+    socket = socket |> put_view(player) |> assign(picked: nil, picks: %{})
 
     case result do
       {:error, _code, message} -> assign(socket, game_flash: %{text: message, type: :danger})

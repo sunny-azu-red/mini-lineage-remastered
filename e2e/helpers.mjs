@@ -53,6 +53,22 @@ export const traceAudio = (context) => context.addInitScript(() => {
     };
 });
 
+/**
+ * Records what LiveView does to a focused select that would shut its open list: a `blur()`, or a
+ * `focus()` it already has, which on Windows does the same.
+ */
+export const traceRefocus = (context) => context.addInitScript(() => {
+    window.__shut = [];
+    for (const name of ['focus', 'blur']) {
+        const original = HTMLElement.prototype[name];
+        HTMLElement.prototype[name] = function (...args) {
+            if (this instanceof HTMLSelectElement && this === document.activeElement)
+                window.__shut.push(`${name} ${new Error().stack.split('\n')[2]?.trim()}`);
+            return original.apply(this, args);
+        };
+    }
+});
+
 /** The controls a player has, bound to one page. */
 export function controls(page) {
     /** The character's live state, read off the one element that mirrors it. */
