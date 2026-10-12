@@ -223,9 +223,9 @@ try {
         new URL(page.url()).pathname === '/character', page.url());
     const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
-        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|📖 Skills'
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|📖 Learned Skills'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
-    check('...its Skills panel naming what it knows, Soul Cry free from the start and told as a toggle',
+    check('...its Learned Skills panel naming what it knows, Soul Cry free from the start and told as a toggle',
         await page.locator('#skill-chill-flame').count() === 1
         && /P\.Atk \+4\.5 for 2 MP, then 3 MP every 3 seconds/.test(await text('#skill-soul-cry')),
         await text('#skill-soul-cry'));
@@ -560,15 +560,36 @@ try {
     await page.waitForFunction((want) =>
         document.querySelector('[data-key="trainer-sp"]')?.dataset.value === String(want), spBefore + 10000,
         { timeout: 5000 });
-    check('the home village\'s trainer teaches the set\'s own first skill',
-        await page.locator('#lesson-mortal-blow-2[data-status="ready"]').count() === 1);
-    check('...listing its level 1 as known, for 0 SP, as every free line is',
-        await page.locator('#lesson-mortal-blow-1.owned[data-status="known"]').count() === 1);
+    check('the home village\'s trainer teaches the set\'s own first skill, unmuted',
+        await page.locator('#lesson-mortal-blow-2[data-status="ready"]:not(.locked)').count() === 1);
+    check('...muting a line until the one before it is learned',
+        await page.locator('#lesson-mortal-blow-3.locked[data-status="queued"]').count() === 1);
+    check('...with the level it requires and its SP named in full on hover',
+        await page.getAttribute('#lessons th:nth-child(2)', 'title') === 'Level Required' &&
+        await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Skill Points');
+    await page.click('#lessons button[phx-value-key="sp"]');
+    await page.waitForSelector('#lessons th[aria-sort="ascending"] button[phx-value-key="sp"]', { timeout: 5000 });
+    check('...sorting on a header, with the keyboard left on that header rather than the dropdown',
+        await page.evaluate(() => document.activeElement?.matches('#lessons button[phx-value-key="sp"]')));
+    await page.click('#lessons button[phx-value-key="sp"]');
+    await page.click('#lessons button[phx-value-key="sp"]');
+    await page.waitForSelector('#lessons th[aria-sort]', { state: 'detached', timeout: 5000 });
+    check('...leaving level 1, known free, to the Learned Skills panel beside it',
+        await page.locator('#lesson-mortal-blow-1').count() === 0 &&
+        await text('#skill-mortal-blow .skill') === 'Mortal Blow 1', await text('#skill-mortal-blow'));
+    check('...and offering the next line by name, as the legacy shop did',
+        await text('#learn-form option[value="Mortal Blow|2"]') === 'Pick 🎯 Mortal Blow 2');
     await page.selectOption('#learn-form select', 'Mortal Blow|2');
+    check('...and the button turns to learning it once picked',
+        await text('#learn-form button') === '🎓 Learn', await text('#learn-form button'));
     await page.click('#learn-form button');
-    await page.waitForSelector('#lesson-mortal-blow-2[data-status="known"]', { timeout: 5000 });
+    await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',
         Number(await sp()) === spBefore + 10000 - 50, await sp());
+    check('...moving into the Learned Skills panel and offering the next line',
+        await text('#skill-mortal-blow .skill') === 'Mortal Blow 2' &&
+        await page.locator('#lesson-mortal-blow-3[data-status="ready"]').count() === 1,
+        await text('#skill-mortal-blow'));
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

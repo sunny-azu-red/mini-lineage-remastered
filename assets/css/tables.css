@@ -47,6 +47,11 @@ th.num {
     .data-table th:not(.name) {
         white-space: normal;
     }
+
+    /* Every column is at its narrowest here, so the arrow keeps its room only where it is drawn. */
+    .data-table th:not([aria-sort]) .sort-arrow {
+        display: none;
+    }
 }
 
 /* --- the Halls ------------------------------------------------------------------------------- */
@@ -73,7 +78,69 @@ th.num {
     opacity: 1;
 }
 
-/* What the reader has: an equipped item, a known skill. Gold, as their own row in the Monument is. */
+/* What the reader cannot learn next: a lesson above its level or after one not yet learned. Its
+   gold and SP mute with it. */
+.data-table tbody tr.locked td {
+    color: var(--text-muted);
+}
+
+/* --- a sortable column ---------------------------------------------------------------------- */
+
+/* The whole cell is the target, so the button takes the header's padding and inherits its type. */
+.data-table th:has(> .sort) {
+    padding: 0;
+}
+
+.data-table .sort {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 6px 10px 4px 10px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+/* A right-aligned label keeps its edge, and the arrow goes on the side it leaves free. */
+.data-table th.num .sort {
+    flex-direction: row-reverse;
+}
+
+.data-table .sort:hover {
+    color: var(--gold-hover);
+}
+
+.data-table th[aria-sort] {
+    color: var(--gold);
+}
+
+/* The panel's chevron at a label's size; the translate centres it. Hidden rather than absent, so a
+   column does not widen as it takes the sort. */
+.sort-arrow {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translate(-1.125px, -1.125px);
+    visibility: hidden;
+}
+
+.data-table th[aria-sort] .sort-arrow {
+    visibility: visible;
+}
+
+.data-table th[aria-sort="ascending"] .sort-arrow {
+    transform: rotate(-135deg) translate(-1.125px, -1.125px);
+}
+
+/* What the reader has: an equipped item. Gold, as their own row in the Monument is. */
 .data-table tbody tr.owned {
     background-color: var(--wash-gold);
     box-shadow: inset 2px 0 0 var(--gold);

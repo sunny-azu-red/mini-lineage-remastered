@@ -375,7 +375,7 @@ defmodule MiniLineage.Game.Actions do
         }
 
         text =
-          ~s(You learn #{skill} level #{level} for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
+          ~s(You learn <span class="skill">#{skill} #{level}</span> for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
 
         {clamp_bars(player), {:ok, %{text: text, type: :info}}}
     end

@@ -161,14 +161,25 @@ defmodule MiniLineageWeb.Controls do
 
   # ------------------------------------------------------------------ tables
 
-  @doc "Every table in the game. The rows are the caller's `<tbody>`."
+  @doc """
+  Every table in the game. The rows are the caller's `<tbody>`, already in `sort`'s order: a `:col`
+  with `sort` is a header button sending `sort` with the table's id and its key, which the LiveView
+  cycles with `next_sort/2` and the screen applies with `sort_rows/3`, so a patch never fights it.
+  `remember` keeps the sort under `table:<id>` through the `Table` hook, handed back on connect.
+  """
   attr :id, :string, required: true
+  # `{key, :asc | :desc}`, or nil for the order the rows arrived in.
+  attr :sort, :any, default: nil
+  # Only for a table `Screens.sortable/1` also marks remembered, which reads the kept sort back.
+  attr :remember, :boolean, default: false
   # Lands on the `<table>`.
   attr :rest, :global
 
   slot :col, required: true do
     attr :class, :string
     attr :title, :string
+    # Without one the header is only a label.
+    attr :sort, :string
   end
 
   slot :inner_block, required: true
@@ -177,9 +188,25 @@ defmodule MiniLineageWeb.Controls do
     ~H"""
     <div class="table-container">
       <table id={@id} class="data-table" {@rest}>
-        <thead>
+        <thead
+          id={@remember && "#{@id}-head"}
+          phx-hook={@remember && "Table"}
+          data-table={@remember && @id}
+          data-sort={@remember && encode_sort(@sort)}
+        >
           <tr>
-            <th :for={col <- @col} title={col[:title]} {column(col)}>{render_slot(col)}</th>
+            <%= for col <- @col do %>
+              <th :if={!col[:sort]} title={col[:title]} {column(col, nil)}>{render_slot(col)}</th>
+              <th :if={col[:sort]} title={col[:title]} {column(col, @sort)}>
+                <button
+                  type="button"
+                  class="sort"
+                  phx-click="sort"
+                  phx-value-table={@id}
+                  phx-value-key={col.sort}
+                ><span>{render_slot(col)}</span><span class="sort-arrow" aria-hidden="true"></span></button>
+              </th>
+            <% end %>
           </tr>
         </thead>
         {render_slot(@inner_block)}
@@ -189,7 +216,48 @@ defmodule MiniLineageWeb.Controls do
   end
 
   # Spread, so a column with no class prints no `class=""`.
-  defp column(col), do: if(col[:class], do: [class: col[:class]], else: [])
+  defp column(col, sort) do
+    Enum.reject(
+      [class: col[:class], "aria-sort": aria_sort(sort, col[:sort])],
+      &is_nil(elem(&1, 1))
+    )
+  end
+
+  defp aria_sort({key, :asc}, key), do: "ascending"
+  defp aria_sort({key, :desc}, key), do: "descending"
+  defp aria_sort(_sort, _key), do: nil
+
+  @doc "A click on `key`: ascending, then descending, then back to the order the rows arrived in."
+  def next_sort({key, :asc}, key), do: {key, :desc}
+  def next_sort({key, :desc}, key), do: nil
+  def next_sort(_sort, key), do: {key, :asc}
+
+  @doc """
+  Rows in `sort`'s order by `key_of.(row, key)`. Stable, so rows equal on the column keep the
+  order they arrived in rather than trading places on a patch.
+  """
+  def sort_rows(rows, nil, _key_of), do: rows
+  def sort_rows(rows, {key, dir}, key_of), do: Enum.sort_by(rows, &key_of.(&1, key), dir)
+
+  # The empty string, not nil, so the hook sees a sort undone as a change.
+  defp encode_sort(nil), do: ""
+  defp encode_sort({key, dir}), do: "#{key}:#{dir}"
+
+  @doc """
+  A kept sort read back against the keys a table offers today. Storage is the reader's to edit, so
+  anything that is not one of them is no sort at all.
+  """
+  def decode_sort(value, keys) when is_binary(value) and is_list(keys) do
+    with [key, dir] <- String.split(value, ":"),
+         true <- key in keys,
+         {:ok, dir} <- Map.fetch(%{"asc" => :asc, "desc" => :desc}, dir) do
+      {key, dir}
+    else
+      _ -> nil
+    end
+  end
+
+  def decode_sort(_value, _keys), do: nil
 
   # ------------------------------------------------------------------ alerts
 

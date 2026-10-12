@@ -10,6 +10,20 @@ export function recall(kind, id) {
     }
 }
 
+/** Every kept `<kind>:<id>` of one kind, as `{id: value}`. */
+export function recallAll(kind) {
+    const all = {};
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith(`${kind}:`)) all[key.slice(kind.length + 1)] = localStorage.getItem(key);
+        }
+    } catch {
+        // As above: nothing kept, nothing to hand over.
+    }
+    return all;
+}
+
 /** Null forgets it, so a choice undone leaves nothing behind to be read back. */
 export function keep(kind, id, value) {
     try {

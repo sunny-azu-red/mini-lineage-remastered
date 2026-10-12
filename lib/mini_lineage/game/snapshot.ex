@@ -131,8 +131,9 @@ defmodule MiniLineage.Game.Snapshot do
       status =
         cond do
           known >= lesson.level -> :known
-          level >= lesson.learn_at and known == lesson.level - 1 -> :ready
-          true -> :later
+          level < lesson.learn_at -> :later
+          known != lesson.level - 1 -> :queued
+          true -> :ready
         end
 
       Map.put(lesson, :status, status)

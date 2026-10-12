@@ -60,6 +60,7 @@ defmodule MiniLineageWeb.GameLive do
        character_id: nil,
        picked: nil,
        picks: %{},
+       sorts: kept_sorts(get_connect_params(socket)),
        dev_name: nil,
        keys: [],
        icon: nil,
@@ -73,6 +74,19 @@ defmodule MiniLineageWeb.GameLive do
   # A cookie the plug never saw — a tab left open across a deploy. A LiveView cannot issue one, so
   # bounce through a real request. The plug always sets one, so this cannot come round twice.
   def mount(_params, _session, socket), do: {:ok, redirect(socket, to: ~p"/")}
+
+  # Kept sorts arrive with the socket, so the first connected render has them. Each is checked against
+  # the table it names, and a table that does not remember takes none.
+  defp kept_sorts(%{"tables" => kept}) when is_map(kept) do
+    for {table, value} <- kept,
+        %{remember: true, keys: keys} <- [Screens.sortable(table)],
+        sort = Controls.decode_sort(value, keys),
+        sort != nil,
+        into: %{},
+        do: {table, sort}
+  end
+
+  defp kept_sorts(_params), do: %{}
 
   # ------------------------------------------------------------- navigation
 
@@ -273,6 +287,17 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
+  # A sort orders rows the socket already holds, so it reads nothing and gates nothing; a key no
+  # table offers is ignored rather than stored.
+  def handle_event("sort", %{"table" => table, "key" => key}, socket) do
+    if key in Screens.sortable(table).keys do
+      sort = Controls.next_sort(socket.assigns.sorts[table], key)
+      {:noreply, assign(socket, sorts: Map.put(socket.assigns.sorts, table, sort))}
+    else
+      {:noreply, socket}
+    end
+  end
+
   # Rules §20: one click, one fight, staying on the ground unless it ends the run. A fight the hunter
   # walks away from is written on the ground's page; one that ends the run keeps its alert.
   def handle_event("hunt", _params, socket),
@@ -464,6 +489,7 @@ defmodule MiniLineageWeb.GameLive do
         character_id={@character_id}
         fight={@fight}
         picks={@picks}
+        sorts={@sorts}
       />
     </Layouts.app>
     """

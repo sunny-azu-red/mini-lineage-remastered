@@ -21,8 +21,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   colocated hooks.
 - **Hooks**: `app.js` imports them from `assets/js/hooks.js`, which holds nothing but that list. Each
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
-  `AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus` and `SoundToggle` (over the synth in
-  `soundfx.js`); `kept.js` is storage.
+  `AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus`, `SoundToggle` (over the synth in
+  `soundfx.js`) and `Table`; `kept.js` is storage.
 - **Two sounds, and only two**, each a list of notes in `soundfx.js` with no assets. The new-game
   fanfare is the flash's `sound`, pushed by `GameLive` as `play-sound` so no reload can replay it.
   The sound toggle's chime is the browser's own.
@@ -269,9 +269,9 @@ Each of these is here because it was got wrong once.
   to focus one). Opening by hand scrolls the panel into view; restoring or patching never moves the
   page. The chevron's transition waits for the `data-ready` the hook sets two frames in. A side
   panel folds only if marked `.folds`: today only the Inventory, on a phone, opening unfolded.
-- **What the reader chooses is kept as `<kind>:<id>` through `hooks/kept.js`**, whose `recall` and
-  `keep` are the only code touching `localStorage`: `panel:<id>` for a fold, `sound:effects` while
-  sound is off. A new thing that remembers takes a kind and writes no storage code. Hand a kind to the
+- **What the reader chooses is kept as `<kind>:<id>` through `hooks/kept.js`**, whose `recall`,
+  `recallAll` and `keep` are the only code touching `localStorage`: `panel:<id>` for a fold,
+  `sound:effects` while sound is off, `table:<id>` for a remembered sort (handed over on connect). A new thing that remembers takes a kind and writes no storage code. Hand a kind to the
   server only when it must know it to render.
 - **Every button is `Controls.button/1`**, the only writer of `btn`. Without `patch` it is a
   `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
@@ -284,7 +284,11 @@ Each of these is here because it was got wrong once.
   its flash, dropped on the next arrival unless the action itself moved you there.
 - **Every table is `Controls.data_table/1`**: the container, header row and `<table>`, with the rows
   the caller's `<tbody>` and other attributes on the `<table>`. A sort is the server's, never the
-  DOM's, which a patch would undo. `legacy/` has the sortable one.
+  DOM's, which a patch would undo: a `:col` with `sort` is a header button cycling up, down and off
+  in `GameLive`'s `sorts`, only for the keys `Screens.sortable/1` lists, and the screen orders its
+  rows with `Controls.sort_rows/3`. A sort header neither takes `PanelFocus`'s first focus nor gives
+  it back to the dropdown. A table outlives a reload only with `remember` on the table AND in
+  `sortable/1`, which `GameLive` checks before reading a kept sort back; none does yet.
 - **Every figure counts; only names and dates jump.** A number the player can watch change is a
   `<.figure>`, animated by `AnimatedValues` hooked once over whatever contains them. It writes
   `data-value` and the text from one value, and `format={:short}` sets both the short form and the

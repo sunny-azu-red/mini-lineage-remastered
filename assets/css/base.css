@@ -118,9 +118,10 @@ p {
     color: var(--text-critical);
 }
 
-/* What it is worth: its purse and its level. */
+/* What it is worth: its purse, its level and the skills it has learned. */
 .adena,
-.level {
+.level,
+.skill {
     color: var(--gold);
 }
 
@@ -152,7 +153,7 @@ p {
 
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does.
  * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
-:is(p, li) :is(.hp, .attack, .magic, .debuff, .crit, .adena, .level, .regen, .buff, .attribute,
-    .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura) {
+:is(p, li) :is(.hp, .attack, .magic, .debuff, .crit, .adena, .level, .skill, .regen, .buff,
+    .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura) {
     font-weight: var(--weight-value);
 }

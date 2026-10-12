@@ -1,3 +1,7 @@
+// A table's sort is how the reader views it, not something the run does: it neither takes the first
+// focus nor sends it anywhere, so focus stays on the header a keyboard is cycling.
+const VIEW_CONTROLS = '.sort';
+
 /**
  * Focuses the panel's first control on arrival, so the game plays from the keyboard. Never takes
  * focus the player moved themselves.
@@ -9,7 +13,8 @@ export const PanelFocus = {
         // action may take focus back. Cleared by the next focus pass, so it never outlives it.
         this.acted = false;
         this.el.addEventListener('click', (e) => {
-            if (e.target.closest('button'))
+            const button = e.target.closest('button');
+            if (button && !button.matches(VIEW_CONTROLS))
                 this.acted = true;
         });
         requestAnimationFrame(() => this.focusFirst(true));
@@ -33,7 +38,7 @@ export const PanelFocus = {
         // Links are out because Space scrolls them rather than activating them; hidden inputs
         // because they match `input` without being focusable; and anything that destroys, by its mark.
         const control = this.el.querySelector(
-            'input:not([type="hidden"]), select, button:not([data-no-autofocus])',
+            `input:not([type="hidden"]), select, button:not([data-no-autofocus], ${VIEW_CONTROLS})`,
         );
         if (control && !control.matches(':disabled'))
             control.focus({ preventScroll: true });

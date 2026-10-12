@@ -5,9 +5,10 @@ import { DevKeys } from './hooks/dev-keys';
 import { Panel } from './hooks/panel';
 import { PanelFocus } from './hooks/panel-focus';
 import { SoundToggle } from './hooks/sound-toggle';
+import { Table } from './hooks/table';
 
 // The client-side twins of `Format.short`, `Format.percent` and `Format.tenths`, held to the server's
 // own tables.
 export { shortFigure, percentFigure, tenthsFigure };
 
-export const hooks = { PanelFocus, AnimatedValues, DevKeys, Panel, SoundToggle };
+export const hooks = { PanelFocus, AnimatedValues, DevKeys, Panel, SoundToggle, Table };

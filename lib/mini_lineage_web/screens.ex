@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Format, Math}
+  alias MiniLineage.Game.{Constants, Format, Math, Rules}
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
@@ -75,7 +75,14 @@ defmodule MiniLineageWeb.Screens do
       },
       %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
       %{title: "Combat Stats", icon: "⚖️", section: :stats},
-      %{title: "Skills", icon: "📖", section: :skills, body_class: "rows"}
+      %{title: "Learned Skills", icon: "📖", section: :skills, body_class: "rows"}
+    ]
+
+  # Rules §25: what the trainers teach, and beside it what the character already knows.
+  def panels("trainer", view, _catalog),
+    do: [
+      %{title: title("trainer", view), icon: icon("trainer", view)},
+      %{title: "Learned Skills", icon: "📖", section: :skills, body_class: "rows"}
     ]
 
   # Rules §23: what is equipped and carried, and beside it the stats it makes, which count as gear moves.
@@ -104,6 +111,8 @@ defmodule MiniLineageWeb.Screens do
   attr :character_id, :string, default: nil
   # What each dropdown on the screen has picked, by its field.
   attr :picks, :map, default: %{}
+  # Each sortable table's `{key, dir}`, by its id.
+  attr :sorts, :map, default: %{}
   # Rules §20: the last fight on this ground, its log and what it came to.
   attr :fight, :map, default: nil
 
@@ -119,6 +128,7 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "trader"} = assigns), do: trader(assigns)
   def screen(%{screen: "trader-" <> _} = assigns), do: trader_page(assigns)
+  def screen(%{screen: "trainer", panel: %{section: :skills}} = assigns), do: character(assigns)
   def screen(%{screen: "trainer"} = assigns), do: trainer(assigns)
   def screen(%{screen: "inventory", panel: %{section: :stats}} = assigns), do: character(assigns)
   def screen(%{screen: "inventory"} = assigns), do: inventory(assigns)
@@ -161,7 +171,7 @@ defmodule MiniLineageWeb.Screens do
           type="text"
           name="name"
           class="form-input"
-          maxlength={MiniLineage.Game.Constants.character().name_max_length}
+          maxlength={Constants.character().name_max_length}
           placeholder="Enter your name, Heir"
           value={@dev_name}
           autocomplete="off"
@@ -351,32 +361,36 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §25: what the character knows, highlighted, and what it can learn now; nothing it cannot.
+  # Rules §25: every line the set has still to learn, muted unless it can be learned next; what it
+  # knows is the panel beside it. SP is paid like Adena, so a line short of it is still offered.
   defp trainer(assigns) do
-    lessons = Enum.filter(assigns.view.lessons, &(&1.status in [:known, :ready]))
+    lessons = Enum.reject(assigns.view.lessons, &(&1.status == :known))
+    sort = assigns.sorts["lessons"]
 
     assigns =
-      assign(assigns, lessons: lessons, ready: Enum.filter(lessons, &(&1.status == :ready)))
+      assign(assigns,
+        sort: sort,
+        lessons: sort_rows(lessons, sort, &lesson_key/2),
+        ready: Enum.filter(lessons, &(&1.status == :ready))
+      )
 
     ~H"""
     <p id="trainer-intro" phx-no-format>
       The trainers of {@view.town.emoji} {@view.town.name} teach their own, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="trainer-sp" value={@view.sp} /> SP</span>.
     </p>
-    <.data_table id="lessons">
-      <:col class="name">Skill</:col>
-      <:col class="num">Level</:col>
-      <:col class="num">From level</:col>
-      <:col>SP</:col>
+    <.data_table id="lessons" sort={@sort}>
+      <:col class="name" sort="skill">Skill</:col>
+      <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
+      <:col title="Skill Points" sort="sp">SP</:col>
       <tbody>
         <tr
           :for={lesson <- @lessons}
           id={"lesson-#{slug(lesson.skill)}-#{lesson.level}"}
           data-status={lesson.status}
-          {if lesson.status == :known, do: [class: "owned"], else: []}
+          {if lesson.status == :ready, do: [], else: [class: "locked"]}
         >
-          <td class="name">{lesson.skill}</td>
-          <td class="num">{lesson.level}</td>
-          <td class="num">{lesson.learn_at}</td>
+          <td class="name">{skill_icon(lesson.skill)} {lesson.skill} {lesson.level}</td>
+          <td class="num level">{lesson.learn_at}</td>
           <td class="sp">{Format.number(lesson.sp)}</td>
         </tr>
       </tbody>
@@ -395,15 +409,26 @@ defmodule MiniLineageWeb.Screens do
           @ready,
           &%{
             value: "#{&1.skill}|#{&1.level}",
-            label: "📖 #{&1.skill} #{&1.level} for #{Format.number(&1.sp)} SP"
+            label: "Pick #{skill_icon(&1.skill)} #{&1.skill} #{&1.level}"
           }
         )
       }
       default_label="Return"
-      active_label="📖 Learn"
+      active_label="🎓 Learn"
     />
     """
   end
+
+  defp lesson_key(lesson, "skill"), do: {lesson.skill, lesson.level}
+  defp lesson_key(lesson, "learn_at"), do: lesson.learn_at
+  defp lesson_key(lesson, "sp"), do: lesson.sp
+
+  @doc """
+  The keys a table may be sorted on, checked before a sort is stored, and whether the reader's sort
+  outlives a reload; a remembered table also sets `remember` on its `<.data_table>`.
+  """
+  def sortable("lessons"), do: %{keys: ~w(skill learn_at sp), remember: false}
+  def sortable(_table), do: %{keys: [], remember: false}
 
   # Rules §23: everything carried in one list, what is equipped highlighted, then two choices: what to
   # put on or take off, and, apart and in red, what to destroy.
@@ -419,7 +444,7 @@ defmodule MiniLineageWeb.Screens do
 
     assigns =
       assign(assigns,
-        capacity: MiniLineage.Game.Rules.capacity(),
+        capacity: Rules.capacity(),
         carried: Enum.reject(assigns.view.items, & &1.equipped),
         wear_label: wear_label,
         shares: MiniLineage.Game.Player.potion_shares()
@@ -633,38 +658,83 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §19 and §25: what the character knows, each skill's numbers at the level it knows it.
+  # Rules §19 and §25: what the character knows, each skill's numbers at the level it knows it, each
+  # figure in the colour of what it is.
   defp character(%{panel: %{section: :skills}} = assigns) do
     ~H"""
     <div :for={{name, level} <- @view.skills} id={"skill-#{slug(name)}"} class="stat-row">
       <p phx-no-format>
-        <span class="buff">{name}</span> <span class="muted">&bull;</span> level <span class="level">{level}</span>{skill_line(name, level)}
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} />
       </p>
     </div>
     """
   end
 
-  defp skill_line(name, level), do: skill_effect(MiniLineage.Game.Rules.skill(name, level))
+  # One each, since a set learns two of a kind (the Orc Fighter, two physical skills).
+  @skill_icons %{
+    "Power Strike" => "💥",
+    "Power Shot" => "🏹",
+    "Mortal Blow" => "🎯",
+    "Iron Punch" => "👊",
+    "Wind Strike" => "🌪️",
+    "Ice Bolt" => "❄️",
+    "Vampiric Touch" => "🦇",
+    "Chill Flame" => "🔥",
+    "Drain Health" => "🩸",
+    "Life Drain" => "👻",
+    "Self Heal" => "💚",
+    "Heal" => "💖",
+    "Elemental Heal" => "💧",
+    "Curse: Poison" => "☠️",
+    "Wind Shackle" => "⛓️",
+    "Soul Cry" => "📢"
+  }
 
-  defp skill_effect(%{kind: :heal} = s),
-    do: ", mends #{s.power} HP and √M.Atk more for #{s.mp} MP."
+  @doc "A skill's own emoji, or for one that raises an aura that aura's, as Buffs shows it."
+  def skill_icon(name) do
+    if Rules.skill(name).kind in [:aura, :rest],
+      do: Constants.skill_aura(name).emoji,
+      else: Map.fetch!(@skill_icons, name)
+  end
 
-  defp skill_effect(%{kind: :aura} = s),
-    do: ", #{stat_name(s.stat)} ×#{s.times} for #{div(s.lasts, 60_000)} minutes, for #{s.mp} MP."
+  attr :skill, :map, required: true
 
-  defp skill_effect(%{kind: :poison} = s),
+  defp skill_effect(%{skill: %{kind: :heal}} = assigns),
+    do: ~H|Mends <span class="regen">{@skill.power} HP</span>
+and <span class="magic">√M.Atk</span>
+more for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_effect(%{skill: %{kind: :aura}} = assigns),
+    do: ~H|<span class={stat_class(@skill.stat)}>{stat_name(@skill.stat)} ×{@skill.times}</span>
+for {div(@skill.lasts, 60_000)} minutes, for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_effect(%{skill: %{kind: :poison}} = assigns),
     do:
-      ", #{s.power} HP every #{div(s.every, 1000)} seconds for #{div(s.lasts, 1000)} seconds, for #{s.mp} MP."
+      ~H|Takes <span class="debuff">{@skill.power} HP</span>
+every {div(@skill.every, 1000)} seconds for {div(@skill.lasts, 1000)} seconds, for <span class="mp">{@skill.mp} MP</span>.|
 
-  defp skill_effect(%{kind: :shackle} = s),
-    do: ", the foe swings ×#{s.times} for #{div(s.lasts, 1000)} seconds, for #{s.mp} MP."
+  defp skill_effect(%{skill: %{kind: :shackle}} = assigns),
+    do: ~H|The foe <span class="speed">swings ×{@skill.times}</span>
+for {div(@skill.lasts, 1000)} seconds, for <span class="mp">{@skill.mp} MP</span>.|
 
-  defp skill_effect(%{kind: :toggle} = s),
-    do:
-      ", P.Atk +#{s.power} for #{s.mp} MP, then #{s.drain} MP every #{div(s.every, 1000)} seconds."
+  defp skill_effect(%{skill: %{kind: :toggle}} = assigns),
+    do: ~H|<span class="attack">P.Atk +{@skill.power}</span>
+for <span class="mp">{@skill.mp} MP</span>, then <span class="mp">{@skill.drain} MP</span>
+every {div(@skill.every, 1000)} seconds.|
 
-  defp skill_effect(%{kind: :rest} = s), do: ", +#{s.power} HP a tick of rest for #{s.mp} MP."
-  defp skill_effect(s), do: ", power #{s.power} for #{s.mp} MP."
+  defp skill_effect(%{skill: %{kind: :rest}} = assigns),
+    do: ~H|<span class="regen">+{@skill.power} HP</span>
+a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
+
+  # A blade's skill lands as an attack, everything else as a spell.
+  defp skill_effect(assigns) do
+    assigns =
+      assign(assigns,
+        class: if(assigns.skill.kind in [:physical, :blow], do: "attack", else: "magic")
+      )
+
+    ~H|<span class={@class}>Power {@skill.power}</span> for <span class="mp">{@skill.mp} MP</span>.|
+  end
 
   defp stat_name(:p_def), do: "P.Def"
   defp stat_name(:p_atk), do: "P.Atk"
@@ -672,6 +742,8 @@ defmodule MiniLineageWeb.Screens do
   # What an effect changes wears the colour of the stat it changes.
   defp stat_class(:accuracy), do: "accuracy"
   defp stat_class(stat) when stat in [:hp_regen, :mp_regen], do: "regen"
+  defp stat_class(:p_def), do: "defense"
+  defp stat_class(:p_atk), do: "attack"
 
   # "an Elven Fighter", "a Dark Mystic", "a 4.6% Critical", "an 8.4% Critical", "an 11.0% Critical".
   defp article(word) when is_float(word), do: article(Float.to_string(word))
