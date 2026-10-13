@@ -400,7 +400,8 @@ Example: a Young Keltir (DEX 30, level 1) has Accuracy and Evasion √30 × 6 + 
 Every set has a first skill from its own tree, and each race's is different. A Mystic starts knowing
 its first spell, because a Mystic's STR makes a poor weapon of whatever it holds; a Fighter starts
 with none and learns its first from its trainer (§25) at level 1, after its first kill. The trainer
-teaches the rest before the class change, each set its own, the ones also at level 1 among them.
+teaches the rest before the class change, each set its own. A Mystic also learns one more at
+level 1 (Self Heal, or the Orc's Soul Cry) and a Fighter none, so every set of a kind starts alike.
 Each costs MP and then rests for its reuse.
 
 | Set | First skill | Also at level 1 | Then |
@@ -410,9 +411,9 @@ Each costs MP and then rests for its reuse.
 | Dark Fighter | Mortal Blow | | Attack Aura, Drain Health |
 | Orc Fighter | Iron Punch | | Power Strike, Relax |
 | Human Mystic | Wind Strike | Self Heal | Ice Bolt |
-| Elven Mystic | Ice Bolt | Self Heal, Wind Strike | Heal |
-| Dark Mystic | Vampiric Touch | Self Heal | Curse: Poison, Wind Shackle |
-| Orc Mystic | Chill Flame | Soul Cry, Life Drain | |
+| Elven Mystic | Ice Bolt | Self Heal | Wind Strike, Heal |
+| Dark Mystic | Vampiric Touch | Self Heal | Curse: Poison, Shield, Wind Shackle |
+| Orc Mystic | Chill Flame | Soul Cry | Life Drain, Soul Shield, Venom |
 
 Each at level 1 (§25 has the later levels):
 
@@ -433,7 +434,10 @@ Each at level 1 (§25 has the later levels):
 | Elemental Heal | heal | 71 | 40 | 10,000 | 5,000 |
 | Defense Aura | aura | | 5 | 6,000 | 4,000 |
 | Attack Aura | aura | | 7 | 6,000 | 4,000 |
+| Shield | aura | | 10 | 6,000 | 4,000 |
+| Soul Shield | aura | | 10 | 5,000 | 2,500 |
 | Curse: Poison | poison | 24 | 10 | 12,000 | 4,000 |
+| Venom | poison | 24 | 10 | 12,000 | 4,000 |
 | Wind Shackle | shackle | | 3 | 8,000 | 1,500 |
 | Soul Cry | toggle | 4.5 | 2 | | |
 | Relax | rest | 5 | 3 | | |
@@ -454,8 +458,9 @@ Punch need their weapons (§23); the rest need none.
   target that still burns.
 - **Ice Bolt** also slows its target for 120 seconds, and a slowed monster swings 30% less.
 - **Heal:** power + √M.Atk HP back, rounded down and never past the most.
-- **Aura:** Defense Aura multiplies P.Def and Attack Aura P.Atk by 1.08, for 20 minutes, in the
-  fight and out of it.
+- **Aura:** Defense Aura, Shield and Soul Shield multiply P.Def and Attack Aura P.Atk by 1.08, for
+  20 minutes, in the fight and out of it. Shield and Soul Shield are cast on another in Lineage II,
+  and the caster is the one here.
 - **Poison:** lands 70% of the time, and then takes power HP every 3 seconds for 30 seconds, never
   the last HP. It is not cast again on a target already poisoned.
 - **Shackle:** lands 80% of the time, and then the target swings × 0.83 for 15 seconds.
@@ -665,10 +670,10 @@ Example: a Broadsword costs **12,500** and sells back for **6,250**.
 
 Each starting village's trainers teach its own race and nobody else, for the SP a character earns
 on the hunt (§20). A line is learned once the character has reached its level, knows the level
-before it, and pays its SP. Each set's list is short: its first skill and the two skills §19 gives
-it, each at every level. Only a Mystic's first spell is taught at level 1 for nothing, and so is
+before it, and pays its SP. Each set's list is short: its first skill and the others §19 gives it,
+each at every level. Only a Mystic's first spell is taught at level 1 for nothing, and so is
 known from the start. A Fighter's first skill costs 10 SP, what a level 1 kill pays (§18, §22),
-and the other lines §19 gives at level 1 cost 50.
+and a Mystic's other line at level 1 costs 50.
 
 A skill grows in steps, not one level at a time: after its first level, each line is everything the
 trainer teaches of it at one character level (5, 10 and 15 for a Fighter, 7 and 14 for a Mystic). Its
@@ -723,7 +728,7 @@ of that level's lines about a level later, so each step is saved for and the ord
 | Elven Mystic | Ice Bolt | 2 | 7 | 260 |
 | Elven Mystic | Ice Bolt | 3 | 14 | 2,200 |
 | Elven Mystic | Self Heal | 1 | 1 | 50 |
-| Elven Mystic | Wind Strike | 1 | 1 | 50 |
+| Elven Mystic | Wind Strike | 1 | 7 | 50 |
 | Elven Mystic | Wind Strike | 2 | 7 | 520 |
 | Elven Mystic | Wind Strike | 3 | 14 | 2,200 |
 | Elven Mystic | Heal | 1 | 7 | 170 |
@@ -733,13 +738,17 @@ of that level's lines about a level later, so each step is saved for and the ord
 | Dark Mystic | Vampiric Touch | 2 | 14 | 2,900 |
 | Dark Mystic | Self Heal | 1 | 1 | 50 |
 | Dark Mystic | Curse: Poison | 1 | 7 | 470 |
+| Dark Mystic | Shield | 1 | 7 | 470 |
 | Dark Mystic | Wind Shackle | 1 | 14 | 5,600 |
 | Orc Mystic | Chill Flame | 1 | 1 | 0 |
-| Orc Mystic | Chill Flame | 2 | 14 | 3,000 |
+| Orc Mystic | Chill Flame | 2 | 14 | 2,250 |
 | Orc Mystic | Soul Cry | 1 | 1 | 50 |
-| Orc Mystic | Soul Cry | 2 | 14 | 3,000 |
-| Orc Mystic | Life Drain | 1 | 1 | 50 |
-| Orc Mystic | Life Drain | 2 | 14 | 3,000 |
+| Orc Mystic | Soul Cry | 2 | 14 | 2,250 |
+| Orc Mystic | Life Drain | 1 | 7 | 350 |
+| Orc Mystic | Life Drain | 2 | 14 | 2,250 |
+| Orc Mystic | Soul Shield | 1 | 7 | 350 |
+| Orc Mystic | Venom | 1 | 7 | 350 |
+| Orc Mystic | Venom | 2 | 14 | 2,250 |
 
 Each skill's power and MP at each level (a burn's power is per second):
 
@@ -783,7 +792,11 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Elemental Heal 2 | 80 | 45 |
 | Defense Aura 1 | | 5 |
 | Attack Aura 1 | | 7 |
+| Shield 1 | | 10 |
+| Soul Shield 1 | | 10 |
 | Curse: Poison 1 | 24 | 10 |
+| Venom 1 | 24 | 10 |
+| Venom 2 | 36 | 15 |
 | Wind Shackle 1 | | 3 |
 | Soul Cry 1 | 4.5 | 2 |
 | Soul Cry 2 | 14 | 3 |

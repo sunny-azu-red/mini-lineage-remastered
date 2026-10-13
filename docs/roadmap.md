@@ -102,11 +102,14 @@ follows before characters reach 15.
   Dark and Orc Mystics, known from the start. Nothing else comes free.
 - **SP comes from monsters,** like EXP.
 - **A short list per set** until the first class change, learned with SP from the trainers of the
-  character's own village (rules §25, built): the first skill's later levels and two more skills
-  from its canon tree, each race's different (rules §19). They are actives, a heal, an aura, a
+  character's own village (rules §25, built): the first skill and two to four more from its canon
+  tree, chosen so each set plays its own way (rules §19). They are actives, a heal, an aura, a
   drain, a curse or a toggle, in place of Lineage II's passive masteries, which only moved numbers.
-  The two auras are the first timed buffs, as the Temple's will be. The character page's Skills
-  panel is the spellbook: what it knows.
+  The auras are the first timed buffs, as the Temple's will be. The character page's Skills panel
+  is the spellbook: what it knows.
+- **A skill grows in steps** of 3 or 4 lines, each a character level's worth of canon levels, and
+  the trainer shows only each skill's next line. Every Fighter learns one skill at level 1 and
+  every Mystic two, and the SP left from level 15 waits for the class change's skills.
 - **The class change opens the specialised skills** of the new class, learned the same way.
 - **Skills matter most in the slower fights,** where a boss is fought in rounds with a choice each
   round.

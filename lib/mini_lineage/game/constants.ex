@@ -124,6 +124,21 @@ defmodule MiniLineage.Game.Constants do
       label: "Attack Aura",
       about: "An aura raised in the field drives every blow harder, and holds for twenty minutes."
     },
+    "Shield" => %{
+      id: "shield",
+      type: :buff,
+      emoji: "🔰",
+      label: "Shield",
+      about:
+        "A ward cast on oneself hardens the skin against blows, and holds for twenty minutes."
+    },
+    "Soul Shield" => %{
+      id: "soul_shield",
+      type: :buff,
+      emoji: "💠",
+      label: "Soul Shield",
+      about: "The spirits called to stand guard turn blows aside, and hold for twenty minutes."
+    },
     "Relax" => %{
       id: "relax",
       type: :buff,

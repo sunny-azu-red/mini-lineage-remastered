@@ -87,7 +87,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 470, 2100 | passive mystic Weapon Mastery: P.Atk +1.5/+2.8 and M.Atk +1.9/+3.5, then P.Atk x1.45, M.Atk x1.17; bow/pole: Casting Spd x0.7, Accuracy -9 |
 | Heal | 1011 | 7 (levels 1–3), 14 (levels 4–6) | 160, 700 | heal target; power 49,58,67 / 83,95,107 HP; MP 2+8..5+17; 5000 ms; reuse 10 s |
 | Cure Poison | 1012 | 7 (level 1) | 470 | cure poison on target; MP 2+8; 4000 ms; reuse 15 s |
-| Shield | 1040 | 7 (level 1) | 470 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s |
+| Shield | 1040 | 7 (level 1) | 470 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s; TARGET_ONE, so it can be cast on oneself |
 | Might | 1068 | 7 (level 1) | 470 | target buff Might: P.Atk x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s |
 | Curse: Poison | 1168 | 7 (level 1) | 470 | poison DoT Curse: Poison: 24 HP every 3 s x10 (30 s); land rate 70; MP 2+8; reuse 12 s |
 | Ice Bolt | 1184 | 7 (levels 1–2), 14 (levels 3–4) | 240, 1100 | magic attack Ice Bolt + slow (Speed x0.7); power 8,9 / 11,13; MP 2+7..3+12; 3100+200 ms; reuse 8 s |
@@ -135,7 +135,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 520, 2100 | passive mystic Weapon Mastery: P.Atk +1.5/+2.8 and M.Atk +1.9/+3.5, then P.Atk x1.45, M.Atk x1.17; bow/pole: Casting Spd x0.7, Accuracy -9 |
 | Heal | 1011 | 7 (levels 1–3), 14 (levels 4–6) | 170, 700 | heal target; power 49,58,67 / 83,95,107 HP; MP 2+8..5+17; 5000 ms; reuse 10 s |
 | Cure Poison | 1012 | 7 (level 1) | 520 | cure poison on target; MP 2+8; 4000 ms; reuse 15 s |
-| Shield | 1040 | 7 (level 1) | 520 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s |
+| Shield | 1040 | 7 (level 1) | 520 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s; TARGET_ONE, so it can be cast on oneself |
 | Might | 1068 | 7 (level 1) | 520 | target buff Might: P.Atk x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s |
 | Ice Bolt | 1184 | 7 (levels 1–2), 14 (levels 3–4) | 260, 1100 | magic attack Ice Bolt + slow (Speed x0.7); power 8,9 / 11,13; MP 2+7..3+12; 3100+200 ms; reuse 8 s |
 | Battle Heal | 1015 | 14 (levels 1–3) | 700 | fast heal target; power 83,95,107 HP; MP 5+20..7+25; 2000 ms; reuse 3 s |
@@ -183,7 +183,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 470, 2100 | passive mystic Weapon Mastery: P.Atk +1.5/+2.8 and M.Atk +1.9/+3.5, then P.Atk x1.45, M.Atk x1.17; bow/pole: Casting Spd x0.7, Accuracy -9 |
 | Heal | 1011 | 7 (levels 1–3), 14 (levels 4–6) | 160, 700 | heal target; power 49,58,67 / 83,95,107 HP; MP 2+8..5+17; 5000 ms; reuse 10 s |
 | Cure Poison | 1012 | 7 (level 1) | 470 | cure poison on target; MP 2+8; 4000 ms; reuse 15 s |
-| Shield | 1040 | 7 (level 1) | 470 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s |
+| Shield | 1040 | 7 (level 1) | 470 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s; TARGET_ONE, so it can be cast on oneself |
 | Might | 1068 | 7 (level 1) | 470 | target buff Might: P.Atk x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s |
 | Curse: Poison | 1168 | 7 (level 1) | 470 | poison DoT Curse: Poison: 24 HP every 3 s x10 (30 s); land rate 70; MP 2+8; reuse 12 s |
 | Ice Bolt | 1184 | 7 (levels 1–2), 14 (levels 3–4) | 240, 1100 | magic attack Ice Bolt + slow (Speed x0.7); power 8,9 / 11,13; MP 2+7..3+12; 3100+200 ms; reuse 8 s |
@@ -229,9 +229,9 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Weapon Mastery | 250 | 7 (level 1), 14 (level 2) | 520, 1800 | passive orc-mystic Weapon Mastery (same table as 249) |
 | Robe Mastery | 251 | 7 (levels 1–2), 14 (levels 3–4) | 260, 880 | passive Robe Mastery: P.Def +11.6/+13.4/+16.1/+18.4 (robe) |
 | Light Armor Mastery | 252 | 7 (levels 1–2), 14 (levels 3–4) | 260, 880 | passive Light Armor Mastery: P.Def +12.6..+19.3; Casting Spd x1.9, Atk.Spd x1.25, MP regen x1.2 in light armor |
-| Soul Shield | 1010 | 7 (level 1) | 520 | target buff Soul Shield: P.Def x1.08, 20 min; MP 2+8; 2500 ms; reuse 5 s |
+| Soul Shield | 1010 | 7 (level 1) | 520 | target buff Soul Shield: P.Def x1.08, 20 min; MP 2+8; 2500 ms; reuse 5 s; TARGET_ONE, so it can be cast on oneself |
 | Life Drain | 1090 | 7 (level 1), 14 (level 2) | 520, 1800 | active magic drain Life Drain; power 15 / 21; heals caster 80% of damage; MP 5+22 / 8+32; 4000 ms; reuse 6 s |
-| Venom | 1095 | 7 (level 1), 14 (level 2) | 520, 1800 | poison DoT Venom: 24 / 36 HP every 3 s x10 (30 s); land rate 70; MP 2+8 / 3+12; reuse 12 s |
+| Venom | 1095 | 7 (level 1), 14 (level 2) | 520, 1800 | poison DoT Venom: 24 / 36 HP every 3 s x10 (30 s); land rate 70; MP 2+8 / 3+12; 4000 ms (L2J hitTime); reuse 12 s |
 | Dreaming Spirit | 1097 | 7 (level 1), 14 (level 2) | 520, 1800 | debuff Dreaming Spirit: sleep 30 s; land rate 80; MP 2+8 / 3+12; reuse 6 s |
 | Chill Flame | 1100 | 7 (level 1), 14 (level 2) | 520, 1800 | fire DoT Chill Flame: 20 / 30 HP every 1 s x15 (300 / 450 total); land rate 70; MP 3+12 / 5+18; 4000 ms; reuse 6 s |
 | Heavy Armor Mastery | 253 | 14 (levels 1–2) | 880 | passive Heavy Armor Mastery: P.Def +11.6/+13.3 (heavy); Casting Spd x1.71, Atk.Spd x1.25 |

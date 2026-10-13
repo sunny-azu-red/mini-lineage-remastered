@@ -221,7 +221,7 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§19 each set's first skill, every race's its own, free only to a Mystic, and the rest" do
+    test "§19 each set's first skill, every race's its own, free only to a Mystic, one more at level 1 for a Mystic, and the rest" do
       rows = table("Set | First skill")
       assert length(rows) == 8
       names = fn cell -> cell |> String.split(", ", trim: true) |> Enum.sort() end
@@ -229,6 +229,7 @@ defmodule MiniLineage.Game.RulesTest do
       for [set, first, also, then] <- rows do
         %{race_id: race, path: path} = Enum.find(Rules.sets(), &(&1.name == set))
         assert Rules.first_skill(race, path).name == first, set
+        assert length(names.(also)) == if(path == :mystic, do: 1, else: 0), set
 
         {at_one, later} = set |> Rules.lessons() |> Enum.split_with(&(&1.learn_at == 1))
         costs = Map.new(at_one, &{&1.skill, &1.sp})

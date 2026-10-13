@@ -21,6 +21,11 @@ checked against Interlude's own data.
   Dark Elves win it back, and Elves rest faster under the Mother Tree.
 - **Stats that grow with you**, worked from the attributes and the level up to level 80, on L2's own
   EXP table.
+- **Every set fights its own way.** Its trainer at home teaches a short list from its own Lineage II
+  tree for the SP of the hunt: the Human Fighter has a skill for every weapon, the Elven Fighter
+  guards with Defense Aura, the Dark Fighter strikes with Attack Aura, the Orc Fighter rests with
+  Relax, and each Mystic has its own spells. A skill grows in a few big steps rather than nine
+  small ones.
 - **Rest heals, and says so.** While HP or MP is short, 🌿 *Regenerating* shows, and a 3-second tick
   heals. The aura and the healing are one condition, so neither appears without the other.
 - **A status sidebar** drawn like L2's status window, a character page at `/character`, and the

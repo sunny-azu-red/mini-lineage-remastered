@@ -36,6 +36,16 @@ defmodule MiniLineage.Game.SkillsTest do
     assert buffs == %{}
   end
 
+  test "a Mystic casts Shield, or the Orc's Soul Shield, on itself, as a P.Def aura of its own" do
+    for {race_id, skill, id} <- [{3, "Shield", "shield"}, {1, "Soul Shield", "soul_shield"}] do
+      mystic = character(race_id, :mystic, 7, %{skill => 1})
+      raised = Player.put_buffs(mystic, [skill])
+
+      assert aura?(raised, id)
+      assert_in_delta Player.stats(raised).p_def, Player.stats(mystic).p_def * 1.08, 1.0e-9
+    end
+  end
+
   test "a hunt keeps the auras it raised" do
     Rng.put_source(fn -> 0.0 end)
     elf = character(2, :fighter, 5, %{"Defense Aura" => 1})

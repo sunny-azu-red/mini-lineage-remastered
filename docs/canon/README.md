@@ -104,50 +104,67 @@ where it has any.
   replay for a better score.
 - **"Orc Mystic"** names the Orc's mystic set, matching the other three Mystics, even if the
   client says "Orc Mage".
-- **Every set has a first skill from its own tree, and each race's differs:** Power Strike
-  (Human Fighter), Power Shot (Elven Fighter), Mortal Blow (Dark Fighter), Iron Punch (Orc
-  Fighter), Wind Strike (Human Mystic), Ice Bolt (Elven Mystic), Vampiric Touch (Dark Mystic),
-  Chill Flame (Orc Mystic). A Mystic starts knowing its spell and a Fighter learns its skill at
-  level 1 for 10 SP. In Lineage II only Wind Strike and Soul Cry came at level 1, the Fighters'
-  skills came at 5, and each needed the right weapon.
-- **A short skill list per set,** different for each race, until the class change opens the
-  specialised skills: the first skill and two more from the set's canon tree (rules §19, §25).
-  Lineage II's trees are far larger. The Human Fighter's canon Relax is left out for a line per
-  weapon: Mortal Blow for the Dagger it carries, Power Shot for a bow.
-- **A skill grows in steps** (rules §25): after its first level, the canon levels taught at one
-  character level are one line, at the top level's power and MP, so Power Strike has 4 lines where
-  Lineage II sold 9 one at a time. The canon groups' SP stands where a set has a choice to make at
-  that level; where the masteries this game leaves out used to soak up the SP, the late lines cost
-  more (the Elven and Dark Fighters at 15, the Human, Dark and Orc Mystics at 14), so every step is
-  saved for.
-- **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
-  Mastery are left out, and each set learns two actives in their place.
-- **Self Heal (every Mystic but the Orc), Wind Strike (Elven Mystic) and Soul Cry cost 50 SP at
-  level 1,** where Lineage II taught them for 0 SP, so nothing but a Mystic's first spell comes
-  free; the others are bought at their canon levels. The Dark Mystic's canon Wind Strike is left
-  out, its first skill being Vampiric Touch.
-- **The Orc Mystic learns Life Drain at level 1 for 50 SP,** where Lineage II taught it at 7 for
-  520, and **its Chill Flame can take the last HP,** where Lineage II's leaves 1. Its first spell is
-  a burn whose cast outlasts it, so without them it paid for every kill in blows taken, with no heal
-  before level 7, and died early more than any other set.
-- **The character chooses its own skills in a fight** (rules §20): its auras, its toggle, its
-  strongest spell, then while its spells rest a heal below half HP, or a curse on a monster above
-  half its HP. In Lineage II the player chose.
-- **A heal mends its power + √M.Atk,** as aCis has it and every retail-derived source shows; L2J
-  heals its power alone. No source from Interlude's own time settles it. **Curse: Poison lands 70%
-  of the time,** aCis's power; L2J's 10 rolls against the target's CON and M.Def, which has no place
-  here. **Wind Shackle lands 80% of the time,** its power with no MEN save.
-- **Relax works on the tick of rest,** 5 HP more for 3 MP, while HP is short. In Lineage II it sat
-  the character down, drained 2 MP every 2 seconds and ended when it stood or HP was full.
-- **Soul Cry lasts one fight** and is lit anew in the next, where Lineage II kept it on until
-  switched off. **An aura holds its canon 20 minutes,** out of the fight too.
-- **No spellbooks.** A line is learned with level and SP alone; in Lineage II some needed a book
-  from the village trader.
-- **Skills are learned only at the trainers of the character's own village,** with SP. In
-  Lineage II any town's trainers for your race would teach you.
 - **A class is changed only in the character's own starting village,** by that village's master
   (High Priest Biotin, Hierarch Asterios, Tetrarch Thifiell, Flame Lord Kakai). In Lineage II any
   town's master would do.
+
+**Skills**
+
+Every skill, its numbers and its level come from the set's own canon tree (rules §19, §25). What
+differs is which of them a set gets, how they are sold, and how the fight uses them.
+
+- **Each set plays its own way.** Before the class change a set learns its first skill and two to
+  four more from its tree, chosen so no two sets fight alike, where Lineage II's trees are far
+  larger and shared:
+
+  | Set | Its style | Its skills |
+  |---|---|---|
+  | Human Fighter | the all-rounder, a line for every weapon and no recovery | Power Strike, Mortal Blow, Power Shot |
+  | Elven Fighter | the archer who guards | Power Shot, Defense Aura, Elemental Heal |
+  | Dark Fighter | the dagger who strikes harder | Mortal Blow, Attack Aura, Drain Health |
+  | Orc Fighter | fists and sword, and the one Fighter that rests faster | Iron Punch, Power Strike, Relax |
+  | Human Mystic | wind and ice | Wind Strike, Self Heal, Ice Bolt |
+  | Elven Mystic | the healer | Ice Bolt, Self Heal, Wind Strike, Heal |
+  | Dark Mystic | drains and curses | Vampiric Touch, Self Heal, Curse: Poison, Shield, Wind Shackle |
+  | Orc Mystic | burns, poison and spirit | Chill Flame, Soul Cry, Life Drain, Soul Shield, Venom |
+
+  So **the Elven Fighter learns only Defense Aura and the Dark Fighter only Attack Aura**, where
+  Lineage II taught both to both; **Relax is the Orc Fighter's alone**, where Lineage II also gave
+  it to the Human Fighter; and the Dark Mystic's canon Wind Strike is left out for Vampiric Touch.
+- **Every set's first skill is its own,** learned at level 1. In Lineage II only Wind Strike and
+  Soul Cry came at level 1, the Fighters' skills came at 5, and several sets shared them.
+- **Level 1 follows one rule:** a Fighter learns its first skill for 10 SP, what one kill pays; a
+  Mystic knows its first spell free and learns exactly one more for 50 SP (Self Heal, or the Orc's
+  Soul Cry). In Lineage II a Mystic's level 1 skills were free, and the Elven Mystic had Wind
+  Strike at 1, here at 7.
+- **A skill grows in steps, not nine levels:** after its first level, the canon levels taught at
+  one character level are one line, at the top level's power and MP, so Power Strike has 4 lines
+  where Lineage II sold 9 one at a time.
+- **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
+  Mastery are left out for the actives above. The SP they soaked up goes on dearer late lines (the
+  Elven and Dark Fighters at 15, the Human, Dark and Orc Mystics at 14), so each step is saved for;
+  what is left after level 15 waits for the class change.
+- **Buffs are cast on oneself.** Shield and Soul Shield, cast on a target in Lineage II, are cast
+  by the Mystic on itself, as a lone Mystic did there. **An aura holds its canon 20 minutes,** out
+  of the fight too.
+- **The character chooses its own skills in a fight** (rules §20): its auras, its toggle, its
+  strongest spell, then while its spells rest a heal below half HP, or a curse on a monster above
+  half its HP. In Lineage II the player chose.
+- **Odds and numbers are fixed where Lineage II rolled against stats we lack.** A heal mends its
+  power + √M.Atk, as aCis has it and every retail-derived source shows; L2J heals its power alone.
+  Curse: Poison and Venom land 70% of the time, aCis's power, where L2J rolls against the target's
+  CON and M.Def. Wind Shackle lands 80%, with no MEN save.
+- **Relax works on the tick of rest,** 5 HP more for 3 MP, while HP is short. In Lineage II it sat
+  the character down, drained 2 MP every 2 seconds and ended when it stood or HP was full.
+- **Soul Cry lasts one fight** and is lit anew in the next, where Lineage II kept it on until
+  switched off.
+- **The Orc Mystic's Chill Flame can take the last HP,** where Lineage II's leaves 1: its first
+  spell is a burn whose cast outlasts it, so without that it paid for every kill in blows taken.
+  **Its level 7 lines cost 350 SP each** (Life Drain, Soul Shield, Venom), where Lineage II asked
+  520, so three arriving at once are bought within the level.
+- **Skills are learned with level and SP alone, at the trainers of the character's own village.**
+  In Lineage II some needed a spellbook from the village trader, and any town's trainers for your
+  race would teach you.
 
 **Pace and gear**
 
