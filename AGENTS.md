@@ -75,10 +75,13 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 
 ## Working here
 
-- **Balance is measured, not guessed.** `bench/ladder.exs` plays every set up its village's ladder
-  through the game's own actions (hunt, rest, buy, train) with seeded dice and reports where runs
-  die and to what: `MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [level] [rest below %]`.
-  Run it before and after anything that moves a fight's numbers.
+- **Balance is measured, not guessed.** `bench/ladder.exs` plays every set up its village's ladder,
+  once per weapon path its skills can use, through the game's own actions (hunt, rest, buy, sell,
+  train) with seeded dice. It reports where runs die and to what, when the trainer's list and the
+  shop's best kit are bought, and the SP and Adena earned and left:
+  `MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [level] [rest below %] [potions kept]`.
+  Run it before and after anything that moves a fight's numbers, a price, a reward or the trainer,
+  and rewrite [docs/balance.md](docs/balance.md), the last reading, from what it prints.
 - **Done means `mix precommit`**, plus `mix e2e` for anything the browser renders: a screen, a hook,
   a selector, what an element *is*. A change that only moves colour values skips e2e; no suite can
   fail on a hex. ExUnit's coverage understates the web layer because the browser suites aren't
