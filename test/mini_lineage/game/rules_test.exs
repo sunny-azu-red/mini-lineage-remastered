@@ -641,7 +641,7 @@ defmodule MiniLineage.Game.RulesTest do
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
     end
 
-    test "§25 a Human Fighter buys Power Strike, then learns three lines with 150 SP at level 5" do
+    test "§25 a Human Fighter buys Power Strike, then learns two lines with 150 SP at level 5" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Pupil")
       fighter = %{fighter | sp: 10}
@@ -651,7 +651,7 @@ defmodule MiniLineage.Game.RulesTest do
 
       fighter =
         Enum.reduce(
-          [{"Power Strike", 2}, {"Power Strike", 3}, {"Mortal Blow", 1}],
+          [{"Power Strike", 2}, {"Mortal Blow", 1}],
           fighter,
           fn {skill, level}, p ->
             {p, {:ok, _}} = MiniLineage.Game.Actions.learn(p, skill, level)

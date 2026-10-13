@@ -111,9 +111,15 @@ where it has any.
   level 1 for 10 SP. In Lineage II only Wind Strike and Soul Cry came at level 1, the Fighters'
   skills came at 5, and each needed the right weapon.
 - **A short skill list per set,** different for each race, until the class change opens the
-  specialised skills: the first skill and two more from the set's canon tree, at their canon levels
-  and SP (rules §19, §25). Lineage II's trees are far larger. The Human Fighter's canon Relax is
-  left out for a line per weapon: Mortal Blow for the Dagger it carries, Power Shot for a bow.
+  specialised skills: the first skill and two more from the set's canon tree (rules §19, §25).
+  Lineage II's trees are far larger. The Human Fighter's canon Relax is left out for a line per
+  weapon: Mortal Blow for the Dagger it carries, Power Shot for a bow.
+- **A skill grows in steps** (rules §25): after its first level, the canon levels taught at one
+  character level are one line, at the top level's power and MP, so Power Strike has 4 lines where
+  Lineage II sold 9 one at a time. The canon groups' SP stands where a set has a choice to make at
+  that level; where the masteries this game leaves out used to soak up the SP, the late lines cost
+  more (the Elven and Dark Fighters at 15, the Human, Dark and Orc Mystics at 14), so every step is
+  saved for.
 - **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
   Mastery are left out, and each set learns two actives in their place.
 - **Self Heal (every Mystic but the Orc), Wind Strike (Elven Mystic) and Soul Cry cost 50 SP at

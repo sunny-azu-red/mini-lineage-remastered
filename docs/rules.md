@@ -670,166 +670,103 @@ it, each at every level. Only a Mystic's first spell is taught at level 1 for no
 known from the start. A Fighter's first skill costs 10 SP, what a level 1 kill pays (§18, §22),
 and the other lines §19 gives at level 1 cost 50.
 
+A skill grows in steps, not one level at a time: after its first level, each line is everything the
+trainer teaches of it at one character level (5, 10 and 15 for a Fighter, 7 and 14 for a Mystic). Its
+SP is set so that a character can afford about one new line when it reaches that level and the rest
+of that level's lines about a level later, so each step is saved for and the order chosen.
+
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
 | Human Fighter | Power Strike | 1 | 1 | 10 |
-| Human Fighter | Power Strike | 2 | 5 | 50 |
-| Human Fighter | Power Strike | 3 | 5 | 50 |
-| Human Fighter | Power Strike | 4 | 10 | 370 |
-| Human Fighter | Power Strike | 5 | 10 | 370 |
-| Human Fighter | Power Strike | 6 | 10 | 370 |
-| Human Fighter | Power Strike | 7 | 15 | 1,300 |
-| Human Fighter | Power Strike | 8 | 15 | 1,300 |
-| Human Fighter | Power Strike | 9 | 15 | 1,300 |
+| Human Fighter | Power Strike | 2 | 5 | 100 |
+| Human Fighter | Power Strike | 3 | 10 | 1,110 |
+| Human Fighter | Power Strike | 4 | 15 | 3,900 |
 | Human Fighter | Mortal Blow | 1 | 5 | 50 |
-| Human Fighter | Mortal Blow | 2 | 5 | 50 |
-| Human Fighter | Mortal Blow | 3 | 5 | 50 |
-| Human Fighter | Mortal Blow | 4 | 10 | 370 |
-| Human Fighter | Mortal Blow | 5 | 10 | 370 |
-| Human Fighter | Mortal Blow | 6 | 10 | 370 |
-| Human Fighter | Mortal Blow | 7 | 15 | 1,300 |
-| Human Fighter | Mortal Blow | 8 | 15 | 1,300 |
-| Human Fighter | Mortal Blow | 9 | 15 | 1,300 |
+| Human Fighter | Mortal Blow | 2 | 5 | 100 |
+| Human Fighter | Mortal Blow | 3 | 10 | 1,110 |
+| Human Fighter | Mortal Blow | 4 | 15 | 3,900 |
 | Human Fighter | Power Shot | 1 | 5 | 50 |
-| Human Fighter | Power Shot | 2 | 5 | 50 |
-| Human Fighter | Power Shot | 3 | 5 | 50 |
-| Human Fighter | Power Shot | 4 | 10 | 370 |
-| Human Fighter | Power Shot | 5 | 10 | 370 |
-| Human Fighter | Power Shot | 6 | 10 | 370 |
-| Human Fighter | Power Shot | 7 | 15 | 1,300 |
-| Human Fighter | Power Shot | 8 | 15 | 1,300 |
-| Human Fighter | Power Shot | 9 | 15 | 1,300 |
+| Human Fighter | Power Shot | 2 | 5 | 100 |
+| Human Fighter | Power Shot | 3 | 10 | 1,110 |
+| Human Fighter | Power Shot | 4 | 15 | 3,900 |
 | Elven Fighter | Power Shot | 1 | 1 | 10 |
-| Elven Fighter | Power Shot | 2 | 5 | 50 |
-| Elven Fighter | Power Shot | 3 | 5 | 50 |
-| Elven Fighter | Power Shot | 4 | 10 | 310 |
-| Elven Fighter | Power Shot | 5 | 10 | 310 |
-| Elven Fighter | Power Shot | 6 | 10 | 310 |
-| Elven Fighter | Power Shot | 7 | 15 | 1,100 |
-| Elven Fighter | Power Shot | 8 | 15 | 1,100 |
-| Elven Fighter | Power Shot | 9 | 15 | 1,100 |
+| Elven Fighter | Power Shot | 2 | 5 | 100 |
+| Elven Fighter | Power Shot | 3 | 10 | 930 |
+| Elven Fighter | Power Shot | 4 | 15 | 5,300 |
 | Elven Fighter | Defense Aura | 1 | 5 | 160 |
-| Elven Fighter | Elemental Heal | 1 | 15 | 1,100 |
-| Elven Fighter | Elemental Heal | 2 | 15 | 1,100 |
-| Elven Fighter | Elemental Heal | 3 | 15 | 1,100 |
+| Elven Fighter | Elemental Heal | 1 | 15 | 1,800 |
+| Elven Fighter | Elemental Heal | 2 | 15 | 3,500 |
 | Dark Fighter | Mortal Blow | 1 | 1 | 10 |
-| Dark Fighter | Mortal Blow | 2 | 5 | 50 |
-| Dark Fighter | Mortal Blow | 3 | 5 | 50 |
-| Dark Fighter | Mortal Blow | 4 | 10 | 310 |
-| Dark Fighter | Mortal Blow | 5 | 10 | 310 |
-| Dark Fighter | Mortal Blow | 6 | 10 | 310 |
-| Dark Fighter | Mortal Blow | 7 | 15 | 950 |
-| Dark Fighter | Mortal Blow | 8 | 15 | 950 |
-| Dark Fighter | Mortal Blow | 9 | 15 | 950 |
+| Dark Fighter | Mortal Blow | 2 | 5 | 100 |
+| Dark Fighter | Mortal Blow | 3 | 10 | 930 |
+| Dark Fighter | Mortal Blow | 4 | 15 | 5,000 |
 | Dark Fighter | Attack Aura | 1 | 10 | 910 |
-| Dark Fighter | Drain Health | 1 | 15 | 1,400 |
-| Dark Fighter | Drain Health | 2 | 15 | 1,400 |
+| Dark Fighter | Drain Health | 1 | 15 | 2,450 |
+| Dark Fighter | Drain Health | 2 | 15 | 2,450 |
 | Orc Fighter | Iron Punch | 1 | 1 | 10 |
-| Orc Fighter | Iron Punch | 2 | 5 | 60 |
-| Orc Fighter | Iron Punch | 3 | 5 | 60 |
-| Orc Fighter | Iron Punch | 4 | 10 | 460 |
-| Orc Fighter | Iron Punch | 5 | 10 | 460 |
-| Orc Fighter | Iron Punch | 6 | 10 | 460 |
-| Orc Fighter | Iron Punch | 7 | 15 | 1,300 |
-| Orc Fighter | Iron Punch | 8 | 15 | 1,300 |
-| Orc Fighter | Iron Punch | 9 | 15 | 1,300 |
+| Orc Fighter | Iron Punch | 2 | 5 | 120 |
+| Orc Fighter | Iron Punch | 3 | 10 | 1,380 |
+| Orc Fighter | Iron Punch | 4 | 15 | 3,900 |
 | Orc Fighter | Power Strike | 1 | 5 | 60 |
-| Orc Fighter | Power Strike | 2 | 5 | 60 |
-| Orc Fighter | Power Strike | 3 | 5 | 60 |
-| Orc Fighter | Power Strike | 4 | 10 | 460 |
-| Orc Fighter | Power Strike | 5 | 10 | 460 |
-| Orc Fighter | Power Strike | 6 | 10 | 460 |
-| Orc Fighter | Power Strike | 7 | 15 | 1,300 |
-| Orc Fighter | Power Strike | 8 | 15 | 1,300 |
-| Orc Fighter | Power Strike | 9 | 15 | 1,300 |
+| Orc Fighter | Power Strike | 2 | 5 | 120 |
+| Orc Fighter | Power Strike | 3 | 10 | 1,380 |
+| Orc Fighter | Power Strike | 4 | 15 | 3,900 |
 | Orc Fighter | Relax | 1 | 5 | 190 |
 | Human Mystic | Wind Strike | 1 | 1 | 0 |
-| Human Mystic | Wind Strike | 2 | 7 | 240 |
-| Human Mystic | Wind Strike | 3 | 7 | 240 |
-| Human Mystic | Wind Strike | 4 | 14 | 1,100 |
-| Human Mystic | Wind Strike | 5 | 14 | 1,100 |
+| Human Mystic | Wind Strike | 2 | 7 | 480 |
+| Human Mystic | Wind Strike | 3 | 14 | 4,000 |
 | Human Mystic | Self Heal | 1 | 1 | 50 |
 | Human Mystic | Ice Bolt | 1 | 7 | 240 |
 | Human Mystic | Ice Bolt | 2 | 7 | 240 |
-| Human Mystic | Ice Bolt | 3 | 14 | 1,100 |
-| Human Mystic | Ice Bolt | 4 | 14 | 1,100 |
+| Human Mystic | Ice Bolt | 3 | 14 | 4,000 |
 | Elven Mystic | Ice Bolt | 1 | 1 | 0 |
 | Elven Mystic | Ice Bolt | 2 | 7 | 260 |
-| Elven Mystic | Ice Bolt | 3 | 14 | 1,100 |
-| Elven Mystic | Ice Bolt | 4 | 14 | 1,100 |
+| Elven Mystic | Ice Bolt | 3 | 14 | 2,200 |
 | Elven Mystic | Self Heal | 1 | 1 | 50 |
 | Elven Mystic | Wind Strike | 1 | 1 | 50 |
-| Elven Mystic | Wind Strike | 2 | 7 | 260 |
-| Elven Mystic | Wind Strike | 3 | 7 | 260 |
-| Elven Mystic | Wind Strike | 4 | 14 | 1,100 |
-| Elven Mystic | Wind Strike | 5 | 14 | 1,100 |
+| Elven Mystic | Wind Strike | 2 | 7 | 520 |
+| Elven Mystic | Wind Strike | 3 | 14 | 2,200 |
 | Elven Mystic | Heal | 1 | 7 | 170 |
-| Elven Mystic | Heal | 2 | 7 | 170 |
-| Elven Mystic | Heal | 3 | 7 | 170 |
-| Elven Mystic | Heal | 4 | 14 | 700 |
-| Elven Mystic | Heal | 5 | 14 | 700 |
-| Elven Mystic | Heal | 6 | 14 | 700 |
+| Elven Mystic | Heal | 2 | 7 | 340 |
+| Elven Mystic | Heal | 3 | 14 | 2,100 |
 | Dark Mystic | Vampiric Touch | 1 | 1 | 0 |
-| Dark Mystic | Vampiric Touch | 2 | 14 | 1,100 |
+| Dark Mystic | Vampiric Touch | 2 | 14 | 2,900 |
 | Dark Mystic | Self Heal | 1 | 1 | 50 |
 | Dark Mystic | Curse: Poison | 1 | 7 | 470 |
-| Dark Mystic | Wind Shackle | 1 | 14 | 2,100 |
+| Dark Mystic | Wind Shackle | 1 | 14 | 5,600 |
 | Orc Mystic | Chill Flame | 1 | 1 | 0 |
-| Orc Mystic | Chill Flame | 2 | 14 | 1,800 |
+| Orc Mystic | Chill Flame | 2 | 14 | 3,000 |
 | Orc Mystic | Soul Cry | 1 | 1 | 50 |
-| Orc Mystic | Soul Cry | 2 | 14 | 1,800 |
+| Orc Mystic | Soul Cry | 2 | 14 | 3,000 |
 | Orc Mystic | Life Drain | 1 | 1 | 50 |
-| Orc Mystic | Life Drain | 2 | 14 | 1,800 |
+| Orc Mystic | Life Drain | 2 | 14 | 3,000 |
 
 Each skill's power and MP at each level (a burn's power is per second):
 
 | Skill level | Power | MP |
 |---|---|---|
 | Power Strike 1 | 25 | 10 |
-| Power Strike 2 | 27 | 10 |
-| Power Strike 3 | 30 | 11 |
-| Power Strike 4 | 39 | 13 |
-| Power Strike 5 | 42 | 13 |
-| Power Strike 6 | 46 | 14 |
-| Power Strike 7 | 60 | 17 |
-| Power Strike 8 | 65 | 18 |
-| Power Strike 9 | 70 | 19 |
+| Power Strike 2 | 30 | 11 |
+| Power Strike 3 | 46 | 14 |
+| Power Strike 4 | 70 | 19 |
 | Mortal Blow 1 | 73 | 9 |
-| Mortal Blow 2 | 80 | 9 |
-| Mortal Blow 3 | 88 | 10 |
-| Mortal Blow 4 | 115 | 11 |
-| Mortal Blow 5 | 126 | 12 |
-| Mortal Blow 6 | 137 | 13 |
-| Mortal Blow 7 | 178 | 16 |
-| Mortal Blow 8 | 193 | 16 |
-| Mortal Blow 9 | 210 | 17 |
+| Mortal Blow 2 | 88 | 10 |
+| Mortal Blow 3 | 137 | 13 |
+| Mortal Blow 4 | 210 | 17 |
 | Power Shot 1 | 65 | 19 |
-| Power Shot 2 | 71 | 20 |
-| Power Shot 3 | 78 | 21 |
-| Power Shot 4 | 102 | 25 |
-| Power Shot 5 | 112 | 26 |
-| Power Shot 6 | 122 | 27 |
-| Power Shot 7 | 158 | 34 |
-| Power Shot 8 | 172 | 36 |
-| Power Shot 9 | 187 | 37 |
+| Power Shot 2 | 78 | 21 |
+| Power Shot 3 | 122 | 27 |
+| Power Shot 4 | 187 | 37 |
 | Iron Punch 1 | 29 | 11 |
-| Iron Punch 2 | 31 | 12 |
-| Iron Punch 3 | 34 | 13 |
-| Iron Punch 4 | 45 | 15 |
-| Iron Punch 5 | 49 | 15 |
-| Iron Punch 6 | 54 | 16 |
-| Iron Punch 7 | 69 | 20 |
-| Iron Punch 8 | 76 | 21 |
-| Iron Punch 9 | 82 | 22 |
+| Iron Punch 2 | 34 | 13 |
+| Iron Punch 3 | 54 | 16 |
+| Iron Punch 4 | 82 | 22 |
 | Wind Strike 1 | 12 | 9 |
-| Wind Strike 2 | 13 | 9 |
-| Wind Strike 3 | 15 | 10 |
-| Wind Strike 4 | 18 | 14 |
-| Wind Strike 5 | 21 | 15 |
+| Wind Strike 2 | 15 | 10 |
+| Wind Strike 3 | 21 | 15 |
 | Ice Bolt 1 | 8 | 9 |
 | Ice Bolt 2 | 9 | 10 |
-| Ice Bolt 3 | 11 | 14 |
-| Ice Bolt 4 | 13 | 15 |
+| Ice Bolt 3 | 13 | 15 |
 | Vampiric Touch 1 | 18 | 25 |
 | Vampiric Touch 2 | 21 | 28 |
 | Chill Flame 1 | 20 | 15 |
@@ -840,14 +777,10 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Life Drain 2 | 21 | 40 |
 | Self Heal 1 | 42 | 9 |
 | Heal 1 | 49 | 10 |
-| Heal 2 | 58 | 13 |
-| Heal 3 | 67 | 14 |
-| Heal 4 | 83 | 17 |
-| Heal 5 | 95 | 19 |
-| Heal 6 | 107 | 22 |
+| Heal 2 | 67 | 14 |
+| Heal 3 | 107 | 22 |
 | Elemental Heal 1 | 71 | 40 |
-| Elemental Heal 2 | 75 | 43 |
-| Elemental Heal 3 | 80 | 45 |
+| Elemental Heal 2 | 80 | 45 |
 | Defense Aura 1 | | 5 |
 | Attack Aura 1 | | 7 |
 | Curse: Poison 1 | 24 | 10 |
@@ -857,8 +790,8 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Relax 1 | 5 | 3 |
 
 Example: a level 5 Human Fighter that learned Power Strike 1 for 10 SP at level 1, now with 150 SP,
-learns Power Strike 2 and 3 and Mortal Blow 1 for 50 each, with 150 − 50 − 50 − 50 = **0** left, and
-its Power Strike strikes at power **30**. A Human Mystic starts knowing Wind Strike, whose level 1
+learns Power Strike 2 for 100 and Mortal Blow 1 for 50, with 150 − 100 − 50 = **0** left, and its
+Power Strike strikes at power **30**. A Human Mystic starts knowing Wind Strike, whose level 1
 its trainer teaches for nothing, and learns Self Heal for **50** SP.
 
 ## 26. Potions

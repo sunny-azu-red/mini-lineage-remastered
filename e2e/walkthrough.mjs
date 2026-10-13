@@ -596,8 +596,8 @@ try {
     const learnedPanel = () => page.locator('#screen h2.header-name', { hasText: 'Learned Skills' }).count();
     check('...to a Fighter that starts knowing nothing, so no Learned Skills panel beside it',
         await learnedPanel() === 0);
-    check('...muting a line until the one before it is learned',
-        await page.locator('#lesson-mortal-blow-2.locked[data-status="queued"]').count() === 1);
+    check('...listing each skill\'s next line alone, never the ones after it',
+        await page.locator('#lesson-mortal-blow-2').count() === 0);
     check('...with the level it requires and its SP named in full on hover',
         await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Level Required' &&
         await page.getAttribute('#lessons th:nth-child(4)', 'title') === 'Skill Points');
@@ -623,7 +623,7 @@ try {
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',
-        Number(await sp()) === spBefore + 10000 - 10 - 50, await sp());
+        Number(await sp()) === spBefore + 10000 - 10 - 100, await sp());
     check('...the dropdown and its button both going back to the village, the lesson no longer offered',
         await page.inputValue('#learn-form select') === '' && await text('#learn-form button') === 'Return',
         await text('#learn-form button'));
@@ -631,7 +631,8 @@ try {
         await page.locator('#trainer-intro[phx-hook="AnimatedValues"] [data-key="trainer-sp"]').count() === 1);
     check('...moving into the Learned Skills panel and offering the next line',
         await text('#skill-mortal-blow .skill') === 'Mortal Blow 2' &&
-        await page.locator('#lesson-mortal-blow-3[data-status="ready"]').count() === 1,
+        await page.locator('#lesson-mortal-blow-3[data-status="ready"]').count() === 1 &&
+        await page.locator('#lesson-mortal-blow-4').count() === 0,
         await text('#skill-mortal-blow'));
     check('...each line naming the weapon it needs, a spell any',
         await text('#lesson-mortal-blow-3 td:nth-child(2)') === 'Dagger' &&

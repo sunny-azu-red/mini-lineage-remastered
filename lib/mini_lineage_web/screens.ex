@@ -361,7 +361,12 @@ defmodule MiniLineageWeb.Screens do
   # Rules §25: every line the set has still to learn, muted unless it can be learned next; what it
   # knows is the panel beside it. SP is paid like Adena, so a line short of it is still offered.
   defp trainer(assigns) do
-    lessons = Enum.reject(assigns.view.lessons, &(&1.status == :known))
+    # Each skill's next line only: the ones after it are learned in order, so listing them is clutter.
+    lessons =
+      assigns.view.lessons
+      |> Enum.reject(&(&1.status == :known))
+      |> Enum.uniq_by(& &1.skill)
+
     sort = assigns.sorts["lessons"]
 
     assigns =

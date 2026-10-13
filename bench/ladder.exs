@@ -11,9 +11,14 @@ alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules, Sho
       Process.put(:kept, String.to_integer(k))
       {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
 
-    [r, t, b] -> {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
-    [r, t] -> {String.to_integer(r), String.to_integer(t), 100}
-    _ -> {40, 15, 100}
+    [r, t, b] ->
+      {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
+
+    [r, t] ->
+      {String.to_integer(r), String.to_integer(t), 100}
+
+    _ ->
+      {40, 15, 100}
   end
 
 Application.ensure_all_started(:tz)
@@ -108,6 +113,28 @@ defmodule Ladder do
     end)
   end
 
+  # What the trainer is worth: SP on hand once trained on arriving at a level, each line's wait in
+  # hunts from the level it is taught at, and the SP earned and spent.
+  def note_training(reached, was, now, kills) do
+    level = Player.level(now)
+
+    waits =
+      for {skill, known} <- now.skills,
+          bought <- (Map.get(was.skills, skill, 0) + 1)..known//1,
+          lesson =
+            Enum.find(
+              Rules.lessons(Rules.set(now.race_id, now.path).name),
+              &(&1.skill == skill and &1.level == bought)
+            ),
+          do: {lesson.learn_at, kills - Map.get(reached, lesson.learn_at, 0)}
+
+    reached
+    |> Map.put_new({:sp, level}, now.sp)
+    |> Map.put_new({:earned, level}, was.sp + Map.get(reached, :spent, 0))
+    |> Map.update(:waits, waits, &(waits ++ &1))
+    |> Map.update(:spent, was.sp - now.sp, &(&1 + was.sp - now.sp))
+  end
+
   # Ticks of rest (3 seconds each) until both bars are full.
   def rest(player, ticks \\ 0) do
     {rested, healed?} = Player.regenerate(player)
@@ -124,7 +151,10 @@ for race <- [0, 2, 3, 1], path <- [:fighter, :mystic] do
       {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Bench")
 
       Stream.iterate({player, 0, 0, %{}}, fn {p, kills, ticks, reached} ->
-        p = p |> Ladder.shop() |> Ladder.stock_potions() |> Ladder.train()
+        p = p |> Ladder.shop() |> Ladder.stock_potions()
+        trained = Ladder.train(p)
+        reached = Ladder.note_training(reached, p, trained, kills)
+        p = trained
         stats = Player.stats(p)
 
         # Resting means walking back to town, where the disengaging's seconds are spent at once.
@@ -167,5 +197,26 @@ for race <- [0, 2, 3, 1], path <- [:fighter, :mystic] do
       "to L#{top}: #{avg.(alive, fn {_, k, _, _} -> k end)} hunts, " <>
       "#{avg.(alive, fn {_, _, t, _} -> div(t * 3, 60) end)} min resting, " <>
       "L5 at hunt #{avg.(results, fn {_, _, _, r} -> r[5] || 0 end)}, L10 at #{avg.(results, fn {_, _, _, r} -> r[10] || 0 end)}"
+  )
+
+  banked =
+    for l <- [5, 7, 10, 14, 15],
+        do:
+          "L#{l} #{avg.(Enum.filter(results, fn {_, _, _, r} -> r[{:sp, l}] end), fn {_, _, _, r} -> r[{:sp, l}] end)}"
+
+  earned =
+    for l <- [5, 7, 10, 14, 15],
+        do: "L#{l} #{avg.(results, fn {_, _, _, r} -> r[{:earned, l}] || 0 end)}"
+
+  waits =
+    results
+    |> Enum.flat_map(fn {_, _, _, r} -> Map.get(r, :waits, []) end)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    |> Enum.sort()
+    |> Enum.map(fn {tier, w} -> "L#{tier} #{round(Enum.sum(w) / length(w))}/#{Enum.max(w)}" end)
+
+  IO.puts(
+    "#{String.pad_trailing("", 14)} SP left once trained: #{Enum.join(banked, ", ")}, at the end #{avg.(alive, fn {p, _, _, _} -> p.sp end)} | " <>
+      "earned by #{Enum.join(earned, ", ")} | wait in hunts (avg/max) #{Enum.join(waits, ", ")} | spent #{avg.(alive, fn {_, _, _, r} -> r[:spent] || 0 end)}"
   )
 end

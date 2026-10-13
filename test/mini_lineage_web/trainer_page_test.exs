@@ -57,7 +57,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
   end
 
   test "the home village leads to its trainer, whose lessons are the set's own" do
-    {view, _session, _conn} = human(build_conn(), 100)
+    {view, session, conn} = human(build_conn(), 100)
 
     assert has_element?(view, ~s(#travel-form option[value="trainer"]))
     view |> form("#travel-form", %{"place" => "trainer"}) |> render_submit()
@@ -66,12 +66,16 @@ defmodule MiniLineageWeb.TrainerPageTest do
     assert has_element?(view, ~s(#lesson-power-strike-2[data-status="ready"]))
     refute has_element?(view, "#lesson-power-strike-2.locked")
 
-    # A line waiting on the one before it is muted and not offered, though its level is reached.
-    assert has_element?(view, ~s(#lesson-power-strike-3.locked[data-status="queued"]))
+    # Each skill shows its next line alone, and another set's lines are not listed at all.
+    refute has_element?(view, "#lesson-power-strike-3")
     refute has_element?(view, ~s(#learn-form option[value="Power Strike|3"]))
-    # Above its level it is muted; another set's lines are not listed at all.
-    assert has_element?(view, ~s(#lesson-power-strike-4.locked[data-status="later"]))
     refute has_element?(view, "#lesson-wind-strike-2")
+
+    # Once learned, the line after it shows, muted until its level is reached.
+    Characters.mutate(session, &{%{&1 | skills: %{"Power Strike" => 2}}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+    assert has_element?(view, ~s(#lesson-power-strike-3.locked[data-status="later"]))
+    refute has_element?(view, "#lesson-power-strike-4")
   end
 
   test "what it knows is the Learned Skills panel, not a lesson" do
@@ -90,6 +94,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {_view, _session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
     first = &has_element?(view, "#lessons tbody tr:first-child#lesson-#{&1}")
+    last = &has_element?(view, "#lessons tbody tr:last-child#lesson-#{&1}")
     skill = ~s(#lessons button[phx-value-key="skill"])
 
     assert first.("power-strike-2")
@@ -100,11 +105,11 @@ defmodule MiniLineageWeb.TrainerPageTest do
 
     view |> element(skill) |> render_click()
     assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Skill")
-    assert first.("power-strike-9")
+    assert first.("power-strike-2") and last.("mortal-blow-1")
 
     view |> element(skill) |> render_click()
     refute has_element?(view, "#lessons th[aria-sort]")
-    assert first.("power-strike-2")
+    assert first.("power-strike-2") and last.("power-shot-1")
 
     # A key the table does not offer is not stored.
     render_click(view, "sort", %{"table" => "lessons", "key" => "status"})
@@ -152,7 +157,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     assert has_element?(view, "#flash .skill", "Power Strike 2")
     refute has_element?(view, "#lesson-power-strike-2")
     assert has_element?(view, "#skill-power-strike .skill", "Power Strike 2")
-    assert %{sp: 50, skills: %{"Power Strike" => 2}} = stored(session)
+    assert %{sp: 0, skills: %{"Power Strike" => 2}} = stored(session)
   end
 
   test "the SP counts down as it is spent, under the panel's own icon for what is learned" do

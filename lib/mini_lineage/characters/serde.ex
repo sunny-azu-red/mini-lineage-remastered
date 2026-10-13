@@ -80,7 +80,8 @@ defmodule MiniLineage.Characters.Serde do
     end
   end
 
-  # Only the names `Rules` knows, at whole levels; a run from before the trainer knows its first skill.
+  # Only the names `Rules` knows, at whole levels it still teaches; a run from before the trainer
+  # knows its first skill.
   defp skills(%{} = known, _race_id, _path),
     do:
       for(
@@ -88,7 +89,7 @@ defmodule MiniLineage.Characters.Serde do
         Rules.skill_known?(name),
         is_integer(level),
         into: %{},
-        do: {name, level}
+        do: {name, min(level, length(Rules.skill_levels(name)))}
       )
 
   defp skills(_none, race_id, path) when is_integer(race_id) and path in [:fighter, :mystic],

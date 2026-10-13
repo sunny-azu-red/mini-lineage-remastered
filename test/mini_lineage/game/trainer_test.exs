@@ -45,13 +45,13 @@ defmodule MiniLineage.Game.TrainerTest do
     {player, {:ok, _}} = Actions.learn(human(5, 100), "Power Strike", 2)
 
     assert player.skills["Power Strike"] == 2
-    assert player.sp == 50
+    assert player.sp == 0
   end
 
   test "and refused too soon, out of order, without the SP, or away from home" do
     assert {_, {:error, :too_soon, _}} = Actions.learn(human(4, 1_000), "Power Strike", 2)
-    assert {_, {:error, :out_of_order, _}} = Actions.learn(human(5, 1_000), "Power Strike", 3)
-    assert {_, {:error, :no_sp, _}} = Actions.learn(human(5, 49), "Power Strike", 2)
+    assert {_, {:error, :out_of_order, _}} = Actions.learn(human(10, 9_999), "Power Strike", 3)
+    assert {_, {:error, :no_sp, _}} = Actions.learn(human(5, 99), "Power Strike", 2)
     assert {_, {:error, :no_lesson, _}} = Actions.learn(human(20, 9_999), "Wind Strike", 2)
 
     away = %{human(5, 1_000) | location: "gludio"}
@@ -68,7 +68,7 @@ defmodule MiniLineage.Game.TrainerTest do
 
   test "the hunt fights with the level of the first skill the character knows" do
     {player, _} = Actions.learn(human(5, 100), "Power Strike", 2)
-    assert Player.first_skill(player).power == 27
+    assert Player.first_skill(player).power == 30
     assert Player.first_skill(human(1, 0)).power == 25
   end
 end

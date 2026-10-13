@@ -96,6 +96,11 @@ defmodule MiniLineage.Characters.SerdeTest do
     assert %Player{sp: 0, dead: false, killer: nil} = Serde.from_map(doc)
   end
 
+  test "a skill stored past the levels the trainer now teaches is read at its last" do
+    doc = populated() |> Serde.to_map() |> Map.put("skills", %{"Wind Strike" => 5})
+    assert Serde.from_map(doc).skills == %{"Wind Strike" => 3}
+  end
+
   test "a path that is not Fighter or Mystic is read as none, and mints no atom" do
     hostile = "archmage_#{System.unique_integer([:positive])}"
 
