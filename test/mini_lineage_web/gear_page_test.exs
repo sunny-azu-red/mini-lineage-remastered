@@ -70,7 +70,7 @@ defmodule MiniLineageWeb.GearPageTest do
     sword = carried(session, "Broadsword")
 
     {:ok, view, _html} = live(conn, ~p"/talking-island/trader/sell")
-    view |> form("#sell-form", %{"id" => sword.id}) |> render_submit()
+    view |> form("#sell-form", %{"item" => sword.id}) |> render_submit()
     assert stored(session).adena == 20_000 - 12_500 + 6_250
     refute carried(session, "Broadsword")
   end
@@ -108,7 +108,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, ~s(#item-#{sword.id}.owned[data-equipped="true"]))
     assert has_element?(view, ~s(#item-#{dagger.id}[data-equipped="false"]))
 
-    wear = fn id -> view |> form("#wear-form", %{"id" => id}) |> render_submit() end
+    wear = fn id -> view |> form("#wear-form", %{"item" => id}) |> render_submit() end
 
     # The Combat Stats beside it follow the swap: a dagger's 433 against a sword's 379.
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="416"]))
@@ -132,9 +132,9 @@ defmodule MiniLineageWeb.GearPageTest do
     sword = carried(session, "Squire's Sword")
     dagger = carried(session, "Dagger")
 
-    view |> form("#wear-form", %{"id" => sword.id}) |> render_change(%{"_target" => ["id"]})
+    view |> form("#wear-form", %{"item" => sword.id}) |> render_change(%{"_target" => ["item"]})
     assert has_element?(view, "#wear-form button", "Take off")
-    view |> form("#wear-form", %{"id" => dagger.id}) |> render_change(%{"_target" => ["id"]})
+    view |> form("#wear-form", %{"item" => dagger.id}) |> render_change(%{"_target" => ["item"]})
     assert has_element?(view, "#wear-form button", "Put on")
 
     refute has_element?(view, ~s(#destroy-form option[value="#{sword.id}"]))
@@ -159,9 +159,9 @@ defmodule MiniLineageWeb.GearPageTest do
 
     Characters.mutate(session, &{%{&1 | health: 10}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")
-    view |> form("#wear-form", %{"id" => potions.id}) |> render_change(%{"_target" => ["id"]})
+    view |> form("#wear-form", %{"item" => potions.id}) |> render_change(%{"_target" => ["item"]})
     assert has_element?(view, "#wear-form button", "Drink")
-    view |> form("#wear-form", %{"id" => potions.id}) |> render_submit()
+    view |> form("#wear-form", %{"item" => potions.id}) |> render_submit()
 
     assert stored(session).health == 10 + 112
     assert carried(session, "Lesser Healing Potion").count == 9

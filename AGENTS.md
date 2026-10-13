@@ -281,16 +281,28 @@ Each of these is here because it was got wrong once.
   until something is picked and the Halls' filters; `size={:sm}` and `active` (the one of a set
   already chosen) are the filters'. Danger comes back from `legacy/` when needed. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`.
-- **Every dropdown is `Controls.select_action/1`**, and they all behave alike: the player's choice
-  is touched by the player's own pick and the action it leads to, and by nothing else. Every action
-  through `apply_action/3`, refused or not, clears `picked` and `picks`, so the list goes back to its
-  start and the button to its default (a pick left standing bought the same pants twice). A push the
-  player did not ask for (a regen tick, an aura fading, another tab) leaves an open list open, which
-  takes two things. Exactly one option renders `selected`, the one the browser shows (the pick, else
-  the placeholder, else the first option): with none, LiveView reads the list as changed on every
-  patch and blurs it. And the `SelectAction` hook skips the `focus()` LiveView calls on the focused
-  element after every patch, which on Windows shuts an open list. `traceRefocus` in `e2e/helpers.mjs`
-  lets `walkthrough.mjs` check both.
+- **Every dropdown is `Controls.select_action/1`**, because the dropdown and its button ARE the
+  game's navigation: in a town it lists where you can go, at a trader or trainer what you can do
+  there. Only what makes no sense as a place to go from a town (the inventory, the character page) is
+  a link. No `<select>` is written by hand but character creation's, three fields one Start button
+  sends together and `phx-update="ignore"` keeps every patch off (`select_action_test.exs`). They all behave alike: the player's choice is touched by the player's
+  own pick and the action it leads to, and by nothing else. Every action through `apply_action/3`,
+  refused or not, clears `picked` and `picks`, so the list goes back to its start and the button to
+  its default (a pick left standing bought the same pants twice). A push the player did not ask for
+  (a regen tick, an aura fading, another tab) leaves an open list open, and four things shut one:
+  - no option rendering `selected`: LiveView reads the list as changed on every patch and blurs it, so
+    exactly one renders `selected`, the one the browser shows (the pick, else the placeholder, else
+    the first option);
+  - the `focus()` LiveView calls on the focused element after every patch, which on Windows shuts an
+    open list; the `SelectAction` hook skips it;
+  - a field named after a form property (`id`, `name`, `action`…): `form.id` returns the select, and
+    the patch, keying on it, moves the form on every render. `select_action` refuses one;
+  - options that move with a tick (HP, MP, an aura, the hour): the patch rewrites them. Build options
+    only from what the player's own actions change.
+
+  The walkthrough's dropdown tour holds every `select_action` in the source open across a tick,
+  `traceRefocus` in `e2e/helpers.mjs` catching a focus or blur and an observer the rest, and fails on
+  one it never reached, so a new page with a dropdown is added to the tour.
 - **Every alert is `Controls.alert/1`**, `kind` `:info` or `:danger`, anything else landing on the
   `div` (`alert_variants_test.exs`). None is dismissed: what an action says, a refusal included, is
   its flash, dropped on the next arrival unless the action itself moved you there.

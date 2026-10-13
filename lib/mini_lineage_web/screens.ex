@@ -310,7 +310,7 @@ defmodule MiniLineageWeb.Screens do
     <.select_action
       id="sell-form"
       event="sell"
-      name="id"
+      name="item"
       picked={@picked}
       placeholder="🛒 Back to the trader"
       options={
@@ -447,7 +447,7 @@ defmodule MiniLineageWeb.Screens do
   # Rules §23: everything carried in one list, what is equipped highlighted, then two choices: what to
   # put on or take off, and, apart and in red, what to destroy.
   defp inventory(assigns) do
-    picked = Enum.find(assigns.view.items, &(&1.id == assigns.picks["id"]))
+    picked = Enum.find(assigns.view.items, &(&1.id == assigns.picks["item"]))
 
     wear_label =
       cond do
@@ -486,8 +486,8 @@ defmodule MiniLineageWeb.Screens do
     <.select_action
       id="wear-form"
       event="wear"
-      name="id"
-      picked={@picks["id"]}
+      name="item"
+      picked={@picks["item"]}
       placeholder={"🚪 #{@view.town.name}"}
       options={
         Enum.map(

@@ -2,7 +2,7 @@
  * One character, made and stood in its village, end to end: `mix e2e walkthrough`. It asserts only
  * what the browser alone can see; every starting set is races.mjs's.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { BASE, reporter, traceAudio, traceRefocus, controls, marginsLeftAtEnds, freshStart } from './helpers.mjs';
 
@@ -485,28 +485,6 @@ try {
     await page.keyboard.type('adena');
     await adena(savings + 10000);
     const wallet = savings + 10000;
-    // A regen tick is a push the player did not ask for, so it leaves an open list open: hurt, so
-    // one comes, with the list held open across it.
-    const leftOpenThroughTick = async (form, whose) => {
-        await page.evaluate(() => document.activeElement?.blur());
-        await page.keyboard.type('half');
-        await page.waitForFunction(() => {
-            const figure = (key) => Number(document.querySelector(`#sidebar [data-key="${key}"]`)?.dataset.value);
-            return figure('hp') < figure('max-hp');
-        }, null, { timeout: 5000 });
-        await page.click(`#${form} select`);
-        await page.evaluate(() => { window.__shut = []; });
-        await page.evaluate(() => new Promise((resolve, reject) => {
-            new MutationObserver((_, observer) => { observer.disconnect(); resolve(); })
-                .observe(document.getElementById('sidebar'), { subtree: true, attributeFilter: ['data-value'] });
-            setTimeout(() => reject(new Error('no regen tick within 8s')), 8000);
-        }));
-        const shut = await page.evaluate(() => window.__shut);
-        check(`${whose} open dropdown is left alone by a regen tick, which would otherwise shut it`,
-            shut.length === 0, shut.join('; '));
-        await page.keyboard.press('Escape');
-    };
-    await leftOpenThroughTick('travel-form', 'the town\'s');
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
@@ -516,7 +494,6 @@ try {
     check('the trader\'s daggers are a page of their own, listing only daggers',
         new URL(page.url()).pathname === '/dark-elf-village/trader/daggers'
         && await page.locator('#stock-broadsword').count() === 0, page.url());
-    await leftOpenThroughTick('buy-form', 'a trader\'s');
     await page.selectOption('#buy-form select', 'Bone Dagger');
     await page.click('#buy-form button');
     // The debug build's own flash is already up.
@@ -637,6 +614,97 @@ try {
     check('...each line naming the weapon it needs, a spell any',
         await text('#lesson-mortal-blow-3 td:nth-child(2)') === 'Dagger' &&
         await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
+
+    // ---- every dropdown, held open across a regen tick -----------------------------------------
+    // The game moves and acts through dropdowns, so a push the player did not ask for must leave an
+    // open list open. Every `select_action` in the source is held here, so a new one can't be missed.
+    const hurt = async () => {
+        await page.evaluate(() => document.activeElement?.blur());
+        await page.keyboard.type('half');
+        await page.waitForFunction(() => {
+            const figure = (key) => Number(document.querySelector(`#sidebar [data-key="${key}"]`)?.dataset.value);
+            return figure('hp') < figure('max-hp');
+        }, null, { timeout: 5000 });
+    };
+    const held = new Set();
+    const holdEach = async () => {
+        const forms = await page.$$eval('#screen form:has(select[phx-hook="SelectAction"])', fs => fs.map(f => f.getAttribute('id')));
+        for (const form of forms) {
+            await page.click(`#${form} select`);
+            // A blur shuts the list, and so does a focus() it already has (on Windows), the select
+            // being moved out and back in, or its options being rewritten.
+            await page.evaluate((form) => {
+                window.__shut = [];
+                const select = document.querySelector(`#${form} select`);
+                window.__moved = new MutationObserver((records) => {
+                    for (const r of records) {
+                        if ([...r.removedNodes].some(n => n.contains(select))) window.__shut.push('moved');
+                        else if (select.contains(r.target)) window.__shut.push(`rebuilt ${r.type} ${r.attributeName ?? ''}`);
+                    }
+                });
+                window.__moved.observe(document.getElementById('screen'),
+                    { subtree: true, childList: true, attributes: true, characterData: true });
+            }, form);
+            // The socket's next push, read off the socket because not every page draws the bars.
+            await page.evaluate(() => new Promise((resolve, reject) => {
+                const socket = window.liveSocket.socket;
+                const ref = socket.onMessage((message) => {
+                    if (message.event !== 'diff') return;
+                    socket.off([ref]);
+                    requestAnimationFrame(() => resolve());
+                });
+                setTimeout(() => reject(new Error('no regen tick within 8s')), 8000);
+            }));
+            const shut = await page.evaluate(() => { window.__moved.disconnect(); return window.__shut; });
+            check(`#${form}, held open, is left alone by a regen tick`, shut.length === 0, shut.join('; '));
+            await page.keyboard.press('Escape');
+            held.add(form);
+        }
+    };
+    const travel = async (place, screen) => {
+        await page.selectOption('#travel-form select', place);
+        await page.click('#travel-form button');
+        await onScreen(screen);
+    };
+    const browse = async (part) => {
+        await page.selectOption('#trader-form select', part);
+        await page.click('#trader-form button');
+        await onScreen(part);
+    };
+    const home = async () => {
+        await page.click('#header-link');
+        await onScreen('town');
+    };
+    await home();
+    await hurt();
+    await holdEach();
+    await travel('gatekeeper', 'gatekeeper');
+    await holdEach();
+    await home();
+    await travel('trader', 'trader');
+    await holdEach();
+    await browse('trader-daggers');
+    await holdEach();
+    await home();
+    await hurt();
+    await travel('trader', 'trader');
+    await browse('trader-sell');
+    await holdEach();
+    await home();
+    await travel('trainer', 'trainer');
+    await holdEach();
+    await home();
+    await hurt();
+    await page.click('#purse a');
+    await onScreen('inventory');
+    await holdEach();
+    const declared = readdirSync('lib/mini_lineage_web', { recursive: true })
+        .filter(f => /\.(ex|heex)$/.test(f))
+        .flatMap(f => [...readFileSync(`lib/mini_lineage_web/${f}`, 'utf8')
+            .matchAll(/<\.select_action\b[\s\S]*?\sid="([^"]+)"/g)].map(m => m[1]));
+    const missed = declared.filter(id => !held.has(id));
+    check(`...every dropdown in the source among them (${declared.length})`,
+        declared.length > 0 && missed.length === 0, `not held: ${missed.join(', ')}`);
 
     // ---- a weapon skill without its weapon (rules §23) ------------------------------------------
     await page.click('#header-link');

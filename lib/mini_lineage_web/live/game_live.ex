@@ -236,19 +236,19 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
-  def handle_event("sell", %{"id" => ""}, socket),
+  def handle_event("sell", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
 
-  def handle_event("sell", %{"id" => id}, socket),
+  def handle_event("sell", %{"item" => id}, socket),
     do: {:noreply, apply_action(socket, &Actions.sell(&1, id), nil)}
 
   # The inventory's one choice: what to do, and to which item.
   # The inventory: one item picked and put on or taken off, whichever it needs; its empty choice
   # goes back to town. Destroying is a form of its own, whose empty choice does nothing.
-  def handle_event("wear", %{"id" => ""}, socket),
+  def handle_event("wear", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
 
-  def handle_event("wear", %{"id" => id}, socket) do
+  def handle_event("wear", %{"item" => id}, socket) do
     entry = Enum.find(socket.assigns.player.items, &(&1.id == id))
 
     action =

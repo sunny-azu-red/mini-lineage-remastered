@@ -112,7 +112,8 @@ defmodule MiniLineageWeb.Controls do
   Gatekeeper's routes. Until the PLAYER picks, the button reads `default_label` in the quieter look;
   a `placeholder` is the empty choice, which the event reads as going back. Every action clears the
   pick, so the choice goes back to its start; nothing else touches it, an open list included
-  (`SelectAction`).
+  (`SelectAction`). Options come only from what the player's actions change, never from HP, MP or
+  the hour, or a tick rewrites an open list; AGENTS.md lists what else shuts one.
   """
   # LiveView restores a form's pick after a reconnect only when the form has an id.
   attr :id, :string, required: true
@@ -127,6 +128,13 @@ defmodule MiniLineageWeb.Controls do
   # What the button turns into once something is picked: `:danger` for what cannot be undone.
   attr :active_variant, :atom, default: :primary
   attr :rest, :global
+
+  # A field named after a form property shadows it: `form.id` would return the select, and the
+  # patch, keying on it, moves the form on every render, which shuts an open list.
+  @shadowing ~w(id name action method target elements length submit reset)
+
+  def select_action(%{name: name}) when name in @shadowing,
+    do: raise(ArgumentError, "a select_action field may not be named #{inspect(name)}")
 
   def select_action(assigns) do
     # A pick the options no longer hold (a lesson just learned) falls back to the placeholder in the
