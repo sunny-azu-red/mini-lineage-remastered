@@ -8,9 +8,15 @@ worked out by hand, and holds only for the rules it was measured against.
 level 20, once per weapon path its skills can use: 680 runs, none of them died.
 
 **Rerun it** after anything that moves a fight's numbers, a price, a monster's SP or Adena, or the
-trainer's list, and rewrite these tables from what it prints (about three minutes):
+trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
 
-    MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
+    MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept] [--json path]
+
+Each run's dice are seeded from its set and number, so a change moves only the runs it touches. To
+judge a change, take a `--json` reading on the build before it (a `git worktree`) and one after with
+the same settings, and read them with `bench/compare.exs before.json after.json`, which holds them
+to the bar: no deaths when resting to full, no set's road to the top moving more than 15%, deaths
+not rising past the dice's noise, and the spread between sets not widening.
 
 **How the bench plays**, at its defaults: it rests to full before every hunt and keeps 20 Lesser
 Healing Potions. It learns every line the trainer offers as soon as it can pay for it. At the shop it

@@ -56,7 +56,8 @@ defmodule MiniLineage.Game.Hunt do
   §20: the fight, from the character's stats and bars, the skills it knows (each at its level) and
   the monster (as `foe/1` makes it). The bars may carry `potions` (§26, each `%{name, heals, count}`,
   strongest first) and the `potion_at` share to drink below. Returns what is left of both sides, how
-  it went, the auras it raised, which outlast it, and the potions it `drunk`.
+  it went, the auras it raised, which outlast it, the potions it `drunk`, and how long it took in
+  milliseconds (`ms`).
   """
   def fight(stats, %{health: health, mp: mp} = bars, skills, foe) do
     # §23: a weapon skill without its weapon in hand is not used at all; the Learned Skills panel
@@ -99,7 +100,8 @@ defmodule MiniLineage.Game.Hunt do
     state
     |> rounds(usable, foe)
     |> Map.update!(:log, &Enum.reverse/1)
-    |> Map.take(~w(health mp foe rounds uses critical log raised drunk)a)
+    |> then(&Map.put(&1, :ms, &1.rounds * @round_ms))
+    |> Map.take(~w(health mp foe rounds uses critical log raised drunk ms)a)
   end
 
   defp rounds(%{health: h} = s, _skills, _foe) when h <= 0, do: s

@@ -4,29 +4,20 @@
 # what the trainer costs and when, and what the shop costs and when. docs/balance.md reads it.
 #
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
+#     [--json path]
+#
+# Each run has its own seed, from its set and number, so a rule change moves only the runs it
+# touches and two builds compare run for run (bench/compare.exs reads two --json files).
 alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules}
 
-{runs, top, rest_below} =
-  case System.argv() do
-    [r, t, b, k] ->
-      Process.put(:kept, String.to_integer(k))
-      {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
+{opts, args} = OptionParser.parse!(System.argv(), strict: [json: :string])
 
-    [r, t, b] ->
-      {String.to_integer(r), String.to_integer(t), String.to_integer(b)}
+defaults = [40, 20, 100, 20]
 
-    [r, t] ->
-      {String.to_integer(r), String.to_integer(t), 100}
-
-    _ ->
-      {40, 20, 100}
-  end
+[runs, top, rest_below, kept] =
+  Enum.map(args, &String.to_integer/1) ++ Enum.drop(defaults, length(args))
 
 Application.ensure_all_started(:tz)
-# The clock moves with the run, a tick of rest and a round of a fight at a time, so auras fade.
-start = ~U[2026-07-01 09:00:00Z]
-:rand.seed(:exsss, {7, 7, 7})
-Rng.put_source(fn -> :rand.uniform() end)
 
 defmodule Ladder do
   # A path is a weapon type and the hands it is held in: a one-hander goes with a shield, and a
@@ -138,13 +129,12 @@ defmodule Ladder do
   end
 
   # Rules §26: tops the stack up to the potions kept, ten at a time, once the gear is bought.
-  def stock_potions(player, spent) do
-    kept = Process.get(:kept, 20)
+  def stock_potions(player, spent, kept) do
     have = player |> Player.potions() |> Enum.map(& &1.count) |> Enum.sum()
 
     if have < kept and player.adena >= 900 do
       {player, {:ok, _}} = Actions.buy(player, "Lesser Healing Potion", 10)
-      stock_potions(player, spent + 900)
+      stock_potions(player, spent + 900, kept)
     else
       {player, spent}
     end
@@ -211,132 +201,183 @@ defmodule Ladder do
   end
 end
 
-for race <- [0, 2, 3, 1], path <- [:fighter, :mystic], weapons <- Ladder.paths(race, path) do
-  name = "#{Rules.set(race, path).name}, #{weapons.label}"
+defmodule Run do
+  # One run up the ladder, in its own process with its own dice and clock pin, so runs go in
+  # parallel. The clock moves with the run, a tick of rest and a fight at a time, so auras fade.
+  def play(race, path, weapons, seed, %{top: top, rest_below: rest_below, kept: kept} = settings) do
+    :rand.seed(:exsss, seed)
+    Rng.put_source(fn -> :rand.uniform() end)
+    Clock.put_now(settings.start)
+    {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Bench")
+    player = Ladder.arm(player, weapons)
+    reached = %{adena: 0, potions: 0, fight_ms: 0}
 
-  results =
-    for _ <- 1..runs do
-      Clock.put_now(start)
-      {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Bench")
-      player = Ladder.arm(player, weapons)
-      reached = %{adena: 0, potions: 0}
+    Stream.iterate({player, 0, 0, reached}, fn {p, kills, ticks, reached} ->
+      p = Ladder.shop(p, weapons)
+      {p, potions} = Ladder.stock_potions(p, reached.potions, kept)
+      reached = Ladder.note_gear(%{reached | potions: potions}, p, weapons, kills)
+      trained = Ladder.train(p)
+      reached = Ladder.note_training(reached, p, trained, kills)
 
-      Stream.iterate({player, 0, 0, reached}, fn {p, kills, ticks, reached} ->
-        p = Ladder.shop(p, weapons)
-        {p, potions} = Ladder.stock_potions(p, reached.potions)
-        reached = Ladder.note_gear(%{reached | potions: potions}, p, weapons, kills)
-        trained = Ladder.train(p)
-        reached = Ladder.note_training(reached, p, trained, kills)
+      reached =
+        if Ladder.learned_all?(trained),
+          do: Map.put_new(reached, :list, {Player.level(trained), kills}),
+          else: reached
 
-        reached =
-          if Ladder.learned_all?(trained),
-            do: Map.put_new(reached, :list, {Player.level(trained), kills}),
-            else: reached
+      p = trained
+      stats = Player.stats(p)
 
-        p = trained
-        stats = Player.stats(p)
+      # Resting means walking back to town, where the disengaging's seconds are spent at once.
+      {p, rested} =
+        if p.health * 100 < stats.max_hp * rest_below or p.mp * 100 < stats.max_mp * rest_below,
+          do: Ladder.rest(%{p | combat: nil}),
+          else: {p, 0}
 
-        # Resting means walking back to town, where the disengaging's seconds are spent at once.
-        {p, rested} =
-          if p.health * 100 < stats.max_hp * rest_below or p.mp * 100 < stats.max_mp * rest_below,
-            do: Ladder.rest(%{p | combat: nil}),
-            else: {p, 0}
+      Clock.put_now(DateTime.add(Clock.now(), rested * 3))
+      level = Player.level(p)
+      purse = p.adena
+      {p, {:ok, flash}} = Actions.hunt(p)
+      Clock.put_now(DateTime.add(Clock.now(), round(flash.ms), :millisecond))
 
-        Clock.put_now(DateTime.add(Clock.now(), rested * 3))
-        level = Player.level(p)
-        purse = p.adena
-        {p, {:ok, flash}} = Actions.hunt(p)
-        rounds = length(Map.get(flash, :log, [nil])) - 1
-        Clock.put_now(DateTime.add(Clock.now(), round(rounds * Hunt.round_ms()), :millisecond))
-        reached = %{reached | adena: reached.adena + p.adena - purse}
+      reached = %{
+        reached
+        | adena: reached.adena + p.adena - purse,
+          fight_ms: reached.fight_ms + flash.ms
+      }
 
-        reached =
-          reached
-          |> Map.put_new(Player.level(p), kills + 1)
-          |> Map.put_new({:adena, Player.level(p)}, reached.adena)
+      reached =
+        reached
+        |> Map.put_new(Player.level(p), kills + 1)
+        |> Map.put_new({:adena, Player.level(p)}, reached.adena)
 
-        {p, kills + 1, ticks + rested, Map.put(reached, :died_at, if(p.dead, do: level))}
-      end)
-      |> Enum.find(fn {p, kills, _, _} -> p.dead or Player.level(p) >= top or kills > 5_000 end)
+      {p, kills + 1, ticks + rested, Map.put(reached, :died_at, if(p.dead, do: level))}
+    end)
+    |> Enum.find(fn {p, kills, _, _} -> p.dead or Player.level(p) >= top or kills > 5_000 end)
+  end
+end
+
+settings = %{top: top, rest_below: rest_below, kept: kept, start: ~U[2026-07-01 09:00:00Z]}
+
+rows =
+  for race <- [0, 2, 3, 1], path <- [:fighter, :mystic], weapons <- Ladder.paths(race, path) do
+    name = "#{Rules.set(race, path).name}, #{weapons.label}"
+
+    results =
+      1..runs
+      |> Task.async_stream(
+        &Run.play(race, path, weapons, {:erlang.phash2(name), &1, 7}, settings),
+        max_concurrency: System.schedulers_online(),
+        timeout: :infinity
+      )
+      |> Enum.map(fn {:ok, result} -> result end)
+
+    deaths = Enum.filter(results, fn {p, _, _, _} -> p.dead end)
+
+    died_at =
+      deaths |> Enum.map(fn {_, _, _, r} -> r.died_at end) |> Enum.frequencies() |> Enum.sort()
+
+    alive = results -- deaths
+
+    avg = fn list, f ->
+      if list == [], do: "-", else: round(Enum.sum(Enum.map(list, f)) / length(list))
     end
 
-  deaths = Enum.filter(results, fn {p, _, _, _} -> p.dead end)
+    # A level reached along the way, to the tenth, with the spread across runs.
+    when_at = fn key ->
+      case for({_, _, _, r} <- results, r[key], do: r[key]) do
+        [] ->
+          "never"
 
-  died_at =
-    deaths |> Enum.map(fn {_, _, _, r} -> r.died_at end) |> Enum.frequencies() |> Enum.sort()
-
-  alive = results -- deaths
-
-  avg = fn list, f ->
-    if list == [], do: "-", else: round(Enum.sum(Enum.map(list, f)) / length(list))
-  end
-
-  # A level reached along the way, to the tenth, with the spread across runs.
-  when_at = fn key ->
-    case for({_, _, _, r} <- results, r[key], do: r[key]) do
-      [] ->
-        "never"
-
-      hits ->
-        levels = Enum.map(hits, &if(is_tuple(&1), do: elem(&1, 0), else: &1))
-        mean = Float.round(Enum.sum(levels) / length(levels), 1)
-        hunts = if is_tuple(hd(hits)), do: " hunt #{avg.(hits, &elem(&1, 1))}", else: ""
-        "L#{mean} (#{Enum.min(levels)}–#{Enum.max(levels)})#{hunts}"
+        hits ->
+          levels = Enum.map(hits, &if(is_tuple(&1), do: elem(&1, 0), else: &1))
+          mean = Float.round(Enum.sum(levels) / length(levels), 1)
+          hunts = if is_tuple(hd(hits)), do: " hunt #{avg.(hits, &elem(&1, 1))}", else: ""
+          "L#{mean} (#{Enum.min(levels)}–#{Enum.max(levels)})#{hunts}"
+      end
     end
+
+    killers =
+      deaths
+      |> Enum.map(fn {p, _, _, _} -> p.killer end)
+      |> Enum.frequencies()
+      |> Enum.sort_by(&(-elem(&1, 1)))
+      |> Enum.take(4)
+
+    IO.puts(
+      "#{name} died #{length(deaths)}/#{runs} at #{inspect(died_at)} #{inspect(killers)} | " <>
+        "to L#{top}: #{avg.(alive, fn {_, k, _, _} -> k end)} hunts, " <>
+        "#{avg.(alive, fn {_, _, t, _} -> div(t * 3, 60) end)} min resting, " <>
+        "#{avg.(alive, fn {_, _, _, r} -> div(round(r.fight_ms), 60_000) end)} min fighting, " <>
+        "L5 at hunt #{avg.(results, fn {_, _, _, r} -> r[5] || 0 end)}, L10 at #{avg.(results, fn {_, _, _, r} -> r[10] || 0 end)}"
+    )
+
+    banked =
+      for l <- [5, 7, 10, 14, 15],
+          do:
+            "L#{l} #{avg.(Enum.filter(results, fn {_, _, _, r} -> r[{:sp, l}] end), fn {_, _, _, r} -> r[{:sp, l}] end)}"
+
+    earned =
+      for l <- [5, 7, 10, 14, 15],
+          do: "L#{l} #{avg.(results, fn {_, _, _, r} -> r[{:earned, l}] || 0 end)}"
+
+    waits =
+      results
+      |> Enum.flat_map(fn {_, _, _, r} -> Map.get(r, :waits, []) end)
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+      |> Enum.sort()
+      |> Enum.map(fn {tier, w} -> "L#{tier} #{round(Enum.sum(w) / length(w))}/#{Enum.max(w)}" end)
+
+    IO.puts(
+      "  SP left once trained: #{Enum.join(banked, ", ")}, at the end #{avg.(alive, fn {p, _, _, _} -> p.sp end)} | " <>
+        "earned by #{Enum.join(earned, ", ")} | wait in hunts (avg/max) #{Enum.join(waits, ", ")} | " <>
+        "spent #{avg.(alive, fn {_, _, _, r} -> r[:spent] || 0 end)} | list learned #{when_at.(:list)}"
+    )
+
+    purse =
+      for l <- [5, 10, 12, 14, 15, 16, 17, 18, 20],
+          hits = Enum.filter(results, fn {_, _, _, r} -> r[{:adena, l}] end),
+          hits != [],
+          do: "L#{l} #{avg.(hits, fn {_, _, _, r} -> r[{:adena, l}] end)}"
+
+    # A weapon no better than one already bought (a Knife beside the Doom Dagger) is never held.
+    tiers =
+      for weapon <- weapons.weapons,
+          held = when_at.({:tier, weapon}),
+          held != "never",
+          do: "#{weapon} #{held}"
+
+    IO.puts(
+      "  Adena earned by #{Enum.join(purse, ", ")} | #{Enum.join(tiers, ", ")} | " <>
+        "kit #{when_at.(:kit)} | potions #{avg.(alive, fn {_, _, _, r} -> r.potions end)}, " <>
+        "held at the end #{avg.(alive, fn {p, _, _, _} -> p.adena end)}"
+    )
+
+    mean = fn list, f ->
+      if list == [], do: nil, else: Enum.sum(Enum.map(list, f)) / length(list)
+    end
+
+    minutes = fn {_, _, t, r} -> (t * 3_000 + r.fight_ms) / 60_000 end
+
+    %{
+      set: Rules.set(race, path).name,
+      path: weapons.label,
+      runs: runs,
+      deaths: length(deaths),
+      died_at: Map.new(died_at, fn {level, n} -> {to_string(level), n} end),
+      killers: Map.new(killers),
+      hunts: mean.(alive, fn {_, k, _, _} -> k end),
+      minutes: mean.(alive, minutes),
+      rest_minutes: mean.(alive, fn {_, _, t, _} -> t * 3 / 60 end),
+      rounds_a_fight: mean.(alive, fn {_, k, _, r} -> r.fight_ms / Hunt.round_ms() / k end),
+      potions: mean.(alive, fn {_, _, _, r} -> r.potions end),
+      adena_at_end: mean.(alive, fn {p, _, _, _} -> p.adena end),
+      sp_at_end: mean.(alive, fn {p, _, _, _} -> p.sp end),
+      list_level: mean.(for({_, _, _, %{list: {l, _}}} <- results, do: l), & &1),
+      kit_level: mean.(for({_, _, _, %{kit: {l, _}}} <- results, do: l), & &1)
+    }
   end
 
-  killers =
-    deaths
-    |> Enum.map(fn {p, _, _, _} -> p.killer end)
-    |> Enum.frequencies()
-    |> Enum.sort_by(&(-elem(&1, 1)))
-    |> Enum.take(4)
-
-  IO.puts(
-    "#{name} died #{length(deaths)}/#{runs} at #{inspect(died_at)} #{inspect(killers)} | " <>
-      "to L#{top}: #{avg.(alive, fn {_, k, _, _} -> k end)} hunts, " <>
-      "#{avg.(alive, fn {_, _, t, _} -> div(t * 3, 60) end)} min resting, " <>
-      "L5 at hunt #{avg.(results, fn {_, _, _, r} -> r[5] || 0 end)}, L10 at #{avg.(results, fn {_, _, _, r} -> r[10] || 0 end)}"
-  )
-
-  banked =
-    for l <- [5, 7, 10, 14, 15],
-        do:
-          "L#{l} #{avg.(Enum.filter(results, fn {_, _, _, r} -> r[{:sp, l}] end), fn {_, _, _, r} -> r[{:sp, l}] end)}"
-
-  earned =
-    for l <- [5, 7, 10, 14, 15],
-        do: "L#{l} #{avg.(results, fn {_, _, _, r} -> r[{:earned, l}] || 0 end)}"
-
-  waits =
-    results
-    |> Enum.flat_map(fn {_, _, _, r} -> Map.get(r, :waits, []) end)
-    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-    |> Enum.sort()
-    |> Enum.map(fn {tier, w} -> "L#{tier} #{round(Enum.sum(w) / length(w))}/#{Enum.max(w)}" end)
-
-  IO.puts(
-    "  SP left once trained: #{Enum.join(banked, ", ")}, at the end #{avg.(alive, fn {p, _, _, _} -> p.sp end)} | " <>
-      "earned by #{Enum.join(earned, ", ")} | wait in hunts (avg/max) #{Enum.join(waits, ", ")} | " <>
-      "spent #{avg.(alive, fn {_, _, _, r} -> r[:spent] || 0 end)} | list learned #{when_at.(:list)}"
-  )
-
-  purse =
-    for l <- [5, 10, 12, 14, 15, 16, 17, 18, 20],
-        hits = Enum.filter(results, fn {_, _, _, r} -> r[{:adena, l}] end),
-        hits != [],
-        do: "L#{l} #{avg.(hits, fn {_, _, _, r} -> r[{:adena, l}] end)}"
-
-  # A weapon no better than one already bought (a Knife beside the Doom Dagger) is never held.
-  tiers =
-    for weapon <- weapons.weapons,
-        held = when_at.({:tier, weapon}),
-        held != "never",
-        do: "#{weapon} #{held}"
-
-  IO.puts(
-    "  Adena earned by #{Enum.join(purse, ", ")} | #{Enum.join(tiers, ", ")} | " <>
-      "kit #{when_at.(:kit)} | potions #{avg.(alive, fn {_, _, _, r} -> r.potions end)}, " <>
-      "held at the end #{avg.(alive, fn {p, _, _, _} -> p.adena end)}"
-  )
+if path = opts[:json] do
+  settings = Map.update!(settings, :start, &DateTime.to_iso8601/1)
+  File.write!(path, JSON.encode!(%{settings: settings, rows: rows}))
 end

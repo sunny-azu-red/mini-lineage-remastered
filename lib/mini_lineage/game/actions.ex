@@ -148,7 +148,8 @@ defmodule MiniLineage.Game.Actions do
 
     # Rules §20: a hunt engages; only leaving the ground starts the disengaging.
     player = if player.dead, do: player, else: %{player | combat: "engaged"}
-    {player, {:ok, Map.put(flash, :log, log)}}
+    # The fight's length, which nothing draws, so the ladder bench can move its clock by it.
+    {player, {:ok, Map.merge(flash, %{log: log, ms: result.ms})}}
   end
 
   defp reward(player, foe, ground, level) do

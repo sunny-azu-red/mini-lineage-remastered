@@ -81,7 +81,9 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   shop's best kit are bought, and the SP and Adena earned and left:
   `MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [level] [rest below %] [potions kept]`.
   Run it before and after anything that moves a fight's numbers, a price, a reward or the trainer,
-  and rewrite [docs/balance.md](docs/balance.md), the last reading, from what it prints.
+  and rewrite [docs/balance.md](docs/balance.md), the last reading, from what it prints. A run's dice
+  are seeded from its set and number and its clock moves by the fight's own `ms`, so two builds
+  compare run for run: `--json` both and read them with `bench/compare.exs`, which applies the bar.
 - **Done means `mix precommit`**, plus `mix e2e` for anything the browser renders: a screen, a hook,
   a selector, what an element *is*. A change that only moves colour values skips e2e; no suite can
   fail on a hex. ExUnit's coverage understates the web layer because the browser suites aren't
