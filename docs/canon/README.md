@@ -128,11 +128,12 @@ the fight uses them.
   | Human Mystic | wind and ice | Wind Strike, Self Heal, Ice Bolt |
   | Elven Mystic | the healer | Wind Strike, Self Heal, Ice Bolt, Heal |
   | Dark Mystic | drains and curses | Wind Strike, Self Heal, Vampiric Touch, Curse: Poison, Shield, Wind Shackle |
-  | Orc Mystic | burns, poison and spirit | Chill Flame, Soul Cry, Life Drain, Soul Shield, Venom |
+  | Orc Mystic | burns, drains and spirit | Chill Flame, Soul Cry, Life Drain, Soul Shield |
 
   So **the Elven Fighter learns only Defense Aura and the Dark Fighter only Attack Aura**, where
   Lineage II taught both to both; **Relax is the Orc Fighter's alone**, where Lineage II also gave
-  it to the Human Fighter.
+  it to the Human Fighter; and **the Orc Mystic has no Venom**: a poison only pays while the spells
+  rest, the Orc Mystic's never do, and cast first it slowed the set by a fifth (`docs/balance.md`).
 - **The Orc Mystic knows Chill Flame from level 1,** where Lineage II taught it at 7, with an
   amulet, and the Orc Mystic fought with Soul Cry and its weapon until then. Played that way it died
   at levels 2 to 7 even resting to full (`docs/balance.md`). Every other first skill comes where
@@ -164,7 +165,7 @@ the fight uses them.
   level 19 in most runs (`docs/balance.md`).
 - **Odds and numbers are fixed where Lineage II rolled against stats we lack.** A heal mends its
   power + √M.Atk, as aCis has it and every retail-derived source shows; L2J heals its power alone.
-  Curse: Poison and Venom land 70% of the time, aCis's power, where L2J rolls against the target's
+  Curse: Poison lands 70% of the time, aCis's power, where L2J rolls against the target's
   CON and M.Def. Wind Shackle lands 80%, with no MEN save.
 - **Relax works on the tick of rest,** 5 HP more for 3 MP, while HP is short. In Lineage II it sat
   the character down, drained 2 MP every 2 seconds and ended when it stood or HP was full.
@@ -172,8 +173,6 @@ the fight uses them.
   switched off.
 - **The Orc Mystic's Chill Flame can take the last HP,** where Lineage II's leaves 1: its first
   spell is a burn whose cast outlasts it, so without that it paid for every kill in blows taken.
-  **Its level 7 lines cost 350 SP each** (Life Drain, Soul Shield, Venom), where Lineage II asked
-  520, so three arriving at once are bought within the level.
 - **Skills are learned with level and SP alone, at the trainers of the character's own village.**
   In Lineage II some needed a spellbook from the village trader, and any town's trainers for your
   race would teach you.

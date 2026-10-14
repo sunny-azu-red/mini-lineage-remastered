@@ -45,7 +45,7 @@ SP doesn't depend on the weapon path, so there is one row per set.
 | Human Mystic | 3 (7) | 9,010 | 14.7 (14–15) | 155 of 347 | 23,500 |
 | Elven Mystic | 4 (10) | 8,100 | 14 | 162 of 414 | 24,900 |
 | Dark Mystic | 6 (9) | 9,470 | 15 | 175 of 395 | 23,400 |
-| Orc Mystic | 5 (9) | 10,100 | 15 | 171 of 385 | 22,800 |
+| Orc Mystic | 4 (7) | 7,840 | 14 | 146 of 385 | 25,000 |
 
 A tier's lines are taught at one character level (5, 10 and 15 for a Fighter; 1, 7 and 14 for a
 Mystic, whose level 1 is its first spell and one more). The wait is how many hunts pass between
@@ -60,7 +60,7 @@ reaching that level and buying a line taught there, shown as average / worst:
 | Human Mystic | L7: 9 / 24 | L14: 12 / 28 | |
 | Elven Mystic | L7: 14 / 37 | L14: 7 / 25 | |
 | Dark Mystic | L7: 19 / 36 | L14: 10 / 42 | |
-| Orc Mystic | L7: 13 / 26 | L14: 13 / 43 | |
+| Orc Mystic | L7: 16 / 26 | L14: 5 / 17 | |
 
 - **No tier is empty, and every set can afford its whole list.** Each tier's first line can be bought
   on arrival. One tier holds a single line, the Elven Fighter's at 10 (Power Shot 3), bought at
@@ -119,8 +119,8 @@ The level each of a path's weapons is first held at, then the level and hunt the
 | Elven Mystic | | staff 2h | Rod 3.9 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 201 | 418k |
 | Dark Mystic | | staff 1h | Rod 4.3 | Spellbook 10.3 | | Relic **14.7** (14–15) | 171 | 417k |
 | Dark Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 192 | 397k |
-| Orc Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.9** (14–15) | 167 | 412k |
-| Orc Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.3** (15–16) | 188 | 393k |
+| Orc Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.9** (14–16) | 167 | 411k |
+| Orc Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.3** (15–16) | 188 | 392k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 10, 13, and 15 to 16 for the
   top.** Armour is cheap enough that the top weapon is always the last thing a kit needs.
@@ -151,7 +151,7 @@ Each step is compared run for run (`bench/compare.exs`).
 | Dark Fighter | dagger | 241 | 230 | 230 |
 | Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | **265 / 266** |
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 271 / 286 / 269 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 309 / 309 |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 308 / 308 |
 
 - **A spell or a bow pulls from afar**, so the Human and Elven Mystics and the two archers reach 20
   sooner than before the fight had distance: their first spell or shot is free, and a melee monster
@@ -161,9 +161,15 @@ Each step is compared run for run (`bench/compare.exs`).
   reaches 20 22% sooner. Its time was resting, not fighting (207 minutes of 338): Vampiric Touch
   cost 25 MP a cast where Wind Strike costs 9. The Elven Mystic's Wind Strike at 1 makes it 1%
   faster, and a Fighter's first skill at 5 costs nothing measurable.
-- **The Orc Mystic is now the slowest set** at 309 minutes, resting 206 of them: its WIT gives the
+- **The Orc Mystic is now the slowest set** at 308 minutes, resting 205 of them: its WIT gives the
   slowest Casting Spd., Chill Flame burns three rounds after it is begun, and Life Drain costs 27
-  MP. The spread from fastest to slowest set narrows from 147 to 118 minutes.
+  MP. The spread from fastest to slowest set narrows from 147 to 117 minutes. Left unused by the
+  battle orders (rules §20), Life Drain saves it 10% resting to full and 21% with potions, but it is
+  the set's healing, and without potions nearly every run dies; Soul Cry left unused saves about 9%
+  at little risk.
+- **The Orc Mystic has no Venom.** It was never cast: a poison comes only while the spells rest, and
+  Chill Flame or Life Drain is always ready. Without it the set is 0.4% faster for its SP, finishes
+  its list at level 14 for 7,840 SP, and its level 7 lines are back at Lineage II's 520.
 - **With potions and resting below half**, the Mystics took 11% to 13% longer once the fight had
   distance, since a fight lasts longer once a spell lands late, and buy far fewer potions.
 
@@ -178,7 +184,7 @@ a path before the fight had distance (`30e1576`) and now:
 | Human Mystic | staff 1h / 2h | 14 / 18 to **0 / 0** | 27 / 32 to **0 / 0** | |
 | Elven Mystic | staff 1h / 2h | 238 / 370 to **2 / 6** | 249 / 359 to **3 / 5** | Sukar Wererat Leader |
 | Dark Mystic | staff 1h / 2h | 127 / 330 to 213 / 231 | 279 / 397 to 274 / 329 | Skeleton Hunter, Balor Orc Fighters |
-| Orc Mystic | staff 1h / 2h | 2 / 7 to 9 / 16 | 109 / 171 to **63 / 115** | Skeleton Longbowman |
+| Orc Mystic | staff 1h / 2h | 2 / 7 to 6 / 27 | 109 / 171 to **57 / 110** | Skeleton Longbowman |
 | Human Fighter | bow | 365 to **113** | 400 to 388 | Blade Spider |
 | Elven Fighter | bow | 400 to **296** | 400 | Sukar Wererat Leader |
 | Dark Fighter | dagger | 235 to **121** | 400 to 385 | Green Fungus, Doom Soldier |
@@ -206,10 +212,13 @@ a path before the fight had distance (`30e1576`) and now:
   whole fight from afar and cost the Orc Mystic 20% (it now lights once its blows reach); auras
   raised before the pull, which changed nothing, since an aura outlasts many fights; curses only
   while the monster is still running in, 2% to 3% faster for the Dark Mystic but its Wind Shackle
-  was what held a monster off it in melee, so its deaths more than doubled; Ice Bolt slowing the run alone, as in
-  Lineage II, which let the Sukar Wererat Leader kill the Elven Mystic at level 19 in 256 to 360 runs
-  of 400 without potions; and the Orc Mystic with Soul Cry alone until Chill Flame at 7, as in
-  Lineage II, which died at levels 2 to 7 even resting to full (59 runs of 400) and took 20% longer.
+  was what held a monster off it in melee, so its deaths more than doubled; Ice Bolt slowing the
+  run alone, as in Lineage II, which let the Sukar Wererat Leader kill the Elven Mystic at level 19 in 256 to 360 runs
+  of 400 without potions; the Orc Mystic with Soul Cry alone until Chill Flame at 7, as in
+  Lineage II, which died at levels 2 to 7 even resting to full (59 runs of 400) and took 20% longer;
+  and a poison cast before the spells, while the monster is above half or only while it runs in,
+  which slowed the Orc Mystic 21% and the Dark Mystic 6% to 13%, since a poison is slow damage that
+  cannot take the last HP, bought with a 4-second cast.
 - **The Orc Fighter with a sword** dies 35 to 38 times in 400 with potions, and now and then at the
   defaults; that predates all of this.
 

@@ -386,16 +386,6 @@ defmodule MiniLineage.Game.Rules do
       every: 3_000,
       lasts: 30_000
     },
-    "Venom" => %{
-      kind: :poison,
-      power: 24,
-      mp: 10,
-      reuse: 12_000,
-      cast: 4_000,
-      land: 70,
-      every: 3_000,
-      lasts: 30_000
-    },
     "Wind Shackle" => %{
       kind: :shackle,
       power: 0,
@@ -432,7 +422,6 @@ defmodule MiniLineage.Game.Rules do
     "Attack Aura" => [{0, 7}],
     "Shield" => [{0, 10}],
     "Soul Shield" => [{0, 10}],
-    "Venom" => [{24, 10}, {36, 15}],
     "Curse: Poison" => [{24, 10}],
     "Wind Shackle" => [{0, 3}],
     "Soul Cry" => [%{power: 4.5, mp: 2, drain: 3}, %{power: 14, mp: 3, drain: 6}],

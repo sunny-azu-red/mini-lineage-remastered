@@ -78,7 +78,7 @@ defmodule MiniLineage.Game.SkillsTest do
     resting = character(1, :fighter, 5, %{"Relax" => 1})
     assert {_, {:error, :no_switch, _}} = Actions.use_skill(healer, "Self Heal", false)
     assert {_, {:error, :no_switch, _}} = Actions.use_skill(resting, "Relax", false)
-    assert {_, {:error, :no_switch, _}} = Actions.use_skill(orc, "Venom", false)
+    assert {_, {:error, :no_switch, _}} = Actions.use_skill(orc, "Wind Strike", false)
 
     stored = orc |> Serde.to_map() |> JSON.encode!() |> JSON.decode!()
     assert Serde.from_map(stored).unused == ["Life Drain", "Soul Cry"]

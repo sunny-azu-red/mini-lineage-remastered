@@ -427,7 +427,7 @@ Each costs MP and then rests for its reuse.
 | Human Mystic | Wind Strike | Self Heal | Ice Bolt |
 | Elven Mystic | Wind Strike | Self Heal | Ice Bolt, Heal |
 | Dark Mystic | Wind Strike | Self Heal | Vampiric Touch, Curse: Poison, Shield, Wind Shackle |
-| Orc Mystic | Chill Flame | Soul Cry | Life Drain, Soul Shield, Venom |
+| Orc Mystic | Chill Flame | Soul Cry | Life Drain, Soul Shield |
 
 Each at level 1 (§25 has the later levels):
 
@@ -451,7 +451,6 @@ Each at level 1 (§25 has the later levels):
 | Shield | aura | | 10 | 6,000 | 4,000 |
 | Soul Shield | aura | | 10 | 5,000 | 2,500 |
 | Curse: Poison | poison | 24 | 10 | 12,000 | 4,000 |
-| Venom | poison | 24 | 10 | 12,000 | 4,000 |
 | Wind Shackle | shackle | | 3 | 8,000 | 1,500 |
 | Soul Cry | toggle | 4.5 | 2 | | |
 | Relax | rest | 5 | 3 | | |
@@ -796,11 +795,9 @@ of that level's lines about a level later, so each step is saved for and the ord
 | Orc Mystic | Chill Flame | 2 | 14 | 2,250 |
 | Orc Mystic | Soul Cry | 1 | 1 | 50 |
 | Orc Mystic | Soul Cry | 2 | 14 | 2,250 |
-| Orc Mystic | Life Drain | 1 | 7 | 350 |
+| Orc Mystic | Life Drain | 1 | 7 | 520 |
 | Orc Mystic | Life Drain | 2 | 14 | 2,250 |
-| Orc Mystic | Soul Shield | 1 | 7 | 350 |
-| Orc Mystic | Venom | 1 | 7 | 350 |
-| Orc Mystic | Venom | 2 | 14 | 2,250 |
+| Orc Mystic | Soul Shield | 1 | 7 | 520 |
 
 Each skill's power and MP at each level (a burn's power is per second):
 
@@ -847,8 +844,6 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Shield 1 | | 10 |
 | Soul Shield 1 | | 10 |
 | Curse: Poison 1 | 24 | 10 |
-| Venom 1 | 24 | 10 |
-| Venom 2 | 36 | 15 |
 | Wind Shackle 1 | | 3 |
 | Soul Cry 1 | 4.5 | 2 |
 | Soul Cry 2 | 14 | 3 |

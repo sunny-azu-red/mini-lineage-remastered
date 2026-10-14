@@ -751,7 +751,6 @@ defmodule MiniLineageWeb.Screens do
     "Heal" => "💖",
     "Elemental Heal" => "💧",
     "Curse: Poison" => "☠️",
-    "Venom" => "🐍",
     "Wind Shackle" => "⛓️",
     "Soul Cry" => "📢"
   }
