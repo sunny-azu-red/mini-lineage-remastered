@@ -559,9 +559,10 @@ this far (a monster's spells as far as §19 gives):
   pull is still resting when the fight begins. It does not heal once the monster is down, so MP is
   never spent on a walk back to rest.
 - **Orders** are the player's, for a character that knows a heal: the share of HP to heal below
-  before the pull and in the fight, never or below 30%, 50% or 70%; below 50% before the pull and
-  never in the fight to begin with, since a heal cast while the monster strikes mends less than the
-  strikes take before it lands.
+  before the pull and in the fight, never or below 30%, 50% or 70%; below 70% before the pull and
+  never in the fight to begin with, since a character topped up before each pull outlives one that
+  is not, and a heal cast while the monster strikes mends less than the strikes take before it
+  lands.
 - **A skill left unused:** the player may also order the character to leave any skill it knows
   unused, but a heal, whose orders are its shares, and Relax, and to use it again. It then fights as
   if it did not know it: a Mystic with no spell left pulls with its weapon. Every skill is used to

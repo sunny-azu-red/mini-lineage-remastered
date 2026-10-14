@@ -35,7 +35,7 @@ defmodule MiniLineage.Game.Player do
             # Rules §26: the share of its HP below which it drinks a potion in a fight; 0 never.
             potion_at: 50,
             # Rules §20: the shares of its HP below which it heals before a pull and in a fight.
-            heal_pull_at: 50,
+            heal_pull_at: 70,
             heal_fight_at: 0,
             # Rules §20: the skills the player has ordered it to leave unused, by name.
             unused: []

@@ -182,23 +182,25 @@ a path before the fight had distance (`30e1576`) and now:
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 14 / 18 to **0 / 0** | 27 / 32 to **0 / 0** | |
-| Elven Mystic | staff 1h / 2h | 238 / 370 to **2 / 6** | 249 / 359 to **3 / 5** | Sukar Wererat Leader |
-| Dark Mystic | staff 1h / 2h | 127 / 330 to 213 / 231 | 279 / 397 to 274 / 329 | Skeleton Hunter, Balor Orc Fighters |
+| Elven Mystic | staff 1h / 2h | 238 / 370 to **0 / 0** | 249 / 359 to **0 / 0** | |
+| Dark Mystic | staff 1h / 2h | 127 / 330 to **3 / 25** | 279 / 397 to **14 / 26** | Skeleton Hunter, Balor Orc Fighters |
 | Orc Mystic | staff 1h / 2h | 2 / 7 to 6 / 27 | 109 / 171 to **57 / 110** | Skeleton Longbowman |
 | Human Fighter | bow | 365 to **113** | 400 to 388 | Blade Spider |
-| Elven Fighter | bow | 400 to **296** | 400 | Sukar Wererat Leader |
+| Elven Fighter | bow | 400 to **225** | 400 to 399 | Sukar Wererat Leader |
 | Dark Fighter | dagger | 235 to **121** | 400 to 385 | Green Fungus, Doom Soldier |
 | Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 6 / 141 / 214 | 347 / 397 / 399 to 346 / 394 / 399 | Blade Spider |
 | Orc Fighter | fists | 240 to **304** | 400 | Skeleton Longbowman, Evil Eye Watcher |
-| Orc Fighter | sword 1h / 2h | 384 / 339 to 379 / 349 | 400 | Evil Eye Watcher |
+| Orc Fighter | sword 1h / 2h | 384 / 339 to 380 / 338 | 400 | Evil Eye Watcher |
 
 - **Fighting from afar keeps a Mystic alive**, and an archer too. A heal before the pull (rules §20)
   starts each fight topped up, and the opening spell lands before the monster has come.
-- **The Dark Mystic without potions dies at levels 10 to 13**, more than half its runs, where it died
-  in 2% to 5% with Vampiric Touch from level 1: the drain was its healing, and Wind Strike has none.
-  The Skeleton Hunters and Balor Orc Fighters on its ground kill it before Vampiric Touch comes at 14.
-  Resting to full or carrying potions, it never dies, and a player at those levels can afford both.
-  This is canon's price, taken knowingly.
+- **A heal before the pull is set below 70% to begin with.** Measured at each share the orders
+  offer, resting at half or less without potions: below 50% the Dark Mystic died in 213 to 329 runs
+  of 400 at levels 10 to 13, since Wind Strike, unlike the Vampiric Touch it opened with before,
+  heals nothing, and the Skeleton Hunters and Balor Orc Fighters on its ground come before Vampiric
+  Touch at 14; below 70% it dies in 3 to 26, the Elven Mystic in none and the Elven Fighter in 225
+  rather than 296, for 2% to 9% more time. Below 30% killed far more of every healer. Resting to
+  full, the share changes nothing.
 - **A heal cast in the fight costs more than it mends**, now that it takes effect as its cast ends:
   the Dark Mystic's Self Heal, 5 seconds of being struck for 45 HP, lost 73 runs of 400 where never
   healing in the fight lost 13, and healing below 30% came too late to save more. So the fight's heal
@@ -219,8 +221,17 @@ a path before the fight had distance (`30e1576`) and now:
   and a poison cast before the spells, while the monster is above half or only while it runs in,
   which slowed the Orc Mystic 21% and the Dark Mystic 6% to 13%, since a poison is slow damage that
   cannot take the last HP, bought with a 4-second cast.
-- **The Orc Fighter with a sword** dies 35 to 38 times in 400 with potions, and now and then at the
-  defaults; that predates all of this.
+- **The Skeleton Longbowman is the Orc Village ground's hard top rung,** as the Sukar Wererat Leader
+  is the Elven ground's: against a full kit at 19 it costs an Orc Fighter 45% to 52% of its HP a
+  fight (about 60 of them while the Fighter runs 460 in under its arrows), where the Leader costs
+  the Elven Fighter 66% and the rest of either ground 18% to 34%. Its numbers are canon. Neither
+  kills a Fighter resting to full or carrying potions; from half HP, the Longbowman wins 29% to 66%
+  of fights. **The Evil Eye Watcher at level 10** is the Orc Fighter's real killer when it rests
+  only at half: 123 to 237 runs of 400.
+- **The bench once killed the Orc Fighter with a sword** at levels 3 to 5, 38 runs of 400 with
+  potions: its paths counted only the village's stock as their weapons, so the sword path never
+  wielded the Squire's Sword it starts with, and a Leather Shield bought early took off its
+  two-handed Training Gloves. A path now counts its set's starting weapons, and that set dies none.
 
 ## Both together
 

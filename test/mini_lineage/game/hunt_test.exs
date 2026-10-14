@@ -559,8 +559,8 @@ defmodule MiniLineage.Game.HuntTest do
 
       assert {[{"Heal", _} | _] = heals, pulled} = result.before
       assert pulled == 1 + Enum.sum(Enum.map(heals, &elem(&1, 1)))
-      assert pulled * 2 >= stats.max_hp
-      assert (pulled - elem(List.last(heals), 1)) * 2 < stats.max_hp
+      assert pulled * 100 >= stats.max_hp * elf.heal_pull_at
+      assert (pulled - elem(List.last(heals), 1)) * 100 < stats.max_hp * elf.heal_pull_at
       assert [{1, {:begin, _}} | _] = events(result, :begin)
     end
 
@@ -569,7 +569,7 @@ defmodule MiniLineage.Game.HuntTest do
       elf = trained(2, :mystic, 7)
       stats = Player.stats(elf)
       skills = Player.known_skills(elf)
-      above = div(stats.max_hp * 6, 10)
+      above = div(stats.max_hp * (elf.heal_pull_at + 10), 100)
 
       assert Hunt.fight(stats, %{elf | health: above}, skills, frail("Young Keltir")).before ==
                {[], above}
@@ -636,7 +636,7 @@ defmodule MiniLineage.Game.HuntTest do
 
       stored = elf |> Serde.to_map() |> JSON.encode!() |> JSON.decode!()
       assert %{heal_pull_at: 30, heal_fight_at: 0} = Serde.from_map(stored)
-      assert Serde.from_map(Map.delete(stored, "heal_pull_at")).heal_pull_at == 50
+      assert Serde.from_map(Map.delete(stored, "heal_pull_at")).heal_pull_at == 70
       assert Serde.from_map(Map.put(stored, "heal_fight_at", 40)).heal_fight_at == 0
     end
 
