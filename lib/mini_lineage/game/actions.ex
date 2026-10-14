@@ -31,7 +31,8 @@ defmodule MiniLineage.Game.Actions do
     not_potion: "That is not something you drink.",
     whole: "You are already in full health.",
     no_share: "That is not a share you can choose.",
-    no_heal: "You know no heal to give orders for."
+    no_heal: "You know no heal to give orders for.",
+    no_switch: "You cannot give that order for that skill."
   }
 
   # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
@@ -132,7 +133,7 @@ defmodule MiniLineage.Game.Actions do
         heal_fight_at: player.heal_fight_at
       })
 
-    result = Hunt.fight(stats, bars, Player.known_skills(player), foe)
+    result = Hunt.fight(stats, bars, Player.fighting_skills(player), foe)
     player = Player.put_buffs(%{player | health: result.health, mp: result.mp}, result.raised)
     player = Player.drink_down(player, result.drunk)
     stats = Player.stats(player)
@@ -361,6 +362,22 @@ defmodule MiniLineage.Game.Actions do
 
         key = if moment == :pull, do: :heal_pull_at, else: :heal_fight_at
         {Map.put(player, key, share), {:ok, %{text: text, type: :info}}}
+    end
+  end
+
+  @doc "Rules §20: whether the character uses a skill it knows in a fight, or leaves it unused."
+  def use_skill(player, name, use?) when is_boolean(use?) do
+    if Player.started?(player) and name in Player.switchable(player) do
+      unused = player.unused |> List.delete(name) |> then(&if(use?, do: &1, else: [name | &1]))
+
+      text =
+        if use?,
+          do: "You will use #{name} in a fight.",
+          else: "You will leave #{name} unused in a fight."
+
+      {%{player | unused: Enum.sort(unused)}, {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :no_switch, @errors.no_switch}}
     end
   end
 

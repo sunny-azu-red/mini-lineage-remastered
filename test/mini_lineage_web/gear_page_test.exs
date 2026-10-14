@@ -200,4 +200,26 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#heal-pull-share", "below 30%")
     assert has_element?(view, "#heal-fight-share", "below 30%")
   end
+
+  # Rules §20: a skill the orders leave unused is muted where it is listed, and said in the orders.
+  test "the orders leave a skill unused and use it again, a name with a colon in it too" do
+    {_view, session, conn} = human(build_conn(), 0)
+    skills = %{"Power Strike" => 1, "Curse: Poison" => 1}
+    Characters.mutate(session, &{%{&1 | skills: skills}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/character")
+
+    assert has_element?(view, "#unused-skills", "You use every skill you know.")
+    assert has_element?(view, ~s(#orders-form option[value="use:true:Power Strike"][disabled]))
+    view |> form("#orders-form", %{"order" => "use:false:Curse: Poison"}) |> render_submit()
+    view |> form("#orders-form", %{"order" => "use:false:Power Strike"}) |> render_submit()
+
+    assert stored(session).unused == ["Curse: Poison", "Power Strike"]
+    assert has_element?(view, "#unused-skills", "Curse: Poison and")
+    assert has_element?(view, "#skill-power-strike.locked", "Left unused, by your orders.")
+    assert has_element?(view, ~s(#orders-form option[value="use:false:Power Strike"][disabled]))
+
+    view |> form("#orders-form", %{"order" => "use:true:Power Strike"}) |> render_submit()
+    assert stored(session).unused == ["Curse: Poison"]
+    refute has_element?(view, "#skill-power-strike.locked")
+  end
 end

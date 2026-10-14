@@ -650,7 +650,8 @@ defmodule MiniLineageWeb.Screens do
   end
 
   # Rules §19 and §25: what the character knows, each skill's numbers at the level it knows it, each
-  # figure in the colour of what it is. §23: one the weapon in hand cannot use is muted, and says why.
+  # figure in the colour of what it is. §23 and §20: one the weapon in hand cannot use, or the orders
+  # leave unused, is muted, and says why.
   defp character(%{panel: %{section: :skills}} = assigns) do
     ~H"""
     <div :if={@view.skills == []} id="no-skills" class="stat-row">
@@ -661,17 +662,21 @@ defmodule MiniLineageWeb.Screens do
     <div
       :for={{name, level} <- @view.skills}
       id={"skill-#{slug(name)}"}
-      class={["stat-row", !Rules.skill_weapon?(name, @view.stats.weapon) && "locked"]}
+      class={[
+        "stat-row",
+        (!Rules.skill_weapon?(name, @view.stats.weapon) or name in @view.unused) && "locked"
+      ]}
     >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %>
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
     """
   end
 
   # Rules §20 and §26: how the character fights on its own, as the player orders it: when it drinks
-  # a potion and, once it knows a heal, when it heals before the pull and in the fight.
+  # a potion, once it knows a heal when it heals before the pull and in the fight, and which of its
+  # skills it leaves unused.
   defp character(%{panel: %{section: :orders}} = assigns) do
     orders =
       [{"potion", "🧪 Potions", :potion_at}] ++
@@ -683,7 +688,25 @@ defmodule MiniLineageWeb.Screens do
           else: []
         )
 
-    assigns = assign(assigns, orders: orders)
+    shares =
+      for {kind, label, key} <- orders,
+          share <- Player.potion_shares(),
+          do: %{
+            value: "#{kind}:#{share}",
+            label: "#{label}: #{if share == 0, do: "never", else: "below #{share}% HP"}",
+            disabled?: share == Map.fetch!(assigns.view, key)
+          }
+
+    switches =
+      for name <- assigns.view.switchable,
+          use? <- [true, false],
+          do: %{
+            value: "use:#{use?}:#{name}",
+            label: "#{skill_icon(name)} #{name}: #{if use?, do: "use it", else: "leave unused"}",
+            disabled?: use? != name in assigns.view.unused
+          }
+
+    assigns = assign(assigns, options: shares ++ switches)
 
     ~H"""
     <p id="potion-share" phx-no-format>
@@ -695,21 +718,16 @@ defmodule MiniLineageWeb.Screens do
     <p :if={@view.heals?} id="heal-fight-share" phx-no-format>
       <%= if @view.heal_fight_at == 0 do %>You never heal in a fight.<% else %>In a fight you heal below <span class="hp">{@view.heal_fight_at}%</span> of your HP while your spells rest.<% end %>
     </p>
+    <p :if={@view.switchable != []} id="unused-skills" phx-no-format>
+      <%= if @view.unused == [] do %>You use every skill you know.<% else %>You leave {Format.list(Enum.map(@view.unused, &"#{skill_icon(&1)} #{&1}"), "and")} unused.<% end %>
+    </p>
     <.select_action
       id="orders-form"
       event="order"
       name="order"
       picked={@picks["order"]}
       placeholder="📜 Change an order…"
-      options={
-        for {kind, label, key} <- @orders,
-            share <- Player.potion_shares(),
-            do: %{
-              value: "#{kind}:#{share}",
-              label: "#{label}: #{if share == 0, do: "never", else: "below #{share}% HP"}",
-              disabled?: share == Map.fetch!(@view, key)
-            }
-      }
+      options={@options}
       default_label="Choose"
       active_label="📜 Order"
       data-no-autofocus

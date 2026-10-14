@@ -30,7 +30,8 @@ defmodule MiniLineage.Characters.Serde do
       "buffs" => p.buffs,
       "potion_at" => p.potion_at,
       "heal_pull_at" => p.heal_pull_at,
-      "heal_fight_at" => p.heal_fight_at
+      "heal_fight_at" => p.heal_fight_at,
+      "unused" => p.unused
     }
   end
 
@@ -61,7 +62,8 @@ defmodule MiniLineage.Characters.Serde do
           else: %Player{}.potion_at
         ),
       heal_pull_at: share(m["heal_pull_at"], %Player{}.heal_pull_at),
-      heal_fight_at: share(m["heal_fight_at"], %Player{}.heal_fight_at)
+      heal_fight_at: share(m["heal_fight_at"], %Player{}.heal_fight_at),
+      unused: unused(m["unused"])
     }
   end
 
@@ -70,6 +72,12 @@ defmodule MiniLineage.Characters.Serde do
 
   # Orders from before they existed, or a share no longer offered, fall back to the start's.
   defp share(stored, default), do: if(stored in Player.heal_shares(), do: stored, else: default)
+
+  # Only names `Rules` still knows; a run from before the orders had none.
+  defp unused(names) when is_list(names),
+    do: for(name <- names, is_binary(name), Rules.skill_known?(name), uniq: true, do: name)
+
+  defp unused(_none), do: []
 
   # A town renamed keeps whoever stands in it; anything else stored under an old slug would be sent
   # home without a word.

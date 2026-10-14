@@ -617,6 +617,25 @@ try {
         await text('#lesson-mortal-blow-3 td:nth-child(2)') === 'Dagger' &&
         await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
 
+    // ---- a skill left unused (rules §20) --------------------------------------------------------
+    await page.click('#header-link');
+    await onScreen('town');
+    await page.click('#character-name a');
+    await onScreen('character');
+    check('the orders say every skill is used to begin with',
+        await text('#unused-skills') === 'You use every skill you know.', await text('#unused-skills'));
+    await page.selectOption('#orders-form select', 'use:false:Mortal Blow');
+    await page.click('#orders-form button');
+    const unused = await page.locator('#skill-mortal-blow.locked', { hasText: 'Left unused, by your orders.' })
+        .waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check('...and a skill the orders leave unused is muted where it is learned, and named in the orders',
+        unused && /Mortal Blow unused\.$/.test(await text('#unused-skills')), await text('#unused-skills'));
+    await page.selectOption('#orders-form select', 'use:true:Mortal Blow');
+    await page.click('#orders-form button');
+    const used = await page.locator('#skill-mortal-blow:not(.locked)')
+        .waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check('...until it is ordered used again', used, await text('#skill-mortal-blow'));
+
     // ---- every dropdown, held open across a regen tick -----------------------------------------
     // The game moves and acts through dropdowns, so a push the player did not ask for must leave an
     // open list open. Every `select_action` in the source is held here, so a new one can't be missed.

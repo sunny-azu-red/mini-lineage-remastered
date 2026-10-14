@@ -563,6 +563,10 @@ this far (a monster's spells as far as §19 gives):
   before the pull and in the fight, never or below 30%, 50% or 70%; below 50% before the pull and
   never in the fight to begin with, since a heal cast while the monster strikes mends less than the
   strikes take before it lands.
+- **A skill left unused:** the player may also order the character to leave any skill it knows
+  unused, but a heal, whose orders are its shares, and Relax, and to use it again. It then fights as
+  if it did not know it: a Mystic with no spell left pulls with its weapon. Every skill is used to
+  begin with.
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
   (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
   fifth, rounded down.

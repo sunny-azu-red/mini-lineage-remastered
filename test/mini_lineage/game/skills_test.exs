@@ -54,6 +54,38 @@ defmodule MiniLineage.Game.SkillsTest do
     assert Player.buffs_up(hunted) == ["Defense Aura"]
   end
 
+  test "a skill its orders leave unused is never used in a hunt, until it is ordered used again" do
+    Rng.put_source(fn -> 0.0 end)
+    elf = character(2, :fighter, 5, %{"Defense Aura" => 1})
+    {idle, {:ok, _}} = Actions.use_skill(elf, "Defense Aura", false)
+    {hunted, {:ok, _}} = Actions.hunt(idle)
+    assert Player.buffs_up(hunted) == []
+
+    {again, {:ok, _}} = Actions.use_skill(idle, "Defense Aura", true)
+    assert again.unused == []
+    {hunted, {:ok, _}} = Actions.hunt(again)
+    assert Player.buffs_up(hunted) == ["Defense Aura"]
+  end
+
+  test "any skill it knows but a heal and Relax may be left unused, and the order is kept" do
+    orc = character(1, :mystic, 7, %{"Soul Cry" => 1, "Life Drain" => 1})
+    {orc, {:ok, _}} = Actions.use_skill(orc, "Soul Cry", false)
+    {orc, {:ok, _}} = Actions.use_skill(orc, "Life Drain", false)
+    assert orc.unused == ["Life Drain", "Soul Cry"]
+    assert Enum.map(Player.fighting_skills(orc), & &1.name) == ["Chill Flame"]
+
+    healer = character(2, :mystic, 1, %{"Self Heal" => 1})
+    resting = character(1, :fighter, 5, %{"Relax" => 1})
+    assert {_, {:error, :no_switch, _}} = Actions.use_skill(healer, "Self Heal", false)
+    assert {_, {:error, :no_switch, _}} = Actions.use_skill(resting, "Relax", false)
+    assert {_, {:error, :no_switch, _}} = Actions.use_skill(orc, "Venom", false)
+
+    stored = orc |> Serde.to_map() |> JSON.encode!() |> JSON.decode!()
+    assert Serde.from_map(stored).unused == ["Life Drain", "Soul Cry"]
+    assert Serde.from_map(Map.put(stored, "unused", ["Nonsense", 3])).unused == []
+    assert Serde.from_map(Map.delete(stored, "unused")).unused == []
+  end
+
   test "Relax mends 5 HP more a tick for 3 MP, while HP is short and the MP lasts" do
     plain = character(1, :fighter, 5, %{})
     plain = %{plain | health: div(plain.health, 2)}

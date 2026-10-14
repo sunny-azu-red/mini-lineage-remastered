@@ -36,7 +36,9 @@ defmodule MiniLineage.Game.Player do
             potion_at: 50,
             # Rules §20: the shares of its HP below which it heals before a pull and in a fight.
             heal_pull_at: 50,
-            heal_fight_at: 0
+            heal_fight_at: 0,
+            # Rules §20: the skills the player has ordered it to leave unused, by name.
+            unused: []
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -187,6 +189,15 @@ defmodule MiniLineage.Game.Player do
   @doc "Rules §19: every skill it knows, each at the level it knows it."
   def known_skills(player),
     do: for({name, level} <- player.skills || %{}, do: Rules.skill(name, level))
+
+  @doc "Rules §20: the skills it fights with, all it knows but those its orders leave unused."
+  def fighting_skills(player),
+    do: Enum.reject(known_skills(player), &(&1.name in (player.unused || [])))
+
+  @doc "Rules §20: the skills it knows that its orders may leave unused: all but a heal and Relax."
+  def switchable(player),
+    do:
+      for(%{kind: kind, name: name} <- known_skills(player), kind not in [:heal, :rest], do: name)
 
   @doc "Rules §25: the set's first skill, at the level the character knows it."
   def first_skill(player) do

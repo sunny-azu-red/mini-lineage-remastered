@@ -262,14 +262,25 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   # Rules §20 and §26: an order, `<what>:<share>`, the share of HP below which to drink a potion or
-  # heal; the empty choice does nothing.
+  # heal, or `use:<true|false>:<skill>`, a skill used or left unused (a name may hold a colon); the
+  # empty choice does nothing.
   def handle_event("order", %{"order" => order}, socket) do
     action =
-      case String.split(order, ":") do
-        ["potion", share] -> share(share, &Actions.potion_at(&1, &2))
-        ["pull", share] -> share(share, &Actions.heal_at(&1, :pull, &2))
-        ["fight", share] -> share(share, &Actions.heal_at(&1, :fight, &2))
-        _ -> nil
+      case String.split(order, ":", parts: 3) do
+        ["potion", share] ->
+          share(share, &Actions.potion_at(&1, &2))
+
+        ["pull", share] ->
+          share(share, &Actions.heal_at(&1, :pull, &2))
+
+        ["fight", share] ->
+          share(share, &Actions.heal_at(&1, :fight, &2))
+
+        ["use", use, name] when use in ~w(true false) ->
+          &Actions.use_skill(&1, name, use == "true")
+
+        _ ->
+          nil
       end
 
     {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}

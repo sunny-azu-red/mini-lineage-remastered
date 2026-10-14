@@ -5,13 +5,16 @@
 #
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
 #     [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
+#     [--unused "Skill,Skill"]
 #
 # Each run has its own seed, from its set and number, so a rule change moves only the runs it
 # touches and two builds compare run for run (bench/compare.exs reads two --json files).
 alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules}
 
 {opts, args} =
-  OptionParser.parse!(System.argv(), strict: [json: :string, only: :string, orders: :string])
+  OptionParser.parse!(System.argv(),
+    strict: [json: :string, only: :string, orders: :string, unused: :string]
+  )
 
 # Rules §20's battle orders every run gives, the start's unless named.
 orders =
@@ -25,6 +28,7 @@ orders =
       |> Enum.map(&String.to_integer/1)
       |> then(fn [pull, fight] -> %{heal_pull_at: pull, heal_fight_at: fight} end)
   end
+  |> Map.put(:unused, String.split(opts[:unused] || "", ",", trim: true))
 
 defaults = [40, 20, 100, 20]
 

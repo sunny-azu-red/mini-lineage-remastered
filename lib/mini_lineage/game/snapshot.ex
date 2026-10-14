@@ -35,6 +35,8 @@ defmodule MiniLineage.Game.Snapshot do
     heals?: false,
     heal_pull_at: nil,
     heal_fight_at: nil,
+    unused: [],
+    switchable: [],
     stats: nil,
     effects: []
   }
@@ -93,6 +95,9 @@ defmodule MiniLineage.Game.Snapshot do
       heals?: Player.heals?(player),
       heal_pull_at: player.heal_pull_at,
       heal_fight_at: player.heal_fight_at,
+      # Rules §20: the skills its orders leave unused, and those they may.
+      unused: player.unused,
+      switchable: Player.switchable(player),
       stats: stats,
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }
