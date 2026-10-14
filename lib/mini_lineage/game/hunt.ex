@@ -17,6 +17,9 @@ defmodule MiniLineage.Game.Hunt do
   @monster_absorb 0.2
   # §20: a curse only on a monster above half its HP.
   @curse_above 0.5
+  # §20: a monster with a short-range spell, one reaching this far, casts it only this close.
+  @short_spell 150
+  @near 100
 
   @spells [:magic, :drain, :burn]
   # §20: what a character casts at the monster, each reaching a spell's distance.
@@ -447,12 +450,18 @@ defmodule MiniLineage.Game.Hunt do
   end
 
   # §20: a monster casts the strongest spell that is ready and reaches, which takes its cast time,
-  # or swings, or runs at the character until one of them reaches.
+  # or swings, or runs at the character until one of them reaches. One with a short-range spell
+  # casts it close and its others beyond, as Lineage II's casters choose by distance.
   defp monster_turn(s, foe) do
+    short? = &(&1.range <= @short_spell)
+    split? = Enum.any?(foe.spells, short?)
+    near? = s.distance <= @near
+
     ready =
       foe.spells
       |> Enum.filter(
-        &(s.foe_cooldowns[&1.name] <= 0 and s.foe_mp >= &1.mp and &1.range >= s.distance)
+        &(s.foe_cooldowns[&1.name] <= 0 and s.foe_mp >= &1.mp and &1.range >= s.distance and
+            (not split? or short?.(&1) == near?))
       )
       |> Enum.max_by(& &1.power, fn -> nil end)
 

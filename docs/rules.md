@@ -550,7 +550,9 @@ this far (a monster's spells as far as §19 gives):
 - **The monster** swings its blows the same way, at its own Atk. Spd., and a monster with a bow
   draws and reloads as a character's bow does (§10). A monster with spells casts the strongest that
   is ready instead, and does nothing else for its cast time. Its reuse and cast time are not
-  scaled.
+  scaled. One with a short-range spell, reaching 150 or less, casts it while the character is
+  within 100 and only its other spells beyond, so an Evil Eye burns a character beside it with
+  Aura Burn and drains or strikes one at a distance.
 - **Blows** hit and do damage as §13 says. Skills and spells do what §19 says.
 - **It ends** when either reaches 0 HP. After 1,000 rounds the monster wanders off and pays nothing.
 - **Before the pull**, since it rests nothing on the ground (§11), the character heals while its HP

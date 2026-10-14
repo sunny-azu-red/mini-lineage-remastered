@@ -150,7 +150,7 @@ Each step is compared run for run (`bench/compare.exs`).
 | Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 202 / 202 |
 | Dark Fighter | dagger | 241 | 230 | 230 |
 | Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | **265 / 266** |
-| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 271 / 286 / 269 |
+| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 |
 | Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 308 / 308 |
 
 - **A spell or a bow pulls from afar**, so the Human and Elven Mystics and the two archers reach 20
@@ -189,8 +189,8 @@ a path before the fight had distance (`30e1576`) and now:
 | Elven Fighter | bow | 400 to **225** | 400 to 399 | Sukar Wererat Leader |
 | Dark Fighter | dagger | 235 to **121** | 400 to 385 | Green Fungus, Doom Soldier |
 | Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 6 / 141 / 214 | 347 / 397 / 399 to 346 / 394 / 399 | Blade Spider |
-| Orc Fighter | fists | 240 to **304** | 400 | Skeleton Longbowman, Evil Eye Watcher |
-| Orc Fighter | sword 1h / 2h | 384 / 339 to 380 / 338 | 400 | Evil Eye Watcher |
+| Orc Fighter | fists | 240 to 258 | 400 to 399 | Skeleton Longbowman |
+| Orc Fighter | sword 1h / 2h | 384 / 339 to **294 / 206** | 400 | Skeleton Longbowman, Evil Eyes |
 
 - **Fighting from afar keeps a Mystic alive**, and an archer too. A heal before the pull (rules §20)
   starts each fight topped up, and the opening spell lands before the monster has come.
@@ -226,8 +226,14 @@ a path before the fight had distance (`30e1576`) and now:
   fight (about 60 of them while the Fighter runs 460 in under its arrows), where the Leader costs
   the Elven Fighter 66% and the rest of either ground 18% to 34%. Its numbers are canon. Neither
   kills a Fighter resting to full or carrying potions; from half HP, the Longbowman wins 29% to 66%
-  of fights. **The Evil Eye Watcher at level 10** is the Orc Fighter's real killer when it rests
-  only at half: 123 to 237 runs of 400.
+  of fights.
+- **An Evil Eye beside a character burns it, and drains or strikes it only from afar,** as Lineage
+  II's casters choose their spell by distance. It casts back to back, as theirs did, and never
+  swings while its MP lasts. When it cast its strongest spell at any distance, the Evil Eye Watcher's
+  HP Drain killed a level 10 Orc Fighter in its gear from full HP in 47% to 100% of fights without
+  potions, and resting at half killed 157 to 296 runs of 400 at level 10. Burning with Aura Burn
+  beside it, it takes 54% to 56% of that Fighter's HP and kills none from full; deaths at 10 fall to
+  25 to 73, the Orc Fighter is 1% faster, and the Orc Mystic, which it meets from afar, is unmoved.
 - **The bench once killed the Orc Fighter with a sword** at levels 3 to 5, 38 runs of 400 with
   potions: its paths counted only the village's stock as their weapons, so the sword path never
   wielded the Squire's Sword it starts with, and a Leather Shield bought early took off its

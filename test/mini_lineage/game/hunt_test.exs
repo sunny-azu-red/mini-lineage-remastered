@@ -178,7 +178,8 @@ defmodule MiniLineage.Game.HuntTest do
       Rng.put_source(fn -> 0.0 end)
       {stats, bars} = target()
       skill = %{Rules.first_skill(0, :fighter) | mp: 1}
-      foe = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000}
+      eye = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000}
+      foe = %{eye | spells: [Rules.monster_spell("NPC Windstrike - Magic 1")]}
       result = Hunt.fight(stats, bars, [skill], foe)
 
       # Windstrike - Magic: 4 seconds a cast, so each lands in the third round of its cast and the
@@ -510,6 +511,19 @@ defmodule MiniLineage.Game.HuntTest do
       result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), eye)
 
       assert first(result, :foe_cast) > running(Rules.reach(:spell) - burn.range, eye.run_spd)
+    end
+
+    test "an Evil Eye burns a character beside it, and drains one at a distance first" do
+      Rng.put_source(fn -> 0.0 end)
+      fighter = striker()
+      result = fight(fighter, "Evil Eye Watcher")
+      spells = for {_, {kind, name, _}} <- result.log, kind == :foe_cast, uniq: true, do: name
+      assert spells == ["NPC Aura Burn - Magic 1"]
+
+      mystic = trained(0, :mystic, 1)
+      eye = tough("Evil Eye Watcher")
+      result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), eye)
+      assert [{_, {:foe_begin, "NPC HP Drain - Magic 1"}} | _] = events(result, :foe_begin)
     end
 
     test "an Ice-Bolted monster runs 30% slower" do
