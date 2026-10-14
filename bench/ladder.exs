@@ -40,8 +40,12 @@ Application.ensure_all_started(:tz)
 defmodule Ladder do
   # A path is a weapon type and the hands it is held in: a one-hander goes with a shield, and a
   # two-hander path carries one-handers only until its first two-hander is affordable.
+  # The set's own starting weapons count as the path's too, or a sword path would never wield the
+  # Squire's Sword it carries, and a shield bought early would leave it bare-handed.
   def paths(race, path) do
-    stock = Rules.stock(Rules.hometown(race))
+    {equipped, carried} = Rules.kit(race, path)
+    kit = for name <- equipped ++ carried, item = Rules.item(name), item.kind == :weapon, do: item
+    stock = Rules.stock(Rules.hometown(race)) ++ kit
     set = Rules.set(race, path).name
 
     types =
