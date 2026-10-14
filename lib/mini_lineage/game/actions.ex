@@ -128,6 +128,7 @@ defmodule MiniLineage.Game.Actions do
         potions: Player.potions(player),
         potion_at: player.potion_at,
         heal_pull_at: player.heal_pull_at,
+        path: player.path,
         heal_fight_at: player.heal_fight_at
       })
 

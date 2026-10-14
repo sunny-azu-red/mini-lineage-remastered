@@ -45,6 +45,7 @@ defmodule MiniLineage.Game.Formulas do
   # §10, a weapon's speed in place of the bare hand's 300.
   def atk_spd(dex, speed \\ 300), do: min(trunc(speed * bonus(:dex, dex)), @caps.atk_spd)
   def cast_spd(wit), do: min(trunc(333 * bonus(:wit, wit)), @caps.cast_spd)
+  def run_spd(dex, speed), do: trunc(speed * bonus(:dex, dex))
   def blows_per_round(atk_spd), do: atk_spd / 300
   def shots_per_round(atk_spd), do: atk_spd / 610
   def casts_per_round(cast_spd), do: cast_spd / 333

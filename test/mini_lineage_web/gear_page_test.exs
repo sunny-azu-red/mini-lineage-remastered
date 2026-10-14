@@ -191,13 +191,13 @@ defmodule MiniLineageWeb.GearPageTest do
     Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Self Heal", 1)}, :ok})
     {:ok, view, _html} = live(conn, ~p"/character")
     assert has_element?(view, "#heal-pull-share", "below 50%")
-    assert has_element?(view, "#heal-fight-share", "below 50%")
+    assert has_element?(view, "#heal-fight-share", "never heal in a fight")
 
     view |> form("#orders-form", %{"order" => "pull:30"}) |> render_submit()
-    view |> form("#orders-form", %{"order" => "fight:0"}) |> render_submit()
+    view |> form("#orders-form", %{"order" => "fight:30"}) |> render_submit()
 
-    assert %{heal_pull_at: 30, heal_fight_at: 0} = stored(session)
+    assert %{heal_pull_at: 30, heal_fight_at: 30} = stored(session)
     assert has_element?(view, "#heal-pull-share", "below 30%")
-    assert has_element?(view, "#heal-fight-share", "never heal in a fight")
+    assert has_element?(view, "#heal-fight-share", "below 30%")
   end
 end

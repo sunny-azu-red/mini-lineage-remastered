@@ -198,7 +198,6 @@ The slower fights, for bosses and dungeons.
 - Lethal blows that cut a monster's HP down at once.
 - EXP shared by the damage dealt, smaller against much weaker monsters, with a bonus for an
   overkill.
-- Aggressive monsters that attack first.
 
 ## The world
 

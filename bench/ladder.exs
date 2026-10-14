@@ -4,13 +4,27 @@
 # what the trainer costs and when, and what the shop costs and when. docs/balance.md reads it.
 #
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
-#     [--json path]
+#     [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
 #
 # Each run has its own seed, from its set and number, so a rule change moves only the runs it
 # touches and two builds compare run for run (bench/compare.exs reads two --json files).
 alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules}
 
-{opts, args} = OptionParser.parse!(System.argv(), strict: [json: :string])
+{opts, args} =
+  OptionParser.parse!(System.argv(), strict: [json: :string, only: :string, orders: :string])
+
+# Rules §20's battle orders every run gives, the start's unless named.
+orders =
+  case opts[:orders] do
+    nil ->
+      %{}
+
+    given ->
+      given
+      |> String.split(",")
+      |> Enum.map(&String.to_integer/1)
+      |> then(fn [pull, fight] -> %{heal_pull_at: pull, heal_fight_at: fight} end)
+  end
 
 defaults = [40, 20, 100, 20]
 
@@ -209,6 +223,7 @@ defmodule Run do
     Rng.put_source(fn -> :rand.uniform() end)
     Clock.put_now(settings.start)
     {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Bench")
+    player = Map.merge(player, settings.orders)
     player = Ladder.arm(player, weapons)
     reached = %{adena: 0, potions: 0, fight_ms: 0}
 
@@ -256,10 +271,19 @@ defmodule Run do
   end
 end
 
-settings = %{top: top, rest_below: rest_below, kept: kept, start: ~U[2026-07-01 09:00:00Z]}
+settings = %{
+  top: top,
+  rest_below: rest_below,
+  kept: kept,
+  orders: orders,
+  start: ~U[2026-07-01 09:00:00Z]
+}
 
 rows =
-  for race <- [0, 2, 3, 1], path <- [:fighter, :mystic], weapons <- Ladder.paths(race, path) do
+  for race <- [0, 2, 3, 1],
+      path <- [:fighter, :mystic],
+      opts[:only] in [nil, Rules.set(race, path).name],
+      weapons <- Ladder.paths(race, path) do
     name = "#{Rules.set(race, path).name}, #{weapons.label}"
 
     results =

@@ -5,15 +5,17 @@ what things cost; this says when a player can afford them. Every figure here was
 worked out by hand, and holds only for the rules it was measured against.
 
 **Measured at** `ed9c030` (rules §1 to §26), 40 seeded runs of every set up its village's ladder to
-level 20, once per weapon path its skills can use: 680 runs, none of them died. Read again at 400
-runs a path with each run seeded on its own (`82e8c4d`), one Orc Fighter run in 400, with a sword
-and shield, dies at the defaults. Rules §20's battle orders change nothing at the defaults, figure
-for figure; what they change is under Survival.
+level 20, once per weapon path its skills can use: 680 runs, none of them died. The trainer's and
+the shop's tables are that reading, and still hold: a kill pays what it paid, so SP and Adena by
+level and hunt are unmoved by how a fight is fought. **Time to level 20 and Survival** are read at
+400 runs a path with each run seeded on its own, on the fight of rules §20 as it now stands: a line
+between the two, spells that take effect as their cast ends, and the battle orders.
 
 **Rerun it** after anything that moves a fight's numbers, a price, a monster's SP or Adena, or the
 trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
 
-    MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept] [--json path]
+    MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
+      [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
 
 Each run's dice are seeded from its set and number, so a change moves only the runs it touches. To
 judge a change, take a `--json` reading on the build before it (a `git worktree`) and one after with
@@ -133,40 +135,70 @@ The level each of a path's weapons is first held at, then the level and hunt the
   bought with that, so price it against these figures, or give the village something to spend it on
   sooner.
 
+## Time to level 20
+
+Minutes of play to level 20 at the defaults, resting and fighting, before the fight had distance
+(`30e1576`) and now, compared run for run (`bench/compare.exs`).
+
+| Set | Path | Before | Now | Change |
+|---|---|---|---|---|
+| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | +4% |
+| Human Fighter | bow | 228 | 208 | −9% |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | −8% / −11% |
+| Elven Fighter | bow | 233 | 216 | −7% |
+| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | −7% / −8% |
+| Dark Fighter | dagger | 241 | 230 | −5% |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | +5% / +4% |
+| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | +2% to +3% |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | −1% |
+
+- **A spell or a bow now pulls from afar**, so the Human and Elven Mystics and the two archers
+  reach 20 sooner: their first spell or shot is free, and a melee monster spends rounds running in.
+- **A melee Fighter pays 2% to 5%**, waiting while an aggressive monster runs at it and taking its
+  first blow.
+- **The Dark and Orc Mystics stay the slowest sets**, as they were. Their spells cast slowly (the Orc
+  Mystic's WIT gives the slowest Casting Spd.) and rest long, and a spell that takes effect as its
+  cast ends costs them most: the Orc Mystic's Chill Flame burns three rounds later than it did, and
+  the Dark Mystic's Vampiric Touch rests 12 seconds. The spread from fastest to slowest set widens
+  from 129 to 147 minutes. Their kits are the next thing to look at.
+- **With potions and resting below half**, the Mystics take 11% to 13% longer than before, since a
+  fight lasts longer once a spell lands late, and buy far fewer potions.
+
 ## Survival
 
 The bench at its defaults rests to full before every hunt, so survival is read with no potions and
 resting only once a bar falls below a share: `bench/ladder.exs 400 20 <share> 0`. Deaths of 400 runs
-a path, before rules §20's battle orders (`82e8c4d`) and with them at their start, healing before the
-pull below 50% and in the fight below 50%:
+a path before the fight had distance (`30e1576`) and now:
 
-| Set | Path | Rest below 50% | Rest below 30% | Most often killed by, at 30% |
+| Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
-| Human Mystic | staff 1h / 2h | 14 / 18, the same | 385 / 393 to **27 / 32** | Orc Fighter Leader, Talon Spider |
-| Elven Mystic | staff 1h / 2h | 238 / 370, the same | 400 / 400 to **249 / 359** | Shade Horror, Mist Terror |
-| Dark Mystic | staff 1h / 2h | 127 / 330, the same | 395 / 400 to **279 / 397** | Omen Beast, Cave Fang Spider |
-| Orc Mystic | staff 1h / 2h | 2 / 7 | 109 / 171 | Kasha Timber Wolf |
-| Elven Fighter | bow | 400 | 400 | Dungeon Skeleton |
-| Human Fighter | sword 1h / 2h / dagger / bow | 8 / 156 / 217 / 365 | 347 / 397 / 399 / 400 | Blade Spider, Orc Fighter Leader |
-| Dark Fighter | dagger | 235 | 400 | Balor Orc Fighter |
-| Orc Fighter | fists / sword 1h / 2h | 240 / 384 / 339 | 400 | Evil Eye |
+| Human Mystic | staff 1h / 2h | 14 / 18 to **0 / 0** | 27 / 32 to **0 / 0** | |
+| Elven Mystic | staff 1h / 2h | 238 / 370 to **2 / 5** | 249 / 359 to **2 / 5** | Sukar Wererat Leader |
+| Dark Mystic | staff 1h / 2h | 127 / 330 to **7 / 13** | 279 / 397 to **13 / 18** | Doom Soldier, Omen Beast |
+| Orc Mystic | staff 1h / 2h | 2 / 7 to 9 / 16 | 109 / 171 to **63 / 115** | Skeleton Longbowman |
+| Human Fighter | bow | 365 to **118** | 400 to 388 | Blade Spider |
+| Elven Fighter | bow | 400 to **291** | 400 | Sukar Wererat Leader |
+| Dark Fighter | dagger | 235 to **130** | 400 to 378 | Green Fungus, Doom Soldier |
+| Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217, the same | 347 / 397 / 399, the same | Blade Spider |
+| Orc Fighter | fists | 240 to **317** | 400 | Skeleton Longbowman, Evil Eye Watcher |
+| Orc Fighter | sword 1h / 2h | 384 / 339 to 386 / 344 | 400 | Evil Eye Watcher |
 
-- **A heal before the pull keeps a Mystic alive between rests.** Nothing rests on the ground (§11),
-  so a run that walks on below half used to begin every fight with what the last one left. Run for
-  run, it reaches level 20 in the same time: the Human Mystic's 14 runs that finished both ways took
-  184.7 and 184.6 minutes.
-- **Resting below half leaves it nothing to do,** since the pull's heal waits for the same line, and
-  so the bench resting at 50% reads the same before and after. It is the player who walks on past
-  half that the order saves.
-- **Three other ways were measured and dropped.** A heal put before the spells in the fight, alone
-  or taking turns with them, killed every Human and Elven Mystic run, because its 3 rounds of
-  casting mend less than the monster deals in them. Heals after the kill and before the pull, to
-  full, kept Mystics alive but slowed them 16% to 70% to level 20, spending MP that resting then had
-  to give back, and MP rests slower than HP.
-- **The Elven Fighter's Elemental Heal** (71 HP for 40 MP) does not save it at either share: it dies
-  to the Elven Fortress's skeletons as before.
-- **The Fighters without a heal die as they did**, and the Orc Fighter with a sword dies even with
-  potions (35 of 400 resting below half), and once in 400 at the defaults. That predates the orders.
+- **Fighting from afar keeps a Mystic alive**, and an archer too. A heal before the pull (rules §20)
+  starts each fight topped up, and the opening spell lands before the monster has come.
+- **A heal cast in the fight costs more than it mends**, now that it takes effect as its cast ends:
+  the Dark Mystic's Self Heal, 5 seconds of being struck for 45 HP, lost 73 runs of 400 where never
+  healing in the fight lost 13, and healing below 30% came too late to save more. So the fight's heal
+  order starts at never, and the Elven Fighter, whose Elemental Heal no longer fires mid-fight,
+  survives a quarter of its runs.
+- **The Skeleton Longbowman**, an aggressive archer at level 19 on the Orc Village's ground, shoots a
+  melee character for the 460 it must run, and kills the Orc Fighter with fists twice as often.
+- **Measured and dropped:** a heal before the spells in the fight, alone or taking turns, which
+  killed every Human and Elven Mystic run; heals to full before the pull and after the kill, which
+  slowed the Mystics 16% to 70%; Soul Cry lit at the pull by a Mystic, which drained its MP for the
+  whole fight from afar and cost the Orc Mystic 20% (it now lights once its blows reach); and auras
+  raised before the pull, which changed nothing, since an aura outlasts many fights.
+- **The Orc Fighter with a sword** dies once in 400 at the defaults, and 35 times with potions; that
+  predates all of this.
 
 ## Both together
 

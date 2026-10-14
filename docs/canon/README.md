@@ -150,8 +150,16 @@ differs is which of them a set gets, how they are sold, and how the fight uses t
   of the fight too.
 - **The character chooses its own skills in a fight** (rules §20): its auras, its toggle, its
   strongest spell, then while its spells rest its strongest heal below the player's share of HP, or
-  a curse on a monster above half its HP, and before the pull its heals up to that share. In Lineage
-  II the player chose each cast; here the player gives orders.
+  a curse on a monster above half its HP, and before the pull its heals up to that share. A Mystic
+  lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
+  player gives orders.
+- **A fight is fought on one line** (rules §20): the character pulls from its opening's reach, or an
+  aggressive monster comes at it from L2J's 500, the monster runs in at L2J's run speed (which holds
+  its DEX bonus), and once both are in reach nobody moves again, so nobody kites, flanks or chases.
+  A clan never comes to a member's help. A passive monster wakes at the first blow, shot or spell,
+  and a spell takes effect as its cast ends, as in Lineage II. **Ice Bolt slows both swing and run** by 30%, where
+  Lineage II slowed only the run (`movement.md`), since the swing was all a fight had before it had
+  distance.
 - **Odds and numbers are fixed where Lineage II rolled against stats we lack.** A heal mends its
   power + √M.Atk, as aCis has it and every retail-derived source shows; L2J heals its power alone.
   Curse: Poison and Venom land 70% of the time, aCis's power, where L2J rolls against the target's

@@ -187,17 +187,19 @@ defmodule MiniLineage.Game.RulesTest do
             m_def,
             atk_spd,
             dex,
+            run_spd,
             exp,
             sp,
             adena,
             attack,
+            aggressive,
             spells
           ] <-
             rows do
         m = Rules.monster(name)
 
         assert Enum.map(
-                 [level, hp, mp, p_atk, m_atk, p_def, m_def, atk_spd, dex, exp, sp],
+                 [level, hp, mp, p_atk, m_atk, p_def, m_def, atk_spd, dex, run_spd, exp, sp],
                  &trunc(number(&1))
                ) ==
                  [
@@ -210,6 +212,7 @@ defmodule MiniLineage.Game.RulesTest do
                    m.m_def,
                    m.atk_spd,
                    m.dex,
+                   m.run_spd,
                    m.exp,
                    m.sp
                  ],
@@ -218,6 +221,7 @@ defmodule MiniLineage.Game.RulesTest do
         assert adena == "#{m.adena_min}–#{m.adena_max} at #{m.adena_chance}%", name
         assert spells == Enum.join(m.spells, ", "), name
         assert attack == if(m.bow?, do: "bow", else: "melee"), name
+        assert aggressive == if(m.aggressive?, do: "yes", else: "no"), name
       end
     end
 
@@ -264,16 +268,33 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§20 how far a blow, a bow's shot and a character's spell reach" do
+      assert table("Reach") == [
+               ["A blow, or a physical skill", "#{Rules.reach(:blow)}"],
+               ["A bow's shot", "#{Rules.reach(:bow)}"],
+               ["A character's spell", "#{Rules.reach(:spell)}"],
+               ["An aggressive monster noticing a character", "#{Rules.reach(:notice)}"]
+             ]
+    end
+
+    test "§10 each set's run speed" do
+      rows = table("Set | Run speed")
+      assert length(rows) == 8
+
+      for [name, speed] <- rows,
+          do: assert(Enum.find(Rules.sets(), &(&1.name == name)).run_spd == trunc(number(speed)))
+    end
+
     test "§19 the spells monsters cast, and every one a monster carries is among them" do
       rows = table("Spell")
       assert length(rows) == map_size(Rules.monster_spells())
 
-      for [name, kind, power, mp, reuse, cast] <- rows do
+      for [name, kind, power, mp, reuse, cast, range] <- rows do
         spell = Rules.monster_spell(name)
         assert Atom.to_string(spell.kind) == kind
 
-        assert [spell.power, spell.mp, spell.reuse, spell.cast] ==
-                 Enum.map([power, mp, reuse, cast], &trunc(number(&1)))
+        assert [spell.power, spell.mp, spell.reuse, spell.cast, spell.range] ==
+                 Enum.map([power, mp, reuse, cast, range], &trunc(number(&1)))
       end
 
       for {_, m} <- Rules.monsters(), spell <- m.spells, do: Rules.monster_spell(spell)
@@ -500,6 +521,7 @@ defmodule MiniLineage.Game.RulesTest do
       assert Formulas.casts_per_round(333) == 1.0
       assert Formulas.atk_spd(99) <= 1500
       assert Formulas.cast_spd(99) == 1999
+      assert Formulas.run_spd(hf.attributes.dex, hf.run_spd) == 126
     end
 
     test "§11 resting: 18 ticks to full at level 1, 31 at 40, in whole points", %{hf: hf} do

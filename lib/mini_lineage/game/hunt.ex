@@ -19,6 +19,8 @@ defmodule MiniLineage.Game.Hunt do
   @curse_above 0.5
 
   @spells [:magic, :drain, :burn]
+  # §20: what a character casts at the monster, each reaching a spell's distance.
+  @ranged @spells ++ [:poison, :shackle]
 
   def round_ms, do: @round_ms
   def max_rounds, do: @max_rounds
@@ -85,15 +87,30 @@ defmodule MiniLineage.Game.Hunt do
       potion_at: Map.get(bars, :potion_at, 0),
       drunk: %{},
       heal_pull_at: Map.get(bars, :heal_pull_at, 0),
+      # §20: a Mystic pulls with a spell, a Fighter with its weapon.
+      path: Map.get(bars, :path),
       heal_fight_at: Map.get(bars, :heal_fight_at, 0),
       # §20: the heals cast before the pull, newest first, each `{skill, healed}`, and their time.
       mended: [],
       quiet_ms: 0.0,
       toggle: nil,
       toggle_carry: 0.0,
-      # §20: what is left of a spell's cast, during which its caster does nothing else.
+      # §20: how far apart the two stand on the fight's line, set at the pull, and how far its
+      # blows reach.
+      distance: 0,
+      blow_reach:
+        if(match?(%{type: "bow"}, stats[:weapon]),
+          do: Rules.reach(:bow),
+          else: Rules.reach(:blow)
+        ),
+      # §20: what is left of a spell's cast, during which its caster does nothing else, and the
+      # spell, which takes effect as the cast ends (§19).
       busy: 0.0,
       foe_busy: 0.0,
+      pending: nil,
+      foe_pending: nil,
+      # §20: a passive monster stands until the character's first blow, shot or spell reaches it.
+      engaged: foe.aggressive?,
       # What happened, newest first, each `{round, event}`: the fight log.
       log: [],
       blows: 0.0,
@@ -105,7 +122,7 @@ defmodule MiniLineage.Game.Hunt do
 
     state = state |> mend(Enum.filter(usable, &(&1.kind == :heal))) |> settle()
     before = {Enum.reverse(state.mended), state.health}
-    state = rounds(state, usable, foe)
+    state = %{state | distance: opening(state, usable, foe)} |> rounds(usable, foe)
 
     %{state | log: Enum.reverse(state.log)}
     |> Map.merge(%{before: before, ms: state.rounds * @round_ms + state.quiet_ms})
@@ -119,15 +136,12 @@ defmodule MiniLineage.Game.Hunt do
   defp rounds(s, skills, foe) do
     s = %{s | rounds: s.rounds + 1} |> burn() |> poison() |> drain_toggle() |> drink()
 
+    # §20: an aggressive monster acts first in the first round, having come at the character.
     s =
-      cond do
-        # A burn may have ended the fight before anybody acts.
-        s.foe <= 0 -> s
-        s.busy > 0 -> note(s, :casting)
-        true -> character_turn(s, skills, foe)
-      end
+      if s.rounds == 1 and foe.aggressive?,
+        do: s |> foe_acts(foe) |> character_acts(skills, foe),
+        else: s |> character_acts(skills, foe) |> foe_acts(foe)
 
-    s = if s.foe > 0 and s.foe_busy <= 0, do: monster_turn(s, foe), else: s
     # Where both stand when the round is over, so the log's numbers read against something.
     s = note(s, {:standing, s.health, s.foe})
 
@@ -227,6 +241,37 @@ defmodule MiniLineage.Game.Hunt do
         quiet_ms: s.quiet_ms + ms
     }
 
+  defp character_acts(s, skills, foe) do
+    {s, landed?} = land(s, foe)
+
+    cond do
+      # A burn may have ended the fight before anybody acts, or the monster's first blow.
+      s.foe <= 0 or s.health <= 0 -> s
+      s.busy > 0 and landed? -> s
+      s.busy > 0 -> note(s, :casting)
+      true -> character_turn(s, skills, foe)
+    end
+  end
+
+  defp foe_acts(s, foe) do
+    s = foe_land(s, foe)
+
+    if s.engaged and s.foe > 0 and s.health > 0 and s.foe_busy <= 0,
+      do: monster_turn(s, foe),
+      else: s
+  end
+
+  # §19: a spell takes effect in the round its cast ends.
+  defp land(%{pending: nil} = s, _foe), do: {s, false}
+  defp land(%{busy: busy} = s, _foe) when busy > @round_ms, do: {s, false}
+  defp land(%{pending: skill} = s, foe), do: {take_effect(%{s | pending: nil}, skill, foe), true}
+
+  defp foe_land(%{foe_pending: nil} = s, _foe), do: s
+  defp foe_land(%{foe_busy: busy} = s, _foe) when busy > @round_ms, do: s
+
+  defp foe_land(%{foe_pending: spell} = s, foe),
+    do: foe_effect(%{s | foe_pending: nil}, foe, spell)
+
   # §20: what a character does when it is free to: raise its auras, light its toggle, cast its
   # strongest spell, and while its spells rest heal when hurt or curse; otherwise it swings.
   defp character_turn(s, skills, foe) do
@@ -239,7 +284,10 @@ defmodule MiniLineage.Game.Hunt do
         skills,
         &(&1.kind == :aura and not MapSet.member?(s.auras, &1.name) and ready?(s, &1))
       ) ||
-        Enum.find(skills, &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp)) ||
+        Enum.find(
+          skills,
+          &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp and blows?(s))
+        ) ||
         strongest(s, skills, &(&1.kind in @spells and not (&1.kind == :burn and s.burn != nil))) ||
         (hurt? && strongest(s, skills, &(&1.kind == :heal))) ||
         if(fresh?,
@@ -249,7 +297,7 @@ defmodule MiniLineage.Game.Hunt do
         )
 
     case choice do
-      nil -> swing(s, Enum.filter(skills, &(&1.kind in [:physical, :blow])), foe)
+      nil -> out_of_reach(s, skills, foe)
       %{kind: :toggle} = toggle -> light(s, toggle)
       skill -> cast(s, skill, foe)
     end
@@ -269,9 +317,19 @@ defmodule MiniLineage.Game.Hunt do
     note(s, {:toggle, toggle.name})
   end
 
+  # §19: the MP and the reuse at once, the effect as the cast ends; one that ends within the round
+  # takes effect in it.
   defp cast(s, skill, foe) do
+    s = %{spend(s, skill, s.stats.cast_spd) | busy: skill.cast * 333 / s.stats.cast_spd}
+
+    if s.busy <= @round_ms,
+      do: take_effect(s, skill, foe),
+      else: note(%{s | pending: skill}, {:begin, skill.name})
+  end
+
+  defp take_effect(s, skill, foe) do
     stats = s.stats
-    s = %{spend(s, skill, stats.cast_spd) | busy: skill.cast * 333 / stats.cast_spd}
+    s = if skill.kind in [:heal, :aura], do: s, else: %{s | engaged: true}
 
     case skill.kind do
       :heal ->
@@ -327,7 +385,7 @@ defmodule MiniLineage.Game.Hunt do
     {count, carry} = carry_over(s.blows, s.stats.blows_per_round)
     s = %{s | blows: carry}
     # A round with no blow in it is spent getting ready: drawing a bow, or winding up.
-    s = if count == 0, do: note(s, :readying), else: s
+    s = if count == 0, do: note(s, :readying), else: %{s | engaged: true}
 
     Enum.reduce_while(1..count//1, s, fn _, s ->
       s =
@@ -388,17 +446,80 @@ defmodule MiniLineage.Game.Hunt do
     end
   end
 
-  # §20: a monster casts the strongest spell that is ready, which takes its cast time, or swings.
+  # §20: a monster casts the strongest spell that is ready and reaches, which takes its cast time,
+  # or swings, or runs at the character until one of them reaches.
   defp monster_turn(s, foe) do
     ready =
       foe.spells
-      |> Enum.filter(&(s.foe_cooldowns[&1.name] <= 0 and s.foe_mp >= &1.mp))
+      |> Enum.filter(
+        &(s.foe_cooldowns[&1.name] <= 0 and s.foe_mp >= &1.mp and &1.range >= s.distance)
+      )
       |> Enum.max_by(& &1.power, fn -> nil end)
 
-    if ready, do: monster_cast(s, foe, ready), else: monster_swing(s, foe)
+    reach = foe_reach(foe)
+
+    cond do
+      ready -> monster_cast(s, foe, ready)
+      s.distance <= reach -> monster_swing(s, foe)
+      true -> close_in(s, foe, reach)
+    end
+  end
+
+  # §20: its blows, if they reach; else it waits for a monster that is coming, or runs at one that is
+  # not.
+  defp out_of_reach(s, skills, foe) do
+    cond do
+      s.distance <= s.blow_reach ->
+        swing(s, Enum.filter(skills, &(&1.kind in [:physical, :blow])), foe)
+
+      s.distance > foe_reach(foe) ->
+        note(s, :waiting)
+
+      true ->
+        advance(s)
+    end
+  end
+
+  # §20: a toggle strengthens blows, so a Mystic lights it only once its blows reach.
+  defp blows?(s), do: s.path != :mystic or s.distance <= s.blow_reach
+
+  defp foe_reach(foe), do: if(foe.bow?, do: Rules.reach(:bow), else: Rules.reach(:blow))
+
+  # §20: a character whose blows cannot reach a monster that will not come runs at it.
+  defp advance(s) do
+    step = s.stats.run_spd * @round_ms / 1000
+    note(%{s | distance: max(s.distance - step, s.blow_reach)}, :advancing)
+  end
+
+  defp close_in(s, foe, reach) do
+    speed = foe.run_spd * if(s.slowed > 0, do: @slowed, else: 1)
+    note(%{s | distance: max(s.distance - speed * @round_ms / 1000, reach)}, :closing)
+  end
+
+  # §20: an aggressive monster comes at the character from where it notices it; otherwise the pull
+  # is made from as far as the opening reaches: a Mystic's spell it can pay for, else the weapon.
+  defp opening(_s, _skills, %{aggressive?: true}), do: Rules.reach(:notice)
+
+  defp opening(s, skills, _foe) do
+    if s.path == :mystic and Enum.any?(skills, &(&1.kind in @ranged and s.mp >= &1.mp)),
+      do: Rules.reach(:spell),
+      else: s.blow_reach
   end
 
   defp monster_cast(s, foe, spell) do
+    s = %{
+      s
+      | foe_mp: s.foe_mp - spell.mp,
+        foe_busy: spell.cast * 1.0,
+        foe_cooldowns: Map.put(s.foe_cooldowns, spell.name, spell.reuse * 1.0)
+    }
+
+    if spell.cast <= @round_ms,
+      do: foe_effect(s, foe, spell),
+      else: note(%{s | foe_pending: spell}, {:foe_begin, spell.name})
+  end
+
+  defp foe_effect(s, foe, spell) do
     damage = round(Formulas.magic_damage(foe.m_atk, s.stats.m_def, spell.power))
     lost = min(max(damage, 1), s.health)
 
@@ -406,15 +527,7 @@ defmodule MiniLineage.Game.Hunt do
       if spell.kind == :drain, do: trunc(lost * @monster_absorb), else: 0
 
     s = note(s, {:foe_cast, spell.name, lost})
-
-    %{
-      s
-      | health: s.health - lost,
-        foe: min(s.foe + healed, foe.hp),
-        foe_mp: s.foe_mp - spell.mp,
-        foe_busy: spell.cast * 1.0,
-        foe_cooldowns: Map.put(s.foe_cooldowns, spell.name, spell.reuse * 1.0)
-    }
+    %{s | health: s.health - lost, foe: min(s.foe + healed, foe.hp)}
   end
 
   defp monster_swing(s, foe) do

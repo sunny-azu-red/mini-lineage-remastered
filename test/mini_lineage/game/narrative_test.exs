@@ -27,6 +27,28 @@ defmodule MiniLineage.Game.NarrativeTest do
   end
 
   describe "the fight log" do
+    test "an aggressive monster comes at the character, a passive one is met" do
+      ground = Rules.ground("obelisk-of-victory")
+
+      log =
+        &Narrative.build_fight_log(
+          Rules.monster(&1),
+          ground,
+          [],
+          %{max_hp: 100, bow?: false},
+          {[], 100}
+        )
+
+      [noticed] = log.("Orc Fighter")
+      [met] = log.("Young Keltir")
+
+      assert Narrative.alert(noticed) =~
+               ~r/^An Orc Fighter, level .*10.*, notices you on the .* and comes at you\.$/
+
+      assert Narrative.alert(met) =~ ~r/^You meet a Young Keltir/
+      assert unrendered(Narrative.voiced(noticed, false)) == []
+    end
+
     test "writes every event a skill makes, open-voiced and with no brace left" do
       foe = Rules.monster("Young Keltir")
       ground = Rules.ground("obelisk-of-victory")
@@ -38,7 +60,12 @@ defmodule MiniLineage.Game.NarrativeTest do
         {3, {:curse, "Curse: Poison", true}},
         {3, {:poison, 8}},
         {4, {:curse, "Wind Shackle", false}},
-        {4, {:potion, "Lesser Healing Potion", 112}}
+        {4, {:potion, "Lesser Healing Potion", 112}},
+        {4, :waiting},
+        {4, :closing},
+        {4, :advancing},
+        {4, {:begin, "Wind Strike"}},
+        {4, {:foe_begin, "NPC Windstrike - Magic 1"}}
       ]
 
       # Every round ends on where both stand, as the engine writes it.
@@ -67,6 +94,11 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "the poison eats"
       assert text =~ "Wind Shackle slides off the Young Keltir"
       assert text =~ "drink a Lesser Healing Potion and mend"
+      assert text =~ "you wait for the Young Keltir to come"
+      assert text =~ "the Young Keltir runs at you"
+      assert text =~ "you run at the Young Keltir"
+      assert text =~ "you begin casting Wind Strike"
+      assert text =~ "the Young Keltir begins casting NPC Windstrike - Magic 1"
 
       assert Enum.at(lines, 1) =~
                ~r/^Before the fight: you cast Heal and mend .*Self Heal.*you at/

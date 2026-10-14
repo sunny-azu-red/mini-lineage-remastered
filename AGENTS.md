@@ -6,7 +6,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
-  the one-click fight in `Hunt`, `Actions.hunt/1`, and death), each village's trader and its inner
+  the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
+  distance, `Actions.hunt/1`, and death), each village's trader and its inner
   pages (`/<village>/trader/<category|sell>`) and the inventory beside its Combat
   Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
   and the home village's trainer (rules §25: `Actions.learn/3`, `/<village>/trainer`, a character's

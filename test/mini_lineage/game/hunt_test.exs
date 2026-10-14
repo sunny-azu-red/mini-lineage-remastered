@@ -122,10 +122,11 @@ defmodule MiniLineage.Game.HuntTest do
       foe = %{Hunt.foe(Rules.monster("Elder Prairie Keltir")) | hp: 1_000_000_000}
       result = Hunt.fight(Player.stats(mystic), mystic, [skill], foe)
 
-      # The first burn runs nine rounds; a second may only start once it has gone out.
+      # Begun at once, it takes hold as its cast ends; the burn runs nine rounds from there, and a
+      # second may only start once it has gone out.
+      assert [{1, {:begin, "Chill Flame"}} | _] = events(result, :begin)
       casts = for {round, {:cast, "Chill Flame", _, _}} <- result.log, do: round
-      assert hd(casts) == 1
-      assert Enum.all?(tl(casts), &(&1 > 10)), inspect(casts)
+      assert Enum.all?(tl(casts), &(&1 > hd(casts) + 9)), inspect(casts)
     end
 
     test "with every blow missing, Power Strike still lands, and alone fells a Young Keltir" do
@@ -175,11 +176,13 @@ defmodule MiniLineage.Game.HuntTest do
       foe = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000}
       result = Hunt.fight(stats, bars, [skill], foe)
 
-      # Windstrike - Magic: 4 seconds a cast, so the next comes three rounds after the last.
-      casts =
-        for {round, {:foe_cast, "NPC Windstrike - Magic 1", _}} <- result.log, do: round
+      # Windstrike - Magic: 4 seconds a cast, so each lands in the third round of its cast and the
+      # next begins three rounds after the last.
+      begun = for {round, {:foe_begin, "NPC Windstrike - Magic 1"}} <- result.log, do: round
+      landed = for {round, {:foe_cast, "NPC Windstrike - Magic 1", _}} <- result.log, do: round
 
-      assert Enum.take(casts, 5) == [1, 4, 7, 10, 13]
+      assert Enum.take(begun, 5) == [1, 4, 7, 10, 13]
+      assert Enum.take(landed, 5) == [3, 6, 9, 12, 15]
     end
   end
 
@@ -194,8 +197,9 @@ defmodule MiniLineage.Game.HuntTest do
       stats = Player.stats(mystic)
 
       hurt = Hunt.fight(stats, fight_only(%{mystic | health: 10}), skills, dummy("Young Keltir"))
-      [{first, _}, {second, _} | _] = events(hurt, :cast)
-      [{healed, heal} | _] = events(hurt, :heal)
+      [{first, _}, {second, _} | _] = for {r, {:begin, "Wind Strike"}} <- hurt.log, do: {r, nil}
+      [{healed, _} | _] = for {r, {:begin, "Self Heal"}} <- hurt.log, do: {r, nil}
+      [{_, heal} | _] = events(hurt, :heal)
 
       assert first == 1 and healed in first..second
       assert heal == {:heal, "Self Heal", Hunt.heal_amount(42, stats.m_atk)}
@@ -246,11 +250,11 @@ defmodule MiniLineage.Game.HuntTest do
       rested =
         Hunt.fight(stats, fight_only(%{elf | health: 10}), heals(elf), dummy("Young Keltir"))
 
-      assert [{1, {:heal, "Heal", _}} | _] = events(rested, :heal)
+      assert [{_, {:heal, "Heal", _}} | _] = events(rested, :heal)
 
       short = fight_only(%{elf | health: 10, mp: heal.mp - 1})
 
-      assert [{1, {:heal, "Self Heal", _}} | _] =
+      assert [{_, {:heal, "Self Heal", _}} | _] =
                events(Hunt.fight(stats, short, heals(elf), dummy("Young Keltir")), :heal)
     end
 
@@ -260,7 +264,8 @@ defmodule MiniLineage.Game.HuntTest do
       stats = Player.stats(elf)
       result = Hunt.fight(stats, elf, Player.known_skills(elf), dummy("Young Keltir"))
 
-      assert events(result, :aura) == [{1, {:aura, "Defense Aura"}}]
+      assert [{1, {:begin, "Defense Aura"}} | _] = events(result, :begin)
+      assert [{_, {:aura, "Defense Aura"}}] = events(result, :aura)
       assert result.raised == ["Defense Aura"]
 
       up = Map.put(stats, :auras, ["Defense Aura"])
@@ -290,7 +295,7 @@ defmodule MiniLineage.Game.HuntTest do
 
       Rng.put_source(fn -> 0.9999 end)
       missed = Hunt.fight(stats, bars, [poison], dummy("Young Keltir"))
-      assert {1, {:curse, "Curse: Poison", false}} in missed.log
+      assert [{_, {:curse, "Curse: Poison", false}} | _] = events(missed, :curse)
     end
 
     test "a poison never takes the last HP, nor is it laid on a monster at half its HP" do
@@ -324,6 +329,217 @@ defmodule MiniLineage.Game.HuntTest do
     end
   end
 
+  describe "the opening" do
+    # Too tough to fall, so the opening plays out whatever is cast at it.
+    defp tough(monster), do: %{foe(monster) | hp: 1_000_000_000}
+
+    defp on(result, event), do: for({round, ^event} <- result.log, do: round)
+    defp first(result, kind), do: result |> events(kind) |> Enum.map(&elem(&1, 0)) |> List.first()
+
+    # §20: rounds a monster runs to cover the gap at its run speed, 1⅔ seconds each.
+    defp running(gap, run_spd), do: ceil(gap / (run_spd * Hunt.round_ms() / 1000))
+
+    test "a Mystic pulls from its spell's reach, and a melee monster runs in before its first blow" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      keltir = tough("Young Keltir")
+      result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), keltir)
+
+      # It stands until the opening spell lands, then runs from there.
+      runs = running(Rules.reach(:spell) - Rules.reach(:blow), keltir.run_spd)
+      landed = first(result, :cast)
+      assert first(result, :begin) == 1 and landed > 1
+      assert on(result, :closing) == Enum.to_list(landed..(landed + runs - 1))
+      assert first(result, :foe_blow) > landed + runs - 1
+    end
+
+    test "a melee character against a passive monster starts toe to toe" do
+      Rng.put_source(fn -> 0.0 end)
+      fighter = character(0, :fighter)
+      result = Hunt.fight(Player.stats(fighter), fighter, [], tough("Young Keltir"))
+
+      assert on(result, :closing) == []
+      assert first(result, :foe_blow) == 2
+    end
+
+    test "a spell takes effect in the round its cast ends, and the monster is untouched till then" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      stats = Player.stats(mystic)
+      [wind] = Enum.filter(Player.known_skills(mystic), &(&1.name == "Wind Strike"))
+      keltir = tough("Young Keltir")
+      result = Hunt.fight(stats, mystic, [wind], keltir)
+
+      ends = wind.cast * 333 / stats.cast_spd
+      landed = trunc(ends / Hunt.round_ms()) + 1
+      assert first(result, :cast) == landed
+
+      untouched = for {r, {:standing, _, foe}} <- result.log, r < landed, do: foe
+      assert untouched != [] and Enum.all?(untouched, &(&1 == keltir.hp))
+    end
+
+    test "a Mystic lights its toggle only once its blows reach, a Fighter at once" do
+      Rng.put_source(fn -> 0.0 end)
+      orc = trained(1, :mystic, 1)
+      keltir = tough("Young Keltir")
+      result = Hunt.fight(Player.stats(orc), orc, Player.known_skills(orc), keltir)
+      [{lit, _}] = events(result, :toggle)
+      assert lit > Enum.max(on(result, :closing))
+
+      fighter = %{character(1, :fighter) | skills: %{"Soul Cry" => 1}}
+
+      ahead =
+        Hunt.fight(
+          Player.stats(fighter),
+          fighter,
+          Player.known_skills(fighter),
+          tough("Orc Fighter")
+        )
+
+      assert [{1, _}] = events(ahead, :toggle)
+      assert 1 in on(ahead, :closing)
+    end
+
+    test "a Fighter that knows a spell still pulls with its weapon" do
+      Rng.put_source(fn -> 0.0 end)
+      fighter = %{character(3, :fighter, 15) | skills: %{"Drain Health" => 1}}
+
+      result =
+        Hunt.fight(
+          Player.stats(fighter),
+          fighter,
+          Player.known_skills(fighter),
+          tough("Young Keltir")
+        )
+
+      assert on(result, :closing) == []
+    end
+
+    test "an aggressive monster comes at the character from where it notices it, and acts first" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      orc = tough("Orc Fighter")
+      assert orc.aggressive?
+      result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), orc)
+
+      runs = running(Rules.reach(:notice) - Rules.reach(:blow), orc.run_spd)
+      assert on(result, :closing) == Enum.to_list(1..runs)
+      assert [:closing, {:begin, _} | _] = for({1, event} <- result.log, do: event)
+    end
+
+    test "a melee character runs at an aggressive archer, which shoots as it comes" do
+      Rng.put_source(fn -> 0.0 end)
+      fighter = character(0, :fighter)
+      stats = Player.stats(fighter)
+      archer = tough("Skeleton Longbowman")
+      assert archer.aggressive? and archer.bow?
+      result = Hunt.fight(stats, fighter, [], archer)
+
+      runs = running(Rules.reach(:notice) - Rules.reach(:blow), stats.run_spd)
+      assert on(result, :advancing) == Enum.to_list(1..runs)
+      assert on(result, :closing) == []
+      assert first(result, :foe_blow) <= runs
+    end
+
+    test "and waits for an aggressive monster that comes to it" do
+      Rng.put_source(fn -> 0.0 end)
+      fighter = character(0, :fighter)
+      orc = tough("Orc Fighter")
+      result = Hunt.fight(Player.stats(fighter), fighter, [], orc)
+
+      runs = running(Rules.reach(:notice) - Rules.reach(:blow), orc.run_spd)
+      assert on(result, :closing) == Enum.to_list(1..runs)
+      assert on(result, :advancing) == []
+      assert on(result, :waiting) != []
+    end
+
+    test "a bow pulls from its own reach" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = character(2, :fighter)
+      assert Player.stats(elf).weapon.type == "bow"
+      keltir = tough("Young Keltir")
+      result = Hunt.fight(Player.stats(elf), elf, [], keltir)
+
+      # The first round draws the bow, which the keltir does not notice; it runs from the first shot.
+      runs = running(Rules.reach(:bow) - Rules.reach(:blow), keltir.run_spd)
+      assert on(result, :readying) == [1] or hd(on(result, :readying)) == 1
+      shot = first(result, :blow) || hd(on(result, :miss))
+      assert on(result, :closing) == Enum.to_list(shot..(shot + runs - 1))
+    end
+
+    test "an archer runs only until its bow reaches" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      archer = tough("Orc Archer")
+      result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), archer)
+
+      runs = running(Rules.reach(:spell) - Rules.reach(:bow), archer.run_spd)
+      landed = first(result, :cast)
+      assert on(result, :closing) == Enum.to_list(landed..(landed + runs - 1))
+    end
+
+    test "a monster's spell that reaches is cast from where it stands" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+
+      result =
+        Hunt.fight(
+          Player.stats(mystic),
+          mystic,
+          Player.known_skills(mystic),
+          tough("Stone Golem")
+        )
+
+      # It begins in the round the Mystic's spell lands, from where it stood, and runs in only
+      # while its spell rests.
+      landed = first(result, :cast)
+      assert first(result, :foe_begin) == landed
+      assert Enum.all?(on(result, :closing), &(&1 > landed))
+    end
+
+    test "and one that does not reach waits until the monster has run close enough" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      burn = Rules.monster_spell("NPC Aura Burn - Magic 1")
+      eye = %{tough("Evil Eye") | spells: [burn]}
+      result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), eye)
+
+      assert first(result, :foe_cast) > running(Rules.reach(:spell) - burn.range, eye.run_spd)
+    end
+
+    test "an Ice-Bolted monster runs 30% slower" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 7)
+      stats = Player.stats(mystic)
+      keltir = tough("Young Keltir")
+      bolt = Enum.filter(Player.known_skills(mystic), &(&1.name == "Ice Bolt"))
+      wind = Enum.filter(Player.known_skills(mystic), &(&1.name == "Wind Strike"))
+      gap = Rules.reach(:spell) - Rules.reach(:blow)
+
+      assert length(on(Hunt.fight(stats, mystic, wind, keltir), :closing)) ==
+               running(gap, keltir.run_spd)
+
+      assert length(on(Hunt.fight(stats, mystic, bolt, keltir), :closing)) ==
+               running(gap, keltir.run_spd * 0.7)
+    end
+
+    test "a character whose blows cannot reach yet waits, then fights where the monster stands" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      [wind] = Enum.filter(Player.known_skills(mystic), &(&1.name == "Wind Strike"))
+
+      # One spell's MP, and a monster that crawls, so the Mystic outlasts its MP before it arrives.
+      zombie = tough("Tainted Zombie")
+      result = Hunt.fight(Player.stats(mystic), %{mystic | mp: wind.mp}, [wind], zombie)
+
+      waits = on(result, :waiting)
+      closes = on(result, :closing)
+      assert waits != [] and Enum.max(waits) <= Enum.max(closes)
+      swings = on(result, :miss) ++ for({r, {:blow, _, _}} <- result.log, do: r)
+      assert Enum.min(swings) > Enum.max(closes)
+    end
+  end
+
   describe "before the pull" do
     # Down with the first spell, and never swinging back, so only the heals move HP.
     defp frail(monster), do: %{foe(monster) | hp: 1, atk_spd: 0}
@@ -340,7 +556,7 @@ defmodule MiniLineage.Game.HuntTest do
       assert pulled == 1 + Enum.sum(Enum.map(heals, &elem(&1, 1)))
       assert pulled * 2 >= stats.max_hp
       assert (pulled - elem(List.last(heals), 1)) * 2 < stats.max_hp
-      assert [{1, {:cast, _, _, _}} | _] = events(result, :cast)
+      assert [{1, {:begin, _}} | _] = events(result, :begin)
     end
 
     test "not at all above its share, nor when its order is never" do
@@ -384,11 +600,11 @@ defmodule MiniLineage.Game.HuntTest do
 
       pulled = Hunt.fight(stats, bars, heal, dummy("Young Keltir"))
       assert {[_ | _], _} = pulled.before
-      assert [{round, _} | _] = events(pulled, :heal)
+      assert [{round, _} | _] = events(pulled, :begin)
       assert round > 1
 
       fresh = Hunt.fight(stats, %{bars | heal_pull_at: 0}, heal, dummy("Young Keltir"))
-      assert [{1, _} | _] = events(fresh, :heal)
+      assert [{1, _} | _] = events(fresh, :begin)
     end
 
     test "and none once the monster is down, the fight's cost left for the rest" do
@@ -416,7 +632,7 @@ defmodule MiniLineage.Game.HuntTest do
       stored = elf |> Serde.to_map() |> JSON.encode!() |> JSON.decode!()
       assert %{heal_pull_at: 30, heal_fight_at: 0} = Serde.from_map(stored)
       assert Serde.from_map(Map.delete(stored, "heal_pull_at")).heal_pull_at == 50
-      assert Serde.from_map(Map.put(stored, "heal_fight_at", 40)).heal_fight_at == 50
+      assert Serde.from_map(Map.put(stored, "heal_fight_at", 40)).heal_fight_at == 0
     end
 
     test "and the time spent on heals is counted" do

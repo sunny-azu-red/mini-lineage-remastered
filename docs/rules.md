@@ -149,6 +149,7 @@ a sword. A Human Mystic's WIT 20 gives
 
 - **Atk. Spd. = the weapon's speed (300 bare-handed) × DEX bonus**, rounded down, at most 1500.
 - **Casting Spd. = 333 × WIT bonus**, rounded down, at most 1999.
+- **Run Spd. = the set's run speed × DEX bonus**, rounded down, the distance it runs a second (§20).
 - In a fight, a character strikes **Atk. Spd. ÷ 300** times a round and casts **Casting Spd. ÷ 333**
   times a round. A bow, which draws and then reloads, shoots **Atk. Spd. ÷ 610** times a round
   (Lineage II's 500,000 + 517,500 ÷ Atk. Spd. milliseconds a shot). A fraction carries over to the
@@ -156,7 +157,18 @@ a sword. A Human Mystic's WIT 20 gives
 
 Example: a Human Fighter's DEX 30 gives Atk. Spd. **330** bare-handed, so **1.1** blows a round, and
 379 × 1.10 = **416** with a sword. An Elven Fighter's DEX 35 draws a Short Bow at 293 × 1.15 =
-**336**, so **0.55** shots a round.
+**336**, so **0.55** shots a round. The Human Fighter runs 115 × 1.10 = **126**.
+
+| Set | Run speed |
+|---|---|
+| Human Fighter | 115 |
+| Human Mystic | 120 |
+| Elven Fighter | 125 |
+| Elven Mystic | 122 |
+| Dark Fighter | 122 |
+| Dark Mystic | 122 |
+| Orc Fighter | 117 |
+| Orc Mystic | 121 |
 
 ## 11. Resting
 
@@ -290,107 +302,109 @@ monster around that village, its fields and its nearby grounds, each at its own 
 A monster is what Lineage II made it, taken whole from `docs/canon/monsters.md` (L2J's figures).
 Its Accuracy and Evasion are √DEX × 6 + its level, rounded, and its Critical is 4 × its DEX bonus,
 as a character's are (§8, §9). A monster carries its Adena at the chance given, evenly anywhere from
-the least to the most. It fights in melee or with a bow (§10). The spells are §19's.
+the least to the most. It fights in melee or with a bow (§10), runs at its run speed, L2J's figure,
+which already holds its DEX bonus, and an aggressive one comes at a character it notices (§20). The
+spells are §19's.
 
-| Monster | Level | HP | MP | P.Atk | M.Atk | P.Def | M.Def | Atk. Spd. | DEX | EXP | SP | Adena | Attack | Spells |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Young Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 35 | 2 | 8–12 at 70% | melee |  |
-| Bearded Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 35 | 2 | 8–12 at 70% | melee |  |
-| Elpy | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 35 | 2 | 8–12 at 70% | melee |  |
-| Gremlin | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 29 | 2 | 7–13 at 100% | melee |  |
-| Elder Keltir | 3 | 90 | 60 | 12 | 3 | 40 | 35 | 278 | 30 | 105 | 2 | 13–20 at 70% | melee |  |
-| Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 141 | 4 | 19–29 at 70% | melee |  |
-| Elder Wolf | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 176 | 5 | 30–42 at 70% | melee |  |
-| Giant Toad | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 178 | 5 | 30–42 at 70% | melee |  |
-| Orc | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 213 | 6 | 41–58 at 70% | melee |  |
-| Orc Grunt | 7 | 171 | 94 | 17 | 6 | 53 | 43 | 278 | 30 | 249 | 8 | 51–72 at 70% | melee |  |
-| Goblin Scout | 8 | 197 | 102 | 18 | 6 | 55 | 45 | 278 | 30 | 284 | 10 | 67–91 at 70% | melee |  |
-| Orc Archer | 8 | 197 | 102 | 41 | 6 | 55 | 45 | 249 | 30 | 293 | 10 | 69–94 at 70% | bow |  |
-| Werewolf | 9 | 226 | 111 | 20 | 7 | 58 | 47 | 278 | 30 | 321 | 11 | 80–108 at 70% | melee |  |
-| Orc Fighter | 10 | 257 | 120 | 22 | 8 | 61 | 49 | 278 | 30 | 363 | 12 | 98–132 at 70% | melee |  |
-| Werewolf Hunter | 10 | 257 | 120 | 25 | 8 | 55 | 49 | 278 | 30 | 363 | 12 | 98–132 at 70% | melee |  |
-| Orc Lieutenant | 11 | 292 | 129 | 23 | 9 | 70 | 52 | 278 | 30 | 391 | 15 | 109–147 at 70% | melee |  |
-| Werewolf Chieftain | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 436 | 16 | 114–157 at 70% | melee |  |
-| Orc Fighter Leader | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 447 | 17 | 117–161 at 70% | melee |  |
-| Stone Golem | 13 | 339 | 147 | 30 | 11 | 70 | 56 | 278 | 30 | 654 | 26 | 127–180 at 70% | melee | NPC Windstrike - Slow 1 |
-| Crasher | 14 | 364 | 156 | 30 | 12 | 80 | 59 | 278 | 30 | 705 | 27 | 128–189 at 70% | melee | NPC Windstrike - Slow 1 |
-| Talon Spider | 16 | 417 | 174 | 44 | 15 | 72 | 64 | 278 | 30 | 570 | 23 | 118–183 at 70% | melee |  |
-| Blade Spider | 17 | 446 | 184 | 48 | 17 | 75 | 67 | 278 | 30 | 618 | 26 | 122–197 at 70% | melee |  |
-| Young Red Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 35 | 2 | 8–12 at 70% | melee |  |
-| Red Keltir | 2 | 75 | 52 | 10 | 3 | 42 | 34 | 278 | 30 | 70 | 2 | 8–13 at 70% | melee |  |
-| Elder Red Keltir | 3 | 90 | 60 | 11 | 3 | 44 | 35 | 278 | 30 | 105 | 2 | 13–20 at 70% | melee |  |
-| Gray Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 141 | 4 | 19–29 at 70% | melee |  |
-| Goblin Raider | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 178 | 5 | 30–42 at 70% | melee |  |
-| Kaboo Orc | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 213 | 6 | 41–58 at 70% | melee |  |
-| Kaboo Orc Grunt | 7 | 171 | 94 | 17 | 6 | 53 | 43 | 278 | 30 | 249 | 8 | 51–72 at 70% | melee |  |
-| Green Dryad | 8 | 197 | 102 | 18 | 6 | 55 | 45 | 278 | 30 | 284 | 10 | 67–91 at 70% | melee |  |
-| Kaboo Orc Archer | 8 | 197 | 102 | 41 | 6 | 55 | 45 | 249 | 30 | 293 | 10 | 69–94 at 70% | bow |  |
-| Spore Fungus | 9 | 226 | 111 | 22 | 7 | 53 | 47 | 278 | 30 | 321 | 11 | 80–108 at 70% | melee |  |
-| Kaboo Orc Fighter | 10 | 257 | 120 | 20 | 8 | 67 | 49 | 278 | 30 | 363 | 12 | 98–132 at 70% | melee |  |
-| Baraq Orc Fighter | 10 | 257 | 120 | 25 | 8 | 55 | 49 | 278 | 30 | 302 | 10 | 81–110 at 70% | melee |  |
-| Baraq Orc Warrior Leader | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 326 | 12 | 91–122 at 70% | melee |  |
-| Dungeon Skeleton | 12 | 315 | 138 | 26 | 10 | 60 | 54 | 317 | 30 | 363 | 13 | 95–131 at 70% | melee |  |
-| Dungeon Skeleton Archer | 13 | 339 | 147 | 61 | 11 | 77 | 56 | 249 | 30 | 397 | 16 | 97–137 at 70% | bow |  |
-| Dread Soldier | 14 | 364 | 156 | 32 | 12 | 66 | 59 | 317 | 30 | 424 | 16 | 97–143 at 70% | melee |  |
-| Mist Terror | 15 | 390 | 165 | 40 | 14 | 69 | 62 | 278 | 30 | 454 | 19 | 99–150 at 70% | melee |  |
-| Dark Terror | 16 | 417 | 174 | 44 | 15 | 72 | 64 | 278 | 30 | 533 | 22 | 110–171 at 70% | melee |  |
-| Shade Horror | 17 | 446 | 184 | 48 | 17 | 75 | 67 | 278 | 30 | 504 | 21 | 100–161 at 70% | melee |  |
-| Sukar Wererat | 18 | 476 | 193 | 46 | 19 | 79 | 70 | 317 | 30 | 533 | 23 | 101–167 at 70% | melee |  |
-| Sukar Wererat Leader | 19 | 508 | 203 | 42 | 21 | 99 | 73 | 317 | 30 | 576 | 26 | 104–177 at 70% | melee |  |
-| Dre Vanul Tracker | 20 | 541 | 213 | 63 | 23 | 86 | 76 | 278 | 30 | 605 | 27 | 106–184 at 70% | melee |  |
-| Young Brown Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 35 | 2 | 8–12 at 70% | melee |  |
-| Brown Keltir | 2 | 75 | 52 | 10 | 3 | 42 | 34 | 278 | 30 | 70 | 2 | 8–13 at 70% | melee |  |
-| Elder Brown Keltir | 3 | 90 | 60 | 11 | 3 | 44 | 35 | 278 | 30 | 105 | 2 | 13–20 at 70% | melee |  |
-| Ashen Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 141 | 4 | 19–29 at 70% | melee |  |
-| Goblin | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 178 | 5 | 30–42 at 70% | melee |  |
-| Imp | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 213 | 6 | 41–58 at 70% | melee |  |
-| Imp Elder | 7 | 171 | 94 | 18 | 6 | 48 | 43 | 278 | 30 | 249 | 8 | 51–72 at 70% | melee |  |
-| Balor Orc Archer | 8 | 197 | 102 | 41 | 6 | 55 | 45 | 249 | 30 | 293 | 10 | 69–94 at 70% | bow |  |
-| Goblin Lookout | 8 | 197 | 102 | 16 | 6 | 55 | 45 | 317 | 30 | 284 | 10 | 67–91 at 70% | melee |  |
-| Green Fungus | 9 | 226 | 111 | 22 | 7 | 53 | 47 | 278 | 30 | 321 | 11 | 80–108 at 70% | melee |  |
-| Balor Orc Fighter | 10 | 257 | 120 | 25 | 8 | 55 | 49 | 278 | 30 | 363 | 12 | 98–132 at 70% | melee |  |
-| Goblin Thief | 10 | 257 | 120 | 20 | 8 | 61 | 49 | 317 | 30 | 356 | 12 | 96–130 at 70% | melee |  |
-| Vaiss Orc | 10 | 257 | 120 | 22 | 8 | 61 | 49 | 278 | 30 | 296 | 10 | 80–108 at 70% | melee |  |
-| Balor Orc Lieutenant | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 391 | 15 | 109–147 at 70% | melee |  |
-| Vaiss Orc Warrior Leader | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 326 | 12 | 91–122 at 70% | melee |  |
-| Balor Orc Fighter Leader | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 436 | 16 | 114–157 at 70% | melee |  |
-| Blood Fungus | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 427 | 16 | 112–154 at 70% | melee |  |
-| Skeleton Hunter | 12 | 315 | 138 | 26 | 10 | 60 | 54 | 317 | 30 | 363 | 13 | 95–131 at 70% | melee |  |
-| Doom Soldier | 14 | 364 | 156 | 32 | 12 | 66 | 59 | 317 | 30 | 424 | 16 | 97–143 at 70% | melee |  |
-| Cave Spider | 15 | 390 | 165 | 40 | 14 | 69 | 62 | 278 | 30 | 445 | 18 | 97–147 at 70% | melee |  |
-| Cave Fang Spider | 16 | 417 | 174 | 44 | 15 | 72 | 64 | 278 | 30 | 485 | 20 | 100–156 at 70% | melee |  |
-| Omen Beast | 17 | 446 | 184 | 48 | 17 | 75 | 67 | 278 | 30 | 504 | 21 | 100–161 at 70% | melee |  |
-| Tainted Zombie | 18 | 476 | 193 | 44 | 19 | 95 | 70 | 278 | 30 | 754 | 33 | 114–187 at 70% | melee |  |
-| Stink Zombie | 19 | 508 | 203 | 48 | 21 | 99 | 73 | 278 | 30 | 799 | 36 | 115–195 at 70% | melee | NPC HP Drain - Slow 1 |
-| Lesser Succubus | 20 | 541 | 213 | 57 | 23 | 94 | 76 | 278 | 30 | 605 | 27 | 106–184 at 70% | melee |  |
-| Lesser Succubus Turen | 21 | 575 | 227 | 69 | 25 | 89 | 80 | 278 | 30 | 649 | 30 | 110–197 at 70% | melee | NPC HP Drain - Magic 2, NPC Aura Burn - Magic 2 |
-| Lesser Succubus Tilfo | 22 | 611 | 242 | 75 | 28 | 93 | 83 | 278 | 30 | 698 | 33 | 116–209 at 70% | melee |  |
-| Young Prairie Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 35 | 2 | 8–12 at 70% | melee |  |
-| Prairie Keltir | 2 | 75 | 52 | 10 | 3 | 42 | 34 | 278 | 30 | 70 | 2 | 8–13 at 70% | melee |  |
-| Elder Prairie Keltir | 3 | 90 | 60 | 11 | 3 | 44 | 35 | 278 | 30 | 105 | 2 | 13–20 at 70% | melee |  |
-| Kasha Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 141 | 4 | 19–29 at 70% | melee |  |
-| Goblin Grave Robber | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 178 | 5 | 30–42 at 70% | melee |  |
-| Rakeclaw Imp | 6 | 147 | 85 | 16 | 5 | 46 | 41 | 278 | 30 | 213 | 6 | 41–58 at 70% | melee |  |
-| Kasha Timber Wolf | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 211 | 6 | 41–58 at 70% | melee |  |
-| Rakeclaw Imp Hunter | 7 | 171 | 94 | 18 | 6 | 48 | 43 | 278 | 30 | 249 | 8 | 51–72 at 70% | melee |  |
-| Mountain Fungus | 8 | 197 | 102 | 20 | 6 | 50 | 45 | 278 | 30 | 284 | 10 | 67–91 at 70% | melee |  |
-| Maraku Werewolf | 9 | 226 | 111 | 22 | 7 | 53 | 47 | 278 | 30 | 321 | 11 | 80–108 at 70% | melee |  |
-| Evil Eye | 10 | 257 | 120 | 20 | 8 | 67 | 49 | 278 | 30 | 356 | 12 | 96–130 at 70% | melee | NPC Windstrike - Magic 1, NPC Aura Burn - Magic 1 |
-| Evil Eye Watcher | 10 | 257 | 120 | 20 | 8 | 67 | 49 | 278 | 30 | 296 | 10 | 80–108 at 70% | melee | NPC HP Drain - Magic 1, NPC Aura Burn - Magic 1 |
-| Darkwing Bat | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 391 | 15 | 109–147 at 70% | melee |  |
-| Grizzly | 12 | 315 | 138 | 27 | 10 | 66 | 54 | 278 | 30 | 436 | 16 | 114–157 at 70% | melee |  |
-| Goblin Tomb Raider Leader | 12 | 315 | 138 | 24 | 10 | 66 | 54 | 317 | 30 | 427 | 16 | 112–154 at 70% | melee |  |
-| Slave Skeleton | 12 | 315 | 138 | 26 | 10 | 60 | 54 | 317 | 30 | 363 | 13 | 95–131 at 70% | melee |  |
-| Greystone Golem | 13 | 339 | 147 | 27 | 11 | 77 | 56 | 278 | 30 | 654 | 26 | 127–180 at 70% | melee | NPC Prominence - Slow 1 |
-| Grave Keeper | 13 | 339 | 147 | 27 | 11 | 77 | 56 | 278 | 30 | 545 | 21 | 106–150 at 70% | melee | NPC Windstrike - Slow 1 |
-| Evil Eye Patroller | 14 | 364 | 156 | 30 | 12 | 80 | 59 | 278 | 30 | 498 | 19 | 114–168 at 70% | melee | NPC Windstrike - Magic 1, NPC Aura Burn - Magic 1 |
-| Crypt Horror | 15 | 390 | 165 | 40 | 14 | 69 | 62 | 278 | 30 | 454 | 19 | 99–150 at 70% | melee |  |
-| Kuruka Ratman | 16 | 417 | 174 | 32 | 15 | 87 | 64 | 317 | 30 | 475 | 19 | 98–153 at 70% | melee |  |
-| Kuruka Ratman Hunter | 17 | 446 | 184 | 40 | 17 | 91 | 67 | 278 | 30 | 504 | 21 | 100–161 at 70% | melee |  |
-| Skeleton Longbowman | 19 | 508 | 203 | 129 | 21 | 82 | 73 | 249 | 30 | 587 | 26 | 106–181 at 70% | bow |  |
-| Undead Slave | 19 | 508 | 203 | 58 | 21 | 82 | 73 | 278 | 30 | 799 | 36 | 115–195 at 70% | melee | NPC Windstrike - Slow 1 |
-| Ghost | 20 | 541 | 213 | 63 | 23 | 86 | 76 | 278 | 30 | 599 | 27 | 105–183 at 70% | melee |  |
-| Ghost Guardian | 21 | 575 | 227 | 63 | 25 | 98 | 80 | 278 | 30 | 643 | 30 | 109–195 at 70% | melee |  |
+| Monster | Level | HP | MP | P.Atk | M.Atk | P.Def | M.Def | Atk. Spd. | DEX | Run Spd. | EXP | SP | Adena | Attack | Aggressive | Spells |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Young Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
+| Bearded Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
+| Elpy | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 88 | 35 | 2 | 8–12 at 70% | melee | no |  |
+| Gremlin | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 55 | 29 | 2 | 7–13 at 100% | melee | no |  |
+| Elder Keltir | 3 | 90 | 60 | 12 | 3 | 40 | 35 | 278 | 30 | 121 | 105 | 2 | 13–20 at 70% | melee | no |  |
+| Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 121 | 141 | 4 | 19–29 at 70% | melee | no |  |
+| Elder Wolf | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 121 | 176 | 5 | 30–42 at 70% | melee | no |  |
+| Giant Toad | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 110 | 178 | 5 | 30–42 at 70% | melee | no |  |
+| Orc | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 121 | 213 | 6 | 41–58 at 70% | melee | no |  |
+| Orc Grunt | 7 | 171 | 94 | 17 | 6 | 53 | 43 | 278 | 30 | 121 | 249 | 8 | 51–72 at 70% | melee | no |  |
+| Goblin Scout | 8 | 197 | 102 | 18 | 6 | 55 | 45 | 278 | 30 | 121 | 284 | 10 | 67–91 at 70% | melee | no |  |
+| Orc Archer | 8 | 197 | 102 | 41 | 6 | 55 | 45 | 249 | 30 | 121 | 293 | 10 | 69–94 at 70% | bow | no |  |
+| Werewolf | 9 | 226 | 111 | 20 | 7 | 58 | 47 | 278 | 30 | 132 | 321 | 11 | 80–108 at 70% | melee | no |  |
+| Orc Fighter | 10 | 257 | 120 | 22 | 8 | 61 | 49 | 278 | 30 | 121 | 363 | 12 | 98–132 at 70% | melee | yes |  |
+| Werewolf Hunter | 10 | 257 | 120 | 25 | 8 | 55 | 49 | 278 | 30 | 132 | 363 | 12 | 98–132 at 70% | melee | yes |  |
+| Orc Lieutenant | 11 | 292 | 129 | 23 | 9 | 70 | 52 | 278 | 30 | 121 | 391 | 15 | 109–147 at 70% | melee | no |  |
+| Werewolf Chieftain | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 132 | 436 | 16 | 114–157 at 70% | melee | yes |  |
+| Orc Fighter Leader | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 121 | 447 | 17 | 117–161 at 70% | melee | yes |  |
+| Stone Golem | 13 | 339 | 147 | 30 | 11 | 70 | 56 | 278 | 30 | 25 | 654 | 26 | 127–180 at 70% | melee | no | NPC Windstrike - Slow 1 |
+| Crasher | 14 | 364 | 156 | 30 | 12 | 80 | 59 | 278 | 30 | 25 | 705 | 27 | 128–189 at 70% | melee | no | NPC Windstrike - Slow 1 |
+| Talon Spider | 16 | 417 | 174 | 44 | 15 | 72 | 64 | 278 | 30 | 143 | 570 | 23 | 118–183 at 70% | melee | no |  |
+| Blade Spider | 17 | 446 | 184 | 48 | 17 | 75 | 67 | 278 | 30 | 143 | 618 | 26 | 122–197 at 70% | melee | yes |  |
+| Young Red Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
+| Red Keltir | 2 | 75 | 52 | 10 | 3 | 42 | 34 | 278 | 30 | 121 | 70 | 2 | 8–13 at 70% | melee | no |  |
+| Elder Red Keltir | 3 | 90 | 60 | 11 | 3 | 44 | 35 | 278 | 30 | 121 | 105 | 2 | 13–20 at 70% | melee | no |  |
+| Gray Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 121 | 141 | 4 | 19–29 at 70% | melee | no |  |
+| Goblin Raider | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 121 | 178 | 5 | 30–42 at 70% | melee | no |  |
+| Kaboo Orc | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 121 | 213 | 6 | 41–58 at 70% | melee | no |  |
+| Kaboo Orc Grunt | 7 | 171 | 94 | 17 | 6 | 53 | 43 | 278 | 30 | 121 | 249 | 8 | 51–72 at 70% | melee | no |  |
+| Green Dryad | 8 | 197 | 102 | 18 | 6 | 55 | 45 | 278 | 30 | 121 | 284 | 10 | 67–91 at 70% | melee | no |  |
+| Kaboo Orc Archer | 8 | 197 | 102 | 41 | 6 | 55 | 45 | 249 | 30 | 121 | 293 | 10 | 69–94 at 70% | bow | no |  |
+| Spore Fungus | 9 | 226 | 111 | 22 | 7 | 53 | 47 | 278 | 30 | 121 | 321 | 11 | 80–108 at 70% | melee | no |  |
+| Kaboo Orc Fighter | 10 | 257 | 120 | 20 | 8 | 67 | 49 | 278 | 30 | 121 | 363 | 12 | 98–132 at 70% | melee | yes |  |
+| Baraq Orc Fighter | 10 | 257 | 120 | 25 | 8 | 55 | 49 | 278 | 30 | 121 | 302 | 10 | 81–110 at 70% | melee | yes |  |
+| Baraq Orc Warrior Leader | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 121 | 326 | 12 | 91–122 at 70% | melee | no |  |
+| Dungeon Skeleton | 12 | 315 | 138 | 26 | 10 | 60 | 54 | 317 | 30 | 154 | 363 | 13 | 95–131 at 70% | melee | yes |  |
+| Dungeon Skeleton Archer | 13 | 339 | 147 | 61 | 11 | 77 | 56 | 249 | 30 | 154 | 397 | 16 | 97–137 at 70% | bow | no |  |
+| Dread Soldier | 14 | 364 | 156 | 32 | 12 | 66 | 59 | 317 | 30 | 154 | 424 | 16 | 97–143 at 70% | melee | yes |  |
+| Mist Terror | 15 | 390 | 165 | 40 | 14 | 69 | 62 | 278 | 30 | 110 | 454 | 19 | 99–150 at 70% | melee | yes |  |
+| Dark Terror | 16 | 417 | 174 | 44 | 15 | 72 | 64 | 278 | 30 | 110 | 533 | 22 | 110–171 at 70% | melee | yes |  |
+| Shade Horror | 17 | 446 | 184 | 48 | 17 | 75 | 67 | 278 | 30 | 110 | 504 | 21 | 100–161 at 70% | melee | no |  |
+| Sukar Wererat | 18 | 476 | 193 | 46 | 19 | 79 | 70 | 317 | 30 | 132 | 533 | 23 | 101–167 at 70% | melee | no |  |
+| Sukar Wererat Leader | 19 | 508 | 203 | 42 | 21 | 99 | 73 | 317 | 30 | 132 | 576 | 26 | 104–177 at 70% | melee | yes |  |
+| Dre Vanul Tracker | 20 | 541 | 213 | 63 | 23 | 86 | 76 | 278 | 30 | 88 | 605 | 27 | 106–184 at 70% | melee | yes |  |
+| Young Brown Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
+| Brown Keltir | 2 | 75 | 52 | 10 | 3 | 42 | 34 | 278 | 30 | 121 | 70 | 2 | 8–13 at 70% | melee | no |  |
+| Elder Brown Keltir | 3 | 90 | 60 | 11 | 3 | 44 | 35 | 278 | 30 | 121 | 105 | 2 | 13–20 at 70% | melee | no |  |
+| Ashen Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 121 | 141 | 4 | 19–29 at 70% | melee | no |  |
+| Goblin | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 121 | 178 | 5 | 30–42 at 70% | melee | no |  |
+| Imp | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 88 | 213 | 6 | 41–58 at 70% | melee | no |  |
+| Imp Elder | 7 | 171 | 94 | 18 | 6 | 48 | 43 | 278 | 30 | 88 | 249 | 8 | 51–72 at 70% | melee | no |  |
+| Balor Orc Archer | 8 | 197 | 102 | 41 | 6 | 55 | 45 | 249 | 30 | 121 | 293 | 10 | 69–94 at 70% | bow | no |  |
+| Goblin Lookout | 8 | 197 | 102 | 16 | 6 | 55 | 45 | 317 | 30 | 121 | 284 | 10 | 67–91 at 70% | melee | no |  |
+| Green Fungus | 9 | 226 | 111 | 22 | 7 | 53 | 47 | 278 | 30 | 121 | 321 | 11 | 80–108 at 70% | melee | no |  |
+| Balor Orc Fighter | 10 | 257 | 120 | 25 | 8 | 55 | 49 | 278 | 30 | 121 | 363 | 12 | 98–132 at 70% | melee | yes |  |
+| Goblin Thief | 10 | 257 | 120 | 20 | 8 | 61 | 49 | 317 | 30 | 121 | 356 | 12 | 96–130 at 70% | melee | no |  |
+| Vaiss Orc | 10 | 257 | 120 | 22 | 8 | 61 | 49 | 278 | 30 | 121 | 296 | 10 | 80–108 at 70% | melee | no |  |
+| Balor Orc Lieutenant | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 121 | 391 | 15 | 109–147 at 70% | melee | no |  |
+| Vaiss Orc Warrior Leader | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 121 | 326 | 12 | 91–122 at 70% | melee | no |  |
+| Balor Orc Fighter Leader | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 121 | 436 | 16 | 114–157 at 70% | melee | yes |  |
+| Blood Fungus | 12 | 315 | 138 | 30 | 10 | 60 | 54 | 278 | 30 | 121 | 427 | 16 | 112–154 at 70% | melee | no |  |
+| Skeleton Hunter | 12 | 315 | 138 | 26 | 10 | 60 | 54 | 317 | 30 | 154 | 363 | 13 | 95–131 at 70% | melee | yes |  |
+| Doom Soldier | 14 | 364 | 156 | 32 | 12 | 66 | 59 | 317 | 30 | 154 | 424 | 16 | 97–143 at 70% | melee | yes |  |
+| Cave Spider | 15 | 390 | 165 | 40 | 14 | 69 | 62 | 278 | 30 | 143 | 445 | 18 | 97–147 at 70% | melee | no |  |
+| Cave Fang Spider | 16 | 417 | 174 | 44 | 15 | 72 | 64 | 278 | 30 | 143 | 485 | 20 | 100–156 at 70% | melee | yes |  |
+| Omen Beast | 17 | 446 | 184 | 48 | 17 | 75 | 67 | 278 | 30 | 132 | 504 | 21 | 100–161 at 70% | melee | no |  |
+| Tainted Zombie | 18 | 476 | 193 | 44 | 19 | 95 | 70 | 278 | 30 | 16 | 754 | 33 | 114–187 at 70% | melee | no |  |
+| Stink Zombie | 19 | 508 | 203 | 48 | 21 | 99 | 73 | 278 | 30 | 16 | 799 | 36 | 115–195 at 70% | melee | no | NPC HP Drain - Slow 1 |
+| Lesser Succubus | 20 | 541 | 213 | 57 | 23 | 94 | 76 | 278 | 30 | 110 | 605 | 27 | 106–184 at 70% | melee | yes |  |
+| Lesser Succubus Turen | 21 | 575 | 227 | 69 | 25 | 89 | 80 | 278 | 30 | 110 | 649 | 30 | 110–197 at 70% | melee | yes | NPC HP Drain - Magic 2, NPC Aura Burn - Magic 2 |
+| Lesser Succubus Tilfo | 22 | 611 | 242 | 75 | 28 | 93 | 83 | 278 | 30 | 110 | 698 | 33 | 116–209 at 70% | melee | yes |  |
+| Young Prairie Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
+| Prairie Keltir | 2 | 75 | 52 | 10 | 3 | 42 | 34 | 278 | 30 | 121 | 70 | 2 | 8–13 at 70% | melee | no |  |
+| Elder Prairie Keltir | 3 | 90 | 60 | 11 | 3 | 44 | 35 | 278 | 30 | 121 | 105 | 2 | 13–20 at 70% | melee | no |  |
+| Kasha Wolf | 4 | 107 | 68 | 12 | 4 | 46 | 37 | 278 | 30 | 121 | 141 | 4 | 19–29 at 70% | melee | no |  |
+| Goblin Grave Robber | 5 | 126 | 77 | 13 | 4 | 48 | 39 | 278 | 30 | 121 | 178 | 5 | 30–42 at 70% | melee | no |  |
+| Rakeclaw Imp | 6 | 147 | 85 | 16 | 5 | 46 | 41 | 278 | 30 | 88 | 213 | 6 | 41–58 at 70% | melee | no |  |
+| Kasha Timber Wolf | 6 | 147 | 85 | 15 | 5 | 50 | 41 | 278 | 30 | 121 | 211 | 6 | 41–58 at 70% | melee | no |  |
+| Rakeclaw Imp Hunter | 7 | 171 | 94 | 18 | 6 | 48 | 43 | 278 | 30 | 88 | 249 | 8 | 51–72 at 70% | melee | no |  |
+| Mountain Fungus | 8 | 197 | 102 | 20 | 6 | 50 | 45 | 278 | 30 | 121 | 284 | 10 | 67–91 at 70% | melee | no |  |
+| Maraku Werewolf | 9 | 226 | 111 | 22 | 7 | 53 | 47 | 278 | 30 | 132 | 321 | 11 | 80–108 at 70% | melee | no |  |
+| Evil Eye | 10 | 257 | 120 | 20 | 8 | 67 | 49 | 278 | 30 | 147 | 356 | 12 | 96–130 at 70% | melee | no | NPC Windstrike - Magic 1, NPC Aura Burn - Magic 1 |
+| Evil Eye Watcher | 10 | 257 | 120 | 20 | 8 | 67 | 49 | 278 | 30 | 147 | 296 | 10 | 80–108 at 70% | melee | no | NPC HP Drain - Magic 1, NPC Aura Burn - Magic 1 |
+| Darkwing Bat | 11 | 292 | 129 | 27 | 9 | 58 | 52 | 278 | 30 | 88 | 391 | 15 | 109–147 at 70% | melee | no |  |
+| Grizzly | 12 | 315 | 138 | 27 | 10 | 66 | 54 | 278 | 30 | 121 | 436 | 16 | 114–157 at 70% | melee | yes |  |
+| Goblin Tomb Raider Leader | 12 | 315 | 138 | 24 | 10 | 66 | 54 | 317 | 30 | 121 | 427 | 16 | 112–154 at 70% | melee | no |  |
+| Slave Skeleton | 12 | 315 | 138 | 26 | 10 | 60 | 54 | 317 | 30 | 154 | 363 | 13 | 95–131 at 70% | melee | yes |  |
+| Greystone Golem | 13 | 339 | 147 | 27 | 11 | 77 | 56 | 278 | 30 | 25 | 654 | 26 | 127–180 at 70% | melee | no | NPC Prominence - Slow 1 |
+| Grave Keeper | 13 | 339 | 147 | 27 | 11 | 77 | 56 | 278 | 30 | 25 | 545 | 21 | 106–150 at 70% | melee | no | NPC Windstrike - Slow 1 |
+| Evil Eye Patroller | 14 | 364 | 156 | 30 | 12 | 80 | 59 | 278 | 30 | 147 | 498 | 19 | 114–168 at 70% | melee | no | NPC Windstrike - Magic 1, NPC Aura Burn - Magic 1 |
+| Crypt Horror | 15 | 390 | 165 | 40 | 14 | 69 | 62 | 278 | 30 | 110 | 454 | 19 | 99–150 at 70% | melee | yes |  |
+| Kuruka Ratman | 16 | 417 | 174 | 32 | 15 | 87 | 64 | 317 | 30 | 132 | 475 | 19 | 98–153 at 70% | melee | no |  |
+| Kuruka Ratman Hunter | 17 | 446 | 184 | 40 | 17 | 91 | 67 | 278 | 30 | 132 | 504 | 21 | 100–161 at 70% | melee | no |  |
+| Skeleton Longbowman | 19 | 508 | 203 | 129 | 21 | 82 | 73 | 249 | 30 | 154 | 587 | 26 | 106–181 at 70% | bow | yes |  |
+| Undead Slave | 19 | 508 | 203 | 58 | 21 | 82 | 73 | 278 | 30 | 16 | 799 | 36 | 115–195 at 70% | melee | no | NPC Windstrike - Slow 1 |
+| Ghost | 20 | 541 | 213 | 63 | 23 | 86 | 76 | 278 | 30 | 154 | 599 | 27 | 105–183 at 70% | melee | yes |  |
+| Ghost Guardian | 21 | 575 | 227 | 63 | 25 | 98 | 80 | 278 | 30 | 154 | 643 | 30 | 109–195 at 70% | melee | yes |  |
 
 Example: a Young Keltir (DEX 30, level 1) has Accuracy and Evasion √30 × 6 + 1 = **34** and a
 **4.4%** Critical.
@@ -442,10 +456,12 @@ Each at level 1 (§25 has the later levels):
 | Soul Cry | toggle | 4.5 | 2 | | |
 | Relax | rest | 5 | 3 | | |
 
-Reuse and cast are in milliseconds. The reuse is × 333 ÷ Atk. Spd. for a physical skill or a blow
-and × 333 ÷ Casting Spd. for the rest, and a cast is × 333 ÷ Casting Spd. A physical skill takes
-the place of a blow and has no cast of its own. Power Strike, Power Shot, Mortal Blow and Iron
-Punch need their weapons (§23); the rest need none.
+A spell takes effect as its cast ends, in the round its cast time runs out, though its MP is paid
+and its reuse begins as it is begun; a physical skill or a blow takes effect at once. So it is with
+a monster's spells. Reuse and cast are in milliseconds. The reuse is × 333 ÷ Atk. Spd. for a
+physical skill or a blow and × 333 ÷ Casting Spd. for the rest, and a cast is × 333 ÷ Casting Spd.
+A physical skill takes the place of a blow and has no cast of its own. Power Strike, Power Shot,
+Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
 
 - **Physical:** 70 × (P.Atk + power) ÷ P.Def, then the weapon's spread (§13). It never misses and
   never lands a critical.
@@ -456,7 +472,8 @@ Punch need their weapons (§23); the rest need none.
   Touch, 20% for Drain Health and 80% for Life Drain.
 - **Burn:** power HP a second for 15 seconds, which can take the last HP. It is not cast again on a
   target that still burns.
-- **Ice Bolt** also slows its target for 120 seconds, and a slowed monster swings 30% less.
+- **Ice Bolt** also slows its target for 120 seconds: a slowed monster swings 30% less and runs 30%
+  slower.
 - **Heal:** power + √M.Atk HP back, rounded down and never past the most.
 - **Aura:** Defense Aura, Shield and Soul Shield multiply P.Def and Attack Aura P.Atk by 1.08, for
   20 minutes, in the fight and out of it. Shield and Soul Shield are cast on another in Lineage II,
@@ -471,17 +488,17 @@ Punch need their weapons (§23); the rest need none.
 
 Monsters cast these:
 
-| Spell | Kind | Power | MP | Reuse | Cast |
-|---|---|---|---|---|---|
-| NPC Windstrike - Magic 1 | magic | 18 | 7 | 3,000 | 4,000 |
-| NPC HP Drain - Magic 1 | drain | 18 | 9 | 3,000 | 4,000 |
-| NPC HP Drain - Magic 2 | drain | 26 | 14 | 3,000 | 4,000 |
-| NPC Aura Burn - Magic 1 | magic | 5 | 3 | 1,000 | 1,500 |
-| NPC Aura Burn - Magic 2 | magic | 7 | 3 | 1,000 | 1,500 |
-| NPC Windstrike - Slow 1 | magic | 5 | 13 | 8,000 | 2,000 |
-| NPC Windstrike - Slow 2 | magic | 8 | 20 | 8,000 | 2,000 |
-| NPC HP Drain - Slow 1 | drain | 5 | 17 | 8,000 | 2,000 |
-| NPC Prominence - Slow 1 | magic | 5 | 13 | 8,000 | 2,000 |
+| Spell | Kind | Power | MP | Reuse | Cast | Range |
+|---|---|---|---|---|---|---|
+| NPC Windstrike - Magic 1 | magic | 18 | 7 | 3,000 | 4,000 | 600 |
+| NPC HP Drain - Magic 1 | drain | 18 | 9 | 3,000 | 4,000 | 600 |
+| NPC HP Drain - Magic 2 | drain | 26 | 14 | 3,000 | 4,000 | 600 |
+| NPC Aura Burn - Magic 1 | magic | 5 | 3 | 1,000 | 1,500 | 150 |
+| NPC Aura Burn - Magic 2 | magic | 7 | 3 | 1,000 | 1,500 | 150 |
+| NPC Windstrike - Slow 1 | magic | 5 | 13 | 8,000 | 2,000 | 1,000 |
+| NPC Windstrike - Slow 2 | magic | 8 | 20 | 8,000 | 2,000 | 1,000 |
+| NPC HP Drain - Slow 1 | drain | 5 | 17 | 8,000 | 2,000 | 1,000 |
+| NPC Prominence - Slow 1 | magic | 5 | 13 | 8,000 | 2,000 | 1,000 |
 
 A monster's drain heals it 20% of what the character lost.
 
@@ -494,6 +511,15 @@ with 20 M.Atk mends 42 + √20 = 46.47, so **46** HP, with Self Heal.
 ## 20. The hunt
 
 One click, one fight. Each village's ground (§17) is hunted from the village, a monster at a time.
+It is fought on one line between the two, at a distance in Lineage II's units, and each reaches
+this far (a monster's spells as far as §19 gives):
+
+| Reach | Distance |
+|---|---|
+| A blow, or a physical skill | 40 |
+| A bow's shot | 500 |
+| A character's spell | 600 |
+| An aggressive monster noticing a character | 500 |
 
 - **Who you meet:** one of the ground's monsters from 3 levels below the character up to its own
   level, each as likely as the next, or one of the nearest if none is. Nothing on a village's ground
@@ -501,9 +527,19 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round.
+- **The opening:** a Mystic pulls the monster from a spell's reach if it can pay for one; a Fighter,
+  or a Mystic that cannot, from its weapon's, its bow's or else its blows'. An aggressive monster
+  (§18) is not pulled: it notices the character from 500 and comes at it, acting first in the first
+  round. Any other stands where it is until the character's first blow, shot, spell or curse lands
+  on it or misses, so a bow's first draw and a spell's first cast are free. A monster runs at the
+  character, its run speed (§18) a second and 30% slower while slowed
+  (§19), until a spell it has ready, its bow or its blows reach, and a round it runs is a round it
+  does nothing else. A character whose blows cannot reach waits for a monster that is coming, and
+  runs at one that is not, at its own run speed (§10). Once both are within reach, neither moves
+  again.
 - **The character** uses the first of these it knows that is ready and paid for (§19):
   1. an aura it has not raised;
-  2. a toggle not lit;
+  2. a toggle not lit, which a Mystic lights only once its blows reach;
   3. the strongest spell (magic, drain or burn);
   4. below the share of its HP its orders give, the strongest heal, so a heal fills the time its
      spells rest and never stops it attacking;
@@ -524,7 +560,9 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
   pull is still resting when the fight begins. It does not heal once the monster is down, so MP is
   never spent on a walk back to rest.
 - **Orders** are the player's, for a character that knows a heal: the share of HP to heal below
-  before the pull and in the fight, never or below 30%, 50% or 70%, each 50% to begin with.
+  before the pull and in the fight, never or below 30%, 50% or 70%; below 50% before the pull and
+  never in the fight to begin with, since a heal cast while the monster strikes mends less than the
+  strikes take before it lands.
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
   (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
   fifth, rounded down.

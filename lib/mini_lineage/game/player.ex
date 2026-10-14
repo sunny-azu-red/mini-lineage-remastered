@@ -36,7 +36,7 @@ defmodule MiniLineage.Game.Player do
             potion_at: 50,
             # Rules §20: the shares of its HP below which it heals before a pull and in a fight.
             heal_pull_at: 50,
-            heal_fight_at: 50
+            heal_fight_at: 0
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -121,6 +121,8 @@ defmodule MiniLineage.Game.Player do
       magic_critical: Formulas.magic_critical(a.wit),
       atk_spd: atk_spd,
       cast_spd: cast_spd,
+      # Rules §10 and §20: how fast it runs at a monster that will not come.
+      run_spd: Formulas.run_spd(a.dex, set.run_spd),
       blows_per_round:
         if(bow?, do: Formulas.shots_per_round(atk_spd), else: Formulas.blows_per_round(atk_spd)),
       casts_per_round: Formulas.casts_per_round(cast_spd),

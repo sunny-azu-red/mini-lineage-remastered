@@ -6,12 +6,14 @@ defmodule MiniLineage.Game.Rules do
   reads the tables back out of the document, so the two cannot disagree.
   """
 
-  # Rules §3 and §6: each set's attributes, and its HP and MP as {start, gain, growth}.
+  # Rules §3, §6 and §10: each set's attributes, its HP and MP as {start, gain, growth}, and the run
+  # speed its DEX bonus multiplies.
   @sets [
     %{
       race_id: 0,
       path: :fighter,
       name: "Human Fighter",
+      run_spd: 115,
       attributes: %{str: 40, con: 43, dex: 30, int: 21, wit: 11, men: 25},
       hp: {80.0, 11.83, 0.13},
       mp: {30.0, 5.46, 0.06}
@@ -20,6 +22,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 0,
       path: :mystic,
       name: "Human Mystic",
+      run_spd: 120,
       attributes: %{str: 22, con: 27, dex: 21, int: 41, wit: 20, men: 39},
       hp: {101.0, 15.47, 0.17},
       mp: {40.0, 7.28, 0.08}
@@ -28,6 +31,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 2,
       path: :fighter,
       name: "Elven Fighter",
+      run_spd: 125,
       attributes: %{str: 36, con: 36, dex: 35, int: 23, wit: 14, men: 26},
       hp: {89.0, 12.74, 0.14},
       mp: {30.0, 5.46, 0.06}
@@ -36,6 +40,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 2,
       path: :mystic,
       name: "Elven Mystic",
+      run_spd: 122,
       attributes: %{str: 21, con: 25, dex: 24, int: 37, wit: 23, men: 40},
       hp: {104.0, 15.47, 0.17},
       mp: {40.0, 7.28, 0.08}
@@ -44,6 +49,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 3,
       path: :fighter,
       name: "Dark Fighter",
+      run_spd: 122,
       attributes: %{str: 41, con: 32, dex: 34, int: 25, wit: 12, men: 26},
       hp: {94.0, 13.65, 0.15},
       mp: {30.0, 5.46, 0.06}
@@ -52,6 +58,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 3,
       path: :mystic,
       name: "Dark Mystic",
+      run_spd: 122,
       attributes: %{str: 23, con: 24, dex: 23, int: 44, wit: 19, men: 37},
       hp: {106.0, 15.47, 0.17},
       mp: {40.0, 7.28, 0.08}
@@ -60,6 +67,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 1,
       path: :fighter,
       name: "Orc Fighter",
+      run_spd: 117,
       attributes: %{str: 40, con: 47, dex: 26, int: 18, wit: 12, men: 27},
       hp: {80.0, 12.74, 0.14},
       mp: {30.0, 5.46, 0.06}
@@ -68,6 +76,7 @@ defmodule MiniLineage.Game.Rules do
       race_id: 1,
       path: :mystic,
       name: "Orc Mystic",
+      run_spd: 121,
       attributes: %{str: 27, con: 31, dex: 24, int: 31, wit: 15, men: 42},
       hp: {95.0, 15.47, 0.17},
       mp: {40.0, 7.28, 0.08}
@@ -273,14 +282,14 @@ defmodule MiniLineage.Game.Rules do
                 monsters_path |> File.read!() |> String.split("\n", trim: true)
 
               keys =
-                ~w(name level hp mp p_atk m_atk p_def m_def atk_spd dex exp sp adena_min adena_max
-                   adena_chance attack spells)a
+                ~w(name level hp mp p_atk m_atk p_def m_def atk_spd dex run_spd exp sp adena_min
+                   adena_max adena_chance attack aggressive spells)a
 
               ^header = Enum.join(keys, ",")
 
               for row <- rows, into: %{} do
                 monster = keys |> Enum.zip(String.split(row, ",")) |> Map.new()
-                numbers = Map.drop(monster, [:name, :spells, :adena_chance, :attack])
+                numbers = Map.drop(monster, [:name, :spells, :adena_chance, :attack, :aggressive])
 
                 monster =
                   numbers
@@ -289,6 +298,7 @@ defmodule MiniLineage.Game.Rules do
                     name: monster.name,
                     adena_chance: String.to_integer(monster.adena_chance),
                     bow?: monster.attack == "bow",
+                    aggressive?: monster.aggressive == "yes",
                     spells: String.split(monster.spells, "; ", trim: true)
                   })
 
@@ -441,16 +451,82 @@ defmodule MiniLineage.Game.Rules do
   }
 
   @monster_spells %{
-    "NPC Windstrike - Magic 1" => %{kind: :magic, power: 18, mp: 7, reuse: 3_000, cast: 4_000},
-    "NPC HP Drain - Magic 1" => %{kind: :drain, power: 18, mp: 9, reuse: 3_000, cast: 4_000},
-    "NPC HP Drain - Magic 2" => %{kind: :drain, power: 26, mp: 14, reuse: 3_000, cast: 4_000},
-    "NPC Aura Burn - Magic 1" => %{kind: :magic, power: 5, mp: 3, reuse: 1_000, cast: 1_500},
-    "NPC Aura Burn - Magic 2" => %{kind: :magic, power: 7, mp: 3, reuse: 1_000, cast: 1_500},
-    "NPC Windstrike - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000, cast: 2_000},
-    "NPC Windstrike - Slow 2" => %{kind: :magic, power: 8, mp: 20, reuse: 8_000, cast: 2_000},
-    "NPC HP Drain - Slow 1" => %{kind: :drain, power: 5, mp: 17, reuse: 8_000, cast: 2_000},
-    "NPC Prominence - Slow 1" => %{kind: :magic, power: 5, mp: 13, reuse: 8_000, cast: 2_000}
+    "NPC Windstrike - Magic 1" => %{
+      kind: :magic,
+      power: 18,
+      mp: 7,
+      reuse: 3_000,
+      cast: 4_000,
+      range: 600
+    },
+    "NPC HP Drain - Magic 1" => %{
+      kind: :drain,
+      power: 18,
+      mp: 9,
+      reuse: 3_000,
+      cast: 4_000,
+      range: 600
+    },
+    "NPC HP Drain - Magic 2" => %{
+      kind: :drain,
+      power: 26,
+      mp: 14,
+      reuse: 3_000,
+      cast: 4_000,
+      range: 600
+    },
+    "NPC Aura Burn - Magic 1" => %{
+      kind: :magic,
+      power: 5,
+      mp: 3,
+      reuse: 1_000,
+      cast: 1_500,
+      range: 150
+    },
+    "NPC Aura Burn - Magic 2" => %{
+      kind: :magic,
+      power: 7,
+      mp: 3,
+      reuse: 1_000,
+      cast: 1_500,
+      range: 150
+    },
+    "NPC Windstrike - Slow 1" => %{
+      kind: :magic,
+      power: 5,
+      mp: 13,
+      reuse: 8_000,
+      cast: 2_000,
+      range: 1_000
+    },
+    "NPC Windstrike - Slow 2" => %{
+      kind: :magic,
+      power: 8,
+      mp: 20,
+      reuse: 8_000,
+      cast: 2_000,
+      range: 1_000
+    },
+    "NPC HP Drain - Slow 1" => %{
+      kind: :drain,
+      power: 5,
+      mp: 17,
+      reuse: 8_000,
+      cast: 2_000,
+      range: 1_000
+    },
+    "NPC Prominence - Slow 1" => %{
+      kind: :magic,
+      power: 5,
+      mp: 13,
+      reuse: 8_000,
+      cast: 2_000,
+      range: 1_000
+    }
   }
+
+  # Rules §20: how far a character's blow, bow shot and spell reach on the fight's line.
+  @reach %{blow: 40, bow: 500, spell: 600, notice: 500}
 
   # The only kinds, slots and shops an item may name; listed so the data file mints no atom.
   @item_words ~w(weapon shield armour jewellery chest legs necklace village orc-village starting light
@@ -601,6 +677,12 @@ defmodule MiniLineage.Game.Rules do
 
   def monster_spell(name), do: @monster_spells |> Map.fetch!(name) |> Map.put(:name, name)
   def monster_spells, do: @monster_spells
+
+  @doc """
+  Rules §20: how far a blow (and a physical skill), a bow's shot or a character's spell reaches, and
+  how far off an aggressive monster notices a character.
+  """
+  def reach(kind), do: Map.fetch!(@reach, kind)
   def rate(kind), do: Map.fetch!(@rates, kind)
 
   def item_words, do: @item_words

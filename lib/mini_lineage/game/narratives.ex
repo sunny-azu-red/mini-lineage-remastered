@@ -30,6 +30,8 @@ defmodule MiniLineage.Game.Narratives do
 
   # Rules §20's fight log: who is met, then each round's events joined into one line.
   @met ~s({they} meet {article} {monster}, level <span class="level">{level}</span>, on the {ground}.)
+  # Rules §20: an aggressive monster finds the character first.
+  @noticed ~s({Article} {monster}, level <span class="level">{level}</span>, notices {object} on the {ground} and comes at {object}.)
   # Each follows "Round N:", so its subject is {them}, the lowercase one.
   @log %{
     blow: ~s({them} hit for {amount}),
@@ -51,6 +53,11 @@ defmodule MiniLineage.Game.Narratives do
     draw: "{them} draw {their} bow",
     ready: "{them} close in for the next blow",
     casting: "{them} keep casting",
+    begin: "{them} begin casting {skill}",
+    foe_begin: "the {monster} begins casting {skill}",
+    closing: "the {monster} runs at {object}",
+    waiting: "{them} wait for the {monster} to come",
+    advancing: "{them} run at the {monster}",
     standing:
       ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
     foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>),
@@ -67,6 +74,7 @@ defmodule MiniLineage.Game.Narratives do
   }
 
   def met, do: @met
+  def noticed, do: @noticed
   def log(kind), do: Map.fetch!(@log, kind)
 
   def slew, do: @slew

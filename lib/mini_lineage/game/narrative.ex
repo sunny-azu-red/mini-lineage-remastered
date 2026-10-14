@@ -63,12 +63,16 @@ defmodule MiniLineage.Game.Narrative do
   """
   def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?}, before) do
     met =
-      Format.fill_template(Narratives.met(), %{
-        "article" => article(foe.name),
-        "monster" => foe.name,
-        "level" => foe.level,
-        "ground" => ground.name
-      })
+      Format.fill_template(
+        if(foe.aggressive?, do: Narratives.noticed(), else: Narratives.met()),
+        %{
+          "article" => article(foe.name),
+          "Article" => String.capitalize(article(foe.name)),
+          "monster" => foe.name,
+          "level" => foe.level,
+          "ground" => ground.name
+        }
+      )
 
     rounds =
       log
@@ -120,6 +124,14 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   defp event(:miss, _foe), do: fill(:miss, %{})
+  defp event(:closing, foe), do: fill(:closing, %{"monster" => foe.name})
+  defp event({:begin, skill}, _foe), do: fill(:begin, %{"skill" => skill})
+
+  defp event({:foe_begin, spell}, foe),
+    do: fill(:foe_begin, %{"monster" => foe.name, "skill" => spell})
+
+  defp event(:waiting, foe), do: fill(:waiting, %{"monster" => foe.name})
+  defp event(:advancing, foe), do: fill(:advancing, %{"monster" => foe.name})
   defp event({:skill, skill, 0}, _foe), do: fill(:skill_failed, %{"skill" => skill})
 
   defp event({:skill, skill, amount}, _foe),

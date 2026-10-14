@@ -10,8 +10,11 @@ read = fn path -> path |> File.read!() |> JSON.decode!() end
 before = read.(before_path)
 after_ = read.(after_path)
 
-if before["settings"] != after_["settings"],
-  do: raise("the two readings were taken with different settings")
+# The orders may differ, being one of the things compared; the ladder may not.
+ladder = &Map.take(&1["settings"], ~w(top rest_below kept))
+
+if ladder.(before) != ladder.(after_),
+  do: raise("the two readings were taken on different ladders")
 
 settings = after_["settings"]
 rested? = settings["rest_below"] == 100
