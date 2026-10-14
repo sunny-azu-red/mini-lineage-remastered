@@ -37,6 +37,11 @@ defmodule MiniLineage.Game.HuntTest do
     Player.restore_fully(%{player | skills: skills})
   end
 
+  # A level 1 Human Fighter given the Power Strike 1 its trainer teaches at 5, so a skill's numbers
+  # are watched against a level 1 character's.
+  defp striker,
+    do: Player.restore_fully(%{character(0, :fighter) | skills: %{"Power Strike" => 1}})
+
   defp foe(monster), do: Hunt.foe(Rules.monster(monster))
 
   # Something that never falls and never swings, so a skill can be watched for as long as it lasts.
@@ -82,7 +87,7 @@ defmodule MiniLineage.Game.HuntTest do
     test "with every roll landing, a Human Fighter opens with Power Strike and finishes with blows" do
       # 0.0 lands every blow as a critical, at the spread's low end: 51, then 21.
       Rng.put_source(fn -> 0.0 end)
-      fighter = trained(0, :fighter, 1)
+      fighter = striker()
       result = fight(fighter, "Young Keltir")
 
       assert result.foe == 0
@@ -132,7 +137,7 @@ defmodule MiniLineage.Game.HuntTest do
     test "with every blow missing, Power Strike still lands, and alone fells a Young Keltir" do
       # 62 at the spread's top, the keltir's whole HP.
       Rng.put_source(fn -> 0.9999 end)
-      result = fight(trained(0, :fighter, 1), "Young Keltir")
+      result = fight(striker(), "Young Keltir")
 
       assert result.foe == 0
       assert result.uses == 1
@@ -141,7 +146,7 @@ defmodule MiniLineage.Game.HuntTest do
 
     test "without its weapon in hand a skill is never used" do
       Rng.put_source(fn -> 0.0 end)
-      fighter = trained(0, :fighter, 1)
+      fighter = striker()
       bare = %{fighter | items: Enum.map(fighter.items, &%{&1 | equipped: false})}
 
       assert fight(bare, "Young Keltir").uses == 0

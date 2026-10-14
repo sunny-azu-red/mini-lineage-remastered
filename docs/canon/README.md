@@ -111,8 +111,9 @@ where it has any.
 
 **Skills**
 
-Every skill, its numbers and its level come from the set's own canon tree (rules §19, §25). What
-differs is which of them a set gets, how they are sold, and how the fight uses them.
+Every skill, its numbers and its level come from the set's own canon tree (rules §19, §25), but for
+the Orc Mystic's Chill Flame. What differs is which of them a set gets, how they are sold, and how
+the fight uses them.
 
 - **Each set plays its own way.** Before the class change a set learns its first skill and two to
   four more from its tree, chosen so no two sets fight alike, where Lineage II's trees are far
@@ -125,19 +126,19 @@ differs is which of them a set gets, how they are sold, and how the fight uses t
   | Dark Fighter | the dagger who strikes harder | Mortal Blow, Attack Aura, Drain Health |
   | Orc Fighter | fists and sword, and the one Fighter that rests faster | Iron Punch, Power Strike, Relax |
   | Human Mystic | wind and ice | Wind Strike, Self Heal, Ice Bolt |
-  | Elven Mystic | the healer | Ice Bolt, Self Heal, Wind Strike, Heal |
-  | Dark Mystic | drains and curses | Vampiric Touch, Self Heal, Curse: Poison, Shield, Wind Shackle |
+  | Elven Mystic | the healer | Wind Strike, Self Heal, Ice Bolt, Heal |
+  | Dark Mystic | drains and curses | Wind Strike, Self Heal, Vampiric Touch, Curse: Poison, Shield, Wind Shackle |
   | Orc Mystic | burns, poison and spirit | Chill Flame, Soul Cry, Life Drain, Soul Shield, Venom |
 
   So **the Elven Fighter learns only Defense Aura and the Dark Fighter only Attack Aura**, where
   Lineage II taught both to both; **Relax is the Orc Fighter's alone**, where Lineage II also gave
-  it to the Human Fighter; and the Dark Mystic's canon Wind Strike is left out for Vampiric Touch.
-- **Every set's first skill is its own,** learned at level 1. In Lineage II only Wind Strike and
-  Soul Cry came at level 1, the Fighters' skills came at 5, and several sets shared them.
-- **Level 1 follows one rule:** a Fighter learns its first skill for 10 SP, what one kill pays; a
-  Mystic knows its first spell free and learns exactly one more for 50 SP (Self Heal, or the Orc's
-  Soul Cry). In Lineage II a Mystic's level 1 skills were free, and the Elven Mystic had Wind
-  Strike at 1, here at 7.
+  it to the Human Fighter.
+- **The Orc Mystic knows Chill Flame from level 1,** where Lineage II taught it at 7, with an
+  amulet, and the Orc Mystic fought with Soul Cry and its weapon until then. Played that way it died
+  at levels 2 to 7 even resting to full (`docs/balance.md`). Every other first skill comes where
+  Lineage II taught it: Wind Strike at 1, a Fighter's at 5.
+- **A Mystic's second skill at level 1 costs 50 SP** (Self Heal, or the Orc's Soul Cry), where
+  Lineage II gave it free.
 - **A skill grows in steps, not nine levels:** after its first level, the canon levels taught at
   one character level are one line, at the top level's power and MP, so Power Strike has 4 lines
   where Lineage II sold 9 one at a time.
@@ -158,8 +159,9 @@ differs is which of them a set gets, how they are sold, and how the fight uses t
   its DEX bonus), and once both are in reach nobody moves again, so nobody kites, flanks or chases.
   A clan never comes to a member's help. A passive monster wakes at the first blow, shot or spell,
   and a spell takes effect as its cast ends, as in Lineage II. **Ice Bolt slows both swing and run** by 30%, where
-  Lineage II slowed only the run (`movement.md`), since the swing was all a fight had before it had
-  distance.
+  Lineage II slowed only the run (`movement.md`), since a monster that has run in is held off only
+  by its swing: slowing the run alone, the Elven Mystic resting at half without potions died at
+  level 19 in most runs (`docs/balance.md`).
 - **Odds and numbers are fixed where Lineage II rolled against stats we lack.** A heal mends its
   power + √M.Atk, as aCis has it and every retail-derived source shows; L2J heals its power alone.
   Curse: Poison and Venom land 70% of the time, aCis's power, where L2J rolls against the target's

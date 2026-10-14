@@ -569,9 +569,9 @@ try {
     await page.waitForFunction((want) =>
         document.querySelector('[data-key="trainer-sp"]')?.dataset.value === String(want), spBefore + 10000,
         { timeout: 5000 });
-    check('the home village\'s trainer teaches the set\'s own first skill, unmuted, for the SP of a kill',
+    check('the home village\'s trainer teaches the set\'s own first skill, unmuted, for its SP',
         await page.locator('#lesson-mortal-blow-1[data-status="ready"]:not(.locked)').count() === 1 &&
-        await text('#lesson-mortal-blow-1 td.sp') === '10', await text('#lesson-mortal-blow-1'));
+        await text('#lesson-mortal-blow-1 td.sp') === '50', await text('#lesson-mortal-blow-1'));
     const learnedPanel = () => page.locator('#screen h2.header-name', { hasText: 'Learned Skills' }).count();
     check('...to a Fighter that starts knowing nothing, so no Learned Skills panel beside it',
         await learnedPanel() === 0);
@@ -602,7 +602,7 @@ try {
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',
-        Number(await sp()) === spBefore + 10000 - 10 - 100, await sp());
+        Number(await sp()) === spBefore + 10000 - 50 - 100, await sp());
     check('...the dropdown and its button both going back to the village, the lesson no longer offered',
         await page.inputValue('#learn-form select') === '' && await text('#learn-form button') === 'Return',
         await text('#learn-form button'));

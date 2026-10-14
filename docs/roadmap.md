@@ -96,10 +96,10 @@ follows before characters reach 15.
 
 ## Skills
 
-- **Every set has a first skill from its own tree, and each race's differs:** Power Strike,
-  Power Shot, Mortal Blow and Iron Punch for the Human, Elven, Dark and Orc Fighters, learned at
-  level 1 for 10 SP; Wind Strike, Ice Bolt, Vampiric Touch and Chill Flame for the Human, Elven,
-  Dark and Orc Mystics, known from the start. Nothing else comes free.
+- **Every set has a first skill from its own tree:** Power Strike, Power Shot, Mortal Blow and
+  Iron Punch for the Human, Elven, Dark and Orc Fighters, learned at level 5 as in Lineage II;
+  Wind Strike for the Human, Elven and Dark Mystics and Chill Flame for the Orc, known from the
+  start. Nothing else comes free.
 - **SP comes from monsters,** like EXP.
 - **A short list per set** until the first class change, learned with SP from the trainers of the
   character's own village (rules §25, built): the first skill and two to four more from its canon

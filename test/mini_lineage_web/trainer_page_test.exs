@@ -28,7 +28,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {view, session, conn}
   end
 
-  # The same at level 5, with the Power Strike it bought at level 1 and `sp` to spend.
+  # The same at level 5, with the Power Strike 1 it learned there and `sp` to spend.
   defp human(conn, sp) do
     {view, session, conn} = pupil(conn)
     level = Math.xp_for_level(5)
@@ -37,7 +37,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {view, session, conn}
   end
 
-  test "a new Fighter knows no skill, and its first is a lesson for the SP of a kill" do
+  test "a new Fighter knows no skill, and its first is a lesson at level 5" do
     {_view, session, conn} = pupil(build_conn())
     {:ok, character, _html} = live(conn, ~p"/character")
     assert has_element?(character, "#no-skills.stat-row", "You have learned no skill yet")
@@ -45,9 +45,12 @@ defmodule MiniLineageWeb.TrainerPageTest do
     # The trainer shows no Learned Skills panel until there is something in it.
     {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
     refute has_element?(view, "#screen h2", "Learned Skills")
-    assert has_element?(view, ~s(#lesson-power-strike-1[data-status="ready"] td.sp), "10")
+    assert has_element?(view, ~s(#lesson-power-strike-1.locked[data-status="later"] td.sp), "50")
 
-    Characters.mutate(session, &{%{&1 | sp: 10}, :ok})
+    level = Math.xp_for_level(5)
+    Characters.mutate(session, &{%{&1 | sp: 50, experience: level}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
+    assert has_element?(view, ~s(#lesson-power-strike-1[data-status="ready"]))
     view |> form("#learn-form", %{"lesson" => "Power Strike|1"}) |> render_submit()
 
     assert has_element?(view, "#screen h2", "Learned Skills")

@@ -445,8 +445,8 @@ defmodule MiniLineage.Game.Rules do
     {3, :fighter} => "Mortal Blow",
     {1, :fighter} => "Iron Punch",
     {0, :mystic} => "Wind Strike",
-    {2, :mystic} => "Ice Bolt",
-    {3, :mystic} => "Vampiric Touch",
+    {2, :mystic} => "Wind Strike",
+    {3, :mystic} => "Wind Strike",
     {1, :mystic} => "Chill Flame"
   }
 

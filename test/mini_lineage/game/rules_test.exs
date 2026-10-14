@@ -225,7 +225,7 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§19 each set's first skill, every race's its own, free only to a Mystic, one more at level 1 for a Mystic, and the rest" do
+    test "§19 each set's first skill, free at level 1 to a Mystic and a Fighter's own at 5, one more at level 1 for a Mystic, and the rest" do
       rows = table("Set | First skill")
       assert length(rows) == 8
       names = fn cell -> cell |> String.split(", ", trim: true) |> Enum.sort() end
@@ -235,23 +235,28 @@ defmodule MiniLineage.Game.RulesTest do
         assert Rules.first_skill(race, path).name == first, set
         assert length(names.(also)) == if(path == :mystic, do: 1, else: 0), set
 
-        {at_one, later} = set |> Rules.lessons() |> Enum.split_with(&(&1.learn_at == 1))
+        lessons = Rules.lessons(set)
+        {at_one, later} = Enum.split_with(lessons, &(&1.learn_at == 1))
         costs = Map.new(at_one, &{&1.skill, &1.sp})
 
-        assert Map.pop(costs, first) ==
-                 {if(path == :mystic, do: 0, else: 10), Map.new(names.(also), &{&1, 50})},
-               set
+        if path == :mystic do
+          assert Map.pop(costs, first) == {0, Map.new(names.(also), &{&1, 50})}, set
+        else
+          assert costs == %{}, set
+          assert Enum.find(lessons, &(&1.skill == first)).learn_at == 5, set
+        end
 
         rest =
-          for lesson <- later, lesson.skill not in Map.keys(costs), uniq: true, do: lesson.skill
+          for lesson <- later,
+              lesson.skill not in [first | Map.keys(costs)],
+              uniq: true,
+              do: lesson.skill
 
         assert Enum.sort(rest) == names.(then), set
       end
 
-      for path <- [:fighter, :mystic] do
-        names = for race <- 0..3, do: Rules.first_skill(race, path).name
-        assert Enum.uniq(names) == names
-      end
+      names = for race <- 0..3, do: Rules.first_skill(race, :fighter).name
+      assert Enum.uniq(names) == names
     end
 
     test "§19 every skill at level 1" do
@@ -664,17 +669,19 @@ defmodule MiniLineage.Game.RulesTest do
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
     end
 
-    test "§25 a Human Fighter buys Power Strike, then learns two lines with 150 SP at level 5" do
+    test "§25 a Human Fighter learns two lines with 200 SP at level 5, and nothing before" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Pupil")
-      fighter = %{fighter | sp: 10}
-      {fighter, {:ok, _}} = MiniLineage.Game.Actions.learn(fighter, "Power Strike", 1)
-      assert fighter.sp == 0
-      fighter = %{fighter | experience: Math.xp_for_level(5), sp: 150}
+      assert fighter.skills == %{}
+
+      assert {_, {:error, :too_soon, _}} =
+               MiniLineage.Game.Actions.learn(%{fighter | sp: 200}, "Power Strike", 1)
+
+      fighter = %{fighter | experience: Math.xp_for_level(5), sp: 200}
 
       fighter =
         Enum.reduce(
-          [{"Power Strike", 2}, {"Mortal Blow", 1}],
+          [{"Power Strike", 1}, {"Power Strike", 2}],
           fighter,
           fn {skill, level}, p ->
             {p, {:ok, _}} = MiniLineage.Game.Actions.learn(p, skill, level)
@@ -682,7 +689,7 @@ defmodule MiniLineage.Game.RulesTest do
           end
         )
 
-      assert fighter.sp == 0
+      assert fighter.sp == 50
       assert Rules.skill("Power Strike", fighter.skills["Power Strike"]).power == 30
 
       {mystic, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Pupil")

@@ -17,18 +17,20 @@ defmodule MiniLineage.Game.TrainerTest do
     player
   end
 
-  # A Human Fighter that bought its Power Strike at level 1.
+  # A Human Fighter that knows its Power Strike 1.
   defp human(level, sp) do
     player = new(0, :fighter)
     %{player | experience: Math.xp_for_level(level), sp: sp, skills: %{"Power Strike" => 1}}
   end
 
-  test "a new Fighter knows nothing and buys its first skill at level 1 for 10 SP" do
+  test "a new Fighter knows nothing and buys its first skill at level 5 for 50 SP" do
     fighter = new(0, :fighter)
     assert fighter.skills == %{}
 
-    assert {_, {:error, :no_sp, _}} = Actions.learn(%{fighter | sp: 9}, "Power Strike", 1)
-    {fighter, {:ok, _}} = Actions.learn(%{fighter | sp: 10}, "Power Strike", 1)
+    assert {_, {:error, :too_soon, _}} = Actions.learn(%{fighter | sp: 50}, "Power Strike", 1)
+    fighter = %{fighter | experience: Math.xp_for_level(5)}
+    assert {_, {:error, :no_sp, _}} = Actions.learn(%{fighter | sp: 49}, "Power Strike", 1)
+    {fighter, {:ok, _}} = Actions.learn(%{fighter | sp: 50}, "Power Strike", 1)
     assert {fighter.skills, fighter.sp} == {%{"Power Strike" => 1}, 0}
   end
 
