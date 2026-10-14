@@ -30,7 +30,8 @@ defmodule MiniLineage.Game.Actions do
     not_wearable: "That is not something you put on.",
     not_potion: "That is not something you drink.",
     whole: "You are already in full health.",
-    no_share: "That is not a share you can choose."
+    no_share: "That is not a share you can choose.",
+    no_heal: "You know no heal to give orders for."
   }
 
   # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
@@ -121,7 +122,15 @@ defmodule MiniLineage.Game.Actions do
     foe = ground |> Rules.monsters_of() |> Hunt.draw(level) |> Hunt.foe()
     stats = Map.put(Player.stats(player), :auras, Player.buffs_up(player))
     bars = %{health: player.health, mp: player.mp}
-    bars = Map.merge(bars, %{potions: Player.potions(player), potion_at: player.potion_at})
+
+    bars =
+      Map.merge(bars, %{
+        potions: Player.potions(player),
+        potion_at: player.potion_at,
+        heal_pull_at: player.heal_pull_at,
+        heal_fight_at: player.heal_fight_at
+      })
+
     result = Hunt.fight(stats, bars, Player.known_skills(player), foe)
     player = Player.put_buffs(%{player | health: result.health, mp: result.mp}, result.raised)
     player = Player.drink_down(player, result.drunk)
@@ -129,7 +138,14 @@ defmodule MiniLineage.Game.Actions do
     weapon = %{max_hp: stats.max_hp, bow?: stats.weapon != nil and stats.weapon.type == "bow"}
 
     log =
-      foe |> Narrative.build_fight_log(ground, result.log, weapon) |> Enum.map(&Narrative.alert/1)
+      foe
+      |> Narrative.build_fight_log(
+        ground,
+        result.log,
+        weapon,
+        result.before
+      )
+      |> Enum.map(&Narrative.alert/1)
 
     {player, {:ok, flash}} =
       cond do
@@ -322,6 +338,28 @@ defmodule MiniLineage.Game.Actions do
       {%{player | potion_at: share}, {:ok, %{text: text, type: :info}}}
     else
       {player, {:error, :no_share, @errors.no_share}}
+    end
+  end
+
+  @doc "Rules §20: the share of HP below which the character heals, before a pull or in a fight."
+  def heal_at(player, moment, share) when moment in [:pull, :fight] do
+    cond do
+      not Player.started?(player) or share not in Player.heal_shares() ->
+        {player, {:error, :no_share, @errors.no_share}}
+
+      not Player.heals?(player) ->
+        {player, {:error, :no_heal, @errors.no_heal}}
+
+      true ->
+        when_ = if moment == :pull, do: "before a pull", else: "in a fight"
+
+        text =
+          if share == 0,
+            do: "You will not heal #{when_}.",
+            else: "You will heal #{when_} below #{share}% of your HP."
+
+        key = if moment == :pull, do: :heal_pull_at, else: :heal_fight_at
+        {Map.put(player, key, share), {:ok, %{text: text, type: :info}}}
     end
   end
 

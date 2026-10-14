@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Rules}
+  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Rules}
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
@@ -73,7 +73,8 @@ defmodule MiniLineageWeb.Screens do
       },
       %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
       %{title: "Combat Stats", icon: "⚖️", section: :stats},
-      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}
+      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"},
+      %{title: "Battle Orders", icon: "📜", section: :orders}
     ]
 
   # Rules §25: what the trainers teach, and beside it what the character already knows, if anything.
@@ -460,8 +461,7 @@ defmodule MiniLineageWeb.Screens do
       assign(assigns,
         capacity: Rules.capacity(),
         carried: Enum.reject(assigns.view.items, & &1.equipped),
-        wear_label: wear_label,
-        shares: MiniLineage.Game.Player.potion_shares()
+        wear_label: wear_label
       )
 
     ~H"""
@@ -512,27 +512,6 @@ defmodule MiniLineageWeb.Screens do
       default_label="Destroy"
       active_label="🗑️ Destroy"
       active_variant={:danger}
-      data-no-autofocus
-    />
-    <p id="potion-share" phx-no-format>
-      <%= if @view.potion_at == 0 do %>You drink no potions in a fight.<% else %>In a fight you drink a potion whenever your HP falls below <span class="hp">{@view.potion_at}%</span>.<% end %>
-    </p>
-    <.select_action
-      id="potion-form"
-      event="potion_at"
-      name="share"
-      picked={@picks["share"]}
-      placeholder="🧪 Drink potions in a fight…"
-      options={
-        for share <- @shares,
-            do: %{
-              value: to_string(share),
-              label: if(share == 0, do: "🧪 Never", else: "🧪 Below #{share}% HP"),
-              disabled?: share == @view.potion_at
-            }
-      }
-      default_label="Choose"
-      active_label="🧪 Choose"
       data-no-autofocus
     />
     """
@@ -688,6 +667,53 @@ defmodule MiniLineageWeb.Screens do
         {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %>
       </p>
     </div>
+    """
+  end
+
+  # Rules §20 and §26: how the character fights on its own, as the player orders it: when it drinks
+  # a potion and, once it knows a heal, when it heals before the pull and in the fight.
+  defp character(%{panel: %{section: :orders}} = assigns) do
+    orders =
+      [{"potion", "🧪 Potions", :potion_at}] ++
+        if(assigns.view.heals?,
+          do: [
+            {"pull", "💚 Heal before the pull", :heal_pull_at},
+            {"fight", "💚 Heal in the fight", :heal_fight_at}
+          ],
+          else: []
+        )
+
+    assigns = assign(assigns, orders: orders)
+
+    ~H"""
+    <p id="potion-share" phx-no-format>
+      <%= if @view.potion_at == 0 do %>You drink no potions in a fight.<% else %>In a fight you drink a potion whenever your HP falls below <span class="hp">{@view.potion_at}%</span>.<% end %>
+    </p>
+    <p :if={@view.heals?} id="heal-pull-share" phx-no-format>
+      <%= if @view.heal_pull_at == 0 do %>You never heal before a pull.<% else %>Before a pull you heal while your HP is below <span class="hp">{@view.heal_pull_at}%</span>.<% end %>
+    </p>
+    <p :if={@view.heals?} id="heal-fight-share" phx-no-format>
+      <%= if @view.heal_fight_at == 0 do %>You never heal in a fight.<% else %>In a fight you heal below <span class="hp">{@view.heal_fight_at}%</span> of your HP while your spells rest.<% end %>
+    </p>
+    <.select_action
+      id="orders-form"
+      event="order"
+      name="order"
+      picked={@picks["order"]}
+      placeholder="📜 Change an order…"
+      options={
+        for {kind, label, key} <- @orders,
+            share <- Player.potion_shares(),
+            do: %{
+              value: "#{kind}:#{share}",
+              label: "#{label}: #{if share == 0, do: "never", else: "below #{share}% HP"}",
+              disabled?: share == Map.fetch!(@view, key)
+            }
+      }
+      default_label="Choose"
+      active_label="📜 Order"
+      data-no-autofocus
+    />
     """
   end
 

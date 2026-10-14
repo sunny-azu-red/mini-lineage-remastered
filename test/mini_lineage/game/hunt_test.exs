@@ -6,7 +6,8 @@ defmodule MiniLineage.Game.HuntTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
 
-  alias MiniLineage.Game.{Clock, Constants, Hunt, Math, Player, Rng, Rules}
+  alias MiniLineage.Characters.Serde
+  alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Player, Rng, Rules}
 
   setup do
     Clock.put_now(~U[2026-07-01 09:00:00Z])
@@ -183,21 +184,74 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "what a character knows" do
-    test "a heal is cast below half HP while the spells rest, and not above it" do
+    # Orders that heal in the fight alone, so nothing is cast before the pull.
+    defp fight_only(player, share \\ 50), do: %{player | heal_pull_at: 0, heal_fight_at: share}
+
+    test "a heal is cast below the ordered share while the spells rest, and not above it" do
       Rng.put_source(fn -> 0.0 end)
       mystic = trained(0, :mystic, 1)
       skills = Player.known_skills(mystic)
       stats = Player.stats(mystic)
 
-      hurt = Hunt.fight(stats, %{mystic | health: 10}, skills, dummy("Young Keltir"))
+      hurt = Hunt.fight(stats, fight_only(%{mystic | health: 10}), skills, dummy("Young Keltir"))
       [{first, _}, {second, _} | _] = events(hurt, :cast)
       [{healed, heal} | _] = events(hurt, :heal)
 
       assert first == 1 and healed in first..second
       assert heal == {:heal, "Self Heal", Hunt.heal_amount(42, stats.m_atk)}
 
-      whole = Hunt.fight(stats, mystic, skills, dummy("Young Keltir"))
+      whole = Hunt.fight(stats, fight_only(mystic), skills, dummy("Young Keltir"))
       assert events(whole, :heal) == []
+    end
+
+    test "the share is the player's: never, or below a higher one" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = trained(0, :mystic, 1)
+      skills = Player.known_skills(mystic)
+      stats = Player.stats(mystic)
+      # Above half, below seven tenths.
+      bars = %{mystic | health: div(stats.max_hp * 6, 10)}
+
+      assert events(Hunt.fight(stats, fight_only(bars, 50), skills, dummy("Young Keltir")), :heal) ==
+               []
+
+      assert [_ | _] =
+               events(
+                 Hunt.fight(stats, fight_only(bars, 70), skills, dummy("Young Keltir")),
+                 :heal
+               )
+
+      assert events(
+               Hunt.fight(
+                 stats,
+                 fight_only(%{bars | health: 10}, 0),
+                 skills,
+                 dummy("Young Keltir")
+               ),
+               :heal
+             ) == []
+    end
+
+    # Heals alone, reversed so the lesser comes first and only strength picks the other.
+    defp heals(player),
+      do: player |> Player.known_skills() |> Enum.filter(&(&1.kind == :heal)) |> Enum.reverse()
+
+    test "in the fight, the strongest heal it can pay for, a lesser one when that costs too much" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      [self_heal, heal] = heals(elf)
+      assert heal.power > self_heal.power and heal.mp > self_heal.mp
+      stats = Player.stats(elf)
+
+      rested =
+        Hunt.fight(stats, fight_only(%{elf | health: 10}), heals(elf), dummy("Young Keltir"))
+
+      assert [{1, {:heal, "Heal", _}} | _] = events(rested, :heal)
+
+      short = fight_only(%{elf | health: 10, mp: heal.mp - 1})
+
+      assert [{1, {:heal, "Self Heal", _}} | _] =
+               events(Hunt.fight(stats, short, heals(elf), dummy("Young Keltir")), :heal)
     end
 
     test "an aura is raised once, and not at all while it is still up" do
@@ -267,6 +321,117 @@ defmodule MiniLineage.Game.HuntTest do
       bare = %{trained(0, :fighter, 5) | items: []}
 
       refute Enum.any?(fight(bare, "Young Keltir").log, &match?({0, _}, &1))
+    end
+  end
+
+  describe "before the pull" do
+    # Down with the first spell, and never swinging back, so only the heals move HP.
+    defp frail(monster), do: %{foe(monster) | hp: 1, atk_spd: 0}
+
+    test "it heals while below its ordered share, the strongest it can pay for, and stops above it" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      stats = Player.stats(elf)
+
+      result =
+        Hunt.fight(stats, %{elf | health: 1}, Player.known_skills(elf), frail("Young Keltir"))
+
+      assert {[{"Heal", _} | _] = heals, pulled} = result.before
+      assert pulled == 1 + Enum.sum(Enum.map(heals, &elem(&1, 1)))
+      assert pulled * 2 >= stats.max_hp
+      assert (pulled - elem(List.last(heals), 1)) * 2 < stats.max_hp
+      assert [{1, {:cast, _, _, _}} | _] = events(result, :cast)
+    end
+
+    test "not at all above its share, nor when its order is never" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      stats = Player.stats(elf)
+      skills = Player.known_skills(elf)
+      above = div(stats.max_hp * 6, 10)
+
+      assert Hunt.fight(stats, %{elf | health: above}, skills, frail("Young Keltir")).before ==
+               {[], above}
+
+      never = %{elf | health: 1, heal_pull_at: 0}
+      assert Hunt.fight(stats, never, skills, frail("Young Keltir")).before == {[], 1}
+    end
+
+    test "until it cannot pay for another" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      [_self_heal, heal] = heals(elf)
+
+      result =
+        Hunt.fight(
+          Player.stats(elf),
+          %{elf | health: 1, mp: heal.mp + 5},
+          Player.known_skills(elf),
+          frail("Young Keltir")
+        )
+
+      assert {[{"Heal", _}], _} = result.before
+      assert result.mp == 5
+    end
+
+    test "a heal cast before the pull is still resting when the fight begins" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      stats = Player.stats(elf)
+      # Heal alone, to half before the pull, and in the fight below eight tenths.
+      heal = Enum.filter(heals(elf), &(&1.name == "Heal"))
+      bars = %{elf | health: 1, heal_fight_at: 80}
+
+      pulled = Hunt.fight(stats, bars, heal, dummy("Young Keltir"))
+      assert {[_ | _], _} = pulled.before
+      assert [{round, _} | _] = events(pulled, :heal)
+      assert round > 1
+
+      fresh = Hunt.fight(stats, %{bars | heal_pull_at: 0}, heal, dummy("Young Keltir"))
+      assert [{1, _} | _] = events(fresh, :heal)
+    end
+
+    test "and none once the monster is down, the fight's cost left for the rest" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      # Tough enough to land its blows, never a critical.
+      foe = %{foe("Kaboo Orc Fighter") | hp: 1_200, critical: 0}
+
+      result = Hunt.fight(Player.stats(elf), elf, Player.known_skills(elf), foe)
+      assert result.foe == 0
+      [{:standing, hp, 0} | _] = for {_, {:standing, _, _} = e} <- Enum.reverse(result.log), do: e
+      assert result.health == hp and hp < Player.stats(elf).max_hp
+    end
+
+    test "the orders are a share the rules offer, given only with a heal, and kept with the character" do
+      fighter = character(0, :fighter)
+      assert {_, {:error, :no_heal, _}} = Actions.heal_at(fighter, :pull, 30)
+
+      elf = trained(2, :mystic, 7)
+      {elf, {:ok, _}} = Actions.heal_at(elf, :pull, 30)
+      {elf, {:ok, _}} = Actions.heal_at(elf, :fight, 0)
+      assert {elf.heal_pull_at, elf.heal_fight_at} == {30, 0}
+      assert {_, {:error, :no_share, _}} = Actions.heal_at(elf, :fight, 40)
+
+      stored = elf |> Serde.to_map() |> JSON.encode!() |> JSON.decode!()
+      assert %{heal_pull_at: 30, heal_fight_at: 0} = Serde.from_map(stored)
+      assert Serde.from_map(Map.delete(stored, "heal_pull_at")).heal_pull_at == 50
+      assert Serde.from_map(Map.put(stored, "heal_fight_at", 40)).heal_fight_at == 50
+    end
+
+    test "and the time spent on heals is counted" do
+      Rng.put_source(fn -> 0.0 end)
+      elf = trained(2, :mystic, 7)
+      skills = Player.known_skills(elf)
+      stats = Player.stats(elf)
+
+      whole = Hunt.fight(stats, elf, skills, frail("Young Keltir"))
+      assert whole.ms == whole.rounds * Hunt.round_ms()
+
+      hurt = Hunt.fight(stats, %{elf | health: 1}, skills, frail("Young Keltir"))
+      {[{first, _} | _], _} = hurt.before
+      heal = Enum.find(skills, &(&1.name == first))
+      assert hurt.ms >= hurt.rounds * Hunt.round_ms() + heal.cast * 333 / stats.cast_spd
     end
   end
 

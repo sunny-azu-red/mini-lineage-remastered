@@ -367,6 +367,9 @@ rows =
       killers: Map.new(killers),
       hunts: mean.(alive, fn {_, k, _, _} -> k end),
       minutes: mean.(alive, minutes),
+      # Each run's minutes to the top, nil for one that died, in run order, to compare run for run.
+      minutes_by_run:
+        Enum.map(results, fn {p, _, _, _} = run -> if !p.dead, do: minutes.(run) end),
       rest_minutes: mean.(alive, fn {_, _, t, _} -> t * 3 / 60 end),
       rounds_a_fight: mean.(alive, fn {_, k, _, r} -> r.fight_ms / Hunt.round_ms() / k end),
       potions: mean.(alive, fn {_, _, _, r} -> r.potions end),

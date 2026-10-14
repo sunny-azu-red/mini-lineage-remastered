@@ -61,7 +61,9 @@ defmodule MiniLineage.Game.Narratives do
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
     poison: ~s(the poison eats <span class="magic">{amount}</span>),
-    potion: ~s({them} drink a {potion} and mend <span class="buff">{amount}</span> HP)
+    potion: ~s({them} drink a {potion} and mend <span class="buff">{amount}</span> HP),
+    # Ends the "Before the fight:" line, when only the character stands.
+    mended: ~s|<span class="muted">({them} at <span class="hp">{hp}</span> of {max})</span>|
   }
 
   def met, do: @met

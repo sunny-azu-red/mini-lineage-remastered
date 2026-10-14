@@ -167,17 +167,37 @@ defmodule MiniLineageWeb.GearPageTest do
     assert carried(session, "Lesser Healing Potion").count == 9
   end
 
-  test "the inventory sets the share of HP a fight drinks below" do
+  test "the character page's orders set the share of HP a fight drinks below" do
     {_view, session, conn} = human(build_conn(), 0)
-    {:ok, view, _html} = live(conn, ~p"/inventory")
+    {:ok, view, _html} = live(conn, ~p"/character")
 
     assert has_element?(view, "#potion-share", "below 50%")
-    assert has_element?(view, ~s(#potion-form option[value="50"][disabled]))
-    view |> form("#potion-form", %{"share" => "30"}) |> render_submit()
+    assert has_element?(view, ~s(#orders-form option[value="potion:50"][disabled]))
+    view |> form("#orders-form", %{"order" => "potion:30"}) |> render_submit()
 
     assert stored(session).potion_at == 30
     assert has_element?(view, "#potion-share", "below 30%")
-    view |> form("#potion-form", %{"share" => "0"}) |> render_submit()
+    view |> form("#orders-form", %{"order" => "potion:0"}) |> render_submit()
     assert has_element?(view, "#potion-share", "no potions")
+  end
+
+  # Rules §20: a character that knows no heal has none to order.
+  test "once a heal is known, the orders also set when it heals, before the pull and in a fight" do
+    {_view, session, conn} = human(build_conn(), 0)
+    {:ok, view, _html} = live(conn, ~p"/character")
+    refute has_element?(view, "#heal-pull-share")
+    refute has_element?(view, ~s(#orders-form option[value="pull:30"]))
+
+    Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Self Heal", 1)}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/character")
+    assert has_element?(view, "#heal-pull-share", "below 50%")
+    assert has_element?(view, "#heal-fight-share", "below 50%")
+
+    view |> form("#orders-form", %{"order" => "pull:30"}) |> render_submit()
+    view |> form("#orders-form", %{"order" => "fight:0"}) |> render_submit()
+
+    assert %{heal_pull_at: 30, heal_fight_at: 0} = stored(session)
+    assert has_element?(view, "#heal-pull-share", "below 30%")
+    assert has_element?(view, "#heal-fight-share", "never heal in a fight")
   end
 end

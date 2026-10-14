@@ -15,8 +15,7 @@ defmodule MiniLineage.Game.Hunt do
   @slowed 0.7
   # §19: a monster's drain heals it this share of what the character lost.
   @monster_absorb 0.2
-  # §20: a heal is cast below half HP, and a curse only on a monster above half its HP.
-  @heal_below 0.5
+  # §20: a curse only on a monster above half its HP.
   @curse_above 0.5
 
   @spells [:magic, :drain, :burn]
@@ -55,9 +54,11 @@ defmodule MiniLineage.Game.Hunt do
   @doc """
   §20: the fight, from the character's stats and bars, the skills it knows (each at its level) and
   the monster (as `foe/1` makes it). The bars may carry `potions` (§26, each `%{name, heals, count}`,
-  strongest first) and the `potion_at` share to drink below. Returns what is left of both sides, how
-  it went, the auras it raised, which outlast it, the potions it `drunk`, and how long it took in
-  milliseconds (`ms`).
+  strongest first) and the `potion_at` share to drink below, and the player's orders, the shares of
+  HP to heal below before the pull and in the fight (`heal_pull_at`, `heal_fight_at`; 0 never).
+  Returns what is left of both sides, how it went, the auras it raised, which outlast it, the potions
+  it `drunk`, the heals cast before the pull (`before`, as `{heals, hp}`), and how long it all took
+  in milliseconds (`ms`).
   """
   def fight(stats, %{health: health, mp: mp} = bars, skills, foe) do
     # §23: a weapon skill without its weapon in hand is not used at all; the Learned Skills panel
@@ -83,6 +84,11 @@ defmodule MiniLineage.Game.Hunt do
       potions: Map.get(bars, :potions, []),
       potion_at: Map.get(bars, :potion_at, 0),
       drunk: %{},
+      heal_pull_at: Map.get(bars, :heal_pull_at, 0),
+      heal_fight_at: Map.get(bars, :heal_fight_at, 0),
+      # §20: the heals cast before the pull, newest first, each `{skill, healed}`, and their time.
+      mended: [],
+      quiet_ms: 0.0,
       toggle: nil,
       toggle_carry: 0.0,
       # §20: what is left of a spell's cast, during which its caster does nothing else.
@@ -97,11 +103,13 @@ defmodule MiniLineage.Game.Hunt do
       critical: false
     }
 
-    state
-    |> rounds(usable, foe)
-    |> Map.update!(:log, &Enum.reverse/1)
-    |> then(&Map.put(&1, :ms, &1.rounds * @round_ms))
-    |> Map.take(~w(health mp foe rounds uses critical log raised drunk ms)a)
+    state = state |> mend(Enum.filter(usable, &(&1.kind == :heal))) |> settle()
+    before = {Enum.reverse(state.mended), state.health}
+    state = rounds(state, usable, foe)
+
+    %{state | log: Enum.reverse(state.log)}
+    |> Map.merge(%{before: before, ms: state.rounds * @round_ms + state.quiet_ms})
+    |> Map.take(~w(health mp foe rounds uses critical log raised drunk before ms)a)
   end
 
   defp rounds(%{health: h} = s, _skills, _foe) when h <= 0, do: s
@@ -187,10 +195,42 @@ defmodule MiniLineage.Game.Hunt do
       else: %{s | toggle: nil, stats: Map.update!(s.stats, :p_atk, &(&1 - toggle.power))}
   end
 
+  # §20: before the pull, while below the player's share of HP, the strongest heal it can pay for,
+  # waiting out the reuse, until it is not or it cannot pay for one.
+  defp mend(s, heals) do
+    paid = Enum.filter(heals, &(s.mp >= &1.mp))
+    heal = s.busy <= 0 && strongest(s, paid, fn _ -> true end)
+
+    cond do
+      s.health * 100 >= s.stats.max_hp * s.heal_pull_at or paid == [] ->
+        s
+
+      heal ->
+        healed = min(heal_amount(heal.power, s.stats.m_atk), s.stats.max_hp - s.health)
+        s = %{spend(s, heal, s.stats.cast_spd) | busy: heal.cast * 333 / s.stats.cast_spd}
+        mend(%{s | health: s.health + healed, mended: [{heal.name, healed} | s.mended]}, heals)
+
+      true ->
+        mend(wait(s, @round_ms), heals)
+    end
+  end
+
+  # The last heal's cast is over before the pull; its reuse runs on into the fight.
+  defp settle(%{mended: []} = s), do: s
+  defp settle(s), do: wait(s, s.busy)
+
+  defp wait(s, ms),
+    do: %{
+      s
+      | cooldowns: Map.new(s.cooldowns, fn {k, v} -> {k, max(v - ms, 0.0)} end),
+        busy: max(s.busy - ms, 0.0),
+        quiet_ms: s.quiet_ms + ms
+    }
+
   # §20: what a character does when it is free to: raise its auras, light its toggle, cast its
   # strongest spell, and while its spells rest heal when hurt or curse; otherwise it swings.
   defp character_turn(s, skills, foe) do
-    hurt? = s.health < s.stats.max_hp * @heal_below
+    hurt? = s.health * 100 < s.stats.max_hp * s.heal_fight_at
     # A curse is not worth its cast on a monster already half dead.
     fresh? = s.foe > foe.hp * @curse_above
 
@@ -200,12 +240,8 @@ defmodule MiniLineage.Game.Hunt do
         &(&1.kind == :aura and not MapSet.member?(s.auras, &1.name) and ready?(s, &1))
       ) ||
         Enum.find(skills, &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp)) ||
-        skills
-        |> Enum.filter(
-          &(&1.kind in @spells and ready?(s, &1) and not (&1.kind == :burn and s.burn != nil))
-        )
-        |> Enum.max_by(& &1.power, fn -> nil end) ||
-        Enum.find(skills, &(&1.kind == :heal and hurt? and ready?(s, &1))) ||
+        strongest(s, skills, &(&1.kind in @spells and not (&1.kind == :burn and s.burn != nil))) ||
+        (hurt? && strongest(s, skills, &(&1.kind == :heal))) ||
         if(fresh?,
           do:
             Enum.find(skills, &(&1.kind == :poison and s.poison == nil and ready?(s, &1))) ||
@@ -217,6 +253,12 @@ defmodule MiniLineage.Game.Hunt do
       %{kind: :toggle} = toggle -> light(s, toggle)
       skill -> cast(s, skill, foe)
     end
+  end
+
+  defp strongest(s, skills, kind?) do
+    skills
+    |> Enum.filter(&(kind?.(&1) and ready?(s, &1)))
+    |> Enum.max_by(& &1.power, fn -> nil end)
   end
 
   defp ready?(s, skill), do: Map.get(s.cooldowns, skill.name, 0.0) <= 0 and s.mp >= skill.mp

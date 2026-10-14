@@ -32,6 +32,9 @@ defmodule MiniLineage.Game.Snapshot do
     lessons: [],
     skills: [],
     potion_at: nil,
+    heals?: false,
+    heal_pull_at: nil,
+    heal_fight_at: nil,
     stats: nil,
     effects: []
   }
@@ -86,6 +89,10 @@ defmodule MiniLineage.Game.Snapshot do
         ),
       skills: Enum.sort(player.skills),
       potion_at: player.potion_at,
+      # Rules §20: the orders, given only by a character that knows a heal.
+      heals?: Player.heals?(player),
+      heal_pull_at: player.heal_pull_at,
+      heal_fight_at: player.heal_fight_at,
       stats: stats,
       effects: Enum.map(Player.auras(player), &aura_view/1)
     }

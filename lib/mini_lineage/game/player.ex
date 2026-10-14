@@ -7,6 +7,8 @@ defmodule MiniLineage.Game.Player do
 
   @elf 2
   # Rules §20: how long a character goes on not resting after it leaves the ground.
+  # Rules §20 and §26: never, or below these shares of HP.
+  @shares [0, 30, 50, 70]
   @disengage_ms 5_000
   @dark_elf 3
 
@@ -31,7 +33,10 @@ defmodule MiniLineage.Game.Player do
             # Rules §19: each aura it raised, to the UTC millisecond it fades.
             buffs: %{},
             # Rules §26: the share of its HP below which it drinks a potion in a fight; 0 never.
-            potion_at: 50
+            potion_at: 50,
+            # Rules §20: the shares of its HP below which it heals before a pull and in a fight.
+            heal_pull_at: 50,
+            heal_fight_at: 50
 
   def started?(%__MODULE__{race_id: race_id, path: path}), do: race_id != nil and path != nil
 
@@ -169,7 +174,13 @@ defmodule MiniLineage.Game.Player do
   end
 
   @doc "Rules §26: the shares a player may choose to drink a potion below."
-  def potion_shares, do: [0, 30, 50, 70]
+  def potion_shares, do: @shares
+
+  @doc "Rules §20: the shares of HP a player may heal below, before a pull or in a fight; 0 never."
+  def heal_shares, do: @shares
+
+  @doc "Rules §20: whether it knows a heal, and so has heals to order."
+  def heals?(player), do: Enum.any?(known_skills(player), &(&1.kind == :heal))
 
   @doc "Rules §19: every skill it knows, each at the level it knows it."
   def known_skills(player),

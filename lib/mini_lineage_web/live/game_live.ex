@@ -261,12 +261,18 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, apply_action(socket, action, nil)}
   end
 
-  # Rules §26: the share of HP to drink a potion below in a fight; the empty choice does nothing.
-  def handle_event("potion_at", %{"share" => share}, socket) do
-    case Integer.parse(share) do
-      {n, ""} -> {:noreply, apply_action(socket, &Actions.potion_at(&1, n), nil)}
-      _ -> {:noreply, socket}
-    end
+  # Rules §20 and §26: an order, `<what>:<share>`, the share of HP below which to drink a potion or
+  # heal; the empty choice does nothing.
+  def handle_event("order", %{"order" => order}, socket) do
+    action =
+      case String.split(order, ":") do
+        ["potion", share] -> share(share, &Actions.potion_at(&1, &2))
+        ["pull", share] -> share(share, &Actions.heal_at(&1, :pull, &2))
+        ["fight", share] -> share(share, &Actions.heal_at(&1, :fight, &2))
+        _ -> nil
+      end
+
+    {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
 
   def handle_event("destroy", %{"doomed" => ""}, socket), do: {:noreply, socket}
@@ -424,6 +430,14 @@ defmodule MiniLineageWeb.GameLive do
   # place worked out from the player it left, or nowhere for nil. `catch` is for the process exiting.
   # Every action, refused or not, puts the dropdowns back to their start: a pick left standing is a
   # second purchase one click away.
+  # An order's share, as the action setting it, or nil for anything else.
+  defp share(share, order) do
+    case Integer.parse(share) do
+      {n, ""} -> &order.(&1, n)
+      _ -> nil
+    end
+  end
+
   defp apply_action(socket, fun, to) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
     socket = socket |> put_view(player) |> assign(picked: nil, picks: %{})

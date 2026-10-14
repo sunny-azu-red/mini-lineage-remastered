@@ -224,7 +224,7 @@ try {
         new URL(page.url()).pathname === '/character', page.url());
     const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
-        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|🎓 Learned Skills'
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|🎓 Learned Skills|📜 Battle Orders'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
     const known = await page.$$eval('#screen [id^="skill-"]', (els) => els.map(el => el.id).join(','));
     check('...its Learned Skills panel naming what it knows, the one spell a Mystic starts with',
@@ -542,12 +542,14 @@ try {
     await onScreen('town');
     check('...which the sidebar leaves to the inventory', !/Potion/.test(await text('#inventory')),
         await text('#inventory'));
-    await page.click('#purse a');
-    await onScreen('inventory');
-    check('...and the inventory drinks them below half HP to begin with',
+    await page.click('#character-name a');
+    await onScreen('character');
+    check('...and the character page\'s orders drink them below half HP to begin with',
         /below 50%/.test(await text('#potion-share')), await text('#potion-share'));
-    await page.selectOption('#potion-form select', '30');
-    await page.click('#potion-form button');
+    check('...with no heal orders for a character that knows no heal',
+        await page.locator('#heal-pull-share').count() === 0);
+    await page.selectOption('#orders-form select', 'potion:30');
+    await page.click('#orders-form button');
     const lowered = await page.locator('#potion-share', { hasText: 'below 30%' })
         .waitFor({ timeout: 5000 }).then(() => true, () => false);
     check('...and the player can lower the share', lowered, await text('#potion-share'));
@@ -697,6 +699,11 @@ try {
     await hurt();
     await page.click('#purse a');
     await onScreen('inventory');
+    await holdEach();
+    await home();
+    await hurt();
+    await page.click('#character-name a');
+    await onScreen('character');
     await holdEach();
     const declared = readdirSync('lib/mini_lineage_web', { recursive: true })
         .filter(f => /\.(ex|heex)$/.test(f))

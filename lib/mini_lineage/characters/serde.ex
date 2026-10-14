@@ -28,7 +28,9 @@ defmodule MiniLineage.Characters.Serde do
       "skills" => p.skills,
       "combat" => p.combat,
       "buffs" => p.buffs,
-      "potion_at" => p.potion_at
+      "potion_at" => p.potion_at,
+      "heal_pull_at" => p.heal_pull_at,
+      "heal_fight_at" => p.heal_fight_at
     }
   end
 
@@ -57,12 +59,17 @@ defmodule MiniLineage.Characters.Serde do
         if(m["potion_at"] in Player.potion_shares(),
           do: m["potion_at"],
           else: %Player{}.potion_at
-        )
+        ),
+      heal_pull_at: share(m["heal_pull_at"], %Player{}.heal_pull_at),
+      heal_fight_at: share(m["heal_fight_at"], %Player{}.heal_fight_at)
     }
   end
 
   def from_map(%{}),
     do: raise("character document carries no version; every one this build writes does")
+
+  # Orders from before they existed, or a share no longer offered, fall back to the start's.
+  defp share(stored, default), do: if(stored in Player.heal_shares(), do: stored, else: default)
 
   # A town renamed keeps whoever stands in it; anything else stored under an old slug would be sent
   # home without a word.

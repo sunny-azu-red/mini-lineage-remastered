@@ -5,7 +5,10 @@ what things cost; this says when a player can afford them. Every figure here was
 worked out by hand, and holds only for the rules it was measured against.
 
 **Measured at** `ed9c030` (rules §1 to §26), 40 seeded runs of every set up its village's ladder to
-level 20, once per weapon path its skills can use: 680 runs, none of them died.
+level 20, once per weapon path its skills can use: 680 runs, none of them died. Read again at 400
+runs a path with each run seeded on its own (`82e8c4d`), one Orc Fighter run in 400, with a sword
+and shield, dies at the defaults. Rules §20's battle orders change nothing at the defaults, figure
+for figure; what they change is under Survival.
 
 **Rerun it** after anything that moves a fight's numbers, a price, a monster's SP or Adena, or the
 trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
@@ -16,7 +19,9 @@ Each run's dice are seeded from its set and number, so a change moves only the r
 judge a change, take a `--json` reading on the build before it (a `git worktree`) and one after with
 the same settings, and read them with `bench/compare.exs before.json after.json`, which holds them
 to the bar: no deaths when resting to full, no set's road to the top moving more than 15%, deaths
-not rising past the dice's noise, and the spread between sets not widening.
+not rising past the dice's noise, and the spread between sets not widening. Time is compared run for
+run, over the runs that reached the top in both readings, so runs a change saves from dying do not
+move a set's figure.
 
 **How the bench plays**, at its defaults: it rests to full before every hunt and keeps 20 Lesser
 Healing Potions. It learns every line the trainer offers as soon as it can pay for it. At the shop it
@@ -127,6 +132,41 @@ The level each of a path's weapons is first held at, then the level and hunt the
   90,000 a level, and a player reaches 20 holding 290,000 to 430,000. Gludio's D-grade gear will be
   bought with that, so price it against these figures, or give the village something to spend it on
   sooner.
+
+## Survival
+
+The bench at its defaults rests to full before every hunt, so survival is read with no potions and
+resting only once a bar falls below a share: `bench/ladder.exs 400 20 <share> 0`. Deaths of 400 runs
+a path, before rules §20's battle orders (`82e8c4d`) and with them at their start, healing before the
+pull below 50% and in the fight below 50%:
+
+| Set | Path | Rest below 50% | Rest below 30% | Most often killed by, at 30% |
+|---|---|---|---|---|
+| Human Mystic | staff 1h / 2h | 14 / 18, the same | 385 / 393 to **27 / 32** | Orc Fighter Leader, Talon Spider |
+| Elven Mystic | staff 1h / 2h | 238 / 370, the same | 400 / 400 to **249 / 359** | Shade Horror, Mist Terror |
+| Dark Mystic | staff 1h / 2h | 127 / 330, the same | 395 / 400 to **279 / 397** | Omen Beast, Cave Fang Spider |
+| Orc Mystic | staff 1h / 2h | 2 / 7 | 109 / 171 | Kasha Timber Wolf |
+| Elven Fighter | bow | 400 | 400 | Dungeon Skeleton |
+| Human Fighter | sword 1h / 2h / dagger / bow | 8 / 156 / 217 / 365 | 347 / 397 / 399 / 400 | Blade Spider, Orc Fighter Leader |
+| Dark Fighter | dagger | 235 | 400 | Balor Orc Fighter |
+| Orc Fighter | fists / sword 1h / 2h | 240 / 384 / 339 | 400 | Evil Eye |
+
+- **A heal before the pull keeps a Mystic alive between rests.** Nothing rests on the ground (§11),
+  so a run that walks on below half used to begin every fight with what the last one left. Run for
+  run, it reaches level 20 in the same time: the Human Mystic's 14 runs that finished both ways took
+  184.7 and 184.6 minutes.
+- **Resting below half leaves it nothing to do,** since the pull's heal waits for the same line, and
+  so the bench resting at 50% reads the same before and after. It is the player who walks on past
+  half that the order saves.
+- **Three other ways were measured and dropped.** A heal put before the spells in the fight, alone
+  or taking turns with them, killed every Human and Elven Mystic run, because its 3 rounds of
+  casting mend less than the monster deals in them. Heals after the kill and before the pull, to
+  full, kept Mystics alive but slowed them 16% to 70% to level 20, spending MP that resting then had
+  to give back, and MP rests slower than HP.
+- **The Elven Fighter's Elemental Heal** (71 HP for 40 MP) does not save it at either share: it dies
+  to the Elven Fortress's skeletons as before.
+- **The Fighters without a heal die as they did**, and the Orc Fighter with a sword dies even with
+  potions (35 of 400 resting below half), and once in 400 at the defaults. That predates the orders.
 
 ## Both together
 

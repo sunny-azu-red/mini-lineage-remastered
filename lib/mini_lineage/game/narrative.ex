@@ -57,8 +57,11 @@ defmodule MiniLineage.Game.Narrative do
         "ground" => ground.name
       })
 
-  @doc "Rules §20: the fight log, each line open-voiced: the meeting, then one line a round."
-  def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?}) do
+  @doc """
+  Rules §20: the fight log, each line open-voiced: the meeting, the heals before the pull (`before`,
+  as `{heals, hp}`), then one line a round.
+  """
+  def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?}, before) do
     met =
       Format.fill_template(Narratives.met(), %{
         "article" => article(foe.name),
@@ -79,7 +82,19 @@ defmodule MiniLineage.Game.Narrative do
           "Round #{round}: " <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
       end)
 
-    [met | rounds]
+    [met | before(before, max_hp)] ++ rounds
+  end
+
+  # Rules §20: the heals cast before the pull, as one line.
+  defp before({[], _hp}, _max_hp), do: []
+
+  defp before({heals, hp}, max_hp) do
+    parts = Enum.map(heals, fn {skill, amount} -> event({:heal, skill, amount}, nil) end)
+
+    [
+      "Before the fight: " <>
+        join(parts) <> " " <> fill(:mended, %{"hp" => hp, "max" => max_hp}) <> "."
+    ]
   end
 
   defp standing([{:standing, hp, left}], foe, max_hp),

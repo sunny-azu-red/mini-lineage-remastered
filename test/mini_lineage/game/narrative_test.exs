@@ -46,7 +46,12 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       lines =
         foe
-        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false})
+        |> Narrative.build_fight_log(
+          ground,
+          log,
+          %{max_hp: 100, bow?: false},
+          {[{"Heal", 70}, {"Self Heal", 45}], 60}
+        )
         |> Enum.map(&Narrative.alert/1)
 
       for line <- lines do
@@ -62,6 +67,9 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "the poison eats"
       assert text =~ "Wind Shackle slides off the Young Keltir"
       assert text =~ "drink a Lesser Healing Potion and mend"
+
+      assert Enum.at(lines, 1) =~
+               ~r/^Before the fight: you cast Heal and mend .*Self Heal.*you at/
     end
   end
 end

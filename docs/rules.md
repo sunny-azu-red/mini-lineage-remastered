@@ -505,8 +505,8 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
   1. an aura it has not raised;
   2. a toggle not lit;
   3. the strongest spell (magic, drain or burn);
-  4. a heal, below half its HP, so a heal fills the time its spells rest and never stops it
-     attacking;
+  4. below the share of its HP its orders give, the strongest heal, so a heal fills the time its
+     spells rest and never stops it attacking;
   5. while the monster has more than half its HP, a poison it does not carry, then a shackle.
 
   A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
@@ -518,6 +518,13 @@ One click, one fight. Each village's ground (§17) is hunted from the village, a
   scaled.
 - **Blows** hit and do damage as §13 says. Skills and spells do what §19 says.
 - **It ends** when either reaches 0 HP. After 1,000 rounds the monster wanders off and pays nothing.
+- **Before the pull**, since it rests nothing on the ground (§11), the character heals while its HP
+  is below the share its orders give: the strongest heal it can pay for, never past the most,
+  waiting out the reuse and cast, until it is not or it cannot pay for one. A heal cast before the
+  pull is still resting when the fight begins. It does not heal once the monster is down, so MP is
+  never spent on a walk back to rest.
+- **Orders** are the player's, for a character that knows a heal: the share of HP to heal below
+  before the pull and in the fight, never or below 30%, 50% or 70%, each 50% to begin with.
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
   (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
   fifth, rounded down.

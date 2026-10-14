@@ -18,6 +18,25 @@ rested? = settings["rest_below"] == 100
 key = &{&1["set"], &1["path"]}
 befores = Map.new(before["rows"], &{key.(&1), &1})
 
+# Time is compared run for run, over the runs that reached the top in both readings, so runs a change
+# saves from dying do not move a set's mean; fewer than this many such runs is too few to judge.
+min_pairs = 10
+
+paired = fn was, now ->
+  pairs =
+    Enum.zip(was["minutes_by_run"], now["minutes_by_run"])
+    |> Enum.filter(fn {b, a} -> b && a end)
+
+  case pairs do
+    [] ->
+      {nil, nil, 0}
+
+    _ ->
+      {Enum.sum(Enum.map(pairs, &elem(&1, 0))) / length(pairs),
+       Enum.sum(Enum.map(pairs, &elem(&1, 1))) / length(pairs), length(pairs)}
+  end
+end
+
 pct = fn
   nil, _ -> nil
   _, nil -> nil
@@ -41,7 +60,8 @@ end
   Enum.map_reduce(after_["rows"], [], fn row, faults ->
     was = Map.fetch!(befores, key.(row))
     n = row["runs"]
-    moved = pct.(was["minutes"], row["minutes"])
+    {was_minutes, now_minutes, pairs} = paired.(was, row)
+    moved = if pairs >= min_pairs, do: pct.(was_minutes, now_minutes)
 
     faults =
       faults
@@ -67,7 +87,7 @@ end
     line =
       String.pad_trailing("#{row["set"]}, #{row["path"]}", 30) <>
         " died #{was["deaths"]} -> #{row["deaths"]} of #{n}" <>
-        " | minutes #{fmt.(was["minutes"])} -> #{fmt.(row["minutes"])} (#{fmt.(moved)}%)" <>
+        " | minutes #{fmt.(was_minutes)} -> #{fmt.(now_minutes)} (#{fmt.(moved)}%, #{pairs} runs)" <>
         " | rest #{fmt.(was["rest_minutes"])} -> #{fmt.(row["rest_minutes"])}" <>
         " | rounds a fight #{fmt.(was["rounds_a_fight"])} -> #{fmt.(row["rounds_a_fight"])}" <>
         " | potions #{fmt.(was["potions"])} -> #{fmt.(row["potions"])}"
@@ -75,14 +95,18 @@ end
     {line, faults}
   end)
 
-spread = fn rows ->
-  case rows |> Enum.map(& &1["minutes"]) |> Enum.reject(&is_nil/1) do
-    [] -> nil
-    minutes -> Enum.max(minutes) - Enum.min(minutes)
-  end
-end
+# Over each set's paired runs, so a set no run of which finished before does not widen it by
+# finishing now.
+judged =
+  for row <- after_["rows"],
+      {was_minutes, now_minutes, pairs} = paired.(befores[key.(row)], row),
+      pairs >= min_pairs,
+      do: {was_minutes, now_minutes}
 
-{was_spread, now_spread} = {spread.(before["rows"]), spread.(after_["rows"])}
+spread = fn minutes -> if minutes == [], do: nil, else: Enum.max(minutes) - Enum.min(minutes) end
+
+{was_spread, now_spread} =
+  {spread.(Enum.map(judged, &elem(&1, 0))), spread.(Enum.map(judged, &elem(&1, 1)))}
 
 faults =
   if was_spread && now_spread && now_spread > was_spread * 1.02,
