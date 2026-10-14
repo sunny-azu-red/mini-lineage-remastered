@@ -97,7 +97,7 @@ follows before characters reach 15.
 ## Skills
 
 - **Every set has a first skill from its own tree:** Power Strike, Power Shot, Mortal Blow and
-  Iron Punch for the Human, Elven, Dark and Orc Fighters, learned at level 5 as in Lineage II;
+  Iron Punch for the Human, Elven, Dark and Orc Fighters, the skills of the weapons they start with;
   Wind Strike for the Human, Elven and Dark Mystics and Chill Flame for the Orc, known from the
   start. Nothing else comes free.
 - **SP comes from monsters,** like EXP.
@@ -108,8 +108,9 @@ follows before characters reach 15.
   The auras are the first timed buffs, as the Temple's will be. The character page's Skills panel
   is the spellbook: what it knows.
 - **A skill grows in steps** of 3 or 4 lines, each a character level's worth of canon levels, and
-  the trainer shows only each skill's next line. Every Fighter learns one skill at level 1 and
-  every Mystic two, and the SP left from level 15 waits for the class change's skills.
+  the trainer shows only each skill's next line, no two lines of one skill opening at one level.
+  Every set starts knowing its first skill, and the SP left from level 15 waits for the class
+  change's skills.
 - **The class change opens the specialised skills** of the new class, learned the same way.
 - **Skills matter most in the slower fights,** where a boss is fought in rounds with a choice each
   round.

@@ -136,13 +136,18 @@ the fight uses them.
   rest, the Orc Mystic's never do, and cast first it slowed the set by a fifth (`docs/balance.md`).
 - **The Orc Mystic knows Chill Flame from level 1,** where Lineage II taught it at 7, with an
   amulet, and the Orc Mystic fought with Soul Cry and its weapon until then. Played that way it died
-  at levels 2 to 7 even resting to full (`docs/balance.md`). Every other first skill comes where
-  Lineage II taught it: Wind Strike at 1, a Fighter's at 5.
+  at levels 2 to 7 even resting to full (`docs/balance.md`).
+- **A Fighter starts knowing the skill of the weapon it starts with, and its weapon skills begin at
+  level 1,** where Lineage II taught them from 5: the first level of each at level 1, its own first
+  skill for nothing and any other for 50 SP, and the rest of that tier at 5. A Mystic starts
+  knowing its first spell, as in Lineage II, and could not do without it: made to buy it at level 1
+  for 50 SP, nine Mystic runs in ten died at levels 1 to 3 before they could.
 - **A Mystic's second skill at level 1 costs 50 SP** (Self Heal, or the Orc's Soul Cry), where
   Lineage II gave it free.
-- **A skill grows in steps, not nine levels:** after its first level, the canon levels taught at
-  one character level are one line, at the top level's power and MP, so Power Strike has 4 lines
-  where Lineage II sold 9 one at a time.
+- **A skill grows in steps, not nine levels:** the canon levels taught at one character level are
+  one line, at the top level's power and MP, so no two lines of one skill open at the same level and
+  Power Strike has 4 lines where Lineage II sold 9 one at a time. Only a Fighter's weapon skills keep
+  their first level apart, at level 1.
 - **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
   Mastery are left out for the actives above. The SP they soaked up goes on dearer late lines (the
   Elven and Dark Fighters at 15, the Human, Dark and Orc Mystics at 14), so each step is saved for;

@@ -9,7 +9,11 @@ defmodule MiniLineage.Characters.Serde do
 
   # The shape of the document, not of the character. A reshape bumps this and `from_map/1` branches
   # on it; a document claiming a LATER one was written by a newer build, and must not be guessed at.
-  @version 2
+  @version 3
+
+  # Version 3 merged each of these skills' first two lines into one (rules §25), so a line known
+  # before is one lower now.
+  @merged ~w(Ice\ Bolt Heal Elemental\ Heal Drain\ Health Vampiric\ Touch)
 
   def to_map(%Player{} = p) do
     %{
@@ -53,7 +57,7 @@ defmodule MiniLineage.Characters.Serde do
       location: location(m["location"], m["race_id"]),
       dead: m["dead"] == true,
       killer: m["killer"],
-      skills: skills(m["skills"], m["race_id"], path(m["path"])),
+      skills: m["skills"] |> renumber(version) |> skills(m["race_id"], path(m["path"])),
       combat: combat(m["combat"]),
       buffs: buffs(m["buffs"]),
       potion_at:
@@ -111,6 +115,15 @@ defmodule MiniLineage.Characters.Serde do
     do: %{Rules.first_skill(race_id, path).name => 1}
 
   defp skills(_none, _race_id, _path), do: %{}
+
+  defp renumber(%{} = known, version) when version < 3,
+    do:
+      Map.new(known, fn
+        {name, level} when name in @merged and is_integer(level) -> {name, max(level - 1, 1)}
+        other -> other
+      end)
+
+  defp renumber(known, _version), do: known
 
   # Only auras `Rules` knows, each to a whole millisecond; a run from before them raised none.
   defp buffs(%{} = raised),

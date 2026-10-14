@@ -51,7 +51,7 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the shape the document was written in" do
     test "is recorded, so a later reshape has something to branch on" do
-      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 2
+      assert %Player{} |> Serde.to_map() |> Map.fetch!("version") == 3
     end
 
     test "and a document without one is refused, not assumed to be this shape" do
@@ -63,7 +63,18 @@ defmodule MiniLineage.Characters.SerdeTest do
     test "and one from a newer build is refused rather than quietly misread" do
       newer = %Player{name: "Hero"} |> Serde.to_map() |> Map.put("version", 99)
 
-      assert_raise RuntimeError, ~r/version 99.*understands 2/, fn -> Serde.from_map(newer) end
+      assert_raise RuntimeError, ~r/version 99.*understands 3/, fn -> Serde.from_map(newer) end
+    end
+
+    test "a version 2 document's merged skills come back a line lower, the rest as they were" do
+      skills = %{"Heal" => 2, "Ice Bolt" => 1, "Vampiric Touch" => 2, "Wind Strike" => 2}
+      v2 = %{populated() | skills: skills} |> Serde.to_map() |> Map.put("version", 2)
+
+      assert Serde.from_map(v2).skills ==
+               %{"Heal" => 1, "Ice Bolt" => 1, "Vampiric Touch" => 1, "Wind Strike" => 2}
+
+      v3 = %{populated() | skills: skills} |> Serde.to_map()
+      assert Serde.from_map(v3).skills == skills |> Map.put("Vampiric Touch", 1)
     end
   end
 

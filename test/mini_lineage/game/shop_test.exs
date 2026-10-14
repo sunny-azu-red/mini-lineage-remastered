@@ -77,11 +77,12 @@ defmodule MiniLineage.Game.ShopTest do
 
   describe "putting on" do
     test "a weapon the first skill cannot use is equipped, with a warning" do
-      player = character()
-      # Nothing to warn about before the first skill is learned.
-      assert {_, {:ok, %{type: :info}}} = Actions.equip(player, carried(player, "Dagger").id)
+      # Nothing to warn about while no weapon skill is known.
+      bare = %{character() | skills: %{}}
+      assert {_, {:ok, %{type: :info}}} = Actions.equip(bare, carried(bare, "Dagger").id)
 
-      player = %{player | skills: %{"Power Strike" => 1}}
+      player = character()
+      assert player.skills == %{"Power Strike" => 1}
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Dagger").id)
 
       assert flash.type == :danger

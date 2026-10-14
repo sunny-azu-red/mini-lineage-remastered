@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.TrainerTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Clock, Constants, Math, Player}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Math, Player, Rules}
 
   setup do
     Clock.put_now(~U[2026-07-01 09:00:00Z])
@@ -23,15 +23,22 @@ defmodule MiniLineage.Game.TrainerTest do
     %{player | experience: Math.xp_for_level(level), sp: sp, skills: %{"Power Strike" => 1}}
   end
 
-  test "a new Fighter knows nothing and buys its first skill at level 5 for 50 SP" do
-    fighter = new(0, :fighter)
-    assert fighter.skills == %{}
+  test "a new Fighter knows the skill of the weapon it starts with, and buys another at level 1" do
+    for {race, skill} <- [
+          {0, "Power Strike"},
+          {2, "Power Shot"},
+          {3, "Mortal Blow"},
+          {1, "Iron Punch"}
+        ] do
+      fighter = new(race, :fighter)
+      assert fighter.skills == %{skill => 1}
+      assert Rules.skill_weapon?(skill, Player.stats(fighter).weapon), skill
+    end
 
-    assert {_, {:error, :too_soon, _}} = Actions.learn(%{fighter | sp: 50}, "Power Strike", 1)
-    fighter = %{fighter | experience: Math.xp_for_level(5)}
-    assert {_, {:error, :no_sp, _}} = Actions.learn(%{fighter | sp: 49}, "Power Strike", 1)
-    {fighter, {:ok, _}} = Actions.learn(%{fighter | sp: 50}, "Power Strike", 1)
-    assert {fighter.skills, fighter.sp} == {%{"Power Strike" => 1}, 0}
+    fighter = new(0, :fighter)
+    assert {_, {:error, :no_sp, _}} = Actions.learn(%{fighter | sp: 49}, "Mortal Blow", 1)
+    {fighter, {:ok, _}} = Actions.learn(%{fighter | sp: 50}, "Mortal Blow", 1)
+    assert {fighter.skills, fighter.sp} == {%{"Power Strike" => 1, "Mortal Blow" => 1}, 0}
   end
 
   test "a new Mystic knows its first spell, and buys what else level 1 offers for 50 SP" do

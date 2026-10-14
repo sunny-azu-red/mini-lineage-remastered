@@ -411,19 +411,19 @@ Example: a Young Keltir (DEX 30, level 1) has Accuracy and Evasion √30 × 6 + 
 
 ## 19. Skills
 
-Every set has a first skill from its own tree. A Mystic starts knowing its first spell, Wind Strike
-or the Orc's Chill Flame, because a Mystic's STR makes a poor weapon of whatever it holds; a Fighter
-starts with none and learns its first, each race's its own, from its trainer (§25) at level 5. The
-trainer teaches the rest before the class change, each set its own. A Mystic also learns one more at
-level 1 (Self Heal, or the Orc's Soul Cry) and a Fighter none, so every set of a kind starts alike.
-Each costs MP and then rests for its reuse.
+Every set has a first skill from its own tree and starts knowing it: a Mystic its first spell, Wind
+Strike or the Orc's Chill Flame, because a Mystic's STR makes a poor weapon of whatever it holds,
+and a Fighter the skill of the weapon it starts with, each race's its own. The trainer (§25) teaches
+the rest before the class change, each set its own. A Mystic can learn one more at level 1 (Self
+Heal, or the Orc's Soul Cry), and a Fighter the first level of its other weapon skills, if it has
+any. Each costs MP and then rests for its reuse.
 
 | Set | First skill | Also at level 1 | Then |
 |---|---|---|---|
-| Human Fighter | Power Strike | | Mortal Blow, Power Shot |
+| Human Fighter | Power Strike | Mortal Blow, Power Shot | |
 | Elven Fighter | Power Shot | | Defense Aura, Elemental Heal |
 | Dark Fighter | Mortal Blow | | Attack Aura, Drain Health |
-| Orc Fighter | Iron Punch | | Power Strike, Relax |
+| Orc Fighter | Iron Punch | Power Strike | Relax |
 | Human Mystic | Wind Strike | Self Heal | Ice Bolt |
 | Elven Mystic | Wind Strike | Self Heal | Ice Bolt, Heal |
 | Dark Mystic | Wind Strike | Self Heal | Vampiric Touch, Curse: Poison, Shield, Wind Shackle |
@@ -438,14 +438,14 @@ Each at level 1 (§25 has the later levels):
 | Mortal Blow | blow | 73 | 9 | 11,000 | |
 | Iron Punch | physical | 29 | 11 | 15,000 | |
 | Wind Strike | magic | 12 | 9 | 6,000 | 4,000 |
-| Ice Bolt | magic | 8 | 9 | 8,000 | 3,300 |
-| Vampiric Touch | drain | 18 | 25 | 12,000 | 4,000 |
+| Ice Bolt | magic | 9 | 10 | 8,000 | 3,300 |
+| Vampiric Touch | drain | 21 | 28 | 12,000 | 4,000 |
 | Chill Flame | burn | 20 | 15 | 6,000 | 4,000 |
-| Drain Health | drain | 20 | 12 | 15,000 | 3,000 |
+| Drain Health | drain | 22 | 13 | 15,000 | 3,000 |
 | Life Drain | drain | 15 | 27 | 6,000 | 4,000 |
 | Self Heal | heal | 42 | 9 | 10,000 | 5,000 |
-| Heal | heal | 49 | 10 | 10,000 | 5,000 |
-| Elemental Heal | heal | 71 | 40 | 10,000 | 5,000 |
+| Heal | heal | 67 | 14 | 10,000 | 5,000 |
+| Elemental Heal | heal | 80 | 45 | 10,000 | 5,000 |
 | Defense Aura | aura | | 5 | 6,000 | 4,000 |
 | Attack Aura | aura | | 7 | 6,000 | 4,000 |
 | Shield | aura | | 10 | 6,000 | 4,000 |
@@ -724,48 +724,47 @@ Example: a Broadsword costs **12,500** and sells back for **6,250**.
 Each starting village's trainers teach its own race and nobody else, for the SP a character earns
 on the hunt (§20). A line is learned once the character has reached its level, knows the level
 before it, and pays its SP. Each set's list is short: its first skill and the others §19 gives it,
-each at every level. Only a Mystic's first spell is taught at level 1 for nothing, and so is
-known from the start, and a Mystic's other line at level 1 costs 50. A Fighter learns nothing
-before level 5.
+each at every level. Only the first skill's level 1 is taught for nothing, and so is known from the
+start; a Mystic's other line at level 1 costs 50, and a Fighter's other weapon skills begin at
+level 1 for 50 (60 for the Orc).
 
-A skill grows in steps, not one level at a time: after its first level, each line is everything the
-trainer teaches of it at one character level (5, 10 and 15 for a Fighter, 7 and 14 for a Mystic). Its
-SP is set so that a character can afford about one new line when it reaches that level and the rest
-of that level's lines about a level later, so each step is saved for and the order chosen.
+A skill grows in steps, not one level at a time: each line is everything the trainer teaches of it
+at one character level (5, 10 and 15 for a Fighter, 7 and 14 for a Mystic), so no two lines of one
+skill open at the same level. A Fighter's weapon skills keep their first level apart, at level 1.
+Its SP is set so that a character can afford about one new line when it reaches that level and the
+rest of that level's lines about a level later, so each step is saved for and the order chosen.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
-| Human Fighter | Power Strike | 1 | 5 | 50 |
+| Human Fighter | Power Strike | 1 | 1 | 0 |
 | Human Fighter | Power Strike | 2 | 5 | 100 |
 | Human Fighter | Power Strike | 3 | 10 | 1,110 |
 | Human Fighter | Power Strike | 4 | 15 | 3,900 |
-| Human Fighter | Mortal Blow | 1 | 5 | 50 |
+| Human Fighter | Mortal Blow | 1 | 1 | 50 |
 | Human Fighter | Mortal Blow | 2 | 5 | 100 |
 | Human Fighter | Mortal Blow | 3 | 10 | 1,110 |
 | Human Fighter | Mortal Blow | 4 | 15 | 3,900 |
-| Human Fighter | Power Shot | 1 | 5 | 50 |
+| Human Fighter | Power Shot | 1 | 1 | 50 |
 | Human Fighter | Power Shot | 2 | 5 | 100 |
 | Human Fighter | Power Shot | 3 | 10 | 1,110 |
 | Human Fighter | Power Shot | 4 | 15 | 3,900 |
-| Elven Fighter | Power Shot | 1 | 5 | 50 |
+| Elven Fighter | Power Shot | 1 | 1 | 0 |
 | Elven Fighter | Power Shot | 2 | 5 | 100 |
 | Elven Fighter | Power Shot | 3 | 10 | 930 |
 | Elven Fighter | Power Shot | 4 | 15 | 5,300 |
 | Elven Fighter | Defense Aura | 1 | 5 | 160 |
-| Elven Fighter | Elemental Heal | 1 | 15 | 1,800 |
-| Elven Fighter | Elemental Heal | 2 | 15 | 3,500 |
-| Dark Fighter | Mortal Blow | 1 | 5 | 50 |
+| Elven Fighter | Elemental Heal | 1 | 15 | 5,300 |
+| Dark Fighter | Mortal Blow | 1 | 1 | 0 |
 | Dark Fighter | Mortal Blow | 2 | 5 | 100 |
 | Dark Fighter | Mortal Blow | 3 | 10 | 930 |
 | Dark Fighter | Mortal Blow | 4 | 15 | 5,000 |
 | Dark Fighter | Attack Aura | 1 | 10 | 910 |
-| Dark Fighter | Drain Health | 1 | 15 | 2,450 |
-| Dark Fighter | Drain Health | 2 | 15 | 2,450 |
-| Orc Fighter | Iron Punch | 1 | 5 | 60 |
+| Dark Fighter | Drain Health | 1 | 15 | 4,900 |
+| Orc Fighter | Iron Punch | 1 | 1 | 0 |
 | Orc Fighter | Iron Punch | 2 | 5 | 120 |
 | Orc Fighter | Iron Punch | 3 | 10 | 1,380 |
 | Orc Fighter | Iron Punch | 4 | 15 | 3,900 |
-| Orc Fighter | Power Strike | 1 | 5 | 60 |
+| Orc Fighter | Power Strike | 1 | 1 | 60 |
 | Orc Fighter | Power Strike | 2 | 5 | 120 |
 | Orc Fighter | Power Strike | 3 | 10 | 1,380 |
 | Orc Fighter | Power Strike | 4 | 15 | 3,900 |
@@ -774,25 +773,21 @@ of that level's lines about a level later, so each step is saved for and the ord
 | Human Mystic | Wind Strike | 2 | 7 | 480 |
 | Human Mystic | Wind Strike | 3 | 14 | 4,000 |
 | Human Mystic | Self Heal | 1 | 1 | 50 |
-| Human Mystic | Ice Bolt | 1 | 7 | 240 |
-| Human Mystic | Ice Bolt | 2 | 7 | 240 |
-| Human Mystic | Ice Bolt | 3 | 14 | 4,000 |
+| Human Mystic | Ice Bolt | 1 | 7 | 480 |
+| Human Mystic | Ice Bolt | 2 | 14 | 4,000 |
 | Elven Mystic | Wind Strike | 1 | 1 | 0 |
 | Elven Mystic | Wind Strike | 2 | 7 | 520 |
 | Elven Mystic | Wind Strike | 3 | 14 | 2,200 |
 | Elven Mystic | Self Heal | 1 | 1 | 50 |
-| Elven Mystic | Ice Bolt | 1 | 7 | 260 |
-| Elven Mystic | Ice Bolt | 2 | 7 | 260 |
-| Elven Mystic | Ice Bolt | 3 | 14 | 2,200 |
-| Elven Mystic | Heal | 1 | 7 | 170 |
-| Elven Mystic | Heal | 2 | 7 | 340 |
-| Elven Mystic | Heal | 3 | 14 | 2,100 |
+| Elven Mystic | Ice Bolt | 1 | 7 | 520 |
+| Elven Mystic | Ice Bolt | 2 | 14 | 2,200 |
+| Elven Mystic | Heal | 1 | 7 | 510 |
+| Elven Mystic | Heal | 2 | 14 | 2,100 |
 | Dark Mystic | Wind Strike | 1 | 1 | 0 |
 | Dark Mystic | Wind Strike | 2 | 7 | 480 |
 | Dark Mystic | Wind Strike | 3 | 14 | 2,200 |
 | Dark Mystic | Self Heal | 1 | 1 | 50 |
-| Dark Mystic | Vampiric Touch | 1 | 14 | 1,100 |
-| Dark Mystic | Vampiric Touch | 2 | 14 | 1,100 |
+| Dark Mystic | Vampiric Touch | 1 | 14 | 2,200 |
 | Dark Mystic | Curse: Poison | 1 | 7 | 470 |
 | Dark Mystic | Shield | 1 | 7 | 470 |
 | Dark Mystic | Wind Shackle | 1 | 14 | 3,600 |
@@ -827,23 +822,18 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Wind Strike 1 | 12 | 9 |
 | Wind Strike 2 | 15 | 10 |
 | Wind Strike 3 | 21 | 15 |
-| Ice Bolt 1 | 8 | 9 |
-| Ice Bolt 2 | 9 | 10 |
-| Ice Bolt 3 | 13 | 15 |
-| Vampiric Touch 1 | 18 | 25 |
-| Vampiric Touch 2 | 21 | 28 |
+| Ice Bolt 1 | 9 | 10 |
+| Ice Bolt 2 | 13 | 15 |
+| Vampiric Touch 1 | 21 | 28 |
 | Chill Flame 1 | 20 | 15 |
 | Chill Flame 2 | 30 | 23 |
-| Drain Health 1 | 20 | 12 |
-| Drain Health 2 | 22 | 13 |
+| Drain Health 1 | 22 | 13 |
 | Life Drain 1 | 15 | 27 |
 | Life Drain 2 | 21 | 40 |
 | Self Heal 1 | 42 | 9 |
-| Heal 1 | 49 | 10 |
-| Heal 2 | 67 | 14 |
-| Heal 3 | 107 | 22 |
-| Elemental Heal 1 | 71 | 40 |
-| Elemental Heal 2 | 80 | 45 |
+| Heal 1 | 67 | 14 |
+| Heal 2 | 107 | 22 |
+| Elemental Heal 1 | 80 | 45 |
 | Defense Aura 1 | | 5 |
 | Attack Aura 1 | | 7 |
 | Shield 1 | | 10 |
@@ -854,9 +844,10 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Soul Cry 2 | 14 | 3 |
 | Relax 1 | 5 | 3 |
 
-Example: a level 5 Human Fighter with 200 SP learns Power Strike 1 for 50 and Power Strike 2 for
-100, with 200 − 50 − 100 = **50** left, and its Power Strike strikes at power **30**. A Human Mystic starts knowing Wind Strike, whose level 1
-its trainer teaches for nothing, and learns Self Heal for **50** SP.
+Example: a Human Fighter starts knowing Power Strike 1, whose level 1 its trainer teaches for
+nothing, and at level 1 learns Mortal Blow 1 for **50** SP. At level 5 with 150 SP it learns Power
+Strike 2 for 100, with 150 − 100 = **50** left, and its Power Strike strikes at power **30**. A Human
+Mystic starts knowing Wind Strike and learns Self Heal for **50** SP.
 
 ## 26. Potions
 

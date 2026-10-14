@@ -1,35 +1,33 @@
 set,skill,level,learn_at,sp
-Human Fighter,Power Strike,1,5,50
+Human Fighter,Power Strike,1,1,0
 Human Fighter,Power Strike,2,5,100
 Human Fighter,Power Strike,3,10,1110
 Human Fighter,Power Strike,4,15,3900
-Human Fighter,Mortal Blow,1,5,50
+Human Fighter,Mortal Blow,1,1,50
 Human Fighter,Mortal Blow,2,5,100
 Human Fighter,Mortal Blow,3,10,1110
 Human Fighter,Mortal Blow,4,15,3900
-Human Fighter,Power Shot,1,5,50
+Human Fighter,Power Shot,1,1,50
 Human Fighter,Power Shot,2,5,100
 Human Fighter,Power Shot,3,10,1110
 Human Fighter,Power Shot,4,15,3900
-Elven Fighter,Power Shot,1,5,50
+Elven Fighter,Power Shot,1,1,0
 Elven Fighter,Power Shot,2,5,100
 Elven Fighter,Power Shot,3,10,930
 Elven Fighter,Power Shot,4,15,5300
 Elven Fighter,Defense Aura,1,5,160
-Elven Fighter,Elemental Heal,1,15,1800
-Elven Fighter,Elemental Heal,2,15,3500
-Dark Fighter,Mortal Blow,1,5,50
+Elven Fighter,Elemental Heal,1,15,5300
+Dark Fighter,Mortal Blow,1,1,0
 Dark Fighter,Mortal Blow,2,5,100
 Dark Fighter,Mortal Blow,3,10,930
 Dark Fighter,Mortal Blow,4,15,5000
 Dark Fighter,Attack Aura,1,10,910
-Dark Fighter,Drain Health,1,15,2450
-Dark Fighter,Drain Health,2,15,2450
-Orc Fighter,Iron Punch,1,5,60
+Dark Fighter,Drain Health,1,15,4900
+Orc Fighter,Iron Punch,1,1,0
 Orc Fighter,Iron Punch,2,5,120
 Orc Fighter,Iron Punch,3,10,1380
 Orc Fighter,Iron Punch,4,15,3900
-Orc Fighter,Power Strike,1,5,60
+Orc Fighter,Power Strike,1,1,60
 Orc Fighter,Power Strike,2,5,120
 Orc Fighter,Power Strike,3,10,1380
 Orc Fighter,Power Strike,4,15,3900
@@ -38,25 +36,21 @@ Human Mystic,Wind Strike,1,1,0
 Human Mystic,Wind Strike,2,7,480
 Human Mystic,Wind Strike,3,14,4000
 Human Mystic,Self Heal,1,1,50
-Human Mystic,Ice Bolt,1,7,240
-Human Mystic,Ice Bolt,2,7,240
-Human Mystic,Ice Bolt,3,14,4000
+Human Mystic,Ice Bolt,1,7,480
+Human Mystic,Ice Bolt,2,14,4000
 Elven Mystic,Wind Strike,1,1,0
 Elven Mystic,Wind Strike,2,7,520
 Elven Mystic,Wind Strike,3,14,2200
 Elven Mystic,Self Heal,1,1,50
-Elven Mystic,Ice Bolt,1,7,260
-Elven Mystic,Ice Bolt,2,7,260
-Elven Mystic,Ice Bolt,3,14,2200
-Elven Mystic,Heal,1,7,170
-Elven Mystic,Heal,2,7,340
-Elven Mystic,Heal,3,14,2100
+Elven Mystic,Ice Bolt,1,7,520
+Elven Mystic,Ice Bolt,2,14,2200
+Elven Mystic,Heal,1,7,510
+Elven Mystic,Heal,2,14,2100
 Dark Mystic,Wind Strike,1,1,0
 Dark Mystic,Wind Strike,2,7,480
 Dark Mystic,Wind Strike,3,14,2200
 Dark Mystic,Self Heal,1,1,50
-Dark Mystic,Vampiric Touch,1,14,1100
-Dark Mystic,Vampiric Touch,2,14,1100
+Dark Mystic,Vampiric Touch,1,14,2200
 Dark Mystic,Curse: Poison,1,7,470
 Dark Mystic,Shield,1,7,470
 Dark Mystic,Wind Shackle,1,14,3600

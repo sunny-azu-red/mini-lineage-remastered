@@ -39,35 +39,40 @@ SP doesn't depend on the weapon path, so there is one row per set.
 
 | Set | Skills (lines) | Whole list | Learned at level | …at hunt | SP saved at 20 |
 |---|---|---|---|---|---|
-| Human Fighter | 3 (12) | 15,480 | 16 | 210 of 347 | 17,100 |
-| Elven Fighter | 3 (7) | 11,840 | 15.3 (15–16) | 210 of 414 | 21,100 |
-| Dark Fighter | 3 (7) | 11,890 | 16.0 (15–16) | 205 of 395 | 21,000 |
-| Orc Fighter | 3 (9) | 11,110 | 15 | 182 of 385 | 21,800 |
-| Human Mystic | 3 (7) | 9,010 | 14.7 (14–15) | 155 of 347 | 23,500 |
-| Elven Mystic | 4 (10) | 8,100 | 14 | 162 of 414 | 24,900 |
-| Dark Mystic | 6 (9) | 9,470 | 15 | 175 of 395 | 23,400 |
+| Human Fighter | 3 (12) | 15,430 | 16 | 210 of 347 | 17,100 |
+| Elven Fighter | 3 (6) | 11,790 | 15.2 (15–16) | 210 of 414 | 21,100 |
+| Dark Fighter | 3 (6) | 11,840 | 15.9 (15–16) | 205 of 395 | 21,000 |
+| Orc Fighter | 3 (9) | 11,050 | 15 | 181 of 385 | 21,800 |
+| Human Mystic | 3 (6) | 9,010 | 14.7 (14–15) | 154 of 347 | 23,500 |
+| Elven Mystic | 4 (8) | 8,100 | 14 | 162 of 414 | 24,900 |
+| Dark Mystic | 6 (8) | 9,470 | 15 | 175 of 395 | 23,400 |
 | Orc Mystic | 4 (7) | 7,840 | 14 | 146 of 385 | 25,000 |
 
-A tier's lines are taught at one character level (5, 10 and 15 for a Fighter; 1, 7 and 14 for a
-Mystic, whose level 1 is its first spell and one more). The wait is how many hunts pass between
-reaching that level and buying a line taught there, shown as average / worst:
+A tier's lines are taught at one character level (1, 5, 10 and 15 for a Fighter; 1, 7 and 14 for a
+Mystic), and no two lines of one skill share one. The wait is how many hunts pass between reaching
+that level and buying a line taught there, shown as average / worst (the trainer's tables are read
+at 100 runs a path):
 
-| Set | First tier | Second | Third |
-|---|---|---|---|
-| Human Fighter | L5: 6 / 19 | L10: 20 / 42 | L15: 26 / 58 |
-| Elven Fighter | L5: 5 / 15 | L10: 0 / 0 | L15: 12 / 40 |
-| Dark Fighter | L5: 1 / 6 | L10: 5 / 11 | L15: 15 / 40 |
-| Orc Fighter | L5: 8 / 24 | L10: 21 / 37 | L15: 11 / 27 |
-| Human Mystic | L7: 9 / 24 | L14: 12 / 28 | |
-| Elven Mystic | L7: 14 / 37 | L14: 7 / 25 | |
-| Dark Mystic | L7: 19 / 36 | L14: 10 / 42 | |
-| Orc Mystic | L7: 16 / 26 | L14: 5 / 17 | |
+| Set | Level 1 | First tier | Second | Third |
+|---|---|---|---|---|
+| Human Fighter | 7 / 10 | L5: 9 / 16 | L10: 20 / 42 | L15: 26 / 57 |
+| Elven Fighter | | L5: 4 / 13 | L10: 0 / 0 | L15: 18 / 39 |
+| Dark Fighter | | L5: 0 / 2 | L10: 4 / 10 | L15: 19 / 39 |
+| Orc Fighter | 6 / 6 | L5: 11 / 20 | L10: 20 / 35 | L15: 11 / 25 |
+| Human Mystic | 5 / 5 | L7: 13 / 23 | L14: 12 / 27 | |
+| Elven Mystic | 5 / 5 | L7: 21 / 35 | L14: 7 / 25 | |
+| Dark Mystic | 5 / 5 | L7: 19 / 36 | L14: 13 / 41 | |
+| Orc Mystic | 5 / 5 | L7: 16 / 25 | L14: 5 / 16 | |
 
+- **Every set starts knowing its first skill,** a Fighter the one its starting weapon uses, and all
+  but the Elven and Dark Fighters find something at the trainer at level 1, bought after 5 to 7
+  hunts: a Mystic's Self Heal or Soul Cry, the Human Fighter's Mortal Blow and Power Shot, the Orc
+  Fighter's Power Strike. Moving a Fighter's first skill from 5 to 1 changed no set by more than
+  1.4%; a Mystic made to buy its first spell instead died at levels 1 to 3 in nine runs of ten.
 - **No tier is empty, and every set can afford its whole list.** Each tier's first line can be bought
-  on arrival. One tier holds a single line, the Elven Fighter's at 10 (Power Shot 3), bought at
-  once. Every other tier offers two to five lines, so the player chooses the order.
-- **A Fighter fights its first four levels with blows alone,** about 10 hunts, and buys its first
-  skill and its second line on reaching 5. That costs it nothing measurable on the road to 20.
+  on arrival. Two tiers hold a single line, the Elven Fighter's at 10 (Power Shot 3) and the Dark
+  Fighter's at 5 (Mortal Blow 2), each bought at once. Every other tier offers two to five lines, so
+  the player chooses the order.
 - **The Mystics finish about a level sooner** (14 to 15, against 15 to 16). Their skills have fewer
   steps, and their fights spend MP rather than SP.
 - **The Human Fighter pays the most and finishes last.** About half its 15,480 buys Mortal Blow and

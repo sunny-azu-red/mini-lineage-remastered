@@ -37,26 +37,22 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {view, session, conn}
   end
 
-  test "a new Fighter knows no skill, and its first is a lesson at level 5" do
+  test "a new Fighter knows its weapon's skill, and its trainer offers another at level 1" do
     {_view, session, conn} = pupil(build_conn())
     {:ok, character, _html} = live(conn, ~p"/character")
-    assert has_element?(character, "#no-skills.stat-row", "You have learned no skill yet")
+    refute has_element?(character, "#no-skills")
+    assert has_element?(character, "#skill-power-strike .skill", "Power Strike 1")
 
-    # The trainer shows no Learned Skills panel until there is something in it.
     {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
-    refute has_element?(view, "#screen h2", "Learned Skills")
-    assert has_element?(view, ~s(#lesson-power-strike-1.locked[data-status="later"] td.sp), "50")
-
-    level = Math.xp_for_level(5)
-    Characters.mutate(session, &{%{&1 | sp: 50, experience: level}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
-    assert has_element?(view, ~s(#lesson-power-strike-1[data-status="ready"]))
-    view |> form("#learn-form", %{"lesson" => "Power Strike|1"}) |> render_submit()
-
     assert has_element?(view, "#screen h2", "Learned Skills")
-    refute has_element?(view, "#no-skills")
-    assert has_element?(view, "#skill-power-strike .skill", "Power Strike 1")
-    assert %{sp: 0, skills: %{"Power Strike" => 1}} = stored(session)
+    assert has_element?(view, ~s(#lesson-mortal-blow-1[data-status="ready"] td.sp), "50")
+    refute has_element?(view, "#lesson-power-strike-1")
+
+    Characters.mutate(session, &{%{&1 | sp: 50}, :ok})
+    view |> form("#learn-form", %{"lesson" => "Mortal Blow|1"}) |> render_submit()
+
+    assert has_element?(view, "#skill-mortal-blow .skill", "Mortal Blow 1")
+    assert %{sp: 0, skills: %{"Power Strike" => 1, "Mortal Blow" => 1}} = stored(session)
   end
 
   test "the home village leads to its trainer, whose lessons are the set's own" do

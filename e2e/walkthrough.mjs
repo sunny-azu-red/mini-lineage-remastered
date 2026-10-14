@@ -569,14 +569,16 @@ try {
     await page.waitForFunction((want) =>
         document.querySelector('[data-key="trainer-sp"]')?.dataset.value === String(want), spBefore + 10000,
         { timeout: 5000 });
-    check('the home village\'s trainer teaches the set\'s own first skill, unmuted, for its SP',
-        await page.locator('#lesson-mortal-blow-1[data-status="ready"]:not(.locked)').count() === 1 &&
-        await text('#lesson-mortal-blow-1 td.sp') === '50', await text('#lesson-mortal-blow-1'));
+    check('the home village\'s trainer teaches the next line of the set\'s own first skill, unmuted, for its SP',
+        await page.locator('#lesson-mortal-blow-2[data-status="ready"]:not(.locked)').count() === 1 &&
+        await text('#lesson-mortal-blow-2 td.sp') === '100', await text('#lesson-mortal-blow-2'));
     const learnedPanel = () => page.locator('#screen h2.header-name', { hasText: 'Learned Skills' }).count();
-    check('...to a Fighter that starts knowing nothing, so no Learned Skills panel beside it',
-        await learnedPanel() === 0);
+    check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it',
+        await learnedPanel() === 1 && await text('#skill-mortal-blow .skill') === 'Mortal Blow 1',
+        await text('#skill-mortal-blow'));
     check('...listing each skill\'s next line alone, never the ones after it',
-        await page.locator('#lesson-mortal-blow-2').count() === 0);
+        await page.locator('#lesson-mortal-blow-1').count() === 0 &&
+        await page.locator('#lesson-mortal-blow-3').count() === 0);
     check('...with the level it requires and its SP named in full on hover',
         await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Level Required' &&
         await page.getAttribute('#lessons th:nth-child(4)', 'title') === 'Skill Points');
@@ -587,34 +589,33 @@ try {
     await page.click('#lessons button[phx-value-key="sp"]');
     await page.click('#lessons button[phx-value-key="sp"]');
     await page.waitForSelector('#lessons th[aria-sort]', { state: 'detached', timeout: 5000 });
-    await page.selectOption('#learn-form select', 'Mortal Blow|1');
+    await page.selectOption('#learn-form select', 'Mortal Blow|2');
     await page.locator('#learn-form button', { hasText: 'Learn' }).waitFor({ timeout: 5000 });
     await page.click('#learn-form button');
-    await page.waitForSelector('#lesson-mortal-blow-1', { state: 'detached', timeout: 5000 });
-    check('...the first line learned opening the Learned Skills panel beside it',
-        await learnedPanel() === 1 &&
-        await text('#skill-mortal-blow .skill') === 'Mortal Blow 1', await text('#skill-mortal-blow'));
+    await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
+    check('...the line learned moving into the Learned Skills panel',
+        await text('#skill-mortal-blow .skill') === 'Mortal Blow 2', await text('#skill-mortal-blow'));
     check('...and offering the next line by name, as the legacy shop did',
-        await text('#learn-form option[value="Mortal Blow|2"]') === 'Pick 🎯 Mortal Blow 2');
-    await page.selectOption('#learn-form select', 'Mortal Blow|2');
+        await text('#learn-form option[value="Mortal Blow|3"]') === 'Pick 🎯 Mortal Blow 3');
+    await page.selectOption('#learn-form select', 'Mortal Blow|3');
     check('...and the button turns to learning it once picked',
         await text('#learn-form button') === '🎓 Learn', await text('#learn-form button'));
     await page.click('#learn-form button');
-    await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('#lesson-mortal-blow-3', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',
-        Number(await sp()) === spBefore + 10000 - 50 - 100, await sp());
+        Number(await sp()) === spBefore + 10000 - 100 - 930, await sp());
     check('...the dropdown and its button both going back to the village, the lesson no longer offered',
         await page.inputValue('#learn-form select') === '' && await text('#learn-form button') === 'Return',
         await text('#learn-form button'));
     check('...and the SP counts down rather than jumping',
         await page.locator('#trainer-intro[phx-hook="AnimatedValues"] [data-key="trainer-sp"]').count() === 1);
     check('...moving into the Learned Skills panel and offering the next line',
-        await text('#skill-mortal-blow .skill') === 'Mortal Blow 2' &&
-        await page.locator('#lesson-mortal-blow-3[data-status="ready"]').count() === 1 &&
-        await page.locator('#lesson-mortal-blow-4').count() === 0,
+        await text('#skill-mortal-blow .skill') === 'Mortal Blow 3' &&
+        await page.locator('#lesson-mortal-blow-4[data-status="ready"]').count() === 1 &&
+        await page.locator('#lesson-mortal-blow-5').count() === 0,
         await text('#skill-mortal-blow'));
     check('...each line naming the weapon it needs, a spell any',
-        await text('#lesson-mortal-blow-3 td:nth-child(2)') === 'Dagger' &&
+        await text('#lesson-mortal-blow-4 td:nth-child(2)') === 'Dagger' &&
         await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
 
     // ---- a skill left unused (rules §20) --------------------------------------------------------
