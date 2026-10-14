@@ -154,7 +154,13 @@ the fight uses them.
   strongest spell, then while its spells rest its strongest heal below the player's share of HP, or
   a curse on a monster above half its HP, and before the pull its heals up to that share. A Mystic
   lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
-  player gives orders, and may leave any skill but a heal unused.
+  player gives orders, and may leave any skill but a heal unused. Life Drain, which returns 80% of
+  what it deals, is cast only below 85% of HP, as the heal it mostly is: cast whenever ready, its
+  27 MP a cast kept the Orc Mystic the slowest set (`docs/balance.md`).
+- **A slow caster casts its spell whenever it is ready** (rules §20): the golems, the zombies and the
+  Undead Slave, whose Lineage II AI (`WarriorSlowType`) cast mostly at a target not hitting them.
+  Their spell is a power-5 poke, and Lineage II's odds moved no set by more than 1%
+  (`docs/balance.md`).
 - **A fight is fought on one line** (rules §20): the character pulls from its opening's reach, or an
   aggressive monster comes at it from L2J's 500, the monster runs in at L2J's run speed (which holds
   its DEX bonus), and once both are in reach nobody moves again, so nobody kites, flanks or chases.

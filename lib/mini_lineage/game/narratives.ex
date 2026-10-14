@@ -41,6 +41,10 @@ defmodule MiniLineage.Game.Narratives do
     skill_failed: "{their} {skill} fails to land",
     cast: ~s({them} cast {skill} for <span class="magic">{amount}</span>),
     magic_critical: ~s({their} {skill} strikes true for <span class="crit">{amount}</span>),
+    drain:
+      ~s({them} cast {skill} for <span class="magic">{amount}</span> and mend <span class="buff">{healed}</span> HP),
+    drain_critical:
+      ~s({their} {skill} strikes true for <span class="crit">{amount}</span> and mends <span class="buff">{healed}</span> HP),
     ignite: "{them} set it burning with {skill}",
     burn: ~s(it burns for <span class="magic">{amount}</span>),
     foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount}</span>),
@@ -61,6 +65,18 @@ defmodule MiniLineage.Game.Narratives do
     standing:
       ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
     foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>),
+    foe_drain:
+      ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span> and mends <span class="buff">{healed}</span> HP),
+    # Two or more swings by one side in a round, each told in order.
+    swings: "{them} swing {times} for {outcomes}",
+    foe_swings: "the {monster} swings {times} at {object} for {outcomes}",
+    swing_hit: ~s(a hit of <span class="attack">{amount}</span>),
+    swing_critical: ~s(a critical hit of <span class="crit">{amount}</span>),
+    swing_miss: "a miss",
+    foe_swing_hit: ~s(a hit of <span class="hp">{amount}</span>),
+    foe_swing_critical: ~s(a critical hit of <span class="hp">{amount}</span>),
+    foe_swing_caught: ~s(a hit of <span class="hp">{amount}</span> that {their} shield catches),
+    foe_swing_perfect: "a blow {their} shield turns aside",
     heal: ~s({them} cast {skill} and mend <span class="buff">{amount}</span> HP),
     aura: ~s({them} raise {their} <span class="buff">{skill}</span>),
     toggle:

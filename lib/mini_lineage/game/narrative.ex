@@ -81,7 +81,7 @@ defmodule MiniLineage.Game.Narrative do
       |> Enum.map(fn
         {round, events} ->
           {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
-          parts = events |> merge_blows() |> Enum.map(&event(&1, foe, bow?))
+          parts = events |> merge_swings() |> Enum.map(&event(&1, foe, bow?))
 
           "Round #{round}: " <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
       end)
@@ -146,6 +146,18 @@ defmodule MiniLineage.Game.Narrative do
         "amount" => amount
       })
 
+  # §19: a drain says what it mends, as a heal does, unless the caster was already whole.
+  defp event({:drain, skill, amount, critical?, 0}, foe),
+    do: event({:cast, skill, amount, critical?}, foe)
+
+  defp event({:drain, skill, amount, critical?, healed}, _foe),
+    do:
+      fill(if(critical?, do: :drain_critical, else: :drain), %{
+        "skill" => skill,
+        "amount" => amount,
+        "healed" => healed
+      })
+
   defp event({:burn, amount}, _foe), do: fill(:burn, %{"amount" => amount})
   defp event({:poison, amount}, _foe), do: fill(:poison, %{"amount" => amount})
 
@@ -181,17 +193,80 @@ defmodule MiniLineage.Game.Narrative do
   defp event({:foe_cast, spell, amount}, foe),
     do: fill(:foe_cast, %{"monster" => foe.name, "skill" => spell, "amount" => amount})
 
+  defp event({:foe_drain, spell, amount, 0}, foe), do: event({:foe_cast, spell, amount}, foe)
+
+  defp event({:foe_drain, spell, amount, healed}, foe),
+    do:
+      fill(:foe_drain, %{
+        "monster" => foe.name,
+        "skill" => spell,
+        "amount" => amount,
+        "healed" => healed
+      })
+
+  defp event({:swings, swings}, _foe),
+    do: fill(:swings, %{"times" => times(swings), "outcomes" => outcomes(swings)})
+
+  defp event({:foe_swings, swings}, foe),
+    do:
+      fill(:foe_swings, %{
+        "monster" => foe.name,
+        "times" => times(swings),
+        "outcomes" => outcomes(swings)
+      })
+
   defp fill(kind, data), do: Format.fill_template(Narratives.log(kind), data)
 
-  # A round's ordinary blows read as one: "you hit for 10 and 9".
-  defp merge_blows(events) do
+  # A side's swings in one round read as one clause: "you hit for 10 and 9" when every one landed
+  # plainly, else each in order, "you swing twice for a critical hit of 65 and a miss".
+  defp merge_swings(events) do
     events
-    |> Enum.chunk_by(&match?({:blow, _, false}, &1))
-    |> Enum.flat_map(fn
-      [{:blow, _, false} | _] = blows -> [{:blows, Enum.map(blows, &elem(&1, 1))}]
-      other -> other
-    end)
+    |> Enum.chunk_by(&swinger/1)
+    |> Enum.flat_map(fn [first | _] = chunk -> merged(swinger(first), chunk) end)
   end
+
+  defp swinger({:blow, _, _}), do: :you
+  defp swinger(:miss), do: :you
+  defp swinger({:foe_blow, _, _, _}), do: :foe
+  defp swinger(:foe_miss), do: :foe
+  defp swinger(_other), do: nil
+
+  defp merged(nil, events), do: events
+
+  defp merged(:you, swings) do
+    cond do
+      Enum.all?(swings, &match?({:blow, _, false}, &1)) ->
+        [{:blows, Enum.map(swings, &elem(&1, 1))}]
+
+      match?([_], swings) ->
+        swings
+
+      true ->
+        [{:swings, swings}]
+    end
+  end
+
+  defp merged(:foe, [_] = one), do: one
+  defp merged(:foe, swings), do: [{:foe_swings, swings}]
+
+  defp times([_, _]), do: "twice"
+  defp times(swings), do: "#{length(swings)} times"
+
+  defp outcomes(swings), do: swings |> Enum.map(&outcome/1) |> join_and()
+
+  defp outcome({:blow, amount, false}), do: fill(:swing_hit, %{"amount" => amount})
+  defp outcome({:blow, amount, true}), do: fill(:swing_critical, %{"amount" => amount})
+  defp outcome(:miss), do: fill(:swing_miss, %{})
+  defp outcome(:foe_miss), do: fill(:swing_miss, %{})
+  defp outcome({:foe_blow, _, _, :perfect}), do: fill(:foe_swing_perfect, %{})
+
+  defp outcome({:foe_blow, amount, _, :caught}),
+    do: fill(:foe_swing_caught, %{"amount" => amount})
+
+  defp outcome({:foe_blow, amount, true, nil}),
+    do: fill(:foe_swing_critical, %{"amount" => amount})
+
+  defp outcome({:foe_blow, amount, false, nil}), do: fill(:foe_swing_hit, %{"amount" => amount})
 
   defp join_and([only]), do: only
   defp join_and(parts), do: Enum.join(Enum.drop(parts, -1), ", ") <> " and " <> List.last(parts)

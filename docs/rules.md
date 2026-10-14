@@ -539,7 +539,9 @@ this far (a monster's spells as far as §19 gives):
 - **The character** uses the first of these it knows that is ready and paid for (§19):
   1. an aura it has not raised;
   2. a toggle not lit, which a Mystic lights only once its blows reach;
-  3. the strongest spell (magic, drain or burn);
+  3. the strongest spell (magic, drain or burn), but a burn not on a monster still burning, and a
+     drain that returns at least half of what it deals (Life Drain) only below 85% of its HP, as
+     the heal it mostly is;
   4. below the share of its HP its orders give, the strongest heal, so a heal fills the time its
      spells rest and never stops it attacking;
   5. while the monster has more than half its HP, a poison it does not carry, then a shackle.

@@ -17,6 +17,10 @@ defmodule MiniLineage.Game.Hunt do
   @monster_absorb 0.2
   # §20: a curse only on a monster above half its HP.
   @curse_above 0.5
+  # §20: a drain returning at least this share of what it deals is a heal, cast only below this
+  # share of HP.
+  @healing_drain 0.5
+  @drain_below 85
   # §20: a monster with a short-range spell, one reaching this far, casts it only this close.
   @short_spell 150
   @near 100
@@ -291,7 +295,7 @@ defmodule MiniLineage.Game.Hunt do
           skills,
           &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp and blows?(s))
         ) ||
-        strongest(s, skills, &(&1.kind in @spells and not (&1.kind == :burn and s.burn != nil))) ||
+        strongest(s, skills, &(&1.kind in @spells and not spent?(s, &1))) ||
         (hurt? && strongest(s, skills, &(&1.kind == :heal))) ||
         if(fresh?,
           do:
@@ -305,6 +309,14 @@ defmodule MiniLineage.Game.Hunt do
       skill -> cast(s, skill, foe)
     end
   end
+
+  # A burn on a monster still burning, or a healing drain on a character not hurt enough to want it.
+  defp spent?(s, %{kind: :burn}), do: s.burn != nil
+
+  defp spent?(s, %{kind: :drain, absorb: absorb}) when absorb >= @healing_drain,
+    do: s.health * 100 >= s.stats.max_hp * @drain_below
+
+  defp spent?(_s, _spell), do: false
 
   defp strongest(s, skills, kind?) do
     skills
@@ -371,12 +383,15 @@ defmodule MiniLineage.Game.Hunt do
         damage = Formulas.magic_damage(stats.m_atk, foe.m_def, skill.power, critical: critical?)
         before = s.foe
         s = s |> wound(round(damage)) |> mark_critical(critical?)
-        s = note(s, {:cast, skill.name, before - s.foe, critical?})
+        dealt = before - s.foe
         s = if skill[:slow], do: %{s | slowed: rounds_of(@slow_ms)}, else: s
 
-        if kind == :drain,
-          do: %{s | health: min(s.health + trunc((before - s.foe) * skill.absorb), stats.max_hp)},
-          else: s
+        if kind == :drain do
+          healed = min(trunc(dealt * skill.absorb), stats.max_hp - s.health)
+          note(%{s | health: s.health + healed}, {:drain, skill.name, dealt, critical?, healed})
+        else
+          note(s, {:cast, skill.name, dealt, critical?})
+        end
     end
   end
 
@@ -533,10 +548,13 @@ defmodule MiniLineage.Game.Hunt do
     lost = min(max(damage, 1), s.health)
 
     healed =
-      if spell.kind == :drain, do: trunc(lost * @monster_absorb), else: 0
+      if spell.kind == :drain, do: min(trunc(lost * @monster_absorb), foe.hp - s.foe), else: 0
 
-    s = note(s, {:foe_cast, spell.name, lost})
-    %{s | health: s.health - lost, foe: min(s.foe + healed, foe.hp)}
+    s = %{s | health: s.health - lost, foe: s.foe + healed}
+
+    if spell.kind == :drain,
+      do: note(s, {:foe_drain, spell.name, lost, healed}),
+      else: note(s, {:foe_cast, spell.name, lost})
   end
 
   defp monster_swing(s, foe) do

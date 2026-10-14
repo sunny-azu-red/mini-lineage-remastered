@@ -6,7 +6,8 @@ worked out by hand, and holds only for the rules it was measured against.
 
 **Measured** on rules §1 to §26 as they now stand: the fight of §20 on a line between the two,
 spells that take effect as their cast ends, the battle orders, and the first skills where Lineage II
-taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc). 400 seeded runs of
+taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc), Life Drain cast as
+a heal and the Evil Eyes choosing their spell by distance. One reading of that build, 400 seeded runs of
 every set up its village's ladder to level 20, once per weapon path its skills can use, each run
 seeded on its own; at the defaults none of them died.
 
@@ -106,21 +107,21 @@ The level each of a path's weapons is first held at, then the level and hunt the
 |---|---|---|---|---|---|---|---|---|
 | Human Fighter | Power Strike | sword 1h | Short Sword 4.0 | Broadsword 10.3 | Gladius 13.0 | Long Sword **15.7** (15–16) | 185 | 381k |
 | Human Fighter | Power Strike | sword 2h | Short Sword 3.8 | Broadsword 10.0 | Brandish 13.0 | Zweihander **17.0** (16–18) | 231 | 282k |
-| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.0 | Doom Dagger 10.3 | Dirk 13.0 | Throwing Knife **15.7** (15–16) | 186 | 380k |
+| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Doom Dagger 10.4 | Dirk 13.0 | Throwing Knife **15.7** (15–16) | 185 | 381k |
 | Human Fighter | Power Shot | bow | Short Bow 3.8 | Bow 10.0 | Hunting Bow 13.0 | Forest Bow **15.5** (15–16) | 181 | 391k |
 | Elven Fighter | Power Shot | bow | (kit) | Bow 9.9 | Hunting Bow 13.0 | Forest Bow **15.1** (15–16) | 201 | 417k |
 | Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.3 | Doom Dagger 10.4 | Dirk 13.0 | Throwing Knife **15.2** (15–16) | 198 | 388k |
-| Orc Fighter | Iron Punch | fists | Spiked Gloves 3.9 | Iron Gloves 10.0 | Fox Claw Gloves 13.0 | Cestus **15.3** (15–16) | 188 | 393k |
-| Orc Fighter | Power Strike | sword 1h | Short Sword 4.2 | Broadsword 10.4 | Gladius 13.0 | Long Sword **15.7** (15–16) | 193 | 384k |
-| Orc Fighter | Power Strike | sword 2h | Short Sword 4.0 | Broadsword 10.0 | Brandish 13.0 | Zweihander **17.0** (16–18) | 246 | 285k |
+| Orc Fighter | Iron Punch | fists | Spiked Gloves 3.9 | Iron Gloves 10.0 | Fox Claw Gloves 13.0 | Cestus **15.3** (15–16) | 188 | 394k |
+| Orc Fighter | Power Strike | sword 1h | Short Sword 4.2 | Broadsword 10.4 | Gladius 13.0 | Long Sword **15.6** (15–16) | 193 | 384k |
+| Orc Fighter | Power Strike | sword 2h | Short Sword 4.0 | Broadsword 10.0 | Brandish 13.0 | Zweihander **17.0** (16–17) | 246 | 285k |
 | Human Mystic | | staff 1h | Rod 4.1 | Spellbook 10.3 | | Relic **14.9** (14–16) | 162 | 405k |
 | Human Mystic | | staff 2h | Rod 3.8 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.4** (15–16) | 181 | 390k |
 | Elven Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.8** (14–15) | 178 | 435k |
 | Elven Mystic | | staff 2h | Rod 3.9 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 201 | 418k |
 | Dark Mystic | | staff 1h | Rod 4.3 | Spellbook 10.3 | | Relic **14.7** (14–15) | 171 | 417k |
 | Dark Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 192 | 397k |
-| Orc Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.9** (14–16) | 167 | 411k |
-| Orc Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.3** (15–16) | 188 | 392k |
+| Orc Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.9** (14–16) | 166 | 414k |
+| Orc Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.3** (15–16) | 187 | 393k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 10, 13, and 15 to 16 for the
   top.** Armour is cheap enough that the top weapon is always the last thing a kit needs.
@@ -143,7 +144,7 @@ Each step is compared run for run (`bench/compare.exs`).
 
 | Set | Path | Before distance | With distance | Now |
 |---|---|---|---|---|
-| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 208 / 204 / 207 |
+| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 208 / 204 / 208 |
 | Human Fighter | bow | 228 | 208 | 208 |
 | Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 191 |
 | Elven Fighter | bow | 233 | 216 | 217 |
@@ -151,7 +152,7 @@ Each step is compared run for run (`bench/compare.exs`).
 | Dark Fighter | dagger | 241 | 230 | 230 |
 | Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | **265 / 266** |
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 308 / 308 |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | **280 / 286** |
 
 - **A spell or a bow pulls from afar**, so the Human and Elven Mystics and the two archers reach 20
   sooner than before the fight had distance: their first spell or shot is free, and a melee monster
@@ -161,12 +162,13 @@ Each step is compared run for run (`bench/compare.exs`).
   reaches 20 22% sooner. Its time was resting, not fighting (207 minutes of 338): Vampiric Touch
   cost 25 MP a cast where Wind Strike costs 9. The Elven Mystic's Wind Strike at 1 makes it 1%
   faster, and a Fighter's first skill at 5 costs nothing measurable.
-- **The Orc Mystic is now the slowest set** at 308 minutes, resting 205 of them: its WIT gives the
-  slowest Casting Spd., Chill Flame burns three rounds after it is begun, and Life Drain costs 27
-  MP. The spread from fastest to slowest set narrows from 147 to 117 minutes. Left unused by the
-  battle orders (rules §20), Life Drain saves it 10% resting to full and 21% with potions, but it is
-  the set's healing, and without potions nearly every run dies; Soul Cry left unused saves about 9%
-  at little risk.
+- **The Orc Mystic casts Life Drain as a heal,** only below 85% of its HP (rules §20), and reaches
+  20 in 280 to 286 minutes rather than 308: Life Drain returns 80% of what it deals for 27 MP, and
+  cast whenever it was ready it spent more MP than any spell in the game while the Orc Mystic was
+  whole. Below 70% it would be 13% to 15% faster, but its deaths without potions doubled; below 85%
+  they move within the dice's noise. It is still the slowest set, by 95 minutes to the Human
+  Mystic where the gap was 147: its WIT gives the slowest Casting Spd., and Chill Flame burns three
+  rounds after it is begun. Soul Cry left unused by the battle orders saves about 9% more.
 - **The Orc Mystic has no Venom.** It was never cast: a poison comes only while the spells rest, and
   Chill Flame or Life Drain is always ready. Without it the set is 0.4% faster for its SP, finishes
   its list at level 14 for 7,840 SP, and its level 7 lines are back at Lineage II's 520.
@@ -184,11 +186,11 @@ a path before the fight had distance (`30e1576`) and now:
 | Human Mystic | staff 1h / 2h | 14 / 18 to **0 / 0** | 27 / 32 to **0 / 0** | |
 | Elven Mystic | staff 1h / 2h | 238 / 370 to **0 / 0** | 249 / 359 to **0 / 0** | |
 | Dark Mystic | staff 1h / 2h | 127 / 330 to **3 / 25** | 279 / 397 to **14 / 26** | Skeleton Hunter, Balor Orc Fighters |
-| Orc Mystic | staff 1h / 2h | 2 / 7 to 6 / 27 | 109 / 171 to **57 / 110** | Skeleton Longbowman |
+| Orc Mystic | staff 1h / 2h | 2 / 7 to 9 / 21 | 109 / 171 to **80 / 136** | Skeleton Longbowman |
 | Human Fighter | bow | 365 to **113** | 400 to 388 | Blade Spider |
 | Elven Fighter | bow | 400 to **225** | 400 to 399 | Sukar Wererat Leader |
 | Dark Fighter | dagger | 235 to **121** | 400 to 385 | Green Fungus, Doom Soldier |
-| Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 6 / 141 / 214 | 347 / 397 / 399 to 346 / 394 / 399 | Blade Spider |
+| Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 6 / 141 / 231 | 347 / 397 / 399 to 346 / 394 / 399 | Blade Spider |
 | Orc Fighter | fists | 240 to 258 | 400 to 399 | Skeleton Longbowman |
 | Orc Fighter | sword 1h / 2h | 384 / 339 to **294 / 206** | 400 | Skeleton Longbowman, Evil Eyes |
 
@@ -215,12 +217,16 @@ a path before the fight had distance (`30e1576`) and now:
   raised before the pull, which changed nothing, since an aura outlasts many fights; curses only
   while the monster is still running in, 2% to 3% faster for the Dark Mystic but its Wind Shackle
   was what held a monster off it in melee, so its deaths more than doubled; Ice Bolt slowing the
-  run alone, as in Lineage II, which let the Sukar Wererat Leader kill the Elven Mystic at level 19 in 256 to 360 runs
-  of 400 without potions; the Orc Mystic with Soul Cry alone until Chill Flame at 7, as in
+  run alone, as in Lineage II, which let the Sukar Wererat Leader kill the Elven Mystic at level
+  19 in 256 to 360 runs of 400 without potions; the Orc Mystic with Soul Cry alone until Chill Flame at 7, as in
   Lineage II, which died at levels 2 to 7 even resting to full (59 runs of 400) and took 20% longer;
   and a poison cast before the spells, while the monster is above half or only while it runs in,
   which slowed the Orc Mystic 21% and the Dark Mystic 6% to 13%, since a poison is slow damage that
-  cannot take the last HP, bought with a 4-second cast.
+  cannot take the last HP, bought with a 4-second cast; every drain cast only below a share of HP,
+  which slowed the Dark Mystic and killed more Dark Fighters, where Life Drain alone pays; and the
+  six slow casters (the golems, the zombies and the Undead Slave) casting their power-5 poke with
+  Lineage II's odds, mostly at a character that is not hitting them, rather than whenever it is
+  ready, which moved no set by more than 1%.
 - **The Skeleton Longbowman is the Orc Village ground's hard top rung,** as the Sukar Wererat Leader
   is the Elven ground's: against a full kit at 19 it costs an Orc Fighter 45% to 52% of its HP a
   fight (about 60 of them while the Fighter runs 460 in under its arrows), where the Leader costs

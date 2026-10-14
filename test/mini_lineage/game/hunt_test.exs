@@ -106,6 +106,36 @@ defmodule MiniLineage.Game.HuntTest do
       assert result.mp == mystic.mp - 9 * result.uses
     end
 
+    test "an Orc Mystic casts Life Drain as a heal, only below 85% of its HP" do
+      Rng.put_source(fn -> 0.0 end)
+      orc = trained(1, :mystic, 7)
+      stats = Player.stats(orc)
+
+      spells = fn result ->
+        for {_, event} <- result.log,
+            is_tuple(event) and elem(event, 0) in [:cast, :drain],
+            do: elem(event, 1)
+      end
+
+      whole = Hunt.fight(stats, orc, Player.known_skills(orc), dummy("Kasha Wolf"))
+      assert "Chill Flame" in spells.(whole)
+      refute "Life Drain" in spells.(whole)
+
+      hurt = %{orc | health: div(stats.max_hp * 80, 100)}
+      drained = Hunt.fight(stats, hurt, Player.known_skills(orc), dummy("Kasha Wolf"))
+
+      # What it mends is in the log, at most 80% of what it dealt, and is what the bar gained.
+      [{round, {:drain, "Life Drain", dealt, _, healed}} | _] = events(drained, :drain)
+      assert healed > 0 and healed <= trunc(dealt * 0.8)
+      before = for {r, {:standing, hp, _}} <- drained.log, r == round - 1, do: hp
+      after_ = for {r, {:standing, hp, _}} <- drained.log, r == round, do: hp
+      assert after_ == Enum.map(before, &(&1 + healed))
+
+      assert "Life Drain" in spells.(
+               Hunt.fight(stats, hurt, Player.known_skills(orc), dummy("Kasha Wolf"))
+             )
+    end
+
     test "a burn takes the last HP, so an Orc Mystic's Chill Flame alone fells a keltir" do
       Rng.put_source(fn -> 0.9999 end)
       result = fight(character(1, :mystic), "Young Prairie Keltir")
@@ -517,13 +547,29 @@ defmodule MiniLineage.Game.HuntTest do
       Rng.put_source(fn -> 0.0 end)
       fighter = striker()
       result = fight(fighter, "Evil Eye Watcher")
-      spells = for {_, {kind, name, _}} <- result.log, kind == :foe_cast, uniq: true, do: name
+
+      spells =
+        for {_, event} <- result.log,
+            is_tuple(event) and elem(event, 0) in [:foe_cast, :foe_drain],
+            uniq: true,
+            do: elem(event, 1)
+
       assert spells == ["NPC Aura Burn - Magic 1"]
 
       mystic = trained(0, :mystic, 1)
       eye = tough("Evil Eye Watcher")
       result = Hunt.fight(Player.stats(mystic), mystic, Player.known_skills(mystic), eye)
       assert [{_, {:foe_begin, "NPC HP Drain - Magic 1"}} | _] = events(result, :foe_begin)
+
+      # What its drain mends is in the log, and is what its HP gained, never past its most.
+      drains = events(result, :foe_drain)
+      assert Enum.any?(drains, &match?({_, {:foe_drain, _, _, healed}} when healed > 0, &1))
+
+      for {round, {:foe_drain, _, lost, healed}} <- drains do
+        [was] = for {r, {:standing, _, foe}} <- result.log, r == round - 1, do: foe
+        [now] = for {r, {:standing, _, foe}} <- result.log, r == round, do: foe
+        assert healed <= trunc(lost * 0.2) and now - was <= healed
+      end
     end
 
     test "an Ice-Bolted monster runs 30% slower" do

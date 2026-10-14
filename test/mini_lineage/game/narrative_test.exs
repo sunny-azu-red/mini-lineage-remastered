@@ -49,12 +49,60 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert unrendered(Narrative.voiced(noticed, false)) == []
     end
 
+    test "tells a side's swings in one round as one clause, each in order" do
+      foe = Rules.monster("Vaiss Orc")
+      ground = Rules.ground("obelisk-of-victory")
+
+      log = [
+        {1, {:blow, 10, false}},
+        {1, {:blow, 9, false}},
+        {2, {:blow, 65, true}},
+        {2, :miss},
+        {2, {:foe_blow, 12, false, nil}},
+        {2, :foe_miss},
+        {3, {:foe_blow, 8, false, :caught}},
+        {3, {:foe_blow, 1, false, :perfect}},
+        {3, {:foe_blow, 30, true, nil}},
+        {4, {:foe_drain, "NPC HP Drain - Magic 1", 20, 4}},
+        {5, {:blow, 11, false}},
+        {5, {:foe_blow, 7, false, nil}},
+        {6, {:blow, 40, true}},
+        {6, :foe_miss}
+      ]
+
+      log = log ++ for(round <- 1..6, do: {round, {:standing, 90, 20}})
+
+      [_met | rounds] =
+        foe
+        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
+        |> Enum.map(&Narrative.alert/1)
+
+      plain = fn line -> String.replace(line, ~r/<[^>]+>/, "") end
+      [one, two, three, four, five, six] = Enum.map(rounds, plain)
+
+      assert one =~ "Round 1: you hit for 10 and 9 ("
+
+      assert two =~
+               "Round 2: you swing twice for a critical hit of 65 and a miss, and the Vaiss Orc swings twice at you for a hit of 12 and a miss ("
+
+      assert three =~
+               "the Vaiss Orc swings 3 times at you for a hit of 8 that your shield catches, a blow your shield turns aside and a critical hit of 30 ("
+
+      assert four =~ "the Vaiss Orc casts NPC HP Drain - Magic 1 on you for 20 and mends 4 HP"
+      assert five =~ "Round 5: you hit for 11, and the Vaiss Orc hits you for 7 ("
+      assert six =~ "Round 6: you land a critical hit for 40, and the Vaiss Orc misses ("
+      for line <- rounds, do: assert(unrendered(line) == [], line)
+    end
+
     test "writes every event a skill makes, open-voiced and with no brace left" do
       foe = Rules.monster("Young Keltir")
       ground = Rules.ground("obelisk-of-victory")
 
       log = [
         {1, {:heal, "Self Heal", 42}},
+        {1, {:drain, "Life Drain", 14, false, 11}},
+        {2, {:drain, "Vampiric Touch", 30, true, 12}},
+        {2, {:drain, "Life Drain", 9, false, 0}},
         {1, {:aura, "Defense Aura"}},
         {2, {:toggle, "Soul Cry"}},
         {3, {:curse, "Curse: Poison", true}},
@@ -88,6 +136,9 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       text = Enum.join(lines, "\n")
       assert text =~ "cast Self Heal and mend"
+      assert text =~ ~r/cast Life Drain for .*14.* and mend .*11.* HP/
+      assert text =~ ~r/Vampiric Touch strikes true for .*30.* and mends .*12.* HP/
+      assert text =~ ~r/cast Life Drain for .*9<\/span>,/
       assert text =~ "raise your"
       assert text =~ "Soul Cry"
       assert text =~ "lay Curse: Poison on the Young Keltir"
