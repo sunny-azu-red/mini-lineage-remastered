@@ -77,3 +77,5 @@ window.__percentFigure = percentFigure;
 window.__tenthsFigure = tenthsFigure;
 window.__timerLabel = timerLabel;
 window.__remainingLabel = remainingLabel;
+// And the countdown itself, handed a duration a stepped server clock could send.
+window.__EffectTimers = gameHooks.EffectTimers;

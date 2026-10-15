@@ -2,7 +2,7 @@ defmodule MiniLineage.Game.SnapshotTest do
   @moduledoc "The Player -> view mapping, and the catalog the pages draw from."
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Math, Player, Rules, Snapshot}
+  alias MiniLineage.Game.{Clock, Constants, Math, Player, Rules, Snapshot}
 
   defp character(race_id \\ 0, overrides \\ %{}) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Subject")
@@ -62,6 +62,27 @@ defmodule MiniLineage.Game.SnapshotTest do
       refute view.is_max_level
       assert view.xp_required > 0
     end
+  end
+
+  test "a countdown keeps its key from build to build, whatever the clock says, and a new one gets its own" do
+    now = ~U[2026-10-15 12:00:00.000Z]
+    fades = DateTime.to_unix(now, :millisecond) + 60_000
+    player = character(2, %{buffs: %{"Defense Aura" => fades}})
+    aura = fn player -> Enum.find(Snapshot.build(player).effects, &(&1.id == "defense_aura")) end
+
+    Clock.put_now(now)
+    first = aura.(player)
+    # A stepped clock: the duration moves, the countdown it names does not.
+    Clock.put_now(DateTime.add(now, 3_600, :millisecond))
+    later = aura.(player)
+
+    assert {first.remaining_ms, later.remaining_ms} == {60_000, 56_400}
+    assert first.timer_key == later.timer_key
+
+    refute aura.(%{player | buffs: %{"Defense Aura" => fades + 60_000}}).timer_key ==
+             first.timer_key
+
+    assert Enum.all?(Snapshot.build(character()).effects, &(&1.timer_key == nil))
   end
 
   test "the regenerating tooltip says what a tick restores" do

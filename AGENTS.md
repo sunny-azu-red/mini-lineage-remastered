@@ -328,8 +328,9 @@ Each of these is here because it was got wrong once.
   duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:
   legacy's pixel badge over the header icon, and on its Buffs & Debuffs row "+8% P.Def for another
   1m 37s." (or, with no stat to change, "You rest again in 3s."). Each row hooks itself, since the rows sit straight in the panel body.
-  A duration is measured when the view is built, and any patch can repeat an old one, so a timer
-  restarts only when its duration changes, and every arrival rebuilds the view.
+  Each also carries a `timer_key` naming that countdown, and the browser counts it from the first
+  duration it is sent: a patch can repeat an old one, and a server clock can step (WSL2's does,
+  3.6s every half minute), so a later duration never moves a timer already counting.
 - **Every figure counts; only names and dates jump.** A number the player can watch change is a
   `<.figure>`, animated by `AnimatedValues` hooked once over whatever contains them. It writes
   `data-value` and the text from one value, and `format={:short}` sets both the short form and the

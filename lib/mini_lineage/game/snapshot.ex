@@ -215,7 +215,10 @@ defmodule MiniLineage.Game.Snapshot do
         Enum.map(Map.get(aura, :rates, []), fn {stat, value} -> %{stat: stat, value: value} end),
       # A duration, not a deadline, so the browser's clock is never compared with the server's.
       remaining_ms:
-        aura[:ends_at] && max(aura.ends_at - DateTime.to_unix(Clock.now(), :millisecond), 0)
+        aura[:ends_at] && max(aura.ends_at - DateTime.to_unix(Clock.now(), :millisecond), 0),
+      # Which countdown this is, and nothing about when: the browser counts each from the first
+      # duration it is sent, so a server clock that steps cannot move one already counting.
+      timer_key: aura[:ends_at] && Integer.to_string(:erlang.phash2({aura.id, aura.ends_at}))
     }
   end
 

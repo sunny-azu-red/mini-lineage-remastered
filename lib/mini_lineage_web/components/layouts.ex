@@ -102,6 +102,7 @@ defmodule MiniLineageWeb.Layouts do
         :if={@effect.remaining_ms}
         class="effect-timer"
         data-remaining-ms={@effect.remaining_ms}
+        data-timer-key={@effect.timer_key}
       >{Format.countdown(@effect.remaining_ms)}</span>
     </span>
     """

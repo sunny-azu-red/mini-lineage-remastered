@@ -632,7 +632,7 @@ defmodule MiniLineageWeb.Screens do
       phx-hook={effect_hook(effect)}
     >
       <p phx-no-format>
-        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="muted">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every three seconds.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} />.<% true -> %><% end %>
+        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="muted">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every three seconds.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
       </p>
     </div>
     """
@@ -767,10 +767,13 @@ defmodule MiniLineageWeb.Screens do
   defp lapse(:aura), do: "You rest again in"
 
   attr :ms, :integer, required: true
+  attr :key, :string, required: true
 
   defp timer(assigns),
     do:
-      ~H|<span class="timer" data-timer="long" data-remaining-ms={@ms}>{Format.remaining(@ms)}</span>|
+      ~H|<span class="timer" data-timer="long" data-remaining-ms={@ms} data-timer-key={@key}>{Format.remaining(
+  @ms
+)}</span>|
 
   # One each, since a set learns two of a kind (the Orc Fighter, two physical skills).
   @skill_icons %{

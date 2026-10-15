@@ -88,6 +88,27 @@ try {
         timers,
     );
     check('...and counts an effect down exactly as the server does', offTimers.length === 0, offTimers.join(' | '));
+    // A server clock can step (WSL2's moves 3.6s every half minute), so a later duration for a
+    // countdown already running must not move it, and a new countdown starts from its own.
+    const stepped = await page.evaluate(() => {
+        const el = document.createElement('div');
+        el.innerHTML = '<span data-remaining-ms="30000" data-timer-key="walkthrough-1"></span>';
+        const timer = el.firstChild;
+        const hook = Object.assign(Object.create(window.__EffectTimers), { el });
+        hook.mounted();
+        const first = timer.textContent;
+        timer.dataset.remainingMs = '33600';
+        hook.updated();
+        const stepped = timer.textContent;
+        timer.dataset.timerKey = 'walkthrough-2';
+        timer.dataset.remainingMs = '9000';
+        hook.updated();
+        const recast = timer.textContent;
+        hook.destroyed();
+        return `${first} ${stepped} ${recast}`;
+    });
+    check('...holding a countdown to its first duration when a later one disagrees, until a new one starts',
+        stepped === '30 30 9', stepped);
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);

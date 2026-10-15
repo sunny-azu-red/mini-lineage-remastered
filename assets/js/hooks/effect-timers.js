@@ -1,7 +1,6 @@
 /**
  * Counts an effect's time down where it is shown. The server sends a duration, never a deadline, so
- * the browser's clock is never compared with the server's. A patch can carry the duration measured
- * at an earlier build, so a timer restarts only when its duration changes.
+ * the browser's clock is never compared with the server's.
  */
 const secondsLeft = (ms) => Math.max(0, Math.ceil(ms / 1000));
 
@@ -20,35 +19,40 @@ export function remainingLabel(ms) {
     return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }
 
+// When each countdown ends by this page's own clock, by `data-timer-key`. Only the first duration
+// counts: a later one is measured by a server clock that may have stepped since, and a badge and its
+// row read one end, so they turn over together.
+const ends = new Map();
+
+const endOf = (timer, now) => {
+    const key = timer.dataset.timerKey;
+    if (!ends.has(key)) ends.set(key, now + Number(timer.dataset.remainingMs));
+    return ends.get(key);
+};
+
 export const EffectTimers = {
     mounted() {
-        this.stamp();
-    },
-    updated() {
-        this.stamp();
-    },
-    destroyed() {
-        clearInterval(this.interval);
-    },
-    // Ticks only while something here is timed: an aura held indefinitely, In Combat on the ground
-    // among them, has no end to count to.
-    stamp() {
-        const now = Date.now();
-        for (const timer of this.el.querySelectorAll('[data-remaining-ms]')) {
-            if (timer.stampedMs === timer.dataset.remainingMs) continue;
-            timer.stampedMs = timer.dataset.remainingMs;
-            timer.stampedAt = now;
-        }
-        clearInterval(this.interval);
-        this.interval = this.el.querySelector('[data-remaining-ms]')
-            ? setInterval(() => this.paint(), 1000)
-            : undefined;
         this.paint();
     },
+    updated() {
+        this.paint();
+    },
+    destroyed() {
+        clearTimeout(this.timeout);
+    },
+    // Repaints as the soonest label turns over, not a second after whenever it was drawn. An aura
+    // held indefinitely, In Combat on the ground among them, has no end to count to.
     paint() {
+        clearTimeout(this.timeout);
+        const now = performance.now();
+        let next = Infinity;
         for (const timer of this.el.querySelectorAll('[data-remaining-ms]')) {
+            const left = endOf(timer, now) - now;
             const say = timer.dataset.timer === 'long' ? remainingLabel : timerLabel;
-            timer.textContent = say(Number(timer.dataset.remainingMs) - (Date.now() - timer.stampedAt));
+            timer.textContent = say(left);
+            if (left > 0) next = Math.min(next, left % 1000 || 1000);
         }
+        for (const [key, end] of ends) if (end < now - 60_000) ends.delete(key);
+        if (next < Infinity) this.timeout = setTimeout(() => this.paint(), next + 5);
     },
 };
