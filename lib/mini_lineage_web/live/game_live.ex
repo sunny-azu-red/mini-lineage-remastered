@@ -108,7 +108,7 @@ defmodule MiniLineageWeb.GameLive do
     do: if(Player.started?(player), do: {"town", player.location}, else: {"start", nil})
 
   defp requested_place(action, uri, _player)
-       when action in [:town, :gatekeeper, :hunt, :trader, :trainer],
+       when action in [:town, :gatekeeper, :hunt, :trader, :guild],
        do: {Atom.to_string(action), Paths.town_of(uri)}
 
   defp requested_place(:highscores, uri, _player), do: {"highscores", Paths.lineage_of(uri)}
@@ -213,7 +213,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
 
-  @inner ~w(trader trainer) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
+  @inner ~w(trader guild) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
 
   # Rules §20: going out to the ground meets nothing until the player looks for a fight.
   def handle_event("navigate", %{"place" => place}, socket) when place in ["hunt" | @inner],
@@ -292,7 +292,7 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
 
-  # Rules §25: one line from the village's trainer, chosen as "skill|level"; the empty choice leaves.
+  # Rules §25: one line from the village's guild, chosen as "skill|level"; the empty choice leaves.
   def handle_event("learn", %{"lesson" => ""}, socket),
     do: {:noreply, walk(socket, {"town", socket.assigns.town})}
 

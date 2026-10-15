@@ -10,8 +10,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   distance, `Actions.hunt/1`, and death), each village's trader and its inner
   pages (`/<village>/trader/<category|sell>`) and the inventory beside its Combat
   Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
-  and the home village's trainer (rules §25: `Actions.learn/3`, `/<village>/trainer`, a character's
-  `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
+  and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
+  `/<village>/guild`, named per set by `Rules.guild/1`, a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
   (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is
   in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
@@ -40,7 +40,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   races, highscores, error), all in `Screens` until one needs its own module; the Halls have
   `Screens.Halls`. `Screens.panels/3` lists a
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
-  the Chronicles, one per section on the character page, and on the trainer's a Learned Skills
+  the Chronicles, one per section on the character page, and on the guild's a Learned Skills
   panel only once something is learned. `GameLive` lists them again whenever the view is rebuilt.
   Every template starts with `<Layouts.app>`.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
@@ -290,7 +290,7 @@ Each of these is here because it was got wrong once.
   already chosen) are the filters'. Danger comes back from `legacy/` when needed. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`.
 - **Every dropdown is `Controls.select_action/1`**, because the dropdown and its button ARE the
-  game's navigation: in a town it lists where you can go, at a trader or trainer what you can do
+  game's navigation: in a town it lists where you can go, at a trader or guild what you can do
   there. Only what makes no sense as a place to go from a town (the inventory, the character page) is
   a link. A place with several verbs keeps one list: each option names its `group` (drawn as an
   `<optgroup>`), and its `action` and `variant` are what the button says and looks like once it is
@@ -354,6 +354,11 @@ Each of these is here because it was got wrong once.
 
 - **The game's prose joins its clauses rather than splitting them with an em dash**: a dash in a
   sentence a player reads becomes `because`, `and` or `nor`. Comments and docs are exempt.
+- **Adena always comes with its coin and its gold.** An amount in a message is `Format.adena/1`
+  (`🪙 N Adena` in `.adena`), a table cell or figure is `.adena` led by 🪙, and a dropdown option,
+  which cannot be coloured, still writes the 🪙.
+- **A place keeps its role; its keeper's name is in what is said there.** The Gatekeeper is
+  "Gatekeeper" in the dropdown and the header, and Roxxy in the intro and the flashes.
 - **Write a named entity where one exists**: `&amp;` `&copy;` `&ndash;` `&bull;` `&nbsp;` `&mdash;`
   `&hellip;`. Everything else, every emoji included, is written as it is.
 - **An anchor wraps its text and nothing else.** A newline inside renders as an underlined space, so

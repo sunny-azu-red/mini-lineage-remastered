@@ -17,12 +17,13 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
-  @doc "Through a Gatekeeper, and what it cost."
-  def build_arrived(town, fee) do
+  @doc "Through the Gatekeeper of the town left, and what it cost."
+  def build_arrived(gatekeeper, town, fee) do
     Format.fill_template(Narratives.arrived(), %{
+      "gatekeeper" => gatekeeper,
       "townEmoji" => town.emoji,
       "town" => town.name,
-      "fee" => Format.number(fee)
+      "fee" => Format.adena(fee)
     })
   end
 
@@ -35,7 +36,7 @@ defmodule MiniLineage.Game.Narrative do
       "sp" => Format.number(sp),
       "adena" =>
         if(adena > 0,
-          do: ~s(, and <span class="adena">#{Format.number(adena)} Adena</span> from its body),
+          do: ", and #{Format.adena(adena)} from its body",
           else: ""
         )
     })

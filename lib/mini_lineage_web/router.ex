@@ -45,7 +45,7 @@ defmodule MiniLineageWeb.Router do
         live "/#{slug}/trader/#{page}", GameLive, :trader_page
       end
 
-      live "/#{slug}/trainer", GameLive, :trainer
+      live "/#{slug}/guild", GameLive, :guild
     end
 
     # Rules §17: a village's ground, outside it and at its own address.

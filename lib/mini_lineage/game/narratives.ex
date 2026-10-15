@@ -19,7 +19,7 @@ defmodule MiniLineage.Game.Narratives do
 
   @began ~s({they} chose the {raceEmoji} {className} and set out from {townEmoji} {town}.)
 
-  @arrived ~s({they} pay the Gatekeeper <span class="adena">{fee} Adena</span> and step out into {townEmoji} {town}.)
+  @arrived ~s({they} pay {gatekeeper} {fee} and step out into {townEmoji} {town}.)
 
   # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
   @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and <span class="sp">{sp} SP</span>{adena}.)

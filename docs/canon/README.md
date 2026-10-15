@@ -46,7 +46,7 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 | File | Holds |
 |---|---|
 | [races.md](races.md) | Each race's level-1 template (attributes, HP, MP, speed) and every starting set's gear |
-| [towns.md](towns.md) | Every town's NPCs, every Gatekeeper's destinations and fees, temples and village masters, the Newbie Guide and its buffs |
+| [towns.md](towns.md) | Every town's NPCs, every Gatekeeper's destinations and fees, temples and village masters, the four villages' guilds and trainers, the Newbie Guide and its buffs |
 | [monsters.md](monsters.md) | Every monster around the four villages and on Ruins of Despair: L2J's full stat block, EXP, SP and Adena, how a monster's Accuracy, Evasion and Critical are worked out, and the spells monsters cast |
 | [hunting-grounds.md](hunting-grounds.md) | Every hunting ground: nearest town, teleport fee, level band, monsters by level |
 | [weapons-and-armour.md](weapons-and-armour.md) | Every weapon and armour piece by grade and type: stats, reference price, which towns sell it |
@@ -188,6 +188,9 @@ the fight uses them.
 - **Skills are learned with level and SP alone, at the trainers of the character's own village.**
   In Lineage II some needed a spellbook from the village trader, and any town's trainers for your
   race would teach you.
+- **The guilds are named alike in both villages that have two:** Warriors Guild and Mystics Guild,
+  with no apostrophe. Lineage II's Newbie Guide writes "Warriors' Guild" and "Temple (Mystics'
+  Guild)" in Talking Island but "Warrior Guild" and "Mystic Guild" in the Orc Village.
 
 **Pace and gear**
 

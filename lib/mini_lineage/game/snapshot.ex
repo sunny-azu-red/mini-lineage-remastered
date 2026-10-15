@@ -29,6 +29,7 @@ defmodule MiniLineage.Game.Snapshot do
     sp: nil,
     items: [],
     stock: [],
+    guild: nil,
     lessons: [],
     skills: [],
     potion_at: nil,
@@ -83,7 +84,8 @@ defmodule MiniLineage.Game.Snapshot do
       items: items(player),
       # Rules §24: the village's shop, where there is one.
       stock: if(Rules.village?(player.location), do: stock(player.location), else: []),
-      # Rules §25: the trainer's lessons, in the character's own village only.
+      # Rules §25: the guild's lessons, in the character's own village only.
+      guild: Rules.guild(Rules.set(player.race_id, player.path).name),
       lessons:
         if(player.location == Rules.hometown(player.race_id),
           do: lessons(player, level),

@@ -31,13 +31,13 @@ defmodule MiniLineageWeb.Screens do
     "trader-jewellery" => "Trader: Jewellery",
     "trader-potions" => "Trader: Potions",
     "trader-sell" => "Trader: Sell",
-    "trainer" => "Trainer",
     "error" => "Error"
   }
 
   @doc "What the panel is headed: the town a run stands in, the screen's name elsewhere."
   def title("town", %{started: true, town: town}), do: town.name
   def title("hunt", %{started: true, ground: %{} = ground}), do: ground.name
+  def title("guild", %{started: true, guild: guild}), do: guild.name
   def title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
 
   @doc "A place's emoji, drawn in the band beside its name; a screen that is not a place has none."
@@ -47,7 +47,7 @@ defmodule MiniLineageWeb.Screens do
   def icon("hunt", _view), do: "⚔️"
   def icon("inventory", _view), do: "🎒"
   def icon("trader" <> _, _view), do: "🛒"
-  def icon("trainer", _view), do: "📖"
+  def icon("guild", _view), do: "📖"
   def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
 
@@ -77,10 +77,10 @@ defmodule MiniLineageWeb.Screens do
       %{title: "Battle Orders", icon: "📜", section: :orders}
     ]
 
-  # Rules §25: what the trainers teach, and beside it what the character already knows, if anything.
-  def panels("trainer", view, _catalog),
+  # Rules §25: what the guild teaches, and beside it what the character already knows, if anything.
+  def panels("guild", view, _catalog),
     do:
-      [%{title: title("trainer", view), icon: icon("trainer", view)}] ++
+      [%{title: title("guild", view), icon: icon("guild", view)}] ++
         if(view.skills == [],
           do: [],
           else: [%{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}]
@@ -121,7 +121,7 @@ defmodule MiniLineageWeb.Screens do
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
-      when screen in ~w(town gatekeeper hunt trader trainer character inventory) or
+      when screen in ~w(town gatekeeper hunt trader guild character inventory) or
              binary_part(screen, 0, min(byte_size(screen), 7)) == "trader-",
       do: ~H||
 
@@ -131,8 +131,8 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "trader"} = assigns), do: trader(assigns)
   def screen(%{screen: "trader-" <> _} = assigns), do: trader_page(assigns)
-  def screen(%{screen: "trainer", panel: %{section: :skills}} = assigns), do: character(assigns)
-  def screen(%{screen: "trainer"} = assigns), do: trainer(assigns)
+  def screen(%{screen: "guild", panel: %{section: :skills}} = assigns), do: character(assigns)
+  def screen(%{screen: "guild"} = assigns), do: guild(assigns)
   def screen(%{screen: "inventory", panel: %{section: :stats}} = assigns), do: character(assigns)
   def screen(%{screen: "inventory"} = assigns), do: inventory(assigns)
   def screen(%{screen: "character"} = assigns), do: character(assigns)
@@ -215,7 +215,7 @@ defmodule MiniLineageWeb.Screens do
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
       if(view.stock != [], do: [%{value: "trader", label: "🛒 Trader"}], else: []) ++
-      if(view.lessons != [], do: [%{value: "trainer", label: "📖 Trainer"}], else: []) ++
+      if(view.lessons != [], do: [%{value: "guild", label: "📖 #{view.guild.name}"}], else: []) ++
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
 
@@ -319,7 +319,7 @@ defmodule MiniLineageWeb.Screens do
       options={
         Enum.map(
           @sellable,
-          &%{value: &1.id, label: "Sell the #{&1.name} for #{Format.number(&1.buyback)}"}
+          &%{value: &1.id, label: "Sell the #{&1.name} for 🪙 #{Format.number(&1.buyback)}"}
         )
       }
       default_label="Return"
@@ -363,7 +363,7 @@ defmodule MiniLineageWeb.Screens do
 
   # Rules §25: every line the set has still to learn, muted unless it can be learned next; what it
   # knows is the panel beside it. SP is paid like Adena, so a line short of it is still offered.
-  defp trainer(assigns) do
+  defp guild(assigns) do
     # Each skill's next line only: the ones after it are learned in order, so listing them is clutter.
     lessons =
       assigns.view.lessons
@@ -382,8 +382,8 @@ defmodule MiniLineageWeb.Screens do
       )
 
     ~H"""
-    <p id="trainer-intro" phx-hook="AnimatedValues" phx-no-format>
-      The trainers of {@view.town.emoji} {@view.town.name} teach their own, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="trainer-sp" value={@view.sp} /> SP</span>.
+    <p id="guild-intro" phx-hook="AnimatedValues" phx-no-format>
+      {Format.list(@view.guild.trainers, "and")} teach their own here in {@view.town.emoji} {@view.town.name}, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="guild-sp" value={@view.sp} /> SP</span>.
     </p>
     <.data_table id="lessons" sort={@sort}>
       <:col class="name" sort="skill">Skill</:col>
@@ -529,11 +529,11 @@ defmodule MiniLineageWeb.Screens do
         for n <- @potion_lots,
             do: %{
               value: "#{item.name}|#{n}",
-              label: "Buy #{n} × #{item.name} for #{Format.number(item.price * n)}"
+              label: "Buy #{n} × #{item.name} for 🪙 #{Format.number(item.price * n)}"
             }
 
       item ->
-        [%{value: item.name, label: "Buy the #{item.name} for #{Format.number(item.price)}"}]
+        [%{value: item.name, label: "Buy the #{item.name} for 🪙 #{Format.number(item.price)}"}]
     end)
   end
 
@@ -558,7 +558,9 @@ defmodule MiniLineageWeb.Screens do
   # Rules §14: every route out of this town and its fee, then the choice of one.
   defp gatekeeper(assigns) do
     ~H"""
-    <p>The Gatekeeper can send you on from {@view.town.emoji} {@view.town.name}, for a fee.</p>
+    <p id="gatekeeper-intro" phx-no-format>
+      {@view.town.gatekeeper} the Gatekeeper can send you on from {@view.town.emoji} {@view.town.name} in the blink of an eye, to any town the routes from here reach, for a fee.
+    </p>
     <.data_table id="routes-table">
       <:col class="name">Destination</:col>
       <:col>Adena</:col>

@@ -40,7 +40,7 @@ defmodule MiniLineageWeb.Paths do
   def for_screen({"trader-" <> page, slug}) when is_binary(slug) and page in @trader_pages,
     do: "/#{slug}/trader/#{page}"
 
-  def for_screen({"trainer", slug}) when is_binary(slug), do: "/#{slug}/trainer"
+  def for_screen({"guild", slug}) when is_binary(slug), do: "/#{slug}/guild"
 
   def for_screen({"hunt", slug}) when is_binary(slug),
     do: "/#{slug}/#{Rules.ground_of(slug).slug}"

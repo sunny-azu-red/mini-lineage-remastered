@@ -220,18 +220,18 @@ deals **100**, and **400** on a magic critical.
 
 A character stands in one town at a time, which starts as its race's village (§1). The towns:
 
-| Town | Slug | Open |
-|---|---|---|
-| Talking Island Village | talking-island | yes |
-| Elven Village | elven-village | yes |
-| Dark Elf Village | dark-elf-village | yes |
-| Orc Village | orc-village | yes |
-| Town of Gludio | gludio | yes |
-| Town of Dion | dion | yes |
-| Town of Giran | giran | not yet |
-| Giran Harbor | giran-harbor | not yet |
+| Town | Slug | Open | Gatekeeper |
+|---|---|---|---|
+| Talking Island Village | talking-island | yes | Roxxy |
+| Elven Village | elven-village | yes | Mirabel |
+| Dark Elf Village | dark-elf-village | yes | Jasmine |
+| Orc Village | orc-village | yes | Tamil |
+| Town of Gludio | gludio | yes | Bella |
+| Town of Dion | dion | yes | Trisha |
+| Town of Giran | giran | not yet | Clarissa |
+| Giran Harbor | giran-harbor | not yet | Angelina |
 
-Every town has a Gatekeeper, who sends a character along a route for Adena. A route runs both ways
+Every town has its Gatekeeper, named above, who sends a character along a route for Adena. A route runs both ways
 at one fee, and these are the only routes: the four villages never link to each other, only to
 Gludio, and the mainland goes on from there. A town that is not open yet is listed by its
 Gatekeeper and cannot be travelled to. A character who cannot pay the fee does not go.
@@ -723,11 +723,26 @@ down. A starting kit is worth nothing to a shop and is never bought.
 
 Example: a Broadsword costs **12,500** and sells back for **6,250**.
 
-## 25. The trainer
+## 25. The guild
 
 Each starting village's trainers teach its own race and nobody else, for the SP a character earns
-on the hunt (§20). A line is learned once the character has reached its level, knows the level
-before it, and pays its SP. Each set's list is short: its first skill and the others §19 gives it,
+on the hunt (§20). They teach in the village's guild, one per path in Talking Island Village and the
+Orc Village and one for both in the Elven and Dark Elf Villages, and only a set's own trainers teach
+it:
+
+| Set | Guild | Trainers |
+|---|---|---|
+| Human Fighter | Warriors Guild | Master Gwinter, Master Minia, Master Pintage |
+| Human Mystic | Mystics Guild | Magister Baulro, Magister Harrys, Priest Yohanes, Priest Petron |
+| Elven Fighter | Eva's Sanctuary | Master Ellenia, Master Cobendell |
+| Elven Mystic | Eva's Sanctuary | Magister Greenis, Magister Esrandell |
+| Dark Fighter | Temple of Shilen | Master Trudy, Master Harant |
+| Dark Mystic | Temple of Shilen | Magister Vlasty, Magister Harne |
+| Orc Fighter | Warriors Guild | Prefect Brukurse, Prefect Karukia |
+| Orc Mystic | Mystics Guild | Seer Tanapi, Seer Livina |
+
+A line is learned once the character has reached its level, knows the level before it, and pays
+its SP. Each set's list is short: its first skill and the others §19 gives it,
 each at every level. Only the first skill's level 1 is taught for nothing, and so is known from the
 start; a Mystic's other line at level 1 costs 50, and a Fighter's other weapon skills begin at
 level 1 for 50 (60 for the Orc).

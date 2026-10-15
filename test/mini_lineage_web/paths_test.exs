@@ -12,7 +12,7 @@ defmodule MiniLineageWeb.PathsTest do
   defp places do
     [{"start", nil}, {"races", nil}, {"error", nil}, {"character", nil}, {"highscores", nil}] ++
       [{"inventory", nil}] ++
-      for(slug <- Paths.villages(), screen <- ~w(trader trainer), do: {screen, slug}) ++
+      for(slug <- Paths.villages(), screen <- ~w(trader guild), do: {screen, slug}) ++
       for(slug <- Paths.villages(), page <- Paths.trader_pages(), do: {"trader-" <> page, slug}) ++
       for(slug <- Paths.towns(), screen <- ~w(town gatekeeper), do: {screen, slug}) ++
       for(slug <- Paths.hunting_towns(), do: {"hunt", slug}) ++
@@ -38,7 +38,7 @@ defmodule MiniLineageWeb.PathsTest do
   end
 
   test "an address names the town it stands in" do
-    for {screen, slug} = place <- places(), screen in ~w(town gatekeeper hunt trader trainer) do
+    for {screen, slug} = place <- places(), screen in ~w(town gatekeeper hunt trader guild) do
       assert Paths.town_of("http://localhost#{Paths.for_screen(place)}") == slug
     end
   end

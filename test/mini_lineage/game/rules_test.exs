@@ -103,12 +103,14 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§14 every town, its address and whether it is open yet" do
+    test "§14 every town, its address, whether it is open yet and its Gatekeeper" do
       rows = table("Town")
       assert length(rows) == length(Rules.towns())
 
-      for {[name, slug, open], town} <- Enum.zip(rows, Rules.towns()) do
-        assert {town.name, town.slug, town.open?} == {name, slug, open == "yes"}, name
+      for {[name, slug, open, gatekeeper], town} <- Enum.zip(rows, Rules.towns()) do
+        assert {town.name, town.slug, town.open?, town.gatekeeper} ==
+                 {name, slug, open == "yes", gatekeeper},
+               name
       end
     end
 
@@ -449,6 +451,15 @@ defmodule MiniLineage.Game.RulesTest do
                    cell
                  ),
                name
+      end
+    end
+
+    test "§25 every set's guild and its trainers" do
+      rows = table("Set | Guild")
+      assert Enum.map(rows, &hd/1) == Enum.map(Rules.sets(), & &1.name)
+
+      for [set, guild, trainers] <- rows do
+        assert Rules.guild(set) == %{name: guild, trainers: String.split(trainers, ", ")}, set
       end
     end
 

@@ -85,14 +85,62 @@ defmodule MiniLineage.Game.Rules do
 
   # Rules §14: every town, by the slug its address is made of. One not yet open is only listed.
   @towns [
-    %{slug: "talking-island", name: "Talking Island Village", emoji: "🏝️", open?: true},
-    %{slug: "elven-village", name: "Elven Village", emoji: "🌳", open?: true},
-    %{slug: "dark-elf-village", name: "Dark Elf Village", emoji: "🌑", open?: true},
-    %{slug: "orc-village", name: "Orc Village", emoji: "🏕️", open?: true},
-    %{slug: "gludio", name: "Town of Gludio", emoji: "🏰", open?: true},
-    %{slug: "dion", name: "Town of Dion", emoji: "🌾", open?: true},
-    %{slug: "giran", name: "Town of Giran", emoji: "🐉", open?: false},
-    %{slug: "giran-harbor", name: "Giran Harbor", emoji: "⚓", open?: false}
+    %{
+      slug: "talking-island",
+      name: "Talking Island Village",
+      emoji: "🏝️",
+      open?: true,
+      gatekeeper: "Roxxy"
+    },
+    %{
+      slug: "elven-village",
+      name: "Elven Village",
+      emoji: "🌳",
+      open?: true,
+      gatekeeper: "Mirabel"
+    },
+    %{
+      slug: "dark-elf-village",
+      name: "Dark Elf Village",
+      emoji: "🌑",
+      open?: true,
+      gatekeeper: "Jasmine"
+    },
+    %{
+      slug: "orc-village",
+      name: "Orc Village",
+      emoji: "🏕️",
+      open?: true,
+      gatekeeper: "Tamil"
+    },
+    %{
+      slug: "gludio",
+      name: "Town of Gludio",
+      emoji: "🏰",
+      open?: true,
+      gatekeeper: "Bella"
+    },
+    %{
+      slug: "dion",
+      name: "Town of Dion",
+      emoji: "🌾",
+      open?: true,
+      gatekeeper: "Trisha"
+    },
+    %{
+      slug: "giran",
+      name: "Town of Giran",
+      emoji: "🐉",
+      open?: false,
+      gatekeeper: "Clarissa"
+    },
+    %{
+      slug: "giran-harbor",
+      name: "Giran Harbor",
+      emoji: "⚓",
+      open?: false,
+      gatekeeper: "Angelina"
+    }
   ]
 
   # Rules §1: the village each race starts in.
@@ -603,6 +651,19 @@ defmodule MiniLineage.Game.Rules do
 
   @capacity 15
 
+  # Rules §25: where each set learns its skills, and from whom.
+  @guilds %{
+    "Human Fighter" => {"Warriors Guild", ["Master Gwinter", "Master Minia", "Master Pintage"]},
+    "Human Mystic" =>
+      {"Mystics Guild", ["Magister Baulro", "Magister Harrys", "Priest Yohanes", "Priest Petron"]},
+    "Elven Fighter" => {"Eva's Sanctuary", ["Master Ellenia", "Master Cobendell"]},
+    "Elven Mystic" => {"Eva's Sanctuary", ["Magister Greenis", "Magister Esrandell"]},
+    "Dark Fighter" => {"Temple of Shilen", ["Master Trudy", "Master Harant"]},
+    "Dark Mystic" => {"Temple of Shilen", ["Magister Vlasty", "Magister Harne"]},
+    "Orc Fighter" => {"Warriors Guild", ["Prefect Brukurse", "Prefect Karukia"]},
+    "Orc Mystic" => {"Mystics Guild", ["Seer Tanapi", "Seer Livina"]}
+  }
+
   # Rules §25: what each set's trainer teaches, at what level and for how much SP.
   @external_resource trainer_path = Path.join(:code.priv_dir(:mini_lineage), "game/trainer.csv")
   @trainer (
@@ -738,6 +799,12 @@ defmodule MiniLineage.Game.Rules do
         ~w(weapon shield chest legs necklace potion)a,
         &(&1 == slot)
       )
+
+  @doc "Rules §25: the guild a set learns in, and its trainers in the order the table lists them."
+  def guild(set_name) do
+    {name, trainers} = Map.fetch!(@guilds, set_name)
+    %{name: name, trainers: trainers}
+  end
 
   @doc "Rules §25: every line a set's trainer teaches, in the order the table lists them."
   def lessons(set_name), do: Enum.filter(@trainer, &(&1.set == set_name))

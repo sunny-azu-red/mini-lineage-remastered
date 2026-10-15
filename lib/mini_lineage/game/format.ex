@@ -73,6 +73,9 @@ defmodule MiniLineage.Game.Format do
 
   defp seconds_left(ms), do: max(ceil(ms / 1000), 0)
 
+  @doc "An amount of Adena as every message writes it: the coin, the figure and the word, in gold."
+  def adena(amount), do: ~s(<span class="adena">🪙 #{number(amount)} Adena</span>)
+
   @doc "Names joined as a sentence says them: \"a\", \"a or b\", \"a, b or c\"."
   def list([only], _word), do: only
 

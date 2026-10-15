@@ -345,6 +345,9 @@ try {
         new URL(page.url()).pathname === '/orc-village/gatekeeper', page.url());
     check('...headed with the Gatekeeper and its own emoji',
         (await text('#main .header-name')) === '🌀 Gatekeeper', await text('#main .header-name'));
+    check('...who says by name where you can be sent from',
+        (await text('#gatekeeper-intro')).startsWith('Tamil the Gatekeeper can send you on from 🏕️ Orc Village'),
+        await text('#gatekeeper-intro'));
     check('...who lists the one route out of an Orc\'s village, and its fee',
         (await text('#routes-table tbody')) === '🏰 Town of Gludio 🪙 6,000', await text('#routes-table tbody'));
     check('...under a button that says it goes back until something is picked',
@@ -355,7 +358,9 @@ try {
         await text('#teleport-form button'));
     await page.click('#teleport-form button');
     await page.waitForSelector('#flash.alert-danger', { timeout: 5000 });
-    check('an empty purse cannot pay the Gatekeeper', (await text('#flash')).includes('cannot pay'),
+    check('an empty purse cannot pay the Gatekeeper, who names the fee in gold',
+        (await text('#flash')).includes('Tamil will not send you on for less than 🪙 6,000 Adena') &&
+        await text('#flash .adena') === '🪙 6,000 Adena',
         await text('#flash'));
     check('...and goes nowhere', new URL(page.url()).pathname === '/orc-village/gatekeeper', page.url());
 
@@ -625,20 +630,28 @@ try {
     await page.click('#header-link');
     await onScreen('town');
 
-    // ---- the trainer (rules §25) ----------------------------------------------------------------
-    await page.selectOption('#travel-form select', 'trainer');
+    // ---- the guild (rules §25) ------------------------------------------------------------------
+    check('the town leads to the set\'s own guild by its name',
+        await text('#travel-form option[value="guild"]') === '📖 Temple of Shilen',
+        await text('#travel-form option[value="guild"]'));
+    await page.selectOption('#travel-form select', 'guild');
     await page.click('#travel-form button');
-    await onScreen('trainer');
-    check('the sidebar shows no SP, which only the trainer shows',
+    await onScreen('guild');
+    check('...at its own address, headed by its name and naming its trainers',
+        new URL(page.url()).pathname === '/dark-elf-village/guild' &&
+        await page.locator('#screen h2.header-name', { hasText: 'Temple of Shilen' }).count() === 1 &&
+        (await text('#guild-intro')).includes('Master Trudy and Master Harant teach'),
+        page.url());
+    check('the sidebar shows no SP, which only the guild shows',
         await page.locator('#sidebar [data-key="sp"]').count() === 0);
-    const sp = () => page.getAttribute('[data-key="trainer-sp"]', 'data-value');
+    const sp = () => page.getAttribute('[data-key="guild-sp"]', 'data-value');
     const spBefore = Number(await sp());
     await page.evaluate(() => document.activeElement?.blur());
     await page.keyboard.type('sp');
     await page.waitForFunction((want) =>
-        document.querySelector('[data-key="trainer-sp"]')?.dataset.value === String(want), spBefore + 10000,
+        document.querySelector('[data-key="guild-sp"]')?.dataset.value === String(want), spBefore + 10000,
         { timeout: 5000 });
-    check('the home village\'s trainer teaches the next line of the set\'s own first skill, unmuted, for its SP',
+    check('the home village\'s guild teaches the next line of the set\'s own first skill, unmuted, for its SP',
         await page.locator('#lesson-mortal-blow-2[data-status="ready"]:not(.locked)').count() === 1 &&
         await text('#lesson-mortal-blow-2 td.sp') === '100', await text('#lesson-mortal-blow-2'));
     const learnedPanel = () => page.locator('#screen h2.header-name', { hasText: 'Learned Skills' }).count();
@@ -682,7 +695,7 @@ try {
         await page.inputValue('#learn-form select') === '' && await text('#learn-form button') === 'Return',
         await text('#learn-form button'));
     check('...and the SP counts down rather than jumping',
-        await page.locator('#trainer-intro[phx-hook="AnimatedValues"] [data-key="trainer-sp"]').count() === 1);
+        await page.locator('#guild-intro[phx-hook="AnimatedValues"] [data-key="guild-sp"]').count() === 1);
     check('...moving into the Learned Skills panel and offering the next line',
         await text('#skill-mortal-blow .skill') === 'Mortal Blow 3' &&
         await page.locator('#lesson-mortal-blow-4[data-status="ready"]').count() === 1 &&
@@ -787,7 +800,7 @@ try {
     await browse('trader-sell');
     await holdEach();
     await home();
-    await travel('trainer', 'trainer');
+    await travel('guild', 'guild');
     await holdEach();
     await home();
     await hurt();

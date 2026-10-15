@@ -45,6 +45,10 @@ defmodule MiniLineage.Game.FormatTest do
     end
   end
 
+  test "an amount of Adena is the coin, the figure and the word, in gold" do
+    assert Format.adena(12_500) == ~s(<span class="adena">🪙 12,500 Adena</span>)
+  end
+
   describe "the values the JavaScript must agree on" do
     test "is shortened the same way here" do
       # hooks/animated-values.js formats the count-up's own frames with a twin of this. Both read

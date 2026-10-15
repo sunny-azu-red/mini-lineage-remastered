@@ -38,9 +38,19 @@ defmodule MiniLineageWeb.GatekeeperTest do
   test "the town's way out leads to its Gatekeeper, which is no trip at all" do
     {view, session, _conn} = elf(build_conn(), 0)
 
+    assert has_element?(view, ~s(#travel-form option[value="gatekeeper"]), "🌀 Gatekeeper")
     view |> form("#travel-form", %{"place" => "gatekeeper"}) |> render_submit()
 
     assert_patch(view, "/elven-village/gatekeeper")
+    # The place is the Gatekeeper; only what is said there names who keeps it.
+    refute has_element?(view, "#screen h2", "Mirabel")
+
+    assert has_element?(
+             view,
+             "#gatekeeper-intro",
+             "Mirabel the Gatekeeper can send you on from 🌳 Elven Village"
+           )
+
     assert has_element?(view, "#screen[data-screen=gatekeeper]")
     assert has_element?(view, "#sidebar")
     assert stored(session).location == "elven-village"
@@ -82,7 +92,9 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, session, conn} = elf(build_conn(), 3_699)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    assert teleport(view, "gludio") =~ "cannot pay"
+    teleport(view, "gludio")
+    assert has_element?(view, "#flash", "Mirabel will not send you on for less than")
+    assert has_element?(view, "#flash .adena", "🪙 3,700 Adena")
     assert stored(session).location == "elven-village"
     assert Characters.snapshot(session).adena == 3_699
   end
@@ -103,8 +115,10 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, session, conn} = elf(build_conn(), 10_000)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    assert teleport(view, "gludio") =~ "3,700 Adena"
+    teleport(view, "gludio")
     assert_patch(view, "/gludio")
+    assert has_element?(view, "#flash", "You pay Mirabel")
+    assert has_element?(view, "#flash .adena", "🪙 3,700 Adena")
     assert %{location: "gludio", adena: 6_300} = stored(session)
 
     view |> form("#travel-form", %{"place" => "gatekeeper"}) |> render_submit()

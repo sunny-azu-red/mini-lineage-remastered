@@ -10,12 +10,10 @@ defmodule MiniLineage.Game.Actions do
     already_started: "You already have a character.",
     invalid: "That is not something you can do.",
     closed: "The Gatekeeper cannot send you there yet.",
-    poor: "You cannot pay the Gatekeeper's fee.",
     last_level: "There is no level past the last.",
     no_ground: "There is nothing to hunt here.",
     no_shop: "There is no shop here.",
     unsold: "The shop does not sell that.",
-    cannot_afford: "You cannot afford that.",
     full: "You cannot carry any more, so sell or destroy something first.",
     not_carried: "You do not carry that.",
     equipped: "Take it off before you sell it.",
@@ -80,14 +78,19 @@ defmodule MiniLineage.Game.Actions do
     cond do
       !route -> {player, {:error, :invalid, @errors.invalid}}
       !Rules.town(to).open? -> {player, {:error, :closed, @errors.closed}}
-      player.adena < route.fee -> {player, {:error, :poor, @errors.poor}}
+      player.adena < route.fee -> {player, {:error, :poor, poor(player.location, route.fee)}}
       true -> arrive(player, Rules.town(to), route.fee)
     end
   end
 
+  defp poor(from, fee),
+    do: "#{Rules.town(from).gatekeeper} will not send you on for less than #{Format.adena(fee)}."
+
   defp arrive(player, town, fee) do
+    gatekeeper = Rules.town(player.location).gatekeeper
     player = %{player | location: town.slug, adena: player.adena - fee}
-    {player, {:ok, %{text: Narrative.alert(Narrative.build_arrived(town, fee)), type: :info}}}
+    text = Narrative.alert(Narrative.build_arrived(gatekeeper, town, fee))
+    {player, {:ok, %{text: text, type: :info}}}
   end
 
   @doc "Rules §20: back to town from the ground, disengaging on the way."
@@ -209,7 +212,9 @@ defmodule MiniLineage.Game.Actions do
         {player, {:error, :unsold, @errors.unsold}}
 
       player.adena < Shop.price(item) * count ->
-        {player, {:error, :cannot_afford, @errors.cannot_afford}}
+        {player,
+         {:error, :cannot_afford,
+          "You cannot afford #{bought(item, count)} for #{Format.adena(Shop.price(item) * count)}."}}
 
       !stack and length(player.items) >= Rules.capacity() ->
         {player, {:error, :full, @errors.full}}
@@ -226,12 +231,14 @@ defmodule MiniLineage.Game.Actions do
               ),
             else: player.items ++ [Player.new_item(name, false, count)]
 
-        what = if Rules.stacks?(item), do: "#{count} × #{name}", else: "the #{name}"
-        text = ~s(You buy #{what} for <span class="adena">#{Format.number(cost)} Adena</span>.)
+        text = "You buy #{bought(item, count)} for #{Format.adena(cost)}."
 
         {%{player | adena: player.adena - cost, items: items}, {:ok, %{text: text, type: :info}}}
     end
   end
+
+  defp bought(item, count),
+    do: if(Rules.stacks?(item), do: "#{count} × #{item.name}", else: "the #{item.name}")
 
   @doc "Rules §24: sells something carried, not equipped, back to the village's shop for half its price."
   def sell(player, id) do
@@ -256,8 +263,7 @@ defmodule MiniLineage.Game.Actions do
         player = %{player | adena: player.adena + paid, items: List.delete(player.items, entry)}
         what = if count > 1, do: "#{count} × #{entry.name}", else: "the #{entry.name}"
 
-        text =
-          ~s(You sell #{what} for <span class="adena">#{Format.number(paid)} Adena</span>.)
+        text = "You sell #{what} for #{Format.adena(paid)}."
 
         {player, {:ok, %{text: text, type: :info}}}
     end
@@ -462,7 +468,7 @@ defmodule MiniLineage.Game.Actions do
   def dev_adena(player) do
     if Version.debug_build?() and Player.started?(player) do
       text =
-        ~s(A debug build drops <span class="adena">#{Format.number(@dev_adena)} Adena</span> into your purse.)
+        "A debug build drops #{Format.adena(@dev_adena)} into your purse."
 
       {%{player | adena: player.adena + @dev_adena}, {:ok, %{text: text, type: :info}}}
     else

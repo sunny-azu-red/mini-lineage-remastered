@@ -14,7 +14,7 @@ defmodule MiniLineage.Game.Access do
 
   # Where a character can stand: its town, that town's Gatekeeper, and its hunting ground.
   @trader ["trader" | Enum.map(MiniLineageWeb.Paths.trader_pages(), &("trader-" <> &1))]
-  @in_town ~w(town gatekeeper hunt trainer) ++ @trader
+  @in_town ~w(town gatekeeper hunt guild) ++ @trader
 
   @doc """
   Where the player is allowed to be: what can be read, for everyone; the town it stands in, and its
@@ -35,7 +35,7 @@ defmodule MiniLineage.Game.Access do
       screen in @trader and town == player.location and Rules.village?(town) ->
         {screen, town}
 
-      screen == "trainer" and town == player.location and town == Rules.hometown(player.race_id) ->
+      screen == "guild" and town == player.location and town == Rules.hometown(player.race_id) ->
         {screen, town}
 
       screen in ~w(town gatekeeper) and town == player.location ->
