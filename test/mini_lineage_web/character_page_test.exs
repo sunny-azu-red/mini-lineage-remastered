@@ -29,9 +29,9 @@ defmodule MiniLineageWeb.CharacterPageTest do
              "#{Float.round(stats.magic_critical, 1)}% M. Critical"
   end
 
-  # Rules §13: Accuracy and Evasion decide whether a blow lands, so they read with blows, never
-  # spells, and running (§20) reads on its own. Resting happens out of a fight, so it reads with the bars it fills.
-  test "combat stats read blows, then spells, then running, and resting sits with HP and MP" do
+  # What the character deals, then what it withstands and running (§20); Accuracy follows the blow it
+  # aims. Resting happens out of a fight, so it reads with the bars it fills.
+  test "combat stats read what is dealt, then what is withstood, and resting sits with HP and MP" do
     {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
     doc = page(player)
 
@@ -40,17 +40,17 @@ defmodule MiniLineageWeb.CharacterPageTest do
     end
 
     assert keys.("#character-stats p:nth-of-type(1) [data-key]") ==
-             ~w(char-p-atk char-atk-spd char-critical char-accuracy char-p-def char-evasion)
+             ~w(char-p-atk char-atk-spd char-critical char-accuracy char-m-atk char-cast-spd char-magic-critical)
 
     assert keys.("#character-stats p:nth-of-type(2) [data-key]") ==
-             ~w(char-m-atk char-cast-spd char-magic-critical char-m-def)
+             ~w(char-p-def char-evasion char-m-def char-run-spd)
 
-    assert keys.("#character-stats p:nth-of-type(3) [data-key]") == ~w(char-run-spd)
+    assert doc |> LazyHTML.query("#character-stats p") |> Enum.count() == 2
 
     assert LazyHTML.query(doc, "#character-stats p:nth-of-type(1) #character-critical")
            |> Enum.count() == 1
 
-    assert LazyHTML.query(doc, "#character-stats p:nth-of-type(2) #character-magic-critical")
+    assert LazyHTML.query(doc, "#character-stats p:nth-of-type(1) #character-magic-critical")
            |> Enum.count() == 1
 
     assert keys.("#character-vitality .regen [data-key]") == ~w(char-hp-regen char-mp-regen)
@@ -64,7 +64,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
 
     keys = fn doc ->
       doc
-      |> LazyHTML.query("#character-stats p:nth-of-type(1) [data-key]")
+      |> LazyHTML.query("#character-stats p:nth-of-type(2) [data-key]")
       |> LazyHTML.attribute("data-key")
     end
 
@@ -73,7 +73,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
     doc = page(%{player | items: player.items ++ [Player.new_item("Small Shield", true)]})
 
     assert keys.(doc) ==
-             ~w(char-p-atk char-atk-spd char-critical char-accuracy char-p-def char-block char-evasion)
+             ~w(char-p-def char-block char-evasion char-m-def char-run-spd)
 
     assert doc |> LazyHTML.query("#character-block") |> LazyHTML.text() == "22.0% Block"
   end

@@ -632,8 +632,8 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Blows, then spells, then running (rules §20); Accuracy, Evasion and a shield's block decide only
-  # whether a blow lands and how hard (rules §13, §23).
+  # What the character deals, then what it withstands and how fast it closes in (rules §20);
+  # Accuracy, Evasion and a shield's block decide only whether a blow lands and how hard (§13, §23).
   defp character(%{panel: %{section: :stats}} = assigns) do
     stats = assigns.view.stats
 
@@ -650,13 +650,10 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
-        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
+        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% M. Critical</span>.
       </p>
       <p phx-no-format>
-        You cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% M. Critical</span>, and turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>
-      </p>
-      <p phx-no-format>
-        You run at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> Run Spd.</span>
+        You turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>, turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>, and run at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> Run Spd.</span>
       </p>
     </div>
     """
