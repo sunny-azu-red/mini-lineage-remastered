@@ -31,7 +31,7 @@ defmodule MiniLineageWeb.NightPageTest do
     assert has_element?(view, ~s(#effects [data-effect-id="shadow_sense"]))
     render_patch(view, ~p"/character")
 
-    # 36 from DEX 34 and level 1, less the starting Dagger's 3 (rules §8), and nothing lost at night.
+    # 36 from DEX 34 and level 1, less the Squire's Dagger's 3 (rules §8), and nothing lost at night.
     assert has_element?(view, ~s(#screen [data-key="char-accuracy"][data-value="33"]))
   end
 

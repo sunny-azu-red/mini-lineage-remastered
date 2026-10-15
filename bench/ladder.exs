@@ -109,7 +109,7 @@ defmodule Ladder do
   def kit?(player, path),
     do: Enum.all?(@slots, &(current(player, path, &1) >= best(player, path, &1)))
 
-  # Puts on whatever of the kit the path holds, a Human Fighter's carried Dagger say.
+  # Puts on whatever of the kit the path holds, a Human Fighter's carried Squire's Dagger say.
   def arm(player, path) do
     Enum.reduce(player.items, player, fn item, p ->
       thing = Rules.item(item.name)

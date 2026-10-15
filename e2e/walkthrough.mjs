@@ -808,12 +808,12 @@ try {
     await onScreen('town');
     await page.click('#purse a');
     await onScreen('inventory');
-    const sword = await page.$eval('#wear-form select', (el) =>
-        [...el.options].find(o => o.textContent.includes("Squire's Sword"))?.value);
-    await page.selectOption('#wear-form select', sword);
-    await page.locator('#wear-form button', { hasText: 'Put on' }).waitFor({ timeout: 5000 });
+    const dagger = await page.$eval('#wear-form select', (el) =>
+        [...el.options].find(o => o.textContent.includes('Bone Dagger'))?.value);
+    await page.selectOption('#wear-form select', dagger);
+    await page.locator('#wear-form button', { hasText: 'Take off' }).waitFor({ timeout: 5000 });
     await page.click('#wear-form button');
-    await page.waitForSelector('#items tr.owned:has-text("Squire\'s Sword")', { timeout: 5000 });
+    await page.waitForSelector('#items tr.owned:has-text("Bone Dagger")', { state: 'detached', timeout: 5000 });
     await page.click('#header-link');
     await onScreen('town');
     await page.click('#character-name a');
@@ -826,7 +826,7 @@ try {
         probe.remove();
         return getComputedStyle(el).color === want;
     });
-    check('with a sword in hand, Mortal Blow is muted down to its figures and says what it needs',
+    check('with nothing in hand, Mortal Blow is muted down to its figures and says what it needs',
         await muted('#skill-mortal-blow .skill') && await muted('#skill-mortal-blow .mp') &&
         /Needs a dagger\.$/.test(await text('#skill-mortal-blow')), await text('#skill-mortal-blow'));
 

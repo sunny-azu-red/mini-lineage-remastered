@@ -118,7 +118,7 @@ defmodule MiniLineage.Game.SkillsTest do
   test "a weapon none of the character's weapon skills can use is put on with a warning" do
     human = character(0, :fighter, 5, %{"Power Strike" => 1, "Mortal Blow" => 1})
     gloves = %{id: "g", name: "Training Gloves", equipped: false}
-    dagger = %{id: "d", name: "Dagger", equipped: false}
+    dagger = %{id: "d", name: "Squire's Dagger", equipped: false}
     human = %{human | items: human.items ++ [gloves, dagger]}
 
     {_, {:ok, warned}} = Actions.equip(human, "g")
@@ -132,7 +132,13 @@ defmodule MiniLineage.Game.SkillsTest do
     for name <- ["Squire's Sword", "Zweihander"],
         do: assert(Rules.skill_weapon?("Power Strike", Rules.item(name)), name)
 
-    for name <- ["Cedar Staff", "Apprentice's Wand", "Dagger", "Short Bow", "Training Gloves"],
+    for name <- [
+          "Cedar Staff",
+          "Apprentice's Wand",
+          "Squire's Dagger",
+          "Short Bow",
+          "Training Gloves"
+        ],
         do: refute(Rules.skill_weapon?("Power Strike", Rules.item(name)), name)
 
     refute Rules.skill_weapon?("Power Strike", nil)

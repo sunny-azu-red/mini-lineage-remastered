@@ -8,7 +8,7 @@ worked out by hand, and holds only for the rules it was measured against.
 spells that take effect as their cast ends, the battle orders, and the first skills where Lineage II
 taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc), Life Drain cast as
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
-the pull. One reading of that build, 400 seeded runs of
+the pull, and each fighter's kit a Squire's weapon for every path its skills take. One reading of that build, 400 seeded runs of
 every set up its village's ladder to level 20, once per weapon path its skills can use, each run
 seeded on its own; at the defaults none of them died.
 
@@ -114,8 +114,8 @@ The level each of a path's weapons is first held at, then the level and hunt the
 | Human Fighter | Power Strike | sword 1h | Short Sword 4.0 | Broadsword 10.3 | Gladius 13.0 | Long Sword **15.7** (15–16) | 185 | 381k |
 | Human Fighter | Power Strike | sword 2h | Short Sword 3.8 | Broadsword 10.0 | Brandish 13.0 | Zweihander **17.0** (16–18) | 231 | 282k |
 | Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Doom Dagger 10.4 | Dirk 13.0 | Throwing Knife **15.7** (15–16) | 185 | 381k |
-| Human Fighter | Power Shot | bow | Short Bow 3.8 | Bow 10.0 | Hunting Bow 13.0 | Forest Bow **15.5** (15–16) | 181 | 391k |
-| Elven Fighter | Power Shot | bow | (kit) | Bow 9.9 | Hunting Bow 13.0 | Forest Bow **15.1** (15–16) | 201 | 417k |
+| Human Fighter | Power Shot | bow | Short Bow 3.8 | Bow 9.9 | Hunting Bow 13.0 | Forest Bow **15.4** (15–16) | 181 | 390k |
+| Elven Fighter | Power Shot | bow | Short Bow 4.0 | Bow 9.9 | Hunting Bow 13.0 | Forest Bow **15.1** (15–16) | 202 | 416k |
 | Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.3 | Doom Dagger 10.4 | Dirk 13.0 | Throwing Knife **15.2** (15–16) | 198 | 388k |
 | Orc Fighter | Iron Punch | fists | Spiked Gloves 3.9 | Iron Gloves 10.0 | Fox Claw Gloves 13.0 | Cestus **15.3** (15–16) | 188 | 394k |
 | Orc Fighter | Power Strike | sword 1h | Short Sword 4.2 | Broadsword 10.4 | Gladius 13.0 | Long Sword **15.6** (15–16) | 193 | 384k |
@@ -203,8 +203,8 @@ a path before the fight had distance (`30e1576`) and now:
 | Elven Mystic | staff 1h / 2h | 238 / 370 to **2 / 1** | 249 / 359 to **2 / 1** | Spore Fungus |
 | Dark Mystic | staff 1h / 2h | 127 / 330 to **2 / 7** | 279 / 397 to **6 / 14** | Balor Orc Fighters, Skeleton Hunter |
 | Orc Mystic | staff 1h / 2h | 2 / 7 to 12 / 15 | 109 / 171 to **85 / 152** | Skeleton Longbowman |
-| Human Fighter | bow | 365 to **106** | 400 to 390 | Blade Spider |
-| Elven Fighter | bow | 400 to **184** | 400 to 397 | Sukar Wererat Leader |
+| Human Fighter | bow | 365 to **121** | 400 to 390 | Blade Spider |
+| Elven Fighter | bow | 400 to **189** | 400 to 399 | Sukar Wererat Leader |
 | Dark Fighter | dagger | 235 to **141** | 400 to 379 | Cave Spider, Skeleton Hunter |
 | Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 10 / 142 / 214 | 347 / 397 / 399 to 348 / 397 / 398 | Blade Spider |
 | Orc Fighter | fists | 240 to 261 | 400 to 399 | Skeleton Longbowman |
@@ -261,6 +261,12 @@ a path before the fight had distance (`30e1576`) and now:
   potions, and resting at half killed 157 to 296 runs of 400 at level 10. Burning with Aura Burn
   beside it, it takes 54% to 56% of that Fighter's HP and kills none from full; deaths at 10 fall to
   25 to 73, the Orc Fighter is 1% faster, and the Orc Mystic, which it meets from afar, is unmoved.
+- **Every fighter starts with a Squire's weapon for each of its paths** (rules §23), none of which a
+  shop buys back, where the Elven Fighter started with a Short Bow it could sell for 384. Both bow
+  paths buy a Short Bow at level 4, so time to level 20 moves 0.4% at most. Resting at half, the
+  Human and Elven Fighters' bow deaths went from 106 and 184 to 121 and 189, nearly all at level 16
+  and above: the weaker bow changes only the first fights, which re-seats every roll after them, and
+  `compare.exs` reads it as the dice's noise.
 - **The bench once killed the Orc Fighter with a sword** at levels 3 to 5, 38 runs of 400 with
   potions: its paths counted only the village's stock as their weapons, so the sword path never
   wielded the Squire's Sword it starts with, and a Leather Shield bought early took off its

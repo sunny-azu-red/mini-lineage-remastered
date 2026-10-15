@@ -580,9 +580,11 @@ defmodule MiniLineage.Game.Rules do
 
   # Rules §23: each set's kit, {equipped, carried}.
   @kits %{
-    {0, :fighter} => {["Squire's Sword", "Squire's Shirt", "Squire's Pants"], ["Dagger"]},
-    {2, :fighter} => {["Short Bow", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
-    {3, :fighter} => {["Dagger", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
+    {0, :fighter} =>
+      {["Squire's Sword", "Squire's Shirt", "Squire's Pants"],
+       ["Squire's Dagger", "Squire's Bow"]},
+    {2, :fighter} => {["Squire's Bow", "Squire's Shirt", "Squire's Pants"], []},
+    {3, :fighter} => {["Squire's Dagger", "Squire's Shirt", "Squire's Pants"], []},
     {1, :fighter} =>
       {["Training Gloves", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
     {0, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},

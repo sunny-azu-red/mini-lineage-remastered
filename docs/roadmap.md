@@ -145,7 +145,7 @@ Built with the first hunt (rules §23 and §24).
   inventory page.
 - **The inventory page** holds everything carried, equipped or not, puts it on or takes it off,
   drinks a potion, and sets the share of HP a fight drinks below (rules §26).
-- **Every set starts with its canon kit,** equipped.
+- **Every set starts with its kit,** equipped: a weapon for each skill path, none of it sold in a shop.
 - **Each village's trader** sells the canon village lists at their canon prices, with no tax, and
   buys back for half.
 - **Next:** a player shop opened from the inventory page, by choosing what to sell and for how much.

@@ -102,7 +102,7 @@ defmodule MiniLineageWeb.GearPageTest do
     {_view, session, conn} = human(build_conn(), 0)
     Characters.mutate(session, &{%{&1 | skills: %{"Power Strike" => 1}}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")
-    dagger = carried(session, "Dagger")
+    dagger = carried(session, "Squire's Dagger")
     sword = carried(session, "Squire's Sword")
 
     assert has_element?(view, ~s(#item-#{sword.id}.owned[data-equipped="true"]))
@@ -115,17 +115,17 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="416"]))
     wear.(dagger.id)
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="476"]))
-    assert %{equipped: true} = carried(session, "Dagger")
+    assert %{equipped: true} = carried(session, "Squire's Dagger")
     assert %{equipped: false} = carried(session, "Squire's Sword")
-    assert has_element?(view, "#sidebar #equipped-weapons", "Dagger")
+    assert has_element?(view, "#sidebar #equipped-weapons", "Squire's Dagger")
     assert has_element?(view, "#flash", "Power Strike needs a sword")
 
     wear.(dagger.id)
-    assert %{equipped: false} = carried(session, "Dagger")
+    assert %{equipped: false} = carried(session, "Squire's Dagger")
 
     view |> form("#destroy-form", %{"doomed" => dagger.id}) |> render_submit()
-    refute carried(session, "Dagger")
-    assert has_element?(view, "#flash", "destroy the Dagger")
+    refute carried(session, "Squire's Dagger")
+    assert has_element?(view, "#flash", "destroy the Squire's Dagger")
   end
 
   test "the inventory closes onto the page it was opened from, and onto the town after a reload" do
@@ -156,7 +156,7 @@ defmodule MiniLineageWeb.GearPageTest do
     {_view, session, conn} = human(build_conn(), 0)
     {:ok, view, _html} = live(conn, ~p"/inventory")
     sword = carried(session, "Squire's Sword")
-    dagger = carried(session, "Dagger")
+    dagger = carried(session, "Squire's Dagger")
 
     view |> form("#wear-form", %{"item" => sword.id}) |> render_change(%{"_target" => ["item"]})
     assert has_element?(view, "#wear-form button", "Take off")

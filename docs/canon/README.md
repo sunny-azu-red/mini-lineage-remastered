@@ -216,8 +216,13 @@ the fight uses them.
   draws and reloads (rules §10).
 - **A weapon's spread covers every physical hit it makes,** skills and blows included, as aCis does;
   L2J spread normal attacks by 0 to +10% whatever the weapon. A monster's blows spread ±10%.
-- **The Elven Fighter's kit carries a Short Bow in place of the Dagger,** so its Power Shot works from
-  the first fight.
+- **A fighter's kit carries a Squire's weapon for each skill its trainer teaches that needs one,**
+  so every first skill works from the first fight and a Human Fighter can start down any of its
+  three paths: the Human Fighter a Squire's Sword, Dagger and Bow, the Orc Fighter Training Gloves and
+  a Squire's Sword, the Elven Fighter a Squire's Bow, the Dark Fighter a Squire's Dagger. In Lineage
+  II all three Fighters carried a Squire's Sword and a Dagger. The Dagger is renamed Squire's Dagger,
+  and the Squire's Bow is ours (P.Atk 14, M.Atk 5, price 138): the Short Bow less what the Squire's
+  Sword is below the Short Sword, so that no shop sells anything in a kit.
 - **A shield blocks from any side, and never a spell.** Lineage II blocked only blows from the front,
   three times as often against arrows, and aCis let a shield turn spells too.
 - **The inventory counts items and does not weigh them:** 80 slots, as for every non-Dwarf, with no

@@ -156,7 +156,7 @@ a sword. A Human Mystic's WIT 20 gives
   next round.
 
 Example: a Human Fighter's DEX 30 gives Atk. Spd. **330** bare-handed, so **1.1** blows a round, and
-379 × 1.10 = **416** with a sword. An Elven Fighter's DEX 35 draws a Short Bow at 293 × 1.15 =
+379 × 1.10 = **416** with a sword. An Elven Fighter's DEX 35 draws a Squire's Bow at 293 × 1.15 =
 **336**, so **0.55** shots a round. The Human Fighter runs 115 × 1.10 = **126**.
 
 | Set | Run speed |
@@ -279,7 +279,7 @@ Each race answers the world in its own way, and a perk holds only for its own ra
   sleeps, roots or poisons.
 - **Humans** have no perk. Their strength is having the most class choices.
 
-Example: a level 1 Dark Fighter (DEX 34) with its Dagger (−3, §8) has Accuracy 33 by day and
+Example: a level 1 Dark Fighter (DEX 34) with its Squire's Dagger (−3, §8) has Accuracy 33 by day and
 33 − 3 + 3 = **33** at night, while a level 1 Human Fighter's 34 drops to **31**. A level 1 Elven Fighter rests 5.36 HP and 3.16
 MP a tick anywhere else, so 5 and 3, and in Elven Village 8.04 and 4.74, so **8 HP** and **5 MP**.
 
@@ -617,13 +617,15 @@ A character carries up to 80 items and wears at most one in each of five slots: 
 chest, legs and necklace. A two-handed weapon (a bow, fists, a two-handed sword or staff) takes the
 shield's hand, so putting one on takes the shield off, and the other way round. Nothing is weighed.
 
-Every set starts with its kit, the wearable part equipped:
+Every set starts with its kit, the wearable part equipped. A fighter's kit holds a weapon for each
+skill its trainer teaches that needs one (§25), the one its first skill needs in hand, and no shop
+sells anything in a kit:
 
 | Kit | Equipped | Carried |
 |---|---|---|
-| Human Fighter | Squire's Sword, Squire's Shirt, Squire's Pants | Dagger |
-| Elven Fighter | Short Bow, Squire's Shirt, Squire's Pants | Squire's Sword |
-| Dark Fighter | Dagger, Squire's Shirt, Squire's Pants | Squire's Sword |
+| Human Fighter | Squire's Sword, Squire's Shirt, Squire's Pants | Squire's Dagger, Squire's Bow |
+| Elven Fighter | Squire's Bow, Squire's Shirt, Squire's Pants | |
+| Dark Fighter | Squire's Dagger, Squire's Shirt, Squire's Pants | |
 | Orc Fighter | Training Gloves, Squire's Shirt, Squire's Pants | Squire's Sword |
 | Human Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
 | Elven Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
@@ -653,11 +655,12 @@ down. A starting kit is worth nothing to a shop and is never bought.
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Apprentice's Wand | weapon | weapon | 1 | staff | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  | 138 | starting |
 | Apprentice's Rod | weapon | weapon | 1 | staff | 6 | 8 | 379 | 4 | 4 | 20 |  |  |  |  |  | 768 | village |
+| Squire's Bow | weapon | weapon | 2 | bow | 14 | 5 | 293 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
 | Short Bow | weapon | weapon | 2 | bow | 16 | 6 | 293 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
 | Bow | weapon | weapon | 2 | bow | 23 | 9 | 293 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
 | Hunting Bow | weapon | weapon | 2 | bow | 34 | 12 | 293 | 12 | -3 | 5 |  |  |  |  |  | 54100 | village |
 | Forest Bow | weapon | weapon | 2 | bow | 49 | 17 | 293 | 12 | -3 | 5 |  |  |  |  |  | 136000 | village |
-| Dagger | weapon | weapon | 1 | dagger | 5 | 5 | 433 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
+| Squire's Dagger | weapon | weapon | 1 | dagger | 5 | 5 | 433 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
 | Bone Dagger | weapon | weapon | 1 | dagger | 7 | 6 | 433 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
 | Knife | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
 | Doom Dagger | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |

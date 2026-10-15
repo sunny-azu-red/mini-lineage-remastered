@@ -1,11 +1,12 @@
 name,kind,slot,hands,type,p_atk,m_atk,atk_spd,critical,accuracy,spread,p_def,m_def,shield_def,shield_rate,mp,price,sold
 Apprentice's Wand,weapon,weapon,1,staff,5,7,379,4,4,20,,,,,,138,starting
 Apprentice's Rod,weapon,weapon,1,staff,6,8,379,4,4,20,,,,,,768,village
+Squire's Bow,weapon,weapon,2,bow,14,5,293,12,-3,5,,,,,,138,starting
 Short Bow,weapon,weapon,2,bow,16,6,293,12,-3,5,,,,,,768,village
 Bow,weapon,weapon,2,bow,23,9,293,12,-3,5,,,,,,12500,village
 Hunting Bow,weapon,weapon,2,bow,34,12,293,12,-3,5,,,,,,54100,village
 Forest Bow,weapon,weapon,2,bow,49,17,293,12,-3,5,,,,,,136000,village
-Dagger,weapon,weapon,1,dagger,5,5,433,12,-3,5,,,,,,138,starting
+Squire's Dagger,weapon,weapon,1,dagger,5,5,433,12,-3,5,,,,,,138,starting
 Bone Dagger,weapon,weapon,1,dagger,7,6,433,12,-3,5,,,,,,768,village
 Knife,weapon,weapon,1,dagger,10,9,433,12,-3,5,,,,,,12500,village
 Doom Dagger,weapon,weapon,1,dagger,10,9,433,12,-3,5,,,,,,12500,village

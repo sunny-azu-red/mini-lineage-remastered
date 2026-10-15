@@ -332,6 +332,28 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§23 every set starts holding what its first skill needs" do
+      for %{race_id: race, path: path, name: set} <- Rules.sets() do
+        {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Novice")
+        weapon = Enum.find(Player.equipped(player), &(&1.slot == :weapon))
+
+        assert [skill] = Map.keys(player.skills), set
+        assert Rules.skill_weapon?(skill, weapon), set
+      end
+    end
+
+    test "§24 a kit holds only what no shop sells, and only a kit holds it" do
+      kits =
+        for %{race_id: race, path: path} <- Rules.sets(),
+            {equipped, carried} = Rules.kit(race, path),
+            name <- equipped ++ carried,
+            uniq: true,
+            do: name
+
+      starting = for {name, %{sold: :starting}} <- Rules.items(), do: name
+      assert Enum.sort(kits) == Enum.sort(starting)
+    end
+
     test "§26 every potion, and no other" do
       rows = table("Potion")
       assert length(rows) == map_size(Rules.potions())
@@ -629,7 +651,7 @@ defmodule MiniLineage.Game.RulesTest do
       assert_in_delta Rules.counts_for(Rules.item("Necklace of Wisdom")), 78.8, 0.05
     end
 
-    test "§9 and §10 a sword's critical and speed, and an Elven Fighter's Short Bow" do
+    test "§9 and §10 a sword's critical and speed, and an Elven Fighter's Squire's Bow" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
       {elf, _} = Player.initialize(%Player{}, Constants.race(2), :fighter, "Archer")

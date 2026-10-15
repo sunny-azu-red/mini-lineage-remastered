@@ -71,7 +71,22 @@ defmodule MiniLineage.Game.ShopTest do
       assert {_, {:error, :equipped, _}} =
                Actions.sell(player, carried(player, "Squire's Sword").id)
 
-      assert {_, {:error, :worthless, _}} = Actions.sell(player, carried(player, "Dagger").id)
+      assert {_, {:error, :worthless, _}} =
+               Actions.sell(player, carried(player, "Squire's Dagger").id)
+    end
+
+    test "nothing in any set's kit fetches a coin, and a Short Bow bought does" do
+      for %{race_id: race, path: path} <- Rules.sets() do
+        player = character(race, path)
+        player = %{player | items: Enum.map(player.items, &%{&1 | equipped: false})}
+
+        for entry <- player.items,
+            do: assert({_, {:error, :worthless, _}} = Actions.sell(player, entry.id))
+      end
+
+      {elf, _} = Actions.buy(character(2), "Short Bow")
+      {elf, {:ok, _}} = Actions.sell(elf, carried(elf, "Short Bow").id)
+      assert elf.adena == 100_000 - 768 + 384
     end
   end
 
@@ -79,11 +94,11 @@ defmodule MiniLineage.Game.ShopTest do
     test "a weapon the first skill cannot use is equipped, with a warning" do
       # Nothing to warn about while no weapon skill is known.
       bare = %{character() | skills: %{}}
-      assert {_, {:ok, %{type: :info}}} = Actions.equip(bare, carried(bare, "Dagger").id)
+      assert {_, {:ok, %{type: :info}}} = Actions.equip(bare, carried(bare, "Squire's Dagger").id)
 
       player = character()
       assert player.skills == %{"Power Strike" => 1}
-      {_, {:ok, flash}} = Actions.equip(player, carried(player, "Dagger").id)
+      {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Dagger").id)
 
       assert flash.type == :danger
       assert flash.text =~ "Power Strike needs a sword,"
@@ -94,9 +109,9 @@ defmodule MiniLineage.Game.ShopTest do
 
     test "a weapon takes the last one off, which stays carried" do
       player = character()
-      {player, {:ok, _}} = Actions.equip(player, carried(player, "Dagger").id)
+      {player, {:ok, _}} = Actions.equip(player, carried(player, "Squire's Dagger").id)
 
-      assert equipped(player) == ["Dagger", "Squire's Pants", "Squire's Shirt"]
+      assert equipped(player) == ["Squire's Dagger", "Squire's Pants", "Squire's Shirt"]
       assert carried(player, "Squire's Sword")
     end
 
@@ -128,8 +143,8 @@ defmodule MiniLineage.Game.ShopTest do
 
     test "destroying takes something carried away for good, and nothing equipped" do
       player = character()
-      {player, {:ok, _}} = Actions.destroy(player, carried(player, "Dagger").id)
-      refute carried(player, "Dagger")
+      {player, {:ok, _}} = Actions.destroy(player, carried(player, "Squire's Dagger").id)
+      refute carried(player, "Squire's Dagger")
 
       assert {_, {:error, :equipped_destroy, _}} =
                Actions.destroy(player, carried(player, "Squire's Sword").id)

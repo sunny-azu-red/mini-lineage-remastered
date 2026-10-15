@@ -224,12 +224,12 @@ defmodule MiniLineageWeb.TrainerPageTest do
     Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Mortal Blow", 1)}, :ok})
     {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
 
-    # The kit's Squire's Sword is in hand, the Dagger carried.
+    # The kit's Squire's Sword is in hand, the Squire's Dagger carried.
     assert has_element?(view, "#skill-mortal-blow.locked", "Needs a dagger.")
     refute has_element?(view, "#skill-power-strike.locked")
     refute has_element?(view, "#skill-power-strike", "Needs")
 
-    dagger = Enum.find(Characters.snapshot(session).items, &(&1.name == "Dagger"))
+    dagger = Enum.find(Characters.snapshot(session).items, &(&1.name == "Squire's Dagger"))
     Characters.mutate(session, &MiniLineage.Game.Actions.equip(&1, dagger.id))
     {:ok, view, _html} = live(conn, ~p"/character")
 
