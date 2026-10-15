@@ -185,7 +185,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     lesson = %{"lesson" => "Power Strike|2"}
 
     view |> form("#learn-form", lesson) |> render_change(%{"_target" => ["lesson"]})
-    assert has_element?(view, "#learn-form button", "🎓 Learn")
+    assert has_element?(view, "#learn-form button", "📖 Learn")
 
     view |> form("#learn-form", lesson) |> render_submit()
     assert has_element?(view, "#learn-form button", "Return")

@@ -816,8 +816,18 @@ defmodule MiniLineage.Game.Rules do
   @doc "Rules §24: a village's four traders, by what they sell."
   def traders(village), do: Map.fetch!(@traders, village)
 
-  @doc "Rules §24: what a village's traders show a set, the goods of its own path (`offered?/2`)."
-  def stock(town, set), do: Enum.filter(stock(town), &offered?(set, &1))
+  @doc """
+  Rules §24: what a village's traders show a set, the goods of its own path (`offered?/2`), its
+  weapons in the order its trainer teaches their skills, so the kit's own weapon leads.
+  """
+  def stock(town, set) do
+    order = path_weapons(set)
+
+    town
+    |> stock()
+    |> Enum.filter(&offered?(set, &1))
+    |> Enum.sort_by(&(Enum.find_index(order, fn type -> type == &1.type end) || length(order)))
+  end
 
   @doc """
   Rules §24: whether a set's path is offered an item: a fighter the weapons its own skills use and

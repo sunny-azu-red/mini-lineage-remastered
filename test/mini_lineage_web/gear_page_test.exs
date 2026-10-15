@@ -61,8 +61,8 @@ defmodule MiniLineageWeb.GearPageTest do
     assert_patch(view, "/talking-island/trader/weapons")
     assert has_element?(view, "#screen h2", "Weapons Trader")
     assert has_element?(view, "#trader-intro", "Lector lays out the weapons")
-    assert has_element?(view, "#stock-broadsword", "One-handed")
-    assert has_element?(view, "#stock-short-bow", "Two-handed")
+    assert has_element?(view, "#stock-broadsword", "Broadsword ✋")
+    assert has_element?(view, "#stock-short-bow", "Short Bow 👐")
     assert has_element?(view, ~s(#buy-form optgroup[label="Daggers"] option[value="Bone Dagger"]))
 
     Characters.mutate(session, &{%{&1 | location: "gludio"}, :ok})
@@ -80,12 +80,17 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#stock-bone-dagger")
     assert has_element?(view, "#stock-short-bow")
     refute has_element?(view, "#stock-buffalos-horn")
+    assert has_element?(view, "#stock tbody tr:first-child#stock-short-sword")
+    assert has_element?(view, "#stock tbody tr:last-child[id$=bow]")
+    assert has_element?(view, "#buy-form optgroup:first-of-type[label=Swords]")
 
     {:ok, view, _html} = live(conn, ~p"/talking-island/trader/armour")
     assert has_element?(view, "#screen h2", "Armour Trader")
     assert has_element?(view, "#stock-small-shield")
     assert has_element?(view, "#stock-leather-shirt")
     refute has_element?(view, "#stock-cotton-tunic")
+    assert has_element?(view, "#stock tbody tr:last-child[id$=-shield]")
+    refute has_element?(view, "#stock tbody tr:first-child[id$=-shield]")
   end
 
   test "a Mystic is shown staves, robes and every shield, and sold nothing else" do

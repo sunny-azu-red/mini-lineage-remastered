@@ -117,7 +117,8 @@ defmodule MiniLineageWeb.Controls do
 
   An option may carry a `group`, neighbours sharing one drawn under one `<optgroup>`, and an
   `action` and `variant` the button takes when it is picked, in place of `active_label` and
-  `active_variant`: one list holding several verbs, as the inventory's does.
+  `active_variant`: one list holding several verbs, as the inventory's does. Every option reads
+  "Pick" and its `label`, an emoji and a name: the verb is the button's and a price the table's.
   """
   # LiveView restores a form's pick after a reconnect only when the form has an id.
   attr :id, :string, required: true
@@ -193,7 +194,7 @@ defmodule MiniLineageWeb.Controls do
   defp option(assigns) do
     ~H"""
     <option value={@option.value} disabled={@option[:disabled?]} selected={@shown == @option.value}>
-      {@option.label}
+      Pick {@option.label}
     </option>
     """
   end
@@ -277,6 +278,38 @@ defmodule MiniLineageWeb.Controls do
   """
   def sort_rows(rows, nil, _key_of), do: rows
   def sort_rows(rows, {key, dir}, key_of), do: Enum.sort_by(rows, &key_of.(&1, key), dir)
+
+  # ------------------------------------------------------------------ items
+
+  @doc """
+  An item as every page names it: its emoji, its name (a stack with its count, rules §26), then
+  for a weapon or shield the hands it takes (rules §23).
+  """
+  def item_label(item),
+    do: Enum.join(Enum.reject([item_emoji(item), item_name(item), hands(item)], &is_nil/1), " ")
+
+  defp item_name(%{potion?: true} = item), do: "#{item.name} ×#{item.count}"
+  defp item_name(item), do: item.name
+
+  defp hands(%{slot: :weapon, hands: 2}), do: "👐"
+  defp hands(%{slot: slot}) when slot in [:weapon, :shield], do: "✋"
+  defp hands(_item), do: nil
+
+  defp item_emoji(%{slot: :weapon, type: type}) do
+    case type do
+      "bow" -> "🏹"
+      "fists" -> "🥊"
+      "dagger" -> "🔪"
+      "staff" -> "🪄"
+      _ -> "🗡️"
+    end
+  end
+
+  defp item_emoji(%{slot: :shield}), do: "🛡️"
+  defp item_emoji(%{slot: :chest}), do: "👕"
+  defp item_emoji(%{slot: :legs}), do: "👖"
+  defp item_emoji(%{slot: :necklace}), do: "📿"
+  defp item_emoji(%{slot: :potion}), do: "🧪"
 
   # The empty string, not nil, so the hook sees a sort undone as a change.
   defp encode_sort(nil), do: ""

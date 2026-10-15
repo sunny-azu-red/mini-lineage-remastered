@@ -60,6 +60,13 @@ defmodule MiniLineageWeb.SelectActionTest do
     assert tree |> LazyHTML.query("option[selected]") |> LazyHTML.attribute("value") == ["use:b"]
   end
 
+  test "every option reads Pick and its label, and the placeholder only itself" do
+    tree = grouped(%{picked: nil}) |> rendered_to_string() |> LazyHTML.from_fragment()
+    texts = tree |> LazyHTML.query("option") |> Enum.map(&String.trim(LazyHTML.text(&1)))
+
+    assert texts == ["Back", "Pick A", "Pick B", "Pick A"]
+  end
+
   test "the picked option's action and variant are the button's" do
     button = &(grouped(%{picked: &1}) |> rendered_to_string() |> LazyHTML.from_fragment())
 

@@ -47,7 +47,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`
-  and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`. `Layouts` holds the shell: `head`,
+  and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
+  page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `head`,
   `site_header`, the sidebar and `footer`, which `ErrorHTML` draws too.
 - **The sidebar** (level and name, the name linking to `/character`, the vitals, then the Inventory,
   its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town and
@@ -287,15 +288,18 @@ Each of these is here because it was got wrong once.
 - **Every button is `Controls.button/1`**, the only writer of `btn`. Without `patch` it is a
   `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
   never a link restyled as a button or the reverse. `variant={:secondary}` serves `<.select_action>`
-  until something is picked and the Halls' filters; `size={:sm}` and `active` (the one of a set
-  already chosen) are the filters'. Danger comes back from `legacy/` when needed. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
+  until something is picked, the hunt's Retreat and the Halls' filters; `size={:sm}` and `active`
+  (the one of a set already chosen) are the filters'. A primary or danger button leads with an
+  emoji; a secondary one has none of its own (`Return`), the filters' being their lineage's. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`.
 - **Every dropdown is `Controls.select_action/1`**, because the dropdown and its button ARE the
   game's navigation: in a town it lists where you can go, at a trader or guild what you can do
   there. Only what makes no sense as a place to go from a town (the inventory, the character page) is
   a link. A place with several verbs keeps one list: each option names its `group` (drawn as an
   `<optgroup>`), and its `action` and `variant` are what the button says and looks like once it is
-  picked, as the inventory's Equip, Unequip, Drink and, in red, Destroy. No `<select>` is written by hand but character creation's, three fields one Start button
+  picked, as the inventory's Equip, Unequip, Drink and, in red, Destroy. Every option reads "Pick"
+  and its emoji and name, which the component writes: the verb is the button's, a price the table's,
+  and a placeholder names where Return goes (`🚪 Traders`). No `<select>` is written by hand but character creation's, three fields one Start button
   sends together and `phx-update="ignore"` keeps every patch off (`select_action_test.exs`). They all behave alike: the player's choice is touched by the player's
   own pick and the action it leads to, and by nothing else. Every action through `apply_action/3`,
   refused or not, clears `picked` and `picks`, so the list goes back to its start and the button to

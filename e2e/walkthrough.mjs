@@ -564,7 +564,7 @@ try {
         && (await page.locator('#stock tbody tr').evaluateAll((rows) => rows.map((row) => row.id))).join() ===
             'stock-bone-dagger,stock-knife,stock-dirk,stock-throwing-knife', await text('#stock tbody'));
     check('...each weapon saying how many hands it takes',
-        (await text('#stock-bone-dagger')).includes('One-handed'), await text('#stock-bone-dagger'));
+        (await text('#stock-bone-dagger')).startsWith('🔪 Bone Dagger ✋'), await text('#stock-bone-dagger'));
     await page.selectOption('#buy-form select', 'Bone Dagger');
     await page.click('#buy-form button');
     // The debug build's own flash is already up.
@@ -639,7 +639,7 @@ try {
 
     // ---- the guild (rules §25) ------------------------------------------------------------------
     check('the town leads to the set\'s own guild by its name',
-        await text('#travel-form option[value="guild"]') === '📖 Temple of Shilen',
+        await text('#travel-form option[value="guild"]') === 'Pick 📖 Temple of Shilen',
         await text('#travel-form option[value="guild"]'));
     await page.selectOption('#travel-form select', 'guild');
     await page.click('#travel-form button');
@@ -691,7 +691,7 @@ try {
     check('...and offering the next line by name, as the legacy shop did',
         await text('#learn-form option[value="Mortal Blow|3"]') === 'Pick 🎯 Mortal Blow 3');
     await page.selectOption('#learn-form select', 'Mortal Blow|3');
-    const learning = await page.locator('#learn-form button', { hasText: '🎓 Learn' })
+    const learning = await page.locator('#learn-form button', { hasText: '📖 Learn' })
         .waitFor({ timeout: 5000 }).then(() => true, () => false);
     check('...and the button turns to learning it once picked', learning, await text('#learn-form button'));
     await page.click('#learn-form button');

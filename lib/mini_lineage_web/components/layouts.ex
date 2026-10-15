@@ -201,7 +201,13 @@ defmodule MiniLineageWeb.Layouts do
     ]
 
   defp equipped(items, slots),
-    do: for(slot <- slots, item <- items, item.equipped and item.slot == slot, do: item.name)
+    do:
+      for(
+        slot <- slots,
+        item <- items,
+        item.equipped and item.slot == slot,
+        do: Controls.item_label(item)
+      )
 
   @doc """
   The banner. `interactive?` is false on the error page, which has no LiveView, so there the

@@ -228,7 +228,7 @@ defmodule MiniLineageWeb.Screens do
     <div class="action-links">
       <.button id="hunt-button" phx-click="hunt">⚔️ Look for more action</.button>
       <.button id="retreat-button" variant={:secondary} phx-click="retreat">
-        🚪 Retreat to {@view.town.name}
+        Retreat to {@view.town.name}
       </.button>
     </div>
     <div :if={@fight} id="fight">
@@ -244,7 +244,7 @@ defmodule MiniLineageWeb.Screens do
   # Rules §24: each trader's page, whose it is and the slots it sells.
   @trader_parts [
     {"trader-weapons", :weapons, [:weapon]},
-    {"trader-armour", :armour, [:shield, :chest, :legs]},
+    {"trader-armour", :armour, [:chest, :legs, :shield]},
     {"trader-jewellery", :jewellery, [:necklace]},
     {"trader-grocer", :grocer, [:potion]}
   ]
@@ -252,7 +252,7 @@ defmodule MiniLineageWeb.Screens do
   defp sellers(traders), do: [traders.weapons, traders.armour, traders.jewellery, traders.grocer]
 
   # Rules §26: how many potions one purchase may take.
-  @potion_lots [1, 10, 50, 100]
+  @potion_lots [1, 10]
 
   # Rules §24: the village's four traders by name, each a page of their own, and selling, which any
   # of them does.
@@ -276,7 +276,7 @@ defmodule MiniLineageWeb.Screens do
       placeholder={"🚪 #{@view.town.name}"}
       options={@parts}
       default_label="Return"
-      active_label="Browse"
+      active_label="🛒 Browse"
     />
     """
   end
@@ -300,7 +300,8 @@ defmodule MiniLineageWeb.Screens do
       <tbody>
         <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
           <td class="name">
-            {item.name} <span class="delimiter">&bull;</span> <span class="muted">{item.about}</span>
+            {item_label(item)} <span class="delimiter">&bull;</span>
+            <span class="muted">{item.about}</span>
           </td>
           <td class="adena">🪙 {Format.number(item.buyback)}</td>
         </tr>
@@ -311,13 +312,8 @@ defmodule MiniLineageWeb.Screens do
       event="sell"
       name="item"
       picked={@picked}
-      placeholder="🛒 Back to the traders"
-      options={
-        Enum.map(
-          @sellable,
-          &%{value: &1.id, label: "Sell the #{&1.name} for 🪙 #{Format.number(&1.buyback)}"}
-        )
-      }
+      placeholder="🚪 Traders"
+      options={Enum.map(@sellable, &%{value: &1.id, label: item_label(&1)})}
       default_label="Return"
       active_label="💰 Sell"
     />
@@ -329,7 +325,11 @@ defmodule MiniLineageWeb.Screens do
 
     assigns =
       assign(assigns,
-        stock: Enum.filter(assigns.view.stock, &(&1.slot in slots)),
+        # A page shows its shelves in the order its part lists them, its own goods before shields.
+        stock:
+          assigns.view.stock
+          |> Enum.filter(&(&1.slot in slots))
+          |> Enum.sort_by(fn item -> Enum.find_index(slots, &(&1 == item.slot)) end),
         line: Constants.trader_line(assigns.view.town.slug, role)
       )
 
@@ -341,7 +341,8 @@ defmodule MiniLineageWeb.Screens do
       <tbody>
         <tr :for={item <- @stock} id={"stock-#{slug(item.name)}"}>
           <td class="name">
-            {item.name} <span class="delimiter">&bull;</span> <span class="muted">{item.about}</span>
+            {item_label(item)} <span class="delimiter">&bull;</span>
+            <span class="muted">{item.about}</span>
           </td>
           <td class="adena">🪙 {Format.number(item.price)}</td>
         </tr>
@@ -352,7 +353,7 @@ defmodule MiniLineageWeb.Screens do
       event="buy"
       name="item"
       picked={@picked}
-      placeholder="🛒 Back to the traders"
+      placeholder="🚪 Traders"
       options={buy_options(@stock)}
       default_label="Return"
       active_label="🪙 Buy"
@@ -417,12 +418,12 @@ defmodule MiniLineageWeb.Screens do
           @ready,
           &%{
             value: "#{&1.skill}|#{&1.level}",
-            label: "Pick #{skill_icon(&1.skill)} #{&1.skill} #{&1.level}"
+            label: "#{skill_icon(&1.skill)} #{&1.skill} #{&1.level}"
           }
         )
       }
       default_label="Return"
-      active_label="🎓 Learn"
+      active_label="📖 Learn"
     />
     """
   end
@@ -469,7 +470,7 @@ defmodule MiniLineageWeb.Screens do
           {if item.equipped, do: [class: "owned"], else: []}
         >
           <td class="name">
-            {item_emoji(item)} {item_name(item)} <span class="delimiter">&bull;</span>
+            {item_label(item)} <span class="delimiter">&bull;</span>
             <span class="muted">{item.about}</span>
           </td>
           <td>{item.slot |> Atom.to_string() |> String.capitalize()}</td>
@@ -502,7 +503,7 @@ defmodule MiniLineageWeb.Screens do
         inventory_verb?(verb, item),
         do: %{
           value: "#{verb}:#{item.id}",
-          label: "#{item_emoji(item)} #{item_name(item)}",
+          label: item_label(item),
           group: group,
           action: action,
           variant: variant
@@ -517,10 +518,6 @@ defmodule MiniLineageWeb.Screens do
   defp back_title({screen, _town}, view), do: title(screen, view)
   defp back_title(nil, view), do: view.town.name
 
-  # Rules §26: a stack names how many it holds.
-  defp item_name(%{potion?: true} = item), do: "#{item.name} ×#{item.count}"
-  defp item_name(item), do: item.name
-
   # Gear is bought one at a time, a potion (§26) by the lot, onto its stack.
   defp buy_options(stock) do
     Enum.flat_map(stock, fn
@@ -528,14 +525,14 @@ defmodule MiniLineageWeb.Screens do
         for n <- @potion_lots,
             do: %{
               value: "#{item.name}|#{n}",
-              label: "Buy #{n} × #{item.name} for 🪙 #{Format.number(item.price * n)}"
+              label: "#{item_label(item)} ×#{n}"
             }
 
       item ->
         [
           %{
             value: item.name,
-            label: "Buy the #{item.name} for 🪙 #{Format.number(item.price)}",
+            label: item_label(item),
             group: shelf(item)
           }
         ]
@@ -560,22 +557,6 @@ defmodule MiniLineageWeb.Screens do
   defp shelf(%{slot: :chest}), do: "Chest"
   defp shelf(%{slot: :legs}), do: "Legs"
   defp shelf(_item), do: nil
-
-  defp item_emoji(%{slot: :weapon, type: type}) do
-    case type do
-      "bow" -> "🏹"
-      "fists" -> "🥊"
-      "dagger" -> "🔪"
-      "staff" -> "🪄"
-      _ -> "🗡️"
-    end
-  end
-
-  defp item_emoji(%{slot: :shield}), do: "🛡️"
-  defp item_emoji(%{slot: :chest}), do: "👕"
-  defp item_emoji(%{slot: :legs}), do: "👖"
-  defp item_emoji(%{slot: :necklace}), do: "📿"
-  defp item_emoji(%{slot: :potion}), do: "🧪"
 
   defp slug(name), do: MiniLineage.Game.Format.slugify(name)
 
@@ -607,7 +588,7 @@ defmodule MiniLineageWeb.Screens do
         Enum.map(@view.routes, fn route ->
           %{
             value: route.slug,
-            label: "Pick #{route.emoji} #{route.name}",
+            label: "#{route.emoji} #{route.name}",
             disabled?: !route.open?
           }
         end)

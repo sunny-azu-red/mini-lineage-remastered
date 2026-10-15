@@ -122,6 +122,7 @@ defmodule MiniLineage.Game.Snapshot do
         potion?: Rules.stacks?(item),
         slot: item.slot,
         type: item.type,
+        hands: item[:hands],
         about: about(item),
         buyback: Shop.buyback(item)
       }
@@ -137,7 +138,14 @@ defmodule MiniLineage.Game.Snapshot do
     do:
       Enum.map(
         Rules.stock(player.location, Rules.set(player.race_id, player.path)),
-        &%{name: &1.name, slot: &1.slot, type: &1.type, about: about(&1), price: Shop.price(&1)}
+        &%{
+          name: &1.name,
+          slot: &1.slot,
+          type: &1.type,
+          hands: &1[:hands],
+          about: about(&1),
+          price: Shop.price(&1)
+        }
       )
 
   defp lessons(player, level) do
@@ -164,9 +172,6 @@ defmodule MiniLineage.Game.Snapshot do
   def about(item) do
     # Rules §7: a piece of armour shows what it counts for, which is what it gives.
     counts = if item.slot in [:chest, :legs, :necklace], do: round(Rules.counts_for(item))
-    # Rules §23: a two-handed weapon takes the shield's hand, so which it is leads its numbers.
-    hands =
-      if item.slot == :weapon, do: [if(item.hands == 2, do: "Two-handed", else: "One-handed")]
 
     [
       p_atk: "P.Atk",
@@ -191,7 +196,6 @@ defmodule MiniLineage.Game.Snapshot do
       {key, label} when key in [:p_def, :m_def] -> "#{label} #{counts || item[key]}"
       {key, label} -> "#{label} #{item[key]}"
     end)
-    |> then(&((hands || []) ++ &1))
     |> Enum.join(", ")
   end
 

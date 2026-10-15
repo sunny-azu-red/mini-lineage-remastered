@@ -714,7 +714,7 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§24 a trader shows each path its own goods, and every shield, necklace and potion" do
+    test "§24 a trader shows each path its own goods, its weapons in its trainer's order, and every shield, necklace and potion" do
       weapons = fn set ->
         for i <- Rules.stock("orc-village", set), i.slot == :weapon, uniq: true, do: i.type
       end
@@ -736,13 +736,13 @@ defmodule MiniLineage.Game.RulesTest do
         for i <- Rules.stock("orc-village"), i.slot in [:shield, :necklace, :potion], do: i.name
 
       for {set, types} <- [
-            {"Human Fighter", ["bow", "dagger", "sword"]},
+            {"Human Fighter", ["sword", "dagger", "bow"]},
             {"Elven Fighter", ["bow"]},
             {"Dark Fighter", ["dagger"]},
             {"Orc Fighter", ["fists", "sword"]}
           ],
           set = Enum.find(Rules.sets(), &(&1.name == set)) do
-        assert Enum.sort(weapons.(set)) == types, set.name
+        assert weapons.(set) == types, set.name
         assert robes.(set) == ["light"], set.name
         assert shared.(set) == everyone, set.name
       end
