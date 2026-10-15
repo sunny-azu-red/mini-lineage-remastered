@@ -248,11 +248,16 @@ defmodule MiniLineage.Game.Player do
     |> Kernel.++(raised(player))
   end
 
-  # Rules §19: an aura the character raised, until it fades.
+  # Rules §19: an aura the character raised, until it fades at `ends_at`.
   defp raised(player) do
-    for name <- buffs_up(player) do
+    now = now_ms()
+
+    for {name, fades} <- player.buffs || %{}, fades > now do
       skill = Rules.skill(name)
-      Map.put(Constants.skill_aura(name), :modifiers, [{skill.stat, {:mul, skill.times}}])
+
+      Constants.skill_aura(name)
+      |> Map.put(:modifiers, [{skill.stat, {:mul, skill.times}}])
+      |> Map.put(:ends_at, fades)
     end
   end
 
@@ -280,8 +285,9 @@ defmodule MiniLineage.Game.Player do
     conditions = conditions(player)
     stats = stats(player, conditions)
 
+    # Rules §20: engaged has no end; disengaging ends when rest resumes.
     if in_combat?(player),
-      do: [Constants.aura(:combat) | conditions],
+      do: [combat(player) | conditions],
       else: resting_auras(player, conditions, stats)
   end
 
@@ -316,6 +322,11 @@ defmodule MiniLineage.Game.Player do
           else: []
     end
   end
+
+  defp combat(%{combat: until}) when is_integer(until),
+    do: Map.put(Constants.aura(:combat), :ends_at, until)
+
+  defp combat(_player), do: Constants.aura(:combat)
 
   @doc "Rules §20: whether a character is engaged, or still disengaging, and so does not rest."
   def in_combat?(%{combat: "engaged"}), do: true

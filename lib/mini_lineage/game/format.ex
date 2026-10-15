@@ -48,6 +48,31 @@ defmodule MiniLineage.Game.Format do
   def tenths(tenths) when is_integer(tenths) and tenths >= 0,
     do: "#{div(tenths, 10)}.#{rem(tenths, 10)}"
 
+  @doc """
+  Time left over an effect's icon: whole seconds, rounded up, and from a minute on whole minutes, "37"
+  and "2m". Twinned with `timerLabel` in `hooks/effect-timers.js`.
+  """
+  def countdown(ms) do
+    seconds = seconds_left(ms)
+    if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
+  end
+
+  @doc """
+  The same time said in a sentence: "1m 37s", "2m", "37s". Twinned with `remainingLabel` in
+  `hooks/effect-timers.js`.
+  """
+  def remaining(ms) do
+    seconds = seconds_left(ms)
+
+    case {div(seconds, 60), rem(seconds, 60)} do
+      {0, rest} -> "#{rest}s"
+      {minutes, 0} -> "#{minutes}m"
+      {minutes, rest} -> "#{minutes}m #{rest}s"
+    end
+  end
+
+  defp seconds_left(ms), do: max(ceil(ms / 1000), 0)
+
   @doc "Names joined as a sentence says them: \"a\", \"a or b\", \"a, b or c\"."
   def list([only], _word), do: only
 

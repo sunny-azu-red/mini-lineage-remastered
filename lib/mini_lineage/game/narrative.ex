@@ -58,8 +58,8 @@ defmodule MiniLineage.Game.Narrative do
       })
 
   @doc """
-  Rules §20: the fight log, each line open-voiced: the meeting, the heals before the pull (`before`,
-  as `{heals, hp}`), then one line a round.
+  Rules §20: the fight log, each line open-voiced: the meeting, the auras and heals before the pull
+  (`before`, as `{done, hp}`), then one line a round.
   """
   def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?}, before) do
     met =
@@ -89,11 +89,11 @@ defmodule MiniLineage.Game.Narrative do
     [met | before(before, max_hp)] ++ rounds
   end
 
-  # Rules §20: the heals cast before the pull, as one line.
+  # Rules §20: the auras raised and heals cast before the pull, as one line.
   defp before({[], _hp}, _max_hp), do: []
 
-  defp before({heals, hp}, max_hp) do
-    parts = Enum.map(heals, fn {skill, amount} -> event({:heal, skill, amount}, nil) end)
+  defp before({done, hp}, max_hp) do
+    parts = Enum.map(done, &event(&1, nil))
 
     [
       "Before the fight: " <>

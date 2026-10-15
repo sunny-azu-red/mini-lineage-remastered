@@ -77,6 +77,17 @@ try {
         tenths,
     );
     check('...and writes tenths exactly as the server does', offTenths.length === 0, offTenths.join(' | '));
+    const timers = JSON.parse(readFileSync('test/fixtures/effect_timer.json', 'utf8'));
+    const offTimers = await page.evaluate(
+        ({ badge, spoken }) => [
+            ...badge.filter(([ms, expected]) => window.__timerLabel(ms) !== expected)
+                .map(([ms, expected]) => `${ms}: ${window.__timerLabel(ms)} != ${expected}`),
+            ...spoken.filter(([ms, expected]) => window.__remainingLabel(ms) !== expected)
+                .map(([ms, expected]) => `${ms}: ${window.__remainingLabel(ms)} != ${expected}`),
+        ],
+        timers,
+    );
+    check('...and counts an effect down exactly as the server does', offTimers.length === 0, offTimers.join(' | '));
 
     const cookie = (await context.cookies()).find(c => c.name === '_mini_lineage_key');
     check('the session cookie is httpOnly', cookie?.httpOnly === true);
@@ -470,6 +481,22 @@ try {
     await page.click('#retreat-button');
     await onScreen('town');
     check('...and retreating goes back to the village', (await state()).screen === 'town');
+    // Rules §20: In Combat lingers 5 seconds after the ground, counted down over its icon by
+    // EffectTimers between pushes, then rest resumes on the next tick.
+    const combatTimer = '#effects [data-effect-id="combat"] .effect-timer';
+    await page.waitForSelector(combatTimer, { timeout: 5000 });
+    const firstSecond = Number(await text(combatTimer));
+    check('...where In Combat counts down the seconds until rest over its icon',
+        firstSecond >= 1 && firstSecond <= 5, await text(combatTimer));
+    const ticked = await page.waitForFunction(
+        ({ selector, was }) => Number(document.querySelector(selector)?.textContent) < was,
+        { selector: combatTimer, was: firstSecond }, { timeout: 3000 }).then(() => true, () => false);
+    check('...in the browser, between pushes', ticked,
+        await page.locator(combatTimer).textContent({ timeout: 500 }).catch(() => 'gone'));
+    const rested = await page.waitForSelector('#effects [data-effect-id="combat"]', { state: 'detached', timeout: 10000 })
+        .then(() => true, () => false);
+    check('...and then the hunter rests again', rested
+        && await page.locator('#effects [data-effect-id="resting"]').count() === 1);
 
     // ---- the trader and the inventory (rules §23, §24) ----------------------------------------
     check('the sidebar names the weapons and armour equipped, unlabelled, and one link opens the inventory, underlining only its word',
@@ -576,6 +603,10 @@ try {
     check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it',
         await learnedPanel() === 1 && await text('#skill-mortal-blow .skill') === 'Mortal Blow 1',
         await text('#skill-mortal-blow'));
+    check('...saying how often it lands and when it is ready again, worked for this character',
+        /landing \d+\.\d% of the time, for \d+ MP\. Ready again every \d+\.\d seconds\./.test(await text('#skill-mortal-blow'))
+        && Number(await page.getAttribute('[data-key="skill-mortal-blow-lands"]', 'data-value')) > 0,
+        await text('#skill-mortal-blow'));
     check('...listing each skill\'s next line alone, never the ones after it',
         await page.locator('#lesson-mortal-blow-1').count() === 0 &&
         await page.locator('#lesson-mortal-blow-3').count() === 0);
@@ -598,8 +629,9 @@ try {
     check('...and offering the next line by name, as the legacy shop did',
         await text('#learn-form option[value="Mortal Blow|3"]') === 'Pick 🎯 Mortal Blow 3');
     await page.selectOption('#learn-form select', 'Mortal Blow|3');
-    check('...and the button turns to learning it once picked',
-        await text('#learn-form button') === '🎓 Learn', await text('#learn-form button'));
+    const learning = await page.locator('#learn-form button', { hasText: '🎓 Learn' })
+        .waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check('...and the button turns to learning it once picked', learning, await text('#learn-form button'));
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-3', { state: 'detached', timeout: 5000 });
     check('...and a lesson is learned through the dropdown, for its SP',

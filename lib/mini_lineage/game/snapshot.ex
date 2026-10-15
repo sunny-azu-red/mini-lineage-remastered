@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping, and the static catalog the pages draw from."
-  alias MiniLineage.Game.{Constants, Format, Formulas, Math, Player, Rules, Shop}
+  alias MiniLineage.Game.{Clock, Constants, Format, Formulas, Math, Player, Rules, Shop}
 
   @doc """
   Always the SAME shape, whether or not a character exists: a screen still rendering when its
@@ -166,6 +166,8 @@ defmodule MiniLineage.Game.Snapshot do
       m_atk: "M.Atk",
       atk_spd: "Atk. Spd.",
       critical: "Critical",
+      # Rules §13: how far each blow strays either way.
+      spread: "Damage ±",
       accuracy: "Accuracy",
       p_def: "P.Def",
       m_def: "M.Def",
@@ -176,6 +178,7 @@ defmodule MiniLineage.Game.Snapshot do
     |> Enum.filter(fn {key, _} -> item[key] not in [nil, 0] end)
     |> Enum.map(fn
       {:shield_rate, label} -> "#{label} #{item.shield_rate}%"
+      {:spread, label} -> "#{label}#{item.spread}%"
       {:mp, label} -> "#{label} +#{item.mp}"
       {:accuracy, label} -> "#{label} #{if item.accuracy > 0, do: "+"}#{item.accuracy}"
       {key, label} when key in [:p_def, :m_def] -> "#{label} #{counts || item[key]}"
@@ -206,7 +209,13 @@ defmodule MiniLineage.Game.Snapshot do
       # A rate is drawn as a figure beside the stats; a modifier is a rule, and never moves. The
       # stat rides along so the page can colour the change as it colours the stat.
       changes:
-        Enum.map(Map.get(aura, :modifiers, []), &%{stat: elem(&1, 0), text: modifier_text(&1)})
+        Enum.map(Map.get(aura, :modifiers, []), &%{stat: elem(&1, 0), text: modifier_text(&1)}),
+      # Rules §11: what a tick of rest mends (or Relax costs), said on the row as in the tooltip.
+      rates:
+        Enum.map(Map.get(aura, :rates, []), fn {stat, value} -> %{stat: stat, value: value} end),
+      # A duration, not a deadline, so the browser's clock is never compared with the server's.
+      remaining_ms:
+        aura[:ends_at] && max(aura.ends_at - DateTime.to_unix(Clock.now(), :millisecond), 0)
     }
   end
 
@@ -226,7 +235,9 @@ defmodule MiniLineage.Game.Snapshot do
 
   defp modifier_text({stat, {:add, value}}) when value >= 0, do: "+#{value} #{@stat_names[stat]}"
   defp modifier_text({stat, {:add, value}}), do: "#{value} #{@stat_names[stat]}"
-  defp modifier_text({stat, {:mul, value}}), do: "×#{value} #{@stat_names[stat]}"
+  # As Lineage II's own data writes a buff: "+8% P.Def", never "×1.08".
+  defp modifier_text({stat, {:mul, value}}),
+    do: "#{signed(round((value - 1) * 100))}% #{@stat_names[stat]}"
 
   @doc "Every race as the Chronicles of Ancestry draws it: its town and its two level-1 sets."
   def catalog do

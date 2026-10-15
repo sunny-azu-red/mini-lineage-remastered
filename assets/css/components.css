@@ -105,6 +105,38 @@
     justify-content: center;
 }
 
+/* Time left, over the icon in its kind's colour, outlined so it reads over any emoji. Its own case
+ * and colour, never the band's gold capitals. */
+.effect-timer {
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    font-family: var(--font-pixel);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-primary);
+    pointer-events: none;
+    white-space: nowrap;
+    text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.85),
+        0 0 5px rgba(0, 0, 0, 0.85),
+        -1px -1px 0 rgba(0, 0, 0, 0.85),
+        1px -1px 0 rgba(0, 0, 0, 0.85),
+        -1px 1px 0 rgba(0, 0, 0, 0.85),
+        1px 1px 0 rgba(0, 0, 0, 0.85);
+}
+
+.effect-buff .effect-timer {
+    color: var(--text-heal);
+}
+
+.effect-debuff .effect-timer {
+    color: var(--text-hp);
+}
+
 .effect-fade-in {
     animation: effect-fade-in 0.4s ease-out forwards;
 }

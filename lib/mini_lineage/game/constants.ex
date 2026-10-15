@@ -115,29 +115,28 @@ defmodule MiniLineage.Game.Constants do
       type: :buff,
       emoji: "🛡️",
       label: "Defense Aura",
-      about: "An aura raised in the field turns blows aside, and holds for twenty minutes."
+      about: "An aura raised in the field turns blows aside."
     },
     "Attack Aura" => %{
       id: "attack_aura",
       type: :buff,
       emoji: "💪",
       label: "Attack Aura",
-      about: "An aura raised in the field drives every blow harder, and holds for twenty minutes."
+      about: "An aura raised in the field drives every blow harder."
     },
     "Shield" => %{
       id: "shield",
       type: :buff,
       emoji: "🔰",
       label: "Shield",
-      about:
-        "A ward cast on oneself hardens the skin against blows, and holds for twenty minutes."
+      about: "A ward cast on oneself hardens the skin against blows."
     },
     "Soul Shield" => %{
       id: "soul_shield",
       type: :buff,
       emoji: "💠",
       label: "Soul Shield",
-      about: "The spirits called to stand guard turn blows aside, and hold for twenty minutes."
+      about: "The spirits called to stand guard turn blows aside."
     },
     "Relax" => %{
       id: "relax",

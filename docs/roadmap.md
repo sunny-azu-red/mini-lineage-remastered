@@ -77,7 +77,8 @@ The first thing to build, with the canon's monster stats researched first.
 
 The hunt (rules §17 to §21) put the base layer to work: EXP and levelling (§12) with the level-up
 told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) holds
-on the ground, as the legacy Battleground did, and lifts five seconds after leaving it.
+on the ground, as the legacy Battleground did, and lifts five seconds after leaving it, counted down
+over its icon as the legacy game counted its effects.
 
 **It ships with the inventory and the village shops.** A seeded run of the first hunt showed that a
 character without gear dies in most fights by level 10, because Lineage II's monsters assume a
@@ -105,8 +106,10 @@ follows before characters reach 15.
   character's own village (rules §25, built): the first skill and two to four more from its canon
   tree, chosen so each set plays its own way (rules §19). They are actives, a heal, an aura, a
   drain, a curse or a toggle, in place of Lineage II's passive masteries, which only moved numbers.
-  The auras are the first timed buffs, as the Temple's will be. The character page's Skills panel
-  is the spellbook: what it knows.
+  The auras are the first timed buffs, as the Temple's will be: each holds 2 minutes, raised
+  before the pull, and counts down over its icon and on the character page. The character page's
+  Skills panel is the spellbook: what it knows, in the numbers the fight uses for it (what a heal
+  mends, how often a blow lands, when each is ready again), never a formula.
 - **A skill grows in steps** of 3 or 4 lines, each a character level's worth of canon levels, and
   the trainer shows only each skill's next line, no two lines of one skill opening at one level.
   Every set starts knowing its first skill, and the SP left from level 15 waits for the class
@@ -149,10 +152,11 @@ Built with the first hunt (rules §23 and §24).
 
 ## Items
 
-- Weapons by type, each with its own damage spread.
-- Armour by slot, adding to the body a path starts with.
-- Jewellery adding to the mind.
-- Shields that can block a blow, adding their defence to it.
+- Weapons by type, each with its own damage spread (rules §23, built).
+- Armour by slot, adding to the body a path starts with (rules §23, built).
+- Jewellery adding to the mind (rules §23, built).
+- Shields that can block a blow, adding their defence to it (rules §23, built), the chance shown
+  beside P.Def.
 - Grades (D, C, B, A, S) and a penalty for wearing gear above your level.
 - Soulshots and spiritshots for stronger blows and spells, bought only from player shops.
 - Potions that heal at once (rules §26, built): the Lesser Healing Potion in the villages; better

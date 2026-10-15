@@ -7,7 +7,8 @@ worked out by hand, and holds only for the rules it was measured against.
 **Measured** on rules §1 to §26 as they now stand: the fight of §20 on a line between the two,
 spells that take effect as their cast ends, the battle orders, and the first skills where Lineage II
 taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc), Life Drain cast as
-a heal and the Evil Eyes choosing their spell by distance. One reading of that build, 400 seeded runs of
+a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
+the pull. One reading of that build, 400 seeded runs of
 every set up its village's ladder to level 20, once per weapon path its skills can use, each run
 seeded on its own; at the defaults none of them died.
 
@@ -144,20 +145,29 @@ The level each of a path's weapons is first held at, then the level and hunt the
 ## Time to level 20
 
 Minutes of play to level 20 at the defaults, resting and fighting: before the fight had distance
-(`30e1576`), once it had (`58c1d4c`), and now, with the first skills where Lineage II taught them.
+(`30e1576`), once it had (`58c1d4c`), with the first skills where Lineage II taught them and
+20-minute auras cast in the fight (`b47cf90`), and now, with 2-minute auras raised before the pull.
 Each step is compared run for run (`bench/compare.exs`).
 
-| Set | Path | Before distance | With distance | Now |
-|---|---|---|---|---|
-| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 208 / 204 / 208 |
-| Human Fighter | bow | 228 | 208 | 208 |
-| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 191 |
-| Elven Fighter | bow | 233 | 216 | 217 |
-| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 202 / 202 |
-| Dark Fighter | dagger | 241 | 230 | 230 |
-| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | **265 / 266** |
-| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | **280 / 286** |
+| Set | Path | Before distance | With distance | 20-minute auras | Now |
+|---|---|---|---|---|---|
+| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 |
+| Human Fighter | bow | 228 | 208 | 208 | 208 |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 |
+| Elven Fighter | bow | 233 | 216 | 216 | **225** |
+| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 |
+| Dark Fighter | dagger | 241 | 230 | 228 | **239** |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | **276 / 276** |
+| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | **291 / 298** |
+
+- **Auras hold 2 minutes and are raised before the pull** (rules §19, §20), where they held 20 and
+  were cast in the fight. The four sets with one, the Elven and Dark Fighters and the Dark and Orc
+  Mystics, take 3% to 5% longer at every setting: every 2 minutes the aura's 5 to 10 MP is MP not
+  spent on Mortal Blow or a spell, so a fight lasts half a round longer, and its cast is waited out
+  before the pull. No set dies more. The spread from the fastest set to the slowest widens from 95
+  to 107 minutes, since the Orc Mystic is both slowest and an aura's, the one part of the bar this
+  fails.
 
 - **A spell or a bow pulls from afar**, so the Human and Elven Mystics and the two archers reach 20
   sooner than before the fight had distance: their first spell or shot is free, and a melee monster
@@ -168,12 +178,13 @@ Each step is compared run for run (`bench/compare.exs`).
   cost 25 MP a cast where Wind Strike costs 9. The Elven Mystic's Wind Strike at 1 makes it 1%
   faster, and a Fighter's first skill at 5 costs nothing measurable.
 - **The Orc Mystic casts Life Drain as a heal,** only below 85% of its HP (rules §20), and reaches
-  20 in 280 to 286 minutes rather than 308: Life Drain returns 80% of what it deals for 27 MP, and
-  cast whenever it was ready it spent more MP than any spell in the game while the Orc Mystic was
-  whole. Below 70% it would be 13% to 15% faster, but its deaths without potions doubled; below 85%
-  they move within the dice's noise. It is still the slowest set, by 95 minutes to the Human
-  Mystic where the gap was 147: its WIT gives the slowest Casting Spd., and Chill Flame burns three
-  rounds after it is begun. Soul Cry left unused by the battle orders saves about 9% more.
+  20 in 280 to 286 minutes rather than 308 (291 to 298 since auras hold 2 minutes): Life Drain
+  returns 80% of what it deals for 27 MP, and cast whenever it was ready it spent more MP than any
+  spell in the game while the Orc Mystic was whole. Below 70% it would be 13% to 15% faster, but its
+  deaths without potions doubled; below 85% they move within the dice's noise. It is still the
+  slowest set, by 107 minutes to the Human Mystic (95 before auras held 2 minutes) where the gap
+  was 147: its WIT gives the slowest Casting Spd., and Chill Flame burns three rounds after it is
+  begun. Soul Cry left unused by the battle orders saves about 9% more.
 - **The Orc Mystic has no Venom.** It was never cast: a poison comes only while the spells rest, and
   Chill Flame or Life Drain is always ready. Without it the set is 0.4% faster for its SP, finishes
   its list at level 14 for 7,840 SP, and its level 7 lines are back at Lineage II's 520.
@@ -189,18 +200,21 @@ a path before the fight had distance (`30e1576`) and now:
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 14 / 18 to **0 / 0** | 27 / 32 to **0 / 0** | |
-| Elven Mystic | staff 1h / 2h | 238 / 370 to **0 / 0** | 249 / 359 to **0 / 0** | |
-| Dark Mystic | staff 1h / 2h | 127 / 330 to **3 / 25** | 279 / 397 to **14 / 26** | Skeleton Hunter, Balor Orc Fighters |
-| Orc Mystic | staff 1h / 2h | 2 / 7 to 9 / 21 | 109 / 171 to **80 / 136** | Skeleton Longbowman |
-| Human Fighter | bow | 365 to **113** | 400 to 388 | Blade Spider |
-| Elven Fighter | bow | 400 to **225** | 400 to 399 | Sukar Wererat Leader |
-| Dark Fighter | dagger | 235 to **121** | 400 to 385 | Green Fungus, Doom Soldier |
-| Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 6 / 141 / 231 | 347 / 397 / 399 to 346 / 394 / 399 | Blade Spider |
-| Orc Fighter | fists | 240 to 258 | 400 to 399 | Skeleton Longbowman |
-| Orc Fighter | sword 1h / 2h | 384 / 339 to **294 / 206** | 400 | Skeleton Longbowman, Evil Eyes |
+| Elven Mystic | staff 1h / 2h | 238 / 370 to **2 / 1** | 249 / 359 to **2 / 1** | Spore Fungus |
+| Dark Mystic | staff 1h / 2h | 127 / 330 to **2 / 7** | 279 / 397 to **6 / 14** | Balor Orc Fighters, Skeleton Hunter |
+| Orc Mystic | staff 1h / 2h | 2 / 7 to 12 / 15 | 109 / 171 to **85 / 152** | Skeleton Longbowman |
+| Human Fighter | bow | 365 to **106** | 400 to 390 | Blade Spider |
+| Elven Fighter | bow | 400 to **184** | 400 to 397 | Sukar Wererat Leader |
+| Dark Fighter | dagger | 235 to **141** | 400 to 379 | Cave Spider, Skeleton Hunter |
+| Human Fighter | sword 1h / 2h / dagger | 8 / 156 / 217 to 10 / 142 / 214 | 347 / 397 / 399 to 348 / 397 / 398 | Blade Spider |
+| Orc Fighter | fists | 240 to 261 | 400 to 399 | Skeleton Longbowman |
+| Orc Fighter | sword 1h / 2h | 384 / 339 to **300 / 212** | 400 | Skeleton Longbowman, Evil Eyes |
 
 - **Fighting from afar keeps a Mystic alive**, and an archer too. A heal before the pull (rules §20)
   starts each fight topped up, and the opening spell lands before the monster has come.
+- **An aura raised before the pull saves the round its cast took in the fight.** Against 20-minute
+  auras it kills fewer, not more: resting at half without potions, the Elven Fighter dies in 184 runs
+  rather than 216 and the Dark Mystic with a two-hander in 7 rather than 25.
 - **A heal before the pull is set below 70% to begin with.** Measured at each share the orders
   offer, resting at half or less without potions: below 50% the Dark Mystic died in 213 to 329 runs
   of 400 at levels 10 to 13, since Wind Strike, unlike the Vampiric Touch it opened with before,
@@ -218,8 +232,10 @@ a path before the fight had distance (`30e1576`) and now:
 - **Measured and dropped:** a heal before the spells in the fight, alone or taking turns, which
   killed every Human and Elven Mystic run; heals to full before the pull and after the kill, which
   slowed the Mystics 16% to 70%; Soul Cry lit at the pull by a Mystic, which drained its MP for the
-  whole fight from afar and cost the Orc Mystic 20% (it now lights once its blows reach); auras
-  raised before the pull, which changed nothing, since an aura outlasts many fights; curses only
+  whole fight from afar and cost the Orc Mystic 20% (it now lights once its blows reach); a
+  2-minute aura still cast in the fight, which cost as much time as raising it before the pull and a
+  round of being struck besides, so resting at half without potions the Dark Mystic died in 42 to 57
+  runs of 400 and the Elven Fighter in 258; curses only
   while the monster is still running in, 2% to 3% faster for the Dark Mystic but its Wind Shackle
   was what held a monster off it in melee, so its deaths more than doubled; Ice Bolt slowing the
   run alone, as in Lineage II, which let the Sukar Wererat Leader kill the Elven Mystic at level

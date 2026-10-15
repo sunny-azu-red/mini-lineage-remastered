@@ -25,9 +25,14 @@ checked against Interlude's own data.
   tree for the SP of the hunt: the Human Fighter has a skill for every weapon, the Elven Fighter
   guards with Defense Aura, the Dark Fighter strikes with Attack Aura, the Orc Fighter rests with
   Relax, and each Mystic has its own spells. A skill grows in a few big steps rather than nine
-  small ones.
-- **Rest heals, and says so.** While HP or MP is short, 🌿 *Regenerating* shows, and a 3-second tick
-  heals. The aura and the healing are one condition, so neither appears without the other.
+  small ones. Auras hold 2 minutes and go up before the pull.
+- **Rest heals, and says so.** While HP or MP is short, 🌿 *Regenerating* shows what a 3-second tick
+  heals, and the tick heals it. The aura and the healing are one condition, so neither appears
+  without the other.
+- **The page shows what the fight works out, never the formula.** Run Spd. and a shield's Block sit
+  among the Combat Stats; a skill says what it mends, how often it lands and when it is ready again,
+  for this character; a buff reads "+8% P.Def", as Lineage II's data writes it. Every buff, and the
+  wait before rest after a hunt, counts down over its icon as the legacy game's did.
 - **A status sidebar** drawn like L2's status window, a character page at `/character`, and the
   Chronicles of Ancestry at `/races`, which tell every lineage before you choose one.
 - **Figures count, they don't jump**, two 8-bit sounds made by a Web Audio synth, and play from the

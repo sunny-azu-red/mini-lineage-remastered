@@ -79,6 +79,16 @@ defmodule MiniLineage.Game.FormatTest do
     end
   end
 
+  describe "the countdowns the JavaScript must agree on" do
+    test "are written the same way here" do
+      %{"badge" => badge, "spoken" => spoken} =
+        "test/fixtures/effect_timer.json" |> File.read!() |> Jason.decode!()
+
+      for [ms, expected] <- badge, do: assert(Format.countdown(ms) == expected, "#{ms}")
+      for [ms, expected] <- spoken, do: assert(Format.remaining(ms) == expected, "#{ms}")
+    end
+  end
+
   describe "slugify" do
     test "makes a race label safe for an id" do
       assert Format.slugify("Dark Elf") == "dark-elf"

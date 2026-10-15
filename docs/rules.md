@@ -474,8 +474,8 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
 - **Ice Bolt** also slows its target for 120 seconds: a slowed monster swings 30% less and runs 30%
   slower.
 - **Heal:** power + √M.Atk HP back, rounded down and never past the most.
-- **Aura:** Defense Aura, Shield and Soul Shield multiply P.Def and Attack Aura P.Atk by 1.08, for
-  20 minutes, in the fight and out of it. Shield and Soul Shield are cast on another in Lineage II,
+- **Aura:** Defense Aura, Shield and Soul Shield raise P.Def by 8% and Attack Aura P.Atk by 8%, for
+  2 minutes, in the fight and out of it. Shield and Soul Shield are cast on another in Lineage II,
   and the caster is the one here.
 - **Poison:** lands 70% of the time, and then takes power HP every 3 seconds for 30 seconds, never
   the last HP. It is not cast again on a target already poisoned.
@@ -537,14 +537,13 @@ this far (a monster's spells as far as §19 gives):
   runs at one that is not, at its own run speed (§10). Once both are within reach, neither moves
   again.
 - **The character** uses the first of these it knows that is ready and paid for (§19):
-  1. an aura it has not raised;
-  2. a toggle not lit, which a Mystic lights only once its blows reach;
-  3. the strongest spell (magic, drain or burn), but a burn not on a monster still burning, and a
+  1. a toggle not lit, which a Mystic lights only once its blows reach;
+  2. the strongest spell (magic, drain or burn), but a burn not on a monster still burning, and a
      drain that returns at least half of what it deals (Life Drain) only below 85% of its HP, as
      the heal it mostly is;
-  4. below the share of its HP its orders give, the strongest heal, so a heal fills the time its
+  3. below the share of its HP its orders give, the strongest heal, so a heal fills the time its
      spells rest and never stops it attacking;
-  5. while the monster has more than half its HP, a poison it does not carry, then a shackle.
+  4. while the monster has more than half its HP, a poison it does not carry, then a shackle.
 
   A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
   else. With none of these ready, it swings its blows (§10), and a physical skill or a blow that is
@@ -557,8 +556,9 @@ this far (a monster's spells as far as §19 gives):
   Aura Burn and drains or strikes one at a distance.
 - **Blows** hit and do damage as §13 says. Skills and spells do what §19 says.
 - **It ends** when either reaches 0 HP. After 1,000 rounds the monster wanders off and pays nothing.
-- **Before the pull**, since it rests nothing on the ground (§11), the character heals while its HP
-  is below the share its orders give: the strongest heal it can pay for, never past the most,
+- **Before the pull**, the character first raises every aura it knows that is not up and that it
+  can pay for, each cast to its end, so no round of the fight goes on one. Then, since it rests
+  nothing on the ground (§11), it heals while its HP is below the share its orders give: the strongest heal it can pay for, never past the most,
   waiting out the reuse and cast, until it is not or it cannot pay for one. A heal cast before the
   pull is still resting when the fight begins. It does not heal once the monster is down, so MP is
   never spent on a walk back to rest.

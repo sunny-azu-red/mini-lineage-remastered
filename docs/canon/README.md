@@ -153,11 +153,12 @@ the fight uses them.
   Elven and Dark Fighters at 15, the Human, Dark and Orc Mystics at 14), so each step is saved for;
   what is left after level 15 waits for the class change.
 - **Buffs are cast on oneself.** Shield and Soul Shield, cast on a target in Lineage II, are cast
-  by the Mystic on itself, as a lone Mystic did there. **An aura holds its canon 20 minutes,** out
-  of the fight too.
-- **The character chooses its own skills in a fight** (rules §20): its auras, its toggle, its
-  strongest spell, then while its spells rest its strongest heal below the player's share of HP, or
-  a curse on a monster above half its HP, and before the pull its heals up to that share. A Mystic
+  by the Mystic on itself, as a lone Mystic did there. **An aura holds 2 minutes,** out of the
+  fight too, where Lineage II's held 20: a fight here lasts seconds, so 20 minutes was every fight
+  of a sitting on one cast.
+- **The character chooses its own skills in a fight** (rules §20): its toggle, its strongest spell,
+  then while its spells rest its strongest heal below the player's share of HP, or a curse on a
+  monster above half its HP, and before the pull its auras, then its heals up to that share. A Mystic
   lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
   player gives orders, and may leave any skill but a heal unused. Life Drain, which returns 80% of
   what it deals, is cast only below 85% of HP, as the heal it mostly is: cast whenever ready, its

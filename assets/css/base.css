@@ -93,6 +93,11 @@ p {
     color: var(--text-muted);
 }
 
+/* Time left on an effect, dimmed like a date so the clause around it does not read as an aside. */
+.timer {
+    color: var(--text-muted);
+}
+
 /* Which build serves the page, in the footer; a release names its commit and takes neither. */
 .build-development {
     color: var(--text-critical);
@@ -131,7 +136,7 @@ p {
     color: var(--text-heal);
 }
 
-/* What it was born with, and how often it swings and casts (rules §10). */
+/* What it was born with, how often it swings and casts, and how fast it runs (rules §10). */
 .attribute,
 .speed {
     color: var(--text-attribute);
@@ -154,6 +159,6 @@ p {
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does.
  * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
 :is(p, li) :is(.hp, .attack, .magic, .debuff, .crit, .adena, .level, .skill, .regen, .buff,
-    .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura) {
+    .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura, .timer) {
     font-weight: var(--weight-value);
 }

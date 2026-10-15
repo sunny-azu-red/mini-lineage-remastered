@@ -31,6 +31,18 @@ defmodule MiniLineage.Game.Hunt do
 
   def round_ms, do: @round_ms
   def max_rounds, do: @max_rounds
+  def burn_ms, do: @burn_ms
+  @doc "§19: Ice Bolt's slow, what it leaves of a swing and a run, and for how long."
+  def slow, do: %{times: @slowed, ms: @slow_ms}
+
+  @doc "§19: a skill's reuse, × 333 ÷ Atk. Spd. for a blade's and × 333 ÷ Casting Spd. for the rest."
+  def reuse_ms(skill, stats), do: (skill[:reuse] || 0) * 333 / timing_speed(skill, stats)
+
+  @doc "§19: a spell's cast, × 333 ÷ Casting Spd."
+  def cast_ms(skill, stats), do: skill.cast * 333 / stats.cast_spd
+
+  defp timing_speed(%{kind: kind}, stats) when kind in [:physical, :blow], do: stats.atk_spd
+  defp timing_speed(_skill, stats), do: stats.cast_spd
 
   @doc """
   §20: one of the ground's monsters from 3 levels below the character up to its own level, or one
@@ -97,7 +109,8 @@ defmodule MiniLineage.Game.Hunt do
       # §20: a Mystic pulls with a spell, a Fighter with its weapon.
       path: Map.get(bars, :path),
       heal_fight_at: Map.get(bars, :heal_fight_at, 0),
-      # §20: the heals cast before the pull, newest first, each `{skill, healed}`, and their time.
+      # §20: what it did before the pull, newest first, each `{:aura, skill}` or
+      # `{:heal, skill, healed}`, and the time it took.
       mended: [],
       quiet_ms: 0.0,
       toggle: nil,
@@ -127,7 +140,12 @@ defmodule MiniLineage.Game.Hunt do
       critical: false
     }
 
-    state = state |> mend(Enum.filter(usable, &(&1.kind == :heal))) |> settle()
+    state =
+      state
+      |> raise_auras(Enum.filter(usable, &(&1.kind == :aura)))
+      |> mend(Enum.filter(usable, &(&1.kind == :heal)))
+      |> settle()
+
     before = {Enum.reverse(state.mended), state.health}
     state = %{state | distance: opening(state, usable, foe)} |> rounds(usable, foe)
 
@@ -216,6 +234,29 @@ defmodule MiniLineage.Game.Hunt do
       else: %{s | toggle: nil, stats: Map.update!(s.stats, :p_atk, &(&1 - toggle.power))}
   end
 
+  # §20: before the pull, every aura it knows that is not up and that it can pay for, each cast to
+  # its end, so no round of the fight goes on one.
+  defp raise_auras(s, auras) do
+    case Enum.find(auras, &(not MapSet.member?(s.auras, &1.name) and s.mp >= &1.mp)) do
+      nil ->
+        s
+
+      aura ->
+        s = wait(spend(s, aura), cast_ms(aura, s.stats))
+
+        raise_auras(
+          %{
+            s
+            | auras: MapSet.put(s.auras, aura.name),
+              raised: [aura.name | s.raised],
+              stats: Map.update!(s.stats, aura.stat, &(&1 * aura.times)),
+              mended: [{:aura, aura.name} | s.mended]
+          },
+          auras
+        )
+    end
+  end
+
   # §20: before the pull, while below the player's share of HP, the strongest heal it can pay for,
   # waiting out the reuse, until it is not or it cannot pay for one.
   defp mend(s, heals) do
@@ -228,8 +269,12 @@ defmodule MiniLineage.Game.Hunt do
 
       heal ->
         healed = min(heal_amount(heal.power, s.stats.m_atk), s.stats.max_hp - s.health)
-        s = %{spend(s, heal, s.stats.cast_spd) | busy: heal.cast * 333 / s.stats.cast_spd}
-        mend(%{s | health: s.health + healed, mended: [{heal.name, healed} | s.mended]}, heals)
+        s = %{spend(s, heal) | busy: cast_ms(heal, s.stats)}
+
+        mend(
+          %{s | health: s.health + healed, mended: [{:heal, heal.name, healed} | s.mended]},
+          heals
+        )
 
       true ->
         mend(wait(s, @round_ms), heals)
@@ -279,8 +324,8 @@ defmodule MiniLineage.Game.Hunt do
   defp foe_land(%{foe_pending: spell} = s, foe),
     do: foe_effect(%{s | foe_pending: nil}, foe, spell)
 
-  # §20: what a character does when it is free to: raise its auras, light its toggle, cast its
-  # strongest spell, and while its spells rest heal when hurt or curse; otherwise it swings.
+  # §20: what a character does when it is free to: light its toggle, cast its strongest spell, and
+  # while its spells rest heal when hurt or curse; otherwise it swings. Its auras went up before.
   defp character_turn(s, skills, foe) do
     hurt? = s.health * 100 < s.stats.max_hp * s.heal_fight_at
     # A curse is not worth its cast on a monster already half dead.
@@ -289,12 +334,8 @@ defmodule MiniLineage.Game.Hunt do
     choice =
       Enum.find(
         skills,
-        &(&1.kind == :aura and not MapSet.member?(s.auras, &1.name) and ready?(s, &1))
+        &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp and blows?(s))
       ) ||
-        Enum.find(
-          skills,
-          &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp and blows?(s))
-        ) ||
         strongest(s, skills, &(&1.kind in @spells and not spent?(s, &1))) ||
         (hurt? && strongest(s, skills, &(&1.kind == :heal))) ||
         if(fresh?,
@@ -335,7 +376,7 @@ defmodule MiniLineage.Game.Hunt do
   # §19: the MP and the reuse at once, the effect as the cast ends; one that ends within the round
   # takes effect in it.
   defp cast(s, skill, foe) do
-    s = %{spend(s, skill, s.stats.cast_spd) | busy: skill.cast * 333 / s.stats.cast_spd}
+    s = %{spend(s, skill) | busy: cast_ms(skill, s.stats)}
 
     if s.busy <= @round_ms,
       do: take_effect(s, skill, foe),
@@ -344,17 +385,12 @@ defmodule MiniLineage.Game.Hunt do
 
   defp take_effect(s, skill, foe) do
     stats = s.stats
-    s = if skill.kind in [:heal, :aura], do: s, else: %{s | engaged: true}
+    s = if skill.kind == :heal, do: s, else: %{s | engaged: true}
 
     case skill.kind do
       :heal ->
         healed = min(heal_amount(skill.power, stats.m_atk), stats.max_hp - s.health)
         note(%{s | health: s.health + healed}, {:heal, skill.name, healed})
-
-      :aura ->
-        s = %{s | auras: MapSet.put(s.auras, skill.name), raised: [skill.name | s.raised]}
-        s = %{s | stats: Map.update!(s.stats, skill.stat, &(&1 * skill.times))}
-        note(s, {:aura, skill.name})
 
       :poison ->
         if Formulas.hit?(skill.land) do
@@ -424,7 +460,7 @@ defmodule MiniLineage.Game.Hunt do
   # §19: a physical skill never misses and never crits; a blow lands on its own chance or not at all.
   defp strike(s, skill, foe) do
     stats = s.stats
-    s = spend(s, skill, stats.atk_spd)
+    s = spend(s, skill)
 
     if skill.kind == :blow and not Formulas.hit?(blow_chance(stats.dex)) do
       note(s, {:skill, skill.name, 0})
@@ -620,11 +656,11 @@ defmodule MiniLineage.Game.Hunt do
   defp block(stats), do: stats.p_def
 
   # §19: a skill's reuse, scaled by the speed that times it, runs down a round at a time.
-  defp spend(s, skill, speed) do
+  defp spend(s, skill) do
     %{
       s
       | mp: s.mp - skill.mp,
-        cooldowns: Map.put(s.cooldowns, skill.name, (skill[:reuse] || 0) * 333 / speed),
+        cooldowns: Map.put(s.cooldowns, skill.name, reuse_ms(skill, s.stats)),
         uses: s.uses + 1
     }
   end

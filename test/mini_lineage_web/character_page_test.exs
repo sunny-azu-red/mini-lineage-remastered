@@ -7,7 +7,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
   alias MiniLineage.Game.{Clock, Constants, Math, Player, Snapshot}
   alias MiniLineageWeb.Screens
 
-  @figures ~w(str con dex int wit men p_atk m_atk p_def m_def accuracy evasion atk_spd cast_spd hp_regen mp_regen)a
+  @figures ~w(str con dex int wit men p_atk m_atk p_def m_def accuracy evasion atk_spd cast_spd run_spd hp_regen mp_regen)a
 
   # Rules §3 to §10, worked for the run's own set and level: every number the base layer gives it.
   test "shows every stat the rules give the run, at its level" do
@@ -30,8 +30,8 @@ defmodule MiniLineageWeb.CharacterPageTest do
   end
 
   # Rules §13: Accuracy and Evasion decide whether a blow lands, so they read with blows, never
-  # spells. Resting happens out of a fight, so it reads with the bars it fills.
-  test "combat stats read blows, then spells, and resting sits with HP and MP" do
+  # spells, and running (§20) reads on its own. Resting happens out of a fight, so it reads with the bars it fills.
+  test "combat stats read blows, then spells, then running, and resting sits with HP and MP" do
     {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
     doc = page(player)
 
@@ -45,6 +45,8 @@ defmodule MiniLineageWeb.CharacterPageTest do
     assert keys.("#character-stats p:nth-of-type(2) [data-key]") ==
              ~w(char-m-atk char-cast-spd char-magic-critical char-m-def)
 
+    assert keys.("#character-stats p:nth-of-type(3) [data-key]") == ~w(char-run-spd)
+
     assert LazyHTML.query(doc, "#character-stats p:nth-of-type(1) #character-critical")
            |> Enum.count() == 1
 
@@ -55,6 +57,51 @@ defmodule MiniLineageWeb.CharacterPageTest do
     assert keys.("#character-stats .regen") == []
   end
 
+  # Rules §23, its example: a worn shield catches blows at its block rate × the DEX bonus, so it
+  # reads with them, between P.Def and Evasion, and not at all without one.
+  test "a shield's block reads with the blows it catches, only while one is worn" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Sunny")
+
+    keys = fn doc ->
+      doc
+      |> LazyHTML.query("#character-stats p:nth-of-type(1) [data-key]")
+      |> LazyHTML.attribute("data-key")
+    end
+
+    refute "char-block" in keys.(page(player))
+
+    doc = page(%{player | items: player.items ++ [Player.new_item("Small Shield", true)]})
+
+    assert keys.(doc) ==
+             ~w(char-p-atk char-atk-spd char-critical char-accuracy char-p-def char-block char-evasion)
+
+    assert doc |> LazyHTML.query("#character-block") |> LazyHTML.text() == "22.0% Block"
+  end
+
+  # Rules §11: what a tick of rest mends, or costs, is said on the row as the tooltip says it, in
+  # figures, since it moves with the level and as each bar fills.
+  test "Regenerating and Relax say what a tick of rest mends and costs" do
+    Clock.put_now(~U[2026-07-01 12:00:00Z])
+    {orc, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Rester")
+    orc = %{orc | location: "gludio", health: 1, mp: 10, skills: Map.put(orc.skills, "Relax", 1)}
+    stats = Player.stats(orc)
+    doc = page(orc)
+    text = &(doc |> LazyHTML.query(&1) |> LazyHTML.text() |> String.replace(~r/\s+/, " "))
+    keys = &(doc |> LazyHTML.query(&1) |> LazyHTML.attribute("data-key"))
+    {hp, mp} = {Math.js_round(stats.hp_regen), Math.js_round(stats.mp_regen)}
+
+    assert text.("#effect-regenerating") =~ "+#{hp} HP and +#{mp} MP every three seconds."
+
+    assert keys.("#effect-regenerating [data-key]") ==
+             ~w(effect-regenerating-hp effect-regenerating-mp)
+
+    assert LazyHTML.attribute(LazyHTML.query(doc, "#effect-regenerating"), "phx-hook") == [
+             "AnimatedValues"
+           ]
+
+    assert text.("#effect-relax") =~ "+5 HP and -3 MP every three seconds."
+  end
+
   # Rules §16, by day: a buff reads as one, and what it changes wears the stat it changes.
   test "the Mother Tree's blessing is a buff, and mends in the colour of mending" do
     Clock.put_now(~U[2026-07-01 09:00:00Z])
@@ -63,7 +110,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
     texts = &(doc |> LazyHTML.query(&1) |> Enum.map(fn node -> LazyHTML.text(node) end))
 
     assert texts.("#effect-mother_tree .buff") == ["🌳 Blessing of the Mother Tree"]
-    assert texts.("#effect-mother_tree .regen") == ["×1.5 HP regen", "×1.5 MP regen"]
+    assert texts.("#effect-mother_tree .regen") == ["+50% HP regen", "+50% MP regen"]
     assert texts.("#effect-resting .aura") == ["💤 Resting"]
   end
 

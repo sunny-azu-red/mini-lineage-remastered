@@ -103,7 +103,6 @@ defmodule MiniLineage.Game.NarrativeTest do
         {1, {:drain, "Life Drain", 14, false, 11}},
         {2, {:drain, "Vampiric Touch", 30, true, 12}},
         {2, {:drain, "Life Drain", 9, false, 0}},
-        {1, {:aura, "Defense Aura"}},
         {2, {:toggle, "Soul Cry"}},
         {3, {:curse, "Curse: Poison", true}},
         {3, {:poison, 8}},
@@ -125,7 +124,7 @@ defmodule MiniLineage.Game.NarrativeTest do
           ground,
           log,
           %{max_hp: 100, bow?: false},
-          {[{"Heal", 70}, {"Self Heal", 45}], 60}
+          {[{:aura, "Defense Aura"}, {:heal, "Heal", 70}, {:heal, "Self Heal", 45}], 60}
         )
         |> Enum.map(&Narrative.alert/1)
 
@@ -152,7 +151,7 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "the Young Keltir begins casting NPC Windstrike - Magic 1"
 
       assert Enum.at(lines, 1) =~
-               ~r/^Before the fight: you cast Heal and mend .*Self Heal.*you at/
+               ~r/^Before the fight: you raise your .*Defense Aura.*you cast Heal and mend .*Self Heal.*you at/
     end
   end
 end

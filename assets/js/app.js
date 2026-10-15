@@ -2,7 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortFigure, percentFigure, tenthsFigure} from "./hooks"
+import {hooks as gameHooks, shortFigure, percentFigure, tenthsFigure, timerLabel, remainingLabel} from "./hooks"
 import {recallAll} from "./hooks/kept"
 import {playSound, installUnlock} from "./soundfx"
 
@@ -75,3 +75,5 @@ if (process.env.NODE_ENV === "development") {
 window.__shortFigure = shortFigure;
 window.__percentFigure = percentFigure;
 window.__tenthsFigure = tenthsFigure;
+window.__timerLabel = timerLabel;
+window.__remainingLabel = remainingLabel;

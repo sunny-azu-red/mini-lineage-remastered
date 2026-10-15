@@ -23,14 +23,17 @@ defmodule MiniLineage.Game.SkillsTest do
 
   defp aura?(player, id), do: Enum.any?(Player.auras(player), &(&1.id == id))
 
-  test "an aura raised outlasts the fight as an icon, changes its stat, and fades in 20 minutes" do
+  test "an aura raised outlasts the fight as an icon, changes its stat, and fades in 2 minutes" do
     elf = character(2, :fighter, 5, %{"Defense Aura" => 1})
     raised = Player.put_buffs(elf, ["Defense Aura"])
 
     assert aura?(raised, "defense_aura")
     assert_in_delta Player.stats(raised).p_def, Player.stats(elf).p_def * 1.08, 1.0e-9
 
-    Clock.put_now(DateTime.add(@noon, 20 * 60 + 1))
+    Clock.put_now(DateTime.add(@noon, 2 * 60 - 1))
+    assert aura?(raised, "defense_aura")
+
+    Clock.put_now(DateTime.add(@noon, 2 * 60 + 1))
     refute aura?(raised, "defense_aura")
     assert {%{buffs: buffs}, true} = Player.regenerate(raised)
     assert buffs == %{}

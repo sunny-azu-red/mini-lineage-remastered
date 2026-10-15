@@ -22,8 +22,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   colocated hooks.
 - **Hooks**: `app.js` imports them from `assets/js/hooks.js`, which holds nothing but that list. Each
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
-  `AnimatedValues`, `DevKeys`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle` (over the synth
-  in `soundfx.js`) and `Table`; `kept.js` is storage.
+  `AnimatedValues`, `DevKeys`, `EffectTimers`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle`
+  (over the synth in `soundfx.js`) and `Table`; `kept.js` is storage.
 - **Two sounds, and only two**, each a list of notes in `soundfx.js` with no assets. The new-game
   fanfare is the flash's `sound`, pushed by `GameLive` as `play-sound` so no reload can replay it.
   The sound toggle's chime is the browser's own.
@@ -137,8 +137,10 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **A formatter with a client-side twin is held to a table.** `Format.short`/`shortFigure`,
   `Format.percent`/`percentFigure` and `Format.tenths`/`tenthsFigure` (in
   `hooks/animated-values.js`, the last for a Critical %) are deliberate copies, so a count never
-  changes format mid-tween. Each pair reads `test/fixtures/short_format.json`, `percent_format.json`
-  or `tenths_format.json`, from `format_test.exs` and `walkthrough.mjs`. Anything else both
+  changes format mid-tween, and so are `Format.countdown`/`timerLabel` and
+  `Format.remaining`/`remainingLabel` (in `hooks/effect-timers.js`). Each pair reads
+  `test/fixtures/short_format.json`, `percent_format.json`, `tenths_format.json` or
+  `effect_timer.json`, from `format_test.exs` and `walkthrough.mjs`. Anything else both
   languages format gets the same before it gets a second copy.
 - **Browser suites**: hand Playwright a function, never a string (the CSP refuses `eval`, and a
   `waitForFunction("…")` behind a `.catch` reads as a wait that returned). Read a figure's
@@ -319,6 +321,13 @@ Each of these is here because it was got wrong once.
   rows with `Controls.sort_rows/3`. A sort header neither takes `PanelFocus`'s first focus nor gives
   it back to the dropdown. A table outlives a reload only with `remember` on the table AND in
   `sortable/1`, which `GameLive` checks before reading a kept sort back; none does yet.
+- **A page shows what the fight works out, never the formula.** A skill's row reads the numbers
+  `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
+  multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk".
+- **What ends counts down where it is shown.** An effect with an end carries `remaining_ms`, a
+  duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:
+  legacy's pixel badge over the header icon, and on its Buffs & Debuffs row "+8% P.Def for another
+  1m 37s." (or, with no stat to change, "You rest again in 3s."). Each row hooks itself, since the rows sit straight in the panel body.
 - **Every figure counts; only names and dates jump.** A number the player can watch change is a
   `<.figure>`, animated by `AnimatedValues` hooked once over whatever contains them. It writes
   `data-value` and the text from one value, and `format={:short}` sets both the short form and the

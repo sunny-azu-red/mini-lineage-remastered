@@ -343,7 +343,7 @@ defmodule MiniLineage.Game.Rules do
       cast: 4_000,
       stat: :p_def,
       times: 1.08,
-      lasts: 1_200_000
+      lasts: 120_000
     },
     "Attack Aura" => %{
       kind: :aura,
@@ -353,7 +353,7 @@ defmodule MiniLineage.Game.Rules do
       cast: 4_000,
       stat: :p_atk,
       times: 1.08,
-      lasts: 1_200_000
+      lasts: 120_000
     },
     # Rules §19: a buff Lineage II cast on a target, here always the caster itself.
     "Shield" => %{
@@ -364,7 +364,7 @@ defmodule MiniLineage.Game.Rules do
       cast: 4_000,
       stat: :p_def,
       times: 1.08,
-      lasts: 1_200_000
+      lasts: 120_000
     },
     "Soul Shield" => %{
       kind: :aura,
@@ -374,7 +374,7 @@ defmodule MiniLineage.Game.Rules do
       cast: 2_500,
       stat: :p_def,
       times: 1.08,
-      lasts: 1_200_000
+      lasts: 120_000
     },
     "Curse: Poison" => %{
       kind: :poison,

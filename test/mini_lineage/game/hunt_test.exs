@@ -294,15 +294,17 @@ defmodule MiniLineage.Game.HuntTest do
                events(Hunt.fight(stats, short, heals(elf), dummy("Young Keltir")), :heal)
     end
 
-    test "an aura is raised once, and not at all while it is still up" do
+    test "an aura is raised before the pull, its cast waited out, and not at all while it is up" do
       Rng.put_source(fn -> 0.0 end)
       elf = trained(2, :fighter, 5)
       stats = Player.stats(elf)
       result = Hunt.fight(stats, elf, Player.known_skills(elf), dummy("Young Keltir"))
+      aura = Rules.skill("Defense Aura", 1)
 
-      assert [{1, {:begin, "Defense Aura"}} | _] = events(result, :begin)
-      assert [{_, {:aura, "Defense Aura"}}] = events(result, :aura)
+      assert {[{:aura, "Defense Aura"}], _} = result.before
+      assert events(result, :aura) == [] and events(result, :begin) == []
       assert result.raised == ["Defense Aura"]
+      assert result.ms >= result.rounds * Hunt.round_ms() + Hunt.cast_ms(aura, stats)
 
       up = Map.put(stats, :auras, ["Defense Aura"])
       again = Hunt.fight(up, elf, Player.known_skills(elf), dummy("Young Keltir"))
@@ -617,10 +619,10 @@ defmodule MiniLineage.Game.HuntTest do
       result =
         Hunt.fight(stats, %{elf | health: 1}, Player.known_skills(elf), frail("Young Keltir"))
 
-      assert {[{"Heal", _} | _] = heals, pulled} = result.before
-      assert pulled == 1 + Enum.sum(Enum.map(heals, &elem(&1, 1)))
+      assert {[{:heal, "Heal", _} | _] = heals, pulled} = result.before
+      assert pulled == 1 + Enum.sum(Enum.map(heals, &elem(&1, 2)))
       assert pulled * 100 >= stats.max_hp * elf.heal_pull_at
-      assert (pulled - elem(List.last(heals), 1)) * 100 < stats.max_hp * elf.heal_pull_at
+      assert (pulled - elem(List.last(heals), 2)) * 100 < stats.max_hp * elf.heal_pull_at
       assert [{1, {:begin, _}} | _] = events(result, :begin)
     end
 
@@ -651,7 +653,7 @@ defmodule MiniLineage.Game.HuntTest do
           frail("Young Keltir")
         )
 
-      assert {[{"Heal", _}], _} = result.before
+      assert {[{:heal, "Heal", _}], _} = result.before
       assert result.mp == 5
     end
 
@@ -710,7 +712,7 @@ defmodule MiniLineage.Game.HuntTest do
       assert whole.ms == whole.rounds * Hunt.round_ms()
 
       hurt = Hunt.fight(stats, %{elf | health: 1}, skills, frail("Young Keltir"))
-      {[{first, _} | _], _} = hurt.before
+      {[{:heal, first, _} | _], _} = hurt.before
       heal = Enum.find(skills, &(&1.name == first))
       assert hurt.ms >= hurt.rounds * Hunt.round_ms() + heal.cast * 333 / stats.cast_spd
     end

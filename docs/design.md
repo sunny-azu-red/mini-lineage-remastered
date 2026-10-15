@@ -16,6 +16,10 @@ was got wrong once.
   `body`, so columns line up and a counting number doesn't reflow its line. Weight is scoped to
   values inside `p` and `li`, as one `:is(p, li) :is(…)` list, so adding a name is one edit. Only
   Inter 400, 500 and 600 are loaded; 700 is faked.
+- **An effect's time left is legacy's badge**: Silkscreen (`--font-pixel`) at 8px, centred over the
+  header icon and outlined in black, in its kind's colour. It sets its own case and colour, or it
+  takes the band's gold capitals ("1M"), and it sits over the icon because beside it the row of
+  icons would widen every second.
 - **Declare a property only where the element would not otherwise have it.** Either it doesn't
   inherit (form controls and buttons take no font or colour from `body`) or it differs. Restating an
   inherited value gives `body` a second place to be changed with no second effect: `.data-table td`

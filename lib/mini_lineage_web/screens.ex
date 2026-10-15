@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Constants, Format, Math, Narrative, Player, Rules}
+  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Player, Rules}
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
@@ -618,15 +618,22 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <%!-- One row each, as the sidebar's; the sentence is one <p>, or the row would lay its pieces
           out as columns. --%>
-    <div :for={effect <- @view.effects} id={"effect-#{effect.id}"} class="stat-row">
+    <%!-- Each row counts its own time down: they sit straight in the panel body, so no wrapper can. --%>
+    <div
+      :for={effect <- @view.effects}
+      id={"effect-#{effect.id}"}
+      class="stat-row"
+      phx-hook={effect_hook(effect)}
+    >
       <p phx-no-format>
-        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="muted">&bull;</span> {effect.about}<%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %>{if effect.changes != [], do: "."}
+        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="muted">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every three seconds.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} />.<% true -> %><% end %>
       </p>
     </div>
     """
   end
 
-  # Blows, then spells; Accuracy and Evasion decide only whether a blow lands (rules §13).
+  # Blows, then spells, then running (rules §20); Accuracy, Evasion and a shield's block decide only
+  # whether a blow lands and how hard (rules §13, §23).
   defp character(%{panel: %{section: :stats}} = assigns) do
     stats = assigns.view.stats
 
@@ -634,16 +641,22 @@ defmodule MiniLineageWeb.Screens do
       assign(assigns,
         stats: stats,
         critical: Float.round(stats.critical / 1, 1),
-        magic_critical: Float.round(stats.magic_critical / 1, 1)
+        magic_critical: Float.round(stats.magic_critical / 1, 1),
+        block:
+          stats.shield &&
+            Float.round(Hunt.block_chance(stats.shield.shield_rate, stats.dex) / 1, 1)
       )
 
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
-        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
+        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>.
       </p>
       <p phx-no-format>
         You cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% M. Critical</span>, and turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>
+      </p>
+      <p phx-no-format>
+        You run at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> Run Spd.</span>
       </p>
     </div>
     """
@@ -662,13 +675,14 @@ defmodule MiniLineageWeb.Screens do
     <div
       :for={{name, level} <- @view.skills}
       id={"skill-#{slug(name)}"}
+      phx-hook="AnimatedValues"
       class={[
         "stat-row",
         (!Rules.skill_weapon?(name, @view.stats.weapon) or name in @view.unused) && "locked"
       ]}
     >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
     """
@@ -735,6 +749,26 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  # A row counts what moves in it: its time left, or what a tick of rest mends. None has both.
+  defp effect_hook(%{remaining_ms: ms}) when is_integer(ms), do: "EffectTimers"
+  defp effect_hook(%{rates: [_ | _]}), do: "AnimatedValues"
+  defp effect_hook(_effect), do: nil
+
+  defp rate_unit(:hp_regen), do: "HP"
+  defp rate_unit(:mp_regen), do: "MP"
+
+  # What a timed effect with no stat to change says: a buff is something you still have, a debuff
+  # something you are still under, and In Combat, the one timed aura, the wait before rest.
+  defp lapse(:buff), do: "It holds for another"
+  defp lapse(:debuff), do: "It lifts in"
+  defp lapse(:aura), do: "You rest again in"
+
+  attr :ms, :integer, required: true
+
+  defp timer(assigns),
+    do:
+      ~H|<span class="timer" data-timer="long" data-remaining-ms={@ms}>{Format.remaining(@ms)}</span>|
+
   # One each, since a set learns two of a kind (the Orc Fighter, two physical skills).
   @skill_icons %{
     "Power Strike" => "💥",
@@ -763,43 +797,115 @@ defmodule MiniLineageWeb.Screens do
   end
 
   attr :skill, :map, required: true
+  attr :stats, :map, required: true
 
-  defp skill_effect(%{skill: %{kind: :heal}} = assigns),
-    do: ~H|Mends <span class="regen">{@skill.power} HP</span>
-and <span class="magic">√M.Atk</span>
-more for <span class="mp">{@skill.mp} MP</span>.|
+  # Rules §19, worked for this character: what a skill does in the numbers the fight uses, then how
+  # long it takes, so nobody works out √M.Atk or × 333 ÷ Atk. Spd. by hand.
+  defp skill_effect(assigns) do
+    %{skill: skill, stats: stats} = assigns
+    tenths = &round(&1 / 100)
 
-  defp skill_effect(%{skill: %{kind: :aura}} = assigns),
-    do: ~H|<span class={stat_class(@skill.stat)}>{stat_name(@skill.stat)} ×{@skill.times}</span>
-for {div(@skill.lasts, 60_000)} minutes, for <span class="mp">{@skill.mp} MP</span>.|
+    assigns =
+      assign(assigns,
+        key: "skill-#{slug(skill.name)}",
+        reuse: skill.kind not in [:aura, :toggle, :rest] && tenths.(Hunt.reuse_ms(skill, stats)),
+        cast: skill[:cast] && tenths.(Hunt.cast_ms(skill, stats))
+      )
 
-  defp skill_effect(%{skill: %{kind: :poison}} = assigns),
+    ~H"""
+    <.skill_does skill={@skill} stats={@stats} key={@key} />
+    <%= if @cast do %>
+      Cast in
+      <span class="speed"><.figure key={"#{@key}-cast"} value={@cast} format={:tenths} /> seconds</span>
+      <%= if @reuse do %>
+        , ready again every
+        <span class="speed"><.figure key={"#{@key}-reuse"} value={@reuse} format={:tenths} /> seconds</span>
+      <% end %>.
+    <% else %>
+      <%= if @reuse do %>
+        Ready again every <span class="speed"><.figure key={"#{@key}-reuse"} value={@reuse} format={:tenths} /> seconds</span>.
+      <% end %>
+    <% end %>
+    """
+  end
+
+  attr :skill, :map, required: true
+  attr :stats, :map, required: true
+  attr :key, :string, required: true
+
+  defp skill_does(%{skill: %{kind: :physical}} = assigns),
+    do:
+      ~H|<span class="attack">Power {@skill.power}</span>, never missing, for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_does(%{skill: %{kind: :blow}} = assigns),
+    do:
+      ~H|<span class="attack">Power {@skill.power}</span>, landing <span class="accuracy"><.figure key={"#{@key}-lands"} value={round(Hunt.blow_chance(@stats.dex) * 10)} format={:tenths} />% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_does(%{skill: %{kind: :magic, slow: true}} = assigns) do
+    assigns = assign(assigns, slow: Hunt.slow())
+
+    ~H|<span class="magic">Power {@skill.power}</span>, slowing the foe's swing and run by
+<span class="speed">{percent_off(@slow.times)}</span>
+for {duration(@slow.ms)}, for <span class="mp">{@skill.mp} MP</span>.|
+  end
+
+  defp skill_does(%{skill: %{kind: :magic}} = assigns),
+    do:
+      ~H|<span class="magic">Power {@skill.power}</span> for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_does(%{skill: %{kind: :drain}} = assigns),
+    do:
+      ~H|<span class="magic">Power {@skill.power}</span>, mending <span class="regen">{round(@skill.absorb * 100)}% of the HP it takes</span>, for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_does(%{skill: %{kind: :burn}} = assigns) do
+    assigns = assign(assigns, lasts: Hunt.burn_ms())
+
+    ~H|Burns <span class="magic">{@skill.power} HP a second</span>
+for {duration(@lasts)}, <span class="magic">{div(@skill.power * @lasts, 1000)} HP</span>
+in all, for <span class="mp">{@skill.mp} MP</span>.|
+  end
+
+  defp skill_does(%{skill: %{kind: :heal}} = assigns),
+    do: ~H|Mends
+<span class="regen"><.figure
+  key={"#{@key}-mends"}
+  value={Hunt.heal_amount(@skill.power, @stats.m_atk)}
+/> HP</span>
+for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_does(%{skill: %{kind: :aura}} = assigns),
+    do:
+      ~H|<span class={stat_class(@skill.stat)}>+{round((@skill.times - 1) * 100)}% {stat_name(@skill.stat)}</span>
+for {duration(@skill.lasts)}, for <span class="mp">{@skill.mp} MP</span>.|
+
+  defp skill_does(%{skill: %{kind: :poison}} = assigns),
     do:
       ~H|Takes <span class="debuff">{@skill.power} HP</span>
-every {div(@skill.every, 1000)} seconds for {div(@skill.lasts, 1000)} seconds, for <span class="mp">{@skill.mp} MP</span>.|
+every {duration(@skill.every)} for {duration(@skill.lasts)},
+<span class="debuff">{div(@skill.power * @skill.lasts, @skill.every)} HP</span>
+in all, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
-  defp skill_effect(%{skill: %{kind: :shackle}} = assigns),
-    do: ~H|The foe <span class="speed">swings ×{@skill.times}</span>
-for {div(@skill.lasts, 1000)} seconds, for <span class="mp">{@skill.mp} MP</span>.|
+  defp skill_does(%{skill: %{kind: :shackle}} = assigns),
+    do:
+      ~H|The foe swings <span class="speed">{percent_off(@skill.times)} slower</span>
+for {duration(@skill.lasts)}, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
-  defp skill_effect(%{skill: %{kind: :toggle}} = assigns),
+  defp skill_does(%{skill: %{kind: :toggle}} = assigns),
     do: ~H|<span class="attack">P.Atk +{@skill.power}</span>
 for <span class="mp">{@skill.mp} MP</span>, then <span class="mp">{@skill.drain} MP</span>
-every {div(@skill.every, 1000)} seconds.|
+every {duration(@skill.every)}.|
 
-  defp skill_effect(%{skill: %{kind: :rest}} = assigns),
+  defp skill_does(%{skill: %{kind: :rest}} = assigns),
     do: ~H|<span class="regen">+{@skill.power} HP</span>
 a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
-  # A blade's skill lands as an attack, everything else as a spell.
-  defp skill_effect(assigns) do
-    assigns =
-      assign(assigns,
-        class: if(assigns.skill.kind in [:physical, :blow], do: "attack", else: "magic")
-      )
+  # "30%" for a × 0.7.
+  defp percent_off(times), do: "#{round((1 - times) * 100)}%"
 
-    ~H|<span class={@class}>Power {@skill.power}</span> for <span class="mp">{@skill.mp} MP</span>.|
-  end
+  defp duration(ms) when ms >= 60_000 and rem(ms, 60_000) == 0,
+    do: if(ms == 60_000, do: "a minute", else: "#{div(ms, 60_000)} minutes")
+
+  defp duration(ms), do: "#{div(ms, 1000)} seconds"
 
   defp stat_name(:p_def), do: "P.Def"
   defp stat_name(:p_atk), do: "P.Atk"

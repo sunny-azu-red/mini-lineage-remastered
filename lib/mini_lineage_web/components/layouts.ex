@@ -5,7 +5,7 @@ defmodule MiniLineageWeb.Layouts do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Access, Version}
+  alias MiniLineage.Game.{Access, Format, Version}
 
   embed_templates "layouts/*"
 
@@ -28,7 +28,7 @@ defmodule MiniLineageWeb.Layouts do
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&family=Silkscreen:wght@400&display=swap"
       rel="stylesheet"
     />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
@@ -71,7 +71,7 @@ defmodule MiniLineageWeb.Layouts do
                 body_class={panel[:body_class]}
               >
                 <:header :if={index == 0}>
-                  <div class="header-effects" id="effects">
+                  <div class="header-effects" id="effects" phx-hook="EffectTimers">
                     <.effect_icon :for={effect <- @view.effects} effect={effect} />
                   </div>
                 </:header>
@@ -96,7 +96,11 @@ defmodule MiniLineageWeb.Layouts do
       data-effect-id={@effect.id}
       title={@effect.tooltip}
     >
-      <span class="effect-emoji">{@effect.emoji}</span>
+      <span class="effect-emoji">{@effect.emoji}</span><span
+        :if={@effect.remaining_ms}
+        class="effect-timer"
+        data-remaining-ms={@effect.remaining_ms}
+      >{Format.countdown(@effect.remaining_ms)}</span>
     </span>
     """
   end

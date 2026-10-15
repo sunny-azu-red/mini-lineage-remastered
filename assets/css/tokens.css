@@ -94,6 +94,8 @@
     /* ===== Type ===== */
     --font-heading: 'Cinzel', Georgia, serif;
     --font-body: 'Inter', Verdana, Arial, sans-serif;
+    /* An effect's time left over its icon, the one place 8px must stay legible. */
+    --font-pixel: 'Silkscreen', monospace;
     /* The heaviest Inter loaded: 700 would be synthesised, and blooms light-on-dark at 13px. */
     --weight-value: 600;
 }
