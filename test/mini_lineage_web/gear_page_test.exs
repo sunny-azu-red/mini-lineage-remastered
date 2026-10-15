@@ -11,7 +11,10 @@ defmodule MiniLineageWeb.GearPageTest do
   alias MiniLineage.Characters
 
   # A Human Fighter on Talking Island with `adena` to spend.
-  defp human(conn, adena) do
+  defp human(conn, adena), do: shopper(conn, "0", "fighter", adena)
+
+  # A new character of `race_id` and `path` in its own village, with `adena` to spend.
+  defp shopper(conn, race_id, path, adena) do
     session = Characters.new_session_id()
     on_exit(fn -> Characters.forget(session) end)
     conn = init_test_session(conn, %{"session_id" => session})
@@ -19,7 +22,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
     view
     |> element("form[phx-submit=start]")
-    |> render_submit(%{"name" => "Shopper", "race_id" => "0", "path" => "fighter"})
+    |> render_submit(%{"name" => "Shopper", "race_id" => race_id, "path" => path})
 
     Characters.mutate(session, &{%{&1 | adena: adena}, :ok})
     {view, session, conn}
@@ -38,18 +41,29 @@ defmodule MiniLineageWeb.GearPageTest do
     assert_patch(view, "/inventory")
   end
 
-  test "the village's way out leads to its trader, and Gludio's does not" do
+  test "the village's way out leads to its traders, each by name, and Gludio's does not" do
     {view, session, _conn} = human(build_conn(), 0)
 
-    assert has_element?(view, ~s(#travel-form option[value="trader"]))
+    assert has_element?(view, ~s(#travel-form option[value="trader"]), "🛒 Traders")
     view |> form("#travel-form", %{"place" => "trader"}) |> render_submit()
     assert_patch(view, "/talking-island/trader")
 
-    view |> form("#trader-form", %{"place" => "trader-swords"}) |> render_submit()
-    assert_patch(view, "/talking-island/trader/swords")
-    assert has_element?(view, "#stock-broadsword")
-    refute has_element?(view, "#stock-bone-dagger")
-    refute has_element?(view, "#stock", "two-handed")
+    assert has_element?(
+             view,
+             "#trader-intro",
+             "Lector sells weapons, Jackson armour and shields, Silvia jewellery and Katerina potions"
+           )
+
+    for page <- ~w(weapons armour jewellery grocer sell),
+        do: assert(has_element?(view, ~s(#trader-form option[value="trader-#{page}"])))
+
+    view |> form("#trader-form", %{"place" => "trader-weapons"}) |> render_submit()
+    assert_patch(view, "/talking-island/trader/weapons")
+    assert has_element?(view, "#screen h2", "Weapons Trader")
+    assert has_element?(view, "#trader-intro", "Lector lays out the weapons")
+    assert has_element?(view, "#stock-broadsword", "One-handed")
+    assert has_element?(view, "#stock-short-bow", "Two-handed")
+    assert has_element?(view, ~s(#buy-form optgroup[label="Daggers"] option[value="Bone Dagger"]))
 
     Characters.mutate(session, &{%{&1 | location: "gludio"}, :ok})
 
@@ -59,9 +73,43 @@ defmodule MiniLineageWeb.GearPageTest do
     refute has_element?(view, ~s(#travel-form option[value="trader"]))
   end
 
+  test "a Fighter is shown its own weapons, light armour and every shield" do
+    {_view, _session, conn} = human(build_conn(), 0)
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
+    assert has_element?(view, "#stock-bone-dagger")
+    assert has_element?(view, "#stock-short-bow")
+    refute has_element?(view, "#stock-buffalos-horn")
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/armour")
+    assert has_element?(view, "#screen h2", "Armour Trader")
+    assert has_element?(view, "#stock-small-shield")
+    assert has_element?(view, "#stock-leather-shirt")
+    refute has_element?(view, "#stock-cotton-tunic")
+  end
+
+  test "a Mystic is shown staves, robes and every shield, and sold nothing else" do
+    {_view, session, conn} = shopper(build_conn(), "1", "mystic", 20_000)
+
+    {:ok, view, _html} = live(conn, ~p"/orc-village/trader/weapons")
+    assert has_element?(view, "#trader-intro", "Jakal greets you")
+    assert has_element?(view, "#stock-buffalos-horn")
+    refute has_element?(view, "#stock-broadsword")
+    refute has_element?(view, "#stock-spiked-gloves")
+
+    {:ok, view, _html} = live(conn, ~p"/orc-village/trader/armour")
+    assert has_element?(view, "#stock-cotton-tunic")
+    assert has_element?(view, "#stock-small-shield")
+    refute has_element?(view, "#stock-leather-shirt")
+
+    render_hook(view, "buy", %{"item" => "Broadsword"})
+    assert has_element?(view, "#flash", "does not sell that")
+    assert stored(session).adena == 20_000
+  end
+
   test "a purchase is paid and written at once, and the trader buys it back for half" do
     {_view, session, conn} = human(build_conn(), 20_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/swords")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
 
     view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
@@ -77,7 +125,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a purchase puts the dropdown back to its start, so a second click buys nothing" do
     {_view, _session, conn} = human(build_conn(), 20_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/swords")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
     pick = %{"item" => "Broadsword"}
 
     view |> form("#buy-form", pick) |> render_change(%{"_target" => ["item"]})
@@ -90,7 +138,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a refusal is said, and nothing is paid" do
     {_view, session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/swords")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
 
     view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
@@ -185,7 +233,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "potions are bought by the lot onto one stack, counted in the sidebar and drunk from the inventory" do
     {_view, session, conn} = human(build_conn(), 1_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/potions")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/grocer")
 
     assert has_element?(view, "#stock-lesser-healing-potion")
     assert has_element?(view, ~s(#buy-form option[value="Lesser Healing Potion|10"]))

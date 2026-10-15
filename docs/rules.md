@@ -134,7 +134,7 @@ Wisdom (25) counts for 25 × 41 ÷ 13 = **78.8** of mind, nearly double the bare
 Accuracy: a dagger or a bow −3, fists +4, a sword 0, and a staff +4, or 0 for a book, a horn or a
 relic.
 
-Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**, and with Training Gloves **38**.
+Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**, and with Squire's Gloves **38**.
 
 ## 9. Critical
 
@@ -627,14 +627,14 @@ sells anything in a kit:
 | Human Fighter | Squire's Sword, Squire's Shirt, Squire's Pants | Squire's Dagger, Squire's Bow |
 | Elven Fighter | Squire's Bow, Squire's Shirt, Squire's Pants | |
 | Dark Fighter | Squire's Dagger, Squire's Shirt, Squire's Pants | |
-| Orc Fighter | Training Gloves, Squire's Shirt, Squire's Pants | Squire's Sword |
+| Orc Fighter | Squire's Gloves, Squire's Shirt, Squire's Pants | Squire's Sword |
 | Human Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
 | Elven Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
 | Dark Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
-| Orc Mystic | Training Gloves, Apprentice's Tunic, Apprentice's Stockings | |
+| Orc Mystic | Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings | |
 
 - **Five kinds of weapon:** a sword, one-handed or two; a dagger; a bow; fists; and a staff, which
-  a mystic's wand, rod, book, horn and relic are too, one-handed.
+  a mystic's wand, book, horn and relic are too, one-handed.
 - **A first skill (§19) needs its weapon:** Power Strike a sword, in either hand, Power Shot a bow,
   Mortal Blow a dagger, Iron Punch fists. Without it the skill is never used and costs nothing, and
   the character only swings. Spells need none.
@@ -652,10 +652,23 @@ Every starting village sells the items marked village below, and Orc Village tho
 orc-village too, each at its price. A shop buys back anything it sells for half its price, rounded
 down. A starting kit is worth nothing to a shop and is never bought.
 
+Each village keeps four traders: one for weapons, one for armour who sells the shields too, a
+jeweller and a grocer, and any of them buys back:
+
+| Village | Weapons Trader | Armour Trader | Jeweller | Grocer |
+|---|---|---|---|---|
+| Talking Island Village | Lector | Jackson | Silvia | Katerina |
+| Elven Village | Unoren | Ariel | Creamees | Herbiel |
+| Dark Elf Village | Iria | Payne | Minaless | Vollodos |
+| Orc Village | Jakal | Kunai | Uska | Papuma |
+
+A trader shows a set only what its path uses, and sells it nothing else: a Fighter the weapons its
+own skills need (§23) and light armour, a Mystic staves and robes, and both every shield, necklace
+and potion.
+
 | Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | Accuracy | Spread | P.Def | M.Def | Shield | Block | MP | Price | Sold |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Apprentice's Wand | weapon | weapon | 1 | staff | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  | 138 | starting |
-| Apprentice's Rod | weapon | weapon | 1 | staff | 6 | 8 | 379 | 4 | 4 | 20 |  |  |  |  |  | 768 | village |
 | Squire's Bow | weapon | weapon | 2 | bow | 14 | 5 | 293 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
 | Short Bow | weapon | weapon | 2 | bow | 16 | 6 | 293 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
 | Bow | weapon | weapon | 2 | bow | 23 | 9 | 293 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
@@ -664,23 +677,20 @@ down. A starting kit is worth nothing to a shop and is never bought.
 | Squire's Dagger | weapon | weapon | 1 | dagger | 5 | 5 | 433 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
 | Bone Dagger | weapon | weapon | 1 | dagger | 7 | 6 | 433 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
 | Knife | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
-| Doom Dagger | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
 | Dirk | weapon | weapon | 1 | dagger | 15 | 12 | 433 | 12 | -3 | 5 |  |  |  |  |  | 54100 | village |
 | Throwing Knife | weapon | weapon | 1 | dagger | 21 | 17 | 433 | 12 | -3 | 5 |  |  |  |  |  | 136000 | village |
-| Training Gloves | weapon | weapon | 2 | fists | 7 | 5 | 325 | 4 | 4 | 5 |  |  |  |  |  | 138 | starting |
+| Squire's Gloves | weapon | weapon | 2 | fists | 7 | 5 | 325 | 4 | 4 | 5 |  |  |  |  |  | 138 | starting |
 | Spiked Gloves | weapon | weapon | 2 | fists | 10 | 6 | 325 | 4 | 4 | 5 |  |  |  |  |  | 768 | orc-village |
 | Iron Gloves | weapon | weapon | 2 | fists | 13 | 9 | 325 | 4 | 4 | 5 |  |  |  |  |  | 12500 | orc-village |
 | Fox Claw Gloves | weapon | weapon | 2 | fists | 21 | 12 | 325 | 4 | 4 | 5 |  |  |  |  |  | 54100 | orc-village |
 | Cestus | weapon | weapon | 2 | fists | 29 | 17 | 325 | 4 | 4 | 5 |  |  |  |  |  | 136000 | orc-village |
 | Buffalo's Horn | weapon | weapon | 1 | staff | 6 | 8 | 379 | 8 | 0 | 10 |  |  |  |  |  | 768 | village |
-| Apprentice's Spellbook | weapon | weapon | 1 | staff | 9 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 12500 | village |
+| Scholar's Tome | weapon | weapon | 1 | staff | 9 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 12500 | village |
 | Relic of The Saints | weapon | weapon | 1 | staff | 19 | 22 | 379 | 8 | 0 | 10 |  |  |  |  |  | 136000 | village |
 | Squire's Sword | weapon | weapon | 1 | sword | 6 | 5 | 379 | 8 | 0 | 10 |  |  |  |  |  | 138 | starting |
 | Short Sword | weapon | weapon | 1 | sword | 8 | 6 | 379 | 8 | 0 | 10 |  |  |  |  |  | 768 | village |
 | Broadsword | weapon | weapon | 1 | sword | 11 | 9 | 379 | 8 | 0 | 10 |  |  |  |  |  | 12500 | village |
 | Gladius | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
-| Orcish Sword | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
-| Handmade Sword | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
 | Long Sword | weapon | weapon | 1 | sword | 24 | 17 | 379 | 8 | 0 | 10 |  |  |  |  |  | 136000 | village |
 | Willow Staff | weapon | weapon | 2 | staff | 11 | 12 | 325 | 4 | 4 | 20 |  |  |  |  |  | 12500 | village |
 | Cedar Staff | weapon | weapon | 2 | staff | 16 | 16 | 325 | 4 | 4 | 20 |  |  |  |  |  | 54100 | village |
@@ -695,25 +705,20 @@ down. A starting kit is worth nothing to a shop and is never bought.
 | Shirt | armour | chest |  | light |  |  |  |  |  |  | 36 |  |  |  |  | 147 | village |
 | Leather Shirt | armour | chest |  | light |  |  |  |  |  |  | 43 |  |  |  |  | 2430 | village |
 | Wooden Breastplate | armour | chest |  | light |  |  |  |  |  |  | 47 |  |  |  |  | 7960 | village |
-| Cotton Shirt | armour | chest |  | light |  |  |  |  |  |  | 50 |  |  |  |  | 20300 | village |
 | Bone Breastplate | armour | chest |  | light |  |  |  |  |  |  | 50 |  |  |  |  | 20300 | village |
 | Apprentice's Tunic | armour | chest |  | magic |  |  |  |  |  |  | 17 |  |  |  | 19 | 26 | starting |
 | Tunic | armour | chest |  | magic |  |  |  |  |  |  | 18 |  |  |  | 24 | 147 | village |
 | Cotton Tunic | armour | chest |  | magic |  |  |  |  |  |  | 21 |  |  |  | 38 | 2430 | village |
-| Feriotic Tunic | armour | chest |  | magic |  |  |  |  |  |  | 21 |  |  |  | 38 | 2430 | village |
 | Leather Tunic | armour | chest |  | magic |  |  |  |  |  |  | 25 |  |  |  | 52 | 7960 | village |
 | Tunic of Devotion | armour | chest |  | magic |  |  |  |  |  |  | 30 |  |  |  | 67 | 20300 | village |
 | Squire's Pants | armour | legs |  | light |  |  |  |  |  |  | 20 |  |  |  |  | 6 | starting |
 | Pants | armour | legs |  | light |  |  |  |  |  |  | 22 |  |  |  |  | 92 | village |
 | Leather Pants | armour | legs |  | light |  |  |  |  |  |  | 27 |  |  |  |  | 1520 | village |
-| Hard Leather Pants | armour | legs |  | light |  |  |  |  |  |  | 29 |  |  |  |  | 4970 | village |
 | Wooden Gaiters | armour | legs |  | light |  |  |  |  |  |  | 29 |  |  |  |  | 4970 | village |
-| Cotton Pants | armour | legs |  | light |  |  |  |  |  |  | 32 |  |  |  |  | 12700 | village |
 | Bone Gaiters | armour | legs |  | light |  |  |  |  |  |  | 32 |  |  |  |  | 12700 | village |
 | Apprentice's Stockings | armour | legs |  | magic |  |  |  |  |  |  | 10 |  |  |  | 10 | 6 | starting |
 | Stockings | armour | legs |  | magic |  |  |  |  |  |  | 11 |  |  |  | 15 | 92 | village |
 | Cotton Stockings | armour | legs |  | magic |  |  |  |  |  |  | 13 |  |  |  | 23 | 1520 | village |
-| Feriotic Stockings | armour | legs |  | magic |  |  |  |  |  |  | 13 |  |  |  | 23 | 1520 | village |
 | Leather Stockings | armour | legs |  | magic |  |  |  |  |  |  | 16 |  |  |  | 33 | 4970 | village |
 | Stockings of Devotion | armour | legs |  | magic |  |  |  |  |  |  | 19 |  |  |  | 42 | 12700 | village |
 | Necklace of Magic | jewellery | necklace |  |  |  |  |  |  |  |  |  | 15 |  |  |  | 66 | village |

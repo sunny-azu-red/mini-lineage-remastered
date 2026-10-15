@@ -12,8 +12,13 @@ defmodule MiniLineage.Game.Shop do
   def buyback(%{sold: :starting}), do: 0
   def buyback(item), do: div(item.price, 2)
 
-  @doc "§24: whether the shop in `town` sells `item`."
-  def stocks?(town, item), do: Enum.any?(Rules.stock(town), &(&1.name == item.name))
+  @doc "§24: whether the shop where `player` stands sells `item` to its path."
+  def stocks?(player, item),
+    do:
+      Enum.any?(
+        Rules.stock(player.location, Rules.set(player.race_id, player.path)),
+        &(&1.name == item.name)
+      )
 
   @doc """
   §23: the items with `id` put on, and whatever it displaces taken off: the slot's last occupant, and

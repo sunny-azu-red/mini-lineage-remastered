@@ -212,7 +212,7 @@ the fight uses them.
 - **Five kinds of weapon: sword, dagger, bow, fists and staff** (rules §23). The no-grade blunts
   (Club, Mace, Heavy Chisel, Sickle, Dwarven Mace) and the Short Spear are not sold; dual swords
   and polearms never come. A two-handed sword (BIGSWORD) is a sword, and every mystic weapon is a
-  staff: the two-handed staves (BIGBLUNT), and one-handed the Apprentice's Wand and Rod (BLUNT) and
+  staff: the two-handed staves (BIGBLUNT), and one-handed the Apprentice's Wand (BLUNT) and
   the book, horn and relic (ETC). Each keeps its canon numbers. So Power Strike takes a sword in
   either hand, where Lineage II also took a blunt, a two-handed blunt and so a staff.
 - **Bows need no arrows.** In Lineage II every shot spent one, a miss included; here a bow only
@@ -221,11 +221,22 @@ the fight uses them.
   L2J spread normal attacks by 0 to +10% whatever the weapon. A monster's blows spread ±10%.
 - **A fighter's kit carries a Squire's weapon for each skill its trainer teaches that needs one,**
   so every first skill works from the first fight and a Human Fighter can start down any of its
-  three paths: the Human Fighter a Squire's Sword, Dagger and Bow, the Orc Fighter Training Gloves and
+  three paths: the Human Fighter a Squire's Sword, Dagger and Bow, the Orc Fighter Squire's Gloves and
   a Squire's Sword, the Elven Fighter a Squire's Bow, the Dark Fighter a Squire's Dagger. In Lineage
   II all three Fighters carried a Squire's Sword and a Dagger. The Dagger is renamed Squire's Dagger,
   and the Squire's Bow is ours (P.Atk 14, M.Atk 5, price 138): the Short Bow less what the Squire's
   Sword is below the Short Sword, so that no shop sells anything in a kit.
+- **Every kit is a squire's or an apprentice's, and nothing else is.** Lineage II's Training Gloves
+  are Squire's Gloves and its Apprentice's Spellbook the Scholar's Tome, each with its numbers, so
+  every fighter's kit reads alike, as every mystic's does, and no shop sells an apprentice's thing.
+- **The Orc Mystic starts with the Apprentice's Wand,** as every other mystic does, where Lineage II
+  gave it Training Gloves and no wand. Its spells draw on M.Atk, which the wand has more of (7
+  against 5), and a shop shows a mystic staves and never fists (rules §24).
+- **A village shop sells one of each kind at each price,** where Lineage II sold twins with the same
+  numbers under two names: the Doom Dagger beside the Knife, the Orcish and Handmade Swords beside
+  the Gladius, the Apprentice's Rod beside Buffalo's Horn, the Cotton Shirt and Pants beside the
+  Bone Breastplate and Gaiters, the Hard Leather Pants beside the Wooden Gaiters, and the Feriotic
+  Tunic and Stockings beside the Cotton ones. The first of each is not in the game.
 - **A shield blocks from any side, and never a spell.** Lineage II blocked only blows from the front,
   three times as often against arrows, and aCis let a shield turn spells too.
 - **A character carries 15 items, and nothing is weighed.** Lineage II gave every non-Dwarf 80
@@ -235,6 +246,9 @@ the fight uses them.
 
 **Trade**
 
+- **A trader shows each path only its own goods** (rules §24): a fighter the weapons its own skills
+  use, light armour and shields; a mystic staves, robes and shields; both the jewellery and the
+  potions. In Lineage II every trader showed both a fighter's list and a mystic's to anyone.
 - **Shops charge an item's canon price, with no castle tax** (Lineage II added the castle lord's
   tax, 15% in a village), and nothing mentions one.
 - **NPC shops sell better gear in more advanced towns, for more money.** In Lineage II no NPC

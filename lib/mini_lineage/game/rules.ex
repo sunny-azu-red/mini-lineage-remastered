@@ -634,11 +634,11 @@ defmodule MiniLineage.Game.Rules do
     {2, :fighter} => {["Squire's Bow", "Squire's Shirt", "Squire's Pants"], []},
     {3, :fighter} => {["Squire's Dagger", "Squire's Shirt", "Squire's Pants"], []},
     {1, :fighter} =>
-      {["Training Gloves", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
+      {["Squire's Gloves", "Squire's Shirt", "Squire's Pants"], ["Squire's Sword"]},
     {0, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},
     {2, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},
     {3, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []},
-    {1, :mystic} => {["Training Gloves", "Apprentice's Tunic", "Apprentice's Stockings"], []}
+    {1, :mystic} => {["Apprentice's Wand", "Apprentice's Tunic", "Apprentice's Stockings"], []}
   }
 
   # Rules §23: the weapon each weapon skill needs, in either hand; a spell needs none.
@@ -650,6 +650,29 @@ defmodule MiniLineage.Game.Rules do
   }
 
   @capacity 15
+
+  # Rules §24: each village's four traders, by what they sell.
+  @traders %{
+    "talking-island" => %{
+      weapons: "Lector",
+      armour: "Jackson",
+      jewellery: "Silvia",
+      grocer: "Katerina"
+    },
+    "elven-village" => %{
+      weapons: "Unoren",
+      armour: "Ariel",
+      jewellery: "Creamees",
+      grocer: "Herbiel"
+    },
+    "dark-elf-village" => %{
+      weapons: "Iria",
+      armour: "Payne",
+      jewellery: "Minaless",
+      grocer: "Vollodos"
+    },
+    "orc-village" => %{weapons: "Jakal", armour: "Kunai", jewellery: "Uska", grocer: "Papuma"}
+  }
 
   # Rules §25: where each set learns its skills, and from whom.
   @guilds %{
@@ -789,6 +812,28 @@ defmodule MiniLineage.Game.Rules do
     |> Enum.filter(&(&1.sold in sold))
     |> Enum.sort_by(&{kind_order(&1.kind), slot_order(&1.slot), &1.type || "", &1.price, &1.name})
   end
+
+  @doc "Rules §24: a village's four traders, by what they sell."
+  def traders(village), do: Map.fetch!(@traders, village)
+
+  @doc "Rules §24: what a village's traders show a set, the goods of its own path (`offered?/2`)."
+  def stock(town, set), do: Enum.filter(stock(town), &offered?(set, &1))
+
+  @doc """
+  Rules §24: whether a set's path is offered an item: a fighter the weapons its own skills use and
+  light armour, a mystic staves and robes, and both every shield, necklace and potion.
+  """
+  def offered?(set, %{slot: :weapon, type: type}), do: type in path_weapons(set)
+
+  def offered?(%{path: path}, %{slot: slot, type: type}) when slot in [:chest, :legs],
+    do: type == if(path == :fighter, do: "light", else: "magic")
+
+  def offered?(_set, _item), do: true
+
+  defp path_weapons(%{path: :mystic}), do: ["staff"]
+
+  defp path_weapons(set),
+    do: set.name |> lessons() |> Enum.flat_map(&skill_weapons(&1.skill)) |> Enum.uniq()
 
   defp kind_order(kind),
     do: Enum.find_index([:weapon, :shield, :armour, :jewellery, :potion], &(&1 == kind))

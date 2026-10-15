@@ -552,12 +552,19 @@ try {
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
-    await page.selectOption('#trader-form select', 'trader-daggers');
+    check('the village\'s four traders are named, each by what they sell',
+        (await text('#trader-intro')).startsWith('Iria sells weapons, Payne armour and shields, Minaless jewellery and Vollodos potions'),
+        await text('#trader-intro'));
+    await page.selectOption('#trader-form select', 'trader-weapons');
     await page.click('#trader-form button');
-    await onScreen('trader-daggers');
-    check('the trader\'s daggers are a page of their own, listing only daggers',
-        new URL(page.url()).pathname === '/dark-elf-village/trader/daggers'
-        && await page.locator('#stock-broadsword').count() === 0, page.url());
+    await onScreen('trader-weapons');
+    check('the weapons trader is a page of its own, Iria showing a Dark Fighter daggers and nothing else',
+        new URL(page.url()).pathname === '/dark-elf-village/trader/weapons'
+        && (await text('#trader-intro')).startsWith('Iria deals in no weapons made by clumsy Humans')
+        && (await page.locator('#stock tbody tr').evaluateAll((rows) => rows.map((row) => row.id))).join() ===
+            'stock-bone-dagger,stock-knife,stock-dirk,stock-throwing-knife', await text('#stock tbody'));
+    check('...each weapon saying how many hands it takes',
+        (await text('#stock-bone-dagger')).includes('One-handed'), await text('#stock-bone-dagger'));
     await page.selectOption('#buy-form select', 'Bone Dagger');
     await page.click('#buy-form button');
     // The debug build's own flash is already up.
@@ -604,9 +611,9 @@ try {
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
-    await page.selectOption('#trader-form select', 'trader-potions');
+    await page.selectOption('#trader-form select', 'trader-grocer');
     await page.click('#trader-form button');
-    await onScreen('trader-potions');
+    await onScreen('trader-grocer');
     await page.selectOption('#buy-form select', 'Lesser Healing Potion|10');
     await page.click('#buy-form button');
     await adena(wallet - 768 - 900);
@@ -792,7 +799,7 @@ try {
     await home();
     await travel('trader', 'trader');
     await holdEach();
-    await browse('trader-daggers');
+    await browse('trader-weapons');
     await holdEach();
     await home();
     await hurt();

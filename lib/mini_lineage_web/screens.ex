@@ -20,17 +20,12 @@ defmodule MiniLineageWeb.Screens do
     "races" => "Chronicles of Ancestry",
     "highscores" => "Monument of Heroes",
     "inventory" => "Inventory",
-    "trader" => "Trader",
-    "trader-swords" => "Trader: Swords",
-    "trader-daggers" => "Trader: Daggers",
-    "trader-bows" => "Trader: Bows",
-    "trader-fists" => "Trader: Fists",
-    "trader-staves" => "Trader: Staves and Books",
-    "trader-shields" => "Trader: Shields",
-    "trader-armour" => "Trader: Armour",
-    "trader-jewellery" => "Trader: Jewellery",
-    "trader-potions" => "Trader: Potions",
-    "trader-sell" => "Trader: Sell",
+    "trader" => "Traders",
+    "trader-weapons" => "Weapons Trader",
+    "trader-armour" => "Armour Trader",
+    "trader-jewellery" => "Jeweller",
+    "trader-grocer" => "Grocer",
+    "trader-sell" => "Sell",
     "error" => "Error"
   }
 
@@ -46,7 +41,12 @@ defmodule MiniLineageWeb.Screens do
   def icon("gatekeeper", _view), do: "🌀"
   def icon("hunt", _view), do: "⚔️"
   def icon("inventory", _view), do: "🎒"
-  def icon("trader" <> _, _view), do: "🛒"
+  def icon("trader", _view), do: "🛒"
+  def icon("trader-weapons", _view), do: "⚔️"
+  def icon("trader-armour", _view), do: "🛡️"
+  def icon("trader-jewellery", _view), do: "📿"
+  def icon("trader-grocer", _view), do: "🧪"
+  def icon("trader-sell", _view), do: "💰"
   def icon("guild", _view), do: "📖"
   def icon("highscores", _view), do: "🏛️"
   def icon(_screen, _view), do: nil
@@ -214,7 +214,7 @@ defmodule MiniLineageWeb.Screens do
   # The places in a town: its Gatekeeper, and the ground outside it if it has one (rules §17).
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
-      if(view.stock != [], do: [%{value: "trader", label: "🛒 Trader"}], else: []) ++
+      if(view.stock != [], do: [%{value: "trader", label: "🛒 Traders"}], else: []) ++
       if(view.lessons != [], do: [%{value: "guild", label: "📖 #{view.guild.name}"}], else: []) ++
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
@@ -241,38 +241,32 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §24: what the trader's pages hold, in the order the menu offers them, each with its label.
+  # Rules §24: each trader's page, whose it is and the slots it sells.
   @trader_parts [
-    {"trader-swords", "🗡️ Swords", "swords", {:types, ["sword"]}},
-    {"trader-daggers", "🔪 Daggers", "daggers", {:types, ["dagger"]}},
-    {"trader-bows", "🏹 Bows", "bows", {:types, ["bow"]}},
-    {"trader-fists", "🥊 Fists", "fist weapons", {:types, ["fists"]}},
-    {"trader-staves", "🪄 Staves and books", "staves and books", {:types, ["staff"]}},
-    {"trader-shields", "🛡️ Shields", "shields", {:slots, [:shield]}},
-    {"trader-armour", "👕 Armour", "armour", {:slots, [:chest, :legs]}},
-    {"trader-jewellery", "📿 Jewellery", "necklaces", {:slots, [:necklace]}},
-    {"trader-potions", "🧪 Potions", "potions", {:slots, [:potion]}}
+    {"trader-weapons", :weapons, [:weapon]},
+    {"trader-armour", :armour, [:shield, :chest, :legs]},
+    {"trader-jewellery", :jewellery, [:necklace]},
+    {"trader-grocer", :grocer, [:potion]}
   ]
+
+  defp sellers(traders), do: [traders.weapons, traders.armour, traders.jewellery, traders.grocer]
 
   # Rules §26: how many potions one purchase may take.
   @potion_lots [1, 10, 50, 100]
 
-  defp in_part?(item, {:types, types}), do: item.slot == :weapon and item.type in types
-  defp in_part?(item, {:slots, slots}), do: item.slot in slots
-
-  # Rules §24: the trader's menu, each part of what it sells, and selling, a page of its own.
+  # Rules §24: the village's four traders by name, each a page of their own, and selling, which any
+  # of them does.
   defp trader(assigns) do
     parts =
-      for {page, label, _, part} <- @trader_parts,
-          Enum.any?(assigns.view.stock, &in_part?(&1, part)),
-          do: %{value: page, label: label}
+      for {page, _, slots} <- @trader_parts,
+          Enum.any?(assigns.view.stock, &(&1.slot in slots)),
+          do: %{value: page, label: "#{icon(page, assigns.view)} #{Map.fetch!(@titles, page)}"}
 
     assigns = assign(assigns, parts: parts ++ [%{value: "trader-sell", label: "💰 Sell"}])
 
     ~H"""
-    <p>
-      The traders of {@view.town.emoji} {@view.town.name} sell what every village sells, and buy back
-      what they sell for half of what they ask. What would you like to see?
+    <p id="trader-intro" phx-no-format>
+      {@view.traders.weapons} sells weapons, {@view.traders.armour} armour and shields, {@view.traders.jewellery} jewellery and {@view.traders.grocer} potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
     </p>
     <.select_action
       id="trader-form"
@@ -287,7 +281,6 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §24: one part of the trader's stock, in a table, and the choice of what to buy.
   defp trader_page(%{screen: "trader-sell"} = assigns) do
     assigns =
       assign(assigns,
@@ -295,6 +288,9 @@ defmodule MiniLineageWeb.Screens do
       )
 
     ~H"""
+    <p id="sell-intro" phx-no-format>
+      {Format.list(sellers(@view.traders), "and")} each buy back what they sell for half of what they ask.
+    </p>
     <p :if={@sellable == []} id="nothing-to-sell">
       You carry nothing the traders would buy: they take nothing equipped, and nothing from a starting kit.
     </p>
@@ -315,7 +311,7 @@ defmodule MiniLineageWeb.Screens do
       event="sell"
       name="item"
       picked={@picked}
-      placeholder="🛒 Back to the trader"
+      placeholder="🛒 Back to the traders"
       options={
         Enum.map(
           @sellable,
@@ -329,13 +325,16 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp trader_page(assigns) do
-    {_, _, what, part} = List.keyfind(@trader_parts, assigns.screen, 0)
+    {_, role, slots} = List.keyfind(@trader_parts, assigns.screen, 0)
 
     assigns =
-      assign(assigns, stock: Enum.filter(assigns.view.stock, &in_part?(&1, part)), what: what)
+      assign(assigns,
+        stock: Enum.filter(assigns.view.stock, &(&1.slot in slots)),
+        line: Constants.trader_line(assigns.view.town.slug, role)
+      )
 
     ~H"""
-    <p>The traders lay out their {@what}.</p>
+    <p id="trader-intro">{@line}</p>
     <.data_table id="stock">
       <:col class="name">Item</:col>
       <:col>Adena</:col>
@@ -353,7 +352,7 @@ defmodule MiniLineageWeb.Screens do
       event="buy"
       name="item"
       picked={@picked}
-      placeholder="🛒 Back to the trader"
+      placeholder="🛒 Back to the traders"
       options={buy_options(@stock)}
       default_label="Return"
       active_label="🪙 Buy"
@@ -533,9 +532,34 @@ defmodule MiniLineageWeb.Screens do
             }
 
       item ->
-        [%{value: item.name, label: "Buy the #{item.name} for 🪙 #{Format.number(item.price)}"}]
+        [
+          %{
+            value: item.name,
+            label: "Buy the #{item.name} for 🪙 #{Format.number(item.price)}",
+            group: shelf(item)
+          }
+        ]
     end)
   end
+
+  # Which shelf of a trader's an item is bought from, a heading in the dropdown.
+  defp shelf(%{slot: :weapon, type: type}),
+    do:
+      Map.fetch!(
+        %{
+          "sword" => "Swords",
+          "dagger" => "Daggers",
+          "bow" => "Bows",
+          "fists" => "Fists",
+          "staff" => "Staves"
+        },
+        type
+      )
+
+  defp shelf(%{slot: :shield}), do: "Shields"
+  defp shelf(%{slot: :chest}), do: "Chest"
+  defp shelf(%{slot: :legs}), do: "Legs"
+  defp shelf(_item), do: nil
 
   defp item_emoji(%{slot: :weapon, type: type}) do
     case type do

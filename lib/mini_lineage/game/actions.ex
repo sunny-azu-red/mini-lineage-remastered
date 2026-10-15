@@ -207,7 +207,7 @@ defmodule MiniLineage.Game.Actions do
       !Player.started?(player) or !Rules.village?(player.location) ->
         {player, {:error, :no_shop, @errors.no_shop}}
 
-      !item or !Shop.stocks?(player.location, item) or count < 1 or
+      !item or !Shop.stocks?(player, item) or count < 1 or
           (count > 1 and !Rules.stacks?(item)) ->
         {player, {:error, :unsold, @errors.unsold}}
 

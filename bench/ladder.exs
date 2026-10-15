@@ -45,7 +45,7 @@ defmodule Ladder do
   def paths(race, path) do
     {equipped, carried} = Rules.kit(race, path)
     kit = for name <- equipped ++ carried, item = Rules.item(name), item.kind == :weapon, do: item
-    stock = Rules.stock(Rules.hometown(race)) ++ kit
+    stock = Rules.stock(Rules.hometown(race), Rules.set(race, path)) ++ kit
     set = Rules.set(race, path).name
 
     types =
@@ -99,7 +99,7 @@ defmodule Ladder do
   end
 
   defp best(player, path, slot) do
-    Rules.stock(player.location)
+    Rules.stock(player.location, Rules.set(player.race_id, player.path))
     |> Enum.filter(&(&1.slot == slot))
     |> Enum.map(&worth(player, path, &1))
     |> Enum.max(fn -> -1 end)
@@ -127,7 +127,7 @@ defmodule Ladder do
       now = current(p, path, slot)
 
       pick =
-        Rules.stock(p.location)
+        Rules.stock(p.location, Rules.set(p.race_id, p.path))
         |> Enum.filter(&(&1.slot == slot and worth(p, path, &1) > now and &1.price <= p.adena))
         |> Enum.max_by(&worth(p, path, &1), fn -> nil end)
 
@@ -371,7 +371,7 @@ rows =
           hits != [],
           do: "L#{l} #{avg.(hits, fn {_, _, _, r} -> r[{:adena, l}] end)}"
 
-    # A weapon no better than one already bought (a Knife beside the Doom Dagger) is never held.
+    # A weapon no better than one already bought is never held.
     tiers =
       for weapon <- weapons.weapons,
           held = when_at.({:tier, weapon}),

@@ -189,7 +189,9 @@ Discussed in full when it is built.
   Lineage II no priest buffed. Gludio sells the basic ones and each later town adds stronger ones.
   The villages don't have it.
 - **Shops in each town,** better gear in more advanced towns, for more money. Not every town has
-  every shop.
+  every shop. The Town of Gludio's brings the 244,000 tier the villages stop short of (Falchion,
+  Sword Breaker, Composition Bow, as Lineage II's towns sold them); the Zweihander stays the
+  villages' own.
 - **The trainers and the class master in each village,** for its own race.
 - **The Newbie Guide in each village,** with its free buffs at their real level ranges.
 

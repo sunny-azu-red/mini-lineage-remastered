@@ -8,7 +8,9 @@ worked out by hand, and holds only for the rules it was measured against.
 spells that take effect as their cast ends, the battle orders, and the first skills where Lineage II
 taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc), Life Drain cast as
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
-the pull, and each fighter's kit a Squire's weapon for every path its skills take. One reading of that build, 400 seeded runs of
+the pull, each fighter's kit a Squire's weapon for every path its skills take, the Orc Mystic's an
+Apprentice's Wand, and each path shown only its own goods, one of each kind per price. One reading
+of that build, 400 seeded runs of
 every set up its village's ladder to level 20, once per weapon path its skills can use, each run
 seeded on its own; at the defaults none of them died.
 
@@ -113,21 +115,21 @@ The level each of a path's weapons is first held at, then the level and hunt the
 |---|---|---|---|---|---|---|---|---|
 | Human Fighter | Power Strike | sword 1h | Short Sword 4.0 | Broadsword 10.3 | Gladius 13.0 | Long Sword **15.7** (15–16) | 185 | 381k |
 | Human Fighter | Power Strike | sword 2h | Short Sword 3.8 | Broadsword 10.0 | Brandish 13.0 | Zweihander **17.0** (16–18) | 231 | 282k |
-| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Doom Dagger 10.4 | Dirk 13.0 | Throwing Knife **15.7** (15–16) | 185 | 381k |
+| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Knife 10.4 | Dirk 13.0 | Throwing Knife **15.7** (15–16) | 185 | 381k |
 | Human Fighter | Power Shot | bow | Short Bow 3.8 | Bow 9.9 | Hunting Bow 13.0 | Forest Bow **15.4** (15–16) | 181 | 390k |
 | Elven Fighter | Power Shot | bow | Short Bow 4.0 | Bow 9.9 | Hunting Bow 13.0 | Forest Bow **15.1** (15–16) | 202 | 416k |
-| Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.3 | Doom Dagger 10.4 | Dirk 13.0 | Throwing Knife **15.2** (15–16) | 198 | 388k |
+| Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.3 | Knife 10.4 | Dirk 13.0 | Throwing Knife **15.2** (15–16) | 198 | 388k |
 | Orc Fighter | Iron Punch | fists | Spiked Gloves 3.9 | Iron Gloves 10.0 | Fox Claw Gloves 13.0 | Cestus **15.3** (15–16) | 188 | 394k |
 | Orc Fighter | Power Strike | sword 1h | Short Sword 4.2 | Broadsword 10.4 | Gladius 13.0 | Long Sword **15.6** (15–16) | 193 | 384k |
 | Orc Fighter | Power Strike | sword 2h | Short Sword 4.0 | Broadsword 10.0 | Brandish 13.0 | Zweihander **17.0** (16–17) | 246 | 285k |
-| Human Mystic | | staff 1h | Rod 4.1 | Spellbook 10.3 | | Relic **14.9** (14–16) | 162 | 405k |
-| Human Mystic | | staff 2h | Rod 3.8 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.4** (15–16) | 181 | 390k |
-| Elven Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.8** (14–15) | 178 | 435k |
-| Elven Mystic | | staff 2h | Rod 3.9 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 201 | 418k |
-| Dark Mystic | | staff 1h | Rod 4.3 | Spellbook 10.3 | | Relic **14.7** (14–15) | 171 | 417k |
-| Dark Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 192 | 397k |
-| Orc Mystic | | staff 1h | Rod 4.2 | Spellbook 10.3 | | Relic **14.9** (14–16) | 166 | 414k |
-| Orc Mystic | | staff 2h | Rod 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.3** (15–16) | 187 | 393k |
+| Human Mystic | | staff 1h | Horn 4.1 | Scholar's Tome 10.3 | | Relic **14.9** (14–16) | 162 | 405k |
+| Human Mystic | | staff 2h | Horn 3.8 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.4** (15–16) | 181 | 390k |
+| Elven Mystic | | staff 1h | Horn 4.2 | Scholar's Tome 10.3 | | Relic **14.8** (14–15) | 178 | 435k |
+| Elven Mystic | | staff 2h | Horn 3.9 | Willow Staff 9.9 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 201 | 418k |
+| Dark Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.3 | | Relic **14.7** (14–15) | 171 | 417k |
+| Dark Mystic | | staff 2h | Horn 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.1** (15–16) | 192 | 397k |
+| Orc Mystic | | staff 1h | Horn 4.2 | Scholar's Tome 10.3 | | Relic **14.9** (14–16) | 166 | 414k |
+| Orc Mystic | | staff 2h | Horn 4.0 | Willow Staff 10.0 | Cedar Staff 13.0 | Journeyman's **15.3** (15–16) | 187 | 393k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 10, 13, and 15 to 16 for the
   top.** Armour is cheap enough that the top weapon is always the last thing a kit needs.
@@ -270,7 +272,7 @@ a path before the fight had distance (`30e1576`) and now:
 - **The bench once killed the Orc Fighter with a sword** at levels 3 to 5, 38 runs of 400 with
   potions: its paths counted only the village's stock as their weapons, so the sword path never
   wielded the Squire's Sword it starts with, and a Leather Shield bought early took off its
-  two-handed Training Gloves. A path now counts its set's starting weapons, and that set dies none.
+  two-handed Squire's Gloves. A path now counts its set's starting weapons, and that set dies none.
 
 ## Both together
 

@@ -701,6 +701,59 @@ defmodule MiniLineage.Game.RulesTest do
       assert MiniLineage.Game.Hunt.heal_amount(42, 20) == 46
     end
 
+    test "§24 each village's four traders" do
+      rows = table("Village | Weapons Trader")
+      assert length(rows) == length(Enum.filter(Rules.towns(), &Rules.village?(&1.slug)))
+
+      for [village, weapons, armour, jewellery, grocer] <- rows do
+        slug = Enum.find(Rules.towns(), &(&1.name == village)).slug
+
+        assert Rules.traders(slug) ==
+                 %{weapons: weapons, armour: armour, jewellery: jewellery, grocer: grocer},
+               village
+      end
+    end
+
+    test "§24 a trader shows each path its own goods, and every shield, necklace and potion" do
+      weapons = fn set ->
+        for i <- Rules.stock("orc-village", set), i.slot == :weapon, uniq: true, do: i.type
+      end
+
+      robes = fn set ->
+        for i <- Rules.stock("orc-village", set),
+            i.slot in [:chest, :legs],
+            uniq: true,
+            do: i.type
+      end
+
+      shared = fn set ->
+        for i <- Rules.stock("orc-village", set),
+            i.slot in [:shield, :necklace, :potion],
+            do: i.name
+      end
+
+      everyone =
+        for i <- Rules.stock("orc-village"), i.slot in [:shield, :necklace, :potion], do: i.name
+
+      for {set, types} <- [
+            {"Human Fighter", ["bow", "dagger", "sword"]},
+            {"Elven Fighter", ["bow"]},
+            {"Dark Fighter", ["dagger"]},
+            {"Orc Fighter", ["fists", "sword"]}
+          ],
+          set = Enum.find(Rules.sets(), &(&1.name == set)) do
+        assert Enum.sort(weapons.(set)) == types, set.name
+        assert robes.(set) == ["light"], set.name
+        assert shared.(set) == everyone, set.name
+      end
+
+      for set <- Rules.sets(), set.path == :mystic do
+        assert weapons.(set) == ["staff"], set.name
+        assert robes.(set) == ["magic"], set.name
+        assert shared.(set) == everyone, set.name
+      end
+    end
+
     test "§24 a Broadsword costs 12,500 and sells back for 6,250" do
       assert Shop.price(Rules.item("Broadsword")) == 12_500
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
@@ -731,10 +784,10 @@ defmodule MiniLineage.Game.RulesTest do
       assert mystic.sp == 0
     end
 
-    test "§8 Training Gloves' +4 Accuracy, and §13 a weapon's spread and bare hands'" do
+    test "§8 Squire's Gloves' +4 Accuracy, and §13 a weapon's spread and bare hands'" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
-      gloves = %{fighter | items: [%{id: "g", name: "Training Gloves", equipped: true}]}
+      gloves = %{fighter | items: [%{id: "g", name: "Squire's Gloves", equipped: true}]}
       wand = %{fighter | items: [%{id: "w", name: "Apprentice's Wand", equipped: true}]}
 
       assert Player.stats(gloves).accuracy == 38
