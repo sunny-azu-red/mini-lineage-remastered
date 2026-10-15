@@ -680,7 +680,7 @@ defmodule MiniLineageWeb.Screens do
       ]}
     >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)} equipped.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
     """

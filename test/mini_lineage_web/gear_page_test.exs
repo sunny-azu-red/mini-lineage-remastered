@@ -118,7 +118,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert %{equipped: true} = carried(session, "Squire's Dagger")
     assert %{equipped: false} = carried(session, "Squire's Sword")
     assert has_element?(view, "#sidebar #equipped-weapons", "Squire's Dagger")
-    assert has_element?(view, "#flash", "Power Strike needs a sword")
+    assert has_element?(view, "#flash", "your Power Strike skill needs a sword")
 
     act.("unequip:#{dagger.id}")
     assert %{equipped: false} = carried(session, "Squire's Dagger")

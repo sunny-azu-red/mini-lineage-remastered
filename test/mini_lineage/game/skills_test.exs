@@ -123,7 +123,9 @@ defmodule MiniLineage.Game.SkillsTest do
 
     {_, {:ok, warned}} = Actions.equip(human, "g")
     assert warned.type == :danger
-    assert warned.text =~ "none of your Mortal Blow or Power Strike"
+
+    assert warned.text =~
+             "your Mortal Blow and Power Strike skills cannot be used with a fist weapon,"
 
     assert {_, {:ok, %{type: :info}}} = Actions.equip(human, "d")
   end

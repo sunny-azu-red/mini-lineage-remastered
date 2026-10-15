@@ -101,7 +101,7 @@ defmodule MiniLineage.Game.ShopTest do
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Dagger").id)
 
       assert flash.type == :danger
-      assert flash.text =~ "Power Strike needs a sword,"
+      assert flash.text =~ "your Power Strike skill needs a sword,"
 
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Sword").id)
       assert flash.type == :info

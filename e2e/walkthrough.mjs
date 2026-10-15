@@ -832,7 +832,7 @@ try {
     });
     check('with nothing in hand, Mortal Blow is muted down to its figures and says what it needs',
         await muted('#skill-mortal-blow .skill') && await muted('#skill-mortal-blow .mp') &&
-        /Needs a dagger\.$/.test(await text('#skill-mortal-blow')), await text('#skill-mortal-blow'));
+        /Needs a dagger equipped\.$/.test(await text('#skill-mortal-blow')), await text('#skill-mortal-blow'));
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

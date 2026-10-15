@@ -284,13 +284,13 @@ defmodule MiniLineage.Game.Actions do
       case item.kind == :weapon && unsuited(player, item) do
         [skill] ->
           text =
-            "You equip the #{entry.name}, but your #{skill} needs #{Narrative.weapon_for(skill)}, so you will fight without it."
+            "You equip the #{entry.name}, but your #{skill} skill needs #{Narrative.weapon_for(skill)}, so you will fight without it."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         [_, _ | _] = skills ->
           text =
-            "You equip the #{entry.name}, but none of your #{Format.list(skills, "or")} can be used with it, so you will fight without them."
+            "You equip the #{entry.name}, but your #{Format.list(skills, "and")} skills cannot be used with #{Narrative.weapon(item.type)}, so you will fight without them."
 
           {player, {:ok, %{text: text, type: :danger}}}
 

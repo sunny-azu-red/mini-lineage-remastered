@@ -280,10 +280,14 @@ defmodule MiniLineage.Game.Narrative do
   @doc "What a skill needs in hand, as a sentence names it."
   def weapon_for(skill), do: needs(skill)
 
-  defp needs("Power Strike"), do: "a sword"
-  defp needs("Power Shot"), do: "a bow"
-  defp needs("Mortal Blow"), do: "a dagger"
-  defp needs("Iron Punch"), do: "fists"
+  defp needs("Power Strike"), do: weapon("sword")
+  defp needs("Power Shot"), do: weapon("bow")
+  defp needs("Mortal Blow"), do: weapon("dagger")
+  defp needs("Iron Punch"), do: weapon("fists")
+
+  @doc "A weapon type, as a sentence names one."
+  def weapon("fists"), do: "a fist weapon"
+  def weapon(type), do: "#{article(String.upcase(type))} #{type}"
 
   def voiced(line, mine?), do: Format.fill_template(line, pronouns(mine?))
 

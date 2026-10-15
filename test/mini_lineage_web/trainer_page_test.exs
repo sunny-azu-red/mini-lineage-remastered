@@ -225,7 +225,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {:ok, view, _html} = live(conn, ~p"/talking-island/trainer")
 
     # The kit's Squire's Sword is in hand, the Squire's Dagger carried.
-    assert has_element?(view, "#skill-mortal-blow.locked", "Needs a dagger.")
+    assert has_element?(view, "#skill-mortal-blow.locked", "Needs a dagger equipped.")
     refute has_element?(view, "#skill-power-strike.locked")
     refute has_element?(view, "#skill-power-strike", "Needs")
 
@@ -234,7 +234,7 @@ defmodule MiniLineageWeb.TrainerPageTest do
     {:ok, view, _html} = live(conn, ~p"/character")
 
     refute has_element?(view, "#skill-mortal-blow.locked")
-    assert has_element?(view, "#skill-power-strike.locked", "Needs a sword.")
+    assert has_element?(view, "#skill-power-strike.locked", "Needs a sword equipped.")
   end
 
   test "no trainer away from the home village, even in another village" do
