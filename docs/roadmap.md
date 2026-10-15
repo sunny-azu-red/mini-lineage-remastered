@@ -148,6 +148,8 @@ Built with the first hunt (rules §23 and §24).
 - **Every set starts with its kit,** equipped: a weapon for each skill path, none of it sold in a shop.
 - **Each village's trader** sells the canon village lists at their canon prices, with no tax, and
   buys back for half.
+- **The bag holds 15 items,** worn ones included and a potion's stack as one, so outgrown gear is
+  sold rather than hoarded.
 - **Next:** a player shop opened from the inventory page, by choosing what to sell and for how much.
 
 ## Items

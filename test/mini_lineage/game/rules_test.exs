@@ -332,6 +332,15 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§23 a character carries as many items as the document says, a kit leaving room" do
+      assert @rules =~ "carries up to #{Rules.capacity()} items"
+
+      for %{race_id: race, path: path, name: set} <- Rules.sets() do
+        {equipped, carried} = Rules.kit(race, path)
+        assert length(equipped) + length(carried) < Rules.capacity(), set
+      end
+    end
+
     test "§23 every set starts holding what its first skill needs" do
       for %{race_id: race, path: path, name: set} <- Rules.sets() do
         {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Novice")

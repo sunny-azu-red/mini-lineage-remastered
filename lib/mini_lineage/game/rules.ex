@@ -601,7 +601,7 @@ defmodule MiniLineage.Game.Rules do
     "Iron Punch" => ["fists"]
   }
 
-  @capacity 80
+  @capacity 15
 
   # Rules §25: what each set's trainer teaches, at what level and for how much SP.
   @external_resource trainer_path = Path.join(:code.priv_dir(:mini_lineage), "game/trainer.csv")

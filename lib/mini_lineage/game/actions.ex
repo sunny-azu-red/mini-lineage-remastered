@@ -16,7 +16,7 @@ defmodule MiniLineage.Game.Actions do
     no_shop: "There is no shop here.",
     unsold: "The shop does not sell that.",
     cannot_afford: "You cannot afford that.",
-    full: "You cannot carry any more.",
+    full: "You cannot carry any more, so sell or destroy something first.",
     not_carried: "You do not carry that.",
     equipped: "Take it off before you sell it.",
     worthless: "The shop will not buy that.",

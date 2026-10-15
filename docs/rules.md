@@ -613,9 +613,10 @@ Example: a Young Keltir carrying 10 Adena pays **200**.
 
 ## 23. Gear
 
-A character carries up to 80 items and wears at most one in each of five slots: weapon, shield,
-chest, legs and necklace. A two-handed weapon (a bow, fists, a two-handed sword or staff) takes the
-shield's hand, so putting one on takes the shield off, and the other way round. Nothing is weighed.
+A character carries up to 15 items, what it wears among them and a potion's stack counting as one
+(§26), and wears at most one in each of five slots: weapon, shield, chest, legs and necklace. A
+two-handed weapon (a bow, fists, a two-handed sword or staff) takes the shield's hand, so putting
+one on takes the shield off, and the other way round. Nothing is weighed.
 
 Every set starts with its kit, the wearable part equipped. A fighter's kit holds a weapon for each
 skill its trainer teaches that needs one (§25), the one its first skill needs in hand, and no shop

@@ -225,8 +225,10 @@ the fight uses them.
   Sword is below the Short Sword, so that no shop sells anything in a kit.
 - **A shield blocks from any side, and never a spell.** Lineage II blocked only blows from the front,
   three times as often against arrows, and aCis let a shield turn spells too.
-- **The inventory counts items and does not weigh them:** 80 slots, as for every non-Dwarf, with no
-  weight limit and no load penalties.
+- **A character carries 15 items, and nothing is weighed.** Lineage II gave every non-Dwarf 80
+  inventory slots and a weight limit with load penalties. A text game has no use for weight, and 15
+  makes outgrown gear go to the trader rather than pile up. As in Lineage II, what is worn counts and
+  a potion's stack takes one place.
 
 **Trade**
 
