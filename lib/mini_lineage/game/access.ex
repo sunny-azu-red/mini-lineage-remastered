@@ -49,6 +49,6 @@ defmodule MiniLineage.Game.Access do
     end
   end
 
-  @doc "Screens that show the sidebar."
-  def sidebar?(screen), do: screen in @in_town
+  @doc "Screens that show the sidebar: the town's, and the inventory, so its figures stay in view."
+  def sidebar?(screen), do: screen in ["inventory" | @in_town]
 end

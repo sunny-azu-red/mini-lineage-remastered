@@ -116,6 +116,8 @@ defmodule MiniLineageWeb.Screens do
   attr :sorts, :map, default: %{}
   # Rules §20: the last fight on this ground, its log and what it came to.
   attr :fight, :map, default: nil
+  # The inventory: the place it closes onto.
+  attr :back, :any, default: nil
 
   # Another tab can reset the character under the town; draw nothing until `pin_screen/2` moves on.
   def screen(%{view: %{started: false}, screen: screen} = assigns)
@@ -461,7 +463,8 @@ defmodule MiniLineageWeb.Screens do
       assign(assigns,
         capacity: Rules.capacity(),
         carried: Enum.reject(assigns.view.items, & &1.equipped),
-        wear_label: wear_label
+        wear_label: wear_label,
+        back_title: back_title(assigns.back, assigns.view)
       )
 
     ~H"""
@@ -488,7 +491,7 @@ defmodule MiniLineageWeb.Screens do
       event="wear"
       name="item"
       picked={@picks["item"]}
-      placeholder={"🚪 #{@view.town.name}"}
+      placeholder={"🚪 #{@back_title}"}
       options={
         Enum.map(
           @view.items,
@@ -516,6 +519,9 @@ defmodule MiniLineageWeb.Screens do
     />
     """
   end
+
+  defp back_title({screen, _town}, view), do: title(screen, view)
+  defp back_title(nil, view), do: view.town.name
 
   # Rules §26: a stack names how many it holds.
   defp item_name(%{potion?: true} = item), do: "#{item.name} ×#{item.count}"

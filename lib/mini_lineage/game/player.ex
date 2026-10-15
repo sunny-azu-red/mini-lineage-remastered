@@ -333,6 +333,9 @@ defmodule MiniLineage.Game.Player do
   def in_combat?(%{combat: until}) when is_integer(until), do: until > now_ms()
   def in_combat?(_player), do: false
 
+  @doc "Rules §20: standing on the ground, fighting or not, which no rest survives."
+  def engage(player), do: %{player | combat: "engaged"}
+
   @doc "Rules §20: leaving the ground; resting resumes once the disengaging is over."
   def disengage(%{combat: "engaged"} = player), do: %{player | combat: now_ms() + @disengage_ms}
   def disengage(player), do: player

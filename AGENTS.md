@@ -49,8 +49,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`. `Layouts` holds the shell: `head`,
   `site_header`, the sidebar and `footer`, which `ErrorHTML` draws too.
 - **The sidebar** (level and name, the name linking to `/character`, the vitals, then the Inventory,
-  its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town only. One
-  breakpoint stacks it.
+  its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town and
+  beside the inventory. One breakpoint stacks it.
 - **A new component, hook or shared control is written into this file in the change that adds it.**
   Before writing one, look here and in `Controls`, and extend what exists with an option instead.
 
@@ -328,6 +328,8 @@ Each of these is here because it was got wrong once.
   duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:
   legacy's pixel badge over the header icon, and on its Buffs & Debuffs row "+8% P.Def for another
   1m 37s." (or, with no stat to change, "You rest again in 3s."). Each row hooks itself, since the rows sit straight in the panel body.
+  A duration is measured when the view is built, and any patch can repeat an old one, so a timer
+  restarts only when its duration changes, and every arrival rebuilds the view.
 - **Every figure counts; only names and dates jump.** A number the player can watch change is a
   `<.figure>`, animated by `AnimatedValues` hooked once over whatever contains them. It writes
   `data-value` and the text from one value, and `format={:short}` sets both the short form and the

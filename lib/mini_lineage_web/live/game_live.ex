@@ -54,6 +54,7 @@ defmodule MiniLineageWeb.GameLive do
        catalog: Snapshot.catalog(),
        screen: "start",
        town: nil,
+       back: nil,
        boards: %{},
        fight: nil,
        following_board: false,
@@ -120,7 +121,6 @@ defmodule MiniLineageWeb.GameLive do
   defp requested_place(action, _uri, _player), do: {Atom.to_string(action), nil}
 
   defp enter(socket, {screen, town}) do
-    fresh? = socket.assigns.flash_fresh
     # A flash survives exactly one arrival, so an action that flashes and moves you does not clear
     # its own message.
     socket =
@@ -128,39 +128,51 @@ defmodule MiniLineageWeb.GameLive do
         do: assign(socket, flash_fresh: false),
         else: assign(socket, game_flash: nil)
 
+    socket = engage_if(socket, screen == "hunt")
+
     socket
-    |> disengage_unless(screen == "hunt")
     |> follow_board(screen == "highscores")
     |> assign(
       screen: screen,
       town: town,
-      # A choice belongs to the screen it was made on, and so does the last fight, unless the fight
-      # is what brought the character there.
+      back: back(socket.assigns, screen),
+      # A choice belongs to the screen it was made on, and so does the last fight.
       picked: nil,
       picks: %{},
-      fight: if(screen == "hunt" and fresh?, do: socket.assigns.fight),
+      fight: nil,
       dev_name:
         if(screen == "start" and socket.assigns.debug, do: Math.random_element(@dev_names)),
-      page_title: Screens.page_title(screen, socket.assigns.view),
-      # Assigned, not computed in the template: an expression over `assigns` is re-sent on every
-      # render.
-      panels: Screens.panels(screen, socket.assigns.view, socket.assigns.catalog),
       # A fault belongs to the error screen it brought you to, not to the next visit to it.
       error_detail: if(screen == "error", do: socket.assigns.error_detail)
     )
+    # Rebuilt on every arrival, so an effect drawn afresh counts down from the time left now and
+    # not from when the view was last built.
+    |> put_view(socket.assigns.player)
+    |> then(&assign(&1, page_title: Screens.page_title(screen, &1.assigns.view)))
   end
 
-  # Rules §20: leaving the ground by any road (the banner, a link) disengages as retreating does.
-  defp disengage_unless(socket, true), do: socket
+  # The inventory closes onto the page its sidebar link was clicked on, or the town after a reload.
+  defp back(%{screen: "inventory", back: back}, "inventory"), do: back
 
-  defp disengage_unless(%{assigns: %{player: %{combat: "engaged"}}} = socket, false) do
-    {_, player} =
-      Characters.mutate(socket.assigns.session_id, &{MiniLineage.Game.Player.disengage(&1), :ok})
+  defp back(%{screen: from, town: town, player: player}, "inventory"),
+    do: if(Access.sidebar?(from), do: {from, town}, else: here(player))
 
-    put_view(socket, player)
+  defp back(_assigns, _screen), do: nil
+
+  # Rules §20: the ground is combat, fought on or not, and leaving it by any road (the banner, a
+  # link) disengages as retreating does.
+  defp engage_if(%{assigns: %{player: %{combat: "engaged"}}} = socket, true), do: socket
+  defp engage_if(socket, true), do: combat(socket, &Player.engage/1)
+
+  defp engage_if(%{assigns: %{player: %{combat: "engaged"}}} = socket, false),
+    do: combat(socket, &Player.disengage/1)
+
+  defp engage_if(socket, false), do: socket
+
+  defp combat(socket, change) do
+    {_, player} = Characters.mutate(socket.assigns.session_id, &{change.(&1), :ok})
+    assign(socket, player: player)
   end
-
-  defp disengage_unless(socket, false), do: socket
 
   # Followed only while the Halls are the screen, and subscribed BEFORE they are read, so a refresh
   # in between arrives as a push. Already followed, the pushes have kept every filter current.
@@ -203,12 +215,8 @@ defmodule MiniLineageWeb.GameLive do
 
   @inner ~w(trader trainer) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
 
-  # Rules §20: going out to the ground is the first fight, as the legacy Battleground was.
-  def handle_event("navigate", %{"place" => "hunt"}, socket),
-    do:
-      {:noreply, socket |> apply_action(&Actions.hunt/1, &{"hunt", &1.location}) |> keep_fight()}
-
-  def handle_event("navigate", %{"place" => place}, socket) when place in @inner,
+  # Rules §20: going out to the ground meets nothing until the player looks for a fight.
+  def handle_event("navigate", %{"place" => place}, socket) when place in ["hunt" | @inner],
     do: {:noreply, walk(socket, {place, socket.assigns.town})}
 
   # The empty choice of a menu inside a town goes back to the town.
@@ -244,9 +252,10 @@ defmodule MiniLineageWeb.GameLive do
 
   # The inventory's one choice: what to do, and to which item.
   # The inventory: one item picked and put on or taken off, whichever it needs; its empty choice
-  # goes back to town. Destroying is a form of its own, whose empty choice does nothing.
+  # closes it, as the sidebar's link does. Destroying is a form of its own, whose empty choice does
+  # nothing.
   def handle_event("wear", %{"item" => ""}, socket),
-    do: {:noreply, walk(socket, {"town", socket.assigns.player.location})}
+    do: {:noreply, walk(socket, socket.assigns.back || here(socket.assigns.player))}
 
   def handle_event("wear", %{"item" => id}, socket) do
     entry = Enum.find(socket.assigns.player.items, &(&1.id == id))
@@ -420,6 +429,7 @@ defmodule MiniLineageWeb.GameLive do
   # ------------------------------------------------------------------ plumbing
 
   # The panels follow the view, as what a page holds can change under it (a first skill learned).
+  # Assigned, not computed in the template: an expression over `assigns` is re-sent on every render.
   defp put_view(socket, player) do
     view = Snapshot.build(player)
     panels = Screens.panels(socket.assigns.screen, view, socket.assigns.catalog)
@@ -506,6 +516,7 @@ defmodule MiniLineageWeb.GameLive do
       panels={@panels}
       view={@view}
       screen={@screen}
+      back={@back && Paths.for_screen(@back)}
       dev_keys={@debug and @view.started}
     >
       <Controls.flash_alert :if={@game_flash && panel == hd(@panels)} flash={@game_flash} />
@@ -523,6 +534,7 @@ defmodule MiniLineageWeb.GameLive do
         lineage={@town}
         character_id={@character_id}
         fight={@fight}
+        back={@back}
         picks={@picks}
         sorts={@sorts}
       />

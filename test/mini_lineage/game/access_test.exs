@@ -73,8 +73,8 @@ defmodule MiniLineage.Game.AccessTest do
     end
   end
 
-  test "only a town and its Gatekeeper show the sidebar" do
-    for screen <- ~w(town gatekeeper), do: assert(Access.sidebar?(screen))
+  test "only a town, its Gatekeeper and the inventory show the sidebar" do
+    for screen <- ~w(town gatekeeper inventory), do: assert(Access.sidebar?(screen))
     for screen <- ~w(start character races error), do: refute(Access.sidebar?(screen))
   end
 end

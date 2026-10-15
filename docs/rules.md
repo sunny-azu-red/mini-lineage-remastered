@@ -574,10 +574,10 @@ this far (a monster's spells as far as §19 gives):
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
   (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
   fifth, rounded down.
-- **In combat:** going out to the ground is the first fight, and from then on the character is in
-  combat and does not rest (§11) for as long as it stays there, fight after fight. Leaving the
-  ground, by retreating to town or any other way, it is in combat for 5 seconds more, and then
-  rests.
+- **In combat:** going out to the ground meets nothing until the player looks for a fight, but the
+  character is in combat from the moment it arrives, fighting or not, and does not rest (§11) for as
+  long as it stays there. Leaving the ground, by retreating to town or any other way, it is in combat
+  for 5 seconds more, and then rests.
 - **What is left** of HP and MP stays, until the character is back in town to rest.
 
 Example: a level 12 character who kills a Young Keltir (level 1, 35 EXP) is 11 levels above it, 6 past

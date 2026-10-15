@@ -468,13 +468,16 @@ try {
     check('...headed with the ground\'s name', (await text('#main h2.header-name')).length > 3,
         await text('#main h2.header-name'));
     check('...with the sidebar beside it', await page.locator('#sidebar').count() === 1);
+    check('going out meets nothing until the hunter looks for it, but is combat at once',
+        await page.locator('#fight-log').count() === 0
+        && await page.locator('#effects [data-effect-id="combat"]').count() === 1);
+    await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });
-    check('going out is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
+    check('looking for action is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
         await text('#fight-outcome'));
     check('...on the page itself, round by round with both sides\' HP, not in an alert',
         await page.locator('#flash').count() === 0 && /Round 1: .* HP, you at/.test(await text('#fight-log')),
         (await text('#fight-log')).slice(0, 160));
-    check('...and the hunter is in combat', await page.locator('#effects [data-effect-id="combat"]').count() === 1);
     await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });
     check('looking for more action fights again, still on the ground', (await state()).screen === 'hunt');
@@ -493,6 +496,14 @@ try {
         { selector: combatTimer, was: firstSecond }, { timeout: 3000 }).then(() => true, () => false);
     check('...in the browser, between pushes', ticked,
         await page.locator(combatTimer).textContent({ timeout: 500 }).catch(() => 'gone'));
+    const counted = Number(await text(combatTimer));
+    await page.click('#purse a');
+    await onScreen('inventory');
+    const reopened = await page.locator(combatTimer).textContent({ timeout: 500 }).catch(() => null);
+    check('...and opening the inventory carries on the count rather than starting it again',
+        reopened === null || Number(reopened) <= counted, `${counted} then ${reopened}`);
+    await page.click('#purse a');
+    await onScreen('town');
     const rested = await page.waitForSelector('#effects [data-effect-id="combat"]', { state: 'detached', timeout: 10000 })
         .then(() => true, () => false);
     check('...and then the hunter rests again', rested
@@ -532,6 +543,7 @@ try {
     check('...and the dropdown goes back to its placeholder, so a second click buys nothing more',
         await page.inputValue('#buy-form select') === '' && await text('#buy-form button') === 'Return',
         `${await page.inputValue('#buy-form select')} / ${await text('#buy-form button')}`);
+    const shelf = (await state()).screen;
     await page.click('#purse a');
     await onScreen('inventory');
     check('the inventory lists everything carried, what is equipped highlighted',
@@ -548,10 +560,15 @@ try {
     check('...which it does, highlighting the Bone Dagger', true);
     check('...the Dagger it replaced carried, not lost',
         await page.locator('#items tr:not(.owned) td.name', { hasText: /Dagger$/ }).count() === 1);
+    check('...and the sidebar beside it names it', /Bone Dagger/.test(await text('#equipped-weapons')),
+        await text('#equipped-weapons'));
+    check('...where the way in has become the way out', await text('#purse a') === 'Close', await text('#purse a'));
+    await page.click('#purse a');
+    await onScreen(shelf);
+    check('...which closes onto the trader\'s page it was opened from', (await state()).screen === shelf,
+        (await state()).screen);
     await page.click('#header-link');
     await onScreen('town');
-    check('...and back in town the sidebar names it', /Bone Dagger/.test(await text('#equipped-weapons')),
-        await text('#equipped-weapons'));
 
     // ---- potions (rules §26) --------------------------------------------------------------------
     await page.selectOption('#travel-form select', 'trader');

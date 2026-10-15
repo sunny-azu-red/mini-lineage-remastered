@@ -41,6 +41,8 @@ defmodule MiniLineageWeb.Layouts do
   attr :panels, :list, required: true
   attr :view, :map, required: true
   attr :screen, :string, required: true
+  # On the inventory: the address it closes onto.
+  attr :back, :string, default: nil
   # Debug builds only, for a character: what a release never draws sends it no keys.
   attr :dev_keys, :boolean, default: false
   slot :inner_block, required: true
@@ -55,7 +57,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <div id="content">
-          <.sidebar :if={@view.started && Access.sidebar?(@screen)} view={@view} />
+          <.sidebar :if={@view.started && Access.sidebar?(@screen)} view={@view} back={@back} />
 
           <div id="main">
             <div
@@ -106,6 +108,7 @@ defmodule MiniLineageWeb.Layouts do
   end
 
   attr :view, :map, required: true
+  attr :back, :string, default: nil
 
   defp sidebar(assigns) do
     ~H"""
@@ -181,7 +184,8 @@ defmodule MiniLineageWeb.Layouts do
           <span class="stat-value adena">🪙
           <Controls.figure key="adena" value={@view.adena} format={:short} /></span>
           <%!-- The bag stays outside the anchor, so the underline is under the word alone. --%>
-          <span class="stat-value row-end">🎒 <.link patch={~p"/inventory"}>Open</.link></span>
+          <span :if={!@back} class="stat-value row-end">🎒 <.link patch={~p"/inventory"}>Open</.link></span>
+          <span :if={@back} class="stat-value row-end">🎒 <.link patch={@back}>Close</.link></span>
         </div>
       </Controls.panel>
     </div>

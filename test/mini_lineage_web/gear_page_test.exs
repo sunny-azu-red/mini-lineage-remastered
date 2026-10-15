@@ -107,6 +107,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
     assert has_element?(view, ~s(#item-#{sword.id}.owned[data-equipped="true"]))
     assert has_element?(view, ~s(#item-#{dagger.id}[data-equipped="false"]))
+    assert has_element?(view, "#sidebar #equipped-weapons", "Squire's Sword")
 
     wear = fn id -> view |> form("#wear-form", %{"item" => id}) |> render_submit() end
 
@@ -116,6 +117,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="476"]))
     assert %{equipped: true} = carried(session, "Dagger")
     assert %{equipped: false} = carried(session, "Squire's Sword")
+    assert has_element?(view, "#sidebar #equipped-weapons", "Dagger")
     assert has_element?(view, "#flash", "Power Strike needs a sword")
 
     wear.(dagger.id)
@@ -124,6 +126,30 @@ defmodule MiniLineageWeb.GearPageTest do
     view |> form("#destroy-form", %{"doomed" => dagger.id}) |> render_submit()
     refute carried(session, "Dagger")
     assert has_element?(view, "#flash", "destroy the Dagger")
+  end
+
+  test "the inventory closes onto the page it was opened from, and onto the town after a reload" do
+    {_view, session, conn} = human(build_conn(), 0)
+
+    for from <- ["/talking-island/trader", "/talking-island/obelisk-of-victory"] do
+      {:ok, view, _html} = live(conn, from)
+      view |> element("#purse a", "Open") |> render_click()
+      assert_patch(view, "/inventory")
+      assert has_element?(view, ~s(#purse a[href="#{from}"]), "Close")
+
+      view |> element("#purse a", "Close") |> render_click()
+      assert_patch(view, from)
+      refute has_element?(view, "#fight-log")
+      # Rules §20: back on the ground is back in combat; the trader rests.
+      assert stored(session).combat == "engaged" == (from =~ "obelisk")
+
+      view |> element("#purse a", "Open") |> render_click()
+      view |> form("#wear-form", %{"item" => ""}) |> render_submit()
+      assert_patch(view, from)
+    end
+
+    {:ok, view, _html} = live(conn, ~p"/inventory")
+    assert has_element?(view, ~s(#purse a[href="/talking-island"]), "Close")
   end
 
   test "the button says what the picked item needs, and nothing equipped is offered for destroying" do

@@ -34,7 +34,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     end)
   end
 
-  test "going out to the ground is the first fight, written on the ground's page, in combat" do
+  test "going out to the ground meets nothing but is combat, and looking for action is the first fight" do
     {view, session, _conn} = human(build_conn())
     pin(session, 0.0)
 
@@ -42,9 +42,14 @@ defmodule MiniLineageWeb.HuntPageTest do
     view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
 
     assert_patch(view, "/talking-island/obelisk-of-victory")
-    assert has_element?(view, "#fight-log li", "You meet")
     assert has_element?(view, "#sidebar")
+    refute has_element?(view, "#fight-log")
     assert has_element?(view, "#effects [data-effect-id=combat]")
+    assert stored(session).combat == "engaged"
+
+    view |> element("#hunt-button") |> render_click()
+
+    assert has_element?(view, "#fight-log li", "You meet")
     assert stored(session).combat == "engaged"
   end
 
