@@ -93,6 +93,12 @@ p {
     color: var(--text-muted);
 }
 
+/* The bullet between a name and what it does: one step above muted, or an item's muted stats would
+   run into it. */
+.delimiter {
+    color: var(--text-secondary);
+}
+
 /* Time left on an effect, dimmed like a date so the clause around it does not read as an aside. */
 .timer {
     color: var(--text-muted);

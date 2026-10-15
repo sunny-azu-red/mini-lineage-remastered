@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.{Board, Characters}
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Rules, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Snapshot, Version}
   alias MiniLineageWeb.{Controls, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
@@ -225,7 +225,7 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("navigate", _params, socket), do: {:noreply, socket}
 
-  # Rules §23 and §24: what a character carries, bought, sold, put on and taken off where it stands.
+  # Rules §23 and §24: what a character carries, bought, sold, equipped and unequipped where it stands.
   # A trader's page: its empty choice goes back to the trader's menu.
   def handle_event("buy", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
@@ -250,24 +250,21 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("sell", %{"item" => id}, socket),
     do: {:noreply, apply_action(socket, &Actions.sell(&1, id), nil)}
 
-  # The inventory's one choice: what to do, and to which item.
-  # The inventory: one item picked and put on or taken off, whichever it needs; its empty choice
-  # closes it, as the sidebar's link does. Destroying is a form of its own, whose empty choice does
-  # nothing.
-  def handle_event("wear", %{"item" => ""}, socket),
+  # The inventory's one choice, "<verb>:<id>"; its empty choice closes it, as the sidebar's link does.
+  def handle_event("inventory", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, socket.assigns.back || here(socket.assigns.player))}
 
-  def handle_event("wear", %{"item" => id}, socket) do
-    entry = Enum.find(socket.assigns.player.items, &(&1.id == id))
-
+  def handle_event("inventory", %{"item" => choice}, socket) do
     action =
-      cond do
-        entry && Rules.stacks?(Rules.item(entry.name)) -> &Actions.drink(&1, id)
-        entry && entry.equipped -> &Actions.unequip(&1, id)
-        true -> &Actions.equip(&1, id)
+      case String.split(choice, ":", parts: 2) do
+        ["equip", id] -> &Actions.equip(&1, id)
+        ["unequip", id] -> &Actions.unequip(&1, id)
+        ["drink", id] -> &Actions.drink(&1, id)
+        ["destroy", id] -> &Actions.destroy(&1, id)
+        _ -> nil
       end
 
-    {:noreply, apply_action(socket, action, nil)}
+    {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
 
   # Rules §20 and §26: an order, `<what>:<share>`, the share of HP below which to drink a potion or
@@ -294,11 +291,6 @@ defmodule MiniLineageWeb.GameLive do
 
     {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
-
-  def handle_event("destroy", %{"doomed" => ""}, socket), do: {:noreply, socket}
-
-  def handle_event("destroy", %{"doomed" => id}, socket),
-    do: {:noreply, apply_action(socket, &Actions.destroy(&1, id), nil)}
 
   # Rules §25: one line from the village's trainer, chosen as "skill|level"; the empty choice leaves.
   def handle_event("learn", %{"lesson" => ""}, socket),

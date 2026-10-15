@@ -40,9 +40,10 @@ was got wrong once.
   marked last by hand.
 - **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.
 - **A table has no minimum width and gives no column a width; its rows decide**, and the leftover is
-  shared in proportion to content. A figure never wraps; a name may. A label carrying a unit binds it
-  with `&nbsp;`, rendered through `raw/1` because the label is interpolated. Columns stack below
-  640px. A wide table may scroll on a phone if what matters most is on the left. Check a table change
+  shared in proportion to content. A figure never wraps; a name may, and an item's name carries its
+  stats after a `.delimiter` bullet rather than in a column of their own. A label carrying a unit
+  binds it with `&nbsp;`, rendered through `raw/1` because the label is interpolated. Columns stack
+  below 640px. A wide table may scroll on a phone if what matters most is on the left. Check a table change
   by counting the lines in every cell at every width, not by whether it scrolls.
 
 ## Classes
@@ -50,8 +51,9 @@ was got wrong once.
 - **A class per thing the game names, never per colour.** `.hp`, `.mp` and `.adena` stay apart even
   where two resolve to one token today, so one can move without the others. They are filed under
   **Values** in `base.css`. Above them, **Utilities** hold what is not a value: `.muted` (something
-  that isn't a value standing where one would be, like the `&bull;` between an effect and what it
-  does; no weight), `.build-development` and `.build-testing`.
+  that isn't a value standing where one would be; no weight), `.delimiter` (the `&bull;` between a
+  name and what it does, a skill's, an effect's or an item's, one step brighter than muted so it
+  stands apart from an item's muted stats too), `.build-development` and `.build-testing`.
 - **A value's class goes where the thing is named in a sentence**, figure or not, and never on a
   label. A value is a classed `<span>`, never a `<strong>`. `legacy/AGENTS.md` has the old game's
   whole vocabulary.

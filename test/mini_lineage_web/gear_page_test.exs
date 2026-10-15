@@ -98,7 +98,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert stored(session).adena == 100
   end
 
-  test "the inventory lists everything, equipped highlighted, and puts on, takes off and destroys apart" do
+  test "the inventory lists everything, equipped highlighted, and equips, unequips and destroys" do
     {_view, session, conn} = human(build_conn(), 0)
     Characters.mutate(session, &{%{&1 | skills: %{"Power Strike" => 1}}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")
@@ -109,21 +109,22 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, ~s(#item-#{dagger.id}[data-equipped="false"]))
     assert has_element?(view, "#sidebar #equipped-weapons", "Squire's Sword")
 
-    wear = fn id -> view |> form("#wear-form", %{"item" => id}) |> render_submit() end
+    act = fn choice -> view |> form("#inventory-form", %{"item" => choice}) |> render_submit() end
 
     # The Combat Stats beside it follow the swap: a dagger's 433 against a sword's 379.
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="416"]))
-    wear.(dagger.id)
+    act.("equip:#{dagger.id}")
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="476"]))
     assert %{equipped: true} = carried(session, "Squire's Dagger")
     assert %{equipped: false} = carried(session, "Squire's Sword")
     assert has_element?(view, "#sidebar #equipped-weapons", "Squire's Dagger")
     assert has_element?(view, "#flash", "Power Strike needs a sword")
 
-    wear.(dagger.id)
+    act.("unequip:#{dagger.id}")
     assert %{equipped: false} = carried(session, "Squire's Dagger")
+    assert has_element?(view, "#flash", "You unequip the Squire's Dagger")
 
-    view |> form("#destroy-form", %{"doomed" => dagger.id}) |> render_submit()
+    act.("destroy:#{dagger.id}")
     refute carried(session, "Squire's Dagger")
     assert has_element?(view, "#flash", "destroy the Squire's Dagger")
   end
@@ -144,7 +145,7 @@ defmodule MiniLineageWeb.GearPageTest do
       assert stored(session).combat == "engaged" == (from =~ "obelisk")
 
       view |> element("#purse a", "Open") |> render_click()
-      view |> form("#wear-form", %{"item" => ""}) |> render_submit()
+      view |> form("#inventory-form", %{"item" => ""}) |> render_submit()
       assert_patch(view, from)
     end
 
@@ -152,19 +153,34 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, ~s(#purse a[href="/talking-island"]), "Close")
   end
 
-  test "the button says what the picked item needs, and nothing equipped is offered for destroying" do
+  test "one list groups each item under what can be done with it, and the button says the verb" do
     {_view, session, conn} = human(build_conn(), 0)
     {:ok, view, _html} = live(conn, ~p"/inventory")
     sword = carried(session, "Squire's Sword")
     dagger = carried(session, "Squire's Dagger")
 
-    view |> form("#wear-form", %{"item" => sword.id}) |> render_change(%{"_target" => ["item"]})
-    assert has_element?(view, "#wear-form button", "Take off")
-    view |> form("#wear-form", %{"item" => dagger.id}) |> render_change(%{"_target" => ["item"]})
-    assert has_element?(view, "#wear-form button", "Put on")
+    under = fn group, choice ->
+      ~s(#inventory-form optgroup[label="#{group}"] option[value="#{choice}"])
+    end
 
-    refute has_element?(view, ~s(#destroy-form option[value="#{sword.id}"]))
-    assert has_element?(view, ~s(#destroy-form option[value="#{dagger.id}"]))
+    pick = fn choice ->
+      view
+      |> form("#inventory-form", %{"item" => choice})
+      |> render_change(%{"_target" => ["item"]})
+    end
+
+    assert has_element?(view, under.("Unequip", "unequip:#{sword.id}"))
+    assert has_element?(view, under.("Equip", "equip:#{dagger.id}"))
+    assert has_element?(view, under.("Destroy", "destroy:#{dagger.id}"))
+    refute has_element?(view, ~s(#inventory-form option[value="destroy:#{sword.id}"]))
+    refute has_element?(view, ~s(#inventory-form option[value="equip:#{sword.id}"]))
+
+    pick.("unequip:#{sword.id}")
+    assert has_element?(view, "#inventory-form button:not(.btn-danger)", "Unequip")
+    pick.("equip:#{dagger.id}")
+    assert has_element?(view, "#inventory-form button:not(.btn-danger)", "Equip")
+    pick.("destroy:#{dagger.id}")
+    assert has_element?(view, "#inventory-form button.btn-danger", "Destroy")
   end
 
   test "potions are bought by the lot onto one stack, counted in the sidebar and drunk from the inventory" do
@@ -185,9 +201,11 @@ defmodule MiniLineageWeb.GearPageTest do
 
     Characters.mutate(session, &{%{&1 | health: 10}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")
-    view |> form("#wear-form", %{"item" => potions.id}) |> render_change(%{"_target" => ["item"]})
-    assert has_element?(view, "#wear-form button", "Drink")
-    view |> form("#wear-form", %{"item" => potions.id}) |> render_submit()
+    drink = "drink:#{potions.id}"
+    refute has_element?(view, ~s(#inventory-form option[value="equip:#{potions.id}"]))
+    view |> form("#inventory-form", %{"item" => drink}) |> render_change(%{"_target" => ["item"]})
+    assert has_element?(view, "#inventory-form button", "Drink")
+    view |> form("#inventory-form", %{"item" => drink}) |> render_submit()
 
     assert stored(session).health == 10 + 112
     assert carried(session, "Lesser Healing Potion").count == 9

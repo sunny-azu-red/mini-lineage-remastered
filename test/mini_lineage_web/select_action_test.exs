@@ -33,6 +33,42 @@ defmodule MiniLineageWeb.SelectActionTest do
     assert rendered_to_string(choice(%{name: "item"})) =~ ~s(name="item")
   end
 
+  defp grouped(assigns) do
+    ~H"""
+    <.select_action
+      id="f"
+      event="go"
+      name="item"
+      picked={@picked}
+      placeholder="Back"
+      options={[
+        %{value: "use:a", label: "A", group: "Use", action: "Use"},
+        %{value: "use:b", label: "B", group: "Use", action: "Use"},
+        %{value: "drop:a", label: "A", group: "Drop", action: "Drop", variant: :danger}
+      ]}
+      default_label="Return"
+    />
+    """
+  end
+
+  test "neighbours sharing a group share an optgroup, and exactly one option is selected" do
+    html = rendered_to_string(grouped(%{picked: "use:b"}))
+    tree = LazyHTML.from_fragment(html)
+
+    assert tree |> LazyHTML.query(~s(optgroup[label="Use"] option)) |> Enum.count() == 2
+    assert tree |> LazyHTML.query(~s(optgroup[label="Drop"] option)) |> Enum.count() == 1
+    assert tree |> LazyHTML.query("option[selected]") |> LazyHTML.attribute("value") == ["use:b"]
+  end
+
+  test "the picked option's action and variant are the button's" do
+    button = &(grouped(%{picked: &1}) |> rendered_to_string() |> LazyHTML.from_fragment())
+
+    assert button.(nil) |> LazyHTML.query("button.btn-secondary") |> LazyHTML.text() =~ "Return"
+    assert button.("use:a") |> LazyHTML.query("button") |> LazyHTML.text() =~ "Use"
+    refute button.("use:a") |> LazyHTML.query("button.btn-danger") |> Enum.any?()
+    assert button.("drop:a") |> LazyHTML.query("button.btn-danger") |> LazyHTML.text() =~ "Drop"
+  end
+
   # Character creation is three fields one Start button sends together, not a choice and its action,
   # and `phx-update="ignore"` keeps every patch off them.
   test "no select is written by hand but character creation's" do

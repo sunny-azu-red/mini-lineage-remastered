@@ -292,7 +292,9 @@ Each of these is here because it was got wrong once.
 - **Every dropdown is `Controls.select_action/1`**, because the dropdown and its button ARE the
   game's navigation: in a town it lists where you can go, at a trader or trainer what you can do
   there. Only what makes no sense as a place to go from a town (the inventory, the character page) is
-  a link. No `<select>` is written by hand but character creation's, three fields one Start button
+  a link. A place with several verbs keeps one list: each option names its `group` (drawn as an
+  `<optgroup>`), and its `action` and `variant` are what the button says and looks like once it is
+  picked, as the inventory's Equip, Unequip, Drink and, in red, Destroy. No `<select>` is written by hand but character creation's, three fields one Start button
   sends together and `phx-update="ignore"` keeps every patch off (`select_action_test.exs`). They all behave alike: the player's choice is touched by the player's
   own pick and the action it leads to, and by nothing else. Every action through `apply_action/3`,
   refused or not, clears `picked` and `picks`, so the list goes back to its start and the button to

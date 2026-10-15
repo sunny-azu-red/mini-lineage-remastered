@@ -114,6 +114,10 @@ defmodule MiniLineageWeb.Controls do
   pick, so the choice goes back to its start; nothing else touches it, an open list included
   (`SelectAction`). Options come only from what the player's actions change, never from HP, MP or
   the hour, or a tick rewrites an open list; AGENTS.md lists what else shuts one.
+
+  An option may carry a `group`, neighbours sharing one drawn under one `<optgroup>`, and an
+  `action` and `variant` the button takes when it is picked, in place of `active_label` and
+  `active_variant`: one list holding several verbs, as the inventory's does.
   """
   # LiveView restores a form's pick after a reconnect only when the form has an id.
   attr :id, :string, required: true
@@ -123,7 +127,7 @@ defmodule MiniLineageWeb.Controls do
   attr :placeholder, :string, default: nil
   attr :picked, :string, default: nil
   attr :default_label, :string, required: true
-  attr :active_label, :string, required: true
+  attr :active_label, :string, default: nil
   attr :default_variant, :atom, default: :secondary
   # What the button turns into once something is picked: `:danger` for what cannot be undone.
   attr :active_variant, :atom, default: :primary
@@ -139,13 +143,13 @@ defmodule MiniLineageWeb.Controls do
   def select_action(assigns) do
     # A pick the options no longer hold (a lesson just learned) falls back to the placeholder in the
     # browser, so the button must too, or it reads as acting while it goes back.
-    chosen? = Enum.any?(assigns.options, &(&1.value == assigns.picked))
+    chosen = Enum.find(assigns.options, &(&1.value == assigns.picked))
 
     # Exactly one option says it is shown, the one the browser shows: a list where none does reads to
     # LiveView as changed on every patch, and it blurs the select, shutting an open list.
     shown =
       cond do
-        chosen? -> assigns.picked
+        chosen -> assigns.picked
         assigns.placeholder -> ""
         true -> assigns.options |> List.first(%{}) |> Map.get(:value)
       end
@@ -153,8 +157,14 @@ defmodule MiniLineageWeb.Controls do
     assigns =
       assign(assigns,
         shown: shown,
-        label: if(chosen?, do: assigns.active_label, else: assigns.default_label),
-        variant: if(chosen?, do: assigns.active_variant, else: assigns.default_variant)
+        groups: Enum.chunk_by(assigns.options, & &1[:group]),
+        label:
+          if(chosen, do: chosen[:action] || assigns.active_label, else: assigns.default_label),
+        variant:
+          if(chosen,
+            do: chosen[:variant] || assigns.active_variant,
+            else: assigns.default_variant
+          )
       )
 
     ~H"""
@@ -164,18 +174,27 @@ defmodule MiniLineageWeb.Controls do
               otherwise drop the player's choice. --%>
         <select id={"#{@id}-choice"} name={@name} class="form-select" phx-hook="SelectAction">
           <option :if={@placeholder} value="" selected={@shown == ""}>{@placeholder}</option>
-          <option
-            :for={option <- @options}
-            value={option.value}
-            disabled={option[:disabled?]}
-            selected={@shown == option.value}
-          >
-            {option.label}
-          </option>
+          <%= for [first | _] = options <- @groups do %>
+            <optgroup :if={first[:group]} label={first[:group]}>
+              <.option :for={option <- options} option={option} shown={@shown} />
+            </optgroup>
+            <.option :for={option <- options} :if={!first[:group]} option={option} shown={@shown} />
+          <% end %>
         </select>
         <.button type="submit" variant={@variant} {@rest}>{@label}</.button>
       </div>
     </form>
+    """
+  end
+
+  attr :option, :map, required: true
+  attr :shown, :string, required: true
+
+  defp option(assigns) do
+    ~H"""
+    <option value={@option.value} disabled={@option[:disabled?]} selected={@shown == @option.value}>
+      {@option.label}
+    </option>
     """
   end
 

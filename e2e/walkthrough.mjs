@@ -569,18 +569,22 @@ try {
     await onScreen('inventory');
     check('the inventory lists everything carried, what is equipped highlighted',
         await page.locator('#items tr.owned').count() === 3, String(await page.locator('#items tr.owned').count()));
-    const boneDagger = await page.$eval('#wear-form select', (el) =>
-        [...el.options].find(o => o.textContent.includes('Bone Dagger'))?.value);
-    await page.selectOption('#wear-form select', boneDagger);
+    check('...in one list grouped by what each item can be given',
+        JSON.stringify(await page.$$eval('#inventory-form optgroup', gs => gs.map(g => g.label)))
+            === JSON.stringify(['Equip', 'Unequip', 'Destroy']),
+        JSON.stringify(await page.$$eval('#inventory-form optgroup', gs => gs.map(g => g.label))));
+    const boneDagger = await page.$eval('#inventory-form optgroup[label="Equip"]', (el) =>
+        [...el.children].find(o => o.textContent.includes('Bone Dagger'))?.value);
+    await page.selectOption('#inventory-form select', boneDagger);
     // The label is the server's answer to the pick, a round trip after it.
-    const putOn = await page.locator('#wear-form button', { hasText: 'Put on' })
+    const equip = await page.locator('#inventory-form button', { hasText: /Equip/ })
         .waitFor({ timeout: 5000 }).then(() => true, () => false);
-    check('...and picking something carried offers to put it on', putOn, await text('#wear-form button'));
-    await page.click('#wear-form button');
+    check('...and picking something under Equip offers to equip it', equip, await text('#inventory-form button'));
+    await page.click('#inventory-form button');
     await page.waitForSelector('#items tr.owned:has-text("Bone Dagger")', { timeout: 5000 });
     check('...which it does, highlighting the Bone Dagger', true);
     check('...the Dagger it replaced carried, not lost',
-        await page.locator('#items tr:not(.owned) td.name', { hasText: /Dagger$/ }).count() === 1);
+        await page.locator('#items tr:not(.owned) td.name', { hasText: "Squire's Dagger" }).count() === 1);
     check('...and the sidebar beside it names it', /Bone Dagger/.test(await text('#equipped-weapons')),
         await text('#equipped-weapons'));
     check('...where the way in has become the way out', await text('#purse a') === 'Close', await text('#purse a'));
@@ -808,11 +812,11 @@ try {
     await onScreen('town');
     await page.click('#purse a');
     await onScreen('inventory');
-    const dagger = await page.$eval('#wear-form select', (el) =>
-        [...el.options].find(o => o.textContent.includes('Bone Dagger'))?.value);
-    await page.selectOption('#wear-form select', dagger);
-    await page.locator('#wear-form button', { hasText: 'Take off' }).waitFor({ timeout: 5000 });
-    await page.click('#wear-form button');
+    const dagger = await page.$eval('#inventory-form optgroup[label="Unequip"]', (el) =>
+        [...el.children].find(o => o.textContent.includes('Bone Dagger'))?.value);
+    await page.selectOption('#inventory-form select', dagger);
+    await page.locator('#inventory-form button', { hasText: 'Unequip' }).waitFor({ timeout: 5000 });
+    await page.click('#inventory-form button');
     await page.waitForSelector('#items tr.owned:has-text("Bone Dagger")', { state: 'detached', timeout: 5000 });
     await page.click('#header-link');
     await onScreen('town');

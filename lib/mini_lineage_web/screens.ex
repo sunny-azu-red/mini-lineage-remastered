@@ -300,12 +300,12 @@ defmodule MiniLineageWeb.Screens do
     </p>
     <.data_table :if={@sellable != []} id="sellable">
       <:col class="name">Item</:col>
-      <:col class="name">Stats</:col>
       <:col>Pays</:col>
       <tbody>
         <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
-          <td class="name">{item.name}</td>
-          <td class="name muted">{item.about}</td>
+          <td class="name">
+            {item.name} <span class="delimiter">&bull;</span> <span class="muted">{item.about}</span>
+          </td>
           <td class="adena">🪙 {Format.number(item.buyback)}</td>
         </tr>
       </tbody>
@@ -338,12 +338,12 @@ defmodule MiniLineageWeb.Screens do
     <p>The traders lay out their {@what}.</p>
     <.data_table id="stock">
       <:col class="name">Item</:col>
-      <:col class="name">Stats</:col>
       <:col>Adena</:col>
       <tbody>
         <tr :for={item <- @stock} id={"stock-#{slug(item.name)}"}>
-          <td class="name">{item.name}</td>
-          <td class="name muted">{item.about}</td>
+          <td class="name">
+            {item.name} <span class="delimiter">&bull;</span> <span class="muted">{item.about}</span>
+          </td>
           <td class="adena">🪙 {Format.number(item.price)}</td>
         </tr>
       </tbody>
@@ -447,23 +447,13 @@ defmodule MiniLineageWeb.Screens do
   def sortable("lessons"), do: %{keys: ~w(skill learn_at sp), remember: false}
   def sortable(_table), do: %{keys: [], remember: false}
 
-  # Rules §23: everything carried in one list, what is equipped highlighted, then two choices: what to
-  # put on or take off, and, apart and in red, what to destroy.
+  # Rules §23: everything carried in one list, what is equipped highlighted, and one choice of what
+  # to do with which, grouped by what it does; destroying anything is the red button.
   defp inventory(assigns) do
-    picked = Enum.find(assigns.view.items, &(&1.id == assigns.picks["item"]))
-
-    wear_label =
-      cond do
-        picked && picked.potion? -> "🧪 Drink"
-        picked && picked.equipped -> "Take off"
-        true -> "Put on"
-      end
-
     assigns =
       assign(assigns,
         capacity: Rules.capacity(),
-        carried: Enum.reject(assigns.view.items, & &1.equipped),
-        wear_label: wear_label,
+        choices: inventory_choices(assigns.view.items),
         back_title: back_title(assigns.back, assigns.view)
       )
 
@@ -472,7 +462,6 @@ defmodule MiniLineageWeb.Screens do
     <.data_table id="items">
       <:col class="name">Item</:col>
       <:col>Slot</:col>
-      <:col class="name">Stats</:col>
       <tbody>
         <tr
           :for={item <- @view.items}
@@ -480,45 +469,51 @@ defmodule MiniLineageWeb.Screens do
           data-equipped={to_string(item.equipped)}
           {if item.equipped, do: [class: "owned"], else: []}
         >
-          <td class="name">{item_emoji(item)} {item_name(item)}</td>
+          <td class="name">
+            {item_emoji(item)} {item_name(item)} <span class="delimiter">&bull;</span>
+            <span class="muted">{item.about}</span>
+          </td>
           <td>{item.slot |> Atom.to_string() |> String.capitalize()}</td>
-          <td class="name muted">{item.about}</td>
         </tr>
       </tbody>
     </.data_table>
     <.select_action
-      id="wear-form"
-      event="wear"
+      id="inventory-form"
+      event="inventory"
       name="item"
       picked={@picks["item"]}
       placeholder={"🚪 #{@back_title}"}
-      options={
-        Enum.map(
-          @view.items,
-          &%{
-            value: &1.id,
-            label: "#{item_emoji(&1)} #{item_name(&1)}#{if &1.equipped, do: " (equipped)"}"
-          }
-        )
-      }
+      options={@choices}
       default_label="Return"
-      active_label={@wear_label}
-    />
-    <.select_action
-      :if={@carried != []}
-      id="destroy-form"
-      event="destroy"
-      name="doomed"
-      picked={@picks["doomed"]}
-      placeholder="🗑️ Destroy something you carry…"
-      options={Enum.map(@carried, &%{value: &1.id, label: "🗑️ #{item_name(&1)}"})}
-      default_label="Destroy"
-      active_label="🗑️ Destroy"
-      active_variant={:danger}
-      data-no-autofocus
     />
     """
   end
+
+  # Each verb's items under its own heading, so one list holds them all; the value is "<verb>:<id>".
+  @inventory_verbs [
+    {"equip", "Equip", "⬆️ Equip", :primary},
+    {"unequip", "Unequip", "⬇️ Unequip", :primary},
+    {"drink", "Drink", "🧪 Drink", :primary},
+    {"destroy", "Destroy", "🗑️ Destroy", :danger}
+  ]
+
+  defp inventory_choices(items) do
+    for {verb, group, action, variant} <- @inventory_verbs,
+        item <- items,
+        inventory_verb?(verb, item),
+        do: %{
+          value: "#{verb}:#{item.id}",
+          label: "#{item_emoji(item)} #{item_name(item)}",
+          group: group,
+          action: action,
+          variant: variant
+        }
+  end
+
+  defp inventory_verb?("equip", item), do: !item.potion? and !item.equipped
+  defp inventory_verb?("unequip", item), do: item.equipped
+  defp inventory_verb?("drink", item), do: item.potion?
+  defp inventory_verb?("destroy", item), do: !item.equipped
 
   defp back_title({screen, _town}, view), do: title(screen, view)
   defp back_title(nil, view), do: view.town.name
@@ -632,7 +627,7 @@ defmodule MiniLineageWeb.Screens do
       phx-hook={effect_hook(effect)}
     >
       <p phx-no-format>
-        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="muted">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every three seconds.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
+        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="delimiter">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every three seconds.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
       </p>
     </div>
     """
@@ -685,7 +680,7 @@ defmodule MiniLineageWeb.Screens do
       ]}
     >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="muted">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)}.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
     """

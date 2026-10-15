@@ -20,14 +20,14 @@ defmodule MiniLineage.Game.Actions do
     not_carried: "You do not carry that.",
     equipped: "Take it off before you sell it.",
     worthless: "The shop will not buy that.",
-    equipped_destroy: "Take it off before you destroy it.",
+    equipped_destroy: "Unequip it before you destroy it.",
     no_trainer: "Only the trainers of your own village teach you.",
     no_lesson: "The trainer does not teach that.",
     too_soon: "You are not yet ready to learn that.",
     out_of_order: "You must learn the level before it first.",
     no_sp: "You do not have enough SP to learn this skill.",
     spent: "You are too weak to hunt, and must rest first.",
-    not_wearable: "That is not something you put on.",
+    not_wearable: "That is not something you can equip.",
     not_potion: "That is not something you drink.",
     whole: "You are already in full health.",
     no_share: "That is not a share you can choose.",
@@ -263,7 +263,7 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
-  @doc "Rules §23: puts on something carried, taking off whatever it displaces."
+  @doc "Rules §23: equips something carried, unequipping whatever it displaces."
   def equip(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -284,18 +284,18 @@ defmodule MiniLineage.Game.Actions do
       case item.kind == :weapon && unsuited(player, item) do
         [skill] ->
           text =
-            "You put on the #{entry.name}, but your #{skill} needs #{Narrative.weapon_for(skill)}, so you will fight without it."
+            "You equip the #{entry.name}, but your #{skill} needs #{Narrative.weapon_for(skill)}, so you will fight without it."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         [_, _ | _] = skills ->
           text =
-            "You put on the #{entry.name}, but none of your #{Format.list(skills, "or")} can be used with it, so you will fight without them."
+            "You equip the #{entry.name}, but none of your #{Format.list(skills, "or")} can be used with it, so you will fight without them."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         _fits ->
-          {player, {:ok, %{text: "You put on the #{entry.name}.", type: :info}}}
+          {player, {:ok, %{text: "You equip the #{entry.name}.", type: :info}}}
       end
     else
       {player, {:error, :not_carried, @errors.not_carried}}
@@ -387,14 +387,14 @@ defmodule MiniLineage.Game.Actions do
     if Enum.any?(names, &Rules.skill_weapon?(&1, item)), do: [], else: Enum.sort(names)
   end
 
-  @doc "Rules §23: takes off something equipped, which stays carried."
+  @doc "Rules §23: unequips something equipped, which stays carried."
   def unequip(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
     if entry do
       items = Enum.map(player.items, &if(&1.id == id, do: %{&1 | equipped: false}, else: &1))
       player = clamp_bars(%{player | items: items})
-      {player, {:ok, %{text: "You take off the #{entry.name}.", type: :info}}}
+      {player, {:ok, %{text: "You unequip the #{entry.name}.", type: :info}}}
     else
       {player, {:error, :not_carried, @errors.not_carried}}
     end
