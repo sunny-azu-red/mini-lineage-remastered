@@ -455,7 +455,10 @@ defmodule MiniLineage.Game.Rules do
       power: 0,
       mp: 0,
       bonuses: [%{stat: :p_def, add: 13.4, worn: "magic"}]
-    }
+    },
+    # A Fighter's lines and a Mystic's differ, as in Lineage II; `skill/3` reads them by path.
+    "Weapon Mastery" => %{kind: :passive, power: 0, mp: 0},
+    "Anti Magic" => %{kind: :passive, power: 0, mp: 0, bonuses: [%{stat: :m_def, add: 12}]}
   }
 
   # Rules §25: each skill's {power, MP} by level, level 1 first; a burn's power is per second, a
@@ -490,6 +493,36 @@ defmodule MiniLineage.Game.Rules do
     "Robe Mastery" => [
       %{bonuses: [%{stat: :p_def, add: 13.4, worn: "magic"}]},
       %{bonuses: [%{stat: :p_def, add: 18.4, worn: "magic"}]}
+    ],
+    # A bonus with `times` multiplies; a line's bonuses apply in order.
+    "Weapon Mastery" => %{
+      fighter: [
+        %{bonuses: [%{stat: :p_atk, times: 1.085}, %{stat: :p_atk, add: 2}]},
+        %{bonuses: [%{stat: :p_atk, times: 1.085}, %{stat: :p_atk, add: 3}]},
+        %{bonuses: [%{stat: :p_atk, times: 1.085}, %{stat: :p_atk, add: 4}]}
+      ],
+      mystic: [
+        %{
+          bonuses: [
+            %{stat: :p_atk, add: 1.5},
+            %{stat: :m_atk, add: 1.9},
+            %{stat: :p_atk, times: 1.45},
+            %{stat: :m_atk, times: 1.17}
+          ]
+        },
+        %{
+          bonuses: [
+            %{stat: :p_atk, add: 2.8},
+            %{stat: :m_atk, add: 3.5},
+            %{stat: :p_atk, times: 1.45},
+            %{stat: :m_atk, times: 1.17}
+          ]
+        }
+      ]
+    },
+    "Anti Magic" => [
+      %{bonuses: [%{stat: :m_def, add: 12}]},
+      %{bonuses: [%{stat: :m_def, add: 16}]}
     ]
   }
 
@@ -776,7 +809,6 @@ defmodule MiniLineage.Game.Rules do
   def max_level, do: length(@experience)
   def experience_table, do: @experience
 
-
   def grounds, do: @grounds
   def ground(slug), do: Enum.find(@grounds, &(&1.slug == slug))
   def ground_of(town), do: Enum.find(@grounds, &(&1.town == town))
@@ -901,13 +933,19 @@ defmodule MiniLineage.Game.Rules do
   def skill_known?(name),
     do: Map.has_key?(@skills, name) or Enum.any?(@trainer, &(&1.skill == name))
 
-  @doc "Rules §25: a skill at the level a character knows it."
-  def skill(name, level) do
-    case @skill_levels |> Map.fetch!(name) |> Enum.at(level - 1) do
+  @doc "Rules §25: a skill at the level a character of `path` knows it."
+  def skill(name, level, path \\ nil) do
+    case name |> skill_levels(path) |> Enum.at(level - 1) do
       {power, mp} -> %{skill(name) | power: power, mp: mp}
       %{} = changes -> Map.merge(skill(name), changes)
     end
   end
 
-  def skill_levels(name), do: Map.fetch!(@skill_levels, name)
+  @doc "Rules §25: a skill's lines, a Fighter's or a Mystic's where the two differ (Weapon Mastery)."
+  def skill_levels(name, path \\ nil) do
+    case Map.fetch!(@skill_levels, name) do
+      %{fighter: _, mystic: _} = by_path -> Map.fetch!(by_path, path)
+      levels -> levels
+    end
+  end
 end

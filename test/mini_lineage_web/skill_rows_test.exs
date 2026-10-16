@@ -76,6 +76,25 @@ defmodule MiniLineageWeb.SkillRowsTest do
     assert row(page(mystic), "robe-mastery") == "👘 Robe Mastery 2 • +18.4 P.Def in a robe."
   end
 
+  test "Weapon Mastery reads as a Fighter's P.Atk or a Mystic's M.Atk, a share as a buff writes it" do
+    fighter = %{knowing_all(1, :fighter) | skills: %{"Iron Punch" => 1, "Weapon Mastery" => 3}}
+    doc = page(fighter)
+    assert row(doc, "weapon-mastery") == "🤺 Weapon Mastery 3 • +8.5% P.Atk then +4."
+    refute row(doc, "weapon-mastery") =~ "×"
+
+    mystic = %{knowing_all(2, :mystic) | skills: %{"Wind Strike" => 1, "Weapon Mastery" => 2}}
+    doc = page(mystic)
+
+    assert row(doc, "weapon-mastery") ==
+             "🤺 Weapon Mastery 2 • +2.8 P.Atk then +45% and +3.5 M.Atk then +17%."
+
+    assert doc |> LazyHTML.query("#skill-weapon-mastery .magic") |> LazyHTML.text() ==
+             "+3.5 M.Atk then +17%"
+
+    warded = %{mystic | skills: %{"Wind Strike" => 1, "Anti Magic" => 2}}
+    assert row(page(warded), "anti-magic") == "🧿 Anti Magic 2 • +16 M.Def."
+  end
+
   test "a weapon's line says how far its blows stray" do
     {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Sunny")
 

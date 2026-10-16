@@ -745,10 +745,12 @@ try {
     check('...each line naming the weapon it needs, a spell any',
         await text('#lesson-mortal-blow-4 td:nth-child(2)') === 'Dagger' &&
         await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
-    check('...shelving the skills fought with apart from the mastery, as a trader shelves its goods',
+    check('...shelving the skills fought with apart from the masteries, as a trader shelves its goods',
         await text('#shelf-active tr.shelf th') === 'Active' &&
         await text('#shelf-passive tr.shelf th') === 'Passive' &&
         await page.locator('#shelf-passive #lesson-armor-mastery-1').count() === 1 &&
+        await page.locator('#shelf-passive #lesson-weapon-mastery-1').count() === 1 &&
+        await page.locator('#shelf-passive #lesson-anti-magic-1').count() === 1 &&
         await page.locator('#shelf-active #lesson-armor-mastery-1').count() === 0,
         await text('#lessons'));
     check('...and the dropdown grouped the same',

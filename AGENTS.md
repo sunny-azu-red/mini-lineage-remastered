@@ -184,8 +184,10 @@ Each of these is here because it was got wrong once.
   perks (§15, §16) and the auras a character raised (§19, kept in `buffs` to the millisecond they
   fade) are auras the same way: `Player.conditions/1` derives them with the modifiers `Rules` gives,
   and `Player.stats/1` applies exactly those. A perk names its race in its own clause. A mastery
-  (§19, a `passive`) is no aura and has no icon: `Player.stats/1` adds the bonuses `Rules` gives its
-  line before any aura, and its row on Learned Skills says so.
+  (§19, a `passive`) is no aura and has no icon: `Player.stats/1` adds (or, with `times`,
+  multiplies by) the bonuses `Rules` gives its line, in order, before any aura, and its row on
+  Learned Skills says so. A skill whose lines differ by path keeps one name and is looked up with
+  `Rules.skill/3` (Weapon Mastery: a Fighter's P.Atk, a Mystic's M.Atk), never a second name.
 - **A line keeps its pronouns open until somebody reads it.** Narrative pools carry `{they} {them}
   {object} {their}` and nothing second-person. `Format.fill_template` leaves them alone (they aren't
   in the data map) and `Narrative.voiced/2` closes them at render: `true` for the run's own alert
@@ -345,7 +347,7 @@ Each of these is here because it was got wrong once.
   `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
   multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk". A
   mastery reads the same way, its line's bonus as rules §25 writes it ("+14 P.Def", "+13.4 P.Def in a
-  robe"), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
+  robe", "+8.5% P.Atk then +2"), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
   own, in `1617e87`; a new skill's page is written the same way from the start.
 - **What ends counts down where it is shown.** An effect with an end carries `remaining_ms`, a
   duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:

@@ -136,7 +136,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Skill")
   end
 
-  test "an Active and a Passive shelf, as a trader's, until the mastery is learned out" do
+  test "an Active and a Passive shelf, as a trader's, until the masteries are learned out" do
     {_view, session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
 
@@ -176,7 +176,8 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, "#shelf-passive tr.shelf + tr#lesson-armor-mastery-1")
 
     # Learned out, one shelf is left, with no heading and no group.
-    Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Armor Mastery", 3)}, :ok})
+    masteries = %{"Armor Mastery" => 3, "Weapon Mastery" => 3, "Anti Magic" => 2}
+    Characters.mutate(session, &{%{&1 | skills: Map.merge(&1.skills, masteries)}, :ok})
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
     assert shelves.(view) == ~w(shelf-active)
     refute has_element?(view, "#lessons tr.shelf")

@@ -416,20 +416,20 @@ Strike or the Orc's Chill Flame, because a Mystic's STR makes a poor weapon of w
 and a Fighter the skill of the weapon it starts with, each race's its own. The trainer (§25) teaches
 the rest before the class change, each set its own. A Mystic can learn one more at level 1 (Self
 Heal, or the Orc's Soul Cry), and a Fighter the first level of its other weapon skills, if it has
-any. Each costs MP and then rests for its reuse, but for its mastery, a passive that is never cast
-and adds to a stat for as long as it is known: Armor Mastery for a Fighter, Robe Mastery for a
-Mystic.
+any. Each costs MP and then rests for its reuse, but for its masteries, passives that are never
+cast and add to a stat for as long as they are known: Armor Mastery for a Fighter, Robe Mastery for
+a Mystic, and Weapon Mastery and Anti Magic for both, each learned or not as the player sees fit.
 
 | Set | First skill | Also at level 1 | Then |
 |---|---|---|---|
-| Human Fighter | Power Strike | Mortal Blow, Power Shot | Armor Mastery |
-| Elven Fighter | Power Shot | | Defense Aura, Elemental Heal, Armor Mastery |
-| Dark Fighter | Mortal Blow | | Attack Aura, Drain Health, Armor Mastery |
-| Orc Fighter | Iron Punch | Power Strike | Relax, Armor Mastery |
-| Human Mystic | Wind Strike | Self Heal | Ice Bolt, Robe Mastery |
-| Elven Mystic | Wind Strike | Self Heal | Ice Bolt, Heal, Robe Mastery |
-| Dark Mystic | Wind Strike | Self Heal | Vampiric Touch, Curse: Poison, Shield, Wind Shackle, Robe Mastery |
-| Orc Mystic | Chill Flame | Soul Cry | Life Drain, Soul Shield, Robe Mastery |
+| Human Fighter | Power Strike | Mortal Blow, Power Shot | Armor Mastery, Weapon Mastery, Anti Magic |
+| Elven Fighter | Power Shot | | Defense Aura, Elemental Heal, Armor Mastery, Weapon Mastery, Anti Magic |
+| Dark Fighter | Mortal Blow | | Attack Aura, Drain Health, Armor Mastery, Weapon Mastery, Anti Magic |
+| Orc Fighter | Iron Punch | Power Strike | Relax, Armor Mastery, Weapon Mastery, Anti Magic |
+| Human Mystic | Wind Strike | Self Heal | Ice Bolt, Robe Mastery, Weapon Mastery, Anti Magic |
+| Elven Mystic | Wind Strike | Self Heal | Ice Bolt, Heal, Robe Mastery, Weapon Mastery, Anti Magic |
+| Dark Mystic | Wind Strike | Self Heal | Vampiric Touch, Curse: Poison, Shield, Wind Shackle, Robe Mastery, Weapon Mastery, Anti Magic |
+| Orc Mystic | Chill Flame | Soul Cry | Life Drain, Soul Shield, Robe Mastery, Weapon Mastery, Anti Magic |
 
 Each at level 1 (§25 has the later levels):
 
@@ -458,6 +458,8 @@ Each at level 1 (§25 has the later levels):
 | Relax | rest | 5 | 3 | | |
 | Armor Mastery | passive | | | | |
 | Robe Mastery | passive | | | | |
+| Weapon Mastery | passive | | | | |
+| Anti Magic | passive | | | | |
 
 A spell takes effect as its cast ends, in the round its cast time runs out, though its MP is paid
 and its reuse begins as it is begun; a physical skill or a blow takes effect at once. So it is with
@@ -489,8 +491,10 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
 - **Rest:** Relax mends power HP more on every tick of rest (§11), for its MP. Lineage II drains 2
   MP every 2 seconds, which is 3 a tick.
 - **Passive:** adds to a stat what §25's passive table gives the line it is known at, after §7 to
-  §10 and before any aura. A bonus that names what is worn holds only while the chest piece worn is
-  of that kind (§23): Robe Mastery's P.Def in a robe, Armor Mastery's Evasion in light armour.
+  §10 and before any aura, or multiplies it by a share, in the order the table lists them. A bonus
+  that names what is worn holds only while the chest piece worn is of that kind (§23): Robe
+  Mastery's P.Def in a robe, Armor Mastery's Evasion in light armour. Weapon Mastery is a Fighter's
+  P.Atk and a Mystic's M.Atk (and its P.Atk), each its own lines, as in Lineage II.
 
 Monsters cast these:
 
@@ -772,7 +776,8 @@ Its SP is set so that a character can afford about one new line when it reaches 
 rest of that level's lines about a level later, so each step is saved for and the order chosen. A
 mastery's line costs what Lineage II asks for the levels it holds, Robe Mastery 1 at the Orc
 Mystic's price, and Robe Mastery 2 costs 6,800, so that a Mystic reaches level 20 with about the SP
-a Fighter has left.
+a Fighter has left. Anti Magic, which Lineage II teaches only Mystics, is taught to a Fighter at
+levels 5 and 10, at what its race's Mystic pays.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
@@ -791,6 +796,11 @@ a Fighter has left.
 | Human Fighter | Armor Mastery | 1 | 5 | 160 |
 | Human Fighter | Armor Mastery | 2 | 10 | 1,100 |
 | Human Fighter | Armor Mastery | 3 | 15 | 4,000 |
+| Human Fighter | Weapon Mastery | 1 | 5 | 160 |
+| Human Fighter | Weapon Mastery | 2 | 10 | 1,100 |
+| Human Fighter | Weapon Mastery | 3 | 15 | 4,000 |
+| Human Fighter | Anti Magic | 1 | 5 | 480 |
+| Human Fighter | Anti Magic | 2 | 10 | 2,200 |
 | Elven Fighter | Power Shot | 1 | 1 | 0 |
 | Elven Fighter | Power Shot | 2 | 5 | 100 |
 | Elven Fighter | Power Shot | 3 | 10 | 930 |
@@ -800,6 +810,11 @@ a Fighter has left.
 | Elven Fighter | Armor Mastery | 1 | 5 | 160 |
 | Elven Fighter | Armor Mastery | 2 | 10 | 920 |
 | Elven Fighter | Armor Mastery | 3 | 15 | 3,400 |
+| Elven Fighter | Weapon Mastery | 1 | 5 | 160 |
+| Elven Fighter | Weapon Mastery | 2 | 10 | 910 |
+| Elven Fighter | Weapon Mastery | 3 | 15 | 3,300 |
+| Elven Fighter | Anti Magic | 1 | 5 | 520 |
+| Elven Fighter | Anti Magic | 2 | 10 | 2,200 |
 | Dark Fighter | Mortal Blow | 1 | 1 | 0 |
 | Dark Fighter | Mortal Blow | 2 | 5 | 100 |
 | Dark Fighter | Mortal Blow | 3 | 10 | 930 |
@@ -809,6 +824,11 @@ a Fighter has left.
 | Dark Fighter | Armor Mastery | 1 | 5 | 160 |
 | Dark Fighter | Armor Mastery | 2 | 10 | 920 |
 | Dark Fighter | Armor Mastery | 3 | 15 | 2,800 |
+| Dark Fighter | Weapon Mastery | 1 | 5 | 160 |
+| Dark Fighter | Weapon Mastery | 2 | 10 | 910 |
+| Dark Fighter | Weapon Mastery | 3 | 15 | 2,900 |
+| Dark Fighter | Anti Magic | 1 | 5 | 480 |
+| Dark Fighter | Anti Magic | 2 | 10 | 2,200 |
 | Orc Fighter | Iron Punch | 1 | 1 | 0 |
 | Orc Fighter | Iron Punch | 2 | 5 | 120 |
 | Orc Fighter | Iron Punch | 3 | 10 | 1,380 |
@@ -821,6 +841,11 @@ a Fighter has left.
 | Orc Fighter | Armor Mastery | 1 | 5 | 190 |
 | Orc Fighter | Armor Mastery | 2 | 10 | 1,380 |
 | Orc Fighter | Armor Mastery | 3 | 15 | 4,000 |
+| Orc Fighter | Weapon Mastery | 1 | 5 | 190 |
+| Orc Fighter | Weapon Mastery | 2 | 10 | 1,300 |
+| Orc Fighter | Weapon Mastery | 3 | 15 | 4,000 |
+| Orc Fighter | Anti Magic | 1 | 5 | 520 |
+| Orc Fighter | Anti Magic | 2 | 10 | 1,760 |
 | Human Mystic | Wind Strike | 1 | 1 | 0 |
 | Human Mystic | Wind Strike | 2 | 7 | 480 |
 | Human Mystic | Wind Strike | 3 | 14 | 4,000 |
@@ -829,6 +854,10 @@ a Fighter has left.
 | Human Mystic | Ice Bolt | 2 | 14 | 4,000 |
 | Human Mystic | Robe Mastery | 1 | 7 | 520 |
 | Human Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Human Mystic | Weapon Mastery | 1 | 7 | 470 |
+| Human Mystic | Weapon Mastery | 2 | 14 | 2,100 |
+| Human Mystic | Anti Magic | 1 | 7 | 480 |
+| Human Mystic | Anti Magic | 2 | 14 | 2,200 |
 | Elven Mystic | Wind Strike | 1 | 1 | 0 |
 | Elven Mystic | Wind Strike | 2 | 7 | 520 |
 | Elven Mystic | Wind Strike | 3 | 14 | 2,200 |
@@ -839,6 +868,10 @@ a Fighter has left.
 | Elven Mystic | Heal | 2 | 14 | 2,100 |
 | Elven Mystic | Robe Mastery | 1 | 7 | 520 |
 | Elven Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Elven Mystic | Weapon Mastery | 1 | 7 | 520 |
+| Elven Mystic | Weapon Mastery | 2 | 14 | 2,100 |
+| Elven Mystic | Anti Magic | 1 | 7 | 520 |
+| Elven Mystic | Anti Magic | 2 | 14 | 2,200 |
 | Dark Mystic | Wind Strike | 1 | 1 | 0 |
 | Dark Mystic | Wind Strike | 2 | 7 | 480 |
 | Dark Mystic | Wind Strike | 3 | 14 | 2,200 |
@@ -849,6 +882,10 @@ a Fighter has left.
 | Dark Mystic | Wind Shackle | 1 | 14 | 3,600 |
 | Dark Mystic | Robe Mastery | 1 | 7 | 520 |
 | Dark Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Dark Mystic | Weapon Mastery | 1 | 7 | 470 |
+| Dark Mystic | Weapon Mastery | 2 | 14 | 2,100 |
+| Dark Mystic | Anti Magic | 1 | 7 | 480 |
+| Dark Mystic | Anti Magic | 2 | 14 | 2,200 |
 | Orc Mystic | Chill Flame | 1 | 1 | 0 |
 | Orc Mystic | Chill Flame | 2 | 14 | 2,250 |
 | Orc Mystic | Soul Cry | 1 | 1 | 50 |
@@ -858,6 +895,10 @@ a Fighter has left.
 | Orc Mystic | Soul Shield | 1 | 7 | 520 |
 | Orc Mystic | Robe Mastery | 1 | 7 | 520 |
 | Orc Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Orc Mystic | Weapon Mastery | 1 | 7 | 520 |
+| Orc Mystic | Weapon Mastery | 2 | 14 | 1,800 |
+| Orc Mystic | Anti Magic | 1 | 7 | 520 |
+| Orc Mystic | Anti Magic | 2 | 14 | 1,760 |
 
 Each skill's power and MP at each level (a burn's power is per second):
 
@@ -906,14 +947,32 @@ Each skill's power and MP at each level (a burn's power is per second):
 
 What each line of a mastery adds (§19), and what must be worn for it:
 
-| Passive line | Stat | Adds | Worn |
-|---|---|---|---|
-| Armor Mastery 1 | P.Def | 9 | |
-| Armor Mastery 2 | P.Def | 12 | |
-| Armor Mastery 3 | P.Def | 14 | |
-| Armor Mastery 3 | Evasion | 3 | light armour |
-| Robe Mastery 1 | P.Def | 13.4 | a robe |
-| Robe Mastery 2 | P.Def | 18.4 | a robe |
+| Passive line | Who | Stat | Adds | Worn |
+|---|---|---|---|---|
+| Armor Mastery 1 | | P.Def | 9 | |
+| Armor Mastery 2 | | P.Def | 12 | |
+| Armor Mastery 3 | | P.Def | 14 | |
+| Armor Mastery 3 | | Evasion | 3 | light armour |
+| Robe Mastery 1 | | P.Def | 13.4 | a robe |
+| Robe Mastery 2 | | P.Def | 18.4 | a robe |
+| Weapon Mastery 1 | Fighter | P.Atk | 8.5% | |
+| Weapon Mastery 1 | Fighter | P.Atk | 2 | |
+| Weapon Mastery 2 | Fighter | P.Atk | 8.5% | |
+| Weapon Mastery 2 | Fighter | P.Atk | 3 | |
+| Weapon Mastery 3 | Fighter | P.Atk | 8.5% | |
+| Weapon Mastery 3 | Fighter | P.Atk | 4 | |
+| Weapon Mastery 1 | Mystic | P.Atk | 1.5 | |
+| Weapon Mastery 1 | Mystic | M.Atk | 1.9 | |
+| Weapon Mastery 1 | Mystic | P.Atk | 45% | |
+| Weapon Mastery 1 | Mystic | M.Atk | 17% | |
+| Weapon Mastery 2 | Mystic | P.Atk | 2.8 | |
+| Weapon Mastery 2 | Mystic | M.Atk | 3.5 | |
+| Weapon Mastery 2 | Mystic | P.Atk | 45% | |
+| Weapon Mastery 2 | Mystic | M.Atk | 17% | |
+| Anti Magic 1 | | M.Def | 12 | |
+| Anti Magic 2 | | M.Def | 16 | |
+
+A share multiplies (8.5% is × 1.085); Who names the path a line is for, where the two differ.
 
 Example: a Human Fighter starts knowing Power Strike 1, whose level 1 its trainer teaches for
 nothing, and at level 1 learns Mortal Blow 1 for **50** SP. At level 5 with 150 SP it learns Power
@@ -924,6 +983,11 @@ Example: an Orc Fighter at level 15 in its Squire's Shirt and Pants has 89.51 P.
 and knowing Armor Mastery 3, 89.51 + 14 = **103.51** and 46 + 3 = **49**. A Human Mystic at level 7
 in its Apprentice's Tunic and Stockings has 59.92 P.Def, and knowing Robe Mastery 1, 59.92 + 13.4 =
 **73.32**; with the tunic off it has **55.44**, Robe Mastery or not.
+
+Example: an Orc Fighter at level 10 in its Squire's kit has 8.32 P.Atk and 53.17 M.Def, and knowing
+Weapon Mastery 2 and Anti Magic 1, 8.32 × 1.085 + 3 = **12.02** and 53.17 + 12 = **65.17**. A Human
+Mystic at level 7 with its Apprentice's Wand has 9.45 M.Atk and 3.02 P.Atk, and knowing Weapon
+Mastery 1, (9.45 + 1.9) × 1.17 = **13.27** and (3.02 + 1.5) × 1.45 = **6.56**.
 
 ## 26. Potions
 

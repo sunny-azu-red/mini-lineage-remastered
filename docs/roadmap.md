@@ -104,9 +104,12 @@ follows before characters reach 15.
 - **SP comes from monsters,** like EXP.
 - **A short list per set** until the first class change, learned with SP from the trainers of the
   character's own village (rules §25, built): the first skill and two to four more from its canon
-  tree, chosen so each set plays its own way (rules §19), and its path's mastery. The rest are
-  actives, a heal, an aura, a drain, a curse or a toggle; the mastery is a passive, Armor Mastery
-  for a Fighter and Robe Mastery for every Mystic, and the guild shelves the two apart. The auras are the first timed buffs, as the Temple's will be: each holds 2 minutes, raised
+  tree, chosen so each set plays its own way (rules §19), and four masteries. The rest are
+  actives, a heal, an aura, a drain, a curse or a toggle; the masteries are passives, Armor Mastery
+  for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for both, and
+  the guild shelves the two kinds apart. Whether to learn a mastery is the player's: Anti Magic
+  answers only spells, which the village grounds barely cast (the Orc Village's Evil Eyes aside) and
+  Gludio's and Dion's will. The auras are the first timed buffs, as the Temple's will be: each holds 2 minutes, raised
   before the pull, and counts down over its icon and on the character page. The character page's
   Skills panel is the spellbook: what it knows, in the numbers the fight uses for it (what a heal
   mends, how often a blow lands, when each is ready again), never a formula.
@@ -114,33 +117,6 @@ follows before characters reach 15.
   the trainer shows only each skill's next line, no two lines of one skill opening at one level.
   Every set starts knowing its first skill, and the SP left from level 15 waits for the class
   change's skills.
-- **Open research: Weapon Mastery and Anti Magic.** Both are Lineage II's before the class change
-  and both are left out for now; pick this up in a session of its own.
-  - *What they are* (`canon/skills.md`): a Fighter's Weapon Mastery (141) is P.Atk × 1.085 and then
-    +2, +3, +4 at levels 5, 10 and 15; a Mystic's (249, the Orc's 250) is P.Atk +1.5 / +2.8 and
-    M.Atk +1.9 / +3.5 at 7 and 14, then P.Atk × 1.45 and M.Atk × 1.17, slower casting with a bow or
-    a polearm. Anti Magic (146) is M.Def +10 to +16 for every Mystic, at 7 and 14.
-  - *Weapon Mastery, measured* (2026-10-16, 400 runs a path on `6a43a98`): every set reaches 20 3%
-    to 16% sooner, resting to full, and the Dark Mystic with a two-hander 15.2% sooner, past the
-    bar's 15%; carrying potions it widens the spread between sets from 111 to 120 minutes, because
-    the Orc Mystic gains least (Chill Flame burns for a fixed amount, untouched by M.Atk). Resting
-    at half without potions it cuts the Fighters' deaths by half to three quarters (the Elven
-    Fighter 291 to 132 of 400), more than Armor Mastery does, by ending fights sooner. Its cost is
-    pace, not balance between paths.
-  - *Anti Magic, measured:* nothing beyond 1%. M.Def turns aside spells only, and no monster on the
-    Elven Fortress casts one, the Obelisk of Victory's and the School of Dark Arts' only cast a weak
-    one slowly, and only the Cave of Trials, the Orc Mystic's ground, has real casters, where it
-    saved about 1%. It belongs with grounds that cast: Gludio's, or a caster boss. Note that the
-    Orc Fighter's deaths at level 10 are to the Evil Eyes' spells, which only M.Def answers, and
-    canon gives Anti Magic to Mystics alone.
-  - *Questions for that session:* whether a faster game is wanted (then Weapon Mastery as canon,
-    and a ground or a price taking the time back), or Weapon Mastery reworked to a flat P.Atk or
-    M.Atk with no multiplier; whether Anti Magic waits for the first ground whose monsters cast.
-  - *To re-run it:* add the skill as Armor Mastery is added (a `passive` with its bonuses, rules §25),
-    in a worktree, and bench it against the build without it. The first experiment's patch
-    (`tmp/bench/mastery.patch`, from before the masteries were built) and its readings
-    (`tmp/bench/readings/p_wm_*`, `p_mastery_*`, `p_antimagic_*` against `p_base_*`), all
-    git-ignored; [balance.md](balance.md) says how to bench and compare.
 - **The class change opens the specialised skills** of the new class, learned the same way.
 - **Skills matter most in the slower fights,** where a boss is fought in rounds with a choice each
   round.

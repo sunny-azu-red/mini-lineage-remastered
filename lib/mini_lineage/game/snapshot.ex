@@ -13,6 +13,7 @@ defmodule MiniLineage.Game.Snapshot do
     ancestry: nil,
     perk: nil,
     class_name: nil,
+    path: nil,
     town: nil,
     ground: nil,
     routes: [],
@@ -60,6 +61,7 @@ defmodule MiniLineage.Game.Snapshot do
       ancestry: race.label,
       perk: race.perk,
       class_name: Rules.set(player.race_id, player.path).name,
+      path: player.path,
       town:
         Map.put(
           Rules.town(player.location),

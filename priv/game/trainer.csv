@@ -14,6 +14,11 @@ Human Fighter,Power Shot,4,15,3900
 Human Fighter,Armor Mastery,1,5,160
 Human Fighter,Armor Mastery,2,10,1100
 Human Fighter,Armor Mastery,3,15,4000
+Human Fighter,Weapon Mastery,1,5,160
+Human Fighter,Weapon Mastery,2,10,1100
+Human Fighter,Weapon Mastery,3,15,4000
+Human Fighter,Anti Magic,1,5,480
+Human Fighter,Anti Magic,2,10,2200
 Elven Fighter,Power Shot,1,1,0
 Elven Fighter,Power Shot,2,5,100
 Elven Fighter,Power Shot,3,10,930
@@ -23,6 +28,11 @@ Elven Fighter,Elemental Heal,1,15,5300
 Elven Fighter,Armor Mastery,1,5,160
 Elven Fighter,Armor Mastery,2,10,920
 Elven Fighter,Armor Mastery,3,15,3400
+Elven Fighter,Weapon Mastery,1,5,160
+Elven Fighter,Weapon Mastery,2,10,910
+Elven Fighter,Weapon Mastery,3,15,3300
+Elven Fighter,Anti Magic,1,5,520
+Elven Fighter,Anti Magic,2,10,2200
 Dark Fighter,Mortal Blow,1,1,0
 Dark Fighter,Mortal Blow,2,5,100
 Dark Fighter,Mortal Blow,3,10,930
@@ -32,6 +42,11 @@ Dark Fighter,Drain Health,1,15,4900
 Dark Fighter,Armor Mastery,1,5,160
 Dark Fighter,Armor Mastery,2,10,920
 Dark Fighter,Armor Mastery,3,15,2800
+Dark Fighter,Weapon Mastery,1,5,160
+Dark Fighter,Weapon Mastery,2,10,910
+Dark Fighter,Weapon Mastery,3,15,2900
+Dark Fighter,Anti Magic,1,5,480
+Dark Fighter,Anti Magic,2,10,2200
 Orc Fighter,Iron Punch,1,1,0
 Orc Fighter,Iron Punch,2,5,120
 Orc Fighter,Iron Punch,3,10,1380
@@ -44,6 +59,11 @@ Orc Fighter,Relax,1,5,190
 Orc Fighter,Armor Mastery,1,5,190
 Orc Fighter,Armor Mastery,2,10,1380
 Orc Fighter,Armor Mastery,3,15,4000
+Orc Fighter,Weapon Mastery,1,5,190
+Orc Fighter,Weapon Mastery,2,10,1300
+Orc Fighter,Weapon Mastery,3,15,4000
+Orc Fighter,Anti Magic,1,5,520
+Orc Fighter,Anti Magic,2,10,1760
 Human Mystic,Wind Strike,1,1,0
 Human Mystic,Wind Strike,2,7,480
 Human Mystic,Wind Strike,3,14,4000
@@ -52,6 +72,10 @@ Human Mystic,Ice Bolt,1,7,480
 Human Mystic,Ice Bolt,2,14,4000
 Human Mystic,Robe Mastery,1,7,520
 Human Mystic,Robe Mastery,2,14,6800
+Human Mystic,Weapon Mastery,1,7,470
+Human Mystic,Weapon Mastery,2,14,2100
+Human Mystic,Anti Magic,1,7,480
+Human Mystic,Anti Magic,2,14,2200
 Elven Mystic,Wind Strike,1,1,0
 Elven Mystic,Wind Strike,2,7,520
 Elven Mystic,Wind Strike,3,14,2200
@@ -62,6 +86,10 @@ Elven Mystic,Heal,1,7,510
 Elven Mystic,Heal,2,14,2100
 Elven Mystic,Robe Mastery,1,7,520
 Elven Mystic,Robe Mastery,2,14,6800
+Elven Mystic,Weapon Mastery,1,7,520
+Elven Mystic,Weapon Mastery,2,14,2100
+Elven Mystic,Anti Magic,1,7,520
+Elven Mystic,Anti Magic,2,14,2200
 Dark Mystic,Wind Strike,1,1,0
 Dark Mystic,Wind Strike,2,7,480
 Dark Mystic,Wind Strike,3,14,2200
@@ -72,6 +100,10 @@ Dark Mystic,Shield,1,7,470
 Dark Mystic,Wind Shackle,1,14,3600
 Dark Mystic,Robe Mastery,1,7,520
 Dark Mystic,Robe Mastery,2,14,6800
+Dark Mystic,Weapon Mastery,1,7,470
+Dark Mystic,Weapon Mastery,2,14,2100
+Dark Mystic,Anti Magic,1,7,480
+Dark Mystic,Anti Magic,2,14,2200
 Orc Mystic,Chill Flame,1,1,0
 Orc Mystic,Chill Flame,2,14,2250
 Orc Mystic,Soul Cry,1,1,50
@@ -81,3 +113,7 @@ Orc Mystic,Life Drain,2,14,2250
 Orc Mystic,Soul Shield,1,7,520
 Orc Mystic,Robe Mastery,1,7,520
 Orc Mystic,Robe Mastery,2,14,6800
+Orc Mystic,Weapon Mastery,1,7,520
+Orc Mystic,Weapon Mastery,2,14,1800
+Orc Mystic,Anti Magic,1,7,520
+Orc Mystic,Anti Magic,2,14,1760

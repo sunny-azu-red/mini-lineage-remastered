@@ -101,14 +101,14 @@ defmodule MiniLineage.Characters.Serde do
 
   # Only the names `Rules` knows, at whole levels it still teaches; a run from before the trainer
   # knows its first skill.
-  defp skills(%{} = known, _race_id, _path),
+  defp skills(%{} = known, _race_id, path),
     do:
       for(
         {name, level} <- known,
         Rules.skill_known?(name),
         is_integer(level),
         into: %{},
-        do: {name, min(level, length(Rules.skill_levels(name)))}
+        do: {name, min(level, length(Rules.skill_levels(name, path)))}
       )
 
   defp skills(_none, race_id, path) when is_integer(race_id) and path in [:fighter, :mystic],

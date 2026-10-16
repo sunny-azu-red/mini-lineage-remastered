@@ -95,14 +95,15 @@ defmodule MiniLineage.Game.Player do
     end)
   end
 
-  # Rules §19 and §25: what its masteries add; a bonus naming an armour type holds only in it.
+  # Rules §19 and §25: what its masteries add or multiply by, in order; a bonus naming an armour type
+  # holds only in it.
   defp passives(player) do
     chest = Enum.find(equipped(player), &(&1.slot == :chest))
 
     for %{kind: :passive, bonuses: bonuses} <- known_skills(player),
         bonus <- bonuses,
         bonus[:worn] in [nil, chest && chest.type],
-        do: {bonus.stat, {:add, bonus.add}}
+        do: {bonus.stat, if(bonus[:times], do: {:mul, bonus.times}, else: {:add, bonus.add})}
   end
 
   defp modify({stat, {:add, value}}, stats), do: Map.update!(stats, stat, &(&1 + value))
@@ -200,7 +201,7 @@ defmodule MiniLineage.Game.Player do
 
   @doc "Rules §19: every skill it knows, each at the level it knows it."
   def known_skills(player),
-    do: for({name, level} <- player.skills || %{}, do: Rules.skill(name, level))
+    do: for({name, level} <- player.skills || %{}, do: Rules.skill(name, level, player.path))
 
   @doc "Rules §20: the skills it fights with: all it knows but masteries and what its orders leave."
   def fighting_skills(player),
@@ -222,7 +223,7 @@ defmodule MiniLineage.Game.Player do
   @doc "Rules §25: the set's first skill, at the level the character knows it."
   def first_skill(player) do
     name = Rules.first_skill(player.race_id, player.path).name
-    Rules.skill(name, Map.get(player.skills || %{}, name, 1))
+    Rules.skill(name, Map.get(player.skills || %{}, name, 1), player.path)
   end
 
   @doc "Rules §23: the items a character has on, as `Rules` gives them."

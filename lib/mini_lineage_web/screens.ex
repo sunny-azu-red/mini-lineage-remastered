@@ -764,7 +764,7 @@ defmodule MiniLineageWeb.Screens do
       ]}
     >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)} equipped.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
+        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level, @view.path)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)} equipped.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
     """
@@ -873,7 +873,9 @@ defmodule MiniLineageWeb.Screens do
     "Wind Shackle" => "⛓️",
     "Soul Cry" => "📢",
     "Armor Mastery" => "🪖",
-    "Robe Mastery" => "👘"
+    "Robe Mastery" => "👘",
+    "Weapon Mastery" => "🤺",
+    "Anti Magic" => "🧿"
   }
 
   @doc "A skill's own emoji, or for one that raises an aura that aura's, as Buffs shows it."
@@ -988,12 +990,30 @@ every {duration(@skill.every)}.|
     do: ~H|<span class="regen">+{@skill.power} HP</span>
 a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
-  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P.Def"), and what must be worn.
+  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P.Def", "+8.5% P.Atk then +2"), and
+  # what must be worn. A stat's bonuses go together in the order they apply.
   defp skill_does(%{skill: %{kind: :passive}} = assigns) do
+    bonuses = assigns.skill.bonuses
+    key = &{&1.stat, &1[:worn]}
+
+    groups =
+      for group <- bonuses |> Enum.map(key) |> Enum.uniq(),
+          do: Enum.filter(bonuses, &(key.(&1) == group))
+
+    assigns = assign(assigns, groups: groups)
+
     ~H"""
-    <span phx-no-format><%= for {bonus, index} <- Enum.with_index(@skill.bonuses) do %>{if index > 0, do: " and "}<span class={stat_class(bonus.stat)}>+{bonus.add} {stat_name(bonus.stat)}</span>{worn(bonus[:worn])}<% end %>.</span>
+    <span phx-no-format><%= for {[first | rest], index} <- Enum.with_index(@groups) do %>{if index > 0, do: " and "}<span class={stat_class(first.stat)}>{bonus(first)} {stat_name(first.stat)}<%= for more <- rest do %> then {bonus(more)}<% end %></span>{worn(first[:worn])}<% end %>.</span>
     """
   end
+
+  # "+2", or "+8.5%" for a × 1.085.
+  defp bonus(%{times: times}) do
+    share = Float.round((times - 1) * 100, 1)
+    "+#{if share == trunc(share), do: trunc(share), else: share}%"
+  end
+
+  defp bonus(%{add: add}), do: "+#{add}"
 
   defp worn(nil), do: ""
   defp worn("light"), do: " in light armour"
@@ -1009,12 +1029,15 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
   defp stat_name(:p_def), do: "P.Def"
   defp stat_name(:p_atk), do: "P.Atk"
+  defp stat_name(:m_atk), do: "M.Atk"
+  defp stat_name(:m_def), do: "M.Def"
   defp stat_name(:evasion), do: "Evasion"
 
   # What an effect changes wears the colour of the stat it changes.
   defp stat_class(:accuracy), do: "accuracy"
   defp stat_class(stat) when stat in [:hp_regen, :mp_regen], do: "regen"
-  defp stat_class(:p_def), do: "defense"
+  defp stat_class(stat) when stat in [:p_def, :m_def], do: "defense"
+  defp stat_class(:m_atk), do: "magic"
   defp stat_class(:p_atk), do: "attack"
   defp stat_class(:evasion), do: "evasion"
 
