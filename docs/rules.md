@@ -649,8 +649,11 @@ Example: a Human Fighter (DEX 30) behind a Small Shield (defence 56, block 20) c
 ## 24. Village shops
 
 Every starting village sells the items marked village below, and Orc Village those marked
-orc-village too, each at its price. A shop buys back anything it sells for half its price, rounded
-down. A starting kit is worth nothing to a shop and is never bought.
+orc-village too, each at its canon price below × as many of its slot as it stands for (§7), rounded,
+so a chest, legs or necklace costs what it is worth as it counts what it is worth: a light piece by a
+Fighter's shares, a robe by a Mystic's, a necklace × 41 ÷ 13, anything else its price. A shop buys
+back anything it sells for half what it costs, rounded down. A starting kit is worth nothing to a
+shop and is never bought.
 
 Each village keeps four traders: one for weapons, one for armour who sells the shields too, and a
 jeweller and a grocer who keep the Magic Trader together, its jewellery and its potions. Any of them
@@ -727,7 +730,9 @@ and potion.
 | Necklace of Anguish | jewellery | necklace |  |  |  |  |  |  |  |  |  | 21 |  |  |  | 4680 | village |
 | Necklace of Wisdom | jewellery | necklace |  |  |  |  |  |  |  |  |  | 25 |  |  |  | 11900 | village |
 
-Example: a Broadsword costs **12,500** and sells back for **6,250**.
+Example: a Broadsword costs **12,500** and sells back for **6,250**. A Leather Shirt (2,430) costs
+2,430 × 51 ÷ 31 = **3,998**, a Leather Tunic (7,960) 7,960 × 35 ÷ 15 = **18,573**, and a Necklace of
+Wisdom (11,900) 11,900 × 41 ÷ 13 = **37,531**, which sells back for **18,765**.
 
 ## 25. The guild
 

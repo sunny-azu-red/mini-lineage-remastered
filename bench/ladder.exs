@@ -9,7 +9,7 @@
 #
 # Each run has its own seed, from its set and number, so a rule change moves only the runs it
 # touches and two builds compare run for run (bench/compare.exs reads two --json files).
-alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules}
+alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules, Shop}
 
 {opts, args} =
   OptionParser.parse!(System.argv(),
@@ -128,7 +128,7 @@ defmodule Ladder do
 
       pick =
         Rules.stock(p.location, Rules.set(p.race_id, p.path))
-        |> Enum.filter(&(&1.slot == slot and worth(p, path, &1) > now and &1.price <= p.adena))
+        |> Enum.filter(&(&1.slot == slot and worth(p, path, &1) > now and Shop.price(&1) <= p.adena))
         |> Enum.max_by(&worth(p, path, &1), fn -> nil end)
 
       if pick do

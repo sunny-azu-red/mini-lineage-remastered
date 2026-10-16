@@ -769,14 +769,21 @@ defmodule MiniLineage.Game.Rules do
   Rules §7: what an equipped piece counts for, its canon defence × its part's share ÷ its slot's own,
   by its own kind of armour.
   """
-  def counts_for(item) do
-    part = part(item.slot)
+  def counts_for(%{slot: :necklace} = item), do: item.m_def * stands_for(item)
+  def counts_for(item), do: item.p_def * stands_for(item)
 
-    case item.slot do
-      :necklace -> item.m_def * part.mind / part.jewel
-      _ -> item.p_def * part[path_of(item.type)] / part[String.to_existing_atom(item.type)]
-    end
+  @doc """
+  Rules §7: how many of its own slot a piece stands for, its part's share ÷ its slot's own, which
+  scales its defence and (§24) its price alike; 1 for anything that is not one of the three pieces.
+  """
+  def stands_for(%{slot: :necklace}), do: @parts.necklace.mind / @parts.necklace.jewel
+
+  def stands_for(%{slot: slot, type: type}) when slot in [:chest, :legs] do
+    part = part(slot)
+    part[path_of(type)] / part[String.to_existing_atom(type)]
   end
+
+  def stands_for(_item), do: 1
 
   defp path_of("magic"), do: :mystic
   defp path_of(_light), do: :fighter

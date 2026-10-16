@@ -200,8 +200,10 @@ the fight uses them.
 - **Armour is three pieces: chest, legs and necklace,** beside the weapon and the shield. Each
   stands for its whole part (the chest for head, chest and gloves; the legs for legs and feet; the
   necklace for all five pieces of jewellery), counting its canon defence × its part's share ÷ its
-  slot's (rules §7), so a three-piece set is as strong as the matching full set. Helmets, gloves,
-  boots, earrings and rings are not sold.
+  slot's (rules §7), so a three-piece set is as strong as the matching full set. It costs its canon
+  price by the same share (rules §24), so a Necklace of Wisdom is 37,531 where Lineage II's necklace,
+  two earrings and two rings of its grade came to about 41,500. Helmets, gloves, boots, earrings and
+  rings are not sold.
 - **A potion heals its whole amount at once, with no reuse,** drunk by the character itself below the
   share of HP its player chose, one a round (rules §26). In Lineage II a Lesser Healing Potion
   healed 16 HP every 2 seconds for 15 seconds (112 in all) and rested 10 seconds; it is kept at its

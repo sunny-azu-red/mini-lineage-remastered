@@ -5,12 +5,12 @@ defmodule MiniLineage.Game.Shop do
   """
   alias MiniLineage.Game.Rules
 
-  @doc "§24: an item's price at a village shop, its canon price."
-  def price(item), do: item.price
+  @doc "§24: an item's price at a village shop, its canon price × what it stands for (§7), rounded."
+  def price(item), do: round(item.price * Rules.stands_for(item))
 
   @doc "§24: what a shop pays back for an item, half its price, and nothing for a starting kit."
   def buyback(%{sold: :starting}), do: 0
-  def buyback(item), do: div(item.price, 2)
+  def buyback(item), do: div(price(item), 2)
 
   @doc "§24: whether the shop where `player` stands sells `item` to its path."
   def stocks?(player, item),

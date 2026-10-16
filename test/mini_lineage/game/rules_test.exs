@@ -759,6 +759,13 @@ defmodule MiniLineage.Game.RulesTest do
       assert Shop.buyback(Rules.item("Broadsword")) == 6_250
     end
 
+    test "§24 a piece costs as many of its slot as it stands for" do
+      assert Shop.price(Rules.item("Leather Shirt")) == 3_998
+      assert Shop.price(Rules.item("Leather Tunic")) == 18_573
+      assert Shop.price(Rules.item("Necklace of Wisdom")) == 37_531
+      assert Shop.buyback(Rules.item("Necklace of Wisdom")) == 18_765
+    end
+
     test "§25 a Human Fighter knows Power Strike 1, buys Mortal Blow 1 at level 1 and Power Strike 2 at 5" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Pupil")
