@@ -97,30 +97,36 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, "#skill-power-strike .mp", "10 MP")
   end
 
-  test "a header sorts the lessons up, then down, then back to the trainer's own order" do
+  test "the lessons open on Level Req, a header turns them round, and the dropdown follows" do
     {_view, _session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
     first = &has_element?(view, "#lessons tbody tr:first-child#lesson-#{&1}")
     last = &has_element?(view, "#lessons tbody tr:last-child#lesson-#{&1}")
-    skill = ~s(#lessons button[phx-value-key="skill"])
+    offered = &has_element?(view, ~s{#learn-form option:nth-child(2)[value="#{&1}"]})
+    header = &~s(#lessons button[phx-value-key="#{&1}"])
 
-    assert first.("power-strike-2")
+    # Level 1's two lines in the trainer's order, then Power Strike 2 at level 5.
+    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
+    assert first.("mortal-blow-1") and last.("power-strike-2")
+    assert offered.("Mortal Blow|1")
 
-    view |> element(skill) |> render_click()
+    view |> element(header.("learn_at")) |> render_click()
+    assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Level Req")
+    assert first.("power-strike-2") and last.("power-shot-1")
+    assert offered.("Power Strike|2")
+
+    view |> element(header.("learn_at")) |> render_click()
+    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
+
+    view |> element(header.("skill")) |> render_click()
     assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Skill")
-    assert first.("mortal-blow-1")
-
-    view |> element(skill) |> render_click()
+    view |> element(header.("skill")) |> render_click()
     assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Skill")
     assert first.("power-strike-2") and last.("mortal-blow-1")
 
-    view |> element(skill) |> render_click()
-    refute has_element?(view, "#lessons th[aria-sort]")
-    assert first.("power-strike-2") and last.("power-shot-1")
-
     # A key the table does not offer is not stored.
     render_click(view, "sort", %{"table" => "lessons", "key" => "status"})
-    refute has_element?(view, "#lessons th[aria-sort]")
+    assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Skill")
   end
 
   test "the lessons do not remember their sort, so a kept one is not read back" do
@@ -128,7 +134,8 @@ defmodule MiniLineageWeb.GuildPageTest do
     conn = put_connect_params(conn, %{"tables" => %{"lessons" => "sp:desc"}})
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
 
-    refute has_element?(view, "#lessons th[aria-sort]")
+    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
+    refute has_element?(view, ~s(#lessons th[aria-sort="descending"]))
     refute has_element?(view, "#lessons thead[phx-hook]")
   end
 

@@ -43,10 +43,10 @@ defmodule MiniLineageWeb.DataTableTest do
     assert read(doc({"name", :asc}, false), "thead", "data-sort") == []
   end
 
-  test "a header goes up, then down, then back to the order the rows arrived in" do
+  test "the sorted header turns round, and any other starts ascending" do
     assert next_sort(nil, "sp") == {"sp", :asc}
     assert next_sort({"sp", :asc}, "sp") == {"sp", :desc}
-    assert next_sort({"sp", :desc}, "sp") == nil
+    assert next_sort({"sp", :desc}, "sp") == {"sp", :asc}
     assert next_sort({"skill", :desc}, "sp") == {"sp", :asc}
   end
 

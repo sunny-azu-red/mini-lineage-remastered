@@ -254,6 +254,10 @@ defmodule MiniLineageWeb.Screens do
   # Rules §26: how many potions one purchase may take.
   @potion_lots [1, 10]
 
+  # The inventory's Slot column sorts in the order a character is dressed, not the alphabet's.
+  @slot_order ~w(weapon shield chest legs necklace potion)a
+  @class_keys ~w(class str con dex int wit men hp mp)
+
   # Rules §24: the village's four traders by name, each a page of their own, and selling, which any
   # of them does.
   defp trader(assigns) do
@@ -282,9 +286,15 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp trader_page(%{screen: "trader-sell"} = assigns) do
+    sort = sort_of(assigns.sorts, "sellable")
+
     assigns =
       assign(assigns,
-        sellable: Enum.filter(assigns.view.items, &(!&1.equipped and &1.buyback > 0))
+        sort: sort,
+        sellable:
+          assigns.view.items
+          |> Enum.filter(&(!&1.equipped and &1.buyback > 0))
+          |> sort_rows(sort, &item_key/2)
       )
 
     ~H"""
@@ -294,9 +304,9 @@ defmodule MiniLineageWeb.Screens do
     <p :if={@sellable == []} id="nothing-to-sell">
       You carry nothing the traders would buy: they take nothing equipped, and nothing from a starting kit.
     </p>
-    <.data_table :if={@sellable != []} id="sellable">
-      <:col class="name">Item</:col>
-      <:col>Pays</:col>
+    <.data_table :if={@sellable != []} id="sellable" sort={@sort}>
+      <:col class="name" sort="name">Item</:col>
+      <:col sort="buyback">Pays</:col>
       <tbody>
         <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
           <td class="name">
@@ -323,23 +333,37 @@ defmodule MiniLineageWeb.Screens do
   defp trader_page(assigns) do
     {_, role, slots} = List.keyfind(@trader_parts, assigns.screen, 0)
 
+    # Shelves in the order the page's part lists them, its own goods before shields, in one table so
+    # the columns line up; a sort reorders each shelf's rows and never mixes two shelves.
+    sort = sort_of(assigns.sorts, "stock")
+
+    shelves =
+      assigns.view.stock
+      |> Enum.filter(&(&1.slot in slots))
+      |> Enum.sort_by(fn item -> Enum.find_index(slots, &(&1 == item.slot)) end)
+      |> Enum.chunk_by(&shelf/1)
+      |> Enum.map(fn [first | _] = items ->
+        %{name: shelf(first), items: sort_rows(items, sort, &item_key/2)}
+      end)
+
     assigns =
       assign(assigns,
-        # A page shows its shelves in the order its part lists them, its own goods before shields.
-        stock:
-          assigns.view.stock
-          |> Enum.filter(&(&1.slot in slots))
-          |> Enum.sort_by(fn item -> Enum.find_index(slots, &(&1 == item.slot)) end),
+        sort: sort,
+        shelves: shelves,
         line: Constants.trader_line(assigns.view.town.slug, role)
       )
 
     ~H"""
     <p id="trader-intro">{@line}</p>
-    <.data_table id="stock">
-      <:col class="name">Item</:col>
-      <:col>Adena</:col>
-      <tbody>
-        <tr :for={item <- @stock} id={"stock-#{slug(item.name)}"}>
+    <.data_table id="stock" sort={@sort}>
+      <:col class="name" sort="name">Item</:col>
+      <:col sort="price">Adena</:col>
+      <tbody :for={shelf <- @shelves} id={"shelf-#{slug(shelf.name)}"}>
+        <%!-- A page of one shelf (the grocer's potions, a Mystic's staves) needs no heading. --%>
+        <tr :if={length(@shelves) > 1} class="shelf">
+          <th colspan="2" scope="rowgroup">{shelf.name}</th>
+        </tr>
+        <tr :for={item <- shelf.items} id={"stock-#{slug(item.name)}"}>
           <td class="name">
             {item_label(item)} <span class="delimiter">&bull;</span>
             <span class="muted">{item.about}</span>
@@ -354,7 +378,7 @@ defmodule MiniLineageWeb.Screens do
       name="item"
       picked={@picked}
       placeholder="🚪 Traders"
-      options={buy_options(@stock)}
+      options={buy_options(@shelves)}
       default_label="Return"
       active_label="🪙 Buy"
     />
@@ -370,12 +394,13 @@ defmodule MiniLineageWeb.Screens do
       |> Enum.reject(&(&1.status == :known))
       |> Enum.uniq_by(& &1.skill)
 
-    sort = assigns.sorts["lessons"]
+    sort = sort_of(assigns.sorts, "lessons")
+    lessons = sort_rows(lessons, sort, &lesson_key/2)
 
     assigns =
       assign(assigns,
         sort: sort,
-        lessons: sort_rows(lessons, sort, &lesson_key/2),
+        lessons: lessons,
         ready: Enum.filter(lessons, &(&1.status == :ready)),
         # Rules §23: a set whose every line is a spell has no use for the column.
         weapons?: Enum.any?(assigns.view.lessons, &Rules.weapon_skill?(&1.skill))
@@ -387,7 +412,7 @@ defmodule MiniLineageWeb.Screens do
     </p>
     <.data_table id="lessons" sort={@sort}>
       <:col class="name" sort="skill">Skill</:col>
-      <:col :if={@weapons?}>Weapon</:col>
+      <:col :if={@weapons?} sort="weapon">Weapon</:col>
       <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
       <:col title="Skill Points" sort="sp">SP</:col>
       <tbody>
@@ -437,34 +462,56 @@ defmodule MiniLineageWeb.Screens do
   end
 
   defp lesson_key(lesson, "skill"), do: {lesson.skill, lesson.level}
+  defp lesson_key(lesson, "weapon"), do: weapon_label(lesson.skill)
   defp lesson_key(lesson, "learn_at"), do: lesson.learn_at
   defp lesson_key(lesson, "sp"), do: lesson.sp
 
   @doc """
-  The keys a table may be sorted on, checked before a sort is stored, and whether the reader's sort
-  outlives a reload; a remembered table also sets `remember` on its `<.data_table>`.
+  The keys a table may be sorted on, checked before a sort is stored, the sort it opens on, and
+  whether the reader's sort outlives a reload; a remembered table also sets `remember` on its
+  `<.data_table>`.
   """
-  def sortable("lessons"), do: %{keys: ~w(skill learn_at sp), remember: false}
-  def sortable(_table), do: %{keys: [], remember: false}
+  def sortable("stock"), do: table(~w(name price), {"price", :asc})
+  def sortable("sellable"), do: table(~w(name buyback), {"buyback", :desc})
+  def sortable("items"), do: table(~w(name slot), {"slot", :asc})
+  def sortable("routes-table"), do: table(~w(name fee), {"fee", :asc})
+  def sortable("lessons"), do: table(~w(skill weapon learn_at sp), {"learn_at", :asc})
+  def sortable("halls-table"), do: table(~w(name level total_xp adena), {"total_xp", :desc})
+
+  def sortable(table) do
+    if String.ends_with?(table, "-classes"),
+      do: table(@class_keys, {"class", :asc}),
+      else: %{keys: [], default: nil, remember: false}
+  end
+
+  defp table(keys, default), do: %{keys: keys, default: default, remember: false}
+
+  @doc "The sort a table is drawn in: the reader's, else the one it opens on."
+  def sort_of(sorts, table), do: sorts[table] || sortable(table).default
 
   # Rules §23: everything carried in one list, what is equipped highlighted, and one choice of what
   # to do with which, grouped by what it does; destroying anything is the red button.
   defp inventory(assigns) do
+    sort = sort_of(assigns.sorts, "items")
+    items = sort_rows(assigns.view.items, sort, &item_key/2)
+
     assigns =
       assign(assigns,
+        sort: sort,
+        items: items,
         capacity: Rules.capacity(),
-        choices: inventory_choices(assigns.view.items),
+        choices: inventory_choices(items),
         back_title: back_title(assigns.back, assigns.view)
       )
 
     ~H"""
     <p id="inventory-count">You carry {length(@view.items)} of the {@capacity} things you can.</p>
-    <.data_table id="items">
-      <:col class="name">Item</:col>
-      <:col>Slot</:col>
+    <.data_table id="items" sort={@sort}>
+      <:col class="name" sort="name">Item</:col>
+      <:col sort="slot">Slot</:col>
       <tbody>
         <tr
-          :for={item <- @view.items}
+          :for={item <- @items}
           id={"item-#{item.id}"}
           data-equipped={to_string(item.equipped)}
           {if item.equipped, do: [class: "owned"], else: []}
@@ -518,28 +565,22 @@ defmodule MiniLineageWeb.Screens do
   defp back_title({screen, _town}, view), do: title(screen, view)
   defp back_title(nil, view), do: view.town.name
 
-  # Gear is bought one at a time, a potion (§26) by the lot, onto its stack.
-  defp buy_options(stock) do
-    Enum.flat_map(stock, fn
-      %{slot: :potion} = item ->
-        for n <- @potion_lots,
-            do: %{
-              value: "#{item.name}|#{n}",
-              label: "#{item_label(item)} ×#{n}"
-            }
-
-      item ->
-        [
-          %{
-            value: item.name,
-            label: item_label(item),
-            group: shelf(item)
-          }
-        ]
-    end)
+  # Gear is bought one at a time, a potion (§26) by the lot, onto its stack. Each shelf is a group,
+  # in the order its table shows, as long as there are two to tell apart.
+  defp buy_options(shelves) do
+    for shelf <- shelves,
+        # A generator, not `group = …`: in `for` that is a filter, and a nil group drops the shelf.
+        group <- [if(length(shelves) > 1, do: shelf.name)],
+        item <- shelf.items,
+        n <- if(item.slot == :potion, do: @potion_lots, else: [nil]),
+        do:
+          if(n,
+            do: %{value: "#{item.name}|#{n}", label: "#{item_label(item)} ×#{n}", group: group},
+            else: %{value: item.name, label: item_label(item), group: group}
+          )
   end
 
-  # Which shelf of a trader's an item is bought from, a heading in the dropdown.
+  # Which shelf of a trader's an item is on, its heading in the table and in the dropdown.
   defp shelf(%{slot: :weapon, type: type}),
     do:
       Map.fetch!(
@@ -556,21 +597,38 @@ defmodule MiniLineageWeb.Screens do
   defp shelf(%{slot: :shield}), do: "Shields"
   defp shelf(%{slot: :chest}), do: "Chest"
   defp shelf(%{slot: :legs}), do: "Legs"
-  defp shelf(_item), do: nil
+  defp shelf(%{slot: :necklace}), do: "Necklaces"
+  defp shelf(%{slot: :potion}), do: "Potions"
+
+  # A name sorts on the item's name, never the emoji before it; a slot in the game's own order.
+  defp item_key(item, "name"), do: item.name
+  defp item_key(item, "price"), do: item.price
+  defp item_key(item, "buyback"), do: item.buyback
+
+  defp item_key(item, "slot"),
+    do: {Enum.find_index(@slot_order, &(&1 == item.slot)), !item.equipped}
 
   defp slug(name), do: MiniLineage.Game.Format.slugify(name)
 
+  defp route_key(route, "name"), do: route.name
+  defp route_key(route, "fee"), do: route.fee
+
   # Rules §14: every route out of this town and its fee, then the choice of one.
   defp gatekeeper(assigns) do
+    sort = sort_of(assigns.sorts, "routes-table")
+
+    assigns =
+      assign(assigns, sort: sort, routes: sort_rows(assigns.view.routes, sort, &route_key/2))
+
     ~H"""
     <p id="gatekeeper-intro" phx-no-format>
       {@view.town.gatekeeper} the Gatekeeper can send you on from {@view.town.emoji} {@view.town.name} in the blink of an eye, to any town the routes from here reach, for a fee.
     </p>
-    <.data_table id="routes-table">
-      <:col class="name">Destination</:col>
-      <:col>Adena</:col>
+    <.data_table id="routes-table" sort={@sort}>
+      <:col class="name" sort="name">Destination</:col>
+      <:col sort="fee">Adena</:col>
       <tbody>
-        <tr :for={route <- @view.routes} id={"route-#{route.slug}"}>
+        <tr :for={route <- @routes} id={"route-#{route.slug}"}>
           <td class="name">
             {route.emoji} {route.name}<span :if={!route.open?} class="muted"> (not open yet)</span>
           </td>
@@ -585,7 +643,7 @@ defmodule MiniLineageWeb.Screens do
       picked={@picked}
       placeholder={"🚪 #{@view.town.name}"}
       options={
-        Enum.map(@view.routes, fn route ->
+        Enum.map(@routes, fn route ->
           %{
             value: route.slug,
             label: "#{route.emoji} #{route.name}",
@@ -955,9 +1013,26 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
       men: "Mental Strength"
     ]
 
+  defp class_key(class, "class"), do: class.path
+  defp class_key(class, "hp"), do: class.max_hp
+  defp class_key(class, "mp"), do: class.max_mp
+
+  defp class_key(class, attr),
+    do:
+      class.attributes[Enum.find_value(attributes(), fn {a, _} -> to_string(a) == attr && a end)]
+
   # One lineage, in a panel of its own.
   defp races(%{panel: %{race: race}} = assigns) do
-    assigns = assign(assigns, race: race)
+    id = "#{race.slug}-classes"
+    sort = sort_of(assigns.sorts, id)
+
+    assigns =
+      assign(assigns,
+        race: race,
+        id: id,
+        sort: sort,
+        classes: sort_rows(race.classes, sort, &class_key/2)
+      )
 
     ~H"""
     <p>{raw(@race.backstory)}</p>
@@ -965,15 +1040,15 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
       {@race.perk} They start in {@race.town.emoji} {@race.town.name}.
     </p>
     <%!-- The panel names the race, so a row names only the path. --%>
-    <.data_table id={"#{@race.slug}-classes"}>
-      <:col class="name">Class</:col>
-      <:col :for={{attr, name} <- attributes()} class="num" title={name}>
+    <.data_table id={@id} sort={@sort}>
+      <:col class="name" sort="class">Class</:col>
+      <:col :for={{attr, name} <- attributes()} class="num" title={name} sort={to_string(attr)}>
         {String.upcase(to_string(attr))}
       </:col>
-      <:col class="num" title="Health Points">HP</:col>
-      <:col class="num" title="Mana Points">MP</:col>
+      <:col class="num" title="Health Points" sort="hp">HP</:col>
+      <:col class="num" title="Mana Points" sort="mp">MP</:col>
       <tbody>
-        <tr :for={class <- @race.classes} id={"class-#{@race.slug}-#{class.path}"}>
+        <tr :for={class <- @classes} id={"class-#{@race.slug}-#{class.path}"}>
           <td class="name">{paths()[class.path]}</td>
           <td :for={{attr, _} <- attributes()} class="num attribute">{class.attributes[attr]}</td>
           <td class="num hp">{class.max_hp}</td>

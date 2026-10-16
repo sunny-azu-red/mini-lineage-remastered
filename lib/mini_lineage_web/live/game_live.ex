@@ -309,7 +309,7 @@ defmodule MiniLineageWeb.GameLive do
   # table offers is ignored rather than stored.
   def handle_event("sort", %{"table" => table, "key" => key}, socket) do
     if key in Screens.sortable(table).keys do
-      sort = Controls.next_sort(socket.assigns.sorts[table], key)
+      sort = Controls.next_sort(Screens.sort_of(socket.assigns.sorts, table), key)
       {:noreply, assign(socket, sorts: Map.put(socket.assigns.sorts, table, sort))}
     else
       {:noreply, socket}

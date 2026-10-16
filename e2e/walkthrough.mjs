@@ -25,6 +25,9 @@ page.on('requestfailed', r => {
 });
 
 const { state, onScreen, create, text, adena } = controls(page);
+// The ids of a table's or a shelf's item rows, leaving out a shelf's heading.
+const rowIds = async (rows) =>
+    (await page.locator(`${rows} tr[id]`).evaluateAll((trs) => trs.map((tr) => tr.id))).join();
 
 try {
     // Never `networkidle`: the LiveView websocket stays open, so it never settles.
@@ -394,7 +397,7 @@ try {
     await onScreen('gatekeeper');
     const closed = await page.$$eval('#teleport-form option[disabled]', os => os.map(o => o.value));
     check('Dion\'s Gatekeeper lists Giran and its harbour, not open yet',
-        closed.join(',') === 'giran,giran-harbor', closed.join(','));
+        [...closed].sort().join(',') === 'giran,giran-harbor', closed.join(','));
     await teleport('');
     await onScreen('town');
     check('...and its empty choice is the way back into town', new URL(page.url()).pathname === '/dion', page.url());
@@ -561,10 +564,19 @@ try {
     check('the weapons trader is a page of its own, Iria showing a Dark Fighter daggers and nothing else',
         new URL(page.url()).pathname === '/dark-elf-village/trader/weapons'
         && (await text('#trader-intro')).startsWith('Iria deals in no weapons made by clumsy Humans')
-        && (await page.locator('#stock tbody tr').evaluateAll((rows) => rows.map((row) => row.id))).join() ===
-            'stock-bone-dagger,stock-knife,stock-dirk,stock-throwing-knife', await text('#stock tbody'));
+        && (await page.locator('#screen table').evaluateAll((tables) => tables.map((t) => t.id))).join() === 'stock'
+        && (await rowIds('#shelf-daggers')) === 'stock-bone-dagger,stock-knife,stock-dirk,stock-throwing-knife'
+        && await page.locator('#stock tr.shelf, #buy-form optgroup').count() === 0,
+        await text('#screen'));
     check('...each weapon saying how many hands it takes',
         (await text('#stock-bone-dagger')).startsWith('🔪 Bone Dagger ✋'), await text('#stock-bone-dagger'));
+    await page.click('#stock button[phx-value-key="name"]');
+    await page.waitForSelector('#stock th[aria-sort="ascending"] button[phx-value-key="name"]', { timeout: 5000 });
+    check('...sorting its shelf by name, the dropdown following it',
+        (await rowIds('#shelf-daggers')) === 'stock-bone-dagger,stock-dirk,stock-knife,stock-throwing-knife'
+        && (await page.$$eval('#buy-form option:not([value=""])', (os) => os.map((o) => o.value))).join()
+            === 'Bone Dagger,Dirk,Knife,Throwing Knife',
+        await rowIds('#shelf-daggers'));
     await page.selectOption('#buy-form select', 'Bone Dagger');
     await page.click('#buy-form button');
     // The debug build's own flash is already up.
@@ -675,13 +687,14 @@ try {
     check('...with the level it requires and its SP named in full on hover',
         await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Level Required' &&
         await page.getAttribute('#lessons th:nth-child(4)', 'title') === 'Skill Points');
+    check('...opening on the level each line requires',
+        await page.locator('#lessons th[aria-sort="ascending"] button[phx-value-key="learn_at"]').count() === 1);
     await page.click('#lessons button[phx-value-key="sp"]');
     await page.waitForSelector('#lessons th[aria-sort="ascending"] button[phx-value-key="sp"]', { timeout: 5000 });
     check('...sorting on a header, with the keyboard left on that header rather than the dropdown',
         await page.evaluate(() => document.activeElement?.matches('#lessons button[phx-value-key="sp"]')));
     await page.click('#lessons button[phx-value-key="sp"]');
-    await page.click('#lessons button[phx-value-key="sp"]');
-    await page.waitForSelector('#lessons th[aria-sort]', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('#lessons th[aria-sort="descending"] button[phx-value-key="sp"]', { timeout: 5000 });
     await page.selectOption('#learn-form select', 'Mortal Blow|2');
     await page.locator('#learn-form button', { hasText: 'Learn' }).waitFor({ timeout: 5000 });
     await page.click('#learn-form button');

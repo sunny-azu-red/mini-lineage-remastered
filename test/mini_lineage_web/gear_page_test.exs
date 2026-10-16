@@ -80,8 +80,9 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#stock-bone-dagger")
     assert has_element?(view, "#stock-short-bow")
     refute has_element?(view, "#stock-buffalos-horn")
-    assert has_element?(view, "#stock tbody tr:first-child#stock-short-sword")
-    assert has_element?(view, "#stock tbody tr:last-child[id$=bow]")
+    assert shelves(view) == ~w(shelf-swords shelf-daggers shelf-bows)
+    assert has_element?(view, "#stock #shelf-swords tr.shelf th", "Swords")
+    assert has_element?(view, "#shelf-swords tr.shelf + tr#stock-short-sword")
     assert has_element?(view, "#buy-form optgroup:first-of-type[label=Swords]")
 
     {:ok, view, _html} = live(conn, ~p"/talking-island/trader/armour")
@@ -89,8 +90,43 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#stock-small-shield")
     assert has_element?(view, "#stock-leather-shirt")
     refute has_element?(view, "#stock-cotton-tunic")
-    assert has_element?(view, "#stock tbody tr:last-child[id$=-shield]")
-    refute has_element?(view, "#stock tbody tr:first-child[id$=-shield]")
+    assert shelves(view) == ~w(shelf-chest shelf-legs shelf-shields)
+    assert has_element?(view, "#shelf-shields tr.shelf th", "Shields")
+
+    # One shelf is the whole page, so it has no heading to tell it apart, nor a group.
+    for page <- ~w(jewellery grocer) do
+      {:ok, view, _html} = live(conn, "/talking-island/trader/#{page}")
+      assert has_element?(view, "#stock tbody tr[id^=stock-]")
+      refute has_element?(view, "#stock tr.shelf")
+      refute has_element?(view, "#buy-form optgroup")
+    end
+  end
+
+  test "one table opens cheapest first and sorts within each shelf, by name and not its emoji" do
+    {_view, _session, conn} = human(build_conn(), 0)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
+    first = &has_element?(view, "#shelf-#{&1} tr.shelf + tr#stock-#{&2}")
+
+    offered =
+      &has_element?(view, ~s(#buy-form optgroup[label="#{&1}"] option:first-child[value="#{&2}"]))
+
+    assert has_element?(view, ~s(#stock th[aria-sort="ascending"]), "Adena")
+    assert first.("swords", "short-sword") and first.("bows", "short-bow")
+
+    view |> element(~s(#stock button[phx-value-key="name"])) |> render_click()
+    assert has_element?(view, ~s(#stock th[aria-sort="ascending"]), "Item")
+    assert first.("swords", "brandish") and offered.("Swords", "Brandish")
+    assert first.("bows", "bow") and offered.("Bows", "Bow")
+    assert shelves(view) == ~w(shelf-swords shelf-daggers shelf-bows)
+    refute has_element?(view, "#shelf-swords [id$=bow]")
+  end
+
+  defp shelves(view) do
+    view
+    |> render()
+    |> LazyHTML.from_document()
+    |> LazyHTML.query("#stock tbody")
+    |> LazyHTML.attribute("id")
   end
 
   test "a Mystic is shown staves, robes and every shield, and sold nothing else" do

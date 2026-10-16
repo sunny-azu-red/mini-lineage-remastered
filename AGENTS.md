@@ -321,13 +321,18 @@ Each of these is here because it was got wrong once.
 - **Every alert is `Controls.alert/1`**, `kind` `:info` or `:danger`, anything else landing on the
   `div` (`alert_variants_test.exs`). None is dismissed: what an action says, a refusal included, is
   its flash, dropped on the next arrival unless the action itself moved you there.
-- **Every table is `Controls.data_table/1`**: the container, header row and `<table>`, with the rows
-  the caller's `<tbody>` and other attributes on the `<table>`. A sort is the server's, never the
-  DOM's, which a patch would undo: a `:col` with `sort` is a header button cycling up, down and off
-  in `GameLive`'s `sorts`, only for the keys `Screens.sortable/1` lists, and the screen orders its
-  rows with `Controls.sort_rows/3`. A sort header neither takes `PanelFocus`'s first focus nor gives
-  it back to the dropdown. A table outlives a reload only with `remember` on the table AND in
-  `sortable/1`, which `GameLive` checks before reading a kept sort back; none does yet.
+- **Every table is `Controls.data_table/1`, and every table sorts.** The container, header row and
+  `<table>`, with the rows the caller's `<tbody>` and other attributes on the `<table>`. A sort is
+  the server's, never the DOM's, which a patch would undo: a `:col` with `sort` is a header button,
+  and `Screens.sortable/1` lists each table's keys and the default it opens on
+  (`Screens.sort_of/2`). A click turns the sorted column round and starts any other ascending; there
+  is no "off". The screen orders its rows with `Controls.sort_rows/3`, a name on the name and never
+  its emoji, and its dropdown is built from the sorted rows, so the two agree. A trader shows one
+  table, each shelf its own `<tbody>` headed by a centred row (and a dropdown group) only when the
+  page has two, and a sort reorders each shelf's rows without mixing them. `table_sort_test.exs` walks every page's tables, so a new
+  table is added there. A sort header neither takes `PanelFocus`'s first focus nor gives it back to
+  the dropdown. A table outlives a reload only with `remember` on the table AND in `sortable/1`,
+  which `GameLive` checks before reading a kept sort back; none does yet.
 - **A page shows what the fight works out, never the formula.** A skill's row reads the numbers
   `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
   multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk".

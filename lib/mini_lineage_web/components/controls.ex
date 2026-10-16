@@ -204,11 +204,11 @@ defmodule MiniLineageWeb.Controls do
   @doc """
   Every table in the game. The rows are the caller's `<tbody>`, already in `sort`'s order: a `:col`
   with `sort` is a header button sending `sort` with the table's id and its key, which the LiveView
-  cycles with `next_sort/2` and the screen applies with `sort_rows/3`, so a patch never fights it.
+  turns with `next_sort/2` and the screen applies with `sort_rows/3`, so a patch never fights it.
   `remember` keeps the sort under `table:<id>` through the `Table` hook, handed back on connect.
   """
   attr :id, :string, required: true
-  # `{key, :asc | :desc}`, or nil for the order the rows arrived in.
+  # `{key, :asc | :desc}`, or nil for a table nobody sorts.
   attr :sort, :any, default: nil
   # Only for a table `Screens.sortable/1` also marks remembered, which reads the kept sort back.
   attr :remember, :boolean, default: false
@@ -267,9 +267,12 @@ defmodule MiniLineageWeb.Controls do
   defp aria_sort({key, :desc}, key), do: "descending"
   defp aria_sort(_sort, _key), do: nil
 
-  @doc "A click on `key`: ascending, then descending, then back to the order the rows arrived in."
+  @doc """
+  A click on `key`: the sorted column turns round, any other starts ascending. There is no "off",
+  since every table has a default to be off to, and a click there would read as doing nothing.
+  """
   def next_sort({key, :asc}, key), do: {key, :desc}
-  def next_sort({key, :desc}, key), do: nil
+  def next_sort({key, :desc}, key), do: {key, :asc}
   def next_sort(_sort, key), do: {key, :asc}
 
   @doc """

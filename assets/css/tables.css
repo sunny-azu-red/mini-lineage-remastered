@@ -26,8 +26,26 @@
     padding: 7px 10px;
 }
 
-.data-table tbody tr:nth-child(odd) {
+/* Counted past a trader's shelf headings, so each shelf stripes from its first item. */
+.data-table tbody tr:nth-child(odd of :not(.shelf)) {
     background-color: var(--row-lift);
+}
+
+/* A trader's shelf divides the list rather than labelling a column: centred, a step below its rows
+   in size and colour, on the panel's ground rather than the header's band. Each row's emoji already
+   names its kind. */
+.data-table tr.shelf th {
+    padding: 4px 10px;
+    background: none;
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.data-table tbody + tbody tr.shelf th {
+    border-top: 1px solid var(--border-soft);
 }
 
 /* Tabular figures need an edge to line up on, and the header follows its column. */

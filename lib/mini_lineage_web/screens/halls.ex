@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens.Halls do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineageWeb.Paths
+  alias MiniLineageWeb.{Paths, Screens}
 
   attr :catalog, :map, required: true
   attr :boards, :map, required: true
@@ -17,10 +17,13 @@ defmodule MiniLineageWeb.Screens.Halls do
   attr :lineage, :string, default: nil
   # The reader's own run, marked on the board; nil for a visitor.
   attr :character_id, :string, default: nil
+  attr :sorts, :map, default: %{}
 
   def screen(assigns) do
     race = Enum.find(assigns.catalog.races, &(&1.slug == assigns.lineage))
-    assigns = assign(assigns, rows: Map.get(assigns.boards, race && race.id, []))
+    sort = Screens.sort_of(assigns.sorts, "halls-table")
+    rows = Map.get(assigns.boards, race && race.id, [])
+    assigns = assign(assigns, sort: sort, rows: sort_rows(rows, sort, &row_key/2))
 
     ~H"""
     <%!-- `top` puts the gap below the row, above the table it filters. --%>
@@ -50,11 +53,12 @@ defmodule MiniLineageWeb.Screens.Halls do
         first name to be carved. Will it be yours?
       </p>
     <% else %>
-      <.data_table id="halls-table">
-        <:col class="name">Name</:col>
-        <:col class="num">Level</:col>
-        <:col class="num">Total XP</:col>
-        <:col>Wealth</:col>
+      <%!-- The board arrives ranked; a medal keeps the rank legible under any other sort. --%>
+      <.data_table id="halls-table" sort={@sort}>
+        <:col class="name" sort="name">Name</:col>
+        <:col class="num" sort="level">Level</:col>
+        <:col class="num" sort="total_xp">Total XP</:col>
+        <:col sort="adena">Wealth</:col>
         <%!-- One hook for the whole board: every figure beneath it counts. --%>
         <tbody id="halls-rows" phx-hook="AnimatedValues">
           <.character_row
@@ -107,6 +111,11 @@ defmodule MiniLineageWeb.Screens.Halls do
     </tr>
     """
   end
+
+  defp row_key(row, "name"), do: String.downcase(row.name || "")
+  defp row_key(row, "level"), do: row.level
+  defp row_key(row, "total_xp"), do: row.total_xp
+  defp row_key(row, "adena"), do: row.adena
 
   # A run is going while it has neither died nor lost its session. Without one it is missing: it
   # can never be played again, so it is over even though it never died.
