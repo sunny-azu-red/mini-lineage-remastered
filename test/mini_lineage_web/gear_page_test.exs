@@ -51,7 +51,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(
              view,
              "#trader-intro",
-             "Lector sells weapons, Jackson armour and shields, and Silvia and Katerina necklaces and potions"
+             "Lector sells weapons, Jackson armour and shields, and Silvia and Katerina jewellery and potions"
            )
 
     for page <- ~w(weapons armour magic sell),
@@ -99,7 +99,7 @@ defmodule MiniLineageWeb.GearPageTest do
     {:ok, view, _html} = live(conn, ~p"/talking-island/trader/magic")
 
     assert has_element?(view, "#screen h2", "Magic Trader")
-    assert has_element?(view, "#trader-intro", "Silvia minds the necklaces")
+    assert has_element?(view, "#trader-intro", "Silvia minds the jewellery")
 
     assert has_element?(
              view,

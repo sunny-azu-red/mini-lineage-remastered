@@ -52,7 +52,7 @@ defmodule MiniLineage.Game.Constants do
     {"talking-island", :armour} =>
       "Jackson waves you in to look around, sure that it always pays to buy the best armour you can, since every battle grows easier for it.",
     {"talking-island", :magic} =>
-      "Silvia minds the necklaces for an aunt and asks you to choose quickly, while Katerina wishes you the luck of the goddess and offers potions that are not rare but serve well when they are used wisely.",
+      "Silvia minds the jewellery for an aunt and asks you to choose quickly, while Katerina wishes you the luck of the goddess and offers potions that are not rare but serve well when they are used wisely.",
     {"elven-village", :weapons} =>
       "Unoren trades in the small tools that matter most on the battlefield, from sharp bronze daggers to the finest swords, and bids you have a look.",
     {"elven-village", :armour} =>
@@ -64,7 +64,7 @@ defmodule MiniLineage.Game.Constants do
     {"dark-elf-village", :armour} =>
       "Payne bids you welcome to a shop full of fine wares, each one waiting for the touch of a brave and dashing hero.",
     {"dark-elf-village", :magic} =>
-      "Minaless blesses you in the name of the goddess of darkness and swears the finest necklaces are gathered here for the followers of Shilen, while Vollodos cries out that every potion is fresh and a steal.",
+      "Minaless blesses you in the name of the goddess of darkness and swears the finest jewellery is gathered here for the followers of Shilen, while Vollodos cries out that every potion is fresh and a steal.",
     {"orc-village", :weapons} =>
       "Jakal greets you for the glory of the everlasting flame, and swears there is nothing Jakal cannot find for a child of the flame.",
     {"orc-village", :armour} =>

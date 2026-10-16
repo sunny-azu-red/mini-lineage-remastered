@@ -268,7 +268,7 @@ defmodule MiniLineageWeb.Screens do
 
     ~H"""
     <p id="trader-intro" phx-no-format>
-      {@view.traders.weapons} sells weapons, {@view.traders.armour} armour and shields, and {@view.traders.jewellery} and {@view.traders.grocer} necklaces and potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
+      {@view.traders.weapons} sells weapons, {@view.traders.armour} armour and shields, and {@view.traders.jewellery} and {@view.traders.grocer} jewellery and potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
     </p>
     <.select_action
       id="trader-form"

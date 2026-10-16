@@ -653,7 +653,7 @@ orc-village too, each at its price. A shop buys back anything it sells for half 
 down. A starting kit is worth nothing to a shop and is never bought.
 
 Each village keeps four traders: one for weapons, one for armour who sells the shields too, and a
-jeweller and a grocer who keep the Magic Trader together, its necklaces and its potions. Any of them
+jeweller and a grocer who keep the Magic Trader together, its jewellery and its potions. Any of them
 buys back:
 
 | Village | Weapons Trader | Armour Trader | Jeweller | Grocer |

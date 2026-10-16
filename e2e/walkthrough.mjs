@@ -556,7 +556,7 @@ try {
     await page.click('#travel-form button');
     await onScreen('trader');
     check('the village\'s four traders are named, each by what they sell',
-        (await text('#trader-intro')).startsWith('Iria sells weapons, Payne armour and shields, and Minaless and Vollodos necklaces and potions'),
+        (await text('#trader-intro')).startsWith('Iria sells weapons, Payne armour and shields, and Minaless and Vollodos jewellery and potions'),
         await text('#trader-intro'));
     await page.selectOption('#trader-form select', 'trader-weapons');
     await page.click('#trader-form button');
