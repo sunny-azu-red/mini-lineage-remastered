@@ -41,6 +41,27 @@ defmodule MiniLineageWeb.GearPageTest do
     assert_patch(view, "/inventory")
   end
 
+  test "a necklace is named before the shirt and pants, in the sidebar and the inventory" do
+    {_view, session, conn} = human(build_conn(), 20_000)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/magic")
+    view |> form("#buy-form", %{"item" => "Necklace of Magic"}) |> render_submit()
+    necklace = carried(session, "Necklace of Magic")
+
+    {:ok, view, _html} = live(conn, ~p"/inventory")
+
+    unless necklace.equipped,
+      do: view |> form("#inventory-form", %{"item" => "equip:#{necklace.id}"}) |> render_submit()
+
+    doc = view |> render() |> LazyHTML.from_document()
+    texts = &(doc |> LazyHTML.query(&1) |> Enum.map(fn node -> LazyHTML.text(node) end))
+
+    assert [neck, shirt, pants] = texts.("#equipped-armour .stat-value")
+    assert neck =~ "Necklace" and shirt =~ "Shirt" and pants =~ "Pants"
+
+    assert Enum.take(texts.("#items tbody tr[data-equipped=true] td:last-child"), -3) ==
+             ~w(Necklace Chest Legs)
+  end
+
   test "the village's way out leads to its traders, each by name, and Gludio's does not" do
     {view, session, _conn} = human(build_conn(), 0)
 

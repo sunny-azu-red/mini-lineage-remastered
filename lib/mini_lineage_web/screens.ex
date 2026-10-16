@@ -253,7 +253,7 @@ defmodule MiniLineageWeb.Screens do
   @potion_lots [1, 10]
 
   # The inventory's Slot column sorts in the order a character is dressed, not the alphabet's.
-  @slot_order ~w(weapon shield chest legs necklace potion)a
+  @slot_order ~w(weapon shield necklace chest legs potion)a
   @class_keys ~w(class str con dex int wit men hp mp)
 
   # Rules §24: the village's four traders by name, on three pages, and selling, which any of them

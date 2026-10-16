@@ -197,7 +197,7 @@ defmodule MiniLineageWeb.Layouts do
   defp equipped_rows,
     do: [
       {"equipped-weapons", [:weapon, :shield], "Bare hands"},
-      {"equipped-armour", [:chest, :legs, :necklace], "Birthday suit"}
+      {"equipped-armour", [:necklace, :chest, :legs], "Birthday suit"}
     ]
 
   defp equipped(items, slots),
