@@ -58,6 +58,24 @@ defmodule MiniLineageWeb.SkillRowsTest do
     assert row(dark, "wind-shackle") =~ "The foe swings 17% slower for 15 seconds, landing 80%"
   end
 
+  test "a mastery reads as what it adds, as a buff does, and is never ready again" do
+    fighter = %{knowing_all(1, :fighter) | skills: %{"Iron Punch" => 1, "Armor Mastery" => 3}}
+    doc = page(fighter)
+
+    assert row(doc, "armor-mastery") ==
+             "🪖 Armor Mastery 3 • +14 P.Def and +3 Evasion in light armour."
+
+    assert doc |> LazyHTML.query("#skill-armor-mastery .defense") |> LazyHTML.text() ==
+             "+14 P.Def"
+
+    assert doc |> LazyHTML.query("#skill-armor-mastery .evasion") |> LazyHTML.text() ==
+             "+3 Evasion"
+
+    # §25's decimals as the rules write them; the stat it adds to still reads whole.
+    mystic = %{knowing_all(2, :mystic) | skills: %{"Wind Strike" => 1, "Robe Mastery" => 2}}
+    assert row(page(mystic), "robe-mastery") == "👘 Robe Mastery 2 • +18.4 P.Def in a robe."
+  end
+
   test "a weapon's line says how far its blows stray" do
     {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Sunny")
 

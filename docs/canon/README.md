@@ -115,8 +115,8 @@ Every skill, its numbers and its level come from the set's own canon tree (rules
 the Orc Mystic's Chill Flame. What differs is which of them a set gets, how they are sold, and how
 the fight uses them.
 
-- **Each set plays its own way.** Before the class change a set learns its first skill and two to
-  four more from its tree, chosen so no two sets fight alike, where Lineage II's trees are far
+- **Each set plays its own way.** Before the class change a set learns its first skill, two to
+  four more from its tree and its path's mastery, chosen so no two sets fight alike, where Lineage II's trees are far
   larger and shared:
 
   | Set | Its style | Its skills |
@@ -148,10 +148,17 @@ the fight uses them.
   one line, at the top level's power and MP, so no two lines of one skill open at the same level and
   Power Strike has 4 lines where Lineage II sold 9 one at a time. Only a Fighter's weapon skills keep
   their first level apart, at level 1.
-- **No masteries before the class change.** Weapon Mastery, Armor Mastery, Anti Magic and Robe
-  Mastery are left out for the actives above. The SP they soaked up goes on dearer late lines (the
-  Elven and Dark Fighters at 15, the Human, Dark and Orc Mystics at 14), so each step is saved for;
-  what is left after level 15 waits for the class change.
+- **One mastery a path before the class change, and every Mystic's is Robe Mastery.** A Fighter
+  learns Armor Mastery (142) as Lineage II teaches it, and every Mystic Robe Mastery (251), which
+  Lineage II gives only the Orc Mystic: the Human, Elven and Dark Mystics' Armor Mastery (244) adds
+  half as much on any armour, and a Mystic only ever wears a robe. Robe Mastery 1 costs the Orc
+  Mystic's 520 SP for every Mystic, and Robe Mastery 2 costs 6,800 where Lineage II asks 1,760, so a
+  Mystic reaches level 20 with about the SP a Fighter has left. Weapon Mastery and Anti Magic are
+  left out: the first makes every set 3% to 16% faster to level 20, and the second guards against
+  spells that only the Orc Mystic's ground casts (`docs/roadmap.md`, open research). The SP the
+  masteries soaked up in Lineage II still goes on dearer late lines (the Elven and Dark Fighters at
+  15, the Human, Dark and Orc Mystics at 14), so each step is saved for; what is left after level 15
+  waits for the class change.
 - **Buffs are cast on oneself.** Shield and Soul Shield, cast on a target in Lineage II, are cast
   by the Mystic on itself, as a lone Mystic did there. **An aura holds 2 minutes,** out of the
   fight too, where Lineage II's held 20: a fight here lasts seconds, so 20 minutes was every fight

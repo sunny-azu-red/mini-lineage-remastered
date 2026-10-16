@@ -26,13 +26,14 @@
     padding: 7px 10px;
 }
 
-/* Counted past a trader's shelf headings, so each shelf stripes from its first item. `:where`, since
-   the `of` selector's class would outrank every row wash (`.owned`, `.mine`) on an odd row. */
+/* Counted past a shelf's headings (a trader's, the guild's), so each shelf stripes from its first
+   item. `:where`, since the `of` selector's class would outrank every row wash (`.owned`, `.mine`)
+   on an odd row. */
 .data-table tbody tr:where(:nth-child(odd of :not(.shelf))) {
     background-color: var(--row-lift);
 }
 
-/* A trader's shelf divides the list rather than labelling a column: centred, a step below its rows
+/* A shelf divides the list rather than labelling a column: centred, a step below its rows
    in size and colour, on a fade between the two row grounds rather than the header's band. Each
    row's emoji already names its kind. */
 .data-table tr.shelf th {

@@ -88,9 +88,21 @@ defmodule MiniLineage.Game.Player do
 
   # Under conditions read once, so one call cannot straddle dusk.
   defp stats(player, conditions) do
-    Enum.reduce(conditions, base_stats(player), fn aura, stats ->
+    known = Enum.reduce(passives(player), base_stats(player), &modify/2)
+
+    Enum.reduce(conditions, known, fn aura, stats ->
       Enum.reduce(aura.modifiers, stats, &modify/2)
     end)
+  end
+
+  # Rules §19 and §25: what its masteries add; a bonus naming an armour type holds only in it.
+  defp passives(player) do
+    chest = Enum.find(equipped(player), &(&1.slot == :chest))
+
+    for %{kind: :passive, bonuses: bonuses} <- known_skills(player),
+        bonus <- bonuses,
+        bonus[:worn] in [nil, chest && chest.type],
+        do: {bonus.stat, {:add, bonus.add}}
   end
 
   defp modify({stat, {:add, value}}, stats), do: Map.update!(stats, stat, &(&1 + value))
@@ -190,14 +202,22 @@ defmodule MiniLineage.Game.Player do
   def known_skills(player),
     do: for({name, level} <- player.skills || %{}, do: Rules.skill(name, level))
 
-  @doc "Rules §20: the skills it fights with, all it knows but those its orders leave unused."
+  @doc "Rules §20: the skills it fights with: all it knows but masteries and what its orders leave."
   def fighting_skills(player),
-    do: Enum.reject(known_skills(player), &(&1.name in (player.unused || [])))
+    do:
+      Enum.reject(
+        known_skills(player),
+        &(&1.kind == :passive or &1.name in (player.unused || []))
+      )
 
-  @doc "Rules §20: the skills it knows that its orders may leave unused: all but a heal and Relax."
+  @doc "Rules §20: the skills its orders may leave unused: all but a heal, Relax and a mastery."
   def switchable(player),
     do:
-      for(%{kind: kind, name: name} <- known_skills(player), kind not in [:heal, :rest], do: name)
+      for(
+        %{kind: kind, name: name} <- known_skills(player),
+        kind not in [:heal, :rest, :passive],
+        do: name
+      )
 
   @doc "Rules §25: the set's first skill, at the level the character knows it."
   def first_skill(player) do

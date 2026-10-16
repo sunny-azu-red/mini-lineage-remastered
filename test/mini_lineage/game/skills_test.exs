@@ -1,7 +1,8 @@
 defmodule MiniLineage.Game.SkillsTest do
   @moduledoc """
   Rules §19 past the fight: an aura outlasting it as an icon that changes the stat it names, Relax on
-  the tick of rest, what is stored, and the warning a weapon none of the skills can use brings.
+  the tick of rest, a mastery adding to its stat, what is stored, and the warning a weapon none of
+  the skills can use brings.
   """
   use ExUnit.Case, async: true
 
@@ -87,6 +88,36 @@ defmodule MiniLineage.Game.SkillsTest do
     assert Serde.from_map(stored).unused == ["Life Drain", "Soul Cry"]
     assert Serde.from_map(Map.put(stored, "unused", ["Nonsense", 3])).unused == []
     assert Serde.from_map(Map.delete(stored, "unused")).unused == []
+  end
+
+  test "a mastery is never cast and never an order, only what it adds" do
+    fighter = character(0, :fighter, 15, %{"Armor Mastery" => 3})
+    refute "Armor Mastery" in Enum.map(Player.fighting_skills(fighter), & &1.name)
+    refute "Armor Mastery" in Player.switchable(fighter)
+    assert {_, {:error, :no_switch, _}} = Actions.use_skill(fighter, "Armor Mastery", false)
+  end
+
+  test "Armor Mastery's P.Def holds in anything, its Evasion only in light armour" do
+    fighter = character(0, :fighter, 15, %{})
+    master = %{fighter | skills: Map.put(fighter.skills, "Armor Mastery", 3)}
+    shirtless = fn p -> %{p | items: Enum.reject(p.items, &(&1.name == "Squire's Shirt"))} end
+
+    assert_in_delta Player.stats(master).p_def - Player.stats(fighter).p_def, 14, 1.0e-9
+    assert Player.stats(master).evasion - Player.stats(fighter).evasion == 3
+
+    assert_in_delta Player.stats(shirtless.(master)).p_def -
+                      Player.stats(shirtless.(fighter)).p_def,
+                    14,
+                    1.0e-9
+
+    assert Player.stats(shirtless.(master)).evasion == Player.stats(shirtless.(fighter)).evasion
+
+    # Each line adds its own, never the ones before it as well.
+    adds =
+      for line <- 1..3, do: Player.stats(%{master | skills: %{"Armor Mastery" => line}}).p_def
+
+    assert Enum.map(adds, &Float.round(&1 - Player.stats(%{fighter | skills: %{}}).p_def, 1)) ==
+             [9.0, 12.0, 14.0]
   end
 
   test "Relax mends 5 HP more a tick for 3 MP, while HP is short and the MP lasts" do

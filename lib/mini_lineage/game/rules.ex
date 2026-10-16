@@ -447,11 +447,19 @@ defmodule MiniLineage.Game.Rules do
     # A toggle's MP is to light it; it then drains `drain` MP every `every` until the MP runs out.
     "Soul Cry" => %{kind: :toggle, power: 4.5, mp: 2, drain: 3, every: 3_000},
     # Rules §11: power HP more on each tick of rest, for MP each tick.
-    "Relax" => %{kind: :rest, power: 5, mp: 3}
+    "Relax" => %{kind: :rest, power: 5, mp: 3},
+    # Never cast: each bonus adds to its stat, one naming an armour type only while it is worn.
+    "Armor Mastery" => %{kind: :passive, power: 0, mp: 0, bonuses: [%{stat: :p_def, add: 9}]},
+    "Robe Mastery" => %{
+      kind: :passive,
+      power: 0,
+      mp: 0,
+      bonuses: [%{stat: :p_def, add: 13.4, worn: "magic"}]
+    }
   }
 
-  # Rules §25: each skill's {power, MP} by level, level 1 first; a burn's power is per second, and a
-  # toggle's level says what it drains as well.
+  # Rules §25: each skill's {power, MP} by level, level 1 first; a burn's power is per second, a
+  # toggle's level says what it drains as well, and a passive's what it adds.
   @skill_levels %{
     "Power Strike" => [{25, 10}, {30, 11}, {46, 14}, {70, 19}],
     "Mortal Blow" => [{73, 9}, {88, 10}, {137, 13}, {210, 17}],
@@ -473,7 +481,16 @@ defmodule MiniLineage.Game.Rules do
     "Curse: Poison" => [{24, 10}],
     "Wind Shackle" => [{0, 3}],
     "Soul Cry" => [%{power: 4.5, mp: 2, drain: 3}, %{power: 14, mp: 3, drain: 6}],
-    "Relax" => [{5, 3}]
+    "Relax" => [{5, 3}],
+    "Armor Mastery" => [
+      %{bonuses: [%{stat: :p_def, add: 9}]},
+      %{bonuses: [%{stat: :p_def, add: 12}]},
+      %{bonuses: [%{stat: :p_def, add: 14}, %{stat: :evasion, add: 3, worn: "light"}]}
+    ],
+    "Robe Mastery" => [
+      %{bonuses: [%{stat: :p_def, add: 13.4, worn: "magic"}]},
+      %{bonuses: [%{stat: :p_def, add: 18.4, worn: "magic"}]}
+    ]
   }
 
   @first_skills %{

@@ -745,6 +745,23 @@ try {
     check('...each line naming the weapon it needs, a spell any',
         await text('#lesson-mortal-blow-4 td:nth-child(2)') === 'Dagger' &&
         await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
+    check('...shelving the skills fought with apart from the mastery, as a trader shelves its goods',
+        await text('#shelf-active tr.shelf th') === 'Active' &&
+        await text('#shelf-passive tr.shelf th') === 'Passive' &&
+        await page.locator('#shelf-passive #lesson-armor-mastery-1').count() === 1 &&
+        await page.locator('#shelf-active #lesson-armor-mastery-1').count() === 0,
+        await text('#lessons'));
+    check('...and the dropdown grouped the same',
+        (await page.locator('#learn-form optgroup').evaluateAll((groups) => groups.map((g) => g.label))).join() === 'Active,Passive' &&
+        await text('#learn-form optgroup[label="Passive"] option[value="Armor Mastery|1"]') === 'Pick 🪖 Armor Mastery 1');
+    await page.selectOption('#learn-form select', 'Armor Mastery|1');
+    await page.locator('#learn-form button', { hasText: '📖 Learn' }).waitFor({ timeout: 5000 });
+    await page.click('#learn-form button');
+    await page.waitForSelector('#lesson-armor-mastery-1', { state: 'detached', timeout: 5000 });
+    check('...a mastery learned reading as what it adds, never as a formula or a reuse',
+        await text('#skill-armor-mastery') === '🪖 Armor Mastery 1 • +9 P.Def.' &&
+        await page.locator('#lesson-armor-mastery-2').count() === 1,
+        await text('#skill-armor-mastery'));
 
     // ---- a skill left unused (rules §20) --------------------------------------------------------
     await page.click('#header-link');
@@ -753,6 +770,8 @@ try {
     await onScreen('character');
     check('the orders say every skill is used to begin with',
         await text('#unused-skills') === 'You use every skill you know.', await text('#unused-skills'));
+    check('...and a mastery is no order to give',
+        await page.locator('#orders-form option[value$=":Armor Mastery"]').count() === 0);
     await page.selectOption('#orders-form select', 'use:false:Mortal Blow');
     await page.click('#orders-form button');
     const unused = await page.locator('#skill-mortal-blow.locked', { hasText: 'Left unused, by your orders.' })

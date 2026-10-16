@@ -383,23 +383,34 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §25: every line the set has still to learn, muted unless it can be learned next; what it
-  # knows is the panel beside it. SP is paid like Adena, so a line short of it is still offered.
+  # Rules §25: every line the set has still to learn, muted unless it can be learned next, on an
+  # Active and a Passive shelf as a trader's goods are; what it knows is the panel beside it. SP is
+  # paid like Adena, so a line short of it is still offered.
   defp guild(assigns) do
+    sort = sort_of(assigns.sorts, "lessons")
+
     # Each skill's next line only: the ones after it are learned in order, so listing them is clutter.
-    lessons =
+    shelves =
       assigns.view.lessons
       |> Enum.reject(&(&1.status == :known))
       |> Enum.uniq_by(& &1.skill)
-
-    sort = sort_of(assigns.sorts, "lessons")
-    lessons = sort_rows(lessons, sort, &lesson_key/2)
+      |> Enum.group_by(&lesson_shelf/1)
+      |> Enum.sort_by(fn {name, _} -> name end)
+      |> Enum.map(fn {name, lessons} ->
+        %{name: name, lessons: sort_rows(lessons, sort, &lesson_key/2)}
+      end)
 
     assigns =
       assign(assigns,
         sort: sort,
-        lessons: lessons,
-        ready: Enum.filter(lessons, &(&1.status == :ready)),
+        shelves: shelves,
+        ready:
+          for(
+            shelf <- shelves,
+            lesson <- shelf.lessons,
+            lesson.status == :ready,
+            do: Map.put(lesson, :group, if(length(shelves) > 1, do: shelf.name))
+          ),
         # Rules §23: a set whose every line is a spell has no use for the column.
         weapons?: Enum.any?(assigns.view.lessons, &Rules.weapon_skill?(&1.skill))
       )
@@ -413,9 +424,12 @@ defmodule MiniLineageWeb.Screens do
       <:col :if={@weapons?} sort="weapon">Weapon</:col>
       <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
       <:col title="Skill Points" sort="sp">SP</:col>
-      <tbody>
+      <tbody :for={shelf <- @shelves} id={"shelf-#{slug(shelf.name)}"}>
+        <tr :if={length(@shelves) > 1} class="shelf">
+          <th colspan={if @weapons?, do: 4, else: 3} scope="rowgroup">{shelf.name}</th>
+        </tr>
         <tr
-          :for={lesson <- @lessons}
+          :for={lesson <- shelf.lessons}
           id={"lesson-#{slug(lesson.skill)}-#{lesson.level}"}
           data-status={lesson.status}
           {if lesson.status == :ready, do: [], else: [class: "locked"]}
@@ -441,7 +455,8 @@ defmodule MiniLineageWeb.Screens do
           @ready,
           &%{
             value: "#{&1.skill}|#{&1.level}",
-            label: "#{skill_icon(&1.skill)} #{&1.skill} #{&1.level}"
+            label: "#{skill_icon(&1.skill)} #{&1.skill} #{&1.level}",
+            group: &1.group
           }
         )
       }
@@ -450,6 +465,10 @@ defmodule MiniLineageWeb.Screens do
     />
     """
   end
+
+  # "Active" sorts before "Passive", which is the order the shelves stand in.
+  defp lesson_shelf(lesson),
+    do: if(Rules.skill(lesson.skill).kind == :passive, do: "Passive", else: "Active")
 
   # One hand or two alike; "Any" for a skill that needs no weapon.
   defp weapon_label(skill) do
@@ -852,7 +871,9 @@ defmodule MiniLineageWeb.Screens do
     "Elemental Heal" => "💧",
     "Curse: Poison" => "☠️",
     "Wind Shackle" => "⛓️",
-    "Soul Cry" => "📢"
+    "Soul Cry" => "📢",
+    "Armor Mastery" => "🪖",
+    "Robe Mastery" => "👘"
   }
 
   @doc "A skill's own emoji, or for one that raises an aura that aura's, as Buffs shows it."
@@ -874,7 +895,9 @@ defmodule MiniLineageWeb.Screens do
     assigns =
       assign(assigns,
         key: "skill-#{slug(skill.name)}",
-        reuse: skill.kind not in [:aura, :toggle, :rest] && tenths.(Hunt.reuse_ms(skill, stats)),
+        reuse:
+          skill.kind not in [:aura, :toggle, :rest, :passive] &&
+            tenths.(Hunt.reuse_ms(skill, stats)),
         cast: skill[:cast] && tenths.(Hunt.cast_ms(skill, stats))
       )
 
@@ -965,6 +988,17 @@ every {duration(@skill.every)}.|
     do: ~H|<span class="regen">+{@skill.power} HP</span>
 a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
+  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P.Def"), and what must be worn.
+  defp skill_does(%{skill: %{kind: :passive}} = assigns) do
+    ~H"""
+    <span phx-no-format><%= for {bonus, index} <- Enum.with_index(@skill.bonuses) do %>{if index > 0, do: " and "}<span class={stat_class(bonus.stat)}>+{bonus.add} {stat_name(bonus.stat)}</span>{worn(bonus[:worn])}<% end %>.</span>
+    """
+  end
+
+  defp worn(nil), do: ""
+  defp worn("light"), do: " in light armour"
+  defp worn("magic"), do: " in a robe"
+
   # "30%" for a × 0.7.
   defp percent_off(times), do: "#{round((1 - times) * 100)}%"
 
@@ -975,12 +1009,14 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
   defp stat_name(:p_def), do: "P.Def"
   defp stat_name(:p_atk), do: "P.Atk"
+  defp stat_name(:evasion), do: "Evasion"
 
   # What an effect changes wears the colour of the stat it changes.
   defp stat_class(:accuracy), do: "accuracy"
   defp stat_class(stat) when stat in [:hp_regen, :mp_regen], do: "regen"
   defp stat_class(:p_def), do: "defense"
   defp stat_class(:p_atk), do: "attack"
+  defp stat_class(:evasion), do: "evasion"
 
   # "an Elven Fighter", "a Dark Mystic", "a 4.6% Critical", "an 8.4% Critical", "an 11.0% Critical".
   defp article(word) when is_float(word), do: article(Float.to_string(word))

@@ -488,11 +488,31 @@ defmodule MiniLineage.Game.RulesTest do
         assert {skill.power, skill.mp} == {cell(power), cell(mp)}, name_level
       end
 
-      for {name, _} <- Rules.skills() do
+      # A passive's lines are its own table's, one row a bonus.
+      for {name, skill} <- Rules.skills() do
+        rows = if skill.kind == :passive, do: table("Passive line"), else: table("Skill level")
+        lines = rows |> Enum.map(&hd/1) |> Enum.uniq()
+
         assert length(Rules.skill_levels(name)) ==
-                 length(
-                   Enum.filter(table("Skill level"), &String.starts_with?(hd(&1), name <> " "))
-                 )
+                 Enum.count(lines, &String.starts_with?(&1, name <> " ")),
+               name
+      end
+    end
+
+    test "§25 what each line of a mastery adds, and what must be worn for it" do
+      rows = table("Passive line")
+      stats = %{"P.Def" => :p_def, "Evasion" => :evasion}
+      worn = %{"" => nil, "light armour" => "light", "a robe" => "magic"}
+
+      for {line, bonuses} <- Enum.group_by(rows, &hd/1) do
+        [_, name, level] = Regex.run(~r/^(.+) (\d+)$/, line)
+
+        written =
+          for [_, stat, adds, wearing] <- bonuses,
+              do: %{stat: stats[stat], add: cell(adds), worn: worn[wearing]}
+
+        known = Rules.skill(name, String.to_integer(level)).bonuses
+        assert Enum.map(known, &Map.put_new(&1, :worn, nil)) == written, line
       end
     end
 
@@ -789,6 +809,37 @@ defmodule MiniLineage.Game.RulesTest do
       assert mystic.skills == %{"Wind Strike" => 1}
       {mystic, {:ok, _}} = MiniLineage.Game.Actions.learn(%{mystic | sp: 50}, "Self Heal", 1)
       assert mystic.sp == 0
+    end
+
+    test "§25 Armor Mastery 3 on an Orc Fighter, and Robe Mastery 1 only in a robe" do
+      Clock.put_now(~U[2026-07-01 12:00:00Z])
+
+      learned = fn race, path, level, skills ->
+        {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Pupil")
+        xp = Math.xp_for_level(level)
+        %{player | experience: xp, skills: Map.merge(player.skills, skills), location: "gludio"}
+      end
+
+      round2 = &Float.round(&1 / 1, 2)
+      fighter = Player.stats(learned.(1, :fighter, 15, %{}))
+      master = Player.stats(learned.(1, :fighter, 15, %{"Armor Mastery" => 3}))
+      assert {round2.(fighter.p_def), fighter.evasion} == {89.51, 46}
+      assert {round2.(master.p_def), master.evasion} == {103.51, 49}
+
+      mystic = learned.(0, :mystic, 7, %{"Robe Mastery" => 1})
+      assert round2.(Player.stats(%{mystic | skills: %{}}).p_def) == 59.92
+      assert round2.(Player.stats(mystic).p_def) == 73.32
+
+      bare =
+        Map.update!(mystic, :items, fn items ->
+          Enum.map(
+            items,
+            &if(&1.name == "Apprentice's Tunic", do: %{&1 | equipped: false}, else: &1)
+          )
+        end)
+
+      assert round2.(Player.stats(bare).p_def) == 55.44
+      assert round2.(Player.stats(%{bare | skills: %{}}).p_def) == 55.44
     end
 
     test "§8 Squire's Gloves' +4 Accuracy, and §13 a weapon's spread and bare hands'" do

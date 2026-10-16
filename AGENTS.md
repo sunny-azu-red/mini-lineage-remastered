@@ -13,7 +13,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `Rules.stock/2`), and the inventory beside its Combat
   Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
   and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
-  `/<village>/guild`, named per set by `Rules.guild/1`, a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
+  `/<village>/guild`, named per set by `Rules.guild/1`, its lessons on an Active and a Passive shelf,
+  a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
   (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is
   in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
@@ -178,7 +179,9 @@ Each of these is here because it was got wrong once.
   (rules §11), so there is no icon without healing and no healing without an icon. Night, the race
   perks (§15, §16) and the auras a character raised (§19, kept in `buffs` to the millisecond they
   fade) are auras the same way: `Player.conditions/1` derives them with the modifiers `Rules` gives,
-  and `Player.stats/1` applies exactly those. A perk names its race in its own clause.
+  and `Player.stats/1` applies exactly those. A perk names its race in its own clause. A mastery
+  (§19, a `passive`) is no aura and has no icon: `Player.stats/1` adds the bonuses `Rules` gives its
+  line before any aura, and its row on Learned Skills says so.
 - **A line keeps its pronouns open until somebody reads it.** Narrative pools carry `{they} {them}
   {object} {their}` and nothing second-person. `Format.fill_template` leaves them alone (they aren't
   in the data map) and `Narrative.voiced/2` closes them at render: `true` for the run's own alert
@@ -328,15 +331,18 @@ Each of these is here because it was got wrong once.
   and `Screens.sortable/1` lists each table's keys and the default it opens on
   (`Screens.sort_of/2`). A click turns the sorted column round and starts any other ascending; there
   is no "off". The screen orders its rows with `Controls.sort_rows/3`, a name on the name and never
-  its emoji, and its dropdown is built from the sorted rows, so the two agree. A trader shows one
-  table, each shelf its own `<tbody>` headed by a centred row (and a dropdown group) only when the
+  its emoji, and its dropdown is built from the sorted rows, so the two agree. A trader, and the guild
+  (Active, Passive), shows one table, each shelf its own `<tbody>` headed by a centred row (and a dropdown group) only when the
   page has two, and a sort reorders each shelf's rows without mixing them. `table_sort_test.exs` walks every page's tables, so a new
   table is added there. A sort header neither takes `PanelFocus`'s first focus nor gives it back to
   the dropdown. A table outlives a reload only with `remember` on the table AND in `sortable/1`,
   which `GameLive` checks before reading a kept sort back; none does yet.
 - **A page shows what the fight works out, never the formula.** A skill's row reads the numbers
   `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
-  multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk".
+  multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk". A
+  mastery reads the same way, its line's bonus as rules §25 writes it ("+14 P.Def", "+13.4 P.Def in a
+  robe"), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
+  own, in `1617e87`; a new skill's page is written the same way from the start.
 - **What ends counts down where it is shown.** An effect with an end carries `remaining_ms`, a
   duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:
   legacy's pixel badge over the header icon, and on its Buffs & Debuffs row "+8% P.Def for another

@@ -100,9 +100,16 @@ defmodule MiniLineageWeb.GuildPageTest do
   test "the lessons open on Level Req, a header turns them round, and the dropdown follows" do
     {_view, _session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
-    first = &has_element?(view, "#lessons tbody tr:first-child#lesson-#{&1}")
-    last = &has_element?(view, "#lessons tbody tr:last-child#lesson-#{&1}")
-    offered = &has_element?(view, ~s{#learn-form option:nth-child(2)[value="#{&1}"]})
+    # Within the Active shelf, past its heading; the dropdown's Active group the same.
+    first = &has_element?(view, "#shelf-active tr.shelf + tr#lesson-#{&1}")
+    last = &has_element?(view, "#shelf-active tr:last-child#lesson-#{&1}")
+
+    offered =
+      &has_element?(
+        view,
+        ~s{#learn-form optgroup[label="Active"] option:first-child[value="#{&1}"]}
+      )
+
     header = &~s(#lessons button[phx-value-key="#{&1}"])
 
     # Level 1's two lines in the trainer's order, then Power Strike 2 at level 5.
@@ -127,6 +134,54 @@ defmodule MiniLineageWeb.GuildPageTest do
     # A key the table does not offer is not stored.
     render_click(view, "sort", %{"table" => "lessons", "key" => "status"})
     assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Skill")
+  end
+
+  test "an Active and a Passive shelf, as a trader's, until the mastery is learned out" do
+    {_view, session, conn} = human(build_conn(), 100)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+
+    shelves = fn view ->
+      view
+      |> render()
+      |> LazyHTML.from_fragment()
+      |> LazyHTML.query("#lessons tbody")
+      |> LazyHTML.attribute("id")
+    end
+
+    assert shelves.(view) == ~w(shelf-active shelf-passive)
+    assert has_element?(view, "#shelf-active tr.shelf th", "Active")
+    assert has_element?(view, "#shelf-passive tr.shelf th", "Passive")
+
+    assert has_element?(
+             view,
+             ~s(#shelf-passive #lesson-armor-mastery-1[data-status="ready"] td.sp),
+             "160"
+           )
+
+    assert has_element?(view, "#lesson-armor-mastery-1 td.name", "🪖 Armor Mastery 1")
+    refute has_element?(view, "#shelf-active #lesson-armor-mastery-1")
+
+    assert has_element?(
+             view,
+             ~s(#learn-form optgroup[label="Passive"] option[value="Armor Mastery|1"])
+           )
+
+    assert has_element?(
+             view,
+             ~s(#learn-form optgroup[label="Active"] option[value="Power Strike|2"])
+           )
+
+    # A sort turns each shelf round on its own; the mastery stays on its shelf.
+    view |> element(~s(#lessons button[phx-value-key="learn_at"])) |> render_click()
+    assert has_element?(view, "#shelf-passive tr.shelf + tr#lesson-armor-mastery-1")
+
+    # Learned out, one shelf is left, with no heading and no group.
+    Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Armor Mastery", 3)}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    assert shelves.(view) == ~w(shelf-active)
+    refute has_element?(view, "#lessons tr.shelf")
+    refute has_element?(view, "#learn-form optgroup")
+    assert has_element?(view, "#skill-armor-mastery .skill", "Armor Mastery 3")
   end
 
   test "the lessons do not remember their sort, so a kept one is not read back" do
