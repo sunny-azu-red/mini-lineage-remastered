@@ -556,7 +556,7 @@ try {
     await page.click('#travel-form button');
     await onScreen('trader');
     check('the village\'s four traders are named, each by what they sell',
-        (await text('#trader-intro')).startsWith('Iria sells weapons, Payne armour and shields, Minaless jewellery and Vollodos potions'),
+        (await text('#trader-intro')).startsWith('Iria sells weapons, Payne armour and shields, and Minaless and Vollodos necklaces and potions'),
         await text('#trader-intro'));
     await page.selectOption('#trader-form select', 'trader-weapons');
     await page.click('#trader-form button');
@@ -623,9 +623,14 @@ try {
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');
     await onScreen('trader');
-    await page.selectOption('#trader-form select', 'trader-grocer');
+    await page.selectOption('#trader-form select', 'trader-magic');
     await page.click('#trader-form button');
-    await onScreen('trader-grocer');
+    await onScreen('trader-magic');
+    check('the Magic Trader keeps necklaces and then potions, Minaless and Vollodos greeting you together',
+        (await page.locator('#stock tbody').evaluateAll((shelves) => shelves.map((s) => s.id))).join() ===
+            'shelf-necklaces,shelf-potions'
+        && /^Minaless .* while Vollodos /.test(await text('#trader-intro')),
+        await text('#trader-intro'));
     await page.selectOption('#buy-form select', 'Lesser Healing Potion|10');
     await page.click('#buy-form button');
     await adena(wallet - 768 - 900);

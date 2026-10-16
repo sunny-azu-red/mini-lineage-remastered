@@ -51,10 +51,10 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(
              view,
              "#trader-intro",
-             "Lector sells weapons, Jackson armour and shields, Silvia jewellery and Katerina potions"
+             "Lector sells weapons, Jackson armour and shields, and Silvia and Katerina necklaces and potions"
            )
 
-    for page <- ~w(weapons armour jewellery grocer sell),
+    for page <- ~w(weapons armour magic sell),
         do: assert(has_element?(view, ~s(#trader-form option[value="trader-#{page}"])))
 
     view |> form("#trader-form", %{"place" => "trader-weapons"}) |> render_submit()
@@ -92,14 +92,35 @@ defmodule MiniLineageWeb.GearPageTest do
     refute has_element?(view, "#stock-cotton-tunic")
     assert shelves(view) == ~w(shelf-chest shelf-legs shelf-shields)
     assert has_element?(view, "#shelf-shields tr.shelf th", "Shields")
+  end
 
-    # One shelf is the whole page, so it has no heading to tell it apart, nor a group.
-    for page <- ~w(jewellery grocer) do
-      {:ok, view, _html} = live(conn, "/talking-island/trader/#{page}")
-      assert has_element?(view, "#stock tbody tr[id^=stock-]")
-      refute has_element?(view, "#stock tr.shelf")
-      refute has_element?(view, "#buy-form optgroup")
-    end
+  test "the jeweller and the grocer keep one Magic Trader, necklaces then potions, both greeting you" do
+    {_view, _session, conn} = human(build_conn(), 0)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/magic")
+
+    assert has_element?(view, "#screen h2", "Magic Trader")
+    assert has_element?(view, "#trader-intro", "Silvia minds the necklaces")
+
+    assert has_element?(
+             view,
+             "#trader-intro",
+             "while Katerina wishes you the luck of the goddess"
+           )
+
+    assert shelves(view) == ~w(shelf-necklaces shelf-potions)
+    assert has_element?(view, "#shelf-potions tr.shelf th", "Potions")
+    assert has_element?(view, "#buy-form optgroup:first-of-type[label=Necklaces]")
+    assert has_element?(view, ~s(#buy-form optgroup[label="Potions"] option[value$="|10"]))
+  end
+
+  test "a page of one shelf has no heading to tell it apart, nor a group" do
+    {_view, _session, conn} = shopper(build_conn(), "3", "fighter", 0)
+    {:ok, view, _html} = live(conn, ~p"/dark-elf-village/trader/weapons")
+
+    assert shelves(view) == ~w(shelf-daggers)
+    assert has_element?(view, "#stock tbody tr[id^=stock-]")
+    refute has_element?(view, "#stock tr.shelf")
+    refute has_element?(view, "#buy-form optgroup")
   end
 
   test "one table opens cheapest first and sorts within each shelf, by name and not its emoji" do
@@ -274,7 +295,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "potions are bought by the lot onto one stack, counted in the sidebar and drunk from the inventory" do
     {_view, session, conn} = human(build_conn(), 1_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/grocer")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/magic")
 
     assert has_element?(view, "#stock-lesser-healing-potion")
     assert has_element?(view, ~s(#buy-form option[value="Lesser Healing Potion|10"]))

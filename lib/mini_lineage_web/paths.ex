@@ -3,7 +3,7 @@ defmodule MiniLineageWeb.Paths do
 
   alias MiniLineage.Game.{Constants, Format, Rules}
 
-  @trader_pages ~w(weapons armour jewellery grocer sell)
+  @trader_pages ~w(weapons armour magic sell)
 
   @routes [
     {"races", "/races"},

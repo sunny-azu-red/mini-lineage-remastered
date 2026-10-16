@@ -249,6 +249,9 @@ the fight uses them.
 - **A trader shows each path only its own goods** (rules §24): a fighter the weapons its own skills
   use, light armour and shields; a mystic staves, robes and shields; both the jewellery and the
   potions. In Lineage II every trader showed both a fighter's list and a mystic's to anyone.
+- **The jeweller and the grocer share one counter, the Magic Trader** (rules §24), its necklaces
+  and potions on one page with both keepers greeting you. In Lineage II each kept a shop window of
+  their own, though the Newbie Guide already named their building the Magic Trader.
 - **Shops charge an item's canon price, with no castle tax** (Lineage II added the castle lord's
   tax, 15% in a village), and nothing mentions one.
 - **NPC shops sell better gear in more advanced towns, for more money.** In Lineage II no NPC

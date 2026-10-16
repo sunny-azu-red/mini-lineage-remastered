@@ -651,7 +651,8 @@ defmodule MiniLineage.Game.Rules do
 
   @capacity 15
 
-  # Rules §24: each village's four traders, by what they sell.
+  # Rules §24: each village's four traders, by what they sell; the jeweller and the grocer keep the
+  # Magic Trader together.
   @traders %{
     "talking-island" => %{
       weapons: "Lector",

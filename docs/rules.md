@@ -652,8 +652,9 @@ Every starting village sells the items marked village below, and Orc Village tho
 orc-village too, each at its price. A shop buys back anything it sells for half its price, rounded
 down. A starting kit is worth nothing to a shop and is never bought.
 
-Each village keeps four traders: one for weapons, one for armour who sells the shields too, a
-jeweller and a grocer, and any of them buys back:
+Each village keeps four traders: one for weapons, one for armour who sells the shields too, and a
+jeweller and a grocer who keep the Magic Trader together, its necklaces and its potions. Any of them
+buys back:
 
 | Village | Weapons Trader | Armour Trader | Jeweller | Grocer |
 |---|---|---|---|---|

@@ -23,8 +23,7 @@ defmodule MiniLineageWeb.Screens do
     "trader" => "Traders",
     "trader-weapons" => "Weapons Trader",
     "trader-armour" => "Armour Trader",
-    "trader-jewellery" => "Jeweller",
-    "trader-grocer" => "Grocer",
+    "trader-magic" => "Magic Trader",
     "trader-sell" => "Sell",
     "error" => "Error"
   }
@@ -44,8 +43,7 @@ defmodule MiniLineageWeb.Screens do
   def icon("trader", _view), do: "🛒"
   def icon("trader-weapons", _view), do: "⚔️"
   def icon("trader-armour", _view), do: "🛡️"
-  def icon("trader-jewellery", _view), do: "📿"
-  def icon("trader-grocer", _view), do: "🧪"
+  def icon("trader-magic", _view), do: "⚗️"
   def icon("trader-sell", _view), do: "💰"
   def icon("guild", _view), do: "📖"
   def icon("highscores", _view), do: "🏛️"
@@ -241,12 +239,12 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §24: each trader's page, whose it is and the slots it sells.
+  # Rules §24: each trader's page, whose line opens it and the slots it sells. The jeweller and the
+  # grocer keep the Magic Trader together, as the Newbie Guide's shop of that name.
   @trader_parts [
     {"trader-weapons", :weapons, [:weapon]},
     {"trader-armour", :armour, [:chest, :legs, :shield]},
-    {"trader-jewellery", :jewellery, [:necklace]},
-    {"trader-grocer", :grocer, [:potion]}
+    {"trader-magic", :magic, [:necklace, :potion]}
   ]
 
   defp sellers(traders), do: [traders.weapons, traders.armour, traders.jewellery, traders.grocer]
@@ -258,8 +256,8 @@ defmodule MiniLineageWeb.Screens do
   @slot_order ~w(weapon shield chest legs necklace potion)a
   @class_keys ~w(class str con dex int wit men hp mp)
 
-  # Rules §24: the village's four traders by name, each a page of their own, and selling, which any
-  # of them does.
+  # Rules §24: the village's four traders by name, on three pages, and selling, which any of them
+  # does.
   defp trader(assigns) do
     parts =
       for {page, _, slots} <- @trader_parts,
@@ -270,7 +268,7 @@ defmodule MiniLineageWeb.Screens do
 
     ~H"""
     <p id="trader-intro" phx-no-format>
-      {@view.traders.weapons} sells weapons, {@view.traders.armour} armour and shields, {@view.traders.jewellery} jewellery and {@view.traders.grocer} potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
+      {@view.traders.weapons} sells weapons, {@view.traders.armour} armour and shields, and {@view.traders.jewellery} and {@view.traders.grocer} necklaces and potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
     </p>
     <.select_action
       id="trader-form"
@@ -359,7 +357,7 @@ defmodule MiniLineageWeb.Screens do
       <:col class="name" sort="name">Item</:col>
       <:col sort="price">Adena</:col>
       <tbody :for={shelf <- @shelves} id={"shelf-#{slug(shelf.name)}"}>
-        <%!-- A page of one shelf (the grocer's potions, a Mystic's staves) needs no heading. --%>
+        <%!-- A page of one shelf (a Dark Fighter's daggers, a Mystic's staves) needs no heading. --%>
         <tr :if={length(@shelves) > 1} class="shelf">
           <th colspan="2" scope="rowgroup">{shelf.name}</th>
         </tr>

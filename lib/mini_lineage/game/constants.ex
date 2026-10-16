@@ -44,43 +44,36 @@ defmodule MiniLineage.Game.Constants do
     }
   ]
 
-  # Rules §14's open towns as a reader finds them, by slug. One not yet open is never stood in.
-  # Rules §24: what each village's traders say as a page of theirs opens, from their own greetings.
+  # Rules §24: what each village's traders say as a page of theirs opens, from their own greetings;
+  # the Magic Trader's two keepers speak in one line.
   @trader_lines %{
     {"talking-island", :weapons} =>
       "Lector lays out the weapons your path can use, and warns that the most expensive is not always the best, since a weapon serves only the one it suits.",
     {"talking-island", :armour} =>
       "Jackson waves you in to look around, sure that it always pays to buy the best armour you can, since every battle grows easier for it.",
-    {"talking-island", :jewellery} =>
-      "Silvia minds the necklaces for an aunt, and asks you to choose quickly, since every minute here is one not spent cultivating beauty.",
-    {"talking-island", :grocer} =>
-      "Katerina wishes you the luck of the goddess, and offers goods that are not rare but serve well when they are used wisely.",
+    {"talking-island", :magic} =>
+      "Silvia minds the necklaces for an aunt and asks you to choose quickly, while Katerina wishes you the luck of the goddess and offers potions that are not rare but serve well when they are used wisely.",
     {"elven-village", :weapons} =>
       "Unoren trades in the small tools that matter most on the battlefield, from sharp bronze daggers to the finest swords, and bids you have a look.",
     {"elven-village", :armour} =>
       "Ariel sells everything that protects a life and a reputation, from gorgeous armour to a strong shield, and none of it a mere accessory.",
-    {"elven-village", :jewellery} =>
-      "Creamees asks whether the fragrance of the herbs is not nice, while young Herbiel compounds a new medicine, and bids you look around.",
-    {"elven-village", :grocer} =>
-      "Herbiel sells sweet potions that revive the tired body and put a smile on a weary face, and bids you take your time.",
+    {"elven-village", :magic} =>
+      "Creamees asks whether the fragrance of the herbs is not nice while young Herbiel compounds a new medicine, sweet potions that revive the tired body, and both bid you take your time.",
     {"dark-elf-village", :weapons} =>
       "Iria deals in no weapons made by clumsy Humans, and tells you to buy quickly or get out of sight.",
     {"dark-elf-village", :armour} =>
       "Payne bids you welcome to a shop full of fine wares, each one waiting for the touch of a brave and dashing hero.",
-    {"dark-elf-village", :jewellery} =>
-      "Minaless blesses you in the name of the goddess of darkness, and swears that the finest necklaces are gathered here for the followers of Shilen.",
-    {"dark-elf-village", :grocer} =>
-      "Vollodos promises only fresh new goods of the finest quality, and cries out that every one of them is a bargain, a steal.",
+    {"dark-elf-village", :magic} =>
+      "Minaless blesses you in the name of the goddess of darkness and swears the finest necklaces are gathered here for the followers of Shilen, while Vollodos cries out that every potion is fresh and a steal.",
     {"orc-village", :weapons} =>
       "Jakal greets you for the glory of the everlasting flame, and swears there is nothing Jakal cannot find for a child of the flame.",
     {"orc-village", :armour} =>
       "Kunai greets you for the glory of the everlasting flame, and vouches for wares the Dwarves made, who are hated but make them well.",
-    {"orc-village", :jewellery} =>
-      "Uska greets you for the glory of the everlasting flame, and laughs that an Orc should not waste even a few seconds choosing.",
-    {"orc-village", :grocer} =>
-      "Papuma greets you for the glory of the everlasting flame, and reminds you to train hard for the glory of your people."
+    {"orc-village", :magic} =>
+      "Uska and Papuma greet you for the glory of the everlasting flame, Uska laughing that an Orc should not waste even a few seconds choosing, and Papuma reminding you to train hard for the glory of your people."
   }
 
+  # Rules §14's open towns as a reader finds them, by slug. One not yet open is never stood in.
   @towns %{
     "talking-island" =>
       "A quiet village on Talking Island, off the mainland's coast, where every Human first takes up a blade or a staff.",
