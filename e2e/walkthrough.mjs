@@ -619,6 +619,22 @@ try {
     await page.click('#header-link');
     await onScreen('town');
 
+    await page.selectOption('#travel-form select', 'trader');
+    await page.click('#travel-form button');
+    await onScreen('trader');
+    await page.selectOption('#trader-form select', 'trader-armour');
+    await page.click('#trader-form button');
+    await onScreen('trader-armour');
+    // The stock is still sorted by name from the Weapon Trader, so only what any sort keeps is checked.
+    const lightRows = (await rowIds('#shelf-light-armour')).split(',');
+    check('the Armour Trader shows a Fighter shields first, then its shirts and pants together as light armour',
+        (await page.locator('#stock tbody').evaluateAll((shelves) => shelves.map((s) => s.id))).join() ===
+            'shelf-shields,shelf-light-armour'
+        && ['stock-leather-shirt', 'stock-leather-pants'].every((id) => lightRows.includes(id)),
+        lightRows.join());
+    await page.click('#header-link');
+    await onScreen('town');
+
     // ---- potions (rules §26) --------------------------------------------------------------------
     await page.selectOption('#travel-form select', 'trader');
     await page.click('#travel-form button');

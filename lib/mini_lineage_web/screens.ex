@@ -243,7 +243,7 @@ defmodule MiniLineageWeb.Screens do
   # grocer keep the Magic Trader together, as the Newbie Guide's shop of that name.
   @trader_parts [
     {"trader-weapon", :weapon, [:weapon]},
-    {"trader-armour", :armour, [:chest, :legs, :shield]},
+    {"trader-armour", :armour, [:shield, :chest, :legs]},
     {"trader-magic", :magic, [:necklace, :potion]}
   ]
 
@@ -331,8 +331,8 @@ defmodule MiniLineageWeb.Screens do
   defp trader_page(assigns) do
     {_, role, slots} = List.keyfind(@trader_parts, assigns.screen, 0)
 
-    # Shelves in the order the page's part lists them, its own goods before shields, in one table so
-    # the columns line up; a sort reorders each shelf's rows and never mixes two shelves.
+    # Shelves in the order the page's part lists them, in one table so the columns line up; a sort
+    # reorders each shelf's rows and never mixes two shelves.
     sort = sort_of(assigns.sorts, "stock")
 
     shelves =
@@ -593,8 +593,10 @@ defmodule MiniLineageWeb.Screens do
       )
 
   defp shelf(%{slot: :shield}), do: "Shields"
-  defp shelf(%{slot: :chest}), do: "Chest"
-  defp shelf(%{slot: :legs}), do: "Legs"
+
+  # A chest and legs share a shelf by what they are, so a top sits beside the bottom it pairs with.
+  defp shelf(%{slot: slot, type: "light"}) when slot in [:chest, :legs], do: "Light Armour"
+  defp shelf(%{slot: slot, type: "magic"}) when slot in [:chest, :legs], do: "Robes"
   defp shelf(%{slot: :necklace}), do: "Necklaces"
   defp shelf(%{slot: :potion}), do: "Potions"
 

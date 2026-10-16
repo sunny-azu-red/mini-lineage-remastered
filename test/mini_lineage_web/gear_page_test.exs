@@ -111,8 +111,24 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#stock-small-shield")
     assert has_element?(view, "#stock-leather-shirt")
     refute has_element?(view, "#stock-cotton-tunic")
-    assert shelves(view) == ~w(shelf-chest shelf-legs shelf-shields)
+    assert shelves(view) == ~w(shelf-shields shelf-light-armour)
     assert has_element?(view, "#shelf-shields tr.shelf th", "Shields")
+    assert has_element?(view, "#shelf-light-armour tr.shelf th", "Light Armour")
+    assert has_element?(view, "#shelf-light-armour #stock-leather-shirt")
+    assert has_element?(view, "#shelf-light-armour #stock-leather-pants")
+    assert has_element?(view, "#buy-form optgroup:first-of-type[label=Shields]")
+    assert has_element?(view, ~s(#buy-form optgroup[label="Light Armour"]))
+  end
+
+  test "a Mystic's chest and legs are one shelf of robes" do
+    {_view, _session, conn} = shopper(build_conn(), "0", "mystic", 0)
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/armour")
+    assert shelves(view) == ~w(shelf-shields shelf-robes)
+    assert has_element?(view, "#shelf-robes tr.shelf th", "Robes")
+    assert has_element?(view, "#shelf-robes #stock-cotton-tunic")
+    assert has_element?(view, "#shelf-robes #stock-cotton-stockings")
+    assert has_element?(view, ~s(#buy-form optgroup[label="Robes"]))
   end
 
   test "the jeweller and the grocer keep one Magic Trader, necklaces then potions, both greeting you" do
