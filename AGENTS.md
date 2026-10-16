@@ -89,6 +89,10 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   and rewrite [docs/balance.md](docs/balance.md), the last reading, from what it prints. A run's dice
   are seeded from its set and number and its clock moves by the fight's own `ms`, so two builds
   compare run for run: `--json` both and read them with `bench/compare.exs`, which applies the bar.
+  A study is `--matrix <prefix>`: 200 runs a path of the defaults, resting at half without potions
+  and with them, in one VM. `--only` the sets a change touches, since no set's runs read another's;
+  `--final` adds resting at 30%, for the reading `balance.md` is rewritten from. A cache or a
+  precomputed table that speeds it must leave a 400-run `--final` reading byte-identical.
 - **Done means `mix precommit`**, plus `mix e2e` for anything the browser renders: a screen, a hook,
   a selector, what an element *is*. A change that only moves colour values skips e2e; no suite can
   fail on a hex. ExUnit's coverage understates the web layer because the browser suites aren't

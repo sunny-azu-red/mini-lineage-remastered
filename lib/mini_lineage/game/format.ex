@@ -91,17 +91,26 @@ defmodule MiniLineage.Game.Format do
     |> String.replace(~r/--+/, "-")
   end
 
-  @placeholder ~r/\{(\w+)\}/
-
   @doc "Fills `{key}`. An unknown key is left verbatim, so open pronouns survive until render."
+  # Without a regex, which every fight's lines ran several times over.
   def fill_template(template, data) do
-    String.replace(template, @placeholder, fn match ->
-      [_, key] = Regex.run(@placeholder, match)
-
-      case Map.get(data, key) do
-        nil -> match
-        value -> to_string(value)
-      end
-    end)
+    [head | rest] = String.split(template, "{")
+    IO.iodata_to_binary([head | Enum.map(rest, &fill_after_brace(&1, data))])
   end
+
+  defp fill_after_brace(piece, data) do
+    with [key, tail] <- :binary.split(piece, "}"),
+         true <- word?(key),
+         value when value != nil <- Map.get(data, key) do
+      [to_string(value), tail]
+    else
+      _ -> ["{", piece]
+    end
+  end
+
+  # Regex's `\w+`: ASCII letters, digits and the underscore.
+  defp word?(<<c, rest::binary>>) when c in ?a..?z or c in ?A..?Z or c in ?0..?9 or c == ?_,
+    do: rest == "" or word?(rest)
+
+  defp word?(_), do: false
 end

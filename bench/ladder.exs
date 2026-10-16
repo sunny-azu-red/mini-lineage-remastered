@@ -6,6 +6,8 @@
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
 #     [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
 #     [--unused "Skill,Skill"]
+#   MIX_ENV=test mix run --no-start bench/ladder.exs --matrix <path prefix> [--final] [runs] [top level]
+#     [--only "Set name"] ...: the study's settings in one go, each into <prefix>_<setting>.txt/.json
 #
 # Each run has its own seed, from its set and number, so a rule change moves only the runs it
 # touches and two builds compare run for run (bench/compare.exs reads two --json files).
@@ -13,7 +15,14 @@ alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Player, Rng, Rules, Sho
 
 {opts, args} =
   OptionParser.parse!(System.argv(),
-    strict: [json: :string, only: :string, orders: :string, unused: :string]
+    strict: [
+      json: :string,
+      only: :string,
+      orders: :string,
+      unused: :string,
+      matrix: :string,
+      final: :boolean
+    ]
   )
 
 # Rules §20's battle orders every run gives, the start's unless named.
@@ -30,7 +39,7 @@ orders =
   end
   |> Map.put(:unused, String.split(opts[:unused] || "", ",", trim: true))
 
-defaults = [40, 20, 100, 20]
+defaults = [200, 20, 100, 20]
 
 [runs, top, rest_below, kept] =
   Enum.map(args, &String.to_integer/1) ++ Enum.drop(defaults, length(args))
@@ -90,6 +99,16 @@ defmodule Ladder do
 
   @slots ~w(weapon chest legs necklace shield)a
 
+  # What the village sells the set, the same all run long, so listed once a run.
+  defp stock(player) do
+    key = {:stock, player.location, player.race_id, player.path}
+
+    with nil <- Process.get(key) do
+      Process.put(key, Rules.stock(player.location, Rules.set(player.race_id, player.path)))
+      Process.get(key)
+    end
+  end
+
   defp current(player, path, slot) do
     player
     |> Player.equipped()
@@ -99,7 +118,8 @@ defmodule Ladder do
   end
 
   defp best(player, path, slot) do
-    Rules.stock(player.location, Rules.set(player.race_id, player.path))
+    player
+    |> stock()
     |> Enum.filter(&(&1.slot == slot))
     |> Enum.map(&worth(player, path, &1))
     |> Enum.max(fn -> -1 end)
@@ -127,8 +147,10 @@ defmodule Ladder do
       now = current(p, path, slot)
 
       pick =
-        Rules.stock(p.location, Rules.set(p.race_id, p.path))
-        |> Enum.filter(&(&1.slot == slot and worth(p, path, &1) > now and Shop.price(&1) <= p.adena))
+        stock(p)
+        |> Enum.filter(
+          &(&1.slot == slot and worth(p, path, &1) > now and Shop.price(&1) <= p.adena)
+        )
         |> Enum.max_by(&worth(p, path, &1), fn -> nil end)
 
       if pick do
@@ -227,6 +249,8 @@ defmodule Run do
   # One run up the ladder, in its own process with its own dice and clock pin, so runs go in
   # parallel. The clock moves with the run, a tick of rest and a fight at a time, so auras fade.
   def play(race, path, weapons, seed, %{top: top, rest_below: rest_below, kept: kept} = settings) do
+    # A run's heap grows all the way up the ladder; starting it large saves the collections.
+    Process.flag(:min_heap_size, 1_000_000)
     :rand.seed(:exsss, seed)
     Rng.put_source(fn -> :rand.uniform() end)
     Clock.put_now(settings.start)
@@ -279,30 +303,9 @@ defmodule Run do
   end
 end
 
-settings = %{
-  top: top,
-  rest_below: rest_below,
-  kept: kept,
-  orders: orders,
-  start: ~U[2026-07-01 09:00:00Z]
-}
-
-rows =
-  for race <- [0, 2, 3, 1],
-      path <- [:fighter, :mystic],
-      opts[:only] in [nil, Rules.set(race, path).name],
-      weapons <- Ladder.paths(race, path) do
-    name = "#{Rules.set(race, path).name}, #{weapons.label}"
-
-    results =
-      1..runs
-      |> Task.async_stream(
-        &Run.play(race, path, weapons, {:erlang.phash2(name), &1, 7}, settings),
-        max_concurrency: System.schedulers_online(),
-        timeout: :infinity
-      )
-      |> Enum.map(fn {:ok, result} -> result end)
-
+defmodule Report do
+  # A path's three lines of report and its row for --json, from its runs in run order.
+  def path(name, race, path, weapons, results, runs, top) do
     deaths = Enum.filter(results, fn {p, _, _, _} -> p.dead end)
 
     died_at =
@@ -335,13 +338,12 @@ rows =
       |> Enum.sort_by(&(-elem(&1, 1)))
       |> Enum.take(4)
 
-    IO.puts(
+    first =
       "#{name} died #{length(deaths)}/#{runs} at #{inspect(died_at)} #{inspect(killers)} | " <>
         "to L#{top}: #{avg.(alive, fn {_, k, _, _} -> k end)} hunts, " <>
         "#{avg.(alive, fn {_, _, t, _} -> div(t * 3, 60) end)} min resting, " <>
         "#{avg.(alive, fn {_, _, _, r} -> div(round(r.fight_ms), 60_000) end)} min fighting, " <>
         "L5 at hunt #{avg.(results, fn {_, _, _, r} -> r[5] || 0 end)}, L10 at #{avg.(results, fn {_, _, _, r} -> r[10] || 0 end)}"
-    )
 
     banked =
       for l <- [5, 7, 10, 14, 15],
@@ -359,11 +361,10 @@ rows =
       |> Enum.sort()
       |> Enum.map(fn {tier, w} -> "L#{tier} #{round(Enum.sum(w) / length(w))}/#{Enum.max(w)}" end)
 
-    IO.puts(
+    second =
       "  SP left once trained: #{Enum.join(banked, ", ")}, at the end #{avg.(alive, fn {p, _, _, _} -> p.sp end)} | " <>
         "earned by #{Enum.join(earned, ", ")} | wait in hunts (avg/max) #{Enum.join(waits, ", ")} | " <>
         "spent #{avg.(alive, fn {_, _, _, r} -> r[:spent] || 0 end)} | list learned #{when_at.(:list)}"
-    )
 
     purse =
       for l <- [5, 10, 12, 14, 15, 16, 17, 18, 20],
@@ -378,11 +379,10 @@ rows =
           held != "never",
           do: "#{weapon} #{held}"
 
-    IO.puts(
+    third =
       "  Adena earned by #{Enum.join(purse, ", ")} | #{Enum.join(tiers, ", ")} | " <>
         "kit #{when_at.(:kit)} | potions #{avg.(alive, fn {_, _, _, r} -> r.potions end)}, " <>
         "held at the end #{avg.(alive, fn {p, _, _, _} -> p.adena end)}"
-    )
 
     mean = fn list, f ->
       if list == [], do: nil, else: Enum.sum(Enum.map(list, f)) / length(list)
@@ -390,7 +390,7 @@ rows =
 
     minutes = fn {_, _, t, r} -> (t * 3_000 + r.fight_ms) / 60_000 end
 
-    %{
+    row = %{
       set: Rules.set(race, path).name,
       path: weapons.label,
       runs: runs,
@@ -410,9 +410,73 @@ rows =
       list_level: mean.(for({_, _, _, %{list: {l, _}}} <- results, do: l), & &1),
       kit_level: mean.(for({_, _, _, %{kit: {l, _}}} <- results, do: l), & &1)
     }
+
+    {[first, second, third], row}
+  end
+end
+
+start = ~U[2026-07-01 09:00:00Z]
+setting = &%{top: top, rest_below: &1, kept: &2, orders: orders, start: start}
+
+# --matrix writes the study's settings side by side, resting at 30% without potions (where most
+# Fighters die, so it says little) only with --final.
+studies =
+  if label = opts[:matrix] do
+    ([{"defaults", 100, 20}, {"harsh", 50, 0}] ++
+       if(opts[:final], do: [{"harsher", 30, 0}], else: []) ++ [{"potions", 50, 20}])
+    |> Enum.map(fn {name, rest_below, kept} ->
+      {"#{label}_#{name}", setting.(rest_below, kept)}
+    end)
+  else
+    [{opts[:json] && Path.rootname(opts[:json]), setting.(rest_below, kept)}]
   end
 
-if path = opts[:json] do
+paths =
+  for race <- [0, 2, 3, 1],
+      path <- [:fighter, :mystic],
+      opts[:only] in [nil, Rules.set(race, path).name],
+      weapons <- Ladder.paths(race, path),
+      do: {race, path, weapons, "#{Rules.set(race, path).name}, #{weapons.label}"}
+
+# Every run of every setting in one queue, so no path waits on another's slowest run.
+results =
+  for {study, settings} <- studies, {race, path, weapons, name} <- paths, run <- 1..runs do
+    {study, settings, race, path, weapons, name, run}
+  end
+  |> Task.async_stream(
+    fn {study, settings, race, path, weapons, name, run} ->
+      {{study, name}, run,
+       Run.play(race, path, weapons, {:erlang.phash2(name), run, 7}, settings)}
+    end,
+    max_concurrency: System.schedulers_online(),
+    ordered: false,
+    timeout: :infinity
+  )
+  |> Enum.group_by(fn {:ok, {key, _, _}} -> key end, fn {:ok, {_, run, result}} ->
+    {run, result}
+  end)
+  |> Map.new(fn {key, runs} ->
+    {key, runs |> Enum.sort_by(&elem(&1, 0)) |> Enum.map(&elem(&1, 1))}
+  end)
+
+for {study, settings} <- studies do
+  {lines, rows} =
+    paths
+    |> Enum.map(fn {race, path, weapons, name} ->
+      Report.path(name, race, path, weapons, results[{study, name}], runs, top)
+    end)
+    |> Enum.unzip()
+
+  text = lines |> List.flatten() |> Enum.map_join(&(&1 <> "\n"))
   settings = Map.update!(settings, :start, &DateTime.to_iso8601/1)
-  File.write!(path, JSON.encode!(%{settings: settings, rows: rows}))
+  json = JSON.encode!(%{settings: settings, rows: rows})
+
+  if opts[:matrix] do
+    File.write!(study <> ".txt", text)
+    File.write!(study <> ".json", json)
+    IO.puts("#{study}: #{length(paths)} paths, #{runs} runs each")
+  else
+    IO.write(text)
+    if path = opts[:json], do: File.write!(path, json)
+  end
 end

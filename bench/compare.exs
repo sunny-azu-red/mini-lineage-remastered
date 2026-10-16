@@ -16,6 +16,12 @@ ladder = &Map.take(&1["settings"], ~w(top rest_below kept))
 if ladder.(before) != ladder.(after_),
   do: raise("the two readings were taken on different ladders")
 
+# Deaths are weighed against the dice's noise for one count of runs, so both must have the same.
+runs = &(&1["rows"] |> Enum.map(fn row -> row["runs"] end) |> Enum.uniq())
+
+if runs.(before) != runs.(after_),
+  do: raise("the two readings ran #{inspect(runs.(before))} and #{inspect(runs.(after_))} runs a path")
+
 settings = after_["settings"]
 rested? = settings["rest_below"] == 100
 key = &{&1["set"], &1["path"]}

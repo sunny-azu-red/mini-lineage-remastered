@@ -724,6 +724,25 @@ defmodule MiniLineage.Game.Rules do
              end
            )
 
+  # Every good in the order a trader lists it, sorted once rather than on every listing.
+  @goods (
+           kinds = [:weapon, :shield, :armour, :jewellery, :potion]
+           slots = ~w(weapon shield chest legs necklace potion)a
+           index = fn list, x -> Enum.find_index(list, &(&1 == x)) end
+
+           (Map.values(@items) ++ Map.values(@potions))
+           |> Enum.sort_by(
+             &{index.(kinds, &1.kind), index.(slots, &1.slot), &1.type || "", &1.price, &1.name}
+           )
+         )
+
+  # Grouped once, since a shop's stock asks for a set's lessons for every weapon it lists.
+  @lessons Enum.group_by(@trainer, & &1.set)
+  @path_weapons Map.new(@lessons, fn {set, lessons} ->
+                  {set,
+                   lessons |> Enum.flat_map(&Map.get(@skill_weapons, &1.skill, [])) |> Enum.uniq()}
+                end)
+
   # Rules §22: what the server multiplies a kill's pay by.
   @rates %{exp: 5, sp: 5, adena: 20}
 
@@ -751,8 +770,12 @@ defmodule MiniLineage.Game.Rules do
   def set(race_id, path), do: Enum.find(@sets, &(&1.race_id == race_id and &1.path == path))
   def path(path), do: Map.fetch!(@paths, path)
   def bonus_curve(attr), do: Map.fetch!(@bonus, attr)
-  def experience(level), do: Enum.at(@experience, level - 1)
+  # By level, since working out a level climbs the table one row at a time.
+  @experience_at @experience |> Enum.with_index(1) |> Map.new(fn {xp, level} -> {level, xp} end)
+  def experience(level), do: Map.get(@experience_at, level)
   def max_level, do: length(@experience)
+  def experience_table, do: @experience
+
 
   def grounds, do: @grounds
   def ground(slug), do: Enum.find(@grounds, &(&1.slug == slug))
@@ -832,10 +855,7 @@ defmodule MiniLineage.Game.Rules do
   @doc "Rules §24: what a village's traders sell, in the order the table lists them."
   def stock(town) do
     sold = if town == "orc-village", do: [:village, :"orc-village"], else: [:village]
-
-    (Map.values(@items) ++ Map.values(@potions))
-    |> Enum.filter(&(&1.sold in sold))
-    |> Enum.sort_by(&{kind_order(&1.kind), slot_order(&1.slot), &1.type || "", &1.price, &1.name})
+    Enum.filter(@goods, &(&1.sold in sold))
   end
 
   @doc "Rules §24: a village's four traders, by what they sell."
@@ -867,18 +887,7 @@ defmodule MiniLineage.Game.Rules do
 
   defp path_weapons(%{path: :mystic}), do: ["staff"]
 
-  defp path_weapons(set),
-    do: set.name |> lessons() |> Enum.flat_map(&skill_weapons(&1.skill)) |> Enum.uniq()
-
-  defp kind_order(kind),
-    do: Enum.find_index([:weapon, :shield, :armour, :jewellery, :potion], &(&1 == kind))
-
-  defp slot_order(slot),
-    do:
-      Enum.find_index(
-        ~w(weapon shield chest legs necklace potion)a,
-        &(&1 == slot)
-      )
+  defp path_weapons(set), do: Map.get(@path_weapons, set.name, [])
 
   @doc "Rules §25: the guild a set learns in, and its trainers in the order the table lists them."
   def guild(set_name) do
@@ -887,7 +896,7 @@ defmodule MiniLineage.Game.Rules do
   end
 
   @doc "Rules §25: every line a set's trainer teaches, in the order the table lists them."
-  def lessons(set_name), do: Enum.filter(@trainer, &(&1.set == set_name))
+  def lessons(set_name), do: Map.get(@lessons, set_name, [])
 
   def skill_known?(name),
     do: Map.has_key?(@skills, name) or Enum.any?(@trainer, &(&1.skill == name))

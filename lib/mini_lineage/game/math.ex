@@ -18,13 +18,11 @@ defmodule MiniLineage.Game.Math do
   def xp_for_level(level) when level <= 1, do: 0
   def xp_for_level(level), do: Rules.experience(level)
 
-  def level_for_xp(xp), do: climb(1, xp)
+  def level_for_xp(xp), do: climb(tl(Rules.experience_table()), xp, 1)
 
-  defp climb(level, xp) do
-    if not max_level?(level) and xp_for_level(level + 1) <= xp,
-      do: climb(level + 1, xp),
-      else: level
-  end
+  # Down the table from level 2 in one pass, rather than a lookup per level climbed.
+  defp climb([need | rest], xp, level) when need <= xp, do: climb(rest, xp, level + 1)
+  defp climb(_, _xp, level), do: level
 
   def max_level?(level), do: level >= Rules.max_level()
 

@@ -303,8 +303,10 @@ defmodule MiniLineage.Game.Player do
   """
   def auras(player) do
     conditions = conditions(player)
-    stats = stats(player, conditions)
+    auras(player, conditions, stats(player, conditions))
+  end
 
+  defp auras(player, conditions, stats) do
     # Rules §20: engaged has no end; disengaging ends when rest resumes.
     if in_combat?(player),
       do: [combat(player) | conditions],
@@ -369,12 +371,14 @@ defmodule MiniLineage.Game.Player do
   end
 
   def regenerate(player) do
-    stats = stats(player)
+    # Read once for the tick: a faded aura is in neither, so dropping it below changes neither.
+    conditions = conditions(player)
+    stats = stats(player, conditions)
     # An aura that has faded goes, and the page is told.
     faded? = length(buffs_up(player)) < map_size(player.buffs || %{})
     player = if faded?, do: put_buffs(player, []), else: player
 
-    case auras(player) |> Enum.flat_map(&Map.get(&1, :rates, [])) do
+    case auras(player, conditions, stats) |> Enum.flat_map(&Map.get(&1, :rates, [])) do
       [] ->
         {player, faded?}
 

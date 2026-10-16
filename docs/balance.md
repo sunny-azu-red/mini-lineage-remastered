@@ -20,10 +20,20 @@ trainer's list, and rewrite these tables from what it prints (seconds, its runs 
 
     MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
       [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
+    MIX_ENV=test mix run --no-start bench/ladder.exs --matrix <path prefix> [--final] [runs]
+      [--only "Set name"]
+
+`--matrix` takes the study's readings in one go, 200 runs a path unless told otherwise, each into
+`<prefix>_<setting>.txt` and `.json`: `defaults` (resting to full, 20 potions), `harsh` (resting
+below half, none) and `potions` (below half, 20), and with `--final` `harsher` (below 30%, none) as
+well, which most Fighters do not survive and so is kept for the reading these tables come from. The
+whole `--final` matrix takes about 2 minutes on 8 cores, a routine one about a minute and a half, and `--only`
+one set a fraction of that: no set's runs read another's, so a change to one set is benched alone.
+At 200 runs a time change lands within half a point of what 400 measure.
 
 Each run's dice are seeded from its set and number, so a change moves only the runs it touches. To
-judge a change, take a `--json` reading on the build before it (a `git worktree`) and one after with
-the same settings, and read them with `bench/compare.exs before.json after.json`, which holds them
+judge a change, take a reading on the build before it (a `git worktree`) and one after with the
+same settings and runs, and read them with `bench/compare.exs before.json after.json`, which holds them
 to the bar: no deaths when resting to full, no set's road to the top moving more than 15%, deaths
 not rising past the dice's noise, and the spread between sets not widening. Time is compared run for
 run, over the runs that reached the top in both readings, so runs a change saves from dying do not
