@@ -772,12 +772,11 @@ level 1 for 50 (60 for the Orc).
 A skill grows in steps, not one level at a time: each line is everything the trainer teaches of it
 at one character level (5, 10 and 15 for a Fighter, 7 and 14 for a Mystic), so no two lines of one
 skill open at the same level. A Fighter's weapon skills keep their first level apart, at level 1.
-Its SP is set so that a character can afford about one new line when it reaches that level and the
-rest of that level's lines about a level later, so each step is saved for and the order chosen. A
-mastery's line costs what Lineage II asks for the levels it holds, Robe Mastery 1 at the Orc
-Mystic's price, and Robe Mastery 2 costs 6,800, so that a Mystic reaches level 20 with about the SP
-a Fighter has left. Anti Magic, which Lineage II teaches only Mystics, is taught to a Fighter at
-levels 5 and 10, at what its race's Mystic pays.
+Every line costs what Lineage II asks for the levels it holds, but for level 1 (above) and Robe
+Mastery: Robe Mastery 1 is the Orc Mystic's price for every Mystic, and Robe Mastery 2 costs 6,800,
+so that a Mystic reaches level 20 with about the SP an Elven or Dark Fighter has left. Anti Magic,
+which Lineage II teaches only Mystics, is taught to a Fighter at levels 5 and 10, at what its race's
+Mystic pays.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
@@ -804,9 +803,9 @@ levels 5 and 10, at what its race's Mystic pays.
 | Elven Fighter | Power Shot | 1 | 1 | 0 |
 | Elven Fighter | Power Shot | 2 | 5 | 100 |
 | Elven Fighter | Power Shot | 3 | 10 | 930 |
-| Elven Fighter | Power Shot | 4 | 15 | 5,300 |
+| Elven Fighter | Power Shot | 4 | 15 | 3,300 |
 | Elven Fighter | Defense Aura | 1 | 5 | 160 |
-| Elven Fighter | Elemental Heal | 1 | 15 | 5,300 |
+| Elven Fighter | Elemental Heal | 1 | 15 | 3,300 |
 | Elven Fighter | Armor Mastery | 1 | 5 | 160 |
 | Elven Fighter | Armor Mastery | 2 | 10 | 920 |
 | Elven Fighter | Armor Mastery | 3 | 15 | 3,400 |
@@ -818,9 +817,9 @@ levels 5 and 10, at what its race's Mystic pays.
 | Dark Fighter | Mortal Blow | 1 | 1 | 0 |
 | Dark Fighter | Mortal Blow | 2 | 5 | 100 |
 | Dark Fighter | Mortal Blow | 3 | 10 | 930 |
-| Dark Fighter | Mortal Blow | 4 | 15 | 5,000 |
+| Dark Fighter | Mortal Blow | 4 | 15 | 2,850 |
 | Dark Fighter | Attack Aura | 1 | 10 | 910 |
-| Dark Fighter | Drain Health | 1 | 15 | 4,900 |
+| Dark Fighter | Drain Health | 1 | 15 | 2,800 |
 | Dark Fighter | Armor Mastery | 1 | 5 | 160 |
 | Dark Fighter | Armor Mastery | 2 | 10 | 920 |
 | Dark Fighter | Armor Mastery | 3 | 15 | 2,800 |
@@ -848,10 +847,10 @@ levels 5 and 10, at what its race's Mystic pays.
 | Orc Fighter | Anti Magic | 2 | 10 | 1,760 |
 | Human Mystic | Wind Strike | 1 | 1 | 0 |
 | Human Mystic | Wind Strike | 2 | 7 | 480 |
-| Human Mystic | Wind Strike | 3 | 14 | 4,000 |
+| Human Mystic | Wind Strike | 3 | 14 | 2,200 |
 | Human Mystic | Self Heal | 1 | 1 | 50 |
 | Human Mystic | Ice Bolt | 1 | 7 | 480 |
-| Human Mystic | Ice Bolt | 2 | 14 | 4,000 |
+| Human Mystic | Ice Bolt | 2 | 14 | 2,200 |
 | Human Mystic | Robe Mastery | 1 | 7 | 520 |
 | Human Mystic | Robe Mastery | 2 | 14 | 6,800 |
 | Human Mystic | Weapon Mastery | 1 | 7 | 470 |
@@ -879,7 +878,7 @@ levels 5 and 10, at what its race's Mystic pays.
 | Dark Mystic | Vampiric Touch | 1 | 14 | 2,200 |
 | Dark Mystic | Curse: Poison | 1 | 7 | 470 |
 | Dark Mystic | Shield | 1 | 7 | 470 |
-| Dark Mystic | Wind Shackle | 1 | 14 | 3,600 |
+| Dark Mystic | Wind Shackle | 1 | 14 | 2,100 |
 | Dark Mystic | Robe Mastery | 1 | 7 | 520 |
 | Dark Mystic | Robe Mastery | 2 | 14 | 6,800 |
 | Dark Mystic | Weapon Mastery | 1 | 7 | 470 |
@@ -887,11 +886,11 @@ levels 5 and 10, at what its race's Mystic pays.
 | Dark Mystic | Anti Magic | 1 | 7 | 480 |
 | Dark Mystic | Anti Magic | 2 | 14 | 2,200 |
 | Orc Mystic | Chill Flame | 1 | 1 | 0 |
-| Orc Mystic | Chill Flame | 2 | 14 | 2,250 |
+| Orc Mystic | Chill Flame | 2 | 14 | 1,800 |
 | Orc Mystic | Soul Cry | 1 | 1 | 50 |
-| Orc Mystic | Soul Cry | 2 | 14 | 2,250 |
+| Orc Mystic | Soul Cry | 2 | 14 | 1,800 |
 | Orc Mystic | Life Drain | 1 | 7 | 520 |
-| Orc Mystic | Life Drain | 2 | 14 | 2,250 |
+| Orc Mystic | Life Drain | 2 | 14 | 1,800 |
 | Orc Mystic | Soul Shield | 1 | 7 | 520 |
 | Orc Mystic | Robe Mastery | 1 | 7 | 520 |
 | Orc Mystic | Robe Mastery | 2 | 14 | 6,800 |

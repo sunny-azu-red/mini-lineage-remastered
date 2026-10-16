@@ -159,9 +159,9 @@ the fight uses them.
   asks 1,760, so a Mystic reaches level 20 with about the SP a Fighter has left. A Fighter learns
   Anti Magic too, which Lineage II teaches only Mystics, at levels 5 and 10 for what its race's
   Mystic pays: the Orc Fighter's ground has the Evil Eyes' spells, and the grounds past the villages
-  cast more. The dearer late lines (the Elven and Dark Fighters at 15, the Human, Dark and Orc
-  Mystics at 14) stay, so each step is saved for; what is left after level 15 waits for the class
-  change.
+  cast more. Every other line costs what Lineage II asks for the levels it holds, where the late
+  lines once cost more to soak up the SP the masteries took; what is left after level 15 waits for
+  the class change.
 - **Buffs are cast on oneself.** Shield and Soul Shield, cast on a target in Lineage II, are cast
   by the Mystic on itself, as a lone Mystic did there. **An aura holds 2 minutes,** out of the
   fight too, where Lineage II's held 20: a fight here lasts seconds, so 20 minutes was every fight

@@ -12,7 +12,8 @@ the pull, each fighter's kit a Squire's weapon for every path its skills take, t
 Apprentice's Wand, each path shown only its own goods, one of each kind per price, every chest,
 legs and necklace priced as many of its slot as it stands for, and four masteries on every path,
 Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for
-both. One `--final` reading of that build, 200 seeded runs of every set up its village's ladder to
+both, and every line at Lineage II's price for the levels it holds. One `--final` reading of that
+build, 200 seeded runs of every set up its village's ladder to
 level 20, once per weapon path its skills can use, each run seeded on its own; at the defaults none
 of them died. The bench learns every line, the masteries included, which a player need not.
 
@@ -56,13 +57,13 @@ SP doesn't depend on the weapon path, so there is one row per set.
 | Set | Skills (lines) | Whole list | Of it, Weapon Mastery and Anti Magic | Learned at level | …at hunt | SP saved at 20 |
 |---|---|---|---|---|---|---|
 | Human Fighter | 6 (20) | 28,630 | 7,940 | 19 | 316 of 347 | 3,900 |
-| Elven Fighter | 6 (14) | 23,360 | 7,090 | 18 | 329 of 414 | 9,600 |
-| Dark Fighter | 6 (14) | 22,370 | 6,650 | 18 | 314 of 395 | 10,500 |
+| Elven Fighter | 6 (14) | 19,360 | 7,090 | 17 | 290 of 414 | 13,600 |
+| Dark Fighter | 6 (14) | 18,120 | 6,650 | 17 | 273 of 395 | 14,800 |
 | Orc Fighter | 6 (17) | 24,390 | 7,770 | 18 | 316 of 385 | 8,500 |
-| Human Mystic | 6 (12) | 21,580 | 5,250 | 18 | 258 of 347 | 11,000 |
+| Human Mystic | 6 (12) | 17,980 | 5,250 | 17 | 229 of 347 | 14,600 |
 | Elven Mystic | 7 (14) | 20,760 | 5,340 | 18 | 304 of 414 | 12,200 |
-| Dark Mystic | 9 (14) | 22,040 | 5,250 | 18 | 312 of 395 | 10,800 |
-| Orc Mystic | 7 (13) | 19,760 | 4,600 | 17 | 269 of 385 | 13,100 |
+| Dark Mystic | 9 (14) | 20,540 | 5,250 | 18 | 298 of 395 | 12,300 |
+| Orc Mystic | 7 (13) | 18,410 | 4,600 | 17 | 255 of 385 | 14,500 |
 
 A tier's lines are taught at one character level (1, 5, 10 and 15 for a Fighter; 1, 7 and 14 for a
 Mystic), and no two lines of one skill share one. The wait is how many hunts pass between reaching
@@ -71,13 +72,13 @@ that level and buying a line taught there, shown as average / worst:
 | Set | Level 1 | First tier | Second | Third |
 |---|---|---|---|---|
 | Human Fighter | 7 / 10 | L5: 17 / 40 | L10: 57 / 106 | L15: 97 / 166 |
-| Elven Fighter | | L5: 16 / 39 | L10: 40 / 84 | L15: 78 / 160 |
-| Dark Fighter | | L5: 13 / 34 | L10: 41 / 89 | L15: 75 / 151 |
+| Elven Fighter | | L5: 16 / 39 | L10: 40 / 84 | L15: 63 / 120 |
+| Dark Fighter | | L5: 13 / 34 | L10: 41 / 89 | L15: 58 / 110 |
 | Orc Fighter | 6 / 6 | L5: 21 / 48 | L10: 63 / 106 | L15: 96 / 161 |
-| Human Mystic | 5 / 5 | L7: 29 / 54 | L14: 52 / 132 | |
+| Human Mystic | 5 / 5 | L7: 29 / 54 | L14: 34 / 103 | |
 | Elven Mystic | 5 / 5 | L7: 37 / 66 | L14: 64 / 169 | |
-| Dark Mystic | 5 / 5 | L7: 34 / 63 | L14: 66 / 181 | |
-| Orc Mystic | 5 / 5 | L7: 33 / 59 | L14: 45 / 142 | |
+| Dark Mystic | 5 / 5 | L7: 34 / 63 | L14: 61 / 167 | |
+| Orc Mystic | 5 / 5 | L7: 33 / 59 | L14: 38 / 128 | |
 
 - **Every set starts knowing its first skill,** a Fighter the one its starting weapon uses, and all
   but the Elven and Dark Fighters find something at the trainer at level 1, bought after 5 to 7
@@ -90,19 +91,25 @@ that level and buying a line taught there, shown as average / worst:
 - **The masteries are bought after the skills they fight with,** from what is left: the bench buys
   a tier's lines in the trainer's order, the masteries last (Armor or Robe Mastery, then Weapon
   Mastery, then Anti Magic), so they stretch the list rather than delay a skill. Weapon Mastery and
-  Anti Magic cost 4,600 to 7,940 SP a set, a quarter more on every list, and every tier now waits
-  longer: at the last tier 45 to 97 hunts on average, where it was 27 to 49. Robe Mastery 2 costs
-  6,800 so that a Mystic reaches 20 with what a Fighter has left; measured at 1,760, 5,000, 6,800 and
-  8,500, its price moved no death and no set's time by more than 0.6%.
-- **Every list is learned a level later,** at 17 to 19 rather than 16 to 18, and the Mystics still
-  finish first, since their masteries hold two lines to a Fighter's three and their fights spend MP
-  rather than SP.
+  Anti Magic cost 4,600 to 7,940 SP a set, and every tier now waits longer: at the last tier 34 to
+  97 hunts on average, where it was 27 to 49. Robe Mastery 2 costs 6,800 so that a Mystic reaches 20
+  with about what an Elven or Dark Fighter has left; measured at 1,760, 5,000, 6,800 and 8,500, its
+  price moved no death and no set's time by more than 0.6%.
+- **The late lines cost what Lineage II asks,** where the Elven and Dark Fighters' at 15 and the
+  Human, Dark and Orc Mystics' at 14 cost 1,350 to 4,250 SP more a set to soak up the SP of the
+  masteries then left out. Back at canon, those five sets finish their lists up to a level sooner
+  and keep that SP; the Elven Fighter is 2% faster and resting at half without potions it dies in
+  34 runs of 200 rather than 49, and the Dark Fighter in 14 rather than 24. The Orc Mystic is 0.6% to
+  1.7% slower for it, most likely for buying Soul Cry 2, whose MP drain costs it time, sooner, and
+  the spread from the fastest set to the slowest widens by 1 to 4 minutes, which the game takes.
+- **Every list is learned at 17 to 19,** a level later than before Weapon Mastery and Anti Magic for
+  the Human, Elven and Orc Mystics and the Human and Orc Fighters.
 - **The Human Fighter pays the most and finishes last,** its 28,630 learned at level 19 with 3,900
   SP to spare. Half of it buys Mortal Blow and Power Shot, which only work with a dagger or a bow, and
   the bench buys every line; a player who stays with one weapon finishes sooner and saves more.
-- **From the end of the list to level 20, the trainer has nothing left to sell.** That is 30 to 85
-  hunts while 3,900 to 13,100 SP builds up for the class change (11,900 to 17,700 before Weapon
-  Mastery and Anti Magic). A first tier of class-change skills priced at about 4,000 to 13,000 is
+- **From the end of the list to level 20, the trainer has nothing left to sell.** That is 31 to 130
+  hunts while 3,900 to 14,800 SP builds up for the class change (11,900 to 17,700 before Weapon
+  Mastery and Anti Magic). A first tier of class-change skills priced at about 4,000 to 15,000 is
   what a set that learned everything can afford on reaching 20; one that skipped a mastery has more.
 
 ## The shop: Adena
@@ -177,32 +184,31 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 20-minute auras cast in the fight (`b47cf90`), with 2-minute auras raised before the pull
 (`3a65708`), with every chest, legs and necklace priced as many of its slot as it stands for
 (`6a43a98`), with Armor or Robe Mastery for each path (`613b52f`), and now, with Weapon Mastery and
-Anti Magic for every set. Each step is compared run for run (`bench/compare.exs`).
+Anti Magic for every set and the late lines at Lineage II's prices. Each step is compared run for run (`bench/compare.exs`).
 
 | Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Now |
 |---|---|---|---|---|---|---|---|---|
 | Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 |
 | Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 |
-| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **181 / 182** |
-| Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 216 |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 182** |
+| Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 |
 | Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 194 / 193 |
 | Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 |
-| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 239 |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 239 / 238 |
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **272 / 271** |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** |
 
-- **Weapon Mastery and Anti Magic make every set 2% to 15% faster.** Weapon Mastery does it: Anti
-  Magic, measured alone, moved no set by more than 3% (the Elven Fighter, slower, for its SP). A
-  Fighter's fight ends sooner, so it saves fighting (6 to 14 minutes) and more rest (5 to 21), since
-  each fight costs less HP; the melee Fighters gain 10% to 12%, the archers 5% (Power Shot's power
-  matters more to them than P.Atk does). The Dark Mystic gains most, 13% and 15.2% with the
-  two-hander, past the bar's 15%, which the game takes: Wind Strike and Vampiric Touch grow with
-  M.Atk and its time was rest. The Orc Mystic gains least, 2% to 3%, since Chill Flame burns for a
-  fixed amount, so it is the slowest set by more: the spread from the fastest set to the slowest
-  narrows from 95 to 90 minutes resting to full, and widens from 106 to 114 carrying potions. The
-  hunts to 20 are the same, since a kill pays the same EXP: the time saved is all in the fights and
-  the rest after them.
-
+- **The four masteries and the canon prices make every set 1% to 16% faster** than Armor or Robe
+  Mastery alone. Weapon Mastery does it: Anti Magic, measured alone, moved no set by more than 3%
+  (the Elven Fighter, slower, for its SP). A Fighter's fight ends sooner, so it saves fighting (6 to
+  14 minutes) and more rest (5 to 21), since each fight costs less HP; the melee Fighters gain 10%
+  to 12%, the archers 5% to 7% (Power Shot's power matters more to them than P.Atk does). The Dark
+  Mystic gains most, 13.5% and 15.6% with the two-hander, past the bar's 15%, which the game takes:
+  Wind Strike and Vampiric Touch grow with M.Atk and its time was rest. The Orc Mystic gains least,
+  1% to 3%, since Chill Flame burns for a fixed amount, so it is the slowest set by more: the spread
+  from the fastest set to the slowest narrows from 95 to 92 minutes resting to full, and widens
+  from 106 to 118 carrying potions. The hunts to 20 are the same, since a kill pays the same EXP:
+  the time saved is all in the fights and the rest after them.
 - **Armor or Robe Mastery for each path made every set 1% to 3% faster,** and the Orc Mystic 4% to 5%, which
   gives back about half of what pricing each piece cost; the spread from the fastest set to the
   slowest narrows from 100 to 95 minutes. A mastery adds only to defence, so it shortens no fight
@@ -250,17 +256,17 @@ Anti Magic for every set. Each step is compared run for run (`bench/compare.exs`
 The bench at its defaults rests to full before every hunt, so survival is read with no potions and
 resting only once a bar falls below a share, `harsh` and `harsher` in a `--final` matrix. Deaths of
 200 runs a path with Armor or Robe Mastery alone (`613b52f`), then now, with Weapon Mastery and Anti
-Magic as well:
+Magic as well and the late lines at Lineage II's prices:
 
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0 | 0 / 0, 0 / 0 | |
 | Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4 | 1 / 4, 1 / 4 | Spore Fungus, at 9 |
 | Dark Mystic | staff 1h / 2h | 3 / 7, **2 / 6** | 5 / 12, **5 / 7** | Balor Orc Fighter, at 10 |
-| Orc Mystic | staff 1h / 2h | 0 / 1, **0 / 0** | 5 / 10, **2 / 8** | Skeleton Longbowman, at 19 |
+| Orc Mystic | staff 1h / 2h | 0 / 1, **0 / 0** | 5 / 10, **0 / 9** | Skeleton Longbowman, at 19 |
 | Human Fighter | bow | 47, 59 | 191, 194 | Blade Spider, Talon Spider, at 16 and 17 |
-| Elven Fighter | bow | 68, **49** | 197, 194 | Dread Soldier, Dungeon Skeleton Archer |
-| Dark Fighter | dagger | 60, **24** | 180, 159 | Cave Fang Spider, Doom Soldier |
+| Elven Fighter | bow | 68, **34** | 197, 183 | Dark Terror, Dread Soldier |
+| Dark Fighter | dagger | 60, **14** | 180, **125** | Balor Orc Archer, Cave Fang Spider |
 | Human Fighter | sword 1h / 2h / dagger | 2 / 55 / 59, **0 / 11 / 23** | 161 / 199 / 196, **65 / 156 / 173** | Blade Spider, Talon Spider |
 | Orc Fighter | fists | 118, **10** | 199, 189 | Skeleton Longbowman, at 19 |
 | Orc Fighter | sword 1h / 2h | 141 / 91, **40 / 10** | 200 / 200, 198 / 199 | Evil Eye Watcher, Skeleton Longbowman |
@@ -359,7 +365,7 @@ Magic as well:
 
 ## Both together
 
-The shop runs out at about hunt 200 to 275 and level 16 to 18, and the trainer later, at hunt 258
-to 329 and level 17 to 19, now that it teaches four masteries. From there to level 20, a run has nothing to buy and only the level
+The shop runs out at about hunt 200 to 275 and level 16 to 18, and the trainer at hunt 229 to 316
+and level 17 to 19, now that it teaches four masteries. From there to level 20, a run has nothing to buy and only the level
 to climb. That stretch is where the class change, the Temple's buffs, and Gludio's first ground and
 shops will matter most.
