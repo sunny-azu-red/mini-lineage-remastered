@@ -21,7 +21,7 @@ defmodule MiniLineageWeb.Screens do
     "highscores" => "Monument of Heroes",
     "inventory" => "Inventory",
     "trader" => "Traders",
-    "trader-weapons" => "Weapons Trader",
+    "trader-weapon" => "Weapon Trader",
     "trader-armour" => "Armour Trader",
     "trader-magic" => "Magic Trader",
     "trader-sell" => "Sell",
@@ -41,7 +41,7 @@ defmodule MiniLineageWeb.Screens do
   def icon("hunt", _view), do: "⚔️"
   def icon("inventory", _view), do: "🎒"
   def icon("trader", _view), do: "🛒"
-  def icon("trader-weapons", _view), do: "⚔️"
+  def icon("trader-weapon", _view), do: "⚔️"
   def icon("trader-armour", _view), do: "🛡️"
   def icon("trader-magic", _view), do: "⚗️"
   def icon("trader-sell", _view), do: "💰"
@@ -242,12 +242,12 @@ defmodule MiniLineageWeb.Screens do
   # Rules §24: each trader's page, whose line opens it and the slots it sells. The jeweller and the
   # grocer keep the Magic Trader together, as the Newbie Guide's shop of that name.
   @trader_parts [
-    {"trader-weapons", :weapons, [:weapon]},
+    {"trader-weapon", :weapon, [:weapon]},
     {"trader-armour", :armour, [:chest, :legs, :shield]},
     {"trader-magic", :magic, [:necklace, :potion]}
   ]
 
-  defp sellers(traders), do: [traders.weapons, traders.armour, traders.jewellery, traders.grocer]
+  defp sellers(traders), do: [traders.weapon, traders.armour, traders.jewellery, traders.grocer]
 
   # Rules §26: how many potions one purchase may take.
   @potion_lots [1, 10]
@@ -268,7 +268,7 @@ defmodule MiniLineageWeb.Screens do
 
     ~H"""
     <p id="trader-intro" phx-no-format>
-      {@view.traders.weapons} sells weapons, {@view.traders.armour} armour and shields, and {@view.traders.jewellery} and {@view.traders.grocer} jewellery and potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
+      {@view.traders.weapon} sells weapons, {@view.traders.armour} armour and shields, and {@view.traders.jewellery} and {@view.traders.grocer} jewellery and potions here in {@view.town.emoji} {@view.town.name}, and any of them buys back what they sell for half of what they ask.
     </p>
     <.select_action
       id="trader-form"

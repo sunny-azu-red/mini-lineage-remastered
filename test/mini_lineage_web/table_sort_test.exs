@@ -22,15 +22,15 @@ defmodule MiniLineageWeb.TableSortTest do
     |> render_submit(%{"name" => "Sorter", "race_id" => "0", "path" => "fighter"})
 
     Characters.mutate(session, &{%{&1 | adena: 10_000}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/trader/weapons")
+    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
     render_hook(view, "buy", %{"item" => "Short Sword"})
     %{conn: conn}
   end
 
   # Each page, and the sort every table on it opens on.
   @pages [
-    {"/talking-island/trader/weapons", %{"stock" => {"price", :asc}}},
-    {"/talking-island/trader/sell", %{"sellable" => {"buyback", :desc}}},
+    {"/talking-island/traders/weapon", %{"stock" => {"price", :asc}}},
+    {"/talking-island/traders/sell", %{"sellable" => {"buyback", :desc}}},
     {"/inventory", %{"items" => {"slot", :asc}}},
     {"/talking-island/gatekeeper", %{"routes-table" => {"fee", :asc}}},
     {"/talking-island/guild", %{"lessons" => {"learn_at", :asc}}},

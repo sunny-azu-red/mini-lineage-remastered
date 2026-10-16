@@ -9,7 +9,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
   distance, `Actions.hunt/1`, and death), each village's traders, four by name
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
-  (`/<village>/trader/<weapons|armour|magic|sell>`, each set shown its path's goods by
+  (`/<village>/traders/<weapon|armour|magic|sell>`, each set shown its path's goods by
   `Rules.stock/2`), and the inventory beside its Combat
   Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
   and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
@@ -235,7 +235,7 @@ Each of these is here because it was got wrong once.
 
 - **The URL is where you are.** A character stands in one town (rules §14), stored as `location`.
   Each open town, its Gatekeeper, its ground (`/<town>/<ground>`) and a village's trader
-  (`/<town>/trader`) have literal routes generated from the rules tables, never a pattern. `/` is
+  (`/<town>/traders`) have literal routes generated from the rules tables, never a pattern. `/` is
   game start for a visitor and, for a character, a patch to its town: `GameLive` compares the pinned
   place's address with the one asked for, not the screen alone. A place is `{screen, town}`. A new
   place to stand (a shop, a hunting ground) gets its own URL when built; a state that happens to you

@@ -702,14 +702,14 @@ defmodule MiniLineage.Game.RulesTest do
     end
 
     test "§24 each village's four traders" do
-      rows = table("Village | Weapons Trader")
+      rows = table("Village | Weapon Trader")
       assert length(rows) == length(Enum.filter(Rules.towns(), &Rules.village?(&1.slug)))
 
-      for [village, weapons, armour, jewellery, grocer] <- rows do
+      for [village, weapon, armour, jewellery, grocer] <- rows do
         slug = Enum.find(Rules.towns(), &(&1.name == village)).slug
 
         assert Rules.traders(slug) ==
-                 %{weapons: weapons, armour: armour, jewellery: jewellery, grocer: grocer},
+                 %{weapon: weapon, armour: armour, jewellery: jewellery, grocer: grocer},
                village
       end
     end

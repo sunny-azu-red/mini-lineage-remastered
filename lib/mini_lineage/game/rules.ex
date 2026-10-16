@@ -655,24 +655,24 @@ defmodule MiniLineage.Game.Rules do
   # Magic Trader together.
   @traders %{
     "talking-island" => %{
-      weapons: "Lector",
+      weapon: "Lector",
       armour: "Jackson",
       jewellery: "Silvia",
       grocer: "Katerina"
     },
     "elven-village" => %{
-      weapons: "Unoren",
+      weapon: "Unoren",
       armour: "Ariel",
       jewellery: "Creamees",
       grocer: "Herbiel"
     },
     "dark-elf-village" => %{
-      weapons: "Iria",
+      weapon: "Iria",
       armour: "Payne",
       jewellery: "Minaless",
       grocer: "Vollodos"
     },
-    "orc-village" => %{weapons: "Jakal", armour: "Kunai", jewellery: "Uska", grocer: "Papuma"}
+    "orc-village" => %{weapon: "Jakal", armour: "Kunai", jewellery: "Uska", grocer: "Papuma"}
   }
 
   # Rules §25: where each set learns its skills, and from whom.

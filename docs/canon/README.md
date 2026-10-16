@@ -254,6 +254,9 @@ the fight uses them.
 - **The jeweller and the grocer share one counter, the Magic Trader** (rules §24), its jewellery
   and potions on one page with both keepers greeting you. In Lineage II each kept a shop window of
   their own, though the Newbie Guide already named their building the Magic Trader.
+- **The Weapon Trader is singular,** as the Armour Trader and the Magic Trader are, and so is its
+  address (`/traders/weapon`). Lineage II wrote "Weapons Trader" beside "Armor Trader" (Giran's
+  titles, the Newbie Guide's building), a quirk kept nowhere else.
 - **Shops charge an item's canon price, with no castle tax** (Lineage II added the castle lord's
   tax, 15% in a village), and nothing mentions one.
 - **NPC shops sell better gear in more advanced towns, for more money.** In Lineage II no NPC

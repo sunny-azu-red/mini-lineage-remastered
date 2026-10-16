@@ -3,7 +3,7 @@ defmodule MiniLineageWeb.Paths do
 
   alias MiniLineage.Game.{Constants, Format, Rules}
 
-  @trader_pages ~w(weapons armour magic sell)
+  @trader_pages ~w(weapon armour magic sell)
 
   @routes [
     {"races", "/races"},
@@ -35,10 +35,10 @@ defmodule MiniLineageWeb.Paths do
   def for_screen({"town", slug}) when is_binary(slug), do: "/#{slug}"
   def for_screen({"gatekeeper", slug}) when is_binary(slug), do: "/#{slug}/gatekeeper"
 
-  def for_screen({"trader", slug}) when is_binary(slug), do: "/#{slug}/trader"
+  def for_screen({"trader", slug}) when is_binary(slug), do: "/#{slug}/traders"
 
   def for_screen({"trader-" <> page, slug}) when is_binary(slug) and page in @trader_pages,
-    do: "/#{slug}/trader/#{page}"
+    do: "/#{slug}/traders/#{page}"
 
   def for_screen({"guild", slug}) when is_binary(slug), do: "/#{slug}/guild"
 

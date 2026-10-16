@@ -659,7 +659,7 @@ Each village keeps four traders: one for weapons, one for armour who sells the s
 jeweller and a grocer who keep the Magic Trader together, its jewellery and its potions. Any of them
 buys back:
 
-| Village | Weapons Trader | Armour Trader | Jeweller | Grocer |
+| Village | Weapon Trader | Armour Trader | Jeweller | Grocer |
 |---|---|---|---|---|
 | Talking Island Village | Lector | Jackson | Silvia | Katerina |
 | Elven Village | Unoren | Ariel | Creamees | Herbiel |

@@ -558,11 +558,11 @@ try {
     check('the village\'s four traders are named, each by what they sell',
         (await text('#trader-intro')).startsWith('Iria sells weapons, Payne armour and shields, and Minaless and Vollodos jewellery and potions'),
         await text('#trader-intro'));
-    await page.selectOption('#trader-form select', 'trader-weapons');
+    await page.selectOption('#trader-form select', 'trader-weapon');
     await page.click('#trader-form button');
-    await onScreen('trader-weapons');
+    await onScreen('trader-weapon');
     check('the weapons trader is a page of its own, Iria showing a Dark Fighter daggers and nothing else',
-        new URL(page.url()).pathname === '/dark-elf-village/trader/weapons'
+        new URL(page.url()).pathname === '/dark-elf-village/traders/weapon'
         && (await text('#trader-intro')).startsWith('Iria deals in no weapons made by clumsy Humans')
         && (await page.locator('#screen table').evaluateAll((tables) => tables.map((t) => t.id))).join() === 'stock'
         && (await rowIds('#shelf-daggers')) === 'stock-bone-dagger,stock-knife,stock-dirk,stock-throwing-knife'
@@ -817,7 +817,7 @@ try {
     await home();
     await travel('trader', 'trader');
     await holdEach();
-    await browse('trader-weapons');
+    await browse('trader-weapon');
     await holdEach();
     await home();
     await hurt();
