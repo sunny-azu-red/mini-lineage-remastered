@@ -4,7 +4,7 @@
 # what the trainer costs and when, and what the shop costs and when. docs/balance.md reads it.
 #
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
-#     [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
+#     [--json path] [--only "Set name,Set name"] [--orders <pull share>,<fight share>]
 #     [--unused "Skill,Skill"]
 #   MIX_ENV=test mix run --no-start bench/ladder.exs --matrix <path prefix> [--final] [runs] [top level]
 #     [--only "Set name"] ...: the study's settings in one go, each into <prefix>_<setting>.txt/.json
@@ -431,10 +431,13 @@ studies =
     [{opts[:json] && Path.rootname(opts[:json]), setting.(rest_below, kept)}]
   end
 
+# "Human Mystic,Orc Mystic": the sets a change touches, since no set's runs read another's.
+only = String.split(opts[:only] || "", ",", trim: true)
+
 paths =
   for race <- [0, 2, 3, 1],
       path <- [:fighter, :mystic],
-      opts[:only] in [nil, Rules.set(race, path).name],
+      only == [] or Rules.set(race, path).name in only,
       weapons <- Ladder.paths(race, path),
       do: {race, path, weapons, "#{Rules.set(race, path).name}, #{weapons.label}"}
 

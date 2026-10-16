@@ -21,9 +21,9 @@ of them died. The bench learns every line, the masteries included, which a playe
 trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
 
     MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
-      [--json path] [--only "Set name"] [--orders <pull share>,<fight share>]
+      [--json path] [--only "Set name,Set name"] [--orders <pull share>,<fight share>]
     MIX_ENV=test mix run --no-start bench/ladder.exs --matrix <path prefix> [--final] [runs]
-      [--only "Set name"]
+      [--only "Set name,Set name"]
 
 `--matrix` takes the study's readings in one go, 200 runs a path unless told otherwise, each into
 `<prefix>_<setting>.txt` and `.json`: `defaults` (resting to full, 20 potions), `harsh` (resting
