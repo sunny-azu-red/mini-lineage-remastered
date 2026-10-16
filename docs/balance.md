@@ -10,9 +10,9 @@ taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc), 
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
 the pull, each fighter's kit a Squire's weapon for every path its skills take, the Orc Mystic's an
 Apprentice's Wand, each path shown only its own goods, one of each kind per price, every chest,
-legs and necklace priced as many of its slot as it stands for, and four masteries on every path,
+legs and necklace priced as many of its slot as it stands for, and three masteries on every path,
 Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for
-both, and every line at Lineage II's price for the levels it holds. One `--final` reading of that
+both, and every line at Lineage II's price but level 1's and Robe Mastery's. One `--final` reading of that
 build, 200 seeded runs of every set up its village's ladder to
 level 20, once per weapon path its skills can use, each run seeded on its own; at the defaults none
 of them died. The bench learns every line, the masteries included, which a player need not.
@@ -86,15 +86,16 @@ that level and buying a line taught there, shown as average / worst:
   Fighter's Power Strike. Moving a Fighter's first skill from 5 to 1 changed no set by more than
   1.4%; a Mystic made to buy its first spell instead died at levels 1 to 3 in nine runs of ten.
 - **No tier is empty, and every set can afford its whole list.** Each tier's first line can be bought
-  on arrival, and every tier past level 1 offers two to five lines, a mastery's among them, so the
-  player chooses the order.
+  on arrival, and every tier past level 1 offers four to six lines, two or three of them masteries,
+  so the player chooses the order.
 - **The masteries are bought after the skills they fight with,** from what is left: the bench buys
   a tier's lines in the trainer's order, the masteries last (Armor or Robe Mastery, then Weapon
   Mastery, then Anti Magic), so they stretch the list rather than delay a skill. Weapon Mastery and
   Anti Magic cost 4,600 to 7,940 SP a set, and every tier now waits longer: at the last tier 34 to
   97 hunts on average, where it was 27 to 49. Robe Mastery 2 costs 6,800 so that a Mystic reaches 20
-  with about what an Elven or Dark Fighter has left; measured at 1,760, 5,000, 6,800 and 8,500, its
-  price moved no death and no set's time by more than 0.6%.
+  with about what an Elven or Dark Fighter has left; measured at 1,760, 5,000, 6,800 and 8,500 on
+  `613b52f`, before Weapon Mastery and Anti Magic, its price moved no death and no set's time by
+  more than 0.6%. It is the one line past level 1 that costs more than Lineage II asks.
 - **The late lines cost what Lineage II asks,** where the Elven and Dark Fighters' at 15 and the
   Human, Dark and Orc Mystics' at 14 cost 1,350 to 4,250 SP more a set to soak up the SP of the
   masteries then left out. Back at canon, those five sets finish their lists up to a level sooner
@@ -184,7 +185,8 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 20-minute auras cast in the fight (`b47cf90`), with 2-minute auras raised before the pull
 (`3a65708`), with every chest, legs and necklace priced as many of its slot as it stands for
 (`6a43a98`), with Armor or Robe Mastery for each path (`613b52f`), and now, with Weapon Mastery and
-Anti Magic for every set and the late lines at Lineage II's prices. Each step is compared run for run (`bench/compare.exs`).
+Anti Magic for every set and the late lines at Lineage II's prices (`87027a5`), both steps in one
+column. Each step is compared run for run (`bench/compare.exs`).
 
 | Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Now |
 |---|---|---|---|---|---|---|---|---|
@@ -198,7 +200,7 @@ Anti Magic for every set and the late lines at Lineage II's prices. Each step is
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 |
 | Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** |
 
-- **The four masteries and the canon prices make every set 1% to 16% faster** than Armor or Robe
+- **The masteries and the canon prices make every set 1% to 16% faster** than Armor or Robe
   Mastery alone. Weapon Mastery does it: Anti Magic, measured alone, moved no set by more than 3%
   (the Elven Fighter, slower, for its SP). A Fighter's fight ends sooner, so it saves fighting (6 to
   14 minutes) and more rest (5 to 21), since each fight costs less HP; the melee Fighters gain 10%
@@ -246,8 +248,8 @@ Anti Magic for every set and the late lines at Lineage II's prices. Each step is
   was 147: its WIT gives the slowest Casting Spd., and Chill Flame burns three rounds after it is
   begun. Soul Cry left unused by the battle orders saves about 9% more.
 - **The Orc Mystic has no Venom.** It was never cast: a poison comes only while the spells rest, and
-  Chill Flame or Life Drain is always ready. Without it the set is 0.4% faster for its SP, finishes
-  its list at level 14 for 7,840 SP, and its level 7 lines are back at Lineage II's 520.
+  Chill Flame or Life Drain is always ready. Without it the set was 0.4% faster for its SP, then
+  finishing its list at level 14 for 7,840 SP, and its level 7 lines are back at Lineage II's 520.
 - **With potions and resting below half**, the Mystics took 11% to 13% longer once the fight had
   distance, since a fight lasts longer once a spell lands late, and buy far fewer potions.
 
@@ -271,9 +273,10 @@ Magic as well and the late lines at Lineage II's prices:
 | Orc Fighter | fists | 118, **10** | 199, 189 | Skeleton Longbowman, at 19 |
 | Orc Fighter | sword 1h / 2h | 141 / 91, **40 / 10** | 200 / 200, 198 / 199 | Evil Eye Watcher, Skeleton Longbowman |
 
-- **Weapon Mastery and Anti Magic halve or better the deaths of every Fighter who takes risks,** but
-  the Human archer's, and the Orc Fighter's most: resting at half without potions it dies in 10 to 40
-  runs of 200 where it died in 91 to 141. Weapon Mastery ends a fight sooner, so less HP is lost to
+- **Resting at half without potions, the masteries and the canon prices halve or better the
+  deaths of every Fighter but the Human archer,** the Elven Fighter's (68 to 34) with the canon
+  prices' help, and the Orc Fighter's most: it dies in 10 to 40 runs of 200 where it died in 91 to
+  141. Resting at 30%, nearly every Fighter still dies. Weapon Mastery ends a fight sooner, so less HP is lost to
   it. Anti Magic is the Orc Fighter's: its level 10 deaths are to the Evil Eyes' spells, which only
   M.Def turns aside, and at 400 runs Weapon Mastery alone left 35 / 90 / 57 deaths, both 21 / 74 /
   20. What still kills it is the Skeleton Longbowman's arrows at 19. Elsewhere Anti Magic only costs
@@ -366,6 +369,6 @@ Magic as well and the late lines at Lineage II's prices:
 ## Both together
 
 The shop runs out at about hunt 200 to 275 and level 16 to 18, and the trainer at hunt 229 to 316
-and level 17 to 19, now that it teaches four masteries. From there to level 20, a run has nothing to buy and only the level
-to climb. That stretch is where the class change, the Temple's buffs, and Gludio's first ground and
+and level 17 to 19, now that it teaches three masteries a set. From there to level 20, a run has nothing to buy and
+only the level to climb. That stretch is where the class change, the Temple's buffs, and Gludio's first ground and
 shops will matter most.

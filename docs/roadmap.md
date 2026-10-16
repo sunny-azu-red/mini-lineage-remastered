@@ -103,8 +103,8 @@ follows before characters reach 15.
   start. Nothing else comes free.
 - **SP comes from monsters,** like EXP.
 - **A short list per set** until the first class change, learned with SP from the trainers of the
-  character's own village (rules §25, built): the first skill and two to four more from its canon
-  tree, chosen so each set plays its own way (rules §19), and four masteries. The rest are
+  character's own village (rules §25, built): the first skill and two to five more from its canon
+  tree, chosen so each set plays its own way (rules §19), and three masteries. The rest are
   actives, a heal, an aura, a drain, a curse or a toggle; the masteries are passives, Armor Mastery
   for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for both, and
   the guild shelves the two kinds apart. Whether to learn a mastery is the player's: Anti Magic
@@ -113,7 +113,7 @@ follows before characters reach 15.
   before the pull, and counts down over its icon and on the character page. The character page's
   Skills panel is the spellbook: what it knows, in the numbers the fight uses for it (what a heal
   mends, how often a blow lands, when each is ready again), never a formula.
-- **A skill grows in steps** of 3 or 4 lines, each a character level's worth of canon levels, and
+- **A skill grows in steps** of up to 4 lines, each a character level's worth of canon levels, and
   the trainer shows only each skill's next line, no two lines of one skill opening at one level.
   Every set starts knowing its first skill, and the SP left from level 15 waits for the class
   change's skills.
@@ -126,7 +126,7 @@ follows before characters reach 15.
 Needs the class tree in the canon first.
 
 - **Fighter and Mystic** are already the two paths of the base layer.
-- **Priced against what a run brings to 20:** 11,900 to 17,700 SP and 227,000 to 363,000 Adena
+- **Priced against what a run brings to 20:** 3,900 to 14,800 SP and 227,000 to 363,000 Adena
   with nothing left to buy in the village ([balance.md](balance.md)).
 - **Class transfers** at levels 20 and 40, and a third at 76, where each next class grows HP and MP
   differently.

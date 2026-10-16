@@ -9,6 +9,7 @@ defmodule MiniLineage.Game.RulesTest do
   alias MiniLineage.Game.{Clock, Constants, Formulas, Hunt, Math, Player, Rng, Rules, Shop}
 
   @rules File.read!("docs/rules.md")
+  @canon File.read!("docs/canon/skills.md")
 
   # The rows of the markdown table whose header starts with `first`, as lists of trimmed cells.
   defp table(first) do
@@ -485,6 +486,59 @@ defmodule MiniLineage.Game.RulesTest do
                "#{set} #{skill} #{level}"
 
         assert {learn_at, cost} == {String.to_integer(from), trunc(number(sp))}
+      end
+    end
+
+    test "§25 every line costs what Lineage II asks for the canon levels it holds, but the departures" do
+      # {set, skill, level taught at} => {the top canon level taught there, SP a canon level}
+      canon =
+        for section <- @canon |> String.split("\n### ") |> tl(),
+            [set | lines] = String.split(section, "\n"),
+            line <- lines,
+            [_, skill, learned, sp] <-
+              [Regex.run(~r/^\| ([^|]+?) \| \d+ \| ([^|]+?) \| ([^|]+?) \|/, line)],
+            groups = Regex.scan(~r/(\d+) \(levels? (\d+)(?:–(\d+))?\)/u, learned),
+            prices = for([n] <- Regex.scan(~r/\d+/, sp), do: String.to_integer(n)),
+            length(groups) == length(prices),
+            {[_, at | levels], price} <- Enum.zip(groups, prices),
+            into: %{},
+            do:
+              {{set, skill, String.to_integer(at)}, {String.to_integer(List.last(levels)), price}}
+
+      line_sp = fn set, skill, level ->
+        Enum.find(Rules.lessons(set), &(&1.skill == skill and &1.level == level)).sp
+      end
+
+      for set <- Rules.sets(),
+          {skill, lessons} <- Enum.group_by(Rules.lessons(set.name), & &1.skill) do
+        lessons
+        |> Enum.sort_by(& &1.level)
+        |> Enum.reduce(0, fn lesson, held ->
+          name = "#{set.name} #{skill} #{lesson.level}"
+
+          cond do
+            # Level 1 is its own rule (§25): the first skill free, one more for 50 or 60.
+            lesson.learn_at == 1 ->
+              1
+
+            # Every Mystic pays the Orc Mystic's canon for line 1, and §25's 6,800 for line 2.
+            skill == "Robe Mastery" ->
+              {top, price} = canon[{"Orc Mystic", skill, 7}]
+              assert lesson.sp == if(lesson.level == 1, do: top * price, else: 6_800), name
+              held
+
+            # Lineage II teaches it Mystics only; a Fighter pays what its race's Mystic does.
+            skill == "Anti Magic" and set.path == :fighter ->
+              mystic = String.replace(set.name, "Fighter", "Mystic")
+              assert lesson.sp == line_sp.(mystic, skill, lesson.level), name
+              held
+
+            true ->
+              assert {top, price} = canon[{set.name, skill, lesson.learn_at}], name
+              assert lesson.sp == (top - held) * price, name
+              top
+          end
+        end)
       end
     end
 

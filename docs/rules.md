@@ -494,7 +494,8 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
   §10 and before any aura, or multiplies it by a share, in the order the table lists them. A bonus
   that names what is worn holds only while the chest piece worn is of that kind (§23): Robe
   Mastery's P.Def in a robe, Armor Mastery's Evasion in light armour. Weapon Mastery is a Fighter's
-  P.Atk and a Mystic's M.Atk (and its P.Atk), each its own lines, as in Lineage II.
+  P.Atk and a Mystic's M.Atk (and its P.Atk), each its own lines, as in Lineage II, whose slower
+  casting for a Mystic with a bow or a polearm never applies, since no Mystic is sold either.
 
 Monsters cast these:
 

@@ -184,7 +184,7 @@ Each of these is here because it was got wrong once.
   perks (§15, §16) and the auras a character raised (§19, kept in `buffs` to the millisecond they
   fade) are auras the same way: `Player.conditions/1` derives them with the modifiers `Rules` gives,
   and `Player.stats/1` applies exactly those. A perk names its race in its own clause. A mastery
-  (§19, a `passive`) is no aura and has no icon: `Player.stats/1` adds (or, with `times`,
+  (§19, a `passive`) is no aura and has no aura icon: `Player.stats/1` adds (or, with `times`,
   multiplies by) the bonuses `Rules` gives its line, in order, before any aura, and its row on
   Learned Skills says so. A skill whose lines differ by path keeps one name and is looked up with
   `Rules.skill/3` (Weapon Mastery: a Fighter's P.Atk, a Mystic's M.Atk), never a second name.

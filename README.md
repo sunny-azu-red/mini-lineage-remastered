@@ -25,7 +25,8 @@ checked against Interlude's own data.
   tree for the SP of the hunt: the Human Fighter has a skill for every weapon, the Elven Fighter
   guards with Defense Aura, the Dark Fighter strikes with Attack Aura, the Orc Fighter rests with
   Relax, and each Mystic has its own spells. A skill grows in a few big steps rather than nine
-  small ones. Auras hold 2 minutes and go up before the pull.
+  small ones. Auras hold 2 minutes and go up before the pull. Three masteries a path (Armor or Robe,
+  Weapon, Anti Magic) are there to learn or skip, as the monsters met make worth it.
 - **Rest heals, and says so.** While HP or MP is short, 🌿 *Regenerating* shows what a 3-second tick
   heals, and the tick heals it. The aura and the healing are one condition, so neither appears
   without the other.
