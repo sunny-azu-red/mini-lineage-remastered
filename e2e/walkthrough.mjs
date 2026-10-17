@@ -706,8 +706,8 @@ try {
         await page.locator('#lesson-mortal-blow-1').count() === 0 &&
         await page.locator('#lesson-mortal-blow-3').count() === 0);
     check('...with the level it requires and its SP named in full on hover',
-        await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Level Required' &&
-        await page.getAttribute('#lessons th:nth-child(4)', 'title') === 'Skill Points');
+        await page.getAttribute('#lessons th:nth-child(2)', 'title') === 'Level Required' &&
+        await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Skill Points');
     check('...opening on the level each line requires',
         await page.locator('#lessons th[aria-sort="ascending"] button[phx-value-key="learn_at"]').count() === 1);
     await page.click('#lessons button[phx-value-key="sp"]');
@@ -742,9 +742,9 @@ try {
         await page.locator('#lesson-mortal-blow-4[data-status="ready"]').count() === 1 &&
         await page.locator('#lesson-mortal-blow-5').count() === 0,
         await text('#skill-mortal-blow'));
-    check('...each line naming the weapon it needs, a spell any',
-        await text('#lesson-mortal-blow-4 td:nth-child(2)') === 'Dagger' &&
-        await text('#lesson-drain-health-1 td:nth-child(2)') === 'Any', await text('#lesson-drain-health-1'));
+    check('...a line needing a weapon saying so after its name, a spell nothing',
+        await text('#lesson-mortal-blow-4 td.name .muted') === 'Needs a dagger' &&
+        await page.locator('#lesson-drain-health-1 td.name .muted').count() === 0, await text('#lesson-drain-health-1'));
     check('...shelving the skills fought with apart from the masteries, as a trader shelves its goods',
         await text('#shelf-active tr.shelf th') === 'Active' &&
         await text('#shelf-passive tr.shelf th') === 'Passive' &&

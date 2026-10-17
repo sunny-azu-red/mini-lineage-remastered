@@ -410,9 +410,7 @@ defmodule MiniLineageWeb.Screens do
             lesson <- shelf.lessons,
             lesson.status == :ready,
             do: Map.put(lesson, :group, if(length(shelves) > 1, do: shelf.name))
-          ),
-        # Rules §23: a set whose every line is a spell has no use for the column.
-        weapons?: Enum.any?(assigns.view.lessons, &Rules.weapon_skill?(&1.skill))
+          )
       )
 
     ~H"""
@@ -421,12 +419,11 @@ defmodule MiniLineageWeb.Screens do
     </p>
     <.data_table id="lessons" sort={@sort}>
       <:col class="name" sort="skill">Skill</:col>
-      <:col :if={@weapons?} sort="weapon">Weapon</:col>
       <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
       <:col title="Skill Points" sort="sp">SP</:col>
       <tbody :for={shelf <- @shelves} id={"shelf-#{slug(shelf.name)}"}>
         <tr :if={length(@shelves) > 1} class="shelf">
-          <th colspan={if @weapons?, do: 4, else: 3} scope="rowgroup">{shelf.name}</th>
+          <th colspan="3" scope="rowgroup">{shelf.name}</th>
         </tr>
         <tr
           :for={lesson <- shelf.lessons}
@@ -434,8 +431,13 @@ defmodule MiniLineageWeb.Screens do
           data-status={lesson.status}
           {if lesson.status == :ready, do: [], else: [class: "locked"]}
         >
-          <td class="name">{skill_icon(lesson.skill)} {lesson.skill} {lesson.level}</td>
-          <td :if={@weapons?}>{weapon_label(lesson.skill)}</td>
+          <td class="name">
+            {skill_icon(lesson.skill)} {lesson.skill} {lesson.level}
+            <%= if Rules.weapon_skill?(lesson.skill) do %>
+              <span class="delimiter">&bull;</span>
+              <span class="muted">Needs {Narrative.weapon_for(lesson.skill)}</span>
+            <% end %>
+          </td>
           <td class="num level">{lesson.learn_at}</td>
           <td class="sp">{Format.number(lesson.sp)}</td>
         </tr>
@@ -470,16 +472,7 @@ defmodule MiniLineageWeb.Screens do
   defp lesson_shelf(lesson),
     do: if(Rules.skill(lesson.skill).kind == :passive, do: "Passive", else: "Active")
 
-  # One hand or two alike; "Any" for a skill that needs no weapon.
-  defp weapon_label(skill) do
-    case Rules.skill_weapons(skill) do
-      [] -> "Any"
-      types -> types |> Format.list("or") |> String.capitalize()
-    end
-  end
-
   defp lesson_key(lesson, "skill"), do: {lesson.skill, lesson.level}
-  defp lesson_key(lesson, "weapon"), do: weapon_label(lesson.skill)
   defp lesson_key(lesson, "learn_at"), do: lesson.learn_at
   defp lesson_key(lesson, "sp"), do: lesson.sp
 
@@ -492,7 +485,7 @@ defmodule MiniLineageWeb.Screens do
   def sortable("sellable"), do: table(~w(name buyback), {"buyback", :desc})
   def sortable("items"), do: table(~w(name slot), {"slot", :asc})
   def sortable("routes-table"), do: table(~w(name fee), {"fee", :asc})
-  def sortable("lessons"), do: table(~w(skill weapon learn_at sp), {"learn_at", :asc})
+  def sortable("lessons"), do: table(~w(skill learn_at sp), {"learn_at", :asc})
   def sortable("halls-table"), do: table(~w(name level total_xp adena), {"total_xp", :desc})
 
   def sortable(table) do

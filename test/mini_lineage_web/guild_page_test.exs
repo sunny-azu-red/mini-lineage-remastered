@@ -265,20 +265,20 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert %{sp: 49, skills: %{"Power Strike" => 1}} = stored(session)
   end
 
-  test "each line names the weapon it needs, and a set of spells has no such column" do
+  test "a line needing a weapon says so after its name, and a spell says nothing" do
     {_view, session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
 
-    assert has_element?(view, "#lessons th", "Weapon")
-    assert has_element?(view, "#lesson-power-strike-2 td", "Sword")
-    assert has_element?(view, "#lesson-mortal-blow-1 td", "Dagger")
-    assert has_element?(view, "#lesson-power-shot-1 td", "Bow")
+    assert has_element?(view, "#lesson-power-strike-2 td.name .muted", "Needs a sword")
+    assert has_element?(view, "#lesson-mortal-blow-1 td.name .muted", "Needs a dagger")
+    assert has_element?(view, "#lesson-power-shot-1 td.name .muted", "Needs a bow")
+    refute has_element?(view, "#lesson-armor-mastery-1 td.name .muted")
 
     Characters.mutate(session, &{%{&1 | path: :mystic, skills: %{"Wind Strike" => 1}}, :ok})
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
 
     assert has_element?(view, "#lesson-wind-strike-2")
-    refute has_element?(view, "#lessons th", "Weapon")
+    refute has_element?(view, "#lesson-wind-strike-2 td.name .muted")
   end
 
   test "a toggle says what it costs to light and what it drains after" do
