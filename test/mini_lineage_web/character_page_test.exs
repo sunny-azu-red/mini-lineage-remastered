@@ -90,7 +90,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
     keys = &(doc |> LazyHTML.query(&1) |> LazyHTML.attribute("data-key"))
     {hp, mp} = {Math.js_round(stats.hp_regen), Math.js_round(stats.mp_regen)}
 
-    assert text.("#effect-regenerating") =~ "+#{hp} HP and +#{mp} MP every three seconds."
+    assert text.("#effect-regenerating") =~ "+#{hp} HP and +#{mp} MP every 3s."
 
     assert keys.("#effect-regenerating [data-key]") ==
              ~w(effect-regenerating-hp effect-regenerating-mp)
@@ -99,7 +99,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
              "AnimatedValues"
            ]
 
-    assert text.("#effect-relax") =~ "+5 HP and -3 MP every three seconds."
+    assert text.("#effect-relax") =~ "+5 HP and -3 MP every 3s."
   end
 
   # Rules §16, by day: a buff reads as one, and what it changes wears the stat it changes.

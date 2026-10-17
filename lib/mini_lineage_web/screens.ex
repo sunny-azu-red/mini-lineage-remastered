@@ -704,7 +704,7 @@ defmodule MiniLineageWeb.Screens do
       phx-hook={effect_hook(effect)}
     >
       <p phx-no-format>
-        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="delimiter">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every three seconds.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
+        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="delimiter">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every 3s.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
       </p>
     </div>
     """
@@ -897,19 +897,7 @@ defmodule MiniLineageWeb.Screens do
       )
 
     ~H"""
-    <.skill_does skill={@skill} stats={@stats} key={@key} />
-    <%= if @cast do %>
-      Cast in
-      <span class="speed"><.figure key={"#{@key}-cast"} value={@cast} format={:tenths} /> seconds</span>
-      <%= if @reuse do %>
-        , ready again every
-        <span class="speed"><.figure key={"#{@key}-reuse"} value={@reuse} format={:tenths} /> seconds</span>
-      <% end %>.
-    <% else %>
-      <%= if @reuse do %>
-        Ready again every <span class="speed"><.figure key={"#{@key}-reuse"} value={@reuse} format={:tenths} /> seconds</span>.
-      <% end %>
-    <% end %>
+    <span phx-no-format><.skill_does skill={@skill} stats={@stats} key={@key} /><%= if @cast do %> Cast <span class="speed"><.figure key={"#{@key}-cast"} value={@cast} format={:tenths} />s</span><% end %><%= if @reuse do %>{if @cast, do: ", reuse", else: " Reuse"} <span class="speed"><.figure key={"#{@key}-reuse"} value={@reuse} format={:tenths} />s</span><% end %>{if @cast || @reuse, do: "."}</span>
     """
   end
 
@@ -930,7 +918,7 @@ defmodule MiniLineageWeb.Screens do
 
     ~H|<span class="magic">Power {@skill.power}</span>, slowing the foe's swing and run by
 <span class="speed">{percent_off(@slow.times)}</span>
-for {duration(@slow.ms)}, for <span class="mp">{@skill.mp} MP</span>.|
+for {Format.remaining(@slow.ms)}, for <span class="mp">{@skill.mp} MP</span>.|
   end
 
   defp skill_does(%{skill: %{kind: :magic}} = assigns),
@@ -945,7 +933,7 @@ for {duration(@slow.ms)}, for <span class="mp">{@skill.mp} MP</span>.|
     assigns = assign(assigns, lasts: Hunt.burn_ms())
 
     ~H|Burns <span class="magic">{@skill.power} HP a second</span>
-for {duration(@lasts)}, <span class="magic">{div(@skill.power * @lasts, 1000)} HP</span>
+for {Format.remaining(@lasts)}, <span class="magic">{div(@skill.power * @lasts, 1000)} HP</span>
 in all, for <span class="mp">{@skill.mp} MP</span>.|
   end
 
@@ -960,24 +948,24 @@ for <span class="mp">{@skill.mp} MP</span>.|
   defp skill_does(%{skill: %{kind: :aura}} = assigns),
     do:
       ~H|<span class={stat_class(@skill.stat)}>+{round((@skill.times - 1) * 100)}% {stat_name(@skill.stat)}</span>
-for {duration(@skill.lasts)}, for <span class="mp">{@skill.mp} MP</span>.|
+for {Format.remaining(@skill.lasts)}, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :poison}} = assigns),
     do:
       ~H|Takes <span class="debuff">{@skill.power} HP</span>
-every {duration(@skill.every)} for {duration(@skill.lasts)},
+every {Format.remaining(@skill.every)} for {Format.remaining(@skill.lasts)},
 <span class="debuff">{div(@skill.power * @skill.lasts, @skill.every)} HP</span>
 in all, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :shackle}} = assigns),
     do:
       ~H|The foe swings <span class="speed">{percent_off(@skill.times)} slower</span>
-for {duration(@skill.lasts)}, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
+for {Format.remaining(@skill.lasts)}, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :toggle}} = assigns),
     do: ~H|<span class="attack">P.Atk +{@skill.power}</span>
 for <span class="mp">{@skill.mp} MP</span>, then <span class="mp">{@skill.drain} MP</span>
-every {duration(@skill.every)}.|
+every {Format.remaining(@skill.every)}.|
 
   defp skill_does(%{skill: %{kind: :rest}} = assigns),
     do: ~H|<span class="regen">+{@skill.power} HP</span>
@@ -1014,11 +1002,6 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
   # "30%" for a × 0.7.
   defp percent_off(times), do: "#{round((1 - times) * 100)}%"
-
-  defp duration(ms) when ms >= 60_000 and rem(ms, 60_000) == 0,
-    do: if(ms == 60_000, do: "a minute", else: "#{div(ms, 60_000)} minutes")
-
-  defp duration(ms), do: "#{div(ms, 1000)} seconds"
 
   defp stat_name(:p_def), do: "P.Def"
   defp stat_name(:p_atk), do: "P.Atk"

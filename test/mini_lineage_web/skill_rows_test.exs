@@ -22,12 +22,12 @@ defmodule MiniLineageWeb.SkillRowsTest do
     %{player | skills: skills, location: "gludio"}
   end
 
-  test "a Fighter's skills say how often they land and when they are ready again" do
+  test "a Fighter's skills say how often they land and when they can be used again" do
     # §19: the Human Fighter's Atk. Spd. 416 rests Power Strike 13,000 × 333 ÷ 416.
     human = page(knowing_all(0, :fighter))
 
     assert row(human, "power-strike") =~
-             "Power 25, never missing, for 10 MP. Ready again every 10.4 seconds."
+             "Power 25, never missing, for 10 MP. Reuse 10.4s."
 
     assert figure(human, "skill-power-strike-reuse") == "104"
 
@@ -35,7 +35,7 @@ defmodule MiniLineageWeb.SkillRowsTest do
     dark = page(knowing_all(3, :fighter))
     assert row(dark, "mortal-blow") =~ "Power 73, landing 45.6% of the time, for 9 MP."
     assert figure(dark, "skill-mortal-blow-lands") == "456"
-    assert row(dark, "attack-aura") =~ "+8% P.Atk for 2 minutes, for 7 MP."
+    assert row(dark, "attack-aura") =~ "+8% P.Atk for 2m, for 7 MP."
   end
 
   test "a Mystic's spells say what they mend, burn or take in HP, never √M.Atk or a power alone" do
@@ -45,20 +45,37 @@ defmodule MiniLineageWeb.SkillRowsTest do
 
     # §19: power + √M.Atk, rounded down.
     mends = trunc(42 + :math.sqrt(stats.m_atk))
-    assert row(doc, "self-heal") =~ "Mends #{mends} HP for 9 MP. Cast in "
+    assert row(doc, "self-heal") =~ "Mends #{mends} HP for 9 MP. Cast "
     refute row(doc, "self-heal") =~ "√"
-    assert row(doc, "ice-bolt") =~ "slowing the foe's swing and run by 30% for 2 minutes"
+    assert row(doc, "ice-bolt") =~ "slowing the foe's swing and run by 30% for 2m"
 
     orc = page(knowing_all(1, :mystic))
-    assert row(orc, "chill-flame") =~ "Burns 20 HP a second for 15 seconds, 300 HP in all"
+    assert row(orc, "chill-flame") =~ "Burns 20 HP a second for 15s, 300 HP in all"
     assert row(orc, "life-drain") =~ "mending 80% of the HP it takes"
 
     dark = page(knowing_all(3, :mystic))
     assert row(dark, "curse-poison") =~ "240 HP in all, landing 70% of the time"
-    assert row(dark, "wind-shackle") =~ "The foe swings 17% slower for 15 seconds, landing 80%"
+    assert row(dark, "wind-shackle") =~ "The foe swings 17% slower for 15s, landing 80%"
   end
 
-  test "a mastery reads as what it adds, as a buff does, and is never ready again" do
+  test "a cast and a reuse read as figures in seconds, flush against the clause around them" do
+    doc = page(knowing_all(0, :mystic))
+
+    assert row(doc, "self-heal") =~ ~r/ for 9 MP\. Cast \d+\.\ds, reuse \d+\.\ds\.$/
+
+    assert doc |> LazyHTML.query("#skill-self-heal .speed") |> Enum.map(&LazyHTML.text/1) ==
+             [
+               "#{figure(doc, "skill-self-heal-cast") |> tenths()}s",
+               "#{figure(doc, "skill-self-heal-reuse") |> tenths()}s"
+             ]
+
+    dark = page(knowing_all(3, :fighter))
+
+    assert row(dark, "attack-aura") =~
+             ~r/^\S+ Attack Aura 1 • \+8% P\.Atk for 2m, for 7 MP\. Cast \d+\.\ds\.$/
+  end
+
+  test "a mastery reads as what it adds, as a buff does, and has no reuse" do
     fighter = %{knowing_all(1, :fighter) | skills: %{"Iron Punch" => 1, "Armor Mastery" => 3}}
     doc = page(fighter)
 
@@ -112,6 +129,8 @@ defmodule MiniLineageWeb.SkillRowsTest do
     [value] = doc |> LazyHTML.query(~s([data-key="#{key}"])) |> LazyHTML.attribute("data-value")
     value
   end
+
+  defp tenths(value), do: value |> String.to_integer() |> MiniLineage.Game.Format.tenths()
 
   defp squish(text), do: text |> String.replace(~r/\s+/, " ") |> String.trim()
 

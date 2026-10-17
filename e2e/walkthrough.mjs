@@ -698,8 +698,8 @@ try {
     check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it',
         await learnedPanel() === 1 && await text('#skill-mortal-blow .skill') === 'Mortal Blow 1',
         await text('#skill-mortal-blow'));
-    check('...saying how often it lands and when it is ready again, worked for this character',
-        /landing \d+\.\d% of the time, for \d+ MP\. Ready again every \d+\.\d seconds\./.test(await text('#skill-mortal-blow'))
+    check('...saying how often it lands and its reuse, worked for this character',
+        /landing \d+\.\d% of the time, for \d+ MP\. Reuse \d+\.\ds\./.test(await text('#skill-mortal-blow'))
         && Number(await page.getAttribute('[data-key="skill-mortal-blow-lands"]', 'data-value')) > 0,
         await text('#skill-mortal-blow'));
     check('...listing each skill\'s next line alone, never the ones after it',
