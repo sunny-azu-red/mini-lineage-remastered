@@ -55,7 +55,7 @@ defmodule MiniLineageWeb.SkillRowsTest do
 
     dark = page(knowing_all(3, :mystic))
     assert row(dark, "curse-poison") =~ "240 HP in all, landing 70% of the time"
-    assert row(dark, "wind-shackle") =~ "The foe swings 17% slower for 15s, landing 80%"
+    assert row(dark, "wind-shackle") =~ "Slows the foe's swing by 17% for 15s, landing 80%"
   end
 
   test "a cast and a reuse read as figures in seconds, flush against the clause around them" do

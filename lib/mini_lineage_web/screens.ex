@@ -960,7 +960,7 @@ in all, landing <span class="accuracy">{@skill.land}% of the time</span>, for <s
 
   defp skill_does(%{skill: %{kind: :shackle}} = assigns),
     do:
-      ~H|The foe swings <span class="speed">{percent_off(@skill.times)} slower</span>
+      ~H|Slows the foe's swing by <span class="speed">{percent_off(@skill.times)}</span>
 for {Format.remaining(@skill.lasts)}, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :toggle}} = assigns),
