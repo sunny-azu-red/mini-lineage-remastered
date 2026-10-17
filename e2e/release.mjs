@@ -51,6 +51,8 @@ try {
     const night = await page.locator('#effects [data-effect-id="night"]').count();
     await page.keyboard.type(night ? 'day' : 'night');
     await page.keyboard.type('lvl');
+    await page.keyboard.type('maxlvl');
+    await page.keyboard.type('half');
     await page.keyboard.type('sp');
     await page.keyboard.press('Control+q');
     await page.waitForTimeout(500);
@@ -58,8 +60,11 @@ try {
         await page.locator('#effects [data-effect-id="night"]').count() === night);
     check('...nor typing sp the SP, which no sidebar shows',
         await page.locator('#sidebar [data-key="sp"]').count() === 0);
-    check('...nor typing lvl the level',
+    check('...nor typing lvl or maxlvl the level',
         await page.getAttribute('#sidebar [data-key="level"]', 'data-value') === '1');
+    check('...nor typing half the HP',
+        await page.getAttribute('#sidebar [data-key="hp"]', 'data-value')
+        === await page.getAttribute('#sidebar [data-key="max-hp"]', 'data-value'));
     check('...nor does Ctrl+Q end the character',
         (await page.textContent('#main .header-name'))?.trim() === '🏕️ Orc Village');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

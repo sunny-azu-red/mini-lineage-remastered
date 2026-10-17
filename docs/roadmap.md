@@ -14,15 +14,17 @@ than a tree, one ground per village rather than six. The names, places, monsters
 what bring Lineage II back; the systems stay small enough to be fun.
 
 **Old mechanics.** What the game was before the base layer is kept in `legacy/`, to read and never
-to run: the Inn, the Weapon and Armor Shops, the Battleground, the Character page and its
-Chronicle, the Hall of Champions, the Tome, the Class Master, the Symbol Maker, timed buffs, the
-Konami cheat, and every sound but the new-game fanfare and the sound switch's chime. Each is
-rebuilt here as its system below, on the base layer, and nothing from `legacy/` comes back as it
-was.
+to run. Rebuilt so far, each on the base layer: the shops (the traders), the Battleground (the
+hunting grounds), the Character page, the Hall of Champions (the Monument of Heroes), timed buffs
+(the auras), and the level-up's and the death's sounds. Still only there: the Inn, a run's
+Chronicle, the Tome, the Class Master, the Symbol Maker, the Konami cheat, and the critical hit's,
+the coin's and the food's sounds. Each comes back as its system below, and nothing from `legacy/`
+comes back as it was.
 
-**Where the content goes.** A system's tables (monsters, items, skills) start in `Rules` beside the
-base layer's, held to this document by `rules_test.exs`. When one grows into the hundreds it moves
-to a data file under `priv/` loaded at compile time, still in git; it goes into Postgres only if it
+**Where the content goes.** A system's tables start in `Rules` beside the base layer's, held to
+`rules.md` by `rules_test.exs`. When one grows into the hundreds it moves to a data file under
+`priv/` loaded at compile time, still in git, as the monsters, the items and the trainers' lessons
+have (`priv/game/*.csv`); it goes into Postgres only if it
 must change without a deploy. Postgres is for what grows with play, which includes every
 character's inventory and every player shop. AGENTS.md has the reasoning.
 
@@ -53,7 +55,7 @@ to keep a reason to be visited. Each system below gives one.
 
 ## The first hunt
 
-The first thing to build, with the canon's monster stats researched first.
+Built (rules §17 to §21), with the canon's monster stats researched first.
 
 - **One ground per village,** a ladder from level 1 to the level where Gludio takes over, under
   one nostalgic name. It draws on every monster around that village, each at its own level and
@@ -68,10 +70,10 @@ The first thing to build, with the canon's monster stats researched first.
 
 - **A ground is reached on foot from its village,** for free.
 - **One click, one fight:** a monster near the character's level, fought to the end in rounds,
-  with blows at Atk. Spd., spells at Casting Spd. and the set's first skill. It pays EXP, SP and
-  Adena.
-- **It can kill.** There is no warning; the HP bar is the player's to read.
-- **Then Gludio:** Ruins of Despair, levels 15 to 24.
+  with blows at Atk. Spd., spells at Casting Spd. and the skills it has learned, as its battle
+  orders say. It pays EXP, SP and Adena.
+- **It can kill.** There is no warning but the sidebar's HP or MP row pulsing under a quarter.
+- **Next, Gludio:** Ruins of Despair, levels 15 to 24.
 
 ## Built with the first hunt
 
@@ -83,10 +85,12 @@ over its icon as the legacy game counted its effects.
 **It ships with the inventory and the village shops.** A seeded run of the first hunt showed that a
 character without gear dies in most fights by level 10, because Lineage II's monsters assume a
 weapon and armour, while the canon's no-grade village gear keeps deaths under 2% to level 14. So
-the hunt goes out with the starting gear, the inventory and each village's shop, and the trainer
-follows before characters reach 15.
+the hunt went out with the starting gear, the inventory and each village's shop, and the trainer
+followed (rules §25).
 
 ## Death and the Halls
+
+Built (rules §21).
 
 - **Death is final.** At 0 HP the run ends and the character is gone, but not forgotten: the row
   is kept, never deleted, with who killed it and where.
@@ -126,7 +130,7 @@ follows before characters reach 15.
 Needs the class tree in the canon first.
 
 - **Fighter and Mystic** are already the two paths of the base layer.
-- **Priced against what a run brings to 20:** 3,900 to 19,600 SP (a Mystic 17,200 or more) and 227,000 to 363,000 Adena
+- **Priced against what a run brings to 20:** 13,600 to 19,600 SP (a Mystic 17,200 or more) and 224,000 to 362,000 Adena
   with nothing left to buy in the village ([balance.md](balance.md)).
 - **Class transfers** at levels 20 and 40, and a third at 76, where each next class grows HP and MP
   differently.
@@ -144,13 +148,15 @@ Built with the first hunt (rules §23 and §24).
 
 - **Three pieces of armour** (chest, legs, necklace) beside the weapon and shield, each standing for
   its whole part of the body.
-- **The sidebar panel shows what is equipped, the potions and the Adena,** each name a link to the
-  inventory page.
+- **The sidebar's Inventory panel shows what is equipped and the Adena,** with one link to the
+  inventory page beside the purse.
 - **The inventory page** holds everything carried, equipped or not, puts it on or takes it off,
-  drinks a potion, and sets the share of HP a fight drinks below (rules §26).
-- **Every set starts with its kit,** equipped: a weapon for each skill path, none of it sold in a shop.
-- **Each village's trader** sells the canon village lists at their canon prices, with no tax, and
-  buys back for half.
+  drinks a potion and destroys what isn't wanted. The share of HP a fight drinks below (rules §26)
+  is a battle order, on the character page.
+- **Every set starts with its kit,** the wearable part equipped: a weapon for each skill path, none
+  of it sold in a shop.
+- **Each village's trader** sells the canon village lists at canon prices, each armour piece by the
+  share of its part it stands for, with no tax, and buys back for half.
 - **The bag holds 15 items,** worn ones included and a potion's stack as one, so outgrown gear is
   sold rather than hoarded.
 - **Next:** a player shop opened from the inventory page, by choosing what to sell and for how much.
@@ -195,7 +201,7 @@ Discussed in full when it is built.
   every shop. The Town of Gludio's brings the 244,000 tier the villages stop short of (Falchion,
   Sword Breaker, Composition Bow, as Lineage II's towns sold them); the Zweihander stays the
   villages' own.
-- **The trainers and the class master in each village,** for its own race.
+- **The trainers (built, rules §25) and the class master in each village,** for its own race.
 - **The Newbie Guide in each village,** with its free buffs at their real level ranges.
 
 ## Fighting

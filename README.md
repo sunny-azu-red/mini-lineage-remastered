@@ -3,10 +3,12 @@
 A text-based RPG in the spirit of Lineage II, rebuilt in Elixir, Phoenix LiveView and OTP, with a
 dark fantasy interface that updates in real time.
 
-For now it is cut back to its base layer: who a character is and the numbers that make them. The
-game as it was before (the Inn and the shops, the Battleground, the Halls, the Tome, a run's record
-and its Chronicle) is kept to be read in [`legacy/`](legacy/README.md). Each of those systems comes
-back one at a time, built on the rules, as [`docs/roadmap.md`](docs/roadmap.md) lays out. Every
+Today it is the base layer (who a character is and the numbers that make them) and the first hunt:
+each village's ground, its traders and guild, the inventory, death and the Halls. The game as it was
+before is kept to be read in [`legacy/`](legacy/README.md), and what is not back yet (the Tome, a
+run's Chronicle, classes, dyes) returns one system at a time, built on the rules, as
+[`docs/roadmap.md`](docs/roadmap.md) lays out; why the game is shaped as it is lives in
+[`docs/direction.md`](docs/direction.md). Every
 Lineage II name and number in the game comes from the canon in [`docs/canon/`](docs/canon/README.md),
 checked against Interlude's own data.
 
@@ -21,12 +23,19 @@ checked against Interlude's own data.
   Dark Elves win it back, and Elves rest faster under the Mother Tree.
 - **Stats that grow with you**, worked from the attributes and the level up to level 80, on L2's own
   EXP table.
+- **One click, one fight.** Each village has its hunting ground outside, a ladder of its own canon
+  monsters. A fight is drawn round by round on the ground's page, and a death is final: the run ends
+  and its row stays on the 🏛️ Monument of Heroes at `/highscores`.
+- **Traders and a bag.** Each village's weapon, armour and magic traders sell your path's own goods,
+  and buy back for half; the inventory at `/inventory` equips, drinks and destroys, and potions are
+  drunk in a fight below the share the battle orders set.
 - **Every set fights its own way.** Its trainer at home teaches a short list from its own Lineage II
   tree for the SP of the hunt: the Human Fighter has a skill for every weapon, the Elven Fighter
   guards with Defense Aura, the Dark Fighter strikes with Attack Aura, the Orc Fighter rests with
   Relax, and each Mystic has its own spells. A skill grows in a few big steps rather than nine
   small ones. Auras hold 2 minutes and go up before the pull. Three masteries a path (Armor or Robe,
-  Weapon, Anti Magic) are there to learn or skip, as the monsters met make worth it.
+  Weapon, Anti Magic) are there to learn or skip, as the monsters met make worth it. The guild is at
+  `/<village>/guild`, its lessons on an Active and a Passive shelf.
 - **Rest mends, and says so.** While HP or MP is short, 🌿 *Regenerating* shows what a 3-second tick
   mends, and the tick mends it. The aura and the mending are one condition, so neither appears
   without the other.
@@ -34,10 +43,13 @@ checked against Interlude's own data.
   among the Combat Stats; a skill says what it mends, how often it lands, its cast and its reuse,
   for this character; a buff reads "+8% P. Def.", as Lineage II's data writes it. Every buff, and the
   wait before rest after a hunt, counts down over its icon as the legacy game's did.
-- **A status sidebar** drawn like L2's status window, a character page at `/character`, and the
-  Chronicles of Ancestry at `/races`, which tell every lineage before you choose one.
-- **Figures count, they don't jump**, two 8-bit sounds made by a Web Audio synth, and play from the
-  keyboard alone.
+- **A status sidebar** drawn like L2's status window, its HP or MP row pulsing once under a quarter,
+  a character page at `/character`, and the Chronicles of Ancestry at `/races`, which tell every
+  lineage before you choose one.
+- **What an action says is coloured by what it did**: green for something gained, blue for a
+  rearrangement, red for a refusal, and gold, shining, for a new level.
+- **Figures count, they don't jump**, five 8-bit sounds made by a Web Audio synth (a new game, a
+  success, a new level, a death, the sound toggle), and play from the keyboard alone.
 
 ## 🛠️ Tech stack
 
@@ -45,7 +57,8 @@ checked against Interlude's own data.
   HTML over one WebSocket, with no client-side framework
 - **One `GenServer` per character** under a `DynamicSupervisor` + `Registry`, with `Phoenix.PubSub`
   keeping tabs in sync
-- **PostgreSQL 18** through Ecto, each character one `jsonb` document in one table
+- **PostgreSQL 18** through Ecto, each character one `jsonb` document in `characters`
+  and its inventory in `items`
 - **ExUnit** with StreamData properties, and **Playwright** suites driving headless Chromium
 
 How the code is meant to be written, and why, is in [AGENTS.md](AGENTS.md) and
@@ -108,6 +121,7 @@ shortcuts. Any other key between two letters breaks a word.
 | Type | What it does |
 |---|---|
 | `adena` | 10,000 Adena into the purse |
+| `sp` | 10,000 SP, to try the trainer |
 | `night` / `day` | holds the whole server at that hour until the other word or a restart |
 | `half` | HP and MP to half, and the XP bar halfway to the next level |
 | `lvl` / `maxlvl` | exactly the EXP for the next level, or for level 80 |
@@ -125,8 +139,9 @@ MCP; `.mcp.json` points Claude Code at `http://localhost:4000/tidewave/mcp`.
 ### The browser suites
 
 - **`e2e/walkthrough.mjs`** plays one character end to end: the CSP, the cookie, the error page,
-  creation from the keyboard, the sidebar and character page, a second tab, the Gatekeeper, and
-  every debug shortcut. It fails on any failed request or console error.
+  creation from the keyboard, the sidebar and character page, a second tab, the Gatekeeper, the Halls,
+  the hunt, the traders and inventory, potions, the guild, the battle orders, every dropdown held
+  open across a tick, and every debug shortcut. It fails on any failed request or console error.
 - **`e2e/races.mjs`** makes every starting set and checks each against `docs/rules.md`.
 - **`e2e/release.mjs`** makes a character against a built image, under `e2e/release.sh`.
 

@@ -5,8 +5,9 @@ what things cost; this says when a player can afford them. Every figure here was
 worked out by hand, and holds only for the rules it was measured against.
 
 **Measured** on rules §1 to §26 as they now stand: the fight of §20 on a line between the two,
-spells that take effect as their cast ends, the battle orders, and the first skills where Lineage II
-taught them (a Fighter's at level 5, Wind Strike for every Mystic but the Orc), Life Drain cast as
+spells that take effect as their cast ends, the battle orders, and the first skills (a Fighter's weapon
+skills from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the
+Orc), Life Drain cast as
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
 the pull, each fighter's kit a Squire's weapon for every path its skills take, the Orc Mystic's an
 Apprentice's Wand, each path shown only its own goods, one of each kind per price, every chest,
@@ -25,8 +26,9 @@ trainer's list, and rewrite these tables from what it prints (seconds, its runs 
 
     MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
       [--json path] [--only "Set name,Set name"] [--orders <pull share>,<fight share>]
-    MIX_ENV=test mix run --no-start bench/ladder.exs --matrix <path prefix> [--final] [runs]
-      [--only "Set name,Set name"]
+      [--unused "Skill,Skill"]
+    MIX_ENV=test mix run --no-start bench/ladder.exs --matrix <path prefix> [--final] [runs] [top level]
+      [--only "Set name,Set name"] ...
 
 `--matrix` takes the study's readings in one go, 200 runs a path unless told otherwise, each into
 `<prefix>_<setting>.txt` and `.json`: `defaults` (resting to full, 20 potions), `harsh` (resting

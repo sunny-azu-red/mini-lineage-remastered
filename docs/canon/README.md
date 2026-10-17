@@ -112,7 +112,8 @@ where it has any.
 **Skills**
 
 Every skill, its numbers and its level come from the set's own canon tree (rules §19, §25), but for
-the Orc Mystic's Chill Flame, every Mystic's Robe Mastery and a Fighter's Anti Magic. What differs
+the Orc Mystic's Chill Flame, the Human, Elven and Dark Mystics' Robe Mastery and a Fighter's Anti
+Magic. What differs
 is which of them a set gets, how they are sold, and how the fight uses them.
 
 - **Each set plays its own way.** Before the class change a set learns its first skill, two to
@@ -139,7 +140,7 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   at levels 2 to 7 even resting to full (`docs/balance.md`).
 - **A Fighter starts knowing the skill of the weapon it starts with, and its weapon skills begin at
   level 1,** where Lineage II taught them from 5: the first level of each at level 1, its own first
-  skill for nothing and any other for 50 SP, and the rest of that tier at 5. A Mystic starts
+  skill for nothing and any other for 50 SP (60 for the Orc), and the rest of that tier at 5. A Mystic starts
   knowing its first spell, as in Lineage II, and could not do without it: made to buy it at level 1
   for 50 SP, nine Mystic runs in ten died at levels 1 to 3 before they could.
 - **A Mystic's second skill at level 1 costs 50 SP** (Self Heal, or the Orc's Soul Cry), where
@@ -269,7 +270,7 @@ is which of them a set gets, how they are sold, and how the fight uses them.
 - **The Weapon Trader is singular,** as the Armour Trader and the Magic Trader are, and so is its
   address (`/traders/weapon`). Lineage II wrote "Weapons Trader" beside "Armor Trader" (Giran's
   titles, the Newbie Guide's building), a quirk kept nowhere else.
-- **Shops charge an item's canon price, with no castle tax** (Lineage II added the castle lord's
+- **Shops charge an item's canon price (armour by its share, above), with no castle tax** (Lineage II added the castle lord's
   tax, 15% in a village), and nothing mentions one.
 - **NPC shops sell better gear in more advanced towns, for more money.** In Lineage II no NPC
   sold anything above D-grade; C-grade and better came from crafting, drops and players.

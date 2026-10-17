@@ -7,12 +7,14 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
-  distance, `Actions.hunt/1`, and death), each village's traders, four by name
+  distance, `Actions.hunt/1`, the last fight drawn on the ground's page as `#fight`, and death),
+  each village's traders (`/<village>/traders`), four by name
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
   (`/<village>/traders/<weapon|armour|magic|sell>`, each set shown its path's goods by
   `Rules.stock/2`), and the inventory beside its Combat
-  Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), the fight log on a hunt's flash,
-  and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
+  Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), potions and the battle orders
+  on the character page (rules §26, §20: `Actions.potion_at/2`, `heal_at/3`, `use_skill/3`), the
+  Buffs & Debuffs panel, and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
   `/<village>/guild`, named per set by `Rules.guild/1`, its lessons on an Active and a Passive shelf,
   a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
   (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is
@@ -23,14 +25,24 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   hackney, and `tz`'s updater stays unused); authentication (a signed session cookie ties a browser
   to a character and nothing else); LiveView streams (one character's state is one assign);
   colocated hooks.
-- **Hooks**: `app.js` imports them from `assets/js/hooks.js`, which holds nothing but that list. Each
+- **Hooks**: `app.js` imports them from `assets/js/hooks.js`, which holds nothing but that list and
+  the formatter twins it re-exports (see Tests). Each
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
   `AnimatedValues`, `DevKeys`, `EffectTimers`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle`
   (over the synth in `soundfx.js`) and `Table`; `kept.js` is storage.
-- **Four sounds**, each a list of notes in `soundfx.js` with no assets. The new-game fanfare, a new
-  level's and a death's are the flash's `sound`, pushed by `GameLive` as `play-sound` so no reload
-  can replay one. The sound toggle's chime is the browser's own.
-- **PostgreSQL via Postgrex, one table**: `characters`, each run's state a single `jsonb` document.
+- **Five sounds**, each a list of notes in `soundfx.js` with no assets. All but the toggle's are
+  pushed by `GameLive` as `play-sound` (`sound/1`), so no reload can replay one, and one action
+  plays one sound at most: a fight is one click however many blows or potions it holds.
+
+  | Sound | Notes | Plays on | Decided by |
+  |---|---|---|---|
+  | `start` | D4 F#4 A4 D5 | a character made | the flash's `sound` |
+  | `death` | sawtooth sliding 260 to 45 Hz | a run's end | the flash's `sound` |
+  | `level` | C5 E5 G5 C6, the last ringing | a new level (the gold alert) | the flash's `levelled` |
+  | `success` | E4 A4 E5 | any green alert | `type: :success`; a kill is drawn on the page, so it is silent |
+  | `toggle` | B5 E6 | sound switched on | the browser, unasked |
+- **PostgreSQL via Postgrex, two tables**: `characters`, each run's state a single `jsonb` document,
+  and `items`, its inventory (see Data).
 - **One `GenServer` per character** under a `DynamicSupervisor` + `Registry`. Anything that mutates
   a character goes through its process, never straight to the database. The registry entry's value
   is `{id, watched?}`, which `Characters.online/0` reads for the Halls' dot.
@@ -39,19 +51,22 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `"board"` only when it moved. `:start_board` is off in test, where `Board.current/0` computes in
   the caller; its own tests start it.
 - **One LiveView, one dispatcher.** `GameLive` holds no game state and routes everything through
-  `Access.pin_screen/2`. `Screens.screen/1` picks the page (start, town, gatekeeper, character,
-  races, highscores, error), all in `Screens` until one needs its own module; the Halls have
+  `Access.pin_screen/2`. `Screens.screen/1` picks the page (start, town, gatekeeper, hunt, trader
+  and its pages, guild, inventory, character, races, highscores, error), all in `Screens` until one
+  needs its own module; the Halls have
   `Screens.Halls`. `Screens.panels/3` lists a
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
-  the Chronicles, one per section on the character page, and on the guild's a Learned Skills
-  panel only once something is learned. `GameLive` lists them again whenever the view is rebuilt.
-  Every template starts with `<Layouts.app>`.
+  the Chronicles, one per section on the character page, Inventory and Combat Stats on the
+  inventory, and on the guild's a Learned Skills panel only once something is learned. `GameLive`
+  lists them again whenever the view is rebuilt. Every LiveView template starts with
+  `<Layouts.app>`; `ErrorHTML` builds its own from the shell's parts.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`
   and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
-  page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `head`,
-  `site_header`, the sidebar and `footer`, which `ErrorHTML` draws too.
+  page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
+  `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
+  `footer`.
 - **The sidebar** (level and name, the name linking to `/character`, the vitals, HP's and MP's rows
   pulsing in their bar's hue under a quarter, then the Inventory, its Adena beside an Open link to
   `/inventory`) is one fixed-width `.side` column, drawn in town and beside the inventory. One
@@ -81,32 +96,34 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 
 ## Working here
 
-- **Balance is measured, not guessed.** `bench/ladder.exs` plays every set up its village's ladder,
-  once per weapon path its skills can use, through the game's own actions (hunt, rest, buy, sell,
-  train) with seeded dice, played as a player would: its own weapon's line, a shield only beside a
-  one-handed sword or staff. Each one-handed path runs again off-meta, with the other shield choice,
-  and is flagged when it beats the meta, since a build the rules let win is a rule to fix. It
-  reports where runs die and to what, when the trainer's list and the shop's best kit are bought,
-  and the SP and Adena earned and left:
-  `MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [level] [rest below %] [potions kept]`.
-  Run it before and after anything that moves a fight's numbers, a price, a reward or the trainer,
-  and rewrite [docs/balance.md](docs/balance.md), the last reading, from what it prints. A run's dice
-  are seeded from its set and number and its clock moves by the fight's own `ms`, so two builds
-  compare run for run: `--json` both and read them with `bench/compare.exs`, which applies the bar.
-  A study is `--matrix <prefix>`: 200 runs a path of the defaults, resting at half without potions
-  and with them, in one VM. `--only` the sets a change touches, since no set's runs read another's;
-  `--final` adds resting at 30%, for the reading `balance.md` is rewritten from. A cache or a
-  precomputed table that speeds it must leave a 400-run `--final` reading byte-identical.
+- **Balance is measured, not guessed.** `bench/ladder.exs` plays every set up its village's ladder
+  through the game's own actions (hunt, rest, buy, sell, train) with seeded dice, as a player would:
+  its own weapon's line, a shield only beside a one-handed sword or staff. Each one-handed path runs
+  again off-meta and is flagged when it beats the meta, since a build the rules let win is a rule to
+  fix. Anything that moves a fight's numbers, a price, a reward or the trainer is measured before and
+  after against the bar in [docs/direction.md](docs/direction.md), and
+  [docs/balance.md](docs/balance.md) is rewritten from the reading; the `balance-study` skill has the
+  steps. A change that fails the bar is reported, never tuned quietly.
+- **The dev database is not player data.** Its rows are the owner's test runs and e2e traffic. Use it
+  to see what a document looks like or to check a plan, never to reason about progression, deaths or
+  balance: that comes from `Formulas`, `Hunt`, `Rules` or the bench, named as the source.
 - **Done means `mix precommit`**, plus `mix e2e` for anything the browser renders: a screen, a hook,
   a selector, what an element *is*. A change that only moves colour values skips e2e; no suite can
   fail on a hex. ExUnit's coverage understates the web layer because the browser suites aren't
   instrumented.
 - **Show a new test failing before claiming it passes.** Break what it covers, watch it go red, and
   restore with `git checkout` or `touch`. Never restore from a backup copy: it is older than the
-  build, so Mix keeps the broken beam.
+  build, so Mix keeps the broken beam. A file with uncommitted work is not restored with `git
+  checkout`, which wipes the work too: reverse the exact `sed`, then `touch`.
 - **Never compile into `_build/dev` while the dev server is up.** Two writers corrupted beams and
   crashed a character mid-game. Use Tidewave's `project_eval`, a script with its own
-  `MIX_BUILD_PATH`, or `:test`.
+  `MIX_BUILD_PATH`, or `:test`. Claude Code's `.claude/hooks/dev_build_guard.py` refuses a Mix
+  command that builds `:dev` (compile, run, eval, `phx.server`, `ecto.*`…) while something listens
+  on the dev server's `PORT`; `mix e2e`, `test` and `precommit` pass, as does any `MIX_ENV=test`.
+- **What every agent should know lives in the repo**: this file for rules, `docs/` for the game's
+  why, and `.claude/` for Claude Code: the committed `settings.json` and its hooks, and `skills/` for
+  procedures (`balance-study`, `new-page`), each moved out of here rather than copied, so the two
+  never drift. A personal memory holds only what is about one person or one machine.
 - **Ask the running app, through Tidewave.** `project_eval` for state (`:sys.get_state`,
   `:timer.tc`); `execute_sql_query` for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually
   sent, captured with a `:telemetry` handler on `[:mini_lineage, :repo, :query]`; `get_logs` for a
@@ -128,6 +145,11 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 
 ### Tests
 
+- **A browser test before a unit test.** Every serious bug so far (a CSP rewriting redirects, a swap
+  wiping the main panel, a stale-code watcher) was browser-only, and the old stack's 100% line
+  coverage saw none of them. A unit test holds a contract (the rules core in `rules_test.exs`, the
+  twinned formatters' fixtures, a component's markup); what a player sees and does is proven in the
+  browser.
 - **Not `async: true`** when a test touches the database (a character's GenServer comes from a
   `DynamicSupervisor`, so the sandbox needs shared mode), changes global state (Application env, an
   OS variable), or claims a registered name (every async module creating a character would post into
@@ -212,8 +234,8 @@ Each of these is here because it was got wrong once.
   builds each town's address from them at compile time. Size is no reason to move one. Once content
   reaches the hundreds (monsters, items, skills), each table moves to a data file under `priv/`
   loaded through `@external_resource`, still in git and read back by a test: the monsters are
-  `priv/game/monsters.csv` and the items `priv/game/items.csv`, held to rules §18 and §24 by
-  `rules_test.exs`. Content goes into Postgres only when it must change without a deploy, decided
+  `priv/game/monsters.csv`, the items `priv/game/items.csv` and the trainers' lessons
+  `priv/game/trainer.csv`, held to rules §18, §24 and §25 by `rules_test.exs`. Content goes into Postgres only when it must change without a deploy, decided
   when such a feature exists.
 - **A character has two ids, never to be confused.** `id` is public and the only one a page shows or
   links. `session_id` is the cookie and a credential: a public id that worked as a session would let
@@ -247,8 +269,9 @@ Each of these is here because it was got wrong once.
 ### Web
 
 - **The URL is where you are.** A character stands in one town (rules §14), stored as `location`.
-  Each open town, its Gatekeeper, its ground (`/<town>/<ground>`) and a village's trader
-  (`/<town>/traders`) have literal routes generated from the rules tables, never a pattern. `/` is
+  Each open town, its Gatekeeper, its ground (`/<town>/<ground>`), a village's traders and their
+  pages (`/<town>/traders/<page>`) and guild, and each lineage's board (`/highscores/<lineage>`)
+  have literal routes generated from the rules tables, never a pattern. `/` is
   game start for a visitor and, for a character, a patch to its town: `GameLive` compares the pinned
   place's address with the one asked for, not the screen alone. A place is `{screen, town}`. A new
   place to stand (a shop, a hunting ground) gets its own URL when built; a state that happens to you
@@ -256,8 +279,9 @@ Each of these is here because it was got wrong once.
 - **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races`, `highscores`
   and `error` carry no action, so its first clauses let every state reach them; the Halls keep their
   lineage filter in the place's second half. The rest decide only screens that can be acted on: a
-  character is in its town, at that town's Gatekeeper, on that town's ground or at its trader if it
-  has them, or on its own character or inventory page; a visitor is at game start.
+  character is in its town, at that town's Gatekeeper, on that town's ground or at its traders if it
+  has them, at its home village's guild, or on its own character or inventory page; a visitor is at
+  game start.
 - **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, `e2e/reset.sh`'s
   refusal of the database `.env` names, `Actions.start/4`'s preconditions: each is the boundary, and a
   test asserts what it still refuses. If one is in the way, what you are building is probably wrong.
@@ -275,7 +299,7 @@ Each of these is here because it was got wrong once.
   browser's own topic, keyed by a secret so nobody can watch anybody else, and a second tab follows
   through it. A topic others may follow is keyed by the PUBLIC id and followed only on the screen
   that draws it. Nightfall stores nothing: `GameLive` wakes itself at `Clock.next_boundary/1` and
-  redraws. `Server.run/3` broadcasts AFTER it persists, so a reader answering a push finds the write.
+  redraws. `Characters.Server` broadcasts AFTER it persists, so a reader answering a push finds the write.
 - **The cookie is legible only to the secret that signed it.** dev and prod read the same `.env`, so
   `config/runtime.exs` gives both the same `SECRET_KEY_BASE`; dev falls back to the one committed in
   `config/dev.exs`.
@@ -283,8 +307,9 @@ Each of these is here because it was got wrong once.
 ### Components
 
 - **Every panel is `Controls.panel/1`**: the card, the header band, the title (always an h2), the
-  body. Options are `icon` (an emoji before the title), `collapsible` and `collapsed`. `id` names the
-  PANEL, which its hook needs; every other attribute lands on the BODY. A screen is addressed by
+  body. Options are `icon` (an emoji before the title), `collapsible`, `collapsed` and a `header`
+  slot. `id` names the PANEL, which its hook needs, and `class` styles it; `body_class` and every
+  other attribute land on the BODY. A screen is addressed by
   `#screen`, which carries `PanelFocus` and the data attributes browser tests read. A panel takes a
   hook only when something in it moves, so the error page, with no LiveView, needs no JavaScript.
 - **A collapse is the reader's, not the template's.** `aria-expanded` is rendered once for the
@@ -294,7 +319,8 @@ Each of these is here because it was got wrong once.
   header band is a BUTTON inside the h2, never a link (Space scrolls a link, and `PanelFocus` refuses
   to focus one). Opening by hand scrolls the panel into view; restoring or patching never moves the
   page. The chevron's transition waits for the `data-ready` the hook sets two frames in. A side
-  panel folds only if marked `.folds`: today only the Inventory, on a phone, opening unfolded.
+  panel never folds beside the main one; under the 640px breakpoint a collapsible one does (today
+  only the Inventory, opening unfolded). `.folds` would fold one everywhere; nothing uses it yet.
 - **What the reader chooses is kept as `<kind>:<id>` through `hooks/kept.js`**, whose `recall`,
   `recallAll` and `keep` are the only code touching `localStorage`: `panel:<id>` for a fold,
   `sound:effects` while sound is off, `table:<id>` for a remembered sort (handed over on connect). A new thing that remembers takes a kind and writes no storage code. Hand a kind to the
@@ -302,7 +328,7 @@ Each of these is here because it was got wrong once.
 - **Every button is `Controls.button/1`**, the only writer of `btn`. Without `patch` it is a
   `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
   never a link restyled as a button or the reverse. `variant={:secondary}` serves `<.select_action>`
-  until something is picked, the hunt's Retreat and the Halls' filters; `size={:sm}` and `active`
+  until something is picked (but for the town's Travel, which has nowhere to go back to), the hunt's Retreat and the Halls' filters; `size={:sm}` and `active`
   (the one of a set already chosen) are the filters'. A primary or danger button leads with an
   emoji; a secondary one has none of its own (`Return`), the filters' being their lineage's. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`.
@@ -313,7 +339,8 @@ Each of these is here because it was got wrong once.
   `<optgroup>`), and its `action` and `variant` are what the button says and looks like once it is
   picked, as the inventory's Equip, Unequip, Drink and, in red, Destroy. Every option reads "Pick"
   and its emoji and name, which the component writes: the verb is the button's, a price the table's,
-  and a placeholder names where Return goes (`🚪 Traders`). No `<select>` is written by hand but character creation's, three fields one Start button
+  and a placeholder names where Return goes (`🚪 Traders`); the character page's battle orders,
+  settings rather than a place, ask for an order and act through Choose. No `<select>` is written by hand but character creation's, three fields one Start button
   sends together and `phx-update="ignore"` keeps every patch off (`select_action_test.exs`). They all behave alike: the player's choice is touched by the player's
   own pick and the action it leads to, and by nothing else. Every action through `apply_action/3`,
   refused or not, clears `picked` and `picks`, so the list goes back to its start and the button to
@@ -347,7 +374,7 @@ Each of these is here because it was got wrong once.
   is no "off". The screen orders its rows with `Controls.sort_rows/3`, a name on the name and never
   its emoji, and its dropdown is built from the sorted rows, so the two agree. A trader, and the guild
   (Active, Passive), shows one table, each shelf its own `<tbody>` headed by a centred row (and a dropdown group) only when the
-  page has two, and a sort reorders each shelf's rows without mixing them. `table_sort_test.exs` walks every page's tables, so a new
+  page has two or more, and a sort reorders each shelf's rows without mixing them. `table_sort_test.exs` walks every page's tables, so a new
   table is added there. A sort header neither takes `PanelFocus`'s first focus nor gives it back to
   the dropdown. A table outlives a reload only with `remember` on the table AND in `sortable/1`,
   which `GameLive` checks before reading a kept sort back; none does yet.
@@ -398,10 +425,10 @@ Each of these is here because it was got wrong once.
   but "P. Atk. 6". A rate carries its % wherever it is written ("Critical 8%", "Block 20%").
 - **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
   `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so
-  does the code's `heal` kind.
+  does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and
+  inventory pages and every item's line against these three rules and the stat names.
 - **A time on a row is short**, as `Format.remaining/1` writes it ("3s", "2m", "1m 37s"), with the
   fight's tenths where it has them ("Cast 5.3s, reuse 10.4s."). Narrative prose keeps its words.
-  `stat_names_test.exs` renders every set's pages and every item's line against the three above.
 - **A place keeps its role; its keeper's name is in what is said there.** The Gatekeeper is
   "Gatekeeper" in the dropdown and the header, and Roxxy in the intro and the flashes.
 - **Write a named entity where one exists**: `&amp;` `&copy;` `&ndash;` `&bull;` `&nbsp;` `&mdash;`
@@ -434,7 +461,8 @@ Each of these is here because it was got wrong once.
 One to three lines, why and not what: a constraint, a trap, a decision that looks wrong until you
 know why. Never narrate the line, restate the identifier, or tell how the bug was found. Needing more
 than three lines means the knowledge belongs in this file. Moduledocs may run to a short paragraph. A
-comment citing a measurement expires when what it was measured against moves.
+comment citing a measurement expires when what it was measured against moves. A longer block met in
+a function being rewritten is compressed with it, never left for later.
 
 ## Elixir and Phoenix reminders
 
