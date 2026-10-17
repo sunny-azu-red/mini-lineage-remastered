@@ -390,12 +390,53 @@
     padding: 9px 12px;
     margin-bottom: 12px;
     border-left: 3px solid;
+    position: relative;
+    overflow: hidden;
 }
 
 .alert-info {
     background: var(--wash-info);
     border-color: var(--border-info);
     color: var(--text-info);
+}
+
+.alert-success {
+    background: var(--wash-success);
+    border-color: var(--border-success);
+    color: var(--text-success);
+}
+
+.alert-triumph {
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--gold) 25%, transparent) 0%,
+            color-mix(in srgb, var(--gold-dim) 35%, transparent) 100%);
+    border-color: var(--gold);
+    color: var(--text-triumph);
+}
+
+/* A new level's shine, crossing the gold every 3s for as long as the alert stands. */
+.alert-triumph::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 150%;
+    background: linear-gradient(45deg,
+            transparent 45%,
+            rgba(255, 255, 255, 0.15) 50%,
+            transparent 55%);
+    animation: alert-shine 3s infinite linear;
+    pointer-events: none;
+    will-change: transform;
+}
+
+@keyframes alert-shine {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
 }
 
 .alert-danger {

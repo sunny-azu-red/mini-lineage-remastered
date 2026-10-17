@@ -429,6 +429,10 @@ try {
     check('...and typing lvl reaches Level 2 exactly, both bars refilled as rules §12 says',
         levelled.xp === 0 && levelled.health === levelled.maxHealth && levelled.mp === levelled.maxMp,
         JSON.stringify(levelled));
+    check('...raising the gold alert above what the debug build says',
+        /Congratulations! You have reached Level 2\./.test(await text('#levelled.alert-triumph'))
+        && await page.evaluate(() => document.querySelector('#levelled').nextElementSibling?.id === 'flash'),
+        await text('#levelled'));
     await page.keyboard.type('maxlvl');
     await page.waitForFunction(() =>
         document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '80', null, { timeout: 5000 });
@@ -583,6 +587,7 @@ try {
     await page.locator('#flash', { hasText: 'Bone Dagger' }).waitFor({ timeout: 5000 }).catch(() => {});
     check('...where a Bone Dagger is bought through the dropdown', /Bone Dagger/.test(await text('#flash')),
         await text('#flash'));
+    check('...in a success alert', await page.locator('#flash.alert-success').count() === 1);
     await adena(wallet - 768);
     check('...for its price, 768', (await state()).adena === wallet - 768, String((await state()).adena));
     check('...and the dropdown goes back to its placeholder, so a second click buys nothing more',

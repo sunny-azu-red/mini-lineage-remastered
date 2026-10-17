@@ -24,6 +24,8 @@ defmodule MiniLineage.Game.Narratives do
   # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
   @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and <span class="sp">{sp} SP</span>{adena}.)
   @levelled ~s({they} reach <span class="level">Level {level}</span>, and {their} wounds close.)
+  # The gold alert a new level raises over the page, beside the fight's own line.
+  @congratulated ~s(🎉 Congratulations! {they} have reached <span class="level">Level {level}</span>.)
   # Rules §21: the line a run ends on, kept with it.
   @fell ~s({they} fall to the {monster} at the {ground}, and {their} road ends here.)
   @wandered ~s({they} cannot bring the {monster} down, and it slinks away into the {ground}.)
@@ -95,6 +97,7 @@ defmodule MiniLineage.Game.Narratives do
 
   def slew, do: @slew
   def levelled, do: @levelled
+  def congratulated, do: @congratulated
   def fell, do: @fell
   def wandered, do: @wandered
   def arrived, do: @arrived

@@ -339,7 +339,7 @@ defmodule MiniLineageWeb.Controls do
   @doc """
   Every alert in the game. None is dismissible: what it says belongs to the screen it stands on.
   """
-  attr :kind, :atom, required: true, values: [:info, :danger]
+  attr :kind, :atom, required: true, values: [:info, :success, :triumph, :danger]
   attr :rest, :global
   slot :inner_block, required: true
 
@@ -347,12 +347,16 @@ defmodule MiniLineageWeb.Controls do
     ~H|<div class={"alert alert-#{@kind}"} {@rest}>{render_slot(@inner_block)}</div>|
   end
 
-  @doc "The result of an action, a refusal included. It disappears the moment you leave the screen."
+  @doc """
+  The result of an action, a refusal included. It disappears the moment you leave the screen. A new
+  level raises its own gold alert above it, alone on the ground, where the fight is the page's.
+  """
   attr :flash, :map, required: true
 
   def flash_alert(assigns) do
     ~H"""
-    <.alert id="flash" kind={@flash.type}>
+    <.alert :if={@flash[:levelled]} id="levelled" kind={:triumph}>{raw(@flash.levelled)}</.alert>
+    <.alert :if={@flash[:text]} id="flash" kind={@flash.type}>
       <%!-- A hunt's fight log (rules §20) comes before what it came to. --%>
       <ol :if={@flash[:log]} id="fight-log" class="fight-log">
         <li :for={line <- @flash.log}>{raw(line)}</li>

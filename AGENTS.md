@@ -27,9 +27,9 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
   `AnimatedValues`, `DevKeys`, `EffectTimers`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle`
   (over the synth in `soundfx.js`) and `Table`; `kept.js` is storage.
-- **Two sounds, and only two**, each a list of notes in `soundfx.js` with no assets. The new-game
-  fanfare is the flash's `sound`, pushed by `GameLive` as `play-sound` so no reload can replay it.
-  The sound toggle's chime is the browser's own.
+- **Four sounds**, each a list of notes in `soundfx.js` with no assets. The new-game fanfare, a new
+  level's and a death's are the flash's `sound`, pushed by `GameLive` as `play-sound` so no reload
+  can replay one. The sound toggle's chime is the browser's own.
 - **PostgreSQL via Postgrex, one table**: `characters`, each run's state a single `jsonb` document.
 - **One `GenServer` per character** under a `DynamicSupervisor` + `Registry`. Anything that mutates
   a character goes through its process, never straight to the database. The registry entry's value
@@ -332,9 +332,13 @@ Each of these is here because it was got wrong once.
   The walkthrough's dropdown tour holds every `select_action` in the source open across a tick,
   `traceRefocus` in `e2e/helpers.mjs` catching a focus or blur and an observer the rest, and fails on
   one it never reached, so a new page with a dropdown is added to the tour.
-- **Every alert is `Controls.alert/1`**, `kind` `:info` or `:danger`, anything else landing on the
-  `div` (`alert_variants_test.exs`). None is dismissed: what an action says, a refusal included, is
-  its flash, dropped on the next arrival unless the action itself moved you there.
+- **Every alert is `Controls.alert/1`**, `kind` `:info`, `:success`, `:triumph` or `:danger`,
+  anything else landing on the `div` (`alert_variants_test.exs`). Success is an action that got you
+  something (a trade, a skill, a trip, a kill, HP mended); info one that only rearranged or set
+  something, or a story. A new level is triumph, gold and shining, the flash's `levelled` drawn
+  above it as `#levelled`, and on the ground the only alert, the fight being the page's. None is
+  dismissed: what an action says, a refusal included, is its flash, dropped on the next arrival
+  unless the action itself moved you there.
 - **Every table is `Controls.data_table/1`, and every table sorts.** The container, header row and
   `<table>`, with the rows the caller's `<tbody>` and other attributes on the `<table>`. A sort is
   the server's, never the DOM's, which a patch would undo: a `:col` with `sort` is a header button,

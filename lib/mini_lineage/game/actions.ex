@@ -90,7 +90,7 @@ defmodule MiniLineage.Game.Actions do
     gatekeeper = Rules.town(player.location).gatekeeper
     player = %{player | location: town.slug, adena: player.adena - fee}
     text = Narrative.alert(Narrative.build_arrived(gatekeeper, town, fee))
-    {player, {:ok, %{text: text, type: :info}}}
+    {player, {:ok, %{text: text, type: :success}}}
   end
 
   @doc "Rules §20: back to town from the ground, disengaging on the way."
@@ -157,7 +157,7 @@ defmodule MiniLineage.Game.Actions do
         result.health <= 0 ->
           fell = Narrative.build_fell(foe, ground)
           player = %{player | dead: true, killer: foe.name}
-          {player, {:ok, %{text: Narrative.alert(fell), type: :danger}}}
+          {player, {:ok, %{text: Narrative.alert(fell), type: :danger, sound: "death"}}}
 
         result.foe > 0 ->
           wandered = Narrative.alert(Narrative.build_wandered(foe, ground))
@@ -185,14 +185,18 @@ defmodule MiniLineage.Game.Actions do
     }
 
     reached = Player.level(gained)
+    slew = Narrative.alert(Narrative.build_slew(foe, ground, exp, sp, adena))
 
-    text =
-      Narrative.alert(Narrative.build_slew(foe, ground, exp, sp, adena)) <>
-        if reached > level,
-          do: " " <> Narrative.alert(Narrative.build_levelled(reached)),
-          else: ""
+    flash =
+      if reached > level,
+        do: %{
+          text: slew <> " " <> Narrative.alert(Narrative.build_levelled(reached)),
+          levelled: Narrative.alert(Narrative.build_congratulated(reached)),
+          sound: "level"
+        },
+        else: %{text: slew}
 
-    {gained, {:ok, %{text: text, type: :info}}}
+    {gained, {:ok, Map.put(flash, :type, :success)}}
   end
 
   @doc """
@@ -233,7 +237,8 @@ defmodule MiniLineage.Game.Actions do
 
         text = "You buy #{bought(item, count)} for #{Format.adena(cost)}."
 
-        {%{player | adena: player.adena - cost, items: items}, {:ok, %{text: text, type: :info}}}
+        {%{player | adena: player.adena - cost, items: items},
+         {:ok, %{text: text, type: :success}}}
     end
   end
 
@@ -265,7 +270,7 @@ defmodule MiniLineage.Game.Actions do
 
         text = "You sell #{what} for #{Format.adena(paid)}."
 
-        {player, {:ok, %{text: text, type: :info}}}
+        {player, {:ok, %{text: text, type: :success}}}
     end
   end
 
@@ -331,7 +336,7 @@ defmodule MiniLineage.Game.Actions do
         text =
           ~s(You drink a #{entry.name} and mend <span class="regen">#{healed} HP</span>.)
 
-        {player, {:ok, %{text: text, type: :info}}}
+        {player, {:ok, %{text: text, type: :success}}}
     end
   end
 
@@ -440,7 +445,7 @@ defmodule MiniLineage.Game.Actions do
         text =
           ~s(You learn <span class="skill">#{skill} #{level}</span> for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
 
-        {clamp_bars(player), {:ok, %{text: text, type: :info}}}
+        {clamp_bars(player), {:ok, %{text: text, type: :success}}}
     end
   end
 
@@ -525,7 +530,14 @@ defmodule MiniLineage.Game.Actions do
         text =
           ~s(A debug build hands you <span class="xp">#{Format.number(needed)} XP</span>, enough to reach <span class="level">Level #{target}</span>.)
 
-        {Player.gain_experience(player, needed), {:ok, %{text: text, type: :info}}}
+        flash = %{
+          text: text,
+          type: :info,
+          levelled: Narrative.alert(Narrative.build_congratulated(target)),
+          sound: "level"
+        }
+
+        {Player.gain_experience(player, needed), {:ok, flash}}
     end
   end
 

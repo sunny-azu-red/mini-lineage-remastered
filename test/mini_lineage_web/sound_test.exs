@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.SoundTest do
   @moduledoc """
-  The two sounds the game plays: the new-game fanfare, pushed by the server when a character is
-  made, and the toggle's own chime, which the browser plays without asking anybody.
+  The new-game fanfare, pushed by the server when a character is made, and the toggle's own chime,
+  which the browser plays without asking anybody. A new level's and a death's are the hunt's.
   """
   use MiniLineageWeb.ConnCase, async: false
 

@@ -23,6 +23,24 @@ const SOUNDS = {
         { offset: 0.30, freq: 587.33, type: 'square', gain: 0.14, decay: 0.45, tail: 0.02 },
     ],
 
+    // ✨ Triumphant retro fanfare (C5 -> E5 -> G5 -> C6), for a new level; the last note rings out.
+    level: [
+        { offset: 0.00, freq: 523.25, type: 'square', gain: 0.12, decay: 0.08, tail: 0.02 },
+        { offset: 0.09, freq: 659.25, type: 'square', gain: 0.12, decay: 0.08, tail: 0.02 },
+        { offset: 0.18, freq: 783.99, type: 'square', gain: 0.12, decay: 0.08, tail: 0.02 },
+        { offset: 0.27, freq: 1046.50, type: 'square', gain: 0.12, decay: 0.38, tail: 0.02 },
+    ],
+
+    // 💀 Slow, melancholic slide down, for a run's end.
+    death: [{
+        offset: 0, freq: 260, type: 'sawtooth', gain: 0.16, decay: 0.70, tail: 0.02,
+        sweeps: [
+            { to: 180, at: 0.18, linear: true },
+            { to: 120, at: 0.36, linear: true },
+            { to: 45, at: 0.68 },
+        ],
+    }],
+
     // 🔊 Crisp double chime, so turning sound on is heard to have worked.
     toggle: [
         { offset: 0.00, freq: 987.77, type: 'sine', gain: 0.13, decay: 0.09, tail: 0.01 },
@@ -37,6 +55,10 @@ function playNote(ctx, start, note) {
 
     const at = start + note.offset;
     osc.frequency.setValueAtTime(note.freq, at);
+    for (const sweep of note.sweeps ?? []) {
+        const ramp = sweep.linear ? 'linearRampToValueAtTime' : 'exponentialRampToValueAtTime';
+        osc.frequency[ramp](sweep.to, at + sweep.at);
+    }
     gain.gain.setValueAtTime(note.gain, at);
     gain.gain.exponentialRampToValueAtTime(0.001, at + note.decay);
 

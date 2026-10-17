@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.HuntPageTest do
 
   alias MiniLineage.{Characters, Repo}
   alias MiniLineage.Characters.Record
-  alias MiniLineage.Game.Rng
+  alias MiniLineage.Game.{Math, Rng}
 
   # A Human Fighter, standing on Talking Island.
   defp human(conn) do
@@ -103,6 +103,25 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert player.experience > 0 and player.sp > 0 and player.adena > 0
   end
 
+  test "a kill that levels raises the gold alert and its fanfare over the fight" do
+    {_view, session, conn} = human(build_conn())
+    Characters.mutate(session, &{%{&1 | experience: Math.xp_for_level(2) - 1}, :ok})
+    pin(session, 0.0)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+
+    view |> element("#hunt-button") |> render_click()
+
+    assert has_element?(
+             view,
+             "#levelled.alert-triumph",
+             "Congratulations! You have reached Level 2."
+           )
+
+    assert has_element?(view, "#fight-outcome", "You reach Level 2")
+    refute has_element?(view, "#flash")
+    assert_push_event(view, "play-sound", %{name: "level"})
+  end
+
   test "a death ends the run, keeps its row, and sends the browser back to game start" do
     {_view, session, conn} = human(build_conn())
     id = Characters.character_id(session)
@@ -119,7 +138,8 @@ defmodule MiniLineageWeb.HuntPageTest do
     view |> element("#hunt-button") |> render_click()
 
     assert_patch(view, "/")
-    assert has_element?(view, "#flash", "your road ends here")
+    assert has_element?(view, "#flash.alert-danger", "your road ends here")
+    assert_push_event(view, "play-sound", %{name: "death"})
     assert has_element?(view, "#screen[data-screen=start]")
     assert %{dead: true, session_id: nil} = Repo.get!(Record, id)
   end

@@ -381,9 +381,10 @@ defmodule MiniLineageWeb.GameLive do
     |> go({"start", nil})
   end
 
-  # A fight the hunter lives through is written on the ground's page rather than in an alert.
+  # A fight the hunter lives through is written on the ground's page rather than in an alert, all
+  # but a new level's gold one.
   defp keep_fight(%{assigns: %{game_flash: %{log: _} = fight, view: %{started: true}}} = socket),
-    do: assign(socket, fight: fight, game_flash: nil)
+    do: assign(socket, fight: fight, game_flash: fight[:levelled] && Map.take(fight, [:levelled]))
 
   defp keep_fight(socket), do: socket
 
