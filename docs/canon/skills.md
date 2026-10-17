@@ -84,7 +84,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Common Craft | 1322 | 1 (level 1) | 0 | Common Craft, free; crafting, not combat |
 | Anti Magic | 146 | 7 (levels 1–2), 14 (levels 3–4) | 240, 1100 | passive Anti Magic: M.Def +10/+12/+14/+16 |
 | Armor Mastery | 244 | 7 (level 1), 14 (levels 2–3) | 470, 1100 | passive mystic Armor Mastery: P.Def +6.7/+8.0/+9.2 |
-| Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 470, 2100 | passive mystic Weapon Mastery: P.Atk +1.5/+2.8 and M.Atk +1.9/+3.5, then P.Atk x1.45, M.Atk x1.17; bow/pole: Casting Spd x0.7, Accuracy -9 |
+| Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 470, 2100 | passive mystic Weapon Mastery: P.Atk x1.45 then +1.5/+2.8, M.Atk x1.17 then +1.9/+3.5; bow/pole: Casting Spd x0.7, Accuracy -9 |
 | Heal | 1011 | 7 (levels 1–3), 14 (levels 4–6) | 160, 700 | heal target; power 49,58,67 / 83,95,107 HP; MP 2+8..5+17; 5000 ms; reuse 10 s |
 | Cure Poison | 1012 | 7 (level 1) | 470 | cure poison on target; MP 2+8; 4000 ms; reuse 15 s |
 | Shield | 1040 | 7 (level 1) | 470 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s; TARGET_ONE, so it can be cast on oneself |
@@ -132,7 +132,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Common Craft | 1322 | 1 (level 1) | 0 | Common Craft, free; crafting, not combat |
 | Anti Magic | 146 | 7 (levels 1–2), 14 (levels 3–4) | 260, 1100 | passive Anti Magic: M.Def +10/+12/+14/+16 |
 | Armor Mastery | 244 | 7 (level 1), 14 (levels 2–3) | 520, 1100 | passive mystic Armor Mastery: P.Def +6.7/+8.0/+9.2 |
-| Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 520, 2100 | passive mystic Weapon Mastery: P.Atk +1.5/+2.8 and M.Atk +1.9/+3.5, then P.Atk x1.45, M.Atk x1.17; bow/pole: Casting Spd x0.7, Accuracy -9 |
+| Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 520, 2100 | passive mystic Weapon Mastery: P.Atk x1.45 then +1.5/+2.8, M.Atk x1.17 then +1.9/+3.5; bow/pole: Casting Spd x0.7, Accuracy -9 |
 | Heal | 1011 | 7 (levels 1–3), 14 (levels 4–6) | 170, 700 | heal target; power 49,58,67 / 83,95,107 HP; MP 2+8..5+17; 5000 ms; reuse 10 s |
 | Cure Poison | 1012 | 7 (level 1) | 520 | cure poison on target; MP 2+8; 4000 ms; reuse 15 s |
 | Shield | 1040 | 7 (level 1) | 520 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s; TARGET_ONE, so it can be cast on oneself |
@@ -180,7 +180,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 | Common Craft | 1322 | 1 (level 1) | 0 | Common Craft, free; crafting, not combat |
 | Anti Magic | 146 | 7 (levels 1–2), 14 (levels 3–4) | 240, 1100 | passive Anti Magic: M.Def +10/+12/+14/+16 |
 | Armor Mastery | 244 | 7 (level 1), 14 (levels 2–3) | 470, 1100 | passive mystic Armor Mastery: P.Def +6.7/+8.0/+9.2 |
-| Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 470, 2100 | passive mystic Weapon Mastery: P.Atk +1.5/+2.8 and M.Atk +1.9/+3.5, then P.Atk x1.45, M.Atk x1.17; bow/pole: Casting Spd x0.7, Accuracy -9 |
+| Weapon Mastery | 249 | 7 (level 1), 14 (level 2) | 470, 2100 | passive mystic Weapon Mastery: P.Atk x1.45 then +1.5/+2.8, M.Atk x1.17 then +1.9/+3.5; bow/pole: Casting Spd x0.7, Accuracy -9 |
 | Heal | 1011 | 7 (levels 1–3), 14 (levels 4–6) | 160, 700 | heal target; power 49,58,67 / 83,95,107 HP; MP 2+8..5+17; 5000 ms; reuse 10 s |
 | Cure Poison | 1012 | 7 (level 1) | 470 | cure poison on target; MP 2+8; 4000 ms; reuse 15 s |
 | Shield | 1040 | 7 (level 1) | 470 | target buff Shield: P.Def x1.08, 20 min; MP 2+8; 4000 ms; reuse 6 s; TARGET_ONE, so it can be cast on oneself |
@@ -250,6 +250,7 @@ Sources: [DEVjEXTREME/L2jaCis-409](https://github.com/DEVjEXTREME/L2jaCis-409/bl
 - **SP is "skill points", for every class** **(single source)**: There is no "spell points". The Human Mystic's Newbie Guide: "SP means "skill points," and they are consumed whenever you learn new skills or magic." The mage tutorial: "You'll need to build your skill points (SP) by hunting monsters." System messages: "You have acquired $s1 SP.", "Your SP has decreased by $s1.", and id 278 "You do not have enough SP to learn this skill." Sources: aCis `aCis_datapack/data/html/script/feature/NewbieHelper/human/guide_human_cnacelot_m07_04.htm`, `.../Tutorial/tutorial_mage020.htm`, `aCis_gameserver/.../network/SystemMessageId.java`; L2J `dist/game/data/scripts/ai/others/Tutorial/tutorial_mage017.htm`; the L2J family only.
 - **A mystic's spells are skills** **(single source)**: The Talking Island mystic trainers (Magister Baulro 30033, Priest Yohanes 30032) offer "Learn skills"; Baulro is "in charge of teaching magic here". The tutorial heads its page "[ Learning Magic ]" and speaks of "magic skills", and a guide says "Active skills, including spells, must be intentionally used." In the data, magic is a flag on a skill (`isMagic`), not a kind of its own. A mystic skill is learned with a book, "Spellbook: Wind Strike" (item 1150). The client's skill window labels were not checked. Sources: aCis `aCis_datapack/data/html/trainer/30033.htm`, `30032.htm`, `.../NewbieHelper/orc/guide_orc_tanai_m07_041.htm`, `aCis_datapack/data/xml/spellbooks.xml`.
 - **What a weapon does to a mystic's casting**: No first-tier mystic skill has a weapon condition (see Weapon conditions above). The mystic Weapon Mastery (249; 250 for the Orc Mystic) multiplies Casting Spd by 0.7 and takes 9 Accuracy while a bow or a polearm is worn (`<using kind="BOW,POLE"/>`). Spellcraft (163, every mystic from level 1) halves Casting Spd unless robe armour is worn. Sources: aCis `aCis_datapack/data/xml/skills/0200-0299.xml`, `0100-0199.xml`; L2J `dist/game/data/stats/skills/0200-0299.xml`.
+- **A passive multiplies before it adds**: a stat's functions run lowest order first, whatever order the skill lists them in. L2J writes the order into the data (`<mul order="0x30">`, `<add order="0x40">`), and aCis into the function (`FuncMul` 20, `FuncAdd` 30, sorted by `Calculator.addFunc`). So the mystic Weapon Mastery, whose data lists its adds first, multiplies P.Atk by 1.45 and M.Atk by 1.17 and then adds 1.5 and 1.9, as the fighter's multiplies by 1.085 and then adds 2. Sources: aCis `aCis_gameserver/java/net/sf/l2j/gameserver/skills/basefuncs/FuncMul.java`, `FuncAdd.java`, `skills/Calculator.java`; L2J `dist/game/data/stats/skills/0100-0199.xml`, `0200-0299.xml`.
 
 ## Disputes and caveats
 

@@ -950,7 +950,7 @@ defmodule MiniLineage.Game.RulesTest do
       mystic = Player.stats(learned.(0, :mystic, 7, %{}))
       master = Player.stats(learned.(0, :mystic, 7, %{"Weapon Mastery" => 1}))
       assert {round2.(mystic.m_atk), round2.(mystic.p_atk)} == {9.45, 3.02}
-      assert {round2.(master.m_atk), round2.(master.p_atk)} == {13.27, 6.56}
+      assert {round2.(master.m_atk), round2.(master.p_atk)} == {12.95, 5.88}
     end
 
     test "§8 Squire's Gloves' +4 Accuracy, and §13 a weapon's spread and bare hands'" do

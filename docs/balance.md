@@ -12,7 +12,8 @@ the pull, each fighter's kit a Squire's weapon for every path its skills take, t
 Apprentice's Wand, each path shown only its own goods, one of each kind per price, every chest,
 legs and necklace priced as many of its slot as it stands for, and three masteries on every path,
 Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for
-both, and every line at Lineage II's price but level 1's. One `--final` reading of that
+both, each multiplying before it adds as Lineage II does, and every line at Lineage II's price but
+level 1's. One `--final` reading of that
 build, 200 seeded runs of every set up its village's ladder to
 level 20, once per weapon path its skills can use, each run seeded on its own; at the defaults none
 of them died. The bench learns every line, the masteries included, which a player need not.
@@ -189,19 +190,20 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 (`3a65708`), with every chest, legs and necklace priced as many of its slot as it stands for
 (`6a43a98`), with Armor or Robe Mastery for each path (`613b52f`), and now, with Weapon Mastery and
 Anti Magic for every set and every line past level 1 at Lineage II's prices (`87027a5` and Robe
-Mastery's after it), the steps in one column. Each step is compared run for run (`bench/compare.exs`).
+Mastery's after it, and the Mystic's Weapon Mastery multiplying before it adds), the steps in one
+column. Each step is compared run for run (`bench/compare.exs`).
 
 | Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Now |
 |---|---|---|---|---|---|---|---|---|
 | Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 |
 | Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 |
-| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **182 / 182** |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** |
 | Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 |
 | Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 |
 | Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 |
 | Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 |
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **273 / 272** |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** |
 
 - **The masteries and the canon prices make every set 1% to 16% faster** than Armor or Robe
   Mastery alone. Weapon Mastery does it: Anti Magic, measured alone, moved no set by more than 3%
@@ -214,6 +216,10 @@ Mastery's after it), the steps in one column. Each step is compared run for run 
   from the fastest set to the slowest narrows from 95 to 91 minutes resting to full, and widens
   from 106 to 118 carrying potions. The hunts to 20 are the same, since a kill pays the same EXP:
   the time saved is all in the fights and the rest after them.
+- **A Mystic's Weapon Mastery multiplies before it adds,** as Lineage II's server sorts it, where it
+  once added first because its data lists the adds first: 0.3 M.Atk and 0.7 P.Atk less at level 7.
+  No Mystic moved more than 0.5% at any setting; with a two-hander the Dark Mystic died once fewer
+  resting below half and below 30%, and the Orc Mystic once fewer below 30%.
 - **Armor or Robe Mastery for each path made every set 1% to 3% faster,** and the Orc Mystic 4% to 5%, which
   gives back about half of what pricing each piece cost; the spread from the fastest set to the
   slowest narrows from 100 to 95 minutes. A mastery adds only to defence, so it shortens no fight
@@ -267,8 +273,8 @@ Magic as well and the late lines at Lineage II's prices:
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0 | 0 / 0, 0 / 0 | |
 | Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4 | 1 / 4, 1 / 4 | Spore Fungus, at 9 |
-| Dark Mystic | staff 1h / 2h | 3 / 7, **2 / 8** | 5 / 12, 4 / 12 | Balor Orc Fighter, at 10 |
-| Orc Mystic | staff 1h / 2h | 0 / 1, **0 / 0** | 5 / 10, **1 / 6** | Skeleton Longbowman, at 19 |
+| Dark Mystic | staff 1h / 2h | 3 / 7, **2 / 7** | 5 / 12, 4 / 11 | Balor Orc Fighter, at 10 |
+| Orc Mystic | staff 1h / 2h | 0 / 1, **0 / 0** | 5 / 10, **1 / 5** | Skeleton Longbowman, at 19 |
 | Human Fighter | bow | 47, 59 | 191, 194 | Blade Spider, Talon Spider, at 16 and 17 |
 | Elven Fighter | bow | 68, **34** | 197, 183 | Dark Terror, Dread Soldier |
 | Dark Fighter | dagger | 60, **14** | 180, **125** | Balor Orc Archer, Cave Fang Spider |

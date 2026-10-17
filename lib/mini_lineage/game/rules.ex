@@ -494,7 +494,7 @@ defmodule MiniLineage.Game.Rules do
       %{bonuses: [%{stat: :p_def, add: 13.4, worn: "magic"}]},
       %{bonuses: [%{stat: :p_def, add: 18.4, worn: "magic"}]}
     ],
-    # A bonus with `times` multiplies; a line's bonuses apply in order.
+    # A bonus with `times` multiplies, and a mastery multiplies before it adds (rules §19).
     "Weapon Mastery" => %{
       fighter: [
         %{bonuses: [%{stat: :p_atk, times: 1.085}, %{stat: :p_atk, add: 2}]},
@@ -504,18 +504,18 @@ defmodule MiniLineage.Game.Rules do
       mystic: [
         %{
           bonuses: [
-            %{stat: :p_atk, add: 1.5},
-            %{stat: :m_atk, add: 1.9},
             %{stat: :p_atk, times: 1.45},
-            %{stat: :m_atk, times: 1.17}
+            %{stat: :p_atk, add: 1.5},
+            %{stat: :m_atk, times: 1.17},
+            %{stat: :m_atk, add: 1.9}
           ]
         },
         %{
           bonuses: [
-            %{stat: :p_atk, add: 2.8},
-            %{stat: :m_atk, add: 3.5},
             %{stat: :p_atk, times: 1.45},
-            %{stat: :m_atk, times: 1.17}
+            %{stat: :p_atk, add: 2.8},
+            %{stat: :m_atk, times: 1.17},
+            %{stat: :m_atk, add: 3.5}
           ]
         }
       ]

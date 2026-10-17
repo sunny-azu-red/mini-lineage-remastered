@@ -63,7 +63,7 @@ defmodule MiniLineageWeb.SkillRowsTest do
     doc = page(fighter)
 
     assert row(doc, "armor-mastery") ==
-             "🪖 Armor Mastery 3 • +14 P.Def and +3 Evasion in light armour."
+             "🪖 Armor Mastery 3 • +14 P.Def, +3 Evasion in light armour."
 
     assert doc |> LazyHTML.query("#skill-armor-mastery .defense") |> LazyHTML.text() ==
              "+14 P.Def"
@@ -79,17 +79,21 @@ defmodule MiniLineageWeb.SkillRowsTest do
   test "Weapon Mastery reads as a Fighter's P.Atk or a Mystic's M.Atk, a share as a buff writes it" do
     fighter = %{knowing_all(1, :fighter) | skills: %{"Iron Punch" => 1, "Weapon Mastery" => 3}}
     doc = page(fighter)
-    assert row(doc, "weapon-mastery") == "🤺 Weapon Mastery 3 • +8.5% P.Atk then +4."
+    assert row(doc, "weapon-mastery") == "🤺 Weapon Mastery 3 • +8.5% P.Atk and +4 P.Atk."
+
+    assert doc |> LazyHTML.query("#skill-weapon-mastery .attack") |> Enum.map(&LazyHTML.text/1) ==
+             ["+8.5% P.Atk", "+4 P.Atk"]
+
     refute row(doc, "weapon-mastery") =~ "×"
 
     mystic = %{knowing_all(2, :mystic) | skills: %{"Wind Strike" => 1, "Weapon Mastery" => 2}}
     doc = page(mystic)
 
     assert row(doc, "weapon-mastery") ==
-             "🤺 Weapon Mastery 2 • +2.8 P.Atk then +45% and +3.5 M.Atk then +17%."
+             "🤺 Weapon Mastery 2 • +45% P.Atk and +2.8 P.Atk, +17% M.Atk and +3.5 M.Atk."
 
-    assert doc |> LazyHTML.query("#skill-weapon-mastery .magic") |> LazyHTML.text() ==
-             "+3.5 M.Atk then +17%"
+    assert doc |> LazyHTML.query("#skill-weapon-mastery .magic") |> Enum.map(&LazyHTML.text/1) ==
+             ["+17% M.Atk", "+3.5 M.Atk"]
 
     warded = %{mystic | skills: %{"Wind Strike" => 1, "Anti Magic" => 2}}
     assert row(page(warded), "anti-magic") == "🧿 Anti Magic 2 • +16 M.Def."

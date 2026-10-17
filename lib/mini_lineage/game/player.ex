@@ -95,15 +95,18 @@ defmodule MiniLineage.Game.Player do
     end)
   end
 
-  # Rules §19 and §25: what its masteries add or multiply by, in order; a bonus naming an armour type
-  # holds only in it.
+  # Rules §19 and §25: what its masteries multiply by, then what they add, as Lineage II sorts them
+  # whatever order its data lists; a bonus naming an armour type holds only in it.
   defp passives(player) do
     chest = Enum.find(equipped(player), &(&1.slot == :chest))
 
-    for %{kind: :passive, bonuses: bonuses} <- known_skills(player),
-        bonus <- bonuses,
-        bonus[:worn] in [nil, chest && chest.type],
-        do: {bonus.stat, if(bonus[:times], do: {:mul, bonus.times}, else: {:add, bonus.add})}
+    modifiers =
+      for %{kind: :passive, bonuses: bonuses} <- known_skills(player),
+          bonus <- bonuses,
+          bonus[:worn] in [nil, chest && chest.type],
+          do: {bonus.stat, if(bonus[:times], do: {:mul, bonus.times}, else: {:add, bonus.add})}
+
+    Enum.sort_by(modifiers, fn {_stat, {op, _value}} -> op == :add end)
   end
 
   defp modify({stat, {:add, value}}, stats), do: Map.update!(stats, stat, &(&1 + value))

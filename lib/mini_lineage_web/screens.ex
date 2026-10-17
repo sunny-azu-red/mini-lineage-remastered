@@ -990,8 +990,8 @@ every {duration(@skill.every)}.|
     do: ~H|<span class="regen">+{@skill.power} HP</span>
 a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
-  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P.Def", "+8.5% P.Atk then +2"), and
-  # what must be worn. A stat's bonuses go together in the order they apply.
+  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P.Def in a robe", "+8.5% P.Atk and
+  # +2 P.Atk"), each bonus naming its stat: a stat's bonuses joined by "and", the stats by commas.
   defp skill_does(%{skill: %{kind: :passive}} = assigns) do
     bonuses = assigns.skill.bonuses
     key = &{&1.stat, &1[:worn]}
@@ -1003,7 +1003,7 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
     assigns = assign(assigns, groups: groups)
 
     ~H"""
-    <span phx-no-format><%= for {[first | rest], index} <- Enum.with_index(@groups) do %>{if index > 0, do: " and "}<span class={stat_class(first.stat)}>{bonus(first)} {stat_name(first.stat)}<%= for more <- rest do %> then {bonus(more)}<% end %></span>{worn(first[:worn])}<% end %>.</span>
+    <span phx-no-format><%= for {[first | _] = group, index} <- Enum.with_index(@groups) do %>{if index > 0, do: ", "}<%= for {bonus, at} <- Enum.with_index(group) do %>{if at > 0, do: " and "}<span class={stat_class(bonus.stat)}>{bonus(bonus)} {stat_name(bonus.stat)}</span><% end %>{worn(first[:worn])}<% end %>.</span>
     """
   end
 

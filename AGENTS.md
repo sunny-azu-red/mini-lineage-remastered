@@ -347,7 +347,7 @@ Each of these is here because it was got wrong once.
   `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
   multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk". A
   mastery reads the same way, its line's bonus as rules §25 writes it ("+14 P.Def", "+13.4 P.Def in a
-  robe", "+8.5% P.Atk then +2"), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
+  robe", "+8.5% P.Atk and +2 P.Atk", each bonus naming its stat), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
   own, in `1617e87`; a new skill's page is written the same way from the start.
 - **What ends counts down where it is shown.** An effect with an end carries `remaining_ms`, a
   duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:

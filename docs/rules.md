@@ -490,8 +490,9 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
   3 seconds (Soul Cry 3 at level 1 and 6 at level 2), going out when the MP runs short.
 - **Rest:** Relax mends power HP more on every tick of rest (§11), for its MP. Lineage II drains 2
   MP every 2 seconds, which is 3 a tick.
-- **Passive:** adds to a stat what §25's passive table gives the line it is known at, after §7 to
-  §10 and before any aura, or multiplies it by a share, in the order the table lists them. A bonus
+- **Passive:** multiplies a stat by the shares §25's passive table gives the line it is known at,
+  then adds its bonuses, as Lineage II does whatever order its data lists them in, after §7 to §10
+  and before any aura. A bonus
   that names what is worn holds only while the chest piece worn is of that kind (§23): Robe
   Mastery's P.Def in a robe, Armor Mastery's Evasion in light armour. Weapon Mastery is a Fighter's
   P.Atk and a Mystic's M.Atk (and its P.Atk), each its own lines, as in Lineage II, whose slower
@@ -960,14 +961,14 @@ What each line of a mastery adds (§19), and what must be worn for it:
 | Weapon Mastery 2 | Fighter | P.Atk | 3 | |
 | Weapon Mastery 3 | Fighter | P.Atk | 8.5% | |
 | Weapon Mastery 3 | Fighter | P.Atk | 4 | |
-| Weapon Mastery 1 | Mystic | P.Atk | 1.5 | |
-| Weapon Mastery 1 | Mystic | M.Atk | 1.9 | |
 | Weapon Mastery 1 | Mystic | P.Atk | 45% | |
+| Weapon Mastery 1 | Mystic | P.Atk | 1.5 | |
 | Weapon Mastery 1 | Mystic | M.Atk | 17% | |
-| Weapon Mastery 2 | Mystic | P.Atk | 2.8 | |
-| Weapon Mastery 2 | Mystic | M.Atk | 3.5 | |
+| Weapon Mastery 1 | Mystic | M.Atk | 1.9 | |
 | Weapon Mastery 2 | Mystic | P.Atk | 45% | |
+| Weapon Mastery 2 | Mystic | P.Atk | 2.8 | |
 | Weapon Mastery 2 | Mystic | M.Atk | 17% | |
+| Weapon Mastery 2 | Mystic | M.Atk | 3.5 | |
 | Anti Magic 1 | | M.Def | 12 | |
 | Anti Magic 2 | | M.Def | 16 | |
 
@@ -986,7 +987,7 @@ in its Apprentice's Tunic and Stockings has 59.92 P.Def, and knowing Robe Master
 Example: an Orc Fighter at level 10 in its Squire's kit has 8.32 P.Atk and 53.17 M.Def, and knowing
 Weapon Mastery 2 and Anti Magic 1, 8.32 × 1.085 + 3 = **12.02** and 53.17 + 12 = **65.17**. A Human
 Mystic at level 7 with its Apprentice's Wand has 9.45 M.Atk and 3.02 P.Atk, and knowing Weapon
-Mastery 1, (9.45 + 1.9) × 1.17 = **13.27** and (3.02 + 1.5) × 1.45 = **6.56**.
+Mastery 1, 9.45 × 1.17 + 1.9 = **12.95** and 3.02 × 1.45 + 1.5 = **5.88**.
 
 ## 26. Potions
 
