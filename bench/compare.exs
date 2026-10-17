@@ -20,7 +20,10 @@ if ladder.(before) != ladder.(after_),
 runs = &(&1["rows"] |> Enum.map(fn row -> row["runs"] end) |> Enum.uniq())
 
 if runs.(before) != runs.(after_),
-  do: raise("the two readings ran #{inspect(runs.(before))} and #{inspect(runs.(after_))} runs a path")
+  do:
+    raise(
+      "the two readings ran #{inspect(runs.(before))} and #{inspect(runs.(after_))} runs a path"
+    )
 
 settings = after_["settings"]
 rested? = settings["rest_below"] == 100
@@ -65,33 +68,43 @@ noise = fn b, a, n ->
   2 * :math.sqrt(2 * n * p * (1 - p))
 end
 
+judge = fn row, was, n, moved, faults ->
+  faults
+  |> then(
+    &if rested? and row["deaths"] > 0,
+      do: ["#{row["set"]}, #{row["path"]} dies at the defaults" | &1],
+      else: &1
+  )
+  |> then(
+    &if row["deaths"] - was["deaths"] > max(noise.(was["deaths"], row["deaths"], n), 1),
+      do: [
+        "#{row["set"]}, #{row["path"]} dies more: #{was["deaths"]} to #{row["deaths"]} of #{n}"
+        | &1
+      ],
+      else: &1
+  )
+  |> then(
+    &if moved && abs(moved) > 15,
+      do: ["#{row["set"]}, #{row["path"]} takes #{fmt.(moved)}% to the top" | &1],
+      else: &1
+  )
+end
+
+# A path only one reading has (an off-meta build the older bench did not run) is left out.
+shared = Enum.filter(after_["rows"], &Map.has_key?(befores, key.(&1)))
+
 {lines, faults} =
-  Enum.map_reduce(after_["rows"], [], fn row, faults ->
+  Enum.map_reduce(shared, [], fn row, faults ->
     was = Map.fetch!(befores, key.(row))
     n = row["runs"]
     {was_minutes, now_minutes, pairs} = paired.(was, row)
     moved = if pairs >= min_pairs, do: pct.(was_minutes, now_minutes)
 
+    # An off-meta build is shown, never held to the bar: the ladder reports whether it beats the meta.
     faults =
-      faults
-      |> then(
-        &if rested? and row["deaths"] > 0,
-          do: ["#{row["set"]}, #{row["path"]} dies at the defaults" | &1],
-          else: &1
-      )
-      |> then(
-        &if row["deaths"] - was["deaths"] > max(noise.(was["deaths"], row["deaths"], n), 1),
-          do: [
-            "#{row["set"]}, #{row["path"]} dies more: #{was["deaths"]} to #{row["deaths"]} of #{n}"
-            | &1
-          ],
-          else: &1
-      )
-      |> then(
-        &if moved && abs(moved) > 15,
-          do: ["#{row["set"]}, #{row["path"]} takes #{fmt.(moved)}% to the top" | &1],
-          else: &1
-      )
+      if row["probe"],
+        do: faults,
+        else: judge.(row, was, n, moved, faults)
 
     line =
       String.pad_trailing("#{row["set"]}, #{row["path"]}", 30) <>
@@ -107,7 +120,8 @@ end
 # Over each set's paired runs, so a set no run of which finished before does not widen it by
 # finishing now.
 judged =
-  for row <- after_["rows"],
+  for row <- shared,
+      !row["probe"],
       {was_minutes, now_minutes, pairs} = paired.(befores[key.(row)], row),
       pairs >= min_pairs,
       do: {was_minutes, now_minutes}

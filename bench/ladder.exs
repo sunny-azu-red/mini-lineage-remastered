@@ -1,7 +1,9 @@
 # A seeded run of every set up its village's ladder, once per weapon path its skills can use, played
-# through the game's own actions: hunt, rest, buy the path's next gear the purse allows (selling what
-# it replaced) and keep potions in stock, learn what the trainer offers. It reports where runs die,
-# what the trainer costs and when, and what the shop costs and when. docs/balance.md reads it.
+# through the game's own actions as a player would: hunt, rest, buy the path's next gear the purse
+# allows (selling what it replaced) and keep potions in stock, learn what the trainer offers for the
+# weapon in hand. It reports where runs die, what the trainer costs and when, and what the shop costs
+# and when. docs/balance.md reads it. Each one-handed path also runs off-meta, with the other shield
+# choice, and is flagged if that does better.
 #
 #   MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [top level] [rest below %] [potions kept]
 #     [--json path] [--only "Set name,Set name"] [--orders <pull share>,<fight share>]
@@ -47,8 +49,9 @@ defaults = [200, 20, 100, 20]
 Application.ensure_all_started(:tz)
 
 defmodule Ladder do
-  # A path is a weapon type and the hands it is held in: a one-hander goes with a shield, and a
-  # two-hander path carries one-handers only until its first two-hander is affordable.
+  # A path is a weapon type and the hands it is held in: a two-hander path carries one-handers only
+  # until its first two-hander is affordable. A sword or staff in one hand goes with a shield, a
+  # dagger without, since a shield's 8 Evasion is what a dagger fights with.
   # The set's own starting weapons count as the path's too, or a sword path would never wield the
   # Squire's Sword it carries, and a shield bought early would leave it bare-handed.
   def paths(race, path) do
@@ -81,8 +84,25 @@ defmodule Ladder do
           do: "#{type} #{hands}h",
           else: type
 
-      %{label: label, weapons: weapons, shield?: hands == 1}
+      %{
+        label: label,
+        type: type,
+        hands: hands,
+        weapons: weapons,
+        shield?: type in ["sword", "staff"],
+        probe: nil
+      }
     end
+  end
+
+  # Each one-handed path again with the other shield choice, named `probe` after the meta path whose
+  # dice it rolls, so the two compare run for run.
+  def with_probes(paths) do
+    paths ++
+      for path <- paths, path.hands == 1 do
+        suffix = if path.shield?, do: " no shield", else: " + shield"
+        %{path | label: path.label <> suffix, shield?: not path.shield?, probe: path.label}
+      end
   end
 
   def worth(player, path, item) do
@@ -90,7 +110,7 @@ defmodule Ladder do
       item.kind == :weapon and item.name not in path.weapons -> -1
       item.kind == :weapon and player.path == :mystic -> item.m_atk
       item.kind == :weapon -> item.p_atk
-      item.kind == :shield -> if path.shield?, do: item.shield_def, else: -1
+      item.kind == :shield -> if path.shield? and one_hand?(player), do: item.shield_def, else: -1
       item.kind == :armour -> if armour_ok?(player.path, item), do: item.p_def, else: -1
       item.kind == :jewellery -> item.m_def
       true -> -1
@@ -98,6 +118,9 @@ defmodule Ladder do
   end
 
   @slots ~w(weapon chest legs necklace shield)a
+
+  defp one_hand?(player),
+    do: Enum.any?(Player.equipped(player), &(&1.kind == :weapon and &1.hands == 1))
 
   # What the village sells the set, the same all run long, so listed once a run.
   defp stock(player) do
@@ -187,10 +210,10 @@ defmodule Ladder do
   defp armour_ok?(:fighter, item), do: item.type != "magic"
   defp armour_ok?(:mystic, item), do: item.type != "light" or item.slot not in [:chest, :legs]
 
-  def train(player) do
+  def train(player, path) do
     level = Player.level(player)
 
-    Enum.reduce(lessons(player), player, fn lesson, p ->
+    Enum.reduce(lessons(player, path), player, fn lesson, p ->
       if lesson.learn_at <= level and Map.get(p.skills, lesson.skill, 0) == lesson.level - 1 and
            p.sp >= lesson.sp do
         {p, {:ok, _}} = Actions.learn(p, lesson.skill, lesson.level)
@@ -203,8 +226,16 @@ defmodule Ladder do
 
   def lessons(player), do: Rules.lessons(Rules.set(player.race_id, player.path).name)
 
-  def learned_all?(player),
-    do: Enum.all?(lessons(player), &(Map.get(player.skills, &1.skill, 0) >= &1.level))
+  # A weapon skill only for the path's weapon: a dagger's run buys no Power Strike.
+  def lessons(player, path) do
+    Enum.filter(lessons(player), fn lesson ->
+      needs = Rules.skill_weapons(lesson.skill)
+      needs == [] or path.type in needs
+    end)
+  end
+
+  def learned_all?(player, path),
+    do: Enum.all?(lessons(player, path), &(Map.get(player.skills, &1.skill, 0) >= &1.level))
 
   # What the trainer is worth: SP on hand once trained on arriving at a level, each line's wait in
   # hunts from the level it is taught at, and the SP earned and spent.
@@ -263,11 +294,11 @@ defmodule Run do
       p = Ladder.shop(p, weapons)
       {p, potions} = Ladder.stock_potions(p, reached.potions, kept)
       reached = Ladder.note_gear(%{reached | potions: potions}, p, weapons, kills)
-      trained = Ladder.train(p)
+      trained = Ladder.train(p, weapons)
       reached = Ladder.note_training(reached, p, trained, kills)
 
       reached =
-        if Ladder.learned_all?(trained),
+        if Ladder.learned_all?(trained, weapons),
           do: Map.put_new(reached, :list, {Player.level(trained), kills}),
           else: reached
 
@@ -393,6 +424,7 @@ defmodule Report do
     row = %{
       set: Rules.set(race, path).name,
       path: weapons.label,
+      probe: weapons.probe,
       runs: runs,
       deaths: length(deaths),
       died_at: Map.new(died_at, fn {level, n} -> {to_string(level), n} end),
@@ -412,6 +444,47 @@ defmodule Report do
     }
 
     {[first, second, third], row}
+  end
+
+  # Two death counts of n runs differ by more than the dice explain past twice the standard
+  # deviation of the difference of two binomials at their pooled rate, as compare.exs weighs them.
+  def noise(a, b, n) do
+    p = (a + b) / (2 * n)
+    max(2 * :math.sqrt(2 * n * p * (1 - p)), 1)
+  end
+
+  # Each off-meta build against its meta path, run for run; one that dies less or is faster by more
+  # than 2% without dying more is flagged, for a build the rules let break the game.
+  def probes(rows) do
+    for probe <- rows, probe.probe do
+      meta = Enum.find(rows, &(&1.set == probe.set and &1.path == probe.probe))
+      n = probe.runs
+
+      pairs =
+        Enum.zip(meta.minutes_by_run, probe.minutes_by_run)
+        |> Enum.filter(fn {a, b} -> a && b end)
+
+      {was, now} =
+        if pairs == [],
+          do: {nil, nil},
+          else:
+            {Enum.sum_by(pairs, &elem(&1, 0)) / length(pairs),
+             Enum.sum_by(pairs, &elem(&1, 1)) / length(pairs)}
+
+      faster = was && (was - now) / was * 100
+      noise = noise(meta.deaths, probe.deaths, n)
+
+      beats? =
+        meta.deaths - probe.deaths > noise or
+          (faster != nil and faster > 2 and probe.deaths - meta.deaths <= noise)
+
+      minutes =
+        if was, do: "#{round(was)} -> #{round(now)} min (#{Float.round(-faster, 1)}%)", else: "-"
+
+      "Off-meta #{probe.set}, #{probe.path} against #{probe.probe}: died #{meta.deaths} -> " <>
+        "#{probe.deaths} of #{n} | #{minutes}" <>
+        if(beats?, do: " | FLAG: beats the meta", else: "")
+    end
   end
 end
 
@@ -438,18 +511,21 @@ paths =
   for race <- [0, 2, 3, 1],
       path <- [:fighter, :mystic],
       only == [] or Rules.set(race, path).name in only,
-      weapons <- Ladder.paths(race, path),
-      do: {race, path, weapons, "#{Rules.set(race, path).name}, #{weapons.label}"}
+      weapons <- Ladder.with_probes(Ladder.paths(race, path)),
+      set = Rules.set(race, path).name,
+      do:
+        {race, path, weapons, "#{set}, #{weapons.label}",
+         "#{set}, #{weapons.probe || weapons.label}"}
 
 # Every run of every setting in one queue, so no path waits on another's slowest run.
 results =
-  for {study, settings} <- studies, {race, path, weapons, name} <- paths, run <- 1..runs do
-    {study, settings, race, path, weapons, name, run}
+  for {study, settings} <- studies, {race, path, weapons, name, dice} <- paths, run <- 1..runs do
+    {study, settings, race, path, weapons, name, dice, run}
   end
   |> Task.async_stream(
-    fn {study, settings, race, path, weapons, name, run} ->
+    fn {study, settings, race, path, weapons, name, dice, run} ->
       {{study, name}, run,
-       Run.play(race, path, weapons, {:erlang.phash2(name), run, 7}, settings)}
+       Run.play(race, path, weapons, {:erlang.phash2(dice), run, 7}, settings)}
     end,
     max_concurrency: System.schedulers_online(),
     ordered: false,
@@ -465,12 +541,12 @@ results =
 for {study, settings} <- studies do
   {lines, rows} =
     paths
-    |> Enum.map(fn {race, path, weapons, name} ->
+    |> Enum.map(fn {race, path, weapons, name, _} ->
       Report.path(name, race, path, weapons, results[{study, name}], runs, top)
     end)
     |> Enum.unzip()
 
-  text = lines |> List.flatten() |> Enum.map_join(&(&1 <> "\n"))
+  text = (List.flatten(lines) ++ Report.probes(rows)) |> Enum.map_join(&(&1 <> "\n"))
   settings = Map.update!(settings, :start, &DateTime.to_iso8601/1)
   json = JSON.encode!(%{settings: settings, rows: rows})
 

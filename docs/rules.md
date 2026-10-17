@@ -132,9 +132,10 @@ Wisdom (25) counts for 25 × 41 ÷ 13 = **78.8** of mind, nearly double the bare
 
 **Accuracy = Evasion = √DEX × 6 + level**, rounded. A weapon's own accuracy (§24) is added to
 Accuracy: a dagger or a bow −3, fists +4, a sword 0, and a staff +4, or 0 for a book, a horn or a
-relic.
+relic. A shield's own evasion (§24), −8 for every shield, is added to Evasion while it is worn.
 
-Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**, and with Squire's Gloves **38**.
+Example: a level 1 Human Fighter, DEX 30: √30 × 6 + 1 = **34**, and with Squire's Gloves **38**
+Accuracy. Behind any shield its Evasion is 34 − 8 = **26**.
 
 ## 9. Critical
 
@@ -653,7 +654,8 @@ sells anything in a kit:
   the character only swings. Spells need none.
 - **A shield** catches a monster's blow at its block rate × the DEX bonus, as a percentage. A catch
   adds the shield's defence to P.Def for that blow, and one catch in twenty is perfect and takes only
-  1. Spells pass a shield by.
+  1. Spells pass a shield by. Every shield blocks at 20 and costs 8 Evasion (§8) while worn, so a
+  better shield catches no more often, only harder, and blows land more often behind any of them.
 - **A robe's MP** is added to Max MP (§6).
 
 Example: a Human Fighter (DEX 30) behind a Small Shield (defence 56, block 20) catches 20 × 1.10 =
@@ -683,65 +685,65 @@ A trader shows a set only what its path uses, and sells it nothing else: a Fight
 own skills need (§23) and light armour, a Mystic staves and robes, and both every shield, necklace
 and potion.
 
-| Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | Accuracy | Spread | P.Def | M.Def | Shield | Block | MP | Price | Sold |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Apprentice's Wand | weapon | weapon | 1 | staff | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  | 138 | starting |
-| Squire's Bow | weapon | weapon | 2 | bow | 14 | 5 | 293 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
-| Short Bow | weapon | weapon | 2 | bow | 16 | 6 | 293 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
-| Bow | weapon | weapon | 2 | bow | 23 | 9 | 293 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
-| Hunting Bow | weapon | weapon | 2 | bow | 34 | 12 | 293 | 12 | -3 | 5 |  |  |  |  |  | 54100 | village |
-| Forest Bow | weapon | weapon | 2 | bow | 49 | 17 | 293 | 12 | -3 | 5 |  |  |  |  |  | 136000 | village |
-| Squire's Dagger | weapon | weapon | 1 | dagger | 5 | 5 | 433 | 12 | -3 | 5 |  |  |  |  |  | 138 | starting |
-| Bone Dagger | weapon | weapon | 1 | dagger | 7 | 6 | 433 | 12 | -3 | 5 |  |  |  |  |  | 768 | village |
-| Knife | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 | -3 | 5 |  |  |  |  |  | 12500 | village |
-| Dirk | weapon | weapon | 1 | dagger | 15 | 12 | 433 | 12 | -3 | 5 |  |  |  |  |  | 54100 | village |
-| Throwing Knife | weapon | weapon | 1 | dagger | 21 | 17 | 433 | 12 | -3 | 5 |  |  |  |  |  | 136000 | village |
-| Squire's Gloves | weapon | weapon | 2 | fists | 7 | 5 | 325 | 4 | 4 | 5 |  |  |  |  |  | 138 | starting |
-| Spiked Gloves | weapon | weapon | 2 | fists | 10 | 6 | 325 | 4 | 4 | 5 |  |  |  |  |  | 768 | orc-village |
-| Iron Gloves | weapon | weapon | 2 | fists | 13 | 9 | 325 | 4 | 4 | 5 |  |  |  |  |  | 12500 | orc-village |
-| Fox Claw Gloves | weapon | weapon | 2 | fists | 21 | 12 | 325 | 4 | 4 | 5 |  |  |  |  |  | 54100 | orc-village |
-| Cestus | weapon | weapon | 2 | fists | 29 | 17 | 325 | 4 | 4 | 5 |  |  |  |  |  | 136000 | orc-village |
-| Buffalo's Horn | weapon | weapon | 1 | staff | 6 | 8 | 379 | 8 | 0 | 10 |  |  |  |  |  | 768 | village |
-| Scholar's Tome | weapon | weapon | 1 | staff | 9 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 12500 | village |
-| Relic of The Saints | weapon | weapon | 1 | staff | 19 | 22 | 379 | 8 | 0 | 10 |  |  |  |  |  | 136000 | village |
-| Squire's Sword | weapon | weapon | 1 | sword | 6 | 5 | 379 | 8 | 0 | 10 |  |  |  |  |  | 138 | starting |
-| Short Sword | weapon | weapon | 1 | sword | 8 | 6 | 379 | 8 | 0 | 10 |  |  |  |  |  | 768 | village |
-| Broadsword | weapon | weapon | 1 | sword | 11 | 9 | 379 | 8 | 0 | 10 |  |  |  |  |  | 12500 | village |
-| Gladius | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
-| Long Sword | weapon | weapon | 1 | sword | 24 | 17 | 379 | 8 | 0 | 10 |  |  |  |  |  | 136000 | village |
-| Willow Staff | weapon | weapon | 2 | staff | 11 | 12 | 325 | 4 | 4 | 20 |  |  |  |  |  | 12500 | village |
-| Cedar Staff | weapon | weapon | 2 | staff | 16 | 16 | 325 | 4 | 4 | 20 |  |  |  |  |  | 54100 | village |
-| Journeyman's Staff | weapon | weapon | 2 | staff | 23 | 22 | 325 | 4 | 4 | 20 |  |  |  |  |  | 136000 | village |
-| Brandish | weapon | weapon | 2 | sword | 21 | 12 | 325 | 8 | 0 | 10 |  |  |  |  |  | 54100 | village |
-| Zweihander | weapon | weapon | 2 | sword | 38 | 21 | 325 | 8 | 0 | 10 |  |  |  |  |  | 244000 | village |
-| Leather Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 47 | 20 |  | 39 | village |
-| Small Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 56 | 20 |  | 638 | village |
-| Buckler | shield | shield |  |  |  |  |  |  |  |  |  |  | 67 | 20 |  | 2780 | village |
-| Round Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 79 | 20 |  | 7110 | village |
-| Squire's Shirt | armour | chest |  | light |  |  |  |  |  |  | 33 |  |  |  |  | 26 | starting |
-| Shirt | armour | chest |  | light |  |  |  |  |  |  | 36 |  |  |  |  | 147 | village |
-| Leather Shirt | armour | chest |  | light |  |  |  |  |  |  | 43 |  |  |  |  | 2430 | village |
-| Wooden Breastplate | armour | chest |  | light |  |  |  |  |  |  | 47 |  |  |  |  | 7960 | village |
-| Bone Breastplate | armour | chest |  | light |  |  |  |  |  |  | 50 |  |  |  |  | 20300 | village |
-| Apprentice's Tunic | armour | chest |  | magic |  |  |  |  |  |  | 17 |  |  |  | 19 | 26 | starting |
-| Tunic | armour | chest |  | magic |  |  |  |  |  |  | 18 |  |  |  | 24 | 147 | village |
-| Cotton Tunic | armour | chest |  | magic |  |  |  |  |  |  | 21 |  |  |  | 38 | 2430 | village |
-| Leather Tunic | armour | chest |  | magic |  |  |  |  |  |  | 25 |  |  |  | 52 | 7960 | village |
-| Tunic of Devotion | armour | chest |  | magic |  |  |  |  |  |  | 30 |  |  |  | 67 | 20300 | village |
-| Squire's Pants | armour | legs |  | light |  |  |  |  |  |  | 20 |  |  |  |  | 6 | starting |
-| Pants | armour | legs |  | light |  |  |  |  |  |  | 22 |  |  |  |  | 92 | village |
-| Leather Pants | armour | legs |  | light |  |  |  |  |  |  | 27 |  |  |  |  | 1520 | village |
-| Wooden Gaiters | armour | legs |  | light |  |  |  |  |  |  | 29 |  |  |  |  | 4970 | village |
-| Bone Gaiters | armour | legs |  | light |  |  |  |  |  |  | 32 |  |  |  |  | 12700 | village |
-| Apprentice's Stockings | armour | legs |  | magic |  |  |  |  |  |  | 10 |  |  |  | 10 | 6 | starting |
-| Stockings | armour | legs |  | magic |  |  |  |  |  |  | 11 |  |  |  | 15 | 92 | village |
-| Cotton Stockings | armour | legs |  | magic |  |  |  |  |  |  | 13 |  |  |  | 23 | 1520 | village |
-| Leather Stockings | armour | legs |  | magic |  |  |  |  |  |  | 16 |  |  |  | 33 | 4970 | village |
-| Stockings of Devotion | armour | legs |  | magic |  |  |  |  |  |  | 19 |  |  |  | 42 | 12700 | village |
-| Necklace of Magic | jewellery | necklace |  |  |  |  |  |  |  |  |  | 15 |  |  |  | 66 | village |
-| Necklace of Knowledge | jewellery | necklace |  |  |  |  |  |  |  |  |  | 18 |  |  |  | 1080 | village |
-| Necklace of Anguish | jewellery | necklace |  |  |  |  |  |  |  |  |  | 21 |  |  |  | 4680 | village |
-| Necklace of Wisdom | jewellery | necklace |  |  |  |  |  |  |  |  |  | 25 |  |  |  | 11900 | village |
+| Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | Accuracy | Spread | P.Def | M.Def | Shield | Block | Evasion | MP | Price | Sold |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Apprentice's Wand | weapon | weapon | 1 | staff | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  |  | 138 | starting |
+| Squire's Bow | weapon | weapon | 2 | bow | 14 | 5 | 293 | 12 | -3 | 5 |  |  |  |  |  |  | 138 | starting |
+| Short Bow | weapon | weapon | 2 | bow | 16 | 6 | 293 | 12 | -3 | 5 |  |  |  |  |  |  | 768 | village |
+| Bow | weapon | weapon | 2 | bow | 23 | 9 | 293 | 12 | -3 | 5 |  |  |  |  |  |  | 12500 | village |
+| Hunting Bow | weapon | weapon | 2 | bow | 34 | 12 | 293 | 12 | -3 | 5 |  |  |  |  |  |  | 54100 | village |
+| Forest Bow | weapon | weapon | 2 | bow | 49 | 17 | 293 | 12 | -3 | 5 |  |  |  |  |  |  | 136000 | village |
+| Squire's Dagger | weapon | weapon | 1 | dagger | 5 | 5 | 433 | 12 | -3 | 5 |  |  |  |  |  |  | 138 | starting |
+| Bone Dagger | weapon | weapon | 1 | dagger | 7 | 6 | 433 | 12 | -3 | 5 |  |  |  |  |  |  | 768 | village |
+| Knife | weapon | weapon | 1 | dagger | 10 | 9 | 433 | 12 | -3 | 5 |  |  |  |  |  |  | 12500 | village |
+| Dirk | weapon | weapon | 1 | dagger | 15 | 12 | 433 | 12 | -3 | 5 |  |  |  |  |  |  | 54100 | village |
+| Throwing Knife | weapon | weapon | 1 | dagger | 21 | 17 | 433 | 12 | -3 | 5 |  |  |  |  |  |  | 136000 | village |
+| Squire's Gloves | weapon | weapon | 2 | fists | 7 | 5 | 325 | 4 | 4 | 5 |  |  |  |  |  |  | 138 | starting |
+| Spiked Gloves | weapon | weapon | 2 | fists | 10 | 6 | 325 | 4 | 4 | 5 |  |  |  |  |  |  | 768 | orc-village |
+| Iron Gloves | weapon | weapon | 2 | fists | 13 | 9 | 325 | 4 | 4 | 5 |  |  |  |  |  |  | 12500 | orc-village |
+| Fox Claw Gloves | weapon | weapon | 2 | fists | 21 | 12 | 325 | 4 | 4 | 5 |  |  |  |  |  |  | 54100 | orc-village |
+| Cestus | weapon | weapon | 2 | fists | 29 | 17 | 325 | 4 | 4 | 5 |  |  |  |  |  |  | 136000 | orc-village |
+| Buffalo's Horn | weapon | weapon | 1 | staff | 6 | 8 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 768 | village |
+| Scholar's Tome | weapon | weapon | 1 | staff | 9 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 12500 | village |
+| Relic of The Saints | weapon | weapon | 1 | staff | 19 | 22 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 136000 | village |
+| Squire's Sword | weapon | weapon | 1 | sword | 6 | 5 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 138 | starting |
+| Short Sword | weapon | weapon | 1 | sword | 8 | 6 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 768 | village |
+| Broadsword | weapon | weapon | 1 | sword | 11 | 9 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 12500 | village |
+| Gladius | weapon | weapon | 1 | sword | 17 | 12 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 54100 | village |
+| Long Sword | weapon | weapon | 1 | sword | 24 | 17 | 379 | 8 | 0 | 10 |  |  |  |  |  |  | 136000 | village |
+| Willow Staff | weapon | weapon | 2 | staff | 11 | 12 | 325 | 4 | 4 | 20 |  |  |  |  |  |  | 12500 | village |
+| Cedar Staff | weapon | weapon | 2 | staff | 16 | 16 | 325 | 4 | 4 | 20 |  |  |  |  |  |  | 54100 | village |
+| Journeyman's Staff | weapon | weapon | 2 | staff | 23 | 22 | 325 | 4 | 4 | 20 |  |  |  |  |  |  | 136000 | village |
+| Brandish | weapon | weapon | 2 | sword | 21 | 12 | 325 | 8 | 0 | 10 |  |  |  |  |  |  | 54100 | village |
+| Zweihander | weapon | weapon | 2 | sword | 38 | 21 | 325 | 8 | 0 | 10 |  |  |  |  |  |  | 244000 | village |
+| Leather Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 47 | 20 | -8 |  | 39 | village |
+| Small Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 56 | 20 | -8 |  | 638 | village |
+| Buckler | shield | shield |  |  |  |  |  |  |  |  |  |  | 67 | 20 | -8 |  | 2780 | village |
+| Round Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 79 | 20 | -8 |  | 7110 | village |
+| Squire's Shirt | armour | chest |  | light |  |  |  |  |  |  | 33 |  |  |  |  |  | 26 | starting |
+| Shirt | armour | chest |  | light |  |  |  |  |  |  | 36 |  |  |  |  |  | 147 | village |
+| Leather Shirt | armour | chest |  | light |  |  |  |  |  |  | 43 |  |  |  |  |  | 2430 | village |
+| Wooden Breastplate | armour | chest |  | light |  |  |  |  |  |  | 47 |  |  |  |  |  | 7960 | village |
+| Bone Breastplate | armour | chest |  | light |  |  |  |  |  |  | 50 |  |  |  |  |  | 20300 | village |
+| Apprentice's Tunic | armour | chest |  | magic |  |  |  |  |  |  | 17 |  |  |  |  | 19 | 26 | starting |
+| Tunic | armour | chest |  | magic |  |  |  |  |  |  | 18 |  |  |  |  | 24 | 147 | village |
+| Cotton Tunic | armour | chest |  | magic |  |  |  |  |  |  | 21 |  |  |  |  | 38 | 2430 | village |
+| Leather Tunic | armour | chest |  | magic |  |  |  |  |  |  | 25 |  |  |  |  | 52 | 7960 | village |
+| Tunic of Devotion | armour | chest |  | magic |  |  |  |  |  |  | 30 |  |  |  |  | 67 | 20300 | village |
+| Squire's Pants | armour | legs |  | light |  |  |  |  |  |  | 20 |  |  |  |  |  | 6 | starting |
+| Pants | armour | legs |  | light |  |  |  |  |  |  | 22 |  |  |  |  |  | 92 | village |
+| Leather Pants | armour | legs |  | light |  |  |  |  |  |  | 27 |  |  |  |  |  | 1520 | village |
+| Wooden Gaiters | armour | legs |  | light |  |  |  |  |  |  | 29 |  |  |  |  |  | 4970 | village |
+| Bone Gaiters | armour | legs |  | light |  |  |  |  |  |  | 32 |  |  |  |  |  | 12700 | village |
+| Apprentice's Stockings | armour | legs |  | magic |  |  |  |  |  |  | 10 |  |  |  |  | 10 | 6 | starting |
+| Stockings | armour | legs |  | magic |  |  |  |  |  |  | 11 |  |  |  |  | 15 | 92 | village |
+| Cotton Stockings | armour | legs |  | magic |  |  |  |  |  |  | 13 |  |  |  |  | 23 | 1520 | village |
+| Leather Stockings | armour | legs |  | magic |  |  |  |  |  |  | 16 |  |  |  |  | 33 | 4970 | village |
+| Stockings of Devotion | armour | legs |  | magic |  |  |  |  |  |  | 19 |  |  |  |  | 42 | 12700 | village |
+| Necklace of Magic | jewellery | necklace |  |  |  |  |  |  |  |  |  | 15 |  |  |  |  | 66 | village |
+| Necklace of Knowledge | jewellery | necklace |  |  |  |  |  |  |  |  |  | 18 |  |  |  |  | 1080 | village |
+| Necklace of Anguish | jewellery | necklace |  |  |  |  |  |  |  |  |  | 21 |  |  |  |  | 4680 | village |
+| Necklace of Wisdom | jewellery | necklace |  |  |  |  |  |  |  |  |  | 25 |  |  |  |  | 11900 | village |
 
 Example: a Broadsword costs **12,500** and sells back for **6,250**. A Leather Shirt (2,430) costs
 2,430 × 51 ÷ 31 = **3,998**, a Leather Tunic (7,960) 7,960 × 35 ÷ 15 = **18,573**, and a Necklace of

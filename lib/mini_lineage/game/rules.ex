@@ -626,7 +626,7 @@ defmodule MiniLineage.Game.Rules do
 
            keys =
              ~w(name kind slot hands type p_atk m_atk atk_spd critical accuracy spread p_def m_def
-                shield_def shield_rate mp price sold)a
+                shield_def shield_rate evasion mp price sold)a
 
            ^header = Enum.join(keys, ",")
            words = ~w(name kind slot type sold)a
@@ -658,7 +658,7 @@ defmodule MiniLineage.Game.Rules do
              blank =
                Map.new(
                  ~w(hands type p_atk m_atk atk_spd critical accuracy spread p_def m_def shield_def
-                    shield_rate mp)a,
+                    shield_rate evasion mp)a,
                  &{&1, nil}
                )
 

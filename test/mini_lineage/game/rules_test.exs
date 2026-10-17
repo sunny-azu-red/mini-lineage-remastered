@@ -410,6 +410,7 @@ defmodule MiniLineage.Game.RulesTest do
             m_def,
             shield,
             block,
+            evasion,
             mp,
             price,
             sold
@@ -437,6 +438,7 @@ defmodule MiniLineage.Game.RulesTest do
                  item.m_def,
                  item.shield_def,
                  item.shield_rate,
+                 item.evasion,
                  item.mp,
                  item.price
                ] ==
@@ -453,6 +455,7 @@ defmodule MiniLineage.Game.RulesTest do
                      m_def,
                      shield,
                      block,
+                     evasion,
                      mp,
                      price
                    ],
@@ -953,13 +956,20 @@ defmodule MiniLineage.Game.RulesTest do
       assert {round2.(master.m_atk), round2.(master.p_atk)} == {12.95, 5.88}
     end
 
-    test "§8 Squire's Gloves' +4 Accuracy, and §13 a weapon's spread and bare hands'" do
+    test "§8 Squire's Gloves' +4 Accuracy, a shield's -8 Evasion, and §13 a weapon's spread and bare hands'" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       {fighter, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Squire")
       gloves = %{fighter | items: [%{id: "g", name: "Squire's Gloves", equipped: true}]}
       wand = %{fighter | items: [%{id: "w", name: "Apprentice's Wand", equipped: true}]}
 
       assert Player.stats(gloves).accuracy == 38
+
+      for shield <- ["Leather Shield", "Round Shield"] do
+        shielded = %{fighter | items: [%{id: "s", name: shield, equipped: true}]}
+        assert Player.stats(%{fighter | items: []}).evasion == 34
+        assert Player.stats(shielded).evasion == 26
+      end
+
       assert Player.stats(wand).spread == 20
       assert Player.stats(%{fighter | items: []}).spread == 6
       Rng.put_source(fn -> 0.0 end)

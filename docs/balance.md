@@ -12,11 +12,11 @@ the pull, each fighter's kit a Squire's weapon for every path its skills take, t
 Apprentice's Wand, each path shown only its own goods, one of each kind per price, every chest,
 legs and necklace priced as many of its slot as it stands for, and three masteries on every path,
 Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for
-both, each multiplying before it adds as Lineage II does, and every line at Lineage II's price but
-level 1's. One `--final` reading of that
-build, 200 seeded runs of every set up its village's ladder to
-level 20, once per weapon path its skills can use, each run seeded on its own; at the defaults none
-of them died. The bench learns every line, the masteries included, which a player need not.
+both, each multiplying before it adds as Lineage II does, every line at Lineage II's price but
+level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Lineage II's do. One
+`--final` reading of that build, 200 seeded runs of every set up its village's ladder to level 20,
+once per weapon path its skills can use, each run seeded on its own; at the defaults none of them
+died. The bench learns every line its weapon uses and every mastery, which a player need not.
 
 **Rerun it** after anything that moves a fight's numbers, a price, a monster's SP or Adena, or the
 trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
@@ -30,7 +30,7 @@ trainer's list, and rewrite these tables from what it prints (seconds, its runs 
 `<prefix>_<setting>.txt` and `.json`: `defaults` (resting to full, 20 potions), `harsh` (resting
 below half, none) and `potions` (below half, 20), and with `--final` `harsher` (below 30%, none) as
 well, which most Fighters do not survive and so is kept for the reading these tables come from. The
-whole `--final` matrix takes about 2 minutes on 8 cores, a routine one about a minute and a half,
+whole `--final` matrix takes about 3 minutes on 8 cores with the off-meta builds, a routine one about two,
 and `--only` one set a fraction of that: no set's runs read another's, so a change to one set is
 benched alone.
 At 200 runs a time change lands within half a point of what 400 measure.
@@ -43,24 +43,33 @@ not rising past the dice's noise, and the spread between sets not widening. Time
 run, over the runs that reached the top in both readings, so runs a change saves from dying do not
 move a set's figure.
 
-**How the bench plays**, at its defaults: it rests to full before every hunt and keeps 20 Lesser
-Healing Potions. It learns every line the trainer offers as soon as it can pay for it. At the shop it
-buys the best upgrade it can afford in each slot, weapon first, and sells back the piece it replaced.
-A path is a weapon type and the hands it is held in. A one-handed path adds a shield. A two-handed
-path holds one-handers only until its first two-hander is affordable, then skips straight to the
-two-handers (the Zweihander path never buys a Long Sword).
+**How the bench plays**, as a player would, at its defaults: it rests to full before every hunt
+and keeps 20 Lesser Healing Potions. It learns every line the trainer offers as soon as it can pay
+for it, but a weapon skill only for its own weapon: a dagger's run buys no Power Strike. At the shop
+it buys the best upgrade it can afford in each slot, weapon first, and sells back the piece it
+replaced. A path is a weapon type and the hands it is held in. A sword or a staff in one hand goes
+with a shield and a dagger without, since a shield's 8 Evasion is what a dagger fights with. A
+two-handed path holds one-handers, with a shield, only until its first two-hander is affordable,
+then skips straight to the two-handers (the Zweihander path never buys a Long Sword).
+
+**Off-meta builds** are run beside the paths and flagged when they beat them (see the last section):
+each one-handed path again with the other shield choice, on the same dice so the two compare run for
+run. `compare.exs` shows them but holds only the paths to the bar.
 
 ## The trainer: SP
 
 Every set earns about **32,500 SP** from level 1 to 20, and three quarters of it comes after level 15.
-SP doesn't depend on the weapon path, so there is one row per set.
+SP doesn't depend on the weapon path, and only the Human and Orc Fighters' lists do, since only they
+have a weapon skill for more than one path.
 
 | Set | Skills (lines) | Whole list | Of it, Weapon Mastery and Anti Magic | Learned at level | …at hunt | SP saved at 20 |
 |---|---|---|---|---|---|---|
-| Human Fighter | 6 (20) | 28,630 | 7,940 | 19 | 316 of 347 | 3,900 |
+| Human Fighter, sword | 4 (12) | 18,310 | 7,940 | 17 | 232 of 347 | 14,200 |
+| Human Fighter, dagger or bow | 4 (12) | 18,360 | 7,940 | 17 | 233 of 347 | 14,200 |
 | Elven Fighter | 6 (14) | 19,360 | 7,090 | 17 | 290 of 414 | 13,600 |
-| Dark Fighter | 6 (14) | 18,120 | 6,650 | 17 | 273 of 395 | 14,800 |
-| Orc Fighter | 6 (17) | 24,390 | 7,770 | 18 | 316 of 385 | 8,500 |
+| Dark Fighter | 6 (14) | 18,120 | 6,650 | 17 | 273 of 395 | 14,700 |
+| Orc Fighter, fists | 5 (13) | 18,930 | 7,770 | 17 | 260 of 385 | 13,900 |
+| Orc Fighter, sword | 5 (13) | 18,990 | 7,770 | 17 | 260 of 385 | 13,900 |
 | Human Mystic | 6 (12) | 12,940 | 5,250 | 16 | 190 of 347 | 19,600 |
 | Elven Mystic | 7 (14) | 15,720 | 5,340 | 17 | 253 of 414 | 17,200 |
 | Dark Mystic | 9 (14) | 15,500 | 5,250 | 16 | 245 of 395 | 17,400 |
@@ -72,19 +81,21 @@ that level and buying a line taught there, shown as average / worst:
 
 | Set | Level 1 | First tier | Second | Third |
 |---|---|---|---|---|
-| Human Fighter | 7 / 10 | L5: 17 / 40 | L10: 57 / 106 | L15: 97 / 166 |
+| Human Fighter, sword | | L5: 12 / 33 | L10: 39 / 79 | L15: 45 / 82 |
+| Human Fighter, dagger or bow | 5 / 5 | L5: 14 / 34 | L10: 40 / 79 | L15: 46 / 81 |
 | Elven Fighter | | L5: 16 / 39 | L10: 40 / 84 | L15: 63 / 120 |
 | Dark Fighter | | L5: 13 / 34 | L10: 41 / 89 | L15: 58 / 110 |
-| Orc Fighter | 6 / 6 | L5: 21 / 48 | L10: 63 / 106 | L15: 96 / 161 |
+| Orc Fighter, fists | | L5: 18 / 42 | L10: 52 / 88 | L15: 61 / 105 |
+| Orc Fighter, sword | 6 / 6 | L5: 20 / 46 | L10: 53 / 90 | L15: 61 / 106 |
 | Human Mystic | 5 / 5 | L7: 29 / 54 | L14: 24 / 65 | |
 | Elven Mystic | 5 / 5 | L7: 37 / 66 | L14: 52 / 117 | |
 | Dark Mystic | 5 / 5 | L7: 34 / 63 | L14: 49 / 113 | |
 | Orc Mystic | 5 / 5 | L7: 33 / 59 | L14: 30 / 77 | |
 
-- **Every set starts knowing its first skill,** a Fighter the one its starting weapon uses, and all
-  but the Elven and Dark Fighters find something at the trainer at level 1, bought after 5 to 7
-  hunts: a Mystic's Self Heal or Soul Cry, the Human Fighter's Mortal Blow and Power Shot, the Orc
-  Fighter's Power Strike. Moving a Fighter's first skill from 5 to 1 changed no set by more than
+- **Every set starts knowing its first skill,** a Fighter the one its starting weapon uses, and a
+  Mystic, a Human Fighter with a dagger or a bow and an Orc Fighter with a sword find something at
+  the trainer at level 1, bought after 5 or 6 hunts: Self Heal or Soul Cry, Mortal Blow or Power
+  Shot, Power Strike. Moving a Fighter's first skill from 5 to 1 changed no set by more than
   1.4%; a Mystic made to buy its first spell instead died at levels 1 to 3 in nine runs of ten.
 - **No tier is empty, and every set can afford its whole list.** Each tier's first line can be bought
   on arrival, and every tier past level 1 offers four to six lines, two or three of them masteries,
@@ -92,7 +103,7 @@ that level and buying a line taught there, shown as average / worst:
 - **The masteries are bought after the skills they fight with,** from what is left: the bench buys
   a tier's lines in the trainer's order, the masteries last (Armor or Robe Mastery, then Weapon
   Mastery, then Anti Magic), so they stretch the list rather than delay a skill. Weapon Mastery and
-  Anti Magic cost 4,600 to 7,940 SP a set, and every tier waits longer: at the last tier 24 to 97
+  Anti Magic cost 4,600 to 7,940 SP a set, and every tier waits longer: at the last tier 24 to 63
   hunts on average, where it was 27 to 49.
 - **Robe Mastery costs every Mystic the Orc Mystic's canon 520 and 1,760.** Its second line was
   6,800, so that a Mystic reached 20 with what an Elven or Dark Fighter has left; measured on this
@@ -106,13 +117,15 @@ that level and buying a line taught there, shown as average / worst:
   34 runs of 200 rather than 49, and the Dark Fighter in 14 rather than 24. The Orc Mystic is 0.6% to
   1.7% slower for it, most likely for buying Soul Cry 2, whose MP drain costs it time, sooner, and
   the spread from the fastest set to the slowest widens by 1 to 4 minutes, which the game takes.
-- **Every list is learned at 16 to 19,** a Mystic's at 16 to 17 and a Fighter's at 17 to 19: a
+- **Every list is learned at 16 to 17,** a Mystic's at 16 to 17 and every Fighter's at 17: a
   Mystic's masteries hold two lines to a Fighter's three, and its fights spend MP rather than SP.
-- **The Human Fighter pays the most and finishes last,** its 28,630 learned at level 19 with 3,900
-  SP to spare. Half of it buys Mortal Blow and Power Shot, which only work with a dagger or a bow, and
-  the bench buys every line; a player who stays with one weapon finishes sooner and saves more.
-- **From the end of the list to level 20, the trainer has nothing left to sell.** That is 31 to 180
-  hunts while SP builds up for the class change: 17,200 to 19,600 for a Mystic and 3,900 to 14,800
+- **A Fighter buys only its own weapon's line,** as a player who stays with one weapon does. The
+  Human Fighter, buying all three of its weapon lines, paid 28,630 and finished at level 19 with
+  3,900 SP to spare; the Orc Fighter, buying both, paid 24,390 and finished at 18. Each now pays
+  about 18,300 to 19,000 like every other Fighter, and its third tier waits 45 to 61 hunts rather
+  than 96 or 97.
+- **From the end of the list to level 20, the trainer has nothing left to sell.** That is 115 to 180
+  hunts while SP builds up for the class change: 17,200 to 19,600 for a Mystic and 13,600 to 14,700
   for a Fighter (11,900 to 17,700 for every set before Weapon Mastery and Anti Magic). A first tier
   of class-change skills is best priced per class against these, what a set that learned everything
   can afford on reaching 20; one that skipped a mastery has more.
@@ -135,7 +148,7 @@ Devotion 47,367, Stockings of Devotion 23,813), where both were 44,900 at canon'
 |---|---|---|---|
 | Sword 1h | Long Sword 136,000 | Round Shield 7,110 | 231,677 |
 | Sword 2h | Zweihander 244,000 | | 332,567 |
-| Dagger | Throwing Knife 136,000 | Round Shield 7,110 | 231,677 |
+| Dagger | Throwing Knife 136,000 | | 224,567 |
 | Bow | Forest Bow 136,000 | | 224,567 |
 | Fists (Orc Village) | Cestus 136,000 | | 224,567 |
 | Staff 1h | Relic of The Saints 136,000 | Round Shield 7,110 | 251,821 |
@@ -146,23 +159,23 @@ The level each of a path's weapons is first held at, then the level and hunt the
 
 | Set | Skill | Path | 768 | 12,500 | 54,100 | Top weapon, kit | Hunt | Held at 20 |
 |---|---|---|---|---|---|---|---|---|
-| Human Fighter | Power Strike | sword 1h | Short Sword 4.4 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.5** (16–17) | 211 | 325k |
-| Human Fighter | Power Strike | sword 2h | Short Sword 4.0 | Broadsword 9.4 | Brandish 14.1 | Zweihander **17.8** (17–18) | 256 | 227k |
-| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.4 | Knife 10.0 | Dirk 14.2 | Throwing Knife **16.5** (16–17) | 211 | 325k |
-| Human Fighter | Power Shot | bow | Short Bow 4.1 | Bow 9.4 | Hunting Bow 14.1 | Forest Bow **16.3** (16–17) | 207 | 334k |
-| Elven Fighter | Power Shot | bow | Short Bow 4.2 | Bow 9.4 | Hunting Bow 14.0 | Forest Bow **16.0** (16–17) | 233 | 363k |
-| Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.5 | Knife 10.0 | Dirk 14.0 | Throwing Knife **16.0** (16–17) | 229 | 335k |
-| Orc Fighter | Iron Punch | fists | Spiked Gloves 4.2 | Iron Gloves 9.4 | Fox Claw Gloves 14.0 | Cestus **16.1** (16–17) | 216 | 341k |
-| Orc Fighter | Power Strike | sword 1h | Short Sword 4.5 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.3** (16–17) | 223 | 327k |
-| Orc Fighter | Power Strike | sword 2h | Short Sword 4.2 | Broadsword 9.4 | Brandish 14.1 | Zweihander **17.5** (17–18) | 276 | 229k |
-| Human Mystic | | staff 1h | Horn 4.4 | Scholar's Tome 10.1 | | Relic **16.1** (16–17) | 200 | 327k |
-| Human Mystic | | staff 2h | Horn 4.2 | Willow Staff 9.8 | Cedar Staff 14.6 | Journeyman's **16.8** (16–17) | 218 | 309k |
-| Elven Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (15–16) | 225 | 355k |
-| Elven Mystic | | staff 2h | Horn 4.3 | Willow Staff 9.9 | Cedar Staff 14.4 | Journeyman's **16.3** (16–17) | 247 | 337k |
-| Dark Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–16) | 216 | 338k |
-| Dark Mystic | | staff 2h | Horn 4.3 | Willow Staff 9.9 | Cedar Staff 14.3 | Journeyman's **16.2** (16–17) | 238 | 320k |
-| Orc Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 210 | 330k |
-| Orc Mystic | | staff 2h | Horn 4.3 | Willow Staff 9.9 | Cedar Staff 14.7 | Journeyman's **16.6** (16–17) | 230 | 315k |
+| Human Fighter | Power Strike | sword 1h | Short Sword 4.3 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.4** (16–17) | 210 | 329k |
+| Human Fighter | Power Strike | sword 2h | Short Sword 4.4 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.9** (17–18) | 257 | 226k |
+| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Knife 9.4 | Dirk 14.1 | Throwing Knife **16.2** (16–17) | 206 | 336k |
+| Human Fighter | Power Shot | bow | Short Bow 4.0 | Bow 9.3 | Hunting Bow 14.1 | Forest Bow **16.3** (16–17) | 207 | 332k |
+| Elven Fighter | Power Shot | bow | Short Bow 4.2 | Bow 9.4 | Hunting Bow 14.0 | Forest Bow **16.0** (15–17) | 234 | 362k |
+| Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.2 | Knife 9.4 | Dirk 14.0 | Throwing Knife **16.0** (15–17) | 223 | 343k |
+| Orc Fighter | Iron Punch | fists | Spiked Gloves 4.2 | Iron Gloves 9.4 | Fox Claw Gloves 14.0 | Cestus **16.1** (16–17) | 216 | 340k |
+| Orc Fighter | Power Strike | sword 1h | Short Sword 4.5 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.2** (16–17) | 222 | 331k |
+| Orc Fighter | Power Strike | sword 2h | Short Sword 4.5 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.7** (17–18) | 280 | 224k |
+| Human Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.1 | | Relic **16.1** (16–17) | 200 | 327k |
+| Human Mystic | | staff 2h | Horn 4.4 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.9** (16–17) | 220 | 305k |
+| Elven Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 225 | 357k |
+| Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.4** (16–17) | 250 | 332k |
+| Dark Mystic | | staff 1h | Horn 4.7 | Scholar's Tome 10.1 | | Relic **15.9** (15–16) | 216 | 335k |
+| Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.3** (16–17) | 241 | 315k |
+| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 209 | 334k |
+| Orc Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.8** (16–17) | 234 | 308k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 9 to 10, 14, and 16 to 17 for
   the top.** At canon's prices the third tier came at 13 and the top at 15 to 16; the armour bought
@@ -176,8 +189,11 @@ The level each of a path's weapons is first held at, then the level and hunt the
   weapon, and it is the one path where saving pays off.
 - **A Mystic's armour costs a fifth more than a Fighter's,** 108,711 against 88,567, because a robe
   stands for more of its part than light armour does (rules §7) and so counts for more.
+- **A two-handed path's early shield costs it about a third of a level** on the way to its first
+  two-hander: the Willow Staff comes at 10.1 rather than 9.8 to 9.9, and the shield is sold back for
+  half once the two-hander is bought.
 - **From level 16 to 18, the shop has nothing left but potions.** Adena keeps coming at 50,000 to
-  90,000 a level, and a player reaches 20 holding 227,000 to 363,000 (290,000 to 430,000 at canon's
+  90,000 a level, and a player reaches 20 holding 224,000 to 362,000 (290,000 to 430,000 at canon's
   prices). Gludio's D-grade gear will be
   bought with that, so price it against these figures, or give the village something to spend it on
   sooner.
@@ -191,20 +207,32 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 (`6a43a98`), with Armor or Robe Mastery for each path (`613b52f`), and now, with Weapon Mastery and
 Anti Magic for every set and every line past level 1 at Lineage II's prices (`87027a5` and Robe
 Mastery's after it, and the Mystic's Weapon Mastery multiplying before it adds), the steps in one
-column. Each step is compared run for run (`bench/compare.exs`).
+column, then with the bench playing as a player would, and now with every shield costing 8 Evasion.
+Each step is compared run for run (`bench/compare.exs`).
 
-| Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Now |
-|---|---|---|---|---|---|---|---|---|
-| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 |
-| Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 |
-| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** |
-| Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 |
-| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 |
-| Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 |
-| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 |
-| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** |
+| Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Masteries | Bench plays meta | Now |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 | 186 / 181 / 186 | **193** / 184 / 186 |
+| Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 | 196 | 196 |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** | 183 / 183 | **183 / 183** |
+| Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 | 211 | 211 |
+| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 | 195 / 194 | 195 / 194 |
+| Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 | 223 | 223 |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 241 / 240 |
+| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / **257** / 248 |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **277** / 274 |
 
+- **Every shield costing 8 Evasion slows the paths that carry one by up to 3.5%,** and the rest not
+  at all. A monster's blow lands up to 16 points more often (rules §13), so the one-handed sword
+  Fighters rest longer: the Human Fighter 3.5% and the Orc Fighter 1.9%, and the two-handers, whose
+  shield goes with the Broadsword, 0.7% to 1.4%. A Mystic, struck 96% to 98% of the time already,
+  loses at most 1.3% (the Orc Mystic's one-hander), and the dagger and bow paths carry no shield.
+  The spread from the fastest set to the slowest widens from 92.6 to 94.6 minutes resting to full,
+  past the bar's 2%, which the game takes as canon's.
+- **The bench playing as a player would makes the Human Fighter 1.3% to 3.5% faster,** since it
+  buys only its own weapon's line and so reaches each tier's lines sooner; the bow most, whose Power
+  Shot 4 no longer waits behind two other lines. The Orc Fighter moves under 1%, and the Dark
+  Fighter, its dagger without a shield, is 1.5% slower. Nothing else moves past 0.6%.
 - **The masteries and the canon prices make every set 1% to 16% faster** than Armor or Robe
   Mastery alone. Weapon Mastery does it: Anti Magic, measured alone, moved no set by more than 3%
   (the Elven Fighter, slower, for its SP). A Fighter's fight ends sooner, so it saves fighting (6 to
@@ -266,22 +294,32 @@ column. Each step is compared run for run (`bench/compare.exs`).
 
 The bench at its defaults rests to full before every hunt, so survival is read with no potions and
 resting only once a bar falls below a share, `harsh` and `harsher` in a `--final` matrix. Deaths of
-200 runs a path with Armor or Robe Mastery alone (`613b52f`), then now, with Weapon Mastery and Anti
-Magic as well and the late lines at Lineage II's prices:
+200 runs a path with Armor or Robe Mastery alone (`613b52f`), then with Weapon Mastery and Anti
+Magic as well and the late lines at Lineage II's prices, then now, with the bench playing as a
+player would and every shield costing 8 Evasion:
 
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
-| Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0 | 0 / 0, 0 / 0 | |
-| Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4 | 1 / 4, 1 / 4 | Spore Fungus, at 9 |
-| Dark Mystic | staff 1h / 2h | 3 / 7, **2 / 7** | 5 / 12, 4 / 11 | Balor Orc Fighter, at 10 |
-| Orc Mystic | staff 1h / 2h | 0 / 1, **0 / 0** | 5 / 10, **1 / 5** | Skeleton Longbowman, at 19 |
-| Human Fighter | bow | 47, 59 | 191, 194 | Blade Spider, Talon Spider, at 16 and 17 |
-| Elven Fighter | bow | 68, **34** | 197, 183 | Dark Terror, Dread Soldier |
-| Dark Fighter | dagger | 60, **14** | 180, **125** | Balor Orc Archer, Cave Fang Spider |
-| Human Fighter | sword 1h / 2h / dagger | 2 / 55 / 59, **0 / 11 / 23** | 161 / 199 / 196, **65 / 156 / 173** | Blade Spider, Talon Spider |
-| Orc Fighter | fists | 118, **10** | 199, 189 | Skeleton Longbowman, at 19 |
-| Orc Fighter | sword 1h / 2h | 141 / 91, **40 / 10** | 200 / 200, 198 / 199 | Evil Eye Watcher, Skeleton Longbowman |
+| Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0, 0 / 0 | 0 / 0, 0 / 0, 0 / 0 | |
+| Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4, 5 / 3 | 1 / 4, 1 / 4, 3 / 4 | Spore Fungus, at 9 |
+| Dark Mystic | staff 1h / 2h | 3 / 7, 2 / 7, 5 / 8 | 5 / 12, 4 / 11, **12** / 12 | Cave Fang Spider at 16, Balor Orc Fighter at 10 |
+| Orc Mystic | staff 1h / 2h | 0 / 1, 0 / 0, 0 / 0 | 5 / 10, 1 / 5, 1 / 6 | |
+| Human Fighter | bow | 47, 59, **8** | 191, 194, **81** | Blade Spider, Talon Spider, at 16 to 18 |
+| Elven Fighter | bow | 68, 34, 34 | 197, 183, 183 | Dread Soldier, Dungeon Skeleton Archer, at 13 and 14 |
+| Dark Fighter | dagger | 60, 14, **32** | 180, 125, **166** | Doom Soldier, Balor Orc Fighter Leader, at 12 to 16 |
+| Human Fighter | sword 1h / 2h / dagger | 2 / 55 / 59, 0 / 11 / 23, 3 / **5** / 28 | 161 / 199 / 196, 65 / 156 / 173, **98** / 148 / 172 | Talon Spider, Blade Spider, at 16 and 17 |
+| Orc Fighter | fists | 118, 10, 16 | 199, 189, 180 | Skeleton Longbowman, at 19 |
+| Orc Fighter | sword 1h / 2h | 141 / 91, 40 / 10, 50 / 18 | 200 / 200, 198 / 199, 199 / 198 | Skeleton Longbowman at 19, the Evil Eyes at 10 |
 
+- **The bench playing as a player would and every shield costing 8 Evasion move the risk-takers'
+  deaths both ways.** The Human archer dies far less (59 to 8 resting at half, 194 to 81 at 30%),
+  its Power Shot 4 no longer bought behind two other lines, and the Human two-hander less too. The
+  Dark Fighter dies more, 14 to 32 and 125 to 166, from going without a shield, which under the old
+  rule cut its deaths by half: the bench now flags that build when the rule lets it win, and under
+  canon it does not (see the last section). The shield's 8 Evasion kills more of those who carry
+  one: the Human Fighter with a one-handed sword resting at 30% (30 to 98 on the meta bench), the
+  Orc Fighter with one resting at half (28 to 50) and the Dark Mystic with one at 30% (4 to 12), each
+  past the dice's noise, which the game takes as canon's.
 - **Resting at half without potions, the masteries and the canon prices halve or better the
   deaths of every Fighter but the Human archer,** the Elven Fighter's (68 to 34) with the canon
   prices' help, and the Orc Fighter's most: it dies in 10 to 40 runs of 200 where it died in 91 to
@@ -375,9 +413,31 @@ Magic as well and the late lines at Lineage II's prices:
   wielded the Squire's Sword it starts with, and a Leather Shield bought early took off its
   two-handed Squire's Gloves. A path now counts its set's starting weapons, and that set dies none.
 
+## Off-meta builds
+
+The bench runs each one-handed path again with the other shield choice, on the same dice, and flags
+the build when it dies less than the path past the dice's noise, or is more than 2% faster without
+dying more. The lines are at the end of each setting's report (`Off-meta …`).
+
+| Off-meta build | Old rule, resting at half / 30% | Every shield 8 Evasion, at half / 30% | Time to 20, now |
+|---|---|---|---|
+| Human Fighter, dagger with a shield | **flagged**: 28 to 12, 172 to 128 deaths | 28 to 37, 172 to 198 | 2.4% to 3.1% slower |
+| Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 32 to 49, 166 to 186 | 2.8% to 3.1% slower |
+| Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | **flagged**: 3 to 1, 98 to 83 | **2.3% to 3.3% faster** |
+| Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 50 to 40, 199 to 194 | 1.3% to 1.6% faster |
+| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 5 to 11 at half) | within 0.6% |
+
+- **A dagger with a shield was the strongest build under the old rule,** a shield's block for
+  nothing: it halved the dagger Fighters' deaths. With every shield costing 8 Evasion, as in Lineage
+  II, a dagger does better without one, which is the meta the bench plays.
+- **A Mystic keeps its shield:** a monster already strikes it 96% to 98% of the time, so the
+  Evasion costs it almost nothing and the block is worth having.
+- **A one-handed sword now does better without a shield,** the Human Fighter's past the flag. The
+  bench still gives it one, as the meta to measure, until that is decided.
+
 ## Both together
 
-The shop runs out at about hunt 200 to 275 and level 16 to 18, and the trainer at hunt 190 to 316
-and level 17 to 19, now that it teaches three masteries a set. From there to level 20, a run has nothing to buy and
+The shop runs out at about hunt 200 to 280 and level 16 to 18, and the trainer at hunt 190 to 290
+and level 16 to 17, now that it teaches three masteries a set. From there to level 20, a run has nothing to buy and
 only the level to climb. That stretch is where the class change, the Temple's buffs, and Gludio's first ground and
 shops will matter most.

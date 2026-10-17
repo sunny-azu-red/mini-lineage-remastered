@@ -50,7 +50,7 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 | [monsters.md](monsters.md) | Every monster around the four villages and on Ruins of Despair: L2J's full stat block, EXP, SP and Adena, how a monster's Accuracy, Evasion and Critical are worked out, and the spells monsters cast |
 | [hunting-grounds.md](hunting-grounds.md) | Every hunting ground: nearest town, teleport fee, level band, monsters by level |
 | [weapons-and-armour.md](weapons-and-armour.md) | Every weapon and armour piece by grade and type: stats, reference price, which towns sell it |
-| [inventory.md](inventory.md) | Every equipment slot, a naked character's stats and how gear replaces them, the inventory's limits, and everything the four starting villages' traders sell, with prices |
+| [inventory.md](inventory.md) | Every equipment slot, a naked character's stats and how gear replaces them, the inventory's limits, the shields and how a block is rolled, and everything the four starting villages' traders sell, with prices |
 | [jewellery-and-consumables.md](jewellery-and-consumables.md) | Jewellery by grade, epic jewels, potions, scrolls, soulshots and spiritshots, enchanting |
 | [skills.md](skills.md) | Each base set's skills from level 1 to 20, the first skills' numbers, how blows, drains, damage over time and misses resolve, the EXP penalty against weaker monsters, and the Monument of Heroes |
 | [movement.md](movement.md) | How far everything reaches and how fast it moves: every monster's attack range, run speed and aggression, every spell's and weapon's range, the starting classes' run speed, the slows, and how aggressive and passive monsters engage |

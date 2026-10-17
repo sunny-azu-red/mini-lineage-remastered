@@ -134,7 +134,7 @@ defmodule MiniLineage.Game.Player do
       p_def: Formulas.p_def(covered(path.body, equipped, player.path, [:chest, :legs]), level),
       m_def: Formulas.m_def(covered(path.mind, equipped, :mind, [:necklace]), a.men, level),
       accuracy: Formulas.accuracy(a.dex, level) + ((weapon && weapon.accuracy) || 0),
-      evasion: Formulas.evasion(a.dex, level),
+      evasion: Formulas.evasion(a.dex, level) + ((shield && shield.evasion) || 0),
       critical: Formulas.critical(a.dex, (weapon && weapon.critical) || 4),
       magic_critical: Formulas.magic_critical(a.wit),
       atk_spd: atk_spd,

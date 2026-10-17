@@ -82,8 +82,11 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 
 - **Balance is measured, not guessed.** `bench/ladder.exs` plays every set up its village's ladder,
   once per weapon path its skills can use, through the game's own actions (hunt, rest, buy, sell,
-  train) with seeded dice. It reports where runs die and to what, when the trainer's list and the
-  shop's best kit are bought, and the SP and Adena earned and left:
+  train) with seeded dice, played as a player would: its own weapon's line, a shield only beside a
+  one-handed sword or staff. Each one-handed path runs again off-meta, with the other shield choice,
+  and is flagged when it beats the meta, since a build the rules let win is a rule to fix. It
+  reports where runs die and to what, when the trainer's list and the shop's best kit are bought,
+  and the SP and Adena earned and left:
   `MIX_ENV=test mix run --no-start bench/ladder.exs [runs] [level] [rest below %] [potions kept]`.
   Run it before and after anything that moves a fight's numbers, a price, a reward or the trainer,
   and rewrite [docs/balance.md](docs/balance.md), the last reading, from what it prints. A run's dice

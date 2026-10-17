@@ -189,16 +189,28 @@ defmodule MiniLineage.Game.Snapshot do
       m_def: "M.Def",
       shield_def: "Shield",
       shield_rate: "Block",
+      evasion: "Evasion",
       mp: "MP"
     ]
     |> Enum.filter(fn {key, _} -> item[key] not in [nil, 0] end)
     |> Enum.map(fn
-      {:shield_rate, label} -> "#{label} #{item.shield_rate}%"
-      {:spread, label} -> "#{label}#{item.spread}%"
-      {:mp, label} -> "#{label} +#{item.mp}"
-      {:accuracy, label} -> "#{label} #{if item.accuracy > 0, do: "+"}#{item.accuracy}"
-      {key, label} when key in [:p_def, :m_def] -> "#{label} #{counts || item[key]}"
-      {key, label} -> "#{label} #{item[key]}"
+      {:shield_rate, label} ->
+        "#{label} #{item.shield_rate}%"
+
+      {:spread, label} ->
+        "#{label}#{item.spread}%"
+
+      {:mp, label} ->
+        "#{label} +#{item.mp}"
+
+      {key, label} when key in [:accuracy, :evasion] ->
+        "#{label} #{if item[key] > 0, do: "+"}#{item[key]}"
+
+      {key, label} when key in [:p_def, :m_def] ->
+        "#{label} #{counts || item[key]}"
+
+      {key, label} ->
+        "#{label} #{item[key]}"
     end)
     |> Enum.join(", ")
   end
