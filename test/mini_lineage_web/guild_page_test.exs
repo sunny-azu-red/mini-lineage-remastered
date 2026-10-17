@@ -185,6 +185,22 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, "#skill-armor-mastery .skill", "Armor Mastery 3")
   end
 
+  test "Learned Skills lists the active skills first and the masteries last, each by name" do
+    {_view, session, conn} = human(build_conn(), 100)
+    masteries = %{"Armor Mastery" => 1, "Anti Magic" => 1}
+    Characters.mutate(session, &{%{&1 | skills: Map.merge(&1.skills, masteries)}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+
+    rows =
+      view
+      |> render()
+      |> LazyHTML.from_fragment()
+      |> LazyHTML.query("[id^=skill-]")
+      |> LazyHTML.attribute("id")
+
+    assert rows == ~w(skill-power-strike skill-anti-magic skill-armor-mastery)
+  end
+
   test "the lessons do not remember their sort, so a kept one is not read back" do
     {_view, _session, conn} = human(build_conn(), 100)
     conn = put_connect_params(conn, %{"tables" => %{"lessons" => "sp:desc"}})

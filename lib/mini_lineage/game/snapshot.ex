@@ -95,7 +95,9 @@ defmodule MiniLineage.Game.Snapshot do
           do: lessons(player, level),
           else: []
         ),
-      skills: Enum.sort(player.skills),
+      # The guild's shelves, Active before Passive, each by name.
+      skills:
+        Enum.sort_by(player.skills, fn {name, _} -> {Rules.skill(name).kind == :passive, name} end),
       potion_at: player.potion_at,
       # Rules §20: the orders, given only by a character that knows a heal.
       heals?: Player.heals?(player),
