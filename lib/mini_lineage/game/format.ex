@@ -73,7 +73,8 @@ defmodule MiniLineage.Game.Format do
 
   defp seconds_left(ms), do: max(ceil(ms / 1000), 0)
 
-  # As Lineage II's client names them, every shortened word ending in a full stop.
+  # As Lineage II's client names them, every shortened word ending in a full stop. Block, M. Critical
+  # and Recovery are ours, as docs/canon/README.md's departures say.
   @stats %{
     p_atk: "P. Atk.",
     m_atk: "M. Atk.",
@@ -86,9 +87,11 @@ defmodule MiniLineage.Game.Format do
     evasion: "Evasion",
     critical: "Critical",
     magic_critical: "M. Critical",
-    hp_regen: "HP regen",
-    mp_regen: "MP regen",
-    mp: "MP"
+    shield_def: "Shield P. Def.",
+    shield_rate: "Block",
+    hp_regen: "HP Recovery",
+    mp_regen: "MP Recovery",
+    mp: "Max MP"
   }
 
   @doc "A stat as every page names it: \"P. Atk.\", \"Casting Spd.\", \"Speed\"."

@@ -27,11 +27,11 @@ Each race starts in its own village, and that is where a new character first sta
 | Attribute | What it feeds |
 |---|---|
 | STR | P. Atk. |
-| CON | Max HP and HP regen |
+| CON | Max HP and HP Recovery |
 | DEX | Accuracy, Evasion, Critical, Atk. Spd. |
 | INT | M. Atk. |
 | WIT | M. Critical, Casting Spd. |
-| MEN | Max MP, MP regen and M. Def. |
+| MEN | Max MP, MP Recovery and M. Def. |
 
 ## 3. Starting attributes
 

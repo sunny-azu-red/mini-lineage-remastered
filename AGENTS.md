@@ -385,9 +385,11 @@ Each of these is here because it was got wrong once.
   which cannot be coloured, still writes the 🪙.
 - **A stat is named as Lineage II's client names it, through `Format.stat/1` and nowhere else**:
   P. Atk., M. Atk., P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical,
-  M. Critical. A stat ending a sentence lends it its full stop (`Format.stop/1`): "+16 M. Def.".
-  `rules.md` spells them the same; `docs/canon/` keeps its sources' spelling.
-- **A bonus leads its stat; an item's own number follows it.** "+8% P. Def.", "-3 Accuracy", "+38 MP",
+  and ours where it has none or several (M. Critical, Block, Shield P. Def., HP Recovery, MP
+  Recovery, Max MP), each a departure in `docs/canon/README.md`. A stat ending a sentence lends it
+  its full stop (`Format.stop/1`): "+16 M. Def.". `rules.md` spells them the same; the rest of
+  `docs/canon/` keeps its sources' spelling.
+- **A bonus leads its stat; an item's own number follows it.** "+8% P. Def.", "-3 Accuracy", "+38 Max MP",
   but "P. Atk. 6". A rate carries its % wherever it is written ("Critical 8%", "Block 20%").
 - **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
   `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so

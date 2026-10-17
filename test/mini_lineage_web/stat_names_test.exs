@@ -34,6 +34,7 @@ defmodule MiniLineageWeb.StatNamesTest do
       refute text =~ ~r/\b(Accuracy|Evasion|MP) [+-]\d/, "#{set.name} #{screen}: #{text}"
       refute text =~ ~r/(Critical|Block) \d+(?![\d.%])/, "#{set.name} #{screen}: #{text}"
       refute text =~ ~r/\bheal/i, "#{set.name} #{screen}: #{text}"
+      refute text =~ ~r/\bregen\b/i, "#{set.name} #{screen}: #{text}"
     end
   end
 
@@ -41,8 +42,8 @@ defmodule MiniLineageWeb.StatNamesTest do
     assert Snapshot.about(Rules.item("Squire's Bow")) ==
              "P. Atk. 14, M. Atk. 5, Atk. Spd. 293, Critical 12%, Damage ±5%, -3 Accuracy"
 
-    assert Snapshot.about(Rules.item("Buckler")) =~ "Block 20%, -8 Evasion"
-    assert Snapshot.about(Rules.item("Cotton Tunic")) =~ ", +38 MP"
+    assert Snapshot.about(Rules.item("Buckler")) == "Shield P. Def. 67, Block 20%, -8 Evasion"
+    assert Snapshot.about(Rules.item("Cotton Tunic")) =~ ~r/^P\. Def\. \d+, \+38 Max MP$/
     assert Snapshot.about(Rules.item("Lesser Healing Potion")) == "Mends 112 HP at once"
   end
 

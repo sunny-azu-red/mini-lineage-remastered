@@ -189,8 +189,8 @@ defmodule MiniLineage.Game.Snapshot do
       accuracy: Format.stat(:accuracy),
       p_def: Format.stat(:p_def),
       m_def: Format.stat(:m_def),
-      shield_def: "Shield",
-      shield_rate: "Block",
+      shield_def: Format.stat(:shield_def),
+      shield_rate: Format.stat(:shield_rate),
       evasion: Format.stat(:evasion),
       mp: Format.stat(:mp)
     ]

@@ -112,7 +112,7 @@ follows before characters reach 15.
   Gludio's and Dion's will. The auras are the first timed buffs, as the Temple's will be: each holds 2 minutes, raised
   before the pull, and counts down over its icon and on the character page. The character page's
   Skills panel is the spellbook: what it knows, in the numbers the fight uses for it (what a heal
-  mends, how often a blow lands, when each is ready again), never a formula.
+  mends, how often a blow lands, each one's cast and reuse), never a formula.
 - **A skill grows in steps** of up to 4 lines, each a character level's worth of canon levels, and
   the trainer shows only each skill's next line, no two lines of one skill opening at one level.
   Every set starts knowing its first skill, and the SP left from level 15 waits for the class
@@ -161,10 +161,10 @@ Built with the first hunt (rules §23 and §24).
 - Armour by slot, adding to the body a path starts with (rules §23, built).
 - Jewellery adding to the mind (rules §23, built).
 - Shields that can block a blow, adding their defence to it (rules §23, built), the chance shown
-  beside P.Def.
+  beside P. Def.
 - Grades (D, C, B, A, S) and a penalty for wearing gear above your level.
 - Soulshots and spiritshots for stronger blows and spells, bought only from player shops.
-- Potions that heal at once (rules §26, built): the Lesser Healing Potion in the villages; better
+- Potions that mend at once (rules §26, built): the Lesser Healing Potion in the villages; better
   potions and potions for MP from the Town of Gludio on, each town's trader its own.
 
 ## Player shops

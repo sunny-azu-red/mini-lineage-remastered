@@ -60,6 +60,6 @@ defmodule MiniLineage.Game.MotherTreeTest do
       |> Enum.find(&(&1.id == "mother_tree"))
       |> Map.fetch!(:tooltip)
 
-    assert tooltip == "Blessing of the Mother Tree (+50% HP regen, +50% MP regen)"
+    assert tooltip == "Blessing of the Mother Tree (+50% HP Recovery, +50% MP Recovery)"
   end
 end

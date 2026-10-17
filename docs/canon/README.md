@@ -281,3 +281,23 @@ is which of them a set gets, how they are sold, and how the fight uses them.
 - **A player shop stays open while its owner is away.** The character sits in that town, as in
   Lineage II, and can't hunt or travel until it closes, but in Lineage II the player had to stay
   logged in.
+
+**How it is written**
+
+The stat names are the client's own, from its status window and skill text: P. Atk., M. Atk.,
+P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical. These differ:
+
+- **Critical is a percent, to the tenth:** "4.5% Critical" on the character page and "Critical 8%"
+  on a weapon. Lineage II's status window shows the same number in tenths of a percent and bare
+  ("Critical 45").
+- **M. Critical is ours,** after M. Atk. Interlude's status window shows no magic critical rate,
+  and its skill text says "critical attack rate of magic attacks" (Wild Magic).
+- **A shield's chance to catch a blow is its Block,** "Block 20%". Lineage II calls it the shield's
+  defense rate, spelt several ways ("Def Rate" in the item data, "shield defense rate" in Shield
+  Fortress). What it adds on a catch keeps its name, "Shield P. Def. 67".
+- **HP Recovery and MP Recovery** name the rate rest mends at. The status window shows neither, and
+  the skill text is split: Regeneration "increases HP recovery", Mana Regeneration "increases
+  ability to regenerate MP". Recovery is the one a stat can be named after.
+- **What an item adds is written as a buff writes it:** "-8 Evasion", "+38 Max MP", where the item
+  data lists "Evasion: -8" and "MP Increase: 38". An item's own numbers keep the data's order,
+  "P. Atk. 6".

@@ -27,12 +27,12 @@ checked against Interlude's own data.
   Relax, and each Mystic has its own spells. A skill grows in a few big steps rather than nine
   small ones. Auras hold 2 minutes and go up before the pull. Three masteries a path (Armor or Robe,
   Weapon, Anti Magic) are there to learn or skip, as the monsters met make worth it.
-- **Rest heals, and says so.** While HP or MP is short, 🌿 *Regenerating* shows what a 3-second tick
-  heals, and the tick heals it. The aura and the healing are one condition, so neither appears
+- **Rest mends, and says so.** While HP or MP is short, 🌿 *Regenerating* shows what a 3-second tick
+  mends, and the tick mends it. The aura and the mending are one condition, so neither appears
   without the other.
-- **The page shows what the fight works out, never the formula.** Run Spd. and a shield's Block sit
-  among the Combat Stats; a skill says what it mends, how often it lands and when it is ready again,
-  for this character; a buff reads "+8% P.Def", as Lineage II's data writes it. Every buff, and the
+- **The page shows what the fight works out, never the formula.** Speed and a shield's Block sit
+  among the Combat Stats; a skill says what it mends, how often it lands, its cast and its reuse,
+  for this character; a buff reads "+8% P. Def.", as Lineage II's data writes it. Every buff, and the
   wait before rest after a hunt, counts down over its icon as the legacy game's did.
 - **A status sidebar** drawn like L2's status window, a character page at `/character`, and the
   Chronicles of Ancestry at `/races`, which tell every lineage before you choose one.

@@ -110,7 +110,7 @@ defmodule MiniLineageWeb.CharacterPageTest do
     texts = &(doc |> LazyHTML.query(&1) |> Enum.map(fn node -> LazyHTML.text(node) end))
 
     assert texts.("#effect-mother_tree .buff") == ["🌳 Blessing of the Mother Tree"]
-    assert texts.("#effect-mother_tree .regen") == ["+50% HP regen", "+50% MP regen"]
+    assert texts.("#effect-mother_tree .regen") == ["+50% HP Recovery", "+50% MP Recovery"]
     assert texts.("#effect-resting .aura") == ["💤 Resting"]
   end
 

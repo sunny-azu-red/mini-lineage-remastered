@@ -242,15 +242,15 @@ Each step is compared run for run (`bench/compare.exs`).
   Mastery alone. Weapon Mastery does it: Anti Magic, measured alone, moved no set by more than 3%
   (the Elven Fighter, slower, for its SP). A Fighter's fight ends sooner, so it saves fighting (6 to
   14 minutes) and more rest (5 to 21), since each fight costs less HP; the melee Fighters gain 10%
-  to 12%, the archers 5% to 7% (Power Shot's power matters more to them than P.Atk does). The Dark
+  to 12%, the archers 5% to 7% (Power Shot's power matters more to them than P. Atk. does). The Dark
   Mystic gains most, 13.3% and 15.7% with the two-hander, past the bar's 15%, which the game takes:
-  Wind Strike and Vampiric Touch grow with M.Atk and its time was rest. The Orc Mystic gains least,
+  Wind Strike and Vampiric Touch grow with M. Atk. and its time was rest. The Orc Mystic gains least,
   1% to 3%, since Chill Flame burns for a fixed amount, so it is the slowest set by more: the spread
   from the fastest set to the slowest narrows from 95 to 91 minutes resting to full, and widens
   from 106 to 118 carrying potions. The hunts to 20 are the same, since a kill pays the same EXP:
   the time saved is all in the fights and the rest after them.
 - **A Mystic's Weapon Mastery multiplies before it adds,** as Lineage II's server sorts it, where it
-  once added first because its data lists the adds first: 0.3 M.Atk and 0.7 P.Atk less at level 7.
+  once added first because its data lists the adds first: 0.3 M. Atk. and 0.7 P. Atk. less at level 7.
   No Mystic moved more than 0.5% at any setting; with a two-hander the Dark Mystic died once fewer
   resting below half and below 30%, and the Orc Mystic once fewer below 30%.
 - **Armor or Robe Mastery for each path made every set 1% to 3% faster,** and the Orc Mystic 4% to 5%, which
@@ -332,7 +332,7 @@ player would and every shield costing 8 Evasion:
   prices' help, and the Orc Fighter's most: it dies in 10 to 40 runs of 200 where it died in 91 to
   141. Resting at 30%, nearly every Fighter still dies. Weapon Mastery ends a fight sooner, so less HP is lost to
   it. Anti Magic is the Orc Fighter's: its level 10 deaths are to the Evil Eyes' spells, which only
-  M.Def turns aside, and at 400 runs Weapon Mastery alone left 35 / 90 / 57 deaths, both 21 / 74 /
+  M. Def. turns aside, and at 400 runs Weapon Mastery alone left 35 / 90 / 57 deaths, both 21 / 74 /
   20. What still kills it is the Skeleton Longbowman's arrows at 19. Elsewhere Anti Magic only costs
   SP, since no other village ground casts much: alone it killed more of the other Fighters (the
   Human archer 102 to 146 of 400), and together with Weapon Mastery the Human archer dies in 59 of
@@ -346,7 +346,7 @@ player would and every shield costing 8 Evasion:
   at canon's prices, and the Orc Mystic almost never. The Dark Mystic, whom the prices hurt most, falls from 30 / 81 to 5 / 23, not
   back to 3 / 7: what is left is the Balor Orc Fighter at level 10, before Robe Mastery 1 has much to
   add to, and that ground's melee monsters at 10 to 13 remain the lever. The Orc Fighter's deaths at
-  10 are to the Evil Eyes' spells, which P.Def does not turn aside. Robe Mastery gives every Mystic
+  10 are to the Evil Eyes' spells, which P. Def. does not turn aside. Robe Mastery gives every Mystic
   twice what Lineage II's Armor Mastery gave the Human, Elven and Dark Mystics: with Armor Mastery
   instead the Dark Mystic died in 9 / 38 runs of 400, and the others as with Robe Mastery.
 
