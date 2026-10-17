@@ -248,10 +248,11 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   the Gladius, the Apprentice's Rod beside Buffalo's Horn, the Cotton Shirt and Pants beside the
   Bone Breastplate and Gaiters, the Hard Leather Pants beside the Wooden Gaiters, and the Feriotic
   Tunic and Stockings beside the Cotton ones. The first of each is not in the game.
-- **A shield blocks from any side, and never a spell.** Lineage II blocked only blows from the front,
-  and a fight here is one line with no facing; aCis let a shield turn spells too. The rest of a block
-  is aCis's: three times as often against an arrow and against a critical, and one roll in which
-  five blows in a hundred are caught perfectly.
+- **A shield blocks from any side.** Lineage II blocked only blows from the front, and a fight here
+  is one line with no facing. The rest of a block is aCis's: three times as often against an arrow
+  and against a critical, and one roll in which five blows in a hundred are caught perfectly. That
+  it never turns a spell is L2J's rule, not a departure: aCis also adds Sh.Def to M.Def against a
+  spell, and is not followed there, so a shield does what its Shield P. Def. says.
 - **A character carries 15 items, and nothing is weighed.** Lineage II gave every non-Dwarf 80
   inventory slots and a weight limit with load penalties. A text game has no use for weight, and 15
   makes outgrown gear go to the trader rather than pile up. As in Lineage II, what is worn counts and
