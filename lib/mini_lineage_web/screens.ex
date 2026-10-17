@@ -410,14 +410,23 @@ defmodule MiniLineageWeb.Screens do
             lesson <- shelf.lessons,
             lesson.status == :ready,
             do: Map.put(lesson, :group, if(length(shelves) > 1, do: shelf.name))
-          )
+          ),
+        # Every line left is the next of its skill, so what is not ready waits on a level.
+        next_level:
+          shelves
+          |> Enum.flat_map(& &1.lessons)
+          |> Enum.map(& &1.learn_at)
+          |> Enum.min(fn -> nil end)
       )
 
     ~H"""
     <p id="guild-intro" phx-hook="AnimatedValues" phx-no-format>
       {Format.list(@view.guild.trainers, "and")} teach their own here in {@view.town.emoji} {@view.town.name}, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="guild-sp" value={@view.sp} /> SP</span>.
     </p>
-    <.data_table id="lessons" sort={@sort}>
+    <p :if={@shelves == []} id="learned-out" class="muted">
+      They have taught you all they can for now.
+    </p>
+    <.data_table :if={@shelves != []} id="lessons" sort={@sort}>
       <:col class="name" sort="skill">Skill</:col>
       <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
       <:col title="Skill Points" sort="sp">SP</:col>
@@ -443,8 +452,8 @@ defmodule MiniLineageWeb.Screens do
         </tr>
       </tbody>
     </.data_table>
-    <p :if={@ready == []} id="nothing-to-learn" class="muted">
-      There is nothing more for you to learn until you grow stronger.
+    <p :if={@ready == [] and @shelves != []} id="nothing-to-learn" class="muted">
+      There is nothing more for you to learn until level {@next_level}.
     </p>
     <.select_action
       id="learn-form"
@@ -515,8 +524,13 @@ defmodule MiniLineageWeb.Screens do
       )
 
     ~H"""
-    <p id="inventory-count">You carry {length(@view.items)} of the {@capacity} things you can.</p>
-    <.data_table id="items" sort={@sort}>
+    <p :if={@view.items == []} id="inventory-count">
+      You carry nothing, with room for {@capacity} things.
+    </p>
+    <p :if={@view.items != []} id="inventory-count">
+      You carry {length(@view.items)} of the {@capacity} things you can.
+    </p>
+    <.data_table :if={@view.items != []} id="items" sort={@sort}>
       <:col class="name" sort="name">Item</:col>
       <:col sort="slot">Slot</:col>
       <tbody>

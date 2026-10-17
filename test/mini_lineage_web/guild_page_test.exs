@@ -234,6 +234,39 @@ defmodule MiniLineageWeb.GuildPageTest do
     refute has_element?(view, "#nothing-to-learn")
   end
 
+  test "nothing in reach names the level the next line waits on" do
+    {_view, session, conn} = human(build_conn(), 0)
+    level = Math.xp_for_level(5)
+
+    known = %{
+      "Power Strike" => 2,
+      "Mortal Blow" => 2,
+      "Power Shot" => 2,
+      "Armor Mastery" => 1,
+      "Weapon Mastery" => 1,
+      "Anti Magic" => 1
+    }
+
+    Characters.mutate(session, &{%{&1 | experience: level, skills: known}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+
+    assert has_element?(view, "#lessons")
+    assert has_element?(view, "#nothing-to-learn", "until level 10.")
+    refute has_element?(view, "#learned-out")
+  end
+
+  test "a guild learned out says so, with no table left to head" do
+    {_view, session, conn} = human(build_conn(), 0)
+    known = Rules.lessons("Human Fighter") |> Map.new(&{&1.skill, &1.level})
+    Characters.mutate(session, &{%{&1 | skills: Map.merge(&1.skills, known)}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+
+    assert has_element?(view, "#learned-out", "They have taught you all they can for now.")
+    refute has_element?(view, "#lessons")
+    refute has_element?(view, "#nothing-to-learn")
+    assert has_element?(view, "#learn-form button", "Return")
+  end
+
   test "a lesson is paid in SP and known at once" do
     {_view, session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")

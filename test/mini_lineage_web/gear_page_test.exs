@@ -9,6 +9,7 @@ defmodule MiniLineageWeb.GearPageTest do
   import MiniLineage.DataCase, only: [stored: 1]
 
   alias MiniLineage.Characters
+  alias MiniLineage.Game.Rules
 
   # A Human Fighter on Talking Island with `adena` to spend.
   defp human(conn, adena), do: shopper(conn, "0", "fighter", adena)
@@ -243,6 +244,17 @@ defmodule MiniLineageWeb.GearPageTest do
 
     assert has_element?(view, "#flash", "cannot afford")
     assert stored(session).adena == 100
+  end
+
+  test "an inventory emptied says so, with no table left to head" do
+    {_view, session, conn} = human(build_conn(), 0)
+    Characters.mutate(session, &{%{&1 | items: []}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/inventory")
+
+    assert render(element(view, "#inventory-count")) =~
+             "You carry nothing, with room for #{Rules.capacity()} things."
+
+    refute has_element?(view, "#items")
   end
 
   test "the inventory lists everything, equipped highlighted, and equips, unequips and destroys" do
