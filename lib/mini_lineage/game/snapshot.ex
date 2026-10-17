@@ -171,40 +171,39 @@ defmodule MiniLineage.Game.Snapshot do
   defp slot_index(slot), do: Enum.find_index(@slots, &(&1 == slot))
 
   @doc "An item's numbers in a line: what it is, then what it gives."
-  def about(%{kind: :potion} = item), do: "Heals #{item.heals} HP at once"
+  def about(%{kind: :potion} = item), do: "Mends #{item.heals} HP at once"
 
+  # An item's own numbers follow their stat ("P. Atk. 6"), and what it adds to yours leads it
+  # ("-3 Accuracy"), as a buff writes it. A rate keeps its %.
   def about(item) do
     # Rules §7: a piece of armour shows what it counts for, which is what it gives.
     counts = if item.slot in [:chest, :legs, :necklace], do: round(Rules.counts_for(item))
 
     [
-      p_atk: "P.Atk",
-      m_atk: "M.Atk",
-      atk_spd: "Atk. Spd.",
-      critical: "Critical",
+      p_atk: Format.stat(:p_atk),
+      m_atk: Format.stat(:m_atk),
+      atk_spd: Format.stat(:atk_spd),
+      critical: Format.stat(:critical),
       # Rules §13: how far each blow strays either way.
       spread: "Damage ±",
-      accuracy: "Accuracy",
-      p_def: "P.Def",
-      m_def: "M.Def",
+      accuracy: Format.stat(:accuracy),
+      p_def: Format.stat(:p_def),
+      m_def: Format.stat(:m_def),
       shield_def: "Shield",
       shield_rate: "Block",
-      evasion: "Evasion",
-      mp: "MP"
+      evasion: Format.stat(:evasion),
+      mp: Format.stat(:mp)
     ]
     |> Enum.filter(fn {key, _} -> item[key] not in [nil, 0] end)
     |> Enum.map(fn
-      {:shield_rate, label} ->
-        "#{label} #{item.shield_rate}%"
+      {key, label} when key in [:critical, :shield_rate] ->
+        "#{label} #{item[key]}%"
 
       {:spread, label} ->
         "#{label}#{item.spread}%"
 
-      {:mp, label} ->
-        "#{label} +#{item.mp}"
-
-      {key, label} when key in [:accuracy, :evasion] ->
-        "#{label} #{if item[key] > 0, do: "+"}#{item[key]}"
+      {key, label} when key in [:accuracy, :evasion, :mp] ->
+        "#{signed(item[key])} #{label}"
 
       {key, label} when key in [:p_def, :m_def] ->
         "#{label} #{counts || item[key]}"
@@ -256,19 +255,10 @@ defmodule MiniLineage.Game.Snapshot do
   defp signed(value) when value >= 0, do: "+#{value}"
   defp signed(value), do: "#{value}"
 
-  @stat_names %{
-    accuracy: "Accuracy",
-    hp_regen: "HP regen",
-    mp_regen: "MP regen",
-    p_atk: "P.Atk",
-    p_def: "P.Def"
-  }
-
-  defp modifier_text({stat, {:add, value}}) when value >= 0, do: "+#{value} #{@stat_names[stat]}"
-  defp modifier_text({stat, {:add, value}}), do: "#{value} #{@stat_names[stat]}"
-  # As Lineage II's own data writes a buff: "+8% P.Def", never "×1.08".
+  defp modifier_text({stat, {:add, value}}), do: "#{signed(value)} #{Format.stat(stat)}"
+  # As Lineage II's own data writes a buff: "+8% P. Def.", never "×1.08".
   defp modifier_text({stat, {:mul, value}}),
-    do: "#{signed(round((value - 1) * 100))}% #{@stat_names[stat]}"
+    do: "#{signed(round((value - 1) * 100))}% #{Format.stat(stat)}"
 
   @doc "Every race as the Chronicles of Ancestry draws it: its town and its two level-1 sets."
   def catalog do

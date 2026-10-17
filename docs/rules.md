@@ -26,12 +26,12 @@ Each race starts in its own village, and that is where a new character first sta
 
 | Attribute | What it feeds |
 |---|---|
-| STR | P.Atk |
+| STR | P. Atk. |
 | CON | Max HP and HP regen |
 | DEX | Accuracy, Evasion, Critical, Atk. Spd. |
-| INT | M.Atk |
-| WIT | Magic Critical, Casting Spd. |
-| MEN | Max MP, MP regen and M.Def |
+| INT | M. Atk. |
+| WIT | M. Critical, Casting Spd. |
+| MEN | Max MP, MP regen and M. Def. |
 
 ## 3. Starting attributes
 
@@ -94,7 +94,7 @@ Example: a Human Fighter grows to 327 HP by level 20, × 1.58 for CON 43 = **516
 ## 7. Power
 
 Each path starts bare-handed and unarmoured, with a power, a magic, a body and a mind. Gear (§23)
-takes their place piece by piece: a weapon's P.Atk and M.Atk take the place of power and magic, and
+takes their place piece by piece: a weapon's P. Atk. and M. Atk. take the place of power and magic, and
 each of the three pieces of armour takes the place of its part of the body or the mind.
 
 | Path | Power | Magic | Body | Mind |
@@ -116,16 +116,16 @@ whole three-piece set is as strong as the matching full set.
 
 The last 4 of a body is never covered.
 
-- **P.Atk = (the weapon's P.Atk, or power) × STR bonus × level bonus**
-- **M.Atk = (the weapon's M.Atk, or magic) × INT bonus² × level bonus²**
-- **P.Def = body, each equipped piece's count in place of its part, × level bonus**
-- **M.Def = mind, the necklace's count in place of its part, × MEN bonus × level bonus**
+- **P. Atk. = (the weapon's P. Atk., or power) × STR bonus × level bonus**
+- **M. Atk. = (the weapon's M. Atk., or magic) × INT bonus² × level bonus²**
+- **P. Def. = body, each equipped piece's count in place of its part, × level bonus**
+- **M. Def. = mind, the necklace's count in place of its part, × MEN bonus × level bonus**
 
-Example: a level 1 Human Fighter has P.Atk 4 × 1.20 × 0.90 = **4.32**, P.Def 80 × 0.90 = **72** and
-M.Def 41 × 1.28 × 0.90 = **47.2**. A level 1 Human Mystic has M.Atk 6 × 1.21² × 0.90² = **7.1**. In
-its starting kit (§23) the Human Fighter has P.Atk 6 × 1.20 × 0.90 = **6.48** from its Squire's
+Example: a level 1 Human Fighter has P. Atk. 4 × 1.20 × 0.90 = **4.32**, P. Def. 80 × 0.90 = **72** and
+M. Def. 41 × 1.28 × 0.90 = **47.2**. A level 1 Human Mystic has M. Atk. 6 × 1.21² × 0.90² = **7.1**. In
+its starting kit (§23) the Human Fighter has P. Atk. 6 × 1.20 × 0.90 = **6.48** from its Squire's
 Sword. Its Squire's Shirt (33) counts for 33 × 51 ÷ 31 = 54.3 and its Squire's Pants (20) for
-20 × 25 ÷ 18 = 27.8, so its P.Def is (80 − 51 − 25 + 54.3 + 27.8) × 0.90 = **77.5**. A Necklace of
+20 × 25 ÷ 18 = 27.8, so its P. Def. is (80 − 51 − 25 + 54.3 + 27.8) × 0.90 = **77.5**. A Necklace of
 Wisdom (25) counts for 25 × 41 ÷ 13 = **78.8** of mind, nearly double the bare 41.
 
 ## 8. Accuracy and Evasion
@@ -140,7 +140,7 @@ Accuracy. Behind any shield its Evasion is 34 − 8 = **26**.
 ## 9. Critical
 
 - **Critical % = the weapon's critical (4 bare-handed) × DEX bonus**, at most 50%.
-- **Magic Critical % = 0.8 × WIT bonus**, at most 20%.
+- **M. Critical % = 0.8 × WIT bonus**, at most 20%.
 
 Example: a Human Fighter's DEX 30 gives 4 × 1.10 = **4.4%** bare-handed and 8 × 1.10 = **8.8%** with
 a sword. A Human Mystic's WIT 20 gives
@@ -150,7 +150,7 @@ a sword. A Human Mystic's WIT 20 gives
 
 - **Atk. Spd. = the weapon's speed (300 bare-handed) × DEX bonus**, rounded down, at most 1500.
 - **Casting Spd. = 333 × WIT bonus**, rounded down, at most 1999.
-- **Run Spd. = the set's run speed × DEX bonus**, rounded down, the distance it runs a second (§20).
+- **Speed = the set's run speed × DEX bonus**, rounded down, the distance it runs a second (§20).
 - In a fight, a character strikes **Atk. Spd. ÷ 300** times a round and casts **Casting Spd. ÷ 333**
   times a round. A bow, which draws and then reloads, shoots **Atk. Spd. ÷ 610** times a round
   (Lineage II's 500,000 + 517,500 ÷ Atk. Spd. milliseconds a shot). A fraction carries over to the
@@ -208,13 +208,13 @@ How the stats meet each other. The fight builds on these.
 
 - **Hit chance % = 88 + 2 × (Accuracy − Evasion)**, between 28% and 98%.
 - **A critical hit** is rolled against Critical %, and doubles the damage.
-- **Physical damage = 70 × P.Atk ÷ P.Def**, then spread by the weapon's own spread (§24) as a whole
+- **Physical damage = 70 × P. Atk. ÷ P. Def.**, then spread by the weapon's own spread (§24) as a whole
   percentage either way, at least 1. Bare hands spread by 5 + √level, rounded down; a monster's
   blows by 10.
-- **Magic damage = 91 × power × √M.Atk ÷ M.Def**, at least 1. A magic critical is ×4.
+- **Magic damage = 91 × power × √M. Atk. ÷ M. Def.**, at least 1. A magic critical is ×4.
 
-Example: Accuracy 40 against Evasion 34 hits **100% → 98%**. P.Atk 100 against P.Def 70 deals
-**100** before the ±10%, and **200** on a critical. A spell of power 10 with M.Atk 100 against M.Def 91
+Example: Accuracy 40 against Evasion 34 hits **100% → 98%**. P. Atk. 100 against P. Def. 70 deals
+**100** before the ±10%, and **200** on a critical. A spell of power 10 with M. Atk. 100 against M. Def. 91
 deals **100**, and **400** on a magic critical.
 
 ## 14. The world
@@ -307,7 +307,7 @@ the least to the most. It fights in melee or with a bow (§10), runs at its run 
 which already holds its DEX bonus, and an aggressive one comes at a character it notices (§20). The
 spells are §19's.
 
-| Monster | Level | HP | MP | P.Atk | M.Atk | P.Def | M.Def | Atk. Spd. | DEX | Run Spd. | EXP | SP | Adena | Attack | Aggressive | Spells |
+| Monster | Level | HP | MP | P. Atk. | M. Atk. | P. Def. | M. Def. | Atk. Spd. | DEX | Speed | EXP | SP | Adena | Attack | Aggressive | Spells |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Young Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
 | Bearded Keltir | 1 | 62 | 44 | 9 | 3 | 39 | 32 | 278 | 30 | 121 | 35 | 2 | 8–12 at 70% | melee | no |  |
@@ -469,7 +469,7 @@ physical skill or a blow and × 333 ÷ Casting Spd. for the rest, and a cast is 
 A physical skill takes the place of a blow and has no cast of its own. Power Strike, Power Shot,
 Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
 
-- **Physical:** 70 × (P.Atk + power) ÷ P.Def, then the weapon's spread (§13). It never misses and
+- **Physical:** 70 × (P. Atk. + power) ÷ P. Def., then the weapon's spread (§13). It never misses and
   never lands a critical.
 - **Blow:** the same damage, landing 40% × the DEX bonus of the time, at most 80%, and otherwise
   doing nothing.
@@ -480,14 +480,14 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
   target that still burns.
 - **Ice Bolt** also slows its target for 120 seconds: a slowed monster swings 30% less and runs 30%
   slower.
-- **Heal:** power + √M.Atk HP back, rounded down and never past the most.
-- **Aura:** Defense Aura, Shield and Soul Shield raise P.Def by 8% and Attack Aura P.Atk by 8%, for
+- **Heal:** power + √M. Atk. HP back, rounded down and never past the most.
+- **Aura:** Defense Aura, Shield and Soul Shield raise P. Def. by 8% and Attack Aura P. Atk. by 8%, for
   2 minutes, in the fight and out of it. Shield and Soul Shield are cast on another in Lineage II,
   and the caster is the one here.
 - **Poison:** lands 70% of the time, and then takes power HP every 3 seconds for 30 seconds, never
   the last HP. It is not cast again on a target already poisoned.
 - **Shackle:** lands 80% of the time, and then the target swings × 0.83 for 15 seconds.
-- **Toggle:** its MP lights it for the fight, adding its power to P.Atk, and it then drains MP every
+- **Toggle:** its MP lights it for the fight, adding its power to P. Atk., and it then drains MP every
   3 seconds (Soul Cry 3 at level 1 and 6 at level 2), going out when the MP runs short.
 - **Rest:** Relax mends power HP more on every tick of rest (§11), for its MP. Lineage II drains 2
   MP every 2 seconds, which is 3 a tick.
@@ -495,8 +495,8 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
   then adds its bonuses, as Lineage II does whatever order its data lists them in, after §7 to §10
   and before any aura. A bonus
   that names what is worn holds only while the chest piece worn is of that kind (§23): Robe
-  Mastery's P.Def in a robe, Armor Mastery's Evasion in light armour. Weapon Mastery is a Fighter's
-  P.Atk and a Mystic's M.Atk (and its P.Atk), each its own lines, as in Lineage II, whose slower
+  Mastery's P. Def. in a robe, Armor Mastery's Evasion in light armour. Weapon Mastery is a Fighter's
+  P. Atk. and a Mystic's M. Atk. (and its P. Atk.), each its own lines, as in Lineage II, whose slower
   casting for a Mystic with a bow or a polearm never applies, since no Mystic is sold either.
 
 Monsters cast these:
@@ -515,11 +515,11 @@ Monsters cast these:
 
 A monster's drain heals it 20% of what the character lost.
 
-Example: a level 1 Human Fighter with its Squire's Sword (P.Atk 6.48) strikes a Young Keltir (P.Def
+Example: a level 1 Human Fighter with its Squire's Sword (P. Atk. 6.48) strikes a Young Keltir (P. Def.
 39) with Power Strike for 70 × (6.48 + 25) ÷ 39 = **56.5** before the ±10%, where a blow does
 **11.6**. A Dark Fighter's DEX 34 lands Mortal Blow 40 × 1.14 = **45.6%** of the time. The Human
 Fighter's Atk. Spd. 416 rests Power Strike 13,000 × 333 ÷ 416 = **10,406** milliseconds. A Mystic
-with 20 M.Atk mends 42 + √20 = 46.47, so **46** HP, with Self Heal.
+with 20 M. Atk. mends 42 + √20 = 46.47, so **46** HP, with Self Heal.
 
 ## 20. The hunt
 
@@ -655,7 +655,7 @@ sells anything in a kit:
 - **A shield** catches a monster's blow at its block rate × the DEX bonus, as a percentage, three
   times as often against an arrow and three times as often against a critical. One roll decides:
   five blows in a hundred are caught perfectly, whatever the shield, and take only 1, and the rest
-  of the catches add the shield's defence to P.Def for that blow. Spells pass a shield by. Every
+  of the catches add the shield's defence to P. Def. for that blow. Spells pass a shield by. Every
   shield blocks at 20 and costs 8 Evasion (§8) while worn, so a better shield catches no more often,
   only harder, and blows land more often behind any of them.
 - **A robe's MP** is added to Max MP (§6).
@@ -687,7 +687,7 @@ A trader shows a set only what its path uses, and sells it nothing else: a Fight
 own skills need (§23) and light armour, a Mystic staves and robes, and both every shield, necklace
 and potion.
 
-| Item | Kind | Slot | Hands | Type | P.Atk | M.Atk | Atk. Spd. | Critical | Accuracy | Spread | P.Def | M.Def | Shield | Block | Evasion | MP | Price | Sold |
+| Item | Kind | Slot | Hands | Type | P. Atk. | M. Atk. | Atk. Spd. | Critical | Accuracy | Spread | P. Def. | M. Def. | Shield | Block | Evasion | MP | Price | Sold |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Apprentice's Wand | weapon | weapon | 1 | staff | 5 | 7 | 379 | 4 | 4 | 20 |  |  |  |  |  |  | 138 | starting |
 | Squire's Bow | weapon | weapon | 2 | bow | 14 | 5 | 293 | 12 | -3 | 5 |  |  |  |  |  |  | 138 | starting |
@@ -953,28 +953,28 @@ What each line of a mastery adds (§19), and what must be worn for it:
 
 | Passive line | Who | Stat | Adds | Worn |
 |---|---|---|---|---|
-| Armor Mastery 1 | | P.Def | 9 | |
-| Armor Mastery 2 | | P.Def | 12 | |
-| Armor Mastery 3 | | P.Def | 14 | |
+| Armor Mastery 1 | | P. Def. | 9 | |
+| Armor Mastery 2 | | P. Def. | 12 | |
+| Armor Mastery 3 | | P. Def. | 14 | |
 | Armor Mastery 3 | | Evasion | 3 | light armour |
-| Robe Mastery 1 | | P.Def | 13.4 | a robe |
-| Robe Mastery 2 | | P.Def | 18.4 | a robe |
-| Weapon Mastery 1 | Fighter | P.Atk | 8.5% | |
-| Weapon Mastery 1 | Fighter | P.Atk | 2 | |
-| Weapon Mastery 2 | Fighter | P.Atk | 8.5% | |
-| Weapon Mastery 2 | Fighter | P.Atk | 3 | |
-| Weapon Mastery 3 | Fighter | P.Atk | 8.5% | |
-| Weapon Mastery 3 | Fighter | P.Atk | 4 | |
-| Weapon Mastery 1 | Mystic | P.Atk | 45% | |
-| Weapon Mastery 1 | Mystic | P.Atk | 1.5 | |
-| Weapon Mastery 1 | Mystic | M.Atk | 17% | |
-| Weapon Mastery 1 | Mystic | M.Atk | 1.9 | |
-| Weapon Mastery 2 | Mystic | P.Atk | 45% | |
-| Weapon Mastery 2 | Mystic | P.Atk | 2.8 | |
-| Weapon Mastery 2 | Mystic | M.Atk | 17% | |
-| Weapon Mastery 2 | Mystic | M.Atk | 3.5 | |
-| Anti Magic 1 | | M.Def | 12 | |
-| Anti Magic 2 | | M.Def | 16 | |
+| Robe Mastery 1 | | P. Def. | 13.4 | a robe |
+| Robe Mastery 2 | | P. Def. | 18.4 | a robe |
+| Weapon Mastery 1 | Fighter | P. Atk. | 8.5% | |
+| Weapon Mastery 1 | Fighter | P. Atk. | 2 | |
+| Weapon Mastery 2 | Fighter | P. Atk. | 8.5% | |
+| Weapon Mastery 2 | Fighter | P. Atk. | 3 | |
+| Weapon Mastery 3 | Fighter | P. Atk. | 8.5% | |
+| Weapon Mastery 3 | Fighter | P. Atk. | 4 | |
+| Weapon Mastery 1 | Mystic | P. Atk. | 45% | |
+| Weapon Mastery 1 | Mystic | P. Atk. | 1.5 | |
+| Weapon Mastery 1 | Mystic | M. Atk. | 17% | |
+| Weapon Mastery 1 | Mystic | M. Atk. | 1.9 | |
+| Weapon Mastery 2 | Mystic | P. Atk. | 45% | |
+| Weapon Mastery 2 | Mystic | P. Atk. | 2.8 | |
+| Weapon Mastery 2 | Mystic | M. Atk. | 17% | |
+| Weapon Mastery 2 | Mystic | M. Atk. | 3.5 | |
+| Anti Magic 1 | | M. Def. | 12 | |
+| Anti Magic 2 | | M. Def. | 16 | |
 
 A share multiplies (8.5% is × 1.085); Who names the path a line is for, where the two differ.
 
@@ -983,14 +983,14 @@ nothing, and at level 1 learns Mortal Blow 1 for **50** SP. At level 5 with 150 
 Strike 2 for 100, with 150 − 100 = **50** left, and its Power Strike strikes at power **30**. A Human
 Mystic starts knowing Wind Strike and learns Self Heal for **50** SP.
 
-Example: an Orc Fighter at level 15 in its Squire's Shirt and Pants has 89.51 P.Def and 46 Evasion,
+Example: an Orc Fighter at level 15 in its Squire's Shirt and Pants has 89.51 P. Def. and 46 Evasion,
 and knowing Armor Mastery 3, 89.51 + 14 = **103.51** and 46 + 3 = **49**. A Human Mystic at level 7
-in its Apprentice's Tunic and Stockings has 59.92 P.Def, and knowing Robe Mastery 1, 59.92 + 13.4 =
+in its Apprentice's Tunic and Stockings has 59.92 P. Def., and knowing Robe Mastery 1, 59.92 + 13.4 =
 **73.32**; with the tunic off it has **55.44**, Robe Mastery or not.
 
-Example: an Orc Fighter at level 10 in its Squire's kit has 8.32 P.Atk and 53.17 M.Def, and knowing
+Example: an Orc Fighter at level 10 in its Squire's kit has 8.32 P. Atk. and 53.17 M. Def., and knowing
 Weapon Mastery 2 and Anti Magic 1, 8.32 × 1.085 + 3 = **12.02** and 53.17 + 12 = **65.17**. A Human
-Mystic at level 7 with its Apprentice's Wand has 9.45 M.Atk and 3.02 P.Atk, and knowing Weapon
+Mystic at level 7 with its Apprentice's Wand has 9.45 M. Atk. and 3.02 P. Atk., and knowing Weapon
 Mastery 1, 9.45 × 1.17 + 1.9 = **12.95** and 3.02 × 1.45 + 1.5 = **5.88**.
 
 ## 26. Potions

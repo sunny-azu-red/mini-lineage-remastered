@@ -190,7 +190,7 @@ Each of these is here because it was got wrong once.
   (§19, a `passive`) is no aura and has no aura icon: `Player.stats/1` adds (or, with `times`,
   multiplies by) the bonuses `Rules` gives its line, in order, before any aura, and its row on
   Learned Skills says so. A skill whose lines differ by path keeps one name and is looked up with
-  `Rules.skill/3` (Weapon Mastery: a Fighter's P.Atk, a Mystic's M.Atk), never a second name.
+  `Rules.skill/3` (Weapon Mastery: a Fighter's P. Atk., a Mystic's M. Atk.), never a second name.
 - **A line keeps its pronouns open until somebody reads it.** Narrative pools carry `{they} {them}
   {object} {their}` and nothing second-person. `Format.fill_template` leaves them alone (they aren't
   in the data map) and `Narrative.voiced/2` closes them at render: `true` for the run's own alert
@@ -348,13 +348,13 @@ Each of these is here because it was got wrong once.
   which `GameLive` checks before reading a kept sort back; none does yet.
 - **A page shows what the fight works out, never the formula.** A skill's row reads the numbers
   `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
-  multiplier reads as Lineage II's data writes a buff: "+8% P.Def", never "×1.08" or "√M.Atk". A
-  mastery reads the same way, its line's bonus as rules §25 writes it ("+14 P.Def", "+13.4 P.Def in a
-  robe", "+8.5% P.Atk and +2 P.Atk", each bonus naming its stat), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
+  multiplier reads as Lineage II's data writes a buff: "+8% P. Def.", never "×1.08" or "√M. Atk.". A
+  mastery reads the same way, its line's bonus as rules §25 writes it ("+14 P. Def.", "+13.4 P. Def.
+  in a robe", "+8.5% P. Atk. and +2 P. Atk.", each bonus naming its stat), never a per-level sum or a rate. The canon's numbers were turned into these, the fight's
   own, in `1617e87`; a new skill's page is written the same way from the start.
 - **What ends counts down where it is shown.** An effect with an end carries `remaining_ms`, a
   duration and never a deadline, so no two clocks are compared, and `EffectTimers` counts it down:
-  legacy's pixel badge over the header icon, and on its Buffs & Debuffs row "+8% P.Def for another
+  legacy's pixel badge over the header icon, and on its Buffs & Debuffs row "+8% P. Def. for another
   1m 37s." (or, with no stat to change, "You rest again in 3s."). Each row hooks itself, since the rows sit straight in the panel body.
   Each also carries a `timer_key` naming that countdown, and the browser counts it from the first
   duration it is sent: a patch can repeat an old one, and a server clock can step (WSL2's does,
@@ -383,6 +383,18 @@ Each of these is here because it was got wrong once.
 - **Adena always comes with its coin and its gold.** An amount in a message is `Format.adena/1`
   (`🪙 N Adena` in `.adena`), a table cell or figure is `.adena` led by 🪙, and a dropdown option,
   which cannot be coloured, still writes the 🪙.
+- **A stat is named as Lineage II's client names it, through `Format.stat/1` and nowhere else**:
+  P. Atk., M. Atk., P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical,
+  M. Critical. A stat ending a sentence lends it its full stop (`Format.stop/1`): "+16 M. Def.".
+  `rules.md` spells them the same; `docs/canon/` keeps its sources' spelling.
+- **A bonus leads its stat; an item's own number follows it.** "+8% P. Def.", "-3 Accuracy", "+38 MP",
+  but "P. Atk. 6". A rate carries its % wherever it is written ("Critical 8%", "Block 20%").
+- **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
+  `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so
+  does the code's `heal` kind.
+- **A time on a row is short**, as `Format.remaining/1` writes it ("3s", "2m", "1m 37s"), with the
+  fight's tenths where it has them ("Cast 5.3s, reuse 10.4s."). Narrative prose keeps its words.
+  `stat_names_test.exs` renders every set's pages and every item's line against the three above.
 - **A place keeps its role; its keeper's name is in what is said there.** The Gatekeeper is
   "Gatekeeper" in the dropdown and the header, and Roxxy in the intro and the flashes.
 - **Write a named entity where one exists**: `&amp;` `&copy;` `&ndash;` `&bull;` `&nbsp;` `&mdash;`

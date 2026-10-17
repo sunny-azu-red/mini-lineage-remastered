@@ -704,7 +704,7 @@ defmodule MiniLineageWeb.Screens do
       phx-hook={effect_hook(effect)}
     >
       <p phx-no-format>
-        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="delimiter">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every 3s.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>.<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
+        <span class={effect.type}>{effect.emoji} {effect.label}</span> <span class="delimiter">&bull;</span> {effect.about}<%= if effect.rates != [] do %> <%= for {rate, index} <- Enum.with_index(effect.rates) do %>{if index > 0, do: " and "}<span class={if rate.value < 0, do: "mp", else: "regen"}>{if rate.value < 0, do: "-", else: "+"}<.figure key={"effect-#{effect.id}-#{rate_unit(rate.stat) |> String.downcase()}"} value={abs(rate.value)} /> {rate_unit(rate.stat)}</span><% end %> every 3s.<% end %><%= for {change, index} <- Enum.with_index(effect.changes) do %>{if index == 0, do: " ", else: " and "}<span class={stat_class(change.stat)}>{change.text}</span><% end %><%= cond do %><% effect.changes != [] and effect.remaining_ms -> %> for another <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% effect.changes != [] -> %>{Format.stop(List.last(effect.changes).text)}<% effect.remaining_ms -> %> {lapse(effect.type)} <.timer ms={effect.remaining_ms} key={effect.timer_key} />.<% true -> %><% end %>
       </p>
     </div>
     """
@@ -728,10 +728,10 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
-        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> P. Atk.</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> Atk. Spd.</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% Critical</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> Accuracy</span>, and cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> M. Atk.</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> Cast. Spd.</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% M. Critical</span>.
+        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> {Format.stat(:p_atk)}</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> {Format.stat(:atk_spd)}</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% {Format.stat(:critical)}</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> {Format.stat(:accuracy)}</span>, and cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> {Format.stat(:m_atk)}</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> {Format.stat(:cast_spd)}</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% {Format.stat(:magic_critical)}</span>.
       </p>
       <p phx-no-format>
-        You turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> P. Def.</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> Evasion</span>, turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> M. Def.</span>, and run at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> Run Spd.</span>
+        You turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> {Format.stat(:p_def)}</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> {Format.stat(:evasion)}</span>, turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> {Format.stat(:m_def)}</span>, and run at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> {Format.stat(:run_spd)}</span>
       </p>
     </div>
     """
@@ -771,8 +771,8 @@ defmodule MiniLineageWeb.Screens do
       [{"potion", "🧪 Potions", :potion_at}] ++
         if(assigns.view.heals?,
           do: [
-            {"pull", "💚 Heal before the pull", :heal_pull_at},
-            {"fight", "💚 Heal in the fight", :heal_fight_at}
+            {"pull", "💚 Mend before the pull", :heal_pull_at},
+            {"fight", "💚 Mend in the fight", :heal_fight_at}
           ],
           else: []
         )
@@ -802,10 +802,10 @@ defmodule MiniLineageWeb.Screens do
       <%= if @view.potion_at == 0 do %>You drink no potions in a fight.<% else %>In a fight you drink a potion whenever your HP falls below <span class="hp">{@view.potion_at}%</span>.<% end %>
     </p>
     <p :if={@view.heals?} id="heal-pull-share" phx-no-format>
-      <%= if @view.heal_pull_at == 0 do %>You never heal before a pull.<% else %>Before a pull you heal while your HP is below <span class="hp">{@view.heal_pull_at}%</span>.<% end %>
+      <%= if @view.heal_pull_at == 0 do %>You never mend before a pull.<% else %>Before a pull you mend while your HP is below <span class="hp">{@view.heal_pull_at}%</span>.<% end %>
     </p>
     <p :if={@view.heals?} id="heal-fight-share" phx-no-format>
-      <%= if @view.heal_fight_at == 0 do %>You never heal in a fight.<% else %>In a fight you heal below <span class="hp">{@view.heal_fight_at}%</span> of your HP while your spells rest.<% end %>
+      <%= if @view.heal_fight_at == 0 do %>You never mend in a fight.<% else %>In a fight you mend below <span class="hp">{@view.heal_fight_at}%</span> of your HP while your spells rest.<% end %>
     </p>
     <p :if={@view.switchable != []} id="unused-skills" phx-no-format>
       <%= if @view.unused == [] do %>You use every skill you know.<% else %>You leave {Format.list(Enum.map(@view.unused, &"#{skill_icon(&1)} #{&1}"), "and")} unused.<% end %>
@@ -946,8 +946,9 @@ in all, for <span class="mp">{@skill.mp} MP</span>.|
 for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :aura}} = assigns),
-    do:
-      ~H|<span class={stat_class(@skill.stat)}>+{round((@skill.times - 1) * 100)}% {stat_name(@skill.stat)}</span>
+    do: ~H|<span class={stat_class(@skill.stat)}>+{round((@skill.times - 1) * 100)}% {Format.stat(
+  @skill.stat
+)}</span>
 for {Format.remaining(@skill.lasts)}, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :poison}} = assigns),
@@ -963,16 +964,17 @@ in all, landing <span class="accuracy">{@skill.land}% of the time</span>, for <s
 for {Format.remaining(@skill.lasts)}, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :toggle}} = assigns),
-    do: ~H|<span class="attack">+{@skill.power} P.Atk</span>
+    do: ~H|<span class="attack">+{@skill.power} {Format.stat(:p_atk)}</span>
 for <span class="mp">{@skill.mp} MP</span>, then <span class="mp">{@skill.drain} MP</span>
 every {Format.remaining(@skill.every)}.|
 
   defp skill_does(%{skill: %{kind: :rest}} = assigns),
     do: ~H|<span class="regen">+{@skill.power} HP</span>
-a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
+for <span class="mp">{@skill.mp} MP</span>
+every 3s of rest.|
 
-  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P.Def in a robe", "+8.5% P.Atk and
-  # +2 P.Atk"), each bonus naming its stat: a stat's bonuses joined by "and", the stats by commas.
+  # Rules §19: what a mastery adds, as the rules write it ("+13.4 P. Def. in a robe", "+8.5% P. Atk.
+  # and +2 P. Atk."), each bonus naming its stat: a stat's bonuses joined by "and", the stats by commas.
   defp skill_does(%{skill: %{kind: :passive}} = assigns) do
     bonuses = assigns.skill.bonuses
     key = &{&1.stat, &1[:worn]}
@@ -981,10 +983,12 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
       for group <- bonuses |> Enum.map(key) |> Enum.uniq(),
           do: Enum.filter(bonuses, &(key.(&1) == group))
 
-    assigns = assign(assigns, groups: groups)
+    last = groups |> List.last() |> List.last()
+    ending = if last[:worn], do: ".", else: Format.stop(Format.stat(last.stat))
+    assigns = assign(assigns, groups: groups, ending: ending)
 
     ~H"""
-    <span phx-no-format><%= for {[first | _] = group, index} <- Enum.with_index(@groups) do %>{if index > 0, do: ", "}<%= for {bonus, at} <- Enum.with_index(group) do %>{if at > 0, do: " and "}<span class={stat_class(bonus.stat)}>{bonus(bonus)} {stat_name(bonus.stat)}</span><% end %>{worn(first[:worn])}<% end %>.</span>
+    <span phx-no-format><%= for {[first | _] = group, index} <- Enum.with_index(@groups) do %>{if index > 0, do: ", "}<%= for {bonus, at} <- Enum.with_index(group) do %>{if at > 0, do: " and "}<span class={stat_class(bonus.stat)}>{bonus(bonus)} {Format.stat(bonus.stat)}</span><% end %>{worn(first[:worn])}<% end %>{@ending}</span>
     """
   end
 
@@ -1002,12 +1006,6 @@ a tick of rest for <span class="mp">{@skill.mp} MP</span>.|
 
   # "30%" for a × 0.7.
   defp percent_off(times), do: "#{round((1 - times) * 100)}%"
-
-  defp stat_name(:p_def), do: "P.Def"
-  defp stat_name(:p_atk), do: "P.Atk"
-  defp stat_name(:m_atk), do: "M.Atk"
-  defp stat_name(:m_def), do: "M.Def"
-  defp stat_name(:evasion), do: "Evasion"
 
   # What an effect changes wears the colour of the stat it changes.
   defp stat_class(:accuracy), do: "accuracy"

@@ -574,8 +574,8 @@ defmodule MiniLineage.Game.RulesTest do
 
     test "§25 what each line of a mastery adds or multiplies by, for whom, and what must be worn" do
       rows = table("Passive line")
-      stats = %{"P.Def" => :p_def, "Evasion" => :evasion, "P.Atk" => :p_atk}
-      stats = Map.merge(stats, %{"M.Atk" => :m_atk, "M.Def" => :m_def})
+      stats = %{"P. Def." => :p_def, "Evasion" => :evasion, "P. Atk." => :p_atk}
+      stats = Map.merge(stats, %{"M. Atk." => :m_atk, "M. Def." => :m_def})
       worn = %{"" => nil, "light armour" => "light", "a robe" => "magic"}
       paths = %{"" => [:fighter, :mystic], "Fighter" => [:fighter], "Mystic" => [:mystic]}
 
@@ -661,7 +661,7 @@ defmodule MiniLineage.Game.RulesTest do
       assert Formulas.evasion(hf.attributes.dex, 1) == 34
     end
 
-    test "§9 Critical and Magic Critical, and their caps", %{hf: hf, hm: hm} do
+    test "§9 Critical and M. Critical, and their caps", %{hf: hf, hm: hm} do
       assert_in_delta Formulas.critical(hf.attributes.dex), 4.4, 1.0e-9
       assert_in_delta Formulas.magic_critical(hm.attributes.wit), 0.8, 1.0e-9
       # DEX alone never reaches the 50% cap; it is there for what later systems add.
@@ -825,7 +825,7 @@ defmodule MiniLineage.Game.RulesTest do
       assert Shop.price(potion) * 10 == 900
     end
 
-    test "§19 Self Heal at 20 M.Atk mends 46" do
+    test "§19 Self Heal at 20 M. Atk. mends 46" do
       assert MiniLineage.Game.Hunt.heal_amount(42, 20) == 46
     end
 

@@ -761,7 +761,7 @@ try {
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-armor-mastery-1', { state: 'detached', timeout: 5000 });
     check('...a mastery learned reading as what it adds, never as a formula or a reuse',
-        await text('#skill-armor-mastery') === '🪖 Armor Mastery 1 • +9 P.Def.' &&
+        await text('#skill-armor-mastery') === '🪖 Armor Mastery 1 • +9 P. Def.' &&
         await page.locator('#lesson-armor-mastery-2').count() === 1,
         await text('#skill-armor-mastery'));
 

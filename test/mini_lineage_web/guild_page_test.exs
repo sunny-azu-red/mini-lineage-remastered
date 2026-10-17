@@ -303,7 +303,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     {:ok, view, _html} = live(conn, ~p"/character")
 
     assert view |> element("#skill-soul-cry") |> render() =~
-             ~r/\+4\.5 P\.Atk<\/span>\sfor .*2 MP.*then.*3 MP.*every 3s/s
+             ~r/\+4\.5 P\. Atk\.<\/span>\sfor .*2 MP.*then.*3 MP.*every 3s/s
   end
 
   test "a learned skill the weapon in hand cannot use is muted, and says what it needs" do

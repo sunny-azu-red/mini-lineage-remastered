@@ -29,7 +29,7 @@ defmodule MiniLineage.Game.Actions do
     not_potion: "That is not something you drink.",
     whole: "You are already in full health.",
     no_share: "That is not a share you can choose.",
-    no_heal: "You know no heal to give orders for.",
+    no_heal: "You know no skill that mends, so there is nothing to order.",
     no_switch: "You cannot give that order for that skill."
   }
 
@@ -329,7 +329,7 @@ defmodule MiniLineage.Game.Actions do
         player = Player.drink_down(%{player | health: player.health + healed}, %{entry.name => 1})
 
         text =
-          ~s(You drink a #{entry.name} and mend <span class="buff">#{healed}</span> HP.)
+          ~s(You drink a #{entry.name} and mend <span class="regen">#{healed} HP</span>.)
 
         {player, {:ok, %{text: text, type: :info}}}
     end
@@ -363,8 +363,8 @@ defmodule MiniLineage.Game.Actions do
 
         text =
           if share == 0,
-            do: "You will not heal #{when_}.",
-            else: "You will heal #{when_} below #{share}% of your HP."
+            do: "You will not mend #{when_}.",
+            else: "You will mend #{when_} below #{share}% of your HP."
 
         key = if moment == :pull, do: :heal_pull_at, else: :heal_fight_at
         {Map.put(player, key, share), {:ok, %{text: text, type: :info}}}

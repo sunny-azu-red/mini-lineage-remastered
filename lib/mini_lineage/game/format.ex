@@ -73,6 +73,30 @@ defmodule MiniLineage.Game.Format do
 
   defp seconds_left(ms), do: max(ceil(ms / 1000), 0)
 
+  # As Lineage II's client names them, every shortened word ending in a full stop.
+  @stats %{
+    p_atk: "P. Atk.",
+    m_atk: "M. Atk.",
+    p_def: "P. Def.",
+    m_def: "M. Def.",
+    atk_spd: "Atk. Spd.",
+    cast_spd: "Casting Spd.",
+    run_spd: "Speed",
+    accuracy: "Accuracy",
+    evasion: "Evasion",
+    critical: "Critical",
+    magic_critical: "M. Critical",
+    hp_regen: "HP regen",
+    mp_regen: "MP regen",
+    mp: "MP"
+  }
+
+  @doc "A stat as every page names it: \"P. Atk.\", \"Casting Spd.\", \"Speed\"."
+  def stat(key), do: Map.fetch!(@stats, key)
+
+  @doc "A sentence's full stop, unless what ends it ends in one already: \"+16 M. Def.\"."
+  def stop(text), do: if(String.ends_with?(text, "."), do: "", else: ".")
+
   @doc "An amount of Adena as every message writes it: the coin, the figure and the word, in gold."
   def adena(amount), do: ~s(<span class="adena">🪙 #{number(amount)} Adena</span>)
 

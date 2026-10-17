@@ -29,7 +29,7 @@ defmodule MiniLineageWeb.EffectTimersTest do
     doc = page(raised)
 
     assert text(doc, "#effect-defense_aura") =~
-             "An aura raised in the field turns blows aside. +8% P.Def for another 1m 37s."
+             "An aura raised in the field turns blows aside. +8% P. Def. for another 1m 37s."
 
     assert attribute(doc, "#effect-defense_aura .timer", "data-remaining-ms") == "97000"
     assert attribute(doc, "#effect-defense_aura", "phx-hook") == "EffectTimers"

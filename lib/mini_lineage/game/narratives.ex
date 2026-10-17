@@ -42,9 +42,9 @@ defmodule MiniLineage.Game.Narratives do
     cast: ~s({them} cast {skill} for <span class="magic">{amount}</span>),
     magic_critical: ~s({their} {skill} strikes true for <span class="crit">{amount}</span>),
     drain:
-      ~s({them} cast {skill} for <span class="magic">{amount}</span> and mend <span class="buff">{healed}</span> HP),
+      ~s({them} cast {skill} for <span class="magic">{amount}</span> and mend <span class="regen">{healed} HP</span>),
     drain_critical:
-      ~s({their} {skill} strikes true for <span class="crit">{amount}</span> and mends <span class="buff">{healed}</span> HP),
+      ~s({their} {skill} strikes true for <span class="crit">{amount}</span> and mends <span class="regen">{healed} HP</span>),
     ignite: "{them} set it burning with {skill}",
     burn: ~s(it burns for <span class="magic">{amount}</span>),
     foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount}</span>),
@@ -66,7 +66,7 @@ defmodule MiniLineage.Game.Narratives do
       ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
     foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>),
     foe_drain:
-      ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span> and mends <span class="buff">{healed}</span> HP),
+      ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span> and mends <span class="regen">{healed} HP</span>),
     # Two or more swings by one side in a round, each told in order.
     swings: "{them} swing {times} for {outcomes}",
     foe_swings: "the {monster} swings {times} at {object} for {outcomes}",
@@ -77,14 +77,14 @@ defmodule MiniLineage.Game.Narratives do
     foe_swing_critical: ~s(a critical hit of <span class="hp">{amount}</span>),
     foe_swing_caught: ~s(a hit of <span class="hp">{amount}</span> that {their} shield catches),
     foe_swing_perfect: "a blow {their} shield turns aside",
-    heal: ~s({them} cast {skill} and mend <span class="buff">{amount}</span> HP),
+    heal: ~s({them} cast {skill} and mend <span class="regen">{amount} HP</span>),
     aura: ~s({them} raise {their} <span class="buff">{skill}</span>),
     toggle:
       ~s({them} let out a <span class="buff">{skill}</span>, and {their} blows grow heavier),
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
     poison: ~s(the poison eats <span class="magic">{amount}</span>),
-    potion: ~s({them} drink a {potion} and mend <span class="buff">{amount}</span> HP),
+    potion: ~s({them} drink a {potion} and mend <span class="regen">{amount} HP</span>),
     # Ends the "Before the fight:" line, when only the character stands.
     mended: ~s|<span class="muted">({them} at <span class="hp">{hp}</span> of {max})</span>|
   }
