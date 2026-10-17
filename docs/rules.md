@@ -773,11 +773,10 @@ level 1 for 50 (60 for the Orc).
 A skill grows in steps, not one level at a time: each line is everything the trainer teaches of it
 at one character level (5, 10 and 15 for a Fighter, 7 and 14 for a Mystic), so no two lines of one
 skill open at the same level. A Fighter's weapon skills keep their first level apart, at level 1.
-Every line costs what Lineage II asks for the levels it holds, but for level 1 (above) and Robe
-Mastery: Robe Mastery 1 is the Orc Mystic's price for every Mystic, and Robe Mastery 2 costs 6,800,
-so that a Mystic reaches level 20 with about the SP an Elven or Dark Fighter has left. Anti Magic,
-which Lineage II teaches only Mystics, is taught to a Fighter at levels 5 and 10, at what its race's
-Mystic pays.
+Every line costs what Lineage II asks for the levels it holds, but for level 1 (above) and two
+masteries taught beyond their canon trees: every Mystic learns Robe Mastery at the Orc Mystic's
+price, and a Fighter Anti Magic, which Lineage II teaches only Mystics, at levels 5 and 10 for what
+its race's Mystic pays.
 
 | Set | Skill | Level | From level | SP |
 |---|---|---|---|---|
@@ -853,7 +852,7 @@ Mystic pays.
 | Human Mystic | Ice Bolt | 1 | 7 | 480 |
 | Human Mystic | Ice Bolt | 2 | 14 | 2,200 |
 | Human Mystic | Robe Mastery | 1 | 7 | 520 |
-| Human Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Human Mystic | Robe Mastery | 2 | 14 | 1,760 |
 | Human Mystic | Weapon Mastery | 1 | 7 | 470 |
 | Human Mystic | Weapon Mastery | 2 | 14 | 2,100 |
 | Human Mystic | Anti Magic | 1 | 7 | 480 |
@@ -867,7 +866,7 @@ Mystic pays.
 | Elven Mystic | Heal | 1 | 7 | 510 |
 | Elven Mystic | Heal | 2 | 14 | 2,100 |
 | Elven Mystic | Robe Mastery | 1 | 7 | 520 |
-| Elven Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Elven Mystic | Robe Mastery | 2 | 14 | 1,760 |
 | Elven Mystic | Weapon Mastery | 1 | 7 | 520 |
 | Elven Mystic | Weapon Mastery | 2 | 14 | 2,100 |
 | Elven Mystic | Anti Magic | 1 | 7 | 520 |
@@ -881,7 +880,7 @@ Mystic pays.
 | Dark Mystic | Shield | 1 | 7 | 470 |
 | Dark Mystic | Wind Shackle | 1 | 14 | 2,100 |
 | Dark Mystic | Robe Mastery | 1 | 7 | 520 |
-| Dark Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Dark Mystic | Robe Mastery | 2 | 14 | 1,760 |
 | Dark Mystic | Weapon Mastery | 1 | 7 | 470 |
 | Dark Mystic | Weapon Mastery | 2 | 14 | 2,100 |
 | Dark Mystic | Anti Magic | 1 | 7 | 480 |
@@ -894,7 +893,7 @@ Mystic pays.
 | Orc Mystic | Life Drain | 2 | 14 | 1,800 |
 | Orc Mystic | Soul Shield | 1 | 7 | 520 |
 | Orc Mystic | Robe Mastery | 1 | 7 | 520 |
-| Orc Mystic | Robe Mastery | 2 | 14 | 6,800 |
+| Orc Mystic | Robe Mastery | 2 | 14 | 1,760 |
 | Orc Mystic | Weapon Mastery | 1 | 7 | 520 |
 | Orc Mystic | Weapon Mastery | 2 | 14 | 1,800 |
 | Orc Mystic | Anti Magic | 1 | 7 | 520 |

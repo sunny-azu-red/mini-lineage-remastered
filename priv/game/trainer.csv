@@ -71,7 +71,7 @@ Human Mystic,Self Heal,1,1,50
 Human Mystic,Ice Bolt,1,7,480
 Human Mystic,Ice Bolt,2,14,2200
 Human Mystic,Robe Mastery,1,7,520
-Human Mystic,Robe Mastery,2,14,6800
+Human Mystic,Robe Mastery,2,14,1760
 Human Mystic,Weapon Mastery,1,7,470
 Human Mystic,Weapon Mastery,2,14,2100
 Human Mystic,Anti Magic,1,7,480
@@ -85,7 +85,7 @@ Elven Mystic,Ice Bolt,2,14,2200
 Elven Mystic,Heal,1,7,510
 Elven Mystic,Heal,2,14,2100
 Elven Mystic,Robe Mastery,1,7,520
-Elven Mystic,Robe Mastery,2,14,6800
+Elven Mystic,Robe Mastery,2,14,1760
 Elven Mystic,Weapon Mastery,1,7,520
 Elven Mystic,Weapon Mastery,2,14,2100
 Elven Mystic,Anti Magic,1,7,520
@@ -99,7 +99,7 @@ Dark Mystic,Curse: Poison,1,7,470
 Dark Mystic,Shield,1,7,470
 Dark Mystic,Wind Shackle,1,14,2100
 Dark Mystic,Robe Mastery,1,7,520
-Dark Mystic,Robe Mastery,2,14,6800
+Dark Mystic,Robe Mastery,2,14,1760
 Dark Mystic,Weapon Mastery,1,7,470
 Dark Mystic,Weapon Mastery,2,14,2100
 Dark Mystic,Anti Magic,1,7,480
@@ -112,7 +112,7 @@ Orc Mystic,Life Drain,1,7,520
 Orc Mystic,Life Drain,2,14,1800
 Orc Mystic,Soul Shield,1,7,520
 Orc Mystic,Robe Mastery,1,7,520
-Orc Mystic,Robe Mastery,2,14,6800
+Orc Mystic,Robe Mastery,2,14,1760
 Orc Mystic,Weapon Mastery,1,7,520
 Orc Mystic,Weapon Mastery,2,14,1800
 Orc Mystic,Anti Magic,1,7,520

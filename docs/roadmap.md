@@ -126,7 +126,7 @@ follows before characters reach 15.
 Needs the class tree in the canon first.
 
 - **Fighter and Mystic** are already the two paths of the base layer.
-- **Priced against what a run brings to 20:** 3,900 to 14,800 SP and 227,000 to 363,000 Adena
+- **Priced against what a run brings to 20:** 3,900 to 19,600 SP (a Mystic 17,200 or more) and 227,000 to 363,000 Adena
   with nothing left to buy in the village ([balance.md](balance.md)).
 - **Class transfers** at levels 20 and 40, and a third at 76, where each next class grows HP and MP
   differently.

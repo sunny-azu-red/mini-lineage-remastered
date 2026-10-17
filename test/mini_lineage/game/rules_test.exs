@@ -521,11 +521,11 @@ defmodule MiniLineage.Game.RulesTest do
             lesson.learn_at == 1 ->
               1
 
-            # Every Mystic pays the Orc Mystic's canon for line 1, and §25's 6,800 for line 2.
+            # Every Mystic learns it at the Orc Mystic's canon price.
             skill == "Robe Mastery" ->
-              {top, price} = canon[{"Orc Mystic", skill, 7}]
-              assert lesson.sp == if(lesson.level == 1, do: top * price, else: 6_800), name
-              held
+              assert {top, price} = canon[{"Orc Mystic", skill, lesson.learn_at}], name
+              assert lesson.sp == (top - held) * price, name
+              top
 
             # Lineage II teaches it Mystics only; a Fighter pays what its race's Mystic does.
             skill == "Anti Magic" and set.path == :fighter ->

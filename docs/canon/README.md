@@ -112,8 +112,8 @@ where it has any.
 **Skills**
 
 Every skill, its numbers and its level come from the set's own canon tree (rules §19, §25), but for
-the Orc Mystic's Chill Flame, every Mystic's Robe Mastery and a Fighter's Anti Magic. What differs is which of them a set gets, how they are sold, and how
-the fight uses them.
+the Orc Mystic's Chill Flame, every Mystic's Robe Mastery and a Fighter's Anti Magic. What differs
+is which of them a set gets, how they are sold, and how the fight uses them.
 
 - **Each set plays its own way.** Before the class change a set learns its first skill, two to
   five more from its tree and three masteries, chosen so no two sets fight alike, where Lineage
@@ -154,9 +154,8 @@ the fight uses them.
   the Fighter's Weapon Mastery and the Mystic's, each its own lines, as in Lineage II, whose bow and
   polearm penalty never applies, since a Mystic is sold neither. Every Mystic learns Robe Mastery
   (251), which Lineage II gives only the Orc Mystic: the Human, Elven and Dark Mystics' Armor
-  Mastery (244) adds half as much on any armour, and a Mystic only ever wears a robe. Robe Mastery 1
-  costs the Orc Mystic's 520 SP for every Mystic, and Robe Mastery 2 costs 6,800 where Lineage II
-  asks 1,760, so a Mystic reaches level 20 with about the SP an Elven or Dark Fighter has left. A Fighter learns
+  Mastery (244) adds half as much on any armour, and a Mystic only ever wears a robe. Robe Mastery
+  costs every Mystic the Orc Mystic's 520 and 1,760 SP. A Fighter learns
   Anti Magic too, which Lineage II teaches only Mystics, at levels 5 and 10 for what its race's
   Mystic pays: the Orc Fighter's ground has the Evil Eyes' spells, and the grounds past the villages
   cast more. Every other line costs what Lineage II asks for the levels it holds, where the late
