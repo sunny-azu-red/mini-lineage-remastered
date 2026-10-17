@@ -40,6 +40,19 @@ defmodule MiniLineageWeb.StatusPanelTest do
     assert Enum.sort(keys) == Enum.sort(~w(adena hp level max-hp max-mp mp xp-percent))
   end
 
+  test "a bar under a quarter of its cap pulses, and one at a quarter does not" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), :mystic, "Sunny")
+    %{max_hp: hp, max_mp: mp} = Player.stats(player)
+    rows = fn p -> sidebar_for(p) |> LazyHTML.from_fragment() end
+
+    at = rows.(%{player | health: div(hp + 3, 4), mp: div(mp + 3, 4)})
+    assert LazyHTML.query(at, ".low-hp, .low-mp") |> Enum.count() == 0
+
+    under = rows.(%{player | health: div(hp + 3, 4) - 1, mp: 0})
+    assert LazyHTML.query(under, "#hp-row.low-hp") |> Enum.count() == 1
+    assert LazyHTML.query(under, "#mp-row.low-mp") |> Enum.count() == 1
+  end
+
   test "a new character's purse holds nothing", %{html: _html} do
     {player, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Sunny")
 

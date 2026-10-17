@@ -246,6 +246,38 @@
     content: none;
 }
 
+/* Only the colour moves: the fade is a background IMAGE, which a `background` shorthand would drop. */
+@keyframes low-pulse {
+
+    0%,
+    100% {
+        background-color: color-mix(in srgb, var(--low) 12%, transparent);
+    }
+
+    50% {
+        background-color: color-mix(in srgb, var(--low) 25%, transparent);
+    }
+}
+
+/* A bar under a quarter, as legacy's HP row did; each pulses in its bar's own hue. */
+.stat-row:is(.low-hp, .low-mp) {
+    background-image: linear-gradient(90deg,
+            var(--bg-panel) 0,
+            transparent 33%,
+            transparent 67%,
+            var(--bg-panel) 100%);
+    background-clip: padding-box;
+    animation: low-pulse .5s ease-in-out infinite;
+}
+
+.stat-row.low-hp {
+    --low: var(--bar-hp);
+}
+
+.stat-row.low-mp {
+    --low: var(--bar-mp);
+}
+
 /* The 1px is optical: capitals centred by their box sit high. */
 .stat-label {
     color: var(--text-secondary);

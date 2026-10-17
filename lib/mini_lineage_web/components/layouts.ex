@@ -128,7 +128,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <%!-- Told apart by colour, as the bars always were; a screen reader hears each one's label. --%>
-        <div class="stat-row">
+        <div id="hp-row" class={["stat-row", low?(@view.health, @view.max_health) && "low-hp"]}>
           <Controls.bar
             id="hp-bar"
             kind={:hp}
@@ -140,7 +140,7 @@ defmodule MiniLineageWeb.Layouts do
           />
         </div>
 
-        <div class="stat-row">
+        <div id="mp-row" class={["stat-row", low?(@view.mp, @view.max_mp) && "low-mp"]}>
           <Controls.bar
             id="mp-bar"
             kind={:mp}
@@ -208,6 +208,9 @@ defmodule MiniLineageWeb.Layouts do
         item.equipped and item.slot == slot,
         do: Controls.item_label(item)
       )
+
+  # Under a quarter, a bar pulses: too little HP to live through the next fight, or MP to cast in it.
+  defp low?(value, of), do: value * 4 < of
 
   @doc """
   The banner. `interactive?` is false on the error page, which has no LiveView, so there the

@@ -52,9 +52,10 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `head`,
   `site_header`, the sidebar and `footer`, which `ErrorHTML` draws too.
-- **The sidebar** (level and name, the name linking to `/character`, the vitals, then the Inventory,
-  its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town and
-  beside the inventory. One breakpoint stacks it.
+- **The sidebar** (level and name, the name linking to `/character`, the vitals, HP's and MP's rows
+  pulsing in their bar's hue under a quarter, then the Inventory, its Adena beside an Open link to
+  `/inventory`) is one fixed-width `.side` column, drawn in town and beside the inventory. One
+  breakpoint stacks it.
 - **A new component, hook or shared control is written into this file in the change that adds it.**
   Before writing one, look here and in `Controls`, and extend what exists with an option instead.
 
