@@ -4,7 +4,7 @@ defmodule MiniLineage.Game.Hunt do
   to the end, and what it pays. Pure but for the dice, which draw through `Math` so a test can pin
   them; nothing here touches a process or the database.
   """
-  alias MiniLineage.Game.{Formulas, Math, Rules}
+  alias MiniLineage.Game.{Formulas, Math, Rng, Rules}
 
   # §20: one blow at 300 Atk. Spd., Lineage II's 500,000 ÷ Atk. Spd. milliseconds.
   @round_ms 500_000 / 300
@@ -620,7 +620,7 @@ defmodule MiniLineage.Game.Hunt do
       spread = Formulas.damage_spread()
 
       {damage, caught} =
-        case block(stats) do
+        case block(stats, foe, critical?) do
           :perfect ->
             {1, :perfect}
 
@@ -642,18 +642,25 @@ defmodule MiniLineage.Game.Hunt do
     end
   end
 
-  @doc "§23: a shield catches at its rate × the DEX bonus; one catch in twenty is perfect."
-  def block_chance(rate, dex), do: rate * Formulas.bonus(:dex, dex)
+  @doc "§23: a shield catches at its rate × the DEX bonus, three times as often against an arrow and again against a critical."
+  def block_chance(rate, dex, opts \\ []) do
+    rate * Formulas.bonus(:dex, dex) * if(opts[:arrow], do: 3, else: 1) *
+      if(opts[:critical], do: 3, else: 1)
+  end
 
-  defp block(%{shield: %{} = shield} = stats) do
+  @doc "§23: one roll decides a blow: below 5 a perfect catch, below the block chance a catch."
+  def block(%{shield: %{} = shield} = stats, foe, critical?) do
+    chance = block_chance(shield.shield_rate, stats.dex, arrow: foe.bow?, critical: critical?)
+    roll = Rng.random() * 100
+
     cond do
-      not Formulas.hit?(block_chance(shield.shield_rate, stats.dex)) -> stats.p_def
-      Formulas.hit?(5) -> :perfect
-      true -> {:caught, stats.p_def + shield.shield_def}
+      roll < 5 -> :perfect
+      roll < chance -> {:caught, stats.p_def + shield.shield_def}
+      true -> stats.p_def
     end
   end
 
-  defp block(stats), do: stats.p_def
+  def block(stats, _foe, _critical?), do: stats.p_def
 
   # §19: a skill's reuse, scaled by the speed that times it, runs down a round at a time.
   defp spend(s, skill) do

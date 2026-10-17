@@ -652,14 +652,16 @@ sells anything in a kit:
 - **A first skill (§19) needs its weapon:** Power Strike a sword, in either hand, Power Shot a bow,
   Mortal Blow a dagger, Iron Punch fists. Without it the skill is never used and costs nothing, and
   the character only swings. Spells need none.
-- **A shield** catches a monster's blow at its block rate × the DEX bonus, as a percentage. A catch
-  adds the shield's defence to P.Def for that blow, and one catch in twenty is perfect and takes only
-  1. Spells pass a shield by. Every shield blocks at 20 and costs 8 Evasion (§8) while worn, so a
-  better shield catches no more often, only harder, and blows land more often behind any of them.
+- **A shield** catches a monster's blow at its block rate × the DEX bonus, as a percentage, three
+  times as often against an arrow and three times as often against a critical. One roll decides:
+  five blows in a hundred are caught perfectly, whatever the shield, and take only 1, and the rest
+  of the catches add the shield's defence to P.Def for that blow. Spells pass a shield by. Every
+  shield blocks at 20 and costs 8 Evasion (§8) while worn, so a better shield catches no more often,
+  only harder, and blows land more often behind any of them.
 - **A robe's MP** is added to Max MP (§6).
 
 Example: a Human Fighter (DEX 30) behind a Small Shield (defence 56, block 20) catches 20 × 1.10 =
-**22%** of the blows aimed at it. A Human Mystic's starting robes add 19 + 10 = **29** Max MP.
+**22%** of the blows aimed at it, 5% of them perfectly, and 22 × 3 = **66%** of the arrows. A Human Mystic's starting robes add 19 + 10 = **29** Max MP.
 
 ## 24. Village shops
 

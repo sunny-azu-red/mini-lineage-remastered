@@ -794,9 +794,25 @@ defmodule MiniLineage.Game.RulesTest do
       assert_in_delta Player.stats(elf).blows_per_round, 0.55, 0.005
     end
 
-    test "§23 a Small Shield catches 22% at DEX 30, and a Mystic's robes add 29 MP" do
+    test "§23 a Small Shield catches 22% at DEX 30, 66% of arrows, and a Mystic's robes add 29 MP" do
       Clock.put_now(~U[2026-07-01 09:00:00Z])
       assert_in_delta Hunt.block_chance(20, 30), 22.0, 1.0e-9
+      assert_in_delta Hunt.block_chance(20, 30, arrow: true), 66.0, 1.0e-9
+      assert_in_delta Hunt.block_chance(20, 30, arrow: true, critical: true), 198.0, 1.0e-9
+
+      # One roll: under 5 perfect, under the chance a catch adding the shield's 56.
+      stats = %{shield: Rules.item("Small Shield"), dex: 30, p_def: 100}
+      melee = %{bow?: false}
+
+      block = fn roll, foe ->
+        Rng.put_source(fn -> roll end)
+        Hunt.block(stats, foe, false)
+      end
+
+      assert block.(0.04, melee) == :perfect
+      assert block.(0.2, melee) == {:caught, 156}
+      assert block.(0.5, melee) == 100
+      assert block.(0.5, %{bow?: true}) == {:caught, 156}
 
       {mystic, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Novice")
       bare = %{mystic | items: []}

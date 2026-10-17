@@ -13,7 +13,9 @@ Apprentice's Wand, each path shown only its own goods, one of each kind per pric
 legs and necklace priced as many of its slot as it stands for, and three masteries on every path,
 Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for
 both, each multiplying before it adds as Lineage II does, every line at Lineage II's price but
-level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Lineage II's do. One
+level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Lineage II's do, and
+catching as aCis's do: three times as often against an arrow or a critical, and five blows in a
+hundred perfectly. One
 `--final` reading of that build, 200 seeded runs of every set up its village's ladder to level 20,
 once per weapon path its skills can use, each run seeded on its own; at the defaults none of them
 died. The bench learns every line its weapon uses and every mastery, which a player need not.
@@ -159,23 +161,23 @@ The level each of a path's weapons is first held at, then the level and hunt the
 
 | Set | Skill | Path | 768 | 12,500 | 54,100 | Top weapon, kit | Hunt | Held at 20 |
 |---|---|---|---|---|---|---|---|---|
-| Human Fighter | Power Strike | sword 1h | Short Sword 4.3 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.4** (16–17) | 210 | 329k |
-| Human Fighter | Power Strike | sword 2h | Short Sword 4.4 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.9** (17–18) | 257 | 226k |
+| Human Fighter | Power Strike | sword 1h | Short Sword 4.3 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.5** (16–17) | 210 | 326k |
+| Human Fighter | Power Strike | sword 2h | Short Sword 4.4 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.9** (17–18) | 259 | 224k |
 | Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Knife 9.4 | Dirk 14.1 | Throwing Knife **16.2** (16–17) | 206 | 336k |
 | Human Fighter | Power Shot | bow | Short Bow 4.0 | Bow 9.3 | Hunting Bow 14.1 | Forest Bow **16.3** (16–17) | 207 | 332k |
 | Elven Fighter | Power Shot | bow | Short Bow 4.2 | Bow 9.4 | Hunting Bow 14.0 | Forest Bow **16.0** (15–17) | 234 | 362k |
 | Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.2 | Knife 9.4 | Dirk 14.0 | Throwing Knife **16.0** (15–17) | 223 | 343k |
 | Orc Fighter | Iron Punch | fists | Spiked Gloves 4.2 | Iron Gloves 9.4 | Fox Claw Gloves 14.0 | Cestus **16.1** (16–17) | 216 | 340k |
-| Orc Fighter | Power Strike | sword 1h | Short Sword 4.5 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.2** (16–17) | 222 | 331k |
-| Orc Fighter | Power Strike | sword 2h | Short Sword 4.5 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.7** (17–18) | 280 | 224k |
-| Human Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.1 | | Relic **16.1** (16–17) | 200 | 327k |
-| Human Mystic | | staff 2h | Horn 4.4 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.9** (16–17) | 220 | 305k |
-| Elven Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 225 | 357k |
-| Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.4** (16–17) | 250 | 332k |
-| Dark Mystic | | staff 1h | Horn 4.7 | Scholar's Tome 10.1 | | Relic **15.9** (15–16) | 216 | 335k |
-| Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.3** (16–17) | 241 | 315k |
-| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 209 | 334k |
-| Orc Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.8** (16–17) | 234 | 308k |
+| Orc Fighter | Power Strike | sword 1h | Short Sword 4.5 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.3** (16–17) | 222 | 329k |
+| Orc Fighter | Power Strike | sword 2h | Short Sword 4.5 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.7** (17–18) | 279 | 226k |
+| Human Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.1 | | Relic **16.0** (16–17) | 200 | 331k |
+| Human Mystic | | staff 2h | Horn 4.4 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.9** (16–18) | 220 | 306k |
+| Elven Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–16) | 226 | 352k |
+| Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.6 | Journeyman's **16.4** (16–17) | 250 | 331k |
+| Dark Mystic | | staff 1h | Horn 4.7 | Scholar's Tome 10.2 | | Relic **15.9** (15–16) | 216 | 337k |
+| Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.2** (16–17) | 241 | 315k |
+| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 209 | 332k |
+| Orc Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.8** (16–17) | 234 | 307k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 9 to 10, 14, and 16 to 17 for
   the top.** At canon's prices the third tier came at 13 and the top at 15 to 16; the armour bought
@@ -207,28 +209,31 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 (`6a43a98`), with Armor or Robe Mastery for each path (`613b52f`), and now, with Weapon Mastery and
 Anti Magic for every set and every line past level 1 at Lineage II's prices (`87027a5` and Robe
 Mastery's after it, and the Mystic's Weapon Mastery multiplying before it adds), the steps in one
-column, then with the bench playing as a player would, and now with every shield costing 8 Evasion.
+column, then with the bench playing as a player would, and now with every shield costing 8 Evasion
+and catching as aCis's do.
 Each step is compared run for run (`bench/compare.exs`).
 
 | Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Masteries | Bench plays meta | Now |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 | 186 / 181 / 186 | **193** / 184 / 186 |
+| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 | 186 / 181 / 186 | 190 / 183 / 186 |
 | Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 | 196 | 196 |
-| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** | 183 / 183 | **183 / 183** |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** | 183 / 183 | **182 / 183** |
 | Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 | 211 | 211 |
-| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 | 195 / 194 | 195 / 194 |
+| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 | 195 / 194 | 194 / 194 |
 | Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 | 223 | 223 |
-| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 241 / 240 |
-| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / **257** / 248 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **277** / 274 |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 240 / 239 |
+| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / 255 / 247 |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **273 / 274** |
 
-- **Every shield costing 8 Evasion slows the paths that carry one by up to 3.5%,** and the rest not
-  at all. A monster's blow lands up to 16 points more often (rules §13), so the one-handed sword
-  Fighters rest longer: the Human Fighter 3.5% and the Orc Fighter 1.9%, and the two-handers, whose
-  shield goes with the Broadsword, 0.7% to 1.4%. A Mystic, struck 96% to 98% of the time already,
-  loses at most 1.3% (the Orc Mystic's one-hander), and the dagger and bow paths carry no shield.
-  The spread from the fastest set to the slowest widens from 92.6 to 94.6 minutes resting to full,
-  past the bar's 2%, which the game takes as canon's.
+- **Every shield costing 8 Evasion and catching as aCis's do slows the one-handed sword Fighters
+  by 1% to 2%, and the rest not at all.** A monster's blow lands up to 16 points more often (rules
+  §13), and a shield gives back some of it, three times as often against an arrow or a critical and
+  with five blows in a hundred caught perfectly: the Human Fighter is 2.1% slower and the Orc
+  Fighter 1.1%, the two-handers, whose shield goes with the Broadsword, 0.4% to 1.0%. A Mystic,
+  struck 96% to 98% of the time already, is up to 0.5% faster for the perfect catches, and the
+  dagger and bow paths carry no shield. The spread from the fastest set to the slowest narrows from
+  92.6 to 91.8 minutes. With 8 Evasion and the old catch (one in twenty perfect, no more against
+  arrows or criticals) the Human Fighter was 3.5% slower and the spread widened to 94.6.
 - **The bench playing as a player would makes the Human Fighter 1.3% to 3.5% faster,** since it
   buys only its own weapon's line and so reaches each tier's lines sooner; the bow most, whose Power
   Shot 4 no longer waits behind two other lines. The Orc Fighter moves under 1%, and the Dark
@@ -301,25 +306,27 @@ player would and every shield costing 8 Evasion:
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0, 0 / 0 | 0 / 0, 0 / 0, 0 / 0 | |
-| Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4, 5 / 3 | 1 / 4, 1 / 4, 3 / 4 | Spore Fungus, at 9 |
-| Dark Mystic | staff 1h / 2h | 3 / 7, 2 / 7, 5 / 8 | 5 / 12, 4 / 11, **12** / 12 | Cave Fang Spider at 16, Balor Orc Fighter at 10 |
-| Orc Mystic | staff 1h / 2h | 0 / 1, 0 / 0, 0 / 0 | 5 / 10, 1 / 5, 1 / 6 | |
+| Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4, 2 / 1 | 1 / 4, 1 / 4, 1 / 1 | Spore Fungus, at 9 |
+| Dark Mystic | staff 1h / 2h | 3 / 7, 2 / 7, **0** / 5 | 5 / 12, 4 / 11, **0** / 9 | Balor Orc Fighter at 10, Cave Fang Spider at 16 |
+| Orc Mystic | staff 1h / 2h | 0 / 1, 0 / 0, 0 / 1 | 5 / 10, 1 / 5, 0 / 5 | |
 | Human Fighter | bow | 47, 59, **8** | 191, 194, **81** | Blade Spider, Talon Spider, at 16 to 18 |
 | Elven Fighter | bow | 68, 34, 34 | 197, 183, 183 | Dread Soldier, Dungeon Skeleton Archer, at 13 and 14 |
 | Dark Fighter | dagger | 60, 14, **32** | 180, 125, **166** | Doom Soldier, Balor Orc Fighter Leader, at 12 to 16 |
-| Human Fighter | sword 1h / 2h / dagger | 2 / 55 / 59, 0 / 11 / 23, 3 / **5** / 28 | 161 / 199 / 196, 65 / 156 / 173, **98** / 148 / 172 | Talon Spider, Blade Spider, at 16 and 17 |
+| Human Fighter | sword 1h / 2h / dagger | 2 / 55 / 59, 0 / 11 / 23, 1 / **4** / 28 | 161 / 199 / 196, 65 / 156 / 173, **77** / **130** / 172 | Talon Spider, Blade Spider, at 16 and 17 |
 | Orc Fighter | fists | 118, 10, 16 | 199, 189, 180 | Skeleton Longbowman, at 19 |
-| Orc Fighter | sword 1h / 2h | 141 / 91, 40 / 10, 50 / 18 | 200 / 200, 198 / 199, 199 / 198 | Skeleton Longbowman at 19, the Evil Eyes at 10 |
+| Orc Fighter | sword 1h / 2h | 141 / 91, 40 / 10, **18** / 25 | 200 / 200, 198 / 199, 178 / 196 | the Evil Eyes at 10, Skeleton Longbowman at 19 |
 
 - **The bench playing as a player would and every shield costing 8 Evasion move the risk-takers'
   deaths both ways.** The Human archer dies far less (59 to 8 resting at half, 194 to 81 at 30%),
   its Power Shot 4 no longer bought behind two other lines, and the Human two-hander less too. The
   Dark Fighter dies more, 14 to 32 and 125 to 166, from going without a shield, which under the old
   rule cut its deaths by half: the bench now flags that build when the rule lets it win, and under
-  canon it does not (see the last section). The shield's 8 Evasion kills more of those who carry
-  one: the Human Fighter with a one-handed sword resting at 30% (30 to 98 on the meta bench), the
-  Orc Fighter with one resting at half (28 to 50) and the Dark Mystic with one at 30% (4 to 12), each
-  past the dice's noise, which the game takes as canon's.
+  canon it does not (see the last section). A shield now costs 8 Evasion and catches as aCis's
+  does, and that keeps those who carry one about as alive as the old free shield did: the Orc
+  Fighter with a one-handed sword dies in 18 runs of 200 resting at half (40 before, 28 on the meta
+  bench), its arrows from the Skeleton Longbowman now caught three times as often, and every Mystic
+  with a shield as often or less. Only the Human Fighter with a one-handed sword resting at 30% dies
+  more, 30 to 77 on the meta bench, past the dice's noise, which the game takes as canon's.
 - **Resting at half without potions, the masteries and the canon prices halve or better the
   deaths of every Fighter but the Human archer,** the Elven Fighter's (68 to 34) with the canon
   prices' help, and the Orc Fighter's most: it dies in 10 to 40 runs of 200 where it died in 91 to
@@ -419,21 +426,25 @@ The bench runs each one-handed path again with the other shield choice, on the s
 the build when it dies less than the path past the dice's noise, or is more than 2% faster without
 dying more. The lines are at the end of each setting's report (`Off-meta …`).
 
-| Off-meta build | Old rule, resting at half / 30% | Every shield 8 Evasion, at half / 30% | Time to 20, now |
+| Off-meta build | Old rule, resting at half / 30% | Canon, resting at half / 30% | Time to 20, canon |
 |---|---|---|---|
-| Human Fighter, dagger with a shield | **flagged**: 28 to 12, 172 to 128 deaths | 28 to 37, 172 to 198 | 2.4% to 3.1% slower |
-| Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 32 to 49, 166 to 186 | 2.8% to 3.1% slower |
-| Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | **flagged**: 3 to 1, 98 to 83 | **2.3% to 3.3% faster** |
-| Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 50 to 40, 199 to 194 | 1.3% to 1.6% faster |
-| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 5 to 11 at half) | within 0.6% |
+| Human Fighter, dagger with a shield | **flagged**: 28 to 12, 172 to 128 deaths | 28 to 24, 172 to 184 | 1.2% to 1.7% slower |
+| Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 32 to 31, 166 to 178 | 0.6% to 2.2% slower |
+| Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | 1 to 1, 77 to 83 | 0.9% to 1.9% faster |
+| Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 18 to 40, 178 to 194 | 0.5% to 0.8% faster |
+| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 0 to 11 at half) | up to 2% slower |
 
 - **A dagger with a shield was the strongest build under the old rule,** a shield's block for
   nothing: it halved the dagger Fighters' deaths. With every shield costing 8 Evasion, as in Lineage
   II, a dagger does better without one, which is the meta the bench plays.
+- **A one-handed sword keeps its shield as a choice between speed and safety:** without one it is
+  up to 2% faster and dies more, the Orc Fighter twice as often resting at half. Measured with the
+  old catch, before arrows and criticals were caught three times as often, it was flagged for the
+  Human Fighter, 2.3% to 3.3% faster and dying less.
 - **A Mystic keeps its shield:** a monster already strikes it 96% to 98% of the time, so the
   Evasion costs it almost nothing and the block is worth having.
-- **A one-handed sword now does better without a shield,** the Human Fighter's past the flag. The
-  bench still gives it one, as the meta to measure, until that is decided.
+- **No build is flagged under canon.** A mastery that raises the block rate (Lineage II's Shield
+  Mastery, a Knight's from level 20) would come with the class change.
 
 ## Both together
 
