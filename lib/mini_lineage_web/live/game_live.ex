@@ -458,7 +458,7 @@ defmodule MiniLineageWeb.GameLive do
 
     case result do
       {:error, _code, message} -> assign(socket, game_flash: %{text: message, type: :danger})
-      {:ok, flash} -> socket |> assign(game_flash: flash) |> play(flash[:sound]) |> arrive(to)
+      {:ok, flash} -> socket |> assign(game_flash: flash) |> play(sound(flash)) |> arrive(to)
     end
   rescue
     error ->
@@ -481,6 +481,14 @@ defmodule MiniLineageWeb.GameLive do
   defp arrive(socket, to), do: go(socket, to.(socket.assigns.player))
 
   defp here(player), do: {"town", player.location}
+
+  # A start and a death name their own; otherwise a green alert chimes and a gold one sounds the
+  # level. A fight is the page's and not an alert, so a kill alone is silent.
+  defp sound(%{sound: sound}), do: sound
+  defp sound(%{levelled: _}), do: "level"
+  defp sound(%{log: _}), do: nil
+  defp sound(%{type: :success}), do: "success"
+  defp sound(_), do: nil
 
   defp play(socket, nil), do: socket
   defp play(socket, sound), do: push_event(socket, "play-sound", %{name: sound})

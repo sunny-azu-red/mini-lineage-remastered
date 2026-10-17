@@ -23,6 +23,13 @@ const SOUNDS = {
         { offset: 0.30, freq: 587.33, type: 'square', gain: 0.14, decay: 0.45, tail: 0.02 },
     ],
 
+    // 🍀 Rising triple chime (E4 -> A4 -> E5), for a green alert: something gained.
+    success: [
+        { offset: 0.00, freq: 329.63, type: 'triangle', gain: 0.14, decay: 0.12, tail: 0.01 },
+        { offset: 0.06, freq: 440.00, type: 'triangle', gain: 0.14, decay: 0.12, tail: 0.01 },
+        { offset: 0.12, freq: 659.25, type: 'triangle', gain: 0.14, decay: 0.12, tail: 0.01 },
+    ],
+
     // ✨ Triumphant retro fanfare (C5 -> E5 -> G5 -> C6), for a new level; the last note rings out.
     level: [
         { offset: 0.00, freq: 523.25, type: 'square', gain: 0.12, decay: 0.08, tail: 0.02 },

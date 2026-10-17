@@ -37,6 +37,28 @@ defmodule MiniLineageWeb.SoundTest do
     refute_push_event(view, "play-sound", %{})
   end
 
+  test "a green alert chimes, and a blue one plays nothing", %{conn: conn} do
+    session = Characters.new_session_id()
+    on_exit(fn -> Characters.forget(session) end)
+    conn = init_test_session(conn, %{"session_id" => session})
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    view
+    |> element("form[phx-submit=start]")
+    |> render_submit(%{"name" => "Heard", "race_id" => "0", "path" => "fighter"})
+
+    assert_push_event(view, "play-sound", %{name: "start"})
+
+    for <<letter <- "adena">>, do: render_hook(view, "key", %{"key" => <<letter>>})
+    assert has_element?(view, "#flash.alert-info")
+    refute_push_event(view, "play-sound", %{})
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    view |> form("#buy-form", %{"item" => "Bone Dagger"}) |> render_submit()
+    assert has_element?(view, "#flash.alert-success")
+    assert_push_event(view, "play-sound", %{name: "success"})
+  end
+
   test "the header carries the toggle, which only its hook drives", %{conn: conn} do
     view = visitor(conn)
 

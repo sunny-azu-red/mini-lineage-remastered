@@ -191,8 +191,7 @@ defmodule MiniLineage.Game.Actions do
       if reached > level,
         do: %{
           text: slew <> " " <> Narrative.alert(Narrative.build_levelled(reached)),
-          levelled: Narrative.alert(Narrative.build_congratulated(reached)),
-          sound: "level"
+          levelled: Narrative.alert(Narrative.build_congratulated(reached))
         },
         else: %{text: slew}
 
@@ -533,8 +532,7 @@ defmodule MiniLineage.Game.Actions do
         flash = %{
           text: text,
           type: :info,
-          levelled: Narrative.alert(Narrative.build_congratulated(target)),
-          sound: "level"
+          levelled: Narrative.alert(Narrative.build_congratulated(target))
         }
 
         {Player.gain_experience(player, needed), {:ok, flash}}
