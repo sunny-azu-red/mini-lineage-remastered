@@ -963,7 +963,7 @@ in all, landing <span class="accuracy">{@skill.land}% of the time</span>, for <s
 for {Format.remaining(@skill.lasts)}, landing <span class="accuracy">{@skill.land}% of the time</span>, for <span class="mp">{@skill.mp} MP</span>.|
 
   defp skill_does(%{skill: %{kind: :toggle}} = assigns),
-    do: ~H|<span class="attack">P.Atk +{@skill.power}</span>
+    do: ~H|<span class="attack">+{@skill.power} P.Atk</span>
 for <span class="mp">{@skill.mp} MP</span>, then <span class="mp">{@skill.drain} MP</span>
 every {Format.remaining(@skill.every)}.|
 
