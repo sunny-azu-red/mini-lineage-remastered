@@ -300,7 +300,7 @@ defmodule MiniLineageWeb.Screens do
       {Format.list(sellers(@view.traders), "and")} each buy back what they sell for half of what they ask.
     </p>
     <p :if={@sellable == []} id="nothing-to-sell">
-      You carry nothing the traders would buy: they take nothing equipped, and nothing from a starting kit.
+      You carry nothing the traders would buy (they take nothing equipped, and nothing from a starting kit).
     </p>
     <.data_table :if={@sellable != []} id="sellable" sort={@sort}>
       <:col class="name" sort="name">Item</:col>
