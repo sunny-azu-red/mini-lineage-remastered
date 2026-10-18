@@ -177,6 +177,9 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   Undead Slave, whose Lineage II AI (`WarriorSlowType`) cast mostly at a target not hitting them.
   Their spell is a power-5 poke, and Lineage II's odds moved no set by more than 1%
   (`docs/balance.md`).
+- **A monster's spell is called what it shows** (rules §19): NPC Windstrike - Slow is Wind Strike in
+  the fight, with no level. Lineage II's data names a monster's skills for its AI, prefix and casting
+  style included, and its client never printed them, since a player saw only the animation.
 - **A fight is fought on one line** (rules §20): the character pulls from its opening's reach, or an
   aggressive monster comes at it from L2J's 500, the monster runs in at L2J's run speed (which holds
   its DEX bonus), and once both are in reach nobody moves again, so nobody kites, flanks or chases.

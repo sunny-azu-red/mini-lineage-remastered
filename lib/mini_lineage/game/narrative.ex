@@ -132,7 +132,7 @@ defmodule MiniLineage.Game.Narrative do
   defp event({:begin, skill}, _foe), do: fill(:begin, %{"skill" => skill})
 
   defp event({:foe_begin, spell}, foe),
-    do: fill(:foe_begin, %{"monster" => foe.name, "skill" => spell})
+    do: fill(:foe_begin, %{"monster" => foe.name, "skill" => shown(spell)})
 
   defp event(:waiting, foe), do: fill(:waiting, %{"monster" => foe.name})
   defp event(:advancing, foe), do: fill(:advancing, %{"monster" => foe.name})
@@ -195,7 +195,7 @@ defmodule MiniLineage.Game.Narrative do
   defp event(:foe_miss, foe), do: fill(:foe_miss, %{"monster" => foe.name})
 
   defp event({:foe_cast, spell, amount}, foe),
-    do: fill(:foe_cast, %{"monster" => foe.name, "skill" => spell, "amount" => amount})
+    do: fill(:foe_cast, %{"monster" => foe.name, "skill" => shown(spell), "amount" => amount})
 
   defp event({:foe_drain, spell, amount, 0}, foe), do: event({:foe_cast, spell, amount}, foe)
 
@@ -203,7 +203,7 @@ defmodule MiniLineage.Game.Narrative do
     do:
       fill(:foe_drain, %{
         "monster" => foe.name,
-        "skill" => spell,
+        "skill" => shown(spell),
         "amount" => amount,
         "healed" => healed
       })
@@ -218,6 +218,9 @@ defmodule MiniLineage.Game.Narrative do
         "times" => times(swings),
         "outcomes" => outcomes(swings)
       })
+
+  # §19: the log keeps a monster's spell by its Lineage II name; the player reads what it shows.
+  defp shown(spell), do: Rules.monster_spell(spell).shown
 
   defp fill(kind, data), do: Format.fill_template(Narratives.log(kind), data)
 

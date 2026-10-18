@@ -299,8 +299,9 @@ defmodule MiniLineage.Game.RulesTest do
       rows = table("Spell")
       assert length(rows) == map_size(Rules.monster_spells())
 
-      for [name, kind, power, mp, reuse, cast, range] <- rows do
+      for [name, shown, kind, power, mp, reuse, cast, range] <- rows do
         spell = Rules.monster_spell(name)
+        assert spell.shown == shown
         assert Atom.to_string(spell.kind) == kind
 
         assert [spell.power, spell.mp, spell.reuse, spell.cast, spell.range] ==

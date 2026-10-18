@@ -499,19 +499,20 @@ Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
   P. Atk. and a Mystic's M. Atk. (and its P. Atk.), each its own lines, as in Lineage II, whose slower
   casting for a Mystic with a bow or a polearm never applies, since no Mystic is sold either.
 
-Monsters cast these:
+Monsters cast these, each keeping its Lineage II name and called in the fight what it shows, as
+the player's own spells are, without a level:
 
-| Spell | Kind | Power | MP | Reuse | Cast | Range |
-|---|---|---|---|---|---|---|
-| NPC Windstrike - Magic 1 | magic | 18 | 7 | 3,000 | 4,000 | 600 |
-| NPC HP Drain - Magic 1 | drain | 18 | 9 | 3,000 | 4,000 | 600 |
-| NPC HP Drain - Magic 2 | drain | 26 | 14 | 3,000 | 4,000 | 600 |
-| NPC Aura Burn - Magic 1 | magic | 5 | 3 | 1,000 | 1,500 | 150 |
-| NPC Aura Burn - Magic 2 | magic | 7 | 3 | 1,000 | 1,500 | 150 |
-| NPC Windstrike - Slow 1 | magic | 5 | 13 | 8,000 | 2,000 | 1,000 |
-| NPC Windstrike - Slow 2 | magic | 8 | 20 | 8,000 | 2,000 | 1,000 |
-| NPC HP Drain - Slow 1 | drain | 5 | 17 | 8,000 | 2,000 | 1,000 |
-| NPC Prominence - Slow 1 | magic | 5 | 13 | 8,000 | 2,000 | 1,000 |
+| Spell | Shown as | Kind | Power | MP | Reuse | Cast | Range |
+|---|---|---|---|---|---|---|---|
+| NPC Windstrike - Magic 1 | Wind Strike | magic | 18 | 7 | 3,000 | 4,000 | 600 |
+| NPC HP Drain - Magic 1 | HP Drain | drain | 18 | 9 | 3,000 | 4,000 | 600 |
+| NPC HP Drain - Magic 2 | HP Drain | drain | 26 | 14 | 3,000 | 4,000 | 600 |
+| NPC Aura Burn - Magic 1 | Aura Burn | magic | 5 | 3 | 1,000 | 1,500 | 150 |
+| NPC Aura Burn - Magic 2 | Aura Burn | magic | 7 | 3 | 1,000 | 1,500 | 150 |
+| NPC Windstrike - Slow 1 | Wind Strike | magic | 5 | 13 | 8,000 | 2,000 | 1,000 |
+| NPC Windstrike - Slow 2 | Wind Strike | magic | 8 | 20 | 8,000 | 2,000 | 1,000 |
+| NPC HP Drain - Slow 1 | HP Drain | drain | 5 | 17 | 8,000 | 2,000 | 1,000 |
+| NPC Prominence - Slow 1 | Prominence | magic | 5 | 13 | 8,000 | 2,000 | 1,000 |
 
 A monster's drain heals it 20% of what the character lost.
 

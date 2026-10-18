@@ -88,7 +88,7 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert three =~
                "the Vaiss Orc swings 3 times at you for a hit of 8 that your shield catches, a blow your shield turns aside and a critical hit of 30 ("
 
-      assert four =~ "the Vaiss Orc casts NPC HP Drain - Magic 1 on you for 20 and mends 4 HP"
+      assert four =~ "the Vaiss Orc casts HP Drain on you for 20 and mends 4 HP"
       assert five =~ "Round 5: you hit for 11, and the Vaiss Orc hits you for 7 ("
       assert six =~ "Round 6: you land a critical hit for 40, and the Vaiss Orc misses ("
       for line <- rounds, do: assert(unrendered(line) == [], line)
@@ -148,7 +148,7 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "the Young Keltir runs at you"
       assert text =~ "you run at the Young Keltir"
       assert text =~ "you begin casting Wind Strike"
-      assert text =~ "the Young Keltir begins casting NPC Windstrike - Magic 1"
+      assert text =~ "the Young Keltir begins casting Wind Strike"
 
       assert Enum.at(lines, 1) =~
                ~r/^Before the fight: you raise your .*Defense Aura.*you cast Heal and mend .*Self Heal.*you at/

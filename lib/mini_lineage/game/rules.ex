@@ -539,6 +539,7 @@ defmodule MiniLineage.Game.Rules do
 
   @monster_spells %{
     "NPC Windstrike - Magic 1" => %{
+      shown: "Wind Strike",
       kind: :magic,
       power: 18,
       mp: 7,
@@ -547,6 +548,7 @@ defmodule MiniLineage.Game.Rules do
       range: 600
     },
     "NPC HP Drain - Magic 1" => %{
+      shown: "HP Drain",
       kind: :drain,
       power: 18,
       mp: 9,
@@ -555,6 +557,7 @@ defmodule MiniLineage.Game.Rules do
       range: 600
     },
     "NPC HP Drain - Magic 2" => %{
+      shown: "HP Drain",
       kind: :drain,
       power: 26,
       mp: 14,
@@ -563,6 +566,7 @@ defmodule MiniLineage.Game.Rules do
       range: 600
     },
     "NPC Aura Burn - Magic 1" => %{
+      shown: "Aura Burn",
       kind: :magic,
       power: 5,
       mp: 3,
@@ -571,6 +575,7 @@ defmodule MiniLineage.Game.Rules do
       range: 150
     },
     "NPC Aura Burn - Magic 2" => %{
+      shown: "Aura Burn",
       kind: :magic,
       power: 7,
       mp: 3,
@@ -579,6 +584,7 @@ defmodule MiniLineage.Game.Rules do
       range: 150
     },
     "NPC Windstrike - Slow 1" => %{
+      shown: "Wind Strike",
       kind: :magic,
       power: 5,
       mp: 13,
@@ -587,6 +593,7 @@ defmodule MiniLineage.Game.Rules do
       range: 1_000
     },
     "NPC Windstrike - Slow 2" => %{
+      shown: "Wind Strike",
       kind: :magic,
       power: 8,
       mp: 20,
@@ -595,6 +602,7 @@ defmodule MiniLineage.Game.Rules do
       range: 1_000
     },
     "NPC HP Drain - Slow 1" => %{
+      shown: "HP Drain",
       kind: :drain,
       power: 5,
       mp: 17,
@@ -603,6 +611,7 @@ defmodule MiniLineage.Game.Rules do
       range: 1_000
     },
     "NPC Prominence - Slow 1" => %{
+      shown: "Prominence",
       kind: :magic,
       power: 5,
       mp: 13,
