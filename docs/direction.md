@@ -90,5 +90,21 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
   and becomes the fastest set, the Human Mystic 4% to 7%, everything else under 2%, and the spread
   from the fastest set to the slowest widens from 92 to 103 minutes resting to full. Accepted: the
   Elf's speed is the point of the set. The slow end is the Orc Mystic's to fix, never the clock.
+- **The Orc Mystic is the slowest set, by about 100 minutes** (2026-10-19). Deferred, not
+  forgotten. It reaches 20 in 272 minutes resting to full, against 169 for the Elven Mystic and 175
+  for the Human: fights of 11.5 rounds against 6.5 to 6.8, and 123 minutes fighting and 149
+  resting against 74 and 94. What the bench has shown so far (`docs/balance.md`):
+  - It has no Wind Strike, so it opens with Chill Flame, a 5.1-second cast (the slowest Casting
+    Spd., from its WIT) whose burn deals a fixed amount over 15 seconds, so neither M. Atk. nor
+    Weapon Mastery speeds it up much (1% to 3% from the masteries, where every other set gained 10%
+    or more).
+  - Chill Flame is not cast again while the monster still burns, and Life Drain waits until the Orc
+    Mystic is below 85% of its HP, so it often has nothing to cast while the monster comes at it.
+  - Its levers already measured: Life Drain below 70% instead was 13% to 15% faster but doubled
+    its deaths without potions; Soul Cry left unused saves about 9%.
+
+  Unmeasured candidates: a burn that grows with M. Atk., Life Drain's threshold, its ground's
+  monsters. None of them has been tried yet.
+- **A shield never turns a spell** (L2J, 40c2446)
 - **A shield never turns a spell** (L2J, 40c2446): an item reading "Shield P. Def." should not raise
   M. Def.
