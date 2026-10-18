@@ -373,17 +373,17 @@ defmodule MiniLineageWeb.Controls do
 
   @doc """
   Rules §20: a fight, an entry a row as legacy's Chronicle drew them, its head saying when on the
-  left and where both stand on the right. The outcome, if given, ends it, washed as the alert that
-  would have announced it.
+  left and where both stand on the right, washed by its `kind` (the meeting, a critical). The
+  outcome, if given, ends it, washed as the alert that would have announced it.
   """
   attr :log, :list, required: true
-  # `%{kind: "victory" | "escaped", head: String.t(), standing: html | nil, text: html}`
+  # `%{kind: "victory" | "escaped", head: String.t(), standing: String.t() | nil, text: html}`
   attr :outcome, :map, default: nil
 
   def fight_log(assigns) do
     ~H"""
     <ol id="fight-log" class="fight-log">
-      <li :for={entry <- @log}>
+      <li :for={entry <- @log} {if(entry.kind, do: [class: entry.kind], else: [])}>
         <div class="entry-head">
           <span>{raw(entry.head)}</span>
           <span>{raw(entry.standing)}</span>

@@ -131,7 +131,9 @@ defmodule MiniLineageWeb.HuntPageTest do
     # Written on the ground's page, not in an alert, with where both stand after each round.
     refute has_element?(view, "#flash")
     assert has_element?(view, "#fight-outcome", "cut down")
-    assert has_element?(view, "#fight-log li .entry-head", "Encounter")
+    assert has_element?(view, "#fight h2", "Fight Log")
+    # A monster that waits to be met opens the log as an Encounter, washed as an info alert is.
+    assert has_element?(view, "#fight-log > li.encounter:first-child .entry-head", "Encounter")
     assert has_element?(view, "#fight-log li", "You meet")
     assert has_element?(view, "#fight-log li .entry-head", "Round 1 • 0.0s")
 
@@ -140,6 +142,10 @@ defmodule MiniLineageWeb.HuntPageTest do
              "#fight-log li .entry-head > span:last-child",
              ~r/^Foe \d+% • You \d+%$/
            )
+
+    # A head is a label: when and where both stand, muted, nothing in it coloured as a value.
+    for class <- ~w(speed hp level),
+        do: refute(has_element?(view, "#fight-log .entry-head .#{class}"))
 
     refute has_element?(view, "#fight-log li p", "HP, you at")
     assert has_element?(view, "#screen[data-screen=hunt]")
@@ -162,7 +168,7 @@ defmodule MiniLineageWeb.HuntPageTest do
            )
 
     # The kill is still a victory, its new level named at the right of its head, never in its line.
-    assert has_element?(view, "#fight-outcome.victory .entry-head .level", "Level Up")
+    assert has_element?(view, "#fight-outcome.victory .entry-head", "Level Up")
     refute has_element?(view, "#fight-outcome p", "Level 2")
     refute has_element?(view, "#flash")
     assert_push_event(view, "play-sound", %{name: "level"})

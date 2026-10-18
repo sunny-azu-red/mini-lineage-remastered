@@ -39,9 +39,13 @@ was got wrong once.
   link's underline would need that room, so a list holds none: a panel's way somewhere is one
   link of its own, on its own row or ending one (the Inventory's Open, beside the purse).
 - **A log is legacy's Chronicle**: an entry a row, ruled as the sidebar's rows are, its head a
-  label (when on the left, where both sides stand on the right) over the line. Only a row that says
-  how it ended is washed, in the colour and fade of the alert that would have announced it: the
-  fight log's Victory and Escaped.
+  label (when on the left, where both sides stand on the right, each side's HP as a percent) over
+  the line, muted throughout, delimiter included. A row is washed, in the colour and fade of the
+  alert that would have said it, for how the fight opened (an Encounter info, an Ambush danger),
+  for a critical hit on either side (`--wash-critical`, the orange a critical is written in), else
+  for HP either side mended (success: a heal, a potion, a drain), and for how it ended (Victory and
+  Escaped both info, green being the mend's). Every other row keeps the panel's ground, and in a
+  death's alert, the alert being the ground, none is washed.
 - **Nothing ends a panel on a margin.** `.panel-body :last-child` drops it at any depth; nothing is
   marked last by hand.
 - **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.
@@ -60,7 +64,8 @@ was got wrong once.
   **Values** in `base.css`. Above them, **Utilities** hold what is not a value: `.muted` (something
   that isn't a value standing where one would be; no weight), `.delimiter` (the `&bull;` between a
   name and what it does, a skill's, an effect's or an item's, one step brighter than muted so it
-  stands apart from an item's muted stats too), `.timer` (an effect's time left, dimmed like a date),
+  stands apart from an item's muted stats too; between two muted sides, as in a log's head, it has
+  nothing to stand apart from and inherits their muted colour), `.timer` (an effect's time left, dimmed like a date),
   `.build-development` and `.build-testing`.
 - **A value's class goes where the thing is named in a sentence**, figure or not, and never on a
   label. A value is a classed `<span>`, never a `<strong>`. `legacy/AGENTS.md` has the old game's

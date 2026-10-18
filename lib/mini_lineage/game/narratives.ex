@@ -39,24 +39,25 @@ defmodule MiniLineage.Game.Narratives do
   # whichever opens the line.
   @log %{
     blow: ~s({them} hit for {amount}),
-    critical: ~s({them} land a critical hit for <span class="crit">{amount}</span>),
+    critical: ~s({them} land a critical hit for <span class="crit">{amount} damage</span>),
     miss: "{them} miss",
-    skill: ~s({their} {skill} deals <span class="attack">{amount}</span>),
+    skill: ~s({their} {skill} deals <span class="attack">{amount} damage</span>),
     skill_failed: "{their} {skill} fails to land",
-    cast: ~s({them} cast {skill} for <span class="magic">{amount}</span>),
-    magic_critical: ~s({their} {skill} strikes true for <span class="crit">{amount}</span>),
+    cast: ~s({them} cast {skill} for <span class="magic">{amount} damage</span>),
+    magic_critical:
+      ~s({their} {skill} strikes true for <span class="crit">{amount} damage</span>),
     drain:
-      ~s({them} cast {skill} for <span class="magic">{amount}</span> and mend <span class="regen">{healed} HP</span>),
+      ~s({them} cast {skill} for <span class="magic">{amount} damage</span> and mend <span class="regen">{healed} HP</span>),
     drain_critical:
-      ~s({their} {skill} strikes true for <span class="crit">{amount}</span> and mends <span class="regen">{healed} HP</span>),
+      ~s({their} {skill} strikes true for <span class="crit">{amount} damage</span> and mends <span class="regen">{healed} HP</span>),
     ignite: "{them} set the {monster} burning with {skill}",
     # A damage-over-time tick, named for the spell that laid it.
-    burn: ~s({their} {skill} tick burns for <span class="magic">{amount}</span>),
-    foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount}</span>),
+    burn: ~s({their} {skill} tick burns for <span class="magic">{amount} damage</span>),
+    foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount} damage</span>),
     foe_critical:
-      ~s(the {monster} lands a critical hit on {object} for <span class="hp">{amount}</span>),
+      ~s(the {monster} lands a critical hit on {object} for <span class="hp">{amount} damage</span>),
     foe_caught:
-      ~s({their} shield catches the {monster}'s blow, and {them} take <span class="hp">{amount}</span>),
+      ~s({their} shield catches the {monster}'s blow, and {them} take <span class="hp">{amount} damage</span>),
     foe_perfect: "{their} shield turns the {monster}'s blow aside",
     foe_miss: "the {monster} misses",
     draw: "{them} draw {their} bow",
@@ -68,33 +69,35 @@ defmodule MiniLineage.Game.Narratives do
     foe_begin: "the {monster} begins casting {skill}",
     closing: "the {monster} runs at {object}",
     advancing: "{them} run at the {monster}",
-    foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>),
+    foe_cast:
+      ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount} damage</span>),
     foe_drain:
-      ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span> and mends <span class="regen">{healed} HP</span>),
+      ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount} damage</span> and mends <span class="regen">{healed} HP</span>),
     # Two or more swings by one side in a round, each told in order.
     swings: "{them} swing {times} for {outcomes}",
     foe_swings: "the {monster} swings {times} at {object} for {outcomes}",
     misses: "{them} miss {times}",
     foe_misses: "the {monster} misses {times}",
-    swing_hit: ~s(a hit of <span class="attack">{amount}</span>),
-    swing_critical: ~s(a critical hit of <span class="crit">{amount}</span>),
+    swing_hit: ~s(a hit of <span class="attack">{amount} damage</span>),
+    swing_critical: ~s(a critical hit of <span class="crit">{amount} damage</span>),
     swing_miss: "a miss",
-    foe_swing_hit: ~s(a hit of <span class="hp">{amount}</span>),
-    foe_swing_critical: ~s(a critical hit of <span class="hp">{amount}</span>),
-    foe_swing_caught: ~s(a hit of <span class="hp">{amount}</span> that {their} shield catches),
+    foe_swing_hit: ~s(a hit of <span class="hp">{amount} damage</span>),
+    foe_swing_critical: ~s(a critical hit of <span class="hp">{amount} damage</span>),
+    foe_swing_caught:
+      ~s(a hit of <span class="hp">{amount} damage</span> that {their} shield catches),
     foe_swing_perfect: "a blow {their} shield turns aside",
     heal: ~s({them} cast {skill} and mend <span class="regen">{amount} HP</span>),
     aura: ~s({them} raise {their} <span class="buff">{skill}</span>),
     toggle: ~s({them} let out a <span class="buff">{skill}</span> to make {their} blows heavier),
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
-    poison: ~s({their} {skill} tick deals <span class="magic">{amount}</span>),
+    poison: ~s({their} {skill} tick deals <span class="magic">{amount} damage</span>),
     potion: ~s({them} drink a {potion} and mend <span class="regen">{amount} HP</span>)
   }
 
   # Where both stand once an entry of the fight log is done, at the right of its head. The entry
   # that meets it has named the monster; "Foe" stays apart from {they} in either voice.
-  @standing ~s(Foe <span class="hp">{foe}</span> <span class="delimiter">&bull;</span> {they} <span class="hp">{hp}</span>)
+  @standing ~s(Foe {foe} <span class="delimiter">&bull;</span> {they} {hp})
 
   # Rules §17: each village's ground, from its fields to the grounds nearby (docs/canon's places), and
   # where the hunt button sends the character next. A line sits beside Retreat on a 360px phone,

@@ -70,12 +70,14 @@ defmodule MiniLineage.Game.Narrative do
 
   @doc """
   Rules §20: the fight log as entries, each a head, where both stand after it (`standing`, at the
-  right of the head), and its line, open-voiced: the meeting, the auras and heals before the pull
-  (`before`, as `{done, hp}`), then one entry a round.
+  right of the head), its line, open-voiced, and the `kind` its row is washed as (`nil` for none):
+  the meeting, the auras and heals before the pull (`before`, as `{done, hp}`), then one entry a
+  round, washed for a critical hit on either side, else for HP either side mended.
   """
   def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?, hp: hp}, before) do
     met = %{
       head: if(foe.aggressive?, do: "Ambush", else: "Encounter"),
+      kind: if(foe.aggressive?, do: "ambush", else: "encounter"),
       standing: standing(foe, foe.hp, hp, max_hp),
       line:
         Format.fill_template(
@@ -105,6 +107,7 @@ defmodule MiniLineage.Game.Narrative do
 
           %{
             head: round_label(round),
+            kind: kind(events),
             standing: standing(foe, left, health, max_hp),
             line: sentence(still_casting(casting) <> join(parts)) <> "."
           }
@@ -127,6 +130,29 @@ defmodule MiniLineage.Game.Narrative do
 
   defp quiet?(event), do: event == :casting or match?({:standing, _, _}, event)
 
+  # A critical outranks a mend, which a draining Mystic does most rounds.
+  defp kind(events) do
+    cond do
+      Enum.any?(events, &critical?/1) -> "critical"
+      Enum.any?(events, &mended?/1) -> "heal"
+      true -> nil
+    end
+  end
+
+  # Exactly what `event/2` tells as a critical: a blocked blow is told as the block, and a spell
+  # that only lights its burn deals nothing.
+  defp critical?({:blow, _, true}), do: true
+  defp critical?({:cast, _, amount, true}), do: amount > 0
+  defp critical?({:drain, _, _, true, _}), do: true
+  defp critical?({:foe_blow, _, true, nil}), do: true
+  defp critical?(_event), do: false
+
+  defp mended?({:heal, _, amount}), do: amount > 0
+  defp mended?({:potion, _, amount}), do: amount > 0
+  defp mended?({:drain, _, _, _, healed}), do: healed > 0
+  defp mended?({:foe_drain, _, _, healed}), do: healed > 0
+  defp mended?(_event), do: false
+
   defp still_casting([]), do: ""
   defp still_casting([:casting]), do: fill(:casting, %{}) <> " "
 
@@ -139,7 +165,7 @@ defmodule MiniLineage.Game.Narrative do
   defp round_label(round) do
     seconds = Format.tenths(round(Hunt.round_starts_ms(round) / 100))
 
-    ~s(Round #{round} <span class="delimiter">&bull;</span> <span class="speed">#{seconds}s</span>)
+    ~s(Round #{round} <span class="delimiter">&bull;</span> #{seconds}s)
   end
 
   # Rules §20: the auras raised and heals cast before the pull, as one entry.
@@ -151,6 +177,7 @@ defmodule MiniLineage.Game.Narrative do
     [
       %{
         head: "Before the fight",
+        kind: if(Enum.any?(done, &mended?/1), do: "heal"),
         standing: standing(foe, foe.hp, hp, max_hp),
         line: sentence(join(parts)) <> "."
       }
@@ -179,9 +206,14 @@ defmodule MiniLineage.Game.Narrative do
 
   defp event({:blow, amount, true}, _foe), do: fill(:critical, %{"amount" => amount})
 
+  # "you hit for 10 and 9 damage": the unit once, after the last.
   defp event({:blows, amounts}, _foe) do
-    amounts = Enum.map(amounts, &~s(<span class="attack">#{&1}</span>))
-    fill(:blow, %{"amount" => join_and(amounts)})
+    {first, [last]} = Enum.split(amounts, -1)
+    spans = Enum.map(first, &~s(<span class="attack">#{&1}</span>))
+
+    fill(:blow, %{
+      "amount" => join_and(spans ++ [~s(<span class="attack">#{last} damage</span>)])
+    })
   end
 
   defp event(:miss, _foe), do: fill(:miss, %{})

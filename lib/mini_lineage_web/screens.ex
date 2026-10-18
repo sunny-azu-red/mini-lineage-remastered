@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.Screens do
 
   @doc """
   The panels a screen is drawn on, top to bottom. The Chronicles give each lineage one of its own
-  and the character page each section; the ground adds the last fight (rules §20) once one is held.
+  and the character page each section; the ground adds the Fight Log (rules §20) once one is held.
   """
   def panels(screen, view, catalog, fight \\ nil)
 
@@ -63,7 +63,7 @@ defmodule MiniLineageWeb.Screens do
         if(fight,
           do: [
             %{
-              title: "The Last Fight",
+              title: "Fight Log",
               icon: "📜",
               id: "fight",
               section: :fight,
@@ -269,7 +269,7 @@ defmodule MiniLineageWeb.Screens do
     do: %{
       kind: "victory",
       head: "Victory",
-      standing: fight[:levelled] && ~s(<span class="level">Level Up</span>),
+      standing: fight[:levelled] && "Level Up",
       text: fight.text
     }
 

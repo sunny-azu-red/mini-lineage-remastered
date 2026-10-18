@@ -59,7 +59,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
   the Chronicles, one per section on the character page, Inventory and Combat Stats on the
   inventory, on the guild's a Learned Skills panel only once something is learned, and on the
-  ground The Last Fight only once a fight is held there, which is what its fourth argument is for. `GameLive`
+  ground the Fight Log only once a fight is held there, which is what its fourth argument is for. `GameLive`
   lists them again whenever the view is rebuilt. Every LiveView template starts with
   `<Layouts.app>`; `ErrorHTML` builds its own from the shell's parts.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
@@ -432,6 +432,9 @@ Each of these is here because it was got wrong once.
 - **A level is named as one, "Level 5", word and number together in `.level`**, a monster's
   ("a Gremlin, Level 1") as much as the character's ("until Level 5"). A level no number names
   ("the next level") is a common noun and stays lowercase and uncoloured.
+- **What a blow takes is damage**, as the client's own "You hit for $s1 damage." counts it: in the
+  fight log every figure a blow, spell or tick deals is `N damage` inside its span, as a mend is
+  `N HP` inside its own, and a list writes the word once, after the last ("10 and 9 damage").
 - **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
   `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so
   does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and

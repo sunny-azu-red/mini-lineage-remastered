@@ -87,6 +87,8 @@
     /* The Halls: a run still going, and your own; and a success alert's ground. */
     --wash-success: color-mix(in srgb, var(--text-heal) 13%, transparent);
     --wash-gold: color-mix(in srgb, var(--gold) 14%, transparent);
+    /* A fight log's round with a critical hit in it, either side's. */
+    --wash-critical: color-mix(in srgb, var(--text-critical) 14%, transparent);
     --focus-ring-color: rgba(201, 168, 76, 0.45);
 
     /* ===== Shape ===== */

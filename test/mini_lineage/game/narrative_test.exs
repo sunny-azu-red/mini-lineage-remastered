@@ -14,12 +14,15 @@ defmodule MiniLineage.Game.NarrativeTest do
 
   @weapon %{max_hp: 100, bow?: false, hp: 100}
 
-  # A fight log as its owner reads it, each entry voiced and its markup stripped.
+  # A fight log as its owner reads it, each entry voiced and its markup stripped; `kind` is no prose.
   defp read(foe, log, before \\ {[], 100}) do
     foe
     |> Narrative.build_fight_log(Rules.ground("obelisk-of-victory"), log, @weapon, before)
     |> Enum.map(fn entry ->
-      Map.new(entry, fn {key, html} -> {key, html |> Narrative.alert() |> plain()} end)
+      Map.new(entry, fn
+        {:kind, kind} -> {:kind, kind}
+        {key, html} -> {key, html |> Narrative.alert() |> plain()}
+      end)
     end)
   end
 
@@ -53,15 +56,19 @@ defmodule MiniLineage.Game.NarrativeTest do
                ~r/^An Orc Fighter, <span class="level">Level 10<\/span>, notices you on the .* and comes at you\.$/
 
       assert noticed.head == "Ambush"
+      assert noticed.kind == "ambush"
       # A level is gold whole and named as one, "Level 1", as every page writes it.
       assert Narrative.alert(met.line) =~
                ~r/^You meet a Young Keltir, <span class="level">Level 1<\/span>,/
 
       assert met.head == "Encounter"
+      assert met.kind == "encounter"
       # Where both stand as they meet: the monster whole, the character as it went in.
       assert plain(Narrative.alert(met.standing)) == "Foe 100% • You 100%"
       assert unrendered(Narrative.voiced(noticed.line, false)) == []
-      assert plain(Narrative.voiced(noticed.standing, false)) == "Foe 100% • They 100%"
+
+      assert plain(Narrative.voiced(noticed.standing, false)) ==
+               "Foe 100% • They 100%"
     end
 
     test "tells a side's swings in one round as one clause, each in order" do
@@ -91,28 +98,32 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       assert one == %{
                head: "Round 1 • 0.0s",
+               kind: nil,
                standing: "Foe #{div(20 * 100, foe.hp)}% • You 90%",
-               line: "You hit for 10 and 9."
+               line: "You hit for 10 and 9 damage."
              }
 
       assert two.head == "Round 2 • 1.7s"
 
       assert two.line ==
-               "You swing twice for a critical hit of 65 and a miss, and the Vaiss Orc swings twice at you for a hit of 12 and a miss."
+               "You swing twice for a critical hit of 65 damage and a miss, and the Vaiss Orc swings twice at you for a hit of 12 damage and a miss."
 
       assert three.line ==
-               "The Vaiss Orc swings 3 times at you for a hit of 8 that your shield catches, a blow your shield turns aside and a critical hit of 30."
+               "The Vaiss Orc swings 3 times at you for a hit of 8 damage that your shield catches, a blow your shield turns aside and a critical hit of 30 damage."
 
-      assert four.line == "The Vaiss Orc casts HP Drain on you for 20 and mends 4 HP."
+      assert four.line == "The Vaiss Orc casts HP Drain on you for 20 damage and mends 4 HP."
 
       assert five == %{
                five
                | head: "Round 5 • 6.7s",
-                 line: "You hit for 11, and the Vaiss Orc hits you for 7."
+                 line: "You hit for 11 damage, and the Vaiss Orc hits you for 7 damage."
              }
 
-      assert six.line == "You land a critical hit for 40, and the Vaiss Orc misses."
-      for entry <- rounds, text <- Map.values(entry), do: assert(unrendered(text) == [], text)
+      assert six.line == "You land a critical hit for 40 damage, and the Vaiss Orc misses."
+
+      for entry <- rounds,
+          text <- [entry.head, entry.standing, entry.line],
+          do: assert(unrendered(text) == [], text)
     end
 
     test "says a cast or a run once as it begins, and leaves out a round with nothing new" do
@@ -140,12 +151,12 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       assert {three.head, three.line} ==
                {"Round 3 • 3.3s",
-                "You cast Wind Strike for 112, and the Goblin Scout runs at you."}
+                "You cast Wind Strike for 112 damage, and the Goblin Scout runs at you."}
 
-      assert {five.head, five.line} == {"Round 5 • 6.7s", "You hit for 9."}
+      assert {five.head, five.line} == {"Round 5 • 6.7s", "You hit for 9 damage."}
       # A round with something else in it says why the character did nothing.
       assert {seven.head, seven.line} ==
-               {"Round 7 • 10.0s", "As you cast, the Goblin Scout hits you for 5."}
+               {"Round 7 • 10.0s", "As you cast, the Goblin Scout hits you for 5 damage."}
     end
 
     test "a side whose every swing missed misses so many times" do
@@ -211,7 +222,7 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "cast Self Heal and mend"
       assert text =~ ~r/cast Life Drain for .*14.* and mend .*11.* HP/
       assert text =~ ~r/Vampiric Touch strikes true for .*30.* and mends .*12.* HP/
-      assert text =~ ~r/cast Life Drain for .*9<\/span>,/
+      assert text =~ ~r/cast Life Drain for .*9 damage<\/span>,/
       assert text =~ "raise your"
       assert text =~ ~r/you let out a .*Soul Cry.* to make your blows heavier/
       assert text =~ "lay Curse: Poison on the Young Keltir"
@@ -228,6 +239,9 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       before = Enum.at(read(foe, log, {[{:aura, "Defense Aura"}, {:heal, "Heal", 70}], 60}), 1)
       assert before.head == "Before the fight"
+      # A mend before the pull washes its entry as one; an aura alone does not.
+      assert before.kind == "heal"
+      assert Enum.at(read(foe, log, {[{:aura, "Defense Aura"}], 100}), 1).kind == nil
       assert before.standing == "Foe 100% • You 60%"
       assert before.line =~ ~r/^You raise your Defense Aura, and you cast Heal and mend 70 HP\.$/
     end
@@ -245,6 +259,35 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       assert one.standing == "Foe 99% • You 99%"
       assert two.standing == "Foe 1% • You 1%"
+    end
+
+    test "a round is washed for a critical hit on either side, else for HP either side mended" do
+      foe = Rules.monster("Vaiss Orc")
+
+      log = [
+        {1, {:blow, 10, false}},
+        {2, {:blow, 40, true}},
+        {3, {:cast, "Wind Strike", 50, true}},
+        {4, {:drain, "Life Drain", 20, true, 5}},
+        {5, {:foe_blow, 30, true, nil}},
+        {6, {:foe_blow, 30, true, :caught}},
+        {7, {:cast, "Chill Flame", 0, true}},
+        {8, {:blow, 9, false}},
+        {8, {:foe_blow, 25, true, nil}},
+        {9, {:heal, "Self Heal", 40}},
+        {10, {:potion, "Lesser Healing Potion", 50}},
+        {11, {:drain, "Life Drain", 14, false, 11}},
+        {12, {:foe_drain, "NPC HP Drain - Magic 1", 20, 4}},
+        {13, {:drain, "Life Drain", 9, false, 0}},
+        {14, {:foe_drain, "NPC HP Drain - Magic 1", 20, 0}},
+        {15, {:drain, "Vampiric Touch", 30, true, 12}}
+      ]
+
+      log = log ++ for(round <- 1..15, do: {round, {:standing, 90, 20}})
+
+      assert foe |> read(log) |> tl() |> Enum.map(& &1.kind) ==
+               [nil, "critical", "critical", "critical", "critical", nil, nil, "critical"] ++
+                 ["heal", "heal", "heal", "heal", nil, nil, "critical"]
     end
 
     test "a line opens with a capital in either voice, whatever leads it" do

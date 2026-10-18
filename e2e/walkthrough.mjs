@@ -517,10 +517,13 @@ try {
         await text('#fight-outcome'));
     const firstHead = await page.evaluate(() => [...document.querySelectorAll('#fight-log .entry-head')]
         .map((head) => head.textContent.replace(/\s+/g, ' ').trim()).find((head) => head.startsWith('Round')) ?? '');
-    check('...in a panel of its own under the ground\'s, a round a row headed by both sides\' HP, not in an alert',
+    check('...in the Fight Log, a panel of its own under the ground\'s, a round a row headed by both sides\' HP, not in an alert',
         await page.locator('#flash').count() === 0
         && await page.locator('#screen > .panel:nth-child(2) #fight-log').count() === 1
+        && (await text('#fight h2')).includes('Fight Log')
         && /^Round 1 • 0\.0s\s*Foe \d+% • You \d+%$/.test(firstHead), firstHead);
+    const opening = await page.evaluate(() => document.querySelector('#fight-log > li:first-child').className);
+    check('...opening on an Encounter washed blue or an Ambush washed red', /^(encounter|ambush)$/.test(opening), opening);
     const firstMove = await text('#hunt-button');
     check('...after which the button names where the hunt goes next', firstMove !== '⚔️ Hunt' && firstMove.startsWith('⚔️ '),
         firstMove);
