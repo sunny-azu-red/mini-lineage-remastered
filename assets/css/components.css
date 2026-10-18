@@ -228,7 +228,8 @@
     font-size: 11px;
 }
 
-.stat-row::after {
+.stat-row::after,
+.fight-log>li::after {
     content: '';
     position: absolute;
     left: 12px;
@@ -238,11 +239,13 @@
 }
 
 /* No rule under the last row, so no strip. */
-.stat-row:last-child {
+.stat-row:last-child,
+.fight-log>li:last-child {
     border-bottom: 0;
 }
 
-.stat-row:last-child::after {
+.stat-row:last-child::after,
+.fight-log>li:last-child::after {
     content: none;
 }
 
@@ -260,13 +263,17 @@
 }
 
 /* A bar under a quarter, as legacy's HP row did; each pulses in its bar's own hue. */
-.stat-row:is(.low-hp, .low-mp) {
+.stat-row:is(.low-hp, .low-mp),
+.fight-log>li:is(.victory, .escaped) {
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
             transparent 67%,
             var(--bg-panel) 100%);
     background-clip: padding-box;
+}
+
+.stat-row:is(.low-hp, .low-mp) {
     animation: low-pulse .5s ease-in-out infinite;
 }
 
@@ -490,13 +497,48 @@
 }
 
 /* ===== The fight log =====
- * Rules §20: a line a round, above what the fight came to. */
-.fight-log {
+ * Rules §20: an entry a row, as legacy's Chronicle drew them: when on the left, where both stand
+ * on the right, the rule ::after as the sidebar's rows have it. */
+ol.fight-log {
     list-style: none;
-    margin: 0 0 8px;
-    padding: 0;
 }
 
-.fight-log li + li {
-    margin-top: 2px;
+.fight-log>li {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    position: relative;
+    border-bottom: 1px solid transparent;
+}
+
+.fight-log .entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 8px;
+    color: var(--text-muted);
+}
+
+/* Each outcome washed as the alert that would have announced it. */
+.fight-log>li.victory {
+    background-color: var(--wash-success);
+}
+
+.fight-log>li.escaped {
+    background-color: var(--wash-info);
+}
+
+/* In a death's alert the alert is the ground, so the rows keep only their rules. */
+.alert .fight-log {
+    margin-bottom: 8px;
+}
+
+.alert .fight-log>li {
+    padding-inline: 0;
+}
+
+.alert .fight-log>li::after {
+    left: 0;
+    right: 0;
 }

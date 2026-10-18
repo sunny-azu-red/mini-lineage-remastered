@@ -38,6 +38,10 @@ was got wrong once.
   line-height 1, as every other row does; leading added to some lines spaces the panel unevenly. A
   link's underline would need that room, so a list holds none: a panel's way somewhere is one
   link of its own, on its own row or ending one (the Inventory's Open, beside the purse).
+- **A log is legacy's Chronicle**: an entry a row, ruled as the sidebar's rows are, its head a
+  label (when on the left, where both sides stand on the right) over the line. Only a row that says
+  how it ended is washed, in the colour and fade of the alert that would have announced it: the
+  fight log's Victory and Escaped.
 - **Nothing ends a panel on a margin.** `.panel-body :last-child` drops it at any depth; nothing is
   marked last by hand.
 - **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.

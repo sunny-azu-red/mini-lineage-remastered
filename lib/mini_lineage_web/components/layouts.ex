@@ -68,6 +68,7 @@ defmodule MiniLineageWeb.Layouts do
             >
               <Controls.panel
                 :for={{panel, index} <- Enum.with_index(@panels)}
+                id={panel[:id]}
                 title={panel.title}
                 icon={panel.icon}
                 body_class={panel[:body_class]}

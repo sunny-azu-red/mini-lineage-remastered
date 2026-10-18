@@ -53,16 +53,34 @@ defmodule MiniLineageWeb.Screens do
 
   @doc """
   The panels a screen is drawn on, top to bottom. The Chronicles give each lineage one of its own
-  and the character page each section.
+  and the character page each section; the ground adds the last fight (rules §20) once one is held.
   """
-  def panels("races", _view, catalog),
+  def panels(screen, view, catalog, fight \\ nil)
+
+  def panels("hunt", view, _catalog, fight),
+    do:
+      [%{title: title("hunt", view), icon: icon("hunt", view)}] ++
+        if(fight,
+          do: [
+            %{
+              title: "The Last Fight",
+              icon: "📜",
+              id: "fight",
+              section: :fight,
+              body_class: "rows"
+            }
+          ],
+          else: []
+        )
+
+  def panels("races", _view, catalog, _fight),
     do:
       for(
         race <- catalog.races,
         do: %{title: race.label, icon: race.emoji, race: race}
       )
 
-  def panels("character", view, _catalog),
+  def panels("character", view, _catalog, _fight),
     do: [
       %{
         title: "#{view.name} of #{view.ancestry} Ancestry",
@@ -76,7 +94,7 @@ defmodule MiniLineageWeb.Screens do
     ]
 
   # Rules §25: what the guild teaches, and beside it what the character already knows, if anything.
-  def panels("guild", view, _catalog),
+  def panels("guild", view, _catalog, _fight),
     do:
       [%{title: title("guild", view), icon: icon("guild", view)}] ++
         if(view.skills == [],
@@ -85,13 +103,13 @@ defmodule MiniLineageWeb.Screens do
         )
 
   # Rules §23: what is equipped and carried, and beside it the stats it makes, which count as gear moves.
-  def panels("inventory", _view, _catalog),
+  def panels("inventory", _view, _catalog, _fight),
     do: [
       %{title: "Inventory", icon: "🎒", section: :inventory},
       %{title: "Combat Stats", icon: "⚖️", section: :stats}
     ]
 
-  def panels(screen, view, _catalog),
+  def panels(screen, view, _catalog, _fight),
     do: [%{title: title(screen, view), icon: icon(screen, view)}]
 
   attr :screen, :string, required: true
@@ -114,6 +132,9 @@ defmodule MiniLineageWeb.Screens do
   attr :sorts, :map, default: %{}
   # Rules §20: the last fight on this ground, its log and what it came to.
   attr :fight, :map, default: nil
+
+  # Rules §20: where the hunt button sends the character next, or nil before the first fight here.
+  attr :next_move, :string, default: nil
   # The inventory: the place it closes onto.
   attr :back, :any, default: nil
 
@@ -126,6 +147,7 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "start"} = assigns), do: start_screen(assigns)
   def screen(%{screen: "town"} = assigns), do: town(assigns)
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
+  def screen(%{screen: "hunt", panel: %{section: :fight}} = assigns), do: last_fight(assigns)
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "trader"} = assigns), do: trader(assigns)
   def screen(%{screen: "trader-" <> _} = assigns), do: trader_page(assigns)
@@ -217,27 +239,41 @@ defmodule MiniLineageWeb.Screens do
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
 
-  # Rules §20: the ground, how the character fights, and the one click that fights again.
+  # Rules §20: the ground, how the character fights, and the one click that fights again. The
+  # button names where it goes next once a fight is held, and only then, so no visit draws a line.
   defp hunt(assigns) do
     ~H"""
-    <p id="hunt-intro" phx-no-format>
-      Monsters roam the {@view.ground.name} outside {@view.town.emoji} {@view.town.name}, the young ones near the village and the strong ones further out. You go out to meet whatever comes nearest your strength, and fight it with what is in your hands and every skill you know until one of you falls.
+    <p id="hunt-intro">{Narrative.ground_intro(@view.ground, @view.town)}</p>
+    <p phx-no-format>
+      Each hunt sets you on the trail of whatever roams nearest your strength, and you fight it with what is in your hands and every skill you know until one of you falls.
     </p>
     <div class="action-links">
-      <.button id="hunt-button" phx-click="hunt">⚔️ Look for more action</.button>
-      <.button id="retreat-button" variant={:secondary} phx-click="retreat">
-        Retreat to {@view.town.name}
-      </.button>
-    </div>
-    <div :if={@fight} id="fight">
-      <h3>The last fight</h3>
-      <ol id="fight-log" class="fight-log">
-        <li :for={line <- @fight.log}>{raw(line)}</li>
-      </ol>
-      <p id="fight-outcome">{raw(@fight.text)}</p>
+      <.button id="hunt-button" phx-click="hunt">⚔️ {@next_move || "Hunt"}</.button>
+      <.button id="retreat-button" variant={:secondary} phx-click="retreat">Retreat</.button>
     </div>
     """
   end
+
+  # Rules §20: the last fight, a round a row, and what it came to.
+  defp last_fight(assigns) do
+    assigns = assign(assigns, outcome: outcome(assigns.fight))
+
+    ~H"""
+    <.fight_log log={@fight.log} outcome={@outcome} />
+    """
+  end
+
+  # A kill is a victory, levelling or not; the new level is named where a round names where both
+  # stand, since the gold alert above says the rest.
+  defp outcome(%{type: :success} = fight),
+    do: %{
+      kind: "victory",
+      head: "Victory",
+      standing: fight[:levelled] && ~s(<span class="level">Level Up</span>),
+      text: fight.text
+    }
+
+  defp outcome(fight), do: %{kind: "escaped", head: "Escaped", standing: nil, text: fight.text}
 
   # Rules §24: each trader's page, whose line opens it and the slots it sells. The jeweller and the
   # grocer keep the Magic Trader together, as the Newbie Guide's shop of that name.

@@ -118,7 +118,7 @@ defmodule MiniLineage.Game.PotionsTest do
       low = %{player | health: 20}
       {hunted, {:ok, flash}} = Actions.hunt(low)
 
-      drunk = Enum.count(flash.log, &(&1 =~ "drink a #{@potion}"))
+      drunk = Enum.count(flash.log, &(&1.line =~ "drink a #{@potion}"))
       assert drunk >= 1
       assert (stack(hunted) || %{count: 0}).count == 5 - drunk
     end

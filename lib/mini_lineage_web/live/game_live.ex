@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.{Board, Characters}
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Clock, Math, Player, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Clock, Math, Narratives, Player, Snapshot, Version}
   alias MiniLineageWeb.{Controls, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
@@ -57,6 +57,7 @@ defmodule MiniLineageWeb.GameLive do
        back: nil,
        boards: %{},
        fight: nil,
+       next_move: nil,
        following_board: false,
        character_id: nil,
        picked: nil,
@@ -140,6 +141,7 @@ defmodule MiniLineageWeb.GameLive do
       picked: nil,
       picks: %{},
       fight: nil,
+      next_move: nil,
       dev_name:
         if(screen == "start" and socket.assigns.debug, do: Math.random_element(@dev_names)),
       # A fault belongs to the error screen it brought you to, not to the next visit to it.
@@ -383,8 +385,19 @@ defmodule MiniLineageWeb.GameLive do
 
   # A fight the hunter lives through is written on the ground's page rather than in an alert, all
   # but a new level's gold one.
-  defp keep_fight(%{assigns: %{game_flash: %{log: _} = fight, view: %{started: true}}} = socket),
-    do: assign(socket, fight: fight, game_flash: fight[:levelled] && Map.take(fight, [:levelled]))
+  # The button then names where the hunt goes next, drawn here rather than by the character's dice,
+  # which the ladder bench seeds, and never the line it already showed.
+  defp keep_fight(%{assigns: %{game_flash: %{log: _} = fight, view: %{started: true}}} = socket) do
+    %{view: view, screen: screen, catalog: catalog, next_move: shown} = socket.assigns
+    moves = Narratives.moves(view.ground.slug) -- [shown]
+
+    assign(socket,
+      fight: fight,
+      next_move: Math.random_element(moves),
+      panels: Screens.panels(screen, view, catalog, fight),
+      game_flash: fight[:levelled] && Map.take(fight, [:levelled])
+    )
+  end
 
   defp keep_fight(socket), do: socket
 
@@ -425,7 +438,10 @@ defmodule MiniLineageWeb.GameLive do
   # Assigned, not computed in the template: an expression over `assigns` is re-sent on every render.
   defp put_view(socket, player) do
     view = Snapshot.build(player)
-    panels = Screens.panels(socket.assigns.screen, view, socket.assigns.catalog)
+
+    panels =
+      Screens.panels(socket.assigns.screen, view, socket.assigns.catalog, socket.assigns.fight)
+
     assign(socket, player: player, view: view, panels: panels)
   end
 
@@ -535,6 +551,7 @@ defmodule MiniLineageWeb.GameLive do
         lineage={@town}
         character_id={@character_id}
         fight={@fight}
+        next_move={@next_move}
         back={@back}
         picks={@picks}
         sorts={@sorts}

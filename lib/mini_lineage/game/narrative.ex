@@ -42,8 +42,6 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
-  def build_levelled(level), do: Format.fill_template(Narratives.levelled(), %{"level" => level})
-
   def build_congratulated(level),
     do: Format.fill_template(Narratives.congratulated(), %{"level" => level})
 
@@ -61,22 +59,36 @@ defmodule MiniLineage.Game.Narrative do
         "ground" => ground.name
       })
 
+  @doc "Rules §17: the ground outside a village, as its page opens."
+  def ground_intro(ground, town),
+    do:
+      Format.fill_template(Narratives.ground_intro(ground.slug), %{
+        "ground" => ground.name,
+        "townEmoji" => town.emoji,
+        "town" => town.name
+      })
+
   @doc """
-  Rules §20: the fight log, each line open-voiced: the meeting, the auras and heals before the pull
-  (`before`, as `{done, hp}`), then one line a round.
+  Rules §20: the fight log as entries, each a head, where both stand after it (`standing`, at the
+  right of the head), and its line, open-voiced: the meeting, the auras and heals before the pull
+  (`before`, as `{done, hp}`), then one entry a round.
   """
-  def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?}, before) do
-    met =
-      Format.fill_template(
-        if(foe.aggressive?, do: Narratives.noticed(), else: Narratives.met()),
-        %{
-          "article" => article(foe.name),
-          "Article" => String.capitalize(article(foe.name)),
-          "monster" => foe.name,
-          "level" => foe.level,
-          "ground" => ground.name
-        }
-      )
+  def build_fight_log(foe, ground, log, %{max_hp: max_hp, bow?: bow?, hp: hp}, before) do
+    met = %{
+      head: if(foe.aggressive?, do: "Ambush", else: "Encounter"),
+      standing: standing(foe, foe.hp, hp, max_hp),
+      line:
+        Format.fill_template(
+          if(foe.aggressive?, do: Narratives.noticed(), else: Narratives.met()),
+          %{
+            "article" => article(foe.name),
+            "Article" => String.capitalize(article(foe.name)),
+            "monster" => foe.name,
+            "level" => foe.level,
+            "ground" => ground.name
+          }
+        )
+    }
 
     rounds =
       log
@@ -85,15 +97,20 @@ defmodule MiniLineage.Game.Narrative do
       |> news()
       |> Enum.map(fn
         {round, events} ->
-          {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
+          {[{:standing, health, left}], events} =
+            Enum.split_with(events, &match?({:standing, _, _}, &1))
+
           {casting, events} = Enum.split_with(events, &(&1 == :casting))
           parts = events |> merge_swings() |> Enum.map(&event(&1, foe, bow?))
 
-          round_label(round) <>
-            still_casting(casting) <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
+          %{
+            head: round_label(round),
+            standing: standing(foe, left, health, max_hp),
+            line: sentence(still_casting(casting) <> join(parts)) <> "."
+          }
       end)
 
-    [met | before(before, max_hp)] ++ rounds
+    [met | before(before, foe, max_hp)] ++ rounds
   end
 
   # §20: a cast or a run is told once, as it begins, so a round left with nothing new is not
@@ -122,30 +139,39 @@ defmodule MiniLineage.Game.Narrative do
   defp round_label(round) do
     seconds = Format.tenths(round(Hunt.round_starts_ms(round) / 100))
 
-    ~s(Round #{round} <span class="delimiter">&bull;</span> <span class="speed">#{seconds}s</span>: )
+    ~s(Round #{round} <span class="delimiter">&bull;</span> <span class="speed">#{seconds}s</span>)
   end
 
-  # Rules §20: the auras raised and heals cast before the pull, as one line.
-  defp before({[], _hp}, _max_hp), do: []
+  # Rules §20: the auras raised and heals cast before the pull, as one entry.
+  defp before({[], _hp}, _foe, _max_hp), do: []
 
-  defp before({done, hp}, max_hp) do
+  defp before({done, hp}, foe, max_hp) do
     parts = Enum.map(done, &event(&1, nil))
 
     [
-      "Before the fight: " <>
-        join(parts) <> " " <> fill(:mended, %{"hp" => hp, "max" => max_hp}) <> "."
+      %{
+        head: "Before the fight",
+        standing: standing(foe, foe.hp, hp, max_hp),
+        line: sentence(join(parts)) <> "."
+      }
     ]
   end
 
-  defp standing([{:standing, hp, left}], foe, max_hp),
+  defp standing(foe, left, hp, max_hp),
     do:
-      fill(:standing, %{
-        "monster" => foe.name,
-        "foe" => left,
-        "foe_max" => foe.hp,
-        "hp" => hp,
-        "max" => max_hp
+      Format.fill_template(Narratives.standing(), %{
+        "foe" => percent(left, foe.hp),
+        "hp" => percent(hp, max_hp)
       })
+
+  # Floored, as the HP bar's percent is, but a side still standing never reads 0%.
+  defp percent(0, _whole), do: Format.percent(0)
+  defp percent(part, whole), do: Format.percent(max(div(part * 100, whole), 1))
+
+  # A line opens its own entry, so whatever leads it is capitalised, its pronoun still open.
+  defp sentence("{them}" <> rest), do: "{they}" <> rest
+  defp sentence("{their}" <> rest), do: "{Their}" <> rest
+  defp sentence(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest
 
   defp event(:readying, _foe, true), do: fill(:draw, %{})
   defp event(:readying, _foe, false), do: fill(:ready, %{})

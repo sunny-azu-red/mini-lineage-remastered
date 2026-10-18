@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.HuntPageTest do
 
   alias MiniLineage.{Characters, Repo}
   alias MiniLineage.Characters.Record
-  alias MiniLineage.Game.{Math, Rng}
+  alias MiniLineage.Game.{Math, Narratives, Rng}
 
   # A Human Fighter, standing on Talking Island.
   defp human(conn) do
@@ -26,6 +26,18 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     {view, session, conn}
   end
+
+  defp text(view, selector),
+    do:
+      view
+      |> element(selector)
+      |> render()
+      |> LazyHTML.from_fragment()
+      |> LazyHTML.text()
+      |> String.trim()
+
+  # Rules §20: where the button sends the hunt next, which it names only once a fight is held.
+  defp moves, do: Enum.map(Narratives.moves("obelisk-of-victory"), &"⚔️ #{&1}")
 
   defp pin(session, value) do
     Characters.mutate(session, fn player ->
@@ -43,13 +55,16 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     assert_patch(view, "/talking-island/obelisk-of-victory")
     assert has_element?(view, "#sidebar")
-    refute has_element?(view, "#fight-log")
+    refute has_element?(view, "#fight")
+    assert text(view, "#hunt-button") == "⚔️ Hunt"
+    assert text(view, "#retreat-button") == "Retreat"
     assert has_element?(view, "#effects [data-effect-id=combat]")
     assert stored(session).combat == "engaged"
 
     view |> element("#hunt-button") |> render_click()
 
-    assert has_element?(view, "#fight-log li", "You meet")
+    assert has_element?(view, "#fight #fight-log li", "You meet")
+    assert text(view, "#hunt-button") in moves()
     assert stored(session).combat == "engaged"
   end
 
@@ -76,6 +91,27 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert is_integer(stored(session).combat)
   end
 
+  test "the button never names the same place twice running, and a new visit forgets the fight" do
+    {_view, session, conn} = human(build_conn())
+    # Far enough from the next level that no kill here reaches it, so each outcome is a plain one.
+    Characters.mutate(session, &{%{&1 | experience: Math.xp_for_level(3)}, :ok})
+    pin(session, 0.0)
+    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+
+    view |> element("#hunt-button") |> render_click()
+    assert has_element?(view, "#fight-outcome.victory", "cut down")
+    first = text(view, "#hunt-button")
+    view |> element("#hunt-button") |> render_click()
+    second = text(view, "#hunt-button")
+
+    assert first in moves() and second in moves() and first != second
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+
+    refute has_element?(view, "#fight")
+    assert text(view, "#hunt-button") == "⚔️ Hunt"
+  end
+
   test "a character cannot hunt another village's ground" do
     {_view, session, conn} = human(build_conn())
 
@@ -95,9 +131,17 @@ defmodule MiniLineageWeb.HuntPageTest do
     # Written on the ground's page, not in an alert, with where both stand after each round.
     refute has_element?(view, "#flash")
     assert has_element?(view, "#fight-outcome", "cut down")
+    assert has_element?(view, "#fight-log li .entry-head", "Encounter")
     assert has_element?(view, "#fight-log li", "You meet")
-    assert has_element?(view, "#fight-log li", "Round 1 • 0.0s:")
-    assert has_element?(view, "#fight-log li", "HP, you at")
+    assert has_element?(view, "#fight-log li .entry-head", "Round 1 • 0.0s")
+
+    assert has_element?(
+             view,
+             "#fight-log li .entry-head > span:last-child",
+             ~r/^Foe \d+% • You \d+%$/
+           )
+
+    refute has_element?(view, "#fight-log li p", "HP, you at")
     assert has_element?(view, "#screen[data-screen=hunt]")
     player = stored(session)
     assert player.experience > 0 and player.sp > 0 and player.adena > 0
@@ -117,7 +161,9 @@ defmodule MiniLineageWeb.HuntPageTest do
              "Congratulations! You have reached Level 2."
            )
 
-    assert has_element?(view, "#fight-outcome", "You reach Level 2")
+    # The kill is still a victory, its new level named at the right of its head, never in its line.
+    assert has_element?(view, "#fight-outcome.victory .entry-head .level", "Level Up")
+    refute has_element?(view, "#fight-outcome p", "Level 2")
     refute has_element?(view, "#flash")
     assert_push_event(view, "play-sound", %{name: "level"})
   end

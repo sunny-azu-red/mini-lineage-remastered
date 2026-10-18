@@ -6,11 +6,24 @@ defmodule MiniLineage.Game.NarrativeTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Constants, Narrative, Player, Rules}
+  alias MiniLineage.Game.{Constants, Narrative, Narratives, Player, Rules}
 
   @races 0..3
 
   defp unrendered(text), do: Regex.scan(~r/\{[^}]*\}/, text) |> List.flatten()
+
+  @weapon %{max_hp: 100, bow?: false, hp: 100}
+
+  # A fight log as its owner reads it, each entry voiced and its markup stripped.
+  defp read(foe, log, before \\ {[], 100}) do
+    foe
+    |> Narrative.build_fight_log(Rules.ground("obelisk-of-victory"), log, @weapon, before)
+    |> Enum.map(fn entry ->
+      Map.new(entry, fn {key, html} -> {key, html |> Narrative.alert() |> plain()} end)
+    end)
+  end
+
+  defp plain(html), do: html |> String.replace(~r/<[^>]+>/, "") |> String.replace("&bull;", "•")
 
   describe "the opening flash" do
     test "names the class and the starting town, and renders cleanly" do
@@ -30,28 +43,29 @@ defmodule MiniLineage.Game.NarrativeTest do
     test "an aggressive monster comes at the character, a passive one is met" do
       ground = Rules.ground("obelisk-of-victory")
 
-      log =
-        &Narrative.build_fight_log(
-          Rules.monster(&1),
-          ground,
-          [],
-          %{max_hp: 100, bow?: false},
-          {[], 100}
-        )
+      [noticed] =
+        Narrative.build_fight_log(Rules.monster("Orc Fighter"), ground, [], @weapon, {[], 80})
 
-      [noticed] = log.("Orc Fighter")
-      [met] = log.("Young Keltir")
+      [met] =
+        Narrative.build_fight_log(Rules.monster("Young Keltir"), ground, [], @weapon, {[], 80})
 
-      assert Narrative.alert(noticed) =~
-               ~r/^An Orc Fighter, level .*10.*, notices you on the .* and comes at you\.$/
+      assert Narrative.alert(noticed.line) =~
+               ~r/^An Orc Fighter, <span class="level">Level 10<\/span>, notices you on the .* and comes at you\.$/
 
-      assert Narrative.alert(met) =~ ~r/^You meet a Young Keltir/
-      assert unrendered(Narrative.voiced(noticed, false)) == []
+      assert noticed.head == "Ambush"
+      # A level is gold whole and named as one, "Level 1", as every page writes it.
+      assert Narrative.alert(met.line) =~
+               ~r/^You meet a Young Keltir, <span class="level">Level 1<\/span>,/
+
+      assert met.head == "Encounter"
+      # Where both stand as they meet: the monster whole, the character as it went in.
+      assert plain(Narrative.alert(met.standing)) == "Foe 100% • You 100%"
+      assert unrendered(Narrative.voiced(noticed.line, false)) == []
+      assert plain(Narrative.voiced(noticed.standing, false)) == "Foe 100% • They 100%"
     end
 
     test "tells a side's swings in one round as one clause, each in order" do
       foe = Rules.monster("Vaiss Orc")
-      ground = Rules.ground("obelisk-of-victory")
 
       log = [
         {1, {:blow, 10, false}},
@@ -72,34 +86,37 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       log = log ++ for(round <- 1..6, do: {round, {:standing, 90, 20}})
 
-      [_met | rounds] =
-        foe
-        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
-        |> Enum.map(&Narrative.alert/1)
+      [_met | rounds] = read(foe, log)
+      [one, two, three, four, five, six] = rounds
 
-      plain = fn line ->
-        line |> String.replace(~r/<[^>]+>/, "") |> String.replace("&bull;", "•")
-      end
+      assert one == %{
+               head: "Round 1 • 0.0s",
+               standing: "Foe #{div(20 * 100, foe.hp)}% • You 90%",
+               line: "You hit for 10 and 9."
+             }
 
-      [one, two, three, four, five, six] = Enum.map(rounds, plain)
+      assert two.head == "Round 2 • 1.7s"
 
-      assert one =~ "Round 1 • 0.0s: you hit for 10 and 9 ("
+      assert two.line ==
+               "You swing twice for a critical hit of 65 and a miss, and the Vaiss Orc swings twice at you for a hit of 12 and a miss."
 
-      assert two =~
-               "Round 2 • 1.7s: you swing twice for a critical hit of 65 and a miss, and the Vaiss Orc swings twice at you for a hit of 12 and a miss ("
+      assert three.line ==
+               "The Vaiss Orc swings 3 times at you for a hit of 8 that your shield catches, a blow your shield turns aside and a critical hit of 30."
 
-      assert three =~
-               "the Vaiss Orc swings 3 times at you for a hit of 8 that your shield catches, a blow your shield turns aside and a critical hit of 30 ("
+      assert four.line == "The Vaiss Orc casts HP Drain on you for 20 and mends 4 HP."
 
-      assert four =~ "the Vaiss Orc casts HP Drain on you for 20 and mends 4 HP"
-      assert five =~ "Round 5 • 6.7s: you hit for 11, and the Vaiss Orc hits you for 7 ("
-      assert six =~ "Round 6 • 8.3s: you land a critical hit for 40, and the Vaiss Orc misses ("
-      for line <- rounds, do: assert(unrendered(line) == [], line)
+      assert five == %{
+               five
+               | head: "Round 5 • 6.7s",
+                 line: "You hit for 11, and the Vaiss Orc hits you for 7."
+             }
+
+      assert six.line == "You land a critical hit for 40, and the Vaiss Orc misses."
+      for entry <- rounds, text <- Map.values(entry), do: assert(unrendered(text) == [], text)
     end
 
     test "says a cast or a run once as it begins, and leaves out a round with nothing new" do
       foe = Rules.monster("Goblin Scout")
-      ground = Rules.ground("obelisk-of-victory")
 
       log = [
         {1, {:begin, "Wind Strike"}},
@@ -118,27 +135,21 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       log = log ++ for(round <- 1..8, do: {round, {:standing, 90, 20}})
 
-      [_met | rounds] =
-        foe
-        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
-        |> Enum.map(&Narrative.alert/1)
+      assert [_met, one, three, five, _six, seven] = read(foe, log)
+      assert {one.head, one.line} == {"Round 1 • 0.0s", "You begin casting Wind Strike."}
 
-      plain = Enum.map(rounds, &String.replace(&1, ~r/<[^>]+>/, ""))
+      assert {three.head, three.line} ==
+               {"Round 3 • 3.3s",
+                "You cast Wind Strike for 112, and the Goblin Scout runs at you."}
 
-      assert [one, three, five, _six, seven] = plain
-      assert one =~ "Round 1 &bull; 0.0s: you begin casting Wind Strike ("
-
-      assert three =~
-               "Round 3 &bull; 3.3s: you cast Wind Strike for 112, and the Goblin Scout runs at you ("
-
-      assert five =~ "Round 5 &bull; 6.7s: you hit for 9 ("
+      assert {five.head, five.line} == {"Round 5 • 6.7s", "You hit for 9."}
       # A round with something else in it says why the character did nothing.
-      assert seven =~ "Round 7 &bull; 10.0s: as you cast, the Goblin Scout hits you for 5 ("
+      assert {seven.head, seven.line} ==
+               {"Round 7 • 10.0s", "As you cast, the Goblin Scout hits you for 5."}
     end
 
     test "a side whose every swing missed misses so many times" do
       foe = Rules.monster("Vaiss Orc")
-      ground = Rules.ground("obelisk-of-victory")
 
       log = [
         {1, :miss},
@@ -149,12 +160,9 @@ defmodule MiniLineage.Game.NarrativeTest do
         {1, {:standing, 90, 20}}
       ]
 
-      [_met, one] =
-        foe
-        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
-        |> Enum.map(&Narrative.alert/1)
+      [_met, one] = read(foe, log)
 
-      assert one =~ "you miss twice, and the Vaiss Orc misses 3 times <span"
+      assert one.line == "You miss twice, and the Vaiss Orc misses 3 times."
     end
 
     test "writes every event a skill makes, open-voiced and with no brace left" do
@@ -188,9 +196,10 @@ defmodule MiniLineage.Game.NarrativeTest do
         |> Narrative.build_fight_log(
           ground,
           log,
-          %{max_hp: 100, bow?: false},
+          @weapon,
           {[{:aura, "Defense Aura"}, {:heal, "Heal", 70}, {:heal, "Self Heal", 45}], 60}
         )
+        |> Enum.flat_map(&[&1.standing, &1.line])
         |> Enum.map(&Narrative.alert/1)
 
       for line <- lines do
@@ -211,14 +220,79 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "drink a Lesser Healing Potion and mend"
       refute text =~ "wait for"
       assert text =~ "the Young Keltir runs at you"
-      assert text =~ "you set the Young Keltir burning with Chill Flame"
-      assert text =~ ~r/your Chill Flame tick burns for .*33/
+      assert text =~ "You set the Young Keltir burning with Chill Flame"
+      assert text =~ ~r/Your Chill Flame tick burns for .*33/
       assert text =~ "you run at the Young Keltir"
       assert text =~ "you begin casting Wind Strike"
       assert text =~ "the Young Keltir begins casting Wind Strike"
 
-      assert Enum.at(lines, 1) =~
-               ~r/^Before the fight: you raise your .*Defense Aura.*you cast Heal and mend .*Self Heal.*you at/
+      before = Enum.at(read(foe, log, {[{:aura, "Defense Aura"}, {:heal, "Heal", 70}], 60}), 1)
+      assert before.head == "Before the fight"
+      assert before.standing == "Foe 100% • You 60%"
+      assert before.line =~ ~r/^You raise your Defense Aura, and you cast Heal and mend 70 HP\.$/
+    end
+
+    test "a side still standing never reads 0%, nor a hurt one 100%" do
+      foe = Rules.monster("Blade Spider")
+
+      [_met, one, two] =
+        read(foe, [
+          {1, {:blow, 10, false}},
+          {1, {:standing, 99, foe.hp - 1}},
+          {2, {:blow, 10, false}},
+          {2, {:standing, 1, 1}}
+        ])
+
+      assert one.standing == "Foe 99% • You 99%"
+      assert two.standing == "Foe 1% • You 1%"
+    end
+
+    test "a line opens with a capital in either voice, whatever leads it" do
+      foe = Rules.monster("Young Keltir")
+
+      log = [
+        {1, {:skill, "Power Strike", 30}},
+        {1, {:standing, 90, 20}},
+        {2, :foe_miss},
+        {2, {:standing, 90, 20}},
+        {3, {:blow, 9, false}},
+        {3, {:standing, 90, 20}}
+      ]
+
+      entries =
+        Narrative.build_fight_log(
+          foe,
+          Rules.ground("obelisk-of-victory"),
+          log,
+          @weapon,
+          {[], 100}
+        )
+
+      for entry <- entries, mine? <- [true, false] do
+        line = Narrative.voiced(entry.line, mine?)
+        assert line =~ ~r/^[A-Z]/, line
+        assert unrendered(line) == [], line
+      end
+
+      assert Narrative.voiced(Enum.at(entries, 1).line, false) =~ "Their Power Strike"
+    end
+  end
+
+  describe "the hunting grounds" do
+    test "each opens on its own ground and village, and has somewhere short to go next" do
+      for ground <- Rules.grounds() do
+        town = Rules.town(ground.town)
+        intro = Narrative.ground_intro(ground, town)
+
+        assert intro =~ ground.name and intro =~ "#{town.emoji} #{town.name}", intro
+        assert unrendered(intro) == [], intro
+
+        moves = Narratives.moves(ground.slug)
+        assert length(moves) == length(Enum.uniq(moves)) and length(moves) > 1
+
+        # Beside Retreat on one row, on a 360px phone.
+        for move <- moves, do: assert(String.length(move) <= 18, move)
+      end
     end
   end
 end

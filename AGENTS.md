@@ -7,7 +7,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
-  distance, `Actions.hunt/1`, the last fight drawn on the ground's page as `#fight`, and death),
+  distance, `Actions.hunt/1`, the last fight in a panel of its own under the ground's, `#fight`,
+  drawn by `<.fight_log>` an entry a row as legacy's Chronicle was, and death),
   each village's traders (`/<village>/traders`), four by name
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
   (`/<village>/traders/<weapon|armour|magic|sell>`, each set shown its path's goods by
@@ -54,16 +55,18 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `Access.pin_screen/2`. `Screens.screen/1` picks the page (start, town, gatekeeper, hunt, trader
   and its pages, guild, inventory, character, races, highscores, error), all in `Screens` until one
   needs its own module; the Halls have
-  `Screens.Halls`. `Screens.panels/3` lists a
+  `Screens.Halls`. `Screens.panels/4` lists a
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
   the Chronicles, one per section on the character page, Inventory and Combat Stats on the
-  inventory, and on the guild's a Learned Skills panel only once something is learned. `GameLive`
+  inventory, on the guild's a Learned Skills panel only once something is learned, and on the
+  ground The Last Fight only once a fight is held there, which is what its fourth argument is for. `GameLive`
   lists them again whenever the view is rebuilt. Every LiveView template starts with
   `<Layouts.app>`; `ErrorHTML` builds its own from the shell's parts.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`
-  and `<.flash_alert>`, `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
+  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's panel and a death's
+  alert), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
@@ -331,7 +334,10 @@ Each of these is here because it was got wrong once.
   until something is picked (but for the town's Travel, which has nowhere to go back to), the hunt's Retreat and the Halls' filters; `size={:sm}` and `active`
   (the one of a set already chosen) are the filters'. A primary or danger button leads with an
   emoji; a secondary one has none of its own (`Return`), the filters' being their lineage's. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
-  is marked `data-no-autofocus`.
+  is marked `data-no-autofocus`. The hunt's button reads "⚔️ Hunt" until a fight is held on this
+  visit, then names where it goes next, a line of the ground's `Narratives.moves/1` other than the
+  one shown, drawn by `GameLive` and never by the character's dice, which the bench seeds. A line
+  runs to 18 characters, the room Retreat leaves it on one row at 360px.
 - **Every dropdown is `Controls.select_action/1`**, because the dropdown and its button ARE the
   game's navigation: in a town it lists where you can go, at a trader or guild what you can do
   there. Only what makes no sense as a place to go from a town (the inventory, the character page) is
@@ -423,6 +429,9 @@ Each of these is here because it was got wrong once.
   `docs/canon/` keeps its sources' spelling.
 - **A bonus leads its stat; an item's own number follows it.** "+8% P. Def.", "-3 Accuracy", "+38 Max MP",
   but "P. Atk. 6". A rate carries its % wherever it is written ("Critical 8%", "Block 20%").
+- **A level is named as one, "Level 5", word and number together in `.level`**, a monster's
+  ("a Gremlin, Level 1") as much as the character's ("until Level 5"). A level no number names
+  ("the next level") is a common noun and stays lowercase and uncoloured.
 - **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
   `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so
   does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and

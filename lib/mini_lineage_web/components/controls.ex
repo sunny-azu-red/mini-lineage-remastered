@@ -365,11 +365,39 @@ defmodule MiniLineageWeb.Controls do
     <.alert :if={@flash[:levelled]} id="levelled" kind={:triumph}>{raw(@flash.levelled)}</.alert>
     <.alert :if={@flash[:text]} id="flash" kind={@flash.type}>
       <%!-- A hunt's fight log (rules §20) comes before what it came to. --%>
-      <ol :if={@flash[:log]} id="fight-log" class="fight-log">
-        <li :for={line <- @flash.log}>{raw(line)}</li>
-      </ol>
+      <.fight_log :if={@flash[:log]} log={@flash.log} />
       {raw(@flash.text)}
     </.alert>
+    """
+  end
+
+  @doc """
+  Rules §20: a fight, an entry a row as legacy's Chronicle drew them, its head saying when on the
+  left and where both stand on the right. The outcome, if given, ends it, washed as the alert that
+  would have announced it.
+  """
+  attr :log, :list, required: true
+  # `%{kind: "victory" | "escaped", head: String.t(), standing: html | nil, text: html}`
+  attr :outcome, :map, default: nil
+
+  def fight_log(assigns) do
+    ~H"""
+    <ol id="fight-log" class="fight-log">
+      <li :for={entry <- @log}>
+        <div class="entry-head">
+          <span>{raw(entry.head)}</span>
+          <span>{raw(entry.standing)}</span>
+        </div>
+        <p>{raw(entry.line)}</p>
+      </li>
+      <li :if={@outcome} id="fight-outcome" class={@outcome.kind}>
+        <div class="entry-head">
+          <span>{@outcome.head}</span>
+          <span :if={@outcome.standing}>{raw(@outcome.standing)}</span>
+        </div>
+        <p>{raw(@outcome.text)}</p>
+      </li>
+    </ol>
     """
   end
 

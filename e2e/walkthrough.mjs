@@ -507,18 +507,37 @@ try {
         await text('#main h2.header-name'));
     check('...with the sidebar beside it', await page.locator('#sidebar').count() === 1);
     check('going out meets nothing until the hunter looks for it, but is combat at once',
-        await page.locator('#fight-log').count() === 0
+        await page.locator('#fight').count() === 0
         && await page.locator('#effects [data-effect-id="combat"]').count() === 1);
+    check('...where the button says Hunt beside Retreat', await text('#hunt-button') === '⚔️ Hunt'
+        && await text('#retreat-button') === 'Retreat', `${await text('#hunt-button')} / ${await text('#retreat-button')}`);
     await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });
-    check('looking for action is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
+    check('hunting is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
         await text('#fight-outcome'));
-    check('...on the page itself, round by round with both sides\' HP, not in an alert',
-        await page.locator('#flash').count() === 0 && /Round 1 • 0\.0s: .* HP, you at/.test(await text('#fight-log')),
-        (await text('#fight-log')).slice(0, 160));
+    const firstHead = await page.evaluate(() => [...document.querySelectorAll('#fight-log .entry-head')]
+        .map((head) => head.textContent.replace(/\s+/g, ' ').trim()).find((head) => head.startsWith('Round')) ?? '');
+    check('...in a panel of its own under the ground\'s, a round a row headed by both sides\' HP, not in an alert',
+        await page.locator('#flash').count() === 0
+        && await page.locator('#screen > .panel:nth-child(2) #fight-log').count() === 1
+        && /^Round 1 • 0\.0s\s*Foe \d+% • You \d+%$/.test(firstHead), firstHead);
+    const firstMove = await text('#hunt-button');
+    check('...after which the button names where the hunt goes next', firstMove !== '⚔️ Hunt' && firstMove.startsWith('⚔️ '),
+        firstMove);
+    // Rules §20: a new line after every fight, so the button row is measured at its widest here.
+    const oneRow = () => page.evaluate(() =>
+        document.querySelector('#hunt-button').getBoundingClientRect().top
+        === document.querySelector('#retreat-button').getBoundingClientRect().top);
+    const wide = page.viewportSize();
+    await page.setViewportSize({ width: 360, height: 800 });
+    const phoneRow = await oneRow();
+    await page.setViewportSize(wide);
+    check('...on one row with Retreat, on a desktop and a 360px phone', await oneRow() && phoneRow);
     await page.click('#hunt-button');
-    await page.waitForSelector('#fight-outcome', { timeout: 5000 });
-    check('looking for more action fights again, still on the ground', (await state()).screen === 'hunt');
+    await page.waitForFunction((shown) =>
+        document.querySelector('#hunt-button')?.textContent.trim() !== shown, firstMove, { timeout: 5000 });
+    check('hunting again fights again, still on the ground, and names somewhere new',
+        (await state()).screen === 'hunt' && await page.locator('#fight-outcome').count() === 1);
     await page.click('#retreat-button');
     await onScreen('town');
     check('...and retreating goes back to the village', (await state()).screen === 'town');

@@ -140,7 +140,12 @@ defmodule MiniLineage.Game.Actions do
     player = Player.put_buffs(%{player | health: result.health, mp: result.mp}, result.raised)
     player = Player.drink_down(player, result.drunk)
     stats = Player.stats(player)
-    weapon = %{max_hp: stats.max_hp, bow?: stats.weapon != nil and stats.weapon.type == "bow"}
+
+    weapon = %{
+      max_hp: stats.max_hp,
+      bow?: stats.weapon != nil and stats.weapon.type == "bow",
+      hp: bars.health
+    }
 
     log =
       foe
@@ -150,7 +155,7 @@ defmodule MiniLineage.Game.Actions do
         weapon,
         result.before
       )
-      |> Enum.map(&Narrative.alert/1)
+      |> Enum.map(&%{&1 | standing: Narrative.alert(&1.standing), line: Narrative.alert(&1.line)})
 
     {player, {:ok, flash}} =
       cond do
@@ -187,12 +192,10 @@ defmodule MiniLineage.Game.Actions do
     reached = Player.level(gained)
     slew = Narrative.alert(Narrative.build_slew(foe, ground, exp, sp, adena))
 
+    # A new level is the gold alert's to tell, so the kill's own line stops at what it paid.
     flash =
       if reached > level,
-        do: %{
-          text: slew <> " " <> Narrative.alert(Narrative.build_levelled(reached)),
-          levelled: Narrative.alert(Narrative.build_congratulated(reached))
-        },
+        do: %{text: slew, levelled: Narrative.alert(Narrative.build_congratulated(reached))},
         else: %{text: slew}
 
     {gained, {:ok, Map.put(flash, :type, :success)}}

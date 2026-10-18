@@ -7,13 +7,15 @@ defmodule MiniLineage.Game.Narratives do
       they: "You",
       them: "you",
       object: "you",
-      their: "your"
+      their: "your",
+      Their: "Your"
     },
     false => %{
       they: "They",
       them: "they",
       object: "them",
-      their: "their"
+      their: "their",
+      Their: "Their"
     }
   }
 
@@ -23,7 +25,6 @@ defmodule MiniLineage.Game.Narratives do
 
   # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
   @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and <span class="sp">{sp} SP</span>{adena}.)
-  @levelled ~s({they} reach <span class="level">Level {level}</span>, and {their} wounds close.)
   # The gold alert a new level raises over the page, beside the fight's own line.
   @congratulated ~s(🎉 Congratulations! {they} have reached <span class="level">Level {level}</span>.)
   # Rules §21: the line a run ends on, kept with it.
@@ -31,10 +32,11 @@ defmodule MiniLineage.Game.Narratives do
   @wandered ~s({they} cannot bring the {monster} down, and it slinks away into the {ground}.)
 
   # Rules §20's fight log: who is met, then each round's events joined into one line.
-  @met ~s({they} meet {article} {monster}, level <span class="level">{level}</span>, on the {ground}.)
+  @met ~s({they} meet {article} {monster}, <span class="level">Level {level}</span>, on the {ground}.)
   # Rules §20: an aggressive monster finds the character first.
-  @noticed ~s({Article} {monster}, level <span class="level">{level}</span>, notices {object} on the {ground} and comes at {object}.)
-  # Each follows "Round N • 0.0s:", so its subject is {them}, the lowercase one.
+  @noticed ~s({Article} {monster}, <span class="level">Level {level}</span>, notices {object} on the {ground} and comes at {object}.)
+  # Each may stand inside a round's line, so it is written lowercase; `Narrative` capitalises
+  # whichever opens the line.
   @log %{
     blow: ~s({them} hit for {amount}),
     critical: ~s({them} land a critical hit for <span class="crit">{amount}</span>),
@@ -66,8 +68,6 @@ defmodule MiniLineage.Game.Narratives do
     foe_begin: "the {monster} begins casting {skill}",
     closing: "the {monster} runs at {object}",
     advancing: "{them} run at the {monster}",
-    standing:
-      ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
     foe_cast: ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span>),
     foe_drain:
       ~s(the {monster} casts {skill} on {object} for <span class="hp">{amount}</span> and mends <span class="regen">{healed} HP</span>),
@@ -89,17 +89,80 @@ defmodule MiniLineage.Game.Narratives do
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
     poison: ~s({their} {skill} tick deals <span class="magic">{amount}</span>),
-    potion: ~s({them} drink a {potion} and mend <span class="regen">{amount} HP</span>),
-    # Ends the "Before the fight:" line, when only the character stands.
-    mended: ~s|<span class="muted">({them} at <span class="hp">{hp}</span> of {max})</span>|
+    potion: ~s({them} drink a {potion} and mend <span class="regen">{amount} HP</span>)
+  }
+
+  # Where both stand once an entry of the fight log is done, at the right of its head. The entry
+  # that meets it has named the monster; "Foe" stays apart from {they} in either voice.
+  @standing ~s(Foe <span class="hp">{foe}</span> <span class="delimiter">&bull;</span> {they} <span class="hp">{hp}</span>)
+
+  # Rules §17: each village's ground, from its fields to the grounds nearby (docs/canon's places), and
+  # where the hunt button sends the character next. A line sits beside Retreat on a 360px phone,
+  # so it runs to 18 characters, and it names no one, being the player's own button.
+  @grounds %{
+    "obelisk-of-victory" => %{
+      intro:
+        "Monsters roam from the fields outside {townEmoji} {town} to the {ground} and the Singing Waterfall beyond it, keltirs and wolves near the walls and orcs, werewolves and spiders further out.",
+      moves: [
+        "Comb the fields",
+        "Head east of town",
+        "Track the wolves",
+        "Skirt the orc camp",
+        "Seek the Obelisk",
+        "Follow the river",
+        "Scout the woods"
+      ]
+    },
+    "elven-fortress" => %{
+      intro:
+        "Monsters roam from the glades outside {townEmoji} {town} to the {ground} and the dungeon beneath it, keltirs and Kaboo orcs among the trees and skeletons and wererats in the dark below.",
+      moves: [
+        "Wander the glades",
+        "Follow the stream",
+        "Track a Kaboo orc",
+        "Seek the dryads",
+        "Pass the fortress",
+        "Enter the dungeon",
+        "Search the ruins"
+      ]
+    },
+    "school-of-dark-arts" => %{
+      intro:
+        "Monsters roam from the Dark Forest outside {townEmoji} {town} to the {ground}, goblins and Balor orcs under the black trees and the undead and succubi in the School's halls.",
+      moves: [
+        "Walk the dark wood",
+        "Under black boughs",
+        "Track a Balor orc",
+        "Trail the goblins",
+        "Enter the School",
+        "Descend the stairs",
+        "Search the cellars"
+      ]
+    },
+    "cave-of-trials" => %{
+      intro:
+        "Monsters roam from the prairie outside {townEmoji} {town} up onto the Immortal Plateau and down into the {ground}, Kasha wolves and Evil Eyes in the open and skeletons, ratmen and ghosts in the cave.",
+      moves: [
+        "Cross the prairie",
+        "Track Kasha wolves",
+        "Climb the Plateau",
+        "Seek an Evil Eye",
+        "Enter the cave",
+        "Go deeper inside",
+        "Search the graves"
+      ]
+    }
   }
 
   def met, do: @met
   def noticed, do: @noticed
   def log(kind), do: Map.fetch!(@log, kind)
+  def standing, do: @standing
+
+  def ground_intro(slug), do: Map.fetch!(@grounds, slug).intro
+  def moves(slug), do: Map.fetch!(@grounds, slug).moves
 
   def slew, do: @slew
-  def levelled, do: @levelled
   def congratulated, do: @congratulated
   def fell, do: @fell
   def wandered, do: @wandered
