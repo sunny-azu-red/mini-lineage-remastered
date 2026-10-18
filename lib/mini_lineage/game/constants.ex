@@ -163,7 +163,7 @@ defmodule MiniLineage.Game.Constants do
     "Soul Shield" => %{
       id: "soul_shield",
       type: :buff,
-      emoji: "💠",
+      emoji: "🗿",
       label: "Soul Shield",
       about: "The spirits called to stand guard turn blows aside."
     },
