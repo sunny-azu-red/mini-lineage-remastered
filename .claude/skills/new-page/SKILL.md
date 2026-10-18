@@ -47,7 +47,9 @@ researched in first if missing.
 - `Screens.screen/1` clause, and the screen in the not-started guard above them all, so a reset in
   another tab draws nothing rather than raise on a nil field.
 - Its heading: a `@titles` entry or a `title/2` clause (else it reads "Mini Lineage"), and `icon/2`.
-- `panels/3` lists its panels; `Layouts.app` wraps each in `Controls.panel` and `screen/1` draws
+- `panels/4` lists its panels (the fourth argument is the hunt's last fight, `_fight` anywhere else;
+  a clause written at arity 3 is a different function and is never called); `Layouts.app` wraps
+  each in `Controls.panel`, with `id` naming the panel when the map has one, and `screen/1` draws
   each one's body. A screen never writes `Controls.panel` itself.
 - What it reads comes from `Snapshot.build/1`: a new field there goes into the not-started `@empty`
   too (`snapshot_test.exs` checks both have every key). New player state goes through `Player` and
