@@ -455,6 +455,12 @@ Each of these is here because it was got wrong once.
   `compile_env!` or `fetch_env!` and never a default of its own, so a missing key fails at compile or
   boot. Only `:app_version` is optional. A value no environment changes is a rule of the game, in
   `Constants`.
+- **The server rates are the one rule a deployment may change** (rules §22). `config.exs` holds
+  retail's ×1 and every env file, CI's jobs included, the private ×5, ×5 and ×20 the game is
+  balanced at, each held to the document by `rules_test.exs`. `runtime.exs` reads them in every
+  environment, so the suites and the bench play `.env.test`'s, and a reading names its rates.
+  `Hunt` takes a rate as an argument and `Actions` passes `Rules.rate/1`, so a test states the rate
+  it works at. The `balance-study` skill checks a reading was taken at the private rates.
 
 ### Comments
 

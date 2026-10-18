@@ -753,18 +753,30 @@ defmodule MiniLineage.Game.RulesTest do
     end
 
     test "§20 EXP shrinks by 5/6 a level past the fifth, and not before" do
-      assert Hunt.reward(:exp, 35, 12, 1) == 58
-      assert Hunt.reward(:exp, 35, 6, 1) == 175
+      assert Hunt.reward(35, 5, 12, 1) == 58
+      assert Hunt.reward(35, 5, 6, 1) == 175
     end
 
-    test "§22 the server's rates, and a Young Keltir's 10 Adena paying 200" do
-      for [kind, times] <- table("Rate") do
-        assert Rules.rate(kind |> String.downcase() |> String.to_existing_atom()) ==
-                 String.to_integer(times)
-      end
+    test "§22 retail's rates are config.exs's, the private ones every env file's" do
+      retail =
+        "config/config.exs" |> Config.Reader.read!(env: :test) |> get_in([:mini_lineage, :rates])
 
+      files = for file <- ~w(.env.example .env.test.example), do: File.read!(file)
+
+      for [kind, times, private] <- table("Rate") do
+        assert retail[kind |> String.downcase() |> String.to_existing_atom()] ==
+                 String.to_integer(times)
+
+        for file <- files,
+            do: assert(file =~ ~r/^#{String.upcase(kind)}_RATE=#{private}$/m)
+      end
+    end
+
+    test "§22 a Young Keltir's 10 Adena pays 10 at retail's rate and 200 at ×20" do
       Rng.put_source(fn -> 0.5 end)
-      assert Hunt.adena(%{adena_chance: 100, adena_min: 10, adena_max: 10}) == 200
+      keltir = %{adena_chance: 100, adena_min: 10, adena_max: 10}
+      assert Hunt.adena(keltir, 1) == 10
+      assert Hunt.adena(keltir, 20) == 200
     end
 
     test "§21 a level 9 run with 40,000 EXP stands above every level 8 run and a 39,999 one" do

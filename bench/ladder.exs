@@ -489,7 +489,9 @@ defmodule Report do
 end
 
 start = ~U[2026-07-01 09:00:00Z]
-setting = &%{top: top, rest_below: &1, kept: &2, orders: orders, start: start}
+# Rules §22's rates are .env.test's, so a reading says which it was taken at.
+rates = Map.new(Application.fetch_env!(:mini_lineage, :rates))
+setting = &%{top: top, rest_below: &1, kept: &2, orders: orders, start: start, rates: rates}
 
 # --matrix writes the study's settings side by side, resting at 30% without potions (where most
 # Fighters die, so it says little) only with --final.
@@ -546,7 +548,10 @@ for {study, settings} <- studies do
     end)
     |> Enum.unzip()
 
-  text = (List.flatten(lines) ++ Report.probes(rows)) |> Enum.map_join(&(&1 <> "\n"))
+  header = "Rates: EXP ×#{rates.exp}, SP ×#{rates.sp}, Adena ×#{rates.adena}"
+
+  text =
+    ([header | List.flatten(lines)] ++ Report.probes(rows)) |> Enum.map_join(&(&1 <> "\n"))
   settings = Map.update!(settings, :start, &DateTime.to_iso8601/1)
   json = JSON.encode!(%{settings: settings, rows: rows})
 

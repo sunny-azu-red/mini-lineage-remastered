@@ -594,9 +594,9 @@ this far (a monster's spells as far as §19 gives):
   for 5 seconds more, and then rests.
 - **What is left** of HP and MP stays, until the character is back in town to rest.
 
-Example: a level 12 character who kills a Young Keltir (level 1, 35 EXP) is 11 levels above it, 6 past
-the fifth, and earns 35 × 5 × (5 ÷ 6)⁶ = 58.6, so **58** EXP. A level 6 character earns all of it,
-**175**.
+Example: at EXP ×5, a level 12 character who kills a Young Keltir (level 1, 35 EXP) is 11 levels
+above it, 6 past the fifth, and earns 35 × 5 × (5 ÷ 6)⁶ = 58.6, so **58** EXP. A level 6 character
+earns all of it, **175**.
 
 ## 21. Death
 
@@ -609,21 +609,24 @@ run with 39,999 EXP.
 
 ## 22. Server rates
 
-Every Lineage II server ran at rates, multiplying what monsters pay. This one runs at:
+Every Lineage II server ran at rates, multiplying what monsters pay. Retail ran at ×1, and so does
+this game unless its operator sets others (`EXP_RATE`, `SP_RATE` and `ADENA_RATE`). The game is
+balanced at the private rates, those private servers such as the ones on aCis ran, which every env
+file it ships sets:
 
-| Rate | Times |
-|---|---|
-| EXP | 5 |
-| SP | 5 |
-| Adena | 20 |
+| Rate | Retail | Private |
+|---|---|---|
+| EXP | 1 | 5 |
+| SP | 1 | 5 |
+| Adena | 1 | 20 |
 
 Adena runs four times faster than EXP because the village shops price their gear for a game where
-most Adena came from quests and from selling what monsters dropped, and the hunt has neither. A
-seeded run of every set up its village's ladder takes about 310 to 390 kills from level 1 to 20, and
-holds about 55,000 Adena at level 11 and 250,000 at level 16, where a Gladius costs 62,215 and a Long
-Sword 156,400.
+most Adena came from quests and from selling what monsters dropped, and the hunt has neither. At the
+private rates, a seeded run of every set up its village's ladder takes about 310 to 390 kills from
+level 1 to 20, and holds about 55,000 Adena at level 11 and 250,000 at level 16, where a Gladius
+costs 62,215 and a Long Sword 156,400.
 
-Example: a Young Keltir carrying 10 Adena pays **200**.
+Example: a Young Keltir carrying 10 Adena pays **10** at retail's rate and **200** at ×20.
 
 ## 23. Gear
 

@@ -1,6 +1,6 @@
 ---
 name: balance-study
-description: Measure a change to the game's balance with bench/ladder.exs and bench/compare.exs, against the bar, before and after. Use when asked to run the benchmarks or the bench, to measure, check or study balance, to compare two builds, and on your own after any change to a fight's numbers, a monster, an item, a skill, a price, a reward (EXP, SP, Adena), the trainer's list, or bench/ladder.exs itself.
+description: Measure a change to the game's balance with bench/ladder.exs and bench/compare.exs, against the bar, before and after. Use when asked to run the benchmarks or the bench, to measure, check or study balance, to compare two builds, and on your own after any change to a fight's numbers, a monster, an item, a skill, a price, a reward (EXP, SP, Adena), the private server rates, the trainer's list, or bench/ladder.exs itself.
 ---
 
 # Balance study
@@ -11,6 +11,17 @@ A change that moves a fight is measured, never guessed. The bar and the calls al
 Every block below runs from the repo root and leaves the shell there: variables do not survive
 between shell calls, so each block works its paths out again. Every Mix command carries
 `MIX_ENV=test`, since the dev server is usually up and the guard hook refuses a `:dev` build.
+
+## The rates
+
+The game is balanced at rules §22's **private rates**, EXP and SP ×5 and Adena ×20, and the bar,
+`docs/balance.md` and every reading are taken at them. Without them the game runs at retail's ×1.
+The bench plays whatever `.env.test` sets (`EXP_RATE`, `SP_RATE`, `ADENA_RATE`), and each reading
+opens with a `Rates:` line and keeps them in its JSON settings. Before reading one, check that line
+says ×5, ×5 and ×20, and if it does not, fix `.env.test` from `.env.test.example` and run it again.
+A change to the private rates themselves is a balance change like any other: measured before and
+after, written into rules §22's table and every env file in the same commit (`rules_test.exs` holds
+them together), and `docs/balance.md` rewritten from the reading.
 
 ## 1. Decide what to run
 
@@ -31,11 +42,13 @@ R=$PWD; W=$(dirname "$R")/$(basename "$R")-base   # beside the repo: live reload
 mkdir -p "$R/tmp/bench/readings"
 git worktree remove --force "$W" 2>/dev/null; git worktree prune
 git worktree add "$W" <commit before the change>   # HEAD if the change is uncommitted
-(cd "$W" && MIX_DEPS_PATH=$R/deps MIX_ENV=test nice -n 19 \
+(cd "$W" && ENV_FILE=$R/.env.test MIX_DEPS_PATH=$R/deps MIX_ENV=test nice -n 19 \
   mix run --no-start bench/ladder.exs --matrix "$R/tmp/bench/readings/<label>_base" --only "<sets>")
 ```
 
-The first run compiles every dependency into the worktree's own `_build/test`, which adds minutes.
+`ENV_FILE` hands the worktree the repo's `.env.test`, which git does not carry, so both readings play
+the private rates; `compare.exs` refuses two taken at different rates. The first run compiles every
+dependency into the worktree's own `_build/test`, which adds minutes.
 If Mix asks for `deps.get` there, the base commit's `mix.lock` differs: stop and say so. Never run
 `deps.get` with the shared `MIX_DEPS_PATH`, which would rewrite the deps under the running server.
 

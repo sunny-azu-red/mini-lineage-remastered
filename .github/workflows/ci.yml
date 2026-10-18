@@ -40,6 +40,10 @@ jobs:
       DB_USERNAME: postgres
       DB_PASSWORD: pass
       DB_DATABASE: lineage_remastered_test
+      # Rules §22's private rates, as .env.test.example sets them.
+      EXP_RATE: 5
+      SP_RATE: 5
+      ADENA_RATE: 20
       MIX_ENV: test
 
     steps:
@@ -112,6 +116,10 @@ jobs:
       DB_USERNAME: postgres
       DB_PASSWORD: pass
       DB_DATABASE: lineage_remastered_test
+      # Rules §22's private rates, as .env.test.example sets them.
+      EXP_RATE: 5
+      SP_RATE: 5
+      ADENA_RATE: 20
       PORT: 4002
       E2E_BASE_URL: http://localhost:4002
 

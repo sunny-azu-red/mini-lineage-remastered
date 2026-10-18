@@ -76,6 +76,21 @@ if level = System.get_env("LOG_LEVEL") do
   config :logger, level: String.to_existing_atom(level)
 end
 
+# Read at runtime, so a server changes its rates with a restart. Every environment reads them, the
+# suites and the bench included, so each plays at its env file's.
+rates =
+  for {kind, name} <- [exp: "EXP_RATE", sp: "SP_RATE", adena: "ADENA_RATE"],
+      value = System.get_env(name),
+      value != "" do
+    case Integer.parse(value) do
+      {times, ""} when times > 0 -> {kind, times}
+      _ -> raise "#{name} is #{inspect(value)}; a rate is a whole number above 0"
+    end
+  end
+
+# Merged into config.exs's, so a rate left unset stays at retail's.
+if rates != [], do: config(:mini_lineage, rates: rates)
+
 # A release does not serve unless told to: PHX_SERVER=true bin/mini_lineage start.
 if System.get_env("PHX_SERVER") do
   config :mini_lineage, MiniLineageWeb.Endpoint, server: true

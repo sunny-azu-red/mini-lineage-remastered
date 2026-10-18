@@ -4,7 +4,8 @@ What the village ladder costs and pays, read off `bench/ladder.exs`. The rules (
 what things cost; this says when a player can afford them. Every figure here was measured, never
 worked out by hand, and holds only for the rules it was measured against.
 
-**Measured** on rules §1 to §26 as they now stand: the fight of §20 on a line between the two,
+**Measured** at rules §22's private rates (EXP and SP ×5, Adena ×20, from `.env.test`), on rules
+§1 to §26 as they now stand: the fight of §20 on a line between the two,
 spells that take effect as their cast ends, the battle orders, and the first skills (a Fighter's weapon
 skills from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the
 Orc), Life Drain cast as

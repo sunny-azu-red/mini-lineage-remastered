@@ -10,11 +10,11 @@ read = fn path -> path |> File.read!() |> JSON.decode!() end
 before = read.(before_path)
 after_ = read.(after_path)
 
-# The orders may differ, being one of the things compared; the ladder may not.
-ladder = &Map.take(&1["settings"], ~w(top rest_below kept))
+# The orders may differ, being one of the things compared; the ladder and the rates may not.
+ladder = &Map.take(&1["settings"], ~w(top rest_below kept rates))
 
 if ladder.(before) != ladder.(after_),
-  do: raise("the two readings were taken on different ladders")
+  do: raise("the two readings were taken on different ladders or at different rates")
 
 # Deaths are weighed against the dice's noise for one count of runs, so both must have the same.
 runs = &(&1["rows"] |> Enum.map(fn row -> row["runs"] end) |> Enum.uniq())

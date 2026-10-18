@@ -27,6 +27,10 @@ config :mini_lineage, time_zone: "Europe/Bucharest"
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
+# Rules §22: retail's ×1, which rules_test.exs holds to the document. Every env file sets the private
+# rates the game is balanced at through EXP_RATE, SP_RATE and ADENA_RATE (runtime.exs).
+config :mini_lineage, rates: [exp: 1, sp: 1, adena: 1]
+
 # The footer's name for an unreleased build.
 config :mini_lineage, build_label: "development"
 

@@ -174,9 +174,9 @@ defmodule MiniLineage.Game.Actions do
   end
 
   defp reward(player, foe, ground, level) do
-    exp = Hunt.reward(:exp, foe.exp, level, foe.level)
-    sp = Hunt.reward(:sp, foe.sp, level, foe.level)
-    adena = Hunt.adena(foe)
+    exp = Hunt.reward(foe.exp, Rules.rate(:exp), level, foe.level)
+    sp = Hunt.reward(foe.sp, Rules.rate(:sp), level, foe.level)
+    adena = Hunt.adena(foe, Rules.rate(:adena))
 
     gained = %{
       Player.gain_experience(player, exp)

@@ -780,9 +780,6 @@ defmodule MiniLineage.Game.Rules do
                    lessons |> Enum.flat_map(&Map.get(@skill_weapons, &1.skill, [])) |> Enum.uniq()}
                 end)
 
-  # Rules §22: what the server multiplies a kill's pay by.
-  @rates %{exp: 5, sp: 5, adena: 20}
-
   def sets, do: @sets
   def towns, do: @towns
 
@@ -835,7 +832,9 @@ defmodule MiniLineage.Game.Rules do
   how far off an aggressive monster notices a character.
   """
   def reach(kind), do: Map.fetch!(@reach, kind)
-  def rate(kind), do: Map.fetch!(@rates, kind)
+
+  @doc "Rules §22: what this server multiplies a kill's pay by, the rules' own unless it sets others."
+  def rate(kind), do: :mini_lineage |> Application.fetch_env!(:rates) |> Keyword.fetch!(kind)
 
   def item_words, do: @item_words
   def part(slot), do: Map.fetch!(@parts, slot)
