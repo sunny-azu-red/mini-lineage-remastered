@@ -59,8 +59,9 @@ defmodule MiniLineage.Game.Narratives do
     draw: "{them} draw {their} bow",
     ready: "{them} close in for the next blow",
     begin: "{them} begin casting {skill}",
-    # Ends a round's line while a cast goes on: "the Orc hits you for 18 as you cast".
-    casting: "as {them} cast",
+    # Leads a round's line while a cast goes on, so it is never read as the monster's:
+    # "as you cast, the Orc hits you for 18".
+    casting: "as {them} cast,",
     foe_begin: "the {monster} begins casting {skill}",
     closing: "the {monster} runs at {object}",
     advancing: "{them} run at the {monster}",

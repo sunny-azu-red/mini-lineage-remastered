@@ -547,7 +547,7 @@ this far (a monster's spells as far as §19 gives):
   it starts: round 1 at 0.0s, round 8 at 11.7s. Casts and reuses count on it, so a Power Strike
   resting 10.4 seconds after round 1 comes round again in round 8. The log tells what changes,
   a cast or a run once as it begins, so a round with nothing new in it is left out and the next
-  one written says when it starts; a round with something else in it ends "as you cast" while a
+  one written says when it starts; a round with something else in it begins "as you cast" while a
   cast goes on. The hunt takes none of the
   world's time, where auras fade, the character rests and being in combat counts down.
 - **The opening:** a Mystic pulls the monster from a spell's reach if it can pay for one; a Fighter,

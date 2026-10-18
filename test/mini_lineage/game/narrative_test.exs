@@ -133,7 +133,7 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       assert five =~ "Round 5 &bull; 6.7s: you hit for 9 ("
       # A round with something else in it says why the character did nothing.
-      assert seven =~ "Round 7 &bull; 10.0s: the Goblin Scout hits you for 5 as you cast ("
+      assert seven =~ "Round 7 &bull; 10.0s: as you cast, the Goblin Scout hits you for 5 ("
     end
 
     test "a side whose every swing missed misses so many times" do

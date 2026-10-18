@@ -90,7 +90,7 @@ defmodule MiniLineage.Game.Narrative do
           parts = events |> merge_swings() |> Enum.map(&event(&1, foe, bow?))
 
           round_label(round) <>
-            join(parts) <> still_casting(casting) <> " " <> standing(standing, foe, max_hp) <> "."
+            still_casting(casting) <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
       end)
 
     [met | before(before, max_hp)] ++ rounds
@@ -111,7 +111,7 @@ defmodule MiniLineage.Game.Narrative do
   defp quiet?(event), do: event == :casting or match?({:standing, _, _}, event)
 
   defp still_casting([]), do: ""
-  defp still_casting([:casting]), do: " " <> fill(:casting, %{})
+  defp still_casting([:casting]), do: fill(:casting, %{}) <> " "
 
   defp going_on?(:waiting, _before), do: true
   defp going_on?(event, before) when event in [:closing, :advancing], do: event in before
