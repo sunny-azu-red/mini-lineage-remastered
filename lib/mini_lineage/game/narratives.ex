@@ -47,8 +47,8 @@ defmodule MiniLineage.Game.Narratives do
       ~s({them} cast {skill} for <span class="magic">{amount}</span> and mend <span class="regen">{healed} HP</span>),
     drain_critical:
       ~s({their} {skill} strikes true for <span class="crit">{amount}</span> and mends <span class="regen">{healed} HP</span>),
-    ignite: "{them} set it burning with {skill}",
-    burn: ~s(it burns for <span class="magic">{amount}</span>),
+    ignite: "{them} set the {monster} burning with {skill}",
+    burn: ~s(the flames eat <span class="magic">{amount}</span>),
     foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount}</span>),
     foe_critical:
       ~s(the {monster} lands a critical hit on {object} for <span class="hp">{amount}</span>),
@@ -58,11 +58,9 @@ defmodule MiniLineage.Game.Narratives do
     foe_miss: "the {monster} misses",
     draw: "{them} draw {their} bow",
     ready: "{them} close in for the next blow",
-    casting: "{them} keep casting",
     begin: "{them} begin casting {skill}",
     foe_begin: "the {monster} begins casting {skill}",
     closing: "the {monster} runs at {object}",
-    waiting: "{them} wait for the {monster} to come",
     advancing: "{them} run at the {monster}",
     standing:
       ~s|<span class="muted">(the {monster} at <span class="hp">{foe}</span> of {foe_max} HP, {them} at <span class="hp">{hp}</span> of {max})</span>|,
@@ -72,6 +70,8 @@ defmodule MiniLineage.Game.Narratives do
     # Two or more swings by one side in a round, each told in order.
     swings: "{them} swing {times} for {outcomes}",
     foe_swings: "the {monster} swings {times} at {object} for {outcomes}",
+    misses: "{them} miss {times}",
+    foe_misses: "the {monster} misses {times}",
     swing_hit: ~s(a hit of <span class="attack">{amount}</span>),
     swing_critical: ~s(a critical hit of <span class="crit">{amount}</span>),
     swing_miss: "a miss",
@@ -81,8 +81,7 @@ defmodule MiniLineage.Game.Narratives do
     foe_swing_perfect: "a blow {their} shield turns aside",
     heal: ~s({them} cast {skill} and mend <span class="regen">{amount} HP</span>),
     aura: ~s({them} raise {their} <span class="buff">{skill}</span>),
-    toggle:
-      ~s({them} let out a <span class="buff">{skill}</span>, and {their} blows grow heavier),
+    toggle: ~s({them} let out a <span class="buff">{skill}</span> to make {their} blows heavier),
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
     poison: ~s(the poison eats <span class="magic">{amount}</span>),

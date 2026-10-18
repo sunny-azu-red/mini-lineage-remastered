@@ -97,6 +97,60 @@ defmodule MiniLineage.Game.NarrativeTest do
       for line <- rounds, do: assert(unrendered(line) == [], line)
     end
 
+    test "says a cast or a run once as it begins, and leaves out a round with nothing new" do
+      foe = Rules.monster("Goblin Scout")
+      ground = Rules.ground("obelisk-of-victory")
+
+      log = [
+        {1, {:begin, "Wind Strike"}},
+        {2, :casting},
+        {3, {:cast, "Wind Strike", 112, false}},
+        {3, :closing},
+        {4, :waiting},
+        {4, :closing},
+        {5, {:blow, 9, false}},
+        {5, :closing}
+      ]
+
+      log = log ++ for(round <- 1..5, do: {round, {:standing, 90, 20}})
+
+      [_met | rounds] =
+        foe
+        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
+        |> Enum.map(&Narrative.alert/1)
+
+      plain = Enum.map(rounds, &String.replace(&1, ~r/<[^>]+>/, ""))
+
+      assert [one, three, five] = plain
+      assert one =~ "Round 1 &bull; 0.0s: you begin casting Wind Strike ("
+
+      assert three =~
+               "Round 3 &bull; 3.3s: you cast Wind Strike for 112, and the Goblin Scout runs at you ("
+
+      assert five =~ "Round 5 &bull; 6.7s: you hit for 9 ("
+    end
+
+    test "a side whose every swing missed misses so many times" do
+      foe = Rules.monster("Vaiss Orc")
+      ground = Rules.ground("obelisk-of-victory")
+
+      log = [
+        {1, :miss},
+        {1, :miss},
+        {1, :foe_miss},
+        {1, :foe_miss},
+        {1, :foe_miss},
+        {1, {:standing, 90, 20}}
+      ]
+
+      [_met, one] =
+        foe
+        |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
+        |> Enum.map(&Narrative.alert/1)
+
+      assert one =~ "you miss twice, and the Vaiss Orc misses 3 times <span"
+    end
+
     test "writes every event a skill makes, open-voiced and with no brace left" do
       foe = Rules.monster("Young Keltir")
       ground = Rules.ground("obelisk-of-victory")
@@ -115,11 +169,13 @@ defmodule MiniLineage.Game.NarrativeTest do
         {4, :closing},
         {4, :advancing},
         {4, {:begin, "Wind Strike"}},
-        {4, {:foe_begin, "NPC Windstrike - Magic 1"}}
+        {4, {:foe_begin, "NPC Windstrike - Magic 1"}},
+        {5, {:cast, "Chill Flame", 0, false}},
+        {6, {:burn, 33}}
       ]
 
       # Every round ends on where both stand, as the engine writes it.
-      log = log ++ for(round <- 1..4, do: {round, {:standing, 90, 20}})
+      log = log ++ for(round <- 1..6, do: {round, {:standing, 90, 20}})
 
       lines =
         foe
@@ -142,13 +198,15 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ ~r/Vampiric Touch strikes true for .*30.* and mends .*12.* HP/
       assert text =~ ~r/cast Life Drain for .*9<\/span>,/
       assert text =~ "raise your"
-      assert text =~ "Soul Cry"
+      assert text =~ ~r/you let out a .*Soul Cry.* to make your blows heavier/
       assert text =~ "lay Curse: Poison on the Young Keltir"
       assert text =~ "the poison eats"
       assert text =~ "Wind Shackle slides off the Young Keltir"
       assert text =~ "drink a Lesser Healing Potion and mend"
-      assert text =~ "you wait for the Young Keltir to come"
+      refute text =~ "wait for"
       assert text =~ "the Young Keltir runs at you"
+      assert text =~ "you set the Young Keltir burning with Chill Flame"
+      assert text =~ ~r/the flames eat .*33/
       assert text =~ "you run at the Young Keltir"
       assert text =~ "you begin casting Wind Strike"
       assert text =~ "the Young Keltir begins casting Wind Strike"
