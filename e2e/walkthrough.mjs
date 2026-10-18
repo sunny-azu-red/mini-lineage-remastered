@@ -514,7 +514,7 @@ try {
     check('looking for action is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
         await text('#fight-outcome'));
     check('...on the page itself, round by round with both sides\' HP, not in an alert',
-        await page.locator('#flash').count() === 0 && /Round 1: .* HP, you at/.test(await text('#fight-log')),
+        await page.locator('#flash').count() === 0 && /Round 1 • 0\.0s: .* HP, you at/.test(await text('#fight-log')),
         (await text('#fight-log')).slice(0, 160));
     await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });

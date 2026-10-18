@@ -204,6 +204,20 @@ defmodule MiniLineage.Game.HuntTest do
       assert shots == trunc(Hunt.max_rounds() * 249 / 610)
     end
 
+    test "a skill comes round again in the first round starting once its reuse has run" do
+      Rng.put_source(fn -> 0.0 end)
+      player = striker()
+      stats = Player.stats(player)
+      reuse = Hunt.reuse_ms(Rules.skill("Power Strike"), stats)
+      result = Hunt.fight(stats, player, Player.known_skills(player), dummy("Young Keltir"))
+
+      [first, second | _] = for {round, {:skill, "Power Strike", _}} <- result.log, do: round
+      since = &(Hunt.round_starts_ms(&1) - Hunt.round_starts_ms(first))
+
+      assert since.(second) >= reuse
+      assert since.(second - 1) < reuse
+    end
+
     test "a spell takes its cast time, during which its caster does nothing else" do
       Rng.put_source(fn -> 0.0 end)
       {stats, bars} = target()

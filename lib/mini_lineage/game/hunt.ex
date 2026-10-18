@@ -30,6 +30,10 @@ defmodule MiniLineage.Game.Hunt do
   @ranged @spells ++ [:poison, :shackle]
 
   def round_ms, do: @round_ms
+
+  @doc "§20: when a round starts on the fight's own clock, which starts at the pull."
+  def round_starts_ms(round), do: (round - 1) * @round_ms
+
   def max_rounds, do: @max_rounds
   def burn_ms, do: @burn_ms
   @doc "§19: Ice Bolt's slow, what it leaves of a swing and a run, and for how long."

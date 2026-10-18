@@ -34,7 +34,7 @@ defmodule MiniLineage.Game.Narratives do
   @met ~s({they} meet {article} {monster}, level <span class="level">{level}</span>, on the {ground}.)
   # Rules §20: an aggressive monster finds the character first.
   @noticed ~s({Article} {monster}, level <span class="level">{level}</span>, notices {object} on the {ground} and comes at {object}.)
-  # Each follows "Round N:", so its subject is {them}, the lowercase one.
+  # Each follows "Round N • 0.0s:", so its subject is {them}, the lowercase one.
   @log %{
     blow: ~s({them} hit for {amount}),
     critical: ~s({them} land a critical hit for <span class="crit">{amount}</span>),

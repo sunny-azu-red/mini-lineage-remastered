@@ -541,6 +541,10 @@ this far (a monster's spells as far as §19 gives):
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round.
+- **The fight keeps its own clock,** starting at the pull, and each round is written with the time
+  it starts: round 1 at 0.0s, round 8 at 11.7s. Casts and reuses count on it, so a Power Strike
+  resting 10.4 seconds after round 1 comes round again in round 8. The hunt takes none of the
+  world's time, where auras fade, the character rests and being in combat counts down.
 - **The opening:** a Mystic pulls the monster from a spell's reach if it can pay for one; a Fighter,
   or a Mystic that cannot, from its weapon's, its bow's or else its blows'. An aggressive monster
   (§18) is not pulled: it notices the character from 500 and comes at it, acting first in the first

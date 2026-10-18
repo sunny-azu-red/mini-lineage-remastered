@@ -3,7 +3,7 @@ defmodule MiniLineage.Game.Narrative do
   Lines told with their pronouns open (`{they}`, `{their}`…), closed for whoever reads them: "you"
   for the run itself, "they" for anybody else.
   """
-  alias MiniLineage.Game.{Format, Narratives, Rules}
+  alias MiniLineage.Game.{Format, Hunt, Narratives, Rules}
 
   @doc "Who a run set out as, and from where."
   def build_began(race, class_name) do
@@ -87,10 +87,18 @@ defmodule MiniLineage.Game.Narrative do
           {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
           parts = events |> merge_swings() |> Enum.map(&event(&1, foe, bow?))
 
-          "Round #{round}: " <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
+          round_label(round) <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
       end)
 
     [met | before(before, max_hp)] ++ rounds
+  end
+
+  # §20: each round says when it starts on the fight's clock, in the tenths a skill row's cast and
+  # reuse are written in, so a reuse can be read off the log.
+  defp round_label(round) do
+    seconds = Format.tenths(round(Hunt.round_starts_ms(round) / 100))
+
+    ~s(Round #{round} <span class="delimiter">&bull;</span> <span class="speed">#{seconds}s</span>: )
   end
 
   # Rules §20: the auras raised and heals cast before the pull, as one line.

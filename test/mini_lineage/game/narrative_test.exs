@@ -77,20 +77,23 @@ defmodule MiniLineage.Game.NarrativeTest do
         |> Narrative.build_fight_log(ground, log, %{max_hp: 100, bow?: false}, {[], 100})
         |> Enum.map(&Narrative.alert/1)
 
-      plain = fn line -> String.replace(line, ~r/<[^>]+>/, "") end
+      plain = fn line ->
+        line |> String.replace(~r/<[^>]+>/, "") |> String.replace("&bull;", "•")
+      end
+
       [one, two, three, four, five, six] = Enum.map(rounds, plain)
 
-      assert one =~ "Round 1: you hit for 10 and 9 ("
+      assert one =~ "Round 1 • 0.0s: you hit for 10 and 9 ("
 
       assert two =~
-               "Round 2: you swing twice for a critical hit of 65 and a miss, and the Vaiss Orc swings twice at you for a hit of 12 and a miss ("
+               "Round 2 • 1.7s: you swing twice for a critical hit of 65 and a miss, and the Vaiss Orc swings twice at you for a hit of 12 and a miss ("
 
       assert three =~
                "the Vaiss Orc swings 3 times at you for a hit of 8 that your shield catches, a blow your shield turns aside and a critical hit of 30 ("
 
       assert four =~ "the Vaiss Orc casts HP Drain on you for 20 and mends 4 HP"
-      assert five =~ "Round 5: you hit for 11, and the Vaiss Orc hits you for 7 ("
-      assert six =~ "Round 6: you land a critical hit for 40, and the Vaiss Orc misses ("
+      assert five =~ "Round 5 • 6.7s: you hit for 11, and the Vaiss Orc hits you for 7 ("
+      assert six =~ "Round 6 • 8.3s: you land a critical hit for 40, and the Vaiss Orc misses ("
       for line <- rounds, do: assert(unrendered(line) == [], line)
     end
 

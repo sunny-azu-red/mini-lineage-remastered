@@ -18,6 +18,10 @@ roadmap wins, and decisions do get reversed on purpose (classes and the inventor
 - **A new player understands the first click**: spawn, one-click hunt, Adena, buy, move on to
   Gludio. Complexity (rounds, choices, skills in use) belongs to bosses and dungeons, up to
   Antharas.
+- **The hunt stays instant and shows its own clock** (2026-10-19). Each round of the log says when it
+  starts, so a skill's "Reuse 10.4s." can be read off it. Time inside a fight is the fight's, in a
+  hunt and in a boss fight alike, however long the player takes over a round, so a skill's times mean
+  the same in both.
 - **Every place keeps a reason to visit** once its grounds are outlevelled: the home village teaches
   skills and changes class, towns sell buffs and better gear, player shops sell every shot.
 - **A village ground is one ladder under one nostalgic name** (Obelisk of Victory, Elven Fortress,

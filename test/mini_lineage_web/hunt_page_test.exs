@@ -96,7 +96,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     refute has_element?(view, "#flash")
     assert has_element?(view, "#fight-outcome", "cut down")
     assert has_element?(view, "#fight-log li", "You meet")
-    assert has_element?(view, "#fight-log li", "Round 1:")
+    assert has_element?(view, "#fight-log li", "Round 1 • 0.0s:")
     assert has_element?(view, "#fight-log li", "HP, you at")
     assert has_element?(view, "#screen[data-screen=hunt]")
     player = stored(session)

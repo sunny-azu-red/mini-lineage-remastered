@@ -216,6 +216,8 @@ The slower fights, for bosses and dungeons.
 
 - Rounds, with speed deciding how many blows and spells each side gets per round, and a choice of
   skill each round.
+- The hunt's clock (rules §20): each round 1⅔ seconds of fight time however long the player
+  thinks, so a cast and a reuse count in rounds as they do in the hunt.
 - Positions drawn at random: front, side or behind.
 - Spells that fail more often against higher-level targets.
 - Debuffs, resisted by the attribute that guards against them.
@@ -238,3 +240,6 @@ Each is decided when its system's rule is written, not before.
 
 - **What a class transfer asks.** In Lineage II it was a quest. Here it might be only a level and a
   fee.
+- **Whose clock an aura runs on in a long fight.** Its 2 minutes are the world's today, which an
+  instant hunt never notices; a boss fight of 72 rounds is 2 minutes of fight time, and a player
+  thinking over each round would watch the world's run out first.
