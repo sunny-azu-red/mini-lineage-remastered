@@ -286,13 +286,20 @@ defmodule MiniLineageWeb.Controls do
 
   @doc """
   An item as every page names it: its emoji, its name (a stack with its count, rules §26), then
-  for a weapon or shield the hands it takes (rules §23).
+  for a weapon or shield the hands it takes (rules §23). `short: true` is the sidebar's: the short
+  name where there is one, and a stack's count left to a figure of its own.
   """
-  def item_label(item),
-    do: Enum.join(Enum.reject([item_emoji(item), item_name(item), hands(item)], &is_nil/1), " ")
+  def item_label(item, opts \\ []),
+    do:
+      Enum.join(
+        Enum.reject([item_emoji(item), item_name(item, opts), hands(item)], &is_nil/1),
+        " "
+      )
 
-  defp item_name(%{potion?: true} = item), do: "#{item.name} ×#{item.count}"
-  defp item_name(item), do: item.name
+  # A trader's stock carries no count, so only what is carried matches as a stack.
+  defp item_name(item, short: true), do: item.short
+  defp item_name(%{potion?: true} = item, _opts), do: "#{item.name} ×#{item.count}"
+  defp item_name(item, _opts), do: item.name
 
   defp hands(%{slot: :weapon, hands: 2}), do: "👐"
   defp hands(%{slot: slot}) when slot in [:weapon, :shield], do: "✋"

@@ -68,8 +68,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
 - **The sidebar** (level and name, the name linking to `/character`, the vitals, HP's and MP's rows
-  pulsing in their bar's hue under a quarter, then the Inventory, its Adena beside an Open link to
-  `/inventory`) is one fixed-width `.side` column, drawn in town and beside the inventory. One
+  pulsing in their bar's hue under a quarter, then the Consumables, each stack carried with its
+  count or "None carried", then the Inventory, its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town and beside the inventory. One
   breakpoint stacks it.
 - **A new component, hook or shared control is written into this file in the change that adds it.**
   Before writing one, look here and in `Controls`, and extend what exists with an option instead.
@@ -320,7 +320,7 @@ Each of these is here because it was got wrong once.
   to focus one). Opening by hand scrolls the panel into view; restoring or patching never moves the
   page. The chevron's transition waits for the `data-ready` the hook sets two frames in. A side
   panel never folds beside the main one; under the 640px breakpoint a collapsible one does (today
-  only the Inventory, opening unfolded). `.folds` would fold one everywhere; nothing uses it yet.
+  the Consumables and the Inventory, each opening unfolded). `.folds` would fold one everywhere; nothing uses it yet.
 - **What the reader chooses is kept as `<kind>:<id>` through `hooks/kept.js`**, whose `recall`,
   `recallAll` and `keep` are the only code touching `localStorage`: `panel:<id>` for a fold,
   `sound:effects` while sound is off, `table:<id>` for a remembered sort (handed over on connect). A new thing that remembers takes a kind and writes no storage code. Hand a kind to the

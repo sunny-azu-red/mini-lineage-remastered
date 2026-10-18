@@ -168,6 +168,21 @@ defmodule MiniLineageWeb.Layouts do
         </div>
       </Controls.panel>
 
+      <%!-- What is used up, to be seen without opening the bag. Not a slot, so its emptiness names
+           nothing the character might be missing. --%>
+      <Controls.panel id="consumables" title="Consumables" icon="🫙" body_class="rows" collapsible>
+        <div :if={consumables(@view.items) == []} class="stat-row">
+          <span class="stat-value muted">None carried</span>
+        </div>
+        <div :for={item <- consumables(@view.items)} class="stat-row" id={"consumable-#{item.id}"}>
+          <span class="stat-value" title={item.name}>{Controls.item_label(item, short: true)}</span>
+          <span class="stat-value row-end">×<Controls.figure
+            key={"consumable-#{item.id}"}
+            value={item.count}
+          /></span>
+        </div>
+      </Controls.panel>
+
       <%!-- Folds on a phone, open until the reader says otherwise: theirs on every screen, so kept. --%>
       <Controls.panel
         id="inventory"
@@ -208,6 +223,9 @@ defmodule MiniLineageWeb.Layouts do
         item.equipped and item.slot == slot,
         do: Controls.item_label(item)
       )
+
+  # Rules §26: what stacks is what is used up, a potion today and a soulshot or spiritshot later.
+  defp consumables(items), do: Enum.filter(items, & &1.potion?)
 
   # Under a quarter, a bar pulses: too little HP to live through the next fight, or MP to cast in it.
   defp low?(value, of), do: value * 4 < of

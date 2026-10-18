@@ -44,7 +44,7 @@ defmodule MiniLineageWeb.StatNamesTest do
 
     assert Snapshot.about(Rules.item("Buckler")) == "Shield P. Def. 67, Block 20%, -8 Evasion"
     assert Snapshot.about(Rules.item("Cotton Tunic")) =~ ~r/^P\. Def\. \d+, \+38 Max MP$/
-    assert Snapshot.about(Rules.item("Lesser Healing Potion")) == "Mends 112 HP at once"
+    assert Snapshot.about(Rules.item("Lesser Healing Potion")) == "Mends 112 HP instantly"
   end
 
   # The set knowing every line its trainer teaches, at level 1.

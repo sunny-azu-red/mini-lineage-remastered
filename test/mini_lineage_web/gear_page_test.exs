@@ -358,6 +358,21 @@ defmodule MiniLineageWeb.GearPageTest do
 
     refute has_element?(view, "#inventory", "Lesser Healing Potion")
 
+    assert has_element?(
+             view,
+             ~s(#consumable-#{potions.id} [title="Lesser Healing Potion"]),
+             "🧪 Lesser Healing"
+           )
+
+    refute has_element?(view, "#consumables", "Lesser Healing Potion")
+
+    assert has_element?(
+             view,
+             ~s(#consumable-#{potions.id} [data-key="consumable-#{potions.id}"][data-value="10"])
+           )
+
+    refute has_element?(view, "#consumables", "None carried")
+
     Characters.mutate(session, &{%{&1 | health: 10}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")
     drink = "drink:#{potions.id}"
@@ -368,6 +383,11 @@ defmodule MiniLineageWeb.GearPageTest do
 
     assert stored(session).health == 10 + 112
     assert carried(session, "Lesser Healing Potion").count == 9
+
+    assert has_element?(
+             view,
+             ~s(#consumables [data-key="consumable-#{potions.id}"][data-value="9"])
+           )
   end
 
   test "the character page's orders set the share of HP a fight drinks below" do

@@ -53,6 +53,14 @@ defmodule MiniLineageWeb.StatusPanelTest do
     assert LazyHTML.query(under, "#mp-row.low-mp") |> Enum.count() == 1
   end
 
+  test "carrying nothing to use up, its Consumables say so and name nothing missing", %{
+    html: html
+  } do
+    consumables = html |> LazyHTML.from_fragment() |> LazyHTML.query("#consumables .panel-body")
+
+    assert text(LazyHTML.to_html(consumables)) |> String.trim() == "None carried"
+  end
+
   test "a new character's purse holds nothing", %{html: _html} do
     {player, _} = Player.initialize(%Player{}, Constants.race(0), :mystic, "Sunny")
 

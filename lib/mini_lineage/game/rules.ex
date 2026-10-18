@@ -653,7 +653,8 @@ defmodule MiniLineage.Game.Rules do
          )
 
   # Rules §26: the potions, each healing its whole amount at once. Every gear stat is there and
-  # empty, so nothing reading an item has to ask which it holds.
+  # empty, so nothing reading an item has to ask which it holds. `short` is ours, for the sidebar,
+  # whose 210px a full name and its count overflow.
   @potions (
              blank =
                Map.new(
@@ -662,12 +663,15 @@ defmodule MiniLineage.Game.Rules do
                  &{&1, nil}
                )
 
-             for {name, heals, price, sold} <- [{"Lesser Healing Potion", 112, 90, :village}],
+             for {name, short, heals, price, sold} <- [
+                   {"Lesser Healing Potion", "Lesser Healing", 112, 90, :village}
+                 ],
                  into: %{},
                  do:
                    {name,
                     Map.merge(blank, %{
                       name: name,
+                      short: short,
                       kind: :potion,
                       slot: :potion,
                       heals: heals,
@@ -866,7 +870,10 @@ defmodule MiniLineage.Game.Rules do
   def items, do: @items
   def potions, do: @potions
 
-  @doc "Rules §26: a potion stacks, one place in the inventory however many it holds."
+  @doc """
+  Rules §26: a potion stacks, one place in the inventory however many it holds, bought by the lot
+  and sold whole. A soulshot or spiritshot stacks the same way when it comes, by a clause here.
+  """
   def stacks?(item), do: item.kind == :potion
   def kit(race_id, path), do: Map.fetch!(@kits, {race_id, path})
   def capacity, do: @capacity

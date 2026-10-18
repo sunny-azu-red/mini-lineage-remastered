@@ -222,6 +222,11 @@ try {
         labels.join(',') === 'HP,MP,XP' && (await text('#xp-bar ~ .bar-text')) === '0%',
         `${labels} / ${await text('#xp-bar ~ .bar-text')}`);
     check('...and an empty purse', born.adena === 0, String(born.adena));
+    check('...and Consumables between the vitals and the Inventory, saying only that none are carried',
+        (await page.locator('#sidebar > .panel').evaluateAll((panels) => panels.map((p) => p.id).slice(1))).join()
+            === 'consumables,inventory'
+        && (await text('#consumables .panel-body')) === 'None carried',
+        await text('#consumables'));
     check('...resting, as a character with nothing to fight always is',
         await page.locator('#effects [data-effect-id="resting"]').count() === 1);
 
@@ -659,8 +664,12 @@ try {
         (await state()).adena === wallet - 768 - 900, String((await state()).adena));
     await page.click('#header-link');
     await onScreen('town');
-    check('...which the sidebar leaves to the inventory', !/Potion/.test(await text('#inventory')),
-        await text('#inventory'));
+    check('...which the sidebar counts among its Consumables and leaves out of its Inventory',
+        /^🧪 Lesser Healing\s*×10$/.test(await text('#consumables .panel-body'))
+        && await page.locator('#consumables [title="Lesser Healing Potion"]').count() === 1
+        && await page.locator('#consumables [data-key^="consumable-"][data-value="10"]').count() === 1
+        && !/Potion/.test(await text('#inventory')),
+        `${await text('#consumables')} / ${await text('#inventory')}`);
     await page.click('#character-name a');
     await onScreen('character');
     check('...and the character page\'s orders drink them below half HP to begin with',
@@ -672,8 +681,47 @@ try {
     const lowered = await page.locator('#potion-share', { hasText: 'below 30%' })
         .waitFor({ timeout: 5000 }).then(() => true, () => false);
     check('...and the player can lower the share', lowered, await text('#potion-share'));
+    await page.selectOption('#orders-form select', 'potion:70');
+    await page.click('#orders-form button');
+    await page.locator('#potion-share', { hasText: 'below 70%' }).waitFor({ timeout: 5000 });
     await page.click('#header-link');
     await onScreen('town');
+
+    // A fight drinks below 70% at the start of every round, so at half HP it drinks at least once,
+    // whatever it meets; the sidebar's figure moves, which is what makes AnimatedValues count it.
+    // Twenty, as climbing back to 70% has drunk five, so the stack outlasts any fight.
+    const stackKey = await page.getAttribute('#consumables [data-key^="consumable-"]', 'data-key');
+    await page.selectOption('#travel-form select', 'trader');
+    await page.click('#travel-form button');
+    await onScreen('trader');
+    await page.selectOption('#trader-form select', 'trader-magic');
+    await page.click('#trader-form button');
+    await onScreen('trader-magic');
+    await page.selectOption('#buy-form select', 'Lesser Healing Potion|10');
+    await page.click('#buy-form button');
+    await page.waitForFunction((key) =>
+        document.querySelector(`#consumables [data-key="${key}"]`)?.dataset.value === '20', stackKey, { timeout: 5000 });
+    await page.click('#header-link');
+    await onScreen('town');
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.type('half');
+    await page.waitForFunction(() => {
+        const figure = (key) => Number(document.querySelector(`#sidebar [data-key="${key}"]`)?.dataset.value);
+        return figure('hp') < figure('max-hp') * 0.7;
+    }, null, { timeout: 5000 });
+    await page.selectOption('#travel-form select', 'hunt');
+    await page.click('#travel-form button');
+    await onScreen('hunt');
+    await page.click('#hunt-button');
+    await page.waitForSelector('#fight-outcome', { timeout: 5000 });
+    // Read, not waited for: a stack drunk dry leaves no figure, and that is no count.
+    const left = await page.evaluate((key) =>
+        document.querySelector(`#consumables [data-key="${key}"]`)?.dataset.value, stackKey);
+    check('a fight that drinks moves the stack\'s own figure in the sidebar, which counts it down',
+        left !== undefined && Number(left) < 20, `${left} left under ${stackKey}`);
+    await page.click('#retreat-button');
+    await onScreen('town');
+    await page.waitForSelector('#effects [data-effect-id="combat"]', { state: 'detached', timeout: 10000 });
 
     // ---- the guild (rules §25) ------------------------------------------------------------------
     check('the town leads to the set\'s own guild by its name',

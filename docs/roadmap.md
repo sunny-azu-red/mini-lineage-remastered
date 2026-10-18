@@ -150,6 +150,9 @@ Built with the first hunt (rules §23 and §24).
   its whole part of the body.
 - **The sidebar's Inventory panel shows what is equipped and the Adena,** with one link to the
   inventory page beside the purse.
+- **The sidebar's Consumables panel, above it, counts every stack carried,** so potions (and shots,
+  when they come) are seen without opening the bag. It is not a slot, so empty it says only that
+  nothing is carried, never what is missing.
 - **The inventory page** holds everything carried, equipped or not, puts it on or takes it off,
   drinks a potion and destroys what isn't wanted. The share of HP a fight drinks below (rules §26)
   is a battle order, on the character page.
@@ -169,7 +172,10 @@ Built with the first hunt (rules §23 and §24).
 - Shields that can block a blow, adding their defence to it (rules §23, built), the chance shown
   beside P. Def.
 - Grades (D, C, B, A, S) and a penalty for wearing gear above your level.
-- Soulshots and spiritshots for stronger blows and spells, bought only from player shops.
+- Soulshots and spiritshots for stronger blows and spells, bought only from player shops. They stack
+  as a potion does (rules §26): one place in the bag however many, bought by the lot, sold whole,
+  counted in the Consumables panel. Only the two, with no blessed spiritshot: 🔶 a soulshot and 🔷 a
+  spiritshot, one shape for one mechanism and Lineage II's crystal colours to tell them apart.
 - Potions that mend at once (rules §26, built): the Lesser Healing Potion in the villages; better
   potions and potions for MP from the Town of Gludio on, each town's trader its own.
 
