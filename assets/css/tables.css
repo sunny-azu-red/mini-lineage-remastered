@@ -101,8 +101,8 @@ th.num {
 }
 
 /* What the reader cannot learn next: a lesson above its level or after one not yet learned. Its
-   gold and SP mute with it. */
-.data-table tbody tr.locked td {
+   gold and SP mute with it, and so does its bullet, which colours itself rather than inheriting. */
+.data-table tbody tr.locked :is(td, td *) {
     color: var(--text-muted);
 }
 
