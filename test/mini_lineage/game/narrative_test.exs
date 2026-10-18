@@ -109,10 +109,14 @@ defmodule MiniLineage.Game.NarrativeTest do
         {4, :waiting},
         {4, :closing},
         {5, {:blow, 9, false}},
-        {5, :closing}
+        {5, :closing},
+        {6, {:begin, "Ice Bolt"}},
+        {7, :casting},
+        {7, {:foe_blow, 5, false, nil}},
+        {8, :casting}
       ]
 
-      log = log ++ for(round <- 1..5, do: {round, {:standing, 90, 20}})
+      log = log ++ for(round <- 1..8, do: {round, {:standing, 90, 20}})
 
       [_met | rounds] =
         foe
@@ -121,13 +125,15 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       plain = Enum.map(rounds, &String.replace(&1, ~r/<[^>]+>/, ""))
 
-      assert [one, three, five] = plain
+      assert [one, three, five, _six, seven] = plain
       assert one =~ "Round 1 &bull; 0.0s: you begin casting Wind Strike ("
 
       assert three =~
                "Round 3 &bull; 3.3s: you cast Wind Strike for 112, and the Goblin Scout runs at you ("
 
       assert five =~ "Round 5 &bull; 6.7s: you hit for 9 ("
+      # A round with something else in it says why the character did nothing.
+      assert seven =~ "Round 7 &bull; 10.0s: the Goblin Scout hits you for 5 as you cast ("
     end
 
     test "a side whose every swing missed misses so many times" do

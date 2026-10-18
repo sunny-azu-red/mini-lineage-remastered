@@ -86,9 +86,11 @@ defmodule MiniLineage.Game.Narrative do
       |> Enum.map(fn
         {round, events} ->
           {standing, events} = Enum.split_with(events, &match?({:standing, _, _}, &1))
+          {casting, events} = Enum.split_with(events, &(&1 == :casting))
           parts = events |> merge_swings() |> Enum.map(&event(&1, foe, bow?))
 
-          round_label(round) <> join(parts) <> " " <> standing(standing, foe, max_hp) <> "."
+          round_label(round) <>
+            join(parts) <> still_casting(casting) <> " " <> standing(standing, foe, max_hp) <> "."
       end)
 
     [met | before(before, max_hp)] ++ rounds
@@ -96,16 +98,22 @@ defmodule MiniLineage.Game.Narrative do
 
   # §20: a cast or a run is told once, as it begins, so a round left with nothing new is not
   # written; no HP moves without an event of its own, so its standing is the last one written.
+  # A cast still going on is told only beside something else, to say why the character did nothing.
   defp news(rounds) do
     rounds
     |> Enum.map_reduce([], fn {round, events}, before ->
       {{round, Enum.reject(events, &going_on?(&1, before))}, events}
     end)
     |> elem(0)
-    |> Enum.reject(fn {_round, events} -> Enum.all?(events, &match?({:standing, _, _}, &1)) end)
+    |> Enum.reject(fn {_round, events} -> Enum.all?(events, &quiet?/1) end)
   end
 
-  defp going_on?(event, _before) when event in [:casting, :waiting], do: true
+  defp quiet?(event), do: event == :casting or match?({:standing, _, _}, event)
+
+  defp still_casting([]), do: ""
+  defp still_casting([:casting]), do: " " <> fill(:casting, %{})
+
+  defp going_on?(:waiting, _before), do: true
   defp going_on?(event, before) when event in [:closing, :advancing], do: event in before
   defp going_on?(_event, _before), do: false
 
