@@ -423,7 +423,7 @@ defmodule MiniLineageWeb.Screens do
     <p id="guild-intro" phx-hook="AnimatedValues" phx-no-format>
       {Format.list(@view.guild.trainers, "and")} teach their own here in {@view.town.emoji} {@view.town.name}, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="guild-sp" value={@view.sp} /> SP</span>.
     </p>
-    <p :if={@shelves == []} id="learned-out" class="muted">
+    <p :if={@shelves == []} id="learned-out">
       They have taught you all they can for now.
     </p>
     <.data_table :if={@shelves != []} id="lessons" sort={@sort}>
@@ -452,8 +452,8 @@ defmodule MiniLineageWeb.Screens do
         </tr>
       </tbody>
     </.data_table>
-    <p :if={@ready == [] and @shelves != []} id="nothing-to-learn" class="muted">
-      There is nothing more for you to learn until level {@next_level}.
+    <p :if={@ready == [] and @shelves != []} id="nothing-to-learn">
+      There is nothing more for you to learn until <span class="level">Level {@next_level}</span>.
     </p>
     <.select_action
       id="learn-form"
@@ -756,11 +756,6 @@ defmodule MiniLineageWeb.Screens do
   # leave unused, is muted, and says why.
   defp character(%{panel: %{section: :skills}} = assigns) do
     ~H"""
-    <div :if={@view.skills == []} id="no-skills" class="stat-row">
-      <p class="muted">
-        You have learned no skill yet, visit the trainers of your home village.
-      </p>
-    </div>
     <div
       :for={{name, level} <- @view.skills}
       id={"skill-#{slug(name)}"}

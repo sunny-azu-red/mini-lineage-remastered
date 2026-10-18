@@ -40,7 +40,6 @@ defmodule MiniLineageWeb.GuildPageTest do
   test "a new Fighter knows its weapon's skill, and its trainer offers another at level 1" do
     {_view, session, conn} = pupil(build_conn())
     {:ok, character, _html} = live(conn, ~p"/character")
-    refute has_element?(character, "#no-skills")
     assert has_element?(character, "#skill-power-strike .skill", "Power Strike 1")
 
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
@@ -251,7 +250,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
 
     assert has_element?(view, "#lessons")
-    assert has_element?(view, "#nothing-to-learn", "until level 10.")
+    assert has_element?(view, "#nothing-to-learn", "until Level 10.")
     refute has_element?(view, "#learned-out")
   end
 

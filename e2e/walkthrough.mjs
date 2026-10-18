@@ -268,7 +268,7 @@ try {
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
     const known = await page.$$eval('#screen [id^="skill-"]', (els) => els.map(el => el.id).join(','));
     check('...its Learned Skills panel naming what it knows, the one spell a Mystic starts with',
-        known === 'skill-chill-flame' && await page.locator('#no-skills').count() === 0, known);
+        known === 'skill-chill-flame', known);
     check('...under the game\'s name, the page\'s one h1',
         await page.locator('h1').count() === 1 && (await text('h1')) === 'Mini Lineage', await text('h1'));
     check('...then its class, what it was born with and its race\'s perk in one paragraph, then its level, bars and purse',
