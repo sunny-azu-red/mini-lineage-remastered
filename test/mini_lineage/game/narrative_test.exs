@@ -168,7 +168,7 @@ defmodule MiniLineage.Game.NarrativeTest do
         {2, {:drain, "Life Drain", 9, false, 0}},
         {2, {:toggle, "Soul Cry"}},
         {3, {:curse, "Curse: Poison", true}},
-        {3, {:poison, 8}},
+        {3, {:poison, "Curse: Poison", 8}},
         {4, {:curse, "Wind Shackle", false}},
         {4, {:potion, "Lesser Healing Potion", 112}},
         {4, :waiting},
@@ -177,7 +177,7 @@ defmodule MiniLineage.Game.NarrativeTest do
         {4, {:begin, "Wind Strike"}},
         {4, {:foe_begin, "NPC Windstrike - Magic 1"}},
         {5, {:cast, "Chill Flame", 0, false}},
-        {6, {:burn, 33}}
+        {6, {:burn, "Chill Flame", 33}}
       ]
 
       # Every round ends on where both stand, as the engine writes it.
@@ -206,13 +206,13 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "raise your"
       assert text =~ ~r/you let out a .*Soul Cry.* to make your blows heavier/
       assert text =~ "lay Curse: Poison on the Young Keltir"
-      assert text =~ "the poison eats"
+      assert text =~ ~r/your Curse: Poison tick deals .*8/
       assert text =~ "Wind Shackle slides off the Young Keltir"
       assert text =~ "drink a Lesser Healing Potion and mend"
       refute text =~ "wait for"
       assert text =~ "the Young Keltir runs at you"
       assert text =~ "you set the Young Keltir burning with Chill Flame"
-      assert text =~ ~r/the flames eat .*33/
+      assert text =~ ~r/your Chill Flame tick burns for .*33/
       assert text =~ "you run at the Young Keltir"
       assert text =~ "you begin casting Wind Strike"
       assert text =~ "the Young Keltir begins casting Wind Strike"

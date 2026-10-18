@@ -193,8 +193,11 @@ defmodule MiniLineage.Game.Narrative do
         "healed" => healed
       })
 
-  defp event({:burn, amount}, _foe), do: fill(:burn, %{"amount" => amount})
-  defp event({:poison, amount}, _foe), do: fill(:poison, %{"amount" => amount})
+  defp event({:burn, skill, amount}, _foe),
+    do: fill(:burn, %{"skill" => skill, "amount" => amount})
+
+  defp event({:poison, skill, amount}, _foe),
+    do: fill(:poison, %{"skill" => skill, "amount" => amount})
 
   defp event({:potion, potion, amount}, _foe),
     do: fill(:potion, %{"potion" => potion, "amount" => amount})

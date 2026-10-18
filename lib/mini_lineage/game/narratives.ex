@@ -48,7 +48,8 @@ defmodule MiniLineage.Game.Narratives do
     drain_critical:
       ~s({their} {skill} strikes true for <span class="crit">{amount}</span> and mends <span class="regen">{healed} HP</span>),
     ignite: "{them} set the {monster} burning with {skill}",
-    burn: ~s(the flames eat <span class="magic">{amount}</span>),
+    # A damage-over-time tick, named for the spell that laid it.
+    burn: ~s({their} {skill} tick burns for <span class="magic">{amount}</span>),
     foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount}</span>),
     foe_critical:
       ~s(the {monster} lands a critical hit on {object} for <span class="hp">{amount}</span>),
@@ -87,7 +88,7 @@ defmodule MiniLineage.Game.Narratives do
     toggle: ~s({them} let out a <span class="buff">{skill}</span> to make {their} blows heavier),
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
-    poison: ~s(the poison eats <span class="magic">{amount}</span>),
+    poison: ~s({their} {skill} tick deals <span class="magic">{amount}</span>),
     potion: ~s({them} drink a {potion} and mend <span class="regen">{amount} HP</span>),
     # Ends the "Before the fight:" line, when only the character stands.
     mended: ~s|<span class="muted">({them} at <span class="hp">{hp}</span> of {max})</span>|

@@ -230,7 +230,7 @@ defmodule MiniLineage.Game.Hunt do
         hit = total |> trunc() |> min(most) |> max(0)
         dot = %{dot | rounds: dot.rounds - 1, carry: total - trunc(total)}
         s = %{Map.put(s, key, dot) | foe: s.foe - hit}
-        if hit > 0, do: note(s, {key, hit}), else: s
+        if hit > 0, do: note(s, {key, dot.name, hit}), else: s
     end
   end
 
@@ -407,7 +407,14 @@ defmodule MiniLineage.Game.Hunt do
       :poison ->
         if Formulas.hit?(skill.land) do
           per_round = skill.power * @round_ms / skill.every
-          dot = %{per_round: per_round, rounds: rounds_of(skill.lasts), carry: 0.0}
+
+          dot = %{
+            name: skill.name,
+            per_round: per_round,
+            rounds: rounds_of(skill.lasts),
+            carry: 0.0
+          }
+
           note(%{s | poison: dot}, {:curse, skill.name, true})
         else
           note(s, {:curse, skill.name, false})
@@ -423,7 +430,8 @@ defmodule MiniLineage.Game.Hunt do
 
       :burn ->
         per_round = skill.power * @round_ms / 1000
-        s = %{s | burn: %{per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}}
+        burn = %{name: skill.name, per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}
+        s = %{s | burn: burn}
         note(s, {:cast, skill.name, 0, false})
 
       kind ->

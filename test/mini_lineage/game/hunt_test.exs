@@ -146,7 +146,7 @@ defmodule MiniLineage.Game.HuntTest do
 
       # Nobody acts in the round the burn ends.
       last = for {round, event} <- result.log, round == result.rounds, do: event
-      assert [{:burn, _}, {:standing, _, 0}] = last
+      assert [{:burn, "Chill Flame", _}, {:standing, _, 0}] = last
     end
 
     test "and it is not cast again while its target still burns" do
