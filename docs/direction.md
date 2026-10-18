@@ -84,5 +84,11 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
   past level 1 is at canon's price.
 - **Fighter Anti Magic and non-Orc Robe Mastery stay** (2026-10-18): removing Fighter Anti Magic for
   canon fails the bar on the Orc Fighter against the Evil Eyes, and Robe Mastery is the owner's call.
+- **Casts and reuses keep the rest of a round, past the bar** (2026-10-19). One ending partway
+  through a round no longer rounds up to the next, so Casting Spd. counts as it does in Lineage II.
+  The Elven Mystic, the fastest caster, reaches 20 12% to 16% sooner (past 15% resting below half)
+  and becomes the fastest set, the Human Mystic 4% to 7%, everything else under 2%, and the spread
+  from the fastest set to the slowest widens from 92 to 103 minutes resting to full. Accepted: the
+  Elf's speed is the point of the set. The slow end is the Orc Mystic's to fix, never the clock.
 - **A shield never turns a spell** (L2J, 40c2446): an item reading "Shield P. Def." should not raise
   M. Def.

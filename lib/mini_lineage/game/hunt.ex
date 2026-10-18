@@ -176,16 +176,24 @@ defmodule MiniLineage.Game.Hunt do
 
     s = %{
       s
-      | cooldowns: Map.new(s.cooldowns, fn {k, v} -> {k, max(v - @round_ms, 0.0)} end),
-        busy: max(s.busy - @round_ms, 0.0),
-        foe_busy: max(s.foe_busy - @round_ms, 0.0),
-        foe_cooldowns: Map.new(s.foe_cooldowns, fn {k, v} -> {k, max(v - @round_ms, 0.0)} end),
+      | cooldowns: Map.new(s.cooldowns, fn {k, v} -> {k, tick(v)} end),
+        busy: tick(s.busy),
+        foe_busy: tick(s.foe_busy),
+        foe_cooldowns: Map.new(s.foe_cooldowns, fn {k, v} -> {k, tick(v)} end),
         slowed: max(s.slowed - 1, 0),
         shackled: max(s.shackled - 1, 0)
     }
 
     rounds(s, skills, foe)
   end
+
+  # §20: a cast or a reuse ending partway through a round keeps the rest of it (≤ 0) for one round,
+  # lent to whatever starts then, as §10's blows carry their fraction.
+  defp tick(ms) when ms > 0, do: ms - @round_ms
+  defp tick(_ms), do: 0.0
+
+  # What a cast or a reuse starting now is lent by the last one's round.
+  defp lent(ms), do: min(ms, 0.0)
 
   # §26: below its chosen share of HP, one potion a round, the strongest it still carries.
   defp drink(s) do
@@ -380,7 +388,7 @@ defmodule MiniLineage.Game.Hunt do
   # §19: the MP and the reuse at once, the effect as the cast ends; one that ends within the round
   # takes effect in it.
   defp cast(s, skill, foe) do
-    s = %{spend(s, skill) | busy: cast_ms(skill, s.stats)}
+    s = %{spend(s, skill) | busy: cast_ms(skill, s.stats) + lent(s.busy)}
 
     if s.busy <= @round_ms,
       do: take_effect(s, skill, foe),
@@ -574,8 +582,9 @@ defmodule MiniLineage.Game.Hunt do
     s = %{
       s
       | foe_mp: s.foe_mp - spell.mp,
-        foe_busy: spell.cast * 1.0,
-        foe_cooldowns: Map.put(s.foe_cooldowns, spell.name, spell.reuse * 1.0)
+        foe_busy: spell.cast + lent(s.foe_busy),
+        foe_cooldowns:
+          Map.put(s.foe_cooldowns, spell.name, spell.reuse + lent(s.foe_cooldowns[spell.name]))
     }
 
     if spell.cast <= @round_ms,
@@ -668,10 +677,12 @@ defmodule MiniLineage.Game.Hunt do
 
   # §19: a skill's reuse, scaled by the speed that times it, runs down a round at a time.
   defp spend(s, skill) do
+    reuse = reuse_ms(skill, s.stats) + lent(Map.get(s.cooldowns, skill.name, 0.0))
+
     %{
       s
       | mp: s.mp - skill.mp,
-        cooldowns: Map.put(s.cooldowns, skill.name, reuse_ms(skill, s.stats)),
+        cooldowns: Map.put(s.cooldowns, skill.name, reuse),
         uses: s.uses + 1
     }
   end

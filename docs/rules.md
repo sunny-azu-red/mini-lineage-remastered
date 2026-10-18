@@ -540,7 +540,9 @@ this far (a monster's spells as far as §19 gives):
   is ever stronger than the character who meets it there.
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
-  down by 1⅔ seconds each round.
+  down by 1⅔ seconds each round. A cast or a reuse is never rounded up to the round: one that ends
+  partway through a round lends the rest of that round to the next cast, or to that skill's next
+  reuse, if it begins in the round after, as a blow's fraction carries (§10).
 - **The fight keeps its own clock,** starting at the pull, and each round is written with the time
   it starts: round 1 at 0.0s, round 8 at 11.7s. Casts and reuses count on it, so a Power Strike
   resting 10.4 seconds after round 1 comes round again in round 8. The log tells what changes,

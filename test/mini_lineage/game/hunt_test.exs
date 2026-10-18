@@ -206,33 +206,56 @@ defmodule MiniLineage.Game.HuntTest do
 
     test "a skill comes round again in the first round starting once its reuse has run" do
       Rng.put_source(fn -> 0.0 end)
-      player = striker()
+      # MP for a hundred uses, so the reuse alone decides when each comes.
+      player = %{striker() | mp: 1_000}
       stats = Player.stats(player)
       reuse = Hunt.reuse_ms(Rules.skill("Power Strike"), stats)
       result = Hunt.fight(stats, player, Player.known_skills(player), dummy("Young Keltir"))
 
-      [first, second | _] = for {round, {:skill, "Power Strike", _}} <- result.log, do: round
-      since = &(Hunt.round_starts_ms(&1) - Hunt.round_starts_ms(first))
+      used = for {round, {:skill, "Power Strike", _}} <- result.log, do: round
+      assert length(used) > 10
 
-      assert since.(second) >= reuse
-      assert since.(second - 1) < reuse
+      # Each reuse runs from when the last one ran out, not from the round that noticed it, so
+      # the nth use is due at n reuses and none drifts later.
+      for {round, n} <- Enum.with_index(used) do
+        assert Hunt.round_starts_ms(round) >= n * reuse, "use #{n} in round #{round}"
+        assert Hunt.round_starts_ms(round - 1) < n * reuse, "use #{n} in round #{round}"
+      end
+    end
+
+    test "and so does a Mystic's spell, from when its reuse ran out" do
+      Rng.put_source(fn -> 0.0 end)
+      player = %{Player.restore_fully(character(0, :mystic)) | mp: 100_000}
+      stats = Player.stats(player)
+      [wind] = Player.known_skills(player)
+      reuse = Hunt.reuse_ms(wind, stats)
+      result = Hunt.fight(stats, player, [wind], dummy("Young Keltir"))
+
+      begun = for {round, {:begin, "Wind Strike"}} <- result.log, do: round
+      assert length(begun) > 10
+
+      for {round, n} <- Enum.with_index(begun) do
+        assert Hunt.round_starts_ms(round) >= n * reuse, "cast #{n} in round #{round}"
+        assert Hunt.round_starts_ms(round - 1) < n * reuse, "cast #{n} in round #{round}"
+      end
     end
 
     test "a spell takes its cast time, during which its caster does nothing else" do
       Rng.put_source(fn -> 0.0 end)
       {stats, bars} = target()
       skill = %{Rules.first_skill(0, :fighter) | mp: 1}
-      eye = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000}
+      eye = %{Hunt.foe(Rules.monster("Evil Eye")) | hp: 1_000_000_000, mp: 1_000_000}
       foe = %{eye | spells: [Rules.monster_spell("NPC Windstrike - Magic 1")]}
       result = Hunt.fight(stats, bars, [skill], foe)
 
-      # Windstrike - Magic: 4 seconds a cast, so each lands in the third round of its cast and the
-      # next begins three rounds after the last.
+      # Windstrike - Magic: 4 seconds a cast, each landing in the round it ends and the next begun
+      # in the round after with what was left of it, so one lands every 4 seconds, not every 5.
       begun = for {round, {:foe_begin, "NPC Windstrike - Magic 1"}} <- result.log, do: round
       landed = for {round, {:foe_cast, "NPC Windstrike - Magic 1", _}} <- result.log, do: round
 
-      assert Enum.take(begun, 5) == [1, 4, 7, 10, 13]
-      assert Enum.take(landed, 5) == [3, 6, 9, 12, 15]
+      assert Enum.take(begun, 4) == [1, 4, 6, 9]
+      assert Enum.take(landed, 4) == [3, 5, 8, 10]
+      assert length(landed) == trunc(Hunt.max_rounds() * Hunt.round_ms() / 4_000)
     end
   end
 

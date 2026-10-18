@@ -6,7 +6,8 @@ worked out by hand, and holds only for the rules it was measured against.
 
 **Measured** at rules §22's private rates (EXP and SP ×5, Adena ×20, from `.env.test`), on rules
 §1 to §26 as they now stand: the fight of §20 on a line between the two,
-spells that take effect as their cast ends, the battle orders, and the first skills (a Fighter's weapon
+spells that take effect as their cast ends, casts and reuses that keep what is left of the round
+they end in, the battle orders, and the first skills (a Fighter's weapon
 skills from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the
 Orc), Life Drain cast as
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
@@ -212,22 +213,36 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 (`6a43a98`), with Armor or Robe Mastery for each path (`613b52f`), and now, with Weapon Mastery and
 Anti Magic for every set and every line past level 1 at Lineage II's prices (`87027a5` and Robe
 Mastery's after it, and the Mystic's Weapon Mastery multiplying before it adds), the steps in one
-column, then with the bench playing as a player would, and now with every shield costing 8 Evasion
-and catching as aCis's do.
+column, then with the bench playing as a player would, with every shield costing 8 Evasion
+and catching as aCis's do, and now with casts and reuses keeping what is left of a round.
 Each step is compared run for run (`bench/compare.exs`).
 
-| Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Masteries | Bench plays meta | Now |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 | 186 / 181 / 186 | 190 / 183 / 186 |
-| Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 | 196 | 196 |
-| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** | 183 / 183 | **182 / 183** |
-| Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 | 211 | 211 |
-| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 | 195 / 194 | 194 / 194 |
-| Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 | 223 | 223 |
-| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 240 / 239 |
-| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / 255 / 247 |
-| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **273 / 274** |
+| Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Masteries | Bench plays meta | Shields cost Evasion | Now |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Human Fighter | sword 1h / 2h / dagger | 198 / 195 / 198 | 207 / 203 / 207 | 207 / 203 / 207 | 207 / 203 / 207 | 216 / 216 / 213 | 211 / 208 / 210 | 189 / 186 / 189 | 186 / 181 / 186 | 190 / 183 / 186 | 190 / 183 / 186 |
+| Human Fighter | bow | 228 | 208 | 208 | 208 | 216 | 214 | 203 | 196 | 196 | 196 |
+| Human Mystic | staff 1h / 2h | 207 / 215 | 191 / 191 | 191 / 192 | 191 / 192 | 195 / 198 | 191 / 193 | **183 / 183** | 183 / 183 | **182 / 183** | 174 / 175 |
+| Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 | 211 | 211 | 211 |
+| Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 | 195 / 194 | 194 / 194 | **172 / 169** |
+| Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 | 223 | 223 | 224 |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 240 / 239 | 238 / 236 |
+| Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / 255 / 247 | 245 / 255 / 247 |
+| Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **273 / 274** | **272 / 273** |
 
+- **Casts and reuses keeping what is left of a round make the Elven Mystic 11% to 16% faster, the
+  Human Mystic 4% to 7%, and nothing else more than 2%.** A reuse used to wait for the round after
+  it ran out, so each set's spells came round at the next whole round: Wind Strike, resting 5.2
+  seconds for the Elf, 6.0 for the Human and 6.3 for the Dark Elf, came back after 6.7 for all
+  three, and the Elf's Casting Spd. bought nothing. Now each comes back on time, and a set gains as
+  much as its reuses sat below a round's end: the Elven Mystic's fights drop from 8.2 to 6.7 rounds
+  and the Human Mystic's from 7.6 to 6.8, which saves rest as well (5 to 8 minutes for the Elf). The
+  Dark Mystic gains 1%, its reuses already close to a round's end; the Orc Mystic nothing, its Chill
+  Flame still burning when its reuse runs out; and the Fighters nothing, their blows already
+  carrying their fraction and a weapon skill seldom used twice in a fight. The Elven Mystic two-hander is
+  now the fastest set and past the bar's 15% resting below half (16.1% to 16.3%), which the game
+  takes (`docs/direction.md`): the spread from the fastest set to the slowest widens from 92 to 103
+  minutes resting to full, from 103 to 115 resting at half, and from 102 to 110 at 30%, and is
+  unchanged carrying potions (117 to 116).
 - **Every shield costing 8 Evasion and catching as aCis's do slows the one-handed sword Fighters
   by 1% to 2%, and the rest not at all.** A monster's blow lands up to 16 points more often (rules
   §13), and a shield gives back some of it, three times as often against an arrow or a critical and
@@ -302,23 +317,29 @@ Each step is compared run for run (`bench/compare.exs`).
 
 The bench at its defaults rests to full before every hunt, so survival is read with no potions and
 resting only once a bar falls below a share, `harsh` and `harsher` in a `--final` matrix. Deaths of
-200 runs a path with Armor or Robe Mastery alone (`613b52f`), then with Weapon Mastery and Anti
-Magic as well and the late lines at Lineage II's prices, then now, with the bench playing as a
-player would and every shield costing 8 Evasion:
+200 runs a path with Weapon Mastery and Anti Magic and the late lines at Lineage II's prices, then
+with the bench playing as a player would and every shield costing 8 Evasion, then now, with casts
+and reuses keeping what is left of a round:
 
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0, 0 / 0 | 0 / 0, 0 / 0, 0 / 0 | |
-| Elven Mystic | staff 1h / 2h | 3 / 4, 3 / 4, 2 / 1 | 1 / 4, 1 / 4, 1 / 1 | Spore Fungus, at 9 |
-| Dark Mystic | staff 1h / 2h | 3 / 7, 2 / 7, **0** / 5 | 5 / 12, 4 / 11, **0** / 9 | Balor Orc Fighter at 10, Cave Fang Spider at 16 |
-| Orc Mystic | staff 1h / 2h | 0 / 1, 0 / 0, 0 / 1 | 5 / 10, 1 / 5, 0 / 5 | |
-| Human Fighter | bow | 47, 59, **8** | 191, 194, **81** | Blade Spider, Talon Spider, at 16 to 18 |
-| Elven Fighter | bow | 68, 34, 34 | 197, 183, 183 | Dread Soldier, Dungeon Skeleton Archer, at 13 and 14 |
-| Dark Fighter | dagger | 60, 14, **32** | 180, 125, **166** | Doom Soldier, Balor Orc Fighter Leader, at 12 to 16 |
-| Human Fighter | sword 1h / 2h / dagger | 2 / 55 / 59, 0 / 11 / 23, 1 / **4** / 28 | 161 / 199 / 196, 65 / 156 / 173, **77** / **130** / 172 | Talon Spider, Blade Spider, at 16 and 17 |
-| Orc Fighter | fists | 118, 10, 16 | 199, 189, 180 | Skeleton Longbowman, at 19 |
-| Orc Fighter | sword 1h / 2h | 141 / 91, 40 / 10, **18** / 25 | 200 / 200, 198 / 199, 178 / 196 | the Evil Eyes at 10, Skeleton Longbowman at 19 |
+| Elven Mystic | staff 1h / 2h | 3 / 4, 2 / 1, **0** / **0** | 1 / 4, 1 / 1, **0** / **0** | |
+| Dark Mystic | staff 1h / 2h | 2 / 7, 0 / 5, 1 / 4 | 4 / 11, 0 / 9, 0 / 4 | Balor Orc Fighter at 10, Cave Fang Spider at 16 |
+| Orc Mystic | staff 1h / 2h | 0 / 0, 0 / 1, 0 / 0 | 1 / 5, 0 / 5, 0 / 7 | Skeleton Longbowman, at 19 |
+| Human Fighter | bow | 59, 8, 8 | 194, 81, 81 | Blade Spider, Talon Spider, at 16 to 18 |
+| Elven Fighter | bow | 34, 34, 34 | 183, 183, 183 | Dread Soldier, Dungeon Skeleton Archer, at 13 and 14 |
+| Dark Fighter | dagger | 14, 32, **20** | 125, 166, **148** | Doom Soldier, Balor Orc Fighter Leader, at 11 to 15 |
+| Human Fighter | sword 1h / 2h / dagger | 0 / 11 / 23, 1 / 4 / 28, 0 / 6 / **18** | 65 / 156 / 173, 77 / 130 / 172, 72 / 136 / 177 | Blade Spider, Talon Spider, at 16 and 17 |
+| Orc Fighter | fists | 10, 16, 16 | 189, 180, 180 | Skeleton Longbowman, at 19 |
+| Orc Fighter | sword 1h / 2h | 40 / 10, 18 / 25, 14 / 18 | 198 / 199, 178 / 196, 174 / 197 | the Evil Eyes at 10, Skeleton Longbowman at 19 |
 
+- **Casts and reuses keeping what is left of a round kill fewer dagger Fighters resting at half,**
+  the Dark Fighter 32 to 20 and the Human Fighter 28 to 18, most likely for Mortal Blow, whose 7.4
+  to 8.8 second reuse waited out a whole round more; at 30% the Dark Fighter dies in 148 rather than
+  166, and the Human Fighter's dagger moves within the dice's noise (172 to 177). The Elven Mystic,
+  its fights shorter, no longer dies at all, where it lost 1 to 2 runs of 200. Nothing else moves
+  past the dice's noise.
 - **The bench playing as a player would and every shield costing 8 Evasion move the risk-takers'
   deaths both ways.** The Human archer dies far less (59 to 8 resting at half, 194 to 81 at 30%),
   its Power Shot 4 no longer bought behind two other lines, and the Human two-hander less too. The
