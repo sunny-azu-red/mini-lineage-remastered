@@ -78,6 +78,11 @@
     gap: 7px;
     flex-shrink: 0;
     line-height: 1;
+    /* An icon fading in is composited, and Chrome lifts whatever paints after it within the nearest
+       clip onto layers, which lose their LCD text: unclipped, that was the panel's alerts and buttons.
+       The margin keeps the timer, the glow and the rise. */
+    overflow: clip;
+    overflow-clip-margin: 10px;
 }
 
 .header-name {
@@ -137,8 +142,9 @@
     color: var(--text-hp);
 }
 
+/* Never `forwards`: a finished animation that fills is still running to the compositor. */
 .effect-fade-in {
-    animation: effect-fade-in 0.4s ease-out forwards;
+    animation: effect-fade-in 0.4s ease-out;
 }
 
 .effect-icon.effect-aura {

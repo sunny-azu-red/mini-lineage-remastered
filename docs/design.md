@@ -98,6 +98,18 @@ was got wrong once.
   transition on `color` alone.
 - **A button's focus ring is `currentColor`**, so a new look rings in its own colour.
 
+## Motion
+
+- **What moves near text moves by a painted property.** An animated `transform`, `opacity` or
+  `filter` is composited, and Chrome lifts everything painted after it inside its nearest clip (a
+  `.panel`, being `overflow: hidden`) onto layers that lose their LCD text: the text blinks for the
+  run, and a headless browser never shows it. So the switch's knob slides by `left` and a button's
+  shimmer sweeps by `left` and fades by a registered `--shimmer`. Where only a composited property
+  will do (an effect icon's fade), it runs inside an `overflow: clip` of its own, with
+  `overflow-clip-margin` for what spills, and never fills `forwards`, which keeps a finished
+  animation running to the compositor. A shine laid OVER its text (the triumph alert's) lifts
+  nothing that matters. The walkthrough's `lifted()` reads the layer tree to hold each of these.
+
 ## Colour
 
 - **Every text colour is a token.** Adding a class means putting it in a group, never inventing a

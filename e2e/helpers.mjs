@@ -69,6 +69,39 @@ export const traceRefocus = (context) => context.addInitScript(() => {
     }
 });
 
+/**
+ * The elements inside `within` that the compositor holds on layers of their own while `act`'s
+ * animations run, slowed fiftyfold so they still are, a pseudo-element counted as its host. A text
+ * lifted beside an animation loses its LCD rendering and blinks, which no headless pixel shows.
+ */
+export async function lifted(context, page, act, within) {
+    const cdp = await context.newCDPSession(page);
+    let layers = [];
+    cdp.on('LayerTree.layerTreeDidChange', e => { if (e.layers) layers = e.layers; });
+    await cdp.send('LayerTree.enable');
+    await cdp.send('Animation.enable');
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.02 });
+    await act();
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+    const host = new Map();
+    const walk = (node) => {
+        for (const pseudo of node.pseudoElements ?? []) host.set(pseudo.nodeId, node.nodeId);
+        (node.children ?? []).forEach(walk);
+    };
+    walk(root);
+    const owners = layers.filter(l => l.drawsContent && l.backendNodeId).map(l => l.backendNodeId);
+    const { nodeIds } = await cdp.send('DOM.pushNodesByBackendIdsToFrontend', { backendNodeIds: owners });
+    for (const id of nodeIds.filter(Boolean))
+        await cdp.send('DOM.setAttributeValue', { nodeId: host.get(id) ?? id, name: 'data-lifted', value: '' }).catch(() => {});
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 1 });
+    await cdp.detach();
+    return page.$$eval('[data-lifted]', (els, within) => els.flatMap(el => {
+        el.removeAttribute('data-lifted');
+        return el.closest(within) ? [`${el.localName}${el.id ? '#' + el.id : ''}.${[...el.classList].join('.')}`] : [];
+    }), within);
+}
+
 /** The controls a player has, bound to one page. */
 export function controls(page) {
     /** The character's live state, read off the one element that mirrors it. */

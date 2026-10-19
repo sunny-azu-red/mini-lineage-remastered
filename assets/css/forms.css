@@ -235,7 +235,9 @@
     height: 8px;
     border-radius: 50%;
     background: var(--text-muted);
-    transition: transform 0.15s, background-color 0.15s;
+    /* Slid by `left`, never `transform`: an animated transform is composited, Chrome lifts whatever
+       paints after it onto a layer of its own too, and the SP beside it lost its LCD text and blinked. */
+    transition: left 0.15s, background-color 0.15s;
 }
 
 .switch:hover .switch-track {
@@ -251,7 +253,7 @@
 }
 
 .switch[aria-checked="true"] .switch-knob {
-    transform: translateX(10px);
+    left: 12px;
     background: var(--text-success);
 }
 

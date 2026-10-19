@@ -4,7 +4,7 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { BASE, reporter, traceAudio, traceRefocus, controls, marginsLeftAtEnds, freshStart } from './helpers.mjs';
+import { BASE, reporter, traceAudio, traceRefocus, controls, marginsLeftAtEnds, freshStart, lifted } from './helpers.mjs';
 
 const { check, failures } = reporter();
 const browser = await chromium.launch();
@@ -498,9 +498,21 @@ try {
     await page.keyboard.type('maxlvl');
     await page.waitForFunction(() =>
         document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '80', null, { timeout: 5000 });
-    await page.selectOption('#travel-form select', 'hunt');
-    await page.click('#travel-form button');
-    await onScreen('hunt');
+    // An icon fading in unclipped lifted the panel's buttons, which blinked as each one arrived.
+    const arriving = await lifted(context, page, async () => {
+        await page.selectOption('#travel-form select', 'hunt');
+        await page.click('#travel-form button');
+        await onScreen('hunt');
+        await page.waitForSelector('#effects [data-effect-id="combat"]', { timeout: 5000 });
+    }, '#screen');
+    check('the combat icon fades in lifting nothing on the page but itself',
+        arriving.length > 0 && arriving.every(el => el.startsWith('span.effect-icon')), arriving.join(', '));
+    // A finished fade that fills, or a hover's shimmer, kept the Retreat beside Hunt lifted.
+    await page.waitForFunction(() => [...document.querySelectorAll('#effects .effect-icon')]
+        .every(el => el.getAnimations().every(a => a.playState === 'finished')), null, { timeout: 5000 });
+    const resting = await lifted(context, page, () => page.hover('#hunt-button'), '#screen');
+    check('...and once it stands, the pointer on Hunt shimmers it lifting nothing at all',
+        resting.length === 0, resting.join(', '));
     check('the village\'s way out reaches its hunting ground, at its own address',
         new URL(page.url()).pathname.split('/').length === 3, page.url());
     check('...headed with the ground\'s name', (await text('#main h2.header-name')).length > 3,
@@ -932,6 +944,15 @@ try {
     const footerChanges = await page.evaluate(() => { window.__footerObserver.disconnect(); return window.__footer; });
     check('...and a flip across the defaults rebuilds nothing in the footer beside the SP, only the Reset\'s attributes',
         footerChanges.length > 0 && footerChanges.every(c => c.startsWith('@')), footerChanges.join(', '));
+    // A knob slid by `transform` lifted the rows after it, and the SP blinked for the slide.
+    const slid = await lifted(context, page, async () => {
+        await page.click('#use-mortal-blow');
+        await page.waitForSelector('#use-mortal-blow[aria-checked="false"]', { timeout: 5000 });
+    }, '#orders');
+    check('...and a switch slides without lifting anything in the orders onto a layer of its own',
+        slid.length === 0, slid.join(', '));
+    await page.click('#use-mortal-blow');
+    await page.waitForSelector('#use-mortal-blow[aria-checked="true"]', { timeout: 5000 });
     await page.click('#retreat-button');
     await onScreen('town');
     // The tour below waits on regen ticks, which combat withholds.

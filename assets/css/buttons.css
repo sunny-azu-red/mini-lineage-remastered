@@ -1,19 +1,27 @@
 /* Mini-Lineage — Buttons. `Controls.button/1` is the only thing that writes `btn`. */
 
-/* ===== Shared shimmer keyframe ===== */
+/* ===== Shared shimmer keyframe =====
+ * Swept by `left` and faded by a registered alpha, both painted: a transform or an opacity is
+ * composited, and Chrome lifted the button beside it onto a layer, which lost its LCD text. */
+@property --shimmer {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+}
+
 @keyframes btn-shimmer {
     0% {
-        transform: translateX(-120%) skewX(-20deg);
-        opacity: 0;
+        left: -48%;
+        --shimmer: 0;
     }
 
     30% {
-        opacity: 1;
+        --shimmer: 1;
     }
 
     100% {
-        transform: translateX(280%) skewX(-20deg);
-        opacity: 0;
+        left: 112%;
+        --shimmer: 0;
     }
 }
 
@@ -63,15 +71,14 @@
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
+    left: -48%;
     width: 40%;
     height: 100%;
     background: linear-gradient(90deg,
             transparent 0%,
-            rgba(255, 255, 255, 0.18) 50%,
+            rgb(255 255 255 / calc(0.18 * var(--shimmer))) 50%,
             transparent 100%);
-    transform: translateX(-120%) skewX(-20deg);
-    opacity: 0;
+    transform: skewX(-20deg);
     pointer-events: none;
 }
 
@@ -99,7 +106,7 @@
 }
 
 .btn:hover::before {
-    animation: btn-shimmer 0.55s ease forwards;
+    animation: btn-shimmer 0.55s ease;
 }
 
 /* ===== Focus =====
