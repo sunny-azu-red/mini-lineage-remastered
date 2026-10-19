@@ -342,15 +342,12 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
+  # The orders below succeed with nothing to say: each is a setting its own control shows.
+
   @doc "Rules §26: the share of HP below which the character drinks a potion in a fight."
   def potion_at(player, share) do
     if Player.started?(player) and share in Player.potion_shares() do
-      text =
-        if share == 0,
-          do: "You will not drink potions in a fight.",
-          else: "You will drink a potion in a fight below #{share}% of your HP."
-
-      {%{player | potion_at: share}, {:ok, %{text: text, type: :info}}}
+      {%{player | potion_at: share}, {:ok, nil}}
     else
       {player, {:error, :no_share, @errors.no_share}}
     end
@@ -366,15 +363,8 @@ defmodule MiniLineage.Game.Actions do
         {player, {:error, :no_heal, @errors.no_heal}}
 
       true ->
-        when_ = if moment == :pull, do: "before a pull", else: "in a fight"
-
-        text =
-          if share == 0,
-            do: "You will not mend #{when_}.",
-            else: "You will mend #{when_} below #{share}% of your HP."
-
         key = if moment == :pull, do: :heal_pull_at, else: :heal_fight_at
-        {Map.put(player, key, share), {:ok, %{text: text, type: :info}}}
+        {Map.put(player, key, share), {:ok, nil}}
     end
   end
 
@@ -382,13 +372,7 @@ defmodule MiniLineage.Game.Actions do
   def use_skill(player, name, use?) when is_boolean(use?) do
     if Player.started?(player) and name in Player.switchable(player) do
       unused = player.unused |> List.delete(name) |> then(&if(use?, do: &1, else: [name | &1]))
-
-      text =
-        if use?,
-          do: "You will use #{name} in a fight.",
-          else: "You will leave #{name} unused in a fight."
-
-      {%{player | unused: Enum.sort(unused)}, {:ok, %{text: text, type: :info}}}
+      {%{player | unused: Enum.sort(unused)}, {:ok, nil}}
     else
       {player, {:error, :no_switch, @errors.no_switch}}
     end
@@ -397,8 +381,7 @@ defmodule MiniLineage.Game.Actions do
   @doc "Rules §20 and §26: every order back to the one a new character starts with."
   def reset_orders(player) do
     if Player.started?(player) do
-      text = "Your orders are back to the ones you started with."
-      {Map.merge(player, Player.default_orders()), {:ok, %{text: text, type: :info}}}
+      {Map.merge(player, Player.default_orders()), {:ok, nil}}
     else
       {player, {:error, :invalid, @errors.invalid}}
     end

@@ -379,12 +379,11 @@ Each of these is here because it was got wrong once.
   maps the index back, since the shares are uneven), filled to the one held, its value beside it;
   its form sends `phx-change` with `_target` naming the field. A switch is a `role="switch"` button,
   the name it switches and then a small track, green when on (gold is the skill name's), whose
-  `aria-checked` is its state, never a
-  `btn`, and `PanelFocus` treats it as it does a sort: it takes no first focus and gives none back
-  to the panel's first control. A setting's success says
-  nothing (`apply_order/2` in `GameLive`), since the control shows it and on the ground the only
-  alert is a new level's; a refusal still flashes. Its value jumps rather than counts: the player
-  moved it.
+  `aria-checked` is its state, never a `btn`, and `PanelFocus` treats it as it does a sort: it
+  takes no first focus and gives none back to the panel's first control. A setting's success says
+  nothing: its action returns `{:ok, nil}`, for which `apply_action/3` leaves the last flash
+  standing, since the control shows it and on the ground the only alert is a new level's; a
+  refusal still flashes. Its value jumps rather than counts: the player moved it.
 - **Every alert is `Controls.alert/1`**, `kind` `:info`, `:success`, `:triumph` or `:danger`,
   anything else landing on the `div` (`alert_variants_test.exs`). Success is an action that got you
   something (a trade, a skill, a trip, a kill, HP mended); info one that only rearranged or set

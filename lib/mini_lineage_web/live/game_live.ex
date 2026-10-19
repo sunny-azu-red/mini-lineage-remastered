@@ -282,11 +282,11 @@ defmodule MiniLineageWeb.GameLive do
         _ -> nil
       end
 
-    {:noreply, if(action, do: apply_order(socket, action), else: socket)}
+    {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
 
   def handle_event("order", %{"order" => "reset"}, socket),
-    do: {:noreply, apply_order(socket, &Actions.reset_orders/1)}
+    do: {:noreply, apply_action(socket, &Actions.reset_orders/1, nil)}
 
   def handle_event("order", %{"order" => "use:" <> order}, socket) do
     action =
@@ -295,7 +295,7 @@ defmodule MiniLineageWeb.GameLive do
         _ -> nil
       end
 
-    {:noreply, if(action, do: apply_order(socket, action), else: socket)}
+    {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
 
   # Rules §25: one line from the village's guild, chosen as "skill|level"; the empty choice leaves.
@@ -468,21 +468,6 @@ defmodule MiniLineageWeb.GameLive do
   defp order("pull", share), do: &Actions.heal_at(&1, :pull, share)
   defp order("fight", share), do: &Actions.heal_at(&1, :fight, share)
 
-  # An order is a setting its control already shows, so a success says nothing and leaves what was
-  # last said standing (a new level's gold alert); a refusal still says why.
-  defp apply_order(socket, order),
-    do:
-      apply_action(
-        socket,
-        fn player ->
-          case order.(player) do
-            {player, {:ok, _flash}} -> {player, {:ok, :quiet}}
-            refused -> refused
-          end
-        end,
-        nil
-      )
-
   # A refusal stays on the screen it was raised on; a success goes on to where the action leads, a
   # place worked out from the player it left, or nowhere for nil. `catch` is for the process exiting.
   # Every action, refused or not, puts the dropdowns back to their start: a pick left standing is a
@@ -493,7 +478,8 @@ defmodule MiniLineageWeb.GameLive do
 
     case result do
       {:error, _code, message} -> assign(socket, game_flash: %{text: message, type: :danger})
-      {:ok, :quiet} -> socket
+      # Nothing to say (an order, which its control shows), so what was last said stands.
+      {:ok, nil} -> socket
       {:ok, flash} -> socket |> assign(game_flash: flash) |> play(sound(flash)) |> arrive(to)
     end
   rescue

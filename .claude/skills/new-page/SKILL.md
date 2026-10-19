@@ -74,7 +74,9 @@ researched in first if missing.
   pattern. An option's `group` shelves it; its `action` and `variant` are what the button says and
   looks like once it is picked, for a page with several verbs. The component writes "Pick".
 - A `handle_event` going through `apply_action/3` into an `Actions` function that returns
-  `{player, {:ok, flash}}` or `{player, {:error, code, message}}`, the message from `@errors`. Its
+  `{player, {:ok, flash}}` or `{player, {:error, code, message}}`, the message from `@errors`. A
+  setting (a `<.stepper>` or `<.switch>`, never a dropdown) returns `{:ok, nil}`: its control says
+  what changed. Its
   refusals are tested in the domain's own file (`trainer_test.exs`, `shop_test.exs`,
   `potions_test.exs`), and the page gets its own `<page>_page_test.exs` LiveView test, a refusal
   included.
