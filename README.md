@@ -45,7 +45,7 @@ checked against Interlude's own data.
   among the Combat Stats; a skill says what it mends, how often it lands, its cast and its reuse,
   for this character; a buff reads "+8% P. Def.", as Lineage II's data writes it. Every buff, and the
   wait before rest after a hunt, counts down over its icon as the legacy game's did.
-- **A status sidebar** drawn like L2's status window, its HP or MP row pulsing once under a quarter,
+- **A sidebar** under a vital panel drawn like L2's status window, its HP or MP row pulsing once under a quarter,
   a character page at `/character`, and the Chronicles of Ancestry at `/races`, which tell every
   lineage before you choose one.
 - **What an action says is coloured by what it did**: green for something gained, blue for a

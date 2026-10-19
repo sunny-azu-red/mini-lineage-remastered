@@ -1,4 +1,4 @@
-/* Mini-Lineage — Components: panels, the status sidebar, bars, alerts. */
+/* Mini-Lineage — Components: panels, the sidebar's vital panel, bars, alerts. */
 
 /* ===== Panel Card ===== */
 /* The margin is for `scrollIntoView`, so a panel lands a gap above the fold, not flush with it. */
@@ -31,7 +31,7 @@
     align-items: center;
 }
 
-/* The fold is `aria-expanded` alone, so a layout can keep a panel open before any script runs. */
+/* The fold is `aria-expanded` alone, so a panel opens where the template says before any script runs. */
 .panel-heading:has(>.panel-toggle[aria-expanded="false"])+.panel-body {
     display: none;
 }
@@ -182,7 +182,7 @@
     padding: 0;
 }
 
-/* ===== Status Panel ===== */
+/* ===== Vital Panel ===== */
 /* The rule is ::after, being inset where the row is not; the transparent border reserves its strip. */
 .stat-row {
     display: flex;
@@ -193,7 +193,7 @@
     border-bottom: 1px solid transparent;
 }
 
-.status-panel .stat-row {
+.vital-panel .stat-row {
     padding-block: 10px;
 }
 
@@ -217,7 +217,7 @@
 }
 
 /* Edge to edge, with nothing beside it. */
-.status-panel .bar-track {
+.vital-panel .bar-track {
     flex: 1;
 }
 

@@ -260,10 +260,14 @@ defmodule MiniLineageWeb.HuntPageTest do
     {view, session, _conn} = human(build_conn())
     view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
     assert has_element?(view, "#screen > .panel:nth-child(2)#orders")
+    # Second tier, folding as the reader likes; the fight is the ground's, and stays open.
+    assert has_element?(view, ~s(#orders[phx-hook="Panel"] > h2 > button.panel-toggle))
+    refute has_element?(view, "#screen > .panel:first-child .panel-toggle")
 
     pin(session, 0.0)
     view |> element("#hunt-button") |> render_click()
     assert has_element?(view, "#fight + #orders")
+    refute has_element?(view, "#fight .panel-toggle")
   end
 
   # Rules §25: SP is what the guild's lessons cost, so it is shown where the hunt earns it.

@@ -50,7 +50,8 @@ researched in first if missing.
 - `panels/4` lists its panels (the fourth argument is the hunt's last fight, `_fight` anywhere else;
   a clause written at arity 3 is a different function and is never called); `Layouts.app` wraps
   each in `Controls.panel`, with `id` naming the panel when the map has one, and `screen/1` draws
-  each one's body. A screen never writes `Controls.panel` itself.
+  each one's body. A screen never writes `Controls.panel` itself. A panel beside or under the
+  screen's first is second tier: `collapsible: true` with an `id` (AGENTS.md, Components).
 - What it reads comes from `Snapshot.build/1`: a new field there goes into the not-started `@empty`
   too (`snapshot_test.exs` checks both have every key). New player state goes through `Player` and
   `Characters.Serde`, which writes it.

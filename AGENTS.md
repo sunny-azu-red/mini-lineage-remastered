@@ -5,7 +5,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 ## What exists
 
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
-  with their Gatekeepers and the status sidebar, each village's hunting ground (rules §17 to §21:
+  with their Gatekeepers and the sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
   distance, `Actions.hunt/1`, the last fight in a panel of its own under the ground's, `#fight`,
   drawn by `<.fight_log>` an entry a row as legacy's Chronicle was, and death),
@@ -62,8 +62,12 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   the Chronicles, one per section on the character page, Inventory and Combat Stats on the
   inventory, on the guild's a Learned Skills panel only once something is learned, and on the
   ground the Fight Log only once a fight is held there, which is what its fourth argument is for,
-  then the Battle Orders. `GameLive`
-  lists them again whenever the view is rebuilt. Every LiveView template starts with
+  then the Battle Orders. A panel is first tier (the vital panel and each screen's first, where a
+  run is read and played) or second tier (what stands beside or under one: the Consumables, the
+  Inventory, the guild's Learned Skills, the inventory's Combat Stats, the Battle Orders), which is
+  `collapsible` at every width under an `id` its kept fold is named by. The character page's
+  sections are its own, and the Fight Log the ground's, so neither folds. `GameLive` lists them
+  again whenever the view is rebuilt. Every LiveView template starts with
   `<Layouts.app>`; `ErrorHTML` builds its own from the shell's parts.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
@@ -74,10 +78,11 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
-- **The sidebar** (level and name, the name linking to `/character`, the vitals, HP's and MP's rows
-  pulsing in their bar's hue under a quarter, then the Consumables, each stack carried with its
-  count or "None carried", then the Inventory, its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn in town and beside the inventory. One
-  breakpoint stacks it.
+- **The sidebar** (the vital panel, `.vital-panel`: level and name, the name linking to
+  `/character`, the bars, HP's and MP's rows pulsing in their bar's hue under a quarter; then the
+  Consumables, each stack carried with its count, and no panel at all while none is; then the
+  Inventory, its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn
+  in town and beside the inventory. One breakpoint stacks it.
 - **A new component, hook or shared control is written into this file in the change that adds it.**
   Before writing one, look here and in `Controls`, and extend what exists with an option instead.
 
@@ -314,20 +319,21 @@ Each of these is here because it was got wrong once.
 ### Components
 
 - **Every panel is `Controls.panel/1`**: the card, the header band, the title (always an h2), the
-  body. Options are `icon` (an emoji before the title), `collapsible`, `collapsed` and a `header`
+  body. Options are `icon` (an emoji before the title), `collapsible` and a `header`
   slot. `id` names the PANEL, which its hook needs, and `class` styles it; `body_class` and every
   other attribute land on the BODY. A screen is addressed by
   `#screen`, which carries `PanelFocus` and the data attributes browser tests read. A panel takes a
   hook only when something in it moves, so the error page, with no LiveView, needs no JavaScript.
-- **A collapse is the reader's, not the template's.** `aria-expanded` is rendered once for the
-  opening state, then belongs to the `Panel` hook, re-applied on every `updated/0`. It is the whole
-  state: CSS hides a folded body off it, never a `hidden` attribute, so a layout with room keeps it
-  open before any script runs and tells the hook with `--folds: 0`, where the header is disabled. The
-  header band is a BUTTON inside the h2, never a link (Space scrolls a link, and `PanelFocus` refuses
-  to focus one). Opening by hand scrolls the panel into view; restoring or patching never moves the
-  page. The chevron's transition waits for the `data-ready` the hook sets two frames in. A side
-  panel never folds beside the main one; under the 640px breakpoint a collapsible one does (today
-  the Consumables and the Inventory, each opening unfolded). `.folds` would fold one everywhere; nothing uses it yet.
+- **A collapse is the reader's, not the template's.** `aria-expanded` is the whole state: CSS hides
+  a folded body off it, never a `hidden` attribute. The server draws every collapsible panel
+  folded and the `Panel` hook opens it on mount unless the reader folded it, because a panel popping
+  open on a reload read better than one snapping shut; after that the attribute is the hook's alone,
+  `JS.ignore_attributes` keeping every patch off it. The header band is a BUTTON inside the h2,
+  never a link (Space scrolls a link, and `PanelFocus` refuses to focus one), and it neither takes
+  `PanelFocus`'s first focus nor gives it back, as a sort does. Opening by hand scrolls the panel
+  into view; restoring or patching never moves the page. The chevron's transition waits for the
+  `data-ready` the hook sets two frames in. Every second-tier panel folds, on a desktop as on a
+  phone; a first-tier one never does.
 - **What the reader chooses is kept as `<kind>:<id>` through `hooks/kept.js`**, whose `recall`,
   `recallAll` and `keep` are the only code touching `localStorage`: `panel:<id>` for a fold,
   `sound:effects` while sound is off, `table:<id>` for a remembered sort (handed over on connect). A new thing that remembers takes a kind and writes no storage code. Hand a kind to the

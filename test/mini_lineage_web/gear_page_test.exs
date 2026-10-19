@@ -270,6 +270,10 @@ defmodule MiniLineageWeb.GearPageTest do
 
     act = fn choice -> view |> form("#inventory-form", %{"item" => choice}) |> render_submit() end
 
+    # Second tier: the bag is the page, and the stats beside it fold.
+    assert has_element?(view, ~s(#combat-stats[phx-hook="Panel"] > h2 > button.panel-toggle))
+    refute has_element?(view, "#screen > .panel:first-child .panel-toggle")
+
     # The Combat Stats beside it follow the swap: a dagger's 433 against a sword's 379.
     assert has_element?(view, ~s(#character-stats [data-key="char-atk-spd"][data-value="416"]))
     act.("equip:#{dagger.id}")
@@ -370,8 +374,6 @@ defmodule MiniLineageWeb.GearPageTest do
              view,
              ~s(#consumable-#{potions.id} [data-key="consumable-#{potions.id}"][data-value="10"])
            )
-
-    refute has_element?(view, "#consumables", "None carried")
 
     Characters.mutate(session, &{%{&1 | health: 10}, :ok})
     {:ok, view, _html} = live(conn, ~p"/inventory")

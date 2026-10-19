@@ -54,6 +54,8 @@ defmodule MiniLineageWeb.Screens do
   @doc """
   The panels a screen is drawn on, top to bottom. The Chronicles give each lineage one of its own
   and the character page each section; the ground adds the Fight Log (rules §20) once one is held.
+  A second-tier panel, beside what plays the screen rather than part of it, is `collapsible`, under
+  an `id` its kept fold is named by.
   """
   def panels(screen, view, catalog, fight \\ nil)
 
@@ -73,7 +75,16 @@ defmodule MiniLineageWeb.Screens do
           ],
           else: []
         ) ++
-        [%{title: "Battle Orders", icon: "🎖️", id: "orders", section: :orders, body_class: "rows"}]
+        [
+          %{
+            title: "Battle Orders",
+            icon: "🎖️",
+            id: "orders",
+            section: :orders,
+            body_class: "rows",
+            collapsible: true
+          }
+        ]
 
   def panels("races", _view, catalog, _fight),
     do:
@@ -100,14 +111,23 @@ defmodule MiniLineageWeb.Screens do
       [%{title: title("guild", view), icon: icon("guild", view)}] ++
         if(view.skills == [],
           do: [],
-          else: [%{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}]
+          else: [
+            %{
+              title: "Learned Skills",
+              icon: "🎓",
+              id: "learned-skills",
+              section: :skills,
+              body_class: "rows",
+              collapsible: true
+            }
+          ]
         )
 
   # Rules §23: what is equipped and carried, and beside it the stats it makes, which count as gear moves.
   def panels("inventory", _view, _catalog, _fight),
     do: [
       %{title: "Inventory", icon: "🎒", section: :inventory},
-      %{title: "Combat Stats", icon: "⚖️", section: :stats}
+      %{title: "Combat Stats", icon: "⚖️", id: "combat-stats", section: :stats, collapsible: true}
     ]
 
   def panels(screen, view, _catalog, _fight),

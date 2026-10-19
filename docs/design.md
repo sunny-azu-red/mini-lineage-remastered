@@ -67,7 +67,6 @@ was got wrong once.
   takes the line above it too.
 - **Nothing ends a panel on a margin.** `.panel-body :last-child` drops it at any depth; nothing is
   marked last by hand.
-- **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.
 - **A table has no minimum width and gives no column a width; its rows decide**, and the leftover is
   shared in proportion to content. A figure never wraps; a name may, and an item's name carries its
   stats after a `.delimiter` bullet rather than in a column of their own. A label carrying a unit

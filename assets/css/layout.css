@@ -170,24 +170,6 @@
     margin-top: 12px;
 }
 
-/* Beside the main panel a side one does not fold, unless it says `.folds`, and `--folds` tells the
-   hook so. Child combinators, to outrank the fold itself. */
-.side>.panel:not(.folds) {
-    --folds: 0;
-}
-
-.side>.panel:not(.folds)>.panel-heading>.panel-toggle {
-    pointer-events: none;
-}
-
-.side>.panel:not(.folds)>.panel-heading+.panel-body {
-    display: block;
-}
-
-.side>.panel:not(.folds) .panel-arrow {
-    display: none;
-}
-
 /* ===== Copyright ===== */
 #copyright {
     text-align: center;
@@ -205,7 +187,7 @@
 
 /* ===== Responsive ===== */
 /* Stacked before the side column can squeeze the main one narrower than a phone. Both flatten into
-   #content, so the vitals go above the main panel and every other side panel below it. */
+   #content, so the vital panel goes above the main panel and every other side panel below it. */
 @media (max-width: 640px) {
     #content {
         flex-direction: column;
@@ -226,7 +208,7 @@
         order: 3;
     }
 
-    .side>.status-panel {
+    .side>.vital-panel {
         order: 1;
     }
 
@@ -238,24 +220,6 @@
     #copyright {
         order: 4;
         margin-top: 0;
-    }
-
-    /* A side panel folds here, so the main panel is not pushed off the screen. The same selectors
-       as the rules they undo, so these win by coming later; `.folds` folds without them. */
-    .side>.panel:not(.folds) {
-        --folds: 1;
-    }
-
-    .side>.panel:not(.folds)>.panel-heading>.panel-toggle {
-        pointer-events: auto;
-    }
-
-    .side>.panel:not(.folds)>.panel-heading:has(>.panel-toggle[aria-expanded="false"])+.panel-body {
-        display: none;
-    }
-
-    .side>.panel:not(.folds) .panel-arrow {
-        display: block;
     }
 }
 

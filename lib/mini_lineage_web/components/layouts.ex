@@ -72,6 +72,7 @@ defmodule MiniLineageWeb.Layouts do
                 title={panel.title}
                 icon={panel.icon}
                 body_class={panel[:body_class]}
+                collapsible={panel[:collapsible] == true}
               >
                 <:header :if={index == 0}>
                   <div class="header-effects" id="effects" phx-hook="EffectTimers">
@@ -118,7 +119,7 @@ defmodule MiniLineageWeb.Layouts do
       <Controls.panel
         title={@view.class_name}
         icon={@view.race_emoji}
-        class="status-panel"
+        class="vital-panel"
         body_class="rows"
       >
         <div class="stat-row">
@@ -169,12 +170,16 @@ defmodule MiniLineageWeb.Layouts do
         </div>
       </Controls.panel>
 
-      <%!-- What is used up, to be seen without opening the bag. Not a slot, so its emptiness names
-           nothing the character might be missing. --%>
-      <Controls.panel id="consumables" title="Consumables" icon="🫙" body_class="rows" collapsible>
-        <div :if={consumables(@view.items) == []} class="stat-row">
-          <span class="stat-value muted">None carried</span>
-        </div>
+      <%!-- What is used up, to be seen without opening the bag, and only while there is some: it is
+           no slot, so an empty panel would name nothing the character is missing. --%>
+      <Controls.panel
+        :if={consumables(@view.items) != []}
+        id="consumables"
+        title="Consumables"
+        icon="🫙"
+        body_class="rows"
+        collapsible
+      >
         <div :for={item <- consumables(@view.items)} class="stat-row" id={"consumable-#{item.id}"}>
           <span class="stat-value" title={item.name}>{Controls.item_label(item, short: true)}</span>
           <span class="stat-value row-end">×<Controls.figure
@@ -184,7 +189,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
       </Controls.panel>
 
-      <%!-- Folds on a phone, open until the reader says otherwise: theirs on every screen, so kept. --%>
+      <%!-- Open until the reader folds it: theirs on every screen, so kept. --%>
       <Controls.panel
         id="inventory"
         title="Inventory"

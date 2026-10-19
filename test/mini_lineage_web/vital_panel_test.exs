@@ -1,6 +1,6 @@
-defmodule MiniLineageWeb.StatusPanelTest do
+defmodule MiniLineageWeb.VitalPanelTest do
   @moduledoc """
-  The sidebar the town carries. Its figures animate, so each is its own element, and HEEx renders
+  The sidebar the town carries, under its vital panel. Its figures animate, so each is its own element, and HEEx renders
   a newline between elements as a space, which this reads through.
   """
   use ExUnit.Case, async: true
@@ -53,12 +53,11 @@ defmodule MiniLineageWeb.StatusPanelTest do
     assert LazyHTML.query(under, "#mp-row.low-mp") |> Enum.count() == 1
   end
 
-  test "carrying nothing to use up, its Consumables say so and name nothing missing", %{
-    html: html
-  } do
-    consumables = html |> LazyHTML.from_fragment() |> LazyHTML.query("#consumables .panel-body")
+  test "carrying nothing to use up, there is no Consumables panel to say so", %{html: html} do
+    sidebar = LazyHTML.from_fragment(html)
 
-    assert text(LazyHTML.to_html(consumables)) |> String.trim() == "None carried"
+    assert LazyHTML.query(sidebar, "#consumables") |> Enum.count() == 0
+    assert LazyHTML.query(sidebar, "#sidebar > .vital-panel + #inventory") |> Enum.count() == 1
   end
 
   test "a new character's purse holds nothing", %{html: _html} do

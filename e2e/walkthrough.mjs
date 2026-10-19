@@ -222,11 +222,9 @@ try {
         labels.join(',') === 'HP,MP,XP' && (await text('#xp-bar ~ .bar-text')) === '0%',
         `${labels} / ${await text('#xp-bar ~ .bar-text')}`);
     check('...and an empty purse', born.adena === 0, String(born.adena));
-    check('...and Consumables between the vitals and the Inventory, saying only that none are carried',
-        (await page.locator('#sidebar > .panel').evaluateAll((panels) => panels.map((p) => p.id).slice(1))).join()
-            === 'consumables,inventory'
-        && (await text('#consumables .panel-body')) === 'None carried',
-        await text('#consumables'));
+    const sidePanels = () => page.locator('#sidebar > .panel').evaluateAll((panels) => panels.map((p) => p.id).slice(1).join());
+    check('...and no Consumables panel while none are carried, the Inventory following the vitals',
+        await sidePanels() === 'inventory', await sidePanels());
     check('...resting, as a character with nothing to fight always is',
         await page.locator('#effects [data-effect-id="resting"]').count() === 1);
 
@@ -308,23 +306,22 @@ try {
         await tab.getAttribute('#sidebar [data-key="hp"]', 'data-value') === String(born.health));
     await tab.close();
 
-    // ---- the Inventory folds on a phone, and stays as the reader left it -----------------------
+    // ---- a second-tier panel folds at any width, and stays as the reader left it -------------
     const inventory = page.locator('#inventory .panel-body');
     const folded = () => inventory.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
-    check('beside the main panel the Inventory has no fold to offer',
-        await page.locator('#inventory .panel-toggle').isDisabled() && await inventory.isVisible());
-    const desktop = page.viewportSize();
-    await page.setViewportSize({ width: 320, height: 800 });
-    // The hook hears of the new width from a resize event, which lands after the call returns.
-    const offered = await page.waitForFunction(
-        () => !document.querySelector('#inventory .panel-toggle').disabled, null, { timeout: 3000 })
-        .then(() => true, () => false);
-    check('...stacked on a phone it folds, and opens unfolded', offered && await inventory.isVisible());
+    // The page as served, before any script: the hook opens what the reader left open.
+    const served = await (await page.request.get(page.url())).text();
+    check('the Inventory is served folded and opened once the page connects, the reader never having folded it',
+        /<button[^>]*class="panel-header flex panel-toggle"[^>]*aria-expanded="false"[\s\S]*?🎒 Inventory/.test(served)
+        && await inventory.isVisible());
     await page.click('#inventory .panel-toggle');
-    check('...until its header folds it', await folded());
+    check('...until its header folds it, there as anywhere', await folded());
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...and a refresh keeps the fold, the panel being the reader\'s own', await folded());
+    const desktop = page.viewportSize();
+    await page.setViewportSize({ width: 320, height: 800 });
+    check('...as does a phone, where it stacks under the main panel', await folded());
     await page.click('#inventory .panel-toggle');
     check('...until they open it again', await inventory.isVisible());
     await page.setViewportSize(desktop);
@@ -550,11 +547,18 @@ try {
     const phoneRow = await oneRow();
     await page.setViewportSize(wide);
     check('...on one row with Retreat, on a desktop and a 360px phone', await oneRow() && phoneRow);
+    const orders = page.locator('#orders .panel-body');
+    const ordersFolded = () => orders.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
+    await page.click('#orders .panel-toggle');
+    check('the Battle Orders under the fight fold on their header', await ordersFolded());
     await page.click('#hunt-button');
     await page.waitForFunction((shown) =>
         document.querySelector('#hunt-button')?.textContent.trim() !== shown, firstMove, { timeout: 5000 });
     check('hunting again fights again, still on the ground, and names somewhere new',
         (await state()).screen === 'hunt' && await page.locator('#fight-outcome').count() === 1);
+    check('...the orders staying folded through it', await ordersFolded());
+    await page.click('#orders .panel-toggle');
+    check('...until they are opened again', await orders.isVisible());
     await page.click('#retreat-button');
     await onScreen('town');
     check('...and retreating goes back to the village', (await state()).screen === 'town');
@@ -637,8 +641,9 @@ try {
     const shelf = (await state()).screen;
     await page.click('#purse a');
     await onScreen('inventory');
-    check('the inventory lists everything carried, what is equipped highlighted',
-        await page.locator('#items tr.owned').count() === 3, String(await page.locator('#items tr.owned').count()));
+    check('the inventory lists everything carried, what is equipped highlighted, the Combat Stats beside it folding',
+        await page.locator('#items tr.owned').count() === 3 && await page.locator('#combat-stats .panel-toggle').count() === 1,
+        String(await page.locator('#items tr.owned').count()));
     check('...in one list grouped by what each item can be given',
         JSON.stringify(await page.$$eval('#inventory-form optgroup', gs => gs.map(g => g.label)))
             === JSON.stringify(['Equip', 'Unequip', 'Destroy']),
@@ -700,8 +705,9 @@ try {
         (await state()).adena === wallet - 768 - 900, String((await state()).adena));
     await page.click('#header-link');
     await onScreen('town');
-    check('...which the sidebar counts among its Consumables and leaves out of its Inventory',
-        /^🧪 Lesser Healing\s*×10$/.test(await text('#consumables .panel-body'))
+    check('...which the sidebar counts among its Consumables, now between the vitals and the Inventory, and leaves out of the Inventory',
+        await sidePanels() === 'consumables,inventory'
+        && /^🧪 Lesser Healing\s*×10$/.test(await text('#consumables .panel-body'))
         && await page.locator('#consumables [title="Lesser Healing Potion"]').count() === 1
         && await page.locator('#consumables [data-key^="consumable-"][data-value="10"]').count() === 1
         && !/Potion/.test(await text('#inventory')),
@@ -792,9 +798,10 @@ try {
     check('the home village\'s guild teaches the next line of the set\'s own first skill, unmuted, for its SP',
         await page.locator('#lesson-mortal-blow-2[data-status="ready"]:not(.locked)').count() === 1 &&
         await text('#lesson-mortal-blow-2 td.sp') === '100', await text('#lesson-mortal-blow-2'));
-    const learnedPanel = () => page.locator('#screen h2.header-name', { hasText: 'Learned Skills' }).count();
-    check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it',
-        await learnedPanel() === 1 && await text('#skill-mortal-blow .skill') === 'Mortal Blow 1',
+    const learnedPanel = () => page.locator('#screen h2', { hasText: 'Learned Skills' }).count();
+    check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it, which folds',
+        await learnedPanel() === 1 && await page.locator('#learned-skills .panel-toggle').count() === 1
+        && await text('#skill-mortal-blow .skill') === 'Mortal Blow 1',
         await text('#skill-mortal-blow'));
     check('...saying how often it lands and its reuse, worked for this character',
         /landing \d+\.\d% of the time, for \d+ MP\. Reuse \d+\.\ds\./.test(await text('#skill-mortal-blow'))

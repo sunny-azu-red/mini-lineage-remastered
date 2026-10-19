@@ -288,6 +288,8 @@ defmodule MiniLineageWeb.GuildPageTest do
            )
 
     assert has_element?(view, "#screen h2", "🎓 Learned Skills")
+    assert has_element?(view, ~s(#learned-skills[phx-hook="Panel"] > h2 > button.panel-toggle))
+    refute has_element?(view, "#screen > .panel:first-child .panel-toggle")
   end
 
   test "a lesson learned leaves the button going back, as the dropdown falls back to it" do

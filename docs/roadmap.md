@@ -151,11 +151,11 @@ Built with the first hunt (rules §23 and §24).
 - **The sidebar's Inventory panel shows what is equipped and the Adena,** with one link to the
   inventory page beside the purse.
 - **The sidebar's Consumables panel, above it, counts every stack carried,** so potions (and shots,
-  when they come) are seen without opening the bag. It is not a slot, so empty it says only that
-  nothing is carried, never what is missing.
+  when they come) are seen without opening the bag. It is not a slot, so with nothing carried there
+  is no panel at all, rather than one naming what is missing.
 - **The inventory page** holds everything carried, equipped or not, puts it on or takes it off,
   drinks a potion and destroys what isn't wanted. The share of HP a fight drinks below (rules §26)
-  is a battle order, on the character page.
+  is a battle order, under the hunting ground.
 - **Every set starts with its kit,** the wearable part equipped: a weapon for each skill path, none
   of it sold in a shop.
 - **Each village's trader** sells the canon village lists at canon prices, each armour piece by the

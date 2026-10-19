@@ -1,6 +1,6 @@
-// A table's sort is how the reader views it, and a switch a setting, not something the run does:
-// neither takes the first focus nor sends it anywhere, so focus stays where the keyboard is.
-const VIEW_CONTROLS = '.sort, .switch';
+// A table's sort and a panel's fold are how the reader views it, and a switch a setting, not
+// something the run does: none takes the first focus nor sends it anywhere.
+const VIEW_CONTROLS = '.sort, .switch, .panel-toggle';
 
 /**
  * Focuses the panel's first control on arrival, so the game plays from the keyboard. Never takes

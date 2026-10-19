@@ -23,11 +23,9 @@ defmodule MiniLineageWeb.Controls do
   attr :class, :any, default: nil
   attr :body_class, :any, default: nil
 
-  # Folds wherever the stylesheet's `--folds` is not 0: a layout may keep a panel open where there
-  # is room, and the hook reads the answer rather than a breakpoint.
+  # A second-tier panel, beside or under what plays the screen: the reader may fold it at any
+  # width, and their fold is kept.
   attr :collapsible, :boolean, default: false
-  # Where a collapsible panel starts, until the reader's kept fold says otherwise.
-  attr :collapsed, :boolean, default: false
   attr :rest, :global
   slot :header
   slot :inner_block, required: true
@@ -40,12 +38,14 @@ defmodule MiniLineageWeb.Controls do
       phx-hook={if @collapsible, do: "Panel"}
     >
       <%!-- The whole band is the control: a title you have to hit exactly is worse than none. A
-            button's contents are never read as a heading, so the h2 wraps it. --%>
+            button's contents are never read as a heading, so the h2 wraps it. Drawn folded, so
+            the hook opens what the reader left open rather than shutting what they folded. --%>
       <h2 :if={@collapsible} class="panel-heading">
         <button
           type="button"
           class="panel-header flex panel-toggle"
-          aria-expanded={to_string(!@collapsed)}
+          aria-expanded="false"
+          phx-mounted={JS.ignore_attributes(["aria-expanded"])}
         >
           <span class="header-name">{label(@icon, @title)}</span>
           {render_slot(@header)}

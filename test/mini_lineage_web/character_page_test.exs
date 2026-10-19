@@ -114,6 +114,15 @@ defmodule MiniLineageWeb.CharacterPageTest do
     assert texts.("#effect-resting .aura") == ["💤 Resting"]
   end
 
+  # The Combat Stats and Learned Skills fold beside the inventory and the guild, being second tier
+  # there; here they are what the page is for.
+  test "every section is the page itself, so none folds" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
+    panels = Screens.panels("character", Snapshot.build(player), Snapshot.catalog())
+
+    assert Enum.map(panels, & &1[:collapsible]) == [nil, nil, nil, nil]
+  end
+
   defp page(player) do
     view = Snapshot.build(player)
     catalog = Snapshot.catalog()
