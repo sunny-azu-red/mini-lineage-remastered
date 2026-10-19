@@ -57,6 +57,7 @@ defmodule MiniLineageWeb.Screens do
   """
   def panels(screen, view, catalog, fight \\ nil)
 
+  # Rules §20: the ground, its last fight once one is held there, and the orders it is fought by.
   def panels("hunt", view, _catalog, fight),
     do:
       [%{title: title("hunt", view), icon: icon("hunt", view)}] ++
@@ -71,7 +72,8 @@ defmodule MiniLineageWeb.Screens do
             }
           ],
           else: []
-        )
+        ) ++
+        [%{title: "Battle Orders", icon: "🎖️", id: "orders", section: :orders, body_class: "rows"}]
 
   def panels("races", _view, catalog, _fight),
     do:
@@ -89,8 +91,7 @@ defmodule MiniLineageWeb.Screens do
       },
       %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
       %{title: "Combat Stats", icon: "⚖️", section: :stats},
-      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"},
-      %{title: "Battle Orders", icon: "📜", section: :orders}
+      %{title: "Learned Skills", icon: "🎓", section: :skills, body_class: "rows"}
     ]
 
   # Rules §25: what the guild teaches, and beside it what the character already knows, if anything.
@@ -148,6 +149,7 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "town"} = assigns), do: town(assigns)
   def screen(%{screen: "gatekeeper"} = assigns), do: gatekeeper(assigns)
   def screen(%{screen: "hunt", panel: %{section: :fight}} = assigns), do: last_fight(assigns)
+  def screen(%{screen: "hunt", panel: %{section: :orders}} = assigns), do: orders(assigns)
   def screen(%{screen: "hunt"} = assigns), do: hunt(assigns)
   def screen(%{screen: "trader"} = assigns), do: trader(assigns)
   def screen(%{screen: "trader-" <> _} = assigns), do: trader_page(assigns)
@@ -262,6 +264,85 @@ defmodule MiniLineageWeb.Screens do
     <.fight_log log={@fight.log} outcome={@outcome} />
     """
   end
+
+  # Rules §20 and §26: how the character fights on its own, as the player orders it: the share of
+  # HP below which it drinks a potion, once it knows a heal when it mends before the pull and in
+  # the fight, and which of its skills it uses. Settings rather than places, so none is a dropdown.
+  defp orders(assigns) do
+    shares =
+      [{"potion", "🧪 Drink a potion", :potion_at, Player.potion_shares()}] ++
+        if(assigns.view.heals?,
+          do: [
+            {"pull", "💚 Mend before a pull", :heal_pull_at, Player.heal_shares()},
+            {"fight", "💚 Mend in a fight", :heal_fight_at, Player.heal_shares()}
+          ],
+          else: []
+        )
+
+    assigns =
+      assign(assigns,
+        shares:
+          for {name, label, key, steps} <- shares do
+            %{
+              name: name,
+              label: label,
+              share: Map.fetch!(assigns.view, key),
+              steps: for(share <- steps, do: {share, share_text(share)})
+            }
+          end
+      )
+
+    ~H"""
+    <form id="orders-form" class="orders" phx-change="order">
+      <div :for={order <- @shares} id={"#{order.name}-order"} class="stat-row">
+        <label for={"#{order.name}-share"} class="stat-label">{order.label}</label>
+        <.stepper id={"#{order.name}-share"} name={order.name} steps={order.steps} value={order.share}>
+          <.share_value share={order.share} />
+        </.stepper>
+      </div>
+      <div :if={@view.switchable != []} id="skills-order" class="stat-row">
+        <span class="stat-label">🎓 Use skills</span>
+        <div class="switches">
+          <.switch
+            :for={name <- @view.switchable}
+            id={"use-#{slug(name)}"}
+            on={name not in @view.unused}
+            phx-click="order"
+            phx-value-order={"use:#{name in @view.unused}:#{name}"}
+          >
+            {skill_icon(name)} <span class="skill">{name}</span>
+          </.switch>
+        </div>
+      </div>
+      <%!-- What the hunt has earned to spend at the guild, so nobody walks there to find out. --%>
+      <div id="orders-footer" class="stat-row orders-footer" phx-hook="AnimatedValues">
+        <span class="stat-value sp"><.figure key="orders-sp" value={@view.sp} /> SP</span>
+        <%!-- Written as the purse's Open, the emoji outside the control. Disabled rather than swapped
+              for text when there is nothing to put back: the swap rebuilt the row and the SP blinked. --%>
+        <span class="stat-value row-end">
+          🧹
+          <.button
+            id="orders-reset"
+            variant={:link}
+            phx-click="order"
+            phx-value-order="reset"
+            disabled={Player.default_orders?(@view)}
+          >Reset to Default</.button>
+        </span>
+      </div>
+    </form>
+    """
+  end
+
+  defp share_text(0), do: "never"
+  defp share_text(share), do: "below #{share}% HP"
+
+  attr :share, :integer, required: true
+
+  defp share_value(%{share: 0} = assigns), do: ~H|never|
+
+  defp share_value(assigns),
+    do: ~H|below <span class="hp">{@share}% HP</span>|
 
   # A kill is a victory, levelling or not; the new level is named where a round names where both
   # stand, since the gold alert above says the rest.
@@ -805,67 +886,6 @@ defmodule MiniLineageWeb.Screens do
         {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level, @view.path)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)} equipped.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
-    """
-  end
-
-  # Rules §20 and §26: how the character fights on its own, as the player orders it: when it drinks
-  # a potion, once it knows a heal when it heals before the pull and in the fight, and which of its
-  # skills it leaves unused.
-  defp character(%{panel: %{section: :orders}} = assigns) do
-    orders =
-      [{"potion", "🧪 Potions", :potion_at}] ++
-        if(assigns.view.heals?,
-          do: [
-            {"pull", "💚 Mend before the pull", :heal_pull_at},
-            {"fight", "💚 Mend in the fight", :heal_fight_at}
-          ],
-          else: []
-        )
-
-    shares =
-      for {kind, label, key} <- orders,
-          share <- Player.potion_shares(),
-          do: %{
-            value: "#{kind}:#{share}",
-            label: "#{label}: #{if share == 0, do: "never", else: "below #{share}% HP"}",
-            disabled?: share == Map.fetch!(assigns.view, key)
-          }
-
-    switches =
-      for name <- assigns.view.switchable,
-          use? <- [true, false],
-          do: %{
-            value: "use:#{use?}:#{name}",
-            label: "#{skill_icon(name)} #{name}: #{if use?, do: "use it", else: "leave unused"}",
-            disabled?: use? != name in assigns.view.unused
-          }
-
-    assigns = assign(assigns, options: shares ++ switches)
-
-    ~H"""
-    <p id="potion-share" phx-no-format>
-      <%= if @view.potion_at == 0 do %>You drink no potions in a fight.<% else %>In a fight you drink a potion whenever your HP falls below <span class="hp">{@view.potion_at}%</span>.<% end %>
-    </p>
-    <p :if={@view.heals?} id="heal-pull-share" phx-no-format>
-      <%= if @view.heal_pull_at == 0 do %>You never mend before a pull.<% else %>Before a pull you mend while your HP is below <span class="hp">{@view.heal_pull_at}%</span>.<% end %>
-    </p>
-    <p :if={@view.heals?} id="heal-fight-share" phx-no-format>
-      <%= if @view.heal_fight_at == 0 do %>You never mend in a fight.<% else %>In a fight you mend below <span class="hp">{@view.heal_fight_at}%</span> of your HP while your spells rest.<% end %>
-    </p>
-    <p :if={@view.switchable != []} id="unused-skills" phx-no-format>
-      <%= if @view.unused == [] do %>You use every skill you know.<% else %>You leave {Format.list(Enum.map(@view.unused, &"#{skill_icon(&1)} #{&1}"), "and")} unused.<% end %>
-    </p>
-    <.select_action
-      id="orders-form"
-      event="order"
-      name="order"
-      picked={@picks["order"]}
-      placeholder="📜 Change an order…"
-      options={@options}
-      default_label="Choose"
-      active_label="📜 Order"
-      data-no-autofocus
-    />
     """
   end
 

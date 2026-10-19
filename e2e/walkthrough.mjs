@@ -264,7 +264,7 @@ try {
         new URL(page.url()).pathname === '/character', page.url());
     const sections = await page.$$eval('#screen > .panel h2.header-name', hs => hs.map(h => h.textContent.trim()));
     check('...in a panel for each section, the first naming its ancestry, with no sidebar beside them',
-        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|🎓 Learned Skills|📜 Battle Orders'
+        sections.join('|') === '🧟 BrowserBot of Orc Ancestry|✨ Buffs & Debuffs|⚖️ Combat Stats|🎓 Learned Skills'
         && await page.locator('#sidebar').count() === 0, sections.join('|'));
     const known = await page.$$eval('#screen [id^="skill-"]', (els) => els.map(el => el.id).join(','));
     check('...its Learned Skills panel naming what it knows, the one spell a Mystic starts with',
@@ -692,23 +692,6 @@ try {
         && await page.locator('#consumables [data-key^="consumable-"][data-value="10"]').count() === 1
         && !/Potion/.test(await text('#inventory')),
         `${await text('#consumables')} / ${await text('#inventory')}`);
-    await page.click('#character-name a');
-    await onScreen('character');
-    check('...and the character page\'s orders drink them below half HP to begin with',
-        /below 50%/.test(await text('#potion-share')), await text('#potion-share'));
-    check('...with no heal orders for a character that knows no heal',
-        await page.locator('#heal-pull-share').count() === 0);
-    await page.selectOption('#orders-form select', 'potion:30');
-    await page.click('#orders-form button');
-    const lowered = await page.locator('#potion-share', { hasText: 'below 30%' })
-        .waitFor({ timeout: 5000 }).then(() => true, () => false);
-    check('...and the player can lower the share', lowered, await text('#potion-share'));
-    await page.selectOption('#orders-form select', 'potion:70');
-    await page.click('#orders-form button');
-    await page.locator('#potion-share', { hasText: 'below 70%' }).waitFor({ timeout: 5000 });
-    await page.click('#header-link');
-    await onScreen('town');
-
     // A fight drinks below 70% at the start of every round, so at half HP it drinks at least once,
     // whatever it meets; the sidebar's figure moves, which is what makes AnimatedValues count it.
     // Twenty, as climbing back to 70% has drunk five, so the stack outlasts any fight.
@@ -734,6 +717,32 @@ try {
     await page.selectOption('#travel-form select', 'hunt');
     await page.click('#travel-form button');
     await onScreen('hunt');
+
+    // ---- the battle orders (rules §20, §26) -----------------------------------------------------
+    const share = (kind) => page.getAttribute(`#${kind}-share`, 'aria-valuetext');
+    check('the ground\'s orders drink potions below half HP to begin with, on a slider',
+        await share('potion') === 'below 50% HP' && await text('#potion-share-value') === 'below 50% HP',
+        await share('potion'));
+    check('...with no heal orders for a character that knows no heal',
+        await page.locator('#pull-share').count() === 0);
+    await page.focus('#potion-share');
+    await page.keyboard.press('ArrowLeft');
+    const lowered = await page.locator('#potion-share-value', { hasText: 'below 30%' })
+        .waitFor({ timeout: 5000 }).then(() => true, () => false);
+    check('...and the player lowers the share a stop from the keyboard, the slider keeping focus and no alert',
+        lowered && await page.evaluate(() => document.activeElement?.id) === 'potion-share'
+        && await page.locator('#screen .alert').count() === 0, await text('#potion-share-value'));
+    // A value column sized to its text resized the track under a drag each time the server answered.
+    const widths = [];
+    for (const [stop, value] of [['0', 'never'], ['1', 'below 30%'], ['2', 'below 50%'], ['3', 'below 70%']]) {
+        await page.locator('#potion-share').fill(stop);
+        await page.locator('#potion-share-value', { hasText: value }).waitFor({ timeout: 5000 });
+        widths.push(await page.$eval('#potion-share', el => el.getBoundingClientRect().width));
+    }
+    const clipped = await page.$eval('#potion-share-value', el => el.scrollWidth > el.clientWidth);
+    check('...the slider as long at every stop, whatever its value says, and the value never clipped',
+        new Set(widths).size === 1 && !clipped, `${widths.join(', ')}${clipped ? ', clipped' : ''}`);
+
     await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });
     // Read, not waited for: a stack drunk dry leaves no figure, and that is no count.
@@ -843,23 +852,90 @@ try {
     // ---- a skill left unused (rules §20) --------------------------------------------------------
     await page.click('#header-link');
     await onScreen('town');
+    await page.selectOption('#travel-form select', 'hunt');
+    await page.click('#travel-form button');
+    await onScreen('hunt');
+    // Read here and checked at the guild below: nothing between them earns any.
+    const ordersSp = await page.getAttribute('#orders-footer [data-key="orders-sp"]', 'data-value');
+    check('the orders use every skill to begin with, each on a switch',
+        await page.getAttribute('#use-mortal-blow', 'aria-checked') === 'true');
+    check('...and a mastery is no order to give',
+        await page.locator('#use-armor-mastery').count() === 0);
+    // Each track ends its column, so the tracks line up down it whatever the names' lengths.
+    const ends = await page.$$eval('#skills-order .switch', els => els.map(el =>
+        [el.getBoundingClientRect().width, el.getBoundingClientRect().right - el.querySelector('.switch-track').getBoundingClientRect().right]));
+    check('...each switch as wide as the next and its track ending it, so the tracks line up',
+        ends.length > 0 && new Set(ends.map(([w]) => w)).size === 1 && ends.every(([, gap]) => Math.abs(gap) < 0.5),
+        JSON.stringify(ends));
+    const nameColour = () => page.$eval('#use-mortal-blow .skill', el => getComputedStyle(el).color);
+    const lit = await nameColour();
+    await page.click('#use-mortal-blow');
+    await page.waitForSelector('#use-mortal-blow[aria-checked="false"]', { timeout: 5000 });
+    check('...and a chip switched off mutes its name, and keeps the keyboard rather than handing it to the hunt',
+        await nameColour() !== lit
+        && await page.evaluate(() => document.activeElement?.id) === 'use-mortal-blow');
+    await page.click('#header-link');
+    await onScreen('town');
     await page.click('#character-name a');
     await onScreen('character');
-    check('the orders say every skill is used to begin with',
-        await text('#unused-skills') === 'You use every skill you know.', await text('#unused-skills'));
-    check('...and a mastery is no order to give',
-        await page.locator('#orders-form option[value$=":Armor Mastery"]').count() === 0);
-    await page.selectOption('#orders-form select', 'use:false:Mortal Blow');
-    await page.click('#orders-form button');
-    const unused = await page.locator('#skill-mortal-blow.locked', { hasText: 'Left unused, by your orders.' })
+    check('...where it is learned too',
+        await page.locator('#skill-mortal-blow.locked', { hasText: 'Left unused, by your orders.' }).count() === 1,
+        await text('#skill-mortal-blow'));
+    await page.click('#header-link');
+    await onScreen('town');
+    await page.selectOption('#travel-form select', 'hunt');
+    await page.click('#travel-form button');
+    await onScreen('hunt');
+    await page.click('#use-mortal-blow');
+    const used = await page.locator('#use-mortal-blow[aria-checked="true"]')
         .waitFor({ timeout: 5000 }).then(() => true, () => false);
-    check('...and a skill the orders leave unused is muted where it is learned, and named in the orders',
-        unused && /Mortal Blow unused\.$/.test(await text('#unused-skills')), await text('#unused-skills'));
-    await page.selectOption('#orders-form select', 'use:true:Mortal Blow');
-    await page.click('#orders-form button');
-    const used = await page.locator('#skill-mortal-blow:not(.locked)')
+    check('...until it is switched on again', used, await page.getAttribute('#use-mortal-blow', 'aria-checked'));
+    // Drawn by the link rule itself, so it reads as the purse's Open does and can't drift from it.
+    const drawn = (sel) => page.$eval(sel, el => {
+        const c = getComputedStyle(el);
+        return [c.color, c.fontSize, c.textDecorationLine, c.textUnderlineOffset, c.transition].join(' / ');
+    });
+    await page.locator('#orders').scrollIntoViewIfNeeded();
+    check('the orders moved from the start, the footer\'s Reset puts them back, drawn as the purse\'s Open',
+        await page.locator('#orders-footer #orders-reset:not([disabled])').count() === 1
+        && await drawn('#orders-reset') === await drawn('#purse a'),
+        `${await drawn('#orders-reset')} against ${await drawn('#purse a')}`);
+    await page.click('#orders-reset');
+    const reset = await page.locator('#orders-reset[disabled]')
         .waitFor({ timeout: 5000 }).then(() => true, () => false);
-    check('...until it is ordered used again', used, await text('#skill-mortal-blow'));
+    // Muted as a `.muted` beside it is, once the link's colour fade has run, and without the line
+    // that says it can be followed.
+    const quiet = await page.waitForFunction(() => {
+        const el = document.getElementById('orders-reset');
+        const muted = el.parentElement.appendChild(Object.assign(document.createElement('span'), { className: 'muted' }));
+        const same = getComputedStyle(muted).color === getComputedStyle(el).color;
+        muted.remove();
+        return same && getComputedStyle(el).textDecorationLine === 'none';
+    }, null, { timeout: 5000 }).then(() => true, () => false);
+    check('...back to the start, after which it waits for the next change, disabled and muted, with no alert',
+        reset && quiet
+        && await page.getAttribute('#potion-share', 'aria-valuetext') === 'below 50% HP'
+        && await page.locator('#screen .alert').count() === 0, await page.getAttribute('#potion-share', 'aria-valuetext'));
+    // A flip across the defaults once swapped the footer's Reset for plain text beside the SP, and the
+    // SP blinked; a flip may now change attributes in the footer and nothing else.
+    await page.evaluate(() => {
+        window.__footer = [];
+        window.__footerObserver = new MutationObserver(rs => rs.forEach(r => window.__footer.push(
+            r.type === 'attributes' ? `@${r.attributeName}` : r.type)));
+        window.__footerObserver.observe(document.getElementById('orders-footer'),
+            { subtree: true, childList: true, attributes: true, characterData: true });
+    });
+    for (const state of ['false', 'true']) {
+        await page.click('#use-mortal-blow');
+        await page.waitForSelector(`#use-mortal-blow[aria-checked="${state}"]`, { timeout: 5000 });
+    }
+    const footerChanges = await page.evaluate(() => { window.__footerObserver.disconnect(); return window.__footer; });
+    check('...and a flip across the defaults rebuilds nothing in the footer beside the SP, only the Reset\'s attributes',
+        footerChanges.length > 0 && footerChanges.every(c => c.startsWith('@')), footerChanges.join(', '));
+    await page.click('#retreat-button');
+    await onScreen('town');
+    // The tour below waits on regen ticks, which combat withholds.
+    await page.waitForSelector('#effects [data-effect-id="combat"]', { state: 'detached', timeout: 10000 });
 
     // ---- every dropdown, held open across a regen tick -----------------------------------------
     // The game moves and acts through dropdowns, so a push the player did not ask for must leave an
@@ -938,6 +1014,8 @@ try {
     await holdEach();
     await home();
     await travel('guild', 'guild');
+    check('the orders\' footer showed the SP the guild counts, so nobody walks there to see it',
+        await page.getAttribute('[data-key="guild-sp"]', 'data-value') === ordersSp, ordersSp);
     await holdEach();
     await home();
     await hurt();

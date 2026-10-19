@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
   What every screen reaches for and no screen owns: the panel, the button and the choice it acts
-  on, the table, the alerts, the fault, the figure and the bar. `raw/1` renders flashes, which
+  on, a setting's stepper and switch, the table, the alerts, the fault, the figure and the bar. `raw/1` renders flashes, which
   the server composes from the template tables — never from anything a player typed.
   """
   use MiniLineageWeb, :html
@@ -78,13 +78,16 @@ defmodule MiniLineageWeb.Controls do
   looks, never the element.
   """
   attr :type, :string, default: "button"
-  attr :variant, :atom, default: :primary, values: [:primary, :secondary, :danger]
+
+  # `:link` is drawn by the link rule itself, no `btn`: an action standing where a link would, as
+  # the orders' Reset ends its row where the Inventory's Open ends the purse's.
+  attr :variant, :atom, default: :primary, values: [:primary, :secondary, :danger, :link]
   attr :size, :atom, default: :normal, values: [:normal, :sm]
   # The one of a set that is already chosen, pressed in: the Halls' current filter.
   attr :active, :boolean, default: false
   attr :patch, :string, default: nil
   attr :class, :string, default: nil
-  attr :rest, :global
+  attr :rest, :global, include: ~w(disabled)
   slot :inner_block, required: true
 
   def button(assigns) do
@@ -92,7 +95,7 @@ defmodule MiniLineageWeb.Controls do
       assign(assigns,
         classes:
           classes([
-            "btn",
+            if(assigns.variant == :link, do: "link-button", else: "btn"),
             assigns.variant == :secondary && "btn-secondary",
             assigns.variant == :danger && "btn-danger",
             assigns.size == :sm && "btn-sm",
@@ -196,6 +199,76 @@ defmodule MiniLineageWeb.Controls do
     <option value={@option.value} disabled={@option[:disabled?]} selected={@shown == @option.value}>
       Pick {@option.label}
     </option>
+    """
+  end
+
+  # ---------------------------------------------------------------- settings
+
+  @doc """
+  A setting held at one of a few steps, as a battle order's share of HP: a range over the steps'
+  indices, filled up to the one held, its stops dotted, and what it is set to beside it, the inner
+  block. The form around it sends the index on `phx-change`, `_target` naming the field.
+  """
+  attr :id, :string, required: true
+  attr :name, :string, required: true
+  # `{value, text}` in order, the first at the empty end; the text is what a screen reader says.
+  attr :steps, :list, required: true
+  attr :value, :any, required: true
+  attr :rest, :global
+  slot :inner_block, required: true
+
+  def stepper(assigns) do
+    index = Enum.find_index(assigns.steps, fn {value, _} -> value == assigns.value end) || 0
+    last = length(assigns.steps) - 1
+    {_, text} = Enum.at(assigns.steps, index)
+
+    assigns =
+      assign(assigns,
+        index: index,
+        last: last,
+        text: text,
+        at: "--step: #{index}; --steps: #{last}"
+      )
+
+    ~H"""
+    <div class="stepper" style={@at}>
+      <span
+        :for={i <- 0..@last}
+        class={["stepper-stop", i <= @index && "reached"]}
+        style={"--at: #{i}"}
+      ></span>
+      <input
+        type="range"
+        id={@id}
+        name={@name}
+        min="0"
+        max={@last}
+        step="1"
+        value={@index}
+        aria-valuetext={@text}
+        {@rest}
+      />
+    </div>
+    <output id={"#{@id}-value"} for={@id} class="stepper-value">{render_slot(@inner_block)}</output>
+    """
+  end
+
+  @doc """
+  A setting that is on or off, as a skill a fight uses or leaves: what it switches, the inner block,
+  which names it, and then its track. A `role="switch"` button, never a `btn`, because it
+  holds a state rather than doing something. `aria-checked` is the whole state.
+  """
+  attr :id, :string, required: true
+  attr :on, :boolean, required: true
+  attr :rest, :global
+  slot :inner_block, required: true
+
+  def switch(assigns) do
+    ~H"""
+    <button type="button" id={@id} role="switch" class="switch" aria-checked={to_string(@on)} {@rest}>
+      <span class="switch-label">{render_slot(@inner_block)}</span>
+      <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+    </button>
     """
   end
 

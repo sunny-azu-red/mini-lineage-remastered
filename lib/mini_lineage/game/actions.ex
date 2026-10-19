@@ -394,6 +394,16 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
+  @doc "Rules §20 and §26: every order back to the one a new character starts with."
+  def reset_orders(player) do
+    if Player.started?(player) do
+      text = "Your orders are back to the ones you started with."
+      {Map.merge(player, Player.default_orders()), {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :invalid, @errors.invalid}}
+    end
+  end
+
   # The weapon skills it knows, if not one of them can be used with this weapon.
   defp unsuited(player, item) do
     names = for {name, _} <- player.skills, Rules.weapon_skill?(name), do: name

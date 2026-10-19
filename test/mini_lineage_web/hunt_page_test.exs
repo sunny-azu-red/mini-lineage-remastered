@@ -195,4 +195,124 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert has_element?(view, "#screen[data-screen=start]")
     assert %{dead: true, session_id: nil} = Repo.get!(Record, id)
   end
+
+  # Rules §20 and §26: settings, not places, so a slider and a switch rather than a dropdown, and
+  # the control says what is set rather than an alert.
+  defp ground(conn), do: live(conn, ~p"/talking-island/obelisk-of-victory")
+
+  defp slide(view, kind, stop),
+    do:
+      view
+      |> element("#orders-form")
+      |> render_change(%{"_target" => [kind], kind => to_string(stop)})
+
+  test "the ground's orders set the share of HP a fight drinks below, saying nothing" do
+    {_view, session, conn} = human(build_conn())
+    {:ok, view, _html} = ground(conn)
+
+    assert has_element?(view, ~s(#potion-share[value="2"][aria-valuetext="below 50% HP"]))
+    assert text(view, "#potion-share-value") == "below 50% HP"
+    slide(view, "potion", 1)
+
+    assert stored(session).potion_at == 30
+    assert has_element?(view, ~s(#potion-share[value="1"]))
+    assert text(view, "#potion-share-value") == "below 30% HP"
+    refute has_element?(view, ".alert")
+
+    slide(view, "potion", 0)
+    assert text(view, "#potion-share-value") == "never"
+    assert stored(session).potion_at == 0
+
+    # A stop past either end, or not a stop at all, changes nothing.
+    for stop <- ["4", "-1", "x"], do: slide(view, "potion", stop)
+    assert stored(session).potion_at == 0
+  end
+
+  test "the orders sit under the ground, and under the last fight once one is held" do
+    {view, session, _conn} = human(build_conn())
+    view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
+    assert has_element?(view, "#screen > .panel:nth-child(2)#orders")
+
+    pin(session, 0.0)
+    view |> element("#hunt-button") |> render_click()
+    assert has_element?(view, "#fight + #orders")
+  end
+
+  # Rules §25: SP is what the guild's lessons cost, so it is shown where the hunt earns it.
+  test "the orders' footer counts the SP a kill brings, as the guild does" do
+    {view, session, _conn} = human(build_conn())
+    view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
+    sp = ~s(#orders-footer [data-key="orders-sp"])
+    assert has_element?(view, ~s(#{sp}[data-value="0"]))
+
+    pin(session, 0.0)
+    view |> element("#hunt-button") |> render_click()
+    earned = stored(session).sp
+    assert earned > 0
+    assert has_element?(view, ~s(#{sp}[data-value="#{earned}"]))
+  end
+
+  # Rules §20: a character that knows no heal has none to order.
+  test "once a heal is known, the orders also set when it mends, before the pull and in a fight" do
+    {_view, session, conn} = human(build_conn())
+    {:ok, view, _html} = ground(conn)
+    refute has_element?(view, "#pull-share")
+
+    Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Self Heal", 1)}, :ok})
+    {:ok, view, _html} = ground(conn)
+    assert text(view, "#pull-share-value") == "below 70% HP"
+    assert text(view, "#fight-share-value") == "never"
+
+    slide(view, "pull", 1)
+    slide(view, "fight", 1)
+
+    assert %{heal_pull_at: 30, heal_fight_at: 30} = stored(session)
+    assert text(view, "#pull-share-value") == "below 30% HP"
+    assert text(view, "#fight-share-value") == "below 30% HP"
+  end
+
+  # Rules §20: a skill the orders leave unused is muted where it is listed, and its chip switched off.
+  test "a switch leaves a skill unused and uses it again, a name with a colon in it too" do
+    {_view, session, conn} = human(build_conn())
+    skills = %{"Power Strike" => 1, "Curse: Poison" => 1, "Armor Mastery" => 1}
+    Characters.mutate(session, &{%{&1 | skills: skills}, :ok})
+    {:ok, view, _html} = ground(conn)
+
+    assert has_element?(view, ~s(#use-power-strike[role=switch][aria-checked="true"]))
+    refute has_element?(view, "#use-armor-mastery")
+    view |> element("#use-curse-poison") |> render_click()
+    view |> element("#use-power-strike") |> render_click()
+
+    assert stored(session).unused == ["Curse: Poison", "Power Strike"]
+    assert has_element?(view, ~s(#use-power-strike[aria-checked="false"]))
+    assert has_element?(view, ~s(#skills-order #use-curse-poison[aria-checked="false"]))
+    refute has_element?(view, ".alert")
+
+    {:ok, character, _html} = live(conn, ~p"/character")
+    assert has_element?(character, "#skill-power-strike.locked", "Left unused, by your orders.")
+    refute has_element?(character, "#orders")
+
+    view |> element("#use-power-strike") |> render_click()
+    assert stored(session).unused == ["Curse: Poison"]
+    assert has_element?(view, ~s(#use-power-strike[aria-checked="true"]))
+  end
+
+  test "the footer's reset puts every order back as it started, disabled until one has moved" do
+    {_view, session, conn} = human(build_conn())
+    {:ok, view, _html} = ground(conn)
+    reset = "#orders-footer button#orders-reset.link-button"
+    assert has_element?(view, "#{reset}[disabled]", "Reset to Default")
+
+    slide(view, "potion", 0)
+    view |> element("#use-power-strike") |> render_click()
+    assert has_element?(view, "#{reset}:not([disabled])")
+    refute has_element?(view, "#orders-reset.btn")
+
+    view |> element("#orders-reset") |> render_click()
+    assert %{potion_at: 50, heal_pull_at: 70, heal_fight_at: 0, unused: []} = stored(session)
+    assert has_element?(view, ~s(#potion-share[value="2"]))
+    assert has_element?(view, ~s(#use-power-strike[aria-checked="true"]))
+    assert has_element?(view, "#{reset}[disabled]")
+    refute has_element?(view, ".alert")
+  end
 end

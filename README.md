@@ -29,7 +29,8 @@ checked against Interlude's own data.
   ends and its row stays on the 🏛️ Monument of Heroes at `/highscores`.
 - **Traders and a bag.** Each village's weapon, armour and magic traders sell your path's own goods,
   and buy back for half; the inventory at `/inventory` equips, drinks and destroys, and potions are
-  drunk in a fight below the share the battle orders set.
+  drunk in a fight below the share the 🎖️ Battle Orders under the ground set, on a slider, beside a
+  switch for each skill.
 - **Every set fights its own way.** Its trainer at home teaches a short list from its own Lineage II
   tree for the SP of the hunt: the Human Fighter has a skill for every weapon, the Elven Fighter
   guards with Defense Aura, the Dark Fighter strikes with Attack Aura, the Orc Fighter rests with

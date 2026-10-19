@@ -42,16 +42,35 @@ body {
 /* ===== Links =====
  * An element's specificity, so any class beats it. Never :link or :visited: a rule matched through
  * :visited may set colours and nothing else, and a link already followed would lose its underline. */
-/* The words' colour, line and all: the line is currentColor, so it follows the word everywhere. */
-a:where(:not(.btn)) {
+/* The words' colour, line and all: the line is currentColor, so it follows the word everywhere.
+ * `.link-button` is an action standing where a link would, drawn by these very rules. */
+a:where(:not(.btn)),
+:where(.link-button) {
     color: inherit;
     text-decoration: underline 1px;
     text-underline-offset: 2px;
     transition: color 0.25s ease;
 }
 
-a:not(.btn):is(:hover, :focus-visible) {
+a:not(.btn):is(:hover, :focus-visible),
+.link-button:not(:disabled):is(:hover, :focus-visible) {
     color: var(--text-link);
+}
+
+/* Nothing to do yet: muted, without the line that says it can be followed. */
+.link-button:disabled {
+    color: var(--text-muted);
+    text-decoration: none;
+    cursor: default;
+}
+
+/* What a <button> brings that an anchor doesn't. */
+:where(.link-button) {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
 }
 
 /* ===== Keyboard Focus =====

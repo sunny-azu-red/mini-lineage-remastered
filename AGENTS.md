@@ -13,8 +13,10 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
   (`/<village>/traders/<weapon|armour|magic|sell>`, each set shown its path's goods by
   `Rules.stock/2`), and the inventory beside its Combat
-  Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), potions and the battle orders
-  on the character page (rules §26, §20: `Actions.potion_at/2`, `heal_at/3`, `use_skill/3`), the
+  Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), potions and the Battle Orders
+  under the ground's Fight Log (rules §26, §20: `Actions.potion_at/2`, `heal_at/3`, `use_skill/3`,
+  a `<.stepper>` for each share, a `<.switch>` for each skill, and a footer row of the SP the
+  guild spends beside 🧹 Reset to Default, `reset_orders/1`, back to `Player.default_orders/0`), the
   Buffs & Debuffs panel, and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
   `/<village>/guild`, named per set by `Rules.guild/1`, its lessons on an Active and a Passive shelf,
   a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
@@ -59,12 +61,14 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   screen's panels, which `Layouts.app` draws inside `#screen`: one per screen, but one per lineage on
   the Chronicles, one per section on the character page, Inventory and Combat Stats on the
   inventory, on the guild's a Learned Skills panel only once something is learned, and on the
-  ground the Fight Log only once a fight is held there, which is what its fourth argument is for. `GameLive`
+  ground the Fight Log only once a fight is held there, which is what its fourth argument is for,
+  then the Battle Orders. `GameLive`
   lists them again whenever the view is rebuilt. Every LiveView template starts with
   `<Layouts.app>`; `ErrorHTML` builds its own from the shell's parts.
 - **`Controls` holds what a page uses but does not own**: `<.panel>`, `<.data_table>`, `<.button>`,
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
-  never a button per table row; a screen reads as a table and acts through one dropdown), `<.alert>`
+  never a button per table row; a screen reads as a table and acts through one dropdown),
+  `<.stepper>` and `<.switch>` (a setting, see Components), `<.alert>`
   and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's panel and a death's
   alert), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
@@ -332,7 +336,12 @@ Each of these is here because it was got wrong once.
   `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
   never a link restyled as a button or the reverse. `variant={:secondary}` serves `<.select_action>`
   until something is picked (but for the town's Travel, which has nowhere to go back to), the hunt's Retreat and the Halls' filters; `size={:sm}` and `active`
-  (the one of a set already chosen) are the filters'. A primary or danger button leads with an
+  (the one of a set already chosen) are the filters'. `variant={:link}` writes no `btn` but
+  `link-button`, drawn by the link rule itself: an action standing where a link would, the orders'
+  🧹 Reset to Default ending its row as "🎒 Open" ends the purse's, its emoji outside it as 🎒 is
+  outside Open's anchor. It stays a `<button>` because it acts, and with nothing to put back it is
+  disabled, muted and without its underline, never swapped for text: the swap rebuilt the row
+  beside the SP figure, which blinked. A primary or danger button leads with an
   emoji; a secondary one has none of its own (`Return`), the filters' being their lineage's. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`. The hunt's button reads "⚔️ Hunt" until a fight is held on this
   visit, then names where it goes next, a line of the ground's `Narratives.moves/1` other than the
@@ -345,8 +354,8 @@ Each of these is here because it was got wrong once.
   `<optgroup>`), and its `action` and `variant` are what the button says and looks like once it is
   picked, as the inventory's Equip, Unequip, Drink and, in red, Destroy. Every option reads "Pick"
   and its emoji and name, which the component writes: the verb is the button's, a price the table's,
-  and a placeholder names where Return goes (`🚪 Traders`); the character page's battle orders,
-  settings rather than a place, ask for an order and act through Choose. No `<select>` is written by hand but character creation's, three fields one Start button
+  and a placeholder names where Return goes (`🚪 Traders`). A setting is no dropdown (see
+  below). No `<select>` is written by hand but character creation's, three fields one Start button
   sends together and `phx-update="ignore"` keeps every patch off (`select_action_test.exs`). They all behave alike: the player's choice is touched by the player's
   own pick and the action it leads to, and by nothing else. Every action through `apply_action/3`,
   refused or not, clears `picked` and `picks`, so the list goes back to its start and the button to
@@ -365,6 +374,17 @@ Each of these is here because it was got wrong once.
   The walkthrough's dropdown tour holds every `select_action` in the source open across a tick,
   `traceRefocus` in `e2e/helpers.mjs` catching a focus or blur and an observer the rest, and fails on
   one it never reached, so a new page with a dropdown is added to the tour.
+- **A setting is a `Controls.stepper/1` or a `Controls.switch/1`, never a dropdown**, which is for
+  going somewhere or picking something. A stepper is a range over a few steps' indices (the server
+  maps the index back, since the shares are uneven), filled to the one held, its value beside it;
+  its form sends `phx-change` with `_target` naming the field. A switch is a `role="switch"` button,
+  the name it switches and then a small track, green when on (gold is the skill name's), whose
+  `aria-checked` is its state, never a
+  `btn`, and `PanelFocus` treats it as it does a sort: it takes no first focus and gives none back
+  to the panel's first control. A setting's success says
+  nothing (`apply_order/2` in `GameLive`), since the control shows it and on the ground the only
+  alert is a new level's; a refusal still flashes. Its value jumps rather than counts: the player
+  moved it.
 - **Every alert is `Controls.alert/1`**, `kind` `:info`, `:success`, `:triumph` or `:danger`,
   anything else landing on the `div` (`alert_variants_test.exs`). Success is an action that got you
   something (a trade, a skill, a trip, a kill, HP mended); info one that only rearranged or set

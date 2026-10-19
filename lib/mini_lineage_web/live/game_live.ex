@@ -269,29 +269,33 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
   end
 
-  # Rules §20 and §26: an order, `<what>:<share>`, the share of HP below which to drink a potion or
-  # heal, or `use:<true|false>:<skill>`, a skill used or left unused (a name may hold a colon); the
-  # empty choice does nothing.
-  def handle_event("order", %{"order" => order}, socket) do
+  # Rules §20 and §26: an order. A slider sends the stop it was moved to, `_target` naming it
+  # (`potion`, `pull` or `fight`), a switch `use:<true|false>:<skill>`, a name that may hold a
+  # colon, and the header's ↺ `reset`.
+  def handle_event("order", %{"_target" => [kind]} = params, socket)
+      when kind in ~w(potion pull fight) do
     action =
-      case String.split(order, ":", parts: 3) do
-        ["potion", share] ->
-          share(share, &Actions.potion_at(&1, &2))
-
-        ["pull", share] ->
-          share(share, &Actions.heal_at(&1, :pull, &2))
-
-        ["fight", share] ->
-          share(share, &Actions.heal_at(&1, :fight, &2))
-
-        ["use", use, name] when use in ~w(true false) ->
-          &Actions.use_skill(&1, name, use == "true")
-
-        _ ->
-          nil
+      with {stop, ""} when stop >= 0 <- Integer.parse(params[kind] || ""),
+           share when is_integer(share) <- Enum.at(shares(kind), stop) do
+        order(kind, share)
+      else
+        _ -> nil
       end
 
-    {:noreply, if(action, do: apply_action(socket, action, nil), else: socket)}
+    {:noreply, if(action, do: apply_order(socket, action), else: socket)}
+  end
+
+  def handle_event("order", %{"order" => "reset"}, socket),
+    do: {:noreply, apply_order(socket, &Actions.reset_orders/1)}
+
+  def handle_event("order", %{"order" => "use:" <> order}, socket) do
+    action =
+      case String.split(order, ":", parts: 2) do
+        [use, name] when use in ~w(true false) -> &Actions.use_skill(&1, name, use == "true")
+        _ -> nil
+      end
+
+    {:noreply, if(action, do: apply_order(socket, action), else: socket)}
   end
 
   # Rules §25: one line from the village's guild, chosen as "skill|level"; the empty choice leaves.
@@ -456,24 +460,40 @@ defmodule MiniLineageWeb.GameLive do
     )
   end
 
+  # Rules §20 and §26: the shares an order's stops stand for, and the action setting one.
+  defp shares("potion"), do: Player.potion_shares()
+  defp shares(_heal), do: Player.heal_shares()
+
+  defp order("potion", share), do: &Actions.potion_at(&1, share)
+  defp order("pull", share), do: &Actions.heal_at(&1, :pull, share)
+  defp order("fight", share), do: &Actions.heal_at(&1, :fight, share)
+
+  # An order is a setting its control already shows, so a success says nothing and leaves what was
+  # last said standing (a new level's gold alert); a refusal still says why.
+  defp apply_order(socket, order),
+    do:
+      apply_action(
+        socket,
+        fn player ->
+          case order.(player) do
+            {player, {:ok, _flash}} -> {player, {:ok, :quiet}}
+            refused -> refused
+          end
+        end,
+        nil
+      )
+
   # A refusal stays on the screen it was raised on; a success goes on to where the action leads, a
   # place worked out from the player it left, or nowhere for nil. `catch` is for the process exiting.
   # Every action, refused or not, puts the dropdowns back to their start: a pick left standing is a
   # second purchase one click away.
-  # An order's share, as the action setting it, or nil for anything else.
-  defp share(share, order) do
-    case Integer.parse(share) do
-      {n, ""} -> &order.(&1, n)
-      _ -> nil
-    end
-  end
-
   defp apply_action(socket, fun, to) do
     {result, player} = Characters.mutate(socket.assigns.session_id, fun)
     socket = socket |> put_view(player) |> assign(picked: nil, picks: %{})
 
     case result do
       {:error, _code, message} -> assign(socket, game_flash: %{text: message, type: :danger})
+      {:ok, :quiet} -> socket
       {:ok, flash} -> socket |> assign(game_flash: flash) |> play(sound(flash)) |> arrive(to)
     end
   rescue

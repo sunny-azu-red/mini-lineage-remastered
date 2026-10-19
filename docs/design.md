@@ -46,6 +46,23 @@ was got wrong once.
   for HP either side mended (success: a heal, a potion, a drain), and for how it ended (Victory and
   Escaped both info, green being the mend's). Every other row keeps the panel's ground, and in a
   death's alert, the alert being the ground, none is washed.
+- **A panel of settings is three columns shared down its rows** (subgrid): an 11px label, the
+  control, then what it is set to, right-aligned. That last column is a fixed 9em, the widest value
+  with room: sized to its content, it resized the track under a drag. A stepper's
+  track, fill and stop dots run between the thumb's centre at either end, where a native range puts
+  each step, and are drawn under the input, which keeps only its thumb: gold, ringed in the panel's
+  ground. The fill is `--gold-dim`, the stops it reaches `--gold`: a red track outshouted
+  everything near it, so only the share's figure is HP's red, and "never" is the sentence's own
+  colour. Switches sit beside their label in equal columns (10.5em, the longest name), on the row's
+  own ground with no border: each the skill's emoji and name, then a 22px track ending the column,
+  so the tracks line up. On, the track is green, as gold is the name's; off, the track and the name
+  mute, and a hover rings the track and lifts its knob. The track follows the name because before
+  it, beside the emoji, the two marks crowded. The last row is a footer, as the Inventory's purse
+  row is: SP on the left in `.sp`, with no emoji (📖 is the guild's), and 🧹 Reset to Default on
+  the right, a `.link-button` drawn as Open is, and disabled at the defaults: muted, with no
+  underline. A control that comes and goes beside a figure is disabled, never swapped for text,
+  since the swap rebuilds the row and the figure beside it blinks. On a phone a label takes the line above its
+  control, the switches included.
 - **Nothing ends a panel on a margin.** `.panel-body :last-child` drops it at any depth; nothing is
   marked last by hand.
 - **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.
@@ -74,7 +91,9 @@ was got wrong once.
   words around it, on a 1px `currentColor` underline 2px below, and on hover both darken to
   `--text-link`: `currentColor` mixed 77% with black, resolved where it is used, so one rule serves
   prose and alerts alike. The rule never says `:link` or `:visited`, since a `:visited` rule may set
-  only colours and would drop the underline. It is `a:where(:not(.btn))`, an element's specificity.
+  only colours and would drop the underline. It is `a:where(:not(.btn))`, an element's specificity,
+  and `.link-button`, a button standing where a link would, shares the selector so the two never
+  drift.
   The banner opts out with `text-decoration: none`; the footer's commit turns gold on hover through a
   transition on `color` alone.
 - **A button's focus ring is `currentColor`**, so a new look rings in its own colour.

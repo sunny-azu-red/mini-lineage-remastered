@@ -199,6 +199,14 @@ defmodule MiniLineage.Game.Player do
   @doc "Rules §20: the shares of HP a player may heal below, before a pull or in a fight; 0 never."
   def heal_shares, do: @shares
 
+  @orders [:potion_at, :heal_pull_at, :heal_fight_at, :unused]
+
+  @doc "Rules §20 and §26: the orders a new character starts with, which a reset puts back."
+  def default_orders, do: Map.take(%__MODULE__{}, @orders)
+
+  @doc "Rules §20 and §26: whether its orders, a player's or a snapshot's, are the starting ones."
+  def default_orders?(orders), do: Map.take(orders, @orders) == default_orders()
+
   @doc "Rules §20: whether it knows a heal, and so has heals to order."
   def heals?(player), do: Enum.any?(known_skills(player), &(&1.kind == :heal))
 

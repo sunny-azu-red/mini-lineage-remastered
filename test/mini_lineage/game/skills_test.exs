@@ -90,6 +90,23 @@ defmodule MiniLineage.Game.SkillsTest do
     assert Serde.from_map(Map.delete(stored, "unused")).unused == []
   end
 
+  test "a reset puts every order back to the ones a new character starts with" do
+    healer = character(2, :mystic, 1, %{"Self Heal" => 1, "Wind Strike" => 1})
+    assert Player.default_orders?(healer)
+
+    {healer, {:ok, _}} = Actions.potion_at(healer, 0)
+    {healer, {:ok, _}} = Actions.heal_at(healer, :pull, 30)
+    {healer, {:ok, _}} = Actions.heal_at(healer, :fight, 50)
+    {healer, {:ok, _}} = Actions.use_skill(healer, "Wind Strike", false)
+    refute Player.default_orders?(healer)
+
+    {reset, {:ok, _}} = Actions.reset_orders(healer)
+    assert %{potion_at: 50, heal_pull_at: 70, heal_fight_at: 0, unused: []} = reset
+    assert Player.default_orders?(reset)
+    assert reset.skills == healer.skills
+    assert {_, {:error, :invalid, _}} = Actions.reset_orders(%Player{})
+  end
+
   test "a mastery is never cast and never an order, only what it adds" do
     fighter = character(0, :fighter, 15, %{"Armor Mastery" => 3})
     refute "Armor Mastery" in Enum.map(Player.fighting_skills(fighter), & &1.name)

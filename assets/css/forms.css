@@ -57,3 +57,236 @@
     min-width: 115px;
     max-width: 200px;
 }
+
+/* ===== Settings ===== */
+/* Battle orders: each row's label, control and value share three columns, so the sliders line up
+   down the panel. The value's is fixed, as wide as "below 70% HP": sized to its content, it moved
+   the track under a drag each time the server answered a step. */
+.orders {
+    display: grid;
+    grid-template-columns: auto minmax(64px, 1fr) 9em;
+}
+
+.orders>.stat-row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    column-gap: 12px;
+}
+
+/* A sidebar's label stands right of its column; an order's leads its row. */
+.orders .stat-label {
+    text-align: start;
+}
+
+/* The track, its fill and its stops run between the thumb's centre at either end, where a native
+   range puts each step. Drawn under the input, which keeps only its thumb. */
+.stepper {
+    --thumb: 14px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: var(--thumb);
+}
+
+.stepper::before,
+.stepper::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--thumb) / 2);
+    height: 4px;
+    border-radius: 2px;
+}
+
+.stepper::before {
+    right: calc(var(--thumb) / 2);
+    background: var(--border-arcane);
+}
+
+/* Filled up to the share held in the control's own gold: the share's figure is HP's red, not the
+   track, which in red outshouted everything near it. */
+.stepper::after {
+    width: calc((100% - var(--thumb)) * var(--step) / var(--steps));
+    background: var(--gold-dim);
+}
+
+.stepper-stop {
+    position: absolute;
+    z-index: 1;
+    left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--at) / var(--steps));
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    background: var(--border-arcane-bright);
+}
+
+.stepper-stop.reached {
+    background: var(--gold);
+}
+
+.stepper input {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: var(--thumb);
+    margin: 0;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.stepper input::-webkit-slider-runnable-track {
+    background: transparent;
+}
+
+.stepper input::-moz-range-track {
+    background: transparent;
+}
+
+.stepper input::-webkit-slider-thumb {
+    appearance: none;
+    width: var(--thumb);
+    height: var(--thumb);
+    border: 2px solid var(--bg-panel);
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: var(--shadow-sm);
+}
+
+.stepper input::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--thumb);
+    height: var(--thumb);
+    border: 2px solid var(--bg-panel);
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: var(--shadow-sm);
+}
+
+.stepper input:hover::-webkit-slider-thumb {
+    background: var(--gold-hover);
+}
+
+.stepper input:hover::-moz-range-thumb {
+    background: var(--gold-hover);
+}
+
+/* The ring is the thumb's, not the whole track's. */
+.stepper input:focus-visible {
+    outline: none;
+}
+
+.stepper input:focus-visible::-webkit-slider-thumb {
+    box-shadow: var(--focus-ring);
+}
+
+.stepper input:focus-visible::-moz-range-thumb {
+    box-shadow: var(--focus-ring);
+}
+
+.stepper-value {
+    text-align: end;
+    white-space: nowrap;
+}
+
+/* Every skill's switch beside its label, in equal columns, so each track ends its column and the
+   tracks line up whatever the names' lengths. 10.5em holds the longest, "Vampiric Touch". */
+.switches {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10.5em, 1fr));
+    gap: 8px 18px;
+}
+
+/* A skill's name and then its track, on the row's own ground. Off, both mute as a locked row does;
+   on, the track is green, as gold is the skill name's own. */
+.switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.switch-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 22px;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--border-arcane);
+    transition: background-color 0.15s;
+}
+
+.switch-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: transform 0.15s, background-color 0.15s;
+}
+
+.switch:hover .switch-track {
+    box-shadow: inset 0 0 0 1px var(--border-arcane-bright);
+}
+
+.switch:hover .switch-knob {
+    background: var(--text-secondary);
+}
+
+.switch[aria-checked="true"] .switch-track {
+    background: color-mix(in srgb, var(--text-heal) 35%, transparent);
+}
+
+.switch[aria-checked="true"] .switch-knob {
+    transform: translateX(10px);
+    background: var(--text-success);
+}
+
+.switch[aria-checked="true"]:hover .switch-track {
+    box-shadow: inset 0 0 0 1px var(--text-heal);
+}
+
+.switch[aria-checked="false"] :is(.switch-label, .switch-label *) {
+    color: var(--text-muted);
+}
+
+.switch:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px currentColor;
+    border-radius: 2px;
+}
+
+/* SP on the left and Reset at the right edge, as the Inventory's purse row holds Adena and Open. */
+.orders>.stat-row.orders-footer {
+    display: flex;
+}
+
+/* A phone gives the slider the row and its label the line above. Last, as it outranks the rules it
+   overrides only by order. */
+@media (max-width: 640px) {
+    .orders {
+        grid-template-columns: minmax(64px, 1fr) 9em;
+    }
+
+    .orders>.stat-row {
+        row-gap: 10px;
+    }
+
+    .orders .stat-label,
+    .switches {
+        grid-column: 1 / -1;
+    }
+}
