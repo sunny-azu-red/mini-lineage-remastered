@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.HuntPageTest do
 
   alias MiniLineage.{Characters, Repo}
   alias MiniLineage.Characters.Record
-  alias MiniLineage.Game.{Math, Narratives, Rng}
+  alias MiniLineage.Game.{Math, Narratives, Player, Rng}
 
   # A Human Fighter, standing on Talking Island.
   defp human(conn) do
@@ -200,14 +200,42 @@ defmodule MiniLineageWeb.HuntPageTest do
   # the control says what is set rather than an alert.
   defp ground(conn), do: live(conn, ~p"/talking-island/obelisk-of-victory")
 
+  # Rules §26: a stack of potions, which the orders ask about only while one is carried.
+  defp carry_potions(session),
+    do:
+      Characters.mutate(session, fn p ->
+        {%{p | items: p.items ++ [Player.new_item("Lesser Healing Potion", false, 10)]}, :ok}
+      end)
+
   defp slide(view, kind, stop),
     do:
       view
       |> element("#orders-form")
       |> render_change(%{"_target" => [kind], kind => to_string(stop)})
 
+  test "the ground's orders ask when to drink only while a potion is carried" do
+    {_view, session, conn} = human(build_conn())
+    {:ok, view, _html} = ground(conn)
+    refute has_element?(view, "#potion-order")
+
+    carry_potions(session)
+    {:ok, view, _html} = ground(conn)
+    assert has_element?(view, "#potion-order #potion-share")
+    assert text(view, "#potion-order label") == "🧪 Drink Healing Potion"
+
+    # As a stack drunk dry leaves the inventory.
+    Characters.mutate(
+      session,
+      &{%{&1 | items: Enum.reject(&1.items, fn i -> i.name == "Lesser Healing Potion" end)}, :ok}
+    )
+
+    {:ok, view, _html} = ground(conn)
+    refute has_element?(view, "#potion-order")
+  end
+
   test "the ground's orders set the share of HP a fight drinks below, saying nothing" do
     {_view, session, conn} = human(build_conn())
+    carry_potions(session)
     {:ok, view, _html} = ground(conn)
 
     assert has_element?(view, ~s(#potion-share[value="2"][aria-valuetext="below 50% HP"]))
@@ -279,6 +307,8 @@ defmodule MiniLineageWeb.HuntPageTest do
     {:ok, view, _html} = ground(conn)
 
     assert has_element?(view, ~s(#use-power-strike[role=switch][aria-checked="true"]))
+    assert has_element?(view, ~s(#skills-order .switches[role=group][aria-label="Use skills"]))
+    refute has_element?(view, "#skills-order .stat-label")
     refute has_element?(view, "#use-armor-mastery")
     view |> element("#use-curse-poison") |> render_click()
     view |> element("#use-power-strike") |> render_click()
@@ -299,6 +329,7 @@ defmodule MiniLineageWeb.HuntPageTest do
 
   test "the footer's reset puts every order back as it started, disabled until one has moved" do
     {_view, session, conn} = human(build_conn())
+    carry_potions(session)
     {:ok, view, _html} = ground(conn)
     reset = "#orders-footer button#orders-reset.link-button"
     assert has_element?(view, "#{reset}[disabled]", "Reset to Default")

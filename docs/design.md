@@ -53,16 +53,18 @@ was got wrong once.
   each step, and are drawn under the input, which keeps only its thumb: gold, ringed in the panel's
   ground. The fill is `--gold-dim`, the stops it reaches `--gold`: a red track outshouted
   everything near it, so only the share's figure is HP's red, and "never" is the sentence's own
-  colour. Switches sit beside their label in equal columns (10.5em, the longest name), on the row's
-  own ground with no border: each the skill's emoji and name, then a 22px track ending the column,
-  so the tracks line up. On, the track is green, as gold is the name's; off, the track and the name
-  mute, and a hover rings the track and lifts its knob. The track follows the name because before
+  colour. Switches take the panel's width with no label of their own, each naming its skill (a
+  row of several such controls is an `.orders-list`, its group named only for speech), since
+  beside the sliders' label column a long label left them one a line. They sit in equal columns
+  (10.5em, the longest name), on the row's own ground with no border: each the skill's emoji and
+  name, then a 22px track ending the column, so the tracks line up. On, the track is green, as
+  gold is the name's; off, the track and the name mute, and a hover rings the track and lifts its knob. The track follows the name because before
   it, beside the emoji, the two marks crowded. The last row is a footer, as the Inventory's purse
   row is: SP on the left in `.sp`, with no emoji (📖 is the guild's), and 🧹 Reset to Default on
   the right, a `.link-button` drawn as Open is, and disabled at the defaults: muted, with no
   underline. A control that comes and goes beside a figure is disabled, never swapped for text,
-  since the swap rebuilds the row and the figure beside it blinks. On a phone a label takes the line above its
-  control, the switches included.
+  since the swap rebuilds the row and the figure beside it blinks. On a phone a slider's label
+  takes the line above it too.
 - **Nothing ends a panel on a margin.** `.panel-body :last-child` drops it at any depth; nothing is
   marked last by hand.
 - **The phone's fold rules repeat the desktop's `:not(.folds)` selectors**, so they win by order.

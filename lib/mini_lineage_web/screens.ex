@@ -265,15 +265,18 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Rules §20 and §26: how the character fights on its own, as the player orders it: the share of
-  # HP below which it drinks a potion, once it knows a heal when it mends before the pull and in
-  # the fight, and which of its skills it uses. Settings rather than places, so none is a dropdown.
+  # Rules §20 and §26: the player's orders, settings rather than places, so none is a dropdown: while
+  # it carries a potion the share of HP it drinks below, once it knows a heal when it mends before the
+  # pull and in the fight, and which of its skills it uses.
   defp orders(assigns) do
     shares =
-      [{"potion", "🧪 Drink a potion", :potion_at, Player.potion_shares()}] ++
+      if(Enum.any?(assigns.view.items, & &1.potion?),
+        do: [{"potion", "🧪 Drink Healing Potion", :potion_at, Player.potion_shares()}],
+        else: []
+      ) ++
         if(assigns.view.heals?,
           do: [
-            {"pull", "💚 Mend before a pull", :heal_pull_at, Player.heal_shares()},
+            {"pull", "💚 Mend before pull", :heal_pull_at, Player.heal_shares()},
             {"fight", "💚 Mend in a fight", :heal_fight_at, Player.heal_shares()}
           ],
           else: []
@@ -300,9 +303,9 @@ defmodule MiniLineageWeb.Screens do
           <.share_value share={order.share} />
         </.stepper>
       </div>
-      <div :if={@view.switchable != []} id="skills-order" class="stat-row">
-        <span class="stat-label">🎓 Use skills</span>
-        <div class="switches">
+      <div :if={@view.switchable != []} id="skills-order" class="stat-row orders-list">
+        <%!-- Unlabelled on the page, each switch naming its skill; the group still has a name to speak. --%>
+        <div class="switches" role="group" aria-label="Use skills">
           <.switch
             :for={name <- @view.switchable}
             id={"use-#{slug(name)}"}

@@ -190,8 +190,8 @@
     white-space: nowrap;
 }
 
-/* Every skill's switch beside its label, in equal columns, so each track ends its column and the
-   tracks line up whatever the names' lengths. 10.5em holds the longest, "Vampiric Touch". */
+/* Every skill's switch in equal columns, so each track ends its column and the tracks line up
+   whatever the names' lengths. 10.5em holds the longest, "Vampiric Touch". */
 .switches {
     grid-column: 2 / -1;
     display: grid;
@@ -271,6 +271,12 @@
     border-radius: 2px;
 }
 
+/* A row of several controls, each naming itself, takes the panel's width with no label: beside the
+   sliders' label column, "Drink Healing Potion" left the switches room for one a line. */
+.orders>.orders-list>* {
+    grid-column: 1 / -1;
+}
+
 /* SP on the left and Reset at the right edge, as the Inventory's purse row holds Adena and Open. */
 .orders>.stat-row.orders-footer {
     display: flex;
@@ -287,8 +293,7 @@
         row-gap: 10px;
     }
 
-    .orders .stat-label,
-    .switches {
+    .orders .stat-label {
         grid-column: 1 / -1;
     }
 }

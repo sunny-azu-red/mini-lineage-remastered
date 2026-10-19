@@ -521,6 +521,8 @@ try {
     check('going out meets nothing until the hunter looks for it, but is combat at once',
         await page.locator('#fight').count() === 0
         && await page.locator('#effects [data-effect-id="combat"]').count() === 1);
+    check('...and its orders ask nothing about potions while none is carried',
+        await page.locator('#orders').count() === 1 && await page.locator('#potion-order').count() === 0);
     check('...where the button says Hunt beside Retreat', await text('#hunt-button') === '⚔️ Hunt'
         && await text('#retreat-button') === 'Retreat', `${await text('#hunt-button')} / ${await text('#retreat-button')}`);
     await page.click('#hunt-button');
@@ -879,6 +881,11 @@ try {
     check('...each switch as wide as the next and its track ending it, so the tracks line up',
         ends.length > 0 && new Set(ends.map(([w]) => w)).size === 1 && ends.every(([, gap]) => Math.abs(gap) < 0.5),
         JSON.stringify(ends));
+    // Beside the sliders' label column, "Drink Healing Potion" left room for one switch a line.
+    const skillsLeft = await page.$eval('#skills-order .switches', el =>
+        el.getBoundingClientRect().left - document.querySelector('#orders-footer .sp').getBoundingClientRect().left);
+    check('...with no label of their own, the switches taking the panel\'s width from where the SP starts',
+        await page.locator('#skills-order .stat-label').count() === 0 && Math.abs(skillsLeft) < 0.5, skillsLeft);
     const nameColour = () => page.$eval('#use-mortal-blow .skill', el => getComputedStyle(el).color);
     const lit = await nameColour();
     await page.click('#use-mortal-blow');

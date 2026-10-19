@@ -177,7 +177,9 @@ Built with the first hunt (rules §23 and §24).
   counted in the Consumables panel. Only the two, with no blessed spiritshot: 🔶 a soulshot and 🔷 a
   spiritshot, one shape for one mechanism and Lineage II's crystal colours to tell them apart.
 - Potions that mend at once (rules §26, built): the Lesser Healing Potion in the villages; better
-  potions and potions for MP from the Town of Gludio on, each town's trader its own.
+  potions and potions for MP from the Town of Gludio on, each town's trader its own. A Mana Potion
+  is an order of its own beside 🧪 Drink Healing Potion, its share of MP (`mana_potion_at`) rather
+  than a second meaning for `potion_at`, and like it shown only while one is carried.
 
 ## Player shops
 
