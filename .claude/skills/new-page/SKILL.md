@@ -17,7 +17,7 @@ researched in first if missing.
 ## 2. Its address
 
 - `router.ex`: a literal route generated from the rules tables (`for slug <- Paths.villages()`),
-  never a pattern or glob.
+  never a pattern or glob, inside `live_session :game`, whose session carries the kept cookie.
 - `Paths.for_screen/1`: a clause for `{screen, town}` placed before the catch-all
   `for_screen({screen, _town})`, or an `@routes` entry for a page with no town.
 - `GameLive.requested_place/3`: a town-scoped `live_action` joins the guard list of the clause that
@@ -63,7 +63,8 @@ researched in first if missing.
 ## 6. Tables
 
 - `<.data_table>` (the short form, as `Screens` writes it), rows ordered by `Controls.sort_rows/3`.
-- `Screens.sortable/1`: its keys and the default it opens on.
+- `Screens.sortable/1`: its keys and the default it opens on, and `remember: true` (with `remember`
+  on the `<.data_table>`) if the reader's sort should be served back after a reload.
 - `table_sort_test.exs` `@pages`: the path and each table's default.
 - Shelves are separate `<tbody>`s, with a centred heading row and a dropdown `group` each when there
   is more than one.

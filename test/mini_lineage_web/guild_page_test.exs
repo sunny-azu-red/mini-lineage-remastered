@@ -202,7 +202,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "the lessons do not remember their sort, so a kept one is not read back" do
     {_view, _session, conn} = human(build_conn(), 100)
-    conn = put_connect_params(conn, %{"tables" => %{"lessons" => "sp:desc"}})
+    conn = put_req_cookie(conn, MiniLineageWeb.Kept.cookie(), "table%3Alessons=sp%3Adesc")
     {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
 
     assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")

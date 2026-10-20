@@ -1,23 +1,25 @@
 import { playSound, setSoundEnabled, soundEnabled } from '../soundfx';
 
-/** Mute toggle. The preference is per-browser and never reaches the server. */
+/**
+ * Mute toggle. The server draws the kept state and both faces' text, so a click only flips between
+ * them; the choice is kept for the next page to be served with.
+ */
 export const SoundToggle = {
     mounted() {
-        this.render();
         this.el.addEventListener('click', () => {
             const on = !soundEnabled();
             setSoundEnabled(on);
-            this.render();
+            this.render(on);
             if (on)
                 playSound('toggle');
         });
     },
-    render() {
-        const on = soundEnabled();
-        const title = on ? 'Sound FX Enabled (Click to Mute)' : 'Sound FX Muted (Click to Unmute)';
+    render(on) {
+        const { on: face, onLabel, off, offLabel } = this.el.dataset;
+        const title = on ? onLabel : offLabel;
         this.el.classList.toggle('silenced', !on);
         this.el.title = title;
         this.el.setAttribute('aria-label', title);
-        this.el.textContent = on ? '🔊' : '🔇';
+        this.el.textContent = on ? face : off;
     },
 };

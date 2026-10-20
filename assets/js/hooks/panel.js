@@ -1,18 +1,19 @@
-import { keep, recall } from './kept';
+import { keep } from './kept';
 
 /**
- * A panel that folds on its own header. The server draws it folded and leaves `aria-expanded` to
- * this hook after that, so a patch never touches the reader's fold.
+ * A panel that folds on its own header. The server draws the reader's kept fold and leaves
+ * `aria-expanded` to this hook after that, so a patch never touches it; a click is kept and told to
+ * the server, which draws the panel that way when it comes back on this visit.
  */
 export const Panel = {
     mounted() {
         this.toggle = this.el.querySelector(':scope > .panel-heading > .panel-toggle');
-        // Open unless the reader folded it.
-        this.show(recall('panel', this.el.id) !== '0');
+        this.open = this.toggle.getAttribute('aria-expanded') === 'true';
 
         this.toggle.addEventListener('click', () => {
             this.show(!this.open);
             keep('panel', this.el.id, this.open ? '1' : '0');
+            this.pushEvent('fold', { panel: this.el.id, open: this.open });
             if (this.open) this.reveal();
         });
 

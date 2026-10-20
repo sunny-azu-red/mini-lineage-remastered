@@ -632,7 +632,8 @@ defmodule MiniLineageWeb.Screens do
   """
   def sortable("stock"), do: table(~w(name price), {"price", :asc})
   def sortable("sellable"), do: table(~w(name buyback), {"buyback", :desc})
-  def sortable("items"), do: table(~w(name slot), {"slot", :asc})
+  # The reader's own bag, the table they come back to most.
+  def sortable("items"), do: table(~w(name slot), {"slot", :asc}, remember: true)
   def sortable("routes-table"), do: table(~w(name fee), {"fee", :asc})
   def sortable("lessons"), do: table(~w(skill learn_at sp), {"learn_at", :asc})
   def sortable("halls-table"), do: table(~w(name level total_xp adena), {"total_xp", :desc})
@@ -643,7 +644,8 @@ defmodule MiniLineageWeb.Screens do
       else: %{keys: [], default: nil, remember: false}
   end
 
-  defp table(keys, default), do: %{keys: keys, default: default, remember: false}
+  defp table(keys, default, opts \\ []),
+    do: %{keys: keys, default: default, remember: Keyword.get(opts, :remember, false)}
 
   @doc "The sort a table is drawn in: the reader's, else the one it opens on."
   def sort_of(sorts, table), do: sorts[table] || sortable(table).default
@@ -670,7 +672,7 @@ defmodule MiniLineageWeb.Screens do
     <p :if={@view.items != []} id="inventory-count">
       You carry {length(@view.items)} of the {@capacity} things you can.
     </p>
-    <.data_table :if={@view.items != []} id="items" sort={@sort}>
+    <.data_table :if={@view.items != []} id="items" sort={@sort} remember>
       <:col class="name" sort="name">Item</:col>
       <:col sort="slot">Slot</:col>
       <tbody>

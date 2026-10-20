@@ -9,12 +9,15 @@ defmodule MiniLineageWeb.VitalPanelTest do
 
   alias MiniLineage.Game.{Constants, Math, Player, Snapshot}
 
-  defp sidebar_for(player) do
-    render_component(&MiniLineageWeb.Layouts.app/1,
-      panels: [%{title: "Dark Elf Village", icon: nil}],
-      view: Snapshot.build(player),
-      screen: "town",
-      inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]
+  defp sidebar_for(player, more \\ []) do
+    render_component(
+      &MiniLineageWeb.Layouts.app/1,
+      [
+        panels: [%{title: "Dark Elf Village", icon: nil}],
+        view: Snapshot.build(player),
+        screen: "town",
+        inner_block: [%{inner_block: fn _, _ -> "" end, __slot__: :inner_block}]
+      ] ++ more
     )
   end
 
@@ -58,6 +61,15 @@ defmodule MiniLineageWeb.VitalPanelTest do
 
     assert LazyHTML.query(sidebar, "#consumables") |> Enum.count() == 0
     assert LazyHTML.query(sidebar, "#sidebar > .vital-panel + #inventory") |> Enum.count() == 1
+  end
+
+  test "a side panel the reader folded is served folded, and the rest open" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(3), :fighter, "Sunny")
+
+    assert sidebar_for(player, folds: %{"inventory" => false})
+           |> LazyHTML.from_fragment()
+           |> LazyHTML.query("#inventory .panel-toggle")
+           |> LazyHTML.attribute("aria-expanded") == ["false"]
   end
 
   test "a new character's purse holds nothing", %{html: _html} do

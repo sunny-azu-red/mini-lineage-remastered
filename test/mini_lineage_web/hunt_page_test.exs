@@ -270,6 +270,48 @@ defmodule MiniLineageWeb.HuntPageTest do
     refute has_element?(view, "#fight .panel-toggle")
   end
 
+  # `MiniLineageWeb.Kept`: a reload is served as the reader left it, so nothing moves on connect.
+  test "the orders are served folded or open as the reader left them, the browser's cookie first" do
+    {_view, _session, conn} = human(build_conn())
+    ground = ~p"/talking-island/obelisk-of-victory"
+    kept = fn conn, raw -> put_req_cookie(conn, MiniLineageWeb.Kept.cookie(), raw) end
+
+    served = fn conn ->
+      conn
+      |> get(ground)
+      |> html_response(200)
+      |> LazyHTML.from_document()
+      |> LazyHTML.query("#orders .panel-toggle")
+      |> LazyHTML.attribute("aria-expanded")
+    end
+
+    assert served.(conn) == ["true"]
+    assert served.(kept.(conn, "panel%3Aorders=0")) == ["false"]
+
+    {:ok, view, _html} = live(kept.(conn, "panel%3Aorders=0"), ground)
+    assert has_element?(view, ~s(#orders .panel-toggle[aria-expanded="false"]))
+
+    # A reconnect rejoins with the page's copy, so the cookie as it stands now is handed over.
+    newer =
+      conn |> kept.("panel%3Aorders=0") |> put_connect_params(%{"kept" => "panel%3Aorders=1"})
+
+    {:ok, view, _html} = live(newer, ground)
+    assert has_element?(view, ~s(#orders .panel-toggle[aria-expanded="true"]))
+  end
+
+  test "a fold the browser reports is how the orders are drawn on coming back to the ground" do
+    {view, _session, _conn} = human(build_conn())
+    view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
+
+    render_hook(view, "fold", %{"panel" => "orders", "open" => false})
+    render_hook(view, "fold", %{"panel" => "<orders>", "open" => true})
+    render_hook(view, "fold", %{"panel" => "orders", "open" => "yes"})
+    view |> element("#retreat-button") |> render_click()
+    view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
+
+    assert has_element?(view, ~s(#orders .panel-toggle[aria-expanded="false"]))
+  end
+
   # Rules §25: SP is what the guild's lessons cost, so it is shown where the hunt earns it.
   test "the orders' footer counts the SP a kill brings, as the guild does" do
     {view, session, _conn} = human(build_conn())

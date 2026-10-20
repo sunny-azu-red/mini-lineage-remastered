@@ -65,6 +65,37 @@ defmodule MiniLineageWeb.SoundTest do
     assert has_element?(view, "#sound-toggle[phx-hook=SoundToggle]")
   end
 
+  # `MiniLineageWeb.Kept`: served as the reader left it, so the hook never has to swap the face.
+  test "the toggle is served muted for a reader who muted it, and sounding otherwise", %{
+    conn: conn
+  } do
+    toggle = fn conn ->
+      session = Characters.new_session_id()
+      on_exit(fn -> Characters.forget(session) end)
+
+      conn
+      |> init_test_session(%{"session_id" => session})
+      |> get(~p"/")
+      |> html_response(200)
+      |> LazyHTML.from_document()
+      |> LazyHTML.query("#sound-toggle")
+    end
+
+    classes = fn toggle -> toggle |> LazyHTML.attribute("class") |> hd() |> String.split() end
+
+    sounding = toggle.(conn)
+    assert LazyHTML.text(sounding) == "🔊"
+    assert classes.(sounding) == ~w(sound-toggle-btn)
+
+    muted = conn |> put_req_cookie(MiniLineageWeb.Kept.cookie(), "sound%3Aeffects=0") |> toggle.()
+    assert LazyHTML.text(muted) == "🔇"
+    assert classes.(muted) == ~w(sound-toggle-btn silenced)
+    assert LazyHTML.attribute(muted, "title") == ["Sound FX Muted (Click to Unmute)"]
+    # The faces the hook flips between are the server's, so neither language holds a copy.
+    assert LazyHTML.attribute(muted, "data-on") == ["🔊"]
+    assert LazyHTML.attribute(muted, "data-on-label") == ["Sound FX Enabled (Click to Mute)"]
+  end
+
   test "but the error page, with no LiveView to drive it, does not", %{conn: conn} do
     refute conn |> get("/no-such-road") |> html_response(404) =~ "sound-toggle"
   end

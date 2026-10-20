@@ -45,6 +45,9 @@ defmodule MiniLineageWeb.Layouts do
   attr :back, :string, default: nil
   # Debug builds only, for a character: what a release never draws sends it no keys.
   attr :dev_keys, :boolean, default: false
+  # The reader's kept folds, by panel id, and whether sound is on (`MiniLineageWeb.Kept`).
+  attr :folds, :map, default: %{}
+  attr :sound, :boolean, default: true
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -53,11 +56,16 @@ defmodule MiniLineageWeb.Layouts do
       <div :if={@dev_keys} id="dev-keys" phx-hook="DevKeys" hidden></div>
       <div id="wrapper">
         <div id="header">
-          <Layouts.site_header />
+          <Layouts.site_header sound={@sound} />
         </div>
 
         <div id="content">
-          <.sidebar :if={@view.started && Access.sidebar?(@screen)} view={@view} back={@back} />
+          <.sidebar
+            :if={@view.started && Access.sidebar?(@screen)}
+            view={@view}
+            back={@back}
+            folds={@folds}
+          />
 
           <div id="main">
             <div
@@ -73,6 +81,7 @@ defmodule MiniLineageWeb.Layouts do
                 icon={panel.icon}
                 body_class={panel[:body_class]}
                 collapsible={panel[:collapsible] == true}
+                collapsed={panel[:collapsible] == true and folded?(@folds, panel[:id])}
               >
                 <:header :if={index == 0}>
                   <div class="header-effects" id="effects" phx-hook="EffectTimers">
@@ -112,6 +121,7 @@ defmodule MiniLineageWeb.Layouts do
 
   attr :view, :map, required: true
   attr :back, :string, default: nil
+  attr :folds, :map, required: true
 
   defp sidebar(assigns) do
     ~H"""
@@ -179,6 +189,7 @@ defmodule MiniLineageWeb.Layouts do
         icon="🫙"
         body_class="rows"
         collapsible
+        collapsed={folded?(@folds, "consumables")}
       >
         <div :for={item <- consumables(@view.items)} class="stat-row" id={"consumable-#{item.id}"}>
           <span class="stat-value" title={item.name}>{Controls.item_label(item, short: true)}</span>
@@ -196,6 +207,7 @@ defmodule MiniLineageWeb.Layouts do
         icon="🎒"
         body_class="rows"
         collapsible
+        collapsed={folded?(@folds, "inventory")}
       >
         <%!-- Each list says what it is by what is in it, so neither needs a label. --%>
         <div :for={{id, slots, none} <- equipped_rows()} class="stat-row stacked" id={id}>
@@ -230,6 +242,9 @@ defmodule MiniLineageWeb.Layouts do
         do: Controls.item_label(item)
       )
 
+  # Open unless the reader folded it.
+  defp folded?(folds, id), do: Map.get(folds, id) == false
+
   # Rules §26: what stacks is what is used up, a potion today and a soulshot or spiritshot later.
   defp consumables(items), do: Enum.filter(items, & &1.potion?)
 
@@ -241,6 +256,8 @@ defmodule MiniLineageWeb.Layouts do
   banner is an ordinary link and the sound toggle, which nothing would drive, is left out.
   """
   attr :interactive?, :boolean, default: true
+  # The reader's kept choice, so the toggle is served as they left it.
+  attr :sound, :boolean, default: true
 
   def site_header(assigns) do
     ~H"""
@@ -262,21 +279,30 @@ defmodule MiniLineageWeb.Layouts do
         <h1 class="header-title">Mini Lineage</h1>
         <span class="header-subtitle">Remastered</span>
       </.link>
-      <%!-- Outside the anchor, so clicking it never also navigates. Ignored by patches: the hook
-            draws the reader's state over the template's. --%>
+      <%!-- Outside the anchor, so clicking it never also navigates. Ignored by patches, as the hook
+            flips it to the face the data attributes name for the other state. --%>
       <button
         :if={@interactive?}
         id="sound-toggle"
         type="button"
         phx-hook="SoundToggle"
         phx-update="ignore"
-        class="sound-toggle-btn"
-      >
-        🔊
-      </button>
+        class={["sound-toggle-btn", !@sound && "silenced"]}
+        title={sound_label(@sound)}
+        aria-label={sound_label(@sound)}
+        data-on={sound_face(true)}
+        data-on-label={sound_label(true)}
+        data-off={sound_face(false)}
+        data-off-label={sound_label(false)}
+      >{sound_face(@sound)}</button>
     </div>
     """
   end
+
+  defp sound_face(on), do: if(on, do: "🔊", else: "🔇")
+
+  defp sound_label(true), do: "Sound FX Enabled (Click to Mute)"
+  defp sound_label(false), do: "Sound FX Muted (Click to Unmute)"
 
   def footer(assigns) do
     version = Version.current()

@@ -12,7 +12,7 @@ defmodule MiniLineageWeb.GameLive do
   require Logger
 
   alias MiniLineage.Game.{Access, Actions, Clock, Math, Narratives, Player, Snapshot, Version}
-  alias MiniLineageWeb.{Controls, Paths, Screens}
+  alias MiniLineageWeb.{Controls, Kept, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
   @dev_names ~w(Aerin Baelor Cadmus Darion Elowen Fenris Galen Hadrian Isolde Jorah Kaelith Lucan
@@ -36,7 +36,9 @@ defmodule MiniLineageWeb.GameLive do
   @dev_longest @dev_sequences |> Enum.map(fn {keys, _} -> length(keys) end) |> Enum.max()
 
   @impl true
-  def mount(_params, %{"session_id" => id}, socket) when is_binary(id) do
+  def mount(_params, %{"session_id" => id} = session, socket) when is_binary(id) do
+    kept = Kept.read(connect_kept(socket) || session["kept"])
+
     if connected?(socket) do
       Characters.attach(id)
       Characters.subscribe(id)
@@ -62,7 +64,9 @@ defmodule MiniLineageWeb.GameLive do
        character_id: nil,
        picked: nil,
        picks: %{},
-       sorts: kept_sorts(get_connect_params(socket)),
+       sorts: kept.sorts,
+       folds: kept.folds,
+       sound: kept.sound,
        dev_name: nil,
        keys: [],
        icon: nil,
@@ -77,18 +81,14 @@ defmodule MiniLineageWeb.GameLive do
   # bounce through a real request. The plug always sets one, so this cannot come round twice.
   def mount(_params, _session, socket), do: {:ok, redirect(socket, to: ~p"/")}
 
-  # Kept sorts arrive with the socket, so the first connected render has them. Each is checked against
-  # the table it names, and a table that does not remember takes none.
-  defp kept_sorts(%{"tables" => kept}) when is_map(kept) do
-    for {table, value} <- kept,
-        %{remember: true, keys: keys} <- [Screens.sortable(table)],
-        sort = Controls.decode_sort(value, keys),
-        sort != nil,
-        into: %{},
-        do: {table, sort}
+  # The cookie as the browser holds it now, which beats the page's copy: a reconnect after a
+  # restart, or after another tab changed something, rejoins with the token the page was served.
+  defp connect_kept(socket) do
+    case connected?(socket) && get_connect_params(socket) do
+      %{"kept" => kept} when is_binary(kept) -> kept
+      _ -> nil
+    end
   end
-
-  defp kept_sorts(_params), do: %{}
 
   # ------------------------------------------------------------- navigation
 
@@ -322,6 +322,13 @@ defmodule MiniLineageWeb.GameLive do
     end
   end
 
+  # A fold is the reader's like a sort, kept so a panel drawn again on this visit opens as they
+  # left it. The browser has already folded it and kept it, so this only follows.
+  def handle_event("fold", %{"panel" => id, "open" => open}, socket) when is_boolean(open),
+    do: {:noreply, assign(socket, folds: Kept.fold(socket.assigns.folds, id, open))}
+
+  def handle_event("fold", _params, socket), do: {:noreply, socket}
+
   # Rules §20: one click, one fight, staying on the ground unless it ends the run. A fight the hunter
   # walks away from is written on the ground's page; one that ends the run keeps its alert.
   def handle_event("hunt", _params, socket),
@@ -541,6 +548,8 @@ defmodule MiniLineageWeb.GameLive do
       screen={@screen}
       back={@back && Paths.for_screen(@back)}
       dev_keys={@debug and @view.started}
+      folds={@folds}
+      sound={@sound}
     >
       <Controls.flash_alert :if={@game_flash && panel == hd(@panels)} flash={@game_flash} />
 

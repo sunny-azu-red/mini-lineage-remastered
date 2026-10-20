@@ -28,6 +28,19 @@ const { state, onScreen, create, text, adena } = controls(page);
 // The ids of a table's or a shelf's item rows, leaving out a shelf's heading.
 const rowIds = async (rows) =>
     (await page.locator(`${rows} tr[id]`).evaluateAll((trs) => trs.map((tr) => tr.id))).join();
+// What a reload draws before any script (the page fetched again and parsed, never run) beside what
+// is on screen, both read by one reader so they compare whole: a reload is served as it was left.
+const servedShown = (selector) => page.evaluate(async (sel) => {
+    const read = (root) => [...root.querySelectorAll(sel)].map((el) => ({
+        id: el.id, text: el.textContent.trim(), title: el.getAttribute('title'),
+        expanded: el.getAttribute('aria-expanded'), sort: el.getAttribute('aria-sort'),
+        class: [...el.classList].sort().join(' '),
+    }));
+    const html = await (await fetch(location.href)).text();
+    const served = read(new DOMParser().parseFromString(html, 'text/html'));
+    const shown = read(document);
+    return { served, same: JSON.stringify(served) === JSON.stringify(shown), detail: JSON.stringify({ served, shown }) };
+}, selector);
 
 try {
     // Never `networkidle`: the LiveView websocket stays open, so it never settles.
@@ -235,14 +248,26 @@ try {
         await page.locator('#main .alert').count() === 0);
 
     // ---- muting is the browser's, and the toggle says so in its own chime --------------------
+    const keptCookie = async () => (await context.cookies()).find(c => c.name === '_mini_lineage_kept');
     await page.click('#sound-toggle');
     check('muting flips the toggle', await page.textContent('#sound-toggle') === '🔇');
     check('...and plays nothing', (await page.evaluate(() => window.__notes.splice(0))).length === 0);
+    const kept = await keptCookie();
+    check('...kept in a cookie of the browser\'s own, for the whole site, sameSite Lax and readable by the page',
+        kept?.path === '/' && kept.sameSite === 'Lax' && !kept.httpOnly && kept.expires > Date.now() / 1000 + 300 * 86400,
+        JSON.stringify(kept));
+    const mutedToggle = await servedShown('#sound-toggle');
+    check('...which the next page is served with, muted just as the hook drew it',
+        mutedToggle.same && mutedToggle.served[0]?.text === '🔇', mutedToggle.detail);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...and a refresh keeps it muted', await page.textContent('#sound-toggle') === '🔇');
     await page.click('#sound-toggle');
     check('unmuting flips it back', await page.textContent('#sound-toggle') === '🔊');
+    const soundingToggle = await servedShown('#sound-toggle');
+    check('...served sounding again, and with nothing left to keep, the cookie gone',
+        soundingToggle.same && soundingToggle.served[0]?.text === '🔊' && await keptCookie() === undefined,
+        soundingToggle.detail);
     const chime = await page.evaluate(() => window.__notes.splice(0));
     check('...with a chime of its own, two sines', chime.join(',') === 'sine,sine', chime.join(','));
 
@@ -309,13 +334,15 @@ try {
     // ---- a second-tier panel folds at any width, and stays as the reader left it -------------
     const inventory = page.locator('#inventory .panel-body');
     const folded = () => inventory.waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
-    // The page as served, before any script: the hook opens what the reader left open.
-    const served = await (await page.request.get(page.url())).text();
-    check('the Inventory is served folded and opened once the page connects, the reader never having folded it',
-        /<button[^>]*class="panel-header flex panel-toggle"[^>]*aria-expanded="false"[\s\S]*?🎒 Inventory/.test(served)
-        && await inventory.isVisible());
+    const openInventory = await servedShown('#inventory .panel-toggle');
+    check('the Inventory opens unfolded beside the main panel, as it is served',
+        openInventory.same && openInventory.served[0]?.expanded === 'true' && await inventory.isVisible(),
+        openInventory.detail);
     await page.click('#inventory .panel-toggle');
     check('...until its header folds it, there as anywhere', await folded());
+    const foldedInventory = await servedShown('#inventory .panel-toggle');
+    check('...after which the page is served with it folded, so a reload moves nothing',
+        foldedInventory.same && foldedInventory.served[0]?.expanded === 'false', foldedInventory.detail);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('...and a refresh keeps the fold, the panel being the reader\'s own', await folded());
@@ -557,6 +584,8 @@ try {
     check('hunting again fights again, still on the ground, and names somewhere new',
         (await state()).screen === 'hunt' && await page.locator('#fight-outcome').count() === 1);
     check('...the orders staying folded through it', await ordersFolded());
+    const foldedOrders = await servedShown('#orders .panel-toggle');
+    check('...and served folded', foldedOrders.same && foldedOrders.served[0]?.expanded === 'false', foldedOrders.detail);
     await page.click('#orders .panel-toggle');
     check('...until they are opened again', await orders.isVisible());
     await page.click('#retreat-button');
@@ -644,6 +673,17 @@ try {
     check('the inventory lists everything carried, what is equipped highlighted, the Combat Stats beside it folding',
         await page.locator('#items tr.owned').count() === 3 && await page.locator('#combat-stats .panel-toggle').count() === 1,
         String(await page.locator('#items tr.owned').count()));
+    const byName = page.locator('#items thead button.sort', { hasText: 'Item' });
+    const unsorted = await rowIds('#items');
+    await byName.click();
+    await page.waitForSelector('#items th[aria-sort="ascending"]:has-text("Item")', { timeout: 5000 });
+    const sortedIds = await rowIds('#items');
+    const sortedRows = await servedShown('#items tbody tr, #items th');
+    // Compared rather than reloaded: a reload would close the inventory onto the town, not the shelf.
+    check('the inventory remembers its sort, so a reload is served the rows in the order the reader chose',
+        sortedIds !== unsorted && sortedRows.same, sortedRows.detail);
+    await page.locator('#items thead button.sort', { hasText: 'Slot' }).click();
+    await page.waitForSelector('#items th[aria-sort="ascending"]:has-text("Slot")', { timeout: 5000 });
     check('...in one list grouped by what each item can be given',
         JSON.stringify(await page.$$eval('#inventory-form optgroup', gs => gs.map(g => g.label)))
             === JSON.stringify(['Equip', 'Unequip', 'Destroy']),
@@ -878,6 +918,17 @@ try {
     await onScreen('hunt');
     // Read here and checked at the guild below: nothing between them earns any.
     const ordersSp = await page.getAttribute('#orders-footer [data-key="orders-sp"]', 'data-value');
+    await page.click('#orders .panel-toggle');
+    await orders.waitFor({ state: 'hidden', timeout: 3000 });
+    await page.click('#header-link');
+    await onScreen('town');
+    await page.selectOption('#travel-form select', 'hunt');
+    await page.click('#travel-form button');
+    await onScreen('hunt');
+    check('the orders folded on the ground are drawn folded on coming back to it',
+        await page.getAttribute('#orders .panel-toggle', 'aria-expanded') === 'false');
+    await page.click('#orders .panel-toggle');
+    await orders.waitFor({ state: 'visible', timeout: 3000 });
     check('the orders use every skill to begin with, each on a switch',
         await page.getAttribute('#use-mortal-blow', 'aria-checked') === 'true');
     check('...and a mastery is no order to give',

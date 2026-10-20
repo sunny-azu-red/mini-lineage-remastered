@@ -2,7 +2,7 @@ import { keep } from './kept';
 
 /**
  * Keeps a remembered table's sort under `table:<id>`, writing only a change: a second tab mounting
- * on an older sort must not overwrite a newer one. `app.js` hands every kept sort over on connect.
+ * on an older sort must not overwrite a newer one. The server reads it back for its first draw.
  */
 export const Table = {
     mounted() {

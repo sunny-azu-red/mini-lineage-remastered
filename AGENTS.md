@@ -32,7 +32,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   the formatter twins it re-exports (see Tests). Each
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
   `AnimatedValues`, `DevKeys`, `EffectTimers`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle`
-  (over the synth in `soundfx.js`) and `Table`; `kept.js` is storage.
+  (over the synth in `soundfx.js`) and `Table`; `kept.js` is the kept cookie (see Components).
 - **Five sounds**, each a list of notes in `soundfx.js` with no assets. All but the toggle's are
   pushed by `GameLive` as `play-sound` (`sound/1`), so no reload can replay one, and one action
   plays one sound at most: a fight is one click however many blows or potions it holds.
@@ -250,8 +250,8 @@ Each of these is here because it was got wrong once.
   `priv/game/trainer.csv`, held to rules §18, §24 and §25 by `rules_test.exs`. Content goes into Postgres only when it must change without a deploy, decided
   when such a feature exists.
 - **A character has two ids, never to be confused.** `id` is public and the only one a page shows or
-  links. `session_id` is the cookie and a credential: a public id that worked as a session would let
-  anyone play anyone. Anything listing characters selects into plain maps, never `%Record{}`, which
+  links. `session_id` is the session cookie and a credential: a public id that worked as a session
+  would let anyone play anyone. Anything listing characters selects into plain maps, never `%Record{}`, which
   carries `session_id`, and says `active` ("has a session"), never the session. The session names the
   BROWSER, not the run, so it outlives the run's process and every tab.
 - **Writes follow the player, not the clock.** What the player did (today: creating the character) is
@@ -312,7 +312,11 @@ Each of these is here because it was got wrong once.
   through it. A topic others may follow is keyed by the PUBLIC id and followed only on the screen
   that draws it. Nightfall stores nothing: `GameLive` wakes itself at `Clock.next_boundary/1` and
   redraws. `Characters.Server` broadcasts AFTER it persists, so a reader answering a push finds the write.
-- **The cookie is legible only to the secret that signed it.** dev and prod read the same `.env`, so
+- **The first draw is the one the reader sees.** Anything a reload must keep (a fold, a sort, the
+  sound) is read from the request and served as it was left, never put right by a hook once the
+  page connects: drawn wrong and fixed later, every reload moves. The walkthrough compares the page
+  as served with the page as shown (`servedShown`).
+- **The session cookie is legible only to the secret that signed it.** dev and prod read the same `.env`, so
   `config/runtime.exs` gives both the same `SECRET_KEY_BASE`; dev falls back to the one committed in
   `config/dev.exs`.
 
@@ -325,19 +329,25 @@ Each of these is here because it was got wrong once.
   `#screen`, which carries `PanelFocus` and the data attributes browser tests read. A panel takes a
   hook only when something in it moves, so the error page, with no LiveView, needs no JavaScript.
 - **A collapse is the reader's, not the template's.** `aria-expanded` is the whole state: CSS hides
-  a folded body off it, never a `hidden` attribute. The server draws every collapsible panel
-  folded and the `Panel` hook opens it on mount unless the reader folded it, because a panel popping
-  open on a reload read better than one snapping shut; after that the attribute is the hook's alone,
-  `JS.ignore_attributes` keeping every patch off it. The header band is a BUTTON inside the h2,
-  never a link (Space scrolls a link, and `PanelFocus` refuses to focus one), and it neither takes
-  `PanelFocus`'s first focus nor gives it back, as a sort does. Opening by hand scrolls the panel
-  into view; restoring or patching never moves the page. The chevron's transition waits for the
-  `data-ready` the hook sets two frames in. Every second-tier panel folds, on a desktop as on a
-  phone; a first-tier one never does.
-- **What the reader chooses is kept as `<kind>:<id>` through `hooks/kept.js`**, whose `recall`,
-  `recallAll` and `keep` are the only code touching `localStorage`: `panel:<id>` for a fold,
-  `sound:effects` while sound is off, `table:<id>` for a remembered sort (handed over on connect). A new thing that remembers takes a kind and writes no storage code. Hand a kind to the
-  server only when it must know it to render.
+  a folded body off it, never a `hidden` attribute. The server draws the reader's kept fold
+  (`collapsed`, from `MiniLineageWeb.Kept`); after that the attribute is the `Panel` hook's alone,
+  `JS.ignore_attributes` keeping every patch off it. A click folds at once, keeps the fold and
+  pushes `"fold"`, so a panel drawn again on this visit (the orders on coming back to the ground)
+  is drawn as it was left. The header band is a BUTTON inside the h2, never a link (Space scrolls
+  a link, and `PanelFocus` refuses to focus one), and it neither takes `PanelFocus`'s first focus
+  nor gives it back, as a sort does. Opening by hand scrolls the panel into view; restoring or
+  patching never moves the page. The chevron's transition waits for the `data-ready` the hook
+  sets two frames in. Every second-tier panel folds, on a desktop as on a phone; a first-tier one
+  never does.
+- **What the reader chooses is kept as `<kind>:<id>` in the `_mini_lineage_kept` cookie**:
+  `panel:<id>` for a fold, `sound:effects` while sound is off, `table:<id>` for a remembered
+  sort. `hooks/kept.js` (`recall`, `keep`, `keptCookie`, `refreshKept`) is the only code writing
+  it, and `MiniLineageWeb.Kept` the only code reading it, for the first draw through the
+  `live_session`'s session and again from the connect params, which beat the page's copy after a
+  restart. It is the browser's, unsigned, so `Kept.read/1` drops whatever it cannot draw rather
+  than raise. Its 400 days, Chrome's ceiling, restart on every visit. A new thing that remembers
+  takes a kind, writes no storage code and is drawn from `Kept.read/1`; no choice goes in
+  `localStorage`, which the server never sees.
 - **Every button is `Controls.button/1`**, the only writer of `btn`. Without `patch` it is a
   `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
   never a link restyled as a button or the reverse. `variant={:secondary}` serves `<.select_action>`
@@ -408,7 +418,7 @@ Each of these is here because it was got wrong once.
   page has two or more, and a sort reorders each shelf's rows without mixing them. `table_sort_test.exs` walks every page's tables, so a new
   table is added there. A sort header neither takes `PanelFocus`'s first focus nor gives it back to
   the dropdown. A table outlives a reload only with `remember` on the table AND in `sortable/1`,
-  which `GameLive` checks before reading a kept sort back; none does yet.
+  which `Kept.read/1` checks before reading a kept sort back; today the inventory's `items`.
 - **A page shows what the fight works out, never the formula.** A skill's row reads the numbers
   `Hunt` uses for this character (`reuse_ms/2`, `cast_ms/2`, `heal_amount/2`, `blow_chance/1`), and a
   multiplier reads as Lineage II's data writes a buff: "+8% P. Def.", never "×1.08" or "√M. Atk.". A

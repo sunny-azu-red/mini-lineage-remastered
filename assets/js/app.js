@@ -3,7 +3,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import {hooks as gameHooks, shortFigure, percentFigure, tenthsFigure, timerLabel, remainingLabel} from "./hooks"
-import {recallAll} from "./hooks/kept"
+import {keptCookie, refreshKept} from "./hooks/kept"
 import {playSound, installUnlock} from "./soundfx"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
@@ -12,8 +12,8 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 try { sessionStorage.removeItem("phx:fallback:LongPoll") } catch (_) { }
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  // A function, so a reconnect hands over the sorts kept since the page loaded.
-  params: () => ({_csrf_token: csrfToken, tables: recallAll("table")}),
+  // A function, so a reconnect hands over what was kept since the page loaded.
+  params: () => ({_csrf_token: csrfToken, kept: keptCookie()}),
   hooks: gameHooks,
 })
 
@@ -40,6 +40,7 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 installUnlock()
 window.addEventListener("phx:play-sound", event => playSound(event.detail.name))
 
+refreshKept()
 liveSocket.connect()
 
 // For the console: liveSocket.enableDebug(), .enableLatencySim(1000), .disableLatencySim()

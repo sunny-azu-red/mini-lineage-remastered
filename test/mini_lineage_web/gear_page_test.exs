@@ -257,6 +257,24 @@ defmodule MiniLineageWeb.GearPageTest do
     refute has_element?(view, "#items")
   end
 
+  # `MiniLineageWeb.Kept`: the bag is the one table that remembers, served in the reader's sort.
+  test "the inventory is served in the sort the reader left it in" do
+    {_view, session, conn} = human(build_conn(), 0)
+    kept = put_req_cookie(conn, MiniLineageWeb.Kept.cookie(), "table%3Aitems=name%3Adesc")
+
+    by_name =
+      stored(session).items |> Enum.sort_by(& &1.name, :desc) |> Enum.map(&"item-#{&1.id}")
+
+    doc = kept |> get(~p"/inventory") |> html_response(200) |> LazyHTML.from_document()
+    assert doc |> LazyHTML.query("#items tbody tr") |> LazyHTML.attribute("id") == by_name
+
+    assert LazyHTML.query(doc, ~s(#items-head[phx-hook="Table"][data-sort="name:desc"]))
+           |> Enum.count() == 1
+
+    {:ok, view, _html} = live(kept, ~p"/inventory")
+    assert has_element?(view, ~s(#items th[aria-sort="descending"]), "Item")
+  end
+
   test "the inventory lists everything, equipped highlighted, and equips, unequips and destroys" do
     {_view, session, conn} = human(build_conn(), 0)
     Characters.mutate(session, &{%{&1 | skills: %{"Power Strike" => 1}}, :ok})

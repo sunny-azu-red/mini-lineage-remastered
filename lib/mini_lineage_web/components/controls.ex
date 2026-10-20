@@ -26,6 +26,8 @@ defmodule MiniLineageWeb.Controls do
   # A second-tier panel, beside or under what plays the screen: the reader may fold it at any
   # width, and their fold is kept.
   attr :collapsible, :boolean, default: false
+  # The reader's kept fold, so the page is served as they left it.
+  attr :collapsed, :boolean, default: false
   attr :rest, :global
   slot :header
   slot :inner_block, required: true
@@ -38,13 +40,13 @@ defmodule MiniLineageWeb.Controls do
       phx-hook={if @collapsible, do: "Panel"}
     >
       <%!-- The whole band is the control: a title you have to hit exactly is worse than none. A
-            button's contents are never read as a heading, so the h2 wraps it. Drawn folded, so
-            the hook opens what the reader left open rather than shutting what they folded. --%>
+            button's contents are never read as a heading, so the h2 wraps it. The fold is the
+            hook's once mounted: the server hears of a click only after it. --%>
       <h2 :if={@collapsible} class="panel-heading">
         <button
           type="button"
           class="panel-header flex panel-toggle"
-          aria-expanded="false"
+          aria-expanded={to_string(!@collapsed)}
           phx-mounted={JS.ignore_attributes(["aria-expanded"])}
         >
           <span class="header-name">{label(@icon, @title)}</span>
@@ -278,7 +280,8 @@ defmodule MiniLineageWeb.Controls do
   Every table in the game. The rows are the caller's `<tbody>`, already in `sort`'s order: a `:col`
   with `sort` is a header button sending `sort` with the table's id and its key, which the LiveView
   turns with `next_sort/2` and the screen applies with `sort_rows/3`, so a patch never fights it.
-  `remember` keeps the sort under `table:<id>` through the `Table` hook, handed back on connect.
+  `remember` keeps the sort under `table:<id>` through the `Table` hook, and the next page is served
+  in it (`MiniLineageWeb.Kept`).
   """
   attr :id, :string, required: true
   # `{key, :asc | :desc}`, or nil for a table nobody sorts.
