@@ -55,7 +55,7 @@ defmodule MiniLineage.Game.Narratives do
     burn: ~s({their} {skill} tick burns for <span class="magic">{amount} damage</span>),
     foe_blow: ~s(the {monster} hits {object} for <span class="hp">{amount} damage</span>),
     foe_critical:
-      ~s(the {monster} lands a critical hit on {object} for <span class="hp">{amount} damage</span>),
+      ~s(the {monster} lands a critical hit on {object} for <span class="crit">{amount} damage</span>),
     foe_caught:
       ~s({their} shield catches the {monster}'s blow, and {them} take <span class="hp">{amount} damage</span>),
     foe_perfect: "{their} shield turns the {monster}'s blow aside",
@@ -82,7 +82,7 @@ defmodule MiniLineage.Game.Narratives do
     swing_critical: ~s(a critical hit of <span class="crit">{amount} damage</span>),
     swing_miss: "a miss",
     foe_swing_hit: ~s(a hit of <span class="hp">{amount} damage</span>),
-    foe_swing_critical: ~s(a critical hit of <span class="hp">{amount} damage</span>),
+    foe_swing_critical: ~s(a critical hit of <span class="crit">{amount} damage</span>),
     foe_swing_caught:
       ~s(a hit of <span class="hp">{amount} damage</span> that {their} shield catches),
     foe_swing_perfect: "a blow {their} shield turns aside",

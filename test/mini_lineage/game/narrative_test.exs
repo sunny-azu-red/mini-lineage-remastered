@@ -126,6 +126,27 @@ defmodule MiniLineage.Game.NarrativeTest do
           do: assert(unrendered(text) == [], text)
     end
 
+    test "writes a critical hit in its orange whichever side lands it" do
+      foe = Rules.monster("Vaiss Orc")
+
+      log = [
+        {1, {:blow, 40, true}},
+        {1, {:foe_blow, 30, true, nil}},
+        {2, {:foe_blow, 25, true, nil}},
+        {2, :foe_miss},
+        {1, {:standing, 70, 20}},
+        {2, {:standing, 45, 20}}
+      ]
+
+      lines =
+        foe
+        |> Narrative.build_fight_log(Rules.ground("obelisk-of-victory"), log, @weapon, {[], 100})
+        |> Enum.map(&Narrative.alert(&1.line))
+
+      for amount <- [40, 30, 25],
+          do: assert(Enum.any?(lines, &(&1 =~ ~s(<span class="crit">#{amount} damage</span>))))
+    end
+
     test "says a cast or a run once as it begins, and leaves out a round with nothing new" do
       foe = Rules.monster("Goblin Scout")
 
