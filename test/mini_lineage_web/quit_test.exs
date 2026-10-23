@@ -1,8 +1,8 @@
 defmodule MiniLineageWeb.QuitTest do
   @moduledoc """
-  The temporary Quit, Ctrl+Q, for trying every race and path from one browser: it deletes the
-  character and sends the browser back to game start. Debug builds only; a release never listens.
-  The town's dropdown is left to the game.
+  The debug build's Quit, Ctrl+Q, kept for trying every race and path from one browser: it deletes
+  the character and sends the browser back to game start. Debug builds only; a release never
+  listens. The town's dropdown is left to the game.
   """
   use MiniLineageWeb.ConnCase, async: false
 

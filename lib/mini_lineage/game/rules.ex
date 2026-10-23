@@ -2,8 +2,9 @@ defmodule MiniLineage.Game.Rules do
   @moduledoc """
   The base layer's tables, exactly as `docs/rules.md` writes them: the eight starting sets, what
   each path starts with, the attribute bonus curves, the EXP each level needs, the towns and the
-  routes between them, and what night and the race perks do. `rules_test.exs`
-  reads the tables back out of the document, so the two cannot disagree.
+  routes between them, what night and the race perks do, the hunting grounds and their monsters,
+  the skills and what the trainer teaches, the items, potions and kits, and each village's traders
+  and guild. `rules_test.exs` reads the tables back out of the document, so the two cannot disagree.
   """
 
   # Rules §3, §6 and §10: each set's attributes, its HP and MP as {start, gain, growth}, and the run
@@ -448,21 +449,16 @@ defmodule MiniLineage.Game.Rules do
     "Soul Cry" => %{kind: :toggle, power: 4.5, mp: 2, drain: 3, every: 3_000},
     # Rules §11: power HP more on each tick of rest, for MP each tick.
     "Relax" => %{kind: :rest, power: 5, mp: 3},
-    # Never cast: each bonus adds to its stat, one naming an armour type only while it is worn.
-    "Armor Mastery" => %{kind: :passive, power: 0, mp: 0, bonuses: [%{stat: :p_def, add: 9}]},
-    "Robe Mastery" => %{
-      kind: :passive,
-      power: 0,
-      mp: 0,
-      bonuses: [%{stat: :p_def, add: 13.4, worn: "magic"}]
-    },
+    # Never cast: what each line adds or multiplies by is §25's, in @skill_levels.
+    "Armor Mastery" => %{kind: :passive, power: 0, mp: 0},
+    "Robe Mastery" => %{kind: :passive, power: 0, mp: 0},
     # A Fighter's lines and a Mystic's differ, as in Lineage II; `skill/3` reads them by path.
     "Weapon Mastery" => %{kind: :passive, power: 0, mp: 0},
-    "Anti Magic" => %{kind: :passive, power: 0, mp: 0, bonuses: [%{stat: :m_def, add: 12}]}
+    "Anti Magic" => %{kind: :passive, power: 0, mp: 0}
   }
 
   # Rules §25: each skill's {power, MP} by level, level 1 first; a burn's power is per second, a
-  # toggle's level says what it drains as well, and a passive's what it adds.
+  # toggle's level says what it drains as well, and a passive's what it adds or multiplies by.
   @skill_levels %{
     "Power Strike" => [{25, 10}, {30, 11}, {46, 14}, {70, 19}],
     "Mortal Blow" => [{73, 9}, {88, 10}, {137, 13}, {210, 17}],
@@ -639,6 +635,7 @@ defmodule MiniLineage.Game.Rules do
 
            ^header = Enum.join(keys, ",")
            words = ~w(name kind slot type sold)a
+           word = Map.new(@item_words, &{Atom.to_string(&1), &1})
 
            # A blank cell is a stat the item does not have, read as nil.
            for row <- rows, into: %{} do
@@ -652,9 +649,9 @@ defmodule MiniLineage.Game.Rules do
 
              item = %{
                item
-               | kind: String.to_existing_atom(item.kind),
-                 slot: String.to_existing_atom(item.slot),
-                 sold: String.to_existing_atom(item.sold)
+               | kind: Map.fetch!(word, item.kind),
+                 slot: Map.fetch!(word, item.slot),
+                 sold: Map.fetch!(word, item.sold)
              }
 
              {item.name, item}
@@ -813,7 +810,8 @@ defmodule MiniLineage.Game.Rules do
   def set(race_id, path), do: Enum.find(@sets, &(&1.race_id == race_id and &1.path == path))
   def path(path), do: Map.fetch!(@paths, path)
   def bonus_curve(attr), do: Map.fetch!(@bonus, attr)
-  # By level, since working out a level climbs the table one row at a time.
+
+  # By level, for the EXP a level needs; working out a level walks `experience_table/0` instead.
   @experience_at @experience |> Enum.with_index(1) |> Map.new(fn {xp, level} -> {level, xp} end)
   def experience(level), do: Map.get(@experience_at, level)
   def max_level, do: length(@experience)
@@ -845,7 +843,6 @@ defmodule MiniLineage.Game.Rules do
   @doc "Rules §22: what this server multiplies a kill's pay by, the rules' own unless it sets others."
   def rate(kind), do: :mini_lineage |> Application.fetch_env!(:rates) |> Keyword.fetch!(kind)
 
-  def item_words, do: @item_words
   def part(slot), do: Map.fetch!(@parts, slot)
   def parts, do: @parts
 
@@ -921,16 +918,14 @@ defmodule MiniLineage.Game.Rules do
     |> Enum.sort_by(&(Enum.find_index(order, fn type -> type == &1.type end) || length(order)))
   end
 
-  @doc """
-  Rules §24: whether a set's path is offered an item: a fighter the weapons its own skills use and
-  light armour, a mystic staves and robes, and both every shield, necklace and potion.
-  """
-  def offered?(set, %{slot: :weapon, type: type}), do: type in path_weapons(set)
+  # Rules §24: whether a set's path is offered an item: a fighter the weapons its own skills use and
+  # light armour, a mystic staves and robes, and both every shield, necklace and potion.
+  defp offered?(set, %{slot: :weapon, type: type}), do: type in path_weapons(set)
 
-  def offered?(%{path: path}, %{slot: slot, type: type}) when slot in [:chest, :legs],
+  defp offered?(%{path: path}, %{slot: slot, type: type}) when slot in [:chest, :legs],
     do: type == if(path == :fighter, do: "light", else: "magic")
 
-  def offered?(_set, _item), do: true
+  defp offered?(_set, _item), do: true
 
   defp path_weapons(%{path: :mystic}), do: ["staff"]
 
@@ -945,8 +940,7 @@ defmodule MiniLineage.Game.Rules do
   @doc "Rules §25: every line a set's trainer teaches, in the order the table lists them."
   def lessons(set_name), do: Map.get(@lessons, set_name, [])
 
-  def skill_known?(name),
-    do: Map.has_key?(@skills, name) or Enum.any?(@trainer, &(&1.skill == name))
+  def skill_known?(name), do: Map.has_key?(@skills, name)
 
   @doc "Rules §25: a skill at the level a character of `path` knows it."
   def skill(name, level, path \\ nil) do
@@ -957,7 +951,7 @@ defmodule MiniLineage.Game.Rules do
   end
 
   @doc "Rules §25: a skill's lines, a Fighter's or a Mystic's where the two differ (Weapon Mastery)."
-  def skill_levels(name, path \\ nil) do
+  def skill_levels(name, path) do
     case Map.fetch!(@skill_levels, name) do
       %{fighter: _, mystic: _} = by_path -> Map.fetch!(by_path, path)
       levels -> levels

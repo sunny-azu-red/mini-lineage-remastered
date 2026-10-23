@@ -49,5 +49,5 @@ mix run --no-start -e '
   {:ok, conn} = Postgrex.start_link(Keyword.drop(config, [:pool, :pool_size, :adapter]))
   # CASCADE is deliberately NOT used: naming the table keeps this incapable of reaching another.
   Postgrex.query!(conn, "TRUNCATE characters, items, encounters", [])
-  IO.puts("reset #{database}: characters, items")
+  IO.puts("reset #{database}: characters, items, encounters")
 ' >/dev/null

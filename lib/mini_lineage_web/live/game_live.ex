@@ -71,7 +71,6 @@ defmodule MiniLineageWeb.GameLive do
        sound: kept.sound,
        dev_name: nil,
        keys: [],
-       icon: nil,
        game_flash: nil,
        flash_fresh: false,
        error_detail: nil,
@@ -274,7 +273,7 @@ defmodule MiniLineageWeb.GameLive do
 
   # Rules §20 and §26: an order. A slider sends the stop it was moved to, `_target` naming it
   # (`potion`, `pull` or `fight`), a switch `use:<true|false>:<skill>`, a name that may hold a
-  # colon, and the header's ↺ `reset`.
+  # colon, and the footer's 🧹 Reset to Default, `reset`.
   def handle_event("order", %{"_target" => [kind]} = params, socket)
       when kind in ~w(potion pull fight) do
     action =
@@ -389,7 +388,7 @@ defmodule MiniLineageWeb.GameLive do
     assign(socket, game_flash: %{text: text, type: :info})
   end
 
-  # TEMPORARY, for trying every race and path from one browser: deletes the character outright.
+  # Kept by choice, for trying every race and path from one browser: deletes the character outright.
   defp dev(socket, :quit) do
     id = socket.assigns.session_id
     Characters.forget(id)
@@ -570,7 +569,6 @@ defmodule MiniLineageWeb.GameLive do
         catalog={@catalog}
         detail={@error_detail}
         picked={@picked}
-        debug={@debug}
         dev_name={@dev_name}
         boards={@boards}
         lineage={@town}

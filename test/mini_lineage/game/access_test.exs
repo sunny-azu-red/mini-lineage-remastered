@@ -103,8 +103,13 @@ defmodule MiniLineage.Game.AccessTest do
     end
   end
 
-  test "only a town, its Gatekeeper and the inventory show the sidebar" do
-    for screen <- ~w(town gatekeeper inventory), do: assert(Access.sidebar?(screen))
-    for screen <- ~w(start character races error), do: refute(Access.sidebar?(screen))
+  test "a town's places and the inventory show the sidebar, and nothing else" do
+    traders = Enum.map(MiniLineageWeb.Paths.trader_pages(), &("trader-" <> &1))
+
+    for screen <- ~w(town gatekeeper hunt guild trader inventory) ++ traders,
+        do: assert(Access.sidebar?(screen), screen)
+
+    for screen <- ~w(start character races error highscores),
+        do: refute(Access.sidebar?(screen), screen)
   end
 end

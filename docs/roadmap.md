@@ -16,9 +16,9 @@ what bring Lineage II back; the systems stay small enough to be fun.
 **Old mechanics.** What the game was before the base layer is kept in `legacy/`, to read and never
 to run. Rebuilt so far, each on the base layer: the shops (the traders), the Battleground (the
 hunting grounds), the Character page, the Hall of Champions (the Monument of Heroes), timed buffs
-(the auras), and the level-up's and the death's sounds. Still only there: the Inn, a run's
-Chronicle, the Tome, the Class Master, the Symbol Maker, the Konami cheat, and the critical hit's,
-the coin's and the food's sounds. Each comes back as its system below, and nothing from `legacy/`
+(the auras), and the new game's, the level-up's and the death's sounds, the food's chime now every
+green alert's and the coin's the sound switch's. Still only there: the Inn, a run's Chronicle, the
+Tome, the Class Master, the Symbol Maker, the Konami cheat, and the critical hit's sound. Each comes back as its system below, and nothing from `legacy/`
 comes back as it was.
 
 **Where the content goes.** A system's tables start in `Rules` beside the base layer's, held to
@@ -78,7 +78,7 @@ Built (rules §17 to §21), with the canon's monster stats researched first.
 ## Built with the first hunt
 
 The hunt (rules §17 to §21) put the base layer to work: EXP and levelling (§12) with the level-up
-told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§11) holds
+told, the base outcomes (§13), SP, death and the Monument of Heroes. Being in combat (§20) holds
 on the ground, as the legacy Battleground did, and lifts five seconds after leaving it, counted down
 over its icon as the legacy game counted its effects.
 
@@ -117,7 +117,7 @@ Built (rules §21).
   answers only spells, which the village grounds barely cast (the Orc Village's Evil Eyes aside) and
   Gludio's and Dion's will. The auras are the first timed buffs, as the Temple's will be: each holds 2 minutes, raised
   before the pull, and counts down over its icon and on the character page. The character page's
-  Skills panel is the spellbook: what it knows, in the numbers the fight uses for it (what a heal
+  Learned Skills panel is the spellbook: what it knows, in the numbers the fight uses for it (what a heal
   mends, how often a blow lands, each one's cast and reuse), never a formula.
 - **A skill grows in steps** of up to 4 lines, each a character level's worth of canon levels, and
   the trainer shows only each skill's next line, no two lines of one skill opening at one level.
@@ -226,15 +226,15 @@ The slower fights, for bosses and dungeons.
 - Spells that fail more often against higher-level targets.
 - Debuffs, resisted by the attribute that guards against them.
 - Lethal blows that cut a monster's HP down at once.
-- EXP shared by the damage dealt, smaller against much weaker monsters, with a bonus for an
-  overkill.
+- EXP shared by the damage dealt, with a bonus for an overkill (a much weaker monster already pays
+  less, rules §20).
 
 ## The world
 
 - More of the mainland past Dion: Giran and Giran Harbor are listed by rules §14, and not open yet.
 - A ground by each town, at its own level band, then dungeons.
-- Monsters with their own stats, levels, EXP and Adena. Their EXP is on the scale of rules §12,
-  where level 2 is 68 EXP and level 80 is 4.2 billion, or the first kill levels a character.
+- Monsters for each new ground, researched into the canon and taken whole as the villages' were
+  (rules §18).
 - **Raid and grand bosses,** fought in rounds: Gludio and Dion's raid bosses first, then Queen Ant,
   and in time Antharas.
 

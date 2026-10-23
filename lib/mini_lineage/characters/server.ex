@@ -23,7 +23,7 @@ defmodule MiniLineage.Characters.Server do
 
   def start_link(session), do: GenServer.start_link(__MODULE__, session, name: via(session))
 
-  def via(session), do: {:via, Registry, {MiniLineage.Characters.Registry, session}}
+  defp via(session), do: {:via, Registry, {MiniLineage.Characters.Registry, session}}
 
   @impl true
   def init(session) do
@@ -224,9 +224,8 @@ defmodule MiniLineage.Characters.Server do
     state
   end
 
-  @doc false
   # The session's topic is the browser's own: its key is a secret, so nobody watches anybody else.
-  def broadcast(session, player) do
+  defp broadcast(session, player) do
     Phoenix.PubSub.broadcast(
       MiniLineage.PubSub,
       "character:#{session}",

@@ -19,8 +19,8 @@
     margin-bottom: 12px;
 }
 
-/* Shared by the linked and unlinked headers. Not `display: contents`, which drops its box from
-   hit-testing and leaves the gaps dead. */
+/* The banner's link, patched in the game and followed on the error page. Not `display: contents`,
+   which drops its box from hit-testing and leaves the gaps dead. */
 .header-clickable-area {
     display: flex;
     align-items: center;
@@ -220,19 +220,5 @@
     #copyright {
         order: 4;
         margin-top: 0;
-    }
-}
-
-/* The inventory: equipped slots beside what is carried, stacked on a phone. */
-.inventory-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    align-items: start;
-}
-
-@media (max-width: 640px) {
-    .inventory-columns {
-        grid-template-columns: 1fr;
     }
 }

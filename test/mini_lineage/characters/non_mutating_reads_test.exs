@@ -1,7 +1,7 @@
 defmodule MiniLineage.Characters.NonMutatingReadsTest do
   @moduledoc """
   Reading a character never changes it. Connecting, reconnecting and refreshing go through the same
-  `run/3` as an action, so only the fact that no read asks it to keeps a read from writing.
+  `run/2` as an action, so only the fact that no read asks it to keeps a read from writing.
   """
   use MiniLineage.DataCase, async: false
 

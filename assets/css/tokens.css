@@ -18,8 +18,9 @@
 
     /* ===== Borders =====
      * Every surface edge is --border-soft. --border-control draws the primary button, the select
-     * and the input; --border-arcane the secondary, and --border-arcane-bright its hover and the
-     * scrollbar's thumb. */
+     * and the input; --border-arcane the secondary and a setting's track, and
+     * --border-arcane-bright the secondary's hover, a stepper's stops, a switch's hover ring and
+     * the scrollbar's thumb. */
     --border-control: #645b6f;
     --border-arcane: #46414d;
     --border-arcane-bright: #655e6e;
@@ -84,7 +85,7 @@
      * A ground, not a voice. */
     --wash-danger: rgba(146, 43, 33, 0.2);
     --wash-info: rgba(46, 70, 116, 0.3);
-    /* The Halls: a run still going, and your own; and a success alert's ground. */
+    /* The Halls: a run still going, and your own; a success alert's ground and a mended round's. */
     --wash-success: color-mix(in srgb, var(--text-heal) 13%, transparent);
     --wash-gold: color-mix(in srgb, var(--gold) 14%, transparent);
     /* A fight log's round with a critical hit in it, either side's. */

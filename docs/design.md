@@ -9,7 +9,7 @@ was got wrong once.
   sidebar value. 12px is a control, and a shelf's heading row. 11px is a label (a column's, a
   field's, a log entry's head), set by one rule in `base.css` at weight 600, 0.1em, in capitals; the footer, the level
   badge and the banner's subtitle are 11px too, each set where it stands. The exceptions are 10px
-  for the figures and labels inside the HP, MP and XP bars, because an 18px bar has no room, the 8px
+  for the figures and labels inside the HP, MP and XP bars, because a 19px bar has no room, the 8px
   effect badge below, and the banner's 26px title. A field label's 1px
   `margin-top` is optical: `text-box-trim` is missing from Firefox.
 - **The sidebar is 210px.** Widen it before shrinking a value, and never without asking.
@@ -70,9 +70,8 @@ was got wrong once.
 - **A table has no minimum width and gives no column a width; its rows decide**, and the leftover is
   shared in proportion to content. A figure never wraps; a name may, and an item's name carries its
   stats after a `.delimiter` bullet rather than in a column of their own. A label carrying a unit
-  binds it with `&nbsp;`, rendered through `raw/1` because the label is interpolated. Below 520px a
-  column's label may take two lines; the page's layout and the inventory's columns stack below
-  640px. A wide table may scroll on a phone if what matters most is on the left. Check a table change
+  binds it with `&nbsp;`, written in its `<:col>`. Below 520px a
+  column's label may take two lines; the page's layout stacks below 640px. A wide table may scroll on a phone if what matters most is on the left. Check a table change
   by counting the lines in every cell at every width, not by whether it scrolls.
 
 ## Classes

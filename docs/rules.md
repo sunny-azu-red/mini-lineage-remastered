@@ -28,7 +28,7 @@ Each race starts in its own village, and that is where a new character first sta
 |---|---|
 | STR | P. Atk. |
 | CON | Max HP and HP Recovery |
-| DEX | Accuracy, Evasion, Critical, Atk. Spd. |
+| DEX | Accuracy, Evasion, Critical, Atk. Spd., Speed |
 | INT | M. Atk. |
 | WIT | M. Critical, Casting Spd. |
 | MEN | Max MP, MP Recovery and M. Def. |
@@ -637,7 +637,7 @@ Adena runs four times faster than EXP because the village shops price their gear
 most Adena came from quests and from selling what monsters dropped, and the hunt has neither. At the
 private rates, a seeded run of every set up its village's ladder takes about 310 to 390 kills from
 level 1 to 20, and holds about 55,000 Adena at level 11 and 250,000 at level 16, where a Gladius
-costs 62,215 and a Long Sword 156,400.
+costs 54,100 and a Long Sword 136,000.
 
 Example: a Young Keltir carrying 10 Adena pays **10** at retail's rate and **200** at ×20.
 
@@ -1023,7 +1023,7 @@ town a potion is drunk when the player says.
 | Lesser Healing Potion | 112 | 90 | village |
 
 The starting villages sell the Lesser Healing Potion and nothing stronger. Better potions, and
-potions for MP, are sold only in the towns further on, from the Town of Gludio.
+potions for MP, are left to the towns further on, from the Town of Gludio, once they have shops.
 
 Example: a character at 100 of 280 HP, below half, drinks a Lesser Healing Potion at the start of
 the round and stands at **212**; ten cost **900** Adena.

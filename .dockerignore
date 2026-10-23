@@ -17,6 +17,11 @@ priv/static/*.gz
 
 # Development, tests and CI, which the release never reads.
 legacy/
+tmp/
+bench/
+docs/
+.claude/
+.vscode/
 e2e/
 scratch/
 test/

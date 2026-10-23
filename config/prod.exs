@@ -1,6 +1,7 @@
 import Config
 
-# Stamped at build time, since a release has no checkout to ask. Only the footer's link reads it.
+# Stamped at build time, since a release has no checkout to ask. The footer names it and mix.exs's
+# release step requires it.
 app_version =
   case System.get_env("APP_VERSION") do
     given when is_binary(given) and given != "" ->

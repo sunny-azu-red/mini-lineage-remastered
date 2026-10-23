@@ -61,8 +61,8 @@ checked against Interlude's own data.
   HTML over one WebSocket, with no client-side framework
 - **One `GenServer` per character** under a `DynamicSupervisor` + `Registry`, with `Phoenix.PubSub`
   keeping tabs in sync
-- **PostgreSQL 18** through Ecto, each character one `jsonb` document in `characters`
-  and its inventory in `items`
+- **PostgreSQL 18** through Ecto, each character one `jsonb` document in `characters`, its
+  inventory in `items` and every fight it fought in `encounters`
 - **ExUnit** with StreamData properties, and **Playwright** suites driving headless Chromium
 
 How the code is meant to be written, and why, is in [AGENTS.md](AGENTS.md) and
@@ -128,6 +128,7 @@ shortcuts. Any other key between two letters breaks a word.
 | `sp` | 10,000 SP, to try the trainer |
 | `night` / `day` | holds the whole server at that hour until the other word or a restart |
 | `half` | HP and MP to half, and the XP bar halfway to the next level |
+| `frail` | 1 HP, so the next fight can end the run |
 | `lvl` / `maxlvl` | exactly the EXP for the next level, or for level 80 |
 | Ctrl+Q | deletes the character (Firefox on Linux quits instead) |
 
@@ -145,7 +146,8 @@ MCP; `.mcp.json` points Claude Code at `http://localhost:4000/tidewave/mcp`.
 - **`e2e/walkthrough.mjs`** plays one character end to end: the CSP, the cookie, the error page,
   creation from the keyboard, the sidebar and character page, a second tab, the Gatekeeper, the Halls,
   the hunt, the traders and inventory, potions, the guild, the battle orders, every dropdown held
-  open across a tick, and every debug shortcut. It fails on any failed request or console error.
+  open across a tick, and every debug shortcut, then, in a browser of its own, a death and Play
+  Again. It fails on any failed request or console error.
 - **`e2e/races.mjs`** makes every starting set and checks each against `docs/rules.md`.
 - **`e2e/release.mjs`** makes a character against a built image, under `e2e/release.sh`.
 

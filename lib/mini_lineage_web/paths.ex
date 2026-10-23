@@ -19,7 +19,7 @@ defmodule MiniLineageWeb.Paths do
   @doc "The trader's inner pages, each one part of what a village sells or buys (rules §24)."
   def trader_pages, do: @trader_pages
 
-  @doc "The starting villages, each with its shop (rules §24)."
+  @doc "The starting villages, each with its traders and guild (rules §24, §25)."
   def villages, do: for(town <- towns(), Rules.village?(town), do: town)
 
   @doc "The towns with a hunting ground outside them (rules §17)."

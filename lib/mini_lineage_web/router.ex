@@ -40,7 +40,7 @@ defmodule MiniLineageWeb.Router do
         live "/#{slug}/gatekeeper", GameLive, :gatekeeper
       end
 
-      # Rules §24: each village's shop.
+      # Rules §24 and §25: each village's traders and its guild.
       for slug <- MiniLineageWeb.Paths.villages() do
         live "/#{slug}/traders", GameLive, :trader
 

@@ -2,7 +2,7 @@ defmodule MiniLineageWeb.GatekeeperTest do
   @moduledoc """
   Rules §14 in the browser's own terms: the town's way to its Gatekeeper, the routes it lists and
   their fees, and the trip itself, which is paid for and written at once. Adena is arranged in the
-  character's process, there being nothing yet to earn it with.
+  character's process, so no test has to hunt for it.
   """
   use MiniLineageWeb.ConnCase, async: false
 

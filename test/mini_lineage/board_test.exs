@@ -6,8 +6,6 @@ defmodule MiniLineage.BoardTest do
   """
   use MiniLineage.DataCase, async: false
 
-  import Ecto.Query
-
   alias MiniLineage.{Board, Characters}
   alias MiniLineage.Characters.{Record, Store}
   alias MiniLineage.Game.{Constants, Player}

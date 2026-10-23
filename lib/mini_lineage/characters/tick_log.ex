@@ -27,9 +27,13 @@ defmodule MiniLineage.Characters.TickLog do
   defp status(_before, player, false),
     do: if(Player.in_combat?(player), do: "In Combat", else: "Full")
 
+  # A tick that only let an aura fade changed the run without mending it.
   defp status(before, player, true) do
     [{"HP", player.health - before.health}, {"MP", player.mp - before.mp}]
     |> Enum.reject(fn {_bar, gained} -> gained == 0 end)
-    |> Enum.map_join(", ", fn {bar, gained} -> "+#{gained} #{bar}" end)
+    |> case do
+      [] -> "An aura faded"
+      gains -> Enum.map_join(gains, ", ", fn {bar, gained} -> "+#{gained} #{bar}" end)
+    end
   end
 end

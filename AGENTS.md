@@ -77,7 +77,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown),
   `<.stepper>` and `<.switch>` (a setting, see Components), `<.alert>`
-  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's panel), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
+  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's Fight Log, `#fight`), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
@@ -85,7 +85,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `/character`, the bars, HP's and MP's rows pulsing in their bar's hue under a quarter, a fallen
   run's neither, its band wearing ☠️ for its race; then the
   Consumables, each stack carried with its count, and no panel at all while none is; then the
-  Inventory, its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn
+  Inventory, its Adena beside an Open link to `/inventory`, Close back on the inventory itself) is one fixed-width `.side` column, drawn
   in town and beside the inventory. One breakpoint stacks it.
 - **A new component, hook or shared control is written into this file in the change that adds it.**
   Before writing one, look here and in `Controls`, and extend what exists with an option instead.
@@ -187,7 +187,8 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   out its macros (`import_deps` fails in `:dev`).
 - **A formatter with a client-side twin is held to a table.** `Format.short`/`shortFigure`,
   `Format.percent`/`percentFigure` and `Format.tenths`/`tenthsFigure` (in
-  `hooks/animated-values.js`, the last for a Critical %) are deliberate copies, so a count never
+  `hooks/animated-values.js`, the last for a figure in tenths: a rate such as Critical or Block, or a
+  cast or reuse time) are deliberate copies, so a count never
   changes format mid-tween, and so are `Format.countdown`/`timerLabel` and
   `Format.remaining`/`remainingLabel` (in `hooks/effect-timers.js`). Each pair reads
   `test/fixtures/short_format.json`, `percent_format.json`, `tenths_format.json` or
@@ -232,7 +233,7 @@ Each of these is here because it was got wrong once.
   Learned Skills says so. A skill whose lines differ by path keeps one name and is looked up with
   `Rules.skill/3` (Weapon Mastery: a Fighter's P. Atk., a Mystic's M. Atk.), never a second name.
 - **A line keeps its pronouns open until somebody reads it.** Narrative pools carry `{they} {them}
-  {object} {their}` and nothing second-person. `Format.fill_template` leaves them alone (they aren't
+  {object} {their}` (`{Their}` opening a sentence) and nothing second-person. `Format.fill_template` leaves them alone (they aren't
   in the data map) and `Narrative.voiced/2` closes them at render: `true` for the run's own alert
   (`Narrative.alert/1`), `false` for anybody else. They/them shares your verb forms, but a line
   naming two people must keep its referents apart by construction. The game records no gender.
@@ -262,7 +263,7 @@ Each of these is here because it was got wrong once.
   would let anyone play anyone. Anything listing characters selects into plain maps, never `%Record{}`, which
   carries `session_id`, and says `active` ("has a session"), never the session. The session names the
   BROWSER, not the run, so it outlives the run's process and every tab.
-- **Writes follow the player, not the clock.** What the player did (today: creating the character) is
+- **Writes follow the player, not the clock.** What the player did (a start, a hunt, a trade, a lesson, an order) is
   written before they are told it worked. Resting is buffered and rides along with the next write,
   the 60-second backstop, or `terminate/2`. `Characters.Server` derives this from the struct
   (anything outside `@buffered` changed), never from a call site, which can forget.
@@ -293,7 +294,7 @@ Each of these is here because it was got wrong once.
   Each open town, its Gatekeeper, its ground (`/<town>/<ground>`), a village's traders and their
   pages (`/<town>/traders/<page>`) and guild, and each lineage's board (`/highscores/<lineage>`)
   have literal routes generated from the rules tables, never a pattern. `/` is
-  game start for a visitor and, for a character, a patch to its town: `GameLive` compares the pinned
+  game start for a visitor and, for a character, a patch to its town (a fallen run's ground): `GameLive` compares the pinned
   place's address with the one asked for, not the screen alone. A place is `{screen, town}`. A new
   place to stand (a shop, a hunting ground) gets its own URL when built; a state that happens to you
   does not.
@@ -310,8 +311,9 @@ Each of these is here because it was got wrong once.
   mistyped stylesheet with HTML. Phoenix raises for what it doesn't route and `ErrorHTML` draws it in
   the game's shell. `pin_screen` redirects stay: not being allowed somewhere is not the somewhere not
   existing.
-- **What a fault page says depends on the build.** A debug build shows the whole thing,
-  `Exception.format/3` on the kind, reason and stack; a release shows none of it. The gate is
+- **What a fault page says depends on the build.** A debug build shows the fault,
+  `Exception.format/3` on the kind, reason and stack on `ErrorHTML`'s page, and the exception's
+  message or the process's exit reason on the game's error screen; a release shows none of it. The gate is
   `Version.debug_build?/0`, deliberately not `release?/1`, or an image built without APP_VERSION
   would serve traces to players. A 404 gets no trace either way. Both draw through `<.fault>`.
 - **The banner is the way home.** It links `/` on every page, the error page too; no page has a back
@@ -360,7 +362,7 @@ Each of these is here because it was got wrong once.
 - **Every button is `Controls.button/1`**, the only writer of `btn`. Without `patch` it is a
   `<button>`, because it does something; with `patch` it is an `<a>`, because it goes somewhere,
   never a link restyled as a button or the reverse. `variant={:secondary}` serves `<.select_action>`
-  until something is picked (but for the town's Travel, which has nowhere to go back to), the hunt's Retreat and the Halls' filters; `size={:sm}` and `active`
+  until something is picked (but for the town's Travel, which has nowhere to go back to), the hunt's Retreat, a fallen run's Play Again and the Halls' filters; `size={:sm}` and `active`
   (the one of a set already chosen) are the filters'. `variant={:link}` writes no `btn` but
   `link-button`, drawn by the link rule itself: an action standing where a link would, the orders'
   🧹 Reset to Default ending its row as "🎒 Open" ends the purse's, its emoji outside it as 🎒 is
@@ -463,8 +465,7 @@ Each of these is here because it was got wrong once.
 - **The game's prose joins its clauses rather than splitting them with an em dash**: a dash in a
   sentence a player reads becomes `because`, `and` or `nor`. Comments and docs are exempt.
 - **Adena always comes with its coin and its gold.** An amount in a message is `Format.adena/1`
-  (`🪙 N Adena` in `.adena`), a table cell or figure is `.adena` led by 🪙, and a dropdown option,
-  which cannot be coloured, still writes the 🪙.
+  (`🪙 N Adena` in `.adena`), and a table cell or figure is `.adena` led by 🪙.
 - **A stat is named as Lineage II's client names it, through `Format.stat/1` and nowhere else**:
   P. Atk., M. Atk., P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical,
   and ours where it has none or several (M. Critical, Block, Shield P. Def., HP Recovery, MP
@@ -482,11 +483,13 @@ Each of these is here because it was got wrong once.
 - **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
   `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so
   does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and
-  inventory pages and every item's line against these three rules and the stat names.
+  inventory pages and every item's line against the stat names, a bonus before its stat, a rate's
+  % and HP mended.
 - **A time on a row is short**, as `Format.remaining/1` writes it ("3s", "2m", "1m 37s"), with the
   fight's tenths where it has them ("Cast 5.3s, reuse 10.4s."). Narrative prose keeps its words.
 - **A place keeps its role; its keeper's name is in what is said there.** The Gatekeeper is
-  "Gatekeeper" in the dropdown and the header, and Roxxy in the intro and the flashes.
+  "Gatekeeper" in the dropdown and the header, and by its town's keeper's name (Roxxy at Talking
+  Island) in the intro and the flashes.
 - **Write a named entity where one exists**: `&amp;` `&copy;` `&ndash;` `&bull;` `&nbsp;` `&mdash;`
   `&hellip;`. Everything else, every emoji included, is written as it is.
 - **An anchor wraps its text and nothing else.** A newline inside renders as an underlined space, so
@@ -513,7 +516,8 @@ Each of these is here because it was got wrong once.
   `Constants`.
 - **The server rates are the one rule a deployment may change** (rules §22). `config.exs` holds
   retail's ×1 and every env file, CI's jobs included, the private ×5, ×5 and ×20 the game is
-  balanced at, each held to the document by `rules_test.exs`. `runtime.exs` reads them in every
+  balanced at; `rules_test.exs` holds `config.exs` and the two `.example` files to the document,
+  and nothing checks CI's. `runtime.exs` reads them in every
   environment, so the suites and the bench play `.env.test`'s, and a reading names its rates.
   `Hunt` takes a rate as an argument and `Actions` passes `Rules.rate/1`, so a test states the rate
   it works at. The `balance-study` skill checks a reading was taken at the private rates.

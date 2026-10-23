@@ -104,11 +104,11 @@ export async function lifted(context, page, act, within) {
 
 /** The controls a player has, bound to one page. */
 export function controls(page) {
-    /** The character's live state, read off the one element that mirrors it. */
     const xpTrack = async (attr) => {
         const track = page.locator('#sidebar .bar-track:has(#xp-bar)');
         return await track.count() ? Number(await track.getAttribute(attr)) : null;
     };
+    /** The character's live state: #screen's data, the sidebar's figures and the XP track. */
     const state = async () => {
         const raw = await page.locator('#screen').evaluate(node => ({ ...node.dataset }));
         // The figures are the sidebar's own `data-value`, which is what the server wrote rather
@@ -152,15 +152,15 @@ export function controls(page) {
     return { state, onScreen, create, text, adena };
 }
 
-/**
- * A fresh browser on the start page, which is what a new player is: the session names the browser,
- * so a second character needs a second context.
- */
 /** Whatever ends anything in a panel and still keeps a bottom margin: a tag and its margin each. */
 export const marginsLeftAtEnds = (page) => page.$$eval('.panel-body :last-child', els => els
     .filter(el => getComputedStyle(el).marginBottom !== '0px')
     .map(el => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''} ${getComputedStyle(el).marginBottom}`));
 
+/**
+ * A fresh browser on the start page, which is what a new player is: the session names the browser,
+ * so a second character needs a second context.
+ */
 export async function freshStart(browser) {
     const context = await browser.newContext();
     const page = await context.newPage();

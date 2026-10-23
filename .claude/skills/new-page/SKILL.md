@@ -32,7 +32,8 @@ researched in first if missing.
 - `@in_town` if the sidebar belongs beside it (`Access.sidebar?/1`), and `access_test.exs`'s
   sidebar test with it.
 - `access_test.exs`: what it allows AND what it still refuses (another town, a visitor, another
-  race's home).
+  race's home, and a fallen run, which stands only on its ground and its own character and
+  inventory pages).
 
 ## 4. The way there
 
@@ -48,7 +49,7 @@ researched in first if missing.
   another tab draws nothing rather than raise on a nil field.
 - Its heading: a `@titles` entry or a `title/2` clause (else it reads "Mini Lineage"), and `icon/2`.
 - `panels/4` lists its panels (the fourth argument is the hunt's last fight, `_fight` anywhere else;
-  a clause written at arity 3 is a different function and is never called); `Layouts.app` wraps
+  it defaults to nil, so every clause is written at arity 4 and the compiler refuses one at 3); `Layouts.app` wraps
   each in `Controls.panel`, with `id` naming the panel when the map has one, and `screen/1` draws
   each one's body. A screen never writes `Controls.panel` itself. A panel beside or under the
   screen's first is second tier: `collapsible: true` with an `id` (AGENTS.md, Components).

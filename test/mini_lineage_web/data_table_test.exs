@@ -1,7 +1,8 @@
 defmodule MiniLineageWeb.DataTableTest do
   @moduledoc """
-  A table's sort is the server's: a header cycles it up, down and off, the rows arrive in its
-  order, and only a table that remembers carries the hook keeping it, read back against its keys.
+  A table's sort is the server's: a header turns the sorted column round and starts any other
+  ascending, with no off, the rows arrive in its order, and only a table that remembers carries the
+  hook keeping it, read back against its keys.
   """
   use ExUnit.Case, async: true
 

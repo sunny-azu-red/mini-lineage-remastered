@@ -14,12 +14,12 @@ defmodule MiniLineage.Characters do
   Applies `fun` inside the character's process. `fun` takes a player and returns `{player, result}`;
   this returns `{result, player}` — the character as the action left it, so nothing has to ask again.
   """
-  def mutate(id, fun), do: call(id, {:mutate, fun})
+  def mutate(session, fun), do: call(session, {:mutate, fun})
 
-  def snapshot(id), do: call(id, :snapshot)
+  def snapshot(session), do: call(session, :snapshot)
 
   @doc "Rules §20: the last fight the session's run fought on a ground, or nil."
-  def last_fight(id, ground), do: call(id, {:last_fight, ground})
+  def last_fight(session, ground), do: call(session, {:last_fight, ground})
 
   @doc "The public id of the run a session is playing: never the session, which is the secret."
   def character_id(session), do: call(session, :character_id)
@@ -32,14 +32,17 @@ defmodule MiniLineage.Characters do
   end
 
   @doc "Registers a viewer. The process stops shortly after its last viewer goes away."
-  def attach(id, pid \\ self()), do: call(id, {:attach, pid})
+  def attach(session, pid \\ self()), do: call(session, {:attach, pid})
 
-  def subscribe(id), do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, "character:#{id}")
+  def subscribe(session), do: Phoenix.PubSub.subscribe(MiniLineage.PubSub, "character:#{session}")
 
   @doc "Stops a character's process without touching its stored row."
-  def forget_process(id), do: stop_process(id)
+  def forget_process(session), do: stop_process(session)
 
-  @doc "Forgets a character entirely, process and row. For tests: the game itself deletes nothing."
+  @doc """
+  Forgets a character entirely, process and row, for tests and the debug build's Ctrl+Q. A release
+  deletes nothing.
+  """
   def forget(session) do
     stop_process(session)
 
@@ -53,8 +56,8 @@ defmodule MiniLineage.Characters do
 
   # The same race `call/3` guards: an idle character stops itself, so a pid this lookup returns may
   # already be gone by the time the stop reaches it. Asking a dead process to stop is success.
-  defp stop_process(id) do
-    case Registry.lookup(MiniLineage.Characters.Registry, id) do
+  defp stop_process(session) do
+    case Registry.lookup(MiniLineage.Characters.Registry, session) do
       [{pid, _}] -> GenServer.stop(pid, :normal)
       [] -> :ok
     end
@@ -66,24 +69,24 @@ defmodule MiniLineage.Characters do
   # An idle character stops itself and its registry entry clears asynchronously, so a looked-up pid
   # may already be gone. The retry goes through the supervisor: registering a name is handled by the
   # registry itself, behind the DOWN that clears the stale entry.
-  defp call(id, message, retry? \\ true) do
-    GenServer.call(if(retry?, do: server(id), else: start(id)), message)
+  defp call(session, message, retry? \\ true) do
+    GenServer.call(if(retry?, do: server(session), else: start(session)), message)
   catch
     :exit, {reason, _} when retry? and reason in [:noproc, :normal, :shutdown] ->
-      call(id, message, false)
+      call(session, message, false)
   end
 
   # Only a character that is NOT running reaches the supervisor: starting one runs `init/1`'s two
   # queries inside the supervisor's own loop, and everyone else would queue behind it.
-  defp server(id) do
-    case Registry.lookup(MiniLineage.Characters.Registry, id) do
+  defp server(session) do
+    case Registry.lookup(MiniLineage.Characters.Registry, session) do
       [{pid, _}] -> pid
-      [] -> start(id)
+      [] -> start(session)
     end
   end
 
-  defp start(id) do
-    case DynamicSupervisor.start_child(MiniLineage.Characters.Supervisor, {Server, id}) do
+  defp start(session) do
+    case DynamicSupervisor.start_child(MiniLineage.Characters.Supervisor, {Server, session}) do
       {:ok, pid} ->
         pid
 
@@ -96,7 +99,7 @@ defmodule MiniLineage.Characters do
         reraise(exception, stacktrace)
 
       {:error, reason} ->
-        raise "character #{inspect(id)} could not be started: #{inspect(reason)}"
+        raise "a character could not be started: #{inspect(reason)}"
     end
   end
 end

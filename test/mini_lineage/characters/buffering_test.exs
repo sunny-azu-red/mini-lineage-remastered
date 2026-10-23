@@ -144,6 +144,7 @@ defmodule MiniLineage.Characters.BufferingTest do
     test "leaves the process alive and the state still owed", %{id: id} do
       start_character(id)
       pid = pid_for(id)
+      ref = Process.monitor(pid)
 
       # The character is one JSON document, so there is no column to overflow. A name that is not
       # valid UTF-8 cannot be encoded, and raises where any database error would.
@@ -153,7 +154,10 @@ defmodule MiniLineage.Characters.BufferingTest do
         end)
 
       assert log =~ "failed to persist, still buffered", "the failure went by unannounced"
-      assert Process.alive?(pid), "a failed write killed the character and took its buffer"
+
+      refute_received {:DOWN, ^ref, :process, ^pid, _},
+                      "a failed write killed the character and took its buffer"
+
       assert Characters.snapshot(id).name == <<0xFF, 0xFE>>
       assert stored(id).name == "Hero", "the failed write reached the database after all"
       assert :sys.get_state(pid).dirty_since != nil, "the state is not still owed"

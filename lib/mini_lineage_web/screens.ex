@@ -1,9 +1,10 @@
 defmodule MiniLineageWeb.Screens do
   @moduledoc """
-  Which screen is drawn, and the screens themselves: character creation, the town a character
-  stands in and its Gatekeeper, the character's own page, the Chronicles of Ancestry and the error
-  page. `raw/1` renders flashes and lore, which the server
-  composes from its own tables and never from anything a player typed.
+  Which screen is drawn, and the screens themselves: character creation, the town and its
+  Gatekeeper, the hunting ground, a village's traders and guild, the inventory, the character's own
+  page, the Chronicles of Ancestry and the error page; the Halls are `Screens.Halls`. `raw/1`
+  renders flashes and lore, which the server composes from its own tables and never from anything
+  a player typed.
   """
   use MiniLineageWeb, :html
 
@@ -28,26 +29,26 @@ defmodule MiniLineageWeb.Screens do
     "error" => "Error"
   }
 
-  @doc "What the panel is headed: the town a run stands in, the screen's name elsewhere."
-  def title("town", %{started: true, town: town}), do: town.name
-  def title("hunt", %{started: true, ground: %{} = ground}), do: ground.name
-  def title("guild", %{started: true, guild: guild}), do: guild.name
-  def title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
+  # What the panel is headed: the town a run stands in, the screen's name elsewhere.
+  defp title("town", %{started: true, town: town}), do: town.name
+  defp title("hunt", %{started: true, ground: %{} = ground}), do: ground.name
+  defp title("guild", %{started: true, guild: guild}), do: guild.name
+  defp title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
 
-  @doc "A place's emoji, drawn in the band beside its name; a screen that is not a place has none."
-  def icon("town", %{started: true, town: town}), do: town.emoji
-  def icon("start", _view), do: "🐣"
-  def icon("gatekeeper", _view), do: "🌀"
-  def icon("hunt", _view), do: "⚔️"
-  def icon("inventory", _view), do: "🎒"
-  def icon("trader", _view), do: "🛒"
-  def icon("trader-weapon", _view), do: "⚔️"
-  def icon("trader-armour", _view), do: "🛡️"
-  def icon("trader-magic", _view), do: "⚗️"
-  def icon("trader-sell", _view), do: "💰"
-  def icon("guild", _view), do: "📖"
-  def icon("highscores", _view), do: "🏛️"
-  def icon(_screen, _view), do: nil
+  # A place's emoji, drawn in the band beside its name; a screen that is not a place has none.
+  defp icon("town", %{started: true, town: town}), do: town.emoji
+  defp icon("start", _view), do: "🐣"
+  defp icon("gatekeeper", _view), do: "🌀"
+  defp icon("hunt", _view), do: "⚔️"
+  defp icon("inventory", _view), do: "🎒"
+  defp icon("trader", _view), do: "🛒"
+  defp icon("trader-weapon", _view), do: "⚔️"
+  defp icon("trader-armour", _view), do: "🛡️"
+  defp icon("trader-magic", _view), do: "⚗️"
+  defp icon("trader-sell", _view), do: "💰"
+  defp icon("guild", _view), do: "📖"
+  defp icon("highscores", _view), do: "🏛️"
+  defp icon(_screen, _view), do: nil
 
   def page_title(screen, view), do: "Mini Lineage - #{title(screen, view)}"
 
@@ -139,13 +140,12 @@ defmodule MiniLineageWeb.Screens do
     do: [%{title: title(screen, view), icon: icon(screen, view)}]
 
   attr :screen, :string, required: true
-  # Which of `panels/3` is being drawn.
+  # Which of `panels/4` is being drawn.
   attr :panel, :map, required: true
   attr :view, :map, required: true
   attr :catalog, :map, required: true
   attr :detail, :string, default: nil
   attr :picked, :string, default: nil
-  attr :debug, :boolean, default: false
   # Debug builds only: the name game start is already filled in with.
   attr :dev_name, :string, default: nil
   # The Halls: every board, the lineage filtered to, and the reader's own run.
@@ -187,14 +187,11 @@ defmodule MiniLineageWeb.Screens do
   def screen(%{screen: "highscores"} = assigns), do: Halls.screen(assigns)
   def screen(assigns), do: error(assigns)
 
-  @doc """
-  An action that threw, or the `error` screen. The detail is the thrown message, shown only in a
-  debug build: a player is never handed a stack trace.
-  """
-  attr :view, :map, required: true
+  # An action that threw, or the `error` screen. The detail is the thrown message, shown only in a
+  # debug build: a player is never handed a stack trace.
   attr :detail, :string, default: nil
 
-  def error(assigns) do
+  defp error(assigns) do
     ~H"""
     <p>An unexpected error occurred on the server, please try again in a moment.</p>
     <.fault detail={@detail} />
@@ -239,8 +236,8 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Somewhere to stand, and the way out of it: the systems that fill a town come later. The band
-  # names it, so the body opens on the description rather than the name a second time.
+  # Somewhere to stand, and the ways on from it (`town_places/1`). The band names it, so the body
+  # opens on the description rather than the name a second time.
   defp town(assigns) do
     ~H"""
     <p>{@view.town.description}</p>
@@ -258,7 +255,8 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # The places in a town: its Gatekeeper, and the ground outside it if it has one (rules §17).
+  # The places in a town: its Gatekeeper, a village's traders (rules §24), the home village's
+  # guild (§25), and the ground outside it if it has one (§17).
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
       if(view.stock != [], do: [%{value: "trader", label: "🛒 Traders"}], else: []) ++
@@ -858,9 +856,6 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # Only ever the reader's own, so it speaks to them. Each clause stays on one line: a newline at a
-  # tag renders as a space. A panel with figures has a hook of its own to count them; the sidebar's
-  # are its own.
   # Rules §21: a run that has ended is told in the past.
   defp verb(%{dead: true}, _present, past), do: past
   defp verb(_view, present, _past), do: present
@@ -886,6 +881,9 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  # Only ever the reader's own, so it speaks to them. Each clause stays on one line: a newline at a
+  # tag renders as a space. A panel with figures has a hook of its own to count them; the sidebar's
+  # are its own.
   defp character(%{panel: %{section: :lineage}} = assigns) do
     assigns =
       assign(assigns,
@@ -900,7 +898,7 @@ defmodule MiniLineageWeb.Screens do
         You are {@article} {@view.class_name} of <.attribute name="Strength" key="str" value={@stats.str} />, <.attribute name="Constitution" key="con" value={@stats.con} />, <.attribute name="Dexterity" key="dex" value={@stats.dex} />, <.attribute name="Intelligence" key="int" value={@stats.int} />, <.attribute name="Wit" key="wit" value={@stats.wit} /> and <.attribute name="Mental Strength" key="men" value={@stats.men} />. {@view.perk}
       </p>
       <p id="character-vitality" phx-no-format>
-        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> Max MP</span>, mending <span class="regen"><.figure key="char-hp-regen" value={Math.js_round(@stats.hp_regen)} /> HP</span> and <span class="regen"><.figure key="char-mp-regen" value={Math.js_round(@stats.mp_regen)} /> MP</span> every three seconds at rest, while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
+        You are at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, standing unchallenged at the zenith of martial prowess<% else %>, requiring another <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> to reach <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and your vitality sustains you at <span class="hp"><.figure key="char-hp" value={@view.health} /> HP</span> of <span class="hp"><.figure key="char-max-hp" value={@view.max_health} /> Max HP</span> and <span class="mp"><.figure key="char-mp" value={@view.mp} /> MP</span> of <span class="mp"><.figure key="char-max-mp" value={@view.max_mp} /> {Format.stat(:mp)}</span>, mending <span class="regen"><.figure key="char-hp-regen" value={Math.js_round(@stats.hp_regen)} /> HP</span> and <span class="regen"><.figure key="char-mp-regen" value={Math.js_round(@stats.mp_regen)} /> MP</span> every three seconds at rest, while your purse holds <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> for the journey ahead.
       </p>
     </div>
     """
@@ -945,7 +943,7 @@ defmodule MiniLineageWeb.Screens do
         You {verb(@view, "strike", "struck")} with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> {Format.stat(:p_atk)}</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> {Format.stat(:atk_spd)}</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% {Format.stat(:critical)}</span>, {verb(@view, "find", "found")} the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> {Format.stat(:accuracy)}</span>, and cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> {Format.stat(:m_atk)}</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> {Format.stat(:cast_spd)}</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% {Format.stat(:magic_critical)}</span>.
       </p>
       <p phx-no-format>
-        You {verb(@view, "turn", "turned")} blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> {Format.stat(:p_def)}</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or {verb(@view, "slip", "slipped")} them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> {Format.stat(:evasion)}</span>, {verb(@view, "turn", "turned")} spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> {Format.stat(:m_def)}</span>, and {verb(@view, "run", "ran")} at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> {Format.stat(:run_spd)}</span>
+        You {verb(@view, "turn", "turned")} blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> {Format.stat(:p_def)}</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% {Format.stat(:shield_rate)}</span>,</span> or {verb(@view, "slip", "slipped")} them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> {Format.stat(:evasion)}</span>, {verb(@view, "turn", "turned")} spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> {Format.stat(:m_def)}</span>, and {verb(@view, "run", "ran")} at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> {Format.stat(:run_spd)}</span>
       </p>
     </div>
     """

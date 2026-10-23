@@ -82,8 +82,8 @@ defmodule MiniLineage.Game.Hunt do
   strongest first) and the `potion_at` share to drink below, and the player's orders, the shares of
   HP to heal below before the pull and in the fight (`heal_pull_at`, `heal_fight_at`; 0 never).
   Returns what is left of both sides, how it went, the auras it raised, which outlast it, the potions
-  it `drunk`, the heals cast before the pull (`before`, as `{heals, hp}`), and how long it all took
-  in milliseconds (`ms`).
+  it `drunk`, the auras raised and heals cast before the pull (`before`, as `{done, hp}`), and how
+  long it all took in milliseconds (`ms`).
   """
   def fight(stats, %{health: health, mp: mp} = bars, skills, foe) do
     # §23: a weapon skill without its weapon in hand is not used at all; the Learned Skills panel
@@ -493,7 +493,7 @@ defmodule MiniLineage.Game.Hunt do
   end
 
   @doc "§19: a physical skill's damage, before what it hits takes it."
-  def skill_damage(p_atk, power, p_def, spread \\ Formulas.damage_spread()),
+  def skill_damage(p_atk, power, p_def, spread),
     do: max(70 * (p_atk + power) / p_def * spread, 1.0)
 
   @doc "§19: what a heal mends, its power and √M.Atk, rounded down."

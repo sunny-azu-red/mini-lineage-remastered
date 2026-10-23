@@ -65,7 +65,7 @@ if config_env() in [:dev, :e2e] do
   end
 end
 
-# Read at runtime, so settable per deployment without a rebuild; neither may become a compile_env.
+# Read at runtime, so settable per deployment without a rebuild; it may never become a compile_env.
 if level = System.get_env("LOG_LEVEL") do
   levels = ~w(emergency alert critical error warning notice info debug)
 

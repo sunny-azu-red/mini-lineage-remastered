@@ -16,7 +16,8 @@ config :mini_lineage, tick_interval_ms: 3_000
 # start their own and `Board.current/0` computes in the caller without one.
 config :mini_lineage, start_board: true
 
-# Whether the error page may show a stack trace. Off in prod.exs, never derived from the version.
+# Whether this is a debug build: the error page's stack trace and every debug-build tool. Off in
+# prod.exs, never derived from the version.
 config :mini_lineage, debug_build: true
 
 # A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.
@@ -34,9 +35,7 @@ config :mini_lineage, rates: [exp: 1, sp: 1, adena: 1]
 # The footer's name for an unreleased build.
 config :mini_lineage, build_label: "development"
 
-config :mini_lineage,
-  ecto_repos: [MiniLineage.Repo],
-  generators: [timestamp_type: :utc_datetime]
+config :mini_lineage, ecto_repos: [MiniLineage.Repo]
 
 config :mini_lineage, MiniLineageWeb.Endpoint,
   url: [host: "localhost"],
@@ -51,8 +50,7 @@ config :mini_lineage, MiniLineageWeb.Endpoint,
 config :esbuild,
   version: "0.28.2",
   mini_lineage: [
-    args:
-      ~w(js/app.js css/app.css --bundle --target=es2022 --outdir=../priv/static/assets --external:/fonts/* --external:/images/* --alias:@=.),
+    args: ~w(js/app.js css/app.css --bundle --target=es2022 --outdir=../priv/static/assets),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__)]}
   ]

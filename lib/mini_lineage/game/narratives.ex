@@ -79,7 +79,7 @@ defmodule MiniLineage.Game.Narratives do
     ready: "{them} close in for the next blow",
     begin: "{them} begin casting {skill}",
     # Leads a round's line while a cast goes on, so it is never read as the monster's:
-    # "as you cast, the Orc hits you for 18".
+    # "as you cast, the Orc hits you for 18 damage".
     casting: "as {them} cast,",
     foe_begin: "the {monster} begins casting {skill}",
     closing: "the {monster} runs at {object}",

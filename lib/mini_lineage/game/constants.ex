@@ -88,7 +88,7 @@ defmodule MiniLineage.Game.Constants do
       "Wheat fields roll out from Dion's walls toward the castle on the hill, and the road east runs on to Giran."
   }
 
-  # Derived, never stored: a started character always rests (rules §11, there being no combat), and
+  # Derived, never stored: a started character rests (rules §11) unless it is in combat (§20), and
   # regenerates while a bar is short, at the rates `Player` fills in. Night and the perks are what
   # the time and the place put on it (rules §15 and §16), carrying the modifiers `Rules` gives them.
   @auras %{

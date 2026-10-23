@@ -552,6 +552,7 @@ for {study, settings} <- studies do
 
   text =
     ([header | List.flatten(lines)] ++ Report.probes(rows)) |> Enum.map_join(&(&1 <> "\n"))
+
   settings = Map.update!(settings, :start, &DateTime.to_iso8601/1)
   json = JSON.encode!(%{settings: settings, rows: rows})
 

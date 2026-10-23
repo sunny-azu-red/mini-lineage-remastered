@@ -44,7 +44,7 @@ defmodule MiniLineage.Game.Format do
   @doc "Whole percent, as the XP bar reads them: 54 -> \"54%\"."
   def percent(whole) when is_integer(whole) and whole >= 0, do: "#{whole}%"
 
-  @doc "Tenths, a critical rate's: 88 is \"8.8\". Twinned with `tenthsFigure` in animated-values.js."
+  @doc "Tenths, a rate's or a cast's: 88 is \"8.8\". Twinned with `tenthsFigure` in animated-values.js."
   def tenths(tenths) when is_integer(tenths) and tenths >= 0,
     do: "#{div(tenths, 10)}.#{rem(tenths, 10)}"
 

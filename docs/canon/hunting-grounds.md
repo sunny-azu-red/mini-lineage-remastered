@@ -3,7 +3,7 @@
 Part of the Lineage II canon (Interlude, C6): the reference the game takes names and numbers from.
 It is not a roadmap. Read [README.md](README.md) before using an entry.
 
-Where each ground is, how it is reached, its level band and its monsters by level. Monster stats beyond name and level (HP, attack, defence, EXP, Adena) are not here yet: see the gaps in [README.md](README.md).
+Where each ground is, how it is reached, its level band and its monsters by level. Monster stats beyond name and level (HP, attack, defence, EXP, Adena) are in [monsters.md](monsters.md) for the four villages' grounds and Ruins of Despair; past those, see the gaps in [README.md](README.md).
 
 ## The villages, Gludin, Gludio and Dion
 

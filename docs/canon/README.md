@@ -171,7 +171,7 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   then while its spells rest its strongest heal below the player's share of HP, or a curse on a
   monster above half its HP, and before the pull its auras, then its heals up to that share. A Mystic
   lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
-  player gives orders, and may leave any skill but a heal unused. Life Drain, which returns 80% of
+  player gives orders, and may leave any skill but a heal or Relax unused. Life Drain, which returns 80% of
   what it deals, is cast only below 85% of HP, as the heal it mostly is: cast whenever ready, its
   27 MP a cast kept the Orc Mystic the slowest set (`docs/balance.md`).
 - **A slow caster casts its spell whenever it is ready** (rules §20): the golems, the zombies and the
@@ -274,7 +274,7 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   and potions on one page with both keepers greeting you. In Lineage II each kept a shop window of
   their own, though the Newbie Guide already named their building the Magic Trader.
 - **The Weapon Trader is singular,** as the Armour Trader and the Magic Trader are, and so is its
-  address (`/traders/weapon`). Lineage II wrote "Weapons Trader" beside "Armor Trader" (Giran's
+  address (`/<village>/traders/weapon`). Lineage II wrote "Weapons Trader" beside "Armor Trader" (Giran's
   titles, the Newbie Guide's building), a quirk kept nowhere else.
 - **Shops charge an item's canon price (armour by its share, above), with no castle tax** (Lineage II added the castle lord's
   tax, 15% in a village), and nothing mentions one.

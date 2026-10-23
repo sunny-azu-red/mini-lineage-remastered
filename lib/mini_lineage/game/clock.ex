@@ -58,7 +58,7 @@ defmodule MiniLineage.Game.Clock do
   end
 
   @doc "The next dusk or dawn after `now`, in UTC. Built in the zone, so a DST day moves it."
-  def next_boundary(now \\ now()) do
+  def next_boundary(now) do
     today = now |> DateTime.shift_zone!(zone()) |> DateTime.to_date()
 
     for day <- [today, Date.add(today, 1)], time <- [~T[06:00:00], ~T[22:00:00]] do

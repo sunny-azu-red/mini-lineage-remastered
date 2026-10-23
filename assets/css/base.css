@@ -82,11 +82,6 @@ a:not(.btn):is(:hover, :focus-visible),
 }
 
 /* ===== Typography ===== */
-/* A name, not a value: the weight marks it out, the colour stays the body's. */
-strong {
-    font-weight: var(--weight-value);
-}
-
 /* Every label is set one way, wherever it stands; each keeps its own colour and place. */
 .data-table th,
 .stat-label,

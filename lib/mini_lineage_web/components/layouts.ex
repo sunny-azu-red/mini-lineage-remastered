@@ -37,7 +37,7 @@ defmodule MiniLineageWeb.Layouts do
     """
   end
 
-  # `Screens.panels/3`: each is handed to the inner block, which draws its body.
+  # `Screens.panels/4`: each is handed to the inner block, which draws its body.
   attr :panels, :list, required: true
   attr :view, :map, required: true
   attr :screen, :string, required: true

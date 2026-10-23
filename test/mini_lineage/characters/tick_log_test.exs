@@ -57,6 +57,12 @@ defmodule MiniLineage.Characters.TickLogTest do
     assert tick(id) =~ "(Full)"
   end
 
+  test "a full character whose aura faded says so rather than nothing", %{id: id} do
+    start(id, 2, %{buffs: %{"Defense Aura" => 0}})
+
+    assert tick(id) =~ "MP: 39/39 (An aura faded)"
+  end
+
   test "one in combat, short as it may be, says so rather than full", %{id: id} do
     start(id, 2, %{health: 40, combat: "engaged"})
 

@@ -6,9 +6,9 @@ defmodule MiniLineage.Game.Player do
   alias MiniLineage.Game.{Clock, Constants, Formulas, Math, Narrative, Rules}
 
   @elf 2
-  # Rules §20: how long a character goes on not resting after it leaves the ground.
   # Rules §20 and §26: never, or below these shares of HP.
   @shares [0, 30, 50, 70]
+  # Rules §20: how long a character goes on not resting after it leaves the ground.
   @disengage_ms 5_000
   @dark_elf 3
 
@@ -73,7 +73,7 @@ defmodule MiniLineage.Game.Player do
     {player, %{text: Narrative.alert(began), type: :info, sound: "start"}}
   end
 
-  @doc "Rules §25: what its trainer teaches at level 1 for nothing, a Mystic's first spell."
+  @doc "Rules §25: what its trainer teaches at level 1 for nothing, the set's first skill."
   def first_skills(race_id, path) do
     for lesson <- Rules.lessons(Rules.set(race_id, path).name),
         lesson.learn_at == 1 and lesson.sp == 0,
@@ -86,8 +86,8 @@ defmodule MiniLineage.Game.Player do
   def level(player), do: Math.level_for_xp(player.experience || 0)
 
   @doc """
-  Every stat of rules §3 to §11, worked from the set the run started as and its level, then changed
-  by whatever `conditions/1` puts on it.
+  Every stat of rules §3 to §11, worked from the set the run started as and its level, then its
+  masteries (§19, §25), then whatever `conditions/1` puts on it.
   """
   def stats(player), do: stats(player, conditions(player))
 
@@ -236,12 +236,6 @@ defmodule MiniLineage.Game.Player do
         do: name
       )
 
-  @doc "Rules §25: the set's first skill, at the level the character knows it."
-  def first_skill(player) do
-    name = Rules.first_skill(player.race_id, player.path).name
-    Rules.skill(name, Map.get(player.skills || %{}, name, 1), player.path)
-  end
-
   @doc "Rules §23: the items a character has on, as `Rules` gives them."
   def equipped(player),
     do: for(%{equipped: true, name: name} <- player.items || [], do: Rules.item(name))
@@ -268,9 +262,9 @@ defmodule MiniLineage.Game.Player do
   # -------------------------------------------------------------- conditions
 
   @doc """
-  Rules §15 and §16: what the time and the place put on a character, as auras carrying their
-  modifiers. A perk names its race in its own clause, so neither the hour nor the town alone can
-  grant it.
+  Rules §15, §16 and §19: what the time and the place put on a character, and the auras it raised,
+  as auras carrying their modifiers. A perk names its race in its own clause, so neither the hour
+  nor the town alone can grant it.
   """
   def conditions(%{dead: true}), do: []
 
@@ -316,9 +310,10 @@ defmodule MiniLineage.Game.Player do
   # ----------------------------------------------------------------- resting
 
   @doc """
-  💤 always, a one-click hunt taking no time (rules §20), then whatever `conditions/1` puts on the character, and 🌿
-  while a bar is short, carrying what one tick restores to each. The tick reads its rates from
-  here, so the icon and the healing cannot disagree.
+  In combat (rules §20), ⚔️ and whatever `conditions/1` puts on the character. Otherwise 💤, those
+  conditions, 🌿 while a bar is short and 🧘 while Relax mends, each carrying what one tick restores.
+  A run that has ended (§21) wears 👻 alone. The tick reads its rates from here, so the icon and the
+  healing cannot disagree.
   """
   def auras(%{dead: true}), do: [Constants.aura(:ghost)]
 
@@ -387,7 +382,10 @@ defmodule MiniLineage.Game.Player do
 
   defp now_ms, do: DateTime.to_unix(Clock.now(), :millisecond)
 
-  @doc "One 3-second tick of rules §11. Returns `{player, healed?}`. A ghost (§21) mends nothing."
+  @doc """
+  One 3-second tick of rules §11. Returns `{player, changed?}`: mended, or an aura faded. A ghost
+  (§21) mends nothing.
+  """
   def regenerate(%{dead: true} = player), do: {player, false}
 
   def regenerate(%{combat: until} = player) when is_integer(until) do

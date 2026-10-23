@@ -11,8 +11,6 @@ defmodule MiniLineage.DataCase do
     quote do
       alias MiniLineage.Repo
 
-      import Ecto
-      import Ecto.Changeset
       import Ecto.Query
       import MiniLineage.DataCase
     end

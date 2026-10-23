@@ -3,7 +3,7 @@
 # more than 15% either way, deaths do not rise beyond the dice's noise, and the spread between the
 # fastest and slowest set does not widen by more than 2%, which the dice alone can do.
 #
-#   mix run --no-start bench/compare.exs before.json after.json
+#   MIX_ENV=test mix run --no-start bench/compare.exs before.json after.json
 
 [before_path, after_path] = System.argv()
 read = fn path -> path |> File.read!() |> JSON.decode!() end

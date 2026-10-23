@@ -321,9 +321,9 @@ defmodule MiniLineage.Game.Narrative do
 
   defp fill(kind, data), do: Format.fill_template(Narratives.log(kind), data)
 
-  # A side's swings in one round read as one clause: "you hit for 10 and 9" when every one landed
-  # plainly, "you miss twice" when none did, else each in order, "you swing twice for a critical
-  # hit of 65 and a miss".
+  # A side's swings in one round read as one clause: "you hit for 10 and 9 damage" when every one
+  # landed plainly, "you miss twice" when none did, else each in order, "you swing twice for a
+  # critical hit of 65 damage and a miss".
   defp merge_swings(events) do
     events
     |> Enum.chunk_by(&swinger/1)
@@ -384,7 +384,7 @@ defmodule MiniLineage.Game.Narrative do
   defp join_and([only]), do: only
   defp join_and(parts), do: Enum.join(Enum.drop(parts, -1), ", ") <> " and " <> List.last(parts)
 
-  # "you hit for 9, the Wolf misses, and you hit for 8"
+  # "you hit for 9 damage, the Wolf misses, and you hit for 8 damage"
   defp join([only]), do: only
   defp join(parts), do: Enum.join(Enum.drop(parts, -1), ", ") <> ", and " <> List.last(parts)
 

@@ -29,7 +29,7 @@ export const shortFigure = (value) => shorten(value, true);
 /** Whole percent, the XP bar's. Twinned with `Format.percent`, held to a table by both suites. */
 export const percentFigure = (value) => `${Math.max(0, Math.floor(value))}%`;
 
-/** Tenths, a critical rate's. Twinned with `Format.tenths`, held to a table by both suites. */
+/** Tenths, a rate's or a cast's. Twinned with `Format.tenths`, held to a table by both suites. */
 export const tenthsFigure = (value) => {
     const n = Math.max(0, Math.round(value));
     return `${Math.floor(n / 10)}.${n % 10}`;

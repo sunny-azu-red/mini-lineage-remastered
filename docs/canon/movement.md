@@ -192,7 +192,8 @@ lines 79, 125 and 161; the long-range branch is taken on 80% of the hits at line
 
 ## Character skill cast ranges
 
-Every skill in `trainer.csv`. All four sources agree on every value. In L2J, −1 means self; aCis
+Every active skill in `trainer.csv`, and Venom, which the game leaves out; the masteries are
+passive and have no range. All four sources agree on every value. In L2J, −1 means self; aCis
 leaves the field out for self-target skills; l2hub shows −1 for self buffs and 0 for toggles.
 
 | Skill | Id | Cast range | Effect range | Target | Kind | Weapon required |
@@ -255,11 +256,14 @@ line 753: `getPhysicalAttackRange() + own collision radius + target's collision 
   matches `WeaponType` for every weapon here.
 - l2hub gives a weapon's type (`weaponType`) but no attack range: **MISSING** there.
 
-**Every weapon in items.csv** (types read from L2J (db) `weapon.sql`, L2J (Hl4p3x)
+**Every no-grade weapon the village traders listed** (by canon name: the game's `items.csv`
+renames Dagger to Squire's Dagger, Training Gloves to Squire's Gloves and Apprentice's Spellbook to
+Scholar's Tome, leaves out Apprentice's Rod, Doom Dagger, Orcish Sword and Handmade Sword, and adds
+its own Squire's Bow, a bow at 500; types read from L2J (db) `weapon.sql`, L2J (Hl4p3x)
 `dist/game/data/stats/items/*.xml` and aCis `aCis_datapack/data/xml/items/*.xml`, matched by name).
 No pole is in the game, so every game weapon is 40 or 500.
 
-| Weapon (items.csv) | Game type | Hands | Item id | L2J weapon.sql type | L2J (Hl4p3x) XML type | L2J range | aCis type | aCis attack_range |
+| Weapon (canon) | Game type | Hands | Item id | L2J weapon.sql type | L2J (Hl4p3x) XML type | L2J range | aCis type | aCis attack_range |
 |---|---|---|---|---|---|---|---|---|
 | Apprentice's Wand | staff | 1 | 6 | blunt (rhand) | blunt | 40 (base) | BLUNT | 40 |
 | Apprentice's Rod (also id 1300, same type) | staff | 1 | 7 | blunt (rhand) | blunt | 40 (base) | BLUNT | 40 |

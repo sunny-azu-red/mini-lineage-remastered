@@ -66,9 +66,9 @@ try {
     check('...and flags it as a debug build, in the colour that build wears',
         await page.locator('#copyright .build-testing').count() === 1);
 
-    // ---- the two short-form formatters agree ------------------------------------------------
-    // The count-up formats its own frames in hooks/animated-values.js, so both sides of
-    // Format.short read one table; Elixir reads it in format_test.exs.
+    // ---- the twinned formatters agree -------------------------------------------------------
+    // The hooks format their own frames and countdowns, so each Format function and its JavaScript
+    // twin read one table in test/fixtures; Elixir reads them in format_test.exs.
     const { cases } = JSON.parse(readFileSync('test/fixtures/short_format.json', 'utf8'));
     const mismatched = await page.evaluate(
         (rows) => rows
@@ -500,7 +500,7 @@ try {
         String(await watcher.page.getAttribute(purse, 'data-value')));
     await watcher.context.close();
 
-    // ---- the temporary Quit, for trying every set from one browser --------------------------
+    // ---- the debug build's Quit, kept for trying every set from one browser -----------------
     check('the town\'s dropdown offers no Quit, being the game\'s',
         await page.locator('#travel-form option[value="quit"]').count() === 0);
     for (const combo of ['q', 'Control+c', 'Control+c'])

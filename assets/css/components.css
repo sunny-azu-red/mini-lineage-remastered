@@ -210,8 +210,8 @@
     margin-left: auto;
 }
 
-/* A learned skill the weapon in hand cannot use, as a lesson not yet learnable is: its figures mute
-   with it. */
+/* A learned skill the weapon in hand cannot use or the orders leave unused, as a lesson not yet
+   learnable is: its figures mute with it. */
 .stat-row.locked :is(p, p *) {
     color: var(--text-muted);
 }
@@ -374,7 +374,7 @@
     }
 }
 
-/* The one figure off the 13/12/11 scale: an 18px bar has no room for more than 10px. */
+/* The one figure off the 13/12/11 scale: a 19px bar has no room for more than 10px. */
 .bar-label,
 .bar-text {
     line-height: 1;
@@ -542,8 +542,8 @@ ol.fight-log {
 }
 
 /* How it opened, a critical or a mend either way, and how it ended, each washed as the alert that
- * would have said it: a monster that comes at you is danger, and so is the one that ends the run, a
- * critical the colour it is written in. */
+ * would have said it, but a Victory info as an escape is, green being the mend's: a monster that
+ * comes at you is danger, as is one that ends the run, a critical the colour it is written in. */
 .fight-log>li:is(.encounter, .victory, .escaped) {
     background-color: var(--wash-info);
 }

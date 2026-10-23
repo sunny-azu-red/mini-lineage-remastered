@@ -69,7 +69,13 @@ defmodule MiniLineage.Game.RulesTest do
     end
 
     test "§4 the attribute curves, and the bonus each is worth at 20, 30, 40 and 50" do
-      for [attr, growth, pivot | samples] <- table("Attribute"), samples != [] do
+      rows = table("Attribute | Growth")
+      assert length(rows) == 6
+
+      # A strict match, so a row of another table fails rather than being skipped.
+      for row <- rows do
+        [attr, growth, pivot | samples] = row
+        assert length(samples) == 4, attr
         key = attr |> String.downcase() |> String.to_existing_atom()
         assert Rules.bonus_curve(key) == {number(growth), number(pivot)}, attr
 
@@ -92,7 +98,12 @@ defmodule MiniLineage.Game.RulesTest do
     end
 
     test "§7 what each path starts with" do
-      for [path, power, magic, body, mind] <- table("Path") do
+      rows = table("Path | Power")
+      assert length(rows) == 2
+
+      for row <- rows do
+        [path, power, magic, body, mind] = row
+
         assert Rules.path(@paths[path]) ==
                  %{
                    power: trunc(number(power)),
@@ -272,7 +283,7 @@ defmodule MiniLineage.Game.RulesTest do
         for path <- [:fighter, :mystic],
             do:
               assert(
-                Map.delete(Rules.skill(name, 1, path), :bonuses) == Map.delete(skill, :bonuses),
+                Map.delete(Rules.skill(name, 1, path), :bonuses) == skill,
                 name
               )
       end

@@ -49,8 +49,9 @@ roadmap wins, and decisions do get reversed on purpose (classes and the inventor
 
 ## The screens
 
-- **Read in a table, act through one dropdown.** No button per row (rejected 2026-10-11). Over ~15
-  rows, a list is split by category. A panel stays uncluttered: SP shows only at the trainer, the
+- **Read in a table, act through one dropdown.** No button per row (rejected 2026-10-11). A setting (the Battle
+  Orders) is the exception: a stepper or a switch, never a dropdown, since it goes nowhere. Over ~15
+  rows, a list is split by category. A panel stays uncluttered: SP shows only at the guild and in the Battle Orders' footer, the
   shop never mentions tax, and fewer equipment slots are better than more.
 
 ## Balance
@@ -96,15 +97,14 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
   resting against 74 and 94. What the bench has shown so far (`docs/balance.md`):
   - It has no Wind Strike, so it opens with Chill Flame, a 5.1-second cast (the slowest Casting
     Spd., from its WIT) whose burn deals a fixed amount over 15 seconds, so neither M. Atk. nor
-    Weapon Mastery speeds it up much (1% to 3% from the masteries, where every other set gained 10%
-    or more).
+    Weapon Mastery speeds it up much (1% to 3% from the masteries, where the other sets gained 5% to
+    16%).
   - Chill Flame is not cast again while the monster still burns, and Life Drain waits until the Orc
     Mystic is below 85% of its HP, so it often has nothing to cast while the monster comes at it.
   - Its levers already measured: Life Drain below 70% instead was 13% to 15% faster but doubled
     its deaths without potions; Soul Cry left unused saves about 9%.
 
-  Unmeasured candidates: a burn that grows with M. Atk., Life Drain's threshold, its ground's
+  Unmeasured candidates: a burn that grows with M. Atk., a Life Drain threshold between 70% and 85%, its ground's
   monsters. None of them has been tried yet.
-- **A shield never turns a spell** (L2J, 40c2446)
 - **A shield never turns a spell** (L2J, 40c2446): an item reading "Shield P. Def." should not raise
   M. Def.

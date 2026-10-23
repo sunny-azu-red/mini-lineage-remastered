@@ -1,8 +1,9 @@
 defmodule MiniLineageWeb.Controls do
   @moduledoc """
   What every screen reaches for and no screen owns: the panel, the button and the choice it acts
-  on, a setting's stepper and switch, the table, the alerts, the fault, the figure and the bar. `raw/1` renders flashes, which
-  the server composes from the template tables — never from anything a player typed.
+  on, a setting's stepper and switch, the table, the alerts, the fight log, the fault, the figure,
+  the bar and an item's label. `raw/1` renders flashes and the fight log, which the server composes
+  from the template tables — never from anything a player typed.
   """
   use MiniLineageWeb, :html
 
@@ -11,9 +12,9 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------- panels
 
   @doc """
-  The card every part of the game is drawn on. `id` names the PANEL, for its hook; every other
-  attribute lands on the BODY. A hook only when something moves, so the error page, with no
-  LiveView, renders one that asks for no JavaScript.
+  The card every part of the game is drawn on. `id` names the PANEL, for its hook, and `class`
+  styles it; `body_class` and every other attribute land on the BODY. A hook only when something
+  moves, so the error page, with no LiveView, renders one that asks for no JavaScript.
   """
   attr :id, :string, default: nil
   attr :title, :string, required: true
@@ -88,7 +89,6 @@ defmodule MiniLineageWeb.Controls do
   # The one of a set that is already chosen, pressed in: the Halls' current filter.
   attr :active, :boolean, default: false
   attr :patch, :string, default: nil
-  attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled)
   slot :inner_block, required: true
 
@@ -101,8 +101,7 @@ defmodule MiniLineageWeb.Controls do
             assigns.variant == :secondary && "btn-secondary",
             assigns.variant == :danger && "btn-danger",
             assigns.size == :sm && "btn-sm",
-            assigns.active && "active",
-            assigns.class
+            assigns.active && "active"
           ])
       )
 
@@ -122,7 +121,7 @@ defmodule MiniLineageWeb.Controls do
 
   An option may carry a `group`, neighbours sharing one drawn under one `<optgroup>`, and an
   `action` and `variant` the button takes when it is picked, in place of `active_label` and
-  `active_variant`: one list holding several verbs, as the inventory's does. Every option reads
+  the primary look: one list holding several verbs, as the inventory's does. Every option reads
   "Pick" and its `label`, an emoji and a name: the verb is the button's and a price the table's.
   """
   # LiveView restores a form's pick after a reconnect only when the form has an id.
@@ -135,8 +134,6 @@ defmodule MiniLineageWeb.Controls do
   attr :default_label, :string, required: true
   attr :active_label, :string, default: nil
   attr :default_variant, :atom, default: :secondary
-  # What the button turns into once something is picked: `:danger` for what cannot be undone.
-  attr :active_variant, :atom, default: :primary
   attr :rest, :global
 
   # A field named after a form property shadows it: `form.id` would return the select, and the
@@ -168,7 +165,7 @@ defmodule MiniLineageWeb.Controls do
           if(chosen, do: chosen[:action] || assigns.active_label, else: assigns.default_label),
         variant:
           if(chosen,
-            do: chosen[:variant] || assigns.active_variant,
+            do: chosen[:variant] || :primary,
             else: assigns.default_variant
           )
       )
@@ -445,8 +442,9 @@ defmodule MiniLineageWeb.Controls do
 
   @doc """
   Rules §20: a fight, an entry a row as legacy's Chronicle drew them, its head saying when on the
-  left and where both stand on the right, washed by its `kind` (the meeting, a critical). The
-  outcome, if given, ends it, washed as the alert that would have announced it.
+  left and where both stand on the right, washed by its `kind` (the meeting, a critical, a
+  mend). The outcome, if given, ends it: a Defeat washed danger, a Victory or an escape info,
+  since green is the mend's.
   """
   attr :log, :list, required: true
   # `%{kind: "victory" | "escaped" | "defeat", head: String.t(), standing: String.t() | nil,`

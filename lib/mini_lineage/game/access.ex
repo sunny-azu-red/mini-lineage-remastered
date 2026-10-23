@@ -12,15 +12,16 @@ defmodule MiniLineage.Game.Access do
   # lineage filter, which changes what is read and nothing else.
   @readable ~w(races error highscores)
 
-  # Where a character can stand: its town, that town's Gatekeeper, and its hunting ground.
+  # Where a character can stand: its town, that town's Gatekeeper and ground, a village's traders
+  # and their pages, and its home village's guild.
   @trader ["trader" | Enum.map(MiniLineageWeb.Paths.trader_pages(), &("trader-" <> &1))]
   @in_town ~w(town gatekeeper hunt guild) ++ @trader
 
   @doc """
   Where the player is allowed to be: what can be read, for everyone; the town it stands in, and its
-  own character page, once a character exists, which is past character creation; and character
-  creation until then. A run that has ended (rules §21) stands on the ground it fell on, and looks
-  at its own pages from there.
+  own character and inventory pages, once a character exists, which is past character creation;
+  and character creation until then. A run that has ended (rules §21) stands on the ground it fell
+  on, and looks at its own pages from there.
   """
   def pin_screen({"highscores", lineage}, _player), do: {"highscores", lineage}
   def pin_screen({screen, _town}, _player) when screen in @readable, do: {screen, nil}

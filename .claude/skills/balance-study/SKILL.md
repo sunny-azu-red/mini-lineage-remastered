@@ -20,8 +20,9 @@ The bench plays whatever `.env.test` sets (`EXP_RATE`, `SP_RATE`, `ADENA_RATE`),
 opens with a `Rates:` line and keeps them in its JSON settings. Before reading one, check that line
 says ×5, ×5 and ×20, and if it does not, fix `.env.test` from `.env.test.example` and run it again.
 A change to the private rates themselves is a balance change like any other: measured before and
-after, written into rules §22's table and every env file in the same commit (`rules_test.exs` holds
-them together), and `docs/balance.md` rewritten from the reading.
+after, written into rules §22's table, every env file and both of `.github/workflows/ci.yml`'s jobs
+in the same commit (`rules_test.exs` holds the table to `.env.example` and `.env.test.example`;
+nothing checks CI's), and `docs/balance.md` rewritten from the reading.
 
 ## 1. Decide what to run
 
@@ -60,7 +61,7 @@ MIX_ENV=test nice -n 19 \
 ```
 
 Use the same runs, top level and `--only` as the baseline. `compare.exs` refuses only a different
-top level, rest or potions, or a different count of runs; a set in one reading and not the other is
+top level, rest, potions or rates, or a different count of runs; a set in one reading and not the other is
 dropped without a word. Run the two one after the other, since each takes every scheduler.
 
 ## 4. Compare, setting by setting
@@ -75,8 +76,8 @@ grep -h FLAG tmp/bench/readings/<label>_after_*.txt
 ```
 
 Time is compared run for run, over runs that reached the top in both, so a run the change saves from
-dying does not move a set's mean; with fewer than 10 such runs a set's time shows `-` and is not
-judged. Off-meta rows are never held to the bar, and their `FLAG: beats the meta` lines are only in
+dying does not move a set's mean; with fewer than 10 such runs a set's change shows `-` and its time is
+neither judged nor counted in the spread. Off-meta rows are never held to the bar, and their `FLAG: beats the meta` lines are only in
 the matrix's `.txt` files, hence the grep: a build the rules let win is a rule to fix.
 
 ## 5. Report

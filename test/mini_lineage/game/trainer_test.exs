@@ -75,9 +75,12 @@ defmodule MiniLineage.Game.TrainerTest do
     assert player.skills["Mortal Blow"] == 1
   end
 
-  test "the hunt fights with the level of the first skill the character knows" do
+  test "the hunt fights with each skill at the level the character knows" do
     {player, _} = Actions.learn(human(5, 100), "Power Strike", 2)
-    assert Player.first_skill(player).power == 30
-    assert Player.first_skill(human(1, 0)).power == 25
+    assert power_strike(player).power == 30
+    assert power_strike(human(1, 0)).power == 25
   end
+
+  defp power_strike(player),
+    do: Enum.find(Player.fighting_skills(player), &(&1.name == "Power Strike"))
 end
