@@ -105,8 +105,11 @@ defmodule MiniLineage.Game.Format do
     "#{at.day} #{month}#{year}"
   end
 
-  @doc "The whole instant, for a stamp's tooltip: \"17 Oct 2026, 3:10 pm\", in the game's zone."
-  def instant(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y, %-I:%M %P")
+  @doc """
+  The whole instant, for a stamp's tooltip, naming the game's zone so nobody reads it as their own:
+  "17 Oct 2026, 3:10 pm EEST".
+  """
+  def instant(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y, %-I:%M %P %Z")
 
   # As Lineage II's client names them, every shortened word ending in a full stop. Block, M. Critical
   # and Recovery are ours, as docs/canon/README.md's departures say.

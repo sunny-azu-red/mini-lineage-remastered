@@ -1297,7 +1297,7 @@ try {
         (el) => [el.dateTime, el.textContent.trim(), el.title, el.closest('tr').textContent.includes('💀')]);
     check('...where the run carries how long ago it fell, the whole instant beside it, in place of a skull',
         Date.now() - Date.parse(fell[0]) < 600_000 && /^(just now|\d+m ago)$/.test(fell[1])
-        && /^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{1,2}:\d{2} [ap]m$/.test(fell[2]) && !fell[3],
+        && /^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{1,2}:\d{2} [ap]m [A-Z]{2,5}$/.test(fell[2]) && !fell[3],
         fell.join(' | '));
     const stampServed = await servedShownOn(g, '#halls-rows tr.mine time.date');
     check('...served as the hook shows it', stampServed.same && stampServed.served.length === 1, stampServed.detail);

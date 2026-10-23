@@ -180,7 +180,8 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **Nor on the hour.** Night (rules §15) is the wall clock in a zone. `Clock.put_now/1` pins a UTC
   instant for the calling process and, through `$callers`, a LiveView it starts; a character's
   process is pinned inside `Characters.mutate/2`. Every stored time is UTC, and `:time_zone` decides
-  two things: night, and the day and hour a `<.stamp>` writes (`Clock.local/1`), so a date is the
+  two things: night, and every day, hour and year the game draws, a `<.stamp>`'s and the footer's
+  (`Clock.local/1`), never `Date.utc_today/0`, so a date is the
   server's from the first draw and a test of one pins `Clock.put_now/1` and picks an instant whose
   day the zone moves. A browser suite never reads the night.
 - **A property states what holds for every input; fixtures stay the contract with JavaScript.** A
@@ -473,7 +474,7 @@ Each of these is here because it was got wrong once.
 - **When something happened ages where it is shown**, through `Controls.stamp/1` and nothing else:
   "just now", "3m ago", "2h ago", "5d ago" (`form={:long}` for a sentence, "3 minutes ago"), and
   past a week its day, "17 Oct", the year only when it is not this one, with the whole instant in
-  the tooltip ("17 Oct 2026, 3:10 pm"). The `Stamp` hook ages each `<time>` from the age the server
+  the tooltip, naming the zone ("17 Oct 2026, 3:10 pm EEST"). The `Stamp` hook ages each `<time>` from the age the server
   drew it at, `data-age-ms`, a duration as a countdown's is and counted from the first one it is
   sent, and repaints only as the label turns over. The day past the cap is the server's, written in
   the game's zone into `data-date`, so the browser never works out a zone. The Halls' Fallen

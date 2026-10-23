@@ -112,9 +112,11 @@ defmodule MiniLineage.Game.FormatTest do
       assert Format.date(~U[2025-12-31 23:00:00Z], now, :short) == "31 Dec 2025"
     end
 
-    test "with the whole instant in the tooltip, on a twelve-hour clock" do
-      assert Format.instant(~U[2026-10-17 15:10:00Z]) == "17 Oct 2026, 3:10 pm"
-      assert Format.instant(~U[2026-01-05 00:05:00Z]) == "5 Jan 2026, 12:05 am"
+    test "with the whole instant in the tooltip, on a twelve-hour clock in a zone it names" do
+      local = &DateTime.shift_zone!(&1, "Europe/Bucharest")
+
+      assert Format.instant(local.(~U[2026-10-17 12:10:00Z])) == "17 Oct 2026, 3:10 pm EEST"
+      assert Format.instant(local.(~U[2026-01-04 22:05:00Z])) == "5 Jan 2026, 12:05 am EET"
     end
   end
 

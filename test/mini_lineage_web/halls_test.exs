@@ -75,7 +75,7 @@ defmodule MiniLineageWeb.HallsTest do
 
     assert has_element?(
              view,
-             ~s(#fell-#{id}.date[datetime="2026-10-23T22:30:00.000000Z"][title="24 Oct 2026, 1:30 am"]),
+             ~s(#fell-#{id}.date[datetime="2026-10-23T22:30:00.000000Z"][title="24 Oct 2026, 1:30 am EEST"]),
              "24 Oct"
            )
 

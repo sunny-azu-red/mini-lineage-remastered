@@ -5,7 +5,7 @@ defmodule MiniLineageWeb.Layouts do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Access, Format, Version}
+  alias MiniLineage.Game.{Access, Clock, Format, Version}
 
   embed_templates "layouts/*"
 
@@ -311,7 +311,8 @@ defmodule MiniLineageWeb.Layouts do
 
     assigns =
       assign(assigns,
-        year: Date.utc_today().year,
+        # The game's year, which turns over at the game's midnight rather than UTC's.
+        year: Clock.local(Clock.now()).year,
         version: version,
         commit_url: Version.commit_url(version)
       )
