@@ -37,7 +37,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   the formatter twins it re-exports (see Tests). Each
   is its own file under `assets/js/hooks/`; a `ColocatedHook` would compile and never run. They are
   `AnimatedValues`, `DevKeys`, `EffectTimers`, `Panel`, `PanelFocus`, `SelectAction`, `SoundToggle`
-  (over the synth in `soundfx.js`) and `Table`; `kept.js` is the kept cookie (see Components).
+  (over the synth in `soundfx.js`), `Stamp` and `Table`; `kept.js` is the kept cookie (see Components).
 - **Five sounds**, each a list of notes in `soundfx.js` with no assets. All but the toggle's are
   pushed by `GameLive` as `play-sound` (`sound/1`), so no reload can replay one, and one action
   plays one sound at most: a fight is one click however many blows or potions it holds.
@@ -78,7 +78,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown),
   `<.stepper>` and `<.switch>` (a setting, see Components), `<.alert>`
-  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's Fight Log, `#fight`), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
+  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's Fight Log, `#fight`), `<.figure>`, `<.bar>`, `<.stamp>` (when something happened, see Components), `<.fault>`, and `item_label/1`, an item as every
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
@@ -180,9 +180,9 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **Nor on the hour.** Night (rules §15) is the wall clock in a zone. `Clock.put_now/1` pins a UTC
   instant for the calling process and, through `$callers`, a LiveView it starts; a character's
   process is pinned inside `Characters.mutate/2`. Every stored time is UTC, and `:time_zone` decides
-  two things: night, and the day a date is drawn on, `Format.date(Clock.local(at))`, so a date is
-  the server's from the first draw and a test of one picks an instant whose day the zone moves. A
-  browser suite never reads the night.
+  two things: night, and the day and hour a `<.stamp>` writes (`Clock.local/1`), so a date is the
+  server's from the first draw and a test of one pins `Clock.put_now/1` and picks an instant whose
+  day the zone moves. A browser suite never reads the night.
 - **A property states what holds for every input; fixtures stay the contract with JavaScript.** A
   counterexample in a twinned formatter becomes a fixture row. Weight generators toward the boundary.
   Dice are a generated list of integers scaled into `[0, 1)` and cycled through `Rng.put_source/1`,
@@ -193,9 +193,10 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   `hooks/animated-values.js`, the last for a figure in tenths: a rate such as Critical or Block, or a
   cast or reuse time) are deliberate copies, so a count never
   changes format mid-tween, and so are `Format.countdown`/`timerLabel` and
-  `Format.remaining`/`remainingLabel` (in `hooks/effect-timers.js`). Each pair reads
-  `test/fixtures/short_format.json`, `percent_format.json`, `tenths_format.json` or
-  `effect_timer.json`, from `format_test.exs` and `walkthrough.mjs`. Anything else both
+  `Format.remaining`/`remainingLabel` (in `hooks/effect-timers.js`) and `Format.stamp`/`stampLabel`
+  (in `hooks/stamp.js`). Each pair reads `test/fixtures/short_format.json`, `percent_format.json`,
+  `tenths_format.json`, `effect_timer.json` or `stamp_format.json`, from `format_test.exs` and
+  `walkthrough.mjs`. Anything else both
   languages format gets the same before it gets a second copy.
 - **Browser suites**: hand Playwright a function, never a string (the CSP refuses `eval`, and a
   `waitForFunction("…")` behind a `.catch` reads as a wait that returned). Read a figure's
@@ -468,6 +469,14 @@ Each of these is here because it was got wrong once.
   Each also carries a `timer_key` naming that countdown, and the browser counts it from the first
   duration it is sent: a patch can repeat an old one, and a server clock can step (WSL2's does,
   3.6s every half minute), so a later duration never moves a timer already counting.
+- **When something happened ages where it is shown**, through `Controls.stamp/1` and nothing else:
+  "just now", "3m ago", "2h ago", "5d ago" (`form={:long}` for a sentence, "3 minutes ago"), and
+  past a week its day, "17 Oct", the year only when it is not this one, with the whole instant in
+  the tooltip ("17 Oct 2026, 3:10 pm"). The `Stamp` hook ages each `<time>` from the age the server
+  drew it at, `data-age-ms`, a duration as a countdown's is and counted from the first one it is
+  sent, and repaints only as the label turns over. The day past the cap is the server's, written in
+  the game's zone into `data-date`, so the browser never works out a zone. The Halls' Fallen
+  is the only stamp today; an effect's time left is a countdown, never a stamp.
 - **Every figure counts; only names and dates jump.** A number the player can watch change is a
   `<.figure>`, animated by `AnimatedValues` hooked once over whatever contains them. It writes
   `data-value` and the text from one value, and `format={:short}` sets both the short form and the

@@ -1,0 +1,28 @@
+{
+  "_comment": "How long ago something happened, and how each form says it: [age_ms, form, date, label], read against one `cap_ms` of seven days, from which on a stamp is the `date` the server wrote. A negative age is a server clock ahead of the instant. Read by test/mini_lineage/game/format_test.exs for Format.stamp and by e2e/walkthrough.mjs for stampLabel, so a stamp cannot change shape when the hook takes over from the server.",
+  "cap_ms": 604800000,
+  "cases": [
+    [-5000, "short", "17 Oct", "just now"],
+    [0, "short", "17 Oct", "just now"],
+    [59999, "short", "17 Oct", "just now"],
+    [59999, "long", "17 October", "just now"],
+    [60000, "short", "17 Oct", "1m ago"],
+    [60000, "long", "17 October", "a minute ago"],
+    [119999, "short", "17 Oct", "1m ago"],
+    [120000, "short", "17 Oct", "2m ago"],
+    [120000, "long", "17 October", "2 minutes ago"],
+    [3599999, "short", "17 Oct", "59m ago"],
+    [3600000, "short", "17 Oct", "1h ago"],
+    [3600000, "long", "17 October", "an hour ago"],
+    [7200000, "long", "17 October", "2 hours ago"],
+    [86399999, "short", "17 Oct", "23h ago"],
+    [86400000, "short", "17 Oct", "1d ago"],
+    [86400000, "long", "17 October", "a day ago"],
+    [432000000, "short", "17 Oct", "5d ago"],
+    [432000000, "long", "17 October", "5 days ago"],
+    [604799999, "short", "17 Oct", "6d ago"],
+    [604800000, "short", "17 Oct", "17 Oct"],
+    [604800000, "long", "17 October 2025", "17 October 2025"],
+    [9000000000, "short", "17 Oct 2025", "17 Oct 2025"]
+  ]
+}

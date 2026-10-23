@@ -28,7 +28,7 @@ checked against Interlude's own data.
   row with where both sides stand, its criticals washed orange and its heals green, kept in
   `encounters` so a reload finds it. A death is final: the run stays on the ground it fell on as a
   👻 ghost under 🪦 Game Over, its fight ending in Defeat, until you play again, and its row stays
-  on the 🏛️ Monument of Heroes at `/highscores` with the day it fell.
+  on the 🏛️ Monument of Heroes at `/highscores` with how long ago it fell.
 - **Traders and a bag.** Each village's weapon, armour and magic traders sell your path's own goods,
   and buy back for half; the inventory at `/inventory` equips, drinks and destroys, and potions are
   drunk in a fight below the share the 🎖️ Battle Orders under the ground set, on a slider shown

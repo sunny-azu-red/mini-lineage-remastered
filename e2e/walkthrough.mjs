@@ -105,6 +105,15 @@ try {
         timers,
     );
     check('...and counts an effect down exactly as the server does', offTimers.length === 0, offTimers.join(' | '));
+    const stamps = JSON.parse(readFileSync('test/fixtures/stamp_format.json', 'utf8'));
+    const offStamps = await page.evaluate(
+        ({ cap_ms, cases }) => cases
+            .filter(([age, form, date, expected]) => window.__stampLabel(age, cap_ms, form, date) !== expected)
+            .map(([age, form, date, expected]) =>
+                `${age} ${form}: ${window.__stampLabel(age, cap_ms, form, date)} != ${expected}`),
+        stamps,
+    );
+    check('...and ages a stamp exactly as the server does', offStamps.length === 0, offStamps.join(' | '));
     // A server clock can step (WSL2's moves 3.6s every half minute), so a later duration for a
     // countdown already running must not move it, and a new countdown starts from its own.
     const stepped = await page.evaluate(() => {
@@ -1276,10 +1285,13 @@ try {
     // The board coalesces its writes, so the death may reach it a beat after the page does.
     await g.waitForSelector('#halls-rows tr.mine[data-fate="fallen"] time.date', { timeout: 5000 });
     const fell = await g.$eval('#halls-rows tr.mine[data-fate="fallen"] time.date',
-        (el) => [el.dateTime, el.textContent.trim(), el.closest('tr').textContent.includes('💀')]);
-    check('...where the run carries the day it fell, written out, in place of a skull',
-        Date.now() - Date.parse(fell[0]) < 600_000 && /^\d{1,2} [A-Z][a-z]{2} \d{4}$/.test(fell[1]) && !fell[2],
+        (el) => [el.dateTime, el.textContent.trim(), el.title, el.closest('tr').textContent.includes('💀')]);
+    check('...where the run carries how long ago it fell, the whole instant beside it, in place of a skull',
+        Date.now() - Date.parse(fell[0]) < 600_000 && /^(just now|\d+m ago)$/.test(fell[1])
+        && /^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{1,2}:\d{2} [ap]m$/.test(fell[2]) && !fell[3],
         fell.join(' | '));
+    const stampServed = await servedShownOn(g, '#halls-rows tr.mine time.date');
+    check('...served as the hook shows it', stampServed.same && stampServed.served.length === 1, stampServed.detail);
     await g.click('#header-link');
     await gc.onScreen('hunt');
     await g.click('#restart-button');

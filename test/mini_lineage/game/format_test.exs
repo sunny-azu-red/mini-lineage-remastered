@@ -93,6 +93,31 @@ defmodule MiniLineage.Game.FormatTest do
     end
   end
 
+  describe "the stamps the JavaScript must agree on" do
+    test "age the same way here" do
+      %{"cap_ms" => cap, "cases" => cases} =
+        "test/fixtures/stamp_format.json" |> File.read!() |> Jason.decode!()
+
+      for [age, form, date, expected] <- cases do
+        assert Format.stamp(age, cap, String.to_existing_atom(form), date) == expected,
+               "#{age} #{form}"
+      end
+    end
+
+    test "and turn into a day the server writes, the year only when it is not this one" do
+      now = ~U[2026-10-24 12:00:00Z]
+
+      assert Format.date(~U[2026-10-17 15:10:00Z], now, :short) == "17 Oct"
+      assert Format.date(~U[2026-10-17 15:10:00Z], now, :long) == "17 October"
+      assert Format.date(~U[2025-12-31 23:00:00Z], now, :short) == "31 Dec 2025"
+    end
+
+    test "with the whole instant in the tooltip, on a twelve-hour clock" do
+      assert Format.instant(~U[2026-10-17 15:10:00Z]) == "17 Oct 2026, 3:10 pm"
+      assert Format.instant(~U[2026-01-05 00:05:00Z]) == "5 Jan 2026, 12:05 am"
+    end
+  end
+
   describe "slugify" do
     test "makes a race label safe for an id" do
       assert Format.slugify("Dark Elf") == "dark-elf"

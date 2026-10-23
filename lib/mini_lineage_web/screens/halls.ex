@@ -9,7 +9,6 @@ defmodule MiniLineageWeb.Screens.Halls do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Clock, Format}
   alias MiniLineageWeb.{Paths, Screens}
 
   attr :catalog, :map, required: true
@@ -113,9 +112,7 @@ defmodule MiniLineageWeb.Screens.Halls do
         🪙 <.figure key={"adena-#{@row.id}"} value={@row.adena} format={:short} />
       </td>
       <td>
-        <time :if={@row.died_at} class="date" datetime={DateTime.to_iso8601(@row.died_at)}>
-          {Format.date(Clock.local(@row.died_at))}
-        </time>
+        <.stamp :if={@row.died_at} id={"fell-#{@row.id}"} at={@row.died_at} />
       </td>
     </tr>
     """

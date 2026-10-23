@@ -74,10 +74,39 @@ defmodule MiniLineage.Game.Format do
   defp seconds_left(ms), do: max(ceil(ms / 1000), 0)
 
   @doc """
-  A day as a table writes it, "24 Oct 2026", on an instant `Clock.local/1` has put in the game's
-  zone. The server's alone: the first draw is the one the reader sees, so no hook moves it.
+  How long ago something happened: "just now", "3m ago", "2h ago", "5d ago", or `:long` for a
+  sentence ("3 minutes ago"), and from `cap_ms` on the `date` the server wrote. Twinned with
+  `stampLabel` in `hooks/stamp.js`.
   """
-  def date(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y")
+  def stamp(age_ms, cap_ms, _form, date) when age_ms >= cap_ms, do: date
+
+  def stamp(age_ms, _cap_ms, form, _date) do
+    cond do
+      age_ms < 60_000 -> "just now"
+      age_ms < 3_600_000 -> ago(div(age_ms, 60_000), "m", "minute", form)
+      age_ms < 86_400_000 -> ago(div(age_ms, 3_600_000), "h", "hour", form)
+      true -> ago(div(age_ms, 86_400_000), "d", "day", form)
+    end
+  end
+
+  defp ago(n, unit, _word, :short), do: "#{n}#{unit} ago"
+  defp ago(1, _unit, "hour", :long), do: "an hour ago"
+  defp ago(1, _unit, word, :long), do: "a #{word} ago"
+  defp ago(n, _unit, word, :long), do: "#{n} #{word}s ago"
+
+  @doc """
+  The day a stamp turns into past its cap, "17 Oct" or `:long` "17 October", the year only when it
+  is not `now`'s. Both instants are already in the game's zone (`Clock.local/1`), and the browser is
+  handed this rather than a zone to work it out in.
+  """
+  def date(%DateTime{} = at, %DateTime{} = now, form) do
+    month = Calendar.strftime(at, if(form == :long, do: "%B", else: "%b"))
+    year = if at.year == now.year, do: "", else: " #{at.year}"
+    "#{at.day} #{month}#{year}"
+  end
+
+  @doc "The whole instant, for a stamp's tooltip: \"17 Oct 2026, 3:10 pm\", in the game's zone."
+  def instant(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y, %-I:%M %P")
 
   # As Lineage II's client names them, every shortened word ending in a full stop. Block, M. Critical
   # and Recovery are ours, as docs/canon/README.md's departures say.

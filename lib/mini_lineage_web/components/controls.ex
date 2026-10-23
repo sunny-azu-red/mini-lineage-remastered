@@ -7,7 +7,7 @@ defmodule MiniLineageWeb.Controls do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Format, Math}
+  alias MiniLineage.Game.{Clock, Format, Math}
 
   # ------------------------------------------------------------------- panels
 
@@ -507,6 +507,51 @@ defmodule MiniLineageWeb.Controls do
   defp figure_text(:percent, value), do: Format.percent(value)
   defp figure_text(:number, value), do: Format.number(value)
   defp figure_text(:tenths, value), do: Format.tenths(value)
+
+  # ------------------------------------------------------------------ stamps
+
+  # How long a stamp says its age before it says its day.
+  @stamp_cap_ms :timer.hours(24 * 7)
+
+  attr :id, :string, required: true
+  attr :at, DateTime, required: true
+  # `:short` for a row ("3m ago"), `:long` for a sentence ("3 minutes ago").
+  attr :form, :atom, default: :short, values: [:short, :long]
+
+  @doc """
+  When something happened: its age inside a week, its day in the game's zone past it, and the
+  whole instant in the tooltip. The `Stamp` hook ages it from the age the server drew it at.
+  """
+  def stamp(assigns) do
+    now = Clock.now()
+    local = Clock.local(assigns.at)
+    age = DateTime.diff(now, assigns.at, :millisecond)
+    date = Format.date(local, Clock.local(now), assigns.form)
+
+    assigns =
+      assign(assigns,
+        iso: DateTime.to_iso8601(assigns.at),
+        age: age,
+        cap: @stamp_cap_ms,
+        date: date,
+        label: Format.stamp(age, @stamp_cap_ms, assigns.form, date),
+        title: Format.instant(local)
+      )
+
+    ~H"""
+    <time
+      id={@id}
+      class="date"
+      datetime={@iso}
+      title={@title}
+      phx-hook="Stamp"
+      data-age-ms={@age}
+      data-cap-ms={@cap}
+      data-form={@form}
+      data-date={@date}
+    >{@label}</time>
+    """
+  end
 
   # -------------------------------------------------------------------- bars
 

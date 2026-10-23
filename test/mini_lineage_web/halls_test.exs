@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.HallsTest do
 
   alias MiniLineage.{Characters, Repo}
   alias MiniLineage.Characters.{Record, Store}
-  alias MiniLineage.Game.{Constants, Player}
+  alias MiniLineage.Game.{Clock, Constants, Player}
 
   setup do
     Repo.delete_all(Record)
@@ -32,10 +32,10 @@ defmodule MiniLineageWeb.HallsTest do
   end
 
   # Fallen at 10:30 pm UTC on 23 Oct 2026, which is already the 24th in the game's zone.
-  defp fallen(name) do
+  defp fallen(name, at \\ ~U[2026-10-23 22:30:00Z]) do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, name)
     id = Store.new_id()
-    died_at = DateTime.to_unix(~U[2026-10-23 22:30:00Z], :millisecond)
+    died_at = DateTime.to_unix(at, :millisecond)
 
     Store.retire(id, %{
       player
@@ -58,20 +58,25 @@ defmodule MiniLineageWeb.HallsTest do
   test "a character's own run is marked, and a fallen one keeps its place" do
     {conn, session} = play(build_conn(), "Wanderer", 2)
     id = fallen("Gone")
+    recent = fallen("Lately", ~U[2026-11-09 23:57:00Z])
     mine = Characters.character_id(session)
 
+    # Past the week a stamp ages for, and three minutes after the latest fall.
+    Clock.put_now(~U[2026-11-10 00:00:00Z])
     {:ok, view, html} = live(conn, ~p"/highscores")
 
     assert has_element?(view, "#row-#{mine}.mine[data-fate=living]")
     assert has_element?(view, "#row-#{id}[data-fate=fallen]")
     refute html =~ session
 
-    # The day it fell in the game's zone, and none for a run still standing; the date says it, so
-    # no skull does.
+    # How long ago it fell, then past a week the day, in the game's zone; none for a run still
+    # standing. The date says it, so no skull does.
+    assert has_element?(view, ~s(#fell-#{recent}[phx-hook=Stamp][data-age-ms="180000"]), "3m ago")
+
     assert has_element?(
              view,
-             ~s(#row-#{id} time.date[datetime="2026-10-23T22:30:00.000000Z"]),
-             "24 Oct 2026"
+             ~s(#fell-#{id}.date[datetime="2026-10-23T22:30:00.000000Z"][title="24 Oct 2026, 1:30 am"]),
+             "24 Oct"
            )
 
     refute has_element?(view, "#row-#{mine} time")

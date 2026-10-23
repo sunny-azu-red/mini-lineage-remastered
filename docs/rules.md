@@ -615,8 +615,8 @@ and stays on the ground it fell on as a ghost: both bars are empty, every aura i
 nothing mends it, and it can do nothing more, only look at its own pages and the world's. Its end
 is told in a line drawn as it falls and kept with it. Nothing of it carries over when the player
 begins again, which sends the browser to game start for the next one. It keeps its place on the
-Monument of Heroes, which ranks every run by EXP and so by level, then EXP, then Adena, and gives
-the day each fallen run fell.
+Monument of Heroes, which ranks every run by EXP and so by level, then EXP, then Adena, and says
+how long ago each fallen run fell.
 
 Example: a level 9 run with 40,000 EXP that dies stands above every level 8 run, and above a level 9
 run with 39,999 EXP.

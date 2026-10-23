@@ -2,7 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {hooks as gameHooks, shortFigure, percentFigure, tenthsFigure, timerLabel, remainingLabel} from "./hooks"
+import {hooks as gameHooks, shortFigure, percentFigure, tenthsFigure, timerLabel, remainingLabel, stampLabel} from "./hooks"
 import {keptCookie, refreshKept} from "./hooks/kept"
 import {playSound, installUnlock} from "./soundfx"
 
@@ -78,5 +78,6 @@ window.__percentFigure = percentFigure;
 window.__tenthsFigure = tenthsFigure;
 window.__timerLabel = timerLabel;
 window.__remainingLabel = remainingLabel;
+window.__stampLabel = stampLabel;
 // And the countdown itself, handed a duration a stepped server clock could send.
 window.__EffectTimers = gameHooks.EffectTimers;

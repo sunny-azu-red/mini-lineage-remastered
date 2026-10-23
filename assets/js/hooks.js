@@ -7,12 +7,13 @@ import { Panel } from './hooks/panel';
 import { PanelFocus } from './hooks/panel-focus';
 import { SelectAction } from './hooks/select-action';
 import { SoundToggle } from './hooks/sound-toggle';
+import { Stamp, stampLabel } from './hooks/stamp';
 import { Table } from './hooks/table';
 
-// The client-side twins of `Format.short`, `Format.percent`, `Format.tenths`, `Format.countdown`
-// and `Format.remaining`, held to the server's own tables.
-export { shortFigure, percentFigure, tenthsFigure, timerLabel, remainingLabel };
+// The client-side twins of `Format.short`, `Format.percent`, `Format.tenths`, `Format.countdown`,
+// `Format.remaining` and `Format.stamp`, held to the server's own tables.
+export { shortFigure, percentFigure, tenthsFigure, timerLabel, remainingLabel, stampLabel };
 
 export const hooks = {
-    PanelFocus, AnimatedValues, DevKeys, EffectTimers, Panel, SelectAction, SoundToggle, Table,
+    PanelFocus, AnimatedValues, DevKeys, EffectTimers, Panel, SelectAction, SoundToggle, Stamp, Table,
 };
