@@ -50,7 +50,7 @@ defmodule MiniLineage.Characters.Store do
   transaction, so a purchase can never be written without the Adena it cost, nor a fight without
   what it paid.
   """
-  def save(id, session_id, %Player{} = player, items? \\ false) do
+  def save(id, session_id, %Player{} = player, items?) do
     Repo.transaction(fn ->
       upsert(id, session_id, player)
       if items?, do: sync_items(id, player.items)

@@ -26,7 +26,7 @@ defmodule MiniLineage.BoardTest do
 
     if opts[:dead],
       do: Store.retire(id, %{player | dead: true, killer: "Wolf"}),
-      else: Store.save(id, session, player)
+      else: Store.save(id, session, player, false)
 
     %{id: id, session: session}
   end
