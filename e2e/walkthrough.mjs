@@ -983,6 +983,15 @@ try {
     }, '#screen');
     check('...and opening it lifts nothing on the page but its turning chevron',
         turned.every(el => el.startsWith('span.panel-arrow')), turned.join(', '));
+    // The server's answer to a fold patched the panel, and took the chevron's `data-ready` with it.
+    for (let i = 0; i < 2; i++) {
+        await page.click('#orders .panel-toggle');
+        await page.waitForTimeout(300);
+    }
+    const turning = await page.$eval('#orders .panel-arrow', (el) =>
+        [el.hasAttribute('data-ready'), getComputedStyle(el).transitionDuration]);
+    check('...and its chevron still turns after the panel has been folded and opened again',
+        turning[0] && turning[1] !== '0s', turning.join(' | '));
     check('the orders use every skill to begin with, each on a switch',
         await page.getAttribute('#use-mortal-blow', 'aria-checked') === 'true');
     check('...and a mastery is no order to give',

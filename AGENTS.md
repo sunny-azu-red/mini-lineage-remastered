@@ -374,7 +374,8 @@ Each of these is here because it was got wrong once.
   a link, and `PanelFocus` refuses to focus one), and it neither takes `PanelFocus`'s first focus
   nor gives it back, as a sort does. Opening by hand scrolls the panel into view; restoring or
   patching never moves the page. The chevron's transition waits for the `data-ready` the hook
-  sets two frames in. Every second-tier panel folds, on a desktop as on a phone; a first-tier one
+  sets two frames in, which `JS.ignore_attributes` keeps off every patch, or the answer to the first
+  fold strips it and the chevron snaps from then on. Every second-tier panel folds, on a desktop as on a phone; a first-tier one
   never does.
 - **What the reader chooses is kept as `<kind>:<id>` in the `_mini_lineage_kept` cookie**:
   `panel:<id>` for a fold, `sound:effects` while sound is off, `table:<id>` for a remembered

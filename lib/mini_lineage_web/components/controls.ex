@@ -52,7 +52,11 @@ defmodule MiniLineageWeb.Controls do
         >
           <span class="header-name">{label(@icon, @title)}</span>
           {render_slot(@header)}
-          <span class="panel-chevron" aria-hidden="true"><span class="panel-arrow"></span></span>
+          <%!-- `data-ready` is the hook's, or the patch answering a fold strips it and the
+                chevron snaps from then on. --%>
+          <span class="panel-chevron" aria-hidden="true">
+            <span class="panel-arrow" phx-mounted={JS.ignore_attributes(["data-ready"])}></span>
+          </span>
         </button>
       </h2>
       <div :if={!@collapsible} class="panel-header flex">
