@@ -111,15 +111,15 @@ th.num {
     }
 }
 
-/* Somebody has this character open. Always in the DOM so it can fade; only `.lit` changes. */
+/* Somebody has this character open. Always in the DOM so it can fade; only `.lit` changes. The
+   colour fades rather than the opacity, which is composited and lifted the dot onto a layer. */
 .character-row .online {
-    color: var(--text-heal);
-    opacity: 0;
-    transition: opacity 400ms ease;
+    color: transparent;
+    transition: color 400ms ease;
 }
 
 .character-row .online.lit {
-    opacity: 1;
+    color: var(--text-heal);
 }
 
 /* What the reader cannot learn next: a lesson above its level or after one not yet learned. Its

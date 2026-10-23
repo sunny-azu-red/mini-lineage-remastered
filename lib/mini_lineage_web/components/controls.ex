@@ -52,7 +52,7 @@ defmodule MiniLineageWeb.Controls do
         >
           <span class="header-name">{label(@icon, @title)}</span>
           {render_slot(@header)}
-          <span class="panel-arrow" aria-hidden="true"></span>
+          <span class="panel-chevron" aria-hidden="true"><span class="panel-arrow"></span></span>
         </button>
       </h2>
       <div :if={!@collapsible} class="panel-header flex">

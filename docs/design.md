@@ -105,12 +105,13 @@ was got wrong once.
   `filter` is composited, and Chrome lifts everything painted after it inside its nearest clip (a
   `.panel`, being `overflow: hidden`) onto layers that lose their LCD text: the text blinks for the
   run, and a headless browser never shows it. So the switch's knob slides by `left` and a button's
-  shimmer sweeps by `left` and fades by a registered `--shimmer`, as a Halls row sweeps by
-  `background-position`. Where only a composited property
-  will do (an effect icon's fade), it runs inside an `overflow: clip` of its own, with
-  `overflow-clip-margin` for what spills, and never fills `forwards`, which keeps a finished
+  shimmer sweeps by `left` and fades by a registered `--shimmer`, a Halls row sweeps by
+  `background-position` and its online dot fades by `color`. Where only a composited property
+  will do (an effect icon's fade, a panel chevron's turn), it runs inside an `overflow: clip` of its
+  own, with `overflow-clip-margin` for what spills, and never fills `forwards`, which keeps a finished
   animation running to the compositor. A shine laid OVER its text (the triumph alert's) lifts
-  nothing that matters. The walkthrough's `lifted()` reads the layer tree to hold each of these.
+  nothing that matters, and the sound toggle brightens by `opacity`, since an emoji takes no
+  colour, lifting only itself, the last thing the banner paints. The walkthrough's `lifted()` reads the layer tree to hold each of these.
 
 ## Colour
 

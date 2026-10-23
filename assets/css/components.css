@@ -52,8 +52,17 @@
 
 /* The translate centres the L-shaped ink and goes INSIDE the rotate, so one value centres both
    states: rotated, the outline falls 2.48px off centre, and 2.48/√2 is the 1.75. */
-.panel-arrow {
+/* A turn is composited, and Chrome lifts whatever paints after it within the nearest clip onto
+   layers that lose their LCD text: unclipped, the open panel's rows blinked. The margin keeps the
+   turned corners. */
+.panel-chevron {
+    display: inline-flex;
     flex-shrink: 0;
+    overflow: clip;
+    overflow-clip-margin: 6px;
+}
+
+.panel-arrow {
     width: 9px;
     height: 9px;
     margin-right: 3px;

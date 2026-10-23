@@ -250,6 +250,10 @@ try {
 
     // ---- muting is the browser's, and the toggle says so in its own chime --------------------
     const keptCookie = async () => (await context.cookies()).find(c => c.name === '_mini_lineage_kept');
+    // The toggle brightening under the pointer.
+    const hovered = await lifted(context, page, () => page.hover('#sound-toggle'), '#site-header');
+    check('hovering the sound toggle lifts nothing in the banner but itself',
+        hovered.every(el => el.startsWith('button#sound-toggle')), hovered.join(', '));
     await page.click('#sound-toggle');
     check('muting flips the toggle', await page.textContent('#sound-toggle') === '🔇');
     check('...and plays nothing', (await page.evaluate(() => window.__notes.splice(0))).length === 0);
@@ -518,6 +522,16 @@ try {
         stirred.length === 1 && stirred[0] === rowId, stirred.join(', '));
     check('...and the sweep lifts nothing on the board onto a layer of its own',
         swept.length === 0, swept.join(', '));
+    // The run's dot going out and coming on again, which fades.
+    await page.goto('about:blank');
+    await watcher.page.waitForSelector(`#${rowId} .online:not(.lit)`, { timeout: 5000 });
+    const dotted = await lifted(watcher.context, watcher.page, async () => {
+        await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('.phx-connected', { timeout: 8000 });
+        await watcher.page.waitForSelector(`#${rowId} .online.lit`, { timeout: 5000 });
+    }, '#screen');
+    check('...nor does the online dot fading in', dotted.length === 0, dotted.join(', '));
+    await onScreen('town');
     await watcher.context.close();
 
     // ---- the debug build's Quit, kept for trying every set from one browser -----------------
@@ -953,8 +967,13 @@ try {
     await onScreen('hunt');
     check('the orders folded on the ground are drawn folded on coming back to it',
         await page.getAttribute('#orders .panel-toggle', 'aria-expanded') === 'false');
-    await page.click('#orders .panel-toggle');
-    await orders.waitFor({ state: 'visible', timeout: 3000 });
+    // The chevron turning as the panel opens.
+    const turned = await lifted(context, page, async () => {
+        await page.click('#orders .panel-toggle');
+        await orders.waitFor({ state: 'visible', timeout: 3000 });
+    }, '#screen');
+    check('...and opening it lifts nothing on the page but its turning chevron',
+        turned.every(el => el.startsWith('span.panel-arrow')), turned.join(', '));
     check('the orders use every skill to begin with, each on a switch',
         await page.getAttribute('#use-mortal-blow', 'aria-checked') === 'true');
     check('...and a mastery is no order to give',
