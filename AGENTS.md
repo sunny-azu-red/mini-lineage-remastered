@@ -213,7 +213,10 @@ Each of these is here because it was got wrong once.
   holds its tables and `Formulas` its formulas in its order, and `rules_test.exs` reads the tables
   back out of the document and works every example again, so a change to one is a change to both. A
   new system (classes, items, fighting, the world) starts as an entry in `docs/roadmap.md` and
-  builds on the rules rather than quietly changing them. `Player.stats/1` runs the rules in order
+  builds on the rules rather than quietly changing them. A rule may be written ahead of what uses
+  it, taken whole from the canon for a roadmap entry (§19's NPC Windstrike - Slow 2 waits for the
+  Ruins of Despair's Zombie Warrior), so an audit reads an unused rule as planned, never dead, and
+  `Rules` keeps it as the document does. `Player.stats/1` runs the rules in order
   from the starting set and the level. A new character has no Adena and wears its set's kit (rules
   §23), in every environment.
 - **`legacy/` is read, never run, and never updated.** It is the game as of `da4e37c`: the shops, the
