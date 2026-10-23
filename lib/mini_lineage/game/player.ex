@@ -21,11 +21,12 @@ defmodule MiniLineage.Game.Player do
             experience: nil,
             sp: nil,
             location: nil,
-            # Rules §21: a run that died is over, and keeps what killed it, the ground it fell on and
-            # the line its end was told in, open pronouns and all.
+            # Rules §21: a run that died is over, and keeps what killed it, the ground it fell on, the
+            # UTC millisecond it fell and the line its end was told in, open pronouns and all.
             dead: false,
             killer: nil,
             fell_at: nil,
+            died_at: nil,
             death_line: nil,
             # Rules §20: the fight just fought, until its process writes it to `encounters`.
             encounter: nil,

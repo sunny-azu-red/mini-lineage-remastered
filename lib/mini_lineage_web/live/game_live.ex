@@ -152,7 +152,6 @@ defmodule MiniLineageWeb.GameLive do
     # Rebuilt on every arrival, so an effect drawn afresh counts down from the time left now and
     # not from when the view was last built.
     |> put_view(socket.assigns.player)
-    |> then(&assign(&1, page_title: Screens.page_title(screen, &1.assigns.view)))
   end
 
   # The inventory closes onto the page its sidebar link was clicked on, or the town after a reload.
@@ -454,15 +453,19 @@ defmodule MiniLineageWeb.GameLive do
 
   # ------------------------------------------------------------------ plumbing
 
-  # The panels follow the view, as what a page holds can change under it (a first skill learned).
-  # Assigned, not computed in the template: an expression over `assigns` is re-sent on every render.
+  # The panels and the title follow the view, as what a page holds can change under it (a first
+  # skill learned, a death). Assigned, not computed in the template: an expression over `assigns` is
+  # re-sent on every render.
   defp put_view(socket, player) do
+    %{screen: screen, catalog: catalog, fight: fight} = socket.assigns
     view = Snapshot.build(player)
 
-    panels =
-      Screens.panels(socket.assigns.screen, view, socket.assigns.catalog, socket.assigns.fight)
-
-    assign(socket, player: player, view: view, panels: panels)
+    assign(socket,
+      player: player,
+      view: view,
+      panels: Screens.panels(screen, view, catalog, fight),
+      page_title: Screens.page_title(screen, view)
+    )
   end
 
   # A beat past the boundary, so the redraw reads the new hour and not the last of the old one.
@@ -518,6 +521,8 @@ defmodule MiniLineageWeb.GameLive do
 
   defp arrive(socket, to), do: go(socket, to.(socket.assigns.player))
 
+  # Rules §21: a fallen run stands on the ground it fell on, which the inventory's Return names.
+  defp here(%{dead: true} = player), do: {"hunt", player.location}
   defp here(player), do: {"town", player.location}
 
   # A start and a death name their own; otherwise a green alert chimes and a gold one sounds the

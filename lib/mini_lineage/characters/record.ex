@@ -16,6 +16,9 @@ defmodule MiniLineage.Characters.Record do
     field :total_xp, :integer, writable: :never
     field :adena, :integer, writable: :never
     field :dead, :boolean, writable: :never
+    field :died_at, :utc_datetime_usec, writable: :never
+    # When a browser last opened or closed the run, which the idle retirement counts from too.
+    field :seen_at, :utc_datetime_usec
 
     timestamps(type: :utc_datetime_usec)
   end

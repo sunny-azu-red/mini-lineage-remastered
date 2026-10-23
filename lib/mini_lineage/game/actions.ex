@@ -5,6 +5,7 @@ defmodule MiniLineage.Game.Actions do
   client-side routing is convenience, these guards are the boundary.
   """
   alias MiniLineage.Game.{
+    Clock,
     Constants,
     Format,
     Hunt,
@@ -203,6 +204,7 @@ defmodule MiniLineage.Game.Actions do
         mp: 0,
         killer: foe.name,
         fell_at: ground.slug,
+        died_at: DateTime.to_unix(Clock.now(), :millisecond),
         death_line: Math.random_element(Narratives.death()),
         buffs: %{},
         combat: nil

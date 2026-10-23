@@ -1,6 +1,7 @@
 /**
  * Eases the HP/XP/Adena counters toward their new value, shimmering a bar that GAINED — damage
- * never does. Only intermediate frames are formatted here; the last one is the server's own text.
+ * never does, and sweeps a `[data-stir]` row any of whose values moved. Only intermediate frames
+ * are formatted here; the last one is the server's own text.
  */
 const EASE_MS = 600;
 
@@ -46,6 +47,11 @@ export const AnimatedValues = {
         this.previous = new Map();
         // One handle per value, not one for the hook, or every chain but the last would run on.
         this.frames = new Map();
+        this.rows = new Map();
+        // Delegated, so a board of rows costs one listener rather than one per row.
+        this.el.addEventListener('animationend', (event) => {
+            if (event.animationName === 'row-sweep') event.target.removeAttribute('data-stirred');
+        });
         this.sync(false);
     },
     updated() {
@@ -95,6 +101,33 @@ export const AnimatedValues = {
         for (const key of this.previous.keys())
             if (!live.has(key))
                 this.previous.delete(key);
+
+        this.stir(animate);
+    },
+    // Whatever a row draws as a value, its figures and its date, so a new column sweeps with no
+    // list to update; the online dot and the name are neither, and a row new to the board is not.
+    stir(animate) {
+        const live = new Set();
+
+        for (const row of this.el.querySelectorAll('[data-stir]')) {
+            const values = [...row.querySelectorAll('[data-value], time[datetime]')]
+                .map((el) => el.dataset.value ?? el.dateTime).join('|');
+            const before = this.rows.get(row.id);
+            live.add(row.id);
+            this.rows.set(row.id, values);
+
+            if (!animate || before === undefined || before === values)
+                continue;
+
+            row.removeAttribute('data-stirred');
+            // Force a reflow so a second move restarts the sweep instead of being ignored.
+            void row.offsetWidth;
+            row.setAttribute('data-stirred', '');
+        }
+
+        for (const id of this.rows.keys())
+            if (!live.has(id))
+                this.rows.delete(id);
     },
     shimmer(el) {
         const bar = el.closest('.bar-track')?.querySelector('.bar');

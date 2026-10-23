@@ -1,7 +1,7 @@
 defmodule MiniLineage.Repo.Migrations.InitialSchema do
   @moduledoc """
-  The whole schema, in one migration, against an empty database. The generated columns are
-  declared inline because Postgres appends an ALTER'd column after the timestamps.
+  The whole schema, in one migration, against an empty database. Every column is declared inline,
+  generated ones included, because Postgres appends an ALTER'd column after the timestamps.
   """
   use Ecto.Migration
 
@@ -24,6 +24,15 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
       # Documents written before death existed carry no key, and are alive.
       add :dead, :boolean,
         generated: "ALWAYS AS (COALESCE((state->>'dead')::boolean, false)) STORED"
+
+      # Rules §21: the document keeps unix milliseconds, since `to_timestamp(double)` is immutable
+      # and a cast from text is not.
+      add :died_at, :timestamptz,
+        generated: "ALWAYS AS (to_timestamp((state->>'died_at')::bigint / 1000.0)) STORED"
+
+      # When a browser last opened or closed the run, which a look writes and the document never
+      # sees, so the idle retirement spares a run somebody only looks at.
+      add :seen_at, :timestamptz
 
       timestamps(type: :timestamptz)
     end
@@ -66,5 +75,21 @@ defmodule MiniLineage.Repo.Migrations.InitialSchema do
 
     # A character's items, read whole when its process starts.
     create index(:items, [:character_id])
+
+    # Rules §20: every fight a run fought grows with play, so it is a table of its own.
+    create table(:encounters) do
+      add :character_id, references(:characters, type: :string, on_delete: :delete_all),
+        size: 32,
+        null: false
+
+      # The fight log, what it came to and where, read back whole and never sorted on.
+      add :fight, :map, null: false
+      # A ground's page draws the last fight fought there.
+      add :ground, :text, generated: "ALWAYS AS (fight->>'ground') STORED"
+
+      timestamps(type: :timestamptz, updated_at: false)
+    end
+
+    create index(:encounters, ["character_id", "ground", "id DESC"])
   end
 end

@@ -97,8 +97,10 @@ Built (rules §21).
   again, the run stays on that ground as a 👻 ghost, its end told in a line kept with it and its
   last fight ending in Defeat, and may only look at its own pages and the world's.
 - **The Monument of Heroes,** the highscores rebuilt from the legacy Halls: every run ranked by
-  level and then EXP, the living, the fallen and the missing, overall and by lineage, with medals
-  for the top three. In Interlude it is the heroes' obelisk that stands in every town.
+  EXP (and so by level, then EXP) and then Adena, the living, the fallen with the day each fell,
+  and the missing, overall and by lineage, with medals for the top three, a row sweeping as legacy's
+  did whenever a value on it moves. In Interlude it is the heroes' obelisk that stands in every
+  town.
 - **Later, with the Chronicle:** a run's public record page and its "last sighted".
 
 ## Skills

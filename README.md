@@ -27,8 +27,8 @@ checked against Interlude's own data.
   monsters. The last fight fought there is drawn under the ground in its 📜 Fight Log, a round a
   row with where both sides stand, its criticals washed orange and its heals green, kept in
   `encounters` so a reload finds it. A death is final: the run stays on the ground it fell on as a
-  👻 ghost, its fight ending in Defeat, until you play again, and its row stays on the 🏛️ Monument
-  of Heroes at `/highscores`.
+  👻 ghost under 🪦 Game Over, its fight ending in Defeat, until you play again, and its row stays
+  on the 🏛️ Monument of Heroes at `/highscores` with the day it fell.
 - **Traders and a bag.** Each village's weapon, armour and magic traders sell your path's own goods,
   and buy back for half; the inventory at `/inventory` equips, drinks and destroys, and potions are
   drunk in a fight below the share the 🎖️ Battle Orders under the ground set, on a slider shown
@@ -114,7 +114,9 @@ mix precommit           # warnings as errors, unused deps, format, test
 
 mix prod                # test, build a release, migrate, serve (= mix build && mix start)
 mix stop                # stop it; Ctrl-C can't reach a release
-mix ecto.migrate        # after pulling a schema change; `mix dev` doesn't migrate
+mix ecto.migrate        # on a new database; `mix dev` doesn't migrate. Until `next` is first
+                        # deployed the schema is one migration, so a change to it is a rebuild
+                        # (AGENTS.md, Data)
 ```
 
 ### Debug-build shortcuts

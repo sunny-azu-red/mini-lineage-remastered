@@ -29,8 +29,10 @@ defmodule MiniLineageWeb.Screens do
     "error" => "Error"
   }
 
-  # What the panel is headed: the town a run stands in, the screen's name elsewhere.
+  # What the panel is headed: the town a run stands in, the screen's name elsewhere, and on the
+  # ground a run ended on (rules §21) its end, which the inventory's way back names too.
   defp title("town", %{started: true, town: town}), do: town.name
+  defp title("hunt", %{dead: true}), do: "Game Over"
   defp title("hunt", %{started: true, ground: %{} = ground}), do: ground.name
   defp title("guild", %{started: true, guild: guild}), do: guild.name
   defp title(screen, _view), do: Map.get(@titles, screen, "Mini Lineage")
@@ -39,6 +41,7 @@ defmodule MiniLineageWeb.Screens do
   defp icon("town", %{started: true, town: town}), do: town.emoji
   defp icon("start", _view), do: "🐣"
   defp icon("gatekeeper", _view), do: "🌀"
+  defp icon("hunt", %{dead: true}), do: "🪦"
   defp icon("hunt", _view), do: "⚔️"
   defp icon("inventory", _view), do: "🎒"
   defp icon("trader", _view), do: "🛒"
@@ -663,7 +666,9 @@ defmodule MiniLineageWeb.Screens do
   def sortable("items"), do: table(~w(name slot), {"slot", :asc}, remember: true)
   def sortable("routes-table"), do: table(~w(name fee), {"fee", :asc})
   def sortable("lessons"), do: table(~w(skill learn_at sp), {"learn_at", :asc})
-  def sortable("halls-table"), do: table(~w(name level total_xp adena), {"total_xp", :desc})
+
+  def sortable("halls-table"),
+    do: table(~w(name level total_xp adena fallen), {"total_xp", :desc})
 
   def sortable(table) do
     if String.ends_with?(table, "-classes"),

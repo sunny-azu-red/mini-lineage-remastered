@@ -1,6 +1,7 @@
 defmodule MiniLineage.Game.Clock do
   @moduledoc """
-  The game's one source of the time, in UTC, and rules §15's night. A process can pin the time for
+  The game's one source of the time, in UTC, and its zone: rules §15's night, and the day a date
+  is drawn on. A process can pin the time for
   itself, and a pin is found through `$callers` too, so one set in a test reaches the LiveView that
   test starts. A character's own process is not a caller: pin it from inside, through `mutate`.
 
@@ -66,6 +67,9 @@ defmodule MiniLineage.Game.Clock do
     end
     |> Enum.find(&(DateTime.compare(&1, now) == :gt))
   end
+
+  @doc "An instant in the game's zone, for a day the reader sees: what is stored stays UTC."
+  def local(%DateTime{} = at), do: DateTime.shift_zone!(at, zone())
 
   defp zone, do: Application.fetch_env!(:mini_lineage, :time_zone)
 end

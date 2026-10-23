@@ -1,12 +1,13 @@
 defmodule MiniLineage.Characters.Sweeper do
   @moduledoc """
-  Takes the session off characters nobody has played in a while. The row stays and gives up only
+  Takes the session off characters nobody has played or looked at in a while. The row stays and gives up only
   the secret that ties it to a browser; nothing is deleted.
   """
   use GenServer
 
   require Logger
 
+  alias MiniLineage.Characters
   alias MiniLineage.Characters.Store
 
   @every_ms :timer.hours(1)
@@ -35,7 +36,7 @@ defmodule MiniLineage.Characters.Sweeper do
   def handle_call(:sweep, _from, state), do: {:reply, sweep(), state}
 
   defp sweep do
-    retired = Store.retire_idle()
+    retired = Store.retire_idle(Characters.online())
 
     if retired > 0 do
       Logger.info("retired #{retired} character(s) idle for over #{Store.ttl_hours()}h")

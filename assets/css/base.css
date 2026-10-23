@@ -114,6 +114,11 @@ p {
     color: var(--text-secondary);
 }
 
+/* When something happened, which matters less than what did. */
+.date {
+    color: var(--text-muted);
+}
+
 /* Time left on an effect, dimmed like a date so the clause around it does not read as an aside. */
 .timer {
     color: var(--text-muted);

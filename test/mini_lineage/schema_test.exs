@@ -2,7 +2,8 @@ defmodule MiniLineage.SchemaTest do
   @moduledoc """
   The indexes the game cannot go without, named because dropping a column silently drops any
   partial index whose predicate mentions it. A query-plan assertion cannot stand in: Postgres
-  rightly prefers a sequential scan over the few rows a test inserts.
+  rightly prefers a sequential scan over the few rows a test inserts. And every table ends on its
+  timestamps.
   """
   use MiniLineage.DataCase, async: false
 
@@ -43,6 +44,24 @@ defmodule MiniLineage.SchemaTest do
 
              #{Enum.join(definitions, "\n")}
              """
+    end
+  end
+
+  # A column added by ALTER lands after the timestamps, so every column is declared in the one
+  # migration, where the timestamps can end the table.
+  for table <- ~w(characters items encounters) do
+    test "#{table} ends on its timestamps" do
+      columns =
+        Repo.query!(
+          "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 ORDER BY ordinal_position",
+          [unquote(table)]
+        ).rows
+        |> List.flatten()
+
+      stamps = Enum.filter(columns, &(&1 in ~w(inserted_at updated_at)))
+
+      assert stamps != [] and Enum.take(columns, -length(stamps)) == stamps,
+             Enum.join(columns, ", ")
     end
   end
 

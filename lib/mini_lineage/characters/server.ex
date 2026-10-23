@@ -212,8 +212,13 @@ defmodule MiniLineage.Characters.Server do
       {state.id, watched?}
     end)
 
-    # Only a run the Halls list going on or off is news to them.
-    if watched? != state.watched and Player.started?(state.player), do: Board.presence_changed()
+    # Only a run the Halls list going on or off is news to them, and a look is written as one, so
+    # the idle retirement spares a run somebody only comes back to read.
+    if watched? != state.watched and Player.started?(state.player) do
+      Store.seen(state.id)
+      Board.presence_changed()
+    end
+
     state = %{state | watched: watched?}
 
     Logger.debug(fn ->

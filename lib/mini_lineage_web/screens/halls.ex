@@ -9,6 +9,7 @@ defmodule MiniLineageWeb.Screens.Halls do
 
   import MiniLineageWeb.Controls
 
+  alias MiniLineage.Game.{Clock, Format}
   alias MiniLineageWeb.{Paths, Screens}
 
   attr :catalog, :map, required: true
@@ -59,6 +60,7 @@ defmodule MiniLineageWeb.Screens.Halls do
         <:col class="num" sort="level">Level</:col>
         <:col class="num" sort="total_xp">Total XP</:col>
         <:col sort="adena">Wealth</:col>
+        <:col sort="fallen">Fallen</:col>
         <%!-- One hook for the whole board: every figure beneath it counts. --%>
         <tbody id="halls-rows" phx-hook="AnimatedValues">
           <.character_row
@@ -85,16 +87,18 @@ defmodule MiniLineageWeb.Screens.Halls do
       )
 
     ~H"""
-    <%!-- Keyed by the character, never the row: the board reorders under a climb. --%>
+    <%!-- Keyed by the character, never the row: the board reorders under a climb. The sweep is
+          the hook's, so no patch cuts one off. --%>
     <tr
       id={"row-#{@row.id}"}
       class={["character-row", still_going?(@row) && "alive", @mine && "mine"]}
       data-fate={fate(@row)}
+      data-stir
+      phx-mounted={JS.ignore_attributes(["data-stirred"])}
     >
       <td class="name">
         {@emoji} {@name}
         <span :if={@row.medal} title={medal_title(@row.medal)}>{medal(@row.medal)}</span>
-        <span :if={@row.dead} title="Fallen">💀</span>
         <%!-- Always rendered, never `:if`: a span that comes and goes cannot fade, and its width
               keeps names from shifting. --%>
         <span
@@ -108,6 +112,11 @@ defmodule MiniLineageWeb.Screens.Halls do
       <td class="adena">
         🪙 <.figure key={"adena-#{@row.id}"} value={@row.adena} format={:short} />
       </td>
+      <td>
+        <time :if={@row.died_at} class="date" datetime={DateTime.to_iso8601(@row.died_at)}>
+          {Format.date(Clock.local(@row.died_at))}
+        </time>
+      </td>
     </tr>
     """
   end
@@ -116,6 +125,8 @@ defmodule MiniLineageWeb.Screens.Halls do
   defp row_key(row, "level"), do: row.level
   defp row_key(row, "total_xp"), do: row.total_xp
   defp row_key(row, "adena"), do: row.adena
+  # A run still standing falls after every run that has: nil outsorts every integer.
+  defp row_key(row, "fallen"), do: row.died_at && DateTime.to_unix(row.died_at, :microsecond)
 
   # A run is going while it has neither died nor lost its session. Without one it is missing: it
   # can never be played again, so it is over even though it never died.

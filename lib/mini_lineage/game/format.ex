@@ -73,6 +73,12 @@ defmodule MiniLineage.Game.Format do
 
   defp seconds_left(ms), do: max(ceil(ms / 1000), 0)
 
+  @doc """
+  A day as a table writes it, "24 Oct 2026", on an instant `Clock.local/1` has put in the game's
+  zone. The server's alone: the first draw is the one the reader sees, so no hook moves it.
+  """
+  def date(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y")
+
   # As Lineage II's client names them, every shortened word ending in a full stop. Block, M. Critical
   # and Recovery are ours, as docs/canon/README.md's departures say.
   @stats %{

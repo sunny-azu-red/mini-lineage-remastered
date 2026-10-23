@@ -141,13 +141,24 @@ defmodule MiniLineage.CharactersTest do
       stale = DateTime.add(DateTime.utc_now(), -(Store.ttl_hours() + 1) * 3600, :second)
 
       Repo.update_all(from(r in Record, where: r.session_id == ^session),
-        set: [updated_at: stale]
+        set: [updated_at: stale, seen_at: stale]
       )
+    end
+
+    # A tab that opens the run and closes again, acting on nothing.
+    defp look(session) do
+      tab = spawn(fn -> receive do: (:close -> :ok) end)
+      ref = Process.monitor(tab)
+      Characters.attach(session, tab)
+      send(tab, :close)
+      assert_receive {:DOWN, ^ref, :process, ^tab, _}
+      [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, session)
+      :sys.get_state(pid)
     end
 
     test "leaves a character somebody is still playing", %{id: id} do
       start_character(id)
-      Store.retire_idle()
+      Store.retire_idle(Characters.online())
 
       assert Characters.snapshot(id).name == "Hero"
       assert stored(id), "a character in play lost its session"
@@ -159,7 +170,7 @@ defmodule MiniLineage.CharactersTest do
       Characters.forget_process(id)
       backdate(id)
 
-      assert Store.retire_idle() >= 1
+      assert Store.retire_idle(Characters.online()) >= 1
 
       # The session is gone, so nothing can pick this run up again...
       assert stored(id) == nil
@@ -180,6 +191,29 @@ defmodule MiniLineage.CharactersTest do
       assert Repo.get(Record, character_id)
     end
 
+    test "the window slides for a look too: opening the run and acting on nothing", %{id: id} do
+      start_character(id)
+      backdate(id)
+      look(id)
+      Characters.forget_process(id)
+
+      Store.retire_idle(Characters.online())
+
+      assert stored(id), "a character looked at a moment ago was retired"
+    end
+
+    test "and spares a run open in a tab however long ago it was written", %{id: id} do
+      start_character(id)
+      tab = spawn(fn -> receive do: (:close -> :ok) end)
+      on_exit(fn -> send(tab, :close) end)
+      Characters.attach(id, tab)
+      backdate(id)
+
+      Store.retire_idle(Characters.online())
+
+      assert stored(id), "a character open in a tab was retired"
+    end
+
     test "the window slides: playing again resets the clock", %{id: id} do
       start_character(id)
       Characters.forget_process(id)
@@ -188,7 +222,7 @@ defmodule MiniLineage.CharactersTest do
       # Touching the character writes it again, which moves updated_at to now.
       Characters.mutate(id, &{%{&1 | adena: &1.adena + 1}, :ok})
 
-      Store.retire_idle()
+      Store.retire_idle(Characters.online())
 
       assert Characters.snapshot(id).name == "Hero"
       assert stored(id), "a character played a moment ago was retired"

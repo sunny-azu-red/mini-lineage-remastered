@@ -82,7 +82,8 @@ was got wrong once.
   that isn't a value standing where one would be; no weight), `.delimiter` (the `&bull;` between a
   name and what it does, a skill's, an effect's or an item's, one step brighter than muted so it
   stands apart from an item's muted stats too; between two muted sides, as in a log's head, it has
-  nothing to stand apart from and inherits their muted colour), `.timer` (an effect's time left, dimmed like a date),
+  nothing to stand apart from and inherits their muted colour), `.date` (when something happened, as the Halls' Fallen column writes it), `.timer` (an effect's
+  time left, dimmed like a date),
   `.build-development` and `.build-testing`.
 - **A value's class goes where the thing is named in a sentence**, figure or not, and never on a
   label. A value is a classed `<span>`, never a `<strong>`. `legacy/AGENTS.md` has the old game's
@@ -104,7 +105,8 @@ was got wrong once.
   `filter` is composited, and Chrome lifts everything painted after it inside its nearest clip (a
   `.panel`, being `overflow: hidden`) onto layers that lose their LCD text: the text blinks for the
   run, and a headless browser never shows it. So the switch's knob slides by `left` and a button's
-  shimmer sweeps by `left` and fades by a registered `--shimmer`. Where only a composited property
+  shimmer sweeps by `left` and fades by a registered `--shimmer`, as a Halls row sweeps by
+  `background-position`. Where only a composited property
   will do (an effect icon's fade), it runs inside an `overflow: clip` of its own, with
   `overflow-clip-margin` for what spills, and never fills `forwards`, which keeps a finished
   animation running to the compositor. A shine laid OVER its text (the triumph alert's) lifts

@@ -195,7 +195,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     view |> element("#hunt-button") |> render_click()
 
     assert_push_event(view, "play-sound", %{name: "death"})
-    assert %{dead: true, session_id: ^session} = Repo.get!(Record, id)
+    assert %{dead: true, died_at: %DateTime{}, session_id: ^session} = Repo.get!(Record, id)
     ground = ~p"/talking-island/obelisk-of-victory"
 
     # A reload draws what the click did.
@@ -203,6 +203,9 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     for view <- [view, reloaded] do
       assert has_element?(view, "#screen[data-screen=hunt]")
+      assert has_element?(view, ".header-name", "🪦 Game Over")
+      refute has_element?(view, ".header-name", "Obelisk of Victory")
+      assert page_title(view) == "Mini Lineage - Game Over"
       assert has_element?(view, "#fight-outcome.defeat", "your road ends here")
       # The dice are pinned at 0.0, which draws the pool's first line.
       assert has_element?(view, "#death-line .deaths", "The darkness takes you.")
@@ -253,7 +256,8 @@ defmodule MiniLineageWeb.HuntPageTest do
            )
 
     refute has_element?(inventory, "#inventory-form option[value^=equip]")
-    assert has_element?(inventory, "#inventory-form button")
+    assert has_element?(inventory, ~s(#inventory-form option[value=""]), "🚪 Game Over")
+    assert has_element?(inventory, "#inventory-form button", "Return")
 
     reloaded |> element("#restart-button") |> render_click()
     assert_patch(reloaded, "/")

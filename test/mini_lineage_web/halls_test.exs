@@ -31,10 +31,20 @@ defmodule MiniLineageWeb.HallsTest do
     {conn, session}
   end
 
+  # Fallen at 10:30 pm UTC on 23 Oct 2026, which is already the 24th in the game's zone.
   defp fallen(name) do
     {player, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, name)
     id = Store.new_id()
-    Store.retire(id, %{player | experience: 900, dead: true, killer: "Kasha Wolf"})
+    died_at = DateTime.to_unix(~U[2026-10-23 22:30:00Z], :millisecond)
+
+    Store.retire(id, %{
+      player
+      | experience: 900,
+        dead: true,
+        killer: "Kasha Wolf",
+        died_at: died_at
+    })
+
     id
   end
 
@@ -55,6 +65,17 @@ defmodule MiniLineageWeb.HallsTest do
     assert has_element?(view, "#row-#{mine}.mine[data-fate=living]")
     assert has_element?(view, "#row-#{id}[data-fate=fallen]")
     refute html =~ session
+
+    # The day it fell in the game's zone, and none for a run still standing; the date says it, so
+    # no skull does.
+    assert has_element?(
+             view,
+             ~s(#row-#{id} time.date[datetime="2026-10-23T22:30:00.000000Z"]),
+             "24 Oct 2026"
+           )
+
+    refute has_element?(view, "#row-#{mine} time")
+    refute html =~ "💀"
   end
 
   test "a lineage's board is its own address, and holds only its own" do

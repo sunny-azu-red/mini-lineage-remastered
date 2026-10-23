@@ -10,7 +10,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   distance, `Actions.hunt/1`, the last fight fought there in a panel of its own under the ground's,
   `#fight`, read back from `encounters` on every arrival and drawn by `<.fight_log>` an entry a row
   as legacy's Chronicle was, and death: the run stays on the ground it fell on, a 👻 ghost wearing
-  no other aura and mending nothing, its ground's panel telling its end in a line drawn as it fell
+  no other aura and mending nothing, its ground's panel headed 🪦 Game Over (as are the page title
+  and the inventory's way back) and telling its end in a line drawn as it fell
   (`death_line`), its fight ending in Defeat, offering the Monument and Play Again,
   `Actions.restart/1`, and refused every other action),
   each village's traders (`/<village>/traders`), four by name
@@ -179,7 +180,9 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **Nor on the hour.** Night (rules §15) is the wall clock in a zone. `Clock.put_now/1` pins a UTC
   instant for the calling process and, through `$callers`, a LiveView it starts; a character's
   process is pinned inside `Characters.mutate/2`. Every stored time is UTC, and `:time_zone` decides
-  night and nothing else. A browser suite never reads the night.
+  two things: night, and the day a date is drawn on, `Format.date(Clock.local(at))`, so a date is
+  the server's from the first draw and a test of one picks an instant whose day the zone moves. A
+  browser suite never reads the night.
 - **A property states what holds for every input; fixtures stay the contract with JavaScript.** A
   counterexample in a twinned formatter becomes a fixture row. Weight generators toward the boundary.
   Dice are a generated list of integers scaled into `[0, 1)` and cycled through `Rng.put_source/1`,
@@ -253,6 +256,13 @@ Each of these is here because it was got wrong once.
   is a row of `encounters`, its log and outcome a `jsonb` document and its `ground` generated, carried
   on the struct as `encounter` until `Store.save/4` writes it in the same transaction and `Server`
   drops it.
+- **Every table ends on its timestamps.** Postgres appends an ALTER'd column after them, so a new
+  column, generated or not, goes into the one migration, `20261015000000_initial_schema.exs`, at
+  its place before `timestamps`, and `schema_test.exs` fails a table that ends otherwise. The
+  schema stays one migration until `next` is first deployed: until then a database is rebuilt, not
+  migrated (`MIX_ENV=test mix do ecto.drop, ecto.create, ecto.migrate`, and the dev database by
+  hand). From the first deploy on a change is a migration of its own, and the rule is the order
+  the columns were declared in.
 - **A rule's table lives in code; Postgres holds what grows with play.** Towns, routes and fees, the
   EXP table, starting sets and modifiers are `Rules` attributes, changed by a commit, and the router
   builds each town's address from them at compile time. Size is no reason to move one. Once content
@@ -274,9 +284,13 @@ Each of these is here because it was got wrong once.
   and the tick skips a run that hasn't started, so nothing marks it dirty. Hence `characters` has no
   row without a race (`visitor_test.exs`).
 - **A run nobody comes back to goes missing, never deleted.** The 30-day retirement clears its session
-  and leaves its row.
+  and leaves its row. It counts from the later of the last write and `seen_at`, which
+  `Characters.Server` writes whenever a started run's first tab opens or its last closes, and it
+  spares every run online, so a player who only looks never loses one. The cookie's own 30 days
+  restart on every page load (`CharacterSession` puts the session each time).
 - **A run that dies is over, never deleted** (rules §21). It is written `dead` with its `killer`,
-  `fell_at` and `death_line` like any other write, and stays the browser's until Play Again. Then
+  `fell_at` (the ground, not the time), `died_at` (its UTC millisecond, the Halls' generated
+  `died_at` column) and `death_line` like any other write, and stays the browser's until Play Again. Then
   `Characters.Server`, seeing a fallen run come back unstarted, writes it and clears its session in
   one statement (`Store.retire/2`), and goes on as the browser's next, unstarted character under a
   fresh id, so no process stop races the registry. The row stays for the Halls.
@@ -452,7 +466,10 @@ Each of these is here because it was got wrong once.
   `data-format` its frames count in. Adena counts short, and so does XP at the last level. Frames keep
   the tenth the settled value drops, so "2.0k" doesn't narrow to "2k" and jump the line. Animate a
   figure even where it can only move by one today: the count reads its distance from the delta, and
-  a +1 tween is a 137ms delay, not a flicker.
+  a +1 tween is a 137ms delay, not a flicker. A row marked `data-stir` (the Halls') sweeps when any
+  value it draws moves, a figure's `data-value` or a `<time>`'s `datetime`, and nothing else (the
+  online dot, a medal another run took), as legacy's did; the sweep is the `data-stirred` attribute,
+  which the row keeps off every patch with `JS.ignore_attributes`.
 - **A bar is a figure against its cap.** `Controls.bar/1` draws track, fill and figures from `value`
   and `of`, with `aria-valuetext` on a `meter` (HP, MP) or a `progressbar` (XP), so width, text and
   speech agree. Without `of` it is the figure alone in a full track, as XP is at the last level.

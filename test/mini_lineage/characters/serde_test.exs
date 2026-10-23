@@ -50,6 +50,7 @@ defmodule MiniLineage.Characters.SerdeTest do
         | dead: true,
           killer: "Elder Keltir",
           fell_at: "obelisk-of-victory",
+          died_at: 1_792_854_600_000,
           death_line: hd(Narratives.death())
       }
 

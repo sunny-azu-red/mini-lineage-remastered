@@ -89,6 +89,28 @@ th.num {
     box-shadow: inset 2px 0 0 var(--gold);
 }
 
+/* A row whose values moved. A background, not an overlay: a <tr>'s ::after paints over the cells
+   whatever its z-index, so the washes above set `background-color`, never the shorthand. */
+.data-table tbody tr.character-row[data-stirred] {
+    background-image: linear-gradient(105deg,
+            transparent 40%,
+            rgba(255, 255, 255, 0.12) 50%,
+            transparent 60%);
+    /* The image is wider than the row, so a tiled one would sweep twice. */
+    background-repeat: no-repeat;
+    background-size: 250% 100%;
+    background-position: -5% 0;
+    animation: row-sweep 420ms linear;
+}
+
+/* The image is larger than the box, so the percentages run backwards: -5% is just off the RIGHT.
+   Narrow on purpose, or the band spends the animation outside the row and reads as a flicker. */
+@keyframes row-sweep {
+    to {
+        background-position: 105% 0;
+    }
+}
+
 /* Somebody has this character open. Always in the DOM so it can fade; only `.lit` changes. */
 .character-row .online {
     color: var(--text-heal);

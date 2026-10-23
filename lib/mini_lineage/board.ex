@@ -160,6 +160,7 @@ defmodule MiniLineage.Board do
       total_xp: r.total_xp,
       adena: r.adena,
       dead: r.dead,
+      died_at: r.died_at,
       inserted_at: r.inserted_at,
       active: not is_nil(r.session_id)
     })

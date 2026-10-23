@@ -479,8 +479,9 @@ try {
     await onScreen('highscores');
     const mine = page.locator('#halls-rows tr.mine');
     const rowId = await mine.getAttribute('id');
-    check('the Halls list this run as the reader\'s own, still living',
-        await mine.count() === 1 && await mine.getAttribute('data-fate') === 'living', rowId);
+    check('the Halls list this run as the reader\'s own, still living, with no day it fell',
+        await mine.count() === 1 && await mine.getAttribute('data-fate') === 'living'
+        && await mine.locator('time').count() === 0, rowId);
     check('...and the Halls draw no sidebar', await page.locator('#sidebar').count() === 0);
 
     // Somebody else watching the Halls sees the run's purse move, pushed rather than reloaded.
@@ -489,6 +490,16 @@ try {
     await watcher.page.waitForSelector('.phx-connected', { timeout: 8000 });
     const purse = `#${rowId} [data-key="adena-${rowId.slice(4)}"]`;
     const before = Number(await watcher.page.getAttribute(purse, 'data-value'));
+    // Every row that starts a sweep, from before the run's own tab reloads, so its dot going off and
+    // on again is watched too.
+    await watcher.page.evaluate(() => {
+        window.__stirred = [];
+        new MutationObserver((records) => {
+            for (const r of records)
+                if (r.target.hasAttribute('data-stirred')) window.__stirred.push(r.target.id);
+        }).observe(document.querySelector('#halls-rows'),
+            { subtree: true, attributes: true, attributeFilter: ['data-stirred'] });
+    });
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await onScreen('town');
@@ -498,6 +509,9 @@ try {
         [purse, before + 10000], { timeout: 5000 }).then(() => true, () => false);
     check('...and another browser on the Halls sees the purse grow without reloading', pushed,
         String(await watcher.page.getAttribute(purse, 'data-value')));
+    const stirred = await watcher.page.evaluate(() => window.__stirred);
+    check('...its row alone sweeping, once, for the purse and never for the dot',
+        stirred.length === 1 && stirred[0] === rowId, stirred.join(', '));
     await watcher.context.close();
 
     // ---- the debug build's Quit, kept for trying every set from one browser -----------------
@@ -1206,6 +1220,9 @@ try {
         && await g.locator('#effects [data-effect-id="ghost"]').count() === 1
         && (await gc.text('#monument-button')) === '🏛️ Monument of Heroes'
         && (await gc.text('#restart-button')) === 'Play Again');
+    check('...its panel headed Game Over in place of the ground, and the document title with it',
+        (await gc.text('#main .header-name')) === '🪦 Game Over' && await g.title() === 'Mini Lineage - Game Over',
+        `${await gc.text('#main .header-name')} | ${await g.title()}`);
     check('...neither of which takes the keyboard on arrival', await g.evaluate(() =>
         !['monument-button', 'restart-button'].includes(document.activeElement?.id)));
     const fallenServed = await servedShownOn(g, '#death-line, #fight-outcome, #monument-button, #restart-button');
@@ -1223,11 +1240,21 @@ try {
     await gc.onScreen('inventory');
     check('...its inventory read but offering nothing to do',
         await g.locator('#inventory-form option:not([value=""])').count() === 0, await gc.text('#inventory-form'));
+    check('...but the way back to its Game Over',
+        (await gc.text('#inventory-form option[value=""]')) === '🚪 Game Over'
+        && (await gc.text('#inventory-form button')) === 'Return', await gc.text('#inventory-form'));
     await g.click('#inventory-form button');
     await gc.onScreen('hunt');
     await g.click('#monument-button');
     await gc.onScreen('highscores');
     check('the Monument opens on the run\'s own lineage', new URL(g.url()).pathname === '/highscores/human', g.url());
+    // The board coalesces its writes, so the death may reach it a beat after the page does.
+    await g.waitForSelector('#halls-rows tr.mine[data-fate="fallen"] time.date', { timeout: 5000 });
+    const fell = await g.$eval('#halls-rows tr.mine[data-fate="fallen"] time.date',
+        (el) => [el.dateTime, el.textContent.trim(), el.closest('tr').textContent.includes('💀')]);
+    check('...where the run carries the day it fell, written out, in place of a skull',
+        Date.now() - Date.parse(fell[0]) < 600_000 && /^\d{1,2} [A-Z][a-z]{2} \d{4}$/.test(fell[1]) && !fell[2],
+        fell.join(' | '));
     await g.click('#header-link');
     await gc.onScreen('hunt');
     await g.click('#restart-button');

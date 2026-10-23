@@ -23,7 +23,8 @@ config :mini_lineage, debug_build: true
 # A `secure` cookie is not sent over plain http, which a local server is. Set in prod.exs.
 config :mini_lineage, secure_cookie: false
 
-# Rules §15: every time the game keeps is UTC, and this zone only decides which hours are night.
+# Every time the game keeps is UTC. This zone decides which hours are night (rules §15) and the
+# day a date is drawn on, the Halls' Fallen.
 config :mini_lineage, time_zone: "Europe/Bucharest"
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase

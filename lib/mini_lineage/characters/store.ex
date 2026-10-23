@@ -160,13 +160,25 @@ defmodule MiniLineage.Characters.Store do
 
   def delete(id), do: Repo.delete_all(from r in Record, where: r.id == ^id)
 
+  @doc "Notes that a browser opened or closed the run: a look keeps it, as a write does."
+  def seen(id),
+    do: Repo.update_all(from(r in Record, where: r.id == ^id), set: [seen_at: DateTime.utc_now()])
+
   @doc """
-  Takes the session off runs untouched for #{@ttl_hours}h, the cookie's own sliding window, which
-  leaves the row behind and no browser able to reach it. Nothing is deleted. Returns how many were retired.
+  Takes the session off runs neither written nor seen for #{@ttl_hours}h, the cookie's own sliding
+  window, sparing the public ids in `online`, which leaves the row behind and no browser able to
+  reach it. Nothing is deleted. Returns how many were retired.
   """
-  def retire_idle do
+  def retire_idle(online) do
     cutoff = DateTime.add(DateTime.utc_now(), -@ttl_hours * 3600, :second)
-    idle = from r in Record, where: not is_nil(r.session_id) and r.updated_at < ^cutoff
+    online = MapSet.to_list(online)
+
+    # GREATEST skips a NULL, so a run never seen counts from its last write.
+    idle =
+      from r in Record,
+        where:
+          not is_nil(r.session_id) and r.id not in ^online and
+            fragment("GREATEST(?, ?)", r.updated_at, r.seen_at) < ^cutoff
 
     {retired, _} = Repo.update_all(idle, set: [session_id: nil])
 

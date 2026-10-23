@@ -101,9 +101,9 @@ where it has any.
 
 **Characters**
 
-- **Death is final.** The run ends and the character is kept in the highscores, ranked by level
-  and then EXP. In Lineage II death cost EXP and you got up again. Mini-Lineage is a game you
-  replay for a better score.
+- **Death is final.** The run ends and the character is kept in the highscores, ranked by EXP
+  (and so by level, then EXP) and then Adena. In Lineage II death cost EXP and you got up again.
+  Mini-Lineage is a game you replay for a better score.
 - **"Orc Mystic"** names the Orc's mystic set, matching the other three Mystics, even if the
   client says "Orc Mage".
 - **A class is changed only in the character's own starting village,** by that village's master
