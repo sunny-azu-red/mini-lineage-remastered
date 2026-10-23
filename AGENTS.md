@@ -525,9 +525,13 @@ Each of these is here because it was got wrong once.
   does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and
   inventory pages and every item's line against the stat names, a bonus before its stat, a rate's
   % and HP mended.
-- **A time on a row is short**, as `Format.remaining/1` writes it ("3s", "2m", "1m 37s", and from an
-  hour the hours alone, "3h", never "3h 12m"), with the
+- **A time on a row is short**, as `Format.remaining/1` writes it, in its two largest units ("3h
+  12m", "1m 37s", "2m", "3s") where a badge shows one ("3h", "2m", "3"), with the
   fight's tenths where it has them ("Cast 5.3s, reuse 10.4s."). Narrative prose keeps its words.
+- **An effect's title is its name, then what bounds it, then what it changes in brackets**:
+  "Night until dawn at 6:00 am UTC (-3 Accuracy)", "Shadow Sense (+3 Accuracy)", "Resting". Only
+  `Snapshot.aura_view/1` writes one, so a new effect, a new bound or a new kind of change goes
+  through it and keeps the order; `night_test.exs` holds it.
 - **A place keeps its role; its keeper's name is in what is said there.** The Gatekeeper is
   "Gatekeeper" in the dropdown and the header, and by its town's keeper's name (Roxxy at Talking
   Island) in the intro and the flashes.

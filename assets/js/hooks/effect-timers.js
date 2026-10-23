@@ -11,13 +11,13 @@ export function timerLabel(ms) {
     return seconds >= 60 ? `${Math.floor(seconds / 60)}m` : String(seconds);
 }
 
-/** In a sentence: "1m 37s", then from an hour "3h". Twinned with `Format.remaining`, held to a table by both suites. */
+/** In a sentence, two units: "3h 12m", "1m 37s". Twinned with `Format.remaining`, held to a table by both suites. */
 export function remainingLabel(ms) {
     const seconds = secondsLeft(ms);
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60), rest = seconds % 60;
 
-    if (hours) return `${hours}h`;
+    if (hours) return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
     if (!minutes) return `${rest}s`;
     return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }
