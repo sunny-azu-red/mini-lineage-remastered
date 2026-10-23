@@ -503,15 +503,21 @@ try {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await onScreen('town');
-    await page.keyboard.type('adena');
-    const pushed = await watcher.page.waitForFunction(
-        ([sel, want]) => document.querySelector(sel)?.dataset.value === String(want),
-        [purse, before + 10000], { timeout: 5000 }).then(() => true, () => false);
+    // A sweep by a composited property, or one that fills, lifted the board's text and it blinked.
+    let pushed = false;
+    const swept = await lifted(watcher.context, watcher.page, async () => {
+        await page.keyboard.type('adena');
+        pushed = await watcher.page.waitForFunction(
+            ([sel, want]) => document.querySelector(sel)?.dataset.value === String(want),
+            [purse, before + 10000], { timeout: 5000 }).then(() => true, () => false);
+    }, '#screen');
     check('...and another browser on the Halls sees the purse grow without reloading', pushed,
         String(await watcher.page.getAttribute(purse, 'data-value')));
     const stirred = await watcher.page.evaluate(() => window.__stirred);
     check('...its row alone sweeping, once, for the purse and never for the dot',
         stirred.length === 1 && stirred[0] === rowId, stirred.join(', '));
+    check('...and the sweep lifts nothing on the board onto a layer of its own',
+        swept.length === 0, swept.join(', '));
     await watcher.context.close();
 
     // ---- the debug build's Quit, kept for trying every set from one browser -----------------
