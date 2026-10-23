@@ -55,11 +55,11 @@ Every weapon and armour piece by grade and type, with P.Atk, M.Atk or P.Def, the
 
 ## No-grade polearms
 
-- **Short Spear**: ADDED. No-grade polearm (2H). P.Atk 24, M.Atk 17, price 136,000. Shops: every V and T town. Long Spear is P.Atk 31, M.Atk 21, price 244,000, sold in T. Sources: [l2hub.info](https://l2hub.info/il/items/short_spear), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/blob/master/dist/game/data/stats/items/0000-0099.xml).
+- **Short Spear**: No-grade polearm (2H). P.Atk 24, M.Atk 17, price 136,000. Shops: every V and T town. Long Spear is P.Atk 31, M.Atk 21, price 244,000, sold in T. Sources: [l2hub.info](https://l2hub.info/il/items/short_spear), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/blob/master/dist/game/data/stats/items/0000-0099.xml).
 
 ## No-grade fist weapons
 
-- **Cestus**: ADDED. No-grade fist weapon (dualfist). P.Atk 29, M.Atk 17, price 136,000. Shops: T plus Orc Village. Sources: [l2hub.info](https://l2hub.info/il/items/cestus), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Cestus**: No-grade fist weapon (dualfist). P.Atk 29, M.Atk 17, price 136,000. Shops: T plus Orc Village. Sources: [l2hub.info](https://l2hub.info/il/items/cestus), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## D-grade swords
 
@@ -103,11 +103,11 @@ Every weapon and armour piece by grade and type, with P.Atk, M.Atk or P.Def, the
 
 ## D-grade polearms
 
-- **Trident**: ADDED. D-grade polearm. P.Atk 40, M.Atk 26, price 409,000. Shops: T. Pike and Dwarven Trident are P.Atk 51, M.Atk 32, price 644,000, sold in T. Winged Spear is P.Atk 79, M.Atk 47, price 1,400,000, sold in G5. Glaive is P.Atk 92, M.Atk 54, price 1,800,000, not sold. Sources: [l2hub.info](https://l2hub.info/il/items/trident), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Trident**: D-grade polearm. P.Atk 40, M.Atk 26, price 409,000. Shops: T. Pike and Dwarven Trident are P.Atk 51, M.Atk 32, price 644,000, sold in T. Winged Spear is P.Atk 79, M.Atk 47, price 1,400,000, sold in G5. Glaive is P.Atk 92, M.Atk 54, price 1,800,000, not sold. Sources: [l2hub.info](https://l2hub.info/il/items/trident), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## D-grade fist weapons
 
-- **Bich'Hwa**: ADDED. D-grade fist weapon. P.Atk 96, M.Atk 47, price 1,400,000. Shops: G5. Scallop Jamadhr is P.Atk 112, M.Atk 54, price 1,800,000, not sold. Sources: [l2hub.info](https://l2hub.info/il/items/bich'hwa), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Bich'Hwa**: D-grade fist weapon. P.Atk 96, M.Atk 47, price 1,400,000. Shops: G5. Scallop Jamadhr is P.Atk 112, M.Atk 54, price 1,800,000, not sold. Sources: [l2hub.info](https://l2hub.info/il/items/bich'hwa), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## C-grade swords
 
@@ -147,15 +147,15 @@ Every weapon and armour piece by grade and type, with P.Atk, M.Atk or P.Def, the
 
 ## C-grade polearms
 
-- **Scythe**: ADDED. C-grade polearms. Scythe, Orcish Glaive and Body Slasher are P.Atk 107, M.Atk 61, price 2,290,000. Poleaxe is P.Atk 139, M.Atk 76, price 4,300,000. Scorpion and Widow Maker are P.Atk 144, M.Atk 78, price 4,780,000. Orcish Poleaxe is P.Atk 156, M.Atk 83, price 6,130,000. Sources: [l2hub.info](https://l2hub.info/il/items/scythe), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Scythe**: C-grade polearms. Scythe, Orcish Glaive and Body Slasher are P.Atk 107, M.Atk 61, price 2,290,000. Poleaxe is P.Atk 139, M.Atk 76, price 4,300,000. Scorpion and Widow Maker are P.Atk 144, M.Atk 78, price 4,780,000. Orcish Poleaxe is P.Atk 156, M.Atk 83, price 6,130,000. Sources: [l2hub.info](https://l2hub.info/il/items/scythe), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## C-grade fist weapons
 
-- **Chakram**: ADDED. C-grade fist weapons. Chakram is P.Atk 130, M.Atk 61, price 2,290,000. Knuckle Duster is P.Atk 148, M.Atk 68, price 2,870,000. Great Pata is P.Atk 190, M.Atk 83, price 6,130,000. Sources: [l2hub.info](https://l2hub.info/il/items/chakram), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Chakram**: C-grade fist weapons. Chakram is P.Atk 130, M.Atk 61, price 2,290,000. Knuckle Duster is P.Atk 148, M.Atk 68, price 2,870,000. Great Pata is P.Atk 190, M.Atk 83, price 6,130,000. Sources: [l2hub.info](https://l2hub.info/il/items/chakram), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## B-grade swords
 
-- **Keshanberk**: B-grade, 1H. P.Atk 175, M.Atk 91, price 8,680,000. No B-grade weapon is sold in shops. (The researcher's same-stat list of Blade of Serenity, Mist Sword, Sword of Desert, Dusk Sword, Eminence Sword and Hazard Sword has been removed; see caveats.) Sources: [l2hub.info](https://l2hub.info/il/items/keshanberk), [l2db.ru](https://l2db.ru/items/weapons/sword/interlude).
+- **Keshanberk**: B-grade, 1H. P.Atk 175, M.Atk 91, price 8,680,000. No B-grade weapon is sold in shops. Six swords with its stats exist in the data but cannot be obtained (see caveats). Sources: [l2hub.info](https://l2hub.info/il/items/keshanberk), [l2db.ru](https://l2db.ru/items/weapons/sword/interlude).
 - **Sword of Damascus**: B-grade, 1H. P.Atk 194, M.Atk 99, price 13,100,000. Sources: [l2hub.info](https://l2hub.info/il/items/sword_of_damascus), [l2db.ru](https://l2db.ru/items/weapons/sword/interlude).
 - **Great Sword**: B-grade, 2H (item id 78). P.Atk 213, M.Atk 91, price 8,680,000. A non-grade item id 1299 is also named 'Great Sword' and is not player gear. Sources: [l2hub.info](https://l2hub.info/il/items/great_sword), [l2db.ru](https://l2db.ru/items/weapons/sword/interlude).
 - **Guardian Sword**: B-grade, 2H. P.Atk 236, M.Atk 99. Price 13,100,000 per L2J and l2db.ru, 10,091,400 per l2hub. Sources: [l2hub.info](https://l2hub.info/il/items/guardian_sword), [l2db.ru](https://l2db.ru/items/weapons/sword/interlude).
@@ -183,11 +183,11 @@ Every weapon and armour piece by grade and type, with P.Atk, M.Atk or P.Def, the
 
 ## B-grade polearms
 
-- **Great Axe**: ADDED. B-grade polearm. P.Atk 175, M.Atk 91, price 8,680,000. Lance is P.Atk 194, M.Atk 99, price 13,100,000. Sources: [l2hub.info](https://l2hub.info/il/items/great_axe), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Great Axe**: B-grade polearm. P.Atk 175, M.Atk 91, price 8,680,000. Lance is P.Atk 194, M.Atk 99, price 13,100,000. Sources: [l2hub.info](https://l2hub.info/il/items/great_axe), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## B-grade fist weapons
 
-- **Arthro Nail**: ADDED. B-grade fist weapon. P.Atk 213, M.Atk 91, price 8,680,000. Bellion Cestus is P.Atk 236, M.Atk 99, price 13,100,000. Sources: [l2hub.info](https://l2hub.info/il/items/arthro_nail), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Arthro Nail**: B-grade fist weapon. P.Atk 213, M.Atk 91, price 8,680,000. Bellion Cestus is P.Atk 236, M.Atk 99, price 13,100,000. Sources: [l2hub.info](https://l2hub.info/il/items/arthro_nail), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## A-grade swords
 
@@ -217,11 +217,11 @@ Every weapon and armour piece by grade and type, with P.Atk, M.Atk or P.Def, the
 
 ## A-grade polearms
 
-- **Halberd**: ADDED. A-grade polearm. P.Atk 213, M.Atk 107, price 18,300,000. Tallum Glaive is P.Atk 232, M.Atk 114, price 27,000,000. Sources: [l2hub.info](https://l2hub.info/il/items/halberd), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Halberd**: A-grade polearm. P.Atk 213, M.Atk 107, price 18,300,000. Tallum Glaive is P.Atk 232, M.Atk 114, price 27,000,000. Sources: [l2hub.info](https://l2hub.info/il/items/halberd), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## A-grade fist weapons
 
-- **Blood Tornado**: ADDED. A-grade fist weapon. P.Atk 259, M.Atk 107, price 18,300,000. Dragon Grinder is P.Atk 282, M.Atk 114, price 27,000,000. Sources: [l2hub.info](https://l2hub.info/il/items/blood_tornado), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Blood Tornado**: A-grade fist weapon. P.Atk 259, M.Atk 107, price 18,300,000. Dragon Grinder is P.Atk 282, M.Atk 114, price 27,000,000. Sources: [l2hub.info](https://l2hub.info/il/items/blood_tornado), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## A-grade weapons, uncertain
 
@@ -249,11 +249,11 @@ Every weapon and armour piece by grade and type, with P.Atk, M.Atk or P.Def, the
 
 ## S-grade polearms and fist weapons
 
-- **Saint Spear**: ADDED. S-grade polearm. P.Atk 281, M.Atk 132, price 48,800,000. Demon Splinter is the S-grade fist weapon: P.Atk 342, M.Atk 132, price 48,800,000. Sources: [l2hub.info](https://l2hub.info/il/items/saint_spear), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Saint Spear**: S-grade polearm. P.Atk 281, M.Atk 132, price 48,800,000. Demon Splinter is the S-grade fist weapon: P.Atk 342, M.Atk 132, price 48,800,000. Sources: [l2hub.info](https://l2hub.info/il/items/saint_spear), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## S-grade Hero weapons
 
-- **Infinity Blade**: S-grade hero weapons, not normal gear. Infinity Blade (1H sword) 297/137. Infinity Cleaver (2H sword) 361/137. Infinity Axe (1H blunt) 297/137. Infinity Rod (1H blunt) 238/182. Infinity Crusher (2H blunt) 361/137. Infinity Scepter (2H staff) 290/182. Infinity Stinger (dagger) 260/137. Infinity Bow 614/137. ADDED: Infinity Fang (fist) 361/137 and Infinity Spear (polearm) 297/137. Price 57,000,000 per the datapacks and l2hub, 48,800,000 per l2db.ru. Sources: [l2hub.info](https://l2hub.info/il/items/the_infinity_blade), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
+- **Infinity Blade**: S-grade hero weapons, not normal gear. Infinity Blade (1H sword) 297/137. Infinity Cleaver (2H sword) 361/137. Infinity Axe (1H blunt) 297/137. Infinity Rod (1H blunt) 238/182. Infinity Crusher (2H blunt) 361/137. Infinity Scepter (2H staff) 290/182. Infinity Stinger (dagger) 260/137. Infinity Bow 614/137. Infinity Fang (fist) 361/137 and Infinity Spear (polearm) 297/137. Price 57,000,000 per the datapacks and l2hub, 48,800,000 per l2db.ru. Sources: [l2hub.info](https://l2hub.info/il/items/the_infinity_blade), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/tree/master/dist/game/data/stats/items).
 
 ## No-grade armour
 

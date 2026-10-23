@@ -264,4 +264,3 @@ What the checks could not settle, kept as the checker wrote it.
 - Disagreements: physical damage constant 77 (aCis) vs 70 (L2J); melee swing 500000 vs 470000 / PAtkSpd; magic crit x4 vs x3; blow chance model (aCis DEX- and position-scaled from baseLandRate 200, cap 80%) vs L2J flat 50/60/70% (its DEX term is an integer-division no-op); night hit penalty -20 points (aCis) vs x0.9 (L2J); magic fail base 1.166 vs 1.3.
 - Lucky (194) and Toughness (134) one-liners are partly from general L2 knowledge: Lucky has no stat block in either pack (handled in core), Toughness's addMul sign was not traced.
 - l2hub.info was used only for Vampiric Touch and Shadow Sense; its NPC page for the monument returned 404.
-- Downloads were read as data only, under dl_c/; nothing was executed.

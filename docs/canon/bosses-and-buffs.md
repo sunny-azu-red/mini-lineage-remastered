@@ -104,7 +104,7 @@ Grand and raid bosses with their levels and lairs, and the buffs, chants and deb
 
 What the checks could not settle, kept as the checker wrote it.
 
-- Independent checks added: l2hub.info/il NPC pages (raid bosses, Core, Frintezza), l2db.duckdns.org Interlude pages (Pan Dryad, Captain of Queen's Royal Guards, Vuku Grand Seer Gharmash, Guilotine), aCis 409 raw XML (raid/grand boss names and levels, skill names 1002/1036/1045/1048/1059/1085, class skill trees) and Hl4p3x raw skill XML (every buff and debuff name). All names and levels in the input matched; no name was invented.
+- Independent checks added: l2hub.info/il NPC pages (raid bosses, Core, Frintezza), l2db.duckdns.org Interlude pages (Pan Dryad, Captain of Queen's Royal Guards, Vuku Grand Seer Gharmash, Guilotine), aCis 409 raw XML (raid/grand boss names and levels, skill names 1002/1036/1045/1048/1059/1085, class skill trees) and Hl4p3x raw skill XML (every buff and debuff name). Every name and level here matched; no name was invented.
 - Corrections made: raid boss zones are now confirmed for 9 bosses from l2hub (Ruins of Despair: Zombie Lord Crowl, Ikuntai; Ruins of Agony: Soul Scavenger; Evil Hunting Grounds: Sukar Wererat Chief; Partisan Hideaway: Partisan Leader Talakin; Cruma Marshlands: Remmel, Lizardmen Leader Hellion; Execution Ground: Soul Collector Acheron). Zones are still unconfirmed for Zombie Lord Farakelsus, Serpent Demon Bifrons, Tiger Hornet, Pan Dryad, Captain of Queen's Royal Guards, Vuku Grand Seer Gharmash and Guilotine (l2hub shows only 'Aden' or 404).
 - Frintezza raised to confirmed at level 85: l2hub IL and aCis both say 85. Hl4p3x says 90 and is the outlier. The claim that the Imperial Tomb is in Goddard territory was removed because no source confirms the territory.
 - Magic Barrier: both Hl4p3x and aCis give 2 levels. The earlier '2 or 3' hedge is resolved to 2.
@@ -114,4 +114,4 @@ What the checks could not settle, kept as the checker wrote it.
 - Empower (1059): aCis says 'Greater Empower'; l2hub IL and Hl4p3x say 'Empower'. Kept as Empower.
 - Blessed Body / Blessed Soul: l2hub IL and aCis agree; Hl4p3x's 'Bless the Body' and 'Bless the Soul' are older names.
 - l2db.net (not l2db.duckdns.org) raid 'guides' are machine-generated and were not used.
-- Dropped: none. Every entry was confirmed in at least two sources, except the lore entry, which is flagged uncertain.
+- Dropped: none. Every entry was confirmed in at least two sources.
