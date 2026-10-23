@@ -55,6 +55,7 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 | [skills.md](skills.md) | Each base set's skills from level 1 to 20, the first skills' numbers, how blows, drains, damage over time and misses resolve, the EXP penalty against weaker monsters, and the Monument of Heroes |
 | [movement.md](movement.md) | How far everything reaches and how fast it moves: every monster's attack range, run speed and aggression, every spell's and weapon's range, the starting classes' run speed, the slows, and how aggressive and passive monsters engage |
 | [bosses-and-buffs.md](bosses-and-buffs.md) | Grand and raid bosses with levels and lairs, buffs, chants and debuffs with the classes that cast them |
+| [death.md](death.md) | What the client says to a character that has died, and Shilen, the goddess of death |
 
 ## Not researched yet
 

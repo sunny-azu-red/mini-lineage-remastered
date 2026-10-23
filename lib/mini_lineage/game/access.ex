@@ -19,7 +19,8 @@ defmodule MiniLineage.Game.Access do
   @doc """
   Where the player is allowed to be: what can be read, for everyone; the town it stands in, and its
   own character page, once a character exists, which is past character creation; and character
-  creation until then.
+  creation until then. A run that has ended (rules §21) stands on the ground it fell on, and looks
+  at its own pages from there.
   """
   def pin_screen({"highscores", lineage}, _player), do: {"highscores", lineage}
   def pin_screen({screen, _town}, _player) when screen in @readable, do: {screen, nil}
@@ -28,6 +29,9 @@ defmodule MiniLineage.Game.Access do
     cond do
       not Player.started?(player) ->
         {"start", nil}
+
+      player.dead ->
+        if screen in ~w(character inventory), do: {screen, nil}, else: {"hunt", player.location}
 
       screen == "hunt" and town == player.location and Rules.ground_of(town) != nil ->
         {screen, town}

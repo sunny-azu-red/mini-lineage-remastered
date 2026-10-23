@@ -21,7 +21,11 @@ defmodule MiniLineage.Characters.TickLog do
   defp bar(same, same, max), do: "#{same}/#{max}"
   defp bar(was, now, max), do: "#{was} -> #{now}/#{max}"
 
-  defp status(_before, _player, false), do: "Full"
+  # Nothing mended, and why: a run that has ended (rules §21) or one in combat (§20) is not full.
+  defp status(_before, %{dead: true}, false), do: "Dead"
+
+  defp status(_before, player, false),
+    do: if(Player.in_combat?(player), do: "In Combat", else: "Full")
 
   defp status(before, player, true) do
     [{"HP", player.health - before.health}, {"MP", player.mp - before.mp}]

@@ -15,7 +15,9 @@ defmodule MiniLineage.SchemaTest do
     {"characters", ["total_xp", "adena", "inserted_at", "id"]},
     {"characters", ["race_id", "total_xp", "adena", "inserted_at", "id"]},
     # A character's inventory, read whole whenever its process starts.
-    {"items", ["character_id"]}
+    {"items", ["character_id"]},
+    # A ground's last fight, on every arrival there.
+    {"encounters", ["character_id", "ground", "id"]}
   ]
 
   for {table, columns} <- @required do

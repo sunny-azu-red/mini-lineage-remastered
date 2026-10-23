@@ -11,7 +11,8 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineage.{Board, Characters}
   require Logger
 
-  alias MiniLineage.Game.{Access, Actions, Clock, Math, Narratives, Player, Snapshot, Version}
+  alias MiniLineage.Game.{Access, Actions, Clock, Math, Narratives, Player, Rules, Snapshot}
+  alias MiniLineage.Game.Version
   alias MiniLineageWeb.{Controls, Kept, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
@@ -28,6 +29,7 @@ defmodule MiniLineageWeb.GameLive do
     {~w(n i g h t), :night},
     {~w(d a y), :day},
     {~w(h a l f), :half},
+    {~w(f r a i l), :frail},
     # Before `lvl`, which it ends in: the first match wins.
     {~w(m a x l v l), :max_level},
     {~w(l v l), :level},
@@ -137,10 +139,11 @@ defmodule MiniLineageWeb.GameLive do
       screen: screen,
       town: town,
       back: back(socket.assigns, screen),
-      # A choice belongs to the screen it was made on, and so does the last fight.
+      # A choice belongs to the screen it was made on.
       picked: nil,
       picks: %{},
-      fight: nil,
+      # Rules §20: a ground draws the last fight fought there, so a reload or a return finds it.
+      fight: if(screen == "hunt", do: last_fight(socket, town)),
       next_move: nil,
       dev_name:
         if(screen == "start" and socket.assigns.debug, do: Math.random_element(@dev_names)),
@@ -329,10 +332,14 @@ defmodule MiniLineageWeb.GameLive do
 
   def handle_event("fold", _params, socket), do: {:noreply, socket}
 
-  # Rules §20: one click, one fight, staying on the ground unless it ends the run. A fight the hunter
-  # walks away from is written on the ground's page; one that ends the run keeps its alert.
+  # Rules §20: one click, one fight, staying on the ground, where it is written on the page; one that
+  # ends the run (§21) leaves it there for good.
   def handle_event("hunt", _params, socket),
     do: {:noreply, socket |> apply_action(&Actions.hunt/1, nil) |> keep_fight()}
+
+  # Rules §21: a run that has ended begins again, at game start.
+  def handle_event("restart", _params, socket),
+    do: {:noreply, apply_action(socket, &Actions.restart/1, fn _ -> {"start", nil} end)}
 
   def handle_event("retreat", _params, socket),
     do: {:noreply, apply_action(socket, &Actions.retreat/1, &{"town", &1.location})}
@@ -367,6 +374,7 @@ defmodule MiniLineageWeb.GameLive do
   defp dev(socket, :adena), do: apply_action(socket, &Actions.dev_adena/1, nil)
   defp dev(socket, :sp), do: apply_action(socket, &Actions.dev_sp/1, nil)
   defp dev(socket, :half), do: apply_action(socket, &Actions.dev_half/1, nil)
+  defp dev(socket, :frail), do: apply_action(socket, &Actions.dev_frail/1, nil)
   defp dev(socket, :level), do: apply_action(socket, &Actions.dev_level/1, nil)
   defp dev(socket, :max_level), do: apply_action(socket, &Actions.dev_max_level/1, nil)
 
@@ -394,8 +402,7 @@ defmodule MiniLineageWeb.GameLive do
     |> go({"start", nil})
   end
 
-  # A fight the hunter lives through is written on the ground's page rather than in an alert, all
-  # but a new level's gold one.
+  # A fight is written on the ground's page rather than in an alert, all but a new level's gold one.
   # The button then names where the hunt goes next, drawn here rather than by the character's dice,
   # which the ladder bench seeds, and never the line it already showed.
   defp keep_fight(%{assigns: %{game_flash: %{log: _} = fight, view: %{started: true}}} = socket) do
@@ -411,6 +418,9 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   defp keep_fight(socket), do: socket
+
+  defp last_fight(socket, town),
+    do: Characters.last_fight(socket.assigns.session_id, Rules.ground_of(town).slug)
 
   # ----------------------------------------------------------------- pushes
 
@@ -499,7 +509,7 @@ defmodule MiniLineageWeb.GameLive do
       fail(socket, "the character process exited: #{inspect(reason)}")
   end
 
-  # Staying put, unless what happened moved the character's place: a death sends it to game start.
+  # Staying put, unless what happened moved the character's place, as another tab can.
   defp arrive(socket, nil) do
     place = {socket.assigns.screen, socket.assigns.town}
     target = Access.pin_screen(place, socket.assigns.player)

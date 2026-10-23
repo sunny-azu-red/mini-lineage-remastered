@@ -61,6 +61,36 @@ defmodule MiniLineage.Game.AccessTest do
     assert Access.pin_screen({"town", "talking-island"}, moved) == {"town", "gludio"}
   end
 
+  # Rules §21: a run that has ended stays on the ground it fell on, and only looks from there.
+  defp fallen, do: %{started() | dead: true, health: 0, fell_at: "obelisk-of-victory"}
+
+  test "a fallen run stands on the ground it fell on, and may read its own pages" do
+    assert Access.pin_screen({"hunt", "talking-island"}, fallen()) == {"hunt", "talking-island"}
+
+    for screen <- ~w(character inventory) do
+      assert Access.pin_screen({screen, nil}, fallen()) == {screen, nil}
+    end
+
+    for place <- [{"races", nil}, {"error", nil}, {"highscores", "human"}] do
+      assert Access.pin_screen(place, fallen()) == place
+    end
+  end
+
+  test "and anywhere it could act puts it back there" do
+    for place <- [
+          {"start", nil},
+          {"town", "talking-island"},
+          {"gatekeeper", "talking-island"},
+          {"trader", "talking-island"},
+          {"trader-weapon", "talking-island"},
+          {"guild", "talking-island"},
+          {"hunt", "elven-village"},
+          {"nowhere", nil}
+        ] do
+      assert Access.pin_screen(place, fallen()) == {"hunt", "talking-island"}, inspect(place)
+    end
+  end
+
   test "a visitor is at character creation until they have a character" do
     for place <- [
           {"start", nil},

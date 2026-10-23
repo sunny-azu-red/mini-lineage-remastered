@@ -57,6 +57,18 @@ defmodule MiniLineage.Characters.TickLogTest do
     assert tick(id) =~ "(Full)"
   end
 
+  test "one in combat, short as it may be, says so rather than full", %{id: id} do
+    start(id, 2, %{health: 40, combat: "engaged"})
+
+    assert tick(id) =~ "HP: 40/113 | MP: 39/39 (In Combat)"
+  end
+
+  test "and a run that has ended, its bars empty, says it is dead", %{id: id} do
+    start(id, 2, %{health: 0, mp: 0, dead: true})
+
+    assert tick(id) =~ "HP: 0/113 | MP: 0/39 (Dead)"
+  end
+
   test "a visitor who has not created a character is not described at all", %{id: id} do
     # No health and nothing to mend: every field the line reads is still nil.
     refute tick(id) =~ "[TICK:"

@@ -24,9 +24,11 @@ checked against Interlude's own data.
 - **Stats that grow with you**, worked from the attributes and the level up to level 80, on L2's own
   EXP table.
 - **One click, one fight.** Each village has its hunting ground outside, a ladder of its own canon
-  monsters. The last fight is drawn under the ground in its 📜 Fight Log, a round a row with where
-  both sides stand, its criticals washed orange and its heals green, and a death is final: the run
-  ends and its row stays on the 🏛️ Monument of Heroes at `/highscores`.
+  monsters. The last fight fought there is drawn under the ground in its 📜 Fight Log, a round a
+  row with where both sides stand, its criticals washed orange and its heals green, kept in
+  `encounters` so a reload finds it. A death is final: the run stays on the ground it fell on as a
+  👻 ghost, its fight ending in Defeat, until you play again, and its row stays on the 🏛️ Monument
+  of Heroes at `/highscores`.
 - **Traders and a bag.** Each village's weapon, armour and magic traders sell your path's own goods,
   and buy back for half; the inventory at `/inventory` equips, drinks and destroys, and potions are
   drunk in a fight below the share the 🎖️ Battle Orders under the ground set, on a slider shown

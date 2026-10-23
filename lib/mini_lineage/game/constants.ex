@@ -134,6 +134,16 @@ defmodule MiniLineage.Game.Constants do
       emoji: "🌿",
       label: "Regenerating",
       about: "Health or mana is short of full, and rest is filling it back up."
+    },
+    # Rules §21: what is left of a run, worn in place of every other aura, since none survives it.
+    # Shilen is the goddess of death (docs/canon/death.md).
+    ghost: %{
+      id: "ghost",
+      type: :aura,
+      emoji: "👻",
+      label: "Ghost",
+      about:
+        "A shade lingers where the body fell, its hands passing through all they once held, and waits on Shilen's call."
     }
   }
 

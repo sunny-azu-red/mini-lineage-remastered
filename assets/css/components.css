@@ -270,7 +270,7 @@
 
 /* A bar under a quarter, as legacy's HP row did; each pulses in its bar's own hue. */
 .stat-row:is(.low-hp, .low-mp),
-.fight-log>li:is(.encounter, .ambush, .critical, .heal, .victory, .escaped) {
+.fight-log>li:is(.encounter, .ambush, .critical, .heal, .victory, .escaped, .defeat) {
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
@@ -542,12 +542,13 @@ ol.fight-log {
 }
 
 /* How it opened, a critical or a mend either way, and how it ended, each washed as the alert that
- * would have said it: a monster that comes at you is danger, a critical the colour it is written in. */
+ * would have said it: a monster that comes at you is danger, and so is the one that ends the run, a
+ * critical the colour it is written in. */
 .fight-log>li:is(.encounter, .victory, .escaped) {
     background-color: var(--wash-info);
 }
 
-.fight-log>li.ambush {
+.fight-log>li:is(.ambush, .defeat) {
     background-color: var(--wash-danger);
 }
 
@@ -559,17 +560,3 @@ ol.fight-log {
     background-color: var(--wash-success);
 }
 
-/* In a death's alert the alert is the ground, so the rows keep only their rules. */
-.alert .fight-log {
-    margin-bottom: 8px;
-}
-
-.alert .fight-log>li {
-    padding-inline: 0;
-    background: none;
-}
-
-.alert .fight-log>li::after {
-    left: 0;
-    right: 0;
-}

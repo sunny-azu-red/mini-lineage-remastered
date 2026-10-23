@@ -91,7 +91,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert is_integer(stored(session).combat)
   end
 
-  test "the button never names the same place twice running, and a new visit forgets the fight" do
+  test "the button never names the same place twice running, and a new visit draws the last fight" do
     {_view, session, conn} = human(build_conn())
     # Far enough from the next level that no kill here reaches it, so each outcome is a plain one.
     Characters.mutate(session, &{%{&1 | experience: Math.xp_for_level(3)}, :ok})
@@ -108,8 +108,13 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
 
-    refute has_element?(view, "#fight")
+    # Read back from `encounters`, so a reload or a return finds it; the button has named nothing yet.
+    assert has_element?(view, "#fight #fight-outcome.victory", "cut down")
     assert text(view, "#hunt-button") == "⚔️ Hunt"
+
+    view |> element("#retreat-button") |> render_click()
+    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    assert has_element?(view, "#fight #fight-outcome.victory", "cut down")
   end
 
   test "a character cannot hunt another village's ground" do
@@ -174,7 +179,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert_push_event(view, "play-sound", %{name: "level"})
   end
 
-  test "a death ends the run, keeps its row, and sends the browser back to game start" do
+  test "a death ends the run on the ground, where it stays, a ghost, until it begins again" do
     {_view, session, conn} = human(build_conn())
     id = Characters.character_id(session)
 
@@ -189,10 +194,70 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     view |> element("#hunt-button") |> render_click()
 
-    assert_patch(view, "/")
-    assert has_element?(view, "#flash.alert-danger", "your road ends here")
     assert_push_event(view, "play-sound", %{name: "death"})
-    assert has_element?(view, "#screen[data-screen=start]")
+    assert %{dead: true, session_id: ^session} = Repo.get!(Record, id)
+    ground = ~p"/talking-island/obelisk-of-victory"
+
+    # A reload draws what the click did.
+    {:ok, reloaded, _html} = live(conn, ground)
+
+    for view <- [view, reloaded] do
+      assert has_element?(view, "#screen[data-screen=hunt]")
+      assert has_element?(view, "#fight-outcome.defeat", "your road ends here")
+      # The dice are pinned at 0.0, which draws the pool's first line.
+      assert has_element?(view, "#death-line .deaths", "The darkness takes you.")
+      # The Monument's own emoji, as its page is headed, never the Fight Log's 📜 beside it.
+      assert has_element?(
+               view,
+               ~s(#monument-button[href="/highscores/human"][data-no-autofocus]),
+               "🏛️ Monument of Heroes"
+             )
+
+      assert has_element?(view, "#restart-button[data-no-autofocus]", "Play Again")
+      assert has_element?(view, "[data-effect-id=ghost]")
+      refute has_element?(view, "#hunt-button")
+      refute has_element?(view, "#orders")
+      refute has_element?(view, "#flash")
+      # Both bars empty, and neither warns of what is already over; the vital panel wears a skull.
+      assert has_element?(view, ~s(#sidebar [data-key="hp"][data-value="0"]))
+      assert has_element?(view, ~s(#sidebar [data-key="mp"][data-value="0"]))
+      refute has_element?(view, "#sidebar .low-hp, #sidebar .low-mp")
+      assert has_element?(view, ".vital-panel .header-name", "☠️ Human Fighter")
+    end
+
+    # Its own page tells the run in the past, nothing mending and nothing left to hold.
+    {:ok, character, _html} = live(conn, ~p"/character")
+
+    assert has_element?(
+             character,
+             "#character-vitality",
+             ~r/You fell to the [A-Z][\w ]+ at the Obelisk of Victory at Level 1 /
+           )
+
+    assert has_element?(character, "#character-class", "You were a Human Fighter")
+    assert has_element?(character, ".header-name", "☠️ Squire of Human Ancestry")
+    assert has_element?(character, "#character-stats", "You struck with")
+    refute has_element?(character, "#character-vitality", "mending")
+
+    # Anywhere it could act sends it back; its own pages it may read, its inventory only to look.
+    for path <- [~p"/", ~p"/talking-island", ~p"/talking-island/traders"] do
+      assert {:error, {:live_redirect, %{to: ^ground}}} = live(conn, path), path
+    end
+
+    {:ok, inventory, _html} = live(conn, ~p"/inventory")
+
+    assert has_element?(
+             inventory,
+             "#inventory-count",
+             ~r/^\s*You carried \d+ of the \d+ things you could\.\s*$/
+           )
+
+    refute has_element?(inventory, "#inventory-form option[value^=equip]")
+    assert has_element?(inventory, "#inventory-form button")
+
+    reloaded |> element("#restart-button") |> render_click()
+    assert_patch(reloaded, "/")
+    assert has_element?(reloaded, "#screen[data-screen=start]")
     assert %{dead: true, session_id: nil} = Repo.get!(Record, id)
   end
 

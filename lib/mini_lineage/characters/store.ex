@@ -5,7 +5,7 @@ defmodule MiniLineage.Characters.Store do
   """
   import Ecto.Query
 
-  alias MiniLineage.Characters.{Item, Record, Serde}
+  alias MiniLineage.Characters.{Encounter, Item, Record, Serde}
   alias MiniLineage.Game.{Player, Rules}
   alias MiniLineage.Repo
 
@@ -46,17 +46,57 @@ defmodule MiniLineage.Characters.Store do
   end
 
   @doc """
-  Writes the character, and with `items?` its inventory too, in one transaction, so a purchase can
-  never be written without the Adena it cost.
+  Writes the character, with `items?` its inventory too, and the fight it has just fought, in one
+  transaction, so a purchase can never be written without the Adena it cost, nor a fight without
+  what it paid.
   """
   def save(id, session_id, %Player{} = player, items? \\ false) do
     Repo.transaction(fn ->
       upsert(id, session_id, player)
       if items?, do: sync_items(id, player.items)
+      if player.encounter, do: Repo.insert!(%Encounter{character_id: id, fight: player.encounter})
     end)
 
     :ok
   end
+
+  @doc """
+  Rules §20: the last fight a character fought on a ground, as its hunt told it, or nil. The log is
+  the game's own markup, written by nobody else.
+  """
+  def last_fight(id, ground) do
+    Repo.one(
+      from e in Encounter,
+        where: e.character_id == ^id and e.ground == ^ground,
+        order_by: [desc: e.id],
+        limit: 1,
+        select: e.fight
+    )
+    |> fight()
+  end
+
+  defp fight(nil), do: nil
+
+  defp fight(%{} = stored),
+    do: %{
+      log:
+        for(
+          entry <- stored["log"] || [],
+          do: %{
+            kind: entry["kind"],
+            head: entry["head"],
+            standing: entry["standing"],
+            line: entry["line"]
+          }
+        ),
+      text: stored["text"],
+      outcome: outcome(stored["outcome"]),
+      levelled: stored["levelled"]
+    }
+
+  defp outcome("victory"), do: :victory
+  defp outcome("defeat"), do: :defeat
+  defp outcome(_escaped), do: :escaped
 
   # Whatever the process no longer holds goes; whatever it holds is written as it stands.
   defp sync_items(id, items) do

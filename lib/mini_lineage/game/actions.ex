@@ -4,7 +4,19 @@ defmodule MiniLineage.Game.Actions do
   `Characters.mutate/2` runs inside the character's process. Each declares its own preconditions:
   client-side routing is convenience, these guards are the boundary.
   """
-  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Player, Rules, Shop, Version}
+  alias MiniLineage.Game.{
+    Constants,
+    Format,
+    Hunt,
+    Math,
+    Narrative,
+    Narratives,
+    Player,
+    Rules,
+    Shop
+  }
+
+  alias MiniLineage.Game.Version
 
   @errors %{
     already_started: "You already have a character.",
@@ -24,13 +36,14 @@ defmodule MiniLineage.Game.Actions do
     too_soon: "You are not yet ready to learn that.",
     out_of_order: "You must learn the level before it first.",
     no_sp: "You do not have enough SP to learn this skill.",
-    spent: "You are too weak to hunt, and must rest first.",
     not_wearable: "That is not something you can equip.",
     not_potion: "That is not something you drink.",
     whole: "You are already in full health.",
     no_share: "That is not a share you can choose.",
     no_heal: "You know no skill that mends, so there is nothing to order.",
-    no_switch: "You cannot give that order for that skill."
+    no_switch: "You cannot give that order for that skill.",
+    fallen: "Your road has ended, and a ghost changes nothing.",
+    living: "Only a run that has ended begins again."
   }
 
   # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
@@ -72,6 +85,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §14: the Gatekeeper sends a character along a route out of its town, for the fee."
+  def travel(%{dead: true} = player, _to), do: fallen(player)
+
   def travel(player, to) do
     route = Player.started?(player) && Rules.route(player.location, to)
 
@@ -94,6 +109,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §20: back to town from the ground, disengaging on the way."
+  def retreat(%{dead: true} = player), do: fallen(player)
+
   def retreat(player) do
     if Player.started?(player) and Rules.ground_of(player.location) do
       town = Rules.town(player.location)
@@ -109,16 +126,14 @@ defmodule MiniLineage.Game.Actions do
 
   @doc """
   Rules §20: one click, one fight, on the ground of the village the character stands in. A kill
-  pays EXP, SP and Adena; a death (§21) marks the run fallen, which its process then retires.
+  pays EXP, SP and Adena; a death (§21) leaves the run fallen there until it begins again.
   """
+  def hunt(%{dead: true} = player), do: fallen(player)
+
   def hunt(player) do
     ground = Player.started?(player) && Rules.ground_of(player.location)
 
-    cond do
-      !ground -> {player, {:error, :no_ground, @errors.no_ground}}
-      player.health <= 0 -> {player, {:error, :spent, @errors.spent}}
-      true -> fight(player, ground)
-    end
+    if ground, do: fight(player, ground), else: {player, {:error, :no_ground, @errors.no_ground}}
   end
 
   defp fight(player, ground) do
@@ -160,9 +175,8 @@ defmodule MiniLineage.Game.Actions do
     {player, {:ok, flash}} =
       cond do
         result.health <= 0 ->
-          fell = Narrative.build_fell(foe, ground)
-          player = %{player | dead: true, killer: foe.name}
-          {player, {:ok, %{text: Narrative.alert(fell), type: :danger, sound: "death"}}}
+          fell = Narrative.alert(Narrative.build_fell(foe, ground))
+          {die(player, foe, ground), {:ok, %{text: fell, type: :danger, sound: "death"}}}
 
         result.foe > 0 ->
           wandered = Narrative.alert(Narrative.build_wandered(foe, ground))
@@ -173,10 +187,37 @@ defmodule MiniLineage.Game.Actions do
       end
 
     # Rules §20: a hunt engages; only leaving the ground starts the disengaging.
-    player = if player.dead, do: player, else: %{player | combat: "engaged"}
+    player = Player.engage(player)
     # The fight's length, which nothing draws, so the ladder bench can move its clock by it.
-    {player, {:ok, Map.merge(flash, %{log: log, ms: result.ms})}}
+    flash = Map.merge(flash, %{log: log, ms: result.ms, outcome: outcome(player, result)})
+    {%{player | encounter: encounter(flash, foe, ground)}, {:ok, flash}}
   end
+
+  # Rules §21: the run is over where it fell, both bars empty and every aura gone with it, its end
+  # told in a line drawn now and kept. The last draw of the run, so no die after it moves.
+  defp die(player, foe, ground),
+    do: %{
+      player
+      | dead: true,
+        health: 0,
+        mp: 0,
+        killer: foe.name,
+        fell_at: ground.slug,
+        death_line: Math.random_element(Narratives.death()),
+        buffs: %{},
+        combat: nil
+    }
+
+  defp outcome(%{dead: true}, _result), do: :defeat
+  defp outcome(_player, %{foe: foe}) when foe > 0, do: :escaped
+  defp outcome(_player, _result), do: :victory
+
+  # What `encounters` keeps of a fight: the page's log and what it came to, by its ground.
+  defp encounter(flash, foe, ground),
+    do:
+      flash
+      |> Map.take([:log, :text, :outcome, :levelled, :ms])
+      |> Map.merge(%{ground: ground.slug, monster: foe.name})
 
   defp reward(player, foe, ground, level) do
     exp = Hunt.reward(foe.exp, Rules.rate(:exp), level, foe.level)
@@ -205,7 +246,10 @@ defmodule MiniLineage.Game.Actions do
   Rules §24: buys an item from the shop of the village the character stands in; a potion (§26)
   `count` at a time, onto the stack it already carries.
   """
-  def buy(player, name, count \\ 1) do
+  def buy(player, name, count \\ 1)
+  def buy(%{dead: true} = player, _name, _count), do: fallen(player)
+
+  def buy(player, name, count) do
     item = Player.started?(player) && Rules.item?(name) && Rules.item(name)
     stack = item && Rules.stacks?(item) && Enum.find(player.items, &(&1.name == name))
 
@@ -248,6 +292,8 @@ defmodule MiniLineage.Game.Actions do
     do: if(Rules.stacks?(item), do: "#{count} × #{item.name}", else: "the #{item.name}")
 
   @doc "Rules §24: sells something carried, not equipped, back to the village's shop for half its price."
+  def sell(%{dead: true} = player, _id), do: fallen(player)
+
   def sell(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -277,6 +323,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §23: equips something carried, unequipping whatever it displaces."
+  def equip(%{dead: true} = player, _id), do: fallen(player)
+
   def equip(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -316,6 +364,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §26: drinks one potion carried, in town or anywhere, healing at once."
+  def drink(%{dead: true} = player, _id), do: fallen(player)
+
   def drink(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
     item = entry && Rules.item(entry.name)
@@ -345,6 +395,8 @@ defmodule MiniLineage.Game.Actions do
   # The orders below succeed with nothing to say: each is a setting its own control shows.
 
   @doc "Rules §26: the share of HP below which the character drinks a potion in a fight."
+  def potion_at(%{dead: true} = player, _share), do: fallen(player)
+
   def potion_at(player, share) do
     if Player.started?(player) and share in Player.potion_shares() do
       {%{player | potion_at: share}, {:ok, nil}}
@@ -354,6 +406,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §20: the share of HP below which the character heals, before a pull or in a fight."
+  def heal_at(%{dead: true} = player, _moment, _share), do: fallen(player)
+
   def heal_at(player, moment, share) when moment in [:pull, :fight] do
     cond do
       not Player.started?(player) or share not in Player.heal_shares() ->
@@ -369,6 +423,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §20: whether the character uses a skill it knows in a fight, or leaves it unused."
+  def use_skill(%{dead: true} = player, _name, _use?), do: fallen(player)
+
   def use_skill(player, name, use?) when is_boolean(use?) do
     if Player.started?(player) and name in Player.switchable(player) do
       unused = player.unused |> List.delete(name) |> then(&if(use?, do: &1, else: [name | &1]))
@@ -379,6 +435,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §20 and §26: every order back to the one a new character starts with."
+  def reset_orders(%{dead: true} = player), do: fallen(player)
+
   def reset_orders(player) do
     if Player.started?(player) do
       {Map.merge(player, Player.default_orders()), {:ok, nil}}
@@ -394,6 +452,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §23: unequips something equipped, which stays carried."
+  def unequip(%{dead: true} = player, _id), do: fallen(player)
+
   def unequip(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -410,6 +470,8 @@ defmodule MiniLineage.Game.Actions do
   Rules §25: learns one line from the trainer of the character's own village, once it has reached
   the line's level, knows the level before it, and has the SP.
   """
+  def learn(%{dead: true} = player, _skill, _level), do: fallen(player)
+
   def learn(player, skill, level) do
     set = Player.started?(player) && Rules.set(player.race_id, player.path).name
     lesson = set && Enum.find(Rules.lessons(set), &(&1.skill == skill and &1.level == level))
@@ -445,6 +507,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Rules §23: destroys something carried and not equipped, for good."
+  def destroy(%{dead: true} = player, _id), do: fallen(player)
+
   def destroy(player, id) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
@@ -461,10 +525,21 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
+  @doc """
+  Rules §21: a run that has ended begins again, which leaves it to the Monument and the browser to
+  game start; its process retires it on seeing a fallen run come back unstarted.
+  """
+  def restart(%{dead: true}), do: {%Player{}, {:ok, %{}}}
+  def restart(player), do: {player, {:error, :living, @errors.living}}
+
+  defp fallen(player), do: {player, {:error, :fallen, @errors.fallen}}
+
   # A robe taken off lowers Max MP (§23), and MP never stands above it.
   defp clamp_bars(player), do: %{player | mp: min(player.mp, Player.stats(player).max_mp)}
 
   @doc "Debug builds only: Adena to try the Gatekeeper with, every time it is asked for."
+  def dev_adena(%{dead: true} = player), do: fallen(player)
+
   def dev_adena(player) do
     if Version.debug_build?() and Player.started?(player) do
       text =
@@ -477,6 +552,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Debug builds only: SP to try the trainer with, every time it is asked for."
+  def dev_sp(%{dead: true} = player), do: fallen(player)
+
   def dev_sp(player) do
     if Version.debug_build?() and Player.started?(player) do
       text =
@@ -489,6 +566,8 @@ defmodule MiniLineage.Game.Actions do
   end
 
   @doc "Debug builds only: both bars to half, and the XP bar halfway to the next level."
+  def dev_half(%{dead: true} = player), do: fallen(player)
+
   def dev_half(player) do
     if Version.debug_build?() and Player.started?(player) do
       stats = Player.stats(player)
@@ -505,11 +584,25 @@ defmodule MiniLineage.Game.Actions do
     end
   end
 
+  @doc "Debug builds only: 1 HP, so the next fight on the ground can end the run."
+  def dev_frail(%{dead: true} = player), do: fallen(player)
+
+  def dev_frail(player) do
+    if Version.debug_build?() and Player.started?(player) do
+      text = ~s(A debug build leaves you <span class="hp">1 HP</span> to hunt with.)
+      {%{player | health: 1}, {:ok, %{text: text, type: :info}}}
+    else
+      {player, {:error, :invalid, @errors.invalid}}
+    end
+  end
+
   @doc "Debug builds only: exactly the EXP the next level needs, which refills both bars."
   def dev_level(player), do: dev_reach(player, Player.level(player) + 1)
 
   @doc "Debug builds only: exactly the EXP the last level needs, which refills both bars."
   def dev_max_level(player), do: dev_reach(player, Rules.max_level())
+
+  defp dev_reach(%{dead: true} = player, _target), do: fallen(player)
 
   defp dev_reach(player, target) do
     cond do

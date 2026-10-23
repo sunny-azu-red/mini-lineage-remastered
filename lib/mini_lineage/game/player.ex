@@ -21,9 +21,14 @@ defmodule MiniLineage.Game.Player do
             experience: nil,
             sp: nil,
             location: nil,
-            # Rules §21: a run that died is over, and keeps what killed it.
+            # Rules §21: a run that died is over, and keeps what killed it, the ground it fell on and
+            # the line its end was told in, open pronouns and all.
             dead: false,
             killer: nil,
+            fell_at: nil,
+            death_line: nil,
+            # Rules §20: the fight just fought, until its process writes it to `encounters`.
+            encounter: nil,
             # Rules §23: what it carries, each `%{id, name, equipped, count}`. Stored in its own table.
             items: [],
             # Rules §25: each skill it knows, at the level it knows it.
@@ -267,6 +272,8 @@ defmodule MiniLineage.Game.Player do
   modifiers. A perk names its race in its own clause, so neither the hour nor the town alone can
   grant it.
   """
+  def conditions(%{dead: true}), do: []
+
   def conditions(player) do
     night? = Clock.night?()
 
@@ -313,6 +320,8 @@ defmodule MiniLineage.Game.Player do
   while a bar is short, carrying what one tick restores to each. The tick reads its rates from
   here, so the icon and the healing cannot disagree.
   """
+  def auras(%{dead: true}), do: [Constants.aura(:ghost)]
+
   def auras(player) do
     conditions = conditions(player)
     auras(player, conditions, stats(player, conditions))
@@ -367,16 +376,20 @@ defmodule MiniLineage.Game.Player do
   def in_combat?(%{combat: until}) when is_integer(until), do: until > now_ms()
   def in_combat?(_player), do: false
 
-  @doc "Rules §20: standing on the ground, fighting or not, which no rest survives."
+  @doc "Rules §20: standing on the ground, which no rest survives; a ghost (§21) fights no more."
+  def engage(%{dead: true} = player), do: player
   def engage(player), do: %{player | combat: "engaged"}
 
   @doc "Rules §20: leaving the ground; resting resumes once the disengaging is over."
   def disengage(%{combat: "engaged"} = player), do: %{player | combat: now_ms() + @disengage_ms}
+
   def disengage(player), do: player
 
   defp now_ms, do: DateTime.to_unix(Clock.now(), :millisecond)
 
-  @doc "One 3-second tick of rules §11. Returns `{player, healed?}`."
+  @doc "One 3-second tick of rules §11. Returns `{player, healed?}`. A ghost (§21) mends nothing."
+  def regenerate(%{dead: true} = player), do: {player, false}
+
   def regenerate(%{combat: until} = player) when is_integer(until) do
     # A disengaging that has run out is forgotten, and this tick rests.
     if in_combat?(player), do: {player, false}, else: regenerate(%{player | combat: nil})

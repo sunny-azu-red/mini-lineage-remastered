@@ -18,6 +18,9 @@ defmodule MiniLineage.Characters do
 
   def snapshot(id), do: call(id, :snapshot)
 
+  @doc "Rules §20: the last fight the session's run fought on a ground, or nil."
+  def last_fight(id, ground), do: call(id, {:last_fight, ground})
+
   @doc "The public id of the run a session is playing: never the session, which is the secret."
   def character_id(session), do: call(session, :character_id)
 

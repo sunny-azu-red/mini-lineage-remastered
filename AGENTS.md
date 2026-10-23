@@ -7,8 +7,12 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 - **The live game is the base layer and the first hunt**: character creation, the towns of rules §14
   with their Gatekeepers and the sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
-  distance, `Actions.hunt/1`, the last fight in a panel of its own under the ground's, `#fight`,
-  drawn by `<.fight_log>` an entry a row as legacy's Chronicle was, and death),
+  distance, `Actions.hunt/1`, the last fight fought there in a panel of its own under the ground's,
+  `#fight`, read back from `encounters` on every arrival and drawn by `<.fight_log>` an entry a row
+  as legacy's Chronicle was, and death: the run stays on the ground it fell on, a 👻 ghost wearing
+  no other aura and mending nothing, its ground's panel telling its end in a line drawn as it fell
+  (`death_line`), its fight ending in Defeat, offering the Monument and Play Again,
+  `Actions.restart/1`, and refused every other action),
   each village's traders (`/<village>/traders`), four by name
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
   (`/<village>/traders/<weapon|armour|magic|sell>`, each set shown its path's goods by
@@ -44,8 +48,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   | `level` | C5 E5 G5 C6, the last ringing | a new level (the gold alert) | the flash's `levelled` |
   | `success` | E4 A4 E5 | any green alert | `type: :success`; a kill is drawn on the page, so it is silent |
   | `toggle` | B5 E6 | sound switched on | the browser, unasked |
-- **PostgreSQL via Postgrex, two tables**: `characters`, each run's state a single `jsonb` document,
-  and `items`, its inventory (see Data).
+- **PostgreSQL via Postgrex, three tables**: `characters`, each run's state a single `jsonb` document,
+  `items`, its inventory, and `encounters`, every fight it fought (see Data).
 - **One `GenServer` per character** under a `DynamicSupervisor` + `Registry`. Anything that mutates
   a character goes through its process, never straight to the database. The registry entry's value
   is `{id, watched?}`, which `Characters.online/0` reads for the Halls' dot.
@@ -62,7 +66,7 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   the Chronicles, one per section on the character page, Inventory and Combat Stats on the
   inventory, on the guild's a Learned Skills panel only once something is learned, and on the
   ground the Fight Log only once a fight is held there, which is what its fourth argument is for,
-  then the Battle Orders. A panel is first tier (the vital panel and each screen's first, where a
+  then the Battle Orders, which a fallen run has none of. A panel is first tier (the vital panel and each screen's first, where a
   run is read and played) or second tier (what stands beside or under one: the Consumables, the
   Inventory, the guild's Learned Skills, the inventory's Combat Stats, the Battle Orders), which is
   `collapsible` at every width under an `id` its kept fold is named by. The character page's
@@ -73,13 +77,13 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown),
   `<.stepper>` and `<.switch>` (a setting, see Components), `<.alert>`
-  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's panel and a death's
-  alert), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
+  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's panel), `<.figure>`, `<.bar>`, `<.fault>`, and `item_label/1`, an item as every
   page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
 - **The sidebar** (the vital panel, `.vital-panel`: level and name, the name linking to
-  `/character`, the bars, HP's and MP's rows pulsing in their bar's hue under a quarter; then the
+  `/character`, the bars, HP's and MP's rows pulsing in their bar's hue under a quarter, a fallen
+  run's neither, its band wearing ☠️ for its race; then the
   Consumables, each stack carried with its count, and no panel at all while none is; then the
   Inventory, its Adena beside an Open link to `/inventory`) is one fixed-width `.side` column, drawn
   in town and beside the inventory. One breakpoint stacks it.
@@ -102,6 +106,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 | `night`, `day` | `Clock.force/1` holds the node at that hour until the other word or a restart; pages redraw off `"world"`. A pinned time beats it | `dev_time_test.exs` |
 | `sp` | +10,000 SP every time, to try the trainer; `Actions.dev_sp/1` refuses in a release | `dev_sp_test.exs` |
 | `half` | HP and MP to half, XP halfway to the next level; `Actions.dev_half/1` refuses in a release | `dev_half_test.exs` |
+| `frail` | 1 HP, so the browser suites can reach a death; `Actions.dev_frail/1` refuses in a release | `dev_frail_test.exs` |
 | `lvl` | the exact EXP the next level needs, through `Player.gain_experience/2` so both bars refill (rules §12); `Actions.dev_level/1` refuses in a release and at the last level | `dev_level_test.exs` |
 | `maxlvl` | the same up to the last level, through `Actions.dev_max_level/1`; matched before `lvl` | `dev_level_test.exs` |
 | (none) | game start comes with a name from `@dev_names` already written in | `dev_name_test.exs` |
@@ -240,7 +245,10 @@ Each of these is here because it was got wrong once.
   play (a history, an inventory, a mailbox) gets its own table, or every save rewrites it. The
   inventory is `items`, written by `Store.save/4` in the character's transaction only when the list
   moved (`Server` compares it with what it last wrote), and `e2e/reset.sh` truncates it with
-  `characters`. A potion (rules §26) is one row with a `count`; every other item counts 1.
+  `characters`. A potion (rules §26) is one row with a `count`; every other item counts 1. A fight
+  is a row of `encounters`, its log and outcome a `jsonb` document and its `ground` generated, carried
+  on the struct as `encounter` until `Store.save/4` writes it in the same transaction and `Server`
+  drops it.
 - **A rule's table lives in code; Postgres holds what grows with play.** Towns, routes and fees, the
   EXP table, starting sets and modifiers are `Rules` attributes, changed by a commit, and the router
   builds each town's address from them at compile time. Size is no reason to move one. Once content
@@ -263,10 +271,11 @@ Each of these is here because it was got wrong once.
   row without a race (`visitor_test.exs`).
 - **A run nobody comes back to goes missing, never deleted.** The 30-day retirement clears its session
   and leaves its row.
-- **A run that dies is over, never deleted** (rules §21). `Characters.Server` writes it and clears
-  its session in one statement (`Store.retire/2`), then goes on as the browser's next, unstarted
-  character under a fresh id, so no process stop races the registry. The row stays for the Halls,
-  `dead` with its `killer`.
+- **A run that dies is over, never deleted** (rules §21). It is written `dead` with its `killer`,
+  `fell_at` and `death_line` like any other write, and stays the browser's until Play Again. Then
+  `Characters.Server`, seeing a fallen run come back unstarted, writes it and clears its session in
+  one statement (`Store.retire/2`), and goes on as the browser's next, unstarted character under a
+  fresh id, so no process stop races the registry. The row stays for the Halls.
 - **The registry can name a process that has just stopped.** `Characters.call/3` reads the registry
   directly, which keeps every call off the `DynamicSupervisor`, whose loop runs two queries to start a
   character. A lookup can see an entry whose `DOWN` is still queued, so the RETRY goes through the
@@ -292,8 +301,8 @@ Each of these is here because it was got wrong once.
   and `error` carry no action, so its first clauses let every state reach them; the Halls keep their
   lineage filter in the place's second half. The rest decide only screens that can be acted on: a
   character is in its town, at that town's Gatekeeper, on that town's ground or at its traders if it
-  has them, at its home village's guild, or on its own character or inventory page; a visitor is at
-  game start.
+  has them, at its home village's guild, or on its own character or inventory page; a fallen run is
+  on the ground it fell on, or on its own character or inventory page; a visitor is at game start.
 - **Do not widen a guard to make something work.** `Access.pin_screen/2`'s clauses, `e2e/reset.sh`'s
   refusal of the database `.env` names, `Actions.start/4`'s preconditions: each is the boundary, and a
   test asserts what it still refuses. If one is in the way, what you are building is probably wrong.

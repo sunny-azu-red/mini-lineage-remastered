@@ -9,7 +9,7 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Player, Rules}
+  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Narratives, Player, Rules}
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
@@ -59,7 +59,8 @@ defmodule MiniLineageWeb.Screens do
   """
   def panels(screen, view, catalog, fight \\ nil)
 
-  # Rules §20: the ground, its last fight once one is held there, and the orders it is fought by.
+  # Rules §20: the ground, its last fight once one is held there, and the orders it is fought by,
+  # which a run that has ended there (§21) has nothing left to give.
   def panels("hunt", view, _catalog, fight),
     do:
       [%{title: title("hunt", view), icon: icon("hunt", view)}] ++
@@ -75,16 +76,19 @@ defmodule MiniLineageWeb.Screens do
           ],
           else: []
         ) ++
-        [
-          %{
-            title: "Battle Orders",
-            icon: "🎖️",
-            id: "orders",
-            section: :orders,
-            body_class: "rows",
-            collapsible: true
-          }
-        ]
+        if(view.dead,
+          do: [],
+          else: [
+            %{
+              title: "Battle Orders",
+              icon: "🎖️",
+              id: "orders",
+              section: :orders,
+              body_class: "rows",
+              collapsible: true
+            }
+          ]
+        )
 
   def panels("races", _view, catalog, _fight),
     do:
@@ -97,7 +101,8 @@ defmodule MiniLineageWeb.Screens do
     do: [
       %{
         title: "#{view.name} of #{view.ancestry} Ancestry",
-        icon: view.race_emoji,
+        # Rules §21: a run that has ended wears a skull for its race, as the vital panel does.
+        icon: if(view.dead, do: "☠️", else: view.race_emoji),
         section: :lineage
       },
       %{title: "Buffs & Debuffs", icon: "✨", section: :effects, body_class: "rows"},
@@ -261,6 +266,27 @@ defmodule MiniLineageWeb.Screens do
       if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
   end
 
+  # Rules §21: the ground a run ended on, told in its own line, and the two ways on from there.
+  # Neither takes the first focus, since a Space still on its way from the Hunt button would press it.
+  defp hunt(%{view: %{dead: true}} = assigns) do
+    ~H"""
+    <p id="death-line"><span class="deaths">{raw(@view.death_line)}</span></p>
+    <p>{raw(Narrative.alert(Narratives.epitaph()))}</p>
+    <div class="action-links">
+      <.button
+        id="monument-button"
+        patch={Paths.for_screen({"highscores", @view.lineage})}
+        data-no-autofocus
+      >
+        🏛️ Monument of Heroes
+      </.button>
+      <.button id="restart-button" variant={:secondary} phx-click="restart" data-no-autofocus>
+        Play Again
+      </.button>
+    </div>
+    """
+  end
+
   # Rules §20: the ground, how the character fights, and the one click that fights again. The
   # button names where it goes next once a fight is held, and only then, so no visit draws a line.
   defp hunt(assigns) do
@@ -368,14 +394,17 @@ defmodule MiniLineageWeb.Screens do
     do: ~H|below <span class="hp">{@share}% HP</span>|
 
   # A kill is a victory, levelling or not; the new level is named where a round names where both
-  # stand, since the gold alert above says the rest.
-  defp outcome(%{type: :success} = fight),
+  # stand, since the gold alert above says the rest. A death (rules §21) is a defeat.
+  defp outcome(%{outcome: :victory} = fight),
     do: %{
       kind: "victory",
       head: "Victory",
       standing: fight[:levelled] && "Level Up",
       text: fight.text
     }
+
+  defp outcome(%{outcome: :defeat} = fight),
+    do: %{kind: "defeat", head: "Defeat", standing: nil, text: fight.text}
 
   defp outcome(fight), do: %{kind: "escaped", head: "Escaped", standing: nil, text: fight.text}
 
@@ -661,16 +690,20 @@ defmodule MiniLineageWeb.Screens do
         sort: sort,
         items: items,
         capacity: Rules.capacity(),
-        choices: inventory_choices(items),
+        # Rules §21: a run that has ended carried what it carried.
+        carry: verb(assigns.view, "carry", "carried"),
+        can: verb(assigns.view, "can", "could"),
+        # Rules §21: a ghost only looks, so nothing is offered but the way back.
+        choices: if(assigns.view.dead, do: [], else: inventory_choices(items)),
         back_title: back_title(assigns.back, assigns.view)
       )
 
     ~H"""
     <p :if={@view.items == []} id="inventory-count">
-      You carry nothing, with room for {@capacity} things.
+      You {@carry} nothing, with room for {@capacity} things.
     </p>
     <p :if={@view.items != []} id="inventory-count">
-      You carry {length(@view.items)} of the {@capacity} things you can.
+      You {@carry} {length(@view.items)} of the {@capacity} things you {@can}.
     </p>
     <.data_table :if={@view.items != []} id="items" sort={@sort} remember>
       <:col class="name" sort="name">Item</:col>
@@ -828,6 +861,31 @@ defmodule MiniLineageWeb.Screens do
   # Only ever the reader's own, so it speaks to them. Each clause stays on one line: a newline at a
   # tag renders as a space. A panel with figures has a hook of its own to count them; the sidebar's
   # are its own.
+  # Rules §21: a run that has ended is told in the past.
+  defp verb(%{dead: true}, _present, past), do: past
+  defp verb(_view, present, _past), do: present
+
+  # Rules §21: a run that has ended, told as legacy's record told it, in the past.
+  defp character(%{panel: %{section: :lineage}, view: %{dead: true}} = assigns) do
+    assigns =
+      assign(assigns,
+        stats: assigns.view.stats,
+        article: article(assigns.view.class_name),
+        xp_needed: assigns.view.xp_required - assigns.view.xp_current
+      )
+
+    ~H"""
+    <div id="character-lineage" phx-hook="AnimatedValues">
+      <p id="character-class" phx-no-format>
+        You were {@article} {@view.class_name} of <.attribute name="Strength" key="str" value={@stats.str} />, <.attribute name="Constitution" key="con" value={@stats.con} />, <.attribute name="Dexterity" key="dex" value={@stats.dex} />, <.attribute name="Intelligence" key="int" value={@stats.int} />, <.attribute name="Wit" key="wit" value={@stats.wit} /> and <.attribute name="Mental Strength" key="men" value={@stats.men} />. {@view.perk}
+      </p>
+      <p id="character-vitality" phx-no-format>
+        You fell to the {@view.killer} at the {@view.fell_at} at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, having stood unchallenged at the zenith of martial prowess<% else %>, only <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> short of <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and <%= if @view.adena > 0 do %>left <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> unspent<% else %>died with an empty purse<% end %>.
+      </p>
+    </div>
+    """
+  end
+
   defp character(%{panel: %{section: :lineage}} = assigns) do
     assigns =
       assign(assigns,
@@ -884,10 +942,10 @@ defmodule MiniLineageWeb.Screens do
     ~H"""
     <div id="character-stats" phx-hook="AnimatedValues">
       <p phx-no-format>
-        You strike with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> {Format.stat(:p_atk)}</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> {Format.stat(:atk_spd)}</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% {Format.stat(:critical)}</span>, find the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> {Format.stat(:accuracy)}</span>, and cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> {Format.stat(:m_atk)}</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> {Format.stat(:cast_spd)}</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% {Format.stat(:magic_critical)}</span>.
+        You {verb(@view, "strike", "struck")} with <span class="attack"><.figure key="char-p-atk" value={Math.js_round(@stats.p_atk)} /> {Format.stat(:p_atk)}</span> at <span class="speed"><.figure key="char-atk-spd" value={Math.js_round(@stats.atk_spd)} /> {Format.stat(:atk_spd)}</span> and {article(@critical)} <span id="character-critical" class="crit"><.figure key="char-critical" value={round(@stats.critical * 10)} format={:tenths} />% {Format.stat(:critical)}</span>, {verb(@view, "find", "found")} the mark with <span class="accuracy"><.figure key="char-accuracy" value={Math.js_round(@stats.accuracy)} /> {Format.stat(:accuracy)}</span>, and cast with <span class="magic"><.figure key="char-m-atk" value={Math.js_round(@stats.m_atk)} /> {Format.stat(:m_atk)}</span> at <span class="speed"><.figure key="char-cast-spd" value={Math.js_round(@stats.cast_spd)} /> {Format.stat(:cast_spd)}</span> and {article(@magic_critical)} <span id="character-magic-critical" class="crit"><.figure key="char-magic-critical" value={round(@stats.magic_critical * 10)} format={:tenths} />% {Format.stat(:magic_critical)}</span>.
       </p>
       <p phx-no-format>
-        You turn blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> {Format.stat(:p_def)}</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or slip them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> {Format.stat(:evasion)}</span>, turn spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> {Format.stat(:m_def)}</span>, and run at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> {Format.stat(:run_spd)}</span>
+        You {verb(@view, "turn", "turned")} blows aside with <span class="defense"><.figure key="char-p-def" value={Math.js_round(@stats.p_def)} /> {Format.stat(:p_def)}</span><span :if={@block}> and {article(@block)} <span id="character-block" class="defense"><.figure key="char-block" value={round(@block * 10)} format={:tenths} />% Block</span>,</span> or {verb(@view, "slip", "slipped")} them with <span class="evasion"><.figure key="char-evasion" value={Math.js_round(@stats.evasion)} /> {Format.stat(:evasion)}</span>, {verb(@view, "turn", "turned")} spells aside with <span class="defense"><.figure key="char-m-def" value={Math.js_round(@stats.m_def)} /> {Format.stat(:m_def)}</span>, and {verb(@view, "run", "ran")} at <span class="speed"><.figure key="char-run-spd" value={Math.js_round(@stats.run_spd)} /> {Format.stat(:run_spd)}</span>
       </p>
     </div>
     """

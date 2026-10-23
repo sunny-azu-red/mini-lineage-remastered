@@ -92,8 +92,10 @@ followed (rules §25).
 
 Built (rules §21).
 
-- **Death is final.** At 0 HP the run ends and the character is gone, but not forgotten: the row
-  is kept, never deleted, with who killed it and where.
+- **Death is final.** At 0 HP the run ends where it fell, and the character is gone, but not
+  forgotten: the row is kept, never deleted, with who killed it and where. Until the player plays
+  again, the run stays on that ground as a 👻 ghost, its end told in a line kept with it and its
+  last fight ending in Defeat, and may only look at its own pages and the world's.
 - **The Monument of Heroes,** the highscores rebuilt from the legacy Halls: every run ranked by
   level and then EXP, the living, the fallen and the missing, overall and by lineage, with medals
   for the top three. In Interlude it is the heroes' obelisk that stands in every town.

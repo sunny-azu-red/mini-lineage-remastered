@@ -439,11 +439,7 @@ defmodule MiniLineageWeb.Controls do
   def flash_alert(assigns) do
     ~H"""
     <.alert :if={@flash[:levelled]} id="levelled" kind={:triumph}>{raw(@flash.levelled)}</.alert>
-    <.alert :if={@flash[:text]} id="flash" kind={@flash.type}>
-      <%!-- A hunt's fight log (rules §20) comes before what it came to. --%>
-      <.fight_log :if={@flash[:log]} log={@flash.log} />
-      {raw(@flash.text)}
-    </.alert>
+    <.alert :if={@flash[:text]} id="flash" kind={@flash.type}>{raw(@flash.text)}</.alert>
     """
   end
 
@@ -453,7 +449,8 @@ defmodule MiniLineageWeb.Controls do
   outcome, if given, ends it, washed as the alert that would have announced it.
   """
   attr :log, :list, required: true
-  # `%{kind: "victory" | "escaped", head: String.t(), standing: String.t() | nil, text: html}`
+  # `%{kind: "victory" | "escaped" | "defeat", head: String.t(), standing: String.t() | nil,`
+  # `text: html}`
   attr :outcome, :map, default: nil
 
   def fight_log(assigns) do

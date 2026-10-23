@@ -7,7 +7,7 @@ defmodule MiniLineage.Characters.SerdeTest do
   use ExUnit.Case, async: true
 
   alias MiniLineage.Characters.Serde
-  alias MiniLineage.Game.Player
+  alias MiniLineage.Game.{Narratives, Player}
 
   defp populated do
     %Player{
@@ -25,9 +25,14 @@ defmodule MiniLineage.Characters.SerdeTest do
 
   describe "the document covers the struct" do
     test "every field is written, and nothing that is not a field" do
-      # The inventory is its own table (rules §23), so the document leaves it out.
+      # The inventory and the fights are their own tables (rules §23 and §20), so the document
+      # leaves them out.
       struct_keys =
-        %Player{} |> Map.from_struct() |> Map.keys() |> MapSet.new() |> MapSet.delete(:items)
+        %Player{}
+        |> Map.from_struct()
+        |> Map.keys()
+        |> MapSet.new()
+        |> MapSet.difference(MapSet.new([:items, :encounter]))
 
       written =
         %Player{}
@@ -40,7 +45,13 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "a fully populated character survives the round trip, through JSON, unchanged" do
-      fallen = %{populated() | dead: true, killer: "Elder Keltir"}
+      fallen = %{
+        populated()
+        | dead: true,
+          killer: "Elder Keltir",
+          fell_at: "obelisk-of-victory",
+          death_line: hd(Narratives.death())
+      }
 
       for player <- [populated(), %{populated() | path: :fighter}, fallen, %Player{}] do
         assert player |> Serde.to_map() |> Jason.encode!() |> Jason.decode!() |> Serde.from_map() ==
@@ -105,6 +116,15 @@ defmodule MiniLineage.Characters.SerdeTest do
   test "a run from before the first hunt has earned no SP, and is alive" do
     doc = populated() |> Serde.to_map() |> Map.drop(["sp", "dead", "killer"])
     assert %Player{sp: 0, dead: false, killer: nil} = Serde.from_map(doc)
+  end
+
+  test "a fallen run keeps only a ground and a death line the game still has, the line being drawn raw" do
+    doc =
+      populated()
+      |> Serde.to_map()
+      |> Map.merge(%{"fell_at" => "nowhere", "death_line" => "<script>alert(1)</script>"})
+
+    assert %Player{fell_at: nil, death_line: nil} = Serde.from_map(doc)
   end
 
   test "a skill stored past the levels the trainer now teaches is read at its last" do

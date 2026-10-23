@@ -64,6 +64,10 @@ defmodule MiniLineage.Characters.Server do
 
   def handle_call(:snapshot, _from, state), do: {:reply, state.player, state}
 
+  # Asked of the process, which knows the public id the fights are kept under.
+  def handle_call({:last_fight, ground}, _from, state),
+    do: {:reply, Store.last_fight(state.id, ground), state}
+
   # The public id, which the Halls use to mark the reader's own run.
   def handle_call(:character_id, _from, state), do: {:reply, state.id, state}
 
@@ -119,7 +123,7 @@ defmodule MiniLineage.Characters.Server do
 
     cond do
       player == before -> {result, state}
-      player.dead -> {result, retire(state, player)}
+      before.dead and not Player.started?(player) -> {result, retire(state, before)}
       true -> {result, changed(state, before, player)}
     end
   end
@@ -134,8 +138,8 @@ defmodule MiniLineage.Characters.Server do
     state
   end
 
-  # Rules §21. The run is written with its session given up, and this process goes on as the
-  # browser's next, unstarted character under a fresh id, so no stop races the registry.
+  # Rules §21: a fallen run begun again. It is written with its session given up, and this process
+  # goes on as the browser's next, unstarted character under a fresh id, so no stop races the registry.
   defp retire(state, player) do
     Store.retire(state.id, player)
     Board.character_changed()
@@ -170,7 +174,13 @@ defmodule MiniLineage.Characters.Server do
     Store.save(state.id, state.session, state.player, state.player.items != state.saved_items)
     Board.character_changed()
 
-    %{state | dirty_since: nil, saved_items: state.player.items}
+    # The fight is written once; kept on a failure, the next flush carries it.
+    %{
+      state
+      | dirty_since: nil,
+        saved_items: state.player.items,
+        player: %{state.player | encounter: nil}
+    }
   rescue
     error ->
       Logger.error("💾 character #{state.id} failed to persist, still buffered: #{inspect(error)}")

@@ -128,7 +128,7 @@ defmodule MiniLineageWeb.Layouts do
     <div id="sidebar" class="side" phx-hook="AnimatedValues">
       <Controls.panel
         title={@view.class_name}
-        icon={@view.race_emoji}
+        icon={if @view.dead, do: "☠️", else: @view.race_emoji}
         class="vital-panel"
         body_class="rows"
       >
@@ -140,7 +140,7 @@ defmodule MiniLineageWeb.Layouts do
         </div>
 
         <%!-- Told apart by colour, as the bars always were; a screen reader hears each one's label. --%>
-        <div id="hp-row" class={["stat-row", low?(@view.health, @view.max_health) && "low-hp"]}>
+        <div id="hp-row" class={["stat-row", low?(@view, @view.health, @view.max_health) && "low-hp"]}>
           <Controls.bar
             id="hp-bar"
             kind={:hp}
@@ -152,7 +152,7 @@ defmodule MiniLineageWeb.Layouts do
           />
         </div>
 
-        <div id="mp-row" class={["stat-row", low?(@view.mp, @view.max_mp) && "low-mp"]}>
+        <div id="mp-row" class={["stat-row", low?(@view, @view.mp, @view.max_mp) && "low-mp"]}>
           <Controls.bar
             id="mp-bar"
             kind={:mp}
@@ -249,7 +249,9 @@ defmodule MiniLineageWeb.Layouts do
   defp consumables(items), do: Enum.filter(items, & &1.potion?)
 
   # Under a quarter, a bar pulses: too little HP to live through the next fight, or MP to cast in it.
-  defp low?(value, of), do: value * 4 < of
+  # Rules §21: a run that has ended has nothing left to warn of.
+  defp low?(%{dead: true}, _value, _of), do: false
+  defp low?(_view, value, of), do: value * 4 < of
 
   @doc """
   The banner. `interactive?` is false on the error page, which has no LiveView, so there the

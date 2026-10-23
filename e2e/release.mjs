@@ -53,6 +53,7 @@ try {
     await page.keyboard.type('lvl');
     await page.keyboard.type('maxlvl');
     await page.keyboard.type('half');
+    await page.keyboard.type('frail');
     await page.keyboard.type('sp');
     await page.keyboard.press('Control+q');
     await page.waitForTimeout(500);
@@ -62,7 +63,7 @@ try {
         await page.locator('#sidebar [data-key="sp"]').count() === 0);
     check('...nor typing lvl or maxlvl the level',
         await page.getAttribute('#sidebar [data-key="level"]', 'data-value') === '1');
-    check('...nor typing half the HP',
+    check('...nor typing half or frail the HP',
         await page.getAttribute('#sidebar [data-key="hp"]', 'data-value')
         === await page.getAttribute('#sidebar [data-key="max-hp"]', 'data-value'));
     check('...nor does Ctrl+Q end the character',

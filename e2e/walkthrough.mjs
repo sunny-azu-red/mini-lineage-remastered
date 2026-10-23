@@ -30,7 +30,7 @@ const rowIds = async (rows) =>
     (await page.locator(`${rows} tr[id]`).evaluateAll((trs) => trs.map((tr) => tr.id))).join();
 // What a reload draws before any script (the page fetched again and parsed, never run) beside what
 // is on screen, both read by one reader so they compare whole: a reload is served as it was left.
-const servedShown = (selector) => page.evaluate(async (sel) => {
+const servedShownOn = (on, selector) => on.evaluate(async (sel) => {
     const read = (root) => [...root.querySelectorAll(sel)].map((el) => ({
         id: el.id, text: el.textContent.trim(), title: el.getAttribute('title'),
         expanded: el.getAttribute('aria-expanded'), sort: el.getAttribute('aria-sort'),
@@ -41,6 +41,7 @@ const servedShown = (selector) => page.evaluate(async (sel) => {
     const shown = read(document);
     return { served, same: JSON.stringify(served) === JSON.stringify(shown), detail: JSON.stringify({ served, shown }) };
 }, selector);
+const servedShown = (selector) => servedShownOn(page, selector);
 
 try {
     // Never `networkidle`: the LiveView websocket stays open, so it never settles.
@@ -777,6 +778,9 @@ try {
     await page.selectOption('#travel-form select', 'hunt');
     await page.click('#travel-form button');
     await onScreen('hunt');
+    check('coming back to the ground draws the last fight fought there, the button saying Hunt again',
+        await page.locator('#fight #fight-outcome').count() === 1 && await text('#hunt-button') === '⚔️ Hunt',
+        await text('#hunt-button'));
 
     // ---- the battle orders (rules §20, §26) -----------------------------------------------------
     const share = (kind) => page.getAttribute(`#${kind}-share`, 'aria-valuetext');
@@ -803,8 +807,10 @@ try {
     check('...the slider as long at every stop, whatever its value says, and the value never clipped',
         new Set(widths).size === 1 && !clipped, `${widths.join(', ')}${clipped ? ', clipped' : ''}`);
 
+    // The last fight is already drawn here, so the new one is known by the button naming a move.
     await page.click('#hunt-button');
-    await page.waitForSelector('#fight-outcome', { timeout: 5000 });
+    await page.waitForFunction(() =>
+        document.querySelector('#hunt-button')?.textContent.trim() !== '⚔️ Hunt', null, { timeout: 5000 });
     // Read, not waited for: a stack drunk dry leaves no figure, and that is no count.
     const left = await page.evaluate((key) =>
         document.querySelector(`#consumables [data-key="${key}"]`)?.dataset.value, stackKey);
@@ -1147,6 +1153,88 @@ try {
     check('with nothing in hand, Mortal Blow is muted down to its figures and says what it needs',
         await muted('#skill-mortal-blow .skill') && await muted('#skill-mortal-blow .mp') &&
         /Needs a dagger equipped\.$/.test(await text('#skill-mortal-blow')), await text('#skill-mortal-blow'));
+
+    // ---- a death (rules §21), in a browser of its own ---------------------------------------------
+    // Left 1 HP before every fight, since a fight can still be won at 1 HP (a blow that kills first, a
+    // monster that misses), so one soon ends the run; the suite asserts on what a death draws, never
+    // on which fight it came in.
+    const grave = await freshStart(browser);
+    const g = grave.page;
+    const gc = controls(g);
+    g.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    await gc.create('Doomed', 0, 'fighter');
+    await g.selectOption('#travel-form select', 'hunt');
+    await g.click('#travel-form button');
+    await gc.onScreen('hunt');
+    const ground = new URL(g.url()).pathname;
+    let fights = 0;
+    for (; fights < 40 && await g.locator('#death-line').count() === 0; fights++) {
+        await g.evaluate(() => document.activeElement?.blur());
+        await g.keyboard.type('frail');
+        await g.waitForFunction(() =>
+            document.querySelector('#sidebar [data-key="hp"]')?.dataset.value === '1', null, { timeout: 5000 });
+        // A fight lived through renames the button, never to the line it showed; a death removes it.
+        const shown = await gc.text('#hunt-button');
+        await g.click('#hunt-button');
+        await g.waitForFunction((was) => document.querySelector('#death-line')
+            || document.querySelector('#hunt-button')?.textContent.replace(/\s+/g, ' ').trim() !== was,
+            shown, { timeout: 5000 });
+    }
+    check(`a run left 1 HP before each fight dies within 40 of them (${fights})`,
+        await g.locator('#death-line').count() === 1);
+    const colour = (sel) => g.$eval(sel, (el) => getComputedStyle(el).color);
+    const hpRed = await g.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.className = 'hp';
+        document.body.append(probe);
+        const red = getComputedStyle(probe).color;
+        probe.remove();
+        return red;
+    });
+    check('a death keeps the run on the ground it fell on, its end told in red',
+        new URL(g.url()).pathname === ground && await colour('#death-line .deaths') === hpRed,
+        `${g.url()} ${await colour('#death-line .deaths')}`);
+    const washed = await g.$eval('#fight-outcome', (el) => [
+        getComputedStyle(el).backgroundColor.replace(/\s/g, ''),
+        getComputedStyle(document.documentElement).getPropertyValue('--wash-danger').replace(/\s/g, ''),
+        el.querySelector('.entry-head').textContent.trim()]);
+    check('...its fight ending in Defeat, washed red', washed[2] === 'Defeat' && washed[0] === washed[1],
+        washed.join(' | '));
+    check('...a ghost with no Hunt, no Retreat and no orders, offering the Monument and Play Again',
+        await g.locator('#hunt-button, #retreat-button, #orders').count() === 0
+        && await g.locator('#effects [data-effect-id]').count() === 1
+        && await g.locator('#effects [data-effect-id="ghost"]').count() === 1
+        && (await gc.text('#monument-button')) === '🏛️ Monument of Heroes'
+        && (await gc.text('#restart-button')) === 'Play Again');
+    check('...neither of which takes the keyboard on arrival', await g.evaluate(() =>
+        !['monument-button', 'restart-button'].includes(document.activeElement?.id)));
+    const fallenServed = await servedShownOn(g, '#death-line, #fight-outcome, #monument-button, #restart-button');
+    check('...served as it is shown', fallenServed.same && fallenServed.served.length === 4, fallenServed.detail);
+    const line = await gc.text('#death-line');
+    await g.reload({ waitUntil: 'domcontentloaded' });
+    await g.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and a reload draws the same line and the same fight',
+        await gc.text('#death-line') === line && await g.locator('#fight-outcome.defeat').count() === 1);
+    await g.goto(`${BASE}/${ground.split('/')[1]}`, { waitUntil: 'domcontentloaded' });
+    await g.waitForSelector('.phx-connected', { timeout: 8000 });
+    await gc.onScreen('hunt');
+    check('...the town it stood in sending it back there', new URL(g.url()).pathname === ground, g.url());
+    await g.click('#purse a');
+    await gc.onScreen('inventory');
+    check('...its inventory read but offering nothing to do',
+        await g.locator('#inventory-form option:not([value=""])').count() === 0, await gc.text('#inventory-form'));
+    await g.click('#inventory-form button');
+    await gc.onScreen('hunt');
+    await g.click('#monument-button');
+    await gc.onScreen('highscores');
+    check('the Monument opens on the run\'s own lineage', new URL(g.url()).pathname === '/highscores/human', g.url());
+    await g.click('#header-link');
+    await gc.onScreen('hunt');
+    await g.click('#restart-button');
+    await gc.onScreen('start');
+    check('...and Play Again goes to game start, with no character',
+        new URL(g.url()).pathname === '/' && (await gc.state()).started === false);
+    await grave.context.close();
 
     check('no request to the app failed', failedRequests.length === 0, failedRequests.join(' | '));
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));

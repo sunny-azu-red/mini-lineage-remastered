@@ -30,6 +30,21 @@ defmodule MiniLineage.Game.Narratives do
   # Rules §21: the line a run ends on, kept with it.
   @fell ~s({they} fall to the {monster} at the {ground}, and {their} road ends here.)
   @wandered ~s({they} cannot bring the {monster} down, and it slinks away into the {ground}.)
+  # Rules §21: how the end is told on the ground it came on, one drawn at death and kept with the run.
+  @death [
+    "🌑 The darkness takes {object}. {Their} journey ends here.",
+    "👻 {Their} strength fails, and the world fades to black.",
+    "💀 Fate has claimed {their} soul. Better luck in the next life.",
+    "✨ {Their} life essence scatters into the aether.",
+    "🩸 {Their} story has come to a sudden, bloody conclusion.",
+    "🥀 {Their} light flickers out in the cold silence.",
+    "🪦 {they} fought bravely&hellip; but not bravely enough.",
+    "🦴 {Their} bones will lie on this ground for the next adventurer to find.",
+    "🎭 {they} have met a terrible fate, haven't {them}?"
+  ]
+  # And what becomes of it: rules §21 keeps every run on the Monument of Heroes, the obelisk that
+  # stands in every town, and Shilen is the goddess of death (docs/canon/death.md).
+  @epitaph ~s(Shilen, the goddess of death, has gathered {their} soul but not {their} name, which the Monument of Heroes keeps in every town of Aden among all who fought before {object}.)
 
   # Rules §20's fight log: who is met, then each round's events joined into one line.
   @met ~s({they} meet {article} {monster}, <span class="level">Level {level}</span>, on the {ground}.)
@@ -169,6 +184,8 @@ defmodule MiniLineage.Game.Narratives do
   def congratulated, do: @congratulated
   def fell, do: @fell
   def wandered, do: @wandered
+  def death, do: @death
+  def epitaph, do: @epitaph
   def arrived, do: @arrived
   def began, do: @began
 
