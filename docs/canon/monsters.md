@@ -342,7 +342,11 @@ Damage is the ordinary magic formula, 91 × √M.Atk ÷ M.Def × power, and powe
 
 ## Disputes and caveats
 
-What the checks could not settle, kept as the checker wrote it.
+What the checks could not settle, kept as the checker wrote it. Two checks wrote it, and each counts
+its own monsters: the first, whose notes say 44, covered Talking Island's and Elven Village's
+grounds; the second, whose notes say 64, the Dark Elf and Orc villages' grounds and the Ruins of
+Despair, 63 monsters here and the Gremlin again, which every village's fields share and this file
+draws once.
 
 - Stats are the L2J C6 npc.sql template (identical in the david-buzas and Hl4p3x packs for all 44 monsters), which is also what an L2J server shows in-game since monsters get no attribute or level modifiers there. level, HP, EXP, SP, STR/CON/DEX/INT/WIT and cast speed match l2hub IL exactly for every monster; EXP is l2hub's figure floored (l2hub shows fractions such as 35.268).
 - MP: L2J's figure matches l2hub's C5 and CT1 pages, but in-game IL MP is about x1.1 (MEN bonus), which aCis computes and l2hub IL displays (Young Keltir 44 vs 48). MEN: L2J, aCis and l2hub C5 say 10; l2hub IL shows 20 for every monster, which does not fit its own MP figures and looks like a display default.
