@@ -21,10 +21,11 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-}
       # Optional; the defaults are prod.exs's own.
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      # Empty keeps the rules' rate.
+      # Empty keeps the rules' rate, and UTC.
       - EXP_RATE=${EXP_RATE:-}
       - SP_RATE=${SP_RATE:-}
       - ADENA_RATE=${ADENA_RATE:-}
+      - TIME_ZONE=${TIME_ZONE:-}
     # Catches a process that is up but not answering. localhost is exempt from force_ssl.
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-4000}/health"]

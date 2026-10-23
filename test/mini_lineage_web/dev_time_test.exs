@@ -46,6 +46,14 @@ defmodule MiniLineageWeb.DevTimeTest do
     refute night?(elsewhere)
   end
 
+  test "a night held by the word has no dawn to count down to" do
+    typist = started(build_conn(), "0")
+    type(typist, "night")
+
+    refute has_element?(typist, ~s(#effects [data-effect-id="night"] .effect-timer))
+    assert Clock.dawn() == nil
+  end
+
   test "a pinned time beats it, so a test that pins is never moved by one that forces" do
     :ok = Clock.force(:night)
     Clock.put_now(~U[2026-07-01 09:00:00Z])

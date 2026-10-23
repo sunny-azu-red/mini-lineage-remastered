@@ -233,13 +233,19 @@ defmodule MiniLineage.Game.Snapshot do
   defp routes(from),
     do: Enum.map(Rules.routes_from(from), &Map.put(Rules.town(&1.to), :fee, &1.fee))
 
-  # 🌿 says what it is restoring, and how much a tick; night and a perk what they change.
+  # 🌿 says what it is restoring, and how much a tick; night and a perk what they change, and night
+  # when it ends, on the game's clock.
   defp aura_view(aura) do
     parts =
       Enum.map(Map.get(aura, :rates, []), &rate_text/1) ++
         Enum.map(Map.get(aura, :modifiers, []), &modifier_text/1)
 
+    until =
+      aura[:until] &&
+        "#{aura.until} at #{aura.ends_at |> DateTime.from_unix!(:millisecond) |> Clock.local() |> Format.clock()}"
+
     tooltip = if parts == [], do: aura.label, else: "#{aura.label} (#{Enum.join(parts, ", ")})"
+    tooltip = if until, do: "#{tooltip} until #{until}", else: tooltip
 
     %{
       id: aura.id,
@@ -248,6 +254,7 @@ defmodule MiniLineage.Game.Snapshot do
       label: aura.label,
       tooltip: tooltip,
       about: aura.about,
+      until: until,
       # A rate is drawn as a figure beside the stats; a modifier is a rule, and never moves. The
       # stat rides along so the page can colour the change as it colours the stat.
       changes:

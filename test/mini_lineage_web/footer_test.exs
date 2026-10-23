@@ -1,5 +1,5 @@
 defmodule MiniLineageWeb.FooterTest do
-  @moduledoc "The footer's year is the game's, turning over at midnight in its zone (rules §15)."
+  @moduledoc "The footer's year and clock are the game's, kept in its zone (rules §15)."
   use ExUnit.Case, async: false
 
   import Phoenix.LiveViewTest
@@ -11,6 +11,8 @@ defmodule MiniLineageWeb.FooterTest do
     # Half past midnight on New Year's Day in Bucharest, 22:30 on New Year's Eve in UTC.
     Clock.put_now(~U[2026-12-31 22:30:00Z])
 
-    assert render_component(&Layouts.footer/1, %{}) =~ "2005 &ndash; 2027"
+    html = render_component(&Layouts.footer/1, %{})
+    assert html =~ "2005 &ndash; 2027"
+    assert html =~ "🕰️ 12:30 am EET"
   end
 end

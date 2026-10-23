@@ -769,6 +769,21 @@ defmodule MiniLineage.Game.RulesTest do
       assert Hunt.reward(35, 5, 6, 1) == 175
     end
 
+    test "§15 the zone is UTC in config.exs, and Europe/Bucharest in every env file" do
+      zone =
+        "config/config.exs"
+        |> Config.Reader.read!(env: :test)
+        |> get_in([:mini_lineage, :time_zone])
+
+      assert zone == "Etc/UTC"
+      assert @rules =~ "this game is played on **Europe/Bucharest**"
+
+      for file <- ~w(.env.example .env.test.example),
+          do: assert(File.read!(file) =~ ~r/^TIME_ZONE=Europe\/Bucharest$/m, file)
+
+      assert Application.fetch_env!(:mini_lineage, :time_zone) == "Europe/Bucharest"
+    end
+
     test "§22 retail's rates are config.exs's, the private ones every env file's" do
       retail =
         "config/config.exs" |> Config.Reader.read!(env: :test) |> get_in([:mini_lineage, :rates])

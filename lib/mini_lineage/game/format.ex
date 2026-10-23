@@ -49,25 +49,32 @@ defmodule MiniLineage.Game.Format do
     do: "#{div(tenths, 10)}.#{rem(tenths, 10)}"
 
   @doc """
-  Time left over an effect's icon: whole seconds, rounded up, and from a minute on whole minutes, "37"
-  and "2m". Twinned with `timerLabel` in `hooks/effect-timers.js`.
+  Time left over an effect's icon: whole seconds, rounded up, from a minute on whole minutes and
+  from an hour whole hours, "37", "2m" and "3h". Twinned with `timerLabel` in `hooks/effect-timers.js`.
   """
   def countdown(ms) do
     seconds = seconds_left(ms)
-    if seconds >= 60, do: "#{div(seconds, 60)}m", else: Integer.to_string(seconds)
+
+    cond do
+      seconds >= 3600 -> "#{div(seconds, 3600)}h"
+      seconds >= 60 -> "#{div(seconds, 60)}m"
+      true -> Integer.to_string(seconds)
+    end
   end
 
   @doc """
-  The same time said in a sentence: "1m 37s", "2m", "37s". Twinned with `remainingLabel` in
-  `hooks/effect-timers.js`.
+  The same time said in a sentence: "1m 37s", "2m", "37s", and from an hour on without its seconds,
+  "3h 12m". Twinned with `remainingLabel` in `hooks/effect-timers.js`.
   """
   def remaining(ms) do
     seconds = seconds_left(ms)
 
-    case {div(seconds, 60), rem(seconds, 60)} do
-      {0, rest} -> "#{rest}s"
-      {minutes, 0} -> "#{minutes}m"
-      {minutes, rest} -> "#{minutes}m #{rest}s"
+    case {div(seconds, 3600), div(rem(seconds, 3600), 60), rem(seconds, 60)} do
+      {0, 0, rest} -> "#{rest}s"
+      {0, minutes, 0} -> "#{minutes}m"
+      {0, minutes, rest} -> "#{minutes}m #{rest}s"
+      {hours, 0, _} -> "#{hours}h"
+      {hours, minutes, _} -> "#{hours}h #{minutes}m"
     end
   end
 
@@ -109,7 +116,10 @@ defmodule MiniLineage.Game.Format do
   The whole instant, for a stamp's tooltip, naming the game's zone so nobody reads it as their own:
   "17 Oct 2026, 3:10 pm EEST".
   """
-  def instant(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y, %-I:%M %P %Z")
+  def instant(%DateTime{} = at), do: Calendar.strftime(at, "%-d %b %Y, ") <> clock(at)
+
+  @doc "The hour on the game's clock, naming its zone: \"3:10 pm EEST\"."
+  def clock(%DateTime{} = at), do: Calendar.strftime(at, "%-I:%M %P %Z")
 
   # As Lineage II's client names them, every shortened word ending in a full stop. Block, M. Critical
   # and Recovery are ours, as docs/canon/README.md's departures say.

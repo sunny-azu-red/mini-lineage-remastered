@@ -58,12 +58,12 @@ defmodule MiniLineage.Game.NightTest do
     assert Map.delete(night, :accuracy) == Map.delete(day, :accuracy)
   end
 
-  test "the header says what each one changes" do
+  test "the header says what each one changes, and until when on the game's clock" do
     tooltips =
       at(@night, fn -> Snapshot.build(born(3)).effects end)
       |> Map.new(&{&1.id, &1.tooltip})
 
-    assert tooltips["night"] == "Night (-3 Accuracy)"
-    assert tooltips["shadow_sense"] == "Shadow Sense (+3 Accuracy)"
+    assert tooltips["night"] == "Night (-3 Accuracy) until dawn at 6:00 am EEST"
+    assert tooltips["shadow_sense"] == "Shadow Sense (+3 Accuracy) until dawn at 6:00 am EEST"
   end
 end

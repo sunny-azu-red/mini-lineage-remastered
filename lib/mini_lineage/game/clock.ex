@@ -52,6 +52,14 @@ defmodule MiniLineage.Game.Clock do
     end
   end
 
+  @doc "When the night now falling ends, in UTC, or nil while a debug build holds it."
+  def dawn do
+    case {pin(), forced()} do
+      {nil, forced} when forced != nil -> nil
+      {pinned, _} -> next_boundary(pinned || DateTime.utc_now())
+    end
+  end
+
   @doc "Rules §15: from 22:00 to 06:00 in the game's zone."
   def night?(%DateTime{} = now) do
     %{hour: hour} = DateTime.shift_zone!(now, zone())

@@ -44,6 +44,8 @@ jobs:
       EXP_RATE: 5
       SP_RATE: 5
       ADENA_RATE: 20
+      # Rules §15's zone, as .env.test.example sets it.
+      TIME_ZONE: Europe/Bucharest
       MIX_ENV: test
 
     steps:
@@ -120,6 +122,8 @@ jobs:
       EXP_RATE: 5
       SP_RATE: 5
       ADENA_RATE: 20
+      # Rules §15's zone, as .env.test.example sets it.
+      TIME_ZONE: Europe/Bucharest
       PORT: 4002
       E2E_BASE_URL: http://localhost:4002
 

@@ -256,9 +256,11 @@ Adena. An Orc with 10,000 reaches Gludio with **4,000** left, which is not enoug
 
 ## 15. Day and night
 
-Night runs from **22:00 to 06:00** in the game's time zone, Europe/Bucharest. The game keeps every
-time in UTC, and the zone only decides which hours those are, summer time included. At night every
-character's **Accuracy is −3**, which is 6% less to hit by §13.
+Night runs from **22:00 to 06:00** in the game's time zone, which a server sets as `TIME_ZONE`
+(UTC when it sets none); this game is played on **Europe/Bucharest**, which every env file sets.
+The game keeps every time in UTC, and the zone only decides which hours those are, summer time
+included, and how the game writes a time or a day. At night every character's **Accuracy is −3**,
+which is 6% less to hit by §13, until dawn.
 
 Example: a level 1 Human Fighter's Accuracy is 34 by day and **31** at night.
 

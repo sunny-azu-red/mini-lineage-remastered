@@ -4,17 +4,20 @@
  */
 const secondsLeft = (ms) => Math.max(0, Math.ceil(ms / 1000));
 
-/** Over an icon: "37", then "2m". Twinned with `Format.countdown`, held to a table by both suites. */
+/** Over an icon: "37", "2m", then "3h". Twinned with `Format.countdown`, held to a table by both suites. */
 export function timerLabel(ms) {
     const seconds = secondsLeft(ms);
+    if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h`;
     return seconds >= 60 ? `${Math.floor(seconds / 60)}m` : String(seconds);
 }
 
-/** In a sentence: "1m 37s". Twinned with `Format.remaining`, held to a table by both suites. */
+/** In a sentence: "1m 37s", then "3h 12m". Twinned with `Format.remaining`, held to a table by both suites. */
 export function remainingLabel(ms) {
     const seconds = secondsLeft(ms);
-    const minutes = Math.floor(seconds / 60), rest = seconds % 60;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60), rest = seconds % 60;
 
+    if (hours) return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
     if (!minutes) return `${rest}s`;
     return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }

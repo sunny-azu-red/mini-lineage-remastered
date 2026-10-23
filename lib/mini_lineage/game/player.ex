@@ -271,6 +271,7 @@ defmodule MiniLineage.Game.Player do
 
   def conditions(player) do
     night? = Clock.night?()
+    dawn = night? && Clock.dawn()
 
     [
       night? && :night,
@@ -279,8 +280,15 @@ defmodule MiniLineage.Game.Player do
     ]
     |> Enum.filter(& &1)
     |> Enum.map(&Map.put(Constants.aura(&1), :modifiers, Rules.modifiers(&1)))
+    |> Enum.map(&until_dawn(&1, dawn))
     |> Kernel.++(raised(player))
   end
+
+  # What the night puts on lasts until dawn, which a debug build holding the night has none of.
+  defp until_dawn(%{id: id} = aura, %DateTime{} = dawn) when id in ~w(night shadow_sense),
+    do: Map.merge(aura, %{ends_at: DateTime.to_unix(dawn, :millisecond), until: "dawn"})
+
+  defp until_dawn(aura, _dawn), do: aura
 
   # Rules §19: an aura the character raised, until it fades at `ends_at`.
   defp raised(player) do

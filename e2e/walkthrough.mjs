@@ -173,6 +173,9 @@ try {
     check('game start is headed with its call to begin',
         (await text('#main h2.header-name')) === '🐣 A New Bloodline Rises', await text('#main h2.header-name'));
     check('...and no second heading saying it again', await page.locator('#screen h2').count() === 1);
+    // .env.test's zone, Europe/Bucharest, named whatever the season.
+    check('the footer keeps the game\'s clock, naming its zone',
+        /^🕰️ \d{1,2}:\d{2} [ap]m EES?T$/.test(await text('#game-clock')), await text('#game-clock'));
     await page.click('#main a:has-text("Chronicles of Ancestry")');
     await onScreen('races');
     check('Chronicles of Ancestry is public', (await state()).screen === 'races');

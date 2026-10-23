@@ -50,6 +50,39 @@ defmodule MiniLineageWeb.NightPageTest do
     assert has_element?(view, "#effect-shadow_sense .accuracy", "+3 Accuracy")
   end
 
+  test "the night says when dawn comes on the game's clock, and counts down to it", %{conn: conn} do
+    # 11 pm in Bucharest's summer, seven hours before its dawn.
+    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    view = dark_elf(conn)
+
+    assert has_element?(
+             view,
+             ~s|#effects [data-effect-id="night"][title="Night (-3 Accuracy) until dawn at 6:00 am EEST"]|,
+             "7h"
+           )
+
+    render_patch(view, ~p"/character")
+
+    assert has_element?(
+             view,
+             "#effect-night",
+             "-3 Accuracy until dawn at 6:00 am EEST, for another 7h."
+           )
+
+    assert has_element?(view, ~s(#effect-night .timer[data-remaining-ms="25200000"]))
+  end
+
+  test "the footer keeps the game's time, and moves on as each minute turns", %{conn: conn} do
+    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    view = dark_elf(conn)
+    assert has_element?(view, "#game-clock", "🕰️ 11:00 pm EEST")
+
+    Clock.put_now(~U[2026-07-01 20:01:00Z])
+    send(view.pid, :minute)
+
+    assert has_element?(view, "#game-clock", "🕰️ 11:01 pm EEST")
+  end
+
   test "and dawn takes both away without anything being pushed", %{conn: conn} do
     Clock.put_now(~U[2026-07-01 20:00:00Z])
     view = dark_elf(conn)

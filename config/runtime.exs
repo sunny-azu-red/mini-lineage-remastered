@@ -91,6 +91,19 @@ rates =
 # Merged into config.exs's, so a rate left unset stays at retail's.
 if rates != [], do: config(:mini_lineage, rates: rates)
 
+# Rules §15: the zone the game's clock keeps, read at runtime like the rates. Unset stays UTC.
+case System.get_env("TIME_ZONE", "") do
+  "" ->
+    :ok
+
+  zone ->
+    with {:error, _} <- DateTime.now(zone, Tz.TimeZoneDatabase) do
+      raise "TIME_ZONE is #{inspect(zone)}, which is no zone the time zone database knows"
+    end
+
+    config :mini_lineage, time_zone: zone
+end
+
 # A release does not serve unless told to: PHX_SERVER=true bin/mini_lineage start.
 if System.get_env("PHX_SERVER") do
   config :mini_lineage, MiniLineageWeb.Endpoint, server: true

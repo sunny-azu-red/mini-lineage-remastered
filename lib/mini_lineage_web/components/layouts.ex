@@ -48,6 +48,8 @@ defmodule MiniLineageWeb.Layouts do
   # The reader's kept folds, by panel id, and whether sound is on (`MiniLineageWeb.Kept`).
   attr :folds, :map, default: %{}
   attr :sound, :boolean, default: true
+  # The minute the footer's clock shows, which the LiveView moves on.
+  attr :now, DateTime, default: nil
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -92,7 +94,7 @@ defmodule MiniLineageWeb.Layouts do
               </Controls.panel>
             </div>
 
-            <Layouts.footer />
+            <Layouts.footer now={@now} />
           </div>
         </div>
       </div>
@@ -306,13 +308,18 @@ defmodule MiniLineageWeb.Layouts do
   defp sound_label(true), do: "Sound FX Enabled (Click to Mute)"
   defp sound_label(false), do: "Sound FX Muted (Click to Unmute)"
 
+  # A LiveView's minute; a page without one, the error page, draws the time it was served at.
+  attr :now, DateTime, default: nil
+
   def footer(assigns) do
     version = Version.current()
+    local = Clock.local(assigns.now || Clock.now())
 
     assigns =
       assign(assigns,
         # The game's year, which turns over at the game's midnight rather than UTC's.
-        year: Clock.local(Clock.now()).year,
+        year: local.year,
+        clock: Format.clock(local),
         version: version,
         commit_url: Version.commit_url(version)
       )
@@ -327,7 +334,8 @@ defmodule MiniLineageWeb.Layouts do
         class="version-link"
       >{@version}</a>
       <span :if={!@commit_url} class={Version.build_class(@version)}>{@version}</span>
-      &copy; 2005 &ndash; {@year}
+      &copy; 2005 &ndash; {@year} <span class="delimiter">&bull;</span>
+      <span id="game-clock" title="The game's clock, which night and every date keep">🕰️ {@clock}</span>
     </div>
     """
   end

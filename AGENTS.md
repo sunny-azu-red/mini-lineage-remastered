@@ -553,13 +553,19 @@ Each of these is here because it was got wrong once.
   `compile_env!` or `fetch_env!` and never a default of its own, so a missing key fails at compile or
   boot. Only `:app_version` is optional. A value no environment changes is a rule of the game, in
   `Constants`.
-- **The server rates are the one rule a deployment may change** (rules §22). `config.exs` holds
+- **The server rates and the time zone are the rules a deployment may change** (rules §22, §15). `config.exs` holds
   retail's ×1 and every env file, CI's jobs included, the private ×5, ×5 and ×20 the game is
   balanced at; `rules_test.exs` holds `config.exs` and the two `.example` files to the document,
   and nothing checks CI's. `runtime.exs` reads them in every
   environment, so the suites and the bench play `.env.test`'s, and a reading names its rates.
   `Hunt` takes a rate as an argument and `Actions` passes `Rules.rate/1`, so a test states the rate
-  it works at. The `balance-study` skill checks a reading was taken at the private rates.
+  it works at. The `balance-study` skill checks a reading was taken at the private rates. The zone
+  is the same: `config.exs` holds UTC, every env file and CI's jobs `TIME_ZONE=Europe/Bucharest`,
+  `runtime.exs` refuses a zone `Tz` does not know, and `rules_test.exs` holds the two to §15. It
+  moves only which hours are night and how a time is written, never what is stored. The game shows
+  its clock where a player meets it: the footer's 🕰️ (`GameLive` redraws it at each minute's
+  turn, so only the server names the zone), and the 🌙 Night aura's "until dawn at 6:00 am EEST",
+  counted down like any effect with an end.
 
 ### Comments
 

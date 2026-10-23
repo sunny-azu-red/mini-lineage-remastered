@@ -46,6 +46,7 @@ defmodule MiniLineageWeb.GameLive do
       Characters.subscribe(id)
       Phoenix.PubSub.subscribe(MiniLineage.PubSub, @world)
       await_dusk_or_dawn()
+      await_minute()
     end
 
     player = Characters.snapshot(id)
@@ -74,7 +75,8 @@ defmodule MiniLineageWeb.GameLive do
        game_flash: nil,
        flash_fresh: false,
        error_detail: nil,
-       debug: Version.debug_build?()
+       debug: Version.debug_build?(),
+       now: Clock.now()
      )}
   end
 
@@ -451,6 +453,12 @@ defmodule MiniLineageWeb.GameLive do
     {:noreply, put_view(socket, socket.assigns.player)}
   end
 
+  # The footer's clock, which only the server draws, so the zone it names is the game's.
+  def handle_info(:minute, socket) do
+    await_minute()
+    {:noreply, assign(socket, now: Clock.now())}
+  end
+
   # ------------------------------------------------------------------ plumbing
 
   # The panels and the title follow the view, as what a page holds can change under it (a first
@@ -477,6 +485,11 @@ defmodule MiniLineageWeb.GameLive do
       :dusk_or_dawn,
       DateTime.diff(Clock.next_boundary(now), now, :millisecond) + 50
     )
+  end
+
+  defp await_minute do
+    ms = Clock.now() |> DateTime.to_unix(:millisecond) |> rem(60_000)
+    Process.send_after(self(), :minute, 60_000 - ms + 50)
   end
 
   # Rules §20 and §26: the shares an order's stops stand for, and the action setting one.
@@ -564,6 +577,7 @@ defmodule MiniLineageWeb.GameLive do
       dev_keys={@debug and @view.started}
       folds={@folds}
       sound={@sound}
+      now={@now}
     >
       <Controls.flash_alert :if={@game_flash && panel == hd(@panels)} flash={@game_flash} />
 
