@@ -104,7 +104,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 |---|---|---|
 | Ctrl+Q | deletes the character; kept by choice, death notwithstanding, for trying every set from one browser | `quit_test.exs` |
 | `adena` | +10,000 Adena every time; `Actions.dev_adena/1` refuses in a release | `dev_adena_test.exs` |
-| `night`, `day` | `Clock.force/1` holds the node at that hour until the other word or a restart; pages redraw off `"world"`. A pinned time beats it | `dev_time_test.exs` |
+| `night`, `day` | `Clock.force/1` holds the node at that hour for five minutes or until the other word, the 🌙 counting them down; pages redraw off `"world"` and wake again when the hour is given back. A pinned time beats it | `dev_time_test.exs` |
 | `sp` | +10,000 SP every time, to try the trainer; `Actions.dev_sp/1` refuses in a release | `dev_sp_test.exs` |
 | `half` | HP and MP to half, XP halfway to the next level; `Actions.dev_half/1` refuses in a release | `dev_half_test.exs` |
 | `frail` | 1 HP, so the browser suites can reach a death; `Actions.dev_frail/1` refuses in a release | `dev_frail_test.exs` |

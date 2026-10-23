@@ -5,13 +5,14 @@ defmodule MiniLineage.Game.Clock do
   itself, and a pin is found through `$callers` too, so one set in a test reaches the LiveView that
   test starts. A character's own process is not a caller: pin it from inside, through `mutate`.
 
-  A debug build can also hold the whole world at night or day, whatever the hour. A pin still
-  beats it, so a test that pins the time cannot be moved by one that forces it.
+  A debug build can also hold the whole world at night or day for five minutes, whatever the hour.
+  A pin still beats it, so a test that pins the time cannot be moved by one that forces it.
   """
   alias MiniLineage.Game.Version
 
   @key :mini_lineage_clock
   @forced {__MODULE__, :forced}
+  @force_ms :timer.minutes(5)
 
   @doc "Holds the time still at `now` for the calling process."
   def put_now(%DateTime{} = now), do: Process.put(@key, now)
@@ -30,18 +31,34 @@ defmodule MiniLineage.Game.Clock do
   end
 
   @doc """
-  Debug builds only: `:night` or `:day` for every process on the node until it restarts, or `nil`
-  to give the hour back. A release refuses.
+  Debug builds only: `:night` or `:day` for every process on the node for `ms`, five minutes
+  unless a test says otherwise, of the real clock, or `nil` to give the hour back now. A release
+  refuses.
   """
-  def force(time) when time in [:night, :day, nil] do
+  def force(time, ms \\ @force_ms) when time in [:night, :day, nil] do
     cond do
-      not Version.debug_build?() -> :error
-      time == nil -> with(_ <- :persistent_term.erase(@forced), do: :ok)
-      true -> :persistent_term.put(@forced, time)
+      not Version.debug_build?() ->
+        :error
+
+      time == nil ->
+        with(_ <- :persistent_term.erase(@forced), do: :ok)
+
+      true ->
+        :persistent_term.put(@forced, {time, DateTime.add(DateTime.utc_now(), ms, :millisecond)})
     end
   end
 
-  def forced, do: :persistent_term.get(@forced, nil)
+  @doc "The hour a debug build holds, until its five minutes are up."
+  def forced, do: with({time, _until} <- held(), do: time)
+
+  defp forced_until, do: with({_time, until} <- held(), do: until)
+
+  defp held do
+    with {_time, until} = held <- :persistent_term.get(@forced, nil),
+         :lt <- DateTime.compare(DateTime.utc_now(), until),
+         do: held,
+         else: (_ -> nil)
+  end
 
   @doc "Whether it is night now: a pinned time, else a forced one, else the hour."
   def night? do
@@ -52,11 +69,25 @@ defmodule MiniLineage.Game.Clock do
     end
   end
 
-  @doc "When the night now falling ends, in UTC, or nil while a debug build holds it."
+  @doc """
+  When the night now falling ends, in UTC: the next dawn, or a debug build's held night when its
+  five minutes are up, and the real dawn after them if the real hour is night by then.
+  """
   def dawn do
-    case {pin(), forced()} do
-      {nil, forced} when forced != nil -> nil
-      {pinned, _} -> next_boundary(pinned || DateTime.utc_now())
+    case {pin(), forced_until()} do
+      {nil, until} when until != nil ->
+        if night?(until), do: next_boundary(until), else: until
+
+      {pinned, _} ->
+        next_boundary(pinned || DateTime.utc_now())
+    end
+  end
+
+  @doc "The next instant night may come or go: a dusk, a dawn, or a held hour given back."
+  def next_change(now) do
+    case {pin(), forced_until()} do
+      {nil, until} when until != nil -> Enum.min([until, next_boundary(now)], DateTime)
+      _ -> next_boundary(now)
     end
   end
 

@@ -45,7 +45,6 @@ defmodule MiniLineageWeb.GameLive do
       Characters.attach(id)
       Characters.subscribe(id)
       Phoenix.PubSub.subscribe(MiniLineage.PubSub, @world)
-      await_dusk_or_dawn()
       await_minute()
     end
 
@@ -76,8 +75,10 @@ defmodule MiniLineageWeb.GameLive do
        flash_fresh: false,
        error_detail: nil,
        debug: Version.debug_build?(),
-       now: Clock.now()
-     )}
+       now: Clock.now(),
+       hour_timer: nil
+     )
+     |> then(&if(connected?(&1), do: await_dusk_or_dawn(&1), else: &1))}
   end
 
   # A cookie the plug never saw — a tab left open across a deploy. A LiveView cannot issue one, so
@@ -384,7 +385,7 @@ defmodule MiniLineageWeb.GameLive do
     Phoenix.PubSub.broadcast(MiniLineage.PubSub, @world, :world_changed)
 
     text =
-      "A debug build holds the world at #{time}, whatever the hour, until the server restarts."
+      "A debug build holds the world at #{time} for five minutes, whatever the hour, and then gives the hour back."
 
     assign(socket, game_flash: %{text: text, type: :info})
   end
@@ -444,14 +445,13 @@ defmodule MiniLineageWeb.GameLive do
   def handle_info({:board, _boards}, socket), do: {:noreply, socket}
 
   # Rules §15: nightfall changes nothing the character's process stores, so nothing is pushed for it.
-  # The page wakes itself at the exact moment instead, and redraws what the hour changes.
+  # The page wakes itself at the exact moment instead, and redraws what the hour changes. A held
+  # hour moves that moment to when it is given back.
   def handle_info(:world_changed, socket),
-    do: {:noreply, put_view(socket, socket.assigns.player)}
+    do: {:noreply, socket |> await_dusk_or_dawn() |> put_view(socket.assigns.player)}
 
-  def handle_info(:dusk_or_dawn, socket) do
-    await_dusk_or_dawn()
-    {:noreply, put_view(socket, socket.assigns.player)}
-  end
+  def handle_info(:dusk_or_dawn, socket),
+    do: {:noreply, socket |> await_dusk_or_dawn() |> put_view(socket.assigns.player)}
 
   # The footer's clock, which only the server draws, so the zone it names is the game's.
   def handle_info(:minute, socket) do
@@ -476,15 +476,14 @@ defmodule MiniLineageWeb.GameLive do
     )
   end
 
-  # A beat past the boundary, so the redraw reads the new hour and not the last of the old one.
-  defp await_dusk_or_dawn do
+  # A beat past the boundary, so the redraw reads the new hour and not the last of the old one. One
+  # timer, replaced rather than added to, or every force would leave another waking the page.
+  defp await_dusk_or_dawn(socket) do
+    if socket.assigns.hour_timer, do: Process.cancel_timer(socket.assigns.hour_timer)
     now = Clock.now()
+    wait = DateTime.diff(Clock.next_change(now), now, :millisecond) + 50
 
-    Process.send_after(
-      self(),
-      :dusk_or_dawn,
-      DateTime.diff(Clock.next_boundary(now), now, :millisecond) + 50
-    )
+    assign(socket, hour_timer: Process.send_after(self(), :dusk_or_dawn, max(wait, 50)))
   end
 
   defp await_minute do

@@ -1,7 +1,7 @@
 defmodule MiniLineageWeb.DevTimeTest do
   @moduledoc """
   Typing `night` or `day` in a debug build holds the whole world at that hour, whatever the clock
-  says, until the other word or a restart. Not async: the hour is the node's, and a release is a
+  says, for five minutes or until the other word. Not async: the hour is the node's, and a release is a
   flip of the debug build. A pinned time still beats it, which is what keeps the async suites safe.
   """
   use MiniLineageWeb.ConnCase, async: false
@@ -46,12 +46,37 @@ defmodule MiniLineageWeb.DevTimeTest do
     refute night?(elsewhere)
   end
 
-  test "a night held by the word has no dawn to count down to" do
+  test "a night held by the word lasts five minutes, which its aura counts down" do
     typist = started(build_conn(), "0")
     type(typist, "night")
 
-    refute has_element?(typist, ~s(#effects [data-effect-id="night"] .effect-timer))
-    assert Clock.dawn() == nil
+    # Five minutes, or the real dawn if the real hour is still night when they are up: both are
+    # worked out here, so the answer holds at any hour the suite runs.
+    now = DateTime.utc_now()
+    given_back = DateTime.add(now, 5, :minute)
+    dawn = if Clock.night?(given_back), do: Clock.next_boundary(given_back), else: given_back
+    expected = DateTime.diff(dawn, now, :millisecond)
+
+    [shown] =
+      typist
+      |> render()
+      |> LazyHTML.from_document()
+      |> LazyHTML.query(~s(#effects [data-effect-id="night"] .effect-timer))
+      |> LazyHTML.attribute("data-remaining-ms")
+
+    assert_in_delta String.to_integer(shown), expected, 2_000
+    render_patch(typist, ~p"/character")
+    assert has_element?(typist, "#effect-night", "until dawn at")
+  end
+
+  test "and gives the hour back once its time is up, which is when the page wakes" do
+    :ok = Clock.force(:night, 60_000)
+    assert Clock.forced() == :night
+    now = DateTime.utc_now()
+    assert DateTime.diff(Clock.next_change(now), now, :millisecond) <= 60_000
+
+    :ok = Clock.force(:night, -1)
+    assert Clock.forced() == nil
   end
 
   test "a pinned time beats it, so a test that pins is never moved by one that forces" do
