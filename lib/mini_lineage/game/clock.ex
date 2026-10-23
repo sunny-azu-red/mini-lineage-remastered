@@ -71,17 +71,17 @@ defmodule MiniLineage.Game.Clock do
 
   @doc """
   When the night now falling ends, in UTC: the next dawn, or a debug build's held night when its
-  five minutes are up, and the real dawn after them if the real hour is night by then.
+  five minutes are up, when the real hour comes back with a countdown of its own if it is night.
   """
   def dawn do
     case {pin(), forced_until()} do
-      {nil, until} when until != nil ->
-        if night?(until), do: next_boundary(until), else: until
-
-      {pinned, _} ->
-        next_boundary(pinned || DateTime.utc_now())
+      {nil, until} when until != nil -> until
+      {pinned, _} -> next_boundary(pinned || DateTime.utc_now())
     end
   end
+
+  @doc "Whether a debug build is holding the hour now, which a pinned time beats."
+  def held?, do: pin() == nil and forced() != nil
 
   @doc "The next instant night may come or go: a dusk, a dawn, or a held hour given back."
   def next_change(now) do

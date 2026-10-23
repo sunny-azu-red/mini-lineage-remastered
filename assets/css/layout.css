@@ -91,7 +91,8 @@
     padding-top: 6px;
 }
 
-.header-subtitle {
+/* The game's clock, where the banner's subtitle stood: its zone's time, not the reader's. */
+#game-clock {
     position: absolute;
     bottom: 12px;
     right: 12px;
@@ -100,7 +101,6 @@
     color: var(--gold-dim);
     letter-spacing: 0.25em;
     text-transform: uppercase;
-    pointer-events: none;
     line-height: 1;
 }
 

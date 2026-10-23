@@ -46,16 +46,9 @@ defmodule MiniLineageWeb.DevTimeTest do
     refute night?(elsewhere)
   end
 
-  test "a night held by the word lasts five minutes, which its aura counts down" do
+  test "a night held by the word lasts five minutes, which its aura counts down, whatever the hour" do
     typist = started(build_conn(), "0")
     type(typist, "night")
-
-    # Five minutes, or the real dawn if the real hour is still night when they are up: both are
-    # worked out here, so the answer holds at any hour the suite runs.
-    now = DateTime.utc_now()
-    given_back = DateTime.add(now, 5, :minute)
-    dawn = if Clock.night?(given_back), do: Clock.next_boundary(given_back), else: given_back
-    expected = DateTime.diff(dawn, now, :millisecond)
 
     [shown] =
       typist
@@ -64,9 +57,18 @@ defmodule MiniLineageWeb.DevTimeTest do
       |> LazyHTML.query(~s(#effects [data-effect-id="night"] .effect-timer))
       |> LazyHTML.attribute("data-remaining-ms")
 
-    assert_in_delta String.to_integer(shown), expected, 2_000
+    assert_in_delta String.to_integer(shown), :timer.minutes(5), 2_000
     render_patch(typist, ~p"/character")
-    assert has_element?(typist, "#effect-night", "until dawn at")
+    assert has_element?(typist, "#effect-night", "-3 Accuracy for another 5m.")
+    refute has_element?(typist, "#effect-night", "dawn")
+  end
+
+  test "and day then night again starts the five minutes over, at night as by day" do
+    typist = started(build_conn(), "0")
+    type(typist, "day")
+    type(typist, "night")
+
+    assert has_element?(typist, ~s(#effects [data-effect-id="night"] .effect-timer), "5m")
   end
 
   test "and gives the hour back once its time is up, which is when the page wakes" do
@@ -85,7 +87,7 @@ defmodule MiniLineageWeb.DevTimeTest do
     refute Clock.night?()
 
     :ok = Clock.force(:day)
-    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    Clock.put_now(~U[2026-07-01 23:00:00Z])
     assert Clock.night?()
   end
 

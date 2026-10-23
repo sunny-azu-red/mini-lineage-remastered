@@ -58,7 +58,7 @@ defmodule MiniLineageWeb.Layouts do
       <div :if={@dev_keys} id="dev-keys" phx-hook="DevKeys" hidden></div>
       <div id="wrapper">
         <div id="header">
-          <Layouts.site_header sound={@sound} />
+          <Layouts.site_header sound={@sound} now={@now} />
         </div>
 
         <div id="content">
@@ -262,8 +262,12 @@ defmodule MiniLineageWeb.Layouts do
   attr :interactive?, :boolean, default: true
   # The reader's kept choice, so the toggle is served as they left it.
   attr :sound, :boolean, default: true
+  # A LiveView's minute, for the game's clock; a page without one draws the time it was served at.
+  attr :now, DateTime, default: nil
 
   def site_header(assigns) do
+    assigns = assign(assigns, clock: Format.clock(Clock.local(assigns.now || Clock.now())))
+
     ~H"""
     <div id="site-header">
       <.link
@@ -281,8 +285,10 @@ defmodule MiniLineageWeb.Layouts do
           </g>
         </svg>
         <h1 class="header-title">Mini Lineage</h1>
-        <span class="header-subtitle">Remastered</span>
       </.link>
+      <%!-- Outside the anchor, which wraps its text and nothing else. The server alone draws it, so
+            the zone it names is the game's. --%>
+      <span id="game-clock" title="The game's clock, which night and every date keep">{@clock}</span>
       <%!-- Outside the anchor, so clicking it never also navigates. Ignored by patches, as the hook
             flips it to the face the data attributes name for the other state. --%>
       <button
@@ -308,18 +314,16 @@ defmodule MiniLineageWeb.Layouts do
   defp sound_label(true), do: "Sound FX Enabled (Click to Mute)"
   defp sound_label(false), do: "Sound FX Muted (Click to Unmute)"
 
-  # A LiveView's minute; a page without one, the error page, draws the time it was served at.
+  # A LiveView's minute; a page without one, the error page, draws the year it was served in.
   attr :now, DateTime, default: nil
 
   def footer(assigns) do
     version = Version.current()
-    local = Clock.local(assigns.now || Clock.now())
 
     assigns =
       assign(assigns,
         # The game's year, which turns over at the game's midnight rather than UTC's.
-        year: local.year,
-        clock: Format.clock(local),
+        year: Clock.local(assigns.now || Clock.now()).year,
         version: version,
         commit_url: Version.commit_url(version)
       )
@@ -334,8 +338,7 @@ defmodule MiniLineageWeb.Layouts do
         class="version-link"
       >{@version}</a>
       <span :if={!@commit_url} class={Version.build_class(@version)}>{@version}</span>
-      &copy; 2005 &ndash; {@year} <span class="delimiter">&bull;</span>
-      <span id="game-clock" title="The game's clock, which night and every date keep">🕰️ {@clock}</span>
+      &copy; 2005 &ndash; {@year}
     </div>
     """
   end

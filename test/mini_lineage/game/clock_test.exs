@@ -1,12 +1,15 @@
 defmodule MiniLineage.Game.ClockTest do
   @moduledoc """
-  Rules §15's night, in the zone the game is configured for, across summer time. The game keeps
-  UTC, so every instant here is written in UTC and the zone is the clock's business alone.
+  Rules §15's night in a zone with summer time, Bucharest's, which the suites put on the game for
+  this module alone. The game keeps UTC, so every instant here is written in UTC and the zone is
+  the clock's business alone. Not async: the zone is the node's.
   """
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use ExUnitProperties
 
   alias MiniLineage.Game.Clock
+
+  setup do: MiniLineage.Zone.put("Europe/Bucharest")
 
   defp utc(iso), do: iso |> DateTime.from_iso8601() |> elem(1)
   defp local_hour(at), do: DateTime.shift_zone!(at, "Europe/Bucharest").hour

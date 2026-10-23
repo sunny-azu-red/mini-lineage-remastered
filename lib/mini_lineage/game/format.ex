@@ -63,8 +63,8 @@ defmodule MiniLineage.Game.Format do
   end
 
   @doc """
-  The same time said in a sentence: "1m 37s", "2m", "37s", and from an hour on without its seconds,
-  "3h 12m". Twinned with `remainingLabel` in `hooks/effect-timers.js`.
+  The same time said in a sentence: "1m 37s", "2m", "37s", and from an hour on the hours alone,
+  "3h", as the badge counts them. Twinned with `remainingLabel` in `hooks/effect-timers.js`.
   """
   def remaining(ms) do
     seconds = seconds_left(ms)
@@ -73,8 +73,7 @@ defmodule MiniLineage.Game.Format do
       {0, 0, rest} -> "#{rest}s"
       {0, minutes, 0} -> "#{minutes}m"
       {0, minutes, rest} -> "#{minutes}m #{rest}s"
-      {hours, 0, _} -> "#{hours}h"
-      {hours, minutes, _} -> "#{hours}h #{minutes}m"
+      {hours, _, _} -> "#{hours}h"
     end
   end
 

@@ -24,7 +24,7 @@ defmodule MiniLineageWeb.NightPageTest do
   end
 
   test "the header shows the night, and the Shadow Sense that answers it", %{conn: conn} do
-    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    Clock.put_now(~U[2026-07-01 23:00:00Z])
     view = dark_elf(conn)
 
     assert has_element?(view, ~s(#effects [data-effect-id="night"]))
@@ -38,7 +38,7 @@ defmodule MiniLineageWeb.NightPageTest do
   test "the night is a debuff and Shadow Sense a buff, each change in Accuracy's colour", %{
     conn: conn
   } do
-    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    Clock.put_now(~U[2026-07-01 23:00:00Z])
     view = dark_elf(conn)
 
     assert has_element?(view, ~s(#effects .effect-debuff[data-effect-id="night"]))
@@ -51,13 +51,13 @@ defmodule MiniLineageWeb.NightPageTest do
   end
 
   test "the night says when dawn comes on the game's clock, and counts down to it", %{conn: conn} do
-    # 11 pm in Bucharest's summer, seven hours before its dawn.
-    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    # 11 pm, seven hours before dawn.
+    Clock.put_now(~U[2026-07-01 23:00:00Z])
     view = dark_elf(conn)
 
     assert has_element?(
              view,
-             ~s|#effects [data-effect-id="night"][title="Night (-3 Accuracy) until dawn at 6:00 am EEST"]|,
+             ~s|#effects [data-effect-id="night"][title="Night until dawn at 6:00 am UTC (-3 Accuracy)"]|,
              "7h"
            )
 
@@ -66,28 +66,28 @@ defmodule MiniLineageWeb.NightPageTest do
     assert has_element?(
              view,
              "#effect-night",
-             "-3 Accuracy until dawn at 6:00 am EEST, for another 7h."
+             "-3 Accuracy until dawn at 6:00 am UTC, for another 7h."
            )
 
     assert has_element?(view, ~s(#effect-night .timer[data-remaining-ms="25200000"]))
   end
 
-  test "the footer keeps the game's time, and moves on as each minute turns", %{conn: conn} do
-    Clock.put_now(~U[2026-07-01 20:00:00Z])
+  test "the banner keeps the game's time, and moves on as each minute turns", %{conn: conn} do
+    Clock.put_now(~U[2026-07-01 23:00:00Z])
     view = dark_elf(conn)
-    assert has_element?(view, "#game-clock", "🕰️ 11:00 pm EEST")
+    assert has_element?(view, "#game-clock", "11:00 pm UTC")
 
-    Clock.put_now(~U[2026-07-01 20:01:00Z])
+    Clock.put_now(~U[2026-07-01 23:01:00Z])
     send(view.pid, :minute)
 
-    assert has_element?(view, "#game-clock", "🕰️ 11:01 pm EEST")
+    assert has_element?(view, "#game-clock", "11:01 pm UTC")
   end
 
   test "and dawn takes both away without anything being pushed", %{conn: conn} do
-    Clock.put_now(~U[2026-07-01 20:00:00Z])
+    Clock.put_now(~U[2026-07-01 23:00:00Z])
     view = dark_elf(conn)
 
-    Clock.put_now(~U[2026-07-02 03:00:01Z])
+    Clock.put_now(~U[2026-07-02 06:00:01Z])
     send(view.pid, :dusk_or_dawn)
 
     refute has_element?(view, ~s(#effects [data-effect-id="night"]))

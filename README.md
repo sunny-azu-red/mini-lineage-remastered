@@ -19,7 +19,8 @@ checked against Interlude's own data.
   example for every rule, and `rules_test.exs` holds the code to it.
 - **Each race starts at home** in its own village. A 🌀 Gatekeeper in every town sends you along a
   route for Adena. The villages link to the 🏰 Town of Gludio, and the mainland goes on to Dion.
-- **Day and night.** From 22:00 to 06:00 Bucharest time, a 🌙 aura costs every character 3 Accuracy.
+- **Day and night.** From 22:00 to 06:00 on the game's clock (UTC unless `TIME_ZONE` sets another),
+  a 🌙 aura costs every character 3 Accuracy.
   Dark Elves win it back, and Elves rest faster under the Mother Tree.
 - **Stats that grow with you**, worked from the attributes and the level up to level 80, on L2's own
   EXP table.

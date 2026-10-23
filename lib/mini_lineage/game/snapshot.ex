@@ -244,8 +244,9 @@ defmodule MiniLineage.Game.Snapshot do
       aura[:until] &&
         "#{aura.until} at #{aura.ends_at |> DateTime.from_unix!(:millisecond) |> Clock.local() |> Format.clock()}"
 
-    tooltip = if parts == [], do: aura.label, else: "#{aura.label} (#{Enum.join(parts, ", ")})"
-    tooltip = if until, do: "#{tooltip} until #{until}", else: tooltip
+    # The name and what bounds it, then what it changes in brackets, as every effect is titled.
+    named = if until, do: "#{aura.label} until #{until}", else: aura.label
+    tooltip = if parts == [], do: named, else: "#{named} (#{Enum.join(parts, ", ")})"
 
     %{
       id: aura.id,

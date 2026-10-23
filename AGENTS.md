@@ -104,7 +104,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 |---|---|---|
 | Ctrl+Q | deletes the character; kept by choice, death notwithstanding, for trying every set from one browser | `quit_test.exs` |
 | `adena` | +10,000 Adena every time; `Actions.dev_adena/1` refuses in a release | `dev_adena_test.exs` |
-| `night`, `day` | `Clock.force/1` holds the node at that hour for five minutes or until the other word, the 🌙 counting them down; pages redraw off `"world"` and wake again when the hour is given back. A pinned time beats it | `dev_time_test.exs` |
+| `night`, `day` | `Clock.force/1` holds the node at that hour for exactly five minutes or until the other word, the 🌙 counting them down with no "until dawn"; then the real hour is back, a real night with its own countdown. Pages redraw off `"world"` and wake when the hour is given back. A pinned time beats it | `dev_time_test.exs` |
 | `sp` | +10,000 SP every time, to try the trainer; `Actions.dev_sp/1` refuses in a release | `dev_sp_test.exs` |
 | `half` | HP and MP to half, XP halfway to the next level; `Actions.dev_half/1` refuses in a release | `dev_half_test.exs` |
 | `frail` | 1 HP, so the browser suites can reach a death; `Actions.dev_frail/1` refuses in a release | `dev_frail_test.exs` |
@@ -180,10 +180,11 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **Nor on the hour.** Night (rules §15) is the wall clock in a zone. `Clock.put_now/1` pins a UTC
   instant for the calling process and, through `$callers`, a LiveView it starts; a character's
   process is pinned inside `Characters.mutate/2`. Every stored time is UTC, and `:time_zone` decides
-  two things: night, and every day, hour and year the game draws, a `<.stamp>`'s and the footer's
-  (`Clock.local/1`), never `Date.utc_today/0`, so a date is the
-  server's from the first draw and a test of one pins `Clock.put_now/1` and picks an instant whose
-  day the zone moves. A browser suite never reads the night.
+  two things: night, and every day, hour and year the game draws, a `<.stamp>`'s, the banner's
+  clock and the footer's year (`Clock.local/1`), never `Date.utc_today/0`, so a date is the
+  server's from the first draw. The suites play UTC; a test of what a zone changes puts one for its
+  module with `MiniLineage.Zone.put/1` (never async) and picks an instant whose day the zone moves.
+  A browser suite never reads the night.
 - **A property states what holds for every input; fixtures stay the contract with JavaScript.** A
   counterexample in a twinned formatter becomes a fixture row. Weight generators toward the boundary.
   Dice are a generated list of integers scaled into `[0, 1)` and cycled through `Rng.put_source/1`,
@@ -524,7 +525,8 @@ Each of these is here because it was got wrong once.
   does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and
   inventory pages and every item's line against the stat names, a bonus before its stat, a rate's
   % and HP mended.
-- **A time on a row is short**, as `Format.remaining/1` writes it ("3s", "2m", "1m 37s"), with the
+- **A time on a row is short**, as `Format.remaining/1` writes it ("3s", "2m", "1m 37s", and from an
+  hour the hours alone, "3h", never "3h 12m"), with the
   fight's tenths where it has them ("Cast 5.3s, reuse 10.4s."). Narrative prose keeps its words.
 - **A place keeps its role; its keeper's name is in what is said there.** The Gatekeeper is
   "Gatekeeper" in the dropdown and the header, and by its town's keeper's name (Roxxy at Talking
@@ -560,12 +562,13 @@ Each of these is here because it was got wrong once.
   environment, so the suites and the bench play `.env.test`'s, and a reading names its rates.
   `Hunt` takes a rate as an argument and `Actions` passes `Rules.rate/1`, so a test states the rate
   it works at. The `balance-study` skill checks a reading was taken at the private rates. The zone
-  is the same: `config.exs` holds UTC, every env file and CI's jobs `TIME_ZONE=Europe/Bucharest`,
-  `runtime.exs` refuses a zone `Tz` does not know, and `rules_test.exs` holds the two to §15. It
+  is UTC everywhere but where a server sets `TIME_ZONE` (the owner's dev `.env` sets
+  Europe/Bucharest; `.env.example` carries it commented, and no suite, CI job or example file sets
+  it), `runtime.exs` refuses a zone `Tz` does not know, and `rules_test.exs` holds this to §15. It
   moves only which hours are night and how a time is written, never what is stored. The game shows
-  its clock where a player meets it: the footer's 🕰️ (`GameLive` redraws it at each minute's
-  turn, so only the server names the zone), and the 🌙 Night aura's "until dawn at 6:00 am EEST",
-  counted down like any effect with an end.
+  its clock where a player meets it: the banner's, in the subtitle's old place (`GameLive` redraws
+  it at each minute's turn, so only the server names the zone), and the 🌙 Night aura's "until
+  dawn at 6:00 am UTC", counted down like any effect with an end.
 
 ### Comments
 

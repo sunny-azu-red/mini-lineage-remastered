@@ -12,9 +12,10 @@ defmodule MiniLineageWeb.HallsTest do
   alias MiniLineage.Characters.{Record, Store}
   alias MiniLineage.Game.{Clock, Constants, Player}
 
+  # A zone whose day differs from UTC's, so a fall's day is shown to be the game's.
   setup do
     Repo.delete_all(Record)
-    :ok
+    MiniLineage.Zone.put("Europe/Bucharest")
   end
 
   # A character played through the page, as a browser would.

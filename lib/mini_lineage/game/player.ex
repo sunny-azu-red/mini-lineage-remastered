@@ -284,9 +284,14 @@ defmodule MiniLineage.Game.Player do
     |> Kernel.++(raised(player))
   end
 
-  # What the night puts on lasts until dawn, which a debug build holding the night has none of.
+  # What the night puts on lasts until dawn, or a held night until its five minutes are up, which
+  # is no dawn and is not called one.
   defp until_dawn(%{id: id} = aura, %DateTime{} = dawn) when id in ~w(night shadow_sense),
-    do: Map.merge(aura, %{ends_at: DateTime.to_unix(dawn, :millisecond), until: "dawn"})
+    do:
+      Map.merge(aura, %{
+        ends_at: DateTime.to_unix(dawn, :millisecond),
+        until: if(!Clock.held?(), do: "dawn")
+      })
 
   defp until_dawn(aura, _dawn), do: aura
 

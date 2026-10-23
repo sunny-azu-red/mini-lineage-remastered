@@ -28,7 +28,7 @@ defmodule MiniLineage.Game.RulesTest do
     do: [hp_regen: {:mul, number(n)}, mp_regen: {:mul, number(n)}]
 
   # A §16 row's "when it holds", as a moment and a place where it does.
-  defp circumstance("at night"), do: {~U[2026-07-01 20:00:00Z], "gludio"}
+  defp circumstance("at night"), do: {~U[2026-07-01 23:00:00Z], "gludio"}
   defp circumstance("in Elven Village"), do: {~U[2026-07-01 09:00:00Z], "elven-village"}
 
   defp number(cell), do: cell |> String.replace(",", "") |> Float.parse() |> elem(0)
@@ -726,9 +726,9 @@ defmodule MiniLineage.Game.RulesTest do
       end
 
       assert accuracy.(0, ~U[2026-07-01 09:00:00Z]) == 34
-      assert accuracy.(0, ~U[2026-07-01 20:00:00Z]) == 31
+      assert accuracy.(0, ~U[2026-07-01 23:00:00Z]) == 31
       assert accuracy.(3, ~U[2026-07-01 09:00:00Z]) == 33
-      assert accuracy.(3, ~U[2026-07-01 20:00:00Z]) == 33
+      assert accuracy.(3, ~U[2026-07-01 23:00:00Z]) == 33
       assert Rules.modifiers(:night) == [accuracy: {:add, -3}]
     end
 
@@ -769,19 +769,19 @@ defmodule MiniLineage.Game.RulesTest do
       assert Hunt.reward(35, 5, 6, 1) == 175
     end
 
-    test "§15 the zone is UTC in config.exs, and Europe/Bucharest in every env file" do
+    test "§15 the zone is UTC unless a server sets another, as the suites and CI play" do
       zone =
         "config/config.exs"
         |> Config.Reader.read!(env: :test)
         |> get_in([:mini_lineage, :time_zone])
 
       assert zone == "Etc/UTC"
-      assert @rules =~ "this game is played on **Europe/Bucharest**"
+      assert @rules =~ "which is **UTC** unless a server sets\nanother as `TIME_ZONE`"
 
       for file <- ~w(.env.example .env.test.example),
-          do: assert(File.read!(file) =~ ~r/^TIME_ZONE=Europe\/Bucharest$/m, file)
+          do: refute(File.read!(file) =~ ~r/^TIME_ZONE=/m, file)
 
-      assert Application.fetch_env!(:mini_lineage, :time_zone) == "Europe/Bucharest"
+      assert Application.fetch_env!(:mini_lineage, :time_zone) == "Etc/UTC"
     end
 
     test "§22 retail's rates are config.exs's, the private ones every env file's" do

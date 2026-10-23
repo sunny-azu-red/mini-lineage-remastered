@@ -9,7 +9,7 @@ defmodule MiniLineage.Game.NightTest do
   alias MiniLineage.Game.{Clock, Constants, Player, Snapshot}
 
   @day ~U[2026-07-01 09:00:00Z]
-  @night ~U[2026-07-01 20:00:00Z]
+  @night ~U[2026-07-01 23:00:00Z]
 
   # In Gludio, where no race is at home and the Mother Tree blesses nobody.
   defp born(race_id) do
@@ -63,7 +63,7 @@ defmodule MiniLineage.Game.NightTest do
       at(@night, fn -> Snapshot.build(born(3)).effects end)
       |> Map.new(&{&1.id, &1.tooltip})
 
-    assert tooltips["night"] == "Night (-3 Accuracy) until dawn at 6:00 am EEST"
-    assert tooltips["shadow_sense"] == "Shadow Sense (+3 Accuracy) until dawn at 6:00 am EEST"
+    assert tooltips["night"] == "Night until dawn at 6:00 am UTC (-3 Accuracy)"
+    assert tooltips["shadow_sense"] == "Shadow Sense until dawn at 6:00 am UTC (+3 Accuracy)"
   end
 end
