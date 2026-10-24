@@ -50,6 +50,10 @@ defmodule MiniLineage.Game.Actions do
   # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
   @dev_adena 10_000
   @dev_sp 10_000
+  @dev_twink_level 15
+  @dev_twink_potions {"Lesser Healing Potion", 30}
+  @dev_twink_sp 10_000
+  @dev_twink_adena 50_000
 
   @doc "Creates the character: a race, a path and a name, all checked here."
   def start(player, race_id, path, name) do
@@ -627,6 +631,104 @@ defmodule MiniLineage.Game.Actions do
         }
 
         {Player.gain_experience(player, needed), {:ok, flash}}
+    end
+  end
+
+  @doc """
+  Debug builds only: the run put back to one saved state however often it is typed, Level 15 with
+  every lesson its trainer teaches by then, the best of every line its village's traders sell its
+  set, the kit's own line equipped (with the shield beside a one-handed weapon), potions, SP and
+  Adena, the default orders with every skill in use, and both bars full under the new gear.
+  """
+  def dev_twink(%{dead: true} = player), do: fallen(player)
+
+  def dev_twink(player) do
+    if Version.debug_build?() and Player.started?(player) do
+      level = Player.level(player)
+      {potion, count} = @dev_twink_potions
+
+      twinked =
+        Player.restore_fully(%{
+          Map.merge(player, Player.default_orders())
+          | experience: Math.xp_for_level(@dev_twink_level),
+            skills: twink_skills(player),
+            items: twink_items(player),
+            sp: @dev_twink_sp,
+            adena: @dev_twink_adena
+        })
+
+      text =
+        ~s(A debug build puts you back at <span class="level">Level #{@dev_twink_level}</span> with every skill your trainer teaches by then, the best your village sells, #{count} × #{potion}, <span class="sp">#{Format.number(@dev_twink_sp)} SP</span> and #{Format.adena(@dev_twink_adena)}.)
+
+      flash =
+        if @dev_twink_level > level,
+          do: %{
+            text: text,
+            type: :info,
+            levelled: Narrative.alert(Narrative.build_congratulated(@dev_twink_level))
+          },
+          else: %{text: text, type: :info}
+
+      {twinked, {:ok, flash}}
+    else
+      {player, {:error, :invalid, @errors.invalid}}
+    end
+  end
+
+  # Each skill at the last level its trainer teaches by the twink's level.
+  defp twink_skills(player) do
+    for lesson <- Rules.lessons(Rules.set(player.race_id, player.path).name),
+        lesson.learn_at <= @dev_twink_level,
+        reduce: %{} do
+      skills -> Map.update(skills, lesson.skill, lesson.level, &max(&1, lesson.level))
+    end
+  end
+
+  # What it already carries of the set is kept under its own id, so typing it again writes only
+  # what was sold, destroyed or bought since.
+  defp twink_items(player) do
+    {potion, count} = @dev_twink_potions
+
+    {items, _left} =
+      Enum.map_reduce(twink_gear(player) ++ [{potion, false, count}], player.items, fn
+        {name, worn, count}, left ->
+          case Enum.find(left, &(&1.name == name)) do
+            nil -> {Player.new_item(name, worn, count), left}
+            entry -> {%{entry | equipped: worn, count: count}, List.delete(left, entry)}
+          end
+      end)
+
+    items
+  end
+
+  # One item per line (a slot, a type and the hands it takes, so a one-handed sword and a
+  # two-handed one are both kept), the dearest of each, as {name, equipped, count}.
+  defp twink_gear(player) do
+    set = Rules.set(player.race_id, player.path)
+    {kit, _carried} = Rules.kit(player.race_id, player.path)
+    kit_weapon = kit |> Enum.map(&Rules.item/1) |> Enum.find(&(&1.slot == :weapon))
+
+    best =
+      set.race_id
+      |> Rules.hometown()
+      |> Rules.stock(set)
+      |> Enum.reject(&Rules.stacks?/1)
+      |> Enum.sort_by(&Shop.price/1, :desc)
+      |> Enum.uniq_by(&{&1.slot, &1.type, &1.hands})
+
+    weapons = Enum.filter(best, &(&1.slot == :weapon))
+    wielded = Enum.find(weapons, &(&1.type == kit_weapon.type and &1.hands == kit_weapon.hands))
+    one_handed? = Enum.any?(weapons, &(&1.hands == 1))
+
+    for item <- best, item.slot != :shield or one_handed? do
+      worn =
+        case item.slot do
+          :weapon -> item == wielded
+          :shield -> wielded.hands == 1
+          _armour_or_necklace -> true
+        end
+
+      {item.name, worn, 1}
     end
   end
 

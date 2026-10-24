@@ -34,10 +34,11 @@ defmodule MiniLineageWeb.GameLive do
     {~w(d a y), :day},
     {~w(h a l f), :half},
     {~w(f r a i l), :frail},
+    {~w(t w i n k), :twink},
     # Before `lvl`, which it ends in: the first match wins.
     {~w(m a x l v l), :max_level},
     {~w(l v l), :level},
-    {~w(ctrl+q), :quit}
+    {~w(q u i t), :quit}
   ]
   @dev_longest @dev_sequences |> Enum.map(fn {keys, _} -> length(keys) end) |> Enum.max()
 
@@ -367,7 +368,7 @@ defmodule MiniLineageWeb.GameLive do
       )
       when is_binary(key) do
     # Every key counts, so whatever comes between two keys of a sequence breaks it.
-    key = if key =~ ~r/\A(ctrl\+)?[a-z]\z/, do: key, else: "other"
+    key = if key =~ ~r/\A[a-z]\z/, do: key, else: "other"
     keys = Enum.take(socket.assigns.keys ++ [key], -@dev_longest)
 
     case Enum.find(@dev_sequences, fn {sequence, _} -> List.ends_with?(keys, sequence) end) do
@@ -384,6 +385,7 @@ defmodule MiniLineageWeb.GameLive do
   defp dev(socket, :frail), do: apply_action(socket, &Actions.dev_frail/1, nil)
   defp dev(socket, :level), do: apply_action(socket, &Actions.dev_level/1, nil)
   defp dev(socket, :max_level), do: apply_action(socket, &Actions.dev_max_level/1, nil)
+  defp dev(socket, :twink), do: apply_action(socket, &Actions.dev_twink/1, nil)
 
   # Every page redraws, not only this one: the hour is the world's.
   defp dev(socket, time) when time in [:night, :day] do

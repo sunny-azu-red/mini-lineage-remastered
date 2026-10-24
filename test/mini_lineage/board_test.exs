@@ -119,6 +119,15 @@ defmodule MiniLineage.BoardTest do
       assert_receive {:board, %{nil => [%{name: "Climber"}]}}, 2_000
     end
 
+    test "drops a run forgotten, with no other write to wait for" do
+      %{session: session} = run("Quitter", xp: 50)
+      Board.character_changed()
+      assert_receive {:board, %{nil => [%{name: "Quitter"}]}}, 2_000
+
+      Characters.forget(session)
+      assert_receive {:board, %{nil => []}}, 2_000
+    end
+
     test "and pushes nothing when nothing on it moved" do
       Board.character_changed()
 

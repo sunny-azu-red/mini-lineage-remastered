@@ -1,7 +1,7 @@
 /**
  * Debug builds only: relays every key pressed outside a text field, so the server can spot a
  * sequence of `GameLive`'s `@dev_sequences` and anything between breaks it. A letter goes as
- * itself, a Ctrl chord as `ctrl+<letter>`, the rest as `other`; a modifier alone is not a key.
+ * itself and the rest, a chord included, as `other`; a modifier alone is not a key.
  * The server keeps the keys and decides, and a release never draws the element this mounts on.
  */
 const MODIFIERS = ['Control', 'Shift', 'Alt', 'Meta', 'CapsLock'];
@@ -14,8 +14,7 @@ export const DevKeys = {
                 return;
 
             const letter = /^[a-z]$/i.test(e.key ?? '') ? e.key.toLowerCase() : null;
-            const key = !letter || e.altKey || e.metaKey ? 'other'
-                : e.ctrlKey ? `ctrl+${letter}` : letter;
+            const key = !letter || e.ctrlKey || e.altKey || e.metaKey ? 'other' : letter;
             this.pushEvent('key', { key });
         };
         window.addEventListener('keydown', this.onKeyDown);

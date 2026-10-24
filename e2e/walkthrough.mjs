@@ -479,6 +479,13 @@ try {
         /Congratulations! You have reached Level 2\./.test(await text('#levelled.alert-triumph'))
         && await page.evaluate(() => document.querySelector('#levelled').nextElementSibling?.id === 'flash'),
         await text('#levelled'));
+    await page.keyboard.type('twink');
+    await page.waitForFunction(() =>
+        document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '15', null, { timeout: 5000 });
+    check('...and typing twink restores Level 15 with 30 potions and 50,000 Adena',
+        await page.locator('#consumables [data-key^="consumable-"][data-value="30"]').count() === 1
+        && await page.getAttribute('#sidebar [data-key="adena"]', 'data-value') === '50000',
+        await text('#sidebar'));
     await page.keyboard.type('maxlvl');
     await page.waitForFunction(() =>
         document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '80', null, { timeout: 5000 });
@@ -549,15 +556,25 @@ try {
     // ---- the debug build's Quit, kept for trying every set from one browser -----------------
     check('the town\'s dropdown offers no Quit, being the game\'s',
         await page.locator('#travel-form option[value="quit"]').count() === 0);
-    for (const combo of ['q', 'Control+c', 'Control+c'])
+    for (const combo of ['q', 'u', 'i', 'Control+c', 't'])
         await page.keyboard.press(combo);
     // Answered or not, a quit would have landed well inside this: there is nothing to wait for.
     await page.waitForTimeout(500);
-    check('Q alone, or Ctrl+C twice, is not Ctrl+Q', (await state()).screen === 'town',
+    check('quit broken by Ctrl+C is not quit', (await state()).screen === 'town',
         (await state()).screen);
-    await page.keyboard.press('Control+q');
+    await page.keyboard.type('quit');
     await onScreen('start');
-    check('Ctrl+Q goes back to game start, with no character', (await state()).started === false);
+    check('typing quit goes back to game start, with no character', (await state()).started === false);
+    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await onScreen('highscores');
+    // The board pushes once its window closes, so a row drawn on arrival may still be on its way out.
+    const dropped = await page.waitForFunction((id) => !document.getElementById(id), rowId, { timeout: 5000 })
+        .then(() => true, () => false);
+    check('...and the Halls drop it, with no other write to wait for', dropped, rowId);
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await onScreen('start');
     await create('AgainBot', 3, 'fighter');
     check('...and the same browser starts another at once',
         (await text('#main .header-name')) === '🌑 Dark Elf Village', await text('#main .header-name'));

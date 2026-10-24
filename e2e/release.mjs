@@ -52,21 +52,22 @@ try {
     await page.keyboard.type(night ? 'day' : 'night');
     await page.keyboard.type('lvl');
     await page.keyboard.type('maxlvl');
+    await page.keyboard.type('twink');
     await page.keyboard.type('half');
     await page.keyboard.type('frail');
     await page.keyboard.type('sp');
-    await page.keyboard.press('Control+q');
+    await page.keyboard.type('quit');
     await page.waitForTimeout(500);
     check('...nor does typing the hour change it',
         await page.locator('#effects [data-effect-id="night"]').count() === night);
     check('...nor typing sp the SP, which no sidebar shows',
         await page.locator('#sidebar [data-key="sp"]').count() === 0);
-    check('...nor typing lvl or maxlvl the level',
+    check('...nor typing lvl, maxlvl or twink the level',
         await page.getAttribute('#sidebar [data-key="level"]', 'data-value') === '1');
     check('...nor typing half or frail the HP',
         await page.getAttribute('#sidebar [data-key="hp"]', 'data-value')
         === await page.getAttribute('#sidebar [data-key="max-hp"]', 'data-value'));
-    check('...nor does Ctrl+Q end the character',
+    check('...nor does typing quit end the character',
         (await page.textContent('#main .header-name'))?.trim() === '🏕️ Orc Village');
     check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
 } catch (err) {

@@ -96,13 +96,13 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
 Dev and the e2e server only, never a release. Each is gated on `Version.debug_build?/0` twice, where
 it is drawn and where it acts. Each has a test that turns the build off and finds nothing, and
 `release.mjs` checks them against the real image. Keys go through `DevKeys`, which relays every key
-pressed outside a text field (a letter, a Ctrl chord as `ctrl+<letter>`, anything else as `other`, a
+pressed outside a text field (a letter as itself, anything else, a chord included, as `other`, a
 lone modifier not at all), so anything between two keys breaks a sequence. A new sequence goes in
 `GameLive`'s `@dev_sequences`. No dev tool goes in the town's dropdown: it is the game's.
 
 | Key | Does | Test |
 |---|---|---|
-| Ctrl+Q | deletes the character; kept by choice, death notwithstanding, for trying every set from one browser | `quit_test.exs` |
+| `quit` | deletes the character, its row, items and encounters; kept by choice, death notwithstanding, for trying every set from one browser | `quit_test.exs` |
 | `adena` | +10,000 Adena every time; `Actions.dev_adena/1` refuses in a release | `dev_adena_test.exs` |
 | `night`, `day` | `Clock.force/1` holds the node at that hour for exactly five minutes or until the other word, the 🌙 counting them down with no "until dawn"; then the real hour is back, a real night with its own countdown. Pages redraw off `"world"` and wake when the hour is given back. A pinned time beats it | `dev_time_test.exs` |
 | `sp` | +10,000 SP every time, to try the trainer; `Actions.dev_sp/1` refuses in a release | `dev_sp_test.exs` |
@@ -110,6 +110,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 | `frail` | 1 HP, so the browser suites can reach a death; `Actions.dev_frail/1` refuses in a release | `dev_frail_test.exs` |
 | `lvl` | the exact EXP the next level needs, through `Player.gain_experience/2` so both bars refill (rules §12); `Actions.dev_level/1` refuses in a release and at the last level | `dev_level_test.exs` |
 | `maxlvl` | the same up to the last level, through `Actions.dev_max_level/1`; matched before `lvl` | `dev_level_test.exs` |
+| `twink` | puts the run back to one saved state however often it is typed: Level 15, every lesson its trainer teaches by then, the dearest of every line its village sells its set (a one-handed and a two-handed sword or staff both), the kit's line in hand and the shield, only when a one-handed weapon is among them, worn beside one, 30 Lesser Healing Potions, 10,000 SP, 50,000 Adena and the default Battle Orders, every skill in use, and nothing else carried, the starting kit included; a piece still carried keeps its id; `Actions.dev_twink/1` refuses in a release | `dev_twink_test.exs` |
 | (none) | game start comes with a name from `@dev_name_heads` and `@dev_name_tails` already written in | `dev_name_test.exs` |
 
 ## Working here

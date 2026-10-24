@@ -133,7 +133,8 @@ shortcuts. Any other key between two letters breaks a word.
 | `half` | HP and MP to half, and the XP bar halfway to the next level |
 | `frail` | 1 HP, so the next fight can end the run |
 | `lvl` / `maxlvl` | exactly the EXP for the next level, or for level 80 |
-| Ctrl+Q | deletes the character (Firefox on Linux quits instead) |
+| `twink` | restores one saved state, however often it is typed: Level 15 with every skill the trainer teaches by then, the best gear the village sells the set in every weapon line (the shield only beside a one-handed weapon), 30 Lesser Healing Potions, 10,000 SP, 50,000 Adena and the default Battle Orders |
+| `quit` | deletes the character |
 
 Game start also comes with a random name already written in, so trying another race is one click.
 

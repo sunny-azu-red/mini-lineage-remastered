@@ -40,15 +40,20 @@ defmodule MiniLineage.Characters do
   def forget_process(session), do: stop_process(session)
 
   @doc """
-  Forgets a character entirely, process and row, for tests and the debug build's Ctrl+Q. A release
+  Forgets a character entirely, process and row, for tests and the debug build's `quit`. A release
   deletes nothing.
   """
   def forget(session) do
     stop_process(session)
 
     case Store.load_by_session(session) do
-      {id, _player} -> Store.delete(id)
-      nil -> :ok
+      # The process's stop only re-stamps the board's dots, which would keep the row standing.
+      {id, _player} ->
+        Store.delete(id)
+        MiniLineage.Board.character_changed()
+
+      nil ->
+        :ok
     end
 
     :ok
