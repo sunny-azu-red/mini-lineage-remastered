@@ -8,7 +8,7 @@ was got wrong once.
 - **Size is hierarchy, never container.** 13px is anything read: prose, an alert, a table cell, a
   sidebar value. 12px is a control, and a shelf's heading row. 11px is a label (a column's, a
   field's, a log entry's head), set by one rule in `base.css` at weight 600, 0.1em, in capitals; the footer, the level
-  badge and the banner's subtitle are 11px too, each set where it stands. The exceptions are 10px
+  badge and the banner's clock are 11px too, each set where it stands. The exceptions are 10px
   for the figures and labels inside the HP, MP and XP bars, because a 19px bar has no room, the 8px
   effect badge below, and the banner's 26px title. A field label's 1px
   `margin-top` is optical: `text-box-trim` is missing from Firefox.

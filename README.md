@@ -129,7 +129,7 @@ shortcuts. Any other key between two letters breaks a word.
 |---|---|
 | `adena` | 10,000 Adena into the purse |
 | `sp` | 10,000 SP, to try the trainer |
-| `night` / `day` | holds the whole server at that hour until the other word or a restart |
+| `night` / `day` | holds the whole server at that hour for five minutes, or until the other word |
 | `half` | HP and MP to half, and the XP bar halfway to the next level |
 | `frail` | 1 HP, so the next fight can end the run |
 | `lvl` / `maxlvl` | exactly the EXP for the next level, or for level 80 |
