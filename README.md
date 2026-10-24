@@ -135,6 +135,8 @@ shortcuts. Any other key between two letters breaks a word.
 | `lvl` / `maxlvl` | exactly the EXP for the next level, or for level 80 |
 | Ctrl+Q | deletes the character (Firefox on Linux quits instead) |
 
+Game start also comes with a random name already written in, so trying another race is one click.
+
 ### Development tools
 
 Both are `:dev` only and neither changes the CSP.

@@ -16,8 +16,12 @@ defmodule MiniLineageWeb.GameLive do
   alias MiniLineageWeb.{Controls, Kept, Paths, Screens}
 
   # Debug builds only: a name already written on game start, so trying another race is one click.
-  @dev_names ~w(Aerin Baelor Cadmus Darion Elowen Fenris Galen Hadrian Isolde Jorah Kaelith Lucan
-                Morwen Nerys Orin Perrin Quill Rowan Sorcha Talia Ulric Vesper Wren Ysolde)
+  # A head and a tail, so the owner's test runs don't meet the same few names on the Halls.
+  @dev_name_heads ~w(Aer Al Ar Baer Bran Cad Cor Dar Drav Eir El Fen Gal Gwen Had Hal Is Ith Jor
+                     Kael Kor Lir Luc Mal Mor Ner Nim Or Oth Per Quel Row Ryn Sel Sor Tal Thal Ul
+                     Val Ves Wyl Ys Zar)
+  @dev_name_tails ~w(ion wen ric dor iel an ath is mir ra or eth win ys ane ok us anor ild ara
+                     en ias essa orn)
 
   # What every page shares, whoever it belongs to: today, a debug build forcing the hour.
   @world "world"
@@ -148,7 +152,9 @@ defmodule MiniLineageWeb.GameLive do
       fight: if(screen == "hunt", do: last_fight(socket, town)),
       next_move: nil,
       dev_name:
-        if(screen == "start" and socket.assigns.debug, do: Math.random_element(@dev_names)),
+        if(screen == "start" and socket.assigns.debug,
+          do: Math.random_element(@dev_name_heads) <> Math.random_element(@dev_name_tails)
+        ),
       # A fault belongs to the error screen it brought you to, not to the next visit to it.
       error_detail: if(screen == "error", do: socket.assigns.error_detail)
     )

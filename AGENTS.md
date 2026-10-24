@@ -110,7 +110,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 | `frail` | 1 HP, so the browser suites can reach a death; `Actions.dev_frail/1` refuses in a release | `dev_frail_test.exs` |
 | `lvl` | the exact EXP the next level needs, through `Player.gain_experience/2` so both bars refill (rules §12); `Actions.dev_level/1` refuses in a release and at the last level | `dev_level_test.exs` |
 | `maxlvl` | the same up to the last level, through `Actions.dev_max_level/1`; matched before `lvl` | `dev_level_test.exs` |
-| (none) | game start comes with a name from `@dev_names` already written in | `dev_name_test.exs` |
+| (none) | game start comes with a name from `@dev_name_heads` and `@dev_name_tails` already written in | `dev_name_test.exs` |
 
 ## Working here
 
