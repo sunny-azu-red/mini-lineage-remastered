@@ -63,7 +63,7 @@ defmodule MiniLineage.Game.TrainerTest do
     assert {_, {:error, :no_sp, _}} = Actions.learn(human(5, 99), "Power Strike", 2)
     assert {_, {:error, :no_lesson, _}} = Actions.learn(human(20, 9_999), "Wind Strike", 2)
 
-    away = %{human(5, 1_000) | location: "gludio"}
+    away = %{human(5, 1_000) | location: "town-of-gludio"}
     assert {_, {:error, :no_trainer, _}} = Actions.learn(away, "Power Strike", 2)
 
     elsewhere = %{human(5, 1_000) | location: "elven-village"}

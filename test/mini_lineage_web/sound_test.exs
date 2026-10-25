@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.SoundTest do
     assert has_element?(view, "#flash.alert-info")
     refute_push_event(view, "play-sound", %{})
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
     view |> form("#buy-form", %{"item" => "Bone Dagger"}) |> render_submit()
     assert has_element?(view, "#flash.alert-success")
     assert_push_event(view, "play-sound", %{name: "success"})

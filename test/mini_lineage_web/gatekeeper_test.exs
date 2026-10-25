@@ -60,9 +60,9 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, _session, conn} = elf(build_conn(), 0)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    assert view |> element("#route-gludio") |> render() =~ "3,700"
+    assert view |> element("#route-town-of-gludio") |> render() =~ "3,700"
     # The button says what happens, so a choice only names the place, as the old shops' did.
-    assert view |> element(~s(#teleport-form option[value="gludio"])) |> render() =~
+    assert view |> element(~s(#teleport-form option[value="town-of-gludio"])) |> render() =~
              ~r/>\s*Pick 🏰 Town of Gludio\s*</
 
     refute has_element?(view, ~s(#teleport-form option[value="dark-elf-village"]))
@@ -75,7 +75,10 @@ defmodule MiniLineageWeb.GatekeeperTest do
     assert view |> element("#teleport-form button") |> render() =~ "Return"
 
     # A browser names the field that changed; the test client only when told to.
-    view |> form("#teleport-form", %{"to" => "gludio"}) |> render_change(%{"_target" => ["to"]})
+    view
+    |> form("#teleport-form", %{"to" => "town-of-gludio"})
+    |> render_change(%{"_target" => ["to"]})
+
     assert view |> element("#teleport-form button") |> render() =~ "Teleport"
   end
 
@@ -92,7 +95,7 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, session, conn} = elf(build_conn(), 3_699)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    teleport(view, "gludio")
+    teleport(view, "town-of-gludio")
     assert has_element?(view, "#flash", "Mirabel will not send you on for less than")
     assert has_element?(view, "#flash .adena", "🪙 3,700 Adena")
     assert stored(session).location == "elven-village"
@@ -103,7 +106,7 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, session, conn} = elf(build_conn(), 100_000)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    for to <- ["dark-elf-village", "dion", "elven-village", "atlantis"] do
+    for to <- ["dark-elf-village", "town-of-dion", "elven-village", "atlantis"] do
       render_hook(view, "travel", %{"to" => to})
       assert Characters.snapshot(session).location == "elven-village", to
     end
@@ -115,24 +118,24 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {_view, session, conn} = elf(build_conn(), 10_000)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    teleport(view, "gludio")
-    assert_patch(view, "/gludio")
+    teleport(view, "town-of-gludio")
+    assert_patch(view, "/town-of-gludio")
     assert has_element?(view, "#flash", "You pay Mirabel")
     assert has_element?(view, "#flash .adena", "🪙 3,700 Adena")
-    assert %{location: "gludio", adena: 6_300} = stored(session)
+    assert %{location: "town-of-gludio", adena: 6_300} = stored(session)
 
     view |> form("#travel-form", %{"place" => "gatekeeper"}) |> render_submit()
-    teleport(view, "dion")
+    teleport(view, "town-of-dion")
 
-    assert_patch(view, "/dion")
-    assert %{location: "dion", adena: 2_200} = stored(session)
+    assert_patch(view, "/town-of-dion")
+    assert %{location: "town-of-dion", adena: 2_200} = stored(session)
   end
 
   test "what a trip said stays for its arrival, and not for a walk to the Gatekeeper after it" do
     {_view, _session, conn} = elf(build_conn(), 10_000)
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    teleport(view, "gludio")
+    teleport(view, "town-of-gludio")
     assert has_element?(view, "#flash")
 
     view |> form("#travel-form", %{"place" => "gatekeeper"}) |> render_submit()
@@ -141,22 +144,22 @@ defmodule MiniLineageWeb.GatekeeperTest do
 
   test "lists the towns not open yet, and will not send anybody to them" do
     {_view, session, conn} = elf(build_conn(), 100_000)
-    Characters.mutate(session, &{%{&1 | location: "dion"}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/dion/gatekeeper")
+    Characters.mutate(session, &{%{&1 | location: "town-of-dion"}, :ok})
+    {:ok, view, _html} = live(conn, ~p"/town-of-dion/gatekeeper")
 
-    for slug <- ~w(giran giran-harbor) do
+    for slug <- ~w(town-of-giran giran-harbor) do
       assert view |> element("#route-#{slug}") |> render() =~ "not open yet"
       assert has_element?(view, ~s(#teleport-form option[value="#{slug}"][disabled]))
       assert render_hook(view, "travel", %{"to" => slug}) =~ "cannot send you there yet"
     end
 
-    assert %{location: "dion", adena: 100_000} = Characters.snapshot(session)
+    assert %{location: "town-of-dion", adena: 100_000} = Characters.snapshot(session)
   end
 
   test "a character asking for any other town is put back in the one it stands in" do
     {_view, _session, conn} = elf(build_conn(), 0)
 
-    for path <- ["/gludio", "/orc-village/gatekeeper", "/"] do
+    for path <- ["/town-of-gludio", "/orc-village/gatekeeper", "/"] do
       assert {:error, {:live_redirect, %{to: "/elven-village"}}} = live(conn, path), path
     end
   end
@@ -166,9 +169,9 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {:ok, other, _html} = live(conn, ~p"/elven-village")
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
-    teleport(view, "gludio")
+    teleport(view, "town-of-gludio")
 
-    assert_patch(other, "/gludio")
+    assert_patch(other, "/town-of-gludio")
   end
 
   test "a visitor has no town to stand in" do
@@ -176,6 +179,6 @@ defmodule MiniLineageWeb.GatekeeperTest do
     on_exit(fn -> Characters.forget(session) end)
     conn = init_test_session(build_conn(), %{"session_id" => session})
 
-    assert {:error, {:live_redirect, %{to: "/"}}} = live(conn, ~p"/gludio")
+    assert {:error, {:live_redirect, %{to: "/"}}} = live(conn, ~p"/town-of-gludio")
   end
 end

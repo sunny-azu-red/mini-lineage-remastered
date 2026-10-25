@@ -100,7 +100,7 @@ Built (rules §21).
   EXP (and so by level, then EXP) and then Adena, the living, the fallen with how long ago each fell,
   and the missing, overall and by lineage, with medals for the top three, a row sweeping as legacy's
   did whenever a value on it moves. In Interlude it is the heroes' obelisk that stands in every
-  town.
+  town, and here every town's Travel leads to it.
 
 ## Skills
 

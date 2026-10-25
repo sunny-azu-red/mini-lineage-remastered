@@ -29,7 +29,8 @@ checked against Interlude's own data.
   row with where both sides stand, its criticals washed orange and its heals green, kept in
   `encounters` so a reload finds it. A death is final: the run stays on the ground it fell on as a
   👻 ghost under 🪦 Game Over, its fight ending in Defeat, until you play again, and its row stays
-  on the 🏛️ Monument of Heroes at `/highscores` with how long ago it fell.
+  on the 🏛️ Monument of Heroes at `/monument-of-heroes`, which every town's Travel leads to, with
+  how long ago it fell.
 - **Traders and a bag.** Each village's weapon, armour and magic traders sell your path's own goods,
   and buy back for half; the inventory at `/inventory` equips, drinks and destroys, and potions are
   drunk in a fight below the share the 🎖️ Battle Orders under the ground set, on a slider shown
@@ -40,7 +41,7 @@ checked against Interlude's own data.
   Relax, and each Mystic has its own spells. A skill grows in a few big steps rather than nine
   small ones. Auras hold 2 minutes and go up before the pull. Three masteries a path (Armor or Robe,
   Weapon, Anti Magic) are there to learn or skip, as the monsters met make worth it. The guild is at
-  `/<village>/guild`, its lessons on an Active and a Passive shelf.
+  `/<village>/<guild>` (`/orc-village/warriors-guild`), its lessons on an Active and a Passive shelf.
 - **Rest mends, and says so.** While HP or MP is short, 🌿 *Regenerating* shows what a 3-second tick
   mends, and the tick mends it. The aura and the mending are one condition, so neither appears
   without the other.
@@ -49,7 +50,7 @@ checked against Interlude's own data.
   for this character; a buff reads "+8% P. Def.", as Lineage II's data writes it. Every buff, and the
   wait before rest after a hunt, counts down over its icon as the legacy game's did.
 - **A sidebar** under a vital panel drawn like L2's status window, its HP or MP row pulsing once under a quarter,
-  a character page at `/character`, and the Chronicles of Ancestry at `/races`, which tell every
+  a character page at `/character`, and the Chronicles of Ancestry at `/chronicles-of-ancestry`, which tell every
   lineage before you choose one.
 - **What an action says is coloured by what it did**: green for something gained, blue for a
   rearrangement, red for a refusal, and gold, shining, for a new level.

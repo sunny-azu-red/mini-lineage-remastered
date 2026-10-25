@@ -22,26 +22,26 @@ defmodule MiniLineageWeb.TableSortTest do
     |> render_submit(%{"name" => "Sorter", "race_id" => "0", "path" => "fighter"})
 
     Characters.mutate(session, &{%{&1 | adena: 10_000}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
     render_hook(view, "buy", %{"item" => "Short Sword"})
     %{conn: conn}
   end
 
   # Each page, and the sort every table on it opens on.
   @pages [
-    {"/talking-island/traders/weapon", %{"stock" => {"price", :asc}}},
-    {"/talking-island/traders/sell", %{"sellable" => {"buyback", :desc}}},
+    {"/talking-island-village/traders/weapon-trader", %{"stock" => {"price", :asc}}},
+    {"/talking-island-village/traders/sell", %{"sellable" => {"buyback", :desc}}},
     {"/inventory", %{"items" => {"slot", :asc}}},
-    {"/talking-island/gatekeeper", %{"routes-table" => {"fee", :asc}}},
-    {"/talking-island/guild", %{"lessons" => {"learn_at", :asc}}},
-    {"/races",
+    {"/talking-island-village/gatekeeper", %{"routes-table" => {"fee", :asc}}},
+    {"/talking-island-village/warriors-guild", %{"lessons" => {"learn_at", :asc}}},
+    {"/chronicles-of-ancestry",
      %{
        "human-classes" => {"class", :asc},
        "elf-classes" => {"class", :asc},
        "dark-elf-classes" => {"class", :asc},
        "orc-classes" => {"class", :asc}
      }},
-    {"/highscores", %{"halls-table" => {"total_xp", :desc}}}
+    {"/monument-of-heroes", %{"halls-table" => {"total_xp", :desc}}}
   ]
 
   for {path, tables} <- @pages do

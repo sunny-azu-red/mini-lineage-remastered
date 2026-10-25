@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert has_element?(view, ~s(#travel-form option[value="hunt"]), "Obelisk of Victory")
     view |> form("#travel-form", %{"place" => "hunt"}) |> render_submit()
 
-    assert_patch(view, "/talking-island/obelisk-of-victory")
+    assert_patch(view, "/talking-island-village/obelisk-of-victory")
     assert has_element?(view, "#sidebar")
     refute has_element?(view, "#fight")
     assert text(view, "#hunt-button") == "⚔️ Hunt"
@@ -71,19 +71,19 @@ defmodule MiniLineageWeb.HuntPageTest do
   test "retreating goes back to town, disengaging" do
     {_view, session, conn} = human(build_conn())
     pin(session, 0.0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
     view |> element("#hunt-button") |> render_click()
 
     view |> element("#retreat-button") |> render_click()
 
-    assert_patch(view, "/talking-island")
+    assert_patch(view, "/talking-island-village")
     assert is_integer(stored(session).combat)
   end
 
   test "and so does leaving the ground any other way" do
     {_view, session, conn} = human(build_conn())
     pin(session, 0.0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
     view |> element("#hunt-button") |> render_click()
 
     view |> element("#header-link") |> render_click()
@@ -96,7 +96,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     # Far enough from the next level that no kill here reaches it, so each outcome is a plain one.
     Characters.mutate(session, &{%{&1 | experience: Math.xp_for_level(3)}, :ok})
     pin(session, 0.0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
 
     view |> element("#hunt-button") |> render_click()
     assert has_element?(view, "#fight-outcome.victory", "cut down")
@@ -106,30 +106,30 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     assert first in moves() and second in moves() and first != second
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
 
     # Read back from `encounters`, so a reload or a return finds it; the button has named nothing yet.
     assert has_element?(view, "#fight #fight-outcome.victory", "cut down")
     assert text(view, "#hunt-button") == "⚔️ Hunt"
 
     view |> element("#retreat-button") |> render_click()
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
     assert has_element?(view, "#fight #fight-outcome.victory", "cut down")
   end
 
   test "a character cannot hunt another village's ground" do
     {_view, session, conn} = human(build_conn())
 
-    {:error, {:live_redirect, %{to: "/talking-island"}}} =
+    {:error, {:live_redirect, %{to: "/talking-island-village"}}} =
       live(conn, ~p"/orc-village/cave-of-trials")
 
-    assert stored(session).location == "talking-island"
+    assert stored(session).location == "talking-island-village"
   end
 
   test "a kill pays EXP, SP and Adena, written at once, and the character stays to hunt again" do
     {_view, session, conn} = human(build_conn())
     pin(session, 0.0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
 
     view |> element("#hunt-button") |> render_click()
 
@@ -162,7 +162,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     {_view, session, conn} = human(build_conn())
     Characters.mutate(session, &{%{&1 | experience: Math.xp_for_level(2) - 1}, :ok})
     pin(session, 0.0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
 
     view |> element("#hunt-button") |> render_click()
 
@@ -190,13 +190,13 @@ defmodule MiniLineageWeb.HuntPageTest do
     end)
 
     pin(session, 0.0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/obelisk-of-victory")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
 
     view |> element("#hunt-button") |> render_click()
 
     assert_push_event(view, "play-sound", %{name: "death"})
     assert %{dead: true, died_at: %DateTime{}, session_id: ^session} = Repo.get!(Record, id)
-    ground = ~p"/talking-island/obelisk-of-victory"
+    ground = ~p"/talking-island-village/obelisk-of-victory"
 
     # A reload draws what the click did.
     {:ok, reloaded, _html} = live(conn, ground)
@@ -212,7 +212,7 @@ defmodule MiniLineageWeb.HuntPageTest do
       # The Monument's own emoji, as its page is headed, never the Fight Log's 📜 beside it.
       assert has_element?(
                view,
-               ~s(#monument-button[href="/highscores/human"][data-no-autofocus]),
+               ~s(#monument-button[href="/monument-of-heroes/humans"][data-no-autofocus]),
                "🏛️ Monument of Heroes"
              )
 
@@ -243,7 +243,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     refute has_element?(character, "#character-vitality", "mending")
 
     # Anywhere it could act sends it back; its own pages it may read, its inventory only to look.
-    for path <- [~p"/", ~p"/talking-island", ~p"/talking-island/traders"] do
+    for path <- [~p"/", ~p"/talking-island-village", ~p"/talking-island-village/traders"] do
       assert {:error, {:live_redirect, %{to: ^ground}}} = live(conn, path), path
     end
 
@@ -267,7 +267,7 @@ defmodule MiniLineageWeb.HuntPageTest do
 
   # Rules §20 and §26: settings, not places, so a slider and a switch rather than a dropdown, and
   # the control says what is set rather than an alert.
-  defp ground(conn), do: live(conn, ~p"/talking-island/obelisk-of-victory")
+  defp ground(conn), do: live(conn, ~p"/talking-island-village/obelisk-of-victory")
 
   # Rules §26: a stack of potions, which the orders ask about only while one is carried.
   defp carry_potions(session),
@@ -342,7 +342,7 @@ defmodule MiniLineageWeb.HuntPageTest do
   # `MiniLineageWeb.Kept`: a reload is served as the reader left it, so nothing moves on connect.
   test "the orders are served folded or open as the reader left them, the browser's cookie first" do
     {_view, _session, conn} = human(build_conn())
-    ground = ~p"/talking-island/obelisk-of-victory"
+    ground = ~p"/talking-island-village/obelisk-of-victory"
     kept = fn conn, raw -> put_req_cookie(conn, MiniLineageWeb.Kept.cookie(), raw) end
 
     served = fn conn ->

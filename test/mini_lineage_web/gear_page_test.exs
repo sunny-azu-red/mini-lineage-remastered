@@ -44,7 +44,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a necklace is named before the shirt and pants, in the sidebar and the inventory" do
     {_view, session, conn} = human(build_conn(), 20_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/magic")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/magic-trader")
     view |> form("#buy-form", %{"item" => "Necklace of Magic"}) |> render_submit()
     necklace = carried(session, "Necklace of Magic")
 
@@ -68,7 +68,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
     assert has_element?(view, ~s(#travel-form option[value="trader"]), "🛒 Traders")
     view |> form("#travel-form", %{"place" => "trader"}) |> render_submit()
-    assert_patch(view, "/talking-island/traders")
+    assert_patch(view, "/talking-island-village/traders")
 
     assert has_element?(
              view,
@@ -80,17 +80,17 @@ defmodule MiniLineageWeb.GearPageTest do
         do: assert(has_element?(view, ~s(#trader-form option[value="trader-#{page}"])))
 
     view |> form("#trader-form", %{"place" => "trader-weapon"}) |> render_submit()
-    assert_patch(view, "/talking-island/traders/weapon")
+    assert_patch(view, "/talking-island-village/traders/weapon-trader")
     assert has_element?(view, "#screen h2", "Weapon Trader")
     assert has_element?(view, "#trader-intro", "Lector lays out the weapons")
     assert has_element?(view, "#stock-broadsword", "Broadsword ✋")
     assert has_element?(view, "#stock-short-bow", "Short Bow 👐")
     assert has_element?(view, ~s(#buy-form optgroup[label="Daggers"] option[value="Bone Dagger"]))
 
-    Characters.mutate(session, &{%{&1 | location: "gludio"}, :ok})
+    Characters.mutate(session, &{%{&1 | location: "town-of-gludio"}, :ok})
 
     {:ok, view, _html} =
-      live(init_test_session(build_conn(), %{"session_id" => session}), ~p"/gludio")
+      live(init_test_session(build_conn(), %{"session_id" => session}), ~p"/town-of-gludio")
 
     refute has_element?(view, ~s(#travel-form option[value="trader"]))
   end
@@ -98,7 +98,7 @@ defmodule MiniLineageWeb.GearPageTest do
   test "a Fighter is shown its own weapons, light armour and every shield" do
     {_view, _session, conn} = human(build_conn(), 0)
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
     assert has_element?(view, "#stock-bone-dagger")
     assert has_element?(view, "#stock-short-bow")
     refute has_element?(view, "#stock-buffalos-horn")
@@ -107,7 +107,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#shelf-swords tr.shelf + tr#stock-short-sword")
     assert has_element?(view, "#buy-form optgroup:first-of-type[label=Swords]")
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/armour")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/armour-trader")
     assert has_element?(view, "#screen h2", "Armour Trader")
     assert has_element?(view, "#stock-small-shield")
     assert has_element?(view, "#stock-leather-shirt")
@@ -124,7 +124,7 @@ defmodule MiniLineageWeb.GearPageTest do
   test "a Mystic's chest and legs are one shelf of robes" do
     {_view, _session, conn} = shopper(build_conn(), "0", "mystic", 0)
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/armour")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/armour-trader")
     assert shelves(view) == ~w(shelf-shields shelf-robes)
     assert has_element?(view, "#shelf-robes tr.shelf th", "Robes")
     assert has_element?(view, "#shelf-robes #stock-cotton-tunic")
@@ -134,7 +134,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "the jeweller and the grocer keep one Magic Trader, necklaces then potions, both greeting you" do
     {_view, _session, conn} = human(build_conn(), 0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/magic")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/magic-trader")
 
     assert has_element?(view, "#screen h2", "Magic Trader")
     assert has_element?(view, "#trader-intro", "Silvia minds the jewellery")
@@ -153,7 +153,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a page of one shelf has no heading to tell it apart, nor a group" do
     {_view, _session, conn} = shopper(build_conn(), "3", "fighter", 0)
-    {:ok, view, _html} = live(conn, ~p"/dark-elf-village/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/dark-elf-village/traders/weapon-trader")
 
     assert shelves(view) == ~w(shelf-daggers)
     assert has_element?(view, "#stock tbody tr[id^=stock-]")
@@ -163,7 +163,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "one table opens cheapest first and sorts within each shelf, by name and not its emoji" do
     {_view, _session, conn} = human(build_conn(), 0)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
     first = &has_element?(view, "#shelf-#{&1} tr.shelf + tr#stock-#{&2}")
 
     offered =
@@ -191,13 +191,13 @@ defmodule MiniLineageWeb.GearPageTest do
   test "a Mystic is shown staves, robes and every shield, and sold nothing else" do
     {_view, session, conn} = shopper(build_conn(), "1", "mystic", 20_000)
 
-    {:ok, view, _html} = live(conn, ~p"/orc-village/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/orc-village/traders/weapon-trader")
     assert has_element?(view, "#trader-intro", "Jakal greets you")
     assert has_element?(view, "#stock-buffalos-horn")
     refute has_element?(view, "#stock-broadsword")
     refute has_element?(view, "#stock-spiked-gloves")
 
-    {:ok, view, _html} = live(conn, ~p"/orc-village/traders/armour")
+    {:ok, view, _html} = live(conn, ~p"/orc-village/traders/armour-trader")
     assert has_element?(view, "#stock-cotton-tunic")
     assert has_element?(view, "#stock-small-shield")
     refute has_element?(view, "#stock-leather-shirt")
@@ -209,7 +209,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a purchase is paid and written at once, and the trader buys it back for half" do
     {_view, session, conn} = human(build_conn(), 20_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
 
     view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
@@ -217,7 +217,7 @@ defmodule MiniLineageWeb.GearPageTest do
     assert stored(session).adena == 20_000 - 12_500
     sword = carried(session, "Broadsword")
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/sell")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/sell")
     view |> form("#sell-form", %{"item" => sword.id}) |> render_submit()
     assert stored(session).adena == 20_000 - 12_500 + 6_250
     refute carried(session, "Broadsword")
@@ -225,7 +225,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a purchase puts the dropdown back to its start, so a second click buys nothing" do
     {_view, _session, conn} = human(build_conn(), 20_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
     pick = %{"item" => "Broadsword"}
 
     view |> form("#buy-form", pick) |> render_change(%{"_target" => ["item"]})
@@ -238,7 +238,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "a refusal is said, and nothing is paid" do
     {_view, session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/weapon")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/weapon-trader")
 
     view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
@@ -313,7 +313,7 @@ defmodule MiniLineageWeb.GearPageTest do
   test "the inventory closes onto the page it was opened from, and onto the town after a reload" do
     {_view, session, conn} = human(build_conn(), 0)
 
-    for from <- ["/talking-island/traders", "/talking-island/obelisk-of-victory"] do
+    for from <- ["/talking-island-village/traders", "/talking-island-village/obelisk-of-victory"] do
       {:ok, view, _html} = live(conn, from)
       view |> element("#purse a", "Open") |> render_click()
       assert_patch(view, "/inventory")
@@ -331,7 +331,7 @@ defmodule MiniLineageWeb.GearPageTest do
     end
 
     {:ok, view, _html} = live(conn, ~p"/inventory")
-    assert has_element?(view, ~s(#purse a[href="/talking-island"]), "Close")
+    assert has_element?(view, ~s(#purse a[href="/talking-island-village"]), "Close")
   end
 
   test "one list groups each item under what can be done with it, and the button says the verb" do
@@ -366,7 +366,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
   test "potions are bought by the lot onto one stack, counted in the sidebar and drunk from the inventory" do
     {_view, session, conn} = human(build_conn(), 1_000)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/traders/magic")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/magic-trader")
 
     assert has_element?(view, "#stock-lesser-healing-potion")
     assert has_element?(view, ~s(#buy-form option[value="Lesser Healing Potion|10"]))
@@ -376,7 +376,7 @@ defmodule MiniLineageWeb.GearPageTest do
     potions = carried(session, "Lesser Healing Potion")
     assert potions.count == 10
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village")
 
     refute has_element?(view, "#inventory", "Lesser Healing Potion")
 

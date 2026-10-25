@@ -37,7 +37,7 @@ defmodule MiniLineage.Game.MotherTreeTest do
   end
 
   test "an Elf anywhere else rests at the ordinary rate" do
-    for location <- ~w(gludio dion) do
+    for location <- ~w(town-of-gludio town-of-dion) do
       elf = tired(2, location)
 
       refute blessed?(elf), location
@@ -50,7 +50,7 @@ defmodule MiniLineage.Game.MotherTreeTest do
       visitor = tired(race_id, "elven-village")
 
       refute blessed?(visitor), "race #{race_id}"
-      assert rates(visitor) == rates(tired(race_id, "gludio")), "race #{race_id}"
+      assert rates(visitor) == rates(tired(race_id, "town-of-gludio")), "race #{race_id}"
     end
   end
 

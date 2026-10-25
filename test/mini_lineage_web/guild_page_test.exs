@@ -42,7 +42,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     {:ok, character, _html} = live(conn, ~p"/character")
     assert has_element?(character, "#skill-power-strike .skill", "Power Strike 1")
 
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
     assert has_element?(view, "#screen h2", "Learned Skills")
     assert has_element?(view, ~s(#lesson-mortal-blow-1[data-status="ready"] td.sp), "50")
     refute has_element?(view, "#lesson-power-strike-1")
@@ -60,7 +60,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, ~s(#travel-form option[value="guild"]), "📖 Warriors Guild")
     view |> form("#travel-form", %{"place" => "guild"}) |> render_submit()
 
-    assert_patch(view, "/talking-island/guild")
+    assert_patch(view, "/talking-island-village/warriors-guild")
     assert has_element?(view, "#screen h2", "Warriors Guild")
 
     assert has_element?(
@@ -79,14 +79,14 @@ defmodule MiniLineageWeb.GuildPageTest do
 
     # Once learned, the line after it shows, muted until its level is reached.
     Characters.mutate(session, &{%{&1 | skills: %{"Power Strike" => 2}}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
     assert has_element?(view, ~s(#lesson-power-strike-3.locked[data-status="later"]))
     refute has_element?(view, "#lesson-power-strike-4")
   end
 
   test "what it knows is the Learned Skills panel, not a lesson" do
     {_view, _session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     refute has_element?(view, "#lesson-power-strike-1")
     assert has_element?(view, "#skill-power-strike .skill", "Power Strike 1")
@@ -98,7 +98,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "the lessons open on Level Req, a header turns them round, and the dropdown follows" do
     {_view, _session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
     # Within the Active shelf, past its heading; the dropdown's Active group the same.
     first = &has_element?(view, "#shelf-active tr.shelf + tr#lesson-#{&1}")
     last = &has_element?(view, "#shelf-active tr:last-child#lesson-#{&1}")
@@ -137,7 +137,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "an Active and a Passive shelf, as a trader's, until the masteries are learned out" do
     {_view, session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     shelves = fn view ->
       view
@@ -177,7 +177,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     # Learned out, one shelf is left, with no heading and no group.
     masteries = %{"Armor Mastery" => 3, "Weapon Mastery" => 3, "Anti Magic" => 2}
     Characters.mutate(session, &{%{&1 | skills: Map.merge(&1.skills, masteries)}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
     assert shelves.(view) == ~w(shelf-active)
     refute has_element?(view, "#lessons tr.shelf")
     refute has_element?(view, "#learn-form optgroup")
@@ -188,7 +188,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     {_view, session, conn} = human(build_conn(), 100)
     masteries = %{"Armor Mastery" => 1, "Anti Magic" => 1}
     Characters.mutate(session, &{%{&1 | skills: Map.merge(&1.skills, masteries)}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     rows =
       view
@@ -203,7 +203,7 @@ defmodule MiniLineageWeb.GuildPageTest do
   test "the lessons do not remember their sort, so a kept one is not read back" do
     {_view, _session, conn} = human(build_conn(), 100)
     conn = put_req_cookie(conn, MiniLineageWeb.Kept.cookie(), "table%3Alessons=sp%3Adesc")
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
     refute has_element?(view, ~s(#lessons th[aria-sort="descending"]))
@@ -220,7 +220,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "SP is paid like Adena: a line in reach but beyond the purse is still offered" do
     {_view, _session, conn} = human(build_conn(), 49)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     refute has_element?(view, "#lesson-power-strike-2.locked")
 
@@ -247,7 +247,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     }
 
     Characters.mutate(session, &{%{&1 | experience: level, skills: known}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     assert has_element?(view, "#lessons")
     assert has_element?(view, "#nothing-to-learn", "until Level 10.")
@@ -258,7 +258,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     {_view, session, conn} = human(build_conn(), 0)
     known = Rules.lessons("Human Fighter") |> Map.new(&{&1.skill, &1.level})
     Characters.mutate(session, &{%{&1 | skills: Map.merge(&1.skills, known)}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     assert has_element?(view, "#learned-out", "They have taught you all they can for now.")
     refute has_element?(view, "#lessons")
@@ -268,7 +268,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "a lesson is paid in SP and known at once" do
     {_view, session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     view |> form("#learn-form", %{"lesson" => "Power Strike|2"}) |> render_submit()
 
@@ -280,7 +280,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "the SP counts down as it is spent, under the panel's own icon for what is learned" do
     {_view, _session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     assert has_element?(
              view,
@@ -294,7 +294,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "a lesson learned leaves the button going back, as the dropdown falls back to it" do
     {_view, _session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
     lesson = %{"lesson" => "Power Strike|2"}
 
     view |> form("#learn-form", lesson) |> render_change(%{"_target" => ["lesson"]})
@@ -307,7 +307,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "a lesson beyond the purse is refused in plain words" do
     {_view, session, conn} = human(build_conn(), 49)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     view |> form("#learn-form", %{"lesson" => "Power Strike|2"}) |> render_submit()
 
@@ -317,7 +317,7 @@ defmodule MiniLineageWeb.GuildPageTest do
 
   test "a line needing a weapon says so after its name, and a spell says nothing" do
     {_view, session, conn} = human(build_conn(), 100)
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     assert has_element?(view, "#lesson-power-strike-2 td.name .muted", "Needs a sword")
     assert has_element?(view, "#lesson-mortal-blow-1 td.name .muted", "Needs a dagger")
@@ -325,7 +325,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     refute has_element?(view, "#lesson-armor-mastery-1 td.name .muted")
 
     Characters.mutate(session, &{%{&1 | path: :mystic, skills: %{"Wind Strike" => 1}}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/mystics-guild")
 
     assert has_element?(view, "#lesson-wind-strike-2")
     refute has_element?(view, "#lesson-wind-strike-2 td.name .muted")
@@ -343,7 +343,7 @@ defmodule MiniLineageWeb.GuildPageTest do
   test "a learned skill the weapon in hand cannot use is muted, and says what it needs" do
     {_view, session, conn} = human(build_conn(), 100)
     Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Mortal Blow", 1)}, :ok})
-    {:ok, view, _html} = live(conn, ~p"/talking-island/guild")
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
     # The kit's Squire's Sword is in hand, the Squire's Dagger carried.
     assert has_element?(view, "#skill-mortal-blow.locked", "Needs a dagger equipped.")
@@ -368,7 +368,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     |> element("form[phx-submit=start]")
     |> render_submit(%{"name" => "Pupil", "race_id" => "1", "path" => "mystic"})
 
-    {:ok, view, _html} = live(conn, ~p"/orc-village/guild")
+    {:ok, view, _html} = live(conn, ~p"/orc-village/mystics-guild")
     assert has_element?(view, "#screen h2", "Mystics Guild")
 
     assert has_element?(
@@ -378,10 +378,22 @@ defmodule MiniLineageWeb.GuildPageTest do
            )
   end
 
+  test "a village with two guilds sends a run to its own, at the guild's own name" do
+    {_view, session, conn} = human(build_conn(), 0)
+    Characters.mutate(session, &{%{&1 | path: :mystic}, :ok})
+
+    {:error, {:live_redirect, %{to: "/talking-island-village/mystics-guild"}}} =
+      live(conn, ~p"/talking-island-village/warriors-guild")
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/mystics-guild")
+    assert has_element?(view, "#screen h2", "Mystics Guild")
+  end
+
   test "no guild away from the home village, even in another village" do
     {_view, session, conn} = human(build_conn(), 0)
 
-    {:error, {:live_redirect, %{to: "/talking-island"}}} = live(conn, ~p"/elven-village/guild")
+    {:error, {:live_redirect, %{to: "/talking-island-village"}}} =
+      live(conn, ~p"/elven-village/evas-sanctuary")
 
     Characters.mutate(session, &{%{&1 | location: "elven-village"}, :ok})
     {:ok, view, _html} = live(conn, ~p"/elven-village")
@@ -389,6 +401,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, ~s(#travel-form option[value="trader"]))
 
     # Standing in the Elves' village is not enough: its trainers teach Elves.
-    {:error, {:live_redirect, %{to: "/elven-village"}}} = live(conn, ~p"/elven-village/guild")
+    {:error, {:live_redirect, %{to: "/elven-village"}}} =
+      live(conn, ~p"/elven-village/evas-sanctuary")
   end
 end

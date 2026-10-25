@@ -19,7 +19,7 @@ defmodule MiniLineageWeb.SkillRowsTest do
   defp knowing_all(race_id, path) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), path, "Sunny")
     skills = for l <- Rules.lessons(Rules.set(race_id, path).name), into: %{}, do: {l.skill, 1}
-    %{player | skills: skills, location: "gludio"}
+    %{player | skills: skills, location: "town-of-gludio"}
   end
 
   test "a Fighter's skills say how often they land and when they can be used again" do

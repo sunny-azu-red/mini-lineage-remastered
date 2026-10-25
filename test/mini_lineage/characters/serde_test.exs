@@ -19,7 +19,7 @@ defmodule MiniLineage.Characters.SerdeTest do
       adena: 4_210,
       experience: 12_345,
       sp: 321,
-      location: "gludio"
+      location: "town-of-gludio"
     }
   end
 
@@ -98,7 +98,7 @@ defmodule MiniLineage.Characters.SerdeTest do
     end
 
     test "and a town this build does not have, or cannot be stood in, puts it back there too" do
-      for slug <- ["atlantis", "giran", 7] do
+      for slug <- ["atlantis", "town-of-giran", 7] do
         doc = populated() |> Serde.to_map() |> Map.put("location", slug)
         assert Serde.from_map(doc).location == "elven-village", inspect(slug)
       end

@@ -65,7 +65,7 @@ defmodule MiniLineage.Characters.DeathTest do
     for action <- [
           &Actions.hunt/1,
           &Actions.retreat/1,
-          &Actions.travel(&1, "gludio"),
+          &Actions.travel(&1, "town-of-gludio"),
           &Actions.buy(&1, "Healing Potion"),
           &Actions.sell(&1, entry.id),
           &Actions.equip(&1, entry.id),

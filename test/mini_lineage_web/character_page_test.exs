@@ -83,7 +83,15 @@ defmodule MiniLineageWeb.CharacterPageTest do
   test "Regenerating and Relax say what a tick of rest mends and costs" do
     Clock.put_now(~U[2026-07-01 12:00:00Z])
     {orc, _} = Player.initialize(%Player{}, Constants.race(1), :fighter, "Rester")
-    orc = %{orc | location: "gludio", health: 1, mp: 10, skills: Map.put(orc.skills, "Relax", 1)}
+
+    orc = %{
+      orc
+      | location: "town-of-gludio",
+        health: 1,
+        mp: 10,
+        skills: Map.put(orc.skills, "Relax", 1)
+    }
+
     stats = Player.stats(orc)
     doc = page(orc)
     text = &(doc |> LazyHTML.query(&1) |> LazyHTML.text() |> String.replace(~r/\s+/, " "))

@@ -105,7 +105,7 @@ defmodule MiniLineageWeb.GameLive do
   def handle_params(_params, uri, socket) do
     requested = requested_place(socket.assigns.live_action, uri, socket.assigns.player)
     pinned = Access.pin_screen(requested, socket.assigns.player)
-    to = Paths.for_screen(pinned)
+    to = Paths.for_screen(pinned, socket.assigns.player)
 
     # Compared by address, so '/' moves a character to the town it stands in: the URL is where you are.
     if to != URI.parse(uri).path,
@@ -125,7 +125,8 @@ defmodule MiniLineageWeb.GameLive do
 
   defp requested_place(:trader_page, uri, _player),
     do:
-      {"trader-" <> (uri |> URI.parse() |> Map.fetch!(:path) |> Path.basename()),
+      {"trader-" <>
+         (uri |> URI.parse() |> Map.fetch!(:path) |> Path.basename() |> Paths.trader_page_of()),
        Paths.town_of(uri)}
 
   defp requested_place(action, _uri, _player), do: {Atom.to_string(action), nil}
@@ -225,6 +226,10 @@ defmodule MiniLineageWeb.GameLive do
   # Somewhere inside the town, which is where you stand already: a patch, never a write.
   def handle_event("navigate", %{"place" => "gatekeeper"}, socket),
     do: {:noreply, walk(socket, {"gatekeeper", socket.assigns.town})}
+
+  # The Monument is read rather than stood at, so the run stays in its town and the banner leads back.
+  def handle_event("navigate", %{"place" => "highscores"}, socket),
+    do: {:noreply, walk(socket, {"highscores", nil})}
 
   @inner ~w(trader guild) ++ Enum.map(Paths.trader_pages(), &("trader-" <> &1))
 
@@ -565,10 +570,14 @@ defmodule MiniLineageWeb.GameLive do
 
   # Where an action leads, which keeps what it said for the arrival.
   defp go(socket, place),
-    do: socket |> assign(flash_fresh: true) |> push_patch(to: Paths.for_screen(place))
+    do:
+      socket
+      |> assign(flash_fresh: true)
+      |> push_patch(to: Paths.for_screen(place, socket.assigns.player))
 
   # A step nothing was said about, so the arrival drops the last action's flash like any other.
-  defp walk(socket, place), do: push_patch(socket, to: Paths.for_screen(place))
+  defp walk(socket, place),
+    do: push_patch(socket, to: Paths.for_screen(place, socket.assigns.player))
 
   # ------------------------------------------------------------------ render
 
@@ -580,7 +589,7 @@ defmodule MiniLineageWeb.GameLive do
       panels={@panels}
       view={@view}
       screen={@screen}
-      back={@back && Paths.for_screen(@back)}
+      back={@back && Paths.for_screen(@back, @player)}
       dev_keys={@debug and @view.started}
       folds={@folds}
       sound={@sound}

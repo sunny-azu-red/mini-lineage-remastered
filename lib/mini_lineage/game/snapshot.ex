@@ -71,7 +71,7 @@ defmodule MiniLineage.Game.Snapshot do
       name: player.name,
       race_emoji: race.emoji,
       # Its board on the Monument of Heroes.
-      lineage: Format.slugify(race.label),
+      lineage: Format.slugify(race.plural),
       ancestry: race.label,
       perk: race.perk,
       class_name: Rules.set(player.race_id, player.path).name,

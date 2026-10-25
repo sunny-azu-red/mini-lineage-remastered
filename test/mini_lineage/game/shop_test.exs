@@ -43,7 +43,7 @@ defmodule MiniLineage.Game.ShopTest do
     end
 
     test "is refused away from a village, and when the bag is full" do
-      away = %{character() | location: "gludio"}
+      away = %{character() | location: "town-of-gludio"}
       assert {_, {:error, :no_shop, _}} = Actions.buy(away, "Broadsword")
 
       full = %{
@@ -161,7 +161,7 @@ defmodule MiniLineage.Game.ShopTest do
   end
 
   test "every village sells the same, and Orc Village fists too" do
-    base = Enum.map(Rules.stock("talking-island"), & &1.name)
+    base = Enum.map(Rules.stock("talking-island-village"), & &1.name)
 
     for town <- ~w(elven-village dark-elf-village),
         do: assert(Enum.map(Rules.stock(town), & &1.name) == base)

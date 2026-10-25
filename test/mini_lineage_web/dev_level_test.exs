@@ -82,7 +82,7 @@ defmodule MiniLineageWeb.DevLevelTest do
       mp: 1,
       adena: 0,
       experience: top,
-      location: "talking-island"
+      location: "talking-island-village"
     }
 
     assert {%{experience: ^top}, {:error, :last_level, _}} = Actions.dev_level(player)

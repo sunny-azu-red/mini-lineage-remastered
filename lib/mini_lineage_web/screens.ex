@@ -14,20 +14,8 @@ defmodule MiniLineageWeb.Screens do
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
-  @titles %{
-    "start" => "A New Bloodline Rises",
-    "gatekeeper" => "Gatekeeper",
-    "character" => "Character",
-    "races" => "Chronicles of Ancestry",
-    "highscores" => "Monument of Heroes",
-    "inventory" => "Inventory",
-    "trader" => "Traders",
-    "trader-weapon" => "Weapon Trader",
-    "trader-armour" => "Armour Trader",
-    "trader-magic" => "Magic Trader",
-    "trader-sell" => "Sell",
-    "error" => "Error"
-  }
+  # Every page with an address is headed by the name its address is made of (`Paths.names/0`).
+  @titles Map.merge(Paths.names(), %{"start" => "A New Bloodline Rises"})
 
   # What the panel is headed: the town a run stands in, the screen's name elsewhere, and on the
   # ground a run ended on (rules §21) its end, which the inventory's way back names too.
@@ -258,13 +246,15 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
-  # The places in a town: its Gatekeeper, a village's traders (rules §24), the home village's
-  # guild (§25), and the ground outside it if it has one (§17).
+  # The places in a town: its Gatekeeper, a village's traders (rules §24), the home village's guild
+  # (§25), the ground outside it if it has one (§17), and the Monument of Heroes, whose obelisk
+  # stands in every town of the canon.
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
       if(view.stock != [], do: [%{value: "trader", label: "🛒 Traders"}], else: []) ++
       if(view.lessons != [], do: [%{value: "guild", label: "📖 #{view.guild.name}"}], else: []) ++
-      if view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []
+      if(view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []) ++
+      [%{value: "highscores", label: "🏛️ Monument of Heroes"}]
   end
 
   # Rules §21: the ground a run ended on, told in its own line, and the two ways on from there.

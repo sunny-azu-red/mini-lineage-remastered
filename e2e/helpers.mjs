@@ -9,7 +9,7 @@ export const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:4002';
  * opening of its perk. The numbers come from docs/rules.md, which rules_test.exs holds the code to.
  */
 export const RACES = [
-    { id: 0, label: 'Human',    emoji: '🧙', town: 'Talking Island Village', townEmoji: '🏝️', townSlug: 'talking-island',
+    { id: 0, label: 'Human',    emoji: '🧙', town: 'Talking Island Village', townEmoji: '🏝️', townSlug: 'talking-island-village',
       perk: 'Humans have no racial perk', classes: {
         fighter: { name: 'Human Fighter', health: 126, mp: 38 },
         mystic:  { name: 'Human Mystic',  health: 98,  mp: 59 } } },

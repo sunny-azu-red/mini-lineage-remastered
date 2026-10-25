@@ -289,7 +289,7 @@ try {
     check('...with a chime of its own, two sines', chime.join(',') === 'sine,sine', chime.join(','));
 
     // ---- a character may read, and is brought home ---------------------------------------------
-    await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/chronicles-of-ancestry`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     check('a character may read the Chronicles of Ancestry', (await state()).screen === 'races');
     await page.click('#header-link');
@@ -401,7 +401,7 @@ try {
         (await text('#routes-table tbody')) === '🏰 Town of Gludio 🪙 6,000', await text('#routes-table tbody'));
     check('...under a button that says it goes back until something is picked',
         (await text('#teleport-form button')) === 'Return', await text('#teleport-form button'));
-    await page.selectOption('#teleport-form select', 'gludio');
+    await page.selectOption('#teleport-form select', 'town-of-gludio');
     await page.waitForFunction(() => document.querySelector('#teleport-form button').textContent.includes('Teleport'));
     check('...and says it teleports once it is', (await text('#teleport-form button')) === '🌀 Teleport',
         await text('#teleport-form button'));
@@ -416,8 +416,8 @@ try {
     await typeAdena();
     await adena(10000);
     check('typing adena in a debug build puts 10,000 in the purse', (await state()).adena === 10000);
-    await teleport('gludio');
-    await page.waitForURL(`${BASE}/gludio`, { timeout: 5000 });
+    await teleport('town-of-gludio');
+    await page.waitForURL(`${BASE}/town-of-gludio`, { timeout: 5000 });
     await adena(4000);
     check('the Gatekeeper sends it to Gludio for 6,000, leaving 4,000', (await state()).adena === 4000);
     check('...where it stands in Gludio', (await text('#main .header-name')) === '🏰 Town of Gludio',
@@ -426,15 +426,15 @@ try {
     await page.selectOption('#travel-form select', 'gatekeeper');
     await page.click('#travel-form button');
     await onScreen('gatekeeper');
-    await teleport('dion');
+    await teleport('town-of-dion');
     await page.waitForSelector('#flash.alert-danger', { timeout: 5000 });
-    check('4,000 is not the 4,100 Dion costs', new URL(page.url()).pathname === '/gludio/gatekeeper'
+    check('4,000 is not the 4,100 Dion costs', new URL(page.url()).pathname === '/town-of-gludio/gatekeeper'
         && (await state()).adena === 4000, page.url());
     await typeAdena();
     await adena(14000);
     check('...and typing it again fills the purse again', (await state()).adena === 14000);
-    await teleport('dion');
-    await page.waitForURL(`${BASE}/dion`, { timeout: 5000 });
+    await teleport('town-of-dion');
+    await page.waitForURL(`${BASE}/town-of-dion`, { timeout: 5000 });
     await adena(9900);
     check('so it goes on to Dion, with 9,900 left', (await state()).adena === 9900);
 
@@ -443,10 +443,10 @@ try {
     await onScreen('gatekeeper');
     const closed = await page.$$eval('#teleport-form option[disabled]', os => os.map(o => o.value));
     check('Dion\'s Gatekeeper lists Giran and its harbour, not open yet',
-        [...closed].sort().join(',') === 'giran,giran-harbor', closed.join(','));
+        [...closed].sort().join(',') === 'giran-harbor,town-of-giran', closed.join(','));
     await teleport('');
     await onScreen('town');
-    check('...and its empty choice is the way back into town', new URL(page.url()).pathname === '/dion', page.url());
+    check('...and its empty choice is the way back into town', new URL(page.url()).pathname === '/town-of-dion', page.url());
 
     // ---- the hour, forced: the real one is never read, so this holds at any time of day -------
     const night = () => page.locator('#effects [data-effect-id="night"]').count();
@@ -497,9 +497,11 @@ try {
         await page.locator('#travel-form option[value="hunt"]').count() === 0);
 
     // ---- the Halls ------------------------------------------------------------------------------
-    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.selectOption('#travel-form select', 'highscores');
+    await page.click('#travel-form button');
     await onScreen('highscores');
+    check('a town\'s Travel leads to the Monument of Heroes, at its one address',
+        new URL(page.url()).pathname === '/monument-of-heroes', page.url());
     const mine = page.locator('#halls-rows tr.mine');
     const rowId = await mine.getAttribute('id');
     check('the Halls list this run as the reader\'s own, still living, with no day it fell',
@@ -509,7 +511,7 @@ try {
 
     // Somebody else watching the Halls sees the run's purse move, pushed rather than reloaded.
     const watcher = await freshStart(browser);
-    await watcher.page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await watcher.page.goto(`${BASE}/monument-of-heroes`, { waitUntil: 'domcontentloaded' });
     await watcher.page.waitForSelector('.phx-connected', { timeout: 8000 });
     const purse = `#${rowId} [data-key="adena-${rowId.slice(4)}"]`;
     const before = Number(await watcher.page.getAttribute(purse, 'data-value'));
@@ -523,9 +525,10 @@ try {
         }).observe(document.querySelector('#halls-rows'),
             { subtree: true, attributes: true, attributeFilter: ['data-stirred'] });
     });
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    await page.click('#header-link');
     await onScreen('town');
+    check('...and the banner leads back to the town the run still stands in',
+        new URL(page.url()).pathname === '/town-of-dion', page.url());
     // A sweep by a composited property, or one that fills, lifted the board's text and it blinked.
     let pushed = false;
     const swept = await lifted(watcher.context, watcher.page, async () => {
@@ -565,7 +568,7 @@ try {
     await page.keyboard.type('quit');
     await onScreen('start');
     check('typing quit goes back to game start, with no character', (await state()).started === false);
-    await page.goto(`${BASE}/highscores`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/monument-of-heroes`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.phx-connected', { timeout: 8000 });
     await onScreen('highscores');
     // The board pushes once its window closes, so a row drawn on arrival may still be on its way out.
@@ -704,7 +707,7 @@ try {
     await page.click('#trader-form button');
     await onScreen('trader-weapon');
     check('the weapons trader is a page of its own, Iria showing a Dark Fighter daggers and nothing else',
-        new URL(page.url()).pathname === '/dark-elf-village/traders/weapon'
+        new URL(page.url()).pathname === '/dark-elf-village/traders/weapon-trader'
         && (await text('#trader-intro')).startsWith('Iria deals in no weapons made by clumsy Humans')
         && (await page.locator('#screen table').evaluateAll((tables) => tables.map((t) => t.id))).join() === 'stock'
         && (await rowIds('#shelf-daggers')) === 'stock-bone-dagger,stock-knife,stock-dirk,stock-throwing-knife'
@@ -891,7 +894,7 @@ try {
     await page.click('#travel-form button');
     await onScreen('guild');
     check('...at its own address, headed by its name and naming its trainers',
-        new URL(page.url()).pathname === '/dark-elf-village/guild' &&
+        new URL(page.url()).pathname === '/dark-elf-village/temple-of-shilen' &&
         await page.locator('#screen h2.header-name', { hasText: 'Temple of Shilen' }).count() === 1 &&
         (await text('#guild-intro')).includes('Master Trudy and Master Harant teach'),
         page.url());
@@ -1310,7 +1313,7 @@ try {
     await gc.onScreen('hunt');
     await g.click('#monument-button');
     await gc.onScreen('highscores');
-    check('the Monument opens on the run\'s own lineage', new URL(g.url()).pathname === '/highscores/human', g.url());
+    check('the Monument opens on the run\'s own lineage', new URL(g.url()).pathname === '/monument-of-heroes/humans', g.url());
     // The board coalesces its writes, so the death may reach it a beat after the page does.
     await g.waitForSelector('#halls-rows tr.mine[data-fate="fallen"] time.date', { timeout: 5000 });
     const fell = await g.$eval('#halls-rows tr.mine[data-fate="fallen"] time.date',

@@ -50,7 +50,7 @@ defmodule MiniLineageWeb.HallsTest do
   end
 
   test "a visitor may read them, and finds them silent before anyone has played" do
-    {:ok, view, _html} = live(build_conn(), ~p"/highscores")
+    {:ok, view, _html} = live(build_conn(), ~p"/monument-of-heroes")
 
     assert has_element?(view, "#screen[data-screen=highscores]")
     assert has_element?(view, "#halls-empty")
@@ -64,7 +64,7 @@ defmodule MiniLineageWeb.HallsTest do
 
     # Past the week a stamp ages for, and three minutes after the latest fall.
     Clock.put_now(~U[2026-11-10 00:00:00Z])
-    {:ok, view, html} = live(conn, ~p"/highscores")
+    {:ok, view, html} = live(conn, ~p"/monument-of-heroes")
 
     assert has_element?(view, "#row-#{mine}.mine[data-fate=living]")
     assert has_element?(view, "#row-#{id}[data-fate=fallen]")
@@ -84,16 +84,35 @@ defmodule MiniLineageWeb.HallsTest do
     refute html =~ "💀"
   end
 
+  test "a character reaches them from the last of its town's Travel, and still stands in that town" do
+    {conn, session} = play(build_conn(), "Wanderer", 2)
+    {:ok, view, _html} = live(conn, ~p"/elven-village")
+
+    assert has_element?(
+             view,
+             ~s(#travel-form option:last-child[value="highscores"]),
+             "🏛️ Monument of Heroes"
+           )
+
+    view |> form("#travel-form", %{"place" => "highscores"}) |> render_submit()
+
+    assert_patch(view, ~p"/monument-of-heroes")
+    assert has_element?(view, "#screen[data-screen=highscores]")
+    assert has_element?(view, "#row-#{Characters.character_id(session)}.mine")
+
+    assert {:error, {:live_redirect, %{to: "/elven-village"}}} = live(conn, ~p"/")
+  end
+
   test "a lineage's board is its own address, and holds only its own" do
     {conn, session} = play(build_conn(), "Wanderer", 2)
     id = fallen("Gone")
     mine = Characters.character_id(session)
 
-    {:ok, view, _html} = live(conn, ~p"/highscores/elf")
+    {:ok, view, _html} = live(conn, ~p"/monument-of-heroes/elves")
 
     assert has_element?(view, "#row-#{mine}")
     refute has_element?(view, "#row-#{id}")
-    assert has_element?(view, ~s(a.btn.active[href="/highscores/elf"]))
+    assert has_element?(view, ~s(a.btn.active[href="/monument-of-heroes/elves"]))
   end
 
   test "a run that went missing is neither living nor fallen" do
@@ -101,7 +120,7 @@ defmodule MiniLineageWeb.HallsTest do
     id = Characters.character_id(session)
     Repo.update_all(from(r in Record, where: r.id == ^id), set: [session_id: nil])
 
-    {:ok, view, _html} = live(build_conn(), ~p"/highscores")
+    {:ok, view, _html} = live(build_conn(), ~p"/monument-of-heroes")
 
     assert has_element?(view, "#row-#{id}[data-fate=missing]")
   end

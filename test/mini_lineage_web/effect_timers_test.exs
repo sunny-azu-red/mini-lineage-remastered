@@ -20,7 +20,7 @@ defmodule MiniLineageWeb.EffectTimersTest do
   # Away from Elven Village, so the Mother Tree adds nothing, and by day, so night adds nothing.
   defp elf do
     {elf, _} = Player.initialize(%Player{}, Constants.race(2), :fighter, "Sunny")
-    %{elf | location: "gludio", skills: Map.put(elf.skills, "Defense Aura", 1)}
+    %{elf | location: "town-of-gludio", skills: Map.put(elf.skills, "Defense Aura", 1)}
   end
 
   test "a raised aura says what it adds as a percentage, and counts down its two minutes" do

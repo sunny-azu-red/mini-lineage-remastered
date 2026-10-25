@@ -5,7 +5,7 @@ description: Every file and test a new screen touches in this game, as one check
 
 # A new page
 
-AGENTS.md holds each rule; this is the order they bite in, as the guild page (`/<village>/guild`)
+AGENTS.md holds each rule; this is the order they bite in, as the guild page (`/<village>/<guild>`)
 was wired end to end. A place is `{screen, town}`. Work down the list and tick what applies.
 
 ## 1. The rule first
@@ -16,10 +16,12 @@ researched in first if missing.
 
 ## 2. Its address
 
-- `router.ex`: a literal route generated from the rules tables (`for slug <- Paths.villages()`),
-  never a pattern or glob, inside `live_session :game`, whose session carries the kept cookie.
-- `Paths.for_screen/1`: a clause for `{screen, town}` placed before the catch-all
-  `for_screen({screen, _town})`, or an `@routes` entry for a page with no town.
+- `router.ex`: a route for each place, generated from the rules tables (`for town <-
+  Paths.villages()`) and written by `Paths.for_screen`, never a pattern or glob, inside
+  `live_session :game`, whose session carries the kept cookie.
+- `Paths`: the page's name in `@names`, which heads it and its address is the slug of, then a
+  `for_screen/1` clause for `{screen, town}` placed before the catch-all `for_screen({screen,
+  _town})`, or an `@routes` entry for a page with no town.
 - `GameLive.requested_place/3`: a town-scoped `live_action` joins the guard list of the clause that
   reads the town from the URI.
 - `paths_test.exs`: the place in `places/0` (every route linked to, every link routed), and in the

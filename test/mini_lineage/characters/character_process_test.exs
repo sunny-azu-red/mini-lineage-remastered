@@ -70,7 +70,7 @@ defmodule MiniLineage.CharactersTest do
   test "the regeneration tick heals a resting, wounded character", %{id: id} do
     start_character(id, 2)
     hold(id)
-    Characters.mutate(id, &{%{&1 | health: 10, location: "gludio"}, :ok})
+    Characters.mutate(id, &{%{&1 | health: 10, location: "town-of-gludio"}, :ok})
 
     [{pid, _}] = Registry.lookup(MiniLineage.Characters.Registry, id)
     send(pid, :tick)

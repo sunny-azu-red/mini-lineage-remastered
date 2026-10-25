@@ -223,13 +223,13 @@ A character stands in one town at a time, which starts as its race's village (§
 
 | Town | Slug | Open | Gatekeeper |
 |---|---|---|---|
-| Talking Island Village | talking-island | yes | Roxxy |
+| Talking Island Village | talking-island-village | yes | Roxxy |
 | Elven Village | elven-village | yes | Mirabel |
 | Dark Elf Village | dark-elf-village | yes | Jasmine |
 | Orc Village | orc-village | yes | Tamil |
-| Town of Gludio | gludio | yes | Bella |
-| Town of Dion | dion | yes | Trisha |
-| Town of Giran | giran | not yet | Clarissa |
+| Town of Gludio | town-of-gludio | yes | Bella |
+| Town of Dion | town-of-dion | yes | Trisha |
+| Town of Giran | town-of-giran | not yet | Clarissa |
 | Giran Harbor | giran-harbor | not yet | Angelina |
 
 Every town has its Gatekeeper, named above, who sends a character along a route for Adena. A route runs both ways

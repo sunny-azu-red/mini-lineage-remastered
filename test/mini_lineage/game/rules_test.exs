@@ -28,7 +28,7 @@ defmodule MiniLineage.Game.RulesTest do
     do: [hp_regen: {:mul, number(n)}, mp_regen: {:mul, number(n)}]
 
   # A §16 row's "when it holds", as a moment and a place where it does.
-  defp circumstance("at night"), do: {~U[2026-07-01 23:00:00Z], "gludio"}
+  defp circumstance("at night"), do: {~U[2026-07-01 23:00:00Z], "town-of-gludio"}
   defp circumstance("in Elven Village"), do: {~U[2026-07-01 09:00:00Z], "elven-village"}
 
   defp number(cell), do: cell |> String.replace(",", "") |> Float.parse() |> elem(0)
@@ -706,16 +706,18 @@ defmodule MiniLineage.Game.RulesTest do
 
     test "§14 the villages never link to each other, only to Gludio" do
       for race_id <- 0..3, route <- Rules.routes_from(Rules.hometown(race_id)) do
-        assert route.to == "gludio"
+        assert route.to == "town-of-gludio"
       end
     end
 
     test "§14 an Elf reaches Dion for 7,800, and an Orc with 10,000 cannot" do
       fee = fn from, to -> Rules.route(from, to).fee end
 
-      assert fee.("elven-village", "gludio") + fee.("gludio", "dion") == 7_800
-      assert 10_000 - fee.("orc-village", "gludio") == 4_000
-      assert 4_000 < fee.("gludio", "dion")
+      assert fee.("elven-village", "town-of-gludio") + fee.("town-of-gludio", "town-of-dion") ==
+               7_800
+
+      assert 10_000 - fee.("orc-village", "town-of-gludio") == 4_000
+      assert 4_000 < fee.("town-of-gludio", "town-of-dion")
     end
 
     test "§15 a Human Fighter's Accuracy at night, and §16 a Dark Fighter's" do
@@ -740,9 +742,9 @@ defmodule MiniLineage.Game.RulesTest do
         Player.auras(%{elf | location: location, health: 1, mp: 0}) |> List.last()
       end
 
-      assert_in_delta Player.stats(%{elf | location: "gludio"}).hp_regen, 5.36, 0.005
-      assert_in_delta Player.stats(%{elf | location: "gludio"}).mp_regen, 3.16, 0.005
-      assert rates.("gludio").rates == [hp_regen: 5, mp_regen: 3]
+      assert_in_delta Player.stats(%{elf | location: "town-of-gludio"}).hp_regen, 5.36, 0.005
+      assert_in_delta Player.stats(%{elf | location: "town-of-gludio"}).mp_regen, 3.16, 0.005
+      assert rates.("town-of-gludio").rates == [hp_regen: 5, mp_regen: 3]
       assert rates.("elven-village").rates == [hp_regen: 8, mp_regen: 5]
     end
 
@@ -964,7 +966,13 @@ defmodule MiniLineage.Game.RulesTest do
       learned = fn race, path, level, skills ->
         {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Pupil")
         xp = Math.xp_for_level(level)
-        %{player | experience: xp, skills: Map.merge(player.skills, skills), location: "gludio"}
+
+        %{
+          player
+          | experience: xp,
+            skills: Map.merge(player.skills, skills),
+            location: "town-of-gludio"
+        }
       end
 
       round2 = &Float.round(&1 / 1, 2)
@@ -995,7 +1003,13 @@ defmodule MiniLineage.Game.RulesTest do
       learned = fn race, path, level, skills ->
         {player, _} = Player.initialize(%Player{}, Constants.race(race), path, "Pupil")
         xp = Math.xp_for_level(level)
-        %{player | experience: xp, skills: Map.merge(player.skills, skills), location: "gludio"}
+
+        %{
+          player
+          | experience: xp,
+            skills: Map.merge(player.skills, skills),
+            location: "town-of-gludio"
+        }
       end
 
       round2 = &Float.round(&1 / 1, 2)

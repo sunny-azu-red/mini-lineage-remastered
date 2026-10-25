@@ -29,7 +29,7 @@ try {
         const { context, page } = await freshStart(browser);
         watch(page);
         const { text } = controls(page);
-        await page.goto(`${BASE}/races`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`${BASE}/chronicles-of-ancestry`, { waitUntil: 'domcontentloaded' });
         await page.waitForSelector('.phx-connected', { timeout: 8000 });
         const chronicles = await text('#main');
         const headings = await page.$$eval('#screen > .panel h2.header-name',

@@ -14,7 +14,7 @@ defmodule MiniLineage.Game.NightTest do
   # In Gludio, where no race is at home and the Mother Tree blesses nobody.
   defp born(race_id) do
     {player, _} = Player.initialize(%Player{}, Constants.race(race_id), :fighter, "Watcher")
-    %{player | location: "gludio"}
+    %{player | location: "town-of-gludio"}
   end
 
   defp at(time, fun) do

@@ -20,7 +20,7 @@ defmodule MiniLineageWeb.Screens.Halls do
   attr :sorts, :map, default: %{}
 
   def screen(assigns) do
-    race = Enum.find(assigns.catalog.races, &(&1.slug == assigns.lineage))
+    race = Enum.find(assigns.catalog.races, &(Paths.lineage(&1) == assigns.lineage))
     sort = Screens.sort_of(assigns.sorts, "halls-table")
     rows = Map.get(assigns.boards, race && race.id, [])
     assigns = assign(assigns, sort: sort, rows: sort_rows(rows, sort, &row_key/2))
@@ -40,8 +40,8 @@ defmodule MiniLineageWeb.Screens.Halls do
         :for={race <- @catalog.races}
         variant={:secondary}
         size={:sm}
-        active={@lineage == race.slug}
-        patch={Paths.for_screen({"highscores", race.slug})}
+        active={@lineage == Paths.lineage(race)}
+        patch={Paths.for_screen({"highscores", Paths.lineage(race)})}
       >
         {race.emoji} {race.plural}
       </.button>

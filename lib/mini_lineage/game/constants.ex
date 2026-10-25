@@ -47,11 +47,11 @@ defmodule MiniLineage.Game.Constants do
   # Rules §24: what each village's traders say as a page of theirs opens, from their own greetings;
   # the Magic Trader's two keepers speak in one line.
   @trader_lines %{
-    {"talking-island", :weapon} =>
+    {"talking-island-village", :weapon} =>
       "Lector lays out the weapons your path can use, and warns that the most expensive is not always the best, since a weapon serves only the one it suits.",
-    {"talking-island", :armour} =>
+    {"talking-island-village", :armour} =>
       "Jackson waves you in to look around, sure that it always pays to buy the best armour you can, since every battle grows easier for it.",
-    {"talking-island", :magic} =>
+    {"talking-island-village", :magic} =>
       "Silvia minds the jewellery for an aunt and asks you to choose quickly, while Katerina wishes you the luck of the goddess and offers potions that are not rare but serve well when they are used wisely.",
     {"elven-village", :weapon} =>
       "Unoren trades in the small tools that matter most on the battlefield, from sharp bronze daggers to the finest swords, and bids you have a look.",
@@ -75,16 +75,16 @@ defmodule MiniLineage.Game.Constants do
 
   # Rules §14's open towns as a reader finds them, by slug. One not yet open is never stood in.
   @towns %{
-    "talking-island" =>
+    "talking-island-village" =>
       "A quiet village on Talking Island, off the mainland's coast, where every Human first takes up a blade or a staff.",
     "elven-village" => "Built among the roots of the Mother Tree, deep in the Elven Forest.",
     "dark-elf-village" =>
       "Hidden in the shadowed forests where the Dark Elves keep their own counsel.",
     "orc-village" =>
       "The Orc Village stands on a barren plateau of the north, among the tribes who raised it.",
-    "gludio" =>
+    "town-of-gludio" =>
       "A walled town in the south of the mainland, where the roads from every starting village meet.",
-    "dion" =>
+    "town-of-dion" =>
       "Wheat fields roll out from Dion's walls toward the castle on the hill, and the road east runs on to Giran."
   }
 

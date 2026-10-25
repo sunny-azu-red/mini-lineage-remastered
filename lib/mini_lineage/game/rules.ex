@@ -84,59 +84,51 @@ defmodule MiniLineage.Game.Rules do
     }
   ]
 
-  # Rules §14: every town, by the slug its address is made of. One not yet open is only listed.
+  # Rules §14: every town, named as the game draws it. One not yet open is only listed.
   @towns [
     %{
-      slug: "talking-island",
       name: "Talking Island Village",
       emoji: "🏝️",
       open?: true,
       gatekeeper: "Roxxy"
     },
     %{
-      slug: "elven-village",
       name: "Elven Village",
       emoji: "🌳",
       open?: true,
       gatekeeper: "Mirabel"
     },
     %{
-      slug: "dark-elf-village",
       name: "Dark Elf Village",
       emoji: "🌑",
       open?: true,
       gatekeeper: "Jasmine"
     },
     %{
-      slug: "orc-village",
       name: "Orc Village",
       emoji: "🏕️",
       open?: true,
       gatekeeper: "Tamil"
     },
     %{
-      slug: "gludio",
       name: "Town of Gludio",
       emoji: "🏰",
       open?: true,
       gatekeeper: "Bella"
     },
     %{
-      slug: "dion",
       name: "Town of Dion",
       emoji: "🌾",
       open?: true,
       gatekeeper: "Trisha"
     },
     %{
-      slug: "giran",
       name: "Town of Giran",
       emoji: "🐉",
       open?: false,
       gatekeeper: "Clarissa"
     },
     %{
-      slug: "giran-harbor",
       name: "Giran Harbor",
       emoji: "⚓",
       open?: false,
@@ -144,9 +136,12 @@ defmodule MiniLineage.Game.Rules do
     }
   ]
 
+  # A town's id and address, its name slugified and never written, so the two cannot drift.
+  @towns Enum.map(@towns, &Map.put(&1, :slug, MiniLineage.Game.Format.slugify(&1.name)))
+
   # Rules §1: the village each race starts in.
   @hometowns %{
-    0 => "talking-island",
+    0 => "talking-island-village",
     1 => "orc-village",
     2 => "elven-village",
     3 => "dark-elf-village"
@@ -154,13 +149,13 @@ defmodule MiniLineage.Game.Rules do
 
   # Rules §14: each route runs both ways at one fee, listed in the order a Gatekeeper reads them.
   @routes [
-    {"gludio", "dion", 4_100},
-    {"talking-island", "gludio", 2_900},
-    {"elven-village", "gludio", 3_700},
-    {"dark-elf-village", "gludio", 3_700},
-    {"orc-village", "gludio", 6_000},
-    {"dion", "giran", 8_100},
-    {"dion", "giran-harbor", 6_500}
+    {"town-of-gludio", "town-of-dion", 4_100},
+    {"talking-island-village", "town-of-gludio", 2_900},
+    {"elven-village", "town-of-gludio", 3_700},
+    {"dark-elf-village", "town-of-gludio", 3_700},
+    {"orc-village", "town-of-gludio", 6_000},
+    {"town-of-dion", "town-of-giran", 8_100},
+    {"town-of-dion", "giran-harbor", 6_500}
   ]
 
   # Rules §15 and §16: what each condition the world puts on a character does to its stats.
@@ -282,16 +277,14 @@ defmodule MiniLineage.Game.Rules do
   # Rules §17: one ground per starting village, its monsters a ladder by level.
   @grounds [
     %{
-      slug: "obelisk-of-victory",
       name: "Obelisk of Victory",
-      town: "talking-island",
+      town: "talking-island-village",
       monsters:
         ~w(Young_Keltir Bearded_Keltir Elpy Gremlin Elder_Keltir Wolf Elder_Wolf Giant_Toad Orc
            Orc_Grunt Goblin_Scout Orc_Archer Werewolf Orc_Fighter Werewolf_Hunter Orc_Lieutenant
            Werewolf_Chieftain Orc_Fighter_Leader Stone_Golem Crasher Talon_Spider Blade_Spider)
     },
     %{
-      slug: "elven-fortress",
       name: "Elven Fortress",
       town: "elven-village",
       monsters:
@@ -302,7 +295,6 @@ defmodule MiniLineage.Game.Rules do
            Dre_Vanul_Tracker)
     },
     %{
-      slug: "school-of-dark-arts",
       name: "School of Dark Arts",
       town: "dark-elf-village",
       monsters:
@@ -313,7 +305,6 @@ defmodule MiniLineage.Game.Rules do
            Tainted_Zombie Stink_Zombie Lesser_Succubus Lesser_Succubus_Turen Lesser_Succubus_Tilfo)
     },
     %{
-      slug: "cave-of-trials",
       name: "Cave of Trials",
       town: "orc-village",
       monsters: ~w(Young_Prairie_Keltir Gremlin Prairie_Keltir Elder_Prairie_Keltir Kasha_Wolf
@@ -323,6 +314,8 @@ defmodule MiniLineage.Game.Rules do
            Kuruka_Ratman_Hunter Skeleton_Longbowman Undead_Slave Ghost Ghost_Guardian)
     }
   ]
+
+  @grounds Enum.map(@grounds, &Map.put(&1, :slug, MiniLineage.Game.Format.slugify(&1.name)))
 
   # Rules §18, a table in the hundreds and so a data file, read here at compile time.
   @external_resource monsters_path = Path.join(:code.priv_dir(:mini_lineage), "game/monsters.csv")
@@ -714,7 +707,7 @@ defmodule MiniLineage.Game.Rules do
   # Rules §24: each village's four traders, by what they sell; the jeweller and the grocer keep the
   # Magic Trader together.
   @traders %{
-    "talking-island" => %{
+    "talking-island-village" => %{
       weapon: "Lector",
       armour: "Jackson",
       jewellery: "Silvia",

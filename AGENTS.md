@@ -16,16 +16,17 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `Actions.restart/1`, and refused every other action),
   each village's traders (`/<village>/traders`), four by name
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
-  (`/<village>/traders/<weapon|armour|magic|sell>`, each set shown its path's goods by
+  (`/<village>/traders/<weapon-trader|armour-trader|magic-trader|sell>`, each set shown its path's goods by
   `Rules.stock/2`), and the inventory beside its Combat
   Stats (rules §23 and §24: `Shop`, the items table, `/inventory`), potions and the Battle Orders
   under the ground's Fight Log (rules §26, §20: `Actions.potion_at/2`, `heal_at/3`, `use_skill/3`,
   a `<.stepper>` for each share, a `<.switch>` for each skill, and a footer row of the SP the
   guild spends beside 🧹 Reset to Default, `reset_orders/1`, back to `Player.default_orders/0`), the
   Buffs & Debuffs panel, and the home village's guild, where the set's own trainers teach (rules §25: `Actions.learn/3`,
-  `/<village>/guild`, named per set by `Rules.guild/1`, its lessons on an Active and a Passive shelf,
-  a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/races`, the Monument of Heroes
-  (the Halls, in code) at `/highscores`, and the error page. Everything the game was before that is
+  `/<village>/<guild>`, named per set by `Rules.guild/1`, its lessons on an Active and a Passive shelf,
+  a character's `skills` and `sp`), `/character`, the Chronicles of Ancestry at `/chronicles-of-ancestry`, the Monument of Heroes
+  (the Halls, in code) at `/monument-of-heroes`, reached from game start, a fallen run's ground and every
+  town's Travel (its obelisk stands in each), and the error page. Everything the game was before that is
   in `legacy/` (see Rules).
 - **Not here, so don't reach for it**: `core_components.ex` (no `<.icon>`, `<.input>` or
   `<.flash_group>`; every control is hand-written HEEx in `lib/mini_lineage_web/components/`); an
@@ -313,12 +314,20 @@ Each of these is here because it was got wrong once.
 
 - **The URL is where you are.** A character stands in one town (rules §14), stored as `location`.
   Each open town, its Gatekeeper, its ground (`/<town>/<ground>`), a village's traders and their
-  pages (`/<town>/traders/<page>`) and guild, and each lineage's board (`/highscores/<lineage>`)
+  pages (`/<town>/traders/<page>`) and guild, and each lineage's board (`/monument-of-heroes/<lineage>`)
   have literal routes generated from the rules tables, never a pattern. `/` is
   game start for a visitor and, for a character, a patch to its town (a fallen run's ground): `GameLive` compares the pinned
   place's address with the one asked for, not the screen alone. A place is `{screen, town}`. A new
   place to stand (a shop, a hunting ground) gets its own URL when built; a state that happens to you
   does not.
+- **An address says what its link says.** Each segment is `Format.slugify/1` of the name the game
+  draws for that place, derived and never written: a town's and a ground's in `Rules`
+  (`/town-of-gludio`), a guild's (`/talking-island-village/mystics-guild`, so a run is sent on to
+  its own set's through `Paths.for_screen/2`), a lineage's plural as its filter reads
+  (`/monument-of-heroes/dark-elves`), and a page's own name in `Paths.names/0`, which `Screens`
+  heads the page with (`/traders/weapon-trader`). The router builds every route through `Paths`,
+  and `paths_test.exs` holds each segment to a name. A screen's id is internal and stays as it is
+  (`highscores`, `races`, `trader-weapon`); a town is referred to by its slug elsewhere.
 - **`Access.pin_screen/2` gates what may be DONE, never what may be read.** `races`, `highscores`
   and `error` carry no action, so its first clauses let every state reach them; the Halls keep their
   lineage filter in the place's second half. The rest decide only screens that can be acted on: a

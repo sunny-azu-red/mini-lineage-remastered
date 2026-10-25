@@ -53,7 +53,7 @@ defmodule MiniLineageWeb.DevHalfTest do
       mp: 1,
       adena: 0,
       experience: top,
-      location: "talking-island"
+      location: "talking-island-village"
     }
 
     assert {%{experience: ^top}, {:ok, _}} = Actions.dev_half(player)
