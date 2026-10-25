@@ -62,20 +62,29 @@ defmodule MiniLineage.BoardTest do
     test "a run appears the moment it chooses a race, alive, with a session" do
       run("Fresh")
 
-      assert [%{name: "Fresh", dead: false, active: true, level: 1}] = Board.current()[nil]
+      assert [%{name: "Fresh", dead: false, active: true, level: 1, missing_since: nil}] =
+               Board.current()[nil]
     end
 
     test "and stays when it dies, fallen and without a session" do
       run("Fallen", xp: 100, dead: true)
 
-      assert [%{name: "Fallen", dead: true, active: false}] = Board.current()[nil]
+      assert [%{name: "Fallen", dead: true, active: false, missing_since: nil}] =
+               Board.current()[nil]
     end
 
-    test "and stays when it goes missing" do
+    test "and stays when it goes missing, since the later of its last write and last look" do
       %{id: id} = run("Missing", xp: 100)
-      Repo.update_all(from(r in Record, where: r.id == ^id), set: [session_id: nil])
+      written = ~U[2026-09-17 10:00:00.000000Z]
+      seen = ~U[2026-09-20 10:00:00.000000Z]
+      missing = from(r in Record, where: r.id == ^id)
+      Repo.update_all(missing, set: [session_id: nil, updated_at: written, seen_at: nil])
 
-      assert [%{name: "Missing", dead: false, active: false}] = Board.current()[nil]
+      assert [%{name: "Missing", dead: false, active: false, missing_since: ^written}] =
+               Board.current()[nil]
+
+      Repo.update_all(missing, set: [seen_at: seen])
+      assert [%{missing_since: ^seen}] = Board.current()[nil]
     end
 
     test "a lineage's board holds only its own" do
@@ -126,6 +135,22 @@ defmodule MiniLineage.BoardTest do
 
       Characters.forget(session)
       assert_receive {:board, %{nil => []}}, 2_000
+    end
+
+    test "pushes nothing for a write that moved no figure on a living run's row" do
+      %{id: id} = run("Idler", xp: 50)
+      Board.character_changed()
+      assert_receive {:board, %{nil => [%{name: "Idler"}]}}, 2_000
+
+      later = DateTime.add(DateTime.utc_now(), 60, :second)
+
+      Repo.update_all(from(r in Record, where: r.id == ^id),
+        set: [updated_at: later, seen_at: later]
+      )
+
+      Board.character_changed()
+
+      refute_receive {:board, _}, 1_000
     end
 
     test "and pushes nothing when nothing on it moved" do

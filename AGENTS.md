@@ -130,7 +130,8 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **Done means `mix precommit`**, plus `mix e2e` for anything the browser renders: a screen, a hook,
   a selector, what an element *is*. A change that only moves colour values skips e2e; no suite can
   fail on a hex. ExUnit's coverage understates the web layer because the browser suites aren't
-  instrumented.
+  instrumented. Then the `commit-sweep` skill: Claude Code's `.claude/hooks/commit_sweep.py`
+  refuses a `git commit` until the skill has stamped the change as it stands.
 - **Show a new test failing before claiming it passes.** Break what it covers, watch it go red, and
   restore with `git checkout` or `touch`. Never restore from a backup copy: it is older than the
   build, so Mix keeps the broken beam. A file with uncommitted work is not restored with `git
@@ -142,8 +143,8 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   on the dev server's `PORT`; `mix e2e`, `test` and `precommit` pass, as does any `MIX_ENV=test`.
 - **What every agent should know lives in the repo**: this file for rules, `docs/` for the game's
   why, and `.claude/` for Claude Code: the committed `settings.json` and its hooks, and `skills/` for
-  procedures (`balance-study`, `new-page`), each moved out of here rather than copied, so the two
-  never drift. A personal memory holds only what is about one person or one machine.
+  procedures (`balance-study`, `new-page`, `commit-sweep`), each moved out of here rather than
+  copied, so the two never drift. A personal memory holds only what is about one person or one machine.
 - **Ask the running app, through Tidewave.** `project_eval` for state (`:sys.get_state`,
   `:timer.tc`); `execute_sql_query` for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually
   sent, captured with a `:telemetry` handler on `[:mini_lineage, :repo, :query]`; `get_logs` for a
@@ -291,8 +292,10 @@ Each of these is here because it was got wrong once.
 - **A run nobody comes back to goes missing, never deleted.** The 30-day retirement clears its session
   and leaves its row. It counts from the later of the last write and `seen_at`, which
   `Characters.Server` writes whenever a started run's first tab opens or its last closes, and it
-  spares every run online, so a player who only looks never loses one. The cookie's own 30 days
-  restart on every page load (`CharacterSession` puts the session each time).
+  spares every run online, so a player who only looks never loses one. The Halls' Fate dates its
+  "Vanished" by that same later instant, which `Board` keeps only on a missing row, since a living
+  run's moves with every write. The cookie's own 30 days restart on every page load
+  (`CharacterSession` puts the session each time).
 - **A run that dies is over, never deleted** (rules §21). It is written `dead` with its `killer`,
   `fell_at` (the ground, not the time), `died_at` (its UTC millisecond, the Halls' generated
   `died_at` column) and `death_line` like any other write, and stays the browser's until Play Again. Then
@@ -488,8 +491,8 @@ Each of these is here because it was got wrong once.
   the tooltip, naming the zone ("17 Oct 2026, 3:10 pm EEST"). The `Stamp` hook ages each `<time>` from the age the server
   drew it at, `data-age-ms`, a duration as a countdown's is and counted from the first one it is
   sent, and repaints only as the label turns over. The day past the cap is the server's, written in
-  the game's zone into `data-date`, so the browser never works out a zone. The Halls' Fallen
-  is the only stamp today; an effect's time left is a countdown, never a stamp.
+  the game's zone into `data-date`, so the browser never works out a zone. The Halls' Fate
+  (when a run fell, or when a missing one was last seen) is the only stamp today; an effect's time left is a countdown, never a stamp.
 - **Every figure counts; only names and dates jump.** A number the player can watch change is a
   `<.figure>`, animated by `AnimatedValues` hooked once over whatever contains them. It writes
   `data-value` and the text from one value, and `format={:short}` sets both the short form and the

@@ -7,9 +7,20 @@
           {
             "type": "command",
             "command": "python3",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/dev_build_guard.py"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/dev_build_guard.py"
+            ],
             "timeout": 10,
             "statusMessage": "Checking for the dev server"
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/commit_sweep.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "Checking the change was swept"
           }
         ]
       }

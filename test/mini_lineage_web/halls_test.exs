@@ -82,6 +82,10 @@ defmodule MiniLineageWeb.HallsTest do
 
     refute has_element?(view, "#row-#{mine} time")
     refute html =~ "💀"
+
+    # Each cell names its fate, so a run still standing reads apart from one that ended.
+    assert has_element?(view, "#fate-#{mine}", "Alive")
+    assert has_element?(view, "#fate-#{id}", "Fell")
   end
 
   test "a character reaches them from the last of its town's Travel, and still stands in that town" do
@@ -115,13 +119,32 @@ defmodule MiniLineageWeb.HallsTest do
     assert has_element?(view, ~s(a.btn.active[href="/monument-of-heroes/elves"]))
   end
 
-  test "a run that went missing is neither living nor fallen" do
-    {_conn, session} = play(build_conn(), "Wanderer", 0)
-    id = Characters.character_id(session)
-    Repo.update_all(from(r in Record, where: r.id == ^id), set: [session_id: nil])
+  test "a run that went missing is neither living nor fallen, and says when it was last seen" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Drifter")
+    id = Store.new_id()
+    Store.save(id, Characters.new_session_id(), player, false)
 
+    # Retired as the sweep would, its last sighting the later of its last write and last look.
+    Repo.update_all(from(r in Record, where: r.id == ^id),
+      set: [
+        session_id: nil,
+        updated_at: ~U[2026-09-17 10:00:00.000000Z],
+        seen_at: ~U[2026-09-20 10:00:00.000000Z]
+      ]
+    )
+
+    Clock.put_now(~U[2026-11-10 00:00:00Z])
     {:ok, view, _html} = live(build_conn(), ~p"/monument-of-heroes")
 
     assert has_element?(view, "#row-#{id}[data-fate=missing]")
+    assert has_element?(view, "#fate-#{id}", "Vanished")
+
+    assert has_element?(
+             view,
+             ~s(#missing-#{id}.date[datetime="2026-09-20T10:00:00.000000Z"]),
+             "20 Sep"
+           )
+
+    refute has_element?(view, "#fell-#{id}")
   end
 end

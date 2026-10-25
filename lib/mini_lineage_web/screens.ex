@@ -658,7 +658,7 @@ defmodule MiniLineageWeb.Screens do
   def sortable("lessons"), do: table(~w(skill learn_at sp), {"learn_at", :asc})
 
   def sortable("halls-table"),
-    do: table(~w(name level total_xp adena fallen), {"total_xp", :desc})
+    do: table(~w(name level total_xp adena fate), {"total_xp", :desc})
 
   def sortable(table) do
     if String.ends_with?(table, "-classes"),

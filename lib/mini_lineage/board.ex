@@ -161,12 +161,24 @@ defmodule MiniLineage.Board do
       adena: r.adena,
       dead: r.dead,
       died_at: r.died_at,
+      # What the idle retirement counts from: GREATEST skips a NULL, as it does there.
+      last_seen: type(fragment("GREATEST(?, ?)", r.updated_at, r.seen_at), :utc_datetime_usec),
       inserted_at: r.inserted_at,
       active: not is_nil(r.session_id)
     })
   end
 
   # Level comes from the same function the character screen uses, which is why no column stores it.
-  defp decorate(entry),
-    do: Map.merge(entry, %{level: Math.level_for_xp(entry.total_xp), medal: nil, online: false})
+  # A sighting is kept only once the run is missing, when it can no longer move: a living run's
+  # moves with every write, and the board would push and sweep its row for nothing.
+  defp decorate(%{last_seen: last_seen} = entry) do
+    entry
+    |> Map.delete(:last_seen)
+    |> Map.merge(%{
+      level: Math.level_for_xp(entry.total_xp),
+      missing_since: if(entry.dead or entry.active, do: nil, else: last_seen),
+      medal: nil,
+      online: false
+    })
+  end
 end

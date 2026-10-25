@@ -3,7 +3,7 @@ defmodule MiniLineageWeb.Screens.Halls do
   The Monument of Heroes, Interlude's obelisk to its heroes, carrying every run: filtered to one
   lineage or to all of them. A view of the characters rather
   than a table of its own, so a run appears the moment it chooses a race and keeps its place when it
-  ends, whether it fell (rules §21) or went missing.
+  ends, whether it fell (rules §21) or went missing, its Fate saying when it fell or was last seen.
   """
   use MiniLineageWeb, :html
 
@@ -59,7 +59,7 @@ defmodule MiniLineageWeb.Screens.Halls do
         <:col class="num" sort="level">Level</:col>
         <:col class="num" sort="total_xp">Total XP</:col>
         <:col sort="adena">Wealth</:col>
-        <:col sort="fallen">Fallen</:col>
+        <:col sort="fate">Fate</:col>
         <%!-- One hook for the whole board: every figure beneath it counts. --%>
         <tbody id="halls-rows" phx-hook="AnimatedValues">
           <.character_row
@@ -111,8 +111,15 @@ defmodule MiniLineageWeb.Screens.Halls do
       <td class="adena">
         🪙 <.figure key={"adena-#{@row.id}"} value={@row.adena} format={:short} />
       </td>
-      <td>
-        <.stamp :if={@row.died_at} id={"fell-#{@row.id}"} at={@row.died_at} />
+      <td id={"fate-#{@row.id}"} class="muted">
+        <%= case fate(@row) do %>
+          <% "fallen" -> %>
+            Fell <.stamp id={"fell-#{@row.id}"} at={@row.died_at} />
+          <% "missing" -> %>
+            Vanished <.stamp id={"missing-#{@row.id}"} at={@row.missing_since} />
+          <% "living" -> %>
+            Alive
+        <% end %>
       </td>
     </tr>
     """
@@ -122,8 +129,12 @@ defmodule MiniLineageWeb.Screens.Halls do
   defp row_key(row, "level"), do: row.level
   defp row_key(row, "total_xp"), do: row.total_xp
   defp row_key(row, "adena"), do: row.adena
-  # A run still standing falls after every run that has: nil outsorts every integer.
-  defp row_key(row, "fallen"), do: row.died_at && DateTime.to_unix(row.died_at, :microsecond)
+  # An ended run by when it fell or was last seen; one still standing after them all, since nil
+  # outsorts every integer.
+  defp row_key(row, "fate") do
+    ended = row.died_at || row.missing_since
+    ended && DateTime.to_unix(ended, :microsecond)
+  end
 
   # A run is going while it has neither died nor lost its session. Without one it is missing: it
   # can never be played again, so it is over even though it never died.

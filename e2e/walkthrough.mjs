@@ -507,6 +507,8 @@ try {
     check('the Halls list this run as the reader\'s own, still living, with no day it fell',
         await mine.count() === 1 && await mine.getAttribute('data-fate') === 'living'
         && await mine.locator('time').count() === 0, rowId);
+    check('...its Fate reading Alive', (await mine.locator('td:last-child').innerText()).trim() === 'Alive',
+        await mine.locator('td:last-child').innerText());
     check('...and the Halls draw no sidebar', await page.locator('#sidebar').count() === 0);
 
     // Somebody else watching the Halls sees the run's purse move, pushed rather than reloaded.
@@ -1317,10 +1319,11 @@ try {
     // The board coalesces its writes, so the death may reach it a beat after the page does.
     await g.waitForSelector('#halls-rows tr.mine[data-fate="fallen"] time.date', { timeout: 5000 });
     const fell = await g.$eval('#halls-rows tr.mine[data-fate="fallen"] time.date',
-        (el) => [el.dateTime, el.textContent.trim(), el.title, el.closest('tr').textContent.includes('💀')]);
+        (el) => [el.dateTime, el.textContent.trim(), el.title, el.closest('tr').textContent.includes('💀'),
+            el.closest('td').textContent.trim().startsWith('Fell ')]);
     check('...where the run carries how long ago it fell, the whole instant beside it, in place of a skull',
         Date.now() - Date.parse(fell[0]) < 600_000 && /^(just now|\d+m ago)$/.test(fell[1])
-        && /^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{1,2}:\d{2} [ap]m [A-Z]{2,5}$/.test(fell[2]) && !fell[3],
+        && /^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{1,2}:\d{2} [ap]m [A-Z]{2,5}$/.test(fell[2]) && !fell[3] && fell[4],
         fell.join(' | '));
     const stampServed = await servedShownOn(g, '#halls-rows tr.mine time.date');
     check('...served as the hook shows it', stampServed.same && stampServed.served.length === 1, stampServed.detail);

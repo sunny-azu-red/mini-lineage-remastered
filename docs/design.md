@@ -82,7 +82,7 @@ was got wrong once.
   that isn't a value standing where one would be; no weight), `.delimiter` (the `&bull;` between a
   name and what it does, a skill's, an effect's or an item's, one step brighter than muted so it
   stands apart from an item's muted stats too; between two muted sides, as in a log's head, it has
-  nothing to stand apart from and inherits their muted colour), `.date` (a `<.stamp>`, when something happened, as the Halls' Fallen column writes it), `.timer` (an effect's
+  nothing to stand apart from and inherits their muted colour), `.date` (a `<.stamp>`, when something happened, as the Halls' Fate column writes it), `.timer` (an effect's
   time left, dimmed like a date),
   `.build-development` and `.build-testing`.
 - **A value's class goes where the thing is named in a sentence**, figure or not, and never on a
