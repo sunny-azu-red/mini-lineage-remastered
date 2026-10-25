@@ -141,16 +141,16 @@ defmodule MiniLineage.Game.Narrative do
 
   # Exactly what `event/2` tells as a critical: a blocked blow is told as the block, and a spell
   # that only lights its burn deals nothing.
-  defp critical?({:blow, _, true}), do: true
-  defp critical?({:cast, _, amount, true}), do: amount > 0
-  defp critical?({:drain, _, _, true, _}), do: true
-  defp critical?({:foe_blow, _, true, nil}), do: true
+  defp critical?({:blow, _, true, _}), do: true
+  defp critical?({:cast, _, amount, true, _}), do: amount > 0
+  defp critical?({:drain, _, _, true, _, _, _}), do: true
+  defp critical?({:foe_blow, _, true, nil, _}), do: true
   defp critical?(_event), do: false
 
-  defp mended?({:heal, _, amount}), do: amount > 0
-  defp mended?({:potion, _, amount}), do: amount > 0
-  defp mended?({:drain, _, _, _, healed}), do: healed > 0
-  defp mended?({:foe_drain, _, _, healed}), do: healed > 0
+  defp mended?({:heal, _, amount, _}), do: amount > 0
+  defp mended?({:potion, _, amount, _}), do: amount > 0
+  defp mended?({:drain, _, _, _, healed, _, _}), do: healed > 0
+  defp mended?({:foe_drain, _, _, healed, _, _}), do: healed > 0
   defp mended?(_event), do: false
 
   defp still_casting([]), do: ""
@@ -204,15 +204,16 @@ defmodule MiniLineage.Game.Narrative do
   defp event(:readying, _foe, false), do: fill(:ready, %{})
   defp event(other, foe, _bow?), do: event(other, foe)
 
-  defp event({:blow, amount, true}, _foe), do: fill(:critical, %{"amount" => amount})
+  defp event({:blow, amount, true, over}, _foe), do: fill(:critical, hit(amount, over))
 
-  # "you hit for 10 and 9 damage": the unit once, after the last.
-  defp event({:blows, amounts}, _foe) do
-    {first, [last]} = Enum.split(amounts, -1)
-    spans = Enum.map(first, &~s(<span class="attack">#{&1}</span>))
+  # "you hit for 10 and 9 damage": the unit once, after the last, which alone can fell.
+  defp event({:blows, hits}, _foe) do
+    {first, [{last, over}]} = Enum.split(hits, -1)
+    spans = Enum.map(first, fn {amount, 0} -> ~s(<span class="attack">#{amount}</span>) end)
 
     fill(:blow, %{
-      "amount" => join_and(spans ++ [~s(<span class="attack">#{last} damage</span>)])
+      "amount" => join_and(spans ++ [~s(<span class="attack">#{last + over} damage</span>)]),
+      "overkill" => past(over, "overkill")
     })
   end
 
@@ -224,44 +225,45 @@ defmodule MiniLineage.Game.Narrative do
     do: fill(:foe_begin, %{"monster" => foe.name, "skill" => shown(spell)})
 
   defp event(:advancing, foe), do: fill(:advancing, %{"monster" => foe.name})
-  defp event({:skill, skill, 0}, _foe), do: fill(:skill_failed, %{"skill" => skill})
+  defp event({:skill, skill, 0, _}, _foe), do: fill(:skill_failed, %{"skill" => skill})
 
-  defp event({:skill, skill, amount}, _foe),
-    do: fill(:skill, %{"skill" => skill, "amount" => amount})
+  defp event({:skill, skill, amount, over}, _foe),
+    do: fill(:skill, Map.put(hit(amount, over), "skill", skill))
 
-  defp event({:cast, skill, 0, _}, foe),
+  defp event({:cast, skill, 0, _, _}, foe),
     do: fill(:ignite, %{"skill" => skill, "monster" => foe.name})
 
-  defp event({:cast, skill, amount, critical?}, _foe),
+  defp event({:cast, skill, amount, critical?, over}, _foe),
     do:
-      fill(if(critical?, do: :magic_critical, else: :cast), %{
-        "skill" => skill,
-        "amount" => amount
-      })
+      fill(
+        if(critical?, do: :magic_critical, else: :cast),
+        Map.put(hit(amount, over), "skill", skill)
+      )
 
   # §19: a drain says what it mends, as a heal does, unless the caster was already whole.
-  defp event({:drain, skill, amount, critical?, 0}, foe),
-    do: event({:cast, skill, amount, critical?}, foe)
+  defp event({:drain, skill, amount, critical?, 0, over, _}, foe),
+    do: event({:cast, skill, amount, critical?, over}, foe)
 
-  defp event({:drain, skill, amount, critical?, healed}, _foe),
+  defp event({:drain, skill, amount, critical?, healed, over, overheal}, _foe),
     do:
-      fill(if(critical?, do: :drain_critical, else: :drain), %{
-        "skill" => skill,
-        "amount" => amount,
-        "healed" => healed
-      })
+      fill(
+        if(critical?, do: :drain_critical, else: :drain),
+        hit(amount, over)
+        |> Map.merge(mend(healed, overheal, "healed"))
+        |> Map.put("skill", skill)
+      )
 
-  defp event({:burn, skill, amount}, _foe),
-    do: fill(:burn, %{"skill" => skill, "amount" => amount})
+  defp event({:burn, skill, amount, over}, _foe),
+    do: fill(:burn, Map.put(hit(amount, over), "skill", skill))
 
   defp event({:poison, skill, amount}, _foe),
     do: fill(:poison, %{"skill" => skill, "amount" => amount})
 
-  defp event({:potion, potion, amount}, _foe),
-    do: fill(:potion, %{"potion" => potion, "amount" => amount})
+  defp event({:potion, potion, amount, over}, _foe),
+    do: fill(:potion, Map.put(mend(amount, over, "amount"), "potion", potion))
 
-  defp event({:heal, skill, amount}, _foe),
-    do: fill(:heal, %{"skill" => skill, "amount" => amount})
+  defp event({:heal, skill, amount, over}, _foe),
+    do: fill(:heal, Map.put(mend(amount, over, "amount"), "skill", skill))
 
   defp event({:aura, skill}, _foe), do: fill(:aura, %{"skill" => skill})
   defp event({:toggle, skill}, _foe), do: fill(:toggle, %{"skill" => skill})
@@ -273,7 +275,7 @@ defmodule MiniLineage.Game.Narrative do
         "monster" => foe.name
       })
 
-  defp event({:foe_blow, amount, critical?, caught}, foe) do
+  defp event({:foe_blow, amount, critical?, caught, over}, foe) do
     kind =
       case caught do
         :perfect -> :foe_perfect
@@ -281,24 +283,29 @@ defmodule MiniLineage.Game.Narrative do
         nil -> if(critical?, do: :foe_critical, else: :foe_blow)
       end
 
-    fill(kind, %{"monster" => foe.name, "amount" => amount})
+    fill(kind, Map.put(hit(amount, over), "monster", foe.name))
   end
 
   defp event(:foe_miss, foe), do: fill(:foe_miss, %{"monster" => foe.name})
 
-  defp event({:foe_cast, spell, amount}, foe),
-    do: fill(:foe_cast, %{"monster" => foe.name, "skill" => shown(spell), "amount" => amount})
-
-  defp event({:foe_drain, spell, amount, 0}, foe), do: event({:foe_cast, spell, amount}, foe)
-
-  defp event({:foe_drain, spell, amount, healed}, foe),
+  defp event({:foe_cast, spell, amount, over}, foe),
     do:
-      fill(:foe_drain, %{
-        "monster" => foe.name,
-        "skill" => shown(spell),
-        "amount" => amount,
-        "healed" => healed
-      })
+      fill(
+        :foe_cast,
+        Map.merge(hit(amount, over), %{"monster" => foe.name, "skill" => shown(spell)})
+      )
+
+  defp event({:foe_drain, spell, amount, 0, over, _}, foe),
+    do: event({:foe_cast, spell, amount, over}, foe)
+
+  defp event({:foe_drain, spell, amount, healed, over, overheal}, foe),
+    do:
+      fill(
+        :foe_drain,
+        hit(amount, over)
+        |> Map.merge(mend(healed, overheal, "healed"))
+        |> Map.merge(%{"monster" => foe.name, "skill" => shown(spell)})
+      )
 
   defp event({:misses, swings}, _foe), do: fill(:misses, %{"times" => times(swings)})
 
@@ -319,7 +326,21 @@ defmodule MiniLineage.Game.Narrative do
   # §19: the log keeps a monster's spell by its Lineage II name; the player reads what it shows.
   defp shown(spell), do: Rules.monster_spell(spell).shown
 
-  defp fill(kind, data), do: Format.fill_template(Narratives.log(kind), data)
+  defp fill(kind, data),
+    do:
+      Format.fill_template(
+        Narratives.log(kind),
+        Map.merge(%{"overkill" => "", "overheal" => ""}, data)
+      )
+
+  # A hit is written at what it was worth, and a mend too, with what went past the last HP or past
+  # full in brackets after it: "20 damage (19 overkill)", "50 HP (19 overheal)".
+  defp hit(amount, over), do: %{"amount" => amount + over, "overkill" => past(over, "overkill")}
+
+  defp mend(amount, over, key), do: %{key => amount + over, "overheal" => past(over, "overheal")}
+
+  defp past(0, _word), do: ""
+  defp past(over, word), do: " (#{over} #{word})"
 
   # A side's swings in one round read as one clause: "you hit for 10 and 9 damage" when every one
   # landed plainly, "you miss twice" when none did, else each in order, "you swing twice for a
@@ -330,9 +351,9 @@ defmodule MiniLineage.Game.Narrative do
     |> Enum.flat_map(fn [first | _] = chunk -> merged(swinger(first), chunk) end)
   end
 
-  defp swinger({:blow, _, _}), do: :you
+  defp swinger({:blow, _, _, _}), do: :you
   defp swinger(:miss), do: :you
-  defp swinger({:foe_blow, _, _, _}), do: :foe
+  defp swinger({:foe_blow, _, _, _, _}), do: :foe
   defp swinger(:foe_miss), do: :foe
   defp swinger(_other), do: nil
 
@@ -340,8 +361,8 @@ defmodule MiniLineage.Game.Narrative do
 
   defp merged(:you, swings) do
     cond do
-      Enum.all?(swings, &match?({:blow, _, false}, &1)) ->
-        [{:blows, Enum.map(swings, &elem(&1, 1))}]
+      Enum.all?(swings, &match?({:blow, _, false, _}, &1)) ->
+        [{:blows, Enum.map(swings, fn {:blow, amount, false, over} -> {amount, over} end)}]
 
       match?([_], swings) ->
         swings
@@ -367,19 +388,20 @@ defmodule MiniLineage.Game.Narrative do
 
   defp outcomes(swings), do: swings |> Enum.map(&outcome/1) |> join_and()
 
-  defp outcome({:blow, amount, false}), do: fill(:swing_hit, %{"amount" => amount})
-  defp outcome({:blow, amount, true}), do: fill(:swing_critical, %{"amount" => amount})
+  defp outcome({:blow, amount, false, over}), do: fill(:swing_hit, hit(amount, over))
+  defp outcome({:blow, amount, true, over}), do: fill(:swing_critical, hit(amount, over))
   defp outcome(:miss), do: fill(:swing_miss, %{})
   defp outcome(:foe_miss), do: fill(:swing_miss, %{})
-  defp outcome({:foe_blow, _, _, :perfect}), do: fill(:foe_swing_perfect, %{})
+  defp outcome({:foe_blow, _, _, :perfect, _}), do: fill(:foe_swing_perfect, %{})
 
-  defp outcome({:foe_blow, amount, _, :caught}),
-    do: fill(:foe_swing_caught, %{"amount" => amount})
+  defp outcome({:foe_blow, amount, _, :caught, over}),
+    do: fill(:foe_swing_caught, hit(amount, over))
 
-  defp outcome({:foe_blow, amount, true, nil}),
-    do: fill(:foe_swing_critical, %{"amount" => amount})
+  defp outcome({:foe_blow, amount, true, nil, over}),
+    do: fill(:foe_swing_critical, hit(amount, over))
 
-  defp outcome({:foe_blow, amount, false, nil}), do: fill(:foe_swing_hit, %{"amount" => amount})
+  defp outcome({:foe_blow, amount, false, nil, over}),
+    do: fill(:foe_swing_hit, hit(amount, over))
 
   defp join_and([only]), do: only
   defp join_and(parts), do: Enum.join(Enum.drop(parts, -1), ", ") <> " and " <> List.last(parts)

@@ -10,7 +10,8 @@ gets built, and when, is in [../roadmap.md](../roadmap.md). How it works once bu
 
 **No player-facing Lineage II name or number enters the game unless it is here.** That covers
 `docs/rules.md`, `Rules`, narrative pools and templates. If something you need is missing, research
-it and add it here first. Never guess it, approximate it or invent a plausible one.
+it and add it here first. Never guess it, approximate it or invent a plausible one. The
+`canon-check` skill (`.claude/skills/`) walks a feature through this before it is built.
 
 - **The chronicle is Interlude.** A later or earlier chronicle's value is not canon, even when it is
   easier to find.
@@ -197,6 +198,9 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   the character down, drained 2 MP every 2 seconds and ended when it stood or HP was full.
 - **Soul Cry lasts one fight** and is lit anew in the next, where Lineage II kept it on until
   switched off.
+- **A hit that fells or a mend that fills says what went past,** "20 damage (19 overkill)", "50 HP
+  (19 overheal)". Lineage II printed the hit's full figure and nothing more (`skills.md`), and
+  neither word is in its client: its Over-hit is an EXP bonus, not a figure.
 - **The Orc Mystic's Chill Flame can take the last HP,** where Lineage II's leaves 1: its first
   spell is a burn whose cast outlasts it, so without that it paid for every kill in blows taken.
 - **Skills are learned with level and SP alone, at the trainers of the character's own village.**

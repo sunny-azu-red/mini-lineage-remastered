@@ -83,7 +83,8 @@ defmodule MiniLineage.Game.Hunt do
   HP to heal below before the pull and in the fight (`heal_pull_at`, `heal_fight_at`; 0 never).
   Returns what is left of both sides, how it went, the auras it raised, which outlast it, the potions
   it `drunk`, the auras raised and heals cast before the pull (`before`, as `{done, hp}`), and how
-  long it all took in milliseconds (`ms`).
+  long it all took in milliseconds (`ms`). A hit or a mend in the log is what it moved, then what
+  it was worth past that: the overkill of a blow that fells, the overheal of a mend that fills.
   """
   def fight(stats, %{health: health, mp: mp} = bars, skills, foe) do
     # §23: a weapon skill without its weapon in hand is not used at all; the Learned Skills panel
@@ -114,7 +115,7 @@ defmodule MiniLineage.Game.Hunt do
       path: Map.get(bars, :path),
       heal_fight_at: Map.get(bars, :heal_fight_at, 0),
       # §20: what it did before the pull, newest first, each `{:aura, skill}` or
-      # `{:heal, skill, healed}`, and the time it took.
+      # `{:heal, skill, healed, over}`, and the time it took.
       mended: [],
       quiet_ms: 0.0,
       toggle: nil,
@@ -206,7 +207,7 @@ defmodule MiniLineage.Game.Hunt do
 
       note(
         %{s | health: s.health + healed, potions: left, drunk: drunk},
-        {:potion, potion.name, healed}
+        {:potion, potion.name, healed, potion.heals - healed}
       )
     else
       s
@@ -230,7 +231,12 @@ defmodule MiniLineage.Game.Hunt do
         hit = total |> trunc() |> min(most) |> max(0)
         dot = %{dot | rounds: dot.rounds - 1, carry: total - trunc(total)}
         s = %{Map.put(s, key, dot) | foe: s.foe - hit}
-        if hit > 0, do: note(s, {key, dot.name, hit}), else: s
+
+        cond do
+          hit == 0 -> s
+          key == :burn -> note(s, {:burn, dot.name, hit, trunc(total) - hit})
+          true -> note(s, {key, dot.name, hit})
+        end
     end
   end
 
@@ -280,13 +286,11 @@ defmodule MiniLineage.Game.Hunt do
         s
 
       heal ->
-        healed = min(heal_amount(heal.power, s.stats.m_atk), s.stats.max_hp - s.health)
+        worth = heal_amount(heal.power, s.stats.m_atk)
+        healed = min(worth, s.stats.max_hp - s.health)
         s = %{spend(s, heal) | busy: cast_ms(heal, s.stats)}
-
-        mend(
-          %{s | health: s.health + healed, mended: [{:heal, heal.name, healed} | s.mended]},
-          heals
-        )
+        done = {:heal, heal.name, healed, worth - healed}
+        mend(%{s | health: s.health + healed, mended: [done | s.mended]}, heals)
 
       true ->
         mend(wait(s, @round_ms), heals)
@@ -401,8 +405,9 @@ defmodule MiniLineage.Game.Hunt do
 
     case skill.kind do
       :heal ->
-        healed = min(heal_amount(skill.power, stats.m_atk), stats.max_hp - s.health)
-        note(%{s | health: s.health + healed}, {:heal, skill.name, healed})
+        worth = heal_amount(skill.power, stats.m_atk)
+        healed = min(worth, stats.max_hp - s.health)
+        note(%{s | health: s.health + healed}, {:heal, skill.name, healed, worth - healed})
 
       :poison ->
         if Formulas.hit?(skill.land) do
@@ -432,21 +437,28 @@ defmodule MiniLineage.Game.Hunt do
         per_round = skill.power * @round_ms / 1000
         burn = %{name: skill.name, per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}
         s = %{s | burn: burn}
-        note(s, {:cast, skill.name, 0, false})
+        note(s, {:cast, skill.name, 0, false, 0})
 
       kind ->
         critical? = Formulas.hit?(stats.magic_critical)
-        damage = Formulas.magic_damage(stats.m_atk, foe.m_def, skill.power, critical: critical?)
+
+        damage =
+          round(Formulas.magic_damage(stats.m_atk, foe.m_def, skill.power, critical: critical?))
+
         before = s.foe
-        s = s |> wound(round(damage)) |> mark_critical(critical?)
+        s = s |> wound(damage) |> mark_critical(critical?)
         dealt = before - s.foe
+        over = excess(damage, dealt)
         s = if skill[:slow], do: %{s | slowed: rounds_of(@slow_ms)}, else: s
 
+        # §19: a drain absorbs from what it took, never from the overkill.
         if kind == :drain do
-          healed = min(trunc(dealt * skill.absorb), stats.max_hp - s.health)
-          note(%{s | health: s.health + healed}, {:drain, skill.name, dealt, critical?, healed})
+          worth = trunc(dealt * skill.absorb)
+          healed = min(worth, stats.max_hp - s.health)
+          drained = {:drain, skill.name, dealt, critical?, healed, over, worth - healed}
+          note(%{s | health: s.health + healed}, drained)
         else
-          note(s, {:cast, skill.name, dealt, critical?})
+          note(s, {:cast, skill.name, dealt, critical?, over})
         end
     end
   end
@@ -483,12 +495,14 @@ defmodule MiniLineage.Game.Hunt do
     s = spend(s, skill)
 
     if skill.kind == :blow and not Formulas.hit?(blow_chance(stats.dex)) do
-      note(s, {:skill, skill.name, 0})
+      note(s, {:skill, skill.name, 0, 0})
     else
       before = s.foe
       spread = Formulas.damage_spread(stats.spread)
-      s = wound(s, round(skill_damage(stats.p_atk, skill.power, foe.p_def, spread)))
-      note(s, {:skill, skill.name, before - s.foe})
+      damage = round(skill_damage(stats.p_atk, skill.power, foe.p_def, spread))
+      s = wound(s, damage)
+      dealt = before - s.foe
+      note(s, {:skill, skill.name, dealt, excess(damage, dealt)})
     end
   end
 
@@ -510,11 +524,14 @@ defmodule MiniLineage.Game.Hunt do
       spread = Formulas.damage_spread(stats.spread)
 
       damage =
-        Formulas.physical_damage(stats.p_atk, foe.p_def, critical: critical?, spread: spread)
+        round(
+          Formulas.physical_damage(stats.p_atk, foe.p_def, critical: critical?, spread: spread)
+        )
 
       before = s.foe
-      s = s |> wound(round(damage)) |> mark_critical(critical?)
-      note(s, {:blow, before - s.foe, critical?})
+      s = s |> wound(damage) |> mark_critical(critical?)
+      dealt = before - s.foe
+      note(s, {:blow, dealt, critical?, excess(damage, dealt)})
     else
       note(s, :miss)
     end
@@ -603,15 +620,14 @@ defmodule MiniLineage.Game.Hunt do
   defp foe_effect(s, foe, spell) do
     damage = round(Formulas.magic_damage(foe.m_atk, s.stats.m_def, spell.power))
     lost = min(max(damage, 1), s.health)
-
-    healed =
-      if spell.kind == :drain, do: min(trunc(lost * @monster_absorb), foe.hp - s.foe), else: 0
-
+    over = excess(damage, lost)
+    worth = trunc(lost * @monster_absorb)
+    healed = if spell.kind == :drain, do: min(worth, foe.hp - s.foe), else: 0
     s = %{s | health: s.health - lost, foe: s.foe + healed}
 
     if spell.kind == :drain,
-      do: note(s, {:foe_drain, spell.name, lost, healed}),
-      else: note(s, {:foe_cast, spell.name, lost})
+      do: note(s, {:foe_drain, spell.name, lost, healed, over, worth - healed}),
+      else: note(s, {:foe_cast, spell.name, lost, over})
   end
 
   defp monster_swing(s, foe) do
@@ -657,7 +673,7 @@ defmodule MiniLineage.Game.Hunt do
         end
 
       lost = min(damage, s.health)
-      note(%{s | health: s.health - lost}, {:foe_blow, lost, critical?, caught})
+      note(%{s | health: s.health - lost}, {:foe_blow, lost, critical?, caught, damage - lost})
     else
       note(s, :foe_miss)
     end
@@ -696,6 +712,10 @@ defmodule MiniLineage.Game.Hunt do
   end
 
   defp wound(s, damage), do: %{s | foe: s.foe - min(max(damage, 1), s.foe)}
+
+  # What a hit was worth past what it took: every hit takes at least 1, and only one that fells has
+  # any left over.
+  defp excess(damage, dealt), do: max(damage, 1) - dealt
 
   defp note(s, event), do: %{s | log: [{s.rounds, event} | s.log]}
 

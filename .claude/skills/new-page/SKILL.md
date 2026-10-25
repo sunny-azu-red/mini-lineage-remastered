@@ -12,7 +12,7 @@ was wired end to end. A place is `{screen, town}`. Work down the list and tick w
 
 A new place to stand starts in `docs/rules.md`, its table in `Rules`, read back by `rules_test.exs`
 (a roadmap entry first if it is a new system). A name or number comes from `docs/canon/`,
-researched in first if missing.
+researched in first if missing: the `canon-check` skill.
 
 ## 2. Its address
 

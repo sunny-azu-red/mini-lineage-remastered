@@ -1282,6 +1282,11 @@ try {
         el.querySelector('.entry-head').textContent.trim()]);
     check('...its fight ending in Defeat, washed red', washed[2] === 'Defeat' && washed[0] === washed[1],
         washed.join(' | '));
+    // At 1 HP any blow a level 1 monster lands is worth more than the HP it takes.
+    const felled = await g.$eval('#fight-outcome', (el) =>
+        el.previousElementSibling?.textContent.replace(/\s+/g, ' ').trim() ?? '');
+    check('...the blow that felled it written at its full damage, what went past the last HP in brackets',
+        /\d+ damage \(\d+ overkill\)/.test(felled), felled);
     check('...a ghost with no Hunt, no Retreat and no orders, offering the Monument and Play Again',
         await g.locator('#hunt-button, #retreat-button, #orders').count() === 0
         && await g.locator('#effects [data-effect-id]').count() === 1

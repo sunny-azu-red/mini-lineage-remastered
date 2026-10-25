@@ -143,7 +143,7 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   on the dev server's `PORT`; `mix e2e`, `test` and `precommit` pass, as does any `MIX_ENV=test`.
 - **What every agent should know lives in the repo**: this file for rules, `docs/` for the game's
   why, and `.claude/` for Claude Code: the committed `settings.json` and its hooks, and `skills/` for
-  procedures (`balance-study`, `new-page`, `commit-sweep`), each moved out of here rather than
+  procedures (`balance-study`, `canon-check`, `new-page`, `commit-sweep`), each moved out of here rather than
   copied, so the two never drift. A personal memory holds only what is about one person or one machine.
 - **Ask the running app, through Tidewave.** `project_eval` for state (`:sys.get_state`,
   `:timer.tc`); `execute_sql_query` for `EXPLAIN (ANALYZE, BUFFERS)` on the statement Ecto actually
@@ -532,12 +532,15 @@ Each of these is here because it was got wrong once.
   ("the next level") is a common noun and stays lowercase and uncoloured.
 - **What a blow takes is damage**, as the client's own "You hit for $s1 damage." counts it: in the
   fight log every figure a blow, spell or tick deals is `N damage` inside its span, as a mend is
-  `N HP` inside its own, and a list writes the word once, after the last ("10 and 9 damage").
+  `N HP` inside its own, and a list writes the word once, after the last ("10 and 9 damage"). A
+  figure is what the hit or mend was worth, as the client gives it; what went past the last HP or
+  past full follows the span in plain brackets, "(19 overkill)", "(19 overheal)", through the
+  templates' `{overkill}` and `{overheal}`, while the event's own amount stays what HP moved by.
 - **HP is mended, never healed**, by a skill, a potion, rest or an order, and what is mended is
   `.regen` with its HP inside the span. A name keeps its word (Self Heal, Healing Potion), and so
-  does the code's `heal` kind. `stat_names_test.exs` renders every set's character, guild and
-  inventory pages and every item's line against the stat names, a bonus before its stat, a rate's
-  % and HP mended.
+  do the code's `heal` kind and "overheal", the genre's word for a mend past full.
+  `stat_names_test.exs` renders every set's character, guild and inventory pages and every item's
+  line against the stat names, a bonus before its stat, a rate's % and HP mended.
 - **A time on a row is short**, as `Format.remaining/1` writes it, in its two largest units ("3h
   12m", "1m 37s", "2m", "3s") where a badge shows one ("3h", "2m", "3"), with the
   fight's tenths where it has them ("Cast 5.3s, reuse 10.4s."). Narrative prose keeps its words.

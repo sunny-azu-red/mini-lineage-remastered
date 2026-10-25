@@ -97,7 +97,7 @@ defmodule MiniLineage.Game.PotionsTest do
       low = %{player | health: div(stats.max_hp, 3)}
       result = Hunt.fight(stats, bars(low, 50, 3), [], dummy())
 
-      drinks = for {round, {:potion, @potion, _}} <- result.log, do: round
+      drinks = for {round, {:potion, @potion, _, _}} <- result.log, do: round
       assert result.drunk == %{@potion => 3}
       assert hd(drinks) == 1 and drinks == Enum.uniq(drinks)
     end

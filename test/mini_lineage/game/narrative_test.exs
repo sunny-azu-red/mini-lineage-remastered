@@ -75,19 +75,19 @@ defmodule MiniLineage.Game.NarrativeTest do
       foe = Rules.monster("Vaiss Orc")
 
       log = [
-        {1, {:blow, 10, false}},
-        {1, {:blow, 9, false}},
-        {2, {:blow, 65, true}},
+        {1, {:blow, 10, false, 0}},
+        {1, {:blow, 9, false, 0}},
+        {2, {:blow, 65, true, 0}},
         {2, :miss},
-        {2, {:foe_blow, 12, false, nil}},
+        {2, {:foe_blow, 12, false, nil, 0}},
         {2, :foe_miss},
-        {3, {:foe_blow, 8, false, :caught}},
-        {3, {:foe_blow, 1, false, :perfect}},
-        {3, {:foe_blow, 30, true, nil}},
-        {4, {:foe_drain, "NPC HP Drain - Magic 1", 20, 4}},
-        {5, {:blow, 11, false}},
-        {5, {:foe_blow, 7, false, nil}},
-        {6, {:blow, 40, true}},
+        {3, {:foe_blow, 8, false, :caught, 0}},
+        {3, {:foe_blow, 1, false, :perfect, 0}},
+        {3, {:foe_blow, 30, true, nil, 0}},
+        {4, {:foe_drain, "NPC HP Drain - Magic 1", 20, 4, 0, 0}},
+        {5, {:blow, 11, false, 0}},
+        {5, {:foe_blow, 7, false, nil, 0}},
+        {6, {:blow, 40, true, 0}},
         {6, :foe_miss}
       ]
 
@@ -126,13 +126,43 @@ defmodule MiniLineage.Game.NarrativeTest do
           do: assert(unrendered(text) == [], text)
     end
 
+    test "writes a hit that fells, or a mend that fills, at what it was worth, the rest in brackets" do
+      foe = Rules.monster("Vaiss Orc")
+
+      log = [
+        {1, {:blow, 10, false, 0}},
+        {1, {:blow, 5, false, 14}},
+        {2, {:foe_blow, 1, false, nil, 19}},
+        {3, {:drain, "Life Drain", 6, false, 4, 14, 2}},
+        {4, {:potion, "Lesser Healing Potion", 81, 31}},
+        {5, {:blow, 9, false, 0}},
+        {5, {:blow, 5, true, 15}},
+        {6, {:foe_drain, "NPC HP Drain - Magic 1", 1, 0, 19, 0}},
+        {7, {:burn, "Chill Flame", 3, 2}}
+      ]
+
+      log = log ++ for(round <- 1..7, do: {round, {:standing, 90, 20}})
+
+      [_met | rounds] = read(foe, log)
+
+      assert Enum.map(rounds, & &1.line) == [
+               "You hit for 10 and 19 damage (14 overkill).",
+               "The Vaiss Orc hits you for 20 damage (19 overkill).",
+               "You cast Life Drain for 20 damage (14 overkill) and mend 6 HP (2 overheal).",
+               "You drink a Lesser Healing Potion and mend 112 HP (31 overheal).",
+               "You swing twice for a hit of 9 damage and a critical hit of 20 damage (15 overkill).",
+               "The Vaiss Orc casts HP Drain on you for 20 damage (19 overkill).",
+               "Your Chill Flame tick burns for 5 damage (2 overkill)."
+             ]
+    end
+
     test "writes a critical hit in its orange whichever side lands it" do
       foe = Rules.monster("Vaiss Orc")
 
       log = [
-        {1, {:blow, 40, true}},
-        {1, {:foe_blow, 30, true, nil}},
-        {2, {:foe_blow, 25, true, nil}},
+        {1, {:blow, 40, true, 0}},
+        {1, {:foe_blow, 30, true, nil, 0}},
+        {2, {:foe_blow, 25, true, nil, 0}},
         {2, :foe_miss},
         {1, {:standing, 70, 20}},
         {2, {:standing, 45, 20}}
@@ -153,15 +183,15 @@ defmodule MiniLineage.Game.NarrativeTest do
       log = [
         {1, {:begin, "Wind Strike"}},
         {2, :casting},
-        {3, {:cast, "Wind Strike", 112, false}},
+        {3, {:cast, "Wind Strike", 112, false, 0}},
         {3, :closing},
         {4, :waiting},
         {4, :closing},
-        {5, {:blow, 9, false}},
+        {5, {:blow, 9, false, 0}},
         {5, :closing},
         {6, {:begin, "Ice Bolt"}},
         {7, :casting},
-        {7, {:foe_blow, 5, false, nil}},
+        {7, {:foe_blow, 5, false, nil, 0}},
         {8, :casting}
       ]
 
@@ -202,22 +232,22 @@ defmodule MiniLineage.Game.NarrativeTest do
       ground = Rules.ground("obelisk-of-victory")
 
       log = [
-        {1, {:heal, "Self Heal", 42}},
-        {1, {:drain, "Life Drain", 14, false, 11}},
-        {2, {:drain, "Vampiric Touch", 30, true, 12}},
-        {2, {:drain, "Life Drain", 9, false, 0}},
+        {1, {:heal, "Self Heal", 42, 0}},
+        {1, {:drain, "Life Drain", 14, false, 11, 0, 0}},
+        {2, {:drain, "Vampiric Touch", 30, true, 12, 0, 0}},
+        {2, {:drain, "Life Drain", 9, false, 0, 0, 0}},
         {2, {:toggle, "Soul Cry"}},
         {3, {:curse, "Curse: Poison", true}},
         {3, {:poison, "Curse: Poison", 8}},
         {4, {:curse, "Wind Shackle", false}},
-        {4, {:potion, "Lesser Healing Potion", 112}},
+        {4, {:potion, "Lesser Healing Potion", 112, 0}},
         {4, :waiting},
         {4, :closing},
         {4, :advancing},
         {4, {:begin, "Wind Strike"}},
         {4, {:foe_begin, "NPC Windstrike - Magic 1"}},
-        {5, {:cast, "Chill Flame", 0, false}},
-        {6, {:burn, "Chill Flame", 33}}
+        {5, {:cast, "Chill Flame", 0, false, 0}},
+        {6, {:burn, "Chill Flame", 33, 0}}
       ]
 
       # Every round ends on where both stand, as the engine writes it.
@@ -229,7 +259,7 @@ defmodule MiniLineage.Game.NarrativeTest do
           ground,
           log,
           @weapon,
-          {[{:aura, "Defense Aura"}, {:heal, "Heal", 70}, {:heal, "Self Heal", 45}], 60}
+          {[{:aura, "Defense Aura"}, {:heal, "Heal", 70, 0}, {:heal, "Self Heal", 45, 0}], 60}
         )
         |> Enum.flat_map(&[&1.standing, &1.line])
         |> Enum.map(&Narrative.alert/1)
@@ -258,7 +288,7 @@ defmodule MiniLineage.Game.NarrativeTest do
       assert text =~ "you begin casting Wind Strike"
       assert text =~ "the Young Keltir begins casting Wind Strike"
 
-      before = Enum.at(read(foe, log, {[{:aura, "Defense Aura"}, {:heal, "Heal", 70}], 60}), 1)
+      before = Enum.at(read(foe, log, {[{:aura, "Defense Aura"}, {:heal, "Heal", 70, 0}], 60}), 1)
       assert before.head == "Before the fight"
       # A mend before the pull washes its entry as one; an aura alone does not.
       assert before.kind == "heal"
@@ -272,9 +302,9 @@ defmodule MiniLineage.Game.NarrativeTest do
 
       [_met, one, two] =
         read(foe, [
-          {1, {:blow, 10, false}},
+          {1, {:blow, 10, false, 0}},
           {1, {:standing, 99, foe.hp - 1}},
-          {2, {:blow, 10, false}},
+          {2, {:blow, 10, false, 0}},
           {2, {:standing, 1, 1}}
         ])
 
@@ -286,22 +316,22 @@ defmodule MiniLineage.Game.NarrativeTest do
       foe = Rules.monster("Vaiss Orc")
 
       log = [
-        {1, {:blow, 10, false}},
-        {2, {:blow, 40, true}},
-        {3, {:cast, "Wind Strike", 50, true}},
-        {4, {:drain, "Life Drain", 20, true, 5}},
-        {5, {:foe_blow, 30, true, nil}},
-        {6, {:foe_blow, 30, true, :caught}},
-        {7, {:cast, "Chill Flame", 0, true}},
-        {8, {:blow, 9, false}},
-        {8, {:foe_blow, 25, true, nil}},
-        {9, {:heal, "Self Heal", 40}},
-        {10, {:potion, "Lesser Healing Potion", 50}},
-        {11, {:drain, "Life Drain", 14, false, 11}},
-        {12, {:foe_drain, "NPC HP Drain - Magic 1", 20, 4}},
-        {13, {:drain, "Life Drain", 9, false, 0}},
-        {14, {:foe_drain, "NPC HP Drain - Magic 1", 20, 0}},
-        {15, {:drain, "Vampiric Touch", 30, true, 12}}
+        {1, {:blow, 10, false, 0}},
+        {2, {:blow, 40, true, 0}},
+        {3, {:cast, "Wind Strike", 50, true, 0}},
+        {4, {:drain, "Life Drain", 20, true, 5, 0, 0}},
+        {5, {:foe_blow, 30, true, nil, 0}},
+        {6, {:foe_blow, 30, true, :caught, 0}},
+        {7, {:cast, "Chill Flame", 0, true, 0}},
+        {8, {:blow, 9, false, 0}},
+        {8, {:foe_blow, 25, true, nil, 0}},
+        {9, {:heal, "Self Heal", 40, 0}},
+        {10, {:potion, "Lesser Healing Potion", 50, 0}},
+        {11, {:drain, "Life Drain", 14, false, 11, 0, 0}},
+        {12, {:foe_drain, "NPC HP Drain - Magic 1", 20, 4, 0, 0}},
+        {13, {:drain, "Life Drain", 9, false, 0, 0, 0}},
+        {14, {:foe_drain, "NPC HP Drain - Magic 1", 20, 0, 0, 0}},
+        {15, {:drain, "Vampiric Touch", 30, true, 12, 0, 0}}
       ]
 
       log = log ++ for(round <- 1..15, do: {round, {:standing, 90, 20}})
@@ -315,11 +345,11 @@ defmodule MiniLineage.Game.NarrativeTest do
       foe = Rules.monster("Young Keltir")
 
       log = [
-        {1, {:skill, "Power Strike", 30}},
+        {1, {:skill, "Power Strike", 30, 0}},
         {1, {:standing, 90, 20}},
         {2, :foe_miss},
         {2, {:standing, 90, 20}},
-        {3, {:blow, 9, false}},
+        {3, {:blow, 9, false, 0}},
         {3, {:standing, 90, 20}}
       ]
 

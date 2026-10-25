@@ -97,6 +97,24 @@ defmodule MiniLineage.Game.HuntTest do
       assert result.mp == fighter.mp - 10
     end
 
+    test "a hit that fells takes only the HP left, and the log keeps what went past it" do
+      # As above: Power Strike's 51, then a critical blow's 21 against what is left of 62.
+      Rng.put_source(fn -> 0.0 end)
+      result = fight(striker(), "Young Keltir")
+
+      assert [{_, {:skill, "Power Strike", 51, 0}}] = events(result, :skill)
+      assert [{_, {:blow, 11, true, 10}}] = events(result, :blow)
+
+      # A character at 1 HP loses that 1, whatever the blow was worth.
+      frail = %{character(0, :fighter) | health: 1}
+      wall = %{foe("Young Keltir") | hp: 1_000_000_000}
+      fallen = Hunt.fight(Player.stats(frail), frail, [], wall)
+
+      assert fallen.health == 0
+      assert [{_, {:foe_blow, 1, _, _, over}}] = events(fallen, :foe_blow)
+      assert over > 0
+    end
+
     test "a Mystic casts while its spell is ready, and pays for each cast" do
       Rng.put_source(fn -> 0.9999 end)
       mystic = character(0, :mystic)
@@ -125,7 +143,7 @@ defmodule MiniLineage.Game.HuntTest do
       drained = Hunt.fight(stats, hurt, Player.known_skills(orc), dummy("Kasha Wolf"))
 
       # What it mends is in the log, at most 80% of what it dealt, and is what the bar gained.
-      [{round, {:drain, "Life Drain", dealt, _, healed}} | _] = events(drained, :drain)
+      [{round, {:drain, "Life Drain", dealt, _, healed, _, _}} | _] = events(drained, :drain)
       assert healed > 0 and healed <= trunc(dealt * 0.8)
       before = for {r, {:standing, hp, _}} <- drained.log, r == round - 1, do: hp
       after_ = for {r, {:standing, hp, _}} <- drained.log, r == round, do: hp
@@ -146,7 +164,7 @@ defmodule MiniLineage.Game.HuntTest do
 
       # Nobody acts in the round the burn ends.
       last = for {round, event} <- result.log, round == result.rounds, do: event
-      assert [{:burn, "Chill Flame", _}, {:standing, _, 0}] = last
+      assert [{:burn, "Chill Flame", _, _}, {:standing, _, 0}] = last
     end
 
     test "and it is not cast again while its target still burns" do
@@ -160,7 +178,7 @@ defmodule MiniLineage.Game.HuntTest do
       # Begun at once, it takes hold as its cast ends; the burn runs nine rounds from there, and a
       # second may only start once it has gone out.
       assert [{1, {:begin, "Chill Flame"}} | _] = events(result, :begin)
-      casts = for {round, {:cast, "Chill Flame", _, _}} <- result.log, do: round
+      casts = for {round, {:cast, "Chill Flame", _, _, _}} <- result.log, do: round
       assert Enum.all?(tl(casts), &(&1 > hd(casts) + 9)), inspect(casts)
     end
 
@@ -200,7 +218,7 @@ defmodule MiniLineage.Game.HuntTest do
       foe = %{Hunt.foe(Rules.monster("Orc Archer")) | hp: 1_000_000_000}
       result = Hunt.fight(stats, bars, [skill], foe)
 
-      shots = Enum.count(result.log, &match?({_, {:foe_blow, _, _, _}}, &1))
+      shots = Enum.count(result.log, &match?({_, {:foe_blow, _, _, _, _}}, &1))
       assert shots == trunc(Hunt.max_rounds() * 249 / 610)
     end
 
@@ -212,7 +230,7 @@ defmodule MiniLineage.Game.HuntTest do
       reuse = Hunt.reuse_ms(Rules.skill("Power Strike"), stats)
       result = Hunt.fight(stats, player, Player.known_skills(player), dummy("Young Keltir"))
 
-      used = for {round, {:skill, "Power Strike", _}} <- result.log, do: round
+      used = for {round, {:skill, "Power Strike", _, _}} <- result.log, do: round
       assert length(used) > 10
 
       # Each reuse runs from when the last one ran out, not from the round that noticed it, so
@@ -251,7 +269,7 @@ defmodule MiniLineage.Game.HuntTest do
       # Windstrike - Magic: 4 seconds a cast, each landing in the round it ends and the next begun
       # in the round after with what was left of it, so one lands every 4 seconds, not every 5.
       begun = for {round, {:foe_begin, "NPC Windstrike - Magic 1"}} <- result.log, do: round
-      landed = for {round, {:foe_cast, "NPC Windstrike - Magic 1", _}} <- result.log, do: round
+      landed = for {round, {:foe_cast, "NPC Windstrike - Magic 1", _, _}} <- result.log, do: round
 
       assert Enum.take(begun, 4) == [1, 4, 6, 9]
       assert Enum.take(landed, 4) == [3, 5, 8, 10]
@@ -275,7 +293,7 @@ defmodule MiniLineage.Game.HuntTest do
       [{_, heal} | _] = events(hurt, :heal)
 
       assert first == 1 and healed in first..second
-      assert heal == {:heal, "Self Heal", Hunt.heal_amount(42, stats.m_atk)}
+      assert heal == {:heal, "Self Heal", Hunt.heal_amount(42, stats.m_atk), 0}
 
       whole = Hunt.fight(stats, fight_only(mystic), skills, dummy("Young Keltir"))
       assert events(whole, :heal) == []
@@ -323,11 +341,11 @@ defmodule MiniLineage.Game.HuntTest do
       rested =
         Hunt.fight(stats, fight_only(%{elf | health: 10}), heals(elf), dummy("Young Keltir"))
 
-      assert [{_, {:heal, "Heal", _}} | _] = events(rested, :heal)
+      assert [{_, {:heal, "Heal", _, _}} | _] = events(rested, :heal)
 
       short = fight_only(%{elf | health: 10, mp: heal.mp - 1})
 
-      assert [{_, {:heal, "Self Heal", _}} | _] =
+      assert [{_, {:heal, "Self Heal", _, _}} | _] =
                events(Hunt.fight(stats, short, heals(elf), dummy("Young Keltir")), :heal)
     end
 
@@ -602,9 +620,9 @@ defmodule MiniLineage.Game.HuntTest do
 
       # What its drain mends is in the log, and is what its HP gained, never past its most.
       drains = events(result, :foe_drain)
-      assert Enum.any?(drains, &match?({_, {:foe_drain, _, _, healed}} when healed > 0, &1))
+      assert Enum.any?(drains, &match?({_, {:foe_drain, _, _, healed, _, _}} when healed > 0, &1))
 
-      for {round, {:foe_drain, _, lost, healed}} <- drains do
+      for {round, {:foe_drain, _, lost, healed, _, _}} <- drains do
         [was] = for {r, {:standing, _, foe}} <- result.log, r == round - 1, do: foe
         [now] = for {r, {:standing, _, foe}} <- result.log, r == round, do: foe
         assert healed <= trunc(lost * 0.2) and now - was <= healed
@@ -639,7 +657,7 @@ defmodule MiniLineage.Game.HuntTest do
       waits = on(result, :waiting)
       closes = on(result, :closing)
       assert waits != [] and Enum.max(waits) <= Enum.max(closes)
-      swings = on(result, :miss) ++ for({r, {:blow, _, _}} <- result.log, do: r)
+      swings = on(result, :miss) ++ for({r, {:blow, _, _, _}} <- result.log, do: r)
       assert Enum.min(swings) > Enum.max(closes)
     end
   end
@@ -656,7 +674,7 @@ defmodule MiniLineage.Game.HuntTest do
       result =
         Hunt.fight(stats, %{elf | health: 1}, Player.known_skills(elf), frail("Young Keltir"))
 
-      assert {[{:heal, "Heal", _} | _] = heals, pulled} = result.before
+      assert {[{:heal, "Heal", _, _} | _] = heals, pulled} = result.before
       assert pulled == 1 + Enum.sum(Enum.map(heals, &elem(&1, 2)))
       assert pulled * 100 >= stats.max_hp * elf.heal_pull_at
       assert (pulled - elem(List.last(heals), 2)) * 100 < stats.max_hp * elf.heal_pull_at
@@ -690,7 +708,7 @@ defmodule MiniLineage.Game.HuntTest do
           frail("Young Keltir")
         )
 
-      assert {[{:heal, "Heal", _}], _} = result.before
+      assert {[{:heal, "Heal", _, _}], _} = result.before
       assert result.mp == 5
     end
 
@@ -749,7 +767,7 @@ defmodule MiniLineage.Game.HuntTest do
       assert whole.ms == whole.rounds * Hunt.round_ms()
 
       hurt = Hunt.fight(stats, %{elf | health: 1}, skills, frail("Young Keltir"))
-      {[{:heal, first, _} | _], _} = hurt.before
+      {[{:heal, first, _, _} | _], _} = hurt.before
       heal = Enum.find(skills, &(&1.name == first))
       assert hurt.ms >= hurt.rounds * Hunt.round_ms() + heal.cast * 333 / stats.cast_spd
     end

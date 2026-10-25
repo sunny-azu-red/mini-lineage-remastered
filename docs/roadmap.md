@@ -227,8 +227,8 @@ The slower fights, for bosses and dungeons.
 - Spells that fail more often against higher-level targets.
 - Debuffs, resisted by the attribute that guards against them.
 - Lethal blows that cut a monster's HP down at once.
-- EXP shared by the damage dealt, with a bonus for an overkill (a much weaker monster already pays
-  less, rules §20).
+- EXP shared by the damage dealt, with Lineage II's over-hit bonus (canon `skills.md`; a much
+  weaker monster already pays less, rules §20). The fight log's overkill is only a figure.
 
 ## The world
 
