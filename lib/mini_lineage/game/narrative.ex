@@ -300,8 +300,9 @@ defmodule MiniLineage.Game.Narrative do
         Map.put(hit(amount, over), "skill", skill)
       )
 
-  # §19: a drain says what it mends, as a heal does, unless the caster was already whole.
-  defp event({:drain, skill, amount, critical?, 0, over, _}, foe),
+  # §19: a drain says what it mends, as a heal does, its share past full as overheal, so a caster
+  # already whole reads it wasted; only a drain worth nothing at all reads as a plain cast.
+  defp event({:drain, skill, amount, critical?, 0, over, 0}, foe),
     do: event({:cast, skill, amount, critical?, over}, foe)
 
   defp event({:drain, skill, amount, critical?, healed, over, overheal}, _foe),
@@ -348,7 +349,7 @@ defmodule MiniLineage.Game.Narrative do
         Map.merge(hit(amount, over), %{"monster" => foe.name, "skill" => shown(spell)})
       )
 
-  defp event({:foe_drain, spell, amount, 0, over, _}, foe),
+  defp event({:foe_drain, spell, amount, 0, over, 0}, foe),
     do: event({:foe_cast, spell, amount, over}, foe)
 
   defp event({:foe_drain, spell, amount, healed, over, overheal}, foe),

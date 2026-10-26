@@ -201,10 +201,12 @@ defmodule MiniLineage.Game.NarrativeTest do
         {5, {:blow, 9, false, 0}},
         {5, {:blow, 5, true, 15}},
         {6, {:foe_drain, "NPC HP Drain - Magic 1", 1, 0, 19, 0}},
-        {7, {:burn, "Chill Flame", 3, 2}}
+        {7, {:burn, "Chill Flame", 3, 2}},
+        {8, {:drain, "Vampiric Touch", 248, false, 0, 0, 99}},
+        {9, {:foe_drain, "NPC HP Drain - Magic 1", 20, 0, 0, 4}}
       ]
 
-      log = log ++ for(round <- 1..7, do: {round, {:standing, 90, 20}})
+      log = log ++ for(round <- 1..9, do: {round, {:standing, 90, 20}})
 
       [_met | rounds] = read(foe, log)
 
@@ -215,7 +217,9 @@ defmodule MiniLineage.Game.NarrativeTest do
                "You drink a 🧪 Lesser Healing Potion and mend 112 HP (31 overheal).",
                "You swing your 🗡️ Long Sword twice: a hit of 9 damage and a critical hit of 20 damage (15 overkill).",
                "The Vaiss Orc casts 🦟 HP Drain on you for 20 damage (19 overkill).",
-               "Your 🔥 Chill Flame burns the Vaiss Orc for 5 damage (2 overkill)."
+               "Your 🔥 Chill Flame burns the Vaiss Orc for 5 damage (2 overkill).",
+               "You cast 🦇 Vampiric Touch for 248 damage and mend 99 HP (99 overheal).",
+               "The Vaiss Orc casts 🦟 HP Drain on you for 20 damage and mends 4 HP (4 overheal)."
              ]
     end
 
