@@ -131,7 +131,7 @@ defmodule MiniLineage.Game.HuntTest do
 
       spells = fn result ->
         for {_, event} <- result.log,
-            is_tuple(event) and elem(event, 0) in [:cast, :drain],
+            is_tuple(event) and elem(event, 0) in [:cast, :drain, :ignite],
             do: elem(event, 1)
       end
 
@@ -178,8 +178,27 @@ defmodule MiniLineage.Game.HuntTest do
       # Begun at once, it takes hold as its cast ends; the burn runs nine rounds from there, and a
       # second may only start once it has gone out.
       assert [{1, {:begin, "Chill Flame"}} | _] = events(result, :begin)
-      casts = for {round, {:cast, "Chill Flame", _, _, _}} <- result.log, do: round
+      casts = for {round, {:ignite, "Chill Flame"}} <- result.log, do: round
       assert Enum.all?(tl(casts), &(&1 > hd(casts) + 9)), inspect(casts)
+    end
+
+    test "a cast ending once its burn has felled the monster strikes nothing" do
+      # Every blow misses, so only the spells hurt; hurt, so Life Drain is cast while the burn runs.
+      Rng.put_source(fn -> 0.9999 end)
+      orc = trained(1, :mystic, 13)
+      stats = Player.stats(orc)
+      hurt = %{orc | health: div(stats.max_hp, 2), heal_pull_at: 0}
+
+      # Some of these die to a burn tick while Life Drain is still being cast.
+      zero =
+        for hp <- 150..450//3,
+            foe = %{foe("Evil Eye") | hp: hp, atk_spd: 0, spells: []},
+            {_, event} <- Hunt.fight(stats, hurt, Player.known_skills(orc), foe).log,
+            match?({:cast, _, 0, _, _}, event) or
+              match?({:drain, _, 0, _, _, _, _}, event),
+            do: {hp, event}
+
+      assert zero == []
     end
 
     test "with every blow missing, Power Strike still lands, and alone fells a Young Keltir" do

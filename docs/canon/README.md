@@ -319,3 +319,9 @@ P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical. T
 - **What an item adds is written as a buff writes it:** "-8 Evasion", "+38 Max MP", where the item
   data lists "Evasion: -8" and "MP Increase: 38". An item's own numbers keep the data's order,
   "P. Atk. 6".
+- **The fight log names the motion before the outcome:** "You swing and hit for 35 damage", "You
+  shoot and miss", "You use Power Strike for 92 damage", "The Wolf swings and hits your shield
+  for 4 damage". The client names only the outcome (id 35 "You hit for $s1 damage.", id 43 "You
+  have missed.", id 44 "Critical hit!", id 46 "You use $s1."), because the screen shows the swing.
+  A text game cannot, so the owner chose to have every attack say how it was made: a bow shoots,
+  fists punch, any other weapon swings, a skill is used and a spell cast.

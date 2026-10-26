@@ -125,6 +125,10 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
   after against the bar in [docs/direction.md](docs/direction.md), and
   [docs/balance.md](docs/balance.md) is rewritten from the reading; the `balance-study` skill has the
   steps. A change that fails the bar is reported, never tuned quietly.
+- **The fight log is read, not imagined.** `bench/fight_log.exs` plays seeded fights for every set,
+  level band, gear, MP and HP state and monster, and lists every clause the log tells with how often
+  and one real line, then the longest rounds and a whole fight a set. Read it before and after any
+  change to how a fight is told; `narrative_test.exs` holds what it must always read like.
 - **The dev database is not player data.** Its rows are the owner's test runs and e2e traffic. Use it
   to see what a document looks like or to check a plan, never to reason about progression, deaths or
   balance: that comes from `Formulas`, `Hunt`, `Rules` or the bench, named as the source.
@@ -533,6 +537,10 @@ Each of these is here because it was got wrong once.
 - **A level is named as one, "Level 5", word and number together in `.level`**, a monster's
   ("a Gremlin, Level 1") as much as the character's ("until Level 5"). A level no number names
   ("the next level") is a common noun and stays lowercase and uncoloured.
+- **An attack says how it was made, then what it did**, a sentence a side in the order they acted:
+  "You swing and hit for 42 damage. The Wolf swings and hits your shield for 4 damage." A bow shoots,
+  fists punch (`Narrative.motion/1`), any other weapon swings, a skill is used and a spell cast; a
+  departure from the client, which names only the outcome, written in `docs/canon/README.md`.
 - **What a blow takes is damage**, as the client's own "You hit for $s1 damage." counts it: in the
   fight log every figure a blow, spell or tick deals is `N damage` inside its span, as a mend is
   `N HP` inside its own, and a list writes the word once, after the last ("10 and 9 damage"). A

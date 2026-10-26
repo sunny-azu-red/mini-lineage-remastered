@@ -464,11 +464,12 @@ Each at level 1 (§25 has the later levels):
 | Anti Magic | passive | | | | |
 
 A spell takes effect as its cast ends, in the round its cast time runs out, though its MP is paid
-and its reuse begins as it is begun; a physical skill or a blow takes effect at once. So it is with
-a monster's spells. Reuse and cast are in milliseconds. The reuse is × 333 ÷ Atk. Spd. for a
-physical skill or a blow and × 333 ÷ Casting Spd. for the rest, and a cast is × 333 ÷ Casting Spd.
-A physical skill takes the place of a blow and has no cast of its own. Power Strike, Power Shot,
-Mortal Blow and Iron Punch need their weapons (§23); the rest need none.
+and its reuse begins as it is begun, and one that ends on a monster already felled strikes nothing;
+a physical skill or a blow takes effect at once. So it is with a monster's spells. Reuse and cast
+are in milliseconds. The reuse is × 333 ÷ Atk. Spd. for a physical skill or a blow and × 333 ÷
+Casting Spd. for the rest, and a cast is × 333 ÷ Casting Spd. A physical skill takes the place of a
+blow and has no cast of its own. Power Strike, Power Shot, Mortal Blow and Iron Punch need their
+weapons (§23); the rest need none.
 
 - **Physical:** 70 × (P. Atk. + power) ÷ P. Def., then the weapon's spread (§13). It never misses and
   never lands a critical.
@@ -549,10 +550,13 @@ this far (a monster's spells as far as §19 gives):
   resting 10.4 seconds after round 1 comes round again in round 8. The log tells what changes,
   a cast or a run once as it begins, so a round with nothing new in it is left out and the next
   one written says when it starts; a round with something else in it begins "as you cast" while a
-  cast goes on. The first round a spell's reuse is over but its MP cannot be paid, the log says
-  once that the character lacks the MP for it, as Lineage II says "Not enough MP.", so the blows
-  that follow have their reason. A hit is written at what it was worth, as Lineage II's own
-  messages give it, and a mend too: one that fells takes only the HP left and says the rest in
+  cast goes on. Each round is told a sentence a side, in the order they acted, and every attack
+  says how it was made before what it did: a bow shoots, fists punch, any other weapon swings, a
+  skill is used and a spell cast ("You swing and hit for 42 damage", "The Wolf swings and hits
+  your shield for 4 damage"). The first round a spell's reuse is over but its MP cannot be paid,
+  the log says once that the character lacks the MP for it, as Lineage II says "Not enough MP.",
+  so the blows that follow have their reason. A hit is written at what it was worth, as Lineage
+  II's own messages give it, and a mend too: one that fells takes only the HP left and says the rest in
   brackets ("20 damage (19 overkill)"), and one that fills mends only to full ("50 HP (19
   overheal)"); a drain absorbs only from what it took. The hunt takes none of the world's time,
   where auras fade, the character rests and being in combat counts down.

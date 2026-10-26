@@ -164,7 +164,7 @@ defmodule MiniLineage.Game.Actions do
 
     weapon = %{
       max_hp: stats.max_hp,
-      bow?: stats.weapon != nil and stats.weapon.type == "bow",
+      motion: Narrative.motion(stats.weapon),
       hp: bars.health
     }
 

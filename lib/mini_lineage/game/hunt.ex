@@ -334,6 +334,8 @@ defmodule MiniLineage.Game.Hunt do
   # §19: a spell takes effect in the round its cast ends.
   defp land(%{pending: nil} = s, _foe), do: {s, false}
   defp land(%{busy: busy} = s, _foe) when busy > @round_ms, do: {s, false}
+  # A burn that took the last HP at the round's start leaves the cast nothing to strike.
+  defp land(%{foe: left} = s, _foe) when left <= 0, do: {%{s | pending: nil}, true}
   defp land(%{pending: skill} = s, foe), do: {take_effect(%{s | pending: nil}, skill, foe), true}
 
   defp foe_land(%{foe_pending: nil} = s, _foe), do: s
@@ -456,7 +458,7 @@ defmodule MiniLineage.Game.Hunt do
         per_round = skill.power * @round_ms / 1000
         burn = %{name: skill.name, per_round: per_round, rounds: rounds_of(@burn_ms), carry: 0.0}
         s = %{s | burn: burn}
-        note(s, {:cast, skill.name, 0, false, 0})
+        note(s, {:ignite, skill.name})
 
       kind ->
         critical? = Formulas.hit?(stats.magic_critical)
