@@ -1,15 +1,26 @@
 # Every way the fight log can read, gathered from fights the game itself plays: each set at levels
 # 1 to 20, in its starting kit and in the best its village sells (the `twink` key's), at full, low
 # and empty MP and full and low HP (once with no heal before the pull and no potion, so it heals in
-# the fight), against every monster its ground draws at that level. Each
-# clause is reduced to its shape (a monster as M, a skill, spell or potion as S, a number as N) and
-# listed with how often it came and one real line it came in, then the longest rounds and one whole
-# fight a set. Read it after any change to how the log is told, to see every sentence it makes.
+# the fight), against every monster its ground draws at that level. Each clause is reduced to its
+# shape (a monster as M, a skill or spell as S, an item as I, each with its emoji, a number as N)
+# and listed with how often it came and one real line it came in, then the longest rounds and one
+# whole fight a set. Read it after any change to how the log is told, to see every sentence it makes.
 #
 #   MIX_ENV=test mix run --no-start bench/fight_log.exs [--fights N] [--only "Set name,Set name"]
 #
 # Seeded, so two builds tell the same fights and their catalogs compare line for line.
-alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Narrative, Player, Rng, Rules}
+alias MiniLineage.Game.{
+  Actions,
+  Clock,
+  Constants,
+  Hunt,
+  Math,
+  Names,
+  Narrative,
+  Player,
+  Rng,
+  Rules
+}
 
 Application.ensure_all_started(:tz)
 
@@ -83,34 +94,59 @@ played =
     }
 
     result = Hunt.fight(stats, bars, Player.fighting_skills(player), foe)
-    weapon = %{max_hp: stats.max_hp, motion: Narrative.motion(stats.weapon), hp: player.health}
+    you = %{max_hp: stats.max_hp, hp: player.health, weapon: stats.weapon, shield: stats.shield}
 
     entries =
-      for entry <- Narrative.build_fight_log(foe, ground, result.log, weapon, result.before),
+      for entry <- Narrative.build_fight_log(foe, ground, result.log, you, result.before),
           do: {plain.(entry.head), plain.(entry.line)}
 
-    names =
+    # Each skill and item as the log names it, emoji and all, to fold into S and I.
+    named =
       for {_round, event} <- result.log ++ Enum.map(elem(result.before, 0), &{0, &1}),
           is_tuple(event),
           name <- Tuple.to_list(event),
-          is_binary(name),
-          do:
-            if(elem(event, 0) in [:foe_begin, :foe_cast, :foe_drain],
-              do: Rules.monster_spell(name).shown,
-              else: name
-            )
+          is_binary(name) do
+        cond do
+          elem(event, 0) in [:foe_begin, :foe_cast, :foe_drain] ->
+            shown = Rules.monster_spell(name).shown
+            {"#{Names.skill_emoji(shown)} #{shown}", "S"}
 
-    %{set: set.name, gear: gear, level: level, monster: foe.name, entries: entries, names: names}
+          elem(event, 0) == :potion ->
+            {"#{Names.item_emoji(name)} #{name}", "I"}
+
+          true ->
+            {"#{Names.skill_emoji(name)} #{name}", "S"}
+        end
+      end
+
+    held =
+      for item <- [stats.weapon, stats.shield],
+          item,
+          do: {"#{Names.item_emoji(item)} #{item.name}", "I"}
+
+    %{
+      set: set.name,
+      gear: gear,
+      level: level,
+      monster: foe.name,
+      entries: entries,
+      names: named ++ held
+    }
   end
 
 # Longest first, so "Healing Potion" never eats the end of "Lesser Healing Potion".
 longest_first = &Enum.sort_by(Enum.uniq(&1), fn name -> -String.length(name) end)
 monsters = longest_first.(Enum.map(played, & &1.monster))
-names = longest_first.(Enum.flat_map(played, & &1.names))
+
+names =
+  played
+  |> Enum.flat_map(& &1.names)
+  |> Enum.uniq()
+  |> Enum.sort_by(fn {name, _} -> -String.length(name) end)
 
 shape = fn line ->
   line = Enum.reduce(monsters, line, &String.replace(&2, &1, "M"))
-  line = Enum.reduce(names, line, &String.replace(&2, &1, "S"))
+  line = Enum.reduce(names, line, fn {name, as}, line -> String.replace(line, name, as) end)
   String.replace(line, ~r/\d[\d,.]*/, "N")
 end
 

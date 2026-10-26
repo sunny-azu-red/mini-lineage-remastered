@@ -5,7 +5,7 @@ defmodule MiniLineage.Game.ShopTest do
   """
   use ExUnit.Case, async: true
 
-  alias MiniLineage.Game.{Actions, Clock, Constants, Player, Rules, Shop}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Names, Player, Rules, Shop}
 
   setup do
     Clock.put_now(~U[2026-07-01 09:00:00Z])
@@ -101,7 +101,7 @@ defmodule MiniLineage.Game.ShopTest do
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Dagger").id)
 
       assert flash.type == :danger
-      assert flash.text =~ "your Power Strike skill needs a sword,"
+      assert flash.text =~ "your #{Names.skill("Power Strike")} skill needs a sword,"
 
       {_, {:ok, flash}} = Actions.equip(player, carried(player, "Squire's Sword").id)
       assert flash.type == :info

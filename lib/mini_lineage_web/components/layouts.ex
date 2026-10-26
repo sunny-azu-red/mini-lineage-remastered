@@ -194,7 +194,7 @@ defmodule MiniLineageWeb.Layouts do
         collapsed={folded?(@folds, "consumables")}
       >
         <div :for={item <- consumables(@view.items)} class="stat-row" id={"consumable-#{item.id}"}>
-          <span class="stat-value" title={item.name}>{Controls.item_label(item, short: true)}</span>
+          <span class="stat-value" title={item.name}><Controls.item item={item} short /></span>
           <span class="stat-value row-end">×<Controls.figure
             key={"consumable-#{item.id}"}
             value={item.count}
@@ -214,7 +214,9 @@ defmodule MiniLineageWeb.Layouts do
         <%!-- Each list says what it is by what is in it, so neither needs a label. --%>
         <div :for={{id, slots, none} <- equipped_rows()} class="stat-row stacked" id={id}>
           <span :if={equipped(@view.items, slots) == []} class="stat-value muted">{none}</span>
-          <span :for={name <- equipped(@view.items, slots)} class="stat-value">{name}</span>
+          <span :for={item <- equipped(@view.items, slots)} class="stat-value"><Controls.item item={
+            item
+          } /></span>
         </div>
         <div class="stat-row" id="purse">
           <span class="stat-value adena">🪙
@@ -241,7 +243,7 @@ defmodule MiniLineageWeb.Layouts do
         slot <- slots,
         item <- items,
         item.equipped and item.slot == slot,
-        do: Controls.item_label(item)
+        do: item
       )
 
   # Open unless the reader folded it.

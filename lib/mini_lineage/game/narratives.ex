@@ -51,9 +51,10 @@ defmodule MiniLineage.Game.Narratives do
   # Rules §20: an aggressive monster finds the character first.
   @noticed ~s({Article} {monster}, <span class="level">Level {level}</span>, notices {object} on the {ground} and comes at {object}.)
   # Each may stand inside a sentence, so it is written lowercase; `Narrative` capitalises whichever
-  # opens one. Every attack names its motion, then its outcome: {motion} is "swing", "shoot" or
-  # "punch" for the character and "swings" or "shoots" for a monster, with "twice" or "3 times"
-  # when there was more than one.
+  # opens one. Every attack names its motion, then its outcome: {motion} is the character's
+  # "swing {their} 🗡️ Long Sword", "shoot {their} 🏹 Bow", "punch with {their} 🥊 Cestus" or, bare
+  # handed, "punch", and a monster's "swings" or "shoots", with "twice" or "3 times" when there was
+  # more than one. Every {skill}, {potion}, {weapon} and {shield} is named through `Names`.
   @log %{
     # {amount} is every hit's figure, "42 and 41 damage", built by `Narrative`.
     blow: ~s({them} {motion} and hit for {amount}{overkill}),
@@ -81,13 +82,13 @@ defmodule MiniLineage.Game.Narratives do
     foe_critical:
       ~s(the {monster} {motion} and lands a critical hit on {object} for <span class="crit">{amount} damage</span>{overkill}),
     foe_caught:
-      ~s(the {monster} {motion} and hits {their} shield for <span class="hp">{amount} damage</span>{overkill}),
+      ~s(the {monster} {motion} and hits {their} {shield} for <span class="hp">{amount} damage</span>{overkill}),
     foe_perfect:
-      ~s(the {monster} {motion} and glances off {their} shield for <span class="hp">{amount} damage</span>{overkill}),
+      ~s(the {monster} {motion} and glances off {their} {shield} for <span class="hp">{amount} damage</span>{overkill}),
     foe_miss: "the {monster} {motion} and misses",
     foe_misses: "the {monster} {motion} and misses {every}",
     foe_swings: "the {monster} {motion}: {outcomes}",
-    draw: "{them} draw {their} bow",
+    draw: "{them} draw {their} {weapon}",
     ready: "{them} close in for the next blow",
     begin: "{them} begin casting {skill}",
     # Lineage II's "Not enough MP.", said once, in the round the spell would have been cast.
@@ -109,14 +110,14 @@ defmodule MiniLineage.Game.Narratives do
     foe_swing_hit: ~s(a hit of <span class="hp">{amount} damage</span>{overkill}),
     foe_swing_critical: ~s(a critical hit of <span class="crit">{amount} damage</span>{overkill}),
     foe_swing_caught:
-      ~s(a hit of <span class="hp">{amount} damage</span>{overkill} on {their} shield),
+      ~s(a hit of <span class="hp">{amount} damage</span>{overkill} on {their} {shield}),
     foe_swing_perfect:
-      ~s(a glancing blow of <span class="hp">{amount} damage</span>{overkill} off {their} shield),
+      ~s(a glancing blow of <span class="hp">{amount} damage</span>{overkill} off {their} {shield}),
     # {times} is "" or, for the same heal cast again before the pull, " twice".
     heal:
       ~s({them} cast {skill}{times} and mend <span class="regen">{amount} HP</span>{overheal}),
-    aura: ~s({them} raise {their} <span class="buff">{skill}</span>),
-    toggle: ~s({them} let out a <span class="buff">{skill}</span> to make {their} blows heavier),
+    aura: "{them} raise {their} {skill}",
+    toggle: "{them} let out a {skill} to make {their} blows heavier",
     curse: ~s({them} lay {skill} on the {monster}),
     curse_failed: "{their} {skill} slides off the {monster}",
     potion: ~s({them} drink a {potion} and mend <span class="regen">{amount} HP</span>{overheal})

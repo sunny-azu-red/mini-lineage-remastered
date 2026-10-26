@@ -10,8 +10,7 @@ defmodule MiniLineageWeb.GuildPageTest do
   import MiniLineage.DataCase, only: [stored: 1]
 
   alias MiniLineage.Characters
-  alias MiniLineage.Game.{Constants, Rules}
-  alias MiniLineageWeb.Screens
+  alias MiniLineage.Game.Rules
   alias MiniLineage.Game.Math
 
   # A new Human Fighter on Talking Island.
@@ -90,7 +89,10 @@ defmodule MiniLineageWeb.GuildPageTest do
 
     refute has_element?(view, "#lesson-power-strike-1")
     assert has_element?(view, "#skill-power-strike .skill", "Power Strike 1")
-    assert view |> element("#skill-power-strike") |> render() =~ "💥 <span class=\"skill\">"
+
+    assert view |> element("#skill-power-strike") |> render() =~
+             ~s(<span class="skill">💥 Power Strike 1</span>)
+
     # Each figure in the colour of what it is.
     assert has_element?(view, "#skill-power-strike .attack", "Power 25")
     assert has_element?(view, "#skill-power-strike .mp", "10 MP")
@@ -208,31 +210,6 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
     refute has_element?(view, ~s(#lessons th[aria-sort="descending"]))
     refute has_element?(view, "#lessons thead[phx-hook]")
-  end
-
-  test "every skill a set learns has an emoji of its own, no other effect's, a heal 💚 and an aura's the one Buffs shows" do
-    for set <- Rules.sets() do
-      icons =
-        for(%{skill: skill} <- Rules.lessons(set.name), uniq: true, do: skill)
-        |> Enum.map(&Screens.skill_icon/1)
-
-      assert Enum.uniq(icons) == icons, set.name
-    end
-
-    for {name, %{kind: :heal}} <- Rules.skills(), do: assert(Screens.skill_icon(name) == "💚")
-
-    # Nor is a skill's emoji another effect's on the same Buffs & Debuffs panel, or a lineage's.
-    taken =
-      ~w(combat resting night shadow_sense mother_tree regenerating ghost)a
-      |> Enum.map(&Constants.aura(&1).emoji)
-      |> Enum.concat(Enum.map(Constants.races(), & &1.emoji))
-
-    for name <- Map.keys(Rules.skills()),
-        Rules.skill(name).kind not in [:aura, :rest],
-        do: refute(Screens.skill_icon(name) in taken, name)
-
-    assert Screens.skill_icon("Defense Aura") == "🛡️"
-    assert Screens.skill_icon("Relax") == "🧘"
   end
 
   test "SP is paid like Adena: a line in reach but beyond the purse is still offered" do

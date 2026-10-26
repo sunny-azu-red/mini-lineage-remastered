@@ -10,6 +10,7 @@ defmodule MiniLineage.Game.Actions do
     Format,
     Hunt,
     Math,
+    Names,
     Narrative,
     Narratives,
     Player,
@@ -164,7 +165,8 @@ defmodule MiniLineage.Game.Actions do
 
     weapon = %{
       max_hp: stats.max_hp,
-      motion: Narrative.motion(stats.weapon),
+      weapon: stats.weapon,
+      shield: stats.shield,
       hp: bars.health
     }
 
@@ -297,7 +299,11 @@ defmodule MiniLineage.Game.Actions do
   end
 
   defp bought(item, count),
-    do: if(Rules.stacks?(item), do: "#{count} × #{item.name}", else: "the #{item.name}")
+    do:
+      if(Rules.stacks?(item),
+        do: "#{count} × #{Names.item(item)}",
+        else: "the #{Names.item(item)}"
+      )
 
   @doc "Rules §24: sells something carried, not equipped, back to the village's shop for half its price."
   def sell(%{dead: true} = player, _id), do: fallen(player)
@@ -322,7 +328,11 @@ defmodule MiniLineage.Game.Actions do
         count = Map.get(entry, :count, 1)
         paid = Shop.buyback(Rules.item(entry.name)) * count
         player = %{player | adena: player.adena + paid, items: List.delete(player.items, entry)}
-        what = if count > 1, do: "#{count} × #{entry.name}", else: "the #{entry.name}"
+
+        what =
+          if count > 1,
+            do: "#{count} × #{Names.item(entry.name)}",
+            else: "the #{Names.item(entry.name)}"
 
         text = "You sell #{what} for #{Format.adena(paid)}."
 
@@ -353,18 +363,18 @@ defmodule MiniLineage.Game.Actions do
       case item.kind == :weapon && unsuited(player, item) do
         [skill] ->
           text =
-            "You equip the #{entry.name}, but your #{skill} skill needs #{Narrative.weapon_for(skill)}, so you will fight without it."
+            "You equip the #{Names.item(item)}, but your #{Names.skill(skill)} skill needs #{Narrative.weapon_for(skill)}, so you will fight without it."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         [_, _ | _] = skills ->
           text =
-            "You equip the #{entry.name}, but your #{Format.list(skills, "and")} skills cannot be used with #{Narrative.weapon(item.type)}, so you will fight without them."
+            "You equip the #{Names.item(item)}, but your #{Format.list(Enum.map(skills, &Names.skill/1), "and")} skills cannot be used with #{Narrative.weapon(item.type)}, so you will fight without them."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         _fits ->
-          {player, {:ok, %{text: "You equip the #{entry.name}.", type: :info}}}
+          {player, {:ok, %{text: "You equip the #{Names.item(item)}.", type: :info}}}
       end
     else
       {player, {:error, :not_carried, @errors.not_carried}}
@@ -394,7 +404,7 @@ defmodule MiniLineage.Game.Actions do
         player = Player.drink_down(%{player | health: player.health + healed}, %{entry.name => 1})
 
         text =
-          ~s(You drink a #{entry.name} and mend <span class="regen">#{healed} HP</span>.)
+          ~s(You drink a #{Names.item(item)} and mend <span class="regen">#{healed} HP</span>.)
 
         {player, {:ok, %{text: text, type: :success}}}
     end
@@ -471,7 +481,7 @@ defmodule MiniLineage.Game.Actions do
     if entry do
       items = Enum.map(player.items, &if(&1.id == id, do: %{&1 | equipped: false}, else: &1))
       player = clamp_bars(%{player | items: items})
-      {player, {:ok, %{text: "You unequip the #{entry.name}.", type: :info}}}
+      {player, {:ok, %{text: "You unequip the #{Names.item(entry.name)}.", type: :info}}}
     else
       {player, {:error, :not_carried, @errors.not_carried}}
     end
@@ -511,7 +521,7 @@ defmodule MiniLineage.Game.Actions do
         }
 
         text =
-          ~s(You learn <span class="skill">#{skill} #{level}</span> for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
+          ~s(You learn #{Names.skill(skill, level)} for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
 
         {clamp_bars(player), {:ok, %{text: text, type: :success}}}
     end
@@ -532,7 +542,7 @@ defmodule MiniLineage.Game.Actions do
 
       true ->
         {%{player | items: List.delete(player.items, entry)},
-         {:ok, %{text: "You destroy the #{entry.name}.", type: :info}}}
+         {:ok, %{text: "You destroy the #{Names.item(entry.name)}.", type: :info}}}
     end
   end
 
@@ -663,7 +673,7 @@ defmodule MiniLineage.Game.Actions do
         })
 
       text =
-        ~s(A debug build puts you back at <span class="level">Level #{@dev_twink_level}</span> with every skill your trainer teaches by then, the best your village sells, #{count} × #{potion}, <span class="sp">#{Format.number(@dev_twink_sp)} SP</span> and #{Format.adena(@dev_twink_adena)}.)
+        ~s(A debug build puts you back at <span class="level">Level #{@dev_twink_level}</span> with every skill your trainer teaches by then, the best your village sells, #{count} × #{Names.item(potion)}, <span class="sp">#{Format.number(@dev_twink_sp)} SP</span> and #{Format.adena(@dev_twink_adena)}.)
 
       flash =
         if @dev_twink_level > level,

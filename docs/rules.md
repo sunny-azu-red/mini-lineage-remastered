@@ -551,9 +551,9 @@ this far (a monster's spells as far as §19 gives):
   a cast or a run once as it begins, so a round with nothing new in it is left out and the next
   one written says when it starts; a round with something else in it begins "as you cast" while a
   cast goes on. Each round is told a sentence a side, in the order they acted, and every attack
-  says how it was made before what it did: a bow shoots, fists punch, any other weapon swings, a
-  skill is used and a spell cast ("You swing and hit for 42 damage", "The Wolf swings and hits
-  your shield for 4 damage"). The first round a spell's reuse is over but its MP cannot be paid,
+  says how it was made and with what before what it did: a bow shoots, fists punch, any other
+  weapon swings, bare hands punch, a skill is used and a spell cast ("You swing your Long Sword and
+  hit for 42 damage", "The Wolf swings and hits your Round Shield for 4 damage"). The first round a spell's reuse is over but its MP cannot be paid,
   the log says once that the character lacks the MP for it, as Lineage II says "Not enough MP.",
   so the blows that follow have their reason. A hit is written at what it was worth, as Lineage
   II's own messages give it, and a mend too: one that fells takes only the HP left and says the rest in

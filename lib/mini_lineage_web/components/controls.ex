@@ -7,7 +7,7 @@ defmodule MiniLineageWeb.Controls do
   """
   use MiniLineageWeb, :html
 
-  alias MiniLineage.Game.{Clock, Format, Math}
+  alias MiniLineage.Game.{Clock, Format, Math, Names}
 
   # ------------------------------------------------------------------- panels
 
@@ -362,41 +362,50 @@ defmodule MiniLineageWeb.Controls do
   # ------------------------------------------------------------------ items
 
   @doc """
-  An item as every page names it: its emoji, its name (a stack with its count, rules §26), then
-  for a weapon or shield the hands it takes (rules §23). `short: true` is the sidebar's: the short
-  name where there is one, and a stack's count left to a figure of its own.
+  An item named on a page, in the markup `Names.item/1` gives a sentence: its emoji and its name in
+  `.item`, then a stack's count (rules §26) and the hands a weapon or shield takes (rules §23).
+  `short` is the sidebar's: the short name, a stack's count left to a figure of its own.
   """
-  def item_label(item, opts \\ []),
+  attr :item, :map, required: true
+  attr :short, :boolean, default: false
+
+  def item(assigns),
+    do:
+      ~H|<span class="item">{Names.item_emoji(@item)} {if @short, do: @item.short, else: @item.name}</span>{item_extra(
+  @item,
+  @short
+)}|
+
+  defp item_extra(item, short?) do
+    count = if item[:potion?] && !short?, do: " ×#{item.count}"
+    Enum.join([count, hands(item) && " #{hands(item)}"])
+  end
+
+  @doc "A skill named on a page, in the markup `Names.skill/2` gives a sentence."
+  attr :name, :string, required: true
+  attr :level, :integer, default: nil
+
+  def skill(assigns),
+    do: ~H|<span class="skill">{Names.skill_emoji(@name)} {@name}{@level && " #{@level}"}</span>|
+
+  @doc """
+  An item as an `<option>` names it, which can hold no markup: its emoji, its name (a stack with
+  its count), then the hands a weapon or shield takes.
+  """
+  def item_label(item),
     do:
       Enum.join(
-        Enum.reject([item_emoji(item), item_name(item, opts), hands(item)], &is_nil/1),
+        Enum.reject([Names.item_emoji(item), item_name(item), hands(item)], &is_nil/1),
         " "
       )
 
   # A trader's stock carries no count, so only what is carried matches as a stack.
-  defp item_name(item, short: true), do: item.short
-  defp item_name(%{potion?: true} = item, _opts), do: "#{item.name} ×#{item.count}"
-  defp item_name(item, _opts), do: item.name
+  defp item_name(%{potion?: true} = item), do: "#{item.name} ×#{item.count}"
+  defp item_name(item), do: item.name
 
   defp hands(%{slot: :weapon, hands: 2}), do: "👐"
   defp hands(%{slot: slot}) when slot in [:weapon, :shield], do: "✋"
   defp hands(_item), do: nil
-
-  defp item_emoji(%{slot: :weapon, type: type}) do
-    case type do
-      "bow" -> "🏹"
-      "fists" -> "🥊"
-      "dagger" -> "🔪"
-      "staff" -> "🪄"
-      _ -> "🗡️"
-    end
-  end
-
-  defp item_emoji(%{slot: :shield}), do: "🛡️"
-  defp item_emoji(%{slot: :chest}), do: "👕"
-  defp item_emoji(%{slot: :legs}), do: "👖"
-  defp item_emoji(%{slot: :necklace}), do: "📿"
-  defp item_emoji(%{slot: :potion}), do: "🧪"
 
   # The empty string, not nil, so the hook sees a sort undone as a change.
   defp encode_sort(nil), do: ""

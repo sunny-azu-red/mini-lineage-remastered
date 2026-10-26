@@ -152,7 +152,7 @@ defmodule MiniLineage.Game.Constants do
     "Defense Aura" => %{
       id: "defense_aura",
       type: :buff,
-      emoji: "🛡️",
+      emoji: "🧱",
       label: "Defense Aura",
       about: "An aura raised in the field turns blows aside."
     },

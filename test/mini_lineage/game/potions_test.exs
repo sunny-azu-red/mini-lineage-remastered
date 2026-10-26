@@ -6,7 +6,7 @@ defmodule MiniLineage.Game.PotionsTest do
   use ExUnit.Case, async: true
 
   alias MiniLineage.Characters.Serde
-  alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Player, Rng, Rules}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Names, Player, Rng, Rules}
 
   @potion "Lesser Healing Potion"
 
@@ -118,7 +118,7 @@ defmodule MiniLineage.Game.PotionsTest do
       low = %{player | health: 20}
       {hunted, {:ok, flash}} = Actions.hunt(low)
 
-      drunk = Enum.count(flash.log, &(&1.line =~ "drink a #{@potion}"))
+      drunk = Enum.count(flash.log, &(&1.line =~ "drink a #{Names.item(@potion)}"))
       assert drunk >= 1
       assert (stack(hunted) || %{count: 0}).count == 5 - drunk
     end

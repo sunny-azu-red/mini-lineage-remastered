@@ -80,8 +80,10 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   `<.select_action>` (a choice and the button acting on it, which is how a player moves and acts:
   never a button per table row; a screen reads as a table and acts through one dropdown),
   `<.stepper>` and `<.switch>` (a setting, see Components), `<.alert>`
-  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's Fight Log, `#fight`), `<.figure>`, `<.bar>`, `<.stamp>` (when something happened, see Components), `<.fault>`, and `item_label/1`, an item as every
-  page and dropdown names it (emoji, name, then ✋ or 👐 for what a weapon or shield takes in hand). `Layouts` holds the shell: `app`,
+  and `<.flash_alert>`, `<.fight_log>` (rules §20's entries, in the ground's Fight Log, `#fight`), `<.figure>`, `<.bar>`, `<.stamp>` (when something happened, see Components), `<.fault>`, `<.item>` and `<.skill>`
+  (an item or a skill named on a page, see Prose and markup; a row's item adds a stack's count and
+  ✋ or 👐 for what a weapon or shield takes in hand), and `item_label/1`, the same as an `<option>`'s
+  text, which holds no markup. `Layouts` holds the shell: `app`,
   `head`, `site_header`, the sidebar and `footer`; `ErrorHTML` reuses `head`, `site_header` and
   `footer`.
 - **The sidebar** (the vital panel, `.vital-panel`: level and name, the name linking to
@@ -537,10 +539,20 @@ Each of these is here because it was got wrong once.
 - **A level is named as one, "Level 5", word and number together in `.level`**, a monster's
   ("a Gremlin, Level 1") as much as the character's ("until Level 5"). A level no number names
   ("the next level") is a common noun and stays lowercase and uncoloured.
-- **An attack says how it was made, then what it did**, a sentence a side in the order they acted:
-  "You swing and hit for 42 damage. The Wolf swings and hits your shield for 4 damage." A bow shoots,
-  fists punch (`Narrative.motion/1`), any other weapon swings, a skill is used and a spell cast; a
-  departure from the client, which names only the outcome, written in `docs/canon/README.md`.
+- **An item or a skill is named one way, everywhere, or the reader learns two vocabularies**: its
+  emoji, then its name, in `.item` (quiet, as legacy's was) or `.skill` (gold). A page writes
+  `<.item>` or `<.skill>`, a sentence (a flash, the fight log) `Names.item/1` or `Names.skill/2`,
+  the same markup, which `names_test.exs` holds alike; only an `<option>` names one as text, emoji
+  first. The emojis are `Names`' (an aura's is its effect's, in `Constants`), and no two things
+  share one but the heals' 💚 (`MiniLineage.Game.NamesTest`), or a bow's 🏹 reads as Power Shot's.
+  A page or a flash that names one bare fails `MiniLineageWeb.NamesTest`. A stat ("Shield P. Def."),
+  a slot or a setting ("Drink Healing Potion") is no name, and an effect's title is the effect's.
+- **An attack says how it was made, with what, then what it did**, a sentence a side in the order
+  they acted: "You swing your 🗡️ Long Sword and hit for 42 damage. The Wolf swings and hits your 🛡️
+  Round Shield for 4 damage." A bow shoots, fists punch, any other weapon swings, bare hands punch
+  with nothing to name, a skill is used and a spell cast; a monster's weapon is no item and goes
+  unnamed. A departure from the client, which names only the outcome, written in
+  `docs/canon/README.md`.
 - **What a blow takes is damage**, as the client's own "You hit for $s1 damage." counts it: in the
   fight log every figure a blow, spell or tick deals is `N damage` inside its span, as a mend is
   `N HP` inside its own, and a list writes the word once, after the last ("10 and 9 damage"). A

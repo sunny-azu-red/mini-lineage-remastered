@@ -3,7 +3,7 @@ defmodule MiniLineage.Game.Narrative do
   Lines told with their pronouns open (`{they}`, `{their}`…), closed for whoever reads them: "you"
   for the run itself, "they" for anybody else.
   """
-  alias MiniLineage.Game.{Format, Hunt, Narratives, Rules}
+  alias MiniLineage.Game.{Format, Hunt, Names, Narratives, Rules}
 
   @doc "Who a run set out as, and from where."
   def build_began(race, class_name) do
@@ -73,9 +73,12 @@ defmodule MiniLineage.Game.Narrative do
   right of the head), its line, open-voiced, and the `kind` its row is washed as (`nil` for none):
   the meeting, the auras and heals before the pull (`before`, as `{done, hp}`), then one entry a
   round, washed for a critical hit on either side, else for HP either side mended. A round is told
-  one sentence per side, in the order they acted, and every attack names its `motion` (`motion/1`).
+  one sentence per side, in the order they acted, every attack naming how it was made and the
+  weapon it was made with, and every item and skill named as `Names` names it.
   """
-  def build_fight_log(foe, ground, log, %{max_hp: max_hp, motion: motion, hp: hp}, before) do
+  def build_fight_log(foe, ground, log, %{max_hp: max_hp, hp: hp} = you, before) do
+    you = Map.take(you, [:weapon, :shield])
+
     met = %{
       head: if(foe.aggressive?, do: "Ambush", else: "Encounter"),
       kind: if(foe.aggressive?, do: "ambush", else: "encounter"),
@@ -109,7 +112,7 @@ defmodule MiniLineage.Game.Narrative do
             events
             |> merge_swings()
             |> Enum.chunk_by(&side/1)
-            |> Enum.map(fn chunk -> chunk |> Enum.map(&event(&1, foe, motion)) |> join() end)
+            |> Enum.map(fn chunk -> chunk |> Enum.map(&event(&1, foe, you)) |> join() end)
 
           %{
             head: round_label(round),
@@ -121,11 +124,6 @@ defmodule MiniLineage.Game.Narrative do
 
     [met | before(before, foe, max_hp)] ++ rounds
   end
-
-  @doc "Rules §20: how a weapon's attack is told: a bow shoots, fists punch, anything else swings."
-  def motion(%{type: "bow"}), do: :shoot
-  def motion(%{type: "fists"}), do: :punch
-  def motion(_weapon), do: :swing
 
   # §20: a cast or a run is told once, as it begins, so a round left with nothing new is not
   # written; no HP moves without an event of its own, so its standing is the last one written.
@@ -194,7 +192,7 @@ defmodule MiniLineage.Game.Narrative do
         other -> other
       end)
       |> Enum.map(&again/1)
-      |> Enum.map(&event(&1, nil, :swing))
+      |> Enum.map(&event(&1, nil, %{}))
 
     [
       %{
@@ -236,27 +234,29 @@ defmodule MiniLineage.Game.Narrative do
   defp side(event) when is_tuple(event) and elem(event, 0) in @foe_events, do: :foe
   defp side(_event), do: :you
 
-  defp event(:readying, _foe, :shoot), do: fill(:draw, %{})
-  defp event(:readying, _foe, _motion), do: fill(:ready, %{})
+  defp event(:readying, _foe, %{weapon: %{type: "bow"} = bow}),
+    do: fill(:draw, %{"weapon" => bow})
 
-  defp event({:blows, hits}, _foe, motion),
-    do: fill(:blow, Map.put(amounts(hits, "attack"), "motion", yours(motion, hits)))
+  defp event(:readying, _foe, _you), do: fill(:ready, %{})
 
-  defp event({:blow, amount, true, over} = blow, _foe, motion),
-    do: fill(:critical, Map.put(hit(amount, over), "motion", yours(motion, [blow])))
+  defp event({:blows, hits}, _foe, you),
+    do: fill(:blow, Map.put(amounts(hits, "attack"), "motion", yours(you, hits)))
 
-  defp event(:miss, _foe, motion), do: fill(:miss, %{"motion" => yours(motion, [:miss])})
+  defp event({:blow, amount, true, over} = blow, _foe, you),
+    do: fill(:critical, Map.put(hit(amount, over), "motion", yours(you, [blow])))
 
-  defp event({:misses, swings}, _foe, motion),
-    do: fill(:misses, %{"motion" => yours(motion, swings), "every" => every(swings)})
+  defp event(:miss, _foe, you), do: fill(:miss, %{"motion" => yours(you, [:miss])})
 
-  defp event({:swings, swings}, _foe, motion),
-    do: fill(:swings, %{"motion" => yours(motion, swings), "outcomes" => outcomes(swings)})
+  defp event({:misses, swings}, _foe, you),
+    do: fill(:misses, %{"motion" => yours(you, swings), "every" => every(swings)})
 
-  defp event({:foe_blows, hits}, foe, _motion),
+  defp event({:swings, swings}, _foe, you),
+    do: fill(:swings, %{"motion" => yours(you, swings), "outcomes" => outcomes(swings, you)})
+
+  defp event({:foe_blows, hits}, foe, _you),
     do: fill(:foe_blow, Map.merge(amounts(hits, "hp"), foe_data(foe, hits)))
 
-  defp event({:foe_blow, amount, critical?, caught, over} = blow, foe, _motion) do
+  defp event({:foe_blow, amount, critical?, caught, over} = blow, foe, you) do
     kind =
       case caught do
         :perfect -> :foe_perfect
@@ -264,18 +264,18 @@ defmodule MiniLineage.Game.Narrative do
         nil -> if(critical?, do: :foe_critical, else: :foe_blow)
       end
 
-    fill(kind, Map.merge(hit(amount, over), foe_data(foe, [blow])))
+    fill(kind, hit(amount, over) |> Map.merge(foe_data(foe, [blow])) |> shielded(you))
   end
 
-  defp event(:foe_miss, foe, _motion), do: fill(:foe_miss, foe_data(foe, [:foe_miss]))
+  defp event(:foe_miss, foe, _you), do: fill(:foe_miss, foe_data(foe, [:foe_miss]))
 
-  defp event({:foe_misses, swings}, foe, _motion),
+  defp event({:foe_misses, swings}, foe, _you),
     do: fill(:foe_misses, Map.put(foe_data(foe, swings), "every", every(swings)))
 
-  defp event({:foe_swings, swings}, foe, _motion),
-    do: fill(:foe_swings, Map.put(foe_data(foe, swings), "outcomes", outcomes(swings)))
+  defp event({:foe_swings, swings}, foe, you),
+    do: fill(:foe_swings, Map.put(foe_data(foe, swings), "outcomes", outcomes(swings, you)))
 
-  defp event(other, foe, _motion), do: event(other, foe)
+  defp event(other, foe, _you), do: event(other, foe)
 
   defp event({:no_mp, skill}, _foe), do: fill(:no_mp, %{"skill" => skill})
   defp event(:closing, foe), do: fill(:closing, %{"monster" => foe.name})
@@ -363,8 +363,22 @@ defmodule MiniLineage.Game.Narrative do
   # §19: the log keeps a monster's spell by its Lineage II name; the player reads what it shows.
   defp shown(spell), do: Rules.monster_spell(spell).shown
 
-  # How many swings a side made, after its motion: "swing twice", "swings 3 times".
-  defp yours(motion, swings), do: "#{motion}#{times(length(swings))}"
+  # Rules §20: how the character attacked, with what and how many times: a bow shoots, fists
+  # punch, any other weapon swings, and bare hands punch with nothing to name.
+  defp yours(you, swings) do
+    count = times(length(swings))
+
+    case you[:weapon] do
+      nil -> "punch#{count}"
+      %{type: "bow"} = bow -> "shoot {their} #{Names.item(bow)}#{count}"
+      %{type: "fists"} = fists -> "punch with {their} #{Names.item(fists)}#{count}"
+      weapon -> "swing {their} #{Names.item(weapon)}#{count}"
+    end
+  end
+
+  # The shield a blow landed on, named in the clause that says so.
+  defp shielded(data, %{shield: shield}) when shield != nil, do: Map.put(data, "shield", shield)
+  defp shielded(data, _you), do: data
 
   defp foe_data(foe, swings),
     do: %{
@@ -379,11 +393,17 @@ defmodule MiniLineage.Game.Narrative do
   defp every([_, _]), do: "both times"
   defp every(_swings), do: "every time"
 
+  # Every skill and item a line names is named as everywhere else, through `Names`.
   defp fill(kind, data),
     do:
       Format.fill_template(
         Narratives.log(kind),
-        Map.merge(%{"overkill" => "", "overheal" => ""}, data)
+        %{"overkill" => "", "overheal" => ""}
+        |> Map.merge(data)
+        |> Map.replace_lazy("skill", &Names.skill/1)
+        |> Map.replace_lazy("potion", &Names.item/1)
+        |> Map.replace_lazy("weapon", &Names.item/1)
+        |> Map.replace_lazy("shield", &Names.item/1)
       )
 
   # A hit is written at what it was worth, and a mend too, with what went past the last HP or past
@@ -444,23 +464,23 @@ defmodule MiniLineage.Game.Narrative do
   defp tag(:foe, :misses), do: :foe_misses
   defp tag(:foe, :swings), do: :foe_swings
 
-  defp outcomes(swings), do: swings |> Enum.map(&outcome/1) |> join_and()
+  defp outcomes(swings, you), do: swings |> Enum.map(&outcome(&1, you)) |> join_and()
 
-  defp outcome({:blow, amount, false, over}), do: fill(:swing_hit, hit(amount, over))
-  defp outcome({:blow, amount, true, over}), do: fill(:swing_critical, hit(amount, over))
-  defp outcome(:miss), do: fill(:swing_miss, %{})
-  defp outcome(:foe_miss), do: fill(:swing_miss, %{})
+  defp outcome({:blow, amount, false, over}, _you), do: fill(:swing_hit, hit(amount, over))
+  defp outcome({:blow, amount, true, over}, _you), do: fill(:swing_critical, hit(amount, over))
+  defp outcome(:miss, _you), do: fill(:swing_miss, %{})
+  defp outcome(:foe_miss, _you), do: fill(:swing_miss, %{})
 
-  defp outcome({:foe_blow, amount, _, :perfect, over}),
-    do: fill(:foe_swing_perfect, hit(amount, over))
+  defp outcome({:foe_blow, amount, _, :perfect, over}, you),
+    do: fill(:foe_swing_perfect, shielded(hit(amount, over), you))
 
-  defp outcome({:foe_blow, amount, _, :caught, over}),
-    do: fill(:foe_swing_caught, hit(amount, over))
+  defp outcome({:foe_blow, amount, _, :caught, over}, you),
+    do: fill(:foe_swing_caught, shielded(hit(amount, over), you))
 
-  defp outcome({:foe_blow, amount, true, nil, over}),
+  defp outcome({:foe_blow, amount, true, nil, over}, _you),
     do: fill(:foe_swing_critical, hit(amount, over))
 
-  defp outcome({:foe_blow, amount, false, nil, over}),
+  defp outcome({:foe_blow, amount, false, nil, over}, _you),
     do: fill(:foe_swing_hit, hit(amount, over))
 
   defp join_and([only]), do: only

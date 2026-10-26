@@ -299,15 +299,15 @@ defmodule MiniLineageWeb.GearPageTest do
     assert %{equipped: true} = carried(session, "Squire's Dagger")
     assert %{equipped: false} = carried(session, "Squire's Sword")
     assert has_element?(view, "#sidebar #equipped-weapons", "Squire's Dagger")
-    assert has_element?(view, "#flash", "your Power Strike skill needs a sword")
+    assert has_element?(view, "#flash", "your 💥 Power Strike skill needs a sword")
 
     act.("unequip:#{dagger.id}")
     assert %{equipped: false} = carried(session, "Squire's Dagger")
-    assert has_element?(view, "#flash", "You unequip the Squire's Dagger")
+    assert has_element?(view, "#flash", "You unequip the 🔪 Squire's Dagger")
 
     act.("destroy:#{dagger.id}")
     refute carried(session, "Squire's Dagger")
-    assert has_element?(view, "#flash", "destroy the Squire's Dagger")
+    assert has_element?(view, "#flash", "destroy the 🔪 Squire's Dagger")
   end
 
   test "the inventory closes onto the page it was opened from, and onto the town after a reload" do

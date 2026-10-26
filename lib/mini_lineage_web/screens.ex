@@ -10,7 +10,18 @@ defmodule MiniLineageWeb.Screens do
 
   import MiniLineageWeb.Controls
 
-  alias MiniLineage.Game.{Constants, Format, Hunt, Math, Narrative, Narratives, Player, Rules}
+  alias MiniLineage.Game.{
+    Constants,
+    Format,
+    Hunt,
+    Math,
+    Names,
+    Narrative,
+    Narratives,
+    Player,
+    Rules
+  }
+
   alias MiniLineageWeb.Paths
   alias MiniLineageWeb.Screens.Halls
 
@@ -304,7 +315,6 @@ defmodule MiniLineageWeb.Screens do
   end
 
   # Every heal's emoji and its Mend orders', one mark for mending since no set learns two heals.
-  @mend "💚"
 
   # Rules §20 and §26: the player's orders, settings rather than places, so none is a dropdown: while
   # it carries a potion the share of HP it drinks below, once it knows a heal when it mends before the
@@ -317,8 +327,8 @@ defmodule MiniLineageWeb.Screens do
       ) ++
         if(assigns.view.heals?,
           do: [
-            {"pull", "#{@mend} Mend before pull", :heal_pull_at, Player.heal_shares()},
-            {"fight", "#{@mend} Mend in a fight", :heal_fight_at, Player.heal_shares()}
+            {"pull", "#{Names.mend()} Mend before pull", :heal_pull_at, Player.heal_shares()},
+            {"fight", "#{Names.mend()} Mend in a fight", :heal_fight_at, Player.heal_shares()}
           ],
           else: []
         )
@@ -361,7 +371,7 @@ defmodule MiniLineageWeb.Screens do
             phx-click="order"
             phx-value-order={"use:#{name in @view.unused}:#{name}"}
           >
-            {skill_icon(name)} <span class="skill">{name}</span>
+            <.skill name={name} />
           </.switch>
         </div>
       </div>
@@ -479,7 +489,7 @@ defmodule MiniLineageWeb.Screens do
       <tbody>
         <tr :for={item <- @sellable} id={"sell-#{item.id}"}>
           <td class="name">
-            {item_label(item)} <span class="delimiter">&bull;</span>
+            <.item item={item} /> <span class="delimiter">&bull;</span>
             <span class="muted">{item.about}</span>
           </td>
           <td class="adena">🪙 {Format.number(item.buyback)}</td>
@@ -534,7 +544,7 @@ defmodule MiniLineageWeb.Screens do
         </tr>
         <tr :for={item <- shelf.items} id={"stock-#{slug(item.name)}"}>
           <td class="name">
-            {item_label(item)} <span class="delimiter">&bull;</span>
+            <.item item={item} /> <span class="delimiter">&bull;</span>
             <span class="muted">{item.about}</span>
           </td>
           <td class="adena">🪙 {Format.number(item.price)}</td>
@@ -612,7 +622,7 @@ defmodule MiniLineageWeb.Screens do
           {if lesson.status == :ready, do: [], else: [class: "locked"]}
         >
           <td class="name">
-            {skill_icon(lesson.skill)} {lesson.skill} {lesson.level}
+            <.skill name={lesson.skill} level={lesson.level} />
             <%= if Rules.weapon_skill?(lesson.skill) do %>
               <span class="delimiter">&bull;</span>
               <span class="muted">Needs {Narrative.weapon_for(lesson.skill)}</span>
@@ -637,7 +647,7 @@ defmodule MiniLineageWeb.Screens do
           @ready,
           &%{
             value: "#{&1.skill}|#{&1.level}",
-            label: "#{skill_icon(&1.skill)} #{&1.skill} #{&1.level}",
+            label: "#{Names.skill_emoji(&1.skill)} #{&1.skill} #{&1.level}",
             group: &1.group
           }
         )
@@ -720,7 +730,7 @@ defmodule MiniLineageWeb.Screens do
           {if item.equipped, do: [class: "owned"], else: []}
         >
           <td class="name">
-            {item_label(item)} <span class="delimiter">&bull;</span>
+            <.item item={item} /> <span class="delimiter">&bull;</span>
             <span class="muted">{item.about}</span>
           </td>
           <td>{item.slot |> Atom.to_string() |> String.capitalize()}</td>
@@ -970,7 +980,7 @@ defmodule MiniLineageWeb.Screens do
       ]}
     >
       <p phx-no-format>
-        {skill_icon(name)} <span class="skill">{name} {level}</span> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level, @view.path)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)} equipped.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
+        <.skill name={name} level={level} /> <span class="delimiter">&bull;</span> <.skill_effect skill={Rules.skill(name, level, @view.path)} stats={@view.stats} /><%= if !Rules.skill_weapon?(name, @view.stats.weapon) do %> Needs {Narrative.weapon_for(name)} equipped.<% end %><%= if name in @view.unused do %> Left unused, by your orders.<% end %>
       </p>
     </div>
     """
@@ -998,38 +1008,6 @@ defmodule MiniLineageWeb.Screens do
       ~H|<span class="timer" data-timer="long" data-remaining-ms={@ms} data-timer-key={@key}>{Format.remaining(
   @ms
 )}</span>|
-
-  # One each within a set, since a set learns two of a kind (the Orc Fighter, two physical skills);
-  # a set's one heal wears the Mend orders' mark.
-  @skill_icons %{
-    "Power Strike" => "💥",
-    "Power Shot" => "🏹",
-    "Mortal Blow" => "🎯",
-    "Iron Punch" => "👊",
-    "Wind Strike" => "🌪️",
-    "Ice Bolt" => "❄️",
-    "Vampiric Touch" => "🦇",
-    "Chill Flame" => "🔥",
-    "Drain Health" => "🩸",
-    "Life Drain" => "🖤",
-    "Self Heal" => @mend,
-    "Heal" => @mend,
-    "Elemental Heal" => @mend,
-    "Curse: Poison" => "☠️",
-    "Wind Shackle" => "⛓️",
-    "Soul Cry" => "📢",
-    "Armor Mastery" => "🪖",
-    "Robe Mastery" => "👘",
-    "Weapon Mastery" => "🤺",
-    "Anti Magic" => "🧿"
-  }
-
-  @doc "A skill's own emoji, or for one that raises an aura that aura's, as Buffs shows it."
-  def skill_icon(name) do
-    if Rules.skill(name).kind in [:aura, :rest],
-      do: Constants.skill_aura(name).emoji,
-      else: Map.fetch!(@skill_icons, name)
-  end
 
   attr :skill, :map, required: true
   attr :stats, :map, required: true

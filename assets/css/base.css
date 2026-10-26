@@ -162,6 +162,12 @@ p {
     color: var(--gold);
 }
 
+/* What it wears, wields or drinks, quieter than the sentence around it: an item's name is not the
+   news, the figure beside it is. */
+.item {
+    color: var(--text-secondary);
+}
+
 /* What gives it back. */
 .regen,
 .buff {
@@ -190,7 +196,7 @@ p {
 
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does.
  * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
-:is(p, li) :is(.hp, .attack, .magic, .debuff, .deaths, .crit, .adena, .level, .skill, .regen, .buff,
+:is(p, li) :is(.hp, .attack, .magic, .debuff, .deaths, .crit, .adena, .level, .skill, .item, .regen, .buff,
     .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura, .timer) {
     font-weight: var(--weight-value);
 }

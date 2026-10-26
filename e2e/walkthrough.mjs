@@ -929,7 +929,7 @@ try {
     const learnedPanel = () => page.locator('#screen h2', { hasText: 'Learned Skills' }).count();
     check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it, which folds',
         await learnedPanel() === 1 && await page.locator('#learned-skills .panel-toggle').count() === 1
-        && await text('#skill-mortal-blow .skill') === 'Mortal Blow 1',
+        && await text('#skill-mortal-blow .skill') === '🎯 Mortal Blow 1',
         await text('#skill-mortal-blow'));
     check('...saying how often it lands and its reuse, worked for this character',
         /landing \d+\.\d% of the time, for \d+ MP\. Reuse \d+\.\ds\./.test(await text('#skill-mortal-blow'))
@@ -954,7 +954,7 @@ try {
     await page.click('#learn-form button');
     await page.waitForSelector('#lesson-mortal-blow-2', { state: 'detached', timeout: 5000 });
     check('...the line learned moving into the Learned Skills panel',
-        await text('#skill-mortal-blow .skill') === 'Mortal Blow 2', await text('#skill-mortal-blow'));
+        await text('#skill-mortal-blow .skill') === '🎯 Mortal Blow 2', await text('#skill-mortal-blow'));
     check('...and offering the next line by name, as the legacy shop did',
         await text('#learn-form option[value="Mortal Blow|3"]') === 'Pick 🎯 Mortal Blow 3');
     await page.selectOption('#learn-form select', 'Mortal Blow|3');
@@ -971,7 +971,7 @@ try {
     check('...and the SP counts down rather than jumping',
         await page.locator('#guild-intro[phx-hook="AnimatedValues"] [data-key="guild-sp"]').count() === 1);
     check('...moving into the Learned Skills panel and offering the next line',
-        await text('#skill-mortal-blow .skill') === 'Mortal Blow 3' &&
+        await text('#skill-mortal-blow .skill') === '🎯 Mortal Blow 3' &&
         await page.locator('#lesson-mortal-blow-4[data-status="ready"]').count() === 1 &&
         await page.locator('#lesson-mortal-blow-5').count() === 0,
         await text('#skill-mortal-blow'));

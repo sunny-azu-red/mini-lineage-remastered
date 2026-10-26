@@ -7,7 +7,7 @@ defmodule MiniLineage.Game.SkillsTest do
   use ExUnit.Case, async: true
 
   alias MiniLineage.Characters.Serde
-  alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Player, Rng, Rules}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Names, Player, Rng, Rules}
 
   @noon ~U[2026-07-01 12:00:00Z]
 
@@ -203,7 +203,7 @@ defmodule MiniLineage.Game.SkillsTest do
     assert warned.type == :danger
 
     assert warned.text =~
-             "your Mortal Blow and Power Strike skills cannot be used with a fist weapon,"
+             "your #{Names.skill("Mortal Blow")} and #{Names.skill("Power Strike")} skills cannot be used with a fist weapon,"
 
     assert {_, {:ok, %{type: :info}}} = Actions.equip(human, "d")
   end
