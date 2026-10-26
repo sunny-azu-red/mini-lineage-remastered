@@ -1011,7 +1011,7 @@ defmodule MiniLineageWeb.Screens do
     "Vampiric Touch" => "🦇",
     "Chill Flame" => "🔥",
     "Drain Health" => "🩸",
-    "Life Drain" => "👻",
+    "Life Drain" => "🖤",
     "Self Heal" => @mend,
     "Heal" => @mend,
     "Elemental Heal" => @mend,

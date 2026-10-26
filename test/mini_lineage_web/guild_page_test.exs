@@ -10,7 +10,7 @@ defmodule MiniLineageWeb.GuildPageTest do
   import MiniLineage.DataCase, only: [stored: 1]
 
   alias MiniLineage.Characters
-  alias MiniLineage.Game.Rules
+  alias MiniLineage.Game.{Constants, Rules}
   alias MiniLineageWeb.Screens
   alias MiniLineage.Game.Math
 
@@ -210,7 +210,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     refute has_element?(view, "#lessons thead[phx-hook]")
   end
 
-  test "every skill a set learns has an emoji of its own, a heal 💚 and an aura's the one Buffs shows" do
+  test "every skill a set learns has an emoji of its own, no other effect's, a heal 💚 and an aura's the one Buffs shows" do
     for set <- Rules.sets() do
       icons =
         for(%{skill: skill} <- Rules.lessons(set.name), uniq: true, do: skill)
@@ -220,6 +220,16 @@ defmodule MiniLineageWeb.GuildPageTest do
     end
 
     for {name, %{kind: :heal}} <- Rules.skills(), do: assert(Screens.skill_icon(name) == "💚")
+
+    # Nor is a skill's emoji another effect's on the same Buffs & Debuffs panel, or a lineage's.
+    taken =
+      ~w(combat resting night shadow_sense mother_tree regenerating ghost)a
+      |> Enum.map(&Constants.aura(&1).emoji)
+      |> Enum.concat(Enum.map(Constants.races(), & &1.emoji))
+
+    for name <- Map.keys(Rules.skills()),
+        Rules.skill(name).kind not in [:aura, :rest],
+        do: refute(Screens.skill_icon(name) in taken, name)
 
     assert Screens.skill_icon("Defense Aura") == "🛡️"
     assert Screens.skill_icon("Relax") == "🧘"
