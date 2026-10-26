@@ -115,5 +115,10 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
 
   Unmeasured candidates: a burn that grows with M. Atk., a Life Drain threshold between 70% and 85%, its ground's
   monsters. None of them has been tried yet.
+- **One heal a set, and every skill on a switch** (2026-10-26). The Elven Mystic learns Heal from
+  level 1 and never Self Heal: the two had cast in turn on two reuses the player could neither see
+  nor order, and dropping one moved the set by 0.1% at most and killed no run. Every heal wears
+  💚, as the Mend orders do. Every skill but a mastery takes a switch in the Battle Orders, the heal
+  and Relax included, so the player decides each one.
 - **A shield never turns a spell** (L2J, 40c2446): an item reading "Shield P. Def." should not raise
   M. Def.

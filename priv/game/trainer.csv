@@ -79,11 +79,11 @@ Human Mystic,Anti Magic,2,14,2200
 Elven Mystic,Wind Strike,1,1,0
 Elven Mystic,Wind Strike,2,7,520
 Elven Mystic,Wind Strike,3,14,2200
-Elven Mystic,Self Heal,1,1,50
+Elven Mystic,Heal,1,1,50
 Elven Mystic,Ice Bolt,1,7,520
 Elven Mystic,Ice Bolt,2,14,2200
-Elven Mystic,Heal,1,7,510
-Elven Mystic,Heal,2,14,2100
+Elven Mystic,Heal,2,7,340
+Elven Mystic,Heal,3,14,2100
 Elven Mystic,Robe Mastery,1,7,520
 Elven Mystic,Robe Mastery,2,14,1760
 Elven Mystic,Weapon Mastery,1,7,520

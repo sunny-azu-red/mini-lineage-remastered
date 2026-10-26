@@ -275,8 +275,8 @@ defmodule MiniLineage.Game.Hunt do
     end
   end
 
-  # §20: before the pull, while below the player's share of HP, the strongest heal it can pay for,
-  # waiting out the reuse, until it is not or it cannot pay for one.
+  # §20: before the pull, while below the player's share of HP, its heal, waiting out the reuse,
+  # until it is not or it cannot pay for it.
   defp mend(s, heals) do
     paid = Enum.filter(heals, &(s.mp >= &1.mp))
     heal = s.busy <= 0 && strongest(s, paid, fn _ -> true end)

@@ -504,6 +504,18 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
+    test "§20 no set learns more than one heal" do
+      for set <- Rules.sets() do
+        heals =
+          for %{skill: skill} <- Rules.lessons(set.name),
+              Rules.skill(skill).kind == :heal,
+              uniq: true,
+              do: skill
+
+        assert length(heals) <= 1, "#{set.name}: #{Enum.join(heals, ", ")}"
+      end
+    end
+
     test "§25 every line costs what Lineage II asks for the canon levels it holds, but the departures" do
       # {set, skill, level taught at} => {the top canon level taught there, SP a canon level}
       canon =

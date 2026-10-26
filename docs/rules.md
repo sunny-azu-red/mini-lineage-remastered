@@ -417,8 +417,8 @@ Every set has a first skill from its own tree and starts knowing it: a Mystic it
 Strike or the Orc's Chill Flame, because a Mystic's STR makes a poor weapon of whatever it holds,
 and a Fighter the skill of the weapon it starts with, each race's its own. The trainer (§25) teaches
 the rest before the class change, each set its own. A Mystic can learn one more at level 1 (Self
-Heal, or the Orc's Soul Cry), and a Fighter the first level of its other weapon skills, if it has
-any. Each costs MP and then rests for its reuse, but for its masteries, passives that are never
+Heal, the Elf's first level of Heal, or the Orc's Soul Cry), and a Fighter the first level of its
+other weapon skills, if it has any. No set learns more than one heal. Each costs MP and then rests for its reuse, but for its masteries, passives that are never
 cast and add to a stat for as long as they are known: Armor Mastery for a Fighter, Robe Mastery for
 a Mystic, and Weapon Mastery and Anti Magic for both, each learned or not as the player sees fit.
 
@@ -429,7 +429,7 @@ a Mystic, and Weapon Mastery and Anti Magic for both, each learned or not as the
 | Dark Fighter | Mortal Blow | | Attack Aura, Drain Health, Armor Mastery, Weapon Mastery, Anti Magic |
 | Orc Fighter | Iron Punch | Power Strike | Relax, Armor Mastery, Weapon Mastery, Anti Magic |
 | Human Mystic | Wind Strike | Self Heal | Ice Bolt, Robe Mastery, Weapon Mastery, Anti Magic |
-| Elven Mystic | Wind Strike | Self Heal | Ice Bolt, Heal, Robe Mastery, Weapon Mastery, Anti Magic |
+| Elven Mystic | Wind Strike | Heal | Ice Bolt, Robe Mastery, Weapon Mastery, Anti Magic |
 | Dark Mystic | Wind Strike | Self Heal | Vampiric Touch, Curse: Poison, Shield, Wind Shackle, Robe Mastery, Weapon Mastery, Anti Magic |
 | Orc Mystic | Chill Flame | Soul Cry | Life Drain, Soul Shield, Robe Mastery, Weapon Mastery, Anti Magic |
 
@@ -448,7 +448,7 @@ Each at level 1 (§25 has the later levels):
 | Drain Health | drain | 22 | 13 | 15,000 | 3,000 |
 | Life Drain | drain | 15 | 27 | 6,000 | 4,000 |
 | Self Heal | heal | 42 | 9 | 10,000 | 5,000 |
-| Heal | heal | 67 | 14 | 10,000 | 5,000 |
+| Heal | heal | 49 | 10 | 10,000 | 5,000 |
 | Elemental Heal | heal | 80 | 45 | 10,000 | 5,000 |
 | Defense Aura | aura | | 5 | 6,000 | 4,000 |
 | Attack Aura | aura | | 7 | 6,000 | 4,000 |
@@ -569,8 +569,8 @@ this far (a monster's spells as far as §19 gives):
   2. the strongest spell (magic, drain or burn), but a burn not on a monster still burning, and a
      drain that returns at least half of what it deals (Life Drain) only below 85% of its HP, as
      the heal it mostly is;
-  3. below the share of its HP its orders give, the strongest heal, so a heal fills the time its
-     spells rest and never stops it attacking;
+  3. below the share of its HP its orders give, its heal, so a heal fills the time its spells rest
+     and never stops it attacking;
   4. while the monster has more than half its HP, a poison it does not carry, then a shackle.
 
   A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
@@ -586,8 +586,8 @@ this far (a monster's spells as far as §19 gives):
 - **It ends** when either reaches 0 HP. After 1,000 rounds the monster wanders off and pays nothing.
 - **Before the pull**, the character first raises every aura it knows that is not up and that it
   can pay for, each cast to its end, so no round of the fight goes on one. Then, since it rests
-  nothing on the ground (§11), it heals while its HP is below the share its orders give: the strongest heal it can pay for, never past the most,
-  waiting out the reuse and cast, until it is not or it cannot pay for one. A heal cast before the
+  nothing on the ground (§11), it heals while its HP is below the share its orders give, never past
+  the most, waiting out the reuse and cast, until it is not or it cannot pay for its heal. A heal cast before the
   pull is still resting when the fight begins. It does not heal once the monster is down, so MP is
   never spent on a walk back to rest.
 - **Orders** are the player's, for a character that knows a heal: the share of HP to heal below
@@ -887,11 +887,11 @@ its race's Mystic pays.
 | Elven Mystic | Wind Strike | 1 | 1 | 0 |
 | Elven Mystic | Wind Strike | 2 | 7 | 520 |
 | Elven Mystic | Wind Strike | 3 | 14 | 2,200 |
-| Elven Mystic | Self Heal | 1 | 1 | 50 |
+| Elven Mystic | Heal | 1 | 1 | 50 |
 | Elven Mystic | Ice Bolt | 1 | 7 | 520 |
 | Elven Mystic | Ice Bolt | 2 | 14 | 2,200 |
-| Elven Mystic | Heal | 1 | 7 | 510 |
-| Elven Mystic | Heal | 2 | 14 | 2,100 |
+| Elven Mystic | Heal | 2 | 7 | 340 |
+| Elven Mystic | Heal | 3 | 14 | 2,100 |
 | Elven Mystic | Robe Mastery | 1 | 7 | 520 |
 | Elven Mystic | Robe Mastery | 2 | 14 | 1,760 |
 | Elven Mystic | Weapon Mastery | 1 | 7 | 520 |
@@ -958,8 +958,9 @@ Each skill's power and MP at each level (a burn's power is per second):
 | Life Drain 1 | 15 | 27 |
 | Life Drain 2 | 21 | 40 |
 | Self Heal 1 | 42 | 9 |
-| Heal 1 | 67 | 14 |
-| Heal 2 | 107 | 22 |
+| Heal 1 | 49 | 10 |
+| Heal 2 | 67 | 14 |
+| Heal 3 | 107 | 22 |
 | Elemental Heal 1 | 80 | 45 |
 | Defense Aura 1 | | 5 |
 | Attack Aura 1 | | 7 |

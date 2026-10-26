@@ -7,7 +7,8 @@ worked out by hand, and holds only for the rules it was measured against.
 **Measured** at rules §22's private rates (EXP and SP ×5, Adena ×20, from `.env.test`), on rules
 §1 to §26 as they now stand: the fight of §20 on a line between the two,
 spells that take effect as their cast ends, casts and reuses that keep what is left of the round
-they end in, the battle orders, and the first skills (a Fighter's weapon
+they end in, the battle orders (every skill but a mastery on a switch, and one heal a set, the
+Elven Mystic's Heal from level 1), and the first skills (a Fighter's weapon
 skills from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the
 Orc), Life Drain cast as
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
@@ -77,7 +78,7 @@ have a weapon skill for more than one path.
 | Orc Fighter, fists | 5 (13) | 18,930 | 7,770 | 17 | 260 of 385 | 13,900 |
 | Orc Fighter, sword | 5 (13) | 18,990 | 7,770 | 17 | 260 of 385 | 13,900 |
 | Human Mystic | 6 (12) | 12,940 | 5,250 | 16 | 190 of 347 | 19,600 |
-| Elven Mystic | 7 (14) | 15,720 | 5,340 | 17 | 253 of 414 | 17,200 |
+| Elven Mystic | 6 (14) | 15,550 | 5,340 | 16 | 251 of 414 | 17,400 |
 | Dark Mystic | 9 (14) | 15,500 | 5,250 | 16 | 245 of 395 | 17,400 |
 | Orc Mystic | 7 (13) | 13,370 | 4,600 | 16 | 205 of 385 | 19,500 |
 
@@ -94,13 +95,13 @@ that level and buying a line taught there, shown as average / worst:
 | Orc Fighter, fists | | L5: 18 / 42 | L10: 52 / 88 | L15: 61 / 105 |
 | Orc Fighter, sword | 6 / 6 | L5: 20 / 46 | L10: 53 / 90 | L15: 61 / 106 |
 | Human Mystic | 5 / 5 | L7: 29 / 54 | L14: 24 / 65 | |
-| Elven Mystic | 5 / 5 | L7: 37 / 66 | L14: 52 / 117 | |
+| Elven Mystic | 5 / 5 | L7: 33 / 63 | L14: 50 / 117 | |
 | Dark Mystic | 5 / 5 | L7: 34 / 63 | L14: 49 / 113 | |
 | Orc Mystic | 5 / 5 | L7: 33 / 59 | L14: 30 / 77 | |
 
 - **Every set starts knowing its first skill,** a Fighter the one its starting weapon uses, and a
   Mystic, a Human Fighter with a dagger or a bow and an Orc Fighter with a sword find something at
-  the trainer at level 1, bought after 5 or 6 hunts: Self Heal or Soul Cry, Mortal Blow or Power
+  the trainer at level 1, bought after 5 or 6 hunts: Self Heal, the Elf's Heal or Soul Cry, Mortal Blow or Power
   Shot, Power Strike. Moving a Fighter's first skill from 5 to 1 changed no set by more than
   1.4%; a Mystic made to buy its first spell instead died at levels 1 to 3 in nine runs of ten.
 - **No tier is empty, and every set can afford its whole list.** Each tier's first line can be bought
@@ -176,8 +177,8 @@ The level each of a path's weapons is first held at, then the level and hunt the
 | Orc Fighter | Power Strike | sword 2h | Short Sword 4.5 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.7** (17–18) | 279 | 226k |
 | Human Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.1 | | Relic **16.0** (16–17) | 200 | 331k |
 | Human Mystic | | staff 2h | Horn 4.4 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.9** (16–18) | 220 | 306k |
-| Elven Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–16) | 226 | 352k |
-| Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.6 | Journeyman's **16.4** (16–17) | 250 | 331k |
+| Elven Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–16) | 225 | 357k |
+| Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.6 | Journeyman's **16.4** (16–17) | 250 | 334k |
 | Dark Mystic | | staff 1h | Horn 4.7 | Scholar's Tome 10.2 | | Relic **15.9** (15–16) | 216 | 337k |
 | Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.2** (16–17) | 241 | 315k |
 | Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 209 | 332k |
@@ -399,6 +400,11 @@ and reuses keeping what is left of a round:
   healing in the fight lost 13, and healing below 30% came too late to save more. So the fight's heal
   order starts at never, and the Elven Fighter, whose Elemental Heal no longer fires mid-fight,
   survives a quarter of its runs.
+- **One heal a set.** The Elven Mystic once knew Self Heal and Heal, each on a reuse of its own,
+  so it cast one while the other rested. Learning Heal from level 1 instead, and never Self Heal,
+  moved its road to 20 by 0.1% at most in every setting, and no deaths. Topping up from 30% to 70%
+  before a pull takes it 14.3 seconds rather than 9.3, a few times a ladder, so the second heal
+  was clutter that cost nothing to lose.
 - **The Skeleton Longbowman**, an aggressive archer at level 19 on the Orc Village's ground, shoots a
   melee character for the 460 it must run, and kills the Orc Fighter with fists twice as often.
 - **Measured and dropped:** a heal before the spells in the fight, alone or taking turns, which

@@ -129,7 +129,7 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   | Dark Fighter | the dagger who strikes harder | Mortal Blow, Attack Aura, Drain Health |
   | Orc Fighter | fists and sword, and the one Fighter that rests faster | Iron Punch, Power Strike, Relax |
   | Human Mystic | wind and ice | Wind Strike, Self Heal, Ice Bolt |
-  | Elven Mystic | the healer | Wind Strike, Self Heal, Ice Bolt, Heal |
+  | Elven Mystic | the healer | Wind Strike, Heal, Ice Bolt |
   | Dark Mystic | drains and curses | Wind Strike, Self Heal, Vampiric Touch, Curse: Poison, Shield, Wind Shackle |
   | Orc Mystic | burns, drains and spirit | Chill Flame, Soul Cry, Life Drain, Soul Shield |
 
@@ -145,12 +145,18 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   skill for nothing and any other for 50 SP (60 for the Orc), and the rest of that tier at 5. A Mystic starts
   knowing its first spell, as in Lineage II, and could not do without it: made to buy it at level 1
   for 50 SP, nine Mystic runs in ten died at levels 1 to 3 before they could.
-- **A Mystic's second skill at level 1 costs 50 SP** (Self Heal, or the Orc's Soul Cry), where
-  Lineage II gave it free.
+- **A Mystic's second skill at level 1 costs 50 SP** (Self Heal, the Elf's Heal, or the Orc's Soul
+  Cry), where Lineage II gave Self Heal free.
+- **No set learns two heals, and the Elven Mystic's is Heal from level 1.** Lineage II taught every
+  Mystic Self Heal at 1 and Heal (1011) at 7, and the Elves kept both: each rested on a reuse of
+  its own, so one was cast while the other rested, a second clock the player could neither see nor
+  order. Here the Elf learns Heal's level 1 at level 1 (power 49, 10 MP, taken whole), then levels
+  2 and 3 at 7 for the 340 SP they cost, and never Self Heal. The Human and Dark Mystics keep Self
+  Heal, and Heal is the Elves' alone.
 - **A skill grows in steps, not nine levels:** the canon levels taught at one character level are
   one line, at the top level's power and MP, so no two lines of one skill open at the same level and
-  Power Strike has 4 lines where Lineage II sold 9 one at a time. Only a Fighter's weapon skills keep
-  their first level apart, at level 1.
+  Power Strike has 4 lines where Lineage II sold 9 one at a time. Only a Fighter's weapon skills and
+  the Elven Mystic's Heal keep their first level apart, at level 1.
 - **Three masteries a path before the class change, and every Mystic's armour one is Robe
   Mastery.** A Fighter learns Armor Mastery (142) and Weapon Mastery (141) as Lineage II teaches
   them, and a Mystic Weapon Mastery (249, the Orc Mystic's 250) and Anti Magic (146): one name for
@@ -169,8 +175,8 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   fight too, where Lineage II's held 20: a fight here lasts seconds, so 20 minutes was every fight
   of a sitting on one cast.
 - **The character chooses its own skills in a fight** (rules §20): its toggle, its strongest spell,
-  then while its spells rest its strongest heal below the player's share of HP, or a curse on a
-  monster above half its HP, and before the pull its auras, then its heals up to that share. A Mystic
+  then while its spells rest its heal below the player's share of HP, or a curse on a monster
+  above half its HP, and before the pull its auras, then its heal up to that share. A Mystic
   lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
   player gives orders, and may leave any skill but a mastery unused. Life Drain, which returns 80% of
   what it deals, is cast only below 85% of HP, as the heal it mostly is: cast whenever ready, its

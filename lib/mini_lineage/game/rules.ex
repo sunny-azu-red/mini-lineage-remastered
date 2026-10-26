@@ -375,7 +375,7 @@ defmodule MiniLineage.Game.Rules do
     },
     "Life Drain" => %{kind: :drain, power: 15, mp: 27, reuse: 6_000, cast: 4_000, absorb: 0.8},
     "Self Heal" => %{kind: :heal, power: 42, mp: 9, reuse: 10_000, cast: 5_000},
-    "Heal" => %{kind: :heal, power: 67, mp: 14, reuse: 10_000, cast: 5_000},
+    "Heal" => %{kind: :heal, power: 49, mp: 10, reuse: 10_000, cast: 5_000},
     "Elemental Heal" => %{kind: :heal, power: 80, mp: 45, reuse: 10_000, cast: 5_000},
     "Defense Aura" => %{
       kind: :aura,
@@ -464,7 +464,7 @@ defmodule MiniLineage.Game.Rules do
     "Drain Health" => [{22, 13}],
     "Life Drain" => [{15, 27}, {21, 40}],
     "Self Heal" => [{42, 9}],
-    "Heal" => [{67, 14}, {107, 22}],
+    "Heal" => [{49, 10}, {67, 14}, {107, 22}],
     "Elemental Heal" => [{80, 45}],
     "Defense Aura" => [{0, 5}],
     "Attack Aura" => [{0, 7}],

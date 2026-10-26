@@ -259,7 +259,7 @@ defmodule MiniLineage.Game.NarrativeTest do
           ground,
           log,
           @weapon,
-          {[{:aura, "Defense Aura"}, {:heal, "Heal", 70, 0}, {:heal, "Self Heal", 45, 0}], 60}
+          {[{:aura, "Defense Aura"}, {:heal, "Heal", 70, 0}, {:heal, "Heal", 45, 0}], 60}
         )
         |> Enum.flat_map(&[&1.standing, &1.line])
         |> Enum.map(&Narrative.alert/1)

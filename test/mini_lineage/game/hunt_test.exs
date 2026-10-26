@@ -327,15 +327,14 @@ defmodule MiniLineage.Game.HuntTest do
              ) == []
     end
 
-    # Heals alone, reversed so the lesser comes first and only strength picks the other.
+    # Its heal alone, the one a set learns (rules §19).
     defp heals(player),
-      do: player |> Player.known_skills() |> Enum.filter(&(&1.kind == :heal)) |> Enum.reverse()
+      do: player |> Player.known_skills() |> Enum.filter(&(&1.kind == :heal))
 
-    test "in the fight, the strongest heal it can pay for, a lesser one when that costs too much" do
+    test "in the fight, its heal when it can pay for it, and none when it cannot" do
       Rng.put_source(fn -> 0.0 end)
       elf = trained(2, :mystic, 7)
-      [self_heal, heal] = heals(elf)
-      assert heal.power > self_heal.power and heal.mp > self_heal.mp
+      [heal] = heals(elf)
       stats = Player.stats(elf)
 
       rested =
@@ -344,9 +343,7 @@ defmodule MiniLineage.Game.HuntTest do
       assert [{_, {:heal, "Heal", _, _}} | _] = events(rested, :heal)
 
       short = fight_only(%{elf | health: 10, mp: heal.mp - 1})
-
-      assert [{_, {:heal, "Self Heal", _, _}} | _] =
-               events(Hunt.fight(stats, short, heals(elf), dummy("Young Keltir")), :heal)
+      assert [] = events(Hunt.fight(stats, short, heals(elf), dummy("Young Keltir")), :heal)
     end
 
     test "an aura is raised before the pull, its cast waited out, and not at all while it is up" do
@@ -698,7 +695,7 @@ defmodule MiniLineage.Game.HuntTest do
     test "until it cannot pay for another" do
       Rng.put_source(fn -> 0.0 end)
       elf = trained(2, :mystic, 7)
-      [_self_heal, heal] = heals(elf)
+      [heal] = heals(elf)
 
       result =
         Hunt.fight(
@@ -716,8 +713,8 @@ defmodule MiniLineage.Game.HuntTest do
       Rng.put_source(fn -> 0.0 end)
       elf = trained(2, :mystic, 7)
       stats = Player.stats(elf)
-      # Heal alone, to half before the pull, and in the fight below eight tenths.
-      heal = Enum.filter(heals(elf), &(&1.name == "Heal"))
+      # To half before the pull, and in the fight below eight tenths.
+      heal = heals(elf)
       bars = %{elf | health: 1, heal_fight_at: 80}
 
       pulled = Hunt.fight(stats, bars, heal, dummy("Young Keltir"))

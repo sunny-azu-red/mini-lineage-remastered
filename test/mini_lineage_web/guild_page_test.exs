@@ -210,9 +210,16 @@ defmodule MiniLineageWeb.GuildPageTest do
     refute has_element?(view, "#lessons thead[phx-hook]")
   end
 
-  test "every skill has an emoji of its own, an aura's the one Buffs shows" do
-    icons = Enum.map(Map.keys(Rules.skills()), &Screens.skill_icon/1)
-    assert Enum.uniq(icons) == icons
+  test "every skill a set learns has an emoji of its own, a heal 💚 and an aura's the one Buffs shows" do
+    for set <- Rules.sets() do
+      icons =
+        for(%{skill: skill} <- Rules.lessons(set.name), uniq: true, do: skill)
+        |> Enum.map(&Screens.skill_icon/1)
+
+      assert Enum.uniq(icons) == icons, set.name
+    end
+
+    for {name, %{kind: :heal}} <- Rules.skills(), do: assert(Screens.skill_icon(name) == "💚")
 
     assert Screens.skill_icon("Defense Aura") == "🛡️"
     assert Screens.skill_icon("Relax") == "🧘"

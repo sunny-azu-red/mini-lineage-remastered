@@ -303,6 +303,9 @@ defmodule MiniLineageWeb.Screens do
     """
   end
 
+  # Every heal's emoji and its Mend orders', one mark for mending since no set learns two heals.
+  @mend "💚"
+
   # Rules §20 and §26: the player's orders, settings rather than places, so none is a dropdown: while
   # it carries a potion the share of HP it drinks below, once it knows a heal when it mends before the
   # pull and in the fight (held, not hidden, while its heal is left unused), and which skills it uses.
@@ -314,8 +317,8 @@ defmodule MiniLineageWeb.Screens do
       ) ++
         if(assigns.view.heals?,
           do: [
-            {"pull", "💚 Mend before pull", :heal_pull_at, Player.heal_shares()},
-            {"fight", "💚 Mend in a fight", :heal_fight_at, Player.heal_shares()}
+            {"pull", "#{@mend} Mend before pull", :heal_pull_at, Player.heal_shares()},
+            {"fight", "#{@mend} Mend in a fight", :heal_fight_at, Player.heal_shares()}
           ],
           else: []
         )
@@ -996,7 +999,8 @@ defmodule MiniLineageWeb.Screens do
   @ms
 )}</span>|
 
-  # One each, since a set learns two of a kind (the Orc Fighter, two physical skills).
+  # One each within a set, since a set learns two of a kind (the Orc Fighter, two physical skills);
+  # a set's one heal wears the Mend orders' mark.
   @skill_icons %{
     "Power Strike" => "💥",
     "Power Shot" => "🏹",
@@ -1008,9 +1012,9 @@ defmodule MiniLineageWeb.Screens do
     "Chill Flame" => "🔥",
     "Drain Health" => "🩸",
     "Life Drain" => "👻",
-    "Self Heal" => "💚",
-    "Heal" => "💖",
-    "Elemental Heal" => "💧",
+    "Self Heal" => @mend,
+    "Heal" => @mend,
+    "Elemental Heal" => @mend,
     "Curse: Poison" => "☠️",
     "Wind Shackle" => "⛓️",
     "Soul Cry" => "📢",

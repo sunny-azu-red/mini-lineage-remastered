@@ -120,18 +120,19 @@ try {
             const heals = await page.$$eval('#skills-order .switch', els =>
                 els.map(el => el.id).filter(id => /-heal$/.test(id)));
             const mends = await page.locator('#pull-share').count() === 1;
-            check(`...and its heals on switches exactly when it has mend orders`,
-                (heals.length > 0) === mends, heals.join());
+            check(`...and one heal of its own on a switch exactly when it has mend orders`,
+                heals.length === (mends ? 1 : 0), heals.join());
             if (born.name === 'Orc Fighter') {
                 check('...Relax on a switch too', await page.locator('#use-relax').count() === 1);
             }
             if (mends) {
+                const mark = (sel) => page.$eval(sel, el => el.textContent.trim().split(' ')[0]);
+                check('...its heal wearing 💚 as its Mend orders do',
+                    await mark(`#${heals[0]}`) === '💚' && await mark('#pull-order .stat-label') === '💚',
+                    `${await mark(`#${heals[0]}`)} / ${await mark('#pull-order .stat-label')}`);
                 const label = () => page.$eval('#pull-order .stat-label', el => getComputedStyle(el).color);
                 const lit = await label();
-                for (const heal of heals) {
-                    await page.click(`#${heal}`);
-                    await page.waitForSelector(`#${heal}[aria-checked="false"]`, { timeout: 5000 });
-                }
+                await page.click(`#${heals[0]}`);
                 await page.waitForSelector('#pull-share:disabled', { timeout: 5000 });
                 check('...which switched off holds its shares where they stand, muted',
                     await page.locator('#fight-share:disabled').count() === 1
