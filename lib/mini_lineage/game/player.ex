@@ -230,14 +230,12 @@ defmodule MiniLineage.Game.Player do
         &(&1.kind == :passive or &1.name in (player.unused || []))
       )
 
-  @doc "Rules §20: the skills its orders may leave unused: all but a heal, Relax and a mastery."
+  @doc "Rules §20: the skills its orders may leave unused: every one but a mastery."
   def switchable(player),
-    do:
-      for(
-        %{kind: kind, name: name} <- known_skills(player),
-        kind not in [:heal, :rest, :passive],
-        do: name
-      )
+    do: for(%{kind: kind, name: name} <- known_skills(player), kind != :passive, do: name)
+
+  @doc "Rules §20: whether it knows a heal its orders leave in use, so its mend orders apply."
+  def heals_in_use?(player), do: Enum.any?(fighting_skills(player), &(&1.kind == :heal))
 
   @doc "Rules §23: the items a character has on, as `Rules` gives them."
   def equipped(player),
@@ -357,24 +355,19 @@ defmodule MiniLineage.Game.Player do
     [Constants.aura(:resting) | conditions] ++ regenerating ++ relaxing(player, stats)
   end
 
-  # Rules §11: Relax mends more HP for MP, while HP is short and the MP lasts.
+  # Rules §11: Relax mends more HP for MP, while HP is short, the MP lasts and its orders use it.
   defp relaxing(player, stats) do
-    case player.skills["Relax"] do
-      nil ->
-        []
+    relax = player.skills["Relax"] && Rules.skill("Relax", player.skills["Relax"])
 
-      level ->
-        relax = Rules.skill("Relax", level)
-
-        if player.health < stats.max_hp and player.mp >= relax.mp,
-          do: [
-            Map.put(Constants.skill_aura("Relax"), :rates,
-              hp_regen: relax.power,
-              mp_regen: -relax.mp
-            )
-          ],
-          else: []
-    end
+    if relax && "Relax" not in (player.unused || []) && player.health < stats.max_hp &&
+         player.mp >= relax.mp,
+       do: [
+         Map.put(Constants.skill_aura("Relax"), :rates,
+           hp_regen: relax.power,
+           mp_regen: -relax.mp
+         )
+       ],
+       else: []
   end
 
   defp combat(%{combat: until}) when is_integer(until),

@@ -42,6 +42,7 @@ defmodule MiniLineage.Game.Actions do
     whole: "You are already in full health.",
     no_share: "That is not a share you can choose.",
     no_heal: "You know no skill that mends, so there is nothing to order.",
+    heal_unused: "Your orders leave your heal unused, so there is no mend to order.",
     no_switch: "You cannot give that order for that skill.",
     fallen: "Your road has ended, and a ghost changes nothing.",
     living: "Only a run that has ended begins again."
@@ -422,6 +423,9 @@ defmodule MiniLineage.Game.Actions do
 
       not Player.heals?(player) ->
         {player, {:error, :no_heal, @errors.no_heal}}
+
+      not Player.heals_in_use?(player) ->
+        {player, {:error, :heal_unused, @errors.heal_unused}}
 
       true ->
         key = if moment == :pull, do: :heal_pull_at, else: :heal_fight_at

@@ -305,7 +305,7 @@ defmodule MiniLineageWeb.Screens do
 
   # Rules §20 and §26: the player's orders, settings rather than places, so none is a dropdown: while
   # it carries a potion the share of HP it drinks below, once it knows a heal when it mends before the
-  # pull and in the fight, and which of its skills it uses.
+  # pull and in the fight (held, not hidden, while its heal is left unused), and which skills it uses.
   defp orders(assigns) do
     shares =
       if(Enum.any?(assigns.view.items, & &1.potion?),
@@ -327,6 +327,7 @@ defmodule MiniLineageWeb.Screens do
             %{
               name: name,
               label: label,
+              waits: key != :potion_at and not assigns.view.heal_in_use?,
               share: Map.fetch!(assigns.view, key),
               steps: for(share <- steps, do: {share, share_text(share)})
             }
@@ -337,7 +338,13 @@ defmodule MiniLineageWeb.Screens do
     <form id="orders-form" class="orders" phx-change="order">
       <div :for={order <- @shares} id={"#{order.name}-order"} class="stat-row">
         <label for={"#{order.name}-share"} class="stat-label">{order.label}</label>
-        <.stepper id={"#{order.name}-share"} name={order.name} steps={order.steps} value={order.share}>
+        <.stepper
+          id={"#{order.name}-share"}
+          name={order.name}
+          steps={order.steps}
+          value={order.share}
+          disabled={order.waits}
+        >
           <.share_value share={order.share} />
         </.stepper>
       </div>

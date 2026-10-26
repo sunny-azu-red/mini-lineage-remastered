@@ -450,7 +450,9 @@ Each of these is here because it was got wrong once.
   its form sends `phx-change` with `_target` naming the field. A switch is a `role="switch"` button,
   the name it switches and then a small track, green when on (gold is the skill name's), whose
   `aria-checked` is its state, never a `btn`, and `PanelFocus` treats it as it does a sort: it
-  takes no first focus and gives none back to the panel's first control. A setting's success says
+  takes no first focus and gives none back to the panel's first control. A setting that cannot
+  apply yet is disabled where it stands and muted, never hidden (the Mend shares while the heal is
+  switched off). A setting's success says
   nothing: its action returns `{:ok, nil}`, for which `apply_action/3` leaves the last flash
   standing, since the control shows it and on the ground the only alert is a new level's; a
   refusal still flashes. Its value jumps rather than counts: the player moved it.

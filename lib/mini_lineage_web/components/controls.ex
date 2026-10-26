@@ -217,7 +217,7 @@ defmodule MiniLineageWeb.Controls do
   # `{value, text}` in order, the first at the empty end; the text is what a screen reader says.
   attr :steps, :list, required: true
   attr :value, :any, required: true
-  attr :rest, :global
+  attr :rest, :global, include: ~w(disabled)
   slot :inner_block, required: true
 
   def stepper(assigns) do

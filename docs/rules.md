@@ -596,9 +596,10 @@ this far (a monster's spells as far as §19 gives):
   is not, and a heal cast while the monster strikes mends less than the strikes take before it
   lands.
 - **A skill left unused:** the player may also order the character to leave any skill it knows
-  unused, but a heal, whose orders are its shares, and Relax, and to use it again. It then fights as
-  if it did not know it: a Mystic with no spell left pulls with its weapon. Every skill is used to
-  begin with.
+  unused, but a mastery, and to use it again. It then fights as if it did not know it: a Mystic
+  with no spell left pulls with its weapon, a heal left unused mends nothing and its shares wait
+  until it is used again, and Relax left unused mends nothing on the tick of rest (§11) and spends
+  no MP. Every skill is used to begin with.
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
   (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
   fifth, rounded down.

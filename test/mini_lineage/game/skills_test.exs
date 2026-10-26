@@ -7,7 +7,7 @@ defmodule MiniLineage.Game.SkillsTest do
   use ExUnit.Case, async: true
 
   alias MiniLineage.Characters.Serde
-  alias MiniLineage.Game.{Actions, Clock, Constants, Math, Player, Rng, Rules}
+  alias MiniLineage.Game.{Actions, Clock, Constants, Hunt, Math, Player, Rng, Rules}
 
   @noon ~U[2026-07-01 12:00:00Z]
 
@@ -71,23 +71,53 @@ defmodule MiniLineage.Game.SkillsTest do
     assert Player.buffs_up(hunted) == ["Defense Aura"]
   end
 
-  test "any skill it knows but a heal and Relax may be left unused, and the order is kept" do
+  test "any skill it knows but a mastery may be left unused, and the order is kept" do
     orc = character(1, :mystic, 7, %{"Soul Cry" => 1, "Life Drain" => 1})
     {orc, {:ok, _}} = Actions.use_skill(orc, "Soul Cry", false)
     {orc, {:ok, _}} = Actions.use_skill(orc, "Life Drain", false)
     assert orc.unused == ["Life Drain", "Soul Cry"]
     assert Enum.map(Player.fighting_skills(orc), & &1.name) == ["Chill Flame"]
 
-    healer = character(2, :mystic, 1, %{"Self Heal" => 1})
+    healer = character(2, :mystic, 1, %{"Self Heal" => 1, "Robe Mastery" => 1})
     resting = character(1, :fighter, 5, %{"Relax" => 1})
-    assert {_, {:error, :no_switch, _}} = Actions.use_skill(healer, "Self Heal", false)
-    assert {_, {:error, :no_switch, _}} = Actions.use_skill(resting, "Relax", false)
+    assert {_, {:ok, nil}} = Actions.use_skill(healer, "Self Heal", false)
+    assert {_, {:ok, nil}} = Actions.use_skill(resting, "Relax", false)
+    assert {_, {:error, :no_switch, _}} = Actions.use_skill(healer, "Robe Mastery", false)
     assert {_, {:error, :no_switch, _}} = Actions.use_skill(orc, "Wind Strike", false)
 
     stored = orc |> Serde.to_map() |> JSON.encode!() |> JSON.decode!()
     assert Serde.from_map(stored).unused == ["Life Drain", "Soul Cry"]
     assert Serde.from_map(Map.put(stored, "unused", ["Nonsense", 3])).unused == []
     assert Serde.from_map(Map.delete(stored, "unused")).unused == []
+  end
+
+  test "a heal left unused mends nothing before the pull, and its shares wait until it is used" do
+    healer = character(2, :mystic, 1, %{"Self Heal" => 1})
+    hurt = %{healer | health: 1}
+    {unused, {:ok, nil}} = Actions.use_skill(hurt, "Self Heal", false)
+
+    refute Player.heals_in_use?(unused)
+    assert {_, {:error, :heal_unused, _}} = Actions.heal_at(unused, :pull, 30)
+
+    foe = Hunt.foe(Rules.monster("Young Keltir"))
+    stats = Player.stats(unused)
+    pulled = Hunt.fight(stats, unused, Player.fighting_skills(unused), foe)
+    assert {[], 1} = pulled.before
+    assert {[_ | _], _} = Hunt.fight(stats, hurt, Player.fighting_skills(hurt), foe).before
+
+    {used, {:ok, nil}} = Actions.use_skill(unused, "Self Heal", true)
+    assert {_, {:ok, nil}} = Actions.heal_at(used, :pull, 30)
+  end
+
+  test "Relax left unused neither mends on the tick of rest nor spends its MP" do
+    orc = %{character(1, :fighter, 5, %{"Relax" => 1}) | health: 1}
+    assert aura?(orc, "relax")
+
+    {unused, {:ok, nil}} = Actions.use_skill(orc, "Relax", false)
+    refute aura?(unused, "relax")
+    {rested, _} = Player.regenerate(unused)
+    {relaxed, _} = Player.regenerate(orc)
+    assert rested.mp > relaxed.mp
   end
 
   test "a reset puts every order back to the ones a new character starts with" do

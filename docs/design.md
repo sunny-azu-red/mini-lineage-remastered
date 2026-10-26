@@ -53,7 +53,8 @@ was got wrong once.
   each step, and are drawn under the input, which keeps only its thumb: gold, ringed in the panel's
   ground. The fill is `--gold-dim`, the stops it reaches `--gold`: a red track outshouted
   everything near it, so only the share's figure is HP's red, and "never" is the sentence's own
-  colour. Switches take the panel's width with no label of their own, each naming its skill (a
+  colour. A share waiting on its heal, switched off below, keeps its place and its value, but its
+  label, figure, fill, reached stops and thumb all mute, and the thumb no longer moves. Switches take the panel's width with no label of their own, each naming its skill (a
   row of several such controls is an `.orders-list`, its group named only for speech), since
   beside the sliders' label column a long label left them one a line. They sit in equal columns
   (10.5em, the longest name), on the row's own ground with no border: each the skill's emoji and

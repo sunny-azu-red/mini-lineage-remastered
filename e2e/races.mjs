@@ -107,6 +107,42 @@ try {
                 JSON.stringify(shown) === JSON.stringify(attributes[born.name]),
                 `${shown} against ${attributes[born.name]}`);
 
+            // Rules §20: every skill but a mastery is on a switch, the set's heal and Relax included,
+            // and a heal switched off holds its shares where they stand, muted.
+            await page.click('#header-link');
+            await onScreen('town');
+            await page.keyboard.type('twink');
+            await page.waitForFunction(() =>
+                document.querySelector('#sidebar [data-key="level"]')?.dataset.value === '15', null, { timeout: 5000 });
+            await page.selectOption('#travel-form select', 'hunt');
+            await page.click('#travel-form button');
+            await onScreen('hunt');
+            const heals = await page.$$eval('#skills-order .switch', els =>
+                els.map(el => el.id).filter(id => /-heal$/.test(id)));
+            const mends = await page.locator('#pull-share').count() === 1;
+            check(`...and its heals on switches exactly when it has mend orders`,
+                (heals.length > 0) === mends, heals.join());
+            if (born.name === 'Orc Fighter') {
+                check('...Relax on a switch too', await page.locator('#use-relax').count() === 1);
+            }
+            if (mends) {
+                const label = () => page.$eval('#pull-order .stat-label', el => getComputedStyle(el).color);
+                const lit = await label();
+                for (const heal of heals) {
+                    await page.click(`#${heal}`);
+                    await page.waitForSelector(`#${heal}[aria-checked="false"]`, { timeout: 5000 });
+                }
+                await page.waitForSelector('#pull-share:disabled', { timeout: 5000 });
+                check('...which switched off holds its shares where they stand, muted',
+                    await page.locator('#fight-share:disabled').count() === 1
+                    && await text('#pull-share-value') === 'below 70% HP' && await label() !== lit,
+                    `${await text('#pull-share-value')} / ${await label()} against ${lit}`);
+                await page.click(`#${heals[0]}`);
+                const freed = await page.waitForSelector('#pull-share:enabled', { timeout: 5000 })
+                    .then(() => true, () => false);
+                check('...until it is switched on again', freed && await label() === lit);
+            }
+
             await context.close();
         }
     }

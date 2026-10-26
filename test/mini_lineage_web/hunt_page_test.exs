@@ -425,6 +425,24 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert text(view, "#fight-share-value") == "below 30% HP"
   end
 
+  # Rules §20: the heal is switched as any skill is, and its shares are held, not hidden, meanwhile.
+  test "a heal switched off holds its shares where they stand until it is switched on again" do
+    {_view, session, conn} = human(build_conn())
+    Characters.mutate(session, &{%{&1 | skills: Map.put(&1.skills, "Self Heal", 1)}, :ok})
+    {:ok, view, _html} = ground(conn)
+    refute has_element?(view, "#pull-share[disabled]")
+
+    view |> element("#use-self-heal") |> render_click()
+    assert %{unused: ["Self Heal"]} = stored(session)
+    assert has_element?(view, ~s(#use-self-heal[aria-checked="false"]))
+    assert has_element?(view, "#pull-share[disabled]")
+    assert has_element?(view, "#fight-share[disabled]")
+    assert text(view, "#pull-share-value") == "below 70% HP"
+
+    view |> element("#use-self-heal") |> render_click()
+    refute has_element?(view, "#pull-share[disabled]")
+  end
+
   # Rules §20: a skill the orders leave unused is muted where it is listed, and its chip switched off.
   test "a switch leaves a skill unused and uses it again, a name with a colon in it too" do
     {_view, session, conn} = human(build_conn())

@@ -42,6 +42,7 @@ defmodule MiniLineage.Game.Snapshot do
     skills: [],
     potion_at: nil,
     heals?: false,
+    heal_in_use?: false,
     heal_pull_at: nil,
     heal_fight_at: nil,
     unused: [],
@@ -115,6 +116,8 @@ defmodule MiniLineage.Game.Snapshot do
       potion_at: player.potion_at,
       # Rules §20: the orders, given only by a character that knows a heal.
       heals?: Player.heals?(player),
+      # Rules §20: its mend orders wait while the orders leave its heal unused.
+      heal_in_use?: Player.heals_in_use?(player),
       heal_pull_at: player.heal_pull_at,
       heal_fight_at: player.heal_fight_at,
       # Rules §20: the skills its orders leave unused, and those they may.
