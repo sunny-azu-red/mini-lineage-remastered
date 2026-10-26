@@ -549,11 +549,13 @@ this far (a monster's spells as far as §19 gives):
   resting 10.4 seconds after round 1 comes round again in round 8. The log tells what changes,
   a cast or a run once as it begins, so a round with nothing new in it is left out and the next
   one written says when it starts; a round with something else in it begins "as you cast" while a
-  cast goes on. A hit is written at what it was worth, as Lineage II's own messages give it, and a
-  mend too: one that fells takes only the HP left and says the rest in brackets ("20 damage (19
-  overkill)"), and one that fills mends only to full ("50 HP (19 overheal)"); a drain absorbs only
-  from what it took. The hunt takes none of the
-  world's time, where auras fade, the character rests and being in combat counts down.
+  cast goes on. The first round a spell's reuse is over but its MP cannot be paid, the log says
+  once that the character lacks the MP for it, as Lineage II says "Not enough MP.", so the blows
+  that follow have their reason. A hit is written at what it was worth, as Lineage II's own
+  messages give it, and a mend too: one that fells takes only the HP left and says the rest in
+  brackets ("20 damage (19 overkill)"), and one that fills mends only to full ("50 HP (19
+  overheal)"); a drain absorbs only from what it took. The hunt takes none of the world's time,
+  where auras fade, the character rests and being in combat counts down.
 - **The opening:** a Mystic pulls the monster from a spell's reach if it can pay for one; a Fighter,
   or a Mystic that cannot, from its weapon's, its bow's or else its blows'. An aggressive monster
   (§18) is not pulled: it notices the character from 500 and comes at it, acting first in the first

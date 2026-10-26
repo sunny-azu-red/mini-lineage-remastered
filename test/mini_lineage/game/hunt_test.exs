@@ -258,6 +258,35 @@ defmodule MiniLineage.Game.HuntTest do
       end
     end
 
+    test "a spell it cannot pay for is told once, in the first round its reuse is over" do
+      Rng.put_source(fn -> 0.0 end)
+      mystic = character(0, :mystic)
+      stats = Player.stats(mystic)
+      [wind] = Player.known_skills(mystic)
+      reuse = Hunt.reuse_ms(wind, stats)
+
+      dry = Hunt.fight(stats, %{mystic | mp: wind.mp}, [wind], dummy("Young Keltir"))
+      assert [{told, {:no_mp, "Wind Strike"}}] = events(dry, :no_mp)
+      assert Hunt.round_starts_ms(told) >= reuse
+      assert Hunt.round_starts_ms(told - 1) < reuse
+
+      plenty = Hunt.fight(stats, %{mystic | mp: 100_000}, [wind], dummy("Young Keltir"))
+      assert events(plenty, :no_mp) == []
+
+      # A physical skill is no spell: a Fighter out of MP just swings.
+      fighter = %{striker() | mp: 0}
+
+      spent =
+        Hunt.fight(
+          Player.stats(fighter),
+          fighter,
+          Player.known_skills(fighter),
+          dummy("Young Keltir")
+        )
+
+      assert events(spent, :no_mp) == []
+    end
+
     test "a spell takes its cast time, during which its caster does nothing else" do
       Rng.put_source(fn -> 0.0 end)
       {stats, bars} = target()

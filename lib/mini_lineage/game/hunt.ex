@@ -120,6 +120,8 @@ defmodule MiniLineage.Game.Hunt do
       quiet_ms: 0.0,
       toggle: nil,
       toggle_carry: 0.0,
+      # §20: whether the log has said the character lacks the MP for its spell, which it says once.
+      dry: false,
       # §20: how far apart the two stand on the fight's line, set at the pull, and how far its
       # blows reach.
       distance: 0,
@@ -361,7 +363,7 @@ defmodule MiniLineage.Game.Hunt do
         )
 
     case choice do
-      nil -> out_of_reach(s, skills, foe)
+      nil -> s |> dry(skills) |> out_of_reach(skills, foe)
       %{kind: :toggle} = toggle -> light(s, toggle)
       skill -> cast(s, skill, foe)
     end
@@ -374,6 +376,23 @@ defmodule MiniLineage.Game.Hunt do
     do: s.health * 100 >= s.stats.max_hp * @drain_below
 
   defp spent?(_s, _spell), do: false
+
+  # §20, Lineage II's "Not enough MP.": a spell it would cast now that its reuse is over, but cannot
+  # pay for, is told once, so the blows that follow have their reason. Off its reuse and unchosen
+  # means unpaid for.
+  defp dry(%{dry: true} = s, _skills), do: s
+
+  defp dry(s, skills) do
+    skills
+    |> Enum.filter(
+      &(&1.kind in @spells and not spent?(s, &1) and Map.get(s.cooldowns, &1.name, 0.0) <= 0)
+    )
+    |> Enum.max_by(& &1.power, fn -> nil end)
+    |> case do
+      nil -> s
+      spell -> note(%{s | dry: true}, {:no_mp, spell.name})
+    end
+  end
 
   defp strongest(s, skills, kind?) do
     skills

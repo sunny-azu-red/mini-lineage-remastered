@@ -56,7 +56,8 @@ defmodule MiniLineage.Game.Narratives do
     blow: ~s({them} hit for {amount}{overkill}),
     critical:
       ~s({them} land a critical hit for <span class="crit">{amount} damage</span>{overkill}),
-    miss: "{them} miss",
+    miss: "{them} swing and miss",
+    shot_miss: "{them} shoot and miss",
     skill: ~s({their} {skill} deals <span class="attack">{amount} damage</span>{overkill}),
     skill_failed: "{their} {skill} fails to land",
     cast: ~s({them} cast {skill} for <span class="magic">{amount} damage</span>{overkill}),
@@ -80,6 +81,8 @@ defmodule MiniLineage.Game.Narratives do
     draw: "{them} draw {their} bow",
     ready: "{them} close in for the next blow",
     begin: "{them} begin casting {skill}",
+    # Lineage II's "Not enough MP.", said once, in the round the spell would have been cast.
+    no_mp: "{them} lack the MP for {skill}",
     # Leads a round's line while a cast goes on, so it is never read as the monster's:
     # "as you cast, the Orc hits you for 18 damage".
     casting: "as {them} cast,",

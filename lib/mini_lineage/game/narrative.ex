@@ -202,6 +202,7 @@ defmodule MiniLineage.Game.Narrative do
 
   defp event(:readying, _foe, true), do: fill(:draw, %{})
   defp event(:readying, _foe, false), do: fill(:ready, %{})
+  defp event(:miss, _foe, true), do: fill(:shot_miss, %{})
   defp event(other, foe, _bow?), do: event(other, foe)
 
   defp event({:blow, amount, true, over}, _foe), do: fill(:critical, hit(amount, over))
@@ -218,6 +219,7 @@ defmodule MiniLineage.Game.Narrative do
   end
 
   defp event(:miss, _foe), do: fill(:miss, %{})
+  defp event({:no_mp, skill}, _foe), do: fill(:no_mp, %{"skill" => skill})
   defp event(:closing, foe), do: fill(:closing, %{"monster" => foe.name})
   defp event({:begin, skill}, _foe), do: fill(:begin, %{"skill" => skill})
 

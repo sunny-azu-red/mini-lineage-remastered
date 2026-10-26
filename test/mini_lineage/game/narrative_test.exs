@@ -210,6 +210,41 @@ defmodule MiniLineage.Game.NarrativeTest do
                {"Round 7 • 10.0s", "As you cast, the Goblin Scout hits you for 5 damage."}
     end
 
+    test "says once that the character lacks the MP for its spell, and how a lone miss was made" do
+      foe = Rules.monster("Mist Terror")
+
+      log = [
+        {4, {:no_mp, "Wind Strike"}},
+        {4, :miss},
+        {4, {:standing, 89, 51}},
+        {5, :miss},
+        {5, {:foe_blow, 22, false, nil, 0}},
+        {5, {:standing, 82, 51}}
+      ]
+
+      [_met, four, five] = read(foe, log)
+      assert four.line == "You lack the MP for Wind Strike, and you swing and miss."
+      assert five.line == "You swing and miss, and the Mist Terror hits you for 22 damage."
+
+      [_met, theirs, _five] =
+        Narrative.build_fight_log(foe, Rules.ground("elven-fortress"), log, @weapon, {[], 100})
+
+      assert Narrative.voiced(theirs.line, false) ==
+               "They lack the MP for Wind Strike, and they swing and miss."
+
+      [_met, shot, _five] =
+        Narrative.build_fight_log(
+          foe,
+          Rules.ground("elven-fortress"),
+          log,
+          %{@weapon | bow?: true},
+          {[], 100}
+        )
+
+      assert Narrative.alert(shot.line) ==
+               "You lack the MP for Wind Strike, and you shoot and miss."
+    end
+
     test "a side whose every swing missed misses so many times" do
       foe = Rules.monster("Vaiss Orc")
 
