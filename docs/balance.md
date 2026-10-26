@@ -74,7 +74,7 @@ have a weapon skill for more than one path.
 | Human Fighter, sword | 4 (12) | 18,310 | 7,940 | 17 | 232 of 347 | 14,200 |
 | Human Fighter, dagger or bow | 4 (12) | 18,360 | 7,940 | 17 | 233 of 347 | 14,200 |
 | Elven Fighter | 6 (14) | 19,360 | 7,090 | 17 | 290 of 414 | 13,600 |
-| Dark Fighter | 6 (14) | 18,120 | 6,650 | 17 | 273 of 395 | 14,700 |
+| Dark Fighter | 6 (14) | 18,120 | 6,650 | 17 | 273 of 395 | 14,800 |
 | Orc Fighter, fists | 5 (13) | 18,930 | 7,770 | 17 | 260 of 385 | 13,900 |
 | Orc Fighter, sword | 5 (13) | 18,990 | 7,770 | 17 | 260 of 385 | 13,900 |
 | Human Mystic | 6 (12) | 12,940 | 5,250 | 16 | 190 of 347 | 19,600 |
@@ -88,16 +88,16 @@ that level and buying a line taught there, shown as average / worst:
 
 | Set | Level 1 | First tier | Second | Third |
 |---|---|---|---|---|
-| Human Fighter, sword | | L5: 12 / 33 | L10: 39 / 79 | L15: 45 / 82 |
-| Human Fighter, dagger or bow | 5 / 5 | L5: 14 / 34 | L10: 40 / 79 | L15: 46 / 81 |
+| Human Fighter, sword | | L5: 12 / 33 | L10: 39 / 78 | L15: 45 / 81 |
+| Human Fighter, dagger or bow | 5 / 5 | L5: 14 / 34 | L10: 40 / 79 | L15: 46 / 82 |
 | Elven Fighter | | L5: 16 / 39 | L10: 40 / 84 | L15: 63 / 120 |
-| Dark Fighter | | L5: 13 / 34 | L10: 41 / 89 | L15: 58 / 110 |
+| Dark Fighter | | L5: 13 / 33 | L10: 41 / 89 | L15: 58 / 109 |
 | Orc Fighter, fists | | L5: 18 / 42 | L10: 52 / 88 | L15: 61 / 105 |
-| Orc Fighter, sword | 6 / 6 | L5: 20 / 46 | L10: 53 / 90 | L15: 61 / 106 |
+| Orc Fighter, sword | 6 / 6 | L5: 20 / 44 | L10: 53 / 90 | L15: 61 / 106 |
 | Human Mystic | 5 / 5 | L7: 29 / 54 | L14: 24 / 65 | |
 | Elven Mystic | 5 / 5 | L7: 33 / 63 | L14: 50 / 117 | |
-| Dark Mystic | 5 / 5 | L7: 34 / 63 | L14: 49 / 113 | |
-| Orc Mystic | 5 / 5 | L7: 33 / 59 | L14: 30 / 77 | |
+| Dark Mystic | 5 / 5 | L7: 33 / 62 | L14: 49 / 113 | |
+| Orc Mystic | 5 / 5 | L7: 33 / 58 | L14: 30 / 77 | |
 
 - **Every set starts knowing its first skill,** a Fighter the one its starting weapon uses, and a
   Mystic, a Human Fighter with a dagger or a bow and an Orc Fighter with a sword find something at
@@ -110,7 +110,7 @@ that level and buying a line taught there, shown as average / worst:
 - **The masteries are bought after the skills they fight with,** from what is left: the bench buys
   a tier's lines in the trainer's order, the masteries last (Armor or Robe Mastery, then Weapon
   Mastery, then Anti Magic), so they stretch the list rather than delay a skill. Weapon Mastery and
-  Anti Magic cost 4,600 to 7,940 SP a set, and every tier waits longer: at the last tier 24 to 63
+  Anti Magic cost 4,600 to 7,940 SP a set, and every tier waits longer: at the last tier 23 to 63
   hunts on average, where it was 27 to 49.
 - **Robe Mastery costs every Mystic the Orc Mystic's canon 520 and 1,760.** Its second line was
   6,800, so that a Mystic reached 20 with what an Elven or Dark Fighter has left; measured on this
@@ -132,7 +132,7 @@ that level and buying a line taught there, shown as average / worst:
   about 18,300 to 19,000 like every other Fighter, and its third tier waits 45 to 61 hunts rather
   than 96 or 97.
 - **From the end of the list to level 20, the trainer has nothing left to sell.** That is 115 to 180
-  hunts while SP builds up for the class change: 17,200 to 19,600 for a Mystic and 13,600 to 14,700
+  hunts while SP builds up for the class change: 17,400 to 19,600 for a Mystic and 13,600 to 14,800
   for a Fighter (11,900 to 17,700 for every set before Weapon Mastery and Anti Magic). A first tier
   of class-change skills is best priced per class against these, what a set that learned everything
   can afford on reaching 20; one that skipped a mastery has more.
@@ -144,7 +144,7 @@ Talking Island sits at the low end from level 16, because its ground tops out at
 
 | Level | 5 | 10 | 12 | 14 | 15 | 16 | 17 | 18 | 20 |
 |---|---|---|---|---|---|---|---|---|---|
-| Earned | 2k | 32–33k | 77–79k | 153–159k | 201–214k | 258–279k | 321–351k | 400–437k | 615–647k |
+| Earned | 2k | 32–33k | 77–79k | 152–159k | 201–214k | 258–280k | 321–353k | 400–438k | 616–647k |
 
 The best kit each path can buy in its village, priced in rules §24. Armour is the best chest and legs
 plus the Necklace of Wisdom, each priced as many of its slot as it stands for: 88,567 in light armour
@@ -166,22 +166,22 @@ The level each of a path's weapons is first held at, then the level and hunt the
 
 | Set | Skill | Path | 768 | 12,500 | 54,100 | Top weapon, kit | Hunt | Held at 20 |
 |---|---|---|---|---|---|---|---|---|
-| Human Fighter | Power Strike | sword 1h | Short Sword 4.3 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.5** (16–17) | 210 | 326k |
-| Human Fighter | Power Strike | sword 2h | Short Sword 4.4 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.9** (17–18) | 259 | 224k |
-| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Knife 9.4 | Dirk 14.1 | Throwing Knife **16.2** (16–17) | 206 | 336k |
+| Human Fighter | Power Strike | sword 1h | Short Sword 4.3 | Broadsword 10.0 | Gladius 14.1 | Long Sword **16.4** (16–17) | 210 | 327k |
+| Human Fighter | Power Strike | sword 2h | Short Sword 4.4 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.9** (17–18) | 260 | 222k |
+| Human Fighter | Mortal Blow | dagger | Bone Dagger 4.1 | Knife 9.3 | Dirk 14.0 | Throwing Knife **16.3** (16–17) | 206 | 337k |
 | Human Fighter | Power Shot | bow | Short Bow 4.0 | Bow 9.3 | Hunting Bow 14.1 | Forest Bow **16.3** (16–17) | 207 | 332k |
 | Elven Fighter | Power Shot | bow | Short Bow 4.2 | Bow 9.4 | Hunting Bow 14.0 | Forest Bow **16.0** (15–17) | 234 | 362k |
-| Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.2 | Knife 9.4 | Dirk 14.0 | Throwing Knife **16.0** (15–17) | 223 | 343k |
+| Dark Fighter | Mortal Blow | dagger | Bone Dagger 4.3 | Knife 9.5 | Dirk 14.0 | Throwing Knife **16.0** (15–16) | 225 | 341k |
 | Orc Fighter | Iron Punch | fists | Spiked Gloves 4.2 | Iron Gloves 9.4 | Fox Claw Gloves 14.0 | Cestus **16.1** (16–17) | 216 | 340k |
-| Orc Fighter | Power Strike | sword 1h | Short Sword 4.5 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.3** (16–17) | 222 | 329k |
-| Orc Fighter | Power Strike | sword 2h | Short Sword 4.5 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.7** (17–18) | 279 | 226k |
-| Human Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.1 | | Relic **16.0** (16–17) | 200 | 331k |
-| Human Mystic | | staff 2h | Horn 4.4 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.9** (16–18) | 220 | 306k |
+| Orc Fighter | Power Strike | sword 1h | Short Sword 4.5 | Broadsword 10.0 | Gladius 14.2 | Long Sword **16.2** (16–17) | 221 | 331k |
+| Orc Fighter | Power Strike | sword 2h | Short Sword 4.5 | Broadsword 10.0 | Brandish 14.2 | Zweihander **17.7** (17–18) | 278 | 227k |
+| Human Mystic | | staff 1h | Horn 4.3 | Scholar's Tome 10.1 | | Relic **16.1** (16–17) | 200 | 329k |
+| Human Mystic | | staff 2h | Horn 4.4 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.9** (16–18) | 220 | 304k |
 | Elven Mystic | | staff 1h | Horn 4.6 | Scholar's Tome 10.1 | | Relic **16.0** (15–16) | 225 | 357k |
 | Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.6 | Journeyman's **16.4** (16–17) | 250 | 334k |
 | Dark Mystic | | staff 1h | Horn 4.7 | Scholar's Tome 10.2 | | Relic **15.9** (15–16) | 216 | 337k |
-| Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.5 | Journeyman's **16.2** (16–17) | 241 | 315k |
-| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (15–17) | 209 | 332k |
+| Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.4 | Journeyman's **16.3** (16–17) | 240 | 315k |
+| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (16–17) | 210 | 333k |
 | Orc Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.8** (16–17) | 234 | 307k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 9 to 10, 14, and 16 to 17 for
@@ -200,7 +200,7 @@ The level each of a path's weapons is first held at, then the level and hunt the
   two-hander: the Willow Staff comes at 10.1 rather than 9.8 to 9.9, and the shield is sold back for
   half once the two-hander is bought.
 - **From level 16 to 18, the shop has nothing left but potions.** Adena keeps coming at 50,000 to
-  90,000 a level, and a player reaches 20 holding 224,000 to 362,000 (290,000 to 430,000 at canon's
+  90,000 a level, and a player reaches 20 holding 222,000 to 362,000 (290,000 to 430,000 at canon's
   prices). Gludio's D-grade gear will be
   bought with that, so price it against these figures, or give the village something to spend it on
   sooner.
@@ -456,19 +456,20 @@ The bench runs each one-handed path again with the other shield choice, on the s
 the build when it dies less than the path past the dice's noise, or is more than 2% faster without
 dying more. The lines are at the end of each setting's report (`Off-meta …`).
 
-| Off-meta build | Old rule, resting at half / 30% | Canon, resting at half / 30% | Time to 20, canon |
+| Off-meta build | Old rule, resting at half / 30% | Canon now, resting at half / 30% | Time to 20, canon now |
 |---|---|---|---|
-| Human Fighter, dagger with a shield | **flagged**: 28 to 12, 172 to 128 deaths | 28 to 24, 172 to 184 | 1.2% to 1.7% slower |
-| Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 32 to 31, 166 to 178 | 0.6% to 2.2% slower |
-| Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | 1 to 1, 77 to 83 | 0.9% to 1.9% faster |
-| Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 18 to 40, 178 to 194 | 0.5% to 0.8% faster |
-| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 0 to 11 at half) | up to 2% slower |
+| Human Fighter, dagger with a shield | **flagged**: 28 to 12, 172 to 128 deaths | 18 to 19, 177 to 186 | 1.3% to 4.9% slower |
+| Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 20 to 24, 148 to 170 | 0.4% to 2.8% slower |
+| Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | 0 to 0, 72 to 70 | 1.0% to 1.8% faster |
+| Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 14 to 35, 174 to 194 | 0.6% to 0.8% faster |
+| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 1 to 6 at half, 0 to 9 at 30%) | up to 1.5% slower, the Dark Mystic up to 1% faster |
 
 - **A dagger with a shield was the strongest build under the old rule,** a shield's block for
   nothing: it halved the dagger Fighters' deaths. With every shield costing 8 Evasion, as in Lineage
   II, a dagger does better without one, which is the meta the bench plays.
 - **A one-handed sword keeps its shield as a choice between speed and safety:** without one it is
-  up to 2% faster and dies more, the Orc Fighter twice as often resting at half. Measured with the
+  up to 2% faster, and the Orc Fighter dies more than twice as often resting at half; the Human
+  Fighter, which a shield barely keeps alive, dies about as often. Measured with the
   old catch, before arrows and criticals were caught three times as often, it was flagged for the
   Human Fighter, 2.3% to 3.3% faster and dying less.
 - **A Mystic keeps its shield:** a monster already strikes it 96% to 98% of the time, so the
