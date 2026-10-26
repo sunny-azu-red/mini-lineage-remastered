@@ -5,10 +5,10 @@ what things cost; this says when a player can afford them. Every figure here was
 worked out by hand, and holds only for the rules it was measured against.
 
 **Measured** at rules §22's private rates (EXP and SP ×5, Adena ×20, from `.env.test`), on rules
-§1 to §26 as they now stand: the fight of §20 on a line between the two,
-spells that take effect as their cast ends, casts and reuses that keep what is left of the round
-they end in, the battle orders (every skill but a mastery on a switch, and one heal a set, the
-Elven Mystic's Heal from level 1), and the first skills (a Fighter's weapon
+§1 to §26 as they now stand: the fight of §20 on a line between the two, spells that take effect
+as their cast ends and strike nothing once the monster has fallen, casts and reuses that keep what
+is left of the round they end in, the battle orders (every skill but a mastery on a switch, and one
+heal a set, the Elven Mystic's Heal from level 1), and the first skills (a Fighter's weapon
 skills from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the
 Orc), Life Drain cast as
 a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
@@ -181,8 +181,8 @@ The level each of a path's weapons is first held at, then the level and hunt the
 | Elven Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.6 | Journeyman's **16.4** (16–17) | 250 | 334k |
 | Dark Mystic | | staff 1h | Horn 4.7 | Scholar's Tome 10.2 | | Relic **15.9** (15–16) | 216 | 337k |
 | Dark Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.4 | Journeyman's **16.3** (16–17) | 240 | 315k |
-| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (16–17) | 210 | 333k |
-| Orc Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.8** (16–17) | 234 | 307k |
+| Orc Mystic | | staff 1h | Horn 4.5 | Scholar's Tome 10.1 | | Relic **16.0** (16–17) | 210 | 334k |
+| Orc Mystic | | staff 2h | Horn 4.6 | Willow Staff 10.1 | Cedar Staff 14.8 | Journeyman's **16.8** (16–17) | 234 | 306k |
 
 - **Every path reaches each weapon tier at the same levels: about 4, 9 to 10, 14, and 16 to 17 for
   the top.** At canon's prices the third tier came at 13 and the top at 15 to 16; the armour bought
@@ -230,6 +230,11 @@ Each step is compared run for run (`bench/compare.exs`).
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / 255 / 247 | 245 / 255 / 247 |
 | Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **273 / 274** | **272 / 273** |
 
+- **A spell whose cast ends on a monster already felled strikes nothing,** where it once struck the
+  body for nothing and rolled its magic critical. Only the Orc Mystic's burn fells a monster while a
+  cast is under way, so only its runs move, re-seated by that one roll: 0.3% at most, its deaths on
+  the meta paths not at all, and the spread from the fastest set to the slowest from 103.4 to 103.6
+  minutes resting to full. Every other set's reading is identical.
 - **Casts and reuses keeping what is left of a round make the Elven Mystic 11% to 16% faster, the
   Human Mystic 4% to 7%, and nothing else more than 2%.** A reuse used to wait for the round after
   it ran out, so each set's spells came round at the next whole round: Wind Strike, resting 5.2
@@ -462,7 +467,7 @@ dying more. The lines are at the end of each setting's report (`Off-meta …`).
 | Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 20 to 24, 148 to 170 | 0.4% to 2.8% slower |
 | Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | 0 to 0, 72 to 70 | 1.0% to 1.8% faster |
 | Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 14 to 35, 174 to 194 | 0.6% to 0.8% faster |
-| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 1 to 6 at half, 0 to 9 at 30%) | up to 1.5% slower, the Dark Mystic up to 1% faster |
+| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 1 to 6 at half, 0 to 9 at 30%) | up to 1.7% slower, the Dark Mystic up to 1% faster |
 
 - **A dagger with a shield was the strongest build under the old rule,** a shield's block for
   nothing: it halved the dagger Fighters' deaths. With every shield costing 8 Evasion, as in Lineage
