@@ -55,10 +55,12 @@ the scratchpad).
 ## 6. Report, then stamp
 
 Tell the user what was found and fixed and what is left for them to decide. Then, after every fix
-and as the last step, run
+and as the last step, run from the repo root
 
 ```
-python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/commit_sweep.py" --stamp
+python3 .claude/hooks/commit_sweep.py --stamp
 ```
 
-which lets a `git commit` of the change as it stands through. Any edit afterwards voids it.
+which lets a `git commit` of the change as it stands through. Any edit afterwards voids it. The
+shell has no `$CLAUDE_PROJECT_DIR` (only the hook's own run does), and the hook reads a whole
+command before any of it runs, so the stamp is a command of its own, never chained to the commit.
