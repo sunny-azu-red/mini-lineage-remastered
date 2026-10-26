@@ -1,7 +1,8 @@
 # ⚔️ Mini-Lineage Remastered
 
 A text-based RPG in the spirit of Lineage II, rebuilt in Elixir, Phoenix LiveView and OTP, with a
-dark fantasy interface that updates in real time.
+dark fantasy interface that updates in real time. Its objective is Lineage II made simple, played
+in the browser ([`docs/direction.md`](docs/direction.md#the-objective)).
 
 Today it is the base layer (who a character is and the numbers that make them) and the first hunt:
 each village's ground, its traders and guild, the inventory, death and the Halls. The game as it was

@@ -6,6 +6,15 @@ purpose is [canon/README.md](canon/README.md). When this file disagrees with the
 roadmap wins, and decisions do get reversed on purpose (classes and the inventory came back on
 2026-10-10).
 
+## The objective
+
+**Mini-Lineage is Lineage II (Interlude) made simple: a text-based RPG played in the browser.** It
+keeps Lineage II's names, places, monsters and feel, and cuts its systems down to what one player
+can read on a page and act on in a click. Canon is where names and starting numbers come from. A
+canon particularity is departed from, and the departure written down in
+[canon/README.md](canon/README.md), whenever it adds clutter or a choice the player cannot see or
+make (2026-10-26). Every call below serves this.
+
 ## What the game is for
 
 - **Nostalgia, not simulation.** Real Interlude (C6) names, places, monsters and items bring Lineage
