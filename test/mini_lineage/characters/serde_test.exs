@@ -19,7 +19,9 @@ defmodule MiniLineage.Characters.SerdeTest do
       adena: 4_210,
       experience: 12_345,
       sp: 321,
-      location: "town-of-gludio"
+      location: "town-of-gludio",
+      combat: "engaged",
+      fought: 3
     }
   end
 

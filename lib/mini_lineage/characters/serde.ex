@@ -34,6 +34,7 @@ defmodule MiniLineage.Characters.Serde do
       "death_line" => p.death_line,
       "skills" => p.skills,
       "combat" => p.combat,
+      "fought" => p.fought,
       "buffs" => p.buffs,
       "potion_at" => p.potion_at,
       "heal_pull_at" => p.heal_pull_at,
@@ -66,6 +67,7 @@ defmodule MiniLineage.Characters.Serde do
       death_line: if(m["death_line"] in Narratives.death(), do: m["death_line"]),
       skills: m["skills"] |> renumber(version) |> skills(m["race_id"], path(m["path"])),
       combat: combat(m["combat"]),
+      fought: if(is_integer(m["fought"]) and m["fought"] > 0, do: m["fought"], else: 0),
       buffs: buffs(m["buffs"]),
       potion_at:
         if(m["potion_at"] in Player.potion_shares(),

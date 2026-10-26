@@ -140,6 +140,12 @@ defmodule MiniLineageWeb.GameLive do
         else: assign(socket, game_flash: nil)
 
     socket = engage_if(socket, screen == "hunt")
+    player = socket.assigns.player
+
+    # Rules §20: a reload or a second tab is the same visit, so its last fight stays; coming back
+    # after any road off the ground is a new visit, which has held none yet.
+    fight =
+      if screen == "hunt" and (player.fought > 0 or player.dead), do: last_fight(socket, town)
 
     socket
     |> follow_board(screen == "highscores")
@@ -150,9 +156,8 @@ defmodule MiniLineageWeb.GameLive do
       # A choice belongs to the screen it was made on.
       picked: nil,
       picks: %{},
-      # Rules §20: a ground draws the last fight fought there, so a reload or a return finds it.
-      fight: if(screen == "hunt", do: last_fight(socket, town)),
-      next_move: nil,
+      fight: fight,
+      next_move: fight && next_move(Rules.ground_of(town).slug, player),
       dev_name:
         if(screen == "start" and socket.assigns.debug,
           do: Math.random_element(@dev_name_heads) <> Math.random_element(@dev_name_tails)
@@ -183,9 +188,15 @@ defmodule MiniLineageWeb.GameLive do
 
   defp engage_if(socket, false), do: socket
 
+  # The page served draws the arrival without making it, so the connected mount still finds the run
+  # as it stood before and both renders agree on whether this is the same visit.
   defp combat(socket, change) do
-    {_, player} = Characters.mutate(socket.assigns.session_id, &{change.(&1), :ok})
-    assign(socket, player: player)
+    if connected?(socket) do
+      {_, player} = Characters.mutate(socket.assigns.session_id, &{change.(&1), :ok})
+      assign(socket, player: player)
+    else
+      assign(socket, player: change.(socket.assigns.player))
+    end
   end
 
   # Followed only while the Halls are the screen, and subscribed BEFORE they are read, so a refresh
@@ -417,21 +428,26 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   # A fight is written on the ground's page rather than in an alert, all but a new level's gold one.
-  # The button then names where the hunt goes next, drawn here rather than by the character's dice,
-  # which the ladder bench seeds, and never the line it already showed.
+  # The button then names where the hunt goes next, never the line it already showed.
   defp keep_fight(%{assigns: %{game_flash: %{log: _} = fight, view: %{started: true}}} = socket) do
-    %{view: view, screen: screen, catalog: catalog, next_move: shown} = socket.assigns
-    moves = Narratives.moves(view.ground.slug) -- [shown]
+    %{view: view, screen: screen, catalog: catalog, player: player} = socket.assigns
 
     assign(socket,
       fight: fight,
-      next_move: Math.random_element(moves),
+      next_move: next_move(view.ground.slug, player),
       panels: Screens.panels(screen, view, catalog, fight),
       game_flash: fight[:levelled] && Map.take(fight, [:levelled])
     )
   end
 
   defp keep_fight(socket), do: socket
+
+  # Counted round the ground's lines by the visit's fights rather than drawn, so two running never
+  # match, a reload names the same one, and the character's dice, which the bench seeds, stay out.
+  defp next_move(slug, player) do
+    moves = Narratives.moves(slug)
+    Enum.at(moves, rem(player.fought, length(moves)))
+  end
 
   defp last_fight(socket, town),
     do: Characters.last_fight(socket.assigns.session_id, Rules.ground_of(town).slug)

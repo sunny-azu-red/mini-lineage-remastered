@@ -8,7 +8,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   with their Gatekeepers and the sidebar, each village's hunting ground (rules §17 to §21:
   the one-click fight in `Hunt`, fought on one line where a pull or an aggressive monster sets the
   distance, `Actions.hunt/1`, the last fight fought there in a panel of its own under the ground's,
-  `#fight`, read back from `encounters` on every arrival and drawn by `<.fight_log>` an entry a row
+  `#fight`, read back from `encounters` once a fight is held on this visit (`fought`, which a reload
+  keeps and a new visit, after any road off the ground, starts at none) and on a fallen run's ground, and drawn by `<.fight_log>` an entry a row
   as legacy's Chronicle was, and death: the run stays on the ground it fell on, a 👻 ghost wearing
   no other aura and mending nothing, its ground's panel headed 🪦 Game Over (as are the page title
   and the inventory's way back) and telling its end in a line drawn as it fell
@@ -413,8 +414,8 @@ Each of these is here because it was got wrong once.
   beside the SP figure, which blinked. A primary or danger button leads with an
   emoji; a secondary one has none of its own (`Return`), the filters' being their lineage's. `PanelFocus` gives a panel's first control the keyboard on arrival, so a destructive control
   is marked `data-no-autofocus`. The hunt's button reads "⚔️ Hunt" until a fight is held on this
-  visit, then names where it goes next, a line of the ground's `Narratives.moves/1` other than the
-  one shown, drawn by `GameLive` and never by the character's dice, which the bench seeds. A line
+  visit, which a reload keeps (the served page draws an arrival, only the connected one makes it), then names where it goes next, a line of the ground's `Narratives.moves/1` other than the
+  one shown, counted round them by `fought` in `GameLive` so a reload names it again, never by the character's dice, which the bench seeds. A line
   runs to 18 characters, the room Retreat leaves it on one row at 360px.
 - **Every dropdown is `Controls.select_action/1`**, because the dropdown and its button ARE the
   game's navigation: in a town it lists where you can go, at a trader or guild what you can do

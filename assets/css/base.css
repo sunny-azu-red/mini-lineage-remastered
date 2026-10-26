@@ -114,6 +114,11 @@ p {
     color: var(--text-secondary);
 }
 
+/* A unit keeps the case every other time in the game writes it, under an uppercase label too. */
+.unit {
+    text-transform: none;
+}
+
 /* When something happened, which matters less than what did. */
 .date {
     color: var(--text-muted);

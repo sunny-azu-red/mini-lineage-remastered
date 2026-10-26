@@ -193,6 +193,7 @@ defmodule MiniLineage.Game.Actions do
 
     # Rules §20: a hunt engages; only leaving the ground starts the disengaging.
     player = Player.engage(player)
+    player = %{player | fought: player.fought + 1}
     # The fight's length, which nothing draws, so the ladder bench can move its clock by it.
     flash = Map.merge(flash, %{log: log, ms: result.ms, outcome: outcome(player, result)})
     {%{player | encounter: encounter(flash, foe, ground)}, {:ok, flash}}

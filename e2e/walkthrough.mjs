@@ -629,6 +629,11 @@ try {
         && await page.locator('#screen > .panel:nth-child(2) #fight-log').count() === 1
         && (await text('#fight h2')).includes('Fight Log')
         && /^Round 1 • 0\.0s\s*Foe \d+% • You \d+%$/.test(firstHead), firstHead);
+    // innerText applies text-transform, so this is the head as a reader sees it.
+    const shownHead = await page.evaluate(() => [...document.querySelectorAll('#fight-log .entry-head > span:first-child')]
+        .map((head) => head.innerText).find((head) => /^ROUND/.test(head)) ?? '');
+    check('...its time in seconds written with a lowercase s, as every time in the game is', /^ROUND 1 • 0\.0s$/.test(shownHead),
+        shownHead);
     const opening = await page.evaluate(() => document.querySelector('#fight-log > li:first-child').className);
     check('...opening on an Encounter washed blue or an Ambush washed red', /^(encounter|ambush)$/.test(opening), opening);
     const firstMove = await text('#hunt-button');
@@ -657,6 +662,15 @@ try {
     check('...and served folded', foldedOrders.same && foldedOrders.served[0]?.expanded === 'false', foldedOrders.detail);
     await page.click('#orders .panel-toggle');
     check('...until they are opened again', await orders.isVisible());
+    // Rules §20: a reload is the same visit, still engaged, so it keeps the fight and the move named.
+    const visit = await servedShown('#hunt-button, #fight-outcome');
+    check('a reload is served the fight and the move the button names, as they were left',
+        visit.same && visit.served.length === 2 && visit.served[0].text !== '⚔️ Hunt', visit.detail);
+    const named = await text('#hunt-button');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.phx-connected', { timeout: 8000 });
+    check('...and shows them once connected', await page.locator('#fight #fight-outcome').count() === 1
+        && await text('#hunt-button') === named, `${named} / ${await text('#hunt-button')}`);
     await page.click('#retreat-button');
     await onScreen('town');
     check('...and retreating goes back to the village', (await state()).screen === 'town');
@@ -846,8 +860,8 @@ try {
     await page.selectOption('#travel-form select', 'hunt');
     await page.click('#travel-form button');
     await onScreen('hunt');
-    check('coming back to the ground draws the last fight fought there, the button saying Hunt again',
-        await page.locator('#fight #fight-outcome').count() === 1 && await text('#hunt-button') === '⚔️ Hunt',
+    check('coming back to the ground is a new visit, with no fight held yet and the button saying Hunt again',
+        await page.locator('#fight').count() === 0 && await text('#hunt-button') === '⚔️ Hunt',
         await text('#hunt-button'));
 
     // ---- the battle orders (rules §20, §26) -----------------------------------------------------

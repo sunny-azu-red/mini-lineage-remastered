@@ -36,6 +36,8 @@ defmodule MiniLineage.Game.Player do
             skills: %{},
             # Rules §20: "engaged" while it hunts, then the UTC millisecond its disengaging ends.
             combat: nil,
+            # Rules §20: the fights held on this visit to the ground, which a new visit starts at none.
+            fought: 0,
             # Rules §19: each aura it raised, to the UTC millisecond it fades.
             buffs: %{},
             # Rules §26: the share of its HP below which it drinks a potion in a fight; 0 never.
@@ -387,7 +389,8 @@ defmodule MiniLineage.Game.Player do
 
   @doc "Rules §20: standing on the ground, which no rest survives; a ghost (§21) fights no more."
   def engage(%{dead: true} = player), do: player
-  def engage(player), do: %{player | combat: "engaged"}
+  def engage(%{combat: "engaged"} = player), do: player
+  def engage(player), do: %{player | combat: "engaged", fought: 0}
 
   @doc "Rules §20: leaving the ground; resting resumes once the disengaging is over."
   def disengage(%{combat: "engaged"} = player), do: %{player | combat: now_ms() + @disengage_ms}

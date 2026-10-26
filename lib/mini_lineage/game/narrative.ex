@@ -165,7 +165,7 @@ defmodule MiniLineage.Game.Narrative do
   defp round_label(round) do
     seconds = Format.tenths(round(Hunt.round_starts_ms(round) / 100))
 
-    ~s(Round #{round} <span class="delimiter">&bull;</span> #{seconds}s)
+    ~s(Round #{round} <span class="delimiter">&bull;</span> #{seconds}<span class="unit">s</span>)
   end
 
   # Rules §20: the auras raised and heals cast before the pull, as one entry.

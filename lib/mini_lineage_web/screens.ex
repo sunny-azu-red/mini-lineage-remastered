@@ -279,7 +279,8 @@ defmodule MiniLineageWeb.Screens do
   end
 
   # Rules §20: the ground, how the character fights, and the one click that fights again. The
-  # button names where it goes next once a fight is held, and only then, so no visit draws a line.
+  # button names where it goes next once a fight is held on this visit, which a reload keeps, and
+  # only then, so no visit begins on a line.
   defp hunt(assigns) do
     ~H"""
     <p id="hunt-intro">{Narrative.ground_intro(@view.ground, @view.town)}</p>

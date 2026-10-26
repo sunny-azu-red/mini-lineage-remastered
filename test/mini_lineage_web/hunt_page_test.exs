@@ -89,9 +89,14 @@ defmodule MiniLineageWeb.HuntPageTest do
     view |> element("#header-link") |> render_click()
 
     assert is_integer(stored(session).combat)
+
+    # A new visit, which has held no fight yet.
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
+    refute has_element?(view, "#fight")
+    assert text(view, "#hunt-button") == "⚔️ Hunt"
   end
 
-  test "the button never names the same place twice running, and a new visit draws the last fight" do
+  test "the button never names the same place twice running, a reload keeps the visit, and a return starts a new one" do
     {_view, session, conn} = human(build_conn())
     # Far enough from the next level that no kill here reaches it, so each outcome is a plain one.
     Characters.mutate(session, &{%{&1 | experience: Math.xp_for_level(3)}, :ok})
@@ -106,15 +111,21 @@ defmodule MiniLineageWeb.HuntPageTest do
 
     assert first in moves() and second in moves() and first != second
 
+    # Still engaged, so a reload is the same visit: the fight is read back from `encounters`, and the
+    # button names a move.
     {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
-
-    # Read back from `encounters`, so a reload or a return finds it; the button has named nothing yet.
     assert has_element?(view, "#fight #fight-outcome.victory", "cut down")
-    assert text(view, "#hunt-button") == "⚔️ Hunt"
+    assert text(view, "#hunt-button") == second
 
     view |> element("#retreat-button") |> render_click()
     {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
-    assert has_element?(view, "#fight #fight-outcome.victory", "cut down")
+    refute has_element?(view, "#fight")
+    assert text(view, "#hunt-button") == "⚔️ Hunt"
+
+    # Engaged again but with nothing fought yet, so a reload has no fight of this visit to draw.
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
+    refute has_element?(view, "#fight")
+    assert text(view, "#hunt-button") == "⚔️ Hunt"
   end
 
   test "a character cannot hunt another village's ground" do
