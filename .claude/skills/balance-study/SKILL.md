@@ -29,7 +29,9 @@ nothing checks CI's), and `docs/balance.md` rewritten from the reading.
 - **Which sets**: `--only "Human Fighter,Orc Mystic"`, the sets the change touches, since no set's
   runs read another's. The bar's spread is measured only across the sets in the reading, so add the
   current fastest and slowest sets too, or run them all when the change could move a set to either
-  end. A change to something every set uses (the fight, a shared price) runs them all.
+  end; `compare.exs` names the two paths that bound it, and leaves it unjudged for a reading of one
+  set, whose paths alone are no spread between sets. A change to something every set uses (the
+  fight, a shared price) runs them all.
 - **Routine or final**: `--matrix <prefix>` is 200 runs a path at three settings: `defaults` (rest
   to full, 20 potions), `harsh` (rest below half, none), `potions` (half, 20). `--final` adds
   `harsher` (30%, none) and is the reading `docs/balance.md` is rewritten from. A routine matrix of

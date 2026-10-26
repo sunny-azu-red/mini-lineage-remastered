@@ -1,7 +1,9 @@
 # Two readings of bench/ladder.exs --json, the same settings on two builds, set against the bar a
 # fight change must clear: no set dies when it rests to full, no set's road to the top level moves
 # more than 15% either way, deaths do not rise beyond the dice's noise, and the spread between the
-# fastest and slowest set does not widen by more than 2%, which the dice alone can do.
+# fastest and slowest set does not widen by more than 2%, which the dice alone can do. The spread is
+# judged only when the readings hold two sets or more: within one set it is only how far apart its
+# own paths run, which no change to the game is held to.
 #
 #   MIX_ENV=test mix run --no-start bench/compare.exs before.json after.json
 
@@ -124,21 +126,38 @@ judged =
       !row["probe"],
       {was_minutes, now_minutes, pairs} = paired.(befores[key.(row)], row),
       pairs >= min_pairs,
-      do: {was_minutes, now_minutes}
+      do: {"#{row["set"]}, #{row["path"]}", row["set"], was_minutes, now_minutes}
 
-spread = fn minutes -> if minutes == [], do: nil, else: Enum.max(minutes) - Enum.min(minutes) end
+sets = judged |> Enum.map(&elem(&1, 1)) |> Enum.uniq()
 
-{was_spread, now_spread} =
-  {spread.(Enum.map(judged, &elem(&1, 0))), spread.(Enum.map(judged, &elem(&1, 1)))}
+# The spread and the two paths that bound it, so a reading of some sets says which of them it spans.
+spread = fn at ->
+  {fastest, slowest} = Enum.min_max_by(judged, &elem(&1, at))
+  {elem(slowest, at) - elem(fastest, at), elem(fastest, 0), elem(slowest, 0)}
+end
 
-faults =
-  if was_spread && now_spread && now_spread > was_spread * 1.02,
-    do: ["the spread widens: #{fmt.(was_spread)} to #{fmt.(now_spread)} minutes" | faults],
-    else: faults
+{faults, spread_line} =
+  if length(sets) < 2 do
+    {faults,
+     "Spread, fastest to slowest set: not judged, the readings hold #{length(sets)} set " <>
+       "(#{Enum.join(sets, ", ")}); take the fastest and slowest sets too to judge it"}
+  else
+    {was_spread, _, _} = spread.(2)
+    {now_spread, fastest, slowest} = spread.(3)
+
+    faults =
+      if now_spread > was_spread * 1.02,
+        do: ["the spread widens: #{fmt.(was_spread)} to #{fmt.(now_spread)} minutes" | faults],
+        else: faults
+
+    {faults,
+     "Spread, fastest to slowest set: #{fmt.(was_spread)} -> #{fmt.(now_spread)} minutes " <>
+       "(#{fastest} to #{slowest})"}
+  end
 
 IO.puts("Settings: #{inspect(settings)}")
 Enum.each(lines, &IO.puts/1)
-IO.puts("Spread, fastest to slowest set: #{fmt.(was_spread)} -> #{fmt.(now_spread)} minutes")
+IO.puts(spread_line)
 
 case Enum.reverse(faults) do
   [] -> IO.puts("PASS")
