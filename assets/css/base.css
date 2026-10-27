@@ -162,9 +162,10 @@ p {
     color: var(--gold);
 }
 
-/* What it wears, wields or drinks, quieter than the sentence around it: an item's name is not the
-   news, the figure beside it is. */
-.item {
+/* What it wears, wields or drinks, quieter than the sentence around it and weighted as every value
+   there is: an item's name is not the news, the figure beside it is. Unweighted, on a row or in the
+   sidebar, grey would read as muted, so there it keeps the text's colour. */
+:is(p, li) .item {
     color: var(--text-secondary);
 }
 
@@ -194,7 +195,8 @@ p {
     color: var(--text-xp);
 }
 
-/* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does.
+/* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. An
+ * alert repeats this list (components.css), its own colour on every value.
  * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
 :is(p, li) :is(.hp, .attack, .magic, .debuff, .deaths, .crit, .adena, .level, .skill, .item, .regen, .buff,
     .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura, .timer) {

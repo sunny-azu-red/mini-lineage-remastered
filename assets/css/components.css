@@ -467,9 +467,10 @@
     color: var(--text-danger);
 }
 
-/* An item an alert names keeps the alert's voice, as quiet grey would sink into its wash, and takes
-   the weight a sentence gives it. */
-.alert .item {
+/* An alert speaks in its own colour, which means something, so everything it names takes it, with
+   the weight a sentence gives a value to stand apart. The list is base.css's sentence weight's. */
+.alert :is(.hp, .attack, .magic, .debuff, .deaths, .crit, .adena, .level, .skill, .item, .regen, .buff,
+    .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura, .timer) {
     color: inherit;
     font-weight: var(--weight-value);
 }

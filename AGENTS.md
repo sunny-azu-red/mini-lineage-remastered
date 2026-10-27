@@ -468,7 +468,8 @@ Each of these is here because it was got wrong once.
   something, or a story. A new level is triumph, gold and shining, the flash's `levelled` drawn
   above it as `#levelled`, and on the ground the only alert, the fight being the page's. None is
   dismissed: what an action says, a refusal included, is its flash, dropped on the next arrival
-  unless the action itself moved you there.
+  unless the action itself moved you there. An alert's colour is what it means, so every value
+  inside one (an item, a skill, Adena, a figure) takes it, with the weight a sentence gives a value.
 - **Every table is `Controls.data_table/1`, and every table sorts.** The container, header row and
   `<table>`, with the rows the caller's `<tbody>` and other attributes on the `<table>`. A sort is
   the server's, never the DOM's, which a patch would undo: a `:col` with `sort` is a header button,
@@ -540,7 +541,8 @@ Each of these is here because it was got wrong once.
   ("a Gremlin, Level 1") as much as the character's ("until Level 5"). A level no number names
   ("the next level") is a common noun and stays lowercase and uncoloured.
 - **An item or a skill is named one way, everywhere, or the reader learns two vocabularies**: its
-  emoji, then its name, in `.item` (quiet, as legacy's was) or `.skill` (gold). A page writes
+  emoji, then its name, in `.item` (quiet and weighted in a sentence, the text's colour elsewhere)
+  or `.skill` (gold). A page writes
   `<.item>` or `<.skill>`, a sentence (a flash, the fight log) `Names.item/1` or `Names.skill/2`,
   the same markup, which `names_test.exs` holds alike; only an `<option>` names one as text, emoji
   first. The emojis are `Names`' (an aura's is its effect's, in `Constants`), and no two things

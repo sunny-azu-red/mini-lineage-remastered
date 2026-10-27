@@ -88,11 +88,15 @@ was got wrong once.
   `s`, keeping its case under an uppercase head), `.date` (a `<.stamp>`, when something happened, as the Halls' Fate column writes it), `.timer` (an effect's
   time left, dimmed like a date),
   `.build-development` and `.build-testing`.
-- **`.item` is what a run wears, wields or drinks**, `--text-secondary`, weighted in a sentence as
-  every value is, and led by its emoji as `.skill` is: an item's name is not the news, the figure
-  beside it is (legacy's own rule). In an alert it takes the alert's voice, with the weight, since
-  grey sinks into an alert's wash. It is on every item named, a table's row and the sidebar's as
-  much as a flash's or the fight log's; only an `<option>` holds none.
+- **`.item` is what a run wears, wields or drinks**, led by its emoji as `.skill` is, and on every
+  item named: a table's row and the sidebar's as much as a flash's or the fight log's; only an
+  `<option>` holds none. In a sentence it is `--text-secondary` and weighted as every value is, an
+  item's name not being the news, the figure beside it is (legacy's own rule). Grey only works
+  with that weight: on a row or in the sidebar, unweighted, it would read as muted and match the
+  `.delimiter` after it, so there an item keeps the text's colour.
+- **An alert speaks in its own colour**, since its colour is what it means: every value inside one,
+  an item, a skill, Adena, a figure, takes the alert's colour, with the weight a sentence gives a
+  value so it still stands apart. The list is the sentence weight's, written twice.
 - **A value's class goes where the thing is named in a sentence**, figure or not, and never on a
   label. A value is a classed `<span>`, never a `<strong>`. `legacy/AGENTS.md` has the old game's
   whole vocabulary.
