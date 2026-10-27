@@ -44,7 +44,7 @@ defmodule MiniLineageWeb.Screens do
   defp icon("hunt", _view), do: "⚔️"
   defp icon("inventory", _view), do: "🎒"
   defp icon("trader", _view), do: "🛒"
-  defp icon("trader-weapon", _view), do: "⚔️"
+  defp icon("trader-weapon", _view), do: "⚒️"
   defp icon("trader-armour", _view), do: "🛡️"
   defp icon("trader-magic", _view), do: "⚗️"
   defp icon("trader-sell", _view), do: "💰"
@@ -268,12 +268,11 @@ defmodule MiniLineageWeb.Screens do
       [%{value: "highscores", label: "🏛️ Monument of Heroes"}]
   end
 
-  # Rules §21: the ground a run ended on, told in its own line, and the two ways on from there.
+  # Rules §21: the ground a run ended on, what becomes of it, and the two ways on from there.
   # Neither takes the first focus, since a Space still on its way from the Hunt button would press it.
   defp hunt(%{view: %{dead: true}} = assigns) do
     ~H"""
-    <p id="death-line"><span class="deaths">{raw(@view.death_line)}</span></p>
-    <p>{raw(Narrative.alert(Narratives.epitaph()))}</p>
+    <p id="death-line">{raw(Narrative.alert(Narratives.epitaph()))}</p>
     <div class="action-links">
       <.button
         id="monument-button"

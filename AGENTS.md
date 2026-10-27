@@ -12,8 +12,8 @@ beats any general Phoenix habit. How the game is drawn (type, layout, classes, c
   keeps and a new visit, after any road off the ground, starts at none) and on a fallen run's ground, and drawn by `<.fight_log>` an entry a row
   as legacy's Chronicle was, and death: the run stays on the ground it fell on, a 👻 ghost wearing
   no other aura and mending nothing, its ground's panel headed 🪦 Game Over (as are the page title
-  and the inventory's way back) and telling its end in a line drawn as it fell
-  (`death_line`), its fight ending in Defeat, offering the Monument and Play Again,
+  and the inventory's way back) and telling in one fixed line what becomes of it, which says
+  nothing the header says (`Narratives.epitaph/0`), its fight ending in Defeat, offering the Monument and Play Again,
   `Actions.restart/1`, and refused every other action),
   each village's traders (`/<village>/traders`), four by name
   on three pages (the jeweller and the grocer keep the Magic Trader together) and Sell
@@ -305,7 +305,7 @@ Each of these is here because it was got wrong once.
   (`CharacterSession` puts the session each time).
 - **A run that dies is over, never deleted** (rules §21). It is written `dead` with its `killer`,
   `fell_at` (the ground, not the time), `died_at` (its UTC millisecond, the Halls' generated
-  `died_at` column) and `death_line` like any other write, and stays the browser's until Play Again. Then
+  `died_at` column) like any other write, and stays the browser's until Play Again. Then
   `Characters.Server`, seeing a fallen run come back unstarted, writes it and clears its session in
   one statement (`Store.retire/2`), and goes on as the browser's next, unstarted character under a
   fresh id, so no process stop races the registry. The row stays for the Halls.

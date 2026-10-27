@@ -7,7 +7,7 @@ defmodule MiniLineage.Characters.SerdeTest do
   use ExUnit.Case, async: true
 
   alias MiniLineage.Characters.Serde
-  alias MiniLineage.Game.{Narratives, Player}
+  alias MiniLineage.Game.Player
 
   defp populated do
     %Player{
@@ -52,8 +52,7 @@ defmodule MiniLineage.Characters.SerdeTest do
         | dead: true,
           killer: "Elder Keltir",
           fell_at: "obelisk-of-victory",
-          died_at: 1_792_854_600_000,
-          death_line: hd(Narratives.death())
+          died_at: 1_792_854_600_000
       }
 
       for player <- [populated(), %{populated() | path: :fighter}, fallen, %Player{}] do
@@ -121,13 +120,9 @@ defmodule MiniLineage.Characters.SerdeTest do
     assert %Player{sp: 0, dead: false, killer: nil} = Serde.from_map(doc)
   end
 
-  test "a fallen run keeps only a ground and a death line the game still has, the line being drawn raw" do
-    doc =
-      populated()
-      |> Serde.to_map()
-      |> Map.merge(%{"fell_at" => "nowhere", "death_line" => "<script>alert(1)</script>"})
-
-    assert %Player{fell_at: nil, death_line: nil} = Serde.from_map(doc)
+  test "a fallen run keeps only a ground the game still has" do
+    doc = populated() |> Serde.to_map() |> Map.put("fell_at", "nowhere")
+    assert %Player{fell_at: nil} = Serde.from_map(doc)
   end
 
   test "a skill stored past the levels the trainer now teaches is read at its last" do

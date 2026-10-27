@@ -41,7 +41,7 @@ defmodule MiniLineageWeb.DevTwinkTest do
     {view, session} = started(conn, "0", "fighter")
 
     assert type(view, "twink") =~ "Level 15"
-    assert has_element?(view, "#levelled.alert-triumph", "You have reached Level 15.")
+    assert has_element?(view, "#levelled.alert-triumph", "Your level has increased!")
     player = stored(session)
     stats = Player.stats(player)
 

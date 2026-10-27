@@ -5,7 +5,7 @@ defmodule MiniLineage.Characters.Serde do
   Written out field by field rather than derived: the stored document is untrusted input, and
   every atom it turns back into is one this module names itself.
   """
-  alias MiniLineage.Game.{Narratives, Player, Rules}
+  alias MiniLineage.Game.{Player, Rules}
 
   # The shape of the document, not of the character. A reshape bumps this and `from_map/1` branches
   # on it; a document claiming a LATER one was written by a newer build, and must not be guessed at.
@@ -31,7 +31,6 @@ defmodule MiniLineage.Characters.Serde do
       "killer" => p.killer,
       "fell_at" => p.fell_at,
       "died_at" => p.died_at,
-      "death_line" => p.death_line,
       "skills" => p.skills,
       "combat" => p.combat,
       "fought" => p.fought,
@@ -63,8 +62,6 @@ defmodule MiniLineage.Characters.Serde do
       killer: m["killer"],
       fell_at: if(Rules.ground(m["fell_at"]), do: m["fell_at"]),
       died_at: if(is_integer(m["died_at"]), do: m["died_at"]),
-      # Drawn raw, so only a line the pool still holds; a run from before them has none.
-      death_line: if(m["death_line"] in Narratives.death(), do: m["death_line"]),
       skills: m["skills"] |> renumber(version) |> skills(m["race_id"], path(m["path"])),
       combat: combat(m["combat"]),
       fought: if(is_integer(m["fought"]) and m["fought"] > 0, do: m["fought"], else: 0),

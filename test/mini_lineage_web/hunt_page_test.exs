@@ -180,7 +180,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert has_element?(
              view,
              "#levelled.alert-triumph",
-             "Congratulations! You have reached Level 2."
+             "Your level has increased!"
            )
 
     # The kill is still a victory, its new level named at the right of its head, never in its line.
@@ -217,9 +217,16 @@ defmodule MiniLineageWeb.HuntPageTest do
       assert has_element?(view, ".header-name", "🪦 Game Over")
       refute has_element?(view, ".header-name", "Obelisk of Victory")
       assert page_title(view) == "Mini Lineage - Game Over"
-      assert has_element?(view, "#fight-outcome.defeat", "your road ends here")
-      # The dice are pinned at 0.0, which draws the pool's first line.
-      assert has_element?(view, "#death-line .deaths", "The darkness takes you.")
+      # The header says the run is over, so neither the last blow nor the end says it again.
+      assert has_element?(view, "#fight-outcome.defeat", "You fall to the")
+      refute has_element?(view, "#fight-outcome.defeat", "road ends")
+
+      assert has_element?(
+               view,
+               "#death-line",
+               "Shilen, the goddess of death, has gathered your soul"
+             )
+
       # The Monument's own emoji, as its page is headed, never the Fight Log's 📜 beside it.
       assert has_element?(
                view,

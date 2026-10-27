@@ -624,7 +624,8 @@ earns all of it, **175**.
 At 0 HP the run is over. The character is written as fallen, with what killed it, where and when,
 and stays on the ground it fell on as a ghost: both bars are empty, every aura it wore is gone,
 nothing mends it, and it can do nothing more, only look at its own pages and the world's. Its end
-is told in a line drawn as it falls and kept with it. Nothing of it carries over when the player
+is told in one line, the same for every run: Shilen gathers its soul and the Monument of Heroes
+keeps its name. Nothing of it carries over when the player
 begins again, which sends the browser to game start for the next one. It keeps its place on the
 Monument of Heroes, which ranks every run by EXP and so by level, then EXP, then Adena, and says
 how long ago each fallen run fell.

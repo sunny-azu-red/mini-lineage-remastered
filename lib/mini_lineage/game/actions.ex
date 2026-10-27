@@ -202,8 +202,7 @@ defmodule MiniLineage.Game.Actions do
     {%{player | encounter: encounter(flash, foe, ground)}, {:ok, flash}}
   end
 
-  # Rules §21: the run is over where it fell, both bars empty and every aura gone with it, its end
-  # told in a line drawn now and kept. The last draw of the run, so no die after it moves.
+  # Rules §21: the run is over where it fell, both bars empty and every aura gone with it.
   defp die(player, foe, ground),
     do: %{
       player
@@ -213,7 +212,6 @@ defmodule MiniLineage.Game.Actions do
         killer: foe.name,
         fell_at: ground.slug,
         died_at: DateTime.to_unix(Clock.now(), :millisecond),
-        death_line: Math.random_element(Narratives.death()),
         buffs: %{},
         combat: nil
     }
@@ -246,7 +244,7 @@ defmodule MiniLineage.Game.Actions do
     # A new level is the gold alert's to tell, so the kill's own line stops at what it paid.
     flash =
       if reached > level,
-        do: %{text: slew, levelled: Narrative.alert(Narrative.build_congratulated(reached))},
+        do: %{text: slew, levelled: Narrative.alert(Narratives.levelled())},
         else: %{text: slew}
 
     {gained, {:ok, Map.put(flash, :type, :success)}}
@@ -642,7 +640,7 @@ defmodule MiniLineage.Game.Actions do
         flash = %{
           text: text,
           type: :info,
-          levelled: Narrative.alert(Narrative.build_congratulated(target))
+          levelled: Narrative.alert(Narratives.levelled())
         }
 
         {Player.gain_experience(player, needed), {:ok, flash}}
@@ -680,7 +678,7 @@ defmodule MiniLineage.Game.Actions do
           do: %{
             text: text,
             type: :info,
-            levelled: Narrative.alert(Narrative.build_congratulated(@dev_twink_level))
+            levelled: Narrative.alert(Narratives.levelled())
           },
           else: %{text: text, type: :info}
 

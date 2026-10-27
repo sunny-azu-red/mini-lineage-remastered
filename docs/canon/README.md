@@ -53,7 +53,7 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 | [weapons-and-armour.md](weapons-and-armour.md) | Every weapon and armour piece by grade and type: stats, reference price, which towns sell it |
 | [inventory.md](inventory.md) | Every equipment slot, a naked character's stats and how gear replaces them, the inventory's limits, the shields and how a block is rolled, and everything the four starting villages' traders sell, with prices |
 | [jewellery-and-consumables.md](jewellery-and-consumables.md) | Jewellery by grade, epic jewels, potions, scrolls, soulshots and spiritshots, enchanting |
-| [skills.md](skills.md) | Each base set's skills from level 1 to 20, the first skills' numbers, how blows, drains, damage over time and misses resolve, the EXP penalty against weaker monsters, and the Monument of Heroes |
+| [skills.md](skills.md) | Each base set's skills from level 1 to 20, the first skills' numbers, how blows, drains, damage over time and misses resolve, the EXP penalty against weaker monsters, what the client calls things and says on a new level, and the Monument of Heroes |
 | [movement.md](movement.md) | How far everything reaches and how fast it moves: every monster's attack range, run speed and aggression, every spell's and weapon's range, the starting classes' run speed, the slows, and how aggressive and passive monsters engage |
 | [bosses-and-buffs.md](bosses-and-buffs.md) | Grand and raid bosses with levels and lairs, buffs, chants and debuffs with the classes that cast them |
 | [death.md](death.md) | What the client says to a character that has died, and Shilen, the goddess of death |

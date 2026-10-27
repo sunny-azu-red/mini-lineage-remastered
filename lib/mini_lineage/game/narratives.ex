@@ -25,25 +25,14 @@ defmodule MiniLineage.Game.Narratives do
 
   # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
   @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and <span class="sp">{sp} SP</span>{adena}.)
-  # The gold alert a new level raises over the page, beside the fight's own line.
-  @congratulated ~s(🎉 Congratulations! {they} have reached <span class="level">Level {level}</span>.)
-  # Rules §21: the line a run ends on, kept with it.
-  @fell ~s({they} fall to the {monster} at the {ground}, and {their} road ends here.)
+  # The gold alert a new level raises over the page, beside the fight's own line: the client's
+  # system message 96 (docs/canon/skills.md).
+  @levelled "{Their} level has increased!"
+  # Rules §21: the blow a run ends on. The ground's panel is headed Game Over, so this only says who.
+  @fell ~s({they} fall to the {monster} at the {ground}.)
   @wandered ~s({they} cannot bring the {monster} down, and it slinks away into the {ground}.)
-  # Rules §21: how the end is told on the ground it came on, one drawn at death and kept with the run.
-  @death [
-    "🌑 The darkness takes {object}. {Their} journey ends here.",
-    "👻 {Their} strength fails, and the world fades to black.",
-    "💀 Fate has claimed {their} soul. Better luck in the next life.",
-    "✨ {Their} life essence scatters into the aether.",
-    "🩸 {Their} story has come to a sudden, bloody conclusion.",
-    "🥀 {Their} light flickers out in the cold silence.",
-    "🪦 {they} fought bravely&hellip; but not bravely enough.",
-    "🦴 {Their} bones will lie on this ground for the next adventurer to find.",
-    "🎭 {they} have met a terrible fate, haven't {them}?"
-  ]
-  # And what becomes of it: rules §21 keeps every run on the Monument of Heroes, the obelisk that
-  # stands in every town, and Shilen is the goddess of death (docs/canon/death.md).
+  # Rules §21: the one line a fallen run's ground tells, what becomes of it. The Monument of Heroes
+  # is the obelisk that stands in every town, and Shilen the goddess of death (docs/canon/death.md).
   @epitaph ~s(Shilen, the goddess of death, has gathered {their} soul but not {their} name, which the Monument of Heroes keeps in every town of Aden among all who fought before {object}.)
 
   # Rules §20's fight log: who is met, then each round told one sentence per side.
@@ -194,10 +183,9 @@ defmodule MiniLineage.Game.Narratives do
   def moves(slug), do: Map.fetch!(@grounds, slug).moves
 
   def slew, do: @slew
-  def congratulated, do: @congratulated
+  def levelled, do: @levelled
   def fell, do: @fell
   def wandered, do: @wandered
-  def death, do: @death
   def epitaph, do: @epitaph
   def arrived, do: @arrived
   def began, do: @began

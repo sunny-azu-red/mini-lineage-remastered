@@ -141,12 +141,11 @@ p {
 /* ===== Values =====
  * A class per thing the game names, never per colour, so one can move without the others. */
 
-/* What a run has lost, and what takes it from them: either attack, a debuff, and in the end the run. */
+/* What a run has lost, and what takes it from them: either attack and a debuff. */
 .hp,
 .attack,
 .magic,
-.debuff,
-.deaths {
+.debuff {
     color: var(--text-hp);
 }
 
@@ -198,7 +197,7 @@ p {
 /* Weighted only inside a sentence, where hue alone sets a figure apart; a column already does. An
  * alert repeats this list (components.css), its own colour on every value.
  * `.aura` is here and nowhere above: a state is neither good nor bad, so it keeps the sentence's colour. */
-:is(p, li) :is(.hp, .attack, .magic, .debuff, .deaths, .crit, .adena, .level, .skill, .item, .regen, .buff,
+:is(p, li) :is(.hp, .attack, .magic, .debuff, .crit, .adena, .level, .skill, .item, .regen, .buff,
     .attribute, .speed, .defense, .mp, .xp, .sp, .accuracy, .evasion, .aura, .timer) {
     font-weight: var(--weight-value);
 }

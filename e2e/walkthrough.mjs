@@ -476,7 +476,7 @@ try {
         levelled.xp === 0 && levelled.health === levelled.maxHealth && levelled.mp === levelled.maxMp,
         JSON.stringify(levelled));
     check('...raising the gold alert above what the debug build says',
-        /Congratulations! You have reached Level 2\./.test(await text('#levelled.alert-triumph'))
+        (await text('#levelled.alert-triumph')) === 'Your level has increased!'
         && await page.evaluate(() => document.querySelector('#levelled').nextElementSibling?.id === 'flash'),
         await text('#levelled'));
     await page.keyboard.type('twink');
@@ -1278,18 +1278,9 @@ try {
     }
     check(`a run left 1 HP before each fight dies within 40 of them (${fights})`,
         await g.locator('#death-line').count() === 1);
-    const colour = (sel) => g.$eval(sel, (el) => getComputedStyle(el).color);
-    const hpRed = await g.evaluate(() => {
-        const probe = document.createElement('span');
-        probe.className = 'hp';
-        document.body.append(probe);
-        const red = getComputedStyle(probe).color;
-        probe.remove();
-        return red;
-    });
-    check('a death keeps the run on the ground it fell on, its end told in red',
-        new URL(g.url()).pathname === ground && await colour('#death-line .deaths') === hpRed,
-        `${g.url()} ${await colour('#death-line .deaths')}`);
+    check('a death keeps the run on the ground it fell on, telling what becomes of it in one line',
+        new URL(g.url()).pathname === ground && /^Shilen, the goddess of death,/.test(await gc.text('#death-line')),
+        `${g.url()} ${await gc.text('#death-line')}`);
     const washed = await g.$eval('#fight-outcome', (el) => [
         getComputedStyle(el).backgroundColor.replace(/\s/g, ''),
         getComputedStyle(document.documentElement).getPropertyValue('--wash-danger').replace(/\s/g, ''),

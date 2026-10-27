@@ -34,7 +34,7 @@ defmodule MiniLineageWeb.DevLevelTest do
 
     type(view, "half")
     assert type(view, "lvl") =~ "enough to reach"
-    assert has_element?(view, "#levelled.alert-triumph", "You have reached Level 2.")
+    assert has_element?(view, "#levelled.alert-triumph", "Your level has increased!")
     assert_push_event(view, "play-sound", %{name: "level"})
     player = stored(session)
     stats = Player.stats(player)

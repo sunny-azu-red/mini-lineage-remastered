@@ -9,7 +9,7 @@ defmodule MiniLineage.Characters.DeathTest do
 
   alias MiniLineage.Characters
   alias MiniLineage.Characters.{Record, Store}
-  alias MiniLineage.Game.{Actions, Narratives, Player}
+  alias MiniLineage.Game.{Actions, Player}
 
   setup do
     session = Characters.new_session_id()
@@ -28,8 +28,7 @@ defmodule MiniLineage.Characters.DeathTest do
          | health: 0,
            dead: true,
            killer: "Wolf",
-           fell_at: "obelisk-of-victory",
-           death_line: hd(Narratives.death())
+           fell_at: "obelisk-of-victory"
        }, :ok}
 
   test "the row is kept, dead, with what killed it and where, and keeps its session", %{

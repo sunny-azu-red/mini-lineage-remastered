@@ -1,6 +1,6 @@
 defmodule MiniLineage.Game.Snapshot do
   @moduledoc "The single Player -> view-model mapping, and the static catalog the pages draw from."
-  alias MiniLineage.Game.{Clock, Constants, Format, Formulas, Math, Narrative, Narratives, Player}
+  alias MiniLineage.Game.{Clock, Constants, Format, Formulas, Math, Player}
   alias MiniLineage.Game.{Rules, Shop}
 
   @doc """
@@ -10,7 +10,6 @@ defmodule MiniLineage.Game.Snapshot do
   @empty %{
     started: false,
     dead: false,
-    death_line: nil,
     killer: nil,
     fell_at: nil,
     name: nil,
@@ -63,10 +62,8 @@ defmodule MiniLineage.Game.Snapshot do
 
     %{
       started: true,
-      # Rules §21: a run that has ended, and the line its end was told in, the run's own to read.
+      # Rules §21: a run that has ended.
       dead: player.dead,
-      death_line:
-        if(player.dead, do: Narrative.alert(player.death_line || hd(Narratives.death()))),
       killer: player.killer,
       fell_at: player.fell_at && Rules.ground(player.fell_at).name,
       name: player.name,

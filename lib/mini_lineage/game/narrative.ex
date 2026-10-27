@@ -42,9 +42,6 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
-  def build_congratulated(level),
-    do: Format.fill_template(Narratives.congratulated(), %{"level" => level})
-
   def build_fell(monster, ground),
     do:
       Format.fill_template(Narratives.fell(), %{
