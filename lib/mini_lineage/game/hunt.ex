@@ -389,7 +389,7 @@ defmodule MiniLineage.Game.Hunt do
     |> Enum.filter(
       &(&1.kind in @spells and not spent?(s, &1) and Map.get(s.cooldowns, &1.name, 0.0) <= 0)
     )
-    |> Enum.max_by(& &1.power, fn -> nil end)
+    |> Enum.max_by(&strength/1, fn -> nil end)
     |> case do
       nil -> s
       spell -> note(%{s | dry: true}, {:no_mp, spell.name})
@@ -399,8 +399,12 @@ defmodule MiniLineage.Game.Hunt do
   defp strongest(s, skills, kind?) do
     skills
     |> Enum.filter(&(kind?.(&1) and ready?(s, &1)))
-    |> Enum.max_by(& &1.power, fn -> nil end)
+    |> Enum.max_by(&strength/1, fn -> nil end)
   end
+
+  # §20: of two as strong, the cheaper, since what the dearer one buys besides (a drain's mend) is
+  # worth nothing yet.
+  defp strength(skill), do: {skill.power, -skill.mp}
 
   defp ready?(s, skill), do: Map.get(s.cooldowns, skill.name, 0.0) <= 0 and s.mp >= skill.mp
 

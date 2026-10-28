@@ -347,6 +347,19 @@ defmodule MiniLineage.Game.HuntTest do
       assert events(whole, :heal) == []
     end
 
+    test "of two spells as strong, the one costing less MP is cast first" do
+      Rng.put_source(fn -> 0.0 end)
+      dark = Player.restore_fully(%{character(3, :mystic, 14) | skills: %{}})
+      strike = Rules.skill("Wind Strike", 3)
+      touch = Rules.skill("Vampiric Touch", 1)
+      assert strike.power == touch.power and strike.mp < touch.mp
+
+      result = Hunt.fight(Player.stats(dark), dark, [touch, strike], dummy("Young Keltir"))
+
+      assert [{1, {:begin, "Wind Strike"}}, {_, {:begin, "Vampiric Touch"}} | _] =
+               events(result, :begin)
+    end
+
     test "the share is the player's: never, or below a higher one" do
       Rng.put_source(fn -> 0.0 end)
       mystic = trained(0, :mystic, 1)
