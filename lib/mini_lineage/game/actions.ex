@@ -20,33 +20,18 @@ defmodule MiniLineage.Game.Actions do
 
   alias MiniLineage.Game.Version
 
+  # What a refusal a player can meet says, as docs/canon/messages.md lists it. Every other code is a
+  # guard no click reaches (a list offers only what can be done) and says only `invalid`.
   @errors %{
-    already_started: "You already have a character.",
     invalid: "That is not something you can do.",
-    closed: "The Gatekeeper cannot send you there yet.",
+    already_started: "You already have a character.",
     last_level: "There is no level past the last.",
-    no_ground: "There is nothing to hunt here.",
-    no_shop: "There is no shop here.",
-    unsold: "The shop does not sell that.",
-    full: "You cannot carry any more, so sell or destroy something first.",
-    not_carried: "You do not carry that.",
-    equipped: "Take it off before you sell it.",
-    worthless: "The shop will not buy that.",
-    equipped_destroy: "Unequip it before you destroy it.",
-    no_trainer: "Only the trainers of your own village teach you.",
-    no_lesson: "The trainer does not teach that.",
-    too_soon: "You are not yet ready to learn that.",
-    out_of_order: "You must learn the level before it first.",
+    full: "Your inventory is full.",
+    cannot_afford: "You do not have enough Adena.",
+    poor: "You do not have enough Adena.",
     no_sp: "You do not have enough SP to learn this skill.",
-    not_wearable: "That is not something you can equip.",
-    not_potion: "That is not something you drink.",
-    whole: "You are already in full health.",
-    no_share: "That is not a share you can choose.",
-    no_heal: "You know no skill that mends, so there is nothing to order.",
-    heal_unused: "Your orders leave your heal unused, so there is no mend to order.",
-    no_switch: "You cannot give that order for that skill.",
-    fallen: "Your road has ended, and a ghost changes nothing.",
-    living: "Only a run that has ended begins again."
+    whole: "You are already at full health.",
+    fallen: "Your road has ended, and a ghost changes nothing."
   }
 
   # Not rules of the game: what a debug build hands over so the Gatekeeper and the trainer can be tried.
@@ -61,11 +46,11 @@ defmodule MiniLineage.Game.Actions do
   def start(player, race_id, path, name) do
     cond do
       Player.started?(player) ->
-        {player, {:error, :already_started, @errors.already_started}}
+        refuse(player, :already_started)
 
       true ->
         case validate_start(race_id, path, name) do
-          :invalid -> {player, {:error, :invalid, @errors.invalid}}
+          :invalid -> refuse(player, :invalid)
           {:ok, race, path, name} -> begin(player, race, path, name)
         end
     end
@@ -98,15 +83,12 @@ defmodule MiniLineage.Game.Actions do
     route = Player.started?(player) && Rules.route(player.location, to)
 
     cond do
-      !route -> {player, {:error, :invalid, @errors.invalid}}
-      !Rules.town(to).open? -> {player, {:error, :closed, @errors.closed}}
-      player.adena < route.fee -> {player, {:error, :poor, poor(player.location, route.fee)}}
+      !route -> refuse(player, :invalid)
+      !Rules.town(to).open? -> refuse(player, :closed)
+      player.adena < route.fee -> refuse(player, :poor)
       true -> arrive(player, Rules.town(to), route.fee)
     end
   end
-
-  defp poor(from, fee),
-    do: "#{Rules.town(from).gatekeeper} will not send you on for less than #{Format.adena(fee)}."
 
   defp arrive(player, town, fee) do
     gatekeeper = Rules.town(player.location).gatekeeper
@@ -127,7 +109,7 @@ defmodule MiniLineage.Game.Actions do
 
       {Player.disengage(player), {:ok, %{text: text, type: :info}}}
     else
-      {player, {:error, :no_ground, @errors.no_ground}}
+      refuse(player, :no_ground)
     end
   end
 
@@ -140,7 +122,7 @@ defmodule MiniLineage.Game.Actions do
   def hunt(player) do
     ground = Player.started?(player) && Rules.ground_of(player.location)
 
-    if ground, do: fight(player, ground), else: {player, {:error, :no_ground, @errors.no_ground}}
+    if ground, do: fight(player, ground), else: refuse(player, :no_ground)
   end
 
   defp fight(player, ground) do
@@ -263,19 +245,17 @@ defmodule MiniLineage.Game.Actions do
 
     cond do
       !Player.started?(player) or !Rules.village?(player.location) ->
-        {player, {:error, :no_shop, @errors.no_shop}}
+        refuse(player, :no_shop)
 
       !item or !Shop.stocks?(player, item) or count < 1 or
           (count > 1 and !Rules.stacks?(item)) ->
-        {player, {:error, :unsold, @errors.unsold}}
+        refuse(player, :unsold)
 
       player.adena < Shop.price(item) * count ->
-        {player,
-         {:error, :cannot_afford,
-          "You cannot afford #{bought(item, count)} for #{Format.adena(Shop.price(item) * count)}."}}
+        refuse(player, :cannot_afford)
 
       !stack and length(player.items) >= Rules.capacity() ->
-        {player, {:error, :full, @errors.full}}
+        refuse(player, :full)
 
       true ->
         cost = Shop.price(item) * count
@@ -311,16 +291,16 @@ defmodule MiniLineage.Game.Actions do
 
     cond do
       !Player.started?(player) or !Rules.village?(player.location) ->
-        {player, {:error, :no_shop, @errors.no_shop}}
+        refuse(player, :no_shop)
 
       !entry ->
-        {player, {:error, :not_carried, @errors.not_carried}}
+        refuse(player, :not_carried)
 
       entry.equipped ->
-        {player, {:error, :equipped, @errors.equipped}}
+        refuse(player, :equipped)
 
       Shop.buyback(Rules.item(entry.name)) == 0 ->
-        {player, {:error, :worthless, @errors.worthless}}
+        refuse(player, :worthless)
 
       true ->
         count = Map.get(entry, :count, 1)
@@ -345,7 +325,7 @@ defmodule MiniLineage.Game.Actions do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
 
     if entry && Rules.stacks?(Rules.item(entry.name)) do
-      {player, {:error, :not_wearable, @errors.not_wearable}}
+      refuse(player, :not_wearable)
     else
       wear(player, entry, id)
     end
@@ -361,21 +341,21 @@ defmodule MiniLineage.Game.Actions do
       case item.kind == :weapon && unsuited(player, item) do
         [skill] ->
           text =
-            "You equip the #{Names.item(item)}, but your #{Names.skill(skill)} skill needs #{Narrative.weapon_for(skill)}, so you will fight without it."
+            "You have equipped your #{Names.item(item)}, but your #{Names.skill(skill)} skill needs #{Narrative.weapon_for(skill)}, so you will fight without it."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         [_, _ | _] = skills ->
           text =
-            "You equip the #{Names.item(item)}, but your #{Format.list(Enum.map(skills, &Names.skill/1), "and")} skills cannot be used with #{Narrative.weapon(item.type)}, so you will fight without them."
+            "You have equipped your #{Names.item(item)}, but your #{Format.list(Enum.map(skills, &Names.skill/1), "and")} skills cannot be used with #{Narrative.weapon(item.type)}, so you will fight without them."
 
           {player, {:ok, %{text: text, type: :danger}}}
 
         _fits ->
-          {player, {:ok, %{text: "You equip the #{Names.item(item)}.", type: :info}}}
+          {player, {:ok, %{text: "You have equipped your #{Names.item(item)}.", type: :info}}}
       end
     else
-      {player, {:error, :not_carried, @errors.not_carried}}
+      refuse(player, :not_carried)
     end
   end
 
@@ -389,13 +369,13 @@ defmodule MiniLineage.Game.Actions do
 
     cond do
       !entry ->
-        {player, {:error, :not_carried, @errors.not_carried}}
+        refuse(player, :not_carried)
 
       !Rules.stacks?(item) ->
-        {player, {:error, :not_potion, @errors.not_potion}}
+        refuse(player, :not_potion)
 
       player.health >= max_hp ->
-        {player, {:error, :whole, @errors.whole}}
+        refuse(player, :whole)
 
       true ->
         healed = min(item.heals, max_hp - player.health)
@@ -417,7 +397,7 @@ defmodule MiniLineage.Game.Actions do
     if Player.started?(player) and share in Player.potion_shares() do
       {%{player | potion_at: share}, {:ok, nil}}
     else
-      {player, {:error, :no_share, @errors.no_share}}
+      refuse(player, :no_share)
     end
   end
 
@@ -427,13 +407,13 @@ defmodule MiniLineage.Game.Actions do
   def heal_at(player, moment, share) when moment in [:pull, :fight] do
     cond do
       not Player.started?(player) or share not in Player.heal_shares() ->
-        {player, {:error, :no_share, @errors.no_share}}
+        refuse(player, :no_share)
 
       not Player.heals?(player) ->
-        {player, {:error, :no_heal, @errors.no_heal}}
+        refuse(player, :no_heal)
 
       not Player.heals_in_use?(player) ->
-        {player, {:error, :heal_unused, @errors.heal_unused}}
+        refuse(player, :heal_unused)
 
       true ->
         key = if moment == :pull, do: :heal_pull_at, else: :heal_fight_at
@@ -449,7 +429,7 @@ defmodule MiniLineage.Game.Actions do
       unused = player.unused |> List.delete(name) |> then(&if(use?, do: &1, else: [name | &1]))
       {%{player | unused: Enum.sort(unused)}, {:ok, nil}}
     else
-      {player, {:error, :no_switch, @errors.no_switch}}
+      refuse(player, :no_switch)
     end
   end
 
@@ -460,7 +440,7 @@ defmodule MiniLineage.Game.Actions do
     if Player.started?(player) do
       {Map.merge(player, Player.default_orders()), {:ok, nil}}
     else
-      {player, {:error, :invalid, @errors.invalid}}
+      refuse(player, :invalid)
     end
   end
 
@@ -479,9 +459,9 @@ defmodule MiniLineage.Game.Actions do
     if entry do
       items = Enum.map(player.items, &if(&1.id == id, do: %{&1 | equipped: false}, else: &1))
       player = clamp_bars(%{player | items: items})
-      {player, {:ok, %{text: "You unequip the #{Names.item(entry.name)}.", type: :info}}}
+      {player, {:ok, %{text: "#{Names.item(entry.name)} has been disarmed.", type: :info}}}
     else
-      {player, {:error, :not_carried, @errors.not_carried}}
+      refuse(player, :not_carried)
     end
   end
 
@@ -497,19 +477,19 @@ defmodule MiniLineage.Game.Actions do
 
     cond do
       !set or player.location != Rules.hometown(player.race_id) ->
-        {player, {:error, :no_trainer, @errors.no_trainer}}
+        refuse(player, :no_trainer)
 
       !lesson ->
-        {player, {:error, :no_lesson, @errors.no_lesson}}
+        refuse(player, :no_lesson)
 
       Player.level(player) < lesson.learn_at ->
-        {player, {:error, :too_soon, @errors.too_soon}}
+        refuse(player, :too_soon)
 
       Map.get(player.skills, skill, 0) != level - 1 ->
-        {player, {:error, :out_of_order, @errors.out_of_order}}
+        refuse(player, :out_of_order)
 
       player.sp < lesson.sp ->
-        {player, {:error, :no_sp, @errors.no_sp}}
+        refuse(player, :no_sp)
 
       true ->
         player = %{
@@ -519,7 +499,7 @@ defmodule MiniLineage.Game.Actions do
         }
 
         text =
-          ~s(You learn #{Names.skill(skill, level)} for <span class="sp">#{Format.number(lesson.sp)} SP</span>.)
+          "You have earned #{Names.skill(skill, level)} for #{Format.sp(lesson.sp)}."
 
         {clamp_bars(player), {:ok, %{text: text, type: :success}}}
     end
@@ -533,14 +513,14 @@ defmodule MiniLineage.Game.Actions do
 
     cond do
       !entry ->
-        {player, {:error, :not_carried, @errors.not_carried}}
+        refuse(player, :not_carried)
 
       entry.equipped ->
-        {player, {:error, :equipped_destroy, @errors.equipped_destroy}}
+        refuse(player, :equipped_destroy)
 
       true ->
         {%{player | items: List.delete(player.items, entry)},
-         {:ok, %{text: "You destroy the #{Names.item(entry.name)}.", type: :info}}}
+         {:ok, %{text: "#{Names.item(entry.name)} has disappeared.", type: :info}}}
     end
   end
 
@@ -549,9 +529,11 @@ defmodule MiniLineage.Game.Actions do
   game start; its process retires it on seeing a fallen run come back unstarted.
   """
   def restart(%{dead: true}), do: {%Player{}, {:ok, %{}}}
-  def restart(player), do: {player, {:error, :living, @errors.living}}
+  def restart(player), do: refuse(player, :living)
 
-  defp fallen(player), do: {player, {:error, :fallen, @errors.fallen}}
+  defp fallen(player), do: refuse(player, :fallen)
+
+  defp refuse(player, code), do: {player, {:error, code, Map.get(@errors, code, @errors.invalid)}}
 
   # A robe taken off lowers Max MP (§23), and MP never stands above it.
   defp clamp_bars(player), do: %{player | mp: min(player.mp, Player.stats(player).max_mp)}
@@ -566,7 +548,7 @@ defmodule MiniLineage.Game.Actions do
 
       {%{player | adena: player.adena + @dev_adena}, {:ok, %{text: text, type: :info}}}
     else
-      {player, {:error, :invalid, @errors.invalid}}
+      refuse(player, :invalid)
     end
   end
 
@@ -576,11 +558,11 @@ defmodule MiniLineage.Game.Actions do
   def dev_sp(player) do
     if Version.debug_build?() and Player.started?(player) do
       text =
-        ~s(A debug build hands you <span class="sp">#{Format.number(@dev_sp)} SP</span> to learn with.)
+        "A debug build hands you #{Format.sp(@dev_sp)} to learn with."
 
       {%{player | sp: player.sp + @dev_sp}, {:ok, %{text: text, type: :info}}}
     else
-      {player, {:error, :invalid, @errors.invalid}}
+      refuse(player, :invalid)
     end
   end
 
@@ -599,7 +581,7 @@ defmodule MiniLineage.Game.Actions do
            experience: halfway(player)
        }, {:ok, %{text: text, type: :info}}}
     else
-      {player, {:error, :invalid, @errors.invalid}}
+      refuse(player, :invalid)
     end
   end
 
@@ -611,7 +593,7 @@ defmodule MiniLineage.Game.Actions do
       text = ~s(A debug build leaves you <span class="hp">1 HP</span> to hunt with.)
       {%{player | health: 1}, {:ok, %{text: text, type: :info}}}
     else
-      {player, {:error, :invalid, @errors.invalid}}
+      refuse(player, :invalid)
     end
   end
 
@@ -626,10 +608,10 @@ defmodule MiniLineage.Game.Actions do
   defp dev_reach(player, target) do
     cond do
       not (Version.debug_build?() and Player.started?(player)) ->
-        {player, {:error, :invalid, @errors.invalid}}
+        refuse(player, :invalid)
 
       Math.max_level?(Player.level(player)) ->
-        {player, {:error, :last_level, @errors.last_level}}
+        refuse(player, :last_level)
 
       true ->
         needed = Math.xp_for_level(target) - player.experience
@@ -671,7 +653,7 @@ defmodule MiniLineage.Game.Actions do
         })
 
       text =
-        ~s(A debug build puts you back at <span class="level">Level #{@dev_twink_level}</span> with every skill your trainer teaches by then, the best your village sells, #{count} × #{Names.item(potion)}, <span class="sp">#{Format.number(@dev_twink_sp)} SP</span> and #{Format.adena(@dev_twink_adena)}.)
+        ~s(A debug build puts you back at <span class="level">Level #{@dev_twink_level}</span> with every skill your trainer teaches by then, the best your village sells, #{count} × #{Names.item(potion)}, #{Format.sp(@dev_twink_sp)} and #{Format.adena(@dev_twink_adena)}.)
 
       flash =
         if @dev_twink_level > level,
@@ -684,7 +666,7 @@ defmodule MiniLineage.Game.Actions do
 
       {twinked, {:ok, flash}}
     else
-      {player, {:error, :invalid, @errors.invalid}}
+      refuse(player, :invalid)
     end
   end
 

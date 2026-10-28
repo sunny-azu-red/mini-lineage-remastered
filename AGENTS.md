@@ -527,8 +527,16 @@ Each of these is here because it was got wrong once.
 
 - **The game's prose joins its clauses rather than splitting them with an em dash**: a dash in a
   sentence a player reads becomes `because`, `and` or `nor`. Comments and docs are exempt.
-- **Adena always comes with its coin and its gold.** An amount in a message is `Format.adena/1`
-  (`🪙 N Adena` in `.adena`), and a table cell or figure is `.adena` led by 🪙.
+- **Adena always comes with its coin and its gold, and SP with its book.** An amount in a message
+  is `Format.adena/1` (`🪙 N Adena` in `.adena`) or `Format.sp/1` (`📖 N SP` in `.sp`), and a
+  table cell or figure is `.adena` led by 🪙 or `.sp` led by 📖, which is SP's alone (the guild is
+  ⛩️), as 🪙 Buy and 📖 Learn spend them.
+- **A message the client has is its system message, whole**, its own parameters filled in and
+  nothing added but the cost a lesson joins: "You do not have enough Adena.", "You have equipped
+  your 🗡️ Long Sword.". Where it has none, the game's own line, one bare sentence.
+  `docs/canon/messages.md` lists which is which and `messages_test.exs` holds `Actions` to it. A
+  refusal no click reaches keeps its own code and says `invalid`; one a player can meet (or a
+  second tab) gets a line in `Actions`' `@errors`.
 - **A stat is named as Lineage II's client names it, through `Format.stat/1` and nowhere else**:
   P. Atk., M. Atk., P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical,
   and ours where it has none or several (M. Critical, Block, Shield P. Def., HP Recovery, MP

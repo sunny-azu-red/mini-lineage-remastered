@@ -57,6 +57,7 @@ The formulas behind rules §4 to §11 come from L2J Mobius CT_0 Interlude
 | [movement.md](movement.md) | How far everything reaches and how fast it moves: every monster's attack range, run speed and aggression, every spell's and weapon's range, the starting classes' run speed, the slows, and how aggressive and passive monsters engage |
 | [bosses-and-buffs.md](bosses-and-buffs.md) | Grand and raid bosses with levels and lairs, buffs, chants and debuffs with the classes that cast them |
 | [death.md](death.md) | What the client says to a character that has died, and Shilen, the goddess of death |
+| [messages.md](messages.md) | What the client says on a trade, a lesson, an item equipped, unequipped, used or destroyed, and on a refusal, and what the game says in its place |
 
 ## Not researched yet
 
@@ -326,3 +327,13 @@ P. Def., M. Def., Atk. Spd., Casting Spd., Speed, Accuracy, Evasion, Critical. T
   "You use $s1."), because the screen shows the swing and the weapon. A text game cannot, so the
   owner chose to have every attack say how it was made and with what: a bow shoots, fists punch,
   any other weapon swings, bare hands punch, a skill is used and a spell cast.
+- **A refusal is the client's message, whole, where the client has one** ([messages.md](messages.md)):
+  "You do not have enough Adena.", "Your inventory is full.", "You do not have enough SP to learn
+  this skill.", naming neither the item nor the price, which the row picked already shows. Adena
+  keeps the capital the game writes it with everywhere, where the client writes "adena".
+- **A lesson learned names its cost in the same sentence:** "You have earned 🌪️ Wind Strike 2 for
+  📖 1,500 SP.", where the client sends id 277 "You have earned $s1." and id 538 "Your SP has
+  decreased by $s1." as two. A trade says what it cost as the game's own line, "You buy the Long
+  Sword for 🪙 4,200 Adena.", where the client says nothing and only the inventory moves.
+- **A potion mends,** "You drink a Lesser Healing Potion and mend 50 HP.", where the client says
+  nothing for a potion and writes a heal's "$s1 HP has been restored.".

@@ -33,7 +33,7 @@ defmodule MiniLineage.Game.Narrative do
       "monster" => monster.name,
       "ground" => ground.name,
       "exp" => Format.number(exp),
-      "sp" => Format.number(sp),
+      "sp" => Format.sp(sp),
       "adena" =>
         if(adena > 0,
           do: ", and #{Format.adena(adena)} from its body",

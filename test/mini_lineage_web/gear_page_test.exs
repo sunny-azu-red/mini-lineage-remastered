@@ -203,7 +203,7 @@ defmodule MiniLineageWeb.GearPageTest do
     refute has_element?(view, "#stock-leather-shirt")
 
     render_hook(view, "buy", %{"item" => "Broadsword"})
-    assert has_element?(view, "#flash", "does not sell that")
+    assert has_element?(view, "#flash", "That is not something you can do.")
     assert stored(session).adena == 20_000
   end
 
@@ -242,7 +242,7 @@ defmodule MiniLineageWeb.GearPageTest do
 
     view |> form("#buy-form", %{"item" => "Broadsword"}) |> render_submit()
 
-    assert has_element?(view, "#flash", "cannot afford")
+    assert has_element?(view, "#flash", "You do not have enough Adena.")
     assert stored(session).adena == 100
   end
 
@@ -303,11 +303,11 @@ defmodule MiniLineageWeb.GearPageTest do
 
     act.("unequip:#{dagger.id}")
     assert %{equipped: false} = carried(session, "Squire's Dagger")
-    assert has_element?(view, "#flash", "You unequip the 🔪 Squire's Dagger")
+    assert has_element?(view, "#flash", "🔪 Squire's Dagger has been disarmed.")
 
     act.("destroy:#{dagger.id}")
     refute carried(session, "Squire's Dagger")
-    assert has_element?(view, "#flash", "destroy the 🔪 Squire's Dagger")
+    assert has_element?(view, "#flash", "🔪 Squire's Dagger has disappeared.")
   end
 
   test "the inventory closes onto the page it was opened from, and onto the town after a reload" do

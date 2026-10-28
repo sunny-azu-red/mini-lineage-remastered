@@ -24,7 +24,7 @@ defmodule MiniLineage.Game.Narratives do
   @arrived ~s({they} pay {gatekeeper} {fee} and step out into {townEmoji} {town}.)
 
   # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
-  @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and <span class="sp">{sp} SP</span>{adena}.)
+  @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and {sp}{adena}.)
   # The gold alert a new level raises over the page, beside the fight's own line: the client's
   # system message 96 (docs/canon/skills.md).
   @levelled "{Their} level has increased!"

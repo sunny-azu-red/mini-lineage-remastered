@@ -48,7 +48,7 @@ defmodule MiniLineageWeb.Screens do
   defp icon("trader-armour", _view), do: "🛡️"
   defp icon("trader-magic", _view), do: "⚗️"
   defp icon("trader-sell", _view), do: "💰"
-  defp icon("guild", _view), do: "📖"
+  defp icon("guild", _view), do: "⛩️"
   defp icon("highscores", _view), do: "🏛️"
   defp icon(_screen, _view), do: nil
 
@@ -263,7 +263,7 @@ defmodule MiniLineageWeb.Screens do
   defp town_places(view) do
     [%{value: "gatekeeper", label: "🌀 Gatekeeper"}] ++
       if(view.stock != [], do: [%{value: "trader", label: "🛒 Traders"}], else: []) ++
-      if(view.lessons != [], do: [%{value: "guild", label: "📖 #{view.guild.name}"}], else: []) ++
+      if(view.lessons != [], do: [%{value: "guild", label: "⛩️ #{view.guild.name}"}], else: []) ++
       if(view.ground, do: [%{value: "hunt", label: "⚔️ #{view.ground.name}"}], else: []) ++
       [%{value: "highscores", label: "🏛️ Monument of Heroes"}]
   end
@@ -376,7 +376,7 @@ defmodule MiniLineageWeb.Screens do
       </div>
       <%!-- What the hunt has earned to spend at the guild, so nobody walks there to find out. --%>
       <div id="orders-footer" class="stat-row orders-footer" phx-hook="AnimatedValues">
-        <span class="stat-value sp"><.figure key="orders-sp" value={@view.sp} /> SP</span>
+        <span class="stat-value sp">📖 <.figure key="orders-sp" value={@view.sp} /> SP</span>
         <%!-- Written as the purse's Open, the emoji outside the control. Disabled rather than swapped
               for text when there is nothing to put back: the swap rebuilt the row and the SP blinked. --%>
         <span class="stat-value row-end">
@@ -601,14 +601,14 @@ defmodule MiniLineageWeb.Screens do
 
     ~H"""
     <p id="guild-intro" phx-hook="AnimatedValues" phx-no-format>
-      {Format.list(@view.guild.trainers, "and")} teach their own here in {@view.town.emoji} {@view.town.name}, a level at a time, for the skill points you earn on the hunt. You have <span class="sp"><.figure key="guild-sp" value={@view.sp} /> SP</span>.
+      {Format.list(@view.guild.trainers, "and")} teach their own here in {@view.town.emoji} {@view.town.name}, a level at a time, for the skill points you earn on the hunt. You have <span class="sp">📖 <.figure key="guild-sp" value={@view.sp} /> SP</span>.
     </p>
     <p :if={@shelves == []} id="learned-out">
       They have taught you all they can for now.
     </p>
     <.data_table :if={@shelves != []} id="lessons" sort={@sort}>
       <:col class="name" sort="skill">Skill</:col>
-      <:col class="num" title="Level Required" sort="learn_at">Level Req</:col>
+      <:col class="num" title="Required Level" sort="learn_at">Level</:col>
       <:col title="Skill Points" sort="sp">SP</:col>
       <tbody :for={shelf <- @shelves} id={"shelf-#{slug(shelf.name)}"}>
         <tr :if={length(@shelves) > 1} class="shelf">
@@ -628,7 +628,7 @@ defmodule MiniLineageWeb.Screens do
             <% end %>
           </td>
           <td class="num level">{lesson.learn_at}</td>
-          <td class="sp">{Format.number(lesson.sp)}</td>
+          <td class="sp">📖 {Format.number(lesson.sp)}</td>
         </tr>
       </tbody>
     </.data_table>

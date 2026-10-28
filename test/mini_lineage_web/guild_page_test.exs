@@ -56,7 +56,7 @@ defmodule MiniLineageWeb.GuildPageTest do
   test "the home village leads to its guild, whose lessons are the set's own" do
     {view, session, conn} = human(build_conn(), 100)
 
-    assert has_element?(view, ~s(#travel-form option[value="guild"]), "📖 Warriors Guild")
+    assert has_element?(view, ~s(#travel-form option[value="guild"]), "⛩️ Warriors Guild")
     view |> form("#travel-form", %{"place" => "guild"}) |> render_submit()
 
     assert_patch(view, "/talking-island-village/warriors-guild")
@@ -98,7 +98,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     assert has_element?(view, "#skill-power-strike .mp", "10 MP")
   end
 
-  test "the lessons open on Level Req, a header turns them round, and the dropdown follows" do
+  test "the lessons open on Level, a header turns them round, and the dropdown follows" do
     {_view, _session, conn} = human(build_conn(), 100)
     {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
     # Within the Active shelf, past its heading; the dropdown's Active group the same.
@@ -114,17 +114,17 @@ defmodule MiniLineageWeb.GuildPageTest do
     header = &~s(#lessons button[phx-value-key="#{&1}"])
 
     # Level 1's two lines in the trainer's order, then Power Strike 2 at level 5.
-    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
+    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level")
     assert first.("mortal-blow-1") and last.("power-strike-2")
     assert offered.("Mortal Blow|1")
 
     view |> element(header.("learn_at")) |> render_click()
-    assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Level Req")
+    assert has_element?(view, ~s(#lessons th[aria-sort="descending"]), "Level")
     assert first.("power-strike-2") and last.("power-shot-1")
     assert offered.("Power Strike|2")
 
     view |> element(header.("learn_at")) |> render_click()
-    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
+    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level")
 
     view |> element(header.("skill")) |> render_click()
     assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Skill")
@@ -207,7 +207,7 @@ defmodule MiniLineageWeb.GuildPageTest do
     conn = put_req_cookie(conn, MiniLineageWeb.Kept.cookie(), "table%3Alessons=sp%3Adesc")
     {:ok, view, _html} = live(conn, ~p"/talking-island-village/warriors-guild")
 
-    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level Req")
+    assert has_element?(view, ~s(#lessons th[aria-sort="ascending"]), "Level")
     refute has_element?(view, ~s(#lessons th[aria-sort="descending"]))
     refute has_element?(view, "#lessons thead[phx-hook]")
   end

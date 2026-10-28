@@ -407,9 +407,8 @@ try {
         await text('#teleport-form button'));
     await page.click('#teleport-form button');
     await page.waitForSelector('#flash.alert-danger', { timeout: 5000 });
-    check('an empty purse cannot pay the Gatekeeper, who names the fee in gold',
-        (await text('#flash')).includes('Tamil will not send you on for less than 🪙 6,000 Adena') &&
-        await text('#flash .adena') === '🪙 6,000 Adena',
+    check('an empty purse cannot pay the Gatekeeper, as the client says it, the fee left to the table',
+        (await text('#flash')) === 'You do not have enough Adena.',
         await text('#flash'));
     check('...and goes nowhere', new URL(page.url()).pathname === '/orc-village/gatekeeper', page.url());
 
@@ -904,7 +903,7 @@ try {
 
     // ---- the guild (rules §25) ------------------------------------------------------------------
     check('the town leads to the set\'s own guild by its name',
-        await text('#travel-form option[value="guild"]') === 'Pick 📖 Temple of Shilen',
+        await text('#travel-form option[value="guild"]') === 'Pick ⛩️ Temple of Shilen',
         await text('#travel-form option[value="guild"]'));
     await page.selectOption('#travel-form select', 'guild');
     await page.click('#travel-form button');
@@ -925,7 +924,7 @@ try {
         { timeout: 5000 });
     check('the home village\'s guild teaches the next line of the set\'s own first skill, unmuted, for its SP',
         await page.locator('#lesson-mortal-blow-2[data-status="ready"]:not(.locked)').count() === 1 &&
-        await text('#lesson-mortal-blow-2 td.sp') === '100', await text('#lesson-mortal-blow-2'));
+        await text('#lesson-mortal-blow-2 td.sp') === '📖 100', await text('#lesson-mortal-blow-2'));
     const learnedPanel = () => page.locator('#screen h2', { hasText: 'Learned Skills' }).count();
     check('...to a Fighter that starts knowing its weapon\'s skill, in the Learned Skills panel beside it, which folds',
         await learnedPanel() === 1 && await page.locator('#learned-skills .panel-toggle').count() === 1
@@ -939,7 +938,7 @@ try {
         await page.locator('#lesson-mortal-blow-1').count() === 0 &&
         await page.locator('#lesson-mortal-blow-3').count() === 0);
     check('...with the level it requires and its SP named in full on hover',
-        await page.getAttribute('#lessons th:nth-child(2)', 'title') === 'Level Required' &&
+        await page.getAttribute('#lessons th:nth-child(2)', 'title') === 'Required Level' &&
         await page.getAttribute('#lessons th:nth-child(3)', 'title') === 'Skill Points');
     check('...opening on the level each line requires',
         await page.locator('#lessons th[aria-sort="ascending"] button[phx-value-key="learn_at"]').count() === 1);

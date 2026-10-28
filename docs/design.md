@@ -62,7 +62,7 @@ was got wrong once.
   name, then a 22px track ending the column, so the tracks line up. On, the track is green, as
   gold is the name's; off, the track and the name mute, and a hover rings the track and lifts its knob. The track follows the name because before
   it, beside the emoji, the two marks crowded. The last row is a footer, as the Inventory's purse
-  row is: SP on the left in `.sp`, with no emoji (📖 is the guild's), and 🧹 Reset to Default on
+  row is: SP on the left in `.sp`, led by its 📖 as the purse's Adena is by 🪙, and 🧹 Reset to Default on
   the right, a `.link-button` drawn as Open is, and disabled at the defaults: muted, with no
   underline. A control that comes and goes beside a figure is disabled, never swapped for text,
   since the swap rebuilds the row and the figure beside it blinks. On a phone a slider's label

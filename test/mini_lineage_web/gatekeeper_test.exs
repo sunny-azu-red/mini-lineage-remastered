@@ -96,8 +96,8 @@ defmodule MiniLineageWeb.GatekeeperTest do
     {:ok, view, _html} = live(conn, ~p"/elven-village/gatekeeper")
 
     teleport(view, "town-of-gludio")
-    assert has_element?(view, "#flash", "Mirabel will not send you on for less than")
-    assert has_element?(view, "#flash .adena", "🪙 3,700 Adena")
+    assert has_element?(view, "#flash", "You do not have enough Adena.")
+    refute has_element?(view, "#flash .adena")
     assert stored(session).location == "elven-village"
     assert Characters.snapshot(session).adena == 3_699
   end
@@ -150,7 +150,7 @@ defmodule MiniLineageWeb.GatekeeperTest do
     for slug <- ~w(town-of-giran giran-harbor) do
       assert view |> element("#route-#{slug}") |> render() =~ "not open yet"
       assert has_element?(view, ~s(#teleport-form option[value="#{slug}"][disabled]))
-      assert render_hook(view, "travel", %{"to" => slug}) =~ "cannot send you there yet"
+      assert render_hook(view, "travel", %{"to" => slug}) =~ "That is not something you can do."
     end
 
     assert %{location: "town-of-dion", adena: 100_000} = Characters.snapshot(session)

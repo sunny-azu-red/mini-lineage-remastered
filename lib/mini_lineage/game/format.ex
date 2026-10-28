@@ -151,6 +151,9 @@ defmodule MiniLineage.Game.Format do
   @doc "An amount of Adena as every message writes it: the coin, the figure and the word, in gold."
   def adena(amount), do: ~s(<span class="adena">🪙 #{number(amount)} Adena</span>)
 
+  @doc "An amount of SP as every message writes it: the book, the figure and the word."
+  def sp(amount), do: ~s(<span class="sp">📖 #{number(amount)} SP</span>)
+
   @doc "Names joined as a sentence says them: \"a\", \"a or b\", \"a, b or c\"."
   def list([only], _word), do: only
 
