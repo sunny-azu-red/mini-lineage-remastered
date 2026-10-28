@@ -175,11 +175,11 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   by the Mystic on itself, as a lone Mystic did there. **An aura holds 2 minutes,** out of the
   fight too, where Lineage II's held 20: a fight here lasts seconds, so 20 minutes was every fight
   of a sitting on one cast.
-- **The character chooses its own skills in a fight** (rules §20): its toggle, a shackle on a
-  monster with no spells once it has run in, its strongest spell and of two as strong the cheaper,
-  then while its spells rest its heal below the player's share of HP, or a curse on a monster
-  above half its HP, and before the pull its auras, then its heal up to that share. A Mystic
-  lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
+- **The character chooses its own skills in a fight** (rules §20): its toggle, a poison on a
+  monster that is not aggressive, a shackle on a monster with no spells once it has run in, its
+  strongest spell and of two as strong the cheaper, then while its spells rest its heal below the
+  player's share of HP, or a curse on a monster above half its HP, and before the pull its auras, then its heal up to that share. A
+  Mystic lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
   player gives orders, and may leave any skill but a mastery unused. Life Drain, which returns 80% of
   what it deals, is cast only below 85% of HP, as the heal it mostly is: cast whenever ready, its
   27 MP a cast kept the Orc Mystic the slowest set (`docs/balance.md`).
@@ -211,6 +211,13 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   neither word is in its client: its Over-hit is an EXP bonus, not a figure.
 - **The Orc Mystic's Chill Flame can take the last HP,** where Lineage II's leaves 1: its first
   spell is a burn whose cast outlasts it, so without that it paid for every kill in blows taken.
+- **Curse: Poison ticks every second and can take the last HP,** its 24 HP ten times over 10
+  seconds where Lineage II's came every 3 seconds for 30 and left 1. A fight here lasts 8 to 23
+  seconds, so Lineage II's poison dealt 28 to 53 HP a cast of its 240, against 86 to 148 for a
+  Wind Strike of the same 4-second cast, and was cast once a fight at most. It opens the fight on
+  a monster that is not aggressive, as a player lays a poison and lets it run; cast first at an
+  aggressive one, its slow damage let the Cave Fang Spider kill the Dark Mystic resting below half
+  in up to 38 runs of 200 (`docs/balance.md`).
 - **Skills are learned with level and SP alone, at the trainers of the character's own village.**
   In Lineage II some needed a spellbook from the village trader, and any town's trainers for your
   race would teach you.

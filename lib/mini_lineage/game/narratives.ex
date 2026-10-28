@@ -66,7 +66,7 @@ defmodule MiniLineage.Game.Narratives do
     burn:
       ~s({their} {skill} burns the {monster} for <span class="magic">{amount} damage</span>{overkill}),
     poison:
-      ~s({their} {skill} eats at the {monster} for <span class="magic">{amount} damage</span>),
+      ~s({their} {skill} eats at the {monster} for <span class="magic">{amount} damage</span>{overkill}),
     foe_blow: ~s(the {monster} {motion} and hits {object} for {amount}{overkill}),
     foe_critical:
       ~s(the {monster} {motion} and lands a critical hit on {object} for <span class="crit">{amount} damage</span>{overkill}),

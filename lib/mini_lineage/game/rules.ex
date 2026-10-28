@@ -425,8 +425,8 @@ defmodule MiniLineage.Game.Rules do
       reuse: 12_000,
       cast: 4_000,
       land: 70,
-      every: 3_000,
-      lasts: 30_000
+      every: 1_000,
+      lasts: 10_000
     },
     "Wind Shackle" => %{
       kind: :shackle,

@@ -19,7 +19,9 @@ Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Master
 both, each multiplying before it adds as Lineage II does, every line at Lineage II's price but
 level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Lineage II's do, and
 catching as aCis's do: three times as often against an arrow or a critical, and five blows in a
-hundred perfectly. One
+hundred perfectly, and the character's own order of casts: of two spells as strong the cheaper
+first, a shackle on a monster with no spells once it has run in, and Curse: Poison ticking every
+second and able to kill, laid first on a monster that is not aggressive. One
 `--final` reading of that build, 200 seeded runs of every set up its village's ladder to level 20,
 once per weapon path its skills can use, each run seeded on its own; at the defaults none of them
 died. The bench learns every line its weapon uses and every mastery, which a player need not.
@@ -215,7 +217,8 @@ Minutes of play to level 20 at the defaults, resting and fighting: before the fi
 Anti Magic for every set and every line past level 1 at Lineage II's prices (`87027a5` and Robe
 Mastery's after it, and the Mystic's Weapon Mastery multiplying before it adds), the steps in one
 column, then with the bench playing as a player would, with every shield costing 8 Evasion
-and catching as aCis's do, and now with casts and reuses keeping what is left of a round.
+and catching as aCis's do, and now with casts and reuses keeping what is left of a round and the
+Dark Mystic's casts in a player's order (the only set that moved).
 Each step is compared run for run (`bench/compare.exs`).
 
 | Set | Path | Before distance | With distance | 20-minute auras | 2-minute auras | Pieces priced | Armor, Robe Mastery | Masteries | Bench plays meta | Shields cost Evasion | Now |
@@ -226,10 +229,28 @@ Each step is compared run for run (`bench/compare.exs`).
 | Elven Fighter | bow | 233 | 216 | 216 | 225 | 232 | 228 | 211 | 211 | 211 | 211 |
 | Elven Mystic | staff 1h / 2h | 220 / 223 | 204 / 205 | 204 / 205 | 204 / 205 | 210 / 212 | 208 / 208 | 195 / 193 | 195 / 194 | 194 / 194 | **172 / 169** |
 | Dark Fighter | dagger | 241 | 230 | 228 | 239 | 246 | 239 | 220 | 223 | 223 | 224 |
-| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 240 / 239 | 238 / 236 |
+| Dark Mystic | staff 1h / 2h | 321 / 324 | 338 / 338 | 265 / 266 | 276 / 276 | 281 / 287 | 277 / 282 | 240 / 238 | 240 / 239 | 240 / 239 | 235 / 233 |
 | Orc Fighter | fists / sword 1h / 2h | 264 / 280 / 262 | 271 / 286 / 269 | 268 / 281 / 266 | 268 / 281 / 266 | 282 / 291 / 281 | 278 / 286 / 277 | 247 / 253 / 246 | 245 / 252 / 246 | 245 / 255 / 247 | 245 / 255 / 247 |
 | Orc Mystic | staff 1h / 2h | 312 / 312 | 309 / 309 | 280 / 286 | 291 / 298 | 289 / 294 | 277 / 280 | **274 / 273** | 274 / 274 | **273 / 274** | **272 / 273** |
 
+- **The Dark Mystic casts as a player would and is 0.3% to 1.5% faster, drinking 5% to 12% fewer
+  potions.** Three changes, each measured alone against the one before it:
+  - Of two spells as strong, the cheaper goes first. From level 14 Wind Strike 3 and Vampiric
+    Touch 1 are both power 21, and Vampiric Touch had opened every fight, its mend all overheal on
+    a character still whole, for 28 MP where Wind Strike costs 15. This alone made the set 2.0% to
+    2.3% faster.
+  - Wind Shackle is laid on a monster with no spells once it has run in. It had been cast only while
+    the spells rested, which from 14 they never did, so it was never cast at full MP; now a quarter
+    to half of the fights have it. Time moves 0.0% to 0.7%, potions fall up to 9%, and resting at
+    half the set dies in 4 runs of 600 rather than 11.
+  - Curse: Poison ticks every second for 10 seconds and can take the last HP, and opens the fight on
+    a monster that is not aggressive. With Lineage II's 3 seconds for 30 a poison dealt 28 to 53 HP
+    a cast in fights of 8 to 23 seconds; now 80 to 146, about a Wind Strike's, and it is cast in
+    every fight rather than at most one. Time moves 0.0% to 1.8% and potions fall 4% to 8%.
+
+  The spread from the fastest set to the slowest is unchanged at every setting. Without a shield
+  the Dark Mystic dies more to the Balor Orc Archer at 8, a passive bow whose first shots land
+  while the poison is cast, but that build is off-meta: it dies more and is no faster.
 - **A spell whose cast ends on a monster already felled strikes nothing,** where it once struck the
   body for nothing and rolled its magic critical. Only the Orc Mystic's burn fells a monster while a
   cast is under way, so only its runs move, re-seated by that one roll: 0.3% at most, its deaths on
@@ -325,13 +346,13 @@ The bench at its defaults rests to full before every hunt, so survival is read w
 resting only once a bar falls below a share, `harsh` and `harsher` in a `--final` matrix. Deaths of
 200 runs a path with Weapon Mastery and Anti Magic and the late lines at Lineage II's prices, then
 with the bench playing as a player would and every shield costing 8 Evasion, then now, with casts
-and reuses keeping what is left of a round:
+and reuses keeping what is left of a round and the Dark Mystic's casts in a player's order:
 
 | Set | Path | Rest below 50% | Rest below 30% | Most often killed by now |
 |---|---|---|---|---|
 | Human Mystic | staff 1h / 2h | 0 / 0, 0 / 0, 0 / 0 | 0 / 0, 0 / 0, 0 / 0 | |
 | Elven Mystic | staff 1h / 2h | 3 / 4, 2 / 1, **0** / **0** | 1 / 4, 1 / 1, **0** / **0** | |
-| Dark Mystic | staff 1h / 2h | 2 / 7, 0 / 5, 1 / 4 | 4 / 11, 0 / 9, 0 / 4 | Balor Orc Fighter at 10, Cave Fang Spider at 16 |
+| Dark Mystic | staff 1h / 2h | 2 / 7, 0 / 5, 1 / 4 | 4 / 11, 0 / 9, 2 / 6 | Balor Orc Fighter at 10, Doom Soldier at 14 |
 | Orc Mystic | staff 1h / 2h | 0 / 0, 0 / 1, 0 / 0 | 1 / 5, 0 / 5, 0 / 7 | Skeleton Longbowman, at 19 |
 | Human Fighter | bow | 59, 8, 8 | 194, 81, 81 | Blade Spider, Talon Spider, at 16 to 18 |
 | Elven Fighter | bow | 34, 34, 34 | 183, 183, 183 | Dread Soldier, Dungeon Skeleton Archer, at 13 and 14 |
@@ -424,13 +445,18 @@ and reuses keeping what is left of a round:
   run alone, as in Lineage II, which let the Sukar Wererat Leader kill the Elven Mystic at level
   19 in 256 to 360 runs of 400 without potions; the Orc Mystic with Soul Cry alone until Chill Flame at 7, as in
   Lineage II, which died at levels 2 to 7 even resting to full (59 runs of 400) and took 20% longer;
-  and a poison cast before the spells, while the monster is above half or only while it runs in,
-  which slowed the Orc Mystic 21% and the Dark Mystic 6% to 13%, since a poison is slow damage that
-  cannot take the last HP, bought with a 4-second cast; every drain cast only below a share of HP,
-  which slowed the Dark Mystic and killed more Dark Fighters, where Life Drain alone pays; and the
+  and Lineage II's poison, 3 seconds a tick for 30, cast before the spells, while the monster is
+  above half or only while it runs in, which slowed the Orc Mystic 21% and the Dark Mystic 6% to
+  13%, since it was slow damage that could not take the last HP, bought with a 4-second cast; every drain cast only below a share of HP,
+  which slowed the Dark Mystic and killed more Dark Fighters, where Life Drain alone pays; the
   six slow casters (the golems, the zombies and the Undead Slave) casting their power-5 poke with
   Lineage II's odds, mostly at a character that is not hitting them, rather than whenever it is
-  ready, which moved no set by more than 1%.
+  ready, which moved no set by more than 1%; Wind Shackle cast at the pull, 5% to 7% slower for the
+  Dark Mystic, the pull no longer a free Wind Strike and a slowed swing worth less than that; and
+  the faster Curse: Poison laid first on every monster, an aggressive one too, 4% to 7% slower,
+  and resting at half without potions the Dark Mystic died in 99 runs of 600 rather than 4, most
+  to the Cave Fang Spider at 16, whose blows a poison's slow damage did not outrun. Laid only once
+  the fight was under way it was 1% to 3% slower and died as often.
 - **The Skeleton Longbowman is the Orc Village ground's hard top rung,** as the Sukar Wererat Leader
   is the Elven ground's: against a full kit at 19 it costs an Orc Fighter 45% to 52% of its HP a
   fight (about 60 of them while the Fighter runs 460 in under its arrows), where the Leader costs
@@ -467,7 +493,7 @@ dying more. The lines are at the end of each setting's report (`Off-meta …`).
 | Dark Fighter, dagger with a shield | **flagged**: 32 to 14, 166 to 125 | 20 to 24, 148 to 170 | 0.4% to 2.8% slower |
 | Human Fighter, one-handed sword without one | 0 to 1, 30 to 83 | 0 to 0, 72 to 70 | 1.0% to 1.8% faster |
 | Orc Fighter, one-handed sword without one | 28 to 40, 192 to 194 | 14 to 35, 174 to 194 | 0.6% to 0.8% faster |
-| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 1 to 6 at half, 0 to 9 at 30%) | up to 1.7% slower, the Dark Mystic up to 1% faster |
+| Any Mystic, one-handed staff without one | the same or more | the same or more (Dark Mystic 1 to 11 at half, 2 to 16 at 30%, to the Balor Orc Archer at 8) | up to 1.7% slower, the Dark Mystic within 0.3% |
 
 - **A dagger with a shield was the strongest build under the old rule,** a shield's block for
   nothing: it halved the dagger Fighters' deaths. With every shield costing 8 Evasion, as in Lineage

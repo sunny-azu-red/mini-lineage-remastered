@@ -314,8 +314,8 @@ defmodule MiniLineage.Game.Narrative do
   defp event({:burn, skill, amount, over}, foe),
     do: fill(:burn, Map.merge(hit(amount, over), %{"skill" => skill, "monster" => foe.name}))
 
-  defp event({:poison, skill, amount}, foe),
-    do: fill(:poison, %{"skill" => skill, "amount" => amount, "monster" => foe.name})
+  defp event({:poison, skill, amount, over}, foe),
+    do: fill(:poison, Map.merge(hit(amount, over), %{"skill" => skill, "monster" => foe.name}))
 
   defp event({:potion, potion, amount, over}, _foe),
     do: fill(:potion, Map.put(mend(amount, over, "amount"), "potion", potion))

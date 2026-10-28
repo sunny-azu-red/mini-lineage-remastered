@@ -486,8 +486,8 @@ weapons (§23); the rest need none.
 - **Aura:** Defense Aura, Shield and Soul Shield raise P. Def. by 8% and Attack Aura P. Atk. by 8%, for
   2 minutes, in the fight and out of it. Shield and Soul Shield are cast on another in Lineage II,
   and the caster is the one here.
-- **Poison:** lands 70% of the time, and then takes power HP every 3 seconds for 30 seconds, never
-  the last HP. It is not cast again on a target already poisoned.
+- **Poison:** lands 70% of the time, and then takes power HP every second for 10 seconds, which can
+  take the last HP. It is not cast again on a target already poisoned.
 - **Shackle:** lands 80% of the time, and then the target swings × 0.83 for 15 seconds.
 - **Toggle:** its MP lights it for the fight, adding its power to P. Atk., and it then drains MP every
   3 seconds (Soul Cry 3 at level 1 and 6 at level 2), going out when the MP runs short.
@@ -572,15 +572,19 @@ this far (a monster's spells as far as §19 gives):
   again.
 - **The character** uses the first of these it knows that is ready and paid for (§19):
   1. a toggle not lit, which a Mystic lights only once its blows reach;
-  2. a shackle, on a monster with no spells once its blows or bow reach the character, while it
+  2. on a monster that is not aggressive, while it has more than half its HP, a poison it does not
+     carry, so a poison opens the fight and is laid again only once it has run out or missed; an
+     aggressive monster is struck at once instead, a poison's slow damage costing rounds of its
+     blows;
+  3. a shackle, on a monster with no spells once its blows or bow reach the character, while it
      has more than half its HP and is not shackled already, so its swing is slowed from its first
      blow and the pull is still a spell;
-  3. the strongest spell (magic, drain or burn), and of two as strong the one costing less MP, but
+  4. the strongest spell (magic, drain or burn), and of two as strong the one costing less MP, but
      a burn not on a monster still burning, and a drain that returns at least half of what it deals
      (Life Drain) only below 85% of its HP, as the heal it mostly is;
-  4. below the share of its HP its orders give, its heal, so a heal fills the time its spells rest
+  5. below the share of its HP its orders give, its heal, so a heal fills the time its spells rest
      and never stops it attacking;
-  5. while the monster has more than half its HP, a poison it does not carry, then a shackle.
+  6. while the monster has more than half its HP, a poison it does not carry, then a shackle.
 
   A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
   else. With none of these ready, it swings its blows (§10), and a physical skill or a blow that is

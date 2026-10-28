@@ -439,7 +439,7 @@ defmodule MiniLineage.Game.NarrativeTest do
         {2, {:drain, "Life Drain", 9, false, 0, 0, 0}},
         {2, {:toggle, "Soul Cry"}},
         {3, {:curse, "Curse: Poison", true}},
-        {3, {:poison, "Curse: Poison", 8}},
+        {3, {:poison, "Curse: Poison", 8, 0}},
         {4, {:curse, "Wind Shackle", false}},
         {4, {:potion, "Lesser Healing Potion", 112, 0}},
         {4, :waiting},

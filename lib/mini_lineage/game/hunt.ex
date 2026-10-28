@@ -216,9 +216,9 @@ defmodule MiniLineage.Game.Hunt do
     end
   end
 
-  # §19: a burn may take the last HP, a poison never does.
+  # §19: a burn and a poison may take the last HP.
   defp burn(s), do: over_time(s, :burn, s.foe)
-  defp poison(s), do: over_time(s, :poison, s.foe - 1)
+  defp poison(s), do: over_time(s, :poison, s.foe)
 
   defp over_time(s, key, most) do
     case Map.fetch!(s, key) do
@@ -234,11 +234,7 @@ defmodule MiniLineage.Game.Hunt do
         dot = %{dot | rounds: dot.rounds - 1, carry: total - trunc(total)}
         s = %{Map.put(s, key, dot) | foe: s.foe - hit}
 
-        cond do
-          hit == 0 -> s
-          key == :burn -> note(s, {:burn, dot.name, hit, trunc(total) - hit})
-          true -> note(s, {key, dot.name, hit})
-        end
+        if hit == 0, do: s, else: note(s, {key, dot.name, hit, trunc(total) - hit})
     end
   end
 
@@ -344,9 +340,9 @@ defmodule MiniLineage.Game.Hunt do
   defp foe_land(%{foe_pending: spell} = s, foe),
     do: foe_effect(%{s | foe_pending: nil}, foe, spell)
 
-  # §20: what a character does when it is free to: light its toggle, shackle a monster that only
-  # swings once its blows reach, cast its strongest spell, and while its spells rest heal when hurt
-  # or curse; otherwise it swings. Its auras went up before.
+  # §20: what a character does when it is free to: light its toggle, poison a monster that waits,
+  # shackle one that only swings once its blows reach, cast its strongest spell, and while its spells
+  # rest heal when hurt or curse; otherwise it swings. Its auras went up before.
   defp character_turn(s, skills, foe) do
     hurt? = s.health * 100 < s.stats.max_hp * s.heal_fight_at
     # A curse is not worth its cast on a monster already half dead.
@@ -357,14 +353,11 @@ defmodule MiniLineage.Game.Hunt do
         skills,
         &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp and blows?(s))
       ) ||
+        ((fresh? and not foe.aggressive?) && poison(s, skills)) ||
         ((fresh? and foe.spells == [] and s.distance <= foe_reach(foe)) && shackle(s, skills)) ||
         strongest(s, skills, &(&1.kind in @spells and not spent?(s, &1))) ||
         (hurt? && strongest(s, skills, &(&1.kind == :heal))) ||
-        if(fresh?,
-          do:
-            Enum.find(skills, &(&1.kind == :poison and s.poison == nil and ready?(s, &1))) ||
-              shackle(s, skills)
-        )
+        if(fresh?, do: poison(s, skills) || shackle(s, skills))
 
     case choice do
       nil -> s |> dry(skills) |> out_of_reach(skills, foe)
@@ -372,6 +365,9 @@ defmodule MiniLineage.Game.Hunt do
       skill -> cast(s, skill, foe)
     end
   end
+
+  defp poison(s, skills),
+    do: Enum.find(skills, &(&1.kind == :poison and s.poison == nil and ready?(s, &1)))
 
   defp shackle(s, skills),
     do: Enum.find(skills, &(&1.kind == :shackle and s.shackled == 0 and ready?(s, &1)))

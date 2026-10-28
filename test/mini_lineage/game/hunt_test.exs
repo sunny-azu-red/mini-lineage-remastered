@@ -449,16 +449,41 @@ defmodule MiniLineage.Game.HuntTest do
       assert [{_, {:curse, "Curse: Poison", false}} | _] = events(missed, :curse)
     end
 
-    test "a poison never takes the last HP, nor is it laid on a monster at half its HP" do
+    test "a poison may take the last HP, and is not laid again on a monster at half its HP" do
       Rng.put_source(fn -> 0.0 end)
       {stats, bars} = target()
       # It never swings, so only the poison wounds.
       stats = %{stats | blows_per_round: 0}
       bars = %{bars | mp: 1_000_000}
-      result = Hunt.fight(stats, bars, [Rules.skill("Curse: Poison", 1)], foe("Young Keltir"))
+      poison = Rules.skill("Curse: Poison", 1)
 
-      assert result.foe == 1
-      assert [_once] = events(result, :curse)
+      felled = Hunt.fight(stats, bars, [poison], foe("Young Keltir"))
+      assert felled.foe == 0
+      # The tick that fells keeps what went past the last HP, as a burn's does.
+      assert [{_, {:poison, _, _, over}} | _] = Enum.reverse(events(felled, :poison))
+      assert over > 0
+
+      all = div(poison.power * poison.lasts, poison.every)
+      sturdy = %{foe("Young Keltir") | hp: all * 2 - 1, atk_spd: 0}
+      lasted = Hunt.fight(stats, bars, [poison], sturdy)
+      assert lasted.foe == all - 1
+      assert [_once] = events(lasted, :curse)
+    end
+
+    test "a poison opens on a monster that waits, not again while it runs, and on one that comes only while the spells rest" do
+      Rng.put_source(fn -> 0.0 end)
+      dark = Player.restore_fully(%{character(3, :mystic, 14) | skills: %{}})
+      skills = [Rules.skill("Wind Strike", 3), Rules.skill("Curse: Poison", 1)]
+
+      casts = fn monster ->
+        result = Hunt.fight(Player.stats(dark), dark, skills, dummy(monster))
+        for {_, {:begin, name}} <- result.log, do: name
+      end
+
+      assert not Rules.monster("Young Keltir").aggressive?
+      assert ["Curse: Poison", "Wind Strike", "Wind Strike" | _] = casts.("Young Keltir")
+      assert Rules.monster("Balor Orc Fighter").aggressive?
+      assert ["Wind Strike", "Curse: Poison", "Wind Strike" | _] = casts.("Balor Orc Fighter")
     end
 
     test "a monster that only swings is shackled once it reaches, a caster only while the spells rest" do
