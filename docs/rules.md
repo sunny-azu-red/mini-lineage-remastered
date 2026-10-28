@@ -572,12 +572,15 @@ this far (a monster's spells as far as §19 gives):
   again.
 - **The character** uses the first of these it knows that is ready and paid for (§19):
   1. a toggle not lit, which a Mystic lights only once its blows reach;
-  2. the strongest spell (magic, drain or burn), and of two as strong the one costing less MP, but
+  2. a shackle, on a monster with no spells once its blows or bow reach the character, while it
+     has more than half its HP and is not shackled already, so its swing is slowed from its first
+     blow and the pull is still a spell;
+  3. the strongest spell (magic, drain or burn), and of two as strong the one costing less MP, but
      a burn not on a monster still burning, and a drain that returns at least half of what it deals
      (Life Drain) only below 85% of its HP, as the heal it mostly is;
-  3. below the share of its HP its orders give, its heal, so a heal fills the time its spells rest
+  4. below the share of its HP its orders give, its heal, so a heal fills the time its spells rest
      and never stops it attacking;
-  4. while the monster has more than half its HP, a poison it does not carry, then a shackle.
+  5. while the monster has more than half its HP, a poison it does not carry, then a shackle.
 
   A spell takes its cast time (§19), × 333 ÷ Casting Spd., in which the character does nothing
   else. With none of these ready, it swings its blows (§10), and a physical skill or a blow that is

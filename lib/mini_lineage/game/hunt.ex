@@ -344,8 +344,9 @@ defmodule MiniLineage.Game.Hunt do
   defp foe_land(%{foe_pending: spell} = s, foe),
     do: foe_effect(%{s | foe_pending: nil}, foe, spell)
 
-  # §20: what a character does when it is free to: light its toggle, cast its strongest spell, and
-  # while its spells rest heal when hurt or curse; otherwise it swings. Its auras went up before.
+  # §20: what a character does when it is free to: light its toggle, shackle a monster that only
+  # swings once its blows reach, cast its strongest spell, and while its spells rest heal when hurt
+  # or curse; otherwise it swings. Its auras went up before.
   defp character_turn(s, skills, foe) do
     hurt? = s.health * 100 < s.stats.max_hp * s.heal_fight_at
     # A curse is not worth its cast on a monster already half dead.
@@ -356,12 +357,13 @@ defmodule MiniLineage.Game.Hunt do
         skills,
         &(&1.kind == :toggle and s.toggle == nil and s.mp >= &1.mp and blows?(s))
       ) ||
+        ((fresh? and foe.spells == [] and s.distance <= foe_reach(foe)) && shackle(s, skills)) ||
         strongest(s, skills, &(&1.kind in @spells and not spent?(s, &1))) ||
         (hurt? && strongest(s, skills, &(&1.kind == :heal))) ||
         if(fresh?,
           do:
             Enum.find(skills, &(&1.kind == :poison and s.poison == nil and ready?(s, &1))) ||
-              Enum.find(skills, &(&1.kind == :shackle and s.shackled == 0 and ready?(s, &1)))
+              shackle(s, skills)
         )
 
     case choice do
@@ -370,6 +372,9 @@ defmodule MiniLineage.Game.Hunt do
       skill -> cast(s, skill, foe)
     end
   end
+
+  defp shackle(s, skills),
+    do: Enum.find(skills, &(&1.kind == :shackle and s.shackled == 0 and ready?(s, &1)))
 
   # A burn on a monster still burning, or a healing drain on a character not hurt enough to want it.
   defp spent?(s, %{kind: :burn}), do: s.burn != nil

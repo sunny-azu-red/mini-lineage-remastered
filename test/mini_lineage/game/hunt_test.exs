@@ -461,6 +461,33 @@ defmodule MiniLineage.Game.HuntTest do
       assert [_once] = events(result, :curse)
     end
 
+    test "a monster that only swings is shackled once it reaches, a caster only while the spells rest" do
+      Rng.put_source(fn -> 0.0 end)
+      dark = Player.restore_fully(%{character(3, :mystic, 14) | skills: %{}})
+
+      skills =
+        Enum.map(
+          [{"Wind Strike", 3}, {"Vampiric Touch", 1}, {"Wind Shackle", 1}],
+          fn {name, level} -> Rules.skill(name, level) end
+        )
+
+      casts = fn monster ->
+        foe = %{foe(monster) | hp: 1_000_000_000}
+        result = Hunt.fight(Player.stats(dark), dark, skills, foe)
+
+        for {_, event} <- result.log,
+            is_tuple(event),
+            elem(event, 0) in [:begin, :curse],
+            do: elem(event, 1)
+      end
+
+      assert Rules.monster("Young Keltir").spells == [] and Rules.monster("Evil Eye").spells != []
+
+      # The Keltir runs in under the first two spells; Wind Strike is ready again when it arrives.
+      assert ["Wind Strike", "Vampiric Touch", "Wind Shackle" | _] = casts.("Young Keltir")
+      assert ["Wind Strike", "Vampiric Touch", "Wind Strike" | _] = casts.("Evil Eye")
+    end
+
     test "a shackled monster swings less" do
       Rng.put_source(fn -> 0.0 end)
       {stats, bars} = target()

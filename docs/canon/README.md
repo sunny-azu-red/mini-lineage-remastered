@@ -175,7 +175,8 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   by the Mystic on itself, as a lone Mystic did there. **An aura holds 2 minutes,** out of the
   fight too, where Lineage II's held 20: a fight here lasts seconds, so 20 minutes was every fight
   of a sitting on one cast.
-- **The character chooses its own skills in a fight** (rules §20): its toggle, its strongest spell,
+- **The character chooses its own skills in a fight** (rules §20): its toggle, a shackle on a
+  monster with no spells once it has run in, its strongest spell and of two as strong the cheaper,
   then while its spells rest its heal below the player's share of HP, or a curse on a monster
   above half its HP, and before the pull its auras, then its heal up to that share. A Mystic
   lights Soul Cry only once its blows reach. In Lineage II the player chose each cast; here the
