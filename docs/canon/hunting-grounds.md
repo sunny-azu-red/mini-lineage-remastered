@@ -89,6 +89,47 @@ Where each ground is, how it is reached, its level band and its monsters by leve
 - **Monastery of Silence** **(uncertain: check again before use)**: ADDED. The gatekeeper destination 'Monastery of Silence' costs 14,000 Adena from Rune and 10,000 Adena from Goddard, and it is also a Noblesse teleport from both. Monster NAMES agree in aCis, L2J C6, Mobius CT_0 and l2hub: Solina Brother, Solina Lay Brother, Silent Brother, Silent Seeker, Warrior Monk, Monastic Crusader, Monastery Guardian, Guardian of the Grail, Guardian of the Holy Land, Beholder of Light, Judge of Light. LEVELS CONFLICT: 78 in aCis, 80 in L2J C6 and Mobius CT_0. Raid boss: Lord of Splendor Anays, 80 in aCis and 87 in L2J/Mobius. Sources: [github:dr3dd/L2Interlude](https://github.com/dr3dd/L2Interlude/blob/master/Core/Module/NpcAi/Ai/NpcTeleporter/GatekeeperIlyana.cs), [github:dr3dd/L2Interlude](https://github.com/dr3dd/L2Interlude/blob/master/Core/Module/NpcAi/Ai/NpcTeleporter/GatekeeperTatiana.cs), [gitlab:MobiusDevelopment/L2J_Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius/-/tree/master/L2J_Mobius_CT_0_Interlude), [l2hub.info](https://l2hub.info/il/locs/monastery-of-silence).
 - **Pagan Temple** **(uncertain: check again before use)**: Nearest town: Rune Township (Rune area). Neither the regular gatekeeper list nor the Noblesse list has a teleport to it. Monster NAMES agree in 4 sources: Penance Guard, Chapel Guard, Old Aristocrat's Soldier, Zombie Worker, Forgotten Victim, Triol's Layperson, Triol's Believer, Triol's Priest, Triol's High Priest, Temple Guard, Temple Guard Captain, Andreas' Captain of the Royal Guard, Andreas' Royal Guards. LEVELS CONFLICT: aCis and l2hub give 78 for all of them. L2J C6 and Mobius CT_0 give 80, with 85-87 for Andreas' guards. Sources: [gitlab:MobiusDevelopment/L2J_Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius/-/tree/master/L2J_Mobius_CT_0_Interlude), [github:Hl4p3x/L2JServer_C6_Interlude](https://github.com/Hl4p3x/L2JServer_C6_Interlude/blob/master/dist/db_installer/sql/install/npc.sql), [l2hub.info](https://l2hub.info/il/locs/pagan-temple).
 
+## Where play moves, by level
+
+- **Each zone's minimum level** **(single source)**: aCis's admin hunting-zone pages give every
+  zone a type and a minimum level, the field Interlude's client hunting-zone list carries. The
+  minimum matches the lowest monster level each entry above has from two spawn sources, except
+  where noted. Mobius (`WorldAreas/*Territory.htm`) and the PTS port dr3dd/L2Interlude
+  (`admin/teleport/townarea/*Territory.htm`) list the same zones under the same territories, as
+  fields or dungeons, without levels.
+  - Gludio Territory, reached from the Town of Gludio: Evil Hunting Grounds 14+, Ruins of Agony
+    15+, Ruins of Despair 15+, Ruins of Agony Bend 19+, Entrance to the Ruins of Despair 19+,
+    Necropolis of Sacrifice 21+ (dungeon), Ol Mahum Checkpoint 22+, Windawood Manor 22+, Maille
+    Lizardmen Barracks 24+ (its lowest monster is level 20), The Ant Nest 29+ (dungeon), Ant
+    Incubator 36+ (dungeon).
+  - Gludio Territory, reached from Gludin Village: Windmill Hill 15+, Langk Lizardmen Dwellings 16+,
+    Fellmere Harvesting Grounds 17+, Abandoned Camp 21+, Orc Barracks 24+, Wasteland 25+, Windy
+    Hill 26+, Forgotten Temple 27+ (dungeon), Red Rock Ridge 30+.
+  - Dion Territory: Dion Hills 20+, Mandragora Farm 20+, Partisan's Hideaway 23+, Plains of Dion
+    23+, Cruma Marshlands 25+, Execution Grounds 25+ (its Mandragora Sprouts are level 20), Catacomb
+    of the Heretic 30+ (dungeon), Floran Agricultural Area 30+, The Pilgrim's Necropolis 32+
+    (dungeon), Bee Hive 34+, Cruma Tower 40+ (dungeon), Tanor Canyon 46+.
+  - Giran Territory: Breka's Stronghold 30+, Gorgon Flower Garden 31+, Death Pass 35+, Catacomb of
+    the Branded 42+ (dungeon), Devil's Isle 45+ (dungeon), Dragon Valley 45+, Antharas' Lair 60+.
+  - The starting villages' areas, in Oren and Gludio Territory: Talking Island, Eastern Territory
+    1+, Shilen's Garden 1+, Shadow of the Mother Tree 1+, The Dark Forest 8+, Elven Forest 8+,
+    Talking Island, Western Territory 8+, Elven Ruins 9+ (dungeon), School of Dark Arts 10+
+    (dungeon), Elven Fortress 10+ (dungeon), Swampland 13+, The Neutral Zone 15+, Spider Nest 16+.
+
+  Sources: [github:L2GP/aCis-409](https://github.com/L2GP/aCis-409/tree/main/aCis_datapack/data/html/admin/tele/hz)
+  (`gludio.htm`, `dion.htm`, `giran.htm`, `oren.htm`, read from the fork since DEVjEXTREME no longer
+  answers), [gitlab:MobiusDevelopment/L2J_Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius/-/tree/master/L2J_Mobius_CT_0_Interlude/dist/game/data/html/admin/teleports/WorldAreas),
+  [github:dr3dd/L2Interlude](https://github.com/dr3dd/L2Interlude/tree/HEAD/Core/StaticData/html/admin/teleport/townarea).
+- **The first class change sends a character to Gludio at 19**: every first-class quest (401 to
+  418) opens at level 19 ("This quest may only be undertaken by a character of level 19 and
+  above."), and the change itself is at 20. Most send the character to the Town of Gludio, the
+  Ruins of Agony or the Ruins of Despair, or to Gludin's grounds (Windmill Hill, Fellmere,
+  Abandoned Camp); the Dark Elves' keep to the Dark Forest and the School of Dark Arts as well,
+  and the Elves' to the Elven Forest, the Elven Fortress and the Neutral Zone. Sources:
+  [github:L2GP/aCis-409](https://github.com/L2GP/aCis-409/tree/main/aCis_datapack/data/html/script/quest)
+  (`Q401_PathToAWarrior` to `Q418_PathToAnArtisan`), and the quests' places agree with the
+  Gludio guards' own dialogue (`guard/30334.htm`, `30336.htm`, `30382.htm`).
+
 ## Disputes and caveats
 
 What the checks could not settle, kept as the checker wrote it.
