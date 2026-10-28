@@ -176,7 +176,7 @@ Built with the first hunt (rules §23 and §24).
   beside P. Def.
 - Grades (D, C, B, A, S) and a penalty for wearing gear above your level.
 - Soulshots and spiritshots for stronger blows and spells, bought only from player shops. They stack
-  as a potion does (rules §26): one place in the bag however many, bought by the lot, sold whole,
+  as a potion does (rules §26): one place in the bag however many, bought and sold by the lot,
   counted in the Consumables panel. Only the two, with no blessed spiritshot: 🔶 a soulshot and 🔷 a
   spiritshot, one shape for one mechanism and Lineage II's crystal colours to tell them apart.
 - Potions that mend at once (rules §26, built): the Lesser Healing Potion in the villages; better

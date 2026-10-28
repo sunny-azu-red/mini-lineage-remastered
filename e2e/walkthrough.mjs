@@ -901,6 +901,32 @@ try {
     await onScreen('town');
     await page.waitForSelector('#effects [data-effect-id="combat"]', { state: 'detached', timeout: 10000 });
 
+    // What the fight left is sold back as it was bought, one off the stack and never all of it.
+    await page.selectOption('#travel-form select', 'trader');
+    await page.click('#travel-form button');
+    await onScreen('trader');
+    await page.selectOption('#trader-form select', 'trader-sell');
+    await page.click('#trader-form button');
+    await onScreen('trader-sell');
+    const stackId = stackKey.replace('consumable-', '');
+    const lots = await page.$$eval('#sell-form option', (options, id) =>
+        options.map(o => o.value).filter(v => v.startsWith(`${id}|`)), stackId);
+    const beforeSale = (await state()).adena;
+    await page.selectOption('#sell-form select', `${stackId}|1`);
+    await page.click('#sell-form button');
+    await adena(beforeSale + 45);
+    await page.waitForFunction(([key, want]) =>
+        document.querySelector(`#consumables [data-key="${key}"]`)?.dataset.value === want,
+        [stackKey, String(Number(left) - 1)], { timeout: 5000 }).catch(() => {});
+    const after = await page.evaluate((key) =>
+        document.querySelector(`#consumables [data-key="${key}"]`)?.dataset.value, stackKey);
+    check('the trader buys potions back by the lot, ×10 only while the stack holds ten, and one sold takes one off it',
+        lots.join() === (Number(left) >= 10 ? `${stackId}|1,${stackId}|10` : `${stackId}|1`)
+        && (Number(left) > 1 ? after === String(Number(left) - 1) : after === undefined),
+        `${lots.join()} from ${left}, ${after} left`);
+    await page.click('#header-link');
+    await onScreen('town');
+
     // ---- the guild (rules §25) ------------------------------------------------------------------
     check('the town leads to the set\'s own guild by its name',
         await text('#travel-form option[value="guild"]') === 'Pick ⛩️ Temple of Shilen',

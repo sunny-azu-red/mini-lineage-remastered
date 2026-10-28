@@ -1026,11 +1026,11 @@ Mastery 1, 9.45 × 1.17 + 1.9 = **12.95** and 3.02 × 1.45 + 1.5 = **5.88**.
 ## 26. Potions
 
 A potion heals its whole amount at once, never past the most, and stacks: a stack takes one place in
-the inventory (§23) however many it holds, and is bought by the lot at its price each, sold whole for
-half. In a fight (§20), at the start of each round, the character drinks the strongest potion it
-carries if its HP is below the share it has chosen, at most one a round and at no cost to what it
-does. The share is the player's: never, or below 30%, 50% or 70% of HP, and 50% to begin with. In
-town a potion is drunk when the player says.
+the inventory (§23) however many it holds, and is bought by the lot at its price each and sold back
+by the lot for half. In a fight (§20), at the start of each round, the character drinks the
+strongest potion it carries if its HP is below the share it has chosen, at most one a round and at
+no cost to what it does. The share is the player's: never, or below 30%, 50% or 70% of HP, and 50%
+to begin with. In town a potion is drunk when the player says.
 
 | Potion | Heals | Price | Sold |
 |---|---|---|---|

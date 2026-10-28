@@ -869,8 +869,8 @@ defmodule MiniLineage.Game.Rules do
   def potions, do: @potions
 
   @doc """
-  Rules §26: a potion stacks, one place in the inventory however many it holds, bought by the lot
-  and sold whole. A soulshot or spiritshot stacks the same way when it comes, by a clause here.
+  Rules §26: a potion stacks, one place in the inventory however many it holds, bought and sold
+  by the lot. A soulshot or spiritshot stacks the same way when it comes, by a clause here.
   """
   def stacks?(item), do: item.kind == :potion
   def kit(race_id, path), do: Map.fetch!(@kits, {race_id, path})

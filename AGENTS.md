@@ -142,7 +142,12 @@ lone modifier not at all), so anything between two keys breaks a sequence. A new
 - **Show a new test failing before claiming it passes.** Break what it covers, watch it go red, and
   restore with `git checkout` or `touch`. Never restore from a backup copy: it is older than the
   build, so Mix keeps the broken beam. A file with uncommitted work is not restored with `git
-  checkout`, which wipes the work too: reverse the exact `sed`, then `touch`.
+  checkout`, which wipes the work too: reverse the exact `sed`, then `touch`. Stop the dev server
+  before breaking anything: its code reloader compiles whatever `lib/` holds on the next page load,
+  so a break made while the owner plays is the game they play (a sale of one took a whole stack).
+  `kill` the `beam.smp` listening on `.env`'s `PORT` (`ss -ltnp 'sport = :4000'` names it), which
+  shuts it down as Ctrl-C would, writing what it buffered, and tell the owner to run `mix` again once
+  the break is restored.
 - **Never compile into `_build/dev` while the dev server is up.** Two writers corrupted beams and
   crashed a character mid-game. Use Tidewave's `project_eval`, a script with its own
   `MIX_BUILD_PATH`, or `:test`. Claude Code's `.claude/hooks/dev_build_guard.py` refuses a Mix

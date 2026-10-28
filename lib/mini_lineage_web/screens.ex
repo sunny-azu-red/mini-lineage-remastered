@@ -501,7 +501,7 @@ defmodule MiniLineageWeb.Screens do
       name="item"
       picked={@picked}
       placeholder="🚪 Traders"
-      options={Enum.map(@sellable, &%{value: &1.id, label: item_label(&1)})}
+      options={sell_options(@sellable)}
       default_label="Return"
       active_label="💰 Sell"
     />
@@ -787,10 +787,24 @@ defmodule MiniLineageWeb.Screens do
         n <- if(item.slot == :potion, do: @potion_lots, else: [nil]),
         do:
           if(n,
-            do: %{value: "#{item.name}|#{n}", label: "#{item_label(item)} ×#{n}", group: group},
+            do: %{value: "#{item.name}|#{n}", label: lot_label(item, n), group: group},
             else: %{value: item.name, label: item_label(item), group: group}
           )
   end
+
+  # Sold back as bought: a potion by the lots its stack can fill, off the stack, anything else whole.
+  defp sell_options(sellable) do
+    for item <- sellable,
+        n <- if(item.potion?, do: Enum.filter(@potion_lots, &(&1 <= item.count)), else: [nil]),
+        do:
+          if(n,
+            do: %{value: "#{item.id}|#{n}", label: lot_label(item, n)},
+            else: %{value: item.id, label: item_label(item)}
+          )
+  end
+
+  # The lot's count stands where a carried stack's would, so the option names only the lot.
+  defp lot_label(item, n), do: "#{Names.item_emoji(item)} #{item.name} ×#{n}"
 
   # Which shelf of a trader's an item is on, its heading in the table and in the dropdown.
   defp shelf(%{slot: :weapon, type: type}),

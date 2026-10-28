@@ -259,25 +259,14 @@ defmodule MiniLineageWeb.GameLive do
   def handle_event("buy", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
 
-  # A potion (rules §26) comes as "name|count", bought by the lot.
-  def handle_event("buy", %{"item" => choice}, socket) do
-    case String.split(choice, "|", parts: 2) do
-      [name, count] ->
-        case Integer.parse(count) do
-          {n, ""} -> {:noreply, apply_action(socket, &Actions.buy(&1, name, n), nil)}
-          _ -> {:noreply, socket}
-        end
-
-      [name] ->
-        {:noreply, apply_action(socket, &Actions.buy(&1, name), nil)}
-    end
-  end
+  def handle_event("buy", %{"item" => choice}, socket),
+    do: {:noreply, by_the_lot(socket, choice, &Actions.buy/3)}
 
   def handle_event("sell", %{"item" => ""}, socket),
     do: {:noreply, walk(socket, {"trader", socket.assigns.town})}
 
-  def handle_event("sell", %{"item" => id}, socket),
-    do: {:noreply, apply_action(socket, &Actions.sell(&1, id), nil)}
+  def handle_event("sell", %{"item" => choice}, socket),
+    do: {:noreply, by_the_lot(socket, choice, &Actions.sell/3)}
 
   # The inventory's one choice, "<verb>:<id>"; its empty choice closes it, as the sidebar's link does.
   def handle_event("inventory", %{"item" => ""}, socket),
@@ -394,6 +383,20 @@ defmodule MiniLineageWeb.GameLive do
   end
 
   def handle_event("key", _params, socket), do: {:noreply, socket}
+
+  # A potion (rules §26) comes as "<name or id>|count", bought and sold by the lot; anything else alone.
+  defp by_the_lot(socket, choice, trade) do
+    case String.split(choice, "|", parts: 2) do
+      [what, count] ->
+        case Integer.parse(count) do
+          {n, ""} -> apply_action(socket, &trade.(&1, what, n), nil)
+          _ -> socket
+        end
+
+      [what] ->
+        apply_action(socket, &trade.(&1, what, 1), nil)
+    end
+  end
 
   defp dev(socket, :adena), do: apply_action(socket, &Actions.dev_adena/1, nil)
   defp dev(socket, :sp), do: apply_action(socket, &Actions.dev_sp/1, nil)

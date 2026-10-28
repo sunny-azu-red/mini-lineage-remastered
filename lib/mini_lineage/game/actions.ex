@@ -269,25 +269,30 @@ defmodule MiniLineage.Game.Actions do
               ),
             else: player.items ++ [Player.new_item(name, false, count)]
 
-        text = "You buy #{bought(item, count)} for #{Format.adena(cost)}."
+        text = "You buy #{lot(item, count)} for #{Format.adena(cost)}."
 
         {%{player | adena: player.adena - cost, items: items},
          {:ok, %{text: text, type: :success}}}
     end
   end
 
-  defp bought(item, count),
+  defp lot(item, count),
     do:
       if(Rules.stacks?(item),
         do: "#{count} × #{Names.item(item)}",
         else: "the #{Names.item(item)}"
       )
 
-  @doc "Rules §24: sells something carried, not equipped, back to the village's shop for half its price."
-  def sell(%{dead: true} = player, _id), do: fallen(player)
+  @doc """
+  Rules §24: sells something carried, not equipped, back to the village's shop for half its price;
+  a potion (§26) `count` at a time off its stack, as it is bought.
+  """
+  def sell(player, id, count \\ 1)
+  def sell(%{dead: true} = player, _id, _count), do: fallen(player)
 
-  def sell(player, id) do
+  def sell(player, id, count) do
     entry = Player.started?(player) && Enum.find(player.items, &(&1.id == id))
+    item = entry && Rules.item(entry.name)
 
     cond do
       !Player.started?(player) or !Rules.village?(player.location) ->
@@ -299,22 +304,28 @@ defmodule MiniLineage.Game.Actions do
       entry.equipped ->
         refuse(player, :equipped)
 
-      Shop.buyback(Rules.item(entry.name)) == 0 ->
+      Shop.buyback(item) == 0 ->
         refuse(player, :worthless)
 
+      count < 1 or count > Map.get(entry, :count, 1) ->
+        refuse(player, :not_carried)
+
       true ->
-        count = Map.get(entry, :count, 1)
-        paid = Shop.buyback(Rules.item(entry.name)) * count
-        player = %{player | adena: player.adena + paid, items: List.delete(player.items, entry)}
+        paid = Shop.buyback(item) * count
 
-        what =
-          if count > 1,
-            do: "#{count} × #{Names.item(entry.name)}",
-            else: "the #{Names.item(entry.name)}"
+        items =
+          if count == Map.get(entry, :count, 1),
+            do: List.delete(player.items, entry),
+            else:
+              Enum.map(
+                player.items,
+                &if(&1 == entry, do: %{&1 | count: &1.count - count}, else: &1)
+              )
 
-        text = "You sell #{what} for #{Format.adena(paid)}."
+        text = "You sell #{lot(item, count)} for #{Format.adena(paid)}."
 
-        {player, {:ok, %{text: text, type: :success}}}
+        {%{player | adena: player.adena + paid, items: items},
+         {:ok, %{text: text, type: :success}}}
     end
   end
 

@@ -47,13 +47,25 @@ defmodule MiniLineage.Game.PotionsTest do
     assert stack(topped).count == 11
   end
 
-  test "a stack sells whole for half its price each, and is never put on" do
-    {player, {:ok, _}} = Actions.buy(human(0) |> Map.put(:adena, 900), @potion, 10)
+  test "a stack sells back by the lot for half its price each, and is never put on" do
+    {player, {:ok, _}} = Actions.buy(human(0) |> Map.put(:adena, 990), @potion, 11)
     id = stack(player).id
 
     assert {_, {:error, :not_wearable, _}} = Actions.equip(player, id)
-    {sold, {:ok, _}} = Actions.sell(player, id)
-    assert sold.adena == 450 and stack(sold) == nil
+    {lot, {:ok, _}} = Actions.sell(player, id, 10)
+    assert lot.adena == 450 and stack(lot).count == 1
+
+    assert {_, {:error, :not_carried, _}} = Actions.sell(lot, id, 10)
+    assert {_, {:error, :not_carried, _}} = Actions.sell(lot, id, 0)
+    {last, {:ok, _}} = Actions.sell(lot, id)
+    assert last.adena == 495 and stack(last) == nil
+  end
+
+  test "anything but a potion sells only whole" do
+    {player, {:ok, _}} = Actions.buy(human(), "Short Sword")
+    sword = Enum.find(player.items, &(&1.name == "Short Sword"))
+
+    assert {_, {:error, :not_carried, _}} = Actions.sell(player, sword.id, 2)
   end
 
   test "drunk in town it heals at once, takes one, and is refused at full HP" do

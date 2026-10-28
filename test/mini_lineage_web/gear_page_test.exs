@@ -364,6 +364,34 @@ defmodule MiniLineageWeb.GearPageTest do
     assert has_element?(view, "#inventory-form button.btn-danger", "Destroy")
   end
 
+  test "potions are sold back by the lot, only as many as the stack can fill" do
+    {_view, session, conn} = human(build_conn(), 900)
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/magic-trader")
+    view |> form("#buy-form", %{"item" => "Lesser Healing Potion|10"}) |> render_submit()
+    id = carried(session, "Lesser Healing Potion").id
+
+    {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/sell")
+
+    assert has_element?(
+             view,
+             ~s(#sell-form option[value="#{id}|1"]),
+             "🧪 Lesser Healing Potion ×1"
+           )
+
+    assert has_element?(
+             view,
+             ~s(#sell-form option[value="#{id}|10"]),
+             "🧪 Lesser Healing Potion ×10"
+           )
+
+    view |> form("#sell-form", %{"item" => "#{id}|1"}) |> render_submit()
+    assert has_element?(view, "#flash", "You sell 1 × ")
+    assert stored(session).adena == 45
+    assert carried(session, "Lesser Healing Potion").count == 9
+    assert has_element?(view, ~s(#sell-form option[value="#{id}|1"]))
+    refute has_element?(view, ~s(#sell-form option[value="#{id}|10"]))
+  end
+
   test "potions are bought by the lot onto one stack, counted in the sidebar and drunk from the inventory" do
     {_view, session, conn} = human(build_conn(), 1_000)
     {:ok, view, _html} = live(conn, ~p"/talking-island-village/traders/magic-trader")
