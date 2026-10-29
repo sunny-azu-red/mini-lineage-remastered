@@ -76,7 +76,9 @@ Built (rules §17 to §21), with the canon's monster stats researched first.
 - **Next, Gludio, from 15,** where its grounds open (`docs/canon/hunting-grounds.md`, "Where play
   moves"): the Ruins of Despair and the Ruins of Agony first, levels 15 to 24, where Lineage II's
   first class-change quests send a character at 19. They have to pay more than a village ground the
-  character has outgrown, measured when they are built.
+  character has outgrown, measured when they are built. A character arrives wearing the best its
+  village sells, owned by 14 at the private rates (rules §22), so Gludio's shops are what it
+  hunts for: the 244,000 no-grade tier for 15 to 20, and D-grade to save for and wear from 20.
 
 ## Built with the first hunt
 
@@ -177,7 +179,9 @@ Built with the first hunt (rules §23 and §24).
 - Jewellery adding to the mind (rules §23, built).
 - Shields that can block a blow, adding their defence to it (rules §23, built), the chance shown
   beside P. Def.
-- Grades (D, C, B, A, S) and a penalty for wearing gear above your level.
+- Grades (D, C, B, A, S) and a penalty for wearing gear above your level, lifted by Expertise,
+  which Lineage II gives free at 20 for D-grade (`docs/canon/skills.md`), when the first class
+  changes too.
 - Soulshots and spiritshots for stronger blows and spells, bought only from player shops. They stack
   as a potion does (rules §26): one place in the bag however many, bought and sold by the lot,
   counted in the Consumables panel. Only the two, with no blessed spiritshot: 🔶 a soulshot and 🔷 a
@@ -186,6 +190,15 @@ Built with the first hunt (rules §23 and §24).
   potions and potions for MP from the Town of Gludio on, each town's trader its own. A Mana Potion
   is an order of its own beside 🧪 Drink Healing Potion, its share of MP (`mana_potion_at`) rather
   than a second meaning for `potion_at`, and like it shown only while one is carried.
+- **A potion as Lineage II made it, measured first.** Ours mends its 112 HP at once, with no reuse
+  and at no cost to the round, at its canon 90 Adena, and so stands in for resting: a Fighter has no
+  MP to wait for, and resting only to half with 20 potions the Elven Fighter reaches 15 in 70
+  minutes rather than 82 resting to full, where without them it dies in 65 runs of 200. Lineage
+  II's mends 16 HP every 2 seconds for 15 seconds and rests 10
+  (`docs/canon/jewellery-and-consumables.md`). Bench the canon mechanism (the mend spread over the
+  rounds, the reuse) before deciding, keeping the price whole, so a potion becomes a luxury by what
+  it does rather than by a price of our own. Potions are what keep risky play alive today (0 or 1
+  death a path in 200 with 20 carried), so deaths are read as closely as time.
 
 ## Player shops
 
@@ -213,8 +226,9 @@ Discussed in full when it is built.
   The villages don't have it.
 - **Shops in each town,** better gear in more advanced towns, for more money. Not every town has
   every shop. The Town of Gludio's brings the 244,000 tier the villages stop short of (Falchion,
-  Sword Breaker, Composition Bow, as Lineage II's towns sold them); the Zweihander stays the
-  villages' own.
+  Sword Breaker, Composition Bow, as Lineage II's towns sold them), beside the village's 136,000
+  tier, which Lineage II's towns sold too, and D-grade's low tier (409,000 to 716,000 a weapon, the
+  Mithril and Knowledge armour); the Zweihander stays the villages' own.
 - **The trainers (built, rules §25) and the class master in each village,** for its own race.
 - **The Newbie Guide in each village,** with its free buffs at their real level ranges.
 

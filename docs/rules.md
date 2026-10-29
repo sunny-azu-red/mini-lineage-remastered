@@ -652,15 +652,16 @@ file it ships sets:
 |---|---|---|
 | EXP | 1 | 5 |
 | SP | 1 | 5 |
-| Adena | 1 | 20 |
+| Adena | 1 | 30 |
 
-Adena runs four times faster than EXP because the village shops price their gear for a game where
-most Adena came from quests and from selling what monsters dropped, and the hunt has neither. At the
-private rates, a seeded run of every set up its village's ladder takes about 345 to 415 kills from
-level 1 to 20, and has earned about 32,000 Adena by level 10 and 260,000 to 280,000 by level 16,
-where a Gladius costs 54,100 and a Long Sword 136,000.
+Adena runs six times faster than EXP because the village shops price their gear for a game where
+most Adena came from quests and from selling what monsters dropped, and the hunt has neither, and
+fast enough that a character wears the best its village sells before it leaves for the Town of
+Gludio (§17). At the private rates, a seeded run of every set up its village's ladder takes 122 to
+151 kills from level 1 to 15, and has earned about 55,000 Adena by level 10 and 289,000 to 319,000
+by level 15, where a Gladius costs 54,100 and a Long Sword 136,000.
 
-Example: a Young Keltir carrying 10 Adena pays **10** at retail's rate and **200** at ×20.
+Example: a Young Keltir carrying 10 Adena pays **10** at retail's rate and **300** at ×30.
 
 ## 23. Gear
 

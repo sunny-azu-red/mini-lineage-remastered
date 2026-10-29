@@ -813,11 +813,11 @@ defmodule MiniLineage.Game.RulesTest do
       end
     end
 
-    test "§22 a Young Keltir's 10 Adena pays 10 at retail's rate and 200 at ×20" do
+    test "§22 a Young Keltir's 10 Adena pays 10 at retail's rate and 300 at ×30" do
       Rng.put_source(fn -> 0.5 end)
       keltir = %{adena_chance: 100, adena_min: 10, adena_max: 10}
       assert Hunt.adena(keltir, 1) == 10
-      assert Hunt.adena(keltir, 20) == 200
+      assert Hunt.adena(keltir, 30) == 300
     end
 
     test "§21 a level 9 run with 40,000 EXP stands above every level 8 run and a 39,999 one" do

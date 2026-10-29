@@ -4,7 +4,7 @@ What the village ladder costs and pays, read off `bench/ladder.exs`. The rules (
 what things cost; this says when a player can afford them. Every figure here was measured, never
 worked out by hand, and holds only for the rules it was measured against.
 
-**Measured** at rules §22's private rates (EXP and SP ×5, Adena ×20, from `.env.test`), on rules
+**Measured** at rules §22's private rates (EXP and SP ×5, Adena ×30, from `.env.test`), on rules
 §1 to §26 as they now stand: the fight of §20 on a line between the two, spells that take effect
 as their cast ends and strike nothing once the monster has fallen, casts and reuses that keep what
 is left of the round they end in, the battle orders (every skill but a mastery on a switch, and one
@@ -72,54 +72,65 @@ run. `compare.exs` shows them but holds only the paths to the bar.
 
 A character leaves its village for Gludio at about 15 (`docs/direction.md`). Its ground stops at
 level 14 and pays half for each level the character stands more than one above a monster, so 15 to
-16 still pays in full and the village stops being worth it after. Minutes to 15, with deaths in 200
-runs a path, at each of the bench's settings:
+16 still pays in full and the village stops being worth it after. Adena runs at ×30 (rules §22),
+so a character leaves wearing the best its village sells. Minutes to 15, with deaths in 200 runs a
+path, at each of the bench's settings:
 
 | Set | Path | Resting to full, 20 potions | Of it resting | Behind the fastest | Below half, no potions | Below 30%, no potions | Below half, 20 potions |
 |---|---|---|---|---|---|---|---|
-| Human Mystic | staff 1h / 2h | 63 / 64 | 37 / 38 | +0% / +1% | 57 / 57 (0 / 0 died) | 56 / 56 (0 / 0) | 56 / 56 (0 / 0) |
-| Elven Mystic | staff 1h / 2h | 71 / 72 | 38 / 39 | +12% / +13% | 65 / 65 (0 / 0) | 65 / 65 (0 / 0) | 64 / 64 (0 / 0) |
-| Human Fighter | sword 1h / 2h / dagger / bow | 77 / 76 / 74 / 77 | 40 to 42 | +17% to +21% | 69 to 71 (4 / 1 / 62 / 13) | 65 to 69 (132 / 145 / 188 / 103) | 63 to 68 (0 / 0 / 3 / 0) |
-| Elven Fighter | bow | 90 | 41 | +43% | 87 (145) | (200) | 78 (0) |
-| Dark Fighter | dagger | 90 | 54 | +42% | 87 (96) | 83 (195) | 69 (3) |
-| Dark Mystic | staff 1h / 2h | 94 / 94 | 57 / 57 | +49% / +49% | 90 / 92 (42 / 75) | 89 / 89 (56 / 89) | 77 / 77 (0 / 0) |
-| Orc Fighter | fists / sword 1h / 2h | 93 / 96 / 96 | 55 to 57 | +46% to +51% | 87 to 91 (56 / 75 / 78) | 89 to 90 (199 / 200 / 196) | 75 to 81 (0 / 1 / 0) |
-| Orc Mystic | staff 1h / 2h | 92 / 92 | 48 / 49 | +45% / +45% | 82 / 82 (0 / 0) | 78 / 78 (32 / 36) | 82 / 82 (0 / 0) |
+| Human Mystic | staff 1h / 2h | 62 / 62 | 36 / 37 | +0% / +0% | 55 / 55 (0 / 0 died) | 54 / 54 (0 / 0) | 54 / 54 (0 / 0) |
+| Elven Mystic | staff 1h / 2h | 69 / 68 | 36 / 36 | +11% / +10% | 63 / 62 (0 / 0) | 63 / 62 (0 / 0) | 63 / 61 (0 / 0) |
+| Human Fighter | sword 1h / 2h / dagger / bow | 70 / 70 / 69 / 70 | 37 to 38 | +12% to +14% | 64 to 65 (1 / 0 / 36 / 5) | 61 to 62 (94 / 85 / 164 / 58) | 58 to 62 (0 / 0 / 1 / 0) |
+| Elven Fighter | bow | 82 | 38 | +33% | 78 (65) | 76 (190) | 70 (0) |
+| Dark Fighter | dagger | 85 | 51 | +36% | 79 (58) | 76 (188) | 65 (0) |
+| Dark Mystic | staff 1h / 2h | 91 / 87 | 55 / 52 | +47% / +41% | 85 / 81 (13 / 21) | 84 / 79 (17 / 34) | 76 / 72 (0 / 0) |
+| Orc Fighter | fists / sword 1h / 2h | 85 / 87 / 87 | 51 to 52 | +37% to +41% | 79 to 82 (12 / 40 / 34) | 76 to 80 (180 / 189 / 176) | 69 to 73 (0 / 1 / 0) |
+| Orc Mystic | staff 1h / 2h | 90 / 90 | 47 / 47 | +46% / +45% | 81 / 81 (0 / 0) | 76 / 76 (14 / 15) | 81 / 81 (0 / 0) |
 
-Minutes for each level past 15 resting to full, read at tops 16 to 18, are 13 to 35 for 15 to 16,
-31 to 73 for 16 to 17 and 54 to 164 for 17 to 18: the second about twice the first, the third four
-to six times. What a set has at 15, and when its gear comes:
+Minutes for each level past 15 resting to full, read at tops 16 to 18 with Adena at ×20, are 13
+to 35 for 15 to 16, 31 to 73 for 16 to 17 and 54 to 164 for 17 to 18: the second about twice the
+first, the third four to six times. What a set has at 15, and when its gear comes:
 
-| Set | Hunts to 15 | SP held at 15 | Adena earned by 15 | Adena held at 15 |
+| Set | Hunts to 15 | SP held at 15 | Whole village kit owned at | Adena held at 15 |
 |---|---|---|---|---|
-| Human Fighter | 122 | 2,966 to 3,018 | 193k to 195k | 28k to 32k |
-| Human Mystic | 122 | 785 to 794 | 195k to 196k | 36k |
-| Elven Fighter | 151 | 3,242 | 211k | 37k |
-| Elven Mystic | 151 | 249 to 253 | 211k to 212k | 32k to 52k |
-| Dark Fighter | 145 | 2,427 | 213k | 38k |
-| Dark Mystic | 145 | 199 | 212k | 35k to 50k |
-| Orc Fighter | 130 to 131 | 2,289 to 2,342 | 196k to 199k | 27k to 32k |
-| Orc Mystic | 131 | 1,341 to 1,342 | 199k | 36k to 40k |
+| Human Fighter | 122 | 2,967 to 3,020 | 14 (sword 2h never) | 102k to 112k |
+| Human Mystic | 122 | 788 to 795 | 14 | 85k |
+| Elven Fighter | 151 | 3,239 | 14 | 79k |
+| Elven Mystic | 151 | 252 to 255 | 14 | 40k to 101k |
+| Dark Fighter | 145 | 2,430 | 14 | 78k |
+| Dark Mystic | 145 | 196 to 197 | 14 | 49k to 105k |
+| Orc Fighter | 130 to 131 | 2,282 to 2,342 | 14 (sword 2h never) | 100k to 118k |
+| Orc Mystic | 131 | 1,332 to 1,334 | 14 | 70k to 93k |
 
 - **The Human and Elven Mystics set the pace,** and the Human Mystic is fastest. Talking Island's
   Stone Golem and Crasher at 13 and 14 pay the most EXP a hunt, so its sets need 122 hunts to 15
   where the Orc ground asks 131, the Dark Elf one 145 and the Elven one 151.
-- **Everyone else is 12% to 51% behind,** and that is the work this leaves: the Elven Fighter and
-  Dark Fighter at +42% to +43%, the Dark Mystic at +49%, the Orc Fighter at +46% to +51% and the
-  Orc Mystic at +45%. The Dark Elves and Orcs rest most, 54 to 57 minutes of their 90 to 96.
+- **Everyone else is 10% to 47% behind,** and that is the work this leaves: the Elven Fighter at
+  +33%, the Dark Fighter at +36%, the Orc Fighter at +37% to +41%, the Dark Mystic at +41% to +47%
+  and the Orc Mystic at +45% to +46%. The Dark Elves and Orcs rest most, 47 to 55 minutes of their
+  85 to 91.
 - **Resting to full is safe; a careless rest is not.** No set dies resting to full. Below half
-  without potions the Fighters and the Dark Mystic die in 1 to 145 runs of 200, and below 30% the
-  Fighters in 103 to all 200. The Human and Elven Mystics survive both, and the Orc Mystic dies
-  only below 30% (32 to 36). Twenty potions bring every path back to 0 to 3.
-- **Nobody finishes the village's gear or lessons by 15.** The third weapon tier (54,100) comes at
-  14, the top weapon (136,000) and the armour never; a Fighter reaches 15 with 2,300 to 3,200 SP
-  against 3,300 to 4,000 for each of its five level-15 lines, a Mystic with 200 to 1,300 and nothing
-  left to learn. What the village sells past that is bought on a visit home, with Gludio's pay.
-- **Each set reaches 15 with 27,000 to 52,000 Adena,** having earned 193,000 to 213,000.
+  without potions the Fighters and the Dark Mystic die in 1 to 65 runs of 200, and below 30% the
+  Fighters in 58 to 190. The Human and Elven Mystics survive both, and the Orc Mystic dies only
+  below 30% (14 to 15). Twenty potions bring every path back to 0 or 1.
+- **Every path leaves in its village's best,** the 136,000 weapon and the dearest armour,
+  necklace and shield all owned at 14, but the two-handed swords, whose Zweihander (244,000) is
+  still out of reach. Tiers come at about 4, 9 and 13: 768 at 4.0 to 4.3, 12,500 at 8.3 to 9.1,
+  54,100 at 12.6 to 13.2 (the Mystic one-hander's line has no 54,100 piece and goes from 12,500 to
+  136,000 at 14).
+- **Each path reaches 15 with 40,000 to 118,000 Adena,** having earned 289,000 to 319,000, towards
+  Gludio's 244,000 tier and D-grade. The lessons are still out of reach: a Fighter reaches 15 with
+  2,300 to 3,200 SP against 3,300 to 4,000 for each of its five level-15 lines, a Mystic with 200
+  to 1,300 and nothing left to learn.
+- **Adena at ×30 rather than ×20** made every path 1% to 13% faster, Fighters most (their weapon
+  and armour come two tiers sooner), and cut deaths below half without potions from 647 runs of
+  3,400 to 285. The spread from the fastest set to the slowest narrowed at three settings and widened
+  at the fourth (below half, 20 potions, 26.1 to 26.7 minutes) only through the Orc Mystic, which
+  gains 1%.
 
 ## Before the move to 15: the road to 20
 
-Measured to level 20 under the earlier rules, every ground's whole roster, a hunt meeting a
+Measured to level 20 under the earlier rules and Adena at ×20, every ground's whole roster, a hunt meeting a
 monster from three levels below up to its own, and the reward shrinking by 5/6 a level past the
 fifth. Kept for what it found about the trainer, the shop, the sets and what was tried; the section
 above wins wherever the two disagree.

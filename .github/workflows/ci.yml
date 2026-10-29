@@ -43,7 +43,7 @@ jobs:
       # Rules §22's private rates, as .env.test.example sets them.
       EXP_RATE: 5
       SP_RATE: 5
-      ADENA_RATE: 20
+      ADENA_RATE: 30
       MIX_ENV: test
 
     steps:
@@ -119,7 +119,7 @@ jobs:
       # Rules §22's private rates, as .env.test.example sets them.
       EXP_RATE: 5
       SP_RATE: 5
-      ADENA_RATE: 20
+      ADENA_RATE: 30
       PORT: 4002
       E2E_BASE_URL: http://localhost:4002
 

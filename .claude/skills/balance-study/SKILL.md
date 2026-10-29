@@ -14,11 +14,11 @@ between shell calls, so each block works its paths out again. Every Mix command 
 
 ## The rates
 
-The game is balanced at rules §22's **private rates**, EXP and SP ×5 and Adena ×20, and the bar,
+The game is balanced at rules §22's **private rates**, EXP and SP ×5 and Adena ×30, and the bar,
 `docs/balance.md` and every reading are taken at them. Without them the game runs at retail's ×1.
 The bench plays whatever `.env.test` sets (`EXP_RATE`, `SP_RATE`, `ADENA_RATE`), and each reading
 opens with a `Rates:` line and keeps them in its JSON settings. Before reading one, check that line
-says ×5, ×5 and ×20, and if it does not, fix `.env.test` from `.env.test.example` and run it again.
+says ×5, ×5 and ×30, and if it does not, fix `.env.test` from `.env.test.example` and run it again.
 A change to the private rates themselves is a balance change like any other: measured before and
 after, written into rules §22's table, every env file and both of `.github/workflows/ci.yml`'s jobs
 in the same commit (`rules_test.exs` holds the table to `.env.example` and `.env.test.example`;

@@ -237,10 +237,11 @@ is which of them a set gets, how they are sold, and how the fight uses them.
 **Pace and gear**
 
 - **The server runs at rates** (rules §22): retail Interlude's ×1 unless a server sets others, and
-  balanced at its private rates, EXP and SP ×5 and Adena ×20, as private servers such as those on
+  balanced at its private rates, EXP and SP ×5 and Adena ×30, as private servers such as those on
   aCis ran. Adena runs
   faster than EXP because the hunt has no quests and no drops to sell, which is where most of
-  Lineage II's Adena came from.
+  Lineage II's Adena came from, and fast enough that a character wears its village's best gear by
+  level 15, when it leaves for Gludio.
 - **Armour is three pieces: chest, legs and necklace,** beside the weapon and the shield. Each
   stands for its whole part (the chest for head, chest and gloves; the legs for legs and feet; the
   necklace for all five pieces of jewellery), counting its canon defence × its part's share ÷ its

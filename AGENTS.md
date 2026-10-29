@@ -614,7 +614,7 @@ Each of these is here because it was got wrong once.
   boot. Only `:app_version` is optional. A value no environment changes is a rule of the game, in
   `Constants`.
 - **The server rates and the time zone are the rules a deployment may change** (rules §22, §15). `config.exs` holds
-  retail's ×1 and every env file, CI's jobs included, the private ×5, ×5 and ×20 the game is
+  retail's ×1 and every env file, CI's jobs included, the private ×5, ×5 and ×30 the game is
   balanced at; `rules_test.exs` holds `config.exs` and the two `.example` files to the document,
   and nothing checks CI's. `runtime.exs` reads them in every
   environment, so the suites and the bench play `.env.test`'s, and a reading names its rates.

@@ -184,7 +184,7 @@ The build stamps itself with `git rev-parse --short=7 HEAD`. Where there is no c
 the database, as `DB_DATABASE` or `DATABASE_URL`. `DB_HOST`, `DB_PORT`, `DB_USERNAME`,
 `DB_PASSWORD`, `PORT` and `LOG_LEVEL` have defaults; see [.env.example](.env.example). The server
 rates, `EXP_RATE`, `SP_RATE` and `ADENA_RATE`, default to retail's ×1; set them to rules §22's
-private ×5, ×5 and ×20, as `.env.example` does, or the game plays far slower than it was tuned for.
+private ×5, ×5 and ×30, as `.env.example` does, or the game plays far slower than it was tuned for.
 - `PHX_HOST` is also the only origin the LiveView socket accepts. Name it wrongly and the page renders
   once and never connects, with nothing in the log.
 - `force_ssl` redirects plain HTTP to HTTPS on every host but `localhost` and `127.0.0.1`. Put a proxy
