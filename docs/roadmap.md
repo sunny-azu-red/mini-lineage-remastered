@@ -79,6 +79,14 @@ Built (rules §17 to §21), with the canon's monster stats researched first.
   character has outgrown, measured when they are built. A character arrives wearing the best its
   village sells, owned by 14 at the private rates (rules §22), so Gludio's shops are what it
   hunts for: the 244,000 no-grade tier for 15 to 20, and D-grade to save for and wear from 20.
+  The Gludio work also takes in:
+  - **The Ruins of Agony's monsters,** researched into the canon first (only the Ruins of Despair's
+    are), as every ground's are.
+  - **The Town of Dion closed** until it has something to do, since today a character can pay to
+    reach it and find only its Gatekeeper.
+  - **The Gatekeepers' fees** (rules §14), the game's own and never tuned: a character reaches 15
+    with 40,000 to 118,000 Adena, and a Fighter comes home from Gludio for its lessons, so each
+    trip is measured against that purse.
 
 ## Built with the first hunt
 
@@ -138,8 +146,9 @@ Built (rules §21).
 Needs the class tree in the canon first.
 
 - **Fighter and Mystic** are already the two paths of the base layer.
-- **Priced against what a run brings to 20:** 13,600 to 19,600 SP (a Mystic 17,200 or more) and 224,000 to 362,000 Adena
-  with nothing left to buy in the village ([balance.md](balance.md)).
+- **Priced against what a run brings to 20,** read again once Gludio is built, since the road from
+  15 to 20 now runs through it: the last reading, at Adena ×20 on the village alone, brought 13,600
+  to 19,600 SP (a Mystic 17,200 or more) and 224,000 to 362,000 Adena ([balance.md](balance.md)).
 - **Class transfers** at levels 20 and 40, and a third at 76, where each next class grows HP and MP
   differently.
 - **Only in the starting village,** from its master (a departure, listed in the canon): High Priest
