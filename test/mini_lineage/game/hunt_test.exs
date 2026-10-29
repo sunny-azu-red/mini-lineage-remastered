@@ -887,15 +887,29 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "the reward" do
-    test "is whole up to 1 level above, and halves a level past it, at its rate" do
+    test "is whole up to 1 level above, and nothing past it, at its rate" do
       assert Hunt.reward(100, 5, 5, 6) == 500
       assert Hunt.reward(100, 5, 7, 6) == 500
-      assert Hunt.reward(100, 5, 8, 6) == 250
-      assert Hunt.reward(100, 5, 9, 6) == 125
-      assert Hunt.reward(100, 1, 9, 6) == 25
+      assert Hunt.reward(100, 5, 8, 6) == 0
+      assert Hunt.reward(100, 1, 9, 6) == 0
     end
 
-    test "colours a monster's level by where it stands, outgrown exactly where it pays less" do
+    # A Level 16 run in the best its village sells, every roll landing, meets the Crasher (Level 14).
+    test "a monster the character has outgrown pays no EXP, SP or Adena, and says so" do
+      Rng.put_source(fn -> 0.0 end)
+      {twinked, _} = Actions.dev_twink(character(0, :fighter))
+      run = Player.restore_fully(%{twinked | experience: Math.xp_for_level(16)})
+
+      {hunted, {:ok, flash}} = Actions.hunt(run)
+
+      assert {hunted.experience, hunted.sp, hunted.adena} == {run.experience, run.sp, run.adena}
+      assert flash.type == :info
+
+      assert flash.text ==
+               "You cut down the Crasher at the Obelisk of Victory, but you gain nothing from it."
+    end
+
+    test "colours a monster's level by where it stands, outgrown exactly where it pays nothing" do
       assert Hunt.level_gap(16, 18) == :perilous
       assert Hunt.level_gap(16, 17) == :above
       assert Hunt.level_gap(16, 16) == :even

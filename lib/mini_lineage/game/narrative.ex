@@ -27,6 +27,14 @@ defmodule MiniLineage.Game.Narrative do
     })
   end
 
+  @doc "Rules §20: a kill that paid nothing, the character having outgrown the monster."
+  def build_spent(monster, ground),
+    do:
+      Format.fill_template(Narratives.spent(), %{
+        "monster" => monster.name,
+        "ground" => ground.name
+      })
+
   @doc "Rules §20: a kill, with its EXP, SP and whatever Adena it carried."
   def build_slew(monster, ground, exp, sp, adena) do
     Format.fill_template(Narratives.slew(), %{

@@ -105,6 +105,18 @@ defmodule MiniLineage.Game.NarrativeTest do
     end
   end
 
+  # Rules §20: a kill past what pays tells it, to the run and to anyone else.
+  test "a kill that pays nothing says so, in either voice" do
+    line =
+      Narrative.build_spent(Rules.monster("Crasher"), Rules.ground("obelisk-of-victory"))
+
+    assert Narrative.alert(line) ==
+             "You cut down the Crasher at the Obelisk of Victory, but you gain nothing from it."
+
+    assert Narrative.voiced(line, false) ==
+             "They cut down the Crasher at the Obelisk of Victory, but they gain nothing from it."
+  end
+
   describe "the fight log" do
     test "colours the monster's level by where it stands against the character's (rules §20)" do
       ground = Rules.ground("obelisk-of-victory")

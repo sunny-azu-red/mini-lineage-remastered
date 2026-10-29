@@ -4,30 +4,30 @@ What the village ladder costs and pays, read off `bench/ladder.exs`. The rules (
 what things cost; this says when a player can afford them. Every figure here was measured, never
 worked out by hand, and holds only for the rules it was measured against.
 
-**Measured** at rules §22's private rates (EXP and SP ×5, Adena ×30, from `.env.test`), on rules
-§1 to §26 as they now stand: the fight of §20 on a line between the two, spells that take effect
-as their cast ends and strike nothing once the monster has fallen, casts and reuses that keep what
-is left of the round they end in, the battle orders (every skill but a mastery on a switch, and one
-heal a set, the Elven Mystic's Heal from level 1), and the first skills (a Fighter's weapon
-skills from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the
-Orc), Life Drain cast as
-a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes, raised before
-the pull, each fighter's kit a Squire's weapon for every path its skills take, the Orc Mystic's an
-Apprentice's Wand, each path shown only its own goods, one of each kind per price, every chest,
-legs and necklace priced as many of its slot as it stands for, and three masteries on every path,
-Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti Magic for
-both, each multiplying before it adds as Lineage II does, every line at Lineage II's price but
-level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Lineage II's do, and
+**Measured** at rules §22's private rates (EXP and SP ×5, Adena ×30, from `.env.test`), on rules §1
+to §26 as they now stand: the fight of §20 on a line between the two, spells that take effect as
+their cast ends and strike nothing once the monster has fallen, casts and reuses that keep what is
+left of the round they end in, the battle orders (every skill but a mastery on a switch, and one
+heal a set, the Elven Mystic's Heal from level 1), and the first skills (a Fighter's weapon skills
+from level 1, where Lineage II taught them at 5, and Wind Strike for every Mystic but the Orc), Life
+Drain cast as a heal, the Evil Eyes choosing their spell by distance, and auras that hold 2 minutes,
+raised before the pull, each fighter's kit a Squire's weapon for every path its skills take, the Orc
+Mystic's an Apprentice's Wand, each path shown only its own goods, one of each kind per price, every
+chest, legs and necklace priced as many of its slot as it stands for, and three masteries on every
+path, Armor Mastery for a Fighter and Robe Mastery for every Mystic, and Weapon Mastery and Anti
+Magic for both, each multiplying before it adds as Lineage II does, every line at Lineage II's price
+but level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Lineage II's do, and
 catching as aCis's do: three times as often against an arrow or a critical, and five blows in a
 hundred perfectly, and the character's own order of casts: of two spells as strong the cheaper
 first, a shackle on a monster with no spells once it has run in, and Curse: Poison ticking every
-second and able to kill, laid first on a monster that is not aggressive; and, since 2026-10-29,
-each village's ground stopping at level 14, a hunt meeting a monster from one level below the
-character to one above, and a kill paying half for each level past one below (rules §17, §20). One
-`--final` reading of that build, 200 seeded runs of every set up its village's ladder to level 15,
-where a character leaves for Gludio, once per weapon path its skills can use, each run seeded on its
-own; at the defaults none of them died. The sections after "Level 15" were measured to level 20
-on the rules before that, and say so. The bench learns every line its weapon uses and every mastery, which a player need not.
+second and able to kill, laid first on a monster that is not aggressive; and, since 2026-10-29, each
+village's ground stopping at level 14, a hunt meeting a monster from one level below the character
+to one above, and a kill paying nothing past one level below (rules §17, §20). One `--final` reading
+of that build, 200 seeded runs of every set up its village's ladder to level 15, where a character
+leaves for Gludio, once per weapon path its skills can use, each run seeded on its own; at the
+defaults none of them died. The sections after "Level 15" were measured to level 20 on the rules
+before that, and say so. The bench learns every line its weapon uses and every mastery, which a
+player need not.
 
 **Rerun it** after anything that moves a fight's numbers, a price, a monster's SP or Adena, or the
 trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
@@ -71,8 +71,8 @@ run. `compare.exs` shows them but holds only the paths to the bar.
 ## Level 15: the village, as it now stands
 
 A character leaves its village for Gludio at about 15 (`docs/direction.md`). Its ground stops at
-level 14 and pays half for each level the character stands more than one above a monster, so 15 to
-16 still pays in full and the village stops being worth it after. Adena runs at ×30 (rules §22),
+level 14 and pays nothing once the character stands more than one above a monster, so 15 to 16
+still pays in full and the village pays nothing after. Adena runs at ×30 (rules §22),
 so a character leaves wearing the best its village sells. Minutes to 15, with deaths in 200 runs a
 path, at each of the bench's settings:
 
@@ -87,9 +87,9 @@ path, at each of the bench's settings:
 | Orc Fighter | fists / sword 1h / 2h | 85 / 87 / 87 | 51 to 52 | +37% to +41% | 79 to 82 (12 / 40 / 34) | 76 to 80 (180 / 189 / 176) | 69 to 73 (0 / 1 / 0) |
 | Orc Mystic | staff 1h / 2h | 90 / 90 | 47 / 47 | +46% / +45% | 81 / 81 (0 / 0) | 76 / 76 (14 / 15) | 81 / 81 (0 / 0) |
 
-Minutes for each level past 15 resting to full, read at tops 16 to 18 with Adena at ×20, are 13
-to 35 for 15 to 16, 31 to 73 for 16 to 17 and 54 to 164 for 17 to 18: the second about twice the
-first, the third four to six times. What a set has at 15, and when its gear comes:
+Level 15 to 16 takes 13 to 35 minutes resting to full (read with Adena at ×20, which moves no
+EXP). Past 16 the village pays nothing, so no run goes further. What a set has at 15, and when its
+gear comes:
 
 | Set | Hunts to 15 | SP held at 15 | Whole village kit owned at | Adena held at 15 |
 |---|---|---|---|---|

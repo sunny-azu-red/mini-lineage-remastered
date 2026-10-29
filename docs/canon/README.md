@@ -99,17 +99,19 @@ where it has any.
   fight against the character's own kind of foe, the one above making a careless rest dangerous:
   resting below half without potions, the 17 paths' deaths to level 15 rose from 159 to 647 runs
   of 3,400 (`docs/balance.md`, `docs/direction.md`).
-- **A kill pays half for each level the character stands more than one above the monster** (rules
-  §20), where Lineage II shrank EXP and SP by 5/6 a level past the fifth (`skills.md`). The penalty
-  starts where the draw stops, so no fight a ground draws for the character's level is ever
-  touched, and a ground the character has outgrown stops paying: with a top monster of level 14,
-  level 16 to 17 takes about twice as long as 15 to 16, and 17 to 18 four to six times.
+- **A kill pays nothing once the character stands more than one level above the monster** (rules
+  §20): no EXP, SP or Adena. Lineage II shrank EXP and SP by 5/6 a level past the fifth and cut a
+  drop's chance, Adena included, past the same gap (`skills.md`), but never to nothing. The game is
+  small and says so plainly: the cut starts where the draw stops, so no fight a ground draws for
+  the character's level is touched, and a ground the character has outgrown pays nothing at all
+  from level 16, which its muted level tells. Every ground's band opens before the one below it is
+  outgrown, balanced when it is built.
 - **A monster's level is coloured by its own bands** (rules §20). Lineage II coloured a monster's
   name by the gap in seven bands, red from 11 above down to blue from 11 below, plain within 2
   either side (`skills.md`), so its colour changed where its EXP penalty began, at 6 below. The draw
   meets only a level either side, which Lineage II's bands would leave plain, so ours follow the
   draw and the penalty instead: red past 1 above, a critical's orange 1 above, gold even, a mend's
-  green 1 below and muted past it, where the pay halves. Only the level is coloured, not the name.
+  green 1 below and muted past it, where it pays nothing. Only the level is coloured, not the name.
 - **Each village has one hunting ground,** a ladder from level 1 to 14, one below where Gludio's
   grounds open at 15 (`hunting-grounds.md`). It carries one nostalgic name (Obelisk of Victory,
   Elven Fortress, School of Dark Arts, Cave of Trials) and draws on every monster up to level 14

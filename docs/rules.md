@@ -541,7 +541,7 @@ this far (a monster's spells as far as §19 gives):
 - **Who you meet:** one of the ground's monsters from 1 level below the character to 1 level
   above, each as likely as the next, or one of the nearest if none is. Its level is coloured by
   where it stands: red more than 1 above, orange 1 above, gold at the character's own, green 1
-  below and muted further below, where it pays less (the reward, below).
+  below and muted further below, where it pays nothing (the reward, below).
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round. A cast or a reuse is never rounded up to the round: one that ends
@@ -616,8 +616,8 @@ this far (a monster's spells as far as §19 gives):
   until it is used again, and Relax left unused mends nothing on the tick of rest (§11) and spends
   no MP. Every skill is used to begin with.
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
-  (§22). A character more than 1 level above the monster earns × ½ for each level past the first,
-  rounded down, so no monster the ground draws for the character's level pays less, and a ground
+  (§22). A character more than 1 level above the monster earns nothing from it, no EXP, SP or
+  Adena, so every monster the ground draws for the character's level pays in full, and a ground
   the character has outgrown stops paying.
 - **In combat:** going out to the ground meets nothing until the player looks for a fight, but the
   character is in combat from the moment it arrives, fighting or not, and does not rest (§11) for as
@@ -625,9 +625,8 @@ this far (a monster's spells as far as §19 gives):
   for 5 seconds more, and then rests.
 - **What is left** of HP and MP stays, until the character is back in town to rest.
 
-Example: at EXP ×5, a level 16 character who kills a Crasher (level 14, 705 EXP) is 2 levels above
-it, 1 past the first, and earns 705 × 5 × ½ = 1,762.5, so **1,762** EXP. A level 15 character earns
-all of it, **3,525**.
+Example: at EXP ×5, a level 15 character who kills a Crasher (level 14, 705 EXP) earns 705 × 5 =
+**3,525** EXP. A level 16 character, 2 levels above it, earns **nothing**.
 
 ## 21. Death
 

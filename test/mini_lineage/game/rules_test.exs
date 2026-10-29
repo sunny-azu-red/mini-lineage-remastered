@@ -778,8 +778,8 @@ defmodule MiniLineage.Game.RulesTest do
       assert round(13_000 * 333 / 416) == 10_406
     end
 
-    test "§20 EXP halves a level past the first, and not before" do
-      assert Hunt.reward(705, 5, 16, 14) == 1_762
+    test "§20 a kill pays nothing past 1 level below the character, and in full before" do
+      assert Hunt.reward(705, 5, 16, 14) == 0
       assert Hunt.reward(705, 5, 15, 14) == 3_525
     end
 

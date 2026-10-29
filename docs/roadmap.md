@@ -59,7 +59,7 @@ Built (rules §17 to §21), with the canon's monster stats researched first.
 
 - **One ground per village,** a ladder from level 1 to 14, one below where Gludio takes over,
   under one nostalgic name. It draws on every monster up to level 14 around that village, each at
-  its own level and stats, and stops paying in full at 16 (rules §20), so a character moves on:
+  its own level and stats, and stops paying at 16 (rules §20), so a character moves on:
 
   | Village | Ground | Monsters from | Levels |
   |---|---|---|---|
@@ -84,6 +84,8 @@ Built (rules §17 to §21), with the canon's monster stats researched first.
     are), as every ground's are.
   - **The Town of Dion closed** until it has something to do, since today a character can pay to
     reach it and find only its Gatekeeper.
+  - **Each ground's band reaching past where the next opens,** since an outgrown monster pays
+    nothing (rules §20): the ruins must pay from 15 and carry a character to wherever it goes next.
   - **The Gatekeepers' fees** (rules §14), the game's own and never tuned: a character reaches 15
     with 40,000 to 118,000 Adena, and a Fighter comes home from Gludio for its lessons, so each
     trip is measured against that purse.
@@ -255,7 +257,7 @@ The slower fights, for bosses and dungeons.
 - Debuffs, resisted by the attribute that guards against them.
 - Lethal blows that cut a monster's HP down at once.
 - EXP shared by the damage dealt, with Lineage II's over-hit bonus (canon `skills.md`; a much
-  weaker monster already pays less, rules §20). The fight log's overkill is only a figure.
+  monster the character has outgrown pays nothing, rules §20). The fight log's overkill is only a figure.
 
 ## The world
 

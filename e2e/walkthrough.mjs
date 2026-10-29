@@ -617,10 +617,15 @@ try {
         await page.locator('#orders').count() === 1 && await page.locator('#potion-order').count() === 0);
     check('...where the button says Hunt beside Retreat', await text('#hunt-button') === '⚔️ Hunt'
         && await text('#retreat-button') === 'Retreat', `${await text('#hunt-button')} / ${await text('#retreat-button')}`);
+    const purseBefore = (await state()).adena;
     await page.click('#hunt-button');
     await page.waitForSelector('#fight-outcome', { timeout: 5000 });
     check('hunting is the first fight, which says what fell', /cut down/.test(await text('#fight-outcome')),
         await text('#fight-outcome'));
+    // Rules §20: at the last level every monster on the ladder is outgrown, so the kill pays nothing.
+    check('...and an outgrown monster pays nothing, which the fight says',
+        /gain nothing from it\.$/.test(await text('#fight-outcome')) && (await state()).adena === purseBefore,
+        `${await text('#fight-outcome')} / ${purseBefore} → ${(await state()).adena}`);
     const firstHead = await page.evaluate(() => [...document.querySelectorAll('#fight-log .entry-head')]
         .map((head) => head.textContent.replace(/\s+/g, ' ').trim()).find((head) => head.startsWith('Round')) ?? '');
     check('...in the Fight Log, a panel of its own under the ground\'s, a round a row headed by both sides\' HP, not in an alert',

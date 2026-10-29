@@ -210,7 +210,15 @@ defmodule MiniLineage.Game.Actions do
       |> Map.take([:log, :text, :outcome, :levelled, :ms])
       |> Map.merge(%{ground: ground.slug, monster: foe.name})
 
+  # Rules §20: an outgrown monster pays nothing, so its Adena is never rolled.
   defp reward(player, foe, ground, level) do
+    if Hunt.level_gap(level, foe.level) == :outgrown,
+      do:
+        {player, {:ok, %{text: Narrative.alert(Narrative.build_spent(foe, ground)), type: :info}}},
+      else: paid(player, foe, ground, level)
+  end
+
+  defp paid(player, foe, ground, level) do
     exp = Hunt.reward(foe.exp, Rules.rate(:exp), level, foe.level)
     sp = Hunt.reward(foe.sp, Rules.rate(:sp), level, foe.level)
     adena = Hunt.adena(foe, Rules.rate(:adena))

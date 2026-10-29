@@ -94,7 +94,14 @@ played =
     }
 
     result = Hunt.fight(stats, bars, Player.fighting_skills(player), foe)
-    you = %{max_hp: stats.max_hp, hp: player.health, weapon: stats.weapon, shield: stats.shield}
+
+    you = %{
+      level: level,
+      max_hp: stats.max_hp,
+      hp: player.health,
+      weapon: stats.weapon,
+      shield: stats.shield
+    }
 
     entries =
       for entry <- Narrative.build_fight_log(foe, ground, result.log, you, result.before),

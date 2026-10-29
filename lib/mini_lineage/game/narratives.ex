@@ -25,6 +25,8 @@ defmodule MiniLineage.Game.Narratives do
 
   # Rules §20: a kill, and what it paid. `{adena}` is empty when the monster carried none.
   @slew ~s({they} cut down the {monster} at the {ground} and take <span class="xp">{exp} XP</span> and {sp}{adena}.)
+  # Rules §20: a kill the character has outgrown, which pays nothing.
+  @spent ~s({they} cut down the {monster} at the {ground}, but {them} gain nothing from it.)
   # The gold alert a new level raises over the page, beside the fight's own line: the client's
   # system message 96 (docs/canon/skills.md).
   @levelled "{Their} level has increased!"
@@ -183,6 +185,7 @@ defmodule MiniLineage.Game.Narratives do
   def moves(slug), do: Map.fetch!(@grounds, slug).moves
 
   def slew, do: @slew
+  def spent, do: @spent
   def levelled, do: @levelled
   def fell, do: @fell
   def wandered, do: @wandered

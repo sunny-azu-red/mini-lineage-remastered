@@ -26,11 +26,10 @@ defmodule MiniLineage.Game.Hunt do
   @near 100
 
   # §20: who is met, from this far below the character to this far above, and the reward, whole up
-  # to that far above the monster and halving each level past it, so an outgrown ground stops paying.
+  # to that far above the monster and nothing past it, so an outgrown ground stops paying.
   @draw_below 1
   @draw_above 1
   @paid_above @draw_below
-  @past_paid 0.5
 
   @spells [:magic, :drain, :burn]
   # §20: what a character casts at the monster, each reaching a spell's distance.
@@ -755,19 +754,14 @@ defmodule MiniLineage.Game.Hunt do
   defp mark_critical(s, true), do: %{s | critical: true}
   defp mark_critical(s, false), do: s
 
-  @doc """
-  §20 and §22: EXP or SP at a rate, halving a level once the character is more than 1 above the
-  monster.
-  """
+  @doc "§20 and §22: EXP or SP at a rate, and nothing once the character has outgrown the monster."
   def reward(amount, rate, level, monster_level) do
-    gap = level - monster_level
-    penalty = if gap > @paid_above, do: :math.pow(@past_paid, gap - @paid_above), else: 1
-    trunc(amount * rate * penalty)
+    if level_gap(level, monster_level) == :outgrown, do: 0, else: amount * rate
   end
 
   @doc """
   §20: where a monster's level stands against the character's, as its level is coloured: perilous
-  past the draw's reach above, outgrown past what pays in full below.
+  past the draw's reach above, outgrown past what pays below.
   """
   def level_gap(level, monster_level) do
     case monster_level - level do
