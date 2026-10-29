@@ -105,10 +105,10 @@ first, the third four to six times. What a set has at 15, and when its gear come
 - **The Human and Elven Mystics set the pace,** and the Human Mystic is fastest. Talking Island's
   Stone Golem and Crasher at 13 and 14 pay the most EXP a hunt, so its sets need 122 hunts to 15
   where the Orc ground asks 131, the Dark Elf one 145 and the Elven one 151.
-- **Everyone else is 10% to 47% behind,** and that is the work this leaves: the Elven Fighter at
-  +33%, the Dark Fighter at +36%, the Orc Fighter at +37% to +41%, the Dark Mystic at +41% to +47%
-  and the Orc Mystic at +45% to +46%. The Dark Elves and Orcs rest most, 47 to 55 minutes of their
-  85 to 91.
+- **Everyone else is 10% to 47% behind,** a gap the game takes as its grounds' and sets' own
+  (`docs/direction.md`), the Orc Mystic aside: the Elven Fighter at +33%, the Dark Fighter at +36%,
+  the Orc Fighter at +37% to +41%, the Dark Mystic at +41% to +47% and the Orc Mystic at +45% to
+  +46%. The Dark Elves and Orcs rest most, 47 to 55 minutes of their 85 to 91.
 - **Resting to full is safe; a careless rest is not.** No set dies resting to full. Below half
   without potions the Fighters and the Dark Mystic die in 1 to 65 runs of 200, and below 30% the
   Fighters in 58 to 190. The Human and Elven Mystics survive both, and the Orc Mystic dies only

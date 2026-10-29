@@ -81,6 +81,13 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
 
 ### Calls already made
 
+- **The spread between sets has no target; the grounds and the sets are what they are**
+  (2026-10-29). Resting to full the Human Mystic reaches 15 in 62 minutes and the others 10% to 47%
+  behind it, much of it their grounds: Talking Island's needs 122 hunts, the Orc 131, the Dark Elf
+  145 and the Elven 151, each with Lineage II's monsters taken whole. A set is not tuned to close
+  that gap, and the bar still holds a change to never widening it. A character may hunt another
+  village's ground (rules §14 and §17 let it, its lessons still at home), unmeasured yet; the
+  Elves' Mother Tree (§16) is a reason to stay. The Orc Mystic stays its own work.
 - **Adena at ×30, so a character leaves its village in its village's best** (2026-10-29). At ×20 no
   set owned the whole village kit by 15 (the 136,000 weapons and the dearest armour never came); at
   ×30 every path owns it at 14, a two-handed sword's at 13 once the Zweihander (244,000) went to
@@ -96,15 +103,14 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
 - **Balance is measured to level 15, and the village is harder and stops paying at 16**
   (2026-10-29). A character leaves its village for Gludio around 15 or 16, where Gludio's grounds
   open, without a cap telling it to: each starting ground stops at level 14, a hunt meets a monster
-  from one level below to one above, and a kill pays half for each level the character stands
-  more than one above it (rules §17, §20, departures in `docs/canon/README.md`). The village is
-  meant to be harder: resting to full stays safe for every set, but resting below half without
-  potions the 17 paths died in 647 runs of 3,400 rather than 159, and the spread to level 15
-  (leaving out the Orc Mystic) widened from 27 to 32 minutes resting to full and from 26 to 36
-  below half, past the bar, which the game takes. The Human Mystic is fastest, and the Elven
-  Fighter, Dark Fighter, Dark Mystic and both Orcs are the work this leaves (`docs/balance.md`).
-  Gludio has to pay more than a village ground a character has outgrown, measured when it is built.
-
+  from one level below to one above, and a kill pays half for each level the character stands more
+  than one above it (rules §17, §20, departures in `docs/canon/README.md`). The village is meant to
+  be harder: resting to full stays safe for every set, but resting below half without potions the 17
+  paths died in 647 runs of 3,400 rather than 159, and the spread to level 15 (leaving out the Orc
+  Mystic) widened from 27 to 32 minutes resting to full and from 26 to 36 below half, past the bar,
+  which the game takes. The Human Mystic is fastest, and how far the others stand behind it is the
+  grounds' and the sets' own (the spread's call, above). Gludio has to pay more than a village ground a
+  character has outgrown, measured when it is built.
 - **Piece pricing stays despite the Dark Mystic** (6a43a98, 2026-10-16). Pricing every chest, legs
   and necklace by what it stands for failed the risky-play bar (resting below half, no potions): the
   Dark Mystic two-hander went from 7 to 81 deaths in 400. The masteries brought it to 2 / 6 of 200
