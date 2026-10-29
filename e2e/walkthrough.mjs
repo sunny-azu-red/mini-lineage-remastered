@@ -626,6 +626,12 @@ try {
     check('...and an outgrown monster pays nothing, which the fight says',
         /gain nothing from it\.$/.test(await text('#fight-outcome')) && (await state()).adena === purseBefore,
         `${await text('#fight-outcome')} / ${purseBefore} → ${(await state()).adena}`);
+    const spentWash = await page.$eval('#fight-outcome', (el) => [
+        getComputedStyle(el).backgroundColor.replace(/\s/g, ''),
+        getComputedStyle(document.documentElement).getPropertyValue('--wash-info').replace(/\s/g, ''),
+        el.querySelector('.entry-head > span:first-child').textContent.trim()]);
+    check('...its Victory washed blue, as an escape is, since it gained nothing',
+        spentWash[2] === 'Victory' && spentWash[0] === spentWash[1], spentWash.join(' | '));
     const firstHead = await page.evaluate(() => [...document.querySelectorAll('#fight-log .entry-head')]
         .map((head) => head.textContent.replace(/\s+/g, ' ').trim()).find((head) => head.startsWith('Round')) ?? '');
     check('...in the Fight Log, a panel of its own under the ground\'s, a round a row headed by both sides\' HP, not in an alert',

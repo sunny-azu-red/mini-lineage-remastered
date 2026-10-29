@@ -11,7 +11,7 @@ defmodule MiniLineageWeb.HuntPageTest do
 
   alias MiniLineage.{Characters, Repo}
   alias MiniLineage.Characters.Record
-  alias MiniLineage.Game.{Math, Narratives, Player, Rng}
+  alias MiniLineage.Game.{Math, Narratives, Player, Rng, Rules}
 
   # A Human Fighter, standing on Talking Island.
   defp human(conn) do
@@ -126,6 +126,31 @@ defmodule MiniLineageWeb.HuntPageTest do
     {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
     refute has_element?(view, "#fight")
     assert text(view, "#hunt-button") == "⚔️ Hunt"
+  end
+
+  # The fight's last row says how it ended: green for a kill that paid, gold for one that levelled,
+  # and blue, as an escape, for one the character has outgrown (rules §20).
+  test "a victory washes green, gold when it levels, and blue when it paid nothing" do
+    {_view, session, conn} = human(build_conn())
+    pin(session, 0.0)
+
+    hunt = fn experience ->
+      Characters.mutate(session, &{Player.restore_fully(%{&1 | experience: experience}), :ok})
+      {:ok, view, _html} = live(conn, ~p"/talking-island-village/obelisk-of-victory")
+      view |> element("#hunt-button") |> render_click()
+      view
+    end
+
+    plain = hunt.(Math.xp_for_level(3))
+    assert has_element?(plain, "#fight-outcome.victory")
+    refute has_element?(plain, "#fight-outcome:is(.levelled, .spent)")
+
+    assert has_element?(hunt.(Math.xp_for_level(2) - 1), "#fight-outcome.victory.levelled")
+
+    # At the last level every monster on the ladder is outgrown, and none can kill.
+    spent = hunt.(Math.xp_for_level(Rules.max_level()))
+    assert has_element?(spent, "#fight-outcome.spent .entry-head", "Victory")
+    refute has_element?(spent, "#fight-outcome.victory")
   end
 
   test "a character cannot hunt another village's ground" do

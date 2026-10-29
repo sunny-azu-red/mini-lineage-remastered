@@ -181,7 +181,8 @@ defmodule MiniLineage.Game.Actions do
     player = Player.engage(player)
     player = %{player | fought: player.fought + 1}
     # The fight's length, which nothing draws, so the ladder bench can move its clock by it.
-    flash = Map.merge(flash, %{log: log, ms: result.ms, outcome: outcome(player, result)})
+    gap = Hunt.level_gap(level, foe.level)
+    flash = Map.merge(flash, %{log: log, ms: result.ms, outcome: outcome(player, result, gap)})
     {%{player | encounter: encounter(flash, foe, ground)}, {:ok, flash}}
   end
 
@@ -199,9 +200,11 @@ defmodule MiniLineage.Game.Actions do
         combat: nil
     }
 
-  defp outcome(%{dead: true}, _result), do: :defeat
-  defp outcome(_player, %{foe: foe}) when foe > 0, do: :escaped
-  defp outcome(_player, _result), do: :victory
+  # Rules §20: a kill of a monster the character has outgrown is spent, a victory that paid nothing.
+  defp outcome(%{dead: true}, _result, _gap), do: :defeat
+  defp outcome(_player, %{foe: foe}, _gap) when foe > 0, do: :escaped
+  defp outcome(_player, _result, :outgrown), do: :spent
+  defp outcome(_player, _result, _gap), do: :victory
 
   # What `encounters` keeps of a fight: the page's log and what it came to, by its ground.
   defp encounter(flash, foe, ground),

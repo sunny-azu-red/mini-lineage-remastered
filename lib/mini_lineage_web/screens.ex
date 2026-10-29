@@ -405,14 +405,18 @@ defmodule MiniLineageWeb.Screens do
     do: ~H|below <span class="hp">{@share}% HP</span>|
 
   # A kill is a victory, levelling or not; the new level is named where a round names where both
-  # stand, since the gold alert above says the rest. A death (rules §21) is a defeat.
+  # stand, since the gold alert above says the rest. One that paid nothing is spent (rules §20), and
+  # a death (rules §21) is a defeat.
   defp outcome(%{outcome: :victory} = fight),
     do: %{
-      kind: "victory",
+      kind: if(fight[:levelled], do: "victory levelled", else: "victory"),
       head: "Victory",
       standing: fight[:levelled] && "Level Up",
       text: fight.text
     }
+
+  defp outcome(%{outcome: :spent} = fight),
+    do: %{kind: "spent", head: "Victory", standing: nil, text: fight.text}
 
   defp outcome(%{outcome: :defeat} = fight),
     do: %{kind: "defeat", head: "Defeat", standing: nil, text: fight.text}

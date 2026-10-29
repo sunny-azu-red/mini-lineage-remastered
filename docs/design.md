@@ -43,9 +43,10 @@ was got wrong once.
   the line, muted throughout, delimiter included. A row is washed, in the colour and fade of the
   alert that would have said it, for how the fight opened (an Encounter info, an Ambush danger),
   for a critical hit on either side (`--wash-critical`, the orange a critical is written in), else
-  for HP either side mended (success: a heal, a potion, a drain), and for how it ended (Victory and
-  Escaped both info, green being the mend's; Defeat danger, as the Ambush is). Every other row keeps
-  the panel's ground.
+  for HP either side mended (success: a heal, a potion, a drain), and for how it ended: a Victory
+  that paid success, green as a mend is, both being something gained; one that levelled triumph,
+  gold as the alert above it; one that paid nothing (rules §20) info, as an Escape is, nothing
+  gained either way; and Defeat danger, as the Ambush is. Every other row keeps the panel's ground.
 - **A panel of settings is three columns shared down its rows** (subgrid): an 11px label, the
   control, then what it is set to, right-aligned. That last column is a fixed 9em, the widest value
   with room: sized to its content, it resized the track under a drag. A stepper's

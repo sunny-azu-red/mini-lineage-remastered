@@ -279,7 +279,7 @@
 
 /* A bar under a quarter, as legacy's HP row did; each pulses in its bar's own hue. */
 .stat-row:is(.low-hp, .low-mp),
-.fight-log>li:is(.encounter, .ambush, .critical, .heal, .victory, .escaped, .defeat) {
+.fight-log>li:is(.encounter, .ambush, .critical, .heal, .victory, .spent, .escaped, .defeat) {
     background-image: linear-gradient(90deg,
             var(--bg-panel) 0,
             transparent 33%,
@@ -559,10 +559,19 @@ ol.fight-log {
 }
 
 /* How it opened, a critical or a mend either way, and how it ended, each washed as the alert that
- * would have said it, but a Victory info as an escape is, green being the mend's: a monster that
- * comes at you is danger, as is one that ends the run, a critical the colour it is written in. */
-.fight-log>li:is(.encounter, .victory, .escaped) {
+ * would have said it: a monster that comes at you is danger, as is one that ends the run, a critical
+ * the colour it is written in, a kill that paid a success and one that levelled a triumph, and one
+ * that paid nothing (rules §20) info, as an escape is. */
+.fight-log>li:is(.encounter, .spent, .escaped) {
     background-color: var(--wash-info);
+}
+
+.fight-log>li.victory {
+    background-color: var(--wash-success);
+}
+
+.fight-log>li.victory.levelled {
+    background-color: var(--wash-gold);
 }
 
 .fight-log>li:is(.ambush, .defeat) {

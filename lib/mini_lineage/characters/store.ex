@@ -95,6 +95,7 @@ defmodule MiniLineage.Characters.Store do
     }
 
   defp outcome("victory"), do: :victory
+  defp outcome("spent"), do: :spent
   defp outcome("defeat"), do: :defeat
   defp outcome(_escaped), do: :escaped
 
