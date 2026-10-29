@@ -68,7 +68,7 @@ make (2026-10-26). Every call below serves this.
 Balance matters most, and it is measured, never guessed (AGENTS.md has the bench).
 
 - **The bar**, applied by `bench/compare.exs` (agreed 2026-10-14): no deaths when resting to full;
-  no set's time to level 20 moves more than 15%; deaths may not rise past the dice's noise; the
+  no set's time to level 15 moves more than 15%; deaths may not rise past the dice's noise; the
   spread between sets may not widen (2% tolerance). Time is compared run for run, over runs that
   finished in both readings.
 - **A change that fails the bar is reported, not tuned quietly.** The owner decides, and has
@@ -80,6 +80,18 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
   departure where the bench allows it: aCis's shield block won whole over L2J's ×1.3 against arrows.
 
 ### Calls already made
+
+- **Balance is measured to level 15, and the village is harder and stops paying at 16**
+  (2026-10-29). A character leaves its village for Gludio around 15 or 16, where Gludio's grounds
+  open, without a cap telling it to: each starting ground stops at level 14, a hunt meets a monster
+  from one level below to one above, and a kill pays half for each level the character stands
+  more than one above it (rules §17, §20, departures in `docs/canon/README.md`). The village is
+  meant to be harder: resting to full stays safe for every set, but resting below half without
+  potions the 17 paths died in 647 runs of 3,400 rather than 159, and the spread to level 15
+  (leaving out the Orc Mystic) widened from 27 to 32 minutes resting to full and from 26 to 36
+  below half, past the bar, which the game takes. The Human Mystic is fastest, and the Elven
+  Fighter, Dark Fighter, Dark Mystic and both Orcs are the work this leaves (`docs/balance.md`).
+  Gludio has to pay more than a village ground a character has outgrown, measured when it is built.
 
 - **Piece pricing stays despite the Dark Mystic** (6a43a98, 2026-10-16). Pricing every chest, legs
   and necklace by what it stands for failed the risky-play bar (resting below half, no potions): the

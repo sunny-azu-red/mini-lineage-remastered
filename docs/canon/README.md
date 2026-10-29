@@ -94,12 +94,21 @@ where it has any.
   night harder to hit in, but by far more than our Accuracy −3. Shadow Sense is the Dark Fighter's
   real passive (id 294, +3 Accuracy at night), learned at level 15; ours is every Dark Elf's from
   level 1. The Blessing of the Mother Tree is ours alone.
-- **A hunt never meets a monster above the character's level** (rules §20). In Lineage II a player
-  chose whom to fight; here the ground chooses, so it chooses nothing stronger.
-- **Each village has one hunting ground,** a ladder from level 1 to the level where Gludio takes
-  over. It carries one nostalgic name (Obelisk of Victory, Elven Fortress, School of Dark Arts,
-  Cave of Trials) and draws on every monster around that village: its fields and its nearby named
-  grounds. Each monster keeps its own level and stats.
+- **A hunt meets a monster from one level below the character to one above** (rules §20). In
+  Lineage II a player chose whom to fight; here the ground chooses, and a level either side keeps a
+  fight against the character's own kind of foe, the one above making a careless rest dangerous:
+  resting below half without potions, the 17 paths' deaths to level 15 rose from 159 to 647 runs
+  of 3,400 (`docs/balance.md`, `docs/direction.md`).
+- **A kill pays half for each level the character stands more than one above the monster** (rules
+  §20), where Lineage II shrank EXP and SP by 5/6 a level past the fifth (`skills.md`). The penalty
+  starts where the draw stops, so no fight a ground draws for the character's level is ever
+  touched, and a ground the character has outgrown stops paying: with a top monster of level 14,
+  level 16 to 17 takes about twice as long as 15 to 16, and 17 to 18 four to six times.
+- **Each village has one hunting ground,** a ladder from level 1 to 14, one below where Gludio's
+  grounds open at 15 (`hunting-grounds.md`). It carries one nostalgic name (Obelisk of Victory,
+  Elven Fortress, School of Dark Arts, Cave of Trials) and draws on every monster up to level 14
+  around that village: its fields and its nearby named grounds. Each monster keeps its own level
+  and stats. Those past 14 stay in `monsters.md` and `priv/game/monsters.csv`, written ahead.
 
 **Characters**
 

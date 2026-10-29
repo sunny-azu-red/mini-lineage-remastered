@@ -289,15 +289,16 @@ MP a tick anywhere else, so 5 and 3, and in Elven Village 8.04 and 4.74, so **8 
 ## 17. Hunting grounds
 
 Each starting village has one hunting ground, reached on foot from the village and for free. It is
-a ladder from level 1 to about where the Town of Gludio's grounds begin, carrying one name and every
-monster around that village, its fields and its nearby grounds, each at its own level (§18).
+a ladder from level 1 to 14, one below where the Town of Gludio's grounds begin, carrying one name
+and every monster up to level 14 around that village, its fields and its nearby grounds, each at its
+own level (§18). A character outgrows it at 16, where its monsters stop paying in full (§20).
 
 | Ground | Town | Slug | Monsters |
 |---|---|---|---|
-| Obelisk of Victory | Talking Island Village | obelisk-of-victory | Young Keltir, Bearded Keltir, Elpy, Gremlin, Elder Keltir, Wolf, Elder Wolf, Giant Toad, Orc, Orc Grunt, Goblin Scout, Orc Archer, Werewolf, Orc Fighter, Werewolf Hunter, Orc Lieutenant, Werewolf Chieftain, Orc Fighter Leader, Stone Golem, Crasher, Talon Spider, Blade Spider |
-| Elven Fortress | Elven Village | elven-fortress | Young Red Keltir, Gremlin, Red Keltir, Elder Red Keltir, Gray Wolf, Goblin Raider, Kaboo Orc, Kaboo Orc Grunt, Green Dryad, Kaboo Orc Archer, Spore Fungus, Kaboo Orc Fighter, Baraq Orc Fighter, Baraq Orc Warrior Leader, Dungeon Skeleton, Dungeon Skeleton Archer, Dread Soldier, Mist Terror, Dark Terror, Shade Horror, Sukar Wererat, Sukar Wererat Leader, Dre Vanul Tracker |
-| School of Dark Arts | Dark Elf Village | school-of-dark-arts | Young Brown Keltir, Gremlin, Brown Keltir, Elder Brown Keltir, Ashen Wolf, Goblin, Imp, Imp Elder, Balor Orc Archer, Goblin Lookout, Green Fungus, Balor Orc Fighter, Goblin Thief, Vaiss Orc, Balor Orc Lieutenant, Vaiss Orc Warrior Leader, Balor Orc Fighter Leader, Blood Fungus, Skeleton Hunter, Doom Soldier, Cave Spider, Cave Fang Spider, Omen Beast, Tainted Zombie, Stink Zombie, Lesser Succubus, Lesser Succubus Turen, Lesser Succubus Tilfo |
-| Cave of Trials | Orc Village | cave-of-trials | Young Prairie Keltir, Gremlin, Prairie Keltir, Elder Prairie Keltir, Kasha Wolf, Goblin Grave Robber, Rakeclaw Imp, Kasha Timber Wolf, Rakeclaw Imp Hunter, Mountain Fungus, Maraku Werewolf, Evil Eye, Evil Eye Watcher, Darkwing Bat, Grizzly, Goblin Tomb Raider Leader, Slave Skeleton, Greystone Golem, Grave Keeper, Evil Eye Patroller, Crypt Horror, Kuruka Ratman, Kuruka Ratman Hunter, Skeleton Longbowman, Undead Slave, Ghost, Ghost Guardian |
+| Obelisk of Victory | Talking Island Village | obelisk-of-victory | Young Keltir, Bearded Keltir, Elpy, Gremlin, Elder Keltir, Wolf, Elder Wolf, Giant Toad, Orc, Orc Grunt, Goblin Scout, Orc Archer, Werewolf, Orc Fighter, Werewolf Hunter, Orc Lieutenant, Werewolf Chieftain, Orc Fighter Leader, Stone Golem, Crasher |
+| Elven Fortress | Elven Village | elven-fortress | Young Red Keltir, Gremlin, Red Keltir, Elder Red Keltir, Gray Wolf, Goblin Raider, Kaboo Orc, Kaboo Orc Grunt, Green Dryad, Kaboo Orc Archer, Spore Fungus, Kaboo Orc Fighter, Baraq Orc Fighter, Baraq Orc Warrior Leader, Dungeon Skeleton, Dungeon Skeleton Archer, Dread Soldier |
+| School of Dark Arts | Dark Elf Village | school-of-dark-arts | Young Brown Keltir, Gremlin, Brown Keltir, Elder Brown Keltir, Ashen Wolf, Goblin, Imp, Imp Elder, Balor Orc Archer, Goblin Lookout, Green Fungus, Balor Orc Fighter, Goblin Thief, Vaiss Orc, Balor Orc Lieutenant, Vaiss Orc Warrior Leader, Balor Orc Fighter Leader, Blood Fungus, Skeleton Hunter, Doom Soldier |
+| Cave of Trials | Orc Village | cave-of-trials | Young Prairie Keltir, Gremlin, Prairie Keltir, Elder Prairie Keltir, Kasha Wolf, Goblin Grave Robber, Rakeclaw Imp, Kasha Timber Wolf, Rakeclaw Imp Hunter, Mountain Fungus, Maraku Werewolf, Evil Eye, Evil Eye Watcher, Darkwing Bat, Grizzly, Goblin Tomb Raider Leader, Slave Skeleton, Greystone Golem, Grave Keeper, Evil Eye Patroller |
 
 ## 18. Monsters
 
@@ -537,9 +538,8 @@ this far (a monster's spells as far as §19 gives):
 | A character's spell | 600 |
 | An aggressive monster noticing a character | 500 |
 
-- **Who you meet:** one of the ground's monsters from 3 levels below the character up to its own
-  level, each as likely as the next, or one of the nearest if none is. Nothing on a village's ground
-  is ever stronger than the character who meets it there.
+- **Who you meet:** one of the ground's monsters from 1 level below the character to 1 level
+  above, each as likely as the next, or one of the nearest if none is.
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round. A cast or a reuse is never rounded up to the round: one that ends
@@ -614,17 +614,18 @@ this far (a monster's spells as far as §19 gives):
   until it is used again, and Relax left unused mends nothing on the tick of rest (§11) and spends
   no MP. Every skill is used to begin with.
 - **The reward** for a kill is the monster's EXP and SP (§12) and its Adena, each × its server rate
-  (§22). A character more than 5 levels above the monster earns × (5 ÷ 6) for each level past the
-  fifth, rounded down.
+  (§22). A character more than 1 level above the monster earns × ½ for each level past the first,
+  rounded down, so no monster the ground draws for the character's level pays less, and a ground
+  the character has outgrown stops paying.
 - **In combat:** going out to the ground meets nothing until the player looks for a fight, but the
   character is in combat from the moment it arrives, fighting or not, and does not rest (§11) for as
   long as it stays there. Leaving the ground, by retreating to town or any other way, it is in combat
   for 5 seconds more, and then rests.
 - **What is left** of HP and MP stays, until the character is back in town to rest.
 
-Example: at EXP ×5, a level 12 character who kills a Young Keltir (level 1, 35 EXP) is 11 levels
-above it, 6 past the fifth, and earns 35 × 5 × (5 ÷ 6)⁶ = 58.6, so **58** EXP. A level 6 character
-earns all of it, **175**.
+Example: at EXP ×5, a level 16 character who kills a Crasher (level 14, 705 EXP) is 2 levels above
+it, 1 past the first, and earns 705 × 5 × ½ = 1,762.5, so **1,762** EXP. A level 15 character earns
+all of it, **3,525**.
 
 ## 21. Death
 

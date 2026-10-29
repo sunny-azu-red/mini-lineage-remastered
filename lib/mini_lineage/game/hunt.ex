@@ -25,6 +25,13 @@ defmodule MiniLineage.Game.Hunt do
   @short_spell 150
   @near 100
 
+  # §20: who is met, from this far below the character to this far above, and the reward, whole up
+  # to that far above the monster and halving each level past it, so an outgrown ground stops paying.
+  @draw_below 1
+  @draw_above 1
+  @paid_above @draw_below
+  @past_paid 0.5
+
   @spells [:magic, :drain, :burn]
   # §20: what a character casts at the monster, each reaching a spell's distance.
   @ranged @spells ++ [:poison, :shackle]
@@ -49,11 +56,11 @@ defmodule MiniLineage.Game.Hunt do
   defp timing_speed(_skill, stats), do: stats.cast_spd
 
   @doc """
-  §20: one of the ground's monsters from 3 levels below the character up to its own level, or one
-  of the nearest if none is.
+  §20: one of the ground's monsters from 1 level below the character to 1 above, or one of the
+  nearest if none is.
   """
   def draw(monsters, level) do
-    case Enum.filter(monsters, &(&1.level in (level - 3)..level//1)) do
+    case Enum.filter(monsters, &(&1.level in (level - @draw_below)..(level + @draw_above)//1)) do
       [] ->
         gap = fn monster -> abs(monster.level - level) end
         nearest = monsters |> Enum.map(gap) |> Enum.min()
@@ -749,12 +756,12 @@ defmodule MiniLineage.Game.Hunt do
   defp mark_critical(s, false), do: s
 
   @doc """
-  §20 and §22: EXP or SP at a rate, shrinking by 5/6 a level once the character is more than 5
-  above the monster.
+  §20 and §22: EXP or SP at a rate, halving a level once the character is more than 1 above the
+  monster.
   """
   def reward(amount, rate, level, monster_level) do
     gap = level - monster_level
-    penalty = if gap > 5, do: :math.pow(5 / 6, gap - 5), else: 1
+    penalty = if gap > @paid_above, do: :math.pow(@past_paid, gap - @paid_above), else: 1
     trunc(amount * rate * penalty)
   end
 

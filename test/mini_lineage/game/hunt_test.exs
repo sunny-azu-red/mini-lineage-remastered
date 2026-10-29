@@ -66,20 +66,23 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "who is met" do
-    test "a monster from 3 levels below the character up to its own, never above" do
+    test "a monster from 1 level below the character to 1 above" do
       ladder = Rules.monsters_of(Rules.ground("obelisk-of-victory"))
 
       for value <- [0.0, 0.5, 0.9999] do
         Rng.put_source(fn -> value end)
-        assert Hunt.draw(ladder, 6).level in 3..6
+        assert Hunt.draw(ladder, 6).level in 5..7
       end
+
+      Rng.put_source(fn -> 0.9999 end)
+      assert Hunt.draw(ladder, 6).level == 7
     end
 
     test "or the nearest, past the top of the ladder" do
       ladder = Rules.monsters_of(Rules.ground("obelisk-of-victory"))
       Rng.put_source(fn -> 0.0 end)
 
-      assert Hunt.draw(ladder, 40).name == "Blade Spider"
+      assert Hunt.draw(ladder, 40).name == "Crasher"
     end
   end
 
@@ -884,11 +887,12 @@ defmodule MiniLineage.Game.HuntTest do
   end
 
   describe "the reward" do
-    test "is whole up to 5 levels above, and 5/6 a level past it, at its rate" do
-      assert Hunt.reward(100, 5, 6, 1) == 500
-      assert Hunt.reward(100, 5, 7, 1) == 416
-      assert Hunt.reward(100, 5, 8, 1) == 347
-      assert Hunt.reward(100, 1, 8, 1) == 69
+    test "is whole up to 1 level above, and halves a level past it, at its rate" do
+      assert Hunt.reward(100, 5, 5, 6) == 500
+      assert Hunt.reward(100, 5, 7, 6) == 500
+      assert Hunt.reward(100, 5, 8, 6) == 250
+      assert Hunt.reward(100, 5, 9, 6) == 125
+      assert Hunt.reward(100, 1, 9, 6) == 25
     end
 
     test "Adena only at its chance, and between its least and most" do

@@ -778,9 +778,9 @@ defmodule MiniLineage.Game.RulesTest do
       assert round(13_000 * 333 / 416) == 10_406
     end
 
-    test "§20 EXP shrinks by 5/6 a level past the fifth, and not before" do
-      assert Hunt.reward(35, 5, 12, 1) == 58
-      assert Hunt.reward(35, 5, 6, 1) == 175
+    test "§20 EXP halves a level past the first, and not before" do
+      assert Hunt.reward(705, 5, 16, 14) == 1_762
+      assert Hunt.reward(705, 5, 15, 14) == 3_525
     end
 
     test "§15 the zone is UTC unless a server sets another, as the suites and CI play" do

@@ -41,7 +41,8 @@ orders =
   end
   |> Map.put(:unused, String.split(opts[:unused] || "", ",", trim: true))
 
-defaults = [200, 20, 100, 20]
+# The top level is 15, where a character leaves its village for Gludio (docs/direction.md).
+defaults = [200, 15, 100, 20]
 
 [runs, top, rest_below, kept] =
   Enum.map(args, &String.to_integer/1) ++ Enum.drop(defaults, length(args))

@@ -21,10 +21,13 @@ level 1's, and every shield blocking at 20 and costing 8 Evasion, as all of Line
 catching as aCis's do: three times as often against an arrow or a critical, and five blows in a
 hundred perfectly, and the character's own order of casts: of two spells as strong the cheaper
 first, a shackle on a monster with no spells once it has run in, and Curse: Poison ticking every
-second and able to kill, laid first on a monster that is not aggressive. One
-`--final` reading of that build, 200 seeded runs of every set up its village's ladder to level 20,
-once per weapon path its skills can use, each run seeded on its own; at the defaults none of them
-died. The bench learns every line its weapon uses and every mastery, which a player need not.
+second and able to kill, laid first on a monster that is not aggressive; and, since 2026-10-29,
+each village's ground stopping at level 14, a hunt meeting a monster from one level below the
+character to one above, and a kill paying half for each level past one below (rules §17, §20). One
+`--final` reading of that build, 200 seeded runs of every set up its village's ladder to level 15,
+where a character leaves for Gludio, once per weapon path its skills can use, each run seeded on its
+own; at the defaults none of them died. The sections after "Level 15" were measured to level 20
+on the rules before that, and say so. The bench learns every line its weapon uses and every mastery, which a player need not.
 
 **Rerun it** after anything that moves a fight's numbers, a price, a monster's SP or Adena, or the
 trainer's list, and rewrite these tables from what it prints (seconds, its runs in parallel):
@@ -65,7 +68,63 @@ then skips straight to the two-handers (the Zweihander path never buys a Long Sw
 each one-handed path again with the other shield choice, on the same dice so the two compare run for
 run. `compare.exs` shows them but holds only the paths to the bar.
 
-## The trainer: SP
+## Level 15: the village, as it now stands
+
+A character leaves its village for Gludio at about 15 (`docs/direction.md`). Its ground stops at
+level 14 and pays half for each level the character stands more than one above a monster, so 15 to
+16 still pays in full and the village stops being worth it after. Minutes to 15, with deaths in 200
+runs a path, at each of the bench's settings:
+
+| Set | Path | Resting to full, 20 potions | Of it resting | Behind the fastest | Below half, no potions | Below 30%, no potions | Below half, 20 potions |
+|---|---|---|---|---|---|---|---|
+| Human Mystic | staff 1h / 2h | 63 / 64 | 37 / 38 | +0% / +1% | 57 / 57 (0 / 0 died) | 56 / 56 (0 / 0) | 56 / 56 (0 / 0) |
+| Elven Mystic | staff 1h / 2h | 71 / 72 | 38 / 39 | +12% / +13% | 65 / 65 (0 / 0) | 65 / 65 (0 / 0) | 64 / 64 (0 / 0) |
+| Human Fighter | sword 1h / 2h / dagger / bow | 77 / 76 / 74 / 77 | 40 to 42 | +17% to +21% | 69 to 71 (4 / 1 / 62 / 13) | 65 to 69 (132 / 145 / 188 / 103) | 63 to 68 (0 / 0 / 3 / 0) |
+| Elven Fighter | bow | 90 | 41 | +43% | 87 (145) | (200) | 78 (0) |
+| Dark Fighter | dagger | 90 | 54 | +42% | 87 (96) | 83 (195) | 69 (3) |
+| Dark Mystic | staff 1h / 2h | 94 / 94 | 57 / 57 | +49% / +49% | 90 / 92 (42 / 75) | 89 / 89 (56 / 89) | 77 / 77 (0 / 0) |
+| Orc Fighter | fists / sword 1h / 2h | 93 / 96 / 96 | 55 to 57 | +46% to +51% | 87 to 91 (56 / 75 / 78) | 89 to 90 (199 / 200 / 196) | 75 to 81 (0 / 1 / 0) |
+| Orc Mystic | staff 1h / 2h | 92 / 92 | 48 / 49 | +45% / +45% | 82 / 82 (0 / 0) | 78 / 78 (32 / 36) | 82 / 82 (0 / 0) |
+
+Minutes for each level past 15 resting to full, read at tops 16 to 18, are 13 to 35 for 15 to 16,
+31 to 73 for 16 to 17 and 54 to 164 for 17 to 18: the second about twice the first, the third four
+to six times. What a set has at 15, and when its gear comes:
+
+| Set | Hunts to 15 | SP held at 15 | Adena earned by 15 | Adena held at 15 |
+|---|---|---|---|---|
+| Human Fighter | 122 | 2,966 to 3,018 | 193k to 195k | 28k to 32k |
+| Human Mystic | 122 | 785 to 794 | 195k to 196k | 36k |
+| Elven Fighter | 151 | 3,242 | 211k | 37k |
+| Elven Mystic | 151 | 249 to 253 | 211k to 212k | 32k to 52k |
+| Dark Fighter | 145 | 2,427 | 213k | 38k |
+| Dark Mystic | 145 | 199 | 212k | 35k to 50k |
+| Orc Fighter | 130 to 131 | 2,289 to 2,342 | 196k to 199k | 27k to 32k |
+| Orc Mystic | 131 | 1,341 to 1,342 | 199k | 36k to 40k |
+
+- **The Human and Elven Mystics set the pace,** and the Human Mystic is fastest. Talking Island's
+  Stone Golem and Crasher at 13 and 14 pay the most EXP a hunt, so its sets need 122 hunts to 15
+  where the Orc ground asks 131, the Dark Elf one 145 and the Elven one 151.
+- **Everyone else is 12% to 51% behind,** and that is the work this leaves: the Elven Fighter and
+  Dark Fighter at +42% to +43%, the Dark Mystic at +49%, the Orc Fighter at +46% to +51% and the
+  Orc Mystic at +45%. The Dark Elves and Orcs rest most, 54 to 57 minutes of their 90 to 96.
+- **Resting to full is safe; a careless rest is not.** No set dies resting to full. Below half
+  without potions the Fighters and the Dark Mystic die in 1 to 145 runs of 200, and below 30% the
+  Fighters in 103 to all 200. The Human and Elven Mystics survive both, and the Orc Mystic dies
+  only below 30% (32 to 36). Twenty potions bring every path back to 0 to 3.
+- **Nobody finishes the village's gear or lessons by 15.** The third weapon tier (54,100) comes at
+  14, the top weapon (136,000) and the armour never; a Fighter reaches 15 with 2,300 to 3,200 SP
+  against 3,300 to 4,000 for each of its five level-15 lines, a Mystic with 200 to 1,300 and nothing
+  left to learn. What the village sells past that is bought on a visit home, with Gludio's pay.
+- **Each set reaches 15 with 27,000 to 52,000 Adena,** having earned 193,000 to 213,000.
+
+## Before the move to 15: the road to 20
+
+Measured to level 20 under the earlier rules, every ground's whole roster, a hunt meeting a
+monster from three levels below up to its own, and the reward shrinking by 5/6 a level past the
+fifth. Kept for what it found about the trainer, the shop, the sets and what was tried; the section
+above wins wherever the two disagree.
+
+### The trainer: SP
 
 Every set earns about **32,500 SP** from level 1 to 20, and three quarters of it comes after level 15.
 SP doesn't depend on the weapon path, and only the Human and Orc Fighters' lists do, since only they
@@ -139,7 +198,7 @@ that level and buying a line taught there, shown as average / worst:
   of class-change skills is best priced per class against these, what a set that learned everything
   can afford on reaching 20; one that skipped a mastery has more.
 
-## The shop: Adena
+### The shop: Adena
 
 Gross Adena earned from monsters, by the level reached. Each figure is the range across sets.
 Talking Island sits at the low end from level 16, because its ground tops out at level 17.
@@ -207,7 +266,7 @@ The level each of a path's weapons is first held at, then the level and hunt the
   bought with that, so price it against these figures, or give the village something to spend it on
   sooner.
 
-## Time to level 20
+### Time to level 20
 
 Minutes of play to level 20 at the defaults, resting and fighting: before the fight had distance
 (`30e1576`), once it had (`58c1d4c`), with the first skills where Lineage II taught them and
@@ -340,7 +399,7 @@ Each step is compared run for run (`bench/compare.exs`).
 - **With potions and resting below half**, the Mystics took 11% to 13% longer once the fight had
   distance, since a fight lasts longer once a spell lands late, and buy far fewer potions.
 
-## Survival
+### Survival
 
 The bench at its defaults rests to full before every hunt, so survival is read with no potions and
 resting only once a bar falls below a share, `harsh` and `harsher` in a `--final` matrix. Deaths of
@@ -481,7 +540,7 @@ and reuses keeping what is left of a round and the Dark Mystic's casts in a play
   wielded the Squire's Sword it starts with, and a Leather Shield bought early took off its
   two-handed Squire's Gloves. A path now counts its set's starting weapons, and that set dies none.
 
-## Off-meta builds
+### Off-meta builds
 
 The bench runs each one-handed path again with the other shield choice, on the same dice, and flags
 the build when it dies less than the path past the dice's noise, or is more than 2% faster without
@@ -508,7 +567,7 @@ dying more. The lines are at the end of each setting's report (`Off-meta …`).
 - **No build is flagged under canon.** A mastery that raises the block rate (Lineage II's Shield
   Mastery, a Knight's from level 20) would come with the class change.
 
-## Both together
+### Both together
 
 The shop runs out at about hunt 200 to 280 and level 16 to 18, and the trainer at hunt 190 to 290
 and level 16 to 17, now that it teaches three masteries a set. From there to level 20, a run has nothing to buy and

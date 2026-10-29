@@ -57,23 +57,26 @@ to keep a reason to be visited. Each system below gives one.
 
 Built (rules §17 to §21), with the canon's monster stats researched first.
 
-- **One ground per village,** a ladder from level 1 to the level where Gludio takes over, under
-  one nostalgic name. It draws on every monster around that village, each at its own level and
-  stats:
+- **One ground per village,** a ladder from level 1 to 14, one below where Gludio takes over,
+  under one nostalgic name. It draws on every monster up to level 14 around that village, each at
+  its own level and stats, and stops paying in full at 16 (rules §20), so a character moves on:
 
   | Village | Ground | Monsters from | Levels |
   |---|---|---|---|
-  | Talking Island Village | Obelisk of Victory | its fields, Eastern Territory, the Obelisk, Singing Waterfall | 1–17 |
-  | Elven Village | Elven Fortress | its fields, the Fortress | 1–20 |
-  | Dark Elf Village | School of Dark Arts | its fields, Dark Forest, the School | 1–22 |
-  | Orc Village | Cave of Trials | its fields, Immortal Plateau (north), the Cave | 1–21 |
+  | Talking Island Village | Obelisk of Victory | its fields, Eastern Territory, the Obelisk, Singing Waterfall | 1–14 |
+  | Elven Village | Elven Fortress | its fields, the Fortress | 1–14 |
+  | Dark Elf Village | School of Dark Arts | its fields, Dark Forest, the School | 1–14 |
+  | Orc Village | Cave of Trials | its fields, Immortal Plateau (north), the Cave | 1–14 |
 
 - **A ground is reached on foot from its village,** for free.
 - **One click, one fight:** a monster near the character's level, fought to the end in rounds,
   with blows at Atk. Spd., spells at Casting Spd. and the skills it has learned, as its battle
   orders say. It pays EXP, SP and Adena.
 - **It can kill.** There is no warning but the sidebar's HP or MP row pulsing under a quarter.
-- **Next, Gludio:** Ruins of Despair, levels 15 to 24.
+- **Next, Gludio, from 15,** where its grounds open (`docs/canon/hunting-grounds.md`, "Where play
+  moves"): the Ruins of Despair and the Ruins of Agony first, levels 15 to 24, where Lineage II's
+  first class-change quests send a character at 19. They have to pay more than a village ground the
+  character has outgrown, measured when they are built.
 
 ## Built with the first hunt
 

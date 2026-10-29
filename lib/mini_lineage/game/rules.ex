@@ -274,7 +274,7 @@ defmodule MiniLineage.Game.Rules do
     4_200_000_000
   ]
 
-  # Rules §17: one ground per starting village, its monsters a ladder by level.
+  # Rules §17: one ground per starting village, its monsters a ladder by level up to 14.
   @grounds [
     %{
       name: "Obelisk of Victory",
@@ -282,7 +282,7 @@ defmodule MiniLineage.Game.Rules do
       monsters:
         ~w(Young_Keltir Bearded_Keltir Elpy Gremlin Elder_Keltir Wolf Elder_Wolf Giant_Toad Orc
            Orc_Grunt Goblin_Scout Orc_Archer Werewolf Orc_Fighter Werewolf_Hunter Orc_Lieutenant
-           Werewolf_Chieftain Orc_Fighter_Leader Stone_Golem Crasher Talon_Spider Blade_Spider)
+           Werewolf_Chieftain Orc_Fighter_Leader Stone_Golem Crasher)
     },
     %{
       name: "Elven Fortress",
@@ -291,8 +291,7 @@ defmodule MiniLineage.Game.Rules do
         ~w(Young_Red_Keltir Gremlin Red_Keltir Elder_Red_Keltir Gray_Wolf Goblin_Raider Kaboo_Orc
            Kaboo_Orc_Grunt Green_Dryad Kaboo_Orc_Archer Spore_Fungus Kaboo_Orc_Fighter
            Baraq_Orc_Fighter Baraq_Orc_Warrior_Leader Dungeon_Skeleton Dungeon_Skeleton_Archer
-           Dread_Soldier Mist_Terror Dark_Terror Shade_Horror Sukar_Wererat Sukar_Wererat_Leader
-           Dre_Vanul_Tracker)
+           Dread_Soldier)
     },
     %{
       name: "School of Dark Arts",
@@ -301,8 +300,7 @@ defmodule MiniLineage.Game.Rules do
         ~w(Young_Brown_Keltir Gremlin Brown_Keltir Elder_Brown_Keltir Ashen_Wolf Goblin Imp
            Imp_Elder Balor_Orc_Archer Goblin_Lookout Green_Fungus Balor_Orc_Fighter Goblin_Thief
            Vaiss_Orc Balor_Orc_Lieutenant Vaiss_Orc_Warrior_Leader Balor_Orc_Fighter_Leader
-           Blood_Fungus Skeleton_Hunter Doom_Soldier Cave_Spider Cave_Fang_Spider Omen_Beast
-           Tainted_Zombie Stink_Zombie Lesser_Succubus Lesser_Succubus_Turen Lesser_Succubus_Tilfo)
+           Blood_Fungus Skeleton_Hunter Doom_Soldier)
     },
     %{
       name: "Cave of Trials",
@@ -310,8 +308,7 @@ defmodule MiniLineage.Game.Rules do
       monsters: ~w(Young_Prairie_Keltir Gremlin Prairie_Keltir Elder_Prairie_Keltir Kasha_Wolf
            Goblin_Grave_Robber Rakeclaw_Imp Kasha_Timber_Wolf Rakeclaw_Imp_Hunter Mountain_Fungus
            Maraku_Werewolf Evil_Eye Evil_Eye_Watcher Darkwing_Bat Grizzly Goblin_Tomb_Raider_Leader
-           Slave_Skeleton Greystone_Golem Grave_Keeper Evil_Eye_Patroller Crypt_Horror Kuruka_Ratman
-           Kuruka_Ratman_Hunter Skeleton_Longbowman Undead_Slave Ghost Ghost_Guardian)
+           Slave_Skeleton Greystone_Golem Grave_Keeper Evil_Eye_Patroller)
     }
   ]
 

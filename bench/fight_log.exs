@@ -1,5 +1,5 @@
 # Every way the fight log can read, gathered from fights the game itself plays: each set at levels
-# 1 to 20, in its starting kit and in the best its village sells (the `twink` key's), at full, low
+# 1 to 20 (past its ground at 15), in its starting kit and in the best its village sells (the `twink` key's), at full, low
 # and empty MP and full and low HP (once with no heal before the pull and no potion, so it heals in
 # the fight), against every monster its ground draws at that level. Each clause is reduced to its
 # shape (a monster as M, a skill or spell as S, an item as I, each with its emoji, a number as N)
@@ -68,7 +68,7 @@ played =
       level <- [1, 3, 5, 7, 10, 13, 16, 20],
       ground = Rules.ground_of(Rules.hometown(race_id)),
       ladder = Rules.monsters_of(ground),
-      drawn = Enum.filter(ladder, &(&1.level in (level - 3)..level)),
+      drawn = Enum.filter(ladder, &(&1.level in (level - 1)..(level + 1))),
       monster <- if(drawn == [], do: [Enum.min_by(ladder, &abs(&1.level - level))], else: drawn),
       {mp, hp, pull, potion} <- [
         {1.0, 1.0, 70, 50},
