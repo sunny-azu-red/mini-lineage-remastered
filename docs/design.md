@@ -79,8 +79,11 @@ was got wrong once.
 ## Classes
 
 - **A class per thing the game names, never per colour.** `.adena`, `.level` and `.skill` stay apart
-  though all three resolve to gold today, so one can move without the others. They are filed under
-  **Values** in `base.css`. Above them, **Utilities** hold what is not a value: `.muted` (something
+  though all three resolve to gold today, so one can move without the others. A monster's level
+  adds where it stands against the character's (`.above`, `.below`, `.outgrown`, `.perilous`, rules
+  §20), each borrowing the colour of what it is like: a critical's orange, a mend's green, muted,
+  and HP's red; as text only, never a row's wash, so it is never read as the critical or the mend.
+  They are filed under **Values** in `base.css`. Above them, **Utilities** hold what is not a value: `.muted` (something
   that isn't a value standing where one would be; no weight), `.delimiter` (the `&bull;` between a
   name and what it does, a skill's, an effect's or an item's, one step brighter than muted so it
   stands apart from an item's muted stats too; between two muted sides, as in a log's head, it has

@@ -895,7 +895,13 @@ defmodule MiniLineageWeb.Screens do
       assign(assigns,
         stats: assigns.view.stats,
         article: article(assigns.view.class_name),
-        xp_needed: assigns.view.xp_required - assigns.view.xp_current
+        xp_needed: assigns.view.xp_required - assigns.view.xp_current,
+        killer_level: Rules.monster(assigns.view.killer).level
+      )
+
+    assigns =
+      assign(assigns,
+        killer_class: Format.level_class(Hunt.level_gap(assigns.view.level, assigns.killer_level))
       )
 
     ~H"""
@@ -904,7 +910,7 @@ defmodule MiniLineageWeb.Screens do
         You were {@article} {@view.class_name} of <.attribute name="Strength" key="str" value={@stats.str} />, <.attribute name="Constitution" key="con" value={@stats.con} />, <.attribute name="Dexterity" key="dex" value={@stats.dex} />, <.attribute name="Intelligence" key="int" value={@stats.int} />, <.attribute name="Wit" key="wit" value={@stats.wit} /> and <.attribute name="Mental Strength" key="men" value={@stats.men} />. {@view.perk}
       </p>
       <p id="character-vitality" phx-no-format>
-        You fell to the {@view.killer} at the {@view.fell_at} at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, having stood unchallenged at the zenith of martial prowess<% else %>, only <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> short of <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and <%= if @view.adena > 0 do %>left <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> unspent<% else %>died with an empty purse<% end %>.
+        You fell to the {@view.killer}, <span class={@killer_class}>Level {@killer_level}</span>, at the {@view.fell_at} at <span class="level">Level <.figure key="char-level" value={@view.level} /></span> with a total of <span class="xp"><.figure key="char-xp" value={@view.experience} /> XP</span><%= if @view.is_max_level do %>, having stood unchallenged at the zenith of martial prowess<% else %>, only <span class="xp"><.figure key="char-xp-needed" value={@xp_needed} /> XP</span> short of <span class="level">Level <.figure key="char-next-level" value={@view.level + 1} /></span><% end %>, and <%= if @view.adena > 0 do %>left <span class="adena">🪙 <.figure key="char-adena" value={@view.adena} /> Adena</span> unspent<% else %>died with an empty purse<% end %>.
       </p>
     </div>
     """

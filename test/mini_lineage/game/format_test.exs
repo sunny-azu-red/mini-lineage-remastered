@@ -49,6 +49,12 @@ defmodule MiniLineage.Game.FormatTest do
     assert Format.adena(12_500) == ~s(<span class="adena">🪙 12,500 Adena</span>)
   end
 
+  test "a level is the word and the figure in gold, a monster's coloured by where it stands" do
+    assert Format.level(14) == ~s(<span class="level">Level 14</span>)
+    assert Format.level(14, :even) == ~s(<span class="level">Level 14</span>)
+    assert Format.level(14, :outgrown) == ~s(<span class="level outgrown">Level 14</span>)
+  end
+
   describe "the values the JavaScript must agree on" do
     test "is shortened the same way here" do
       # hooks/animated-values.js formats the count-up's own frames with a twin of this. Both read

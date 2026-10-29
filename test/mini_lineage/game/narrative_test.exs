@@ -22,8 +22,9 @@ defmodule MiniLineage.Game.NarrativeTest do
 
   defp unrendered(text), do: Regex.scan(~r/\{[^}]*\}/, text) |> List.flatten()
 
-  # A swordsman with a shield, unless a test arms it otherwise.
+  # A level 10 swordsman with a shield, unless a test arms it otherwise.
   @weapon %{
+    level: 10,
     max_hp: 100,
     hp: 100,
     weapon: Rules.item("Long Sword"),
@@ -78,6 +79,7 @@ defmodule MiniLineage.Game.NarrativeTest do
     result = Hunt.fight(stats, bars, Player.fighting_skills(player), foe)
 
     weapon = %{
+      level: Player.level(player),
       max_hp: stats.max_hp,
       hp: player.health,
       weapon: stats.weapon,
@@ -104,6 +106,24 @@ defmodule MiniLineage.Game.NarrativeTest do
   end
 
   describe "the fight log" do
+    test "colours the monster's level by where it stands against the character's (rules §20)" do
+      ground = Rules.ground("obelisk-of-victory")
+
+      for {name, level, class} <- [
+            {"Orc Fighter", 8, "level perilous"},
+            {"Orc Fighter", 9, "level above"},
+            {"Orc Fighter", 10, "level"},
+            {"Orc Fighter", 11, "level below"},
+            {"Orc Fighter", 12, "level outgrown"}
+          ] do
+        [met] =
+          Rules.monster(name)
+          |> Narrative.build_fight_log(ground, [], %{@weapon | level: level}, {[], 80})
+
+        assert met.line =~ ~s(<span class="#{class}">Level 10</span>), class
+      end
+    end
+
     test "an aggressive monster comes at the character, a passive one is met" do
       ground = Rules.ground("obelisk-of-victory")
 
@@ -111,7 +131,8 @@ defmodule MiniLineage.Game.NarrativeTest do
         Narrative.build_fight_log(Rules.monster("Orc Fighter"), ground, [], @weapon, {[], 80})
 
       [met] =
-        Narrative.build_fight_log(Rules.monster("Young Keltir"), ground, [], @weapon, {[], 80})
+        Rules.monster("Young Keltir")
+        |> Narrative.build_fight_log(ground, [], %{@weapon | level: 1}, {[], 80})
 
       assert Narrative.alert(noticed.line) =~
                ~r/^An Orc Fighter, <span class="level">Level 10<\/span>, notices you on the .* and comes at you\.$/

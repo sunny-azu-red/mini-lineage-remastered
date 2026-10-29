@@ -146,6 +146,7 @@ defmodule MiniLineage.Game.Actions do
     stats = Player.stats(player)
 
     weapon = %{
+      level: level,
       max_hp: stats.max_hp,
       weapon: stats.weapon,
       shield: stats.shield,

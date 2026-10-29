@@ -36,9 +36,9 @@ defmodule MiniLineage.Game.Narratives do
   @epitaph ~s(Shilen, the goddess of death, has gathered {their} soul but not {their} name, which the Monument of Heroes keeps in every town of Aden among all who fought before {object}.)
 
   # Rules §20's fight log: who is met, then each round told one sentence per side.
-  @met ~s({they} meet {article} {monster}, <span class="level">Level {level}</span>, on the {ground}.)
+  @met ~s({they} meet {article} {monster}, {level}, on the {ground}.)
   # Rules §20: an aggressive monster finds the character first.
-  @noticed ~s({Article} {monster}, <span class="level">Level {level}</span>, notices {object} on the {ground} and comes at {object}.)
+  @noticed ~s({Article} {monster}, {level}, notices {object} on the {ground} and comes at {object}.)
   # Each may stand inside a sentence, so it is written lowercase; `Narrative` capitalises whichever
   # opens one. Every attack names its motion, then its outcome: {motion} is the character's
   # "swing {their} 🗡️ Long Sword", "shoot {their} 🏹 Bow", "punch with {their} 🥊 Cestus" or, bare

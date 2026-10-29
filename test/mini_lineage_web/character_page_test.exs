@@ -131,6 +131,24 @@ defmodule MiniLineageWeb.CharacterPageTest do
     assert Enum.map(panels, & &1[:collapsible]) == [nil, nil, nil, nil]
   end
 
+  # Rules §21: the monster a run fell to is named with its level, coloured as the fight log colours it.
+  test "a fallen run names its killer's level, coloured by where it stood against the run" do
+    {player, _} = Player.initialize(%Player{}, Constants.race(0), :fighter, "Sunny")
+
+    player = %{
+      player
+      | experience: Math.xp_for_level(16),
+        dead: true,
+        killer: "Crasher",
+        fell_at: "obelisk-of-victory"
+    }
+
+    doc = page(player)
+
+    assert doc |> LazyHTML.query("#character-vitality .level.outgrown") |> LazyHTML.text() ==
+             "Level 14"
+  end
+
   defp page(player) do
     view = Snapshot.build(player)
     catalog = Snapshot.catalog()

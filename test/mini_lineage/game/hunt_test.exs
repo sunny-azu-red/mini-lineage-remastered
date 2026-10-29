@@ -895,6 +895,19 @@ defmodule MiniLineage.Game.HuntTest do
       assert Hunt.reward(100, 1, 9, 6) == 25
     end
 
+    test "colours a monster's level by where it stands, outgrown exactly where it pays less" do
+      assert Hunt.level_gap(16, 18) == :perilous
+      assert Hunt.level_gap(16, 17) == :above
+      assert Hunt.level_gap(16, 16) == :even
+      assert Hunt.level_gap(16, 15) == :below
+      assert Hunt.level_gap(16, 14) == :outgrown
+
+      for monster_level <- 10..20 do
+        outgrown? = Hunt.level_gap(16, monster_level) == :outgrown
+        assert outgrown? == Hunt.reward(100, 1, 16, monster_level) < 100, "Level #{monster_level}"
+      end
+    end
+
     test "Adena only at its chance, and between its least and most" do
       keltir = Rules.monster("Young Keltir")
       Rng.put_source(fn -> 0.0 end)

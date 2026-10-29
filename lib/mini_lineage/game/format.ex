@@ -151,6 +151,16 @@ defmodule MiniLineage.Game.Format do
   @doc "An amount of Adena as every message writes it: the coin, the figure and the word, in gold."
   def adena(amount), do: ~s(<span class="adena">🪙 #{number(amount)} Adena</span>)
 
+  @doc """
+  A level as every message writes it, the word and the figure in gold, and a monster's coloured by
+  where it stands against the character's (`Hunt.level_gap/2`).
+  """
+  def level(level, gap \\ :even), do: ~s(<span class="#{level_class(gap)}">Level #{level}</span>)
+
+  @doc "The class a level is drawn in, `Format.level/2`'s, for a page that writes the span itself."
+  def level_class(:even), do: "level"
+  def level_class(gap), do: "level #{gap}"
+
   @doc "An amount of SP as every message writes it: the book, the figure and the word."
   def sp(amount), do: ~s(<span class="sp">📖 #{number(amount)} SP</span>)
 

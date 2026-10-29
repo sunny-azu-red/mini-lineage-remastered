@@ -74,6 +74,7 @@ defmodule MiniLineage.Game.Narrative do
   weapon it was made with, and every item and skill named as `Names` names it.
   """
   def build_fight_log(foe, ground, log, %{max_hp: max_hp, hp: hp} = you, before) do
+    level = Format.level(foe.level, Hunt.level_gap(you.level, foe.level))
     you = Map.take(you, [:weapon, :shield])
 
     met = %{
@@ -87,7 +88,7 @@ defmodule MiniLineage.Game.Narrative do
             "article" => article(foe.name),
             "Article" => String.capitalize(article(foe.name)),
             "monster" => foe.name,
-            "level" => foe.level,
+            "level" => level,
             "ground" => ground.name
           }
         )

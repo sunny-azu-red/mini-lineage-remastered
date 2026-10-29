@@ -765,6 +765,20 @@ defmodule MiniLineage.Game.Hunt do
     trunc(amount * rate * penalty)
   end
 
+  @doc """
+  §20: where a monster's level stands against the character's, as its level is coloured: perilous
+  past the draw's reach above, outgrown past what pays in full below.
+  """
+  def level_gap(level, monster_level) do
+    case monster_level - level do
+      gap when gap > @draw_above -> :perilous
+      gap when gap > 0 -> :above
+      0 -> :even
+      gap when gap >= -@paid_above -> :below
+      _ -> :outgrown
+    end
+  end
+
   @doc "§18 and §22: the Adena a slain monster carries, if it carries any, at a rate."
   def adena(monster, rate) do
     if Formulas.hit?(monster.adena_chance),

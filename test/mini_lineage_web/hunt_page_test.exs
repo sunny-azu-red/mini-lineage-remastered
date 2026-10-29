@@ -252,7 +252,7 @@ defmodule MiniLineageWeb.HuntPageTest do
     assert has_element?(
              character,
              "#character-vitality",
-             ~r/You fell to the [A-Z][\w ]+ at the Obelisk of Victory at Level 1 /
+             ~r/You fell to the [A-Z][\w ]+, Level \d+, at the Obelisk of Victory at Level 1 /
            )
 
     assert has_element?(character, "#character-class", "You were a Human Fighter")

@@ -635,6 +635,17 @@ try {
         shownHead);
     const opening = await page.evaluate(() => document.querySelector('#fight-log > li:first-child').className);
     check('...opening on an Encounter washed blue or an Ambush washed red', /^(encounter|ambush)$/.test(opening), opening);
+    // Rules §20: red past the draw's reach above, orange above, gold even, green below, muted past what pays in full.
+    const metLevel = await page.evaluate(() => {
+        const level = document.querySelector('#fight-log > li:first-child .level');
+        return level && { level: Number(level.textContent.replace('Level ', '')), className: level.className };
+    });
+    const hunterLevel = (await state()).level;
+    const levelGap = metLevel ? metLevel.level - hunterLevel : NaN;
+    const levelClass = levelGap > 1 ? 'level perilous' : levelGap > 0 ? 'level above' : levelGap === 0 ? 'level'
+        : levelGap >= -1 ? 'level below' : 'level outgrown';
+    check('...naming the monster\'s level coloured by where it stands against the character\'s',
+        metLevel?.className === levelClass, `Level ${metLevel?.level} met at Level ${hunterLevel}: ${metLevel?.className}`);
     const firstMove = await text('#hunt-button');
     check('...after which the button names where the hunt goes next', firstMove !== '⚔️ Hunt' && firstMove.startsWith('⚔️ '),
         firstMove);

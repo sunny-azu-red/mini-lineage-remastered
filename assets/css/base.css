@@ -161,6 +161,24 @@ p {
     color: var(--gold);
 }
 
+/* A monster's level against the character's (rules §20): a critical's orange above, a mend's green
+   below, muted past what pays in full, and red past the draw's reach above. */
+.level.above {
+    color: var(--text-critical);
+}
+
+.level.below {
+    color: var(--text-heal);
+}
+
+.level.outgrown {
+    color: var(--text-muted);
+}
+
+.level.perilous {
+    color: var(--text-hp);
+}
+
 /* What it wears, wields or drinks, quieter than the sentence around it and weighted as every value
    there is: an item's name is not the news, the figure beside it is. Unweighted, on a row or in the
    sidebar, grey would read as muted, so there it keeps the text's colour. */

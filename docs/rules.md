@@ -539,7 +539,9 @@ this far (a monster's spells as far as §19 gives):
 | An aggressive monster noticing a character | 500 |
 
 - **Who you meet:** one of the ground's monsters from 1 level below the character to 1 level
-  above, each as likely as the next, or one of the nearest if none is.
+  above, each as likely as the next, or one of the nearest if none is. Its level is coloured by
+  where it stands: red more than 1 above, orange 1 above, gold at the character's own, green 1
+  below and muted further below, where it pays less (the reward, below).
 - **A round** is 1⅔ seconds, one blow at 300 Atk. Spd. (Lineage II's 500,000 ÷ Atk. Spd.
   milliseconds). The character acts, then the monster if it still stands, and a skill's reuse runs
   down by 1⅔ seconds each round. A cast or a reuse is never rounded up to the round: one that ends

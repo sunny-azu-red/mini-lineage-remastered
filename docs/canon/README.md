@@ -104,6 +104,12 @@ where it has any.
   starts where the draw stops, so no fight a ground draws for the character's level is ever
   touched, and a ground the character has outgrown stops paying: with a top monster of level 14,
   level 16 to 17 takes about twice as long as 15 to 16, and 17 to 18 four to six times.
+- **A monster's level is coloured by its own bands** (rules §20). Lineage II coloured a monster's
+  name by the gap in seven bands, red from 11 above down to blue from 11 below, plain within 2
+  either side (`skills.md`), so its colour changed where its EXP penalty began, at 6 below. The draw
+  meets only a level either side, which Lineage II's bands would leave plain, so ours follow the
+  draw and the penalty instead: red past 1 above, a critical's orange 1 above, gold even, a mend's
+  green 1 below and muted past it, where the pay halves. Only the level is coloured, not the name.
 - **Each village has one hunting ground,** a ladder from level 1 to 14, one below where Gludio's
   grounds open at 15 (`hunting-grounds.md`). It carries one nostalgic name (Obelisk of Victory,
   Elven Fortress, School of Dark Arts, Cave of Trials) and draws on every monster up to level 14

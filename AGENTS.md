@@ -551,7 +551,9 @@ Each of these is here because it was got wrong once.
 - **A bonus leads its stat; an item's own number follows it.** "+8% P. Def.", "-3 Accuracy", "+38 Max MP",
   but "P. Atk. 6". A rate carries its % wherever it is written ("Critical 8%", "Block 20%").
 - **A level is named as one, "Level 5", word and number together in `.level`**, a monster's
-  ("a Gremlin, Level 1") as much as the character's ("until Level 5"). A level no number names
+  ("a Gremlin, Level 1") as much as the character's ("until Level 5"), in a sentence through
+  `Format.level/2`. A monster's is coloured by where it stands against the character's
+  (`Hunt.level_gap/2`, rules §20), the level alone and never its name. A level no number names
   ("the next level") is a common noun and stays lowercase and uncoloured.
 - **An item or a skill is named one way, everywhere, or the reader learns two vocabularies**: its
   emoji, then its name, in `.item` (quiet and weighted in a sentence, the text's colour elsewhere)
