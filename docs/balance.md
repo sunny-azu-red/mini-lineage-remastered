@@ -62,7 +62,7 @@ it buys the best upgrade it can afford in each slot, weapon first, and sells bac
 replaced. A path is a weapon type and the hands it is held in. A sword or a staff in one hand goes
 with a shield and a dagger without, since a shield's 8 Evasion is what a dagger fights with. A
 two-handed path holds one-handers, with a shield, only until its first two-hander is affordable,
-then skips straight to the two-handers (the Zweihander path never buys a Long Sword).
+then skips straight to the two-handers (a two-handed sword path never buys a Gladius).
 
 **Off-meta builds** are run beside the paths and flagged when they beat them (see the last section):
 each one-handed path again with the other shield choice, on the same dice so the two compare run for
@@ -93,13 +93,13 @@ first, the third four to six times. What a set has at 15, and when its gear come
 
 | Set | Hunts to 15 | SP held at 15 | Whole village kit owned at | Adena held at 15 |
 |---|---|---|---|---|
-| Human Fighter | 122 | 2,967 to 3,020 | 14 (sword 2h never) | 102k to 112k |
+| Human Fighter | 122 | 2,967 to 3,020 | 14 (sword 2h 13) | 102k to 112k |
 | Human Mystic | 122 | 788 to 795 | 14 | 85k |
 | Elven Fighter | 151 | 3,239 | 14 | 79k |
 | Elven Mystic | 151 | 252 to 255 | 14 | 40k to 101k |
 | Dark Fighter | 145 | 2,430 | 14 | 78k |
 | Dark Mystic | 145 | 196 to 197 | 14 | 49k to 105k |
-| Orc Fighter | 130 to 131 | 2,282 to 2,342 | 14 (sword 2h never) | 100k to 118k |
+| Orc Fighter | 130 to 131 | 2,282 to 2,342 | 14 (sword 2h 13) | 100k to 118k |
 | Orc Mystic | 131 | 1,332 to 1,334 | 14 | 70k to 93k |
 
 - **The Human and Elven Mystics set the pace,** and the Human Mystic is fastest. Talking Island's
@@ -114,8 +114,8 @@ first, the third four to six times. What a set has at 15, and when its gear come
   Fighters in 58 to 190. The Human and Elven Mystics survive both, and the Orc Mystic dies only
   below 30% (14 to 15). Twenty potions bring every path back to 0 or 1.
 - **Every path leaves in its village's best,** the 136,000 weapon and the dearest armour,
-  necklace and shield all owned at 14, but the two-handed swords, whose Zweihander (244,000) is
-  still out of reach. Tiers come at about 4, 9 and 13: 768 at 4.0 to 4.3, 12,500 at 8.3 to 9.1,
+  necklace and shield all owned at 14, and a two-handed sword's at 13, its line ending at the
+  Brandish (54,100) since the Zweihander is Gludio's (rules §24). Tiers come at about 4, 9 and 13: 768 at 4.0 to 4.3, 12,500 at 8.3 to 9.1,
   54,100 at 12.6 to 13.2 (the Mystic one-hander's line has no 54,100 piece and goes from 12,500 to
   136,000 at 14).
 - **Each path reaches 15 with 40,000 to 118,000 Adena,** having earned 289,000 to 319,000, towards

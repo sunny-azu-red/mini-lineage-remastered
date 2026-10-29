@@ -27,7 +27,7 @@ Willow Staff,weapon,weapon,2,staff,11,12,325,4,4,20,,,,,,,12500,village
 Cedar Staff,weapon,weapon,2,staff,16,16,325,4,4,20,,,,,,,54100,village
 Journeyman's Staff,weapon,weapon,2,staff,23,22,325,4,4,20,,,,,,,136000,village
 Brandish,weapon,weapon,2,sword,21,12,325,8,0,10,,,,,,,54100,village
-Zweihander,weapon,weapon,2,sword,38,21,325,8,0,10,,,,,,,244000,village
+Zweihander,weapon,weapon,2,sword,38,21,325,8,0,10,,,,,,,244000,town-of-gludio
 Leather Shield,shield,shield,,,,,,,,,,,47,20,-8,,39,village
 Small Shield,shield,shield,,,,,,,,,,,56,20,-8,,638,village
 Buckler,shield,shield,,,,,,,,,,,67,20,-8,,2780,village

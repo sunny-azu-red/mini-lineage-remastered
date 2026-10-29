@@ -67,7 +67,7 @@ defmodule MiniLineageWeb.DevTwinkTest do
                 "Long Sword",
                 "Necklace of Wisdom",
                 "Round Shield"
-              ], ["Forest Bow", "Lesser Healing Potion", "Throwing Knife", "Zweihander"]}
+              ], ["Brandish", "Forest Bow", "Lesser Healing Potion", "Throwing Knife"]}
 
     assert %{count: 30} = Enum.find(player.items, &(&1.name == "Lesser Healing Potion"))
   end
@@ -87,7 +87,7 @@ defmodule MiniLineageWeb.DevTwinkTest do
 
     assert gear(stored(session)) ==
              {["Bone Breastplate", "Bone Gaiters", "Cestus", "Necklace of Wisdom"],
-              ["Lesser Healing Potion", "Long Sword", "Round Shield", "Zweihander"]}
+              ["Brandish", "Lesser Healing Potion", "Long Sword", "Round Shield"]}
   end
 
   test "a mystic holds the one-handed staff and the shield, the two-handed one carried", %{
@@ -113,7 +113,7 @@ defmodule MiniLineageWeb.DevTwinkTest do
     type(view, "twink")
     first = stored(session)
     knife = Enum.find(first.items, &(&1.name == "Throwing Knife"))
-    sword = Enum.find(first.items, &(&1.name == "Zweihander"))
+    sword = Enum.find(first.items, &(&1.name == "Brandish"))
 
     {{:ok, _}, _} = Characters.mutate(session, &Actions.destroy(&1, knife.id))
     {{:ok, _}, _} = Characters.mutate(session, &Actions.equip(&1, sword.id))

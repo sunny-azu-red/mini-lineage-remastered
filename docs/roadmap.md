@@ -228,7 +228,8 @@ Discussed in full when it is built.
   every shop. The Town of Gludio's brings the 244,000 tier the villages stop short of (Falchion,
   Sword Breaker, Composition Bow, as Lineage II's towns sold them), beside the village's 136,000
   tier, which Lineage II's towns sold too, and D-grade's low tier (409,000 to 716,000 a weapon, the
-  Mithril and Knowledge armour); the Zweihander stays the villages' own.
+  Mithril and Knowledge armour), the Zweihander among them, which Lineage II sold in the villages
+  (a departure in `docs/canon/README.md`).
 - **The trainers (built, rules §25) and the class master in each village,** for its own race.
 - **The Newbie Guide in each village,** with its free buffs at their real level ranges.
 

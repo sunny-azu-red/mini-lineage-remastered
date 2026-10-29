@@ -704,11 +704,12 @@ Example: a Human Fighter (DEX 30) behind a Small Shield (defence 56, block 20) c
 ## 24. Village shops
 
 Every starting village sells the items marked village below, and Orc Village those marked
-orc-village too, each at its canon price below × as many of its slot as it stands for (§7), rounded,
-so a chest, legs or necklace costs what it is worth as it counts what it is worth: a light piece by a
-Fighter's shares, a robe by a Mystic's, a necklace × 41 ÷ 13, anything else its price. A shop buys
-back anything it sells for half what it costs, rounded down. A starting kit is worth nothing to a
-shop and is never bought.
+orc-village too, but none marked town-of-gludio, which the Town of Gludio's shops will sell with the
+rest of the 244,000 tier (`docs/roadmap.md`), each at its canon price below × as many of its slot as
+it stands for (§7), rounded, so a chest, legs or necklace costs what it is worth as it counts what
+it is worth: a light piece by a Fighter's shares, a robe by a Mystic's, a necklace × 41 ÷ 13,
+anything else its price. A shop buys back anything it sells for half what it costs, rounded down. A
+starting kit is worth nothing to a shop and is never bought.
 
 Each village keeps four traders: one for weapons, one for armour who sells the shields too, and a
 jeweller and a grocer who keep the Magic Trader together, its jewellery and its potions. Any of them
@@ -755,7 +756,7 @@ and potion.
 | Cedar Staff | weapon | weapon | 2 | staff | 16 | 16 | 325 | 4 | 4 | 20 |  |  |  |  |  |  | 54100 | village |
 | Journeyman's Staff | weapon | weapon | 2 | staff | 23 | 22 | 325 | 4 | 4 | 20 |  |  |  |  |  |  | 136000 | village |
 | Brandish | weapon | weapon | 2 | sword | 21 | 12 | 325 | 8 | 0 | 10 |  |  |  |  |  |  | 54100 | village |
-| Zweihander | weapon | weapon | 2 | sword | 38 | 21 | 325 | 8 | 0 | 10 |  |  |  |  |  |  | 244000 | village |
+| Zweihander | weapon | weapon | 2 | sword | 38 | 21 | 325 | 8 | 0 | 10 |  |  |  |  |  |  | 244000 | town-of-gludio |
 | Leather Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 47 | 20 | -8 |  | 39 | village |
 | Small Shield | shield | shield |  |  |  |  |  |  |  |  |  |  | 56 | 20 | -8 |  | 638 | village |
 | Buckler | shield | shield |  |  |  |  |  |  |  |  |  |  | 67 | 20 | -8 |  | 2780 | village |

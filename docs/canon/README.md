@@ -284,6 +284,11 @@ is which of them a set gets, how they are sold, and how the fight uses them.
   the Gladius, the Apprentice's Rod beside Buffalo's Horn, the Cotton Shirt and Pants beside the
   Bone Breastplate and Gaiters, the Hard Leather Pants beside the Wooden Gaiters, and the Feriotic
   Tunic and Stockings beside the Cotton ones. The first of each is not in the game.
+- **The Zweihander is the Town of Gludio's,** with the rest of the 244,000 tier (Falchion, Sword
+  Breaker, Composition Bow, Mage Staff), where Lineage II sold it in the villages and in Giran and
+  the towns past it, never in Gludio. At Adena ×30 no two-handed sword path could afford it by 15,
+  where every other path owns its village's best at 14 (`docs/balance.md`), so the village's
+  two-handed sword ends at the Brandish (54,100) and the 244,000 tier is all Gludio's.
 - **A shield blocks from any side.** Lineage II blocked only blows from the front, and a fight here
   is one line with no facing. The rest of a block is aCis's: three times as often against an arrow
   and against a critical, and one roll in which five blows in a hundred are caught perfectly. That

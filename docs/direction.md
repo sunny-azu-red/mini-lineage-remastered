@@ -83,15 +83,16 @@ Balance matters most, and it is measured, never guessed (AGENTS.md has the bench
 
 - **Adena at ×30, so a character leaves its village in its village's best** (2026-10-29). At ×20 no
   set owned the whole village kit by 15 (the 136,000 weapons and the dearest armour never came); at
-  ×30 every path owns it at 14 but the two-handed swords, whose Zweihander is 244,000, and arrives
-  in Gludio with 40,000 to 118,000 Adena towards its 244,000 tier and D-grade, which canon's
-  Expertise D lets it wear from 20. Prices stay canon: the rate scales every coin alike, Gludio's
-  included. Every path reaches 15 1% to 13% sooner, Fighters most, so the spread narrows at three
-  settings of four, and deaths fall wherever there were any (resting below half without potions, the
-  17 paths from 647 runs of 3,400 to 285). It fails the bar only resting below half with 20 potions,
-  the spread widening from 26.1 to 26.7 minutes because the Orc Mystic, the slowest there, gains
-  least (1%); without it the spread narrows (21.5 to 21.4). Taken, the Orc Mystic being its own
-  work. ×40 was measured too: the kit at 13 to 14, but a Fighter's time moving up to 17%.
+  ×30 every path owns it at 14, a two-handed sword's at 13 once the Zweihander (244,000) went to
+  Gludio's shops with the rest of its tier, and arrives in Gludio with 40,000 to 118,000 Adena
+  towards its 244,000 tier and D-grade, which canon's Expertise D lets it wear from 20. Prices stay
+  canon: the rate scales every coin alike, Gludio's included. Every path reaches 15 1% to 13%
+  sooner, Fighters most, so the spread narrows at three settings of four, and deaths fall wherever
+  there were any (resting below half without potions, the 17 paths from 647 runs of 3,400 to 285).
+  It fails the bar only resting below half with 20 potions, the spread widening from 26.1 to 26.7
+  minutes because the Orc Mystic, the slowest there, gains least (1%); without it the spread narrows
+  (21.5 to 21.4). Taken, the Orc Mystic being its own work. ×40 was measured too: the kit at 13 to
+  14, but a Fighter's time moving up to 17%.
 - **Balance is measured to level 15, and the village is harder and stops paying at 16**
   (2026-10-29). A character leaves its village for Gludio around 15 or 16, where Gludio's grounds
   open, without a cap telling it to: each starting ground stops at level 14, a hunt meets a monster

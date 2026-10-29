@@ -611,8 +611,8 @@ defmodule MiniLineage.Game.Rules do
   @reach %{blow: 40, bow: 500, spell: 600, notice: 500}
 
   # The only kinds, slots and shops an item may name; listed so the data file mints no atom.
-  @item_words ~w(weapon shield armour jewellery chest legs necklace village orc-village starting light
-                 magic)a
+  @item_words ~w(weapon shield armour jewellery chest legs necklace village orc-village town-of-gludio
+                 starting light magic)a
 
   # Rules §23 and §24: every item, a table in the hundreds and so a data file.
   @external_resource items_path = Path.join(:code.priv_dir(:mini_lineage), "game/items.csv")
