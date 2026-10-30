@@ -1233,6 +1233,18 @@ try {
         await onScreen('town');
     };
     await home();
+    // The caret flips by its masks' size, painted, where a turn would lift the row beside it.
+    const flipped = await lifted(context, page, () => page.click('#travel-form select'), '#screen');
+    const flippedUp = await page.waitForFunction(() =>
+        getComputedStyle(document.querySelector('#travel-form .form-pick'), '::after').getPropertyValue('--caret-up') === '100%',
+    null, { timeout: 3000 }).then(() => true, () => false);
+    check('a dropdown\'s caret points up while its list is open, lifting nothing on the page but itself',
+        flippedUp && flipped.every(el => el.startsWith('span.form-pick')), flipped.join(', '));
+    await page.keyboard.press('Escape');
+    const flippedDown = await page.waitForFunction(() =>
+        getComputedStyle(document.querySelector('#travel-form .form-pick'), '::after').getPropertyValue('--caret-down') === '100%',
+    null, { timeout: 3000 }).then(() => true, () => false);
+    check('...and down again once it shuts', flippedDown);
     await hurt();
     await holdEach();
     await travel('gatekeeper', 'gatekeeper');

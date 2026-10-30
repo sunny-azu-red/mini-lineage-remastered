@@ -226,12 +226,16 @@ defmodule MiniLineageWeb.Screens do
           autocomplete="off"
           required
         />
-        <select name="race_id" class="form-select">
-          <option :for={race <- @catalog.races} value={race.id}>{race.emoji} {race.label}</option>
-        </select>
-        <select name="path" class="form-select">
-          <option :for={{path, label} <- paths()} value={path}>{label}</option>
-        </select>
+        <span class="form-pick">
+          <select name="race_id" class="form-select">
+            <option :for={race <- @catalog.races} value={race.id}>{race.emoji} {race.label}</option>
+          </select>
+        </span>
+        <span class="form-pick">
+          <select name="path" class="form-select">
+            <option :for={{path, label} <- paths()} value={path}>{label}</option>
+          </select>
+        </span>
         <.button type="submit">🚩 Start</.button>
       </div>
     </form>

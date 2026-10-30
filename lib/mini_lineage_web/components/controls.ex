@@ -179,15 +179,17 @@ defmodule MiniLineageWeb.Controls do
       <div class="form-row">
         <%!-- `selected` explicitly: relabelling the button re-renders the options, and would
               otherwise drop the player's choice. --%>
-        <select id={"#{@id}-choice"} name={@name} class="form-select" phx-hook="SelectAction">
-          <option :if={@placeholder} value="" selected={@shown == ""}>{@placeholder}</option>
-          <%= for [first | _] = options <- @groups do %>
-            <optgroup :if={first[:group]} label={first[:group]}>
-              <.option :for={option <- options} option={option} shown={@shown} />
-            </optgroup>
-            <.option :for={option <- options} :if={!first[:group]} option={option} shown={@shown} />
-          <% end %>
-        </select>
+        <span class="form-pick">
+          <select id={"#{@id}-choice"} name={@name} class="form-select" phx-hook="SelectAction">
+            <option :if={@placeholder} value="" selected={@shown == ""}>{@placeholder}</option>
+            <%= for [first | _] = options <- @groups do %>
+              <optgroup :if={first[:group]} label={first[:group]}>
+                <.option :for={option <- options} option={option} shown={@shown} />
+              </optgroup>
+              <.option :for={option <- options} :if={!first[:group]} option={option} shown={@shown} />
+            <% end %>
+          </select>
+        </span>
         <.button type="submit" variant={@variant} {@rest}>{@label}</.button>
       </div>
     </form>

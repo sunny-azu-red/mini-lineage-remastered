@@ -384,8 +384,8 @@ Each of these is here because it was got wrong once.
   nothing fills `forwards` (`b88e2ac`). Otherwise Chrome lifts the text painted after it onto
   layers that lose their LCD rendering and it blinks, which no screenshot shows. A new one gets a
   `lifted()` check in the walkthrough, in the change that adds it, that it lifts nothing but
-  itself, as the effect icon, the shimmer, the switch, the chevron, the Halls sweep and dot and the
-  sound toggle have; design.md's Motion says how each moves.
+  itself, as the effect icon, the shimmer, the switch, the chevron, the dropdown's caret, the Halls
+  sweep and dot and the sound toggle have; design.md's Motion says how each moves.
 - **Every panel is `Controls.panel/1`**: the card, the header band, the title (always an h2), the
   body. Options are `icon` (an emoji before the title), `collapsible` and a `header`
   slot. `id` names the PANEL, which its hook needs, and `class` styles it; `body_class` and every

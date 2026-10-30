@@ -114,14 +114,19 @@ was got wrong once.
   The banner opts out with `text-decoration: none`; the footer's commit turns gold on hover through a
   transition on `color` alone.
 - **A button's focus ring is `currentColor`**, so a new look rings in its own colour.
+- **A dropdown's caret is never a panel's chevron.** The chevron folds and is a gold stroke; the
+  caret opens a list and is a filled triangle, grey until its select is hovered, focused or open,
+  and pointing up while the list is open (`:open`). It is `.form-pick`'s `::after`, a mask over a
+  colour, since a select draws nothing after its content and an image cannot change colour.
 
 ## Motion
 
 - **What moves near text moves by a painted property.** An animated `transform`, `opacity` or
   `filter` is composited, and Chrome lifts everything painted after it inside its nearest clip (a
   `.panel`, being `overflow: hidden`) onto layers that lose their LCD text: the text blinks for the
-  run, and a headless browser never shows it. So the switch's knob slides by `left` and a button's
-  shimmer sweeps by `left` and fades by a registered `--shimmer`, a Halls row sweeps by
+  run, and a headless browser never shows it. So the switch's knob slides by `left`, a button's
+  shimmer sweeps by `left` and fades by a registered `--shimmer`, a dropdown's caret flips by
+  two registered mask heights, a Halls row sweeps by
   `background-position` and its online dot fades by `color`. Where only a composited property
   will do (an effect icon's fade, a panel chevron's turn), it runs inside an `overflow: clip` of its
   own, with `overflow-clip-margin` for what spills, and never fills `forwards`, which keeps a finished

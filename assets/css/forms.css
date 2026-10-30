@@ -46,10 +46,60 @@
     cursor: pointer;
     appearance: none;
     padding-right: 30px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a84c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px top 11px;
+}
+
+/* ===== The dropdown's caret =====
+ * A filled triangle, grey until the select is hovered, focused or open, so it never reads as a
+ * panel's gold chevron. A select draws nothing after its content, so the caret is its wrapper's. */
+@property --caret-down {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 100%;
+}
+
+@property --caret-up {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+
+.form-pick {
+    position: relative;
+    display: inline-flex;
     flex-shrink: 0;
+}
+
+/* It flips by squashing one mask to its middle line and drawing the other out of it: a mask's size
+ * is painted, where a turn is composited and would need a clip of its own (design.md, Motion). */
+.form-pick::after {
+    content: '';
+    position: absolute;
+    right: 11px;
+    top: calc(50% - 3px);
+    width: 9px;
+    height: 6px;
+    pointer-events: none;
+    background-color: var(--text-secondary);
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Cpath d='M.6.6h7.8L4.5 5.4z' stroke='black' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 6'%3E%3Cpath d='M.6 5.4h7.8L4.5.6z' stroke='black' stroke-width='1' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: 100% var(--caret-down), 100% var(--caret-up);
+    transition: background-color 0.15s, --caret-up 80ms ease-in, --caret-down 90ms ease-out 80ms;
+}
+
+.form-pick:hover::after,
+.form-pick:has(>.form-select:focus-visible)::after {
+    background-color: var(--gold);
+}
+
+/* A rule of its own: a browser without `:open` drops the whole rule, and keeps the caret down. */
+.form-pick:has(>.form-select:open)::after {
+    --caret-down: 0%;
+    --caret-up: 100%;
+    background-color: var(--gold);
+    transition: background-color 0.15s, --caret-down 80ms ease-in, --caret-up 90ms ease-out 80ms;
 }
 
 .form-input {
